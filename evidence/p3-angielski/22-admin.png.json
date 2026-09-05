@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/admin/team/members",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nPanel Administratora\nPrzegląd\nDane\nModel\nPiotr Wiśniewski\nPW\nWstecz\nPANEL ADMINISTRATORA\n\nDostęp, polityki organizacji, dowody i bezpieczne operacje\n\nZESPÓŁ I DOSTĘP\nUżytkownicy\nZaproszenia\nRole i uprawnienia\nZespoły\nGoście i dostęp zewnętrzny\nWnioski o dostęp\nPrzeglądy dostępów\nWłasność\nROZLICZENIA I PLANY\nSTEROWANIE AI\nBEZPIECZEŃSTWO I TOŻSAMOŚĆ\nDZIENNIK AUDYTU\nCENTRUM DOWODZENIA\nSTAN SYSTEMU\nPanel administratora\nZespół i dostęp\nUżytkownicy\nUżytkownicy\n\nZarządzanie członkostwem, zmiany ról, przekazanie własności i kody zaproszeń zespołu.\n\nWłaściciel\n\nPełna kontrola nad przestrzenią, przekazanie własności i zabezpieczenia zarezerwowane dla właściciela.\n\nTylko właściciel może przypisać lub usunąć innego właściciela.\n\nAdministrator\n\nMoże zarządzać członkami zespołu, ich rolami i kodami zaproszeń.\n\nNie może zmienić członkostwa właściciela ani ominąć jego zabezpieczeń.\n\nCzłonek\n\nStandardowy dostęp do przestrzeni bez uprawnień administracyjnych zespołu.\n\nNie może otworzyć administracji zespołu ani zmieniać członkostwa.\n\nGość\n\nOgraniczona rola współpracownika bez dostępu administracyjnego.\n\nGoście nie mają dostępu do narzędzi administracyjnych.\n\nCzłonkowie i role\n\nKanoniczna powierzchnia P32 do zarządzania członkostwem, zmianami ról i zabezpieczeniami właściciela.\n\nRola w zaproszeniu\nCzłonek\nAdministrator\nGość\nDodaj członka\nCZŁONEK\n\t\nE-MAIL\n\t\nROLA\n\t\nSTATUS\n\t\n\n\nPiotr Wiśniewski\n\t\npiotr.wisniewski@dbr77.com\n\t\nRola użytkownika Piotr Wiśniewski\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nJustyna Laskowska\n\t\njustyna.laskowska@dbr77.com\n\t\nRola użytkownika Justyna Laskowska\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nMarek Nowak\n\t\nmarek.nowak@dbr77.com\n\t\nRola użytkownika Marek Nowak\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nKrzysztof Zieliński\n\t\nkrzysztof.zielinski@dbr77.com\n\t\nRola użytkownika Krzysztof Zieliński\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nJulia Lewandowska\n\t\njulia.lewandowska@dbr77.com\n\t\nRola użytkownika Julia Lewandowska\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nAnna Kowalska\n\t\nanna.kowalska@dbr77.com\n\t\nRola użytkownika Anna Kowalska\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nTomasz Jankowski\n\t\ntomasz.jankowski@dbr77.com\n\t\nRola użytkownika Tomasz Jankowski\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t\n\n\nAcceptance Owner\n\t\nacceptance.owner@consultify.local\n\t\nRola użytkownika Acceptance Owner\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:54.284Z"
+}

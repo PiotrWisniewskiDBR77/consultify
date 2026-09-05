@@ -2,17 +2,17 @@ import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { StandardPreview } from '@/components/standard/StandardPreview';
+import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
   memberNameOrUnknown,
   useOrganizationMemberNames,
   type MemberNameResolver,
 } from '@/hooks/useOrganizationMemberNames';
-
 import i18n from '@/i18n';
-import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { StandardPreview } from '@/components/standard/StandardPreview';
-import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
+import { capacityUnitLabel } from '@/labels/capacityUnitLabels';
 import {
   acceptResourceCommitment,
   decideResourceCommitment,
@@ -269,7 +269,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     const formatRange = (range: Range) =>
       range.low == null || range.base == null || range.high == null
         ? range.knowledgeState
-        : `${range.low}/${range.base}/${range.high} ${scenario.windowUnit}`;
+        : `${range.low}/${range.base}/${range.high} ${capacityUnitLabel(scenario.windowUnit, true)}`;
     // 98-rola-zespol-duplikat (2026-08-30): kolumna „Rola / zespół” powtarzała
     // co do znaku kolumnę „Opiekun” dla wierszy okresu — obie brały
     // `period.supply.ownerId` i obie szły przez `actorLabel()`. To są jednak dwie
@@ -1154,7 +1154,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
             <div>
               <h3 className="font-semibold">Narzędzia obciążenia</h3>
               <p className="text-xs">
-                Plan źródłowy · v{scenario.planScenarioVersion} · {scenario.windowUnit} ·{' '}
+                Plan źródłowy · v{scenario.planScenarioVersion} ·{' '}
+                {capacityUnitLabel(scenario.windowUnit, true)} ·{' '}
                 {scenario.timezone}
               </p>
             </div>

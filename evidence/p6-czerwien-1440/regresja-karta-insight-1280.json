@@ -1,0 +1,33 @@
+{
+ "url": "http://localhost:3061/?screen=karta-insight&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1280,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Podsumowanie wykonawcze — gotowość opera",
+   "x": 403,
+   "y": 29,
+   "right": 1071.1875,
+   "bottom": 57
+  },
+  {
+   "text": "W recenzji",
+   "x": 377,
+   "y": 67,
+   "right": 449.0625,
+   "bottom": 87
+  },
+  {
+   "text": "Zapisano",
+   "x": 459.0625,
+   "y": 69,
+   "right": 510.90625,
+   "bottom": 85
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:20:31.801Z"
+}

@@ -181,17 +181,7 @@ export function formatKpiScorecardDate(value: string | null | undefined, isPolis
   });
 }
 
-export function shortKpiScorecardId(id: string | null | undefined): string {
-  if (!id) return '—';
-  return id.length > 10 ? `${id.slice(0, 8)}…` : id;
-}
-
-export function kpiScorecardOwnerDisplay(
-  ownerUserId: string | null | undefined,
-  currentUserId: string | null | undefined,
-  isPolish: boolean
-): string {
-  if (!ownerUserId) return '—';
-  if (currentUserId && ownerUserId === currentUserId) return isPolish ? 'Ty' : 'You';
-  return shortKpiScorecardId(ownerUserId);
+export function shortTechnicalHash(hash: string | null | undefined): string {
+  if (!hash) return '—';
+  return hash.length > 10 ? `${hash.slice(0, 8)}…` : hash;
 }

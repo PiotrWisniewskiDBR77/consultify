@@ -1067,12 +1067,21 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           }
 
           // For OAuth providers with config: store config before redirecting
-          await fetch(`/api/settings/integrations/${connectModalApp.id}/connect`, {
+          const resp = await fetch(`/api/settings/integrations/${connectModalApp.id}/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ config: configPayload }),
           });
+          if (!resp.ok) {
+            const responseBody = await resp.json().catch(() => ({}));
+            toast.error(
+              typeof responseBody.error === 'string'
+                ? responseBody.error
+                : t('settings.integrations.connectError', 'Failed to initiate connection')
+            );
+            return;
+          }
         }
 
         await startOAuthFlow(connectModalApp.id);

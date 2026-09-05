@@ -111,7 +111,7 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
   const cancelGate = gateCancel(set);
 
   const rows: ArtifactPropertyRow[] = [
-    { id: 'status', label: isPolish ? 'Status' : 'Status', value: <StatusChip label={okrSetStatusLabel(set.status, isPolish)} tone={OKR_SET_STATUS_TONE[set.status]} /> },
+    { id: 'status', label: 'Status', value: <StatusChip label={okrSetStatusLabel(set.status, isPolish)} tone={OKR_SET_STATUS_TONE[set.status]} /> },
     { id: 'scope', label: isPolish ? 'Zasięg' : 'Scope', value: okrSetScopeLabel(set.scopeType, isPolish) },
     { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: osoba(set.ownerUserId) },
     { id: 'reviewer', label: isPolish ? 'Recenzent' : 'Reviewer', value: osoba(set.reviewerUserId) },

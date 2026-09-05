@@ -441,7 +441,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
       const truth = await updateInitiativeStatusWriteTruth(id, action.targetStatus);
       toast.success(
         t('initiatives.toast.statusChangedLabel', 'Status changed to {{label}}', {
-          label: action.label,
+          label: t(action.labelKey),
         })
       );
       const updated = {
@@ -505,7 +505,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
           <span
             className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${statusMeta.bgColor} ${statusMeta.color}`}
           >
-            {statusMeta.label}
+            {t(statusMeta.labelKey)}
           </span>
           <span
             className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${priorityStyle.bg} ${priorityStyle.text}`}
@@ -559,7 +559,7 @@ export const InitiativeCompactPanel: React.FC<InitiativeCompactPanelProps> = ({
                 className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-c-info/10"
               >
                 <ArrowRight size={10} />
-                {action.label}
+                {t(action.labelKey)}
               </button>
             ))}
         </div>

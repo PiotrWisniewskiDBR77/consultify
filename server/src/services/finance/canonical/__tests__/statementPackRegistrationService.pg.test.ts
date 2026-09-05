@@ -62,6 +62,21 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
           ]);
           await client.query(`DELETE FROM finance_artifacts WHERE artifact_id = $1`, [artifact_id]);
         }
+        // F-M5: potwierdzenie zakłada teraz także kalendarz/okresy/jednostkę pakietu
+        // (`financeCalendarService`). Bez tych czterech DELETE-ów fikstura zostawiałaby
+        // osierocone wiersze — dane demo są twarzą produktu (CLAUDE.md, higiena wykonania).
+        await client.query(`DELETE FROM finance_stmt_lines WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        await client.query(`DELETE FROM finance_stmt_entities WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        await client.query(`DELETE FROM finance_stmt_periods WHERE organization_id = $1`, [
+          organizationId,
+        ]);
+        await client.query(`DELETE FROM finance_stmt_calendars WHERE organization_id = $1`, [
+          organizationId,
+        ]);
         await client.query(`DELETE FROM financial_statement_packs WHERE organization_id = $1`, [
           organizationId,
         ]);
@@ -73,7 +88,10 @@ describe.skipIf(!realPg)('statement-pack canonical registration (real PostgreSQL
              (SELECT count(*) FROM finance_artifacts WHERE organization_id = $1) +
              (SELECT count(*) FROM finance_artifact_aliases WHERE organization_id = $1) +
              (SELECT count(*) FROM financial_statement_packs WHERE organization_id = $1) +
-             (SELECT count(*) FROM financial_statements WHERE organization_id = $1)
+             (SELECT count(*) FROM financial_statements WHERE organization_id = $1) +
+             (SELECT count(*) FROM finance_stmt_calendars WHERE organization_id = $1) +
+             (SELECT count(*) FROM finance_stmt_periods WHERE organization_id = $1) +
+             (SELECT count(*) FROM finance_stmt_entities WHERE organization_id = $1)
            )::int AS count`,
           [organizationId]
         );

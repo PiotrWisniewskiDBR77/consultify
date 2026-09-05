@@ -799,7 +799,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
           </div>
           {f.status ? (
             <div>
-              <dt className="inline font-medium">{isPolish ? 'Status: ' : 'Status: '}</dt>
+              <dt className="inline font-medium">{'Status: '}</dt>
               <dd className="inline">{findingStatusLabel(f.status as any, isPolish)}</dd>
             </div>
           ) : null}
@@ -879,7 +879,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             ...(showFindingColumn ? [isPolish ? 'Ustalenie' : 'Finding'] : []),
             isPolish ? 'Właściciel' : 'Owner',
             isPolish ? 'Termin' : 'Due date',
-            isPolish ? 'Status' : 'Status',
+            'Status',
           ]}
           rows={items.map((a) => [
             a.title,
@@ -1296,7 +1296,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   };
 
   const propertyRows: ArtifactPropertyRow[] = [
-    { id: 'program', label: isPolish ? 'Program' : 'Program', value: programName || report.programName || '—' },
+    { id: 'program', label: 'Program', value: programName || report.programName || '—' },
     {
       id: 'reportKind',
       // R1: mówi prawdę PER TRYB — treść aktywnie wyświetlanego dokumentu, nie report.reportKind.
@@ -1308,7 +1308,7 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
     { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: String(report.version), mono: true },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       value: <StatusChip label={reportStatusLabel(report.status, isPolish)} tone={headerStatusTone(report.status) === 'approved' ? 'success' : headerStatusTone(report.status) === 'review' ? 'warning' : headerStatusTone(report.status) === 'rejected' ? 'danger' : 'neutral'} />,
     },
     { id: 'language', label: isPolish ? 'Język' : 'Language', value: report.language?.toUpperCase() || '—' },

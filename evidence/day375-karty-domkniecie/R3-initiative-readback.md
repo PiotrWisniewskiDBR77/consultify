@@ -1,0 +1,12 @@
+# R3 — werdykt NAPRAW dla GovernedInitiativeHandoffCard
+
+- Producent jest żywy: `UnifiedChatPanel.tsx:2320-2345` tworzy handoff dla `payloadKind === 'initiative'` i zapisuje go w metadata wiadomości, gdy `teresaAdoptChatDraftEnabled` jest włączone (`:815`).
+- Flaga jest realna i domyślnie OFF: `FeatureFlags.ts:35,166`; backend odmawia `404 FEATURE_DISABLED` przy wartości innej niż `true` (`initiativesExecutionRuntime.routes.ts:1820-1822`). Domyślnej wartości nie zmieniono.
+- POST adopcji wymaga `initiative.create` (`:1834-1836`) i przekazuje bez zmian `clientRequestId` do materializacji (`:1853-1866`). `adoptChatDraftInitiative.ts` materializuje agregat `initiative` i relację `TERESA_CHAT_DRAFT_ADOPTION`.
+- Generyczny GET jest zamontowany pod `/api/initiatives/runtime-v1` (`initiatives.routes.ts:154-156`) i szuka kwitu po `clientRequestId` (`initiativesExecutionRuntime.routes.ts:4692-4705`).
+- Autoryzacja jest fail-closed: po znalezieniu kwitu `canViewAggregate` rozwiązuje projekty agregatu i wymaga `initiative.view` (`:1312-1326`, `:4706-4707`); brak uprawnienia i brak kwitu kończą się `404 NOT_FOUND` (`:4728-4730`). Aktor uprawniony dostaje `CONFIRMED`, gdy `currentVersion >= receipt.aggregateVersion` (`:4708-4724`).
+- Test RTL wykonuje realny przepływ karty: pierwszy read-back `404`, odczyt draftu, POST adopcji z `clientRequestId: chat-draft-adopt:initiative-1`, remont z tymi samymi propsami i read-back `CONFIRMED`, a następnie `404` dla niewidocznego `initiative-hidden`. URL obu odczytów dowodzi kodowania dwukropka jako `%3A`; POST zachowuje niezakodowane bajty identyfikatora w JSON.
+- GREEN po naprawie: `r3-after-green.json` — 7/7, SHA-256 `f265fd7a6c38ce17a979c94bbcf01cb64fc430c79bee3b47f5692aa4022b247d`.
+- Mutacja do starego komponentu: 6/7, brak jakiegokolwiek wywołania read-back; SHA-256 `7a1a120322dd50113aa9838d11488b287603b56715987db2982101b6791701af`.
+- Przywrócenie i kontrola po formatowaniu: `r3-restored-green.json` — 7/7, SHA-256 `55fcf7011012f8289101ebdaa9f189dd65b56ad878fd95f8cffe776c728a3780`.
+- Próba dodatkowego generycznego RealPG testu autoryzacji nie jest dowodem: `r3-generic-receipt-auth.json` ma 0 pass / 1 fail / 14 skipped, bo zastany `beforeEach` wykonuje `TRUNCATE` bez `CASCADE` przy pełnym aktualnym schemacie. Nie zmieniano tego nielicencjonowanego testu. Backendowe zachowanie dla kwitu adopcji pozostaje potwierdzone źródłowo, a zachowanie karty przez RTL; nie twierdzę, że wykonano osobny realny HTTP/JWT/PG read-back kwitu adopcji w R3.

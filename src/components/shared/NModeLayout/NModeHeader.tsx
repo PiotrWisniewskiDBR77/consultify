@@ -372,8 +372,20 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           <ChevronLeft size={20} />
         </motion.button>
 
-        {/* Title area: title (truncate) · status pill · save-state text */}
-        <div className="flex-1 min-w-0 flex items-center gap-2.5">
+        {/* Title area: title (truncate) · status pill · save-state text.
+         * P6_CZERWIEN_I_1440.md §4.2/§5 krok 3: `flex-wrap` WŁASNY tego bloku.
+         * Zmierzone (evidence/p6-czerwien-1440/): przy ~1440 px outer row jest
+         * `lg:flex-nowrap`, więc gdy suma icon+truncated-title+statusPill(shrink-0)+
+         * saveState(shrink-0) przekracza szerokość PRZYDZIELONĄ temu blokowi przez
+         * `flex-1 min-w-0` (bo sąsiad `action buttons` jest shrink-0 i zawsze bierze
+         * swoją pełną szerokość), a ten kontener NIE mógł zawinąć swoich dzieci —
+         * pigułka statusu i tekst zapisu WYLEWAŁY SIĘ poza własne pudełko (overflow:
+         * visible domyślny) i wizualnie nachodziły character-w-character na sąsiedni
+         * blok inlineActions ("Sekcje"/"Baza wiedzy"). `flex-wrap` tutaj sprawia, że
+         * te elementy schodzą do drugiego wiersza WEWNĄTRZ własnego pudełka zamiast
+         * bledować na sąsiada — nachodzenie znika, tytuł nadal się nie zawija (ma
+         * własny `min-w-0 truncate` niżej, nieruszony). */}
+        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2.5">
           {/* Ikona-typ artefaktu (M1) — znacznik typu przed tytułem, neutralny. */}
           {(() => {
             const iconName = ARTIFACT_IDENTITY[artifactType]?.icon;
@@ -453,8 +465,11 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Action buttons — P6 §5 krok 3: flex-wrap własny (symetryczny z title
+         * area powyżej), żeby konsumenci z wieloma inlineActions (np. Dynamic
+         * SWOT: Sekcje/Baza wiedzy/Analizuj/Rozpocznij sesję) też schodzili do
+         * drugiego wiersza zamiast przepełniać pasek w prawo przy 1280/1440 px. */}
+        <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
           {inlineActions}
           {/* AI (#27/#37): header slot for klasa S (Task/Decision — no M3),
               opt-in via showChatButton so other NModeHeader consumers that

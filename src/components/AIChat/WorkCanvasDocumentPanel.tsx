@@ -458,31 +458,33 @@ const outputTargets: Partial<Record<CanvasActionId, 'presentation' | 'table' | '
   'create-report': 'report',
 };
 
-const datasetArtifactActions: Array<{
+const getDatasetArtifactActions = (
+  t: TFunction
+): Array<{
   kind: 'table' | 'chart' | 'dashboard' | 'research';
   label: string;
   analysisKind?: DatasetAnalysisKind;
   titlePrefix?: string;
-}> = [
-  { kind: 'table', label: 'Dataset table' },
-  { kind: 'chart', label: 'Dataset chart' },
-  { kind: 'dashboard', label: 'KPI dashboard' },
-  { kind: 'research', label: 'Findings report' },
+}> => [
+  { kind: 'table', label: t('canvas.panel.dataset.table', 'Dataset table') },
+  { kind: 'chart', label: t('canvas.panel.dataset.chart', 'Dataset chart') },
+  { kind: 'dashboard', label: t('canvas.panel.dataset.dashboard', 'KPI dashboard') },
+  { kind: 'research', label: t('canvas.panel.dataset.findingsReport', 'Findings report') },
   {
     kind: 'research',
-    label: 'Profile summary',
+    label: t('canvas.panel.dataset.profileSummary', 'Profile summary'),
     analysisKind: 'profile_summary',
     titlePrefix: 'Profile Summary',
   },
   {
     kind: 'chart',
-    label: 'Aggregate chart',
+    label: t('canvas.panel.dataset.aggregateChart', 'Aggregate chart'),
     analysisKind: 'aggregate_numeric',
     titlePrefix: 'Aggregate Chart',
   },
   {
     kind: 'table',
-    label: 'Filtered table',
+    label: t('canvas.panel.dataset.filteredTable', 'Filtered table'),
     analysisKind: 'filtered_table',
     titlePrefix: 'Filtered Table',
   },
@@ -3224,7 +3226,8 @@ function WorkCanvasMarkdownDocumentPanel({
     const availability = getCanvasActionAvailability(
       actionId,
       documentState,
-      effectiveRuntimeCapabilities
+      effectiveRuntimeCapabilities,
+      t
     );
     if (availability.status !== 'enabled') {
       handleUnavailableAction(availability);
@@ -3271,7 +3274,8 @@ function WorkCanvasMarkdownDocumentPanel({
     const availability = getCanvasActionAvailability(
       actionId,
       documentState,
-      effectiveRuntimeCapabilities
+      effectiveRuntimeCapabilities,
+      t
     );
     const Icon = actionIcons[actionId];
     const isUnavailable = availability.status !== 'enabled';
@@ -3789,7 +3793,7 @@ function WorkCanvasMarkdownDocumentPanel({
                 )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {datasetArtifactActions.map((action) => (
+                {getDatasetArtifactActions(t).map((action) => (
                   <button
                     key={`${action.kind}-${action.analysisKind || 'default'}`}
                     type="button"
@@ -5132,7 +5136,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   {pendingOperation.preview.markdownDiff?.removedLineSamples?.length ? (
                     <div className="rounded-xl border border-danger-200 bg-white/70 p-2 dark:border-danger-300/20 dark:bg-white/10">
                       <div className="mb-1 font-semibold text-danger-700 dark:text-danger-200">
-                        Removed
+                        {t('canvas.panel.pendingOperation.removed', 'Removed')}
                       </div>
                       {pendingOperation.preview.markdownDiff.removedLineSamples.map(
                         (line, index) => (
@@ -5149,7 +5153,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   {pendingOperation.preview.markdownDiff?.addedLineSamples?.length ? (
                     <div className="rounded-xl border border-emerald-200 bg-white/70 p-2 dark:border-emerald-300/20 dark:bg-white/10">
                       <div className="mb-1 font-semibold text-emerald-700 dark:text-emerald-200">
-                        Added
+                        {t('canvas.panel.pendingOperation.added', 'Added')}
                       </div>
                       {pendingOperation.preview.markdownDiff.addedLineSamples.map((line, index) => (
                         <div
@@ -5171,7 +5175,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   onClick={revisePendingSelectionEdit}
                   className="rounded-full border border-blue-200 bg-white/80 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-white dark:border-blue-300/30 dark:bg-white/10 dark:text-blue-100"
                 >
-                  Revise edit
+                  {t('canvas.panel.pendingOperation.reviseEdit', 'Revise edit')}
                 </button>
               ) : null}
               <button

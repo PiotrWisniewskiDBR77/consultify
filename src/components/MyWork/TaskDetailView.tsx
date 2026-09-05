@@ -5049,7 +5049,7 @@ Return ONLY the final comment text.`;
 
   const buildTaskAnalysisInput = useCallback(() => {
     const ctx = [
-      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${'Status'}: ${status}`,
       `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
       dueDate ? `${isPolish ? 'Termin' : 'Due date'}: ${dueDate}` : '',
       blockedReason ? `${isPolish ? 'Powód blokady' : 'Blocked reason'}: ${blockedReason}` : '',

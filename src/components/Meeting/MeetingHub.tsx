@@ -38,6 +38,8 @@ import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import { translateOperatorMessage } from './meetingOperatorBriefI18n';
+
 type FollowUpStatus = 'open' | 'done';
 export type MeetingStatus = 'scheduled' | 'completed';
 
@@ -1054,15 +1056,19 @@ export const MeetingHub: React.FC = () => {
                         : null,
                     result: briefMatchesMeeting(operatorBrief, selectedMeeting.id)
                       ? [
-                          operatorBrief?.prepSummary,
+                          translateOperatorMessage(operatorBrief?.prepSummary, t),
                           Array.isArray(operatorBrief?.agendaGaps) &&
                           operatorBrief.agendaGaps.length
-                            ? (operatorBrief.agendaGaps as string[]).slice(0, 2).join(' • ')
+                            ? operatorBrief.agendaGaps
+                                .slice(0, 2)
+                                .map((item: any) => translateOperatorMessage(item, t))
+                                .join(' • ')
                             : null,
                           Array.isArray(operatorBrief?.followUpSuggestions) &&
                           operatorBrief.followUpSuggestions.length
-                            ? (operatorBrief.followUpSuggestions as string[])
+                            ? operatorBrief.followUpSuggestions
                                 .slice(0, 3)
+                                .map((item: any) => translateOperatorMessage(item, t))
                                 .join(' • ')
                             : null,
                         ]
@@ -1338,7 +1344,8 @@ export const MeetingHub: React.FC = () => {
                             ) : null}
                             {note.decisionReason ? (
                               <p className="mt-2 text-xs text-c-text-muted">
-                                {t('meeting.notes.decisionReason', 'Decision reason')}: {note.decisionReason}
+                                {t('meeting.notes.decisionReason', 'Decision reason')}:{' '}
+                                {note.decisionReason}
                               </p>
                             ) : null}
                           </div>

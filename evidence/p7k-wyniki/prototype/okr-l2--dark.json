@@ -1,0 +1,70 @@
+{
+  "view": "okr-l2",
+  "theme": "dark",
+  "url": "http://127.0.0.1:3037/?screen=p7k-wyniki-prototype&view=okr-l2&theme=dark&lang=pl&uwagi=0",
+  "httpStatus": 200,
+  "bledyKonsoli": 0,
+  "consoleErrors": [],
+  "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 5,
+  "ucieteLacznieSzczegoly": [
+    {
+      "tekst": "Skrócić przezbrojenia bez utraty jakości",
+      "naturalna": 309,
+      "clientWidth": 180,
+      "dymek": true
+    },
+    {
+      "tekst": "Skrócić średni czas przezbrojenia z 42 d",
+      "naturalna": 317,
+      "clientWidth": 241,
+      "dymek": true
+    },
+    {
+      "tekst": "Skrócić przezbrojenia bez utraty jakości",
+      "naturalna": 309,
+      "clientWidth": 180,
+      "dymek": true
+    },
+    {
+      "tekst": "Utrzymać FPY podczas zmian na poziomie m",
+      "naturalna": 339,
+      "clientWidth": 241,
+      "dymek": true
+    },
+    {
+      "tekst": "Uruchomić sprzedaż nowej usługi",
+      "naturalna": 261,
+      "clientWidth": 180,
+      "dymek": true
+    }
+  ],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 9,
+    "rozjechane": 0
+  },
+  "dom": {
+    "aside": {
+      "count": 0
+    },
+    "table": {
+      "count": 1
+    },
+    "truncatedHeaders": [],
+    "numericCellsWithWrap": [
+      "Skrócić średni czas przezbrojenia z 42 do 28 min",
+      "Utrzymać FPY podczas zmian na poziomie min. 98%"
+    ]
+  },
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Wyniki › OKR\nOKR zakładu — Q4 2026\n\nZakład DBR77 · Q4 2026 · mierzalna zmiana operacyjna\n\nKPI\nOKR\nROI\nDodaj cel\nWłaściciel: wszyscy\nWszystkie\nZagrożone\nBez check-inu\nCEL\n\t\nKLUCZOWY REZULTAT\n\t\nWŁAŚCICIEL\n\t\nSTART / CEL / BIEŻĄCA\n\t\nPOSTĘP\n\t\nPEWNOŚĆ\n\t\nTERMIN\n\t\nSTAN\n\t\n\n\nEFEKTYWNOŚĆ OPERACYJNA\nwłaściciel nadrzędny: Dyrektor Operacyjny\n\n\nSkrócić przezbrojenia bez utraty jakości\nZobowiązanie\n\t\nSkrócić średni czas przezbrojenia z 42 do 28 min\n\t\nMarek Zieliński\n\t\n42 / 28 / 31 min\n\t\n79%\n\t\nŚrednia\n\t\n30.11.2026\n\t\nZagrożony\n\t\n\n\nSkrócić przezbrojenia bez utraty jakości\nZobowiązanie\n\t\nUtrzymać FPY podczas zmian na poziomie min. 98%\n\t\nJoanna Lis\n\t\n97,2 / 98 / 96,8%\n\t\n—\n\t\nNiska\n\t\n30.11.2026\n\t\nKrytyczne\n\t\n\n\nWZROST PRZYCHODÓW\nwłaściciel nadrzędny: Dyrektor Sprzedaży\n\n\nUruchomić sprzedaż nowej usługi\nAspiracja\n\t\nPozyskać 12 klientów pilotażowych\n\t\nEwa Maj\n\t\n0 / 12 / 9\n\t\n75%\n\t\nWysoka\n\t\n15.12.2026\n\t\nNa dobrej drodze\n\t"
+}

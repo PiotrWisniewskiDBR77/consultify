@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/document-studio",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDokumenty\nNowy dokument\nDane\nModel\nPiotr Wiśniewski\nPW\nWróć do Materiałów\nMateriały\nGeneruj\nPlik\nGeneruj\nZaplanuj szablon\nTryby 1, 2, 3 · Środowisko artefaktów Word/PDF\nJak chcesz zacząć dokument?\n\nWybierz tryb — wszystkie trzy są równorzędne.\n\nOd zera\nPusty dokument w edytorze. Piszesz samodzielnie, bez AI.\nZ AI\nOpisz dokument — Studio zaplanuje strukturę i pierwszą wersję.\nZ wzorca\nZacznij od zatwierdzonego wzorca i dostosuj treść.",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:19.566Z"
+}

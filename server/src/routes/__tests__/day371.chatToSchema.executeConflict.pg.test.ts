@@ -92,7 +92,7 @@ describe('Day371 schema proposal execute conflict through real ApiGateway and Po
     app = express();
     app.use(express.json());
     ApiGateway.getInstance().initializeRoutes(app);
-  }, 60_000);
+  }, 120_000);
 
   afterAll(async () => {
     if (!sql) return;

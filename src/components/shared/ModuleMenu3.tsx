@@ -12,8 +12,13 @@ import { cn } from '@/utils/cn';
 export const MENU_1_ROW_CLASS =
   'flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/[0.05]';
 
+// P6_CZERWIEN_I_1440.md §4.2/§5 krok 4 (N8): `shrink-0 whitespace-nowrap` — bez tego,
+// przy 1280 px, gdy Menu 2 jest ciasne, przeglądarka domyślnie ŚCIŚNIE ten flex item
+// (flex-shrink:1 domyślny) i tekst etykiety (`<span>` bez nowrap) łamie się do 2 linii,
+// przepełniając pasek. To jest SSOT primary CTA dla ~17 konsumentów StandardModuleBar —
+// naprawa tutaj naprawia całą rodzinę, nie tylko Narzędzia (audyt A §N8).
 export const MENU_1_PRIMARY_CTA =
-  'inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  'inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium whitespace-nowrap bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
 export const MENU_1_BREADCRUMB_LINK =
   'text-sm font-medium text-c-text-muted hover:text-c-text transition-colors truncate';

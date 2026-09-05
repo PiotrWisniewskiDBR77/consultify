@@ -54,7 +54,7 @@ const ROWS = [
     updatedAt: '2026-08-23T12:00:00.000Z',
     reportType: 'executive_memo',
     exportFormats: ['docx'],
-    fileFormat: 'DOCX',
+    fileFormat: 'Unknown',
     governance: {
       visibilityScope: 'organization',
       publishState: 'approved',

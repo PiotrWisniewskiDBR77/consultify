@@ -15,6 +15,7 @@ import { SlackServiceClass } from '../../services/slackService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
+  isGovernedConnectorApprovalError,
 } from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import { setConnectorAuthState } from '../../services/v8/pmSyncTruthService.js';
@@ -752,6 +753,12 @@ router.post(
         if (rawMessage.includes('Unknown connector:')) {
           return res.status(404).json({ error: 'Unknown connector' });
         }
+        if (isGovernedConnectorApprovalError(error)) {
+          return res.status(501).json({
+            error: 'Integracja nie jest dostępna w tej wersji',
+            code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+          });
+        }
         throw error;
       }
     }
@@ -808,6 +815,12 @@ router.post(
         const rawMessage = error instanceof Error ? error.message : 'Failed to connect';
         if (rawMessage.includes('Unknown connector:')) {
           return res.status(404).json({ error: 'Unknown connector' });
+        }
+        if (isGovernedConnectorApprovalError(error)) {
+          return res.status(501).json({
+            error: 'Integracja nie jest dostępna w tej wersji',
+            code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+          });
         }
         throw error;
       }

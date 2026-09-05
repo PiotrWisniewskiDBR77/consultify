@@ -40,6 +40,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MemoryRouter } from 'react-router-dom';
 
 import type { OkrSetDto } from '../../src/components/ResultsVNext/okr/okrApi';
 import type { OkrKeyResultDto, OkrObjectiveWithKeyResultsDto } from '../../src/components/ResultsVNext/okr/okrObjectiveApi';
@@ -560,7 +561,11 @@ const ResultsVNextOkrObjectivesScreen: React.FC = () => {
     );
   }
 
-  return <div className="h-screen bg-c-bg text-c-text">{content}</div>;
+  return (
+    <MemoryRouter initialEntries={['/results/okr']}>
+      <div className="h-screen bg-c-bg text-c-text">{content}</div>
+    </MemoryRouter>
+  );
 };
 
 export default ResultsVNextOkrObjectivesScreen;

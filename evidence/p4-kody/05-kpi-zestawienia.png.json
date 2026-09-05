@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=results-vnext-kpi-registry&lang=pl&state=ready&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "Search\nKPI\nOKR\nROI\nNowe zestawienie\nZestawienia\n1\nWszystkie wskaźniki\nUwaga\nNAZWA\n\t\nOPIS\n\t\nLICZBA WSKAŹNIKÓW\n\t\nWŁAŚCICIEL\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\nBez zestawienia\n\t\nWskaźniki, które nie należą do żadnego widocznego zestawienia (wiersz systemowy, nie rekord w bazie).\n\t\n5\n\t\n—\n\t\nSystemowe\n\t\n—\n\t\nAktor: Piotr (kliknij, aby przełączyć)",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:09:30.939Z"
+}

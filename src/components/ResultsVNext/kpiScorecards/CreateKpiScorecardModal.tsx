@@ -316,10 +316,11 @@ export const CreateKpiScorecardModal: React.FC<CreateKpiScorecardModalProps> = (
           <div className={LABEL_CLASS}>{isPolish ? 'Właściciel' : 'Owner'}</div>
           <p className="text-sm text-c-text-secondary">
             {currentUserId ? (
-              <>
-                {isPolish ? 'Ty' : 'You'}{' '}
-                <span className="font-mono text-c-text-muted text-[12px]">({currentUserId})</span>
-              </>
+              isPolish ? (
+                'Ty'
+              ) : (
+                'You'
+              )
             ) : isPolish ? (
               'Zostanie ustalony przez serwer.'
             ) : (

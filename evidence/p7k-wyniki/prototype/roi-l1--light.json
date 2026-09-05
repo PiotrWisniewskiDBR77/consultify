@@ -1,0 +1,63 @@
+{
+  "view": "roi-l1",
+  "theme": "light",
+  "url": "http://127.0.0.1:3037/?screen=p7k-wyniki-prototype&view=roi-l1&theme=light&lang=pl&uwagi=0",
+  "httpStatus": 200,
+  "bledyKonsoli": 0,
+  "consoleErrors": [],
+  "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 4,
+  "ucieteLacznieSzczegoly": [
+    {
+      "tekst": "Robotyzacja gniazda spawalniczego",
+      "naturalna": 232,
+      "clientWidth": 192,
+      "dymek": true
+    },
+    {
+      "tekst": "2 · pełna automatyzacja",
+      "naturalna": 154,
+      "clientWidth": 111,
+      "dymek": true
+    },
+    {
+      "tekst": "System wizyjny kontroli jakości",
+      "naturalna": 199,
+      "clientWidth": 192,
+      "dymek": true
+    },
+    {
+      "tekst": "Automatyzacja magazynu WIP",
+      "naturalna": 195,
+      "clientWidth": 192,
+      "dymek": true
+    }
+  ],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 10,
+    "rozjechane": 0
+  },
+  "dom": {
+    "aside": {
+      "count": 0
+    },
+    "table": {
+      "count": 1
+    },
+    "truncatedHeaders": [],
+    "numericCellsWithWrap": [
+      "2 · pełna automatyzacja"
+    ]
+  },
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Wyniki › ROI\nAnalizy ROI\n\nInwestycje · ekonomika, ryzyko i rekomendacja\n\nKPI\nOKR\nROI\nNowa analiza\nNAZWA\n\t\nPRZEDMIOT\n\t\nWARIANT\n\t\nCAPEX\n\t\nROCZNA KORZYŚĆ\n\t\nROI\n\t\nPAYBACK\n\t\nREKOMENDACJA\n\t\nFAZA\n\t\n\n\nRobotyzacja gniazda spawalniczego\n\t\nRobotyzacja\n\t\n2 · pełna automatyzacja\n\t\n1 000 000 zł\n\t\n400 000 zł\n\t\nROI 5Y 100%\n\t\n2,5 roku\n\t\nCONDITIONAL GO\n\t\nWyliczenia\n\t\n\n\nSystem wizyjny kontroli jakości\n\t\nIT / jakość\n\t\n1 · modernizacja\n\t\n620 000 zł\n\t\n238 000 zł\n\t\nROI 3Y 15%\n\t\n2,6 roku\n\t\nGO\n\t\nZałożenia\n\t\n\n\nAutomatyzacja magazynu WIP\n\t\nMagazyn\n\t\n3 · RaaS\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\nZałożenia\n\t"
+}

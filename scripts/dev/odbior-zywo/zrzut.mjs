@@ -49,7 +49,19 @@ const browser = await chromium.launch({ headless: true });
 // Kopia sesji z przepisanym originem (patrz --port wyżej). Przy porcie 3000
 // to jest dokładnie ta sama treść co w pliku — zero zmiany zachowania.
 const sesja = JSON.parse(fs.readFileSync(auth, 'utf8'));
-sesja.origins = (sesja.origins || []).map((o) => ({ ...o, origin: String(o.origin).replace('http://localhost:3000', baza) }));
+const originy = sesja.origins || [];
+const zTokenem = originy.find((o) =>
+  (o.localStorage || []).some((entry) => entry.name === 'token' && entry.value)
+);
+const kanoniczny = originy.find((o) => o.origin === 'http://localhost:3000' &&
+  (o.localStorage || []).some((entry) => entry.name === 'token' && entry.value));
+const zrodlo = kanoniczny || zTokenem || originy.find((o) => o.origin === 'http://localhost:3000');
+if (zrodlo) {
+  sesja.origins = [
+    ...originy.filter((o) => o.origin !== baza),
+    { ...zrodlo, origin: baza },
+  ];
+}
 const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: wysokosc }, colorScheme: motyw, locale: 'pl-PL' });
 // Aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
 // src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
@@ -90,7 +102,11 @@ for (const sel of domSelektory) {
     dom[sel] = { liczba: n, boxy };
   } catch (e) { dom[sel] = { blad: String(e.message).split('\n')[0].slice(0, 160) }; }
 }
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
+// tekst: zawsze pelny innerText body (P4, dyzur 374 — straznik slepej plamy czyta .tekst
+// bezwarunkowo); to jest nadzbior zachowania opt-in z P3 (--dom=body), wiec zadnego wolacza
+// nie psuje — kazdy dostaje co najmniej to, co dostawal wczesniej.
+const tekst = await page.locator('body').innerText().catch(() => '');
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, bledyKonsoli: bledy, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
 // zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).

@@ -1,5 +1,6 @@
 import { CheckSquare, ClipboardCheck, Map, MessageSquare, Rocket, Scale, Star } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   Conversation,
@@ -9,6 +10,7 @@ import {
 import { ConversationActions } from './ConversationActions';
 
 export const CONVERSATION_DND_TYPE = 'application/x-conversation-id';
+const LEGACY_DEFAULT_TITLE = 'New\u0020conversation';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -67,6 +69,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   selected = false,
   onToggleSelect,
 }) => {
+  const { t } = useTranslation();
   const entityType = useMemo(() => getConversationEntityType(conversation), [conversation]);
   const { renameConversation } = useConversationStore();
 
@@ -122,20 +125,20 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     ? config?.activeColor || 'text-[var(--c-info)]'
     : config?.color || 'text-slate-600 group-hover:text-slate-500 dark:text-slate-400';
 
-  // Determine if this is an auto-titled "New conversation" that should show a hint
+  // Legacy rows used an English default; both legacy and empty titles are presentation placeholders.
   const isDefaultTitle =
     !conversation.title ||
-    conversation.title === 'New conversation' ||
+    conversation.title === LEGACY_DEFAULT_TITLE ||
     conversation.title === 'Nowa rozmowa';
 
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
       e.dataTransfer.setData(CONVERSATION_DND_TYPE, conversation.id);
-      e.dataTransfer.setData('text/plain', conversation.title || 'Conversation');
+      e.dataTransfer.setData('text/plain', conversation.title || t('aiChat.newConversation'));
       e.dataTransfer.effectAllowed = 'move';
       (e.currentTarget as HTMLElement).style.opacity = '0.4';
     },
-    [conversation.id, conversation.title]
+    [conversation.id, conversation.title, t]
   );
 
   const handleDragEnd = useCallback((e: React.DragEvent) => {
@@ -197,7 +200,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                   : 'text-slate-700 dark:text-slate-300'
             }`}
           >
-            {conversation.title || 'New Conversation'}
+            {isDefaultTitle ? t('aiChat.newConversation') : conversation.title}
           </span>
           {/* Search hits only: the matching excerpt, as inert {text, mark}
               segments from the server. Rendered as React text nodes, never

@@ -145,104 +145,104 @@ export const MODULES: Record<ModuleId, ModuleConfig> = {
  * Status metadata for UI display
  */
 export interface StatusMeta {
-  label: string;
+  labelKey: string;
   color: string;
   bgColor: string;
   dotColor: string;
-  description: string;
+  descriptionKey: string;
 }
 
 export const STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
   [InitiativeStatus.DRAFT]: {
-    label: 'Draft',
+    labelKey: 'initiatives.status.draft',
     color: 'text-slate-500',
     bgColor: 'bg-slate-500/10',
     dotColor: 'bg-slate-400',
-    description: 'Initial draft, needs review',
+    descriptionKey: 'initiatives.statusDescription.draft',
   },
   [InitiativeStatus.PENDING_REVIEW]: {
-    label: 'Pending Review',
+    labelKey: 'initiatives.status.pendingReview',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
     dotColor: 'bg-amber-400',
-    description: 'Awaiting PM/Lead review',
+    descriptionKey: 'initiatives.statusDescription.pendingReview',
   },
   [InitiativeStatus.REVIEW]: {
-    label: 'In Review',
+    labelKey: 'initiatives.status.review',
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10',
     dotColor: 'bg-amber-400',
-    description: 'Business review (Go/No-Go)',
+    descriptionKey: 'initiatives.statusDescription.review',
   },
   [InitiativeStatus.PROMOTED]: {
-    label: 'Promoted',
+    labelKey: 'initiatives.status.promoted',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     dotColor: 'bg-blue-400',
-    description: 'Accepted for planning',
+    descriptionKey: 'initiatives.statusDescription.promoted',
   },
   [InitiativeStatus.PLANNING]: {
-    label: 'Planning',
+    labelKey: 'initiatives.status.planning',
     color: 'text-indigo-500',
     bgColor: 'bg-indigo-500/10',
     dotColor: 'bg-indigo-400',
-    description: 'Being planned and scoped',
+    descriptionKey: 'initiatives.statusDescription.planning',
   },
   [InitiativeStatus.APPROVED]: {
-    label: 'Approved',
+    labelKey: 'initiatives.status.approved',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
     dotColor: 'bg-emerald-400',
-    description: 'Approved, ready for scheduling',
+    descriptionKey: 'initiatives.statusDescription.approved',
   },
   [InitiativeStatus.SCHEDULED]: {
-    label: 'Scheduled',
+    labelKey: 'initiatives.status.scheduled',
     color: 'text-primary-500',
     bgColor: 'bg-primary-500/10',
     dotColor: 'bg-primary-400',
-    description: 'Scheduled in roadmap',
+    descriptionKey: 'initiatives.statusDescription.scheduled',
   },
   [InitiativeStatus.EXECUTING]: {
-    label: 'Executing',
+    labelKey: 'initiatives.status.executing',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     dotColor: 'bg-blue-400',
-    description: 'Currently being implemented',
+    descriptionKey: 'initiatives.statusDescription.executing',
   },
   [InitiativeStatus.BLOCKED]: {
-    label: 'Blocked',
+    labelKey: 'initiatives.status.blocked',
     color: 'text-danger-500',
     bgColor: 'bg-danger-500/10',
     dotColor: 'bg-danger-400',
-    description: 'Blocked by an issue',
+    descriptionKey: 'initiatives.statusDescription.blocked',
   },
   [InitiativeStatus.DONE]: {
-    label: 'Done',
+    labelKey: 'initiatives.status.done',
     color: 'text-green-500',
     bgColor: 'bg-green-500/10',
     dotColor: 'bg-green-400',
-    description: 'Successfully completed',
+    descriptionKey: 'initiatives.statusDescription.done',
   },
   [InitiativeStatus.TRACKING]: {
-    label: 'Tracking',
+    labelKey: 'initiatives.status.tracking',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
     dotColor: 'bg-blue-400',
-    description: 'Benefits tracking in progress',
+    descriptionKey: 'initiatives.statusDescription.tracking',
   },
   [InitiativeStatus.CANCELLED]: {
-    label: 'Cancelled',
+    labelKey: 'initiatives.status.cancelled',
     color: 'text-gray-500',
     bgColor: 'bg-gray-500/10',
     dotColor: 'bg-gray-400',
-    description: 'Initiative was cancelled',
+    descriptionKey: 'initiatives.statusDescription.cancelled',
   },
   [InitiativeStatus.ARCHIVED]: {
-    label: 'Archived',
+    labelKey: 'initiatives.status.archived',
     color: 'text-slate-600',
     bgColor: 'bg-slate-400/10',
     dotColor: 'bg-slate-500',
-    description: 'Archived for reference',
+    descriptionKey: 'initiatives.statusDescription.archived',
   },
 };
 
@@ -303,11 +303,11 @@ export function getTargetModule(to: InitiativeStatus): ModuleConfig {
  * Get status metadata (with safe fallback for unknown statuses)
  */
 const FALLBACK_STATUS_META: StatusMeta = {
-  label: 'Unknown',
+  labelKey: 'initiatives.status.unknown',
   color: 'text-slate-500',
   bgColor: 'bg-slate-500/10',
   dotColor: 'bg-slate-400',
-  description: 'Unknown status',
+  descriptionKey: 'initiatives.statusDescription.unknown',
 };
 
 export function getStatusMeta(status: InitiativeStatus): StatusMeta {
@@ -317,15 +317,13 @@ export function getStatusMeta(status: InitiativeStatus): StatusMeta {
 /**
  * Canonical PL/EN label for an initiative status, shared by every consumer
  * that displays InitiativeStatus (Initiatives, Execution, Results) — CB-06 /
- * RB-035. `STATUS_METADATA[status].label` stays as the English default so
- * existing English-only callers are unaffected; pass a `t()` to localize.
+ * Metadata contains keys only; every caller resolves the label through i18n.
  */
 export function getLocalizedStatusLabel(
   status: InitiativeStatus,
-  t: (key: string, defaultValue: string) => string
+  t: (key: string) => string
 ): string {
-  const fallback = STATUS_METADATA[status]?.label ?? status;
-  return t(`initiativeStatus.${status.toLowerCase()}`, fallback);
+  return t(STATUS_METADATA[status]?.labelKey ?? FALLBACK_STATUS_META.labelKey);
 }
 
 /**
@@ -345,10 +343,9 @@ export function getLocalizedStatusLabel(
  */
 export function getLocalizedStatusDescription(
   status: InitiativeStatus,
-  t: (key: string, defaultValue: string) => string
+  t: (key: string) => string
 ): string {
-  const fallback = STATUS_METADATA[status]?.description ?? '';
-  return t(`initiativeStatusDescription.${status.toLowerCase()}`, fallback);
+  return t(STATUS_METADATA[status]?.descriptionKey ?? FALLBACK_STATUS_META.descriptionKey);
 }
 
 /**
@@ -439,8 +436,7 @@ export function needsAttention(status: InitiativeStatus): boolean {
  * Get action buttons for a given status
  */
 export interface StatusAction {
-  label: string;
-  labelPl: string;
+  labelKey: string;
   targetStatus: InitiativeStatus;
   variant: 'primary' | 'secondary' | 'danger';
   requiresReason?: boolean;
@@ -458,8 +454,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // DRAFT -> Submit for Review
   if (validNext.includes(InitiativeStatus.PENDING_REVIEW)) {
     actions.push({
-      label: 'Submit for Review',
-      labelPl: 'Wyślij do przeglądu',
+      labelKey: 'initiatives.transition.submitForReview',
       targetStatus: InitiativeStatus.PENDING_REVIEW,
       variant: 'primary',
     });
@@ -467,8 +462,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // PENDING_REVIEW -> Approve to Initiatives
   if (validNext.includes(InitiativeStatus.REVIEW)) {
     actions.push({
-      label: 'Approve to Initiatives',
-      labelPl: 'Przekaż do inicjatyw',
+      labelKey: 'initiatives.transition.approveToInitiatives',
       targetStatus: InitiativeStatus.REVIEW,
       variant: 'primary',
     });
@@ -476,8 +470,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // REVIEW -> Accept (Promote)
   if (validNext.includes(InitiativeStatus.PROMOTED)) {
     actions.push({
-      label: 'Accept (Promote)',
-      labelPl: 'Zaakceptuj (promuj)',
+      labelKey: 'initiatives.transition.acceptPromote',
       targetStatus: InitiativeStatus.PROMOTED,
       variant: 'primary',
     });
@@ -485,8 +478,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // PROMOTED -> Start Planning
   if (validNext.includes(InitiativeStatus.PLANNING)) {
     actions.push({
-      label: 'Start Planning',
-      labelPl: 'Rozpocznij planowanie',
+      labelKey: 'initiatives.transition.startPlanning',
       targetStatus: InitiativeStatus.PLANNING,
       variant: 'primary',
     });
@@ -494,8 +486,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // PLANNING -> Approve
   if (validNext.includes(InitiativeStatus.APPROVED)) {
     actions.push({
-      label: 'Approve',
-      labelPl: 'Zatwierdź',
+      labelKey: 'initiatives.transition.approve',
       targetStatus: InitiativeStatus.APPROVED,
       variant: 'primary',
     });
@@ -503,8 +494,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // APPROVED -> Schedule
   if (validNext.includes(InitiativeStatus.SCHEDULED)) {
     actions.push({
-      label: 'Schedule',
-      labelPl: 'Zaplanuj w harmonogramie',
+      labelKey: 'initiatives.transition.schedule',
       targetStatus: InitiativeStatus.SCHEDULED,
       variant: 'primary',
     });
@@ -524,8 +514,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
    */
   if (status === InitiativeStatus.SCHEDULED && validNext.includes(InitiativeStatus.EXECUTING)) {
     actions.push({
-      label: 'Start Execution',
-      labelPl: 'Rozpocznij realizację',
+      labelKey: 'initiatives.transition.startExecution',
       targetStatus: InitiativeStatus.EXECUTING,
       variant: 'primary',
     });
@@ -533,8 +522,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // EXECUTING -> Mark Complete
   if (validNext.includes(InitiativeStatus.DONE)) {
     actions.push({
-      label: 'Mark Complete',
-      labelPl: 'Oznacz jako ukończone',
+      labelKey: 'initiatives.transition.markComplete',
       targetStatus: InitiativeStatus.DONE,
       variant: 'primary',
     });
@@ -542,8 +530,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // DONE -> Start Tracking
   if (validNext.includes(InitiativeStatus.TRACKING)) {
     actions.push({
-      label: 'Start Tracking',
-      labelPl: 'Rozpocznij śledzenie korzyści',
+      labelKey: 'initiatives.transition.startTracking',
       targetStatus: InitiativeStatus.TRACKING,
       variant: 'primary',
     });
@@ -551,8 +538,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // TRACKING/CANCELLED -> Archive
   if (validNext.includes(InitiativeStatus.ARCHIVED)) {
     actions.push({
-      label: 'Archive',
-      labelPl: 'Zarchiwizuj',
+      labelKey: 'initiatives.transition.archive',
       targetStatus: InitiativeStatus.ARCHIVED,
       variant: 'secondary',
     });
@@ -562,8 +548,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // PENDING_REVIEW -> Send Back
   if (status === InitiativeStatus.PENDING_REVIEW && validNext.includes(InitiativeStatus.DRAFT)) {
     actions.push({
-      label: 'Send Back',
-      labelPl: 'Zwróć do edycji',
+      labelKey: 'initiatives.transition.sendBack',
       targetStatus: InitiativeStatus.DRAFT,
       variant: 'secondary',
     });
@@ -571,8 +556,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // REVIEW -> Reject (before generic Return to Draft to maintain order)
   if (status === InitiativeStatus.REVIEW && validNext.includes(InitiativeStatus.DRAFT)) {
     actions.push({
-      label: 'Reject',
-      labelPl: 'Odrzuć',
+      labelKey: 'initiatives.transition.reject',
       targetStatus: InitiativeStatus.DRAFT,
       variant: 'danger',
       requiresReason: true,
@@ -581,8 +565,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // Mark as blocked (in EXECUTING)
   if (validNext.includes(InitiativeStatus.BLOCKED)) {
     actions.push({
-      label: 'Mark Blocked',
-      labelPl: 'Oznacz jako zablokowane',
+      labelKey: 'initiatives.transition.markBlocked',
       targetStatus: InitiativeStatus.BLOCKED,
       variant: 'danger',
       requiresReason: true,
@@ -591,8 +574,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // BLOCKED -> Unblock (back to executing)
   if (status === InitiativeStatus.BLOCKED && validNext.includes(InitiativeStatus.EXECUTING)) {
     actions.push({
-      label: 'Unblock',
-      labelPl: 'Odblokuj',
+      labelKey: 'initiatives.transition.unblock',
       targetStatus: InitiativeStatus.EXECUTING,
       variant: 'primary',
     });
@@ -600,8 +582,7 @@ export function getStatusActions(status: InitiativeStatus): StatusAction[] {
   // Cancel
   if (validNext.includes(InitiativeStatus.CANCELLED)) {
     actions.push({
-      label: 'Cancel',
-      labelPl: 'Anuluj',
+      labelKey: 'initiatives.transition.cancel',
       targetStatus: InitiativeStatus.CANCELLED,
       variant: 'danger',
       requiresReason: true,

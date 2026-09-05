@@ -243,11 +243,14 @@ function CanonicalFinanceDirectWorkspace({
   businessVersionId,
   artifactType,
   onNavigateBack,
+  onAnalysisCreated,
 }: {
   artifactId: string;
   businessVersionId: string;
   artifactType: string;
   onNavigateBack: () => void;
+  /** F-P5 — kreator Analizy utworzył NOWĄ analizę; hub przełącza ekran na nią. */
+  onAnalysisCreated?: (created: { artifactId: string; businessVersionId: string }) => void;
 }) {
   const [artifact, setArtifact] = useState<FinanceArtifactDetailDto | null>(null);
   const [error, setError] = useState<FinanceResolveErrorReason | null>(null);
@@ -348,6 +351,7 @@ function CanonicalFinanceDirectWorkspace({
           businessVersionId={businessVersionId}
           role="preparer"
           onNavigateBack={onNavigateBack}
+          onAnalysisCreated={onAnalysisCreated}
         />
       ) : resolution.workspace === 'valuation' ? (
         <FinanceV3ValuationWorkspace
@@ -749,6 +753,25 @@ export const FinanceHub: React.FC = () => {
   const financeV3AnalysisFlag = useFinanceAnalysisWorkspaceFlag();
   const financeV3ValuationFlag = useFinanceValuationWorkspaceFlag();
   const financeV3StatementPackFlag = useFinanceStatementPackWorkspaceV2Flag();
+
+  /**
+   * F-P5 — otwarcie analizy (nowo utworzonej przez kreator) w jej własnym ekranie.
+   * Ta sama nawigacja po `searchParams`, której używa `handleCreateRelatedArtifact` —
+   * wydzielona, żeby kreator w warsztacie mógł jej użyć bez duplikatu.
+   */
+  const openCanonicalAnalysis = useCallback(
+    (created: { artifactId: string; businessVersionId: string }) => {
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', 'analysis');
+      next.set('canonicalArtifactType', 'HISTORICAL_ANALYSIS');
+      next.set('canonicalArtifactId', created.artifactId);
+      next.set('canonicalBusinessVersionId', created.businessVersionId);
+      canonicalNavigationInFlightRef.current = true;
+      setActiveTab('analysis');
+      setSearchParams(next);
+    },
+    [searchParams, setSearchParams]
+  );
 
   const handleCreateRelatedArtifact = useCallback(
     async (
@@ -1599,11 +1622,15 @@ export const FinanceHub: React.FC = () => {
   // ---- Per-tab columns ----
   const statusFilterOptions = useMemo(
     () => [
-      { value: 'DRAFT', label: t('common.status.draft', 'Draft'), color: 'bg-slate-400' },
-      { value: 'REVIEW', label: t('common.status.review', 'In Review'), color: 'bg-amber-400' },
+      { value: 'DRAFT', label: t('finance.filters.status.draft', 'Draft'), color: 'bg-slate-400' },
+      {
+        value: 'REVIEW',
+        label: t('finance.filters.status.review', 'In Review'),
+        color: 'bg-amber-400',
+      },
       {
         value: 'APPROVED',
-        label: t('common.status.approved', 'Approved'),
+        label: t('finance.filters.status.approved', 'Approved'),
         color: 'bg-emerald-400',
       },
     ],
@@ -3381,6 +3408,7 @@ export const FinanceHub: React.FC = () => {
               businessVersionId={canonicalFinanceQueryOutcome.businessVersionId}
               artifactType={canonicalFinanceQueryOutcome.artifactType}
               onNavigateBack={closeCanonical}
+              onAnalysisCreated={openCanonicalAnalysis}
             />
           </div>
         </div>
