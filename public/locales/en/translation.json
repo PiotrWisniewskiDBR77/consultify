@@ -33174,7 +33174,18 @@
       "workflow": "Workflow",
       "topics": "Topics",
       "structure": "Note structure",
-      "structureEmpty": "This note has no headings yet — the structure appears once you add one."
+      "structureEmpty": "This note has no headings yet — the structure appears once you add one.",
+      "tabsAria": "Panel tabs",
+      "tabNote": "Note",
+      "tabTeresa": "Teresa",
+      "objectKind": "Note",
+      "visibilityPrivate": "Private",
+      "visibilityProject": "Project",
+      "insertBlock": "Insert block",
+      "tags": "Tags",
+      "addTag": "+ tag",
+      "removeTag": "Remove tag {{tag}}",
+      "untitled": "Untitled"
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"

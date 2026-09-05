@@ -408,13 +408,36 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
    * zakładka nie".
    */
   const [panelZamkniety, setPanelZamkniety] = useState<boolean>(wczytajPanelZamkniety);
-  const zakladkaPanelu: 'element' | 'teresa' = isChatCollapsed ? 'element' : 'teresa';
+  /**
+   * ★ NAPRAWA 2026-09-05 (pomiar na żywo, Tabela pomysłów). Zakładka była
+   * liczona WPROST z `isChatCollapsed`. Ten sygnał jest GLOBALNY i TRWAŁY:
+   * kto zostawił czat otwarty na innym ekranie, wchodził na płótno i widział
+   * panel otwarty na Teresie zamiast na obiekcie — zmierzone: `aria-selected`
+   * zakładki „Element" = false zaraz po wejściu na `/workspace/table`.
+   * Dlatego zakładka ma WŁASNY stan (wejście na ekran = obiekt), a globalny
+   * sygnał jest tylko ZDARZENIEM: przejście „czat zamknięty → otwarty"
+   * (np. „Omów z Teresą" z innego miejsca) przełącza na Teresę, przejście w
+   * drugą stronę wraca na obiekt. Sam fakt, że czat był otwarty wcześniej,
+   * już nie przesądza o tym, co widać po wejściu.
+   */
+  const [zakladkaPanelu, setZakladkaPanelu] = useState<'element' | 'teresa'>('element');
+  const poprzedniStanCzatu = useRef<boolean>(isChatCollapsed);
+  useEffect(() => {
+    if (poprzedniStanCzatu.current !== isChatCollapsed) {
+      setZakladkaPanelu(isChatCollapsed ? 'element' : 'teresa');
+      poprzedniStanCzatu.current = isChatCollapsed;
+    }
+  }, [isChatCollapsed]);
   const ustawZakladkePanelu = useCallback(
     (tab: 'element' | 'teresa') => {
       setPanelZamkniety(false);
       zapiszPanelZamkniety(false);
+      setZakladkaPanelu(tab);
+      // Globalny sygnał zostaje zsynchronizowany, żeby reszta aplikacji (np.
+      // kickoff czatu) widziała ten sam stan rozmowy co panel.
       if (tab === 'teresa' && isChatCollapsed) toggleChatCollapse();
       if (tab === 'element' && !isChatCollapsed) toggleChatCollapse();
+      poprzedniStanCzatu.current = tab === 'teresa';
     },
     [isChatCollapsed, toggleChatCollapse]
   );
@@ -2274,6 +2297,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           })
       );
       if (isChatCollapsed) toggleChatCollapse();
+      // ★ NAPRAWA 2026-09-05: przełączenie zakładki JAWNIE, nie tylko przez
+      // globalny sygnał. Gdy czat był już otwarty (`isChatCollapsed === false`),
+      // `toggleChatCollapse()` się nie wykonuje, więc żadne przejście nie
+      // zachodzi — bez tej linii „Omów z Teresą" bywało martwym przyciskiem.
+      ustawZakladkePanelu('teresa');
       // ★ JEDEN PRAWY PANEL: sekcja Menu 3 i zakładka Teresa dzielą tę samą,
       // jedyną kolumnę. Otwarcie Teresy zwalnia kolumnę z panelu Menu 3,
       // inaczej rozmowa otwierałaby się „pod" innym panelem i użytkownik nie
@@ -2288,6 +2316,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       setChatKickoffMessage,
       title,
       toggleChatCollapse,
+      ustawZakladkePanelu,
     ]
   );
 
@@ -2322,6 +2351,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       // Ta sama zasada co w `openChat` — zakładka Teresa i panel Menu 3 dzielą
       // jedyną kolumnę, więc zwalniamy ją przed otwarciem rozmowy.
       setActivePanel(null);
+      ustawZakladkePanelu('teresa');
       openChatWithContext({
         entityType: 'idea',
         entityId: realId,
@@ -2343,6 +2373,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     seedText,
     setActivePanel,
     title,
+    ustawZakladkePanelu,
   ]);
 
   // Subscribe to idea-workspace-chat-prompt so any tool can send text to the chat panel
@@ -4756,7 +4787,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             rightRailCollapsible={!panel6Enabled}
             canvas={
               <>
-                {canvasToolsNode}
+                {/* ★ 2026-09-05 (decyzja CTO „nad płótnem nie pływa nic"):
+                    paleta narzędzi jest NAKŁADKĄ i na płótnach graficznych
+                    (mapa · przepływ · tablica) może pływać nad pustym tłem.
+                    Na TABELI tła nie ma — zmierzone na żywym ekranie:
+                    paleta (x 81–125) zasłaniała kolumnę zaznaczania wierszy
+                    2–13 siatki. Matryca (archetyp D) dostaje więc rynnę
+                    równą szerokości palety, żeby nic nie leżało na treści.
+                    Pozostałe narzędzia zachowują dotychczasowe zachowanie. */}
+                <div
+                  className="h-full w-full"
+                  data-testid="idea-canvas-content"
+                  style={activeTool === 'table' ? { paddingLeft: 72 } : undefined}
+                >
+                  {canvasToolsNode}
+                </div>
                 {/* #6a: the tool switcher now lives solely in the left rail
                     (floatingLeftRail below, CanvasLeftToolbar); the per-tool
                     actions (search / help / discuss) live in the shell

@@ -83,6 +83,17 @@ vi.mock('@/store/useAppStore', () => ({
     setChatKickoffMessage: vi.fn(),
     isChatCollapsed: false,
     toggleChatCollapse: vi.fn(),
+    clearChatKickoffMessage: vi.fn(),
+    chatKickoffMessage: '',
+    // ★ 2026-09-05: od naprawy „jeden prawy panel" Notatnik otwiera swój panel
+    // z EFEKTU (gdy czat jest odsłonięty), a nie tylko z uchwytu kliknięcia —
+    // atrapa sklepu musi więc nieść te same akcje, co realny sklep
+    // (`src/store/slices/uiSlice.ts`), inaczej test mierzy brak atrapy, a nie
+    // zachowanie produktu.
+    notebookRailOpen: false,
+    notebookRailTab: 'work' as const,
+    setNotebookRailOpen: vi.fn(),
+    setNotebookRailTab: vi.fn(),
     // DEC-25: NotebookContent.tsx's action-capability effect (backs the
     // note-menu receipt gate for delete/expand-document) only fires once
     // currentUser is present — without it, the effect early-returns and the

@@ -28,10 +28,8 @@ import {
   Pen,
   Pin,
   Play,
-  Plus,
   RefreshCw,
   Sparkles,
-  Tag,
   Trash2,
   Type,
   Unlink,
@@ -104,7 +102,10 @@ import {
 import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
-import { NotebookRightRail } from './notebook/NotebookRightRail';
+import {
+  NotebookRightRail,
+  type NotebookPanelTab,
+} from './notebook/NotebookRightRail';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
 import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
@@ -117,6 +118,8 @@ import {
 import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
+import { registerEmbeddedModuleChatHost } from '@/components/shared/embeddedModuleChatHost';
+
 import { buildAskAIMessage } from './shared/askAiHelper';
 
 interface NotebookContentProps {
@@ -173,6 +176,20 @@ type OutlineDraft = {
   outline: string;
   assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 };
+
+/**
+ * ★ JEDEN PRAWY PANEL — Teresa jako ZAKŁADKA (decyzja CTO 2026-09-05).
+ * DOKŁADNIE ten sam komponent czatu, który renderuje dok globalny
+ * (`MainLayout`, `mode="split"`) i warsztat Pomysłów — tylko osadzony
+ * WEWNĄTRZ panelu Notatnika. Import leniwy (czat to duży moduł; nie
+ * ładujemy go, dopóki użytkownik nie otworzy zakładki). Moduł 13_CHAT jest
+ * ZAMROŻONY: importujemy, nie zmieniamy.
+ */
+const UnifiedChatPanelLazy = React.lazy(() =>
+  import('@/components/AIChat/UnifiedChatPanel').then((mod) => ({
+    default: mod.UnifiedChatPanel,
+  }))
+);
 
 const MATURITY_CONFIG: Record<
   NotebookMaturity,
@@ -749,6 +766,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     setChatKickoffMessage,
     isChatCollapsed,
     toggleChatCollapse,
+    chatKickoffMessage,
+    clearChatKickoffMessage,
     notebookRailOpen,
     notebookRailTab,
     setNotebookRailOpen,
@@ -1882,13 +1901,109 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
 
+  /**
+   * ★ JEDEN PRAWY PANEL — zakładka „Teresa" (decyzja CTO 2026-09-05).
+   *
+   * Zakładka ma WŁASNY stan — wejście na notatkę zawsze zaczyna od obiektu.
+   * Globalny sygnał czatu jest tu ZDARZENIEM, nie źródłem prawdy: przejście
+   * „czat zamknięty → otwarty" przelącza na Teresę, przejście w drugą stronę
+   * wraca na notatkę. Liczenie zakładki WPROST z tego sygnału dawało panel
+   * otwarty na Teresie u każdego, kto zostawił czat otwarty na innym ekranie
+   * — zmierzone na żywym renderze Tabeli pomysłów przed tą naprawą.
+   * Każde dotychczasowe wołanie (`handleAskAI`, `setChatOpen`, skrót,
+   * komenda z innego miejsca) ustawia zakładkę JAWNIE, więc nie da się
+   * doprowadzić do stanu „czat otwarty, a zakładka nie".
+   * Wzorzec 1:1 z `IdeaMapWorkspace`.
+   */
+  const [notebookPanelTab, setNotebookPanelTabState] = useState<NotebookPanelTab>('note');
+  const poprzedniStanCzatuNotatnika = useRef<boolean>(isChatCollapsed);
+  useEffect(() => {
+    if (poprzedniStanCzatuNotatnika.current !== isChatCollapsed) {
+      setNotebookPanelTabState(isChatCollapsed ? 'note' : 'teresa');
+      poprzedniStanCzatuNotatnika.current = isChatCollapsed;
+    }
+  }, [isChatCollapsed]);
+  const setNotebookPanelTab = useCallback(
+    (tab: NotebookPanelTab) => {
+      setNotebookRailOpen(true);
+      setNotebookPanelTabState(tab);
+      // Globalny sygnał zostaje zsynchronizowany — reszta aplikacji ma widzieć
+      // ten sam stan rozmowy co panel.
+      if (tab === 'teresa' && isChatCollapsed) toggleChatCollapse();
+      if (tab === 'note' && !isChatCollapsed) toggleChatCollapse();
+      poprzedniStanCzatuNotatnika.current = tab === 'teresa';
+    },
+    [isChatCollapsed, setNotebookRailOpen, toggleChatCollapse]
+  );
+
+  /*
+   * Otwarcie Teresy SKĄDKOLWIEK musi też otworzyć panel — inaczej przy
+   * zamkniętym panelu rozmowa nie miałaby gdzie się pokazać, a globalny dok
+   * jest na tym ekranie wyłączony (rejestr `embeddedModuleChatHost`). To jest
+   * bezpiecznik przed kształtem „zamknięte przez wygaszenie".
+   */
+  useEffect(() => {
+    if (!isChatCollapsed) setNotebookRailOpen(true);
+  }, [isChatCollapsed, setNotebookRailOpen]);
+
+  /*
+   * Meldunek do `MainLayout`: ten ekran osadza Teresę u siebie, więc globalny
+   * dok się tu nie pojawia. Meldujemy WYŁĄCZNIE, gdy panel ma gdzie żyć —
+   * otwarta notatka poza trybem mobilnym. Na LIŚCIE notatników (brak
+   * `activePage`) i na wąskim ekranie dok globalny działa jak dotąd.
+   */
+  const notebookHostsTeresa = Boolean(activePage) && !isMobile;
+  useEffect(() => {
+    if (!notebookHostsTeresa) return undefined;
+    return registerEmbeddedModuleChatHost();
+  }, [notebookHostsTeresa]);
+
+  /** Ciało zakładki „Teresa" — ten sam komponent co dok globalny. */
+  const notebookTeresaNode = notebookHostsTeresa ? (
+    <React.Suspense fallback={null}>
+      <UnifiedChatPanelLazy
+        mode="split"
+        showModeToggle={false}
+        showHistoryTrigger
+        showFocusMode
+        kickoffMessage={chatKickoffMessage || undefined}
+        onKickoffConsumed={clearChatKickoffMessage}
+      />
+    </React.Suspense>
+  ) : undefined;
+
   const setChatOpen = (open: boolean) => {
     if (onChatOpenChange) onChatOpenChange(open);
     if (open) {
       setNotebookRailOpen(true);
-      setNotebookRailTab('work');
+      // ★ 2026-09-05 (decyzja CTO „jeden prawy panel"): „otwórz Teresę" nie
+      // wysuwa już globalnego doku obok panelu — przełącza JEDYNY panel na
+      // zakładkę Teresy. Zakładkę ustawiamy JAWNIE: gdy czat był już otwarty,
+      // `toggleChatCollapse()` się nie wykona i samo przejście stanu nie
+      // zaszłoby (martwy przycisk).
+      setNotebookPanelTab('teresa');
     }
   };
+
+  /**
+   * „Wstaw blok" z panelu — TEN SAM slash-menu (`SlashMenu`, tryb `insert`),
+   * tylko zakotwiczony na kursorze edytora zamiast na przycisku (przycisk
+   * zszedł ze środka dokumentu do sekcji „Akcje", 05.09).
+   */
+  const handleInsertBlockFromPanel = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().run();
+    const triggerPos = editor.state.selection.from;
+    let coords = { top: 200, left: 480 };
+    try {
+      const at = editor.view.coordsAtPos(triggerPos);
+      coords = { top: at.bottom + 4, left: at.left };
+    } catch {
+      // Kursor poza widokiem (np. po przewinięciu) — menu otwiera się w
+      // domyślnym miejscu nad edytorem zamiast nie otwierać się wcale.
+    }
+    setSlashState({ open: true, query: '', triggerPos, coords, mode: 'insert' });
+  }, [editor]);
   const aiCommandPromptInputRef = useRef<HTMLInputElement | null>(null);
 
   // MYW-NBK-004 — open a page found via cross-notebook search. Mirrors the
@@ -2228,6 +2343,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       })
     );
     if (isChatCollapsed) toggleChatCollapse();
+    // ★ 2026-09-05: rozmowa otwiera się w JEDYNYM prawym panelu (zakładka
+    // „Teresa"), nie w globalnym doku obok niego.
+    setNotebookPanelTab('teresa');
   };
 
   // Share via email — mirrors WorkspaceTools ShareSection.handleEmail so the ⋯ menu
@@ -3655,32 +3773,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                             placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
                             className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
                           />
-                          {/* Tags inline */}
+                          {/* ★ 05.09 (decyzja CTO „lekkie centrum"): edycja
+                              TAGÓW zeszła do sekcji „Właściwości" JEDYNEGO
+                              prawego panelu — tam, gdzie od 05.09 mieszka
+                              bliźniacza metadana „Tematy". Te same handlery
+                              (`handleAddTag`/`handleRemoveTag`/
+                              `handleTagKeyDown`), żadnej drugiej
+                              implementacji. Tu zostaje wyłącznie plakietka
+                              POCHODZENIA pliku źródłowego — to nie jest tag,
+                              tylko fakt o dokumencie widoczny przy tytule. */}
                           <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                            <Tag size={11} className="text-c-text-secondary shrink-0" />
-                            {pageTags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="group/tag inline-flex items-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-0.5 text-[11px] font-medium hover:bg-c-surface-raised hover:text-c-text transition-colors"
-                              >
-                                {tag}
-                                <button
-                                  onClick={() => handleRemoveTag(tag)}
-                                  className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-danger-500"
-                                  aria-label={`Remove tag ${tag}`}
-                                >
-                                  <X size={9} />
-                                </button>
-                              </span>
-                            ))}
-                            <input
-                              value={tagInput}
-                              onChange={(e) => setTagInput(e.target.value)}
-                              onKeyDown={handleTagKeyDown}
-                              onBlur={handleAddTag}
-                              placeholder={t('notebook.notebookContent.placeholder2', '+ tag')}
-                              className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-c-text-secondary outline-none placeholder:text-c-text-muted"
-                            />
                             {(() => {
                               const uploadSource = getNotebookUploadSourceSummary(
                                 activePage.captureSource,
@@ -4068,26 +4170,12 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         }}
                       />
                     )}
-                    {editor && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          const rect = event.currentTarget.getBoundingClientRect();
-                          setSlashState({
-                            open: true,
-                            query: '',
-                            triggerPos: editor.state.selection.from,
-                            coords: { top: rect.bottom + 4, left: rect.left },
-                            mode: 'insert',
-                          });
-                        }}
-                        aria-label={t('notebook.notebookContent.insertBlock', 'Insert block')}
-                        className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        <Plus size={13} aria-hidden="true" />
-                        {t('notebook.notebookContent.insertBlock', 'Insert block')}
-                      </button>
-                    )}
+                    {/* ★ 05.09 (decyzja CTO „lekkie centrum"): przycisk
+                        „Wstaw blok" zszedł ze środka dokumentu do sekcji
+                        „Akcje" JEDYNEGO prawego panelu. To ten sam slash-menu
+                        (`SlashMenu`, tryb `insert`) — patrz
+                        `handleInsertBlockFromPanel` — tylko kotwiczony na
+                        kursorze, bo przycisk nie stoi już przy treści. */}
                     <EditorContent editor={editor} />
 
                     {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}
@@ -4384,6 +4472,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               }
               onHandoffInitiatives={handleHandoffInitiatives}
               onOpenTopic={(topicId) => setOpenTopicId(topicId)}
+              /* ★ JEDEN PRAWY PANEL (decyzja CTO 2026-09-05): Teresa jest
+                 ZAKŁADKĄ tego panelu, nie drugą kolumną. Globalny dok jest na
+                 tym ekranie wyłączony rejestrem `embeddedModuleChatHost`. */
+              teresaContent={notebookTeresaNode}
+              panelTab={notebookPanelTab}
+              onPanelTabChange={setNotebookPanelTab}
+              /* ★ 05.09 — „Wstaw blok" i TAGI zeszły ze środka dokumentu do
+                 panelu. TE SAME handlery, żadnej drugiej implementacji. */
+              onInsertBlock={handleInsertBlockFromPanel}
+              tags={pageTags}
+              tagInput={tagInput}
+              onTagInputChange={setTagInput}
+              onAddTag={handleAddTag}
+              onRemoveTag={handleRemoveTag}
+              onTagKeyDown={handleTagKeyDown}
             />
           )}
         </div>

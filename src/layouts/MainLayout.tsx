@@ -25,6 +25,7 @@ import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { FirstRunOnboarding } from '../components/Onboarding/FirstRunOnboarding';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
+import { useEmbeddedModuleChatHost } from '../components/shared/embeddedModuleChatHost';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -118,7 +119,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     AppView.SETTINGS_APPEARANCE_MODULE,
   ];
 
-  const hasEmbeddedModuleChat = React.useMemo(() => {
+  /*
+   * ★ 2026-09-05 (decyzja CTO „jeden prawy panel", część II — Notatnik).
+   * Ekran, który sam renderuje Teresę w swoim JEDYNYM prawym panelu, melduje
+   * się w rejestrze `embeddedModuleChatHost`. Ścieżka nie wystarcza tam, gdzie
+   * pod jednym adresem żyją dwa ekrany (`/my-work/notebook` = lista notatników
+   * ORAZ otwarta notatka): wyłączenie doku po ścieżce wygasiłoby Teresę także
+   * na liście, gdzie nikt jej nie osadza.
+   */
+  const embeddedModuleChatHosted = useEmbeddedModuleChatHost();
+
+  const hasEmbeddedModuleChatByPath = React.useMemo(() => {
     const path = location.pathname.toLowerCase();
     // KIMI workspaces and Outputs Deck Builder render their own Teresa panel.
     if (path.startsWith('/wordy')) return true;
@@ -139,6 +150,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (/^\/my-work\/ideas\/[^/]+\/workspace(\/|$)/.test(path)) return true;
     return false;
   }, [location.pathname]);
+
+  const hasEmbeddedModuleChat = hasEmbeddedModuleChatByPath || embeddedModuleChatHosted;
 
   const shouldShowChatPanel =
     (currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true) &&

@@ -43,7 +43,21 @@ describe('Notatnik — centrum bez ściany przycisków (odrzucenie właściciela
 
   it('zostawia w pasku nad dokumentem wyłącznie panel + kebab', () => {
     expect(content).toContain('data-testid="notebook-toolbar-right-actions"');
-    // Jedyna akcja pierwszorzędna, która zostaje w centrum: wstaw blok.
-    expect(content).toContain("t('notebook.notebookContent.insertBlock', 'Insert block')");
+  });
+
+  // ★ 2026-09-05 (decyzja CTO „jeden prawy panel", część II — Notatnik):
+  // ostatnie dwie powierzchnie sterujące zeszły ze środka dokumentu.
+  it('nie zostawia w centrum przycisku „Wstaw blok" ani edycji tagów', () => {
+    expect(content).not.toContain("t('notebook.notebookContent.insertBlock', 'Insert block')");
+    expect(content).not.toContain("t('notebook.notebookContent.placeholder2', '+ tag')");
+    // Handlery ŻYJĄ — przeniesione, nie skasowane.
+    expect(content).toContain('const handleAddTag');
+    expect(content).toContain('const handleRemoveTag');
+    expect(content).toContain('const handleInsertBlockFromPanel');
+    expect(content).toContain('onAddTag={handleAddTag}');
+    expect(content).toContain('onRemoveTag={handleRemoveTag}');
+    expect(content).toContain('onInsertBlock={handleInsertBlockFromPanel}');
+    expect(rail).toContain("t('notebook.rightRail.tags', 'Tagi')");
+    expect(rail).toContain("t('notebook.rightRail.insertBlock', 'Wstaw blok')");
   });
 });
