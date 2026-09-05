@@ -179,6 +179,13 @@ const KpiDeviationCaseSubview = lazyWithRetry(() =>
     default: m.default,
   }))
 );
+// Odrzucenie właściciela 2026-09-05 — POZIOM 3 („zbiór kart KPI") między
+// kartą KPI a kolejną kartą KPI. Patrz nagłówek `KpiCardSetPage.tsx`.
+const KpiCardSetPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/kpiTool/KpiCardSetPage').then((m) => ({
+    default: m.default,
+  }))
+);
 // RN-G5 (2026-08-12) — full ROI Case tool (`/results/roi/cases/:roiCaseId`)
 // + full OKR Set tool (`/results/okr/sets/:okrSetId`) deep-link routes. D03
 // (klasa L, no big editors in a preview) is already binding — these mount
@@ -3048,6 +3055,37 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <KpiToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* POZIOM 3 trzypoziomowej formuły KPI (2026-09-05). MainLayout bez
+            `breadcrumbs` — ekran sam renderuje pełną ścieżkę poziomów w
+            Menu 1 (`StandardModuleBar breadcrumbs`), tak jak karta KPI
+            renderuje swoją (`ArtifactBreadcrumb`); pasek aplikacji na górze
+            by ją zdublował. */}
+        <Route
+          path={ROUTES.RESULTS_KPI.CARD_SET}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    'KPI',
+                    t('results.kpiCardSet', 'KPI card set'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <KpiCardSetPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

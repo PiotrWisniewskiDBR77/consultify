@@ -85,7 +85,7 @@ describe('day199 KPI tool scorecards and history wiring', () => {
   it('renders an honest empty state for scorecards returned by the reverse lookup', async () => {
     mockReads();
     renderTool();
-    await openSection('Karty wyników i konteksty');
+    await openSection('Zestawienia');
     expect(await screen.findByText('Brak kart wyników')).toBeInTheDocument();
     expect(Api.get).toHaveBeenCalledWith(`/vnext/results/kpi/scorecards/for-kpi/${KPI_ID}`);
   });
@@ -101,7 +101,7 @@ describe('day199 KPI tool scorecards and history wiring', () => {
       }],
     });
     renderTool();
-    await openSection('Karty wyników i konteksty');
+    await openSection('Zestawienia');
     expect(await screen.findByText('Karta rentowności')).toBeInTheDocument();
     expect(screen.getByTestId('kpi-tool-scorecards-list')).toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe('day199 KPI tool scorecards and history wiring', () => {
   it('renders an honest empty state for KPI history', async () => {
     mockReads();
     renderTool();
-    await openSection('Historia / rodowód');
+    await openSection('Rodowód');
     expect(await screen.findByText('Brak historii KPI')).toBeInTheDocument();
     expect(Api.get).toHaveBeenCalledWith(`/vnext/results/kpi/${KPI_ID}/history`);
   });
@@ -122,7 +122,7 @@ describe('day199 KPI tool scorecards and history wiring', () => {
       }],
     });
     renderTool();
-    await openSection('Historia / rodowód');
+    await openSection('Rodowód');
     expect(await screen.findByText('KPI_ACTIVATED')).toBeInTheDocument();
     expect(screen.getByTestId('kpi-tool-history-list')).toBeInTheDocument();
   });

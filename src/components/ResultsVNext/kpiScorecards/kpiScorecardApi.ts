@@ -47,6 +47,35 @@ import { isNotFoundError } from '../kpiApi';
 
 export { isNotFoundError, httpErrorCode, type HttpError } from '../kpiApi';
 
+/**
+ * Dane POKAZOWE zestawienia (opt-in `?sampleData=results-vnext`, nigdy na
+ * hoście produkcyjnym) — DOKŁADNIE ta sama bramka i ten sam wzorzec
+ * dynamicznego importu, którego używa już `getKpi` w `../kpiApi.ts`.
+ * Powód: staging ma dziś JEDEN wskaźnik i JEDNO zestawienie z ZEREM pozycji
+ * (zmierzone 2026-09-05 przez API), więc poziomu 3 („zbiór kart KPI",
+ * odrzucenie właściciela 05.09) nie da się na realnych danych ani obejrzeć,
+ * ani odebrać. Zwraca `null` poza trybem pokazowym ⇒ zero zmiany zachowania
+ * dla realnego użytkownika.
+ */
+async function ownerSampleScorecards(): Promise<{
+  scorecard: KpiScorecardDto;
+  items: KpiScorecardItemDto[];
+  snapshot: KpiScorecardReviewSnapshotDto;
+} | null> {
+  const {
+    RESULTS_VNEXT_SAMPLE_SCORECARD,
+    RESULTS_VNEXT_SAMPLE_SCORECARD_ITEMS,
+    RESULTS_VNEXT_SAMPLE_SCORECARD_SNAPSHOT,
+    shouldUseResultsVNextOwnerSampleData,
+  } = await import('../resultsVNextOwnerSampleData');
+  if (!shouldUseResultsVNextOwnerSampleData()) return null;
+  return {
+    scorecard: RESULTS_VNEXT_SAMPLE_SCORECARD,
+    items: RESULTS_VNEXT_SAMPLE_SCORECARD_ITEMS,
+    snapshot: RESULTS_VNEXT_SAMPLE_SCORECARD_SNAPSHOT,
+  };
+}
+
 // ==========================================
 // ENUMS (mirror the CHECK constraints in `kpiScorecardTypes.ts` /
 // `20260812_rvn_kpi_scorecards.sql`, re-declared client-side per this
@@ -207,6 +236,10 @@ export async function listKpiScorecards(
 // ==========================================
 
 export async function listKpiScorecardsForKpi(kpiId: string): Promise<KpiScorecardDto[]> {
+  const sample = await ownerSampleScorecards();
+  if (sample) {
+    return sample.items.some((item) => item.kpiId === kpiId) ? [sample.scorecard] : [];
+  }
   const resp = await Api.get(
     `/vnext/results/kpi/scorecards/for-kpi/${encodeURIComponent(kpiId)}`
   );
@@ -221,6 +254,10 @@ export async function listKpiScorecardsForKpi(kpiId: string): Promise<KpiScoreca
 // ==========================================
 
 export async function getKpiScorecard(scorecardId: string): Promise<KpiScorecardDto | null> {
+  const sample = await ownerSampleScorecards();
+  if (sample) {
+    return sample.scorecard.scorecardId === scorecardId ? sample.scorecard : null;
+  }
   try {
     const resp = await Api.get(`/vnext/results/kpi/scorecards/${encodeURIComponent(scorecardId)}`);
     return (resp?.scorecard ?? null) as KpiScorecardDto | null;
@@ -235,6 +272,10 @@ export async function getKpiScorecard(scorecardId: string): Promise<KpiScorecard
 // ==========================================
 
 export async function listKpiScorecardItems(scorecardId: string): Promise<KpiScorecardItemDto[]> {
+  const sample = await ownerSampleScorecards();
+  if (sample) {
+    return sample.scorecard.scorecardId === scorecardId ? sample.items : [];
+  }
   const resp = await Api.get(
     `/vnext/results/kpi/scorecards/${encodeURIComponent(scorecardId)}/items`
   );
@@ -291,6 +332,10 @@ export async function listKpiScorecardReviewSnapshots(
 export async function getPublishedKpiScorecardSnapshot(
   scorecardId: string
 ): Promise<KpiScorecardReviewSnapshotDto | null> {
+  const sample = await ownerSampleScorecards();
+  if (sample) {
+    return sample.scorecard.scorecardId === scorecardId ? sample.snapshot : null;
+  }
   try {
     const resp = await Api.get(
       `/vnext/results/kpi/scorecards/${encodeURIComponent(scorecardId)}/review-snapshots/published`
