@@ -2,6 +2,8 @@ import { X } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PREVIEW_FOOTER_MAX_HEIGHT } from '@/components/shared/PreviewPane/previewGeometry';
+
 export interface PreviewPaneShellProps {
   /**
    * @deprecated KANON v3: header preview nie pokazuje kickera ("Preview/Podgląd").
@@ -99,8 +101,20 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
         </div>
       ) : null}
 
+      {/*
+        SUFIT STOPKI (2026-09-05) — patrz `previewGeometry.PREVIEW_FOOTER_MAX_HEIGHT`.
+        `shrink-0` bez sufitu oddawał stopce tyle pionu, ile chciała (zmierzone:
+        500 z 728 px panelu Pomysłów), a `flex-1` treści zostawiał 138 px — blok
+        „Szczegóły" wychodził ucięty na nagłówku tabeli właściwości. Sufit liczy
+        się z kanonu (`CANON_PREVIEW_BLOCK_HEIGHT.detailsMin`), więc stopki, które
+        się mieszczą, renderują się bez żadnej zmiany.
+      */}
       {footer && !embedded ? (
-        <div className="shrink-0 border-t border-slate-200/70 dark:border-white/[0.06] p-4">
+        <div
+          data-preview-block="footer"
+          className="app-table-scrollbar shrink-0 overflow-y-auto border-t border-slate-200/70 dark:border-white/[0.06] p-4"
+          style={{ maxHeight: PREVIEW_FOOTER_MAX_HEIGHT }}
+        >
           {footer}
         </div>
       ) : null}

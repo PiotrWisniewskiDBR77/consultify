@@ -218,7 +218,7 @@ function useInsightCardContractEnabled(): boolean {
       }
     }
     try {
-      const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+      const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
       const env = parseInsightCardContractFlag(meta?.env?.VITE_VF1_INSIGHT_CARD_CONTRACT);
       if (env !== null) return env;
     } catch {
