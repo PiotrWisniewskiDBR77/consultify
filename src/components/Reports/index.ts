@@ -23,13 +23,15 @@ export {
 export { RiskMatrix } from './RiskMatrix';
 export { StickyNavigation } from './StickyNavigation';
 
-// Area-based Report Components (Enterprise DRD)
-export type { AreaDetailData, AreaLevelInfo, InterviewData } from './AreaDetailCard';
-export { AreaDetailCard } from './AreaDetailCard';
-export type { AreaAssessment } from './AreaMatrixTable';
-export { AreaMatrixTable, BUSINESS_AREAS, MATURITY_LEVELS } from './AreaMatrixTable';
-export type { AxisInfo, AxisReportData } from './AxisReportSection';
-export { AxisReportSection } from './AxisReportSection';
+// USUNIĘTE 2026-09-05: `AreaMatrixTable` + jej jedyni wołacze
+// (`AxisReportSection`, `AreaDetailCard`). To była macierz odrzucona przez
+// właściciela wprost (`docs/program/grafika/DZIENNIK_GRAFIKA.md` Z-10) i piąte
+// zgłoszenie tej samej sprawy wzięło się z tego, że kopie tej siatki wciąż
+// leżały w repo i wracały na ekrany (Z-12: „kopii jest w tym repo więcej niż
+// oryginałów"). Po naprawie ekranu raportu nie miały już ŻADNEGO wołacza
+// w `src/` — barrela nie importuje nikt. Jedyna macierz DRD to dziś
+// `DRDMatrixGrid` (`src/components/assessment/drd/DRDAssessmentEditor.tsx`),
+// w trybie do czytania przez `DRDMatrixReadOnly`.
 
 // Management Reports Module (Team Meeting & Steering Committee)
 export * from './Management';
