@@ -41,6 +41,7 @@
  */
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import type { PinnedTransactionClient } from '../../../database/PostgresDatabase.js';
 import { createArtifact } from './artifactVersionService.js';
 import type { ArtifactRow } from './artifactVersionService.js';
 import {
@@ -104,7 +105,7 @@ export type EnsureLegacyIdentityResult = LegacyBridgeResolution & {
 
 /** Wiersz legacy o tym id w TEJ organizacji (z nazwą widoczną dla użytkownika) albo `null`. Fail-closed: brak wiersza = nigdy nie tworzymy tożsamości. */
 async function readLegacyRow(
-  tx: { queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> },
+  tx: PinnedTransactionClient,
   legacyTable: LegacyFinanceTable,
   legacyId: string,
   organizationId: string
@@ -141,7 +142,7 @@ interface AliasLookupRow {
  * padłby na `IDENTITY_MISMATCH` zamiast pokazać własny rekord.
  */
 async function findAlias(
-  tx: { queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> },
+  tx: PinnedTransactionClient,
   params: {
     organizationId: string;
     legacyTable: LegacyFinanceTable;
