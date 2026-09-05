@@ -245,20 +245,45 @@ export function zdaniePoPolsku(opis) {
   return z;
 }
 
-function obrazek(etykieta, url, klasa) {
+/**
+ * OBRAZ NA ŻYWO — jedyny widoczny domyślnie (reguła 05.09 właściciela: ocenia
+ * TYLKO obraz na żywo). Pełna szerokość karty, duży, klik otwiera oryginał.
+ */
+function figuraZywa(url, etykieta, klasa = 'duza') {
   if (!url) {
-    return `<figure class="fig ${klasa}"><figcaption>${esc(etykieta)}</figcaption><div class="brakObrazu">brak obrazu</div></figure>`;
+    return `<figure class="fig zywy ${klasa}"><figcaption>${esc(etykieta)}</figcaption><div class="brakObrazu">brak obrazu na żywo</div></figure>`;
   }
-  return `<figure class="fig ${klasa}"><figcaption>${esc(etykieta)}</figcaption>
+  return `<figure class="fig zywy ${klasa}"><figcaption>${esc(etykieta)}</figcaption>
     <a href="${url}" target="_blank" rel="noopener"><img loading="lazy" src="${url}" alt="${esc(etykieta)}"></a></figure>`;
 }
 
-/** Para obrazów „Zatwierdzone | Na żywo" — ten sam układ w każdej sekcji. */
-function paraObrazow(zatw, zywy, etykietaPrawa, klasa = 'duza') {
+/**
+ * OBRAZ ZATWIERDZONY — schowany pod tekstowym przełącznikiem, zamknięty
+ * domyślnie. Powód: właściciel 05.09 — „pokazujesz mi dwa zupełnie różne
+ * obrazy [...] nie wiem, co mam z tego zrobić" — pokazywanie starego obrazu
+ * OBOK żywego sugerowało, że oba są do oceny. Teraz stary obraz jest notatką
+ * z historii, nie materiałem do osądu.
+ * `niepewne`: plakietka ostrzegawcza, gdy ścieżka obrazu nie zawiera id
+ * ekranu (dopasowanie zrobione ręką w pakiecie mogło się pomylić) — plakietka
+ * sama nigdy nie jest widoczna poza tym schowkiem.
+ */
+function blokZatwierdzony(url, niepewne) {
+  if (!url) return '';
+  return `<details class="stary">
+    <summary>pokaż stary obraz z historii</summary>
+    <p class="staryOpis">To stara notatka z historii — bywa błędna. Oceniasz tylko obraz na żywo.${
+      niepewne ? ' <span class="niepewne">dopasowanie niepewne</span>' : ''
+    }</p>
+    <a href="${url}" target="_blank" rel="noopener"><img loading="lazy" class="staryImg" src="${url}" alt="stary obraz zatwierdzony (z historii)"></a>
+  </details>`;
+}
+
+/** Blok obrazów karty: żywy na wierzchu, zatwierdzony schowany za tym samym przełącznikiem wszędzie. */
+function blokObrazow(zatw, zywy, etykietaZywego, klasa, niepewne) {
   if (!zatw && !zywy) return '';
-  return `<div class="paraObrazy">
-    ${obrazek('Zatwierdzone', zatw, klasa)}
-    ${obrazek(etykietaPrawa, zywy, klasa)}
+  return `<div class="obrazyKarty">
+    ${figuraZywa(zywy, etykietaZywego, klasa)}
+    ${blokZatwierdzony(zatw, niepewne)}
   </div>`;
 }
 
@@ -270,24 +295,31 @@ function godzina(kiedy) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Etykiety przycisków — sekcja A pyta o zgodę na propozycję, B/C pytają o obraz na żywo. */
+const ETYKIETY_PRZYCISKOW = {
+  A: { tak: 'Tak, zgadzam się', nie: 'Nie, ma być inaczej' },
+  BC: { tak: 'Tak, tak ma być', nie: 'Nie, ma być inaczej' },
+};
+
 /**
- * OGON KARTY — identyczny w A, B i C. Dwa przyciski i jedno pole uwagi.
- * `wybor` jedzie z przyciskiem „Akceptuję" tylko w sekcji A (litera opcji, którą
+ * OGON KARTY — identyczny szkielet w A, B i C (dwa duże przyciski + jedno pole
+ * uwagi), tekst przycisków zależy od sekcji (patrz `ETYKIETY_PRZYCISKOW`).
+ * `wybor` jedzie z przyciskiem „tak" tylko w sekcji A (litera opcji, którą
  * rekomendujemy) — dzięki temu w rejestrze zostaje ślad, CO właściciel przyjął,
  * a nie samo „zgadza się".
  */
-function ogonKarty(klucz, stan, zapis, wyborAkceptu) {
+function ogonKarty(klucz, stan, zapis, wyborAkceptu, etykiety = ETYKIETY_PRZYCISKOW.BC) {
   const d = zapis || {};
   const uwaga = d.uwaga || '';
   const w = wyborAkceptu ? ` data-w="${esc(wyborAkceptu)}"` : '';
   return `<div class="przyciski">
-    <button type="button" class="dbtn tak ${stan === 'AKCEPT' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="AKCEPT"${w}>Akceptuję</button>
-    <button type="button" class="dbtn nie ${stan === 'POPRAWKA' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="POPRAWKA">Do poprawki</button>
+    <button type="button" class="dbtn tak ${stan === 'AKCEPT' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="AKCEPT"${w}>${esc(etykiety.tak)}</button>
+    <button type="button" class="dbtn nie ${stan === 'POPRAWKA' ? 'on' : ''}" data-k="${esc(klucz)}" data-d="POPRAWKA">${esc(etykiety.nie)}</button>
   </div>
   <div class="zapis ${d.kiedy ? 'jest' : ''}">${d.kiedy ? `zapisano ${esc(godzina(d.kiedy))}` : ''}</div>
   <label class="uwPole">
     <span class="uwEtykieta">Uwaga — co ma być inaczej</span>
-    <textarea class="uw" rows="2" data-k="${esc(klucz)}" placeholder="napisz jednym zdaniem, np. „kolumna KONTEKST ma wrócić”">${esc(uwaga)}</textarea>
+    <textarea class="uw" rows="2" data-k="${esc(klucz)}" placeholder="napisz jednym zdaniem, co ma być inaczej (np. „ma być jak stary obraz”)">${esc(uwaga)}</textarea>
   </label>
   <div class="podpowiedz" hidden>napisz jedną uwagę</div>`;
 }
@@ -320,12 +352,26 @@ export function stronaDecyzje(p) {
   const nazwy = indeksNazw(status);
   const zPakietow = indeksZatwierdzonychZPakietow(pakietyDir);
 
-  const urlZatwierdzonego = (id) => {
-    if (zPakietow[id]) return urlEv(zPakietow[id]);
+  /**
+   * Obraz zatwierdzony + flaga „dopasowanie niepewne" (reguła 5 z 05.09).
+   * Źródło z pakietu jest wpisane ręką — gdy ścieżka nie zawiera id ekranu,
+   * ktoś mógł wkleić złą pozycję; ta plakietka to jedyny ślad tego ryzyka,
+   * bo obraz i tak jest domyślnie schowany. Skan zapasowy (`evidence/grafika`)
+   * dopasowuje po prefiksie NAZWY PLIKU == id, więc jest z definicji pewny.
+   */
+  const zatwierdzony = (id) => {
+    if (zPakietow[id]) {
+      const rel = zPakietow[id];
+      return { url: urlEv(rel), niepewne: !String(rel).toLowerCase().includes(String(id).toLowerCase()) };
+    }
     const zapas = zatwierdzoneZapasowe[id];
-    if (zapas) return urlEv(path.relative(evidenceRoot, zapas.pelna || zapas).split(path.sep).join('/'));
-    return '';
+    if (zapas) {
+      const rel = path.relative(evidenceRoot, zapas.pelna || zapas).split(path.sep).join('/');
+      return { url: urlEv(rel), niepewne: false };
+    }
+    return { url: '', niepewne: false };
   };
+  const urlZatwierdzonego = (id) => zatwierdzony(id).url;
   const urlZywego = (id) => {
     const w = wyniki[id];
     if (w && w.zrzut) return urlEv(w.zrzut);
@@ -355,9 +401,10 @@ export function stronaDecyzje(p) {
       const alternatywa = (d.opcje && d.opcje[inna]) || '';
       const miniatury = (d.ekrany || [])
         .map((id) => {
+          const zat = zatwierdzony(id);
           return `<div class="para">
             <div class="paraNazwa">${esc(nazwa(id))} <code>${esc(id)}</code></div>
-            ${paraObrazow(urlZatwierdzonego(id), urlZywego(id), 'Na żywo 05.09', 'mala')}
+            ${blokObrazow(zat.url, urlZywego(id), 'Na żywo 05.09', 'srednia', zat.niepewne)}
           </div>`;
         })
         .join('');
@@ -369,7 +416,7 @@ export function stronaDecyzje(p) {
           ${alternatywa ? `<p class="propInaczej"><b>Inaczej:</b> ${esc(alternatywa)}</p>` : ''}
         </div>
         ${miniatury ? `<div class="pary">${miniatury}</div>` : ''}
-        ${ogonKarty(klucz, stan, zapis, litera)}
+        ${ogonKarty(klucz, stan, zapis, litera, ETYKIETY_PRZYCISKOW.A)}
       </article>`;
     })
     .join('');
@@ -391,12 +438,13 @@ export function stronaDecyzje(p) {
         .map((w) => {
           const zapis = zapisane[w.id];
           const stan = normalizujDecyzje(zapis && zapis.decyzja);
+          const zat = zatwierdzony(w.id);
           return `<article class="karta ekran" data-sek="B" data-stan="${esc(stan)}" id="k-${esc(w.id)}">
             <div class="modul">${esc(modulEkranu(w.id) || ladnyKatalog(katalog))}</div>
             <h4>${esc(nazwa(w.id))} <code>${esc(w.id)}</code></h4>
             <p class="poLudzku">${esc(zdaniePoPolsku(w.opis) || ZDANIE_B)}</p>
             ${szczegoly(w.opis)}
-            ${paraObrazow(urlZatwierdzonego(w.id), urlZywego(w.id), 'Na żywo 05.09 — kliknij, żeby powiększyć')}
+            ${blokObrazow(zat.url, urlZywego(w.id), 'Na żywo 05.09 — kliknij, żeby powiększyć', 'duza', zat.niepewne)}
             ${ogonKarty(w.id, stan, zapis)}
           </article>`;
         })
@@ -413,13 +461,13 @@ export function stronaDecyzje(p) {
       const zapis = zapisane[klucz];
       const stan = normalizujDecyzje(zapis && zapis.decyzja);
       const zywy = w.id ? urlZywego(w.id) : '';
-      const zatw = w.id ? urlZatwierdzonego(w.id) : '';
+      const zat = w.id ? zatwierdzony(w.id) : { url: '', niepewne: false };
       return `<article class="karta ekran" data-sek="B" data-stan="${esc(stan)}" id="k-${esc(klucz)}">
         <div class="modul">${esc(w.sekcja)}</div>
         <h4>${esc(w.id ? nazwa(w.id) : 'pozycja z pakietu')} ${w.id ? `<code>${esc(w.id)}</code>` : ''}</h4>
         <p class="poLudzku">Tej pozycji nie widziałeś ani razu — obejrzyj i powiedz, czy zostaje.</p>
         ${szczegoly(w.tekst)}
-        ${paraObrazow(zatw, zywy, 'Na żywo 05.09')}
+        ${blokObrazow(zat.url, zywy, 'Na żywo 05.09', 'duza', zat.niepewne)}
         ${ogonKarty(klucz, stan, zapis)}
       </article>`;
     })
@@ -438,13 +486,14 @@ export function stronaDecyzje(p) {
     const zwykly = jesliJest(evidenceRoot, path.join(path.basename(zywoDir), n.katalog, n.id + '.png'));
     const dowodUrl = dowodRel ? urlEv(dowodRel) : zwykly ? urlEv(zwykly) : urlZywego(n.id);
     const w = wyniki[n.id];
+    const zat = zatwierdzony(n.id);
     return `<article class="karta ekran" data-sek="C" data-stan="${esc(stan)}" id="k-${esc(n.id)}">
       <div class="modul">${esc(modulEkranu(n.id) || ladnyKatalog(n.katalog))}</div>
       <h4>${esc(nazwa(n.id))} <code>${esc(n.id)}</code></h4>
       ${w && w.werdykt ? `<span class="werdykt w-${esc(w.werdykt)}">pomiar rundy 3: ${esc(ETYKIETA_WERDYKTU[w.werdykt] || w.werdykt)}</span>` : ''}
       <p class="poLudzku">${esc(ZDANIE_C)}</p>
       ${szczegoly(w && w.opis)}
-      ${paraObrazow(urlZatwierdzonego(n.id), dowodUrl, n.dowod ? 'Dowód naprawy (dziś)' : 'Na żywo 05.09')}
+      ${blokObrazow(zat.url, dowodUrl, n.dowod ? 'Dowód naprawy (dziś)' : 'Na żywo 05.09', 'duza', zat.niepewne)}
       ${ogonKarty(n.id, stan, zapis)}
     </article>`;
   }).join('');
@@ -471,7 +520,11 @@ export function stronaDecyzje(p) {
   </div>
 </header>
 <main>
-  <p class="jakTo">Na każdej karcie są dwa przyciski. <b>Akceptuję</b> — zostaje tak, jak widać. <b>Do poprawki</b> — dopisz w polu pod spodem, co ma być inaczej. Zapisuje się od razu, nic nie trzeba wysyłać.</p>
+  <ul class="jakTo">
+    <li>Oceniasz tylko obraz „Na żywo” — to jest dzisiejsza aplikacja.</li>
+    <li>Wygląda dobrze → Tak. Wygląda źle → Nie + jedno zdanie, co ma być inaczej.</li>
+    <li>Stary obraz z historii jest schowany pod kartą; bywa błędny — nie kieruj się nim.</li>
+  </ul>
   <section id="sek-A">
     <h2>A. Decyzje <small>odpowiedziano <span data-lic="A">${odpA}</span> / ${decyzje.length}</small></h2>
     <p class="wstep">Pytania, na których stoją agenci. Przy każdym jest moja propozycja — akceptujesz ją albo piszesz, czego chcesz inaczej.</p>
@@ -520,8 +573,8 @@ body{margin:0;background:var(--tlo);color:var(--tekst);font:17px/1.6 -apple-syst
 .stan.dobrze{background:#dcfce7;color:#14532d}
 .stan.zle{background:#fee2e2;color:#7f1d1d;font-weight:650}
 main{padding:22px 28px 90px;max-width:1560px;margin:0 auto}
-.jakTo{margin:0 0 26px;padding:13px 18px;background:#fff;border:1px solid var(--kres);border-radius:12px;font-size:16px;color:var(--drugi);max-width:110ch}
-.jakTo b{color:var(--tekst)}
+ul.jakTo{margin:0 0 26px;padding:14px 18px 14px 34px;background:#fff;border:1px solid var(--kres);border-radius:12px;font-size:16px;color:var(--tekst);max-width:110ch}
+.jakTo li{margin:5px 0}
 section{margin-bottom:52px;scroll-margin-top:120px}
 h2{font-size:26px;margin:0 0 6px;font-weight:700;letter-spacing:-.3px}
 h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
@@ -529,7 +582,7 @@ h2 small{font-size:16px;font-weight:500;color:var(--drugi);margin-left:12px}
 .grupa{font-size:18px;font-weight:650;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--kres)}
 .grupa small{font-weight:500;color:var(--drugi);margin-left:8px;font-size:14px}
 .kolumna{display:flex;flex-direction:column;gap:16px}
-.siatka{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+.siatka{display:flex;flex-direction:column;gap:16px}
 .karta{background:var(--karta);border:1px solid var(--kres);border-radius:14px;padding:18px 20px}
 .karta[data-stan="AKCEPT"]{border-color:#bbf7d0;box-shadow:inset 4px 0 0 var(--ok)}
 .karta[data-stan="POPRAWKA"]{border-color:#fde68a;box-shadow:inset 4px 0 0 var(--pop)}
@@ -555,8 +608,8 @@ body.tylkoBez .karta[data-stan="AKCEPT"],body.tylkoBez .karta[data-stan="POPRAWK
 .pary{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
 .para{flex:1 1 340px;min-width:0}
 .paraNazwa{font-size:13.5px;color:var(--drugi);margin-bottom:4px}
-.paraObrazy{display:flex;gap:8px;margin-bottom:4px}
-.fig{margin:0;flex:1;min-width:0}
+.obrazyKarty{margin-bottom:4px}
+.fig{margin:0 0 8px}
 .fig figcaption{font-size:12px;color:var(--drugi);margin-bottom:4px}
 /* PUŁAPKA (05.09): pierwsza wersja kadrowała miniatury przez object-fit:cover
    od GÓRY. Zrzuty modali (np. unified-create-launcher) to wyśrodkowane okno na
@@ -564,9 +617,19 @@ body.tylkoBez .karta[data-stan="AKCEPT"],body.tylkoBez .karta[data-stan="POPRAWK
    prostokąt, czyli obraz wyglądający na zepsuty. object-fit:contain pokazuje
    CAŁY zrzut, pomniejszony; pełny rozmiar jest o jedno kliknięcie dalej. */
 .fig img{width:100%;display:block;border:1px solid var(--kres);border-radius:9px;background:#f8fafc;object-fit:contain;object-position:top center}
-.fig.mala img{height:190px}
-.fig.duza img{height:300px}
+.fig.zywy.duza img{max-height:620px}
+.fig.zywy.srednia img{max-height:420px}
 .brakObrazu{border:1px dashed var(--kres);border-radius:9px;padding:26px 10px;text-align:center;font-size:13px;color:#9aa3ad;background:#fbfcfd}
+/* Obraz zatwierdzony (WERSJA 3, 05.09): schowany za tekstowym przełącznikiem,
+   ZAMKNIĘTY domyślnie — reguła właściciela: ocenia TYLKO obraz na żywo. */
+.stary{margin:8px 0 0}
+.stary summary{cursor:pointer;font-size:13.5px;color:var(--drugi);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--kres);border-radius:8px;background:#fbfcfd}
+.stary summary::-webkit-details-marker{display:none}
+.stary summary::before{content:"›";font-size:15px;line-height:1}
+.stary[open] summary::before{content:"⌄"}
+.staryOpis{margin:9px 0 7px;font-size:13px;line-height:1.5;color:var(--drugi);background:#f7f9fb;border:1px solid var(--kres);border-radius:9px;padding:10px 12px}
+.staryImg{width:100%;display:block;border:1px solid var(--kres);border-radius:9px;background:#f8fafc;object-fit:contain;max-height:420px}
+.niepewne{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:#e5e7eb;color:#4b5563;white-space:nowrap}
 .przyciski{display:flex;gap:12px;margin-top:14px}
 .dbtn{flex:1 1 0;border:1.5px solid #c9ced6;background:#fff;color:var(--tekst);border-radius:11px;padding:14px 18px;cursor:pointer;font:650 17px/1.2 inherit;text-align:center}
 .dbtn:hover{border-color:var(--wybrany)}
