@@ -61,6 +61,19 @@ const EVID = path.join(ROOT, 'evidence/grafika');
 
 import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyzji, kartaModulu, pozaOdbiorem, coDomyka } from './lib/kartyModulow.mjs';
 import { STYL_MODULOW } from './lib/stylModulow.mjs';
+import { stronaZywo } from './lib/odbiorZywo.mjs';
+
+/**
+ * ODBIÓR NA ŻYWO 05.09 (dodane 2026-09-05). Właściciel odbiera MVP i chce
+ * widzieć, dla każdego ekranu A/B, obraz zatwierdzony OBOK zrzutu z realnej
+ * aplikacji — nie ufając samej deklaracji „zgodne z projektem". Dane produkują
+ * równolegle inni agenci do `evidence/odbior-zywo-<data>/<katalog>/wyniki.json`;
+ * ta strona tylko je czyta i renderuje — logika budowy strony i indeksów żyje
+ * w `lib/odbiorZywo.mjs`, żeby dało się ją przetestować bez serwera HTTP.
+ */
+const EVIDENCE_ROOT = path.join(ROOT, 'evidence');
+const ZYWO_DIR = path.join(EVIDENCE_ROOT, 'odbior-zywo-20260905');
+const ODBIOR_ZYWO_DECYZJE = path.join(ROOT, 'docs/program/grafika/ODBIOR_ZYWO_DECYZJE.json');
 
 /**
  * KOLEJNOŚĆ MODUŁÓW W WIDOKU — ustalona przez nadzorcę z rozliczenia korpusu uwag,
@@ -171,6 +184,18 @@ db.exec(`
     powod   TEXT,
     kiedy   TEXT NOT NULL
   );
+  /*
+   * ODBIÓR NA ŻYWO 05.09 — decyzja właściciela o STANIE NA ŻYWO danego ekranu
+   * (zatwierdzony obraz vs zrzut z realnej aplikacji), osobna od tabeli
+   * "decyzje" (ta tabela dotyczy samej grafiki/projektu). Mieszanie ich
+   * zgubiłoby, którą z dwóch rzeczy właściciel właśnie ocenił.
+   */
+  CREATE TABLE IF NOT EXISTS decyzje_zywo (
+    ekran   TEXT PRIMARY KEY,
+    decyzja TEXT,
+    uwaga   TEXT,
+    kiedy   TEXT NOT NULL
+  );
 `);
 
 const czytajDecyzjeModulow = () => {
@@ -265,6 +290,32 @@ function zapiszDecyzje(ekran, zmiana) {
   // Eksport do czytania i do gita — po KAŻDYM zapisie, żeby plik nigdy nie był starszy niż baza.
   fs.writeFileSync(DECYZJE, JSON.stringify(czytajDecyzje(), null, 1), 'utf8');
   return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje WHERE ekran = ?').get(ekran);
+}
+
+const czytajDecyzjeZywo = () => {
+  const out = {};
+  for (const w of db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje_zywo').all()) {
+    out[w.ekran] = { decyzja: w.decyzja || undefined, uwaga: w.uwaga || undefined, kiedy: w.kiedy };
+  }
+  return out;
+};
+
+/**
+ * Zapis decyzji „na żywo" + NATYCHMIASTOWY eksport do pliku w repo — ten sam
+ * mechanizm co `zapiszDecyzje` wyżej (baza sqlite jest w `.gitignore`, więc plik
+ * JSON jest jedyną trwałą kopią, eksport idzie po każdym zapisie, nie na koniec dnia).
+ */
+function zapiszDecyzjeZywo(ekran, zmiana) {
+  const teraz = new Date().toISOString();
+  const stary = db.prepare('SELECT decyzja, uwaga FROM decyzje_zywo WHERE ekran = ?').get(ekran) || {};
+  const decyzja = zmiana.decyzja !== undefined ? zmiana.decyzja : (stary.decyzja ?? null);
+  const uwaga = zmiana.uwaga !== undefined ? zmiana.uwaga : (stary.uwaga ?? null);
+  db.prepare(
+    `INSERT INTO decyzje_zywo (ekran, decyzja, uwaga, kiedy) VALUES (?, ?, ?, ?)
+     ON CONFLICT(ekran) DO UPDATE SET decyzja = excluded.decyzja, uwaga = excluded.uwaga, kiedy = excluded.kiedy`
+  ).run(ekran, decyzja || null, uwaga || null, teraz);
+  fs.writeFileSync(ODBIOR_ZYWO_DECYZJE, JSON.stringify(czytajDecyzjeZywo(), null, 1), 'utf8');
+  return db.prepare('SELECT ekran, decyzja, uwaga, kiedy FROM decyzje_zywo WHERE ekran = ?').get(ekran);
 }
 
 /** Ostatnia poprawka per ekran — to ona zapala zielony znacznik „obejrzyj ponownie". */
@@ -854,11 +905,61 @@ http
     if (req.url === '/moduly' || req.url.startsWith('/moduly?')) {
       return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(stronaModulow());
     }
+    if (req.url === '/zywo' || req.url.startsWith('/zywo?')) {
+      try {
+        const status = JSON.parse(fs.readFileSync(STATUS, 'utf8'));
+        const html = stronaZywo({
+          status,
+          zywoDir: ZYWO_DIR,
+          evidenceRoot: EVIDENCE_ROOT,
+          decyzjeGlowne: czytajDecyzje(),
+          decyzjeZywo: czytajDecyzjeZywo(),
+        });
+        return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(html);
+      } catch (e) {
+        console.error('BŁĄD renderu /zywo:', e);
+        return res
+          .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+          .end(`<h1>Strona /zywo nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
+      }
+    }
+    if (req.method === 'POST' && req.url === '/decyzja-zywo') {
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', () => {
+        try {
+          const { id, ...reszta } = JSON.parse(body);
+          const wiersz = zapiszDecyzjeZywo(id, reszta);
+          res
+            .writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+            .end(JSON.stringify({ ok: true, wiersz }));
+        } catch (e) {
+          console.error('BŁĄD zapisu /decyzja-zywo:', e);
+          res
+            .writeHead(500, { 'content-type': 'application/json; charset=utf-8' })
+            .end(JSON.stringify({ ok: false, blad: String(e && e.message) }));
+        }
+      });
+      return;
+    }
     if (req.url.startsWith('/png/')) {
       const rel = decodeURIComponent(req.url.slice(5));
       const p = path.join(EVID, rel);
       if (!p.startsWith(EVID) || !fs.existsSync(p)) return res.writeHead(404).end('nie ma');
       res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'max-age=600' });
+      return fs.createReadStream(p).pipe(res);
+    }
+    if (req.url.startsWith('/ev/')) {
+      // Odczyt PNG spod całego evidence/ (nie tylko evidence/grafika jak `/png/`) —
+      // potrzebne, bo zrzuty „na żywo" leżą w evidence/odbior-zywo-<data>/. Tylko
+      // odczyt, tylko .png, tylko wewnątrz EVIDENCE_ROOT — bez wyjścia poza katalog.
+      const rel = decodeURIComponent(req.url.slice(4).split('?')[0]);
+      const p = path.resolve(EVIDENCE_ROOT, rel);
+      const wPoddrzewie = p === EVIDENCE_ROOT || p.startsWith(EVIDENCE_ROOT + path.sep);
+      if (!wPoddrzewie || !p.toLowerCase().endsWith('.png') || !fs.existsSync(p)) {
+        return res.writeHead(404).end('nie ma');
+      }
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'max-age=60' });
       return fs.createReadStream(p).pipe(res);
     }
     try {
