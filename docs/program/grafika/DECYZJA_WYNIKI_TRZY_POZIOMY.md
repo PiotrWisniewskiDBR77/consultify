@@ -141,3 +141,13 @@ Plik: `~/Downloads/Apator szablon (1).xlsx` (34 arkusze). Arkusz „Ogólny” =
 2. Poziom 2 = **tabela mierników raportu** z kolumnami z tabeli wyżej, grupowana po Obszarze, z okresami jako kolumnami (CEL / Rezultat), YTD, i podsumowaniem stanu w nagłówku. Nie siatka kafelków. Dodawanie miernika do raportu w tym miejscu.
 3. Poziom 3 = karta miernika: kontrakt (metoda, definicja, jednostka, kierunek, częstotliwość, typ, odpowiedzialność, benchmark, limity) + pomiary per okres (cel/rezultat) + odchylenia z RCA/działaniami/statusem + historia przez lata.
 4. Model danych KPI musi nieść: kierunek (min/max), typ (rozliczeniowy/informacyjny), benchmark, limity %, obszar, właściciel nadrzędny, odpowiedzialność, częstotliwość (w tym „narastająco”), CEL i Rezultat per okres, YTD. Sprawdzić w `kpiTool`/`kpiScorecard` schemacie, które pola już są (rg `direction|target|threshold|frequency|owner` w `server/src/routes/resultsVnext` i migracjach `rvn_kpi_*`); brakujące = addytywna migracja.
+
+## Załącznik właściciela 05.09 (2): „OKR Planning (Q4)” — wzorzec tabeli OKR
+
+Obraz od właściciela („to jest tabela OKR”): nagłówek raportu = **nazwa + okres** („OKR Planning (Q4)”), pod nim **Description** (co planujemy, jaką ramą — tu AARRR) i **Goal** (po co ten arkusz). Tabela: **Theme | Objective | Key Result | Owner | Team | Deadline**. Wiersze grupowane po Theme (Acquisition, Activation, Retention, Referrals, Revenue); **jeden Objective rozpina się na kilka wierszy Key Result**; każdy KR ma **własnego Ownera, Team i Deadline**.
+
+**Wnioski wiążące dla OKR w P7K:**
+1. Poziom 1 OKR = raporty OKR („OKR zakładu — maj”, „OKR projektu — czerwiec”, „OKR — Q1/Q4”) z opisem i celem raportu w nagłówku.
+2. Poziom 2 OKR = **tabela kluczowych rezultatów zgrupowana po temacie i celu**: OBSZAR/TEMAT · CEL (Objective, komórka rozpięta na swoje KR) · KLUCZOWY REZULTAT · WŁAŚCICIEL · ZESPÓŁ · TERMIN · (STAN, POSTĘP — z naszego modelu). Osoba jest kolumną (decyzja nr 3). Podsumowanie stanu w nagłówku, akcja „Dodaj cel / Dodaj rezultat”.
+3. Poziom 3 OKR = karta celu N z rezultatami jako sekcją (każdy KR: start/cel/bieżąca, właściciel, termin, check-iny) — bez osobnego poziomu KR.
+4. Ta sama konstrukcja co KPI (raport → tabela pozycji → karta), różni się tylko tym, że pozycja OKR ma dwa szczeble w jednym wierszu (cel → rezultat), rozwiązane grupowaniem/rozpięciem komórki, nie kolejnym poziomem nawigacji.
