@@ -139,9 +139,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'source',
       label: isPolish ? 'Źródło' : 'Source',
-      width: '180px',
+      width: '150px',
       render: (row: AuditPackSummary) => (
-        <span className="text-xs text-c-text-secondary truncate block max-w-[160px]">
+        <span className="text-xs text-c-text-secondary truncate block max-w-[130px]">
           {row.sourceTitle || '—'}
         </span>
       ),
@@ -157,7 +157,8 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'sourceType',
       label: isPolish ? 'Typ źródła' : 'Source type',
-      width: '190px',
+      width: '150px',
+      dataType: 'status',
       filterable: true,
       filterOptions: AUDIT_SOURCE_TYPES.map((value) => ({
         value,
@@ -173,7 +174,8 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'verificationStatus',
       label: isPolish ? 'Weryfikacja' : 'Verification',
-      width: '170px',
+      width: '150px',
+      dataType: 'status',
       filterable: true,
       filterOptions: AUDIT_VERIFICATION_STATES.map((value) => ({
         value,
@@ -189,7 +191,8 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'publicationStatus',
       label: isPolish ? 'Status publikacji' : 'Publication status',
-      width: '150px',
+      width: '140px',
+      dataType: 'status',
       filterable: true,
       filterOptions: PACK_PUBLICATION_STATUSES.map((value) => ({
         value,
@@ -206,6 +209,7 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
       id: 'criteriaCount',
       label: isPolish ? 'Kryteria' : 'Criteria',
       width: '90px',
+      dataType: 'number',
       render: (row: AuditPackSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">{row.criteriaCount}</span>
       ),
@@ -213,7 +217,8 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditPackSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
