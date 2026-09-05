@@ -1098,7 +1098,7 @@ export const InterviewHub: React.FC = () => {
       setInterviewBreadcrumbs([base, `${typeLabel}: ${docName}`]);
     } else {
       const TAB_LABELS: Record<string, string> = {
-        my_assignments: 'Inbox',
+        my_assignments: t('interview.hub.inbox', 'Skrzynka'),
         sessions: t('interview.hub.sessions'),
         templates: t('interview.hub.templates'),
         insights: t('interview.hub.insights'),
