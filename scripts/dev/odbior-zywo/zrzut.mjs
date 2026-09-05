@@ -68,5 +68,13 @@ fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await p
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
 // zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).
-try { if (!page.url().includes('/login')) await ctx.storageState({ path: auth }); } catch {}
+// Zapis zrotowanej sesji ZAWSZE pod originem kanonicznym :3000 (05.09: agent na :3011 nadpisal plik
+// wspolny i wylogowal rownolegla sesje na :3000). Kopia w pamieci, origin przepisany z powrotem.
+try {
+  if (!page.url().includes('/login')) {
+    const st = await ctx.storageState();
+    st.origins = (st.origins || []).map((o) => ({ ...o, origin: String(o.origin).replace(baza, 'http://localhost:3000') }));
+    fs.writeFileSync(auth, JSON.stringify(st, null, 2), { mode: 0o600 });
+  }
+} catch {}
 await browser.close();
