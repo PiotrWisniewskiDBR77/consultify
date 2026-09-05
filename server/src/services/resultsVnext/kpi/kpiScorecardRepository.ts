@@ -313,7 +313,7 @@ export async function getScorecardStatusDistribution(
    * zamiast być cicho doliczona do cudzej grupy.
    */
   const baseQuerySql = `
-    WITH scoped_items AS (
+    , scoped_items AS (
       SELECT si.kpi_id,
              COALESCE(si.area_name, NULLIF(TRIM(si.display_config->>'obszar'), '')) AS area_name,
              latest.performance_status,
