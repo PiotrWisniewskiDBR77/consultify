@@ -1236,7 +1236,12 @@ app.use('/assets/logos', express.static(brandLogoDir, { maxAge: '7d' }));
 // INPUT SANITIZATION & CSRF PROTECTION (Security Hardening)
 // ============================================================
 
-import { csrfTokenMiddleware, getCsrfTokenHandler } from './middleware/csrf.middleware.js';
+import {
+  csrfProtectionMiddleware,
+  csrfTokenMiddleware,
+  getCsrfMode,
+  getCsrfTokenHandler,
+} from './middleware/csrf.middleware.js';
 import { inputSanitizationMiddleware } from './middleware/inputSanitization.middleware.js';
 
 // Apply input sanitization to all requests
@@ -1248,9 +1253,19 @@ app.get('/api/csrf-token', getCsrfTokenHandler);
 // Apply CSRF token generation (validation is opt-in per route)
 // Note: CSRF validation is disabled by default for API-first architecture
 // Enable per-route using csrfValidationMiddleware for sensitive operations
-if (isProduction) {
+//
+// Faza 1 (evidence/sec-20260905/03_CSRF_MFA_PROPOZYCJA.md,
+// 04_CSRF_FAZA1_RAPORT.md): the token cookie must exist whenever CSRF_MODE
+// is 'report' or 'enforce' too, not only in production — otherwise a
+// non-production env running report/enforce mode would see every mutating
+// request flagged as CSRF_MISSING (no cookie ever set).
+if (isProduction || getCsrfMode() !== 'off') {
   app.use('/api/', csrfTokenMiddleware);
 }
+
+// Faza 1 rollout: mounted unconditionally, but a no-op unless CSRF_MODE is
+// set to 'report' or 'enforce' (default 'off' = zero behavior change).
+app.use('/api/', csrfProtectionMiddleware);
 
 // ============================================================
 // PERFORMANCE METRICS & LOGGING MIDDLEWARE

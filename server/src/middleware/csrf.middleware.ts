@@ -12,12 +12,34 @@
 import crypto from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
 
+import logger from '../utils/Logger.js';
+
 const CSRF_COOKIE_NAME = 'csrf_token';
-const CSRF_HEADER_NAME = 'x-csrf-token';
+// Exported for tests and other backend modules. The frontend interceptor
+// (src/services/csrfClient.ts) lives on the other side of the build boundary
+// and hardcodes the same literal — keep the two in sync by hand if this ever
+// changes.
+export const CSRF_HEADER_NAME = 'x-csrf-token';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_CSRF_TOKEN_CHARS = 256;
 const CSRF_TOKEN_CANONICAL_CHARS = 64;
 const CSRF_TOKEN_CANONICAL_RE = /^[a-f0-9]{64}$/;
+
+// Faza 1 (evidence/sec-20260905/03_CSRF_MFA_PROPOZYCJA.md): rollout mode for
+// `csrfProtectionMiddleware`. Read fresh on every request (not cached at
+// module load) so tests and ops can flip it without a process restart.
+export type CsrfMode = 'off' | 'report' | 'enforce';
+
+export function getCsrfMode(): CsrfMode {
+  const raw = String(process.env.CSRF_MODE || '')
+    .trim()
+    .toLowerCase();
+  if (raw === 'report') return 'report';
+  if (raw === 'enforce') return 'enforce';
+  // Unknown/unset value fails safe to 'off' — this is the "zero behavior
+  // change on staging/demo after merge" guarantee from the proposal.
+  return 'off';
+}
 
 function safeRead<T>(reader: () => T, fallback: T): T {
   try {
@@ -258,8 +280,57 @@ export const csrfTokenMiddleware = (req: Request, res: Response, next: NextFunct
   return next();
 };
 
+export interface CsrfCheckResult {
+  ok: boolean;
+  code?: 'CSRF_MISSING' | 'CSRF_INVALID';
+}
+
 /**
- * CSRF validation middleware (double-submit cookie)
+ * Pure double-submit-cookie comparison, shared by `csrfValidationMiddleware`
+ * (always-enforce, currently unmounted anywhere) and `csrfProtectionMiddleware`
+ * (mode-aware: off/report/enforce, Faza 1). Callers are responsible for the
+ * safe-method / exempt-path / mode gating — this function only compares the
+ * cookie against the header.
+ */
+function evaluateCsrfToken(req: Request): CsrfCheckResult {
+  const cookieTok = readCsrfCookieRaw(req);
+  const headerTok = readCsrfHeader(req);
+  if (hasConflictingCsrfHeaderValues(req) || hasConflictingCsrfHeaderKeySources(req)) {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  if (hasConflictingCsrfCookieAssignments(req)) {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  if (cookieTok === undefined || cookieTok === null || !headerTok) {
+    return { ok: false, code: 'CSRF_MISSING' };
+  }
+  if (typeof cookieTok !== 'string') {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  if (cookieTok.length > MAX_CSRF_TOKEN_CHARS || headerTok.length > MAX_CSRF_TOKEN_CHARS) {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  if (!isCanonicalCsrfToken(cookieTok) || !isCanonicalCsrfToken(headerTok)) {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  if (!safeEqual(cookieTok, headerTok)) {
+    return { ok: false, code: 'CSRF_INVALID' };
+  }
+  return { ok: true };
+}
+
+function csrfForbiddenBody(code: 'CSRF_MISSING' | 'CSRF_INVALID') {
+  return {
+    code,
+    message: code === 'CSRF_MISSING' ? 'CSRF token missing' : 'CSRF token invalid',
+  };
+}
+
+/**
+ * CSRF validation middleware (double-submit cookie). Always enforces
+ * (403 on failure) when the current env allows enforcement — this is the
+ * pre-existing, still-unmounted export (see propozycja KROK 3). Faza 1 uses
+ * `csrfProtectionMiddleware` below instead, which is CSRF_MODE-aware.
  */
 export const csrfValidationMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   if (!shouldEnforceInCurrentEnv()) return next();
@@ -270,39 +341,106 @@ export const csrfValidationMiddleware = (req: Request, res: Response, next: Next
   if (isSafeMethod(requestMethod)) return next();
   if (isExemptPath(requestPath)) return next();
 
+  const result = evaluateCsrfToken(req);
+  if (!result.ok) {
+    sendCsrfForbidden(res, csrfForbiddenBody(result.code!));
+    return;
+  }
+  return next();
+};
+
+/**
+ * Server-to-server / API clients authenticate with `Authorization: Bearer
+ * <jwt>` and never rely on the ambient `csrf_token` cookie. A forged
+ * cross-site request cannot attach a custom Authorization header on its own
+ * (browsers don't do it, and our CORS policy doesn't grant it), so there is
+ * no CSRF exposure to protect against for a request that carries a bearer
+ * token and no CSRF cookie at all. This covers pre-session ticket flows
+ * (e.g. `/api/auth/mfa-enrollment/*`, which authenticate with a scoped
+ * enrollment ticket before any session/cookie exists) without having to
+ * enumerate every such route in `isExemptPath`.
+ */
+function isBearerOnlyRequest(req: Request): boolean {
+  const rawAuth = safeRead(() => req.headers?.['authorization'], undefined as unknown);
+  const authValue = typeof rawAuth === 'string' ? rawAuth : Array.isArray(rawAuth) ? rawAuth[0] : undefined;
+  if (typeof authValue !== 'string' || !/^bearer\s+\S+/i.test(authValue.trim())) return false;
   const cookieTok = readCsrfCookieRaw(req);
-  const headerTok = readCsrfHeader(req);
-  if (hasConflictingCsrfHeaderValues(req) || hasConflictingCsrfHeaderKeySources(req)) {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
-    return;
+  return cookieTok === undefined || cookieTok === null || cookieTok === '';
+}
+
+// Faza 1 "report" mode: log at most once per second per method+path so a
+// client stuck retrying (or a scripted probe) can't flood the log stream.
+// Bounded map size protects memory if many distinct paths (ids in the path)
+// churn through — cleared wholesale past the cap rather than evicting
+// individually, since this is a diagnostic aid, not a security control.
+const CSRF_VIOLATION_LOG_WINDOW_MS = 1000;
+const CSRF_VIOLATION_LOG_MAP_MAX_ENTRIES = 5000;
+const lastCsrfViolationLoggedAt = new Map<string, number>();
+
+function shouldLogCsrfViolation(routeKey: string): boolean {
+  const now = Date.now();
+  const last = lastCsrfViolationLoggedAt.get(routeKey);
+  if (last !== undefined && now - last < CSRF_VIOLATION_LOG_WINDOW_MS) return false;
+  if (lastCsrfViolationLoggedAt.size >= CSRF_VIOLATION_LOG_MAP_MAX_ENTRIES) {
+    lastCsrfViolationLoggedAt.clear();
   }
-  if (hasConflictingCsrfCookieAssignments(req)) {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
+  lastCsrfViolationLoggedAt.set(routeKey, now);
+  return true;
+}
+
+/** Test-only: clear the report-mode log rate limiter between test cases. */
+export function __resetCsrfViolationLogRateLimitForTests(): void {
+  lastCsrfViolationLoggedAt.clear();
+}
+
+/**
+ * Faza 1 rollout middleware (evidence/sec-20260905/03_CSRF_MFA_PROPOZYCJA.md +
+ * 04_CSRF_FAZA1_RAPORT.md). Mounted unconditionally on `/api/`; behavior is
+ * controlled entirely by `CSRF_MODE`:
+ *  - 'off' (default): identical to not being mounted at all — no cookie/header
+ *    read, no logging, no blocking. This is what staging/demo/production run
+ *    until CSRF_MODE is explicitly set.
+ *  - 'report': validates and logs a single structured `csrf_violation` line
+ *    per violation (rate-limited), but always calls next() — never blocks.
+ *  - 'enforce': validates and returns 403 (CSRF_MISSING/CSRF_INVALID) on
+ *    failure, exactly like `csrfValidationMiddleware`.
+ */
+export const csrfProtectionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
+  const mode = getCsrfMode();
+  if (mode === 'off') return next();
+  if (!shouldEnforceInCurrentEnv()) return next();
+
+  const rawRequestMethod = safeRead(() => req.method, undefined as unknown as string | undefined);
+  const requestMethod =
+    typeof rawRequestMethod === 'string' ? rawRequestMethod.trim().toUpperCase() : undefined;
+  const requestPath = safeRead(() => req.path, undefined as unknown as string | undefined);
+
+  if (isSafeMethod(requestMethod)) return next();
+  if (isExemptPath(requestPath)) return next();
+  if (isBearerOnlyRequest(req)) return next();
+
+  const result = evaluateCsrfToken(req);
+  if (result.ok) return next();
+
+  if (mode === 'enforce') {
+    sendCsrfForbidden(res, csrfForbiddenBody(result.code!));
     return;
   }
 
-  if (cookieTok === undefined || cookieTok === null || !headerTok) {
-    sendCsrfForbidden(res, { code: 'CSRF_MISSING', message: 'CSRF token missing' });
-    return;
+  // mode === 'report': never block, just observe.
+  const routeKey = `${requestMethod ?? 'UNKNOWN'} ${requestPath ?? 'unknown'}`;
+  if (shouldLogCsrfViolation(routeKey)) {
+    // No PII: method + path + failure reason only (no cookie/header values,
+    // no user id, no IP — those already flow through apiLoggingMiddleware /
+    // correlation IDs if needed for follow-up).
+    logger.warn('csrf_violation', {
+      event: 'csrf_violation',
+      method: requestMethod ?? 'UNKNOWN',
+      path: requestPath ?? 'unknown',
+      reason: result.code,
+      mode,
+    });
   }
-  if (typeof cookieTok !== 'string') {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
-    return;
-  }
-  if (cookieTok.length > MAX_CSRF_TOKEN_CHARS || headerTok.length > MAX_CSRF_TOKEN_CHARS) {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
-    return;
-  }
-  if (!isCanonicalCsrfToken(cookieTok) || !isCanonicalCsrfToken(headerTok)) {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
-    return;
-  }
-
-  if (!safeEqual(cookieTok, headerTok)) {
-    sendCsrfForbidden(res, { code: 'CSRF_INVALID', message: 'CSRF token invalid' });
-    return;
-  }
-
   return next();
 };
 
