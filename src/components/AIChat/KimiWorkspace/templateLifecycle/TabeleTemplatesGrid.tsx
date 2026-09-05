@@ -33,6 +33,15 @@ import { TemplateLifecycleBadge } from './TemplateLifecycleBadge';
 import { TemplateLifecycleFilter } from './TemplateLifecycleFilter';
 import { useTpBaseTemplates } from './useTpBaseTemplates';
 
+const SYSTEM_TEMPLATE_KEY_BY_NAME: Record<string, string> = {
+  'Team Handbook': 'teamHandbook',
+  'Content Calendar': 'contentCalendar',
+  'Product Roadmap': 'productRoadmap',
+  'Issue Tracker': 'issueTracker',
+  'Project Management': 'projectManagement',
+  'CRM Pipeline': 'crmPipeline',
+};
+
 export interface TabeleTemplatesGridProps {
   onTemplateClick: (templateId: string) => void;
   /** Optional category filter. Forwarded to the lifecycle endpoint. */
@@ -87,7 +96,16 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {templates.map((tpl) => (
+        {templates.map((tpl) => {
+          const systemTemplateKey = SYSTEM_TEMPLATE_KEY_BY_NAME[tpl.name];
+          const templateName = systemTemplateKey
+            ? t(`kimi.template.system.${systemTemplateKey}.name`)
+            : tpl.name;
+          const templateDescription = systemTemplateKey
+            ? t(`kimi.template.system.${systemTemplateKey}.description`)
+            : tpl.description;
+
+          return (
           <div
             key={tpl.id}
             data-testid={`${testId}-card`}
@@ -101,7 +119,7 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1 flex-1">
-                  {tpl.name}
+                  {templateName}
                 </p>
                 <TemplateLifecycleBadge
                   status={tpl.status}
@@ -109,8 +127,10 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                   testId={`${testId}-card-${tpl.id}-status`}
                 />
               </div>
-              {tpl.description && (
-                <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">{tpl.description}</p>
+              {templateDescription && (
+                <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">
+                  {templateDescription}
+                </p>
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
                 <p className="mt-2 flex items-center gap-1 text-[10px] text-c-text-secondary tabular-nums">
@@ -141,7 +161,8 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
               </button>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <TemplateGovernanceDrawer

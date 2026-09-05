@@ -13830,10 +13830,20 @@
     "actions": {
       "downloadPdf": "Download PDF",
       "share": "Share link",
-      "chat": "Chat about this report"
+      "chat": "Chat about this report",
+      "generate": "Generate report",
+      "newReport": "New report"
     },
     "empty": {
-      "noResults": "No reports found."
+      "noResults": "No reports found.",
+      "noReports": "No reports yet",
+      "noReportsDesc": "Generate your first management report to track project status, team progress, and portfolio health."
+    },
+    "tabs": {
+      "reports": "Reports",
+      "templates": "Templates",
+      "schedules": "Schedules",
+      "automation": "Automation"
     },
     "aiThinking": "Processing your request...",
     "aiError": "Sorry, I could not process your request.",
@@ -27093,6 +27103,32 @@
       }
     },
     "template": {
+      "system": {
+        "teamHandbook": {
+          "name": "Team Handbook",
+          "description": "Policies, procedures, and resources"
+        },
+        "contentCalendar": {
+          "name": "Content Calendar",
+          "description": "Plan and schedule content"
+        },
+        "productRoadmap": {
+          "name": "Product Roadmap",
+          "description": "Plan and prioritize product features"
+        },
+        "issueTracker": {
+          "name": "Issue Tracker",
+          "description": "Bug tracking and feature requests"
+        },
+        "projectManagement": {
+          "name": "Project Management",
+          "description": "Tasks, milestones, and timelines"
+        },
+        "crmPipeline": {
+          "name": "CRM Pipeline",
+          "description": "Track deals and contacts"
+        }
+      },
       "grid": {
         "loading": "Loading…",
         "empty": "No templates in status \"{{status}}\".",

@@ -3406,7 +3406,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {t('myWork.hub.aITriage', 'AI Triage')}
+                {t('myWork.hub.aITriage', 'Wstępna klasyfikacja AI')}
               </button>
             </div>
           </div>

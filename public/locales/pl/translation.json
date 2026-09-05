@@ -2936,7 +2936,7 @@
       "label36": "Otwarte",
       "label37": "Gotowe",
       "label38": "Zapisane",
-      "aITriage": "Triage AI",
+      "aITriage": "Wstępna klasyfikacja AI",
       "aIDecisions": "AI Decyzje",
       "selected3": "zaznaczonych",
       "selectAll3": "Zaznacz wszystkie",
@@ -13332,10 +13332,20 @@
     "actions": {
       "downloadPdf": "Pobierz PDF",
       "share": "Udostępnij link",
-      "chat": "Porozmawiaj o tym raporcie"
+      "chat": "Porozmawiaj o tym raporcie",
+      "generate": "Wygeneruj raport",
+      "newReport": "Nowy raport"
     },
     "empty": {
-      "noResults": "Nie znaleziono raportów."
+      "noResults": "Nie znaleziono raportów.",
+      "noReports": "Brak raportów",
+      "noReportsDesc": "Wygeneruj pierwszy raport zarządczy, aby śledzić stan projektu, postępy zespołu i kondycję portfela."
+    },
+    "tabs": {
+      "reports": "Raporty",
+      "templates": "Szablony",
+      "schedules": "Harmonogramy",
+      "automation": "Automatyzacja"
     },
     "aiThinking": "Przetwarzanie Twojego żądania...",
     "aiError": "Przepraszam, nie udało mi się przetworzyć Twojego żądania.",
@@ -28672,6 +28682,32 @@
       }
     },
     "template": {
+      "system": {
+        "teamHandbook": {
+          "name": "Podręcznik zespołu",
+          "description": "Zasady, procedury i zasoby"
+        },
+        "contentCalendar": {
+          "name": "Kalendarz treści",
+          "description": "Planowanie i harmonogramowanie treści"
+        },
+        "productRoadmap": {
+          "name": "Mapa drogowa produktu",
+          "description": "Planowanie i ustalanie priorytetów funkcji produktu"
+        },
+        "issueTracker": {
+          "name": "Rejestr zgłoszeń",
+          "description": "Śledzenie błędów i próśb o nowe funkcje"
+        },
+        "projectManagement": {
+          "name": "Zarządzanie projektami",
+          "description": "Zadania, kamienie milowe i terminy"
+        },
+        "crmPipeline": {
+          "name": "Lejek CRM",
+          "description": "Śledzenie transakcji i kontaktów"
+        }
+      },
       "grid": {
         "loading": "Wczytywanie…",
         "empty": "Brak szablonów w statusie \"{{status}}\".",
