@@ -2415,10 +2415,20 @@ export const InterviewHub: React.FC = () => {
   // RV-025 — launcher only: opens the confirm modal pre-filled with the
   // default name, but does NOT persist anything. The POST only fires from
   // `handleConfirmNewSession` after the user explicitly clicks Create.
+  // NAPRAWA (audyt MVP 06.09, poz. 3.2/5): literał był twardo po angielsku
+  // ("Interview {date}") NIEZALEŻNIE od `isPolish` (mimo że był w deps —
+  // martwa zależność, bo w ciele nigdy nie czytana). `t()` z interpolacją
+  // `{{date}}` daje realną polską nazwę domyślną ("Wywiad {data}") — data
+  // od razu odróżnia kolejne sesje utworzone tego samego dnia z tego
+  // wejścia (zamiast identycznego gołego "Wywiad" ×N).
   const handleNewSession = useCallback(() => {
-    setNewSessionNameDraft(`Interview ${formatListDate(new Date())}`);
+    setNewSessionNameDraft(
+      t('interview.hub.newSessionDefaultName', 'Interview {{date}}', {
+        date: formatListDate(new Date()),
+      })
+    );
     setShowNewSessionModal(true);
-  }, [isPolish]);
+  }, [t]);
 
   const handleCancelNewSession = useCallback(() => {
     setShowNewSessionModal(false);
@@ -6088,9 +6098,24 @@ export const InterviewHub: React.FC = () => {
   // column-widths/view-settings popover all now live inside StandardTable —
   // Triada standard.)
 
+  // NAPRAWA (audyt MVP 06.09, poz. 3.2, KOSMETYKA): backend `GET
+  // /interview/assignments/my` nie osadza `template` (zmierzone na żywo —
+  // `templateId` jest zawsze obecny, `template` zawsze `undefined`), więc
+  // KAŻDY wiersz spadał do tego samego gołego `t('interview.hub.interview')`
+  // ("Wywiad") — 3 zadania z 3 różnymi `templateId`/`dueAt` renderowały się
+  // jako 3 identyczne, nie do odróżnienia wiersze w kolumnie NAZWA. Termin
+  // (`dueAt`) dopisany jako odróżnik — NIE `createdAt`: zmierzone na żywo,
+  // wszystkie 3 seedowane zadania mają identyczny `createdAt` (jeden batch
+  // seeda), więc to dalej dawałoby 3 identyczne napisy; `dueAt` faktycznie
+  // się różni (to samo pole widoczne w kolumnie „Dni do terminu" obok).
+  // `createdAt` zostaje jako drugi fallback (`dueAt` jest opcjonalne w
+  // typie), ten sam wzorzec co istniejące domyślne nazwy w tym pliku
+  // (`Interview ${formatListDate(...)}`).
   const getAssignmentTitle = useCallback(
-    (a: InterviewAssignment) => a.template?.name || t('interview.hub.interview'),
-    [isPolish]
+    (a: InterviewAssignment) =>
+      a.template?.name ||
+      `${t('interview.hub.interview')} · ${formatListDate(a.dueAt || a.createdAt)}`,
+    [t]
   );
   const getAssignmentDescription = useCallback(
     (a: InterviewAssignment) => {
