@@ -4676,9 +4676,22 @@ router.get(
     const identity = requireUser(req, res);
     if (!identity) return;
     try {
-      res.json(await readIdeaProcessFlowCandidate({ organizationId: identity.orgId, ideaId: String(req.params.id) }));
+      const candidate = await readIdeaProcessFlowCandidate({
+        organizationId: identity.orgId,
+        ideaId: String(req.params.id),
+      });
+      res.json({ candidate });
     } catch (error) {
-      if (error instanceof IdeaProcessFlowCandidateHandoffError) return res.status(error.status).json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
+      if (
+        error instanceof IdeaProcessFlowCandidateHandoffError &&
+        error.code === 'HANDOFF_NOT_FOUND'
+      ) {
+        return res.json({ candidate: null });
+      }
+      if (error instanceof IdeaProcessFlowCandidateHandoffError)
+        return res
+          .status(error.status)
+          .json({ code: error.code, ...mapAppErrorResponse(error, req, 'error') });
       throw error;
     }
   })

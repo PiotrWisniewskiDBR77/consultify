@@ -5120,11 +5120,12 @@ export const Api = {
   },
 
   getIdeaProcessFlowCandidate: async (ideaId: string): Promise<any> => {
-    const res = await fetch(
+    const res = await fetchWithRetry(
       `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/candidate`,
       { headers: getHeaders() }
     );
-    return handleResponse(res, 'Failed to read Process Flow candidate');
+    const body = await handleResponse(res, 'Failed to read Process Flow candidate');
+    return body.candidate;
   },
 
   approveIdeaProcessFlowCandidate: async (
