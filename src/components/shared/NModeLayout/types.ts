@@ -31,6 +31,13 @@ export interface NModeSection {
   icon: React.FC<{ size?: number; className?: string }>;
   /** Bilingual label */
   label: { en: string; pl: string };
+  /**
+   * Pełna nazwa sekcji do dymka natywnego (`title`), gdy `label` jest skrótem.
+   * Szyna ma ~140 px i ucina etykietę do „Pr…"; skrót w `label` + pełna nazwa
+   * tutaj daje rozróżnialne pozycje bez rozpychania szyny (odbiór 2026-09-05,
+   * `assessment-report-contract`). Brak wartości = dymek pokazuje `label`.
+   */
+  title?: { en: string; pl: string };
   /** Optional badge count (e.g. number of comments) */
   badge?: number;
   /**

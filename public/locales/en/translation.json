@@ -8153,6 +8153,8 @@
       "table": {
         "author": "Author",
         "assessmentName": "Assessment name",
+        "context": "Context",
+        "contextKind": "Assessment",
         "owner": "Owner",
         "updatedAt": "Updated",
         "score": "Score",
@@ -41449,7 +41451,18 @@
       "openFullscreenTitle": "Open matrix in full screen",
       "rowHint": "Hover for preview · Click for details",
       "rowHintClick": "Click for details",
-      "spacious": "Spacious"
+      "spacious": "Spacious",
+      "avgCurrentLevel": "Avg. Current Level",
+      "avgTargetLevel": "Avg. Target Level",
+      "avgGap": "Avg. Gap",
+      "areasAssessed": "Areas Assessed",
+      "areaStrip": "Area",
+      "overflowHint": "{{count}} more {{noun}} to the right — scroll to see them",
+      "columnNounOne": "column",
+      "columnNounFew": "columns",
+      "columnNounMany": "columns",
+      "fullscreenBack": "Back",
+      "fullscreenEsc": "Press Esc to close"
     }
   },
   "methodWorkspace": {
