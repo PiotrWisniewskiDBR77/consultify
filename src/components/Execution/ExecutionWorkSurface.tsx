@@ -1,4 +1,4 @@
-import { ArrowRight, Eye } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Eye } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +25,11 @@ import {
   requestExecutionDecision,
   updateExecutionTask,
 } from '@/services/initiatives-execution/runtimeApi';
+import {
+  memberNameOrUnknown,
+  useOrganizationMemberNames,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
 import { useAppStore } from '@/store/useAppStore';
 import { liczebnik } from '@/utils/liczebnik';
 
@@ -130,18 +135,41 @@ const workStatusLabel: Record<string, string> = {
 const isOpaqueIdentifier = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim());
 
-const actorLabel = (value: string) =>
-  executionReviewPeople[value] ??
-  (isOpaqueIdentifier(value)
-    ? value
-    : value
-        .replace(/[-_]+/g, ' ')
-        .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase()));
+/**
+ * 2026-09-05 (runda 3 odbioru, `execution-tab-work`): ŹRÓDŁO NAZWISK JUŻ JEST.
+ *
+ * Komentarz powyżej zgłaszał („nie naprawiam — to decyzja produktowa"), że ta
+ * powierzchnia nie ma żadnego katalogu osób poza demo-słownikiem
+ * `executionReviewPeople`, więc realne dane muszą pokazać identyfikator.
+ * Katalog jest: `GET /api/organizations/:id/members` (ta sama lista, z której
+ * korzystają Wyniki). Kolejność: katalog organizacji → słownik demo →
+ * prettifier dla identyfikatorów czytelnych → „Nieznany użytkownik" dla UUID.
+ * UUID nigdy nie trafia na ekran jako nazwisko (obraz zatwierdzony ma tu
+ * „Anna Kowalska", „Marek Nowak", „Katarzyna Wójcik").
+ */
+const actorLabel = (
+  value: string,
+  resolveMemberName?: MemberNameResolver,
+  isPolish = true
+) => {
+  const fromDirectory = value ? resolveMemberName?.(value) : null;
+  if (fromDirectory) return fromDirectory;
+  const fromDemo = executionReviewPeople[value];
+  if (fromDemo) return fromDemo;
+  if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
+  return value
+    .replace(/[-_]+/g, ' ')
+    .replace(/(^|[\s/])(\p{L})/gu, (_m, separator, letter) => separator + letter.toUpperCase());
+};
 // i18n-reszta 20260903: kolumny przeniesione do funkcji wywoływanej z `t`
 // wewnątrz komponentu (patrz `useMemo` w ciele `ExecutionWorkSurface`) —
 // poprzednio literały PL na module-scope nie reagowały na `?lang=` (pomiar
 // nadzorcy 03.09, execution-tab-work).
-const buildCols = (t: (key: string, fallback: string) => string): TableColumn[] => [
+const buildCols = (
+  t: (key: string, fallback: string) => string,
+  resolveMemberName?: MemberNameResolver,
+  isPolish = true
+): TableColumn[] => [
   { id: 'title', label: t('execution.work.columns.title', 'Work item'), sortable: true, width: '240px' },
   {
     id: 'kind',
@@ -160,7 +188,7 @@ const buildCols = (t: (key: string, fallback: string) => string): TableColumn[] 
     id: 'owner',
     label: t('execution.work.columns.owner', 'Owner / decision maker'),
     sortable: true,
-    render: (row) => actorLabel(row.owner),
+    render: (row) => actorLabel(row.owner, resolveMemberName, isPolish),
   },
   { id: 'dueAt', label: t('execution.work.columns.dueAt', 'Due / SLA'), sortable: true },
 ];
@@ -192,14 +220,21 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
-const businessLabel = (value: string | null | undefined, fallback: string) => {
+const businessLabel = (
+  value: string | null | undefined,
+  fallback: string,
+  resolveMemberName?: MemberNameResolver,
+  isPolish = true
+) => {
   if (!value) return fallback;
+  // Katalog organizacji ma pierwszeństwo — panel podglądu i tabela obok muszą
+  // pisać o tej samej osobie tak samo (2026-09-05).
+  const fromDirectory = resolveMemberName?.(value);
+  if (fromDirectory) return fromDirectory;
   // Osoba ma nazwisko w katalogu; `\b\w` nie podnosi liter spoza ASCII, więc
   // granica liczona po Unicode (ten sam kontrakt co `actorLabel` wyżej).
   if (executionReviewPeople[value]) return executionReviewPeople[value];
-  // Ten sam kontrakt co `actorLabel` wyżej — panel podglądu i tabela obok
-  // muszą pisać o tej samej osobie tak samo, także gdy nazwiska nie ma.
-  if (isOpaqueIdentifier(value)) return value;
+  if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
   return value
     .replace(/^(task|decision|case|initiative)[-_:]/i, '')
     .replace(/[-_]+/g, ' ')
@@ -225,8 +260,13 @@ export const ExecutionWorkSurface = ({
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
-  const { t } = useTranslation();
-  const cols = useMemo(() => buildCols(t), [t]);
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+  const resolveMemberName = useOrganizationMemberNames();
+  const cols = useMemo(
+    () => buildCols(t, resolveMemberName, isPolish),
+    [t, resolveMemberName, isPolish]
+  );
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
     [caseId, setCaseId] = useState(''),
@@ -266,6 +306,42 @@ export const ExecutionWorkSurface = ({
     // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
     // Stan jawny, bo cicha luka w liście to gorsze kłamstwo niż wisząca zakładka.
     [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
+  /**
+   * Uczciwy stan częściowy — ale NIE między Menu 3 a tabelą.
+   *
+   * Do 2026-09-05 ten komunikat był akapitem wewnątrz sekcji, tuż nad tabelą,
+   * więc rozpychał pion dokładnie tam, gdzie kanon każe zaczynać tabelę
+   * (uwaga właściciela z 02.09: „w całej aplikacji mamy standard że tabela
+   * zaczyna się pod menu 3", obraz zatwierdzony `UW-06-01` nie ma tam nic).
+   * Teraz to PLAKIETKA w Menu 2 (ta sama rejestracja co filtr realizacji),
+   * czyli NAD paskiem modułu — informacja zostaje, układ się nie łamie.
+   *
+   * Pokazuje się WYŁĄCZNIE gdy dane naprawdę są zdegradowane: stan READY i
+   * co najmniej jedna realizacja, której nie udało się pobrać.
+   */
+  const degradedChip = useMemo(() => {
+    if (state !== 'READY' || unreachableCaseIds.length === 0) return null;
+    const count = unreachableCaseIds.length;
+    return (
+      <span
+        role="status"
+        data-testid="execution-work-degraded-chip"
+        title={unreachableCaseIds.join(', ')}
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 text-xs text-c-text-secondary"
+      >
+        <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+        {t('execution.work.degraded', {
+          count,
+          unit: isPolish
+            ? liczebnik(count, ['realizacja', 'realizacje', 'realizacji'])
+            : count === 1
+              ? 'delivery'
+              : 'deliveries',
+          defaultValue: 'Niepełne dane: {{count}} {{unit}} bez odpowiedzi',
+        })}
+      </span>
+    );
+  }, [state, unreachableCaseIds, t, isPolish]);
   const loadCases = useCallback(async () => {
     setState('LOADING');
     try {
@@ -636,6 +712,7 @@ export const ExecutionWorkSurface = ({
     }
     onRegisterFilterControl(
       <div className="flex flex-wrap items-center gap-2">
+        {degradedChip}
         <select
           aria-label="Execution Case for work"
           value={caseId}
@@ -685,7 +762,7 @@ export const ExecutionWorkSurface = ({
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, documentId, caseId, cases]);
+  }, [onRegisterFilterControl, documentId, caseId, cases, degradedChip]);
 
   if (state === 'ERROR')
     return (
@@ -756,19 +833,6 @@ export const ExecutionWorkSurface = ({
         </div>
       )}
       {state === 'LOADING' && <p role="status">Wczytuję kanoniczny rejestr pracy…</p>}
-      {state === 'READY' && unreachableCaseIds.length > 0 && (
-        /*
-         * Uczciwy stan częściowy: reszta listy JEST widoczna, ale wprost mówimy,
-         * ilu realizacji nie udało się pobrać. Cicha luka w tabeli („po prostu
-         * mniej wierszy") byłaby gorsza niż wisząca zakładka, którą to zastąpiło.
-         */
-        <p
-          role="status"
-          className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
-        >
-          {`Nie udało się pobrać pracy z ${unreachableCaseIds.length} realizacji — poniżej praca z pozostałych.`}
-        </p>
-      )}
       {!caseId && state === 'READY' && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych zadań i decyzji w dostępnych realizacjach.
@@ -823,7 +887,7 @@ export const ExecutionWorkSurface = ({
                   {
                     id: 'owner',
                     label: 'Odpowiedzialny',
-                    value: businessLabel(r.owner, 'Nieprzypisany'),
+                    value: businessLabel(r.owner, 'Nieprzypisany', resolveMemberName, isPolish),
                   },
                   { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
                   { id: 'case', label: 'Realizacja', value: caseLabel(r.executionCaseId) },
@@ -985,7 +1049,7 @@ export const ExecutionWorkSurface = ({
                     {workStatusLabel[m.status] ?? m.status} · gotowość{' '}
                     {workStatusLabel[m.readiness] ?? m.readiness}
                   </div>
-                  <div>Właściciel: {actorLabel(m.ownerId)}</div>
+                  <div>Właściciel: {actorLabel(m.ownerId, resolveMemberName, isPolish)}</div>
                   <div>
                     Termin {formatDateTime(m.targetAt)} · prognoza {formatDateTime(m.forecastAt)}
                   </div>

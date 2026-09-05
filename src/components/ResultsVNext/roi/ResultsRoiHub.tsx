@@ -64,11 +64,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import type { StandardCounterChip, TableRow } from '@/components/standard';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { InitiativeApi } from '@/services/api/initiatives.api';
-import { OrganizationApi } from '@/services/api/organizations.api';
 import { tokenService } from '@/services/tokenService';
-import { useAppStore } from '@/store/useAppStore';
 
 import {
   getResultsDomainPath,
@@ -253,32 +252,10 @@ export const ResultsRoiHub: React.FC = () => {
   // id->name resolver convention as Results Attention
   // (attentionPresenters.tsx) and useMentionAutocomplete: real org member
   // list, honest fallback to the id when unresolved.
-  const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (!currentOrganization?.id) return;
-    let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
-      .then((members) => {
-        if (cancelled) return;
-        const map: Record<string, string> = {};
-        members.forEach((m) => {
-          const label = (m.name && m.name.trim()) || m.email || m.userId;
-          if (label) map[m.userId] = label;
-        });
-        setMemberNameById(map);
-      })
-      .catch(() => {
-        if (!cancelled) setMemberNameById({});
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentOrganization?.id]);
-  const resolveMemberName = useCallback(
-    (userId: string) => memberNameById[userId] || null,
-    [memberNameById]
-  );
+  // 2026-09-05 (runda 3 odbioru): patrz `useOrganizationMemberNames` —
+  // lokalna kopia czytała pola, których API nie zwraca (snake_case),
+  // przez co kolumna Właściciel pokazywała surowy identyfikator.
+  const resolveMemberName = useOrganizationMemberNames();
 
   const restoredUiState = useMemo(() => readRoiHubUiState(), []);
   const [tab] = useState<RoiTab>(restoredUiState.tab ?? 'all');

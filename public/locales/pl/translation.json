@@ -12618,7 +12618,8 @@
         "status": "Status",
         "owner": "Właściciel / osoba decyzyjna",
         "dueAt": "Termin / SLA"
-      }
+      },
+      "degraded": "Niepełne dane: {{count}} {{unit}} bez odpowiedzi"
     },
     "resources": {
       "columns": {

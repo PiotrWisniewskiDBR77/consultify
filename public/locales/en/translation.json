@@ -13177,7 +13177,8 @@
         "status": "Status",
         "owner": "Owner / decision maker",
         "dueAt": "Due / SLA"
-      }
+      },
+      "degraded": "Partial data: {{count}} {{unit}} unavailable"
     },
     "resources": {
       "columns": {

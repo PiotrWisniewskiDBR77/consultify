@@ -44,6 +44,11 @@ import {
   type WorkspaceBarLifecycleTransition,
   type WorkspaceBarMoreMenuItem,
 } from '@/components/Finance/shared/financeWorkspaceBar.contract';
+import {
+  lifecycleShortLabel,
+  lifecycleShortLabelEn,
+  lifecycleTransitionsFor,
+} from '@/components/Finance/shared/financeVersionLifecycle';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useFinanceBaselineWorkspaceFlag } from '@/hooks/useFinanceBaselineWorkspaceFlag';
 import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
@@ -634,99 +639,9 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
   );
 }
 
-function lifecycleShortLabel(status: BusinessVersionStatus): string {
-  switch (status) {
-    case 'DRAFT':
-      return 'Wersja robocza';
-    case 'READY_FOR_REVIEW':
-      return 'Gotowe do przeglądu';
-    case 'IN_REVIEW':
-      return 'W przeglądzie';
-    case 'APPROVED':
-      return 'Zatwierdzone';
-    case 'NEEDS_CHANGES':
-      return 'Wymaga zmian';
-    case 'SUPERSEDED':
-      return 'Zastąpione';
-    case 'ARCHIVED':
-      return 'Zarchiwizowane';
-    case 'INVALIDATED':
-      return 'Unieważnione';
-    default:
-      return status;
-  }
-}
-
-/** G06 i18n (2026-09-03, agent/i18n-pl-en): angielski odpowiednik `lifecycleShortLabel`. */
-function lifecycleShortLabelEn(status: BusinessVersionStatus): string {
-  switch (status) {
-    case 'DRAFT':
-      return 'Draft';
-    case 'READY_FOR_REVIEW':
-      return 'Ready for review';
-    case 'IN_REVIEW':
-      return 'In review';
-    case 'APPROVED':
-      return 'Approved';
-    case 'NEEDS_CHANGES':
-      return 'Needs changes';
-    case 'SUPERSEDED':
-      return 'Superseded';
-    case 'ARCHIVED':
-      return 'Archived';
-    case 'INVALIDATED':
-      return 'Invalidated';
-    default:
-      return status;
-  }
-}
-
-/** Tylko przejścia z realnym odpowiednikiem w API (transitionFinanceVersion/approveFinanceModel/reopenFinanceModel) — bez fabrykowanych akcji. */
-function lifecycleTransitionsFor(status: BusinessVersionStatus): WorkspaceBarLifecycleTransition[] {
-  const t = (
-    action: WorkspaceBarLifecycleTransition['action'],
-    pl: string,
-    opts: Partial<WorkspaceBarLifecycleTransition> = {}
-  ): WorkspaceBarLifecycleTransition => ({
-    action,
-    label: { key: action, pl },
-    enablement: ENABLEMENT_ALWAYS,
-    destructive: false,
-    requiresConfirmation: false,
-    requiresReason: false,
-    ...opts,
-  });
-
-  switch (status) {
-    case 'DRAFT':
-      return [
-        t('submit_for_review', 'Przekaż do przeglądu'),
-        t('invalidate', 'Unieważnij', {
-          destructive: true,
-          requiresConfirmation: true,
-          requiresReason: true,
-        }),
-      ];
-    case 'READY_FOR_REVIEW':
-      return [t('start_review', 'Rozpocznij przegląd'), t('withdraw', 'Wycofaj z przeglądu')];
-    case 'IN_REVIEW':
-      return [
-        t('approve', 'Zatwierdź', { requiresConfirmation: true }),
-        t('request_changes', 'Poproś o zmiany', { requiresReason: true }),
-      ];
-    case 'NEEDS_CHANGES':
-      return [t('resume_editing', 'Wróć do edycji')];
-    case 'APPROVED':
-      return [
-        t('reopen', 'Otwórz ponownie', {
-          destructive: true,
-          requiresConfirmation: true,
-          requiresReason: true,
-        }),
-      ];
-    default:
-      return [];
-  }
-}
+// 2026-09-05 (runda 3 odbioru): `lifecycleShortLabel`/`lifecycleShortLabelEn`/
+// `lifecycleTransitionsFor` przeniesione do wspólnego
+// `shared/financeVersionLifecycle.ts` — ten sam automat stał tu i w
+// drugim ekranie słowo w słowo, a wycena była trzecim wołaczem.
 
 export default BaselineWorkspace;

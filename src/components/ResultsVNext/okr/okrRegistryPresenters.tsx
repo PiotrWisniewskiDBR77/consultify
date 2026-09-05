@@ -12,6 +12,7 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
+import { memberNameOrUnknown } from '@/hooks/useOrganizationMemberNames';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
@@ -29,7 +30,6 @@ import {
   okrSetScopeLabel,
   okrSetStatusLabel,
   parseOkrProgress,
-  shortOkrId,
 } from './okrRegistryMappers';
 
 // ==========================================
@@ -105,13 +105,18 @@ export function buildOkrSetColumns(
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrSetDto) => {
-        const name = resolveMemberName(row.ownerUserId);
+        // 2026-09-05 (runda 3 odbioru, uwaga właściciela): tu stał SUROWY UUID,
+        // bo resolver nigdy nie trafiał (patrz `useOrganizationMemberNames` —
+        // API oddaje `user_id`, kod czytał `userId`). Nawet po naprawie mapy
+        // fallbackiem NIE jest identyfikator: w kolumnie „Właściciel" właściciel
+        // spodziewa się człowieka, więc nierozpoznany wpis to „Nieznany
+        // użytkownik", a surowe id zostaje wyłącznie w `title` (podpowiedź).
         return (
           <span
-            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
+            className="block truncate text-sm text-c-text-secondary"
             title={row.ownerUserId}
           >
-            {name || shortOkrId(row.ownerUserId)}
+            {memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish)}
           </span>
         );
       },
@@ -339,16 +344,14 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
         {
           id: 'owner',
           label: isPolish ? 'Właściciel' : 'Owner',
-          value: resolveMemberName(row.ownerUserId) || row.ownerUserId,
-          mono: !resolveMemberName(row.ownerUserId),
+          value: memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish),
         },
         {
           id: 'reviewer',
           label: isPolish ? 'Recenzent' : 'Reviewer',
           value: row.reviewerUserId
-            ? resolveMemberName(row.reviewerUserId) || row.reviewerUserId
+            ? memberNameOrUnknown(resolveMemberName, row.reviewerUserId, isPolish)
             : '—',
-          mono: !!row.reviewerUserId && !resolveMemberName(row.reviewerUserId),
         },
         {
           id: 'program',

@@ -9,6 +9,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Blocks } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import type { TableColumn, TableRow } from '@/components/standard';
 import { EmptyState } from '@/components/shared/states';
@@ -284,10 +285,41 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
                   ],
                 },
                 relations: [],
-                actions:
-                  selected.status === 'draft'
-                    ? { resolutions: [{ id: 'publish', variant: 'positive', label: isPolish ? 'Publikuj' : 'Publish', onClick: () => publish(selected) }] }
-                    : undefined,
+                /*
+                 * 2026-09-05 (runda 3 odbioru, `results-vnext-okr-admin`, uwaga
+                 * właściciela): panel podglądu programu kończył się na sekcji
+                 * „Powiązania" — BEZ paska akcji na dole — bo `actions` było
+                 * `undefined` dla każdego programu, który nie jest szkicem (a
+                 * jedyny realny program na stagingu jest opublikowany). Panel
+                 * Kart wyników KPI obok ma pasek, więc różnica była widoczna
+                 * gołym okiem. Teraz pasek jest ZAWSZE, a w nim wyłącznie
+                 * akcje, które ten ekran potrafi wykonać:
+                 *   · Publikuj (`publishOkrProgram`) — tylko dla szkicu,
+                 *   · Edytuj szkic (`editOkrProgramDraft`) — tylko dla szkicu,
+                 *   · Cykle OKR — nawigacja do istniejącej powierzchni cykli,
+                 *   · Kopiuj identyfikator — do schowka.
+                 * Zawieś/Wycofaj świadomie POMINIĘTE: `okrAdminApi.ts` mówi
+                 * wprost, że serwer nie ma dla nich trasy (patrz nagłówek
+                 * tego pliku) — martwy przycisk byłby gorszy niż jego brak.
+                 */
+                actions: {
+                  resolutions:
+                    selected.status === 'draft'
+                      ? [{ id: 'publish', variant: 'positive', label: isPolish ? 'Publikuj' : 'Publish', onClick: () => publish(selected) }]
+                      : undefined,
+                  informational: [
+                    ...(selected.status === 'draft'
+                      ? [{ id: 'edit-draft', variant: 'neutral' as const, label: isPolish ? 'Edytuj szkic' : 'Edit draft', onClick: () => openEdit(selected) }]
+                      : []),
+                    { id: 'cycles', variant: 'neutral' as const, label: isPolish ? 'Cykle OKR' : 'OKR cycles', onClick: () => navigate('/results/okr/cycles') },
+                    {
+                      id: 'copy-id',
+                      variant: 'neutral' as const,
+                      label: isPolish ? 'Kopiuj identyfikator' : 'Copy identifier',
+                      onClick: () => void navigator.clipboard?.writeText(selected.programId),
+                    },
+                  ],
+                },
               }
             : null
         }
@@ -406,6 +438,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
 
 export const OkrProgramsPage: React.FC = () => {
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const isPolish = !!i18n.language?.startsWith('pl');
   const enabled = isResultsVNextFlagEnabled('okrRegistry');
 

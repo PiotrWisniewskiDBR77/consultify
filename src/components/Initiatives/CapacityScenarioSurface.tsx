@@ -2,6 +2,12 @@ import { AlertTriangle, Eye, Loader2, Plus, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  memberNameOrUnknown,
+  useOrganizationMemberNames,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
+
 import i18n from '@/i18n';
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -214,6 +220,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   demoMode = false,
 }) => {
   const { t } = useTranslation();
+  // Katalog osób organizacji — patrz komentarz przy `RangeView` niżej.
+  const resolveMemberName = useOrganizationMemberNames();
   const capacityAdvisorEnabled =
     String(import.meta.env.VITE_WAVE3_INITIATIVES_CAPACITY_ADVISOR).toLowerCase() === 'true';
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
@@ -1190,8 +1198,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                   {formatPeriodDate(p.start)} – {formatPeriodDate(p.end)}
                 </span>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <RangeView label="Zapotrzebowanie" value={p.demand} />
-                  <RangeView label="Dostępność" value={p.supply} />
+                  <RangeView label="Zapotrzebowanie" value={p.demand} resolveMemberName={resolveMemberName} />
+                  <RangeView label="Dostępność" value={p.supply} resolveMemberName={resolveMemberName} />
                 </div>
               </article>
             ))}
@@ -1268,6 +1276,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
               onNextInputKind={setNextInputKind}
               onSelect={(comparison, optionId) => void selectOption(comparison, optionId)}
               saving={writeState === 'SAVING'}
+              resolveMemberName={resolveMemberName}
             />
             <div className="flex items-center justify-between border-t border-c-border pt-3">
               <div>
@@ -1383,7 +1392,20 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     </section>
   );
 };
-const RangeView = ({ label, value }: { label: string; value: Range }) => (
+/**
+ * 2026-09-05 (runda 3 odbioru, rodzina „UUID zamiast nazwiska"): pole
+ * „właściciel" pisało tu surowy `ownerId`. Ten sam kontrakt co w Wynikach,
+ * Finansach i Realizacji — człowiek albo „Nieznany użytkownik", nigdy UUID.
+ */
+const RangeView = ({
+  label,
+  value,
+  resolveMemberName,
+}: {
+  label: string;
+  value: Range;
+  resolveMemberName?: MemberNameResolver;
+}) => (
   <div>
     <h5>
       {label}: {knowledgeLabel(value.knowledgeState)}
@@ -1395,7 +1417,7 @@ const RangeView = ({ label, value }: { label: string; value: Range }) => (
     </p>
     <p className="text-xs text-c-text-muted">
       {knowledgeLabel(value.knowledgeState)} · pewność {value.confidence} · właściciel{' '}
-      {value.ownerId}
+      {memberNameOrUnknown(resolveMemberName, value.ownerId, true)}
     </p>
   </div>
 );
@@ -1429,12 +1451,14 @@ const CapacityOptionsPanel = ({
   onNextInputKind,
   onSelect,
   saving,
+  resolveMemberName,
 }: {
   comparisons: CapacityComparison[];
   nextInputKind: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION';
   onNextInputKind: (value: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION') => void;
   onSelect: (comparison: CapacityComparison, optionId: string) => void;
   saving: boolean;
+  resolveMemberName?: MemberNameResolver;
 }) => (
   <section aria-label="Capacity options comparison" className="border-t border-c-border pt-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -1496,7 +1520,8 @@ const CapacityOptionsPanel = ({
                   {option.assumptions.map((assumption) => (
                     <p key={`${option.optionId}:${assumption.assumption}`}>
                       {assumption.knowledgeState} · {assumption.assumption} · właściciel{' '}
-                      {assumption.ownerId} · {assumption.sourceRef.ref} v
+                      {memberNameOrUnknown(resolveMemberName, assumption.ownerId, true)} ·{' '}
+                      {assumption.sourceRef.ref} v
                       {assumption.sourceRef.version}
                     </p>
                   ))}
