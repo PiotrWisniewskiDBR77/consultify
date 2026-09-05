@@ -37,20 +37,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle2,
-  Circle,
-  Clock,
-  GripVertical,
-  Plus,
-  User,
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Circle, Clock, Flag, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  StandardKanbanCard,
+  type StandardKanbanCard as StandardKanbanCardData,
+  type StandardKanbanUrgency,
+} from '@/components/standard';
+import type { ChipTone } from '@/components/ui/primitives/chips/chipBase';
 import { Api } from '@/services/api';
 import { Task, TaskStatus } from '@/types';
 
@@ -77,7 +74,9 @@ interface TasksKanbanBoardProps {
 
 interface KanbanColumnDef {
   id: string;
-  label: string;
+  /** i18n key (kanon A9/A10: kolumny kanbanu po polsku w polskim otoczeniu — patrz execution.kanban). */
+  labelKey: string;
+  labelFallback: string;
   statuses: string[];
   apiStatus: string;
   icon: React.ReactNode;
@@ -89,7 +88,8 @@ interface KanbanColumnDef {
 const KANBAN_COLUMNS: KanbanColumnDef[] = [
   {
     id: 'todo',
-    label: 'To Do',
+    labelKey: 'myWork.kanban.columns.toDo',
+    labelFallback: 'To Do',
     // PILNE-3 (2026-07-27): listy statusów pokrywały tylko część wartości, jakie
     // realnie siedzą w `tasks.status` (unia TaskStatus zna też backlog/review/
     // on_hold/cancelled, a baza demo ma m.in. 'archived'). Karta o statusie spoza
@@ -106,7 +106,8 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   },
   {
     id: 'in_progress',
-    label: 'In Progress',
+    labelKey: 'myWork.kanban.columns.inProgress',
+    labelFallback: 'In Progress',
     statuses: ['in_progress', 'in progress', 'active', 'review', 'in_review'],
     apiStatus: 'in_progress',
     icon: <Clock size={14} />,
@@ -116,7 +117,8 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   },
   {
     id: 'blocked',
-    label: 'Blocked',
+    labelKey: 'myWork.kanban.columns.blocked',
+    labelFallback: 'Blocked',
     statuses: ['blocked', 'on_hold', 'on hold', 'waiting'],
     apiStatus: 'blocked',
     icon: <AlertCircle size={14} />,
@@ -126,7 +128,8 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
   },
   {
     id: 'done',
-    label: 'Done',
+    labelKey: 'myWork.kanban.columns.done',
+    labelFallback: 'Done',
     statuses: ['done', 'completed', 'validated'],
     apiStatus: 'done',
     icon: <CheckCircle2 size={14} />,
@@ -147,63 +150,70 @@ const getColumnForStatus = (status?: string): string => {
   return 'todo';
 };
 
-/* ─── Priority → card styles ───
+/* ─── Priority → StandardKanbanCard chip/urgency (kanon A9) ───
  *
  * N-24 (przegląd 128 zrzutów, 2026-07-27): karta kanbana pokazywała priorytet
  * jako pełną pigułkę `● CRITICAL` UPPERCASE z tłem i ramką — czyli TEN SAM
  * moduł miał dwa różne standardy priorytetu: tabela Tasks robiła kropkę
  * + tekst (kanon A4, ekran przyjęty przez Piotra), a kanban obok — dokładnie
  * to, czego kanon A9 zabrania („pełne czerwone pigułki priorytetów").
- * `badge` niesie teraz sam tonowany kolor tekstu, w skali wspólnej ze
- * `standard/PriorityCell`. Pasek akcentu na lewej krawędzi karty (`border`)
- * i delikatny tint tła (`bg`) ZOSTAJĄ — kanon A9 wprost ich wymaga.
+ *
+ * Odbiór na żywo 05.09 (`16-kanon/standard-kanban-card`): karta w ogóle nie
+ * renderowała się przez `StandardKanbanCard` — była bespoke (ten plik), więc
+ * priorytet i tak wyszedł jako „tekst z kropką" (nie cicha pigułka), a nazwy
+ * kolumn zostały po angielsku. Naprawa: ta karta renderuje się teraz
+ * WYŁĄCZNIE przez `StandardKanbanCard` (JEDYNY dozwolony renderer, #75b) —
+ * priorytet trafia do `chips` (cicha pigułka `MetaChip`, kolor tylko w
+ * kropce), a pasek akcentu ~3px steruje `urgency` (TYLKO bursztyn/czerwony/
+ * brak — kanon A9 zabrania większej palety, więc medium/low nie dostają już
+ * własnego koloru paska, tak jak wcześniej).
  */
 
-const getPriorityCardStyle = (priority?: string) => {
-  switch (priority?.toLowerCase()) {
-    case 'urgent':
-    case 'critical':
-      return {
-        border: 'border-l-4 border-l-danger-500',
-        bg: 'bg-danger-500/5 dark:bg-danger-500/10',
-        badge: 'text-danger-700 dark:text-danger-300',
-        label: 'Critical',
-        dot: 'bg-danger-500',
-      };
-    case 'high':
-      return {
-        border: 'border-l-4 border-l-amber-500',
-        bg: 'bg-amber-500/5 dark:bg-amber-500/10',
-        badge: 'text-c-text-secondary',
-        label: 'High',
-        dot: 'bg-amber-500',
-      };
-    case 'medium':
-      return {
-        border: 'border-l-4 border-l-blue-500',
-        bg: 'bg-blue-500/5 dark:bg-blue-500/10',
-        badge: 'text-c-text-secondary',
-        label: 'Medium',
-        dot: 'bg-blue-500',
-      };
-    case 'low':
-      return {
-        border: 'border-l-4 border-l-slate-400',
-        bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'text-c-text-muted',
-        label: 'Low',
-        dot: 'bg-slate-400',
-      };
-    default:
-      return {
-        border: 'border-l-4 border-l-slate-300',
-        bg: 'bg-slate-500/5 dark:bg-slate-500/10',
-        badge: 'text-c-text-muted',
-        label: 'Normal',
-        dot: 'bg-slate-400',
-      };
-  }
+const PRIORITY_META: Record<
+  string,
+  { tone: ChipTone; urgency: StandardKanbanUrgency; labelKey: string; labelFallback: string }
+> = {
+  urgent: {
+    tone: 'danger',
+    urgency: 'critical',
+    labelKey: 'myWork.tasksList.priorityBadge.critical',
+    labelFallback: 'Critical',
+  },
+  critical: {
+    tone: 'danger',
+    urgency: 'critical',
+    labelKey: 'myWork.tasksList.priorityBadge.critical',
+    labelFallback: 'Critical',
+  },
+  high: {
+    tone: 'warning',
+    urgency: 'pending',
+    labelKey: 'myWork.tasksList.priorityBadge.high',
+    labelFallback: 'High',
+  },
+  medium: {
+    tone: 'info',
+    urgency: 'none',
+    labelKey: 'myWork.tasksList.priorityBadge.medium',
+    labelFallback: 'Medium',
+  },
+  low: {
+    tone: 'neutral',
+    urgency: 'none',
+    labelKey: 'myWork.tasksList.priorityBadge.low',
+    labelFallback: 'Low',
+  },
 };
+
+const DEFAULT_PRIORITY_META = {
+  tone: 'neutral' as ChipTone,
+  urgency: 'none' as StandardKanbanUrgency,
+  labelKey: 'myWork.tasksList.priorityBadge.normal',
+  labelFallback: 'Normal',
+};
+
+const getPriorityMeta = (priority?: string) =>
+  PRIORITY_META[priority?.toLowerCase() || ''] ?? DEFAULT_PRIORITY_META;
 
 /* ─── Date helpers ─── */
 
@@ -234,95 +244,39 @@ const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
  *  Card content (shared between sortable card and drag overlay)
  * ═══════════════════════════════════════════════════════════════ */
 
-const KanbanCardContent: React.FC<{
-  task: Task;
-  isDragging?: boolean;
-  isOverlay?: boolean;
-}> = ({ task, isDragging, isOverlay }) => {
-  const priorityStyle = getPriorityCardStyle(task.priority);
+/** Task → `StandardKanbanCard` data (kanon A9 — JEDYNY dozwolony renderer). */
+function toKanbanCardData(task: Task, t: (key: string, fallback: string) => string) {
   const overdue = isOverdue(task.dueDate, task.status);
   const dueLabel = formatDueDate(task.dueDate);
+  const priorityMeta = getPriorityMeta(task.priority);
   const assigneeName = task.assignee?.firstName
     ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
-    : null;
-  const assigneeInitial = assigneeName ? assigneeName[0].toUpperCase() : '';
+    : undefined;
+  const assigneeInitial = assigneeName ? assigneeName[0].toUpperCase() : undefined;
 
-  return (
-    <div
-      className={`
-        rounded-lg p-3 select-none
-        ${priorityStyle.border} ${priorityStyle.bg}
-        border border-c-border-subtle
-        ${isDragging ? 'opacity-30 scale-[0.98]' : ''}
-        ${isOverlay ? 'shadow-hig-lg rotate-[3deg] scale-105 ring-1 ring-c-border-strong' : ''}
-        transition-all duration-150
-      `}
-    >
-      <div className="flex items-start gap-1.5">
-        <div className="mt-0.5 text-c-text-muted group-hover:text-c-text-secondary transition-colors cursor-grab active:cursor-grabbing flex-shrink-0">
-          <GripVertical size={14} />
-        </div>
-        <h4 className="text-sm font-medium text-c-text mb-2 line-clamp-2 leading-snug flex-1">
-          {task.title || 'Untitled task'}
-        </h4>
-      </div>
-
-      {task.description && (
-        <p className="text-xs text-c-text-muted mb-3 line-clamp-2 leading-relaxed pl-5">
-          {task.description}
-        </p>
-      )}
-
-      <div className="flex items-center gap-1.5 mb-3 flex-wrap pl-5">
-        <span
-          className={`inline-flex items-center gap-1 text-[10px] font-medium ${priorityStyle.badge}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-          {priorityStyle.label}
-        </span>
-        {task.projectName && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-surface-raised text-c-text-secondary border border-c-border-subtle truncate max-w-[120px]">
-            {task.projectName}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pl-5">
-        {dueLabel ? (
-          <span
-            className={`flex items-center gap-1 text-[11px] font-medium ${
-              overdue ? 'text-danger-400' : 'text-c-text-muted'
-            }`}
-          >
-            <Calendar size={11} />
-            {dueLabel}
-          </span>
-        ) : (
-          <span />
-        )}
-        {assigneeName ? (
-          <div className="flex items-center gap-1.5" title={assigneeName}>
-            {task.assignee?.avatarUrl ? (
-              <img
-                src={task.assignee.avatarUrl}
-                alt={assigneeName}
-                className="w-5 h-5 rounded-full object-cover ring-1 ring-white/20"
-              />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-c-surface-raised text-c-text-secondary flex items-center justify-center text-[10px] font-bold ring-1 ring-c-border-subtle">
-                {assigneeInitial}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="w-5 h-5 rounded-full bg-c-surface-raised flex items-center justify-center">
-            <User size={10} className="text-c-text-muted" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+  const card: StandardKanbanCardData = {
+    id: task.id,
+    columnId: getColumnForStatus(task.status),
+    title: task.title || t('myWork.tasksList.untitled', 'Untitled task'),
+    description: task.description,
+    chips: [
+      {
+        id: 'priority',
+        label: t(priorityMeta.labelKey, priorityMeta.labelFallback),
+        icon: Flag,
+        tone: priorityMeta.tone,
+      },
+    ],
+    projectLabel: task.projectName,
+    dueLabel: dueLabel ?? undefined,
+    dueOverdue: overdue,
+    ownerInitials: assigneeInitial,
+    ownerAvatarUrl: task.assignee?.avatarUrl,
+    ownerName: assigneeName,
+    urgency: priorityMeta.urgency,
+  };
+  return card;
+}
 
 /* ═══════════════════════════════════════════════════════════════
  *  Sortable Card wrapper
@@ -332,6 +286,7 @@ const SortableKanbanCard: React.FC<{
   task: Task;
   onClick: (taskId: string, taskData?: Task) => void;
 }> = ({ task, onClick }) => {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', task },
@@ -349,7 +304,7 @@ const SortableKanbanCard: React.FC<{
       style={style}
       {...attributes}
       {...listeners}
-      className="group cursor-grab active:cursor-grabbing touch-none"
+      className="cursor-grab active:cursor-grabbing touch-none"
       onClick={(e) => {
         // Only fire click if this wasn't a drag
         if (!isDragging) {
@@ -358,7 +313,11 @@ const SortableKanbanCard: React.FC<{
         }
       }}
     >
-      <KanbanCardContent task={task} isDragging={isDragging} />
+      <StandardKanbanCard
+        card={toKanbanCardData(task, t)}
+        isDragging={isDragging}
+        dragHandleProps={{}}
+      />
     </div>
   );
 };
@@ -373,10 +332,12 @@ const DroppableColumn: React.FC<{
   children: React.ReactNode;
   onCreateTask: () => void;
 }> = ({ column, taskIds, children, onCreateTask }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
   });
+  const columnLabel = t(column.labelKey, column.labelFallback);
 
   return (
     <div
@@ -390,7 +351,7 @@ const DroppableColumn: React.FC<{
       <div className="flex items-center justify-between px-3 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
-          <span className={`text-sm font-semibold ${column.headerColor}`}>{column.label}</span>
+          <span className={`text-sm font-semibold ${column.headerColor}`}>{columnLabel}</span>
           <span className="ml-1 text-xs font-medium text-c-text-muted bg-c-surface-raised rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {taskIds.length}
           </span>
@@ -402,7 +363,7 @@ const DroppableColumn: React.FC<{
               onCreateTask();
             }}
             className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-            title="Add task"
+            title={t('myWork.kanban.columns.addTask', 'Add task')}
           >
             <Plus size={14} />
           </button>
@@ -420,7 +381,9 @@ const DroppableColumn: React.FC<{
               taskIds.length === 0 ? 'h-24' : 'h-14'
             } ${column.headerColor} opacity-40`}
           >
-            <span className={`text-xs font-medium ${column.headerColor}`}>Drop here</span>
+            <span className={`text-xs font-medium ${column.headerColor}`}>
+              {t('myWork.kanban.columns.dropHere', 'Drop here')}
+            </span>
           </div>
         )}
 
@@ -428,7 +391,9 @@ const DroppableColumn: React.FC<{
         {taskIds.length === 0 && !isOver && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className={`mb-2 ${column.headerColor} opacity-30`}>{column.icon}</div>
-            <p className="text-xs text-c-text-muted">No tasks</p>
+            <p className="text-xs text-c-text-muted">
+              {t('myWork.kanban.columns.noTasks', 'No tasks')}
+            </p>
           </div>
         )}
       </div>
@@ -805,9 +770,10 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           setTasks((prev) =>
             prev.map((item) => (item.id === activeId ? { ...item, ...updated } : item))
           );
+          const targetColumnLabel = t(targetColDef.labelKey, targetColDef.labelFallback);
           toast.success(
             t('myWork.kanban.statusMoved', 'Przeniesiono do „{{column}}"', {
-              column: targetColDef.label,
+              column: targetColumnLabel,
             }),
             { duration: 2000, icon: '✓' }
           );
@@ -825,7 +791,7 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
             (task.title || '').length > 40
               ? `${(task.title || '').slice(0, 40)}…`
               : task.title || '';
-          const ctx = { title: shortTitle, column: targetColDef.label };
+          const ctx = { title: shortTitle, column: t(targetColDef.labelKey, targetColDef.labelFallback) };
           let message: string;
           if (httpStatus === 404) {
             message = t(
@@ -957,8 +923,8 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           {/* Floating ghost card while dragging */}
           <DragOverlay dropAnimation={dropAnimation}>
             {activeTask ? (
-              <div className="w-72">
-                <KanbanCardContent task={activeTask} isOverlay />
+              <div className="w-72 rotate-[3deg] scale-105 shadow-hig-lg ring-1 ring-c-border-strong rounded-lg">
+                <StandardKanbanCard card={toKanbanCardData(activeTask, t)} dragHandleProps={{}} />
               </div>
             ) : null}
           </DragOverlay>

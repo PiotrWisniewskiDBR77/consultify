@@ -2689,7 +2689,16 @@
       "statusFailedForbidden": "Not saved: you do not have permission to change the status of \"{{title}}\". Ask the task owner to change it.",
       "statusFailedServer": "Not saved \"{{title}}\" → {{column}}: server error ({{code}}). The card was moved back — please try again shortly.",
       "statusFailedOffline": "Not saved \"{{title}}\" → {{column}}: no connection to the server. The card was moved back — check your internet and try again.",
-      "statusFailedGeneric": "Not saved \"{{title}}\" → {{column}} ({{code}}). The card was moved back — please try again."
+      "statusFailedGeneric": "Not saved \"{{title}}\" → {{column}} ({{code}}). The card was moved back — please try again.",
+      "columns": {
+        "toDo": "To Do",
+        "inProgress": "In Progress",
+        "blocked": "Blocked",
+        "done": "Done",
+        "noTasks": "No tasks",
+        "addTask": "Add task",
+        "dropHere": "Drop here"
+      }
     },
     "title": "My Work",
     "home": "Home",
@@ -4420,7 +4429,8 @@
         "tasksDeletedCount": "{{count}} tasks deleted",
         "updatePriorityFailed": "Failed to update priority",
         "updateTaskFailed": "Failed to update task"
-      }
+      },
+      "untitled": "Untitled task"
     },
     "notificationsContent": {
       "recently": "Recently",
