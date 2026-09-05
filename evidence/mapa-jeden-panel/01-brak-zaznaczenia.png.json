@@ -1,0 +1,52 @@
+{
+ "url": "http://127.0.0.1:3028/my-work/ideas/f257af8d-98ba-4602-a45c-d3bdfbb563e3/workspace/mindmap",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1089,
+     "y": 166,
+     "width": 319,
+     "height": 734
+    }
+   ]
+  },
+  "[data-testid=\"idea-right-panel\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1089,
+     "y": 166,
+     "width": 319,
+     "height": 734
+    }
+   ]
+  },
+  "[data-testid=\"mels-right-rail-strip\"]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=\"idea-ai-nudge-strip\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1105,
+     "y": 659.75,
+     "width": 287,
+     "height": 224.25
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T12:10:42.382Z"
+}

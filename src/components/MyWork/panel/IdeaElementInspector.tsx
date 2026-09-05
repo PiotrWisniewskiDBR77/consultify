@@ -2,6 +2,8 @@ import { Loader2, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { setCanvasAnalysisSlot } from './canvasAnalysisSlot';
+
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
@@ -9,6 +11,9 @@ import {
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 
 export type IdeaInspectorTool = 'mindmap' | 'process' | 'whiteboard' | 'table';
+
+/** Zakładki JEDNEGO prawego panelu warsztatu Pomysłów (decyzja CTO 2026-09-05). */
+export type IdeaInspectorTab = 'element' | 'teresa';
 
 export interface IdeaInspectorItem {
   id?: string;
@@ -78,6 +83,27 @@ export interface IdeaElementInspectorProps {
   aiInsights?: string[];
   aiLoading?: boolean;
   onGenerateInsights?: () => void;
+  /**
+   * ★ JEDEN PRAWY PANEL (decyzja CTO 2026-09-05). Teresa NIGDY nie jest drugą
+   * kolumną obok tego panelu — gdy gospodarz poda `teresaContent`, panel
+   * dostaje w nagłówku dwie zakładki („Element" | „Teresa") i pokazuje w
+   * swoim ciele albo element, albo rozmowę. Bez tego propsa nagłówek nie ma
+   * zakładek i komponent renderuje się 1:1 jak wcześniej.
+   */
+  teresaContent?: React.ReactNode;
+  /** Aktywna zakładka (sterowana przez gospodarza). Domyślnie 'element'. */
+  activeTab?: IdeaInspectorTab;
+  onTabChange?: (tab: IdeaInspectorTab) => void;
+  /**
+   * Zamknięcie CAŁEGO panelu (X w nagłówku). Gdy podane, X zamyka panel;
+   * gdy nie — X zachowuje dotychczasowe znaczenie (`onReturnToCanvas`).
+   */
+  onClosePanel?: () => void;
+  /**
+   * Gdy `true`, panel wystawia gniazdo na karty „Analiza płótna" (sekcja
+   * „Akcje"). Karty trafiają tam portalem — patrz `canvasAnalysisSlot.ts`.
+   */
+  showCanvasAnalysis?: boolean;
 }
 
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
@@ -162,6 +188,11 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   aiInsights,
   aiLoading = false,
   onGenerateInsights,
+  teresaContent,
+  activeTab = 'element',
+  onTabChange,
+  onClosePanel,
+  showCanvasAnalysis = false,
 }) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(element);
@@ -266,13 +297,118 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
     }[tool]
   );
 
+  /**
+   * ★ JEDEN PRAWY PANEL — powłoka wspólna (decyzja CTO 2026-09-05).
+   * Nagłówek panelu niesie zakładki („Element" | „Teresa") i jeden X. Ta sama
+   * powłoka opakowuje WSZYSTKIE trzy ciała panelu (Teresa · stan pusty ·
+   * element), żeby zakładka „Teresa" była dostępna także wtedy, gdy nic nie
+   * jest zaznaczone — inaczej użytkownik bez zaznaczenia nie miałby jak
+   * otworzyć rozmowy i wróciłaby druga kolumna.
+   */
+  const zakladkaAktywna: IdeaInspectorTab = teresaContent ? activeTab : 'element';
+  const zakladki = teresaContent ? (
+    <div
+      role="tablist"
+      aria-label={t('myWork.ideaInspector.tabs.aria', 'Zakładki panelu')}
+      className="inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5"
+    >
+      {(
+        [
+          { id: 'element' as const, label: t('myWork.ideaInspector.tabs.element', 'Element') },
+          { id: 'teresa' as const, label: t('myWork.ideaInspector.tabs.teresa', 'Teresa') },
+        ] as const
+      ).map((tab) => {
+        const aktywna = zakladkaAktywna === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={aktywna}
+            data-testid={`idea-panel-tab-${tab.id}`}
+            onClick={() => onTabChange?.(tab.id)}
+            className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+              aktywna
+                ? 'bg-c-surface text-c-text shadow-sm'
+                : 'text-c-text-secondary hover:text-c-text'
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+  const zamknijPanel = onClosePanel ?? onReturnToCanvas;
+  const przyciskZamknij = zamknijPanel ? (
+    <button
+      type="button"
+      onClick={zamknijPanel}
+      data-testid="idea-panel-close"
+      aria-label={
+        onClosePanel
+          ? t('myWork.ideaInspector.closePanel', 'Zamknij panel')
+          : t('myWork.ideaInspector.close', 'Zamknij inspektor')
+      }
+      className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+    >
+      <X size={15} />
+    </button>
+  ) : null;
+  const powlokaNaglowka =
+    zakladki || przyciskZamknij ? (
+      <div className="flex items-center gap-2 border-b border-c-border-subtle px-3 py-2">
+        {zakladki}
+        <span className="flex-1" />
+        {przyciskZamknij}
+      </div>
+    ) : null;
+  /**
+   * Gniazdo kart „Analiza płótna". Renderowane DOKŁADNIE RAZ (tylko jedna z
+   * trzech ścieżek `return` niżej się wykonuje), więc rejestr zawsze wskazuje
+   * jeden żywy węzeł. W zakładce „Teresa" gniazdo jest ukryte (`hidden`), ale
+   * obecne — dzięki temu przełączenie zakładki nie gubi kart ani nie wypycha
+   * ich z powrotem na płótno.
+   */
+  const gniazdoAnalizy = showCanvasAnalysis ? (
+    <div
+      ref={setCanvasAnalysisSlot}
+      data-testid="idea-canvas-analysis-slot"
+      className="flex flex-col gap-2"
+    />
+  ) : null;
+  const wspolneAtrybutyKorzenia = {
+    className: 'flex h-full w-full flex-col bg-c-surface text-c-text',
+    onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
+      if (event.key === 'Escape') onReturnToCanvas?.();
+    },
+  };
+
+  if (teresaContent && zakladkaAktywna === 'teresa') {
+    return (
+      <aside
+        ref={rootRef}
+        {...wspolneAtrybutyKorzenia}
+        aria-label={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
+        data-testid="idea-right-panel"
+      >
+        {powlokaNaglowka}
+        <div className="min-h-0 flex-1 overflow-hidden">{teresaContent}</div>
+        {gniazdoAnalizy ? <div hidden>{gniazdoAnalizy}</div> : null}
+      </aside>
+    );
+  }
+
   if (!draft) {
     const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
     return (
       <aside
-        className="flex h-full w-full flex-col bg-c-surface"
+        ref={rootRef}
+        {...wspolneAtrybutyKorzenia}
         aria-label={emptyText}
+        data-testid="idea-right-panel"
       >
+        {powlokaNaglowka}
         <div className="m-auto max-w-xs p-6 text-center">
           <p className="font-medium text-c-text">{emptyText}</p>
           <p className="mt-1 text-sm text-c-text-secondary">
@@ -304,6 +440,9 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
             </section>
           ) : null}
         </div>
+        {/* Analiza płótna dotyczy CAŁEGO płótna, nie zaznaczenia — pokazujemy
+            ją także wtedy, gdy nic nie jest zaznaczone. */}
+        {gniazdoAnalizy ? <div className="px-4 pb-4">{gniazdoAnalizy}</div> : null}
       </aside>
     );
   }
@@ -320,12 +459,17 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
       id: 'actions',
       label: t('myWork.ideaInspector.sections.actions', 'Akcje'),
       defaultOpen: true,
-      isEmpty: true,
+      // ★ 2026-09-05: sekcja przestaje być pusta, gdy gospodarz włączy
+      // „Analizę płótna" — karty, które do dziś PŁYWAŁY nad płótnem, mają tu
+      // swoje miejsce (decyzja CTO: nad płótnem nie pływa nic poza menu
+      // kontekstowym węzła). Bez `showCanvasAnalysis` sekcja zachowuje
+      // dotychczasowy uczciwy stan pusty.
+      isEmpty: !showCanvasAnalysis,
       // Honest empty state — the real quick actions (Drąż w głąb/AI podsumuj/
       // AI porada) live in the header next to the element's identity, same as
       // before; there is no second, distinct set of actions to show here.
       emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'Brak dostępnych akcji.'),
-      children: null,
+      children: gniazdoAnalizy,
     },
     {
       id: 'properties',
@@ -614,6 +758,7 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   return (
     <aside
       ref={rootRef}
+      data-testid="idea-right-panel"
       /*
        * ★ NAPRAWA 2026-09-01 (dyżur 164). Inspektor był PRZYBITY do 360 px
        * wewnątrz powłoki, która rezerwowała 400 px (`ExecutiveModuleShell`,
@@ -623,28 +768,18 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
        * właściciela. Teraz inspektor WYPEŁNIA swojego gospodarza, a jedyną
        * szerokość ustala powłoka z tokenu `--ntype-right-panel-width`.
        */
-      className="flex h-full w-full flex-col bg-c-surface text-c-text"
+      {...wspolneAtrybutyKorzenia}
       aria-label={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') onReturnToCanvas?.();
-      }}
     >
-      {/* Header — no box, typographic title + light meta line (DEC-68). */}
+      {powlokaNaglowka}
+      {/* Header — no box, typographic title + light meta line (DEC-68).
+          X przeniesiony do wspólnej powłoki nagłówka (jeden przycisk zamknięcia
+          na panel, nie dwa) — patrz `powlokaNaglowka`. */}
       <header className="px-4 pb-3 pt-3.5">
         <div className="flex items-start gap-2">
           <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-tight">
             {safeText(draft.label) || t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
           </h2>
-          {onReturnToCanvas ? (
-            <button
-              type="button"
-              onClick={onReturnToCanvas}
-              aria-label={t('myWork.ideaInspector.close', 'Zamknij inspektor')}
-              className="shrink-0 rounded-md p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
-            >
-              <X size={15} />
-            </button>
-          ) : null}
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
           {safeText(draft.semanticType) ? <span>{safeText(draft.semanticType)}</span> : null}
@@ -716,6 +851,10 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <ArtifactRightPanel
+          // Ten komponent JEST już `<aside aria-label>` — accordion renderuje
+          // się jako `div`, żeby panel miał JEDEN korzeń (decyzja CTO
+          // 2026-09-05: „policz aside — ma być 1 albo 0").
+          renderAs="div"
           ariaLabel={t('myWork.ideaInspector.ariaElementProperties', 'Właściwości elementu')}
           sections={sections}
           width="100%"

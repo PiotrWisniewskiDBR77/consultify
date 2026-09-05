@@ -238,6 +238,18 @@ export interface ArtifactRightPanelProps {
    * ten prop tylko udostępnia miejsce w powłoce.
    */
   statusBar?: React.ReactNode;
+  /**
+   * ★ 2026-09-05 (decyzja CTO „jeden prawy panel" na Mapie myśli). Panel
+   * renderuje domyślnie WŁASNY `<aside>` — poprawne, gdy jest jedynym
+   * korzeniem panelu. Ale konsument, który sam już jest `<aside aria-label>`
+   * (np. `IdeaElementInspector`: nagłówek + zakładki Element/Teresa nad tym
+   * accordionem), dostawał przez to DWA zagnieżdżone punkty orientacyjne —
+   * dla czytnika ekranu to dwa panele zamiast jednego, a dla odbioru
+   * „policz `aside`" fałszywe 2 zamiast 1. `renderAs="div"` oddaje ten
+   * jeden `<aside>` gospodarzowi. Domyślnie `'aside'` → zero zmiany u
+   * wszystkich dotychczasowych konsumentów.
+   */
+  renderAs?: 'aside' | 'div';
 }
 
 const SectionRow: React.FC<{
@@ -333,6 +345,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   className,
   ariaLabel,
   statusBar,
+  renderAs = 'aside',
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -523,9 +536,12 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
     });
   }, []);
 
+  const Root = renderAs;
   return (
-    <aside
-      aria-label={ariaLabel ?? defaultAriaLabel}
+    <Root
+      // Gospodarz z własnym `<aside>` (renderAs="div") niesie już etykietę —
+      // nie duplikujemy jej na wewnętrznym kontenerze.
+      {...(renderAs === 'aside' ? { 'aria-label': ariaLabel ?? defaultAriaLabel } : {})}
       style={{ width, minWidth: width }}
       className={`shrink-0 h-full overflow-y-auto bg-c-surface border-l border-c-border-subtle ${className ?? ''}`}
     >
@@ -540,7 +556,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
           onToggle={() => toggle(section.id)}
         />
       ))}
-    </aside>
+    </Root>
   );
 };
 

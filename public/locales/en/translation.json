@@ -5891,7 +5891,14 @@
       "sessionParticipants": "Participants",
       "sessionTimer": "Timer",
       "sessionActive": "active",
-      "sessionInactive": "inactive"
+      "sessionInactive": "inactive",
+      "tabs": {
+        "aria": "Panel tabs",
+        "element": "Element",
+        "teresa": "Teresa"
+      },
+      "closePanel": "Close panel",
+      "ariaPanel": "Idea panel"
     }
   },
   "step1": {
@@ -31146,7 +31153,8 @@
       "start": "Arrow: at the start",
       "both": "Arrow: both ends",
       "noEdges": "This branch has no connections"
-    }
+    },
+    "showPanel": "Show panel"
   },
   "ideas": {
     "table": {

@@ -9,11 +9,13 @@
  */
 import { ArrowRight, GitBranch, Link2, Loader2, Rocket, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
 import type { CanvasToolType } from './ideaSelectionTypes';
+import { useCanvasAnalysisSlot } from './panel/canvasAnalysisSlot';
 
 interface Nudge {
   id: string;
@@ -66,6 +68,7 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
   onSendToChat,
   onActionConnect,
 }) => {
+  const { host, slot } = useCanvasAnalysisSlot();
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const hasDismissalScope = Boolean(userId && organizationId);
@@ -350,20 +353,42 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
   );
 
   if (!isAccepted || allNudges.length === 0) return null;
+  /*
+   * ★ 2026-09-05 (decyzja CTO „jeden prawy panel"): karty analizy płótna NIE
+   * pływają już nad mapą. Gdy warsztat Pomysłów jest gospodarzem (`host`),
+   * renderujemy je portalem do gniazda w JEDNYM prawym panelu; gdy panel jest
+   * zamknięty (`slot === null`) nie renderujemy nic — płótno zostaje czyste,
+   * a użytkownik wraca przyciskiem „Pokaż panel". Poza warsztatem (host=false)
+   * zachowanie jest dotychczasowe: pływający pasek na dole płótna.
+   */
+  if (host && !slot) return null;
+  const wPanelu = Boolean(host && slot);
 
-  return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 max-w-[90%]">
+  const pasek = (
+    <div
+      className={
+        wPanelu
+          ? 'flex flex-col gap-2'
+          : 'absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 max-w-[90%]'
+      }
+      data-testid="idea-ai-nudge-strip"
+      data-embedded={wPanelu ? 'true' : 'false'}
+    >
       {allNudges.map((nudge) => {
         const Icon = nudge.icon;
         return (
           <div
             key={nudge.id}
-            className="flex items-center gap-2 bg-white/95 dark:bg-navy-800/95 backdrop-blur-sm border border-c-info/20 rounded-2xl shadow-lg px-4 py-2.5 animate-in slide-in-from-bottom-4 duration-300"
+            className={
+              wPanelu
+                ? 'flex flex-wrap items-center gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5'
+                : 'flex items-center gap-2 bg-white/95 dark:bg-navy-800/95 backdrop-blur-sm border border-c-info/20 rounded-2xl shadow-lg px-4 py-2.5 animate-in slide-in-from-bottom-4 duration-300'
+            }
           >
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-c-info/20 to-c-info/15 flex items-center justify-center shrink-0">
               <Icon size={14} className="text-c-info" />
             </div>
-            <div className="max-w-[300px] leading-relaxed">
+            <div className={wPanelu ? 'min-w-0 flex-1 leading-relaxed' : 'max-w-[300px] leading-relaxed'}>
               <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-c-info">
                 {nudge.source === 'teresa'
                   ? isPl
@@ -437,6 +462,8 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       )}
     </div>
   );
+
+  return wPanelu && slot ? createPortal(pasek, slot) : pasek;
 };
 
 export default IdeaAINudgeStrip;

@@ -58,9 +58,15 @@ describe('MENU1-RPANEL: Menu 1 (Narzędzia/Kontekst/Sugestie AI) mounts the cano
     expect(computeSite).toBeLessThan(liveBranch);
   });
 
-  it('the live (melsCanvasEnabled) branch actually renders {ideaRightPanelNode} inside its own returned JSX (before the unreachable legacy branch starts)', () => {
+  it('the live (melsCanvasEnabled) branch actually mounts ideaRightPanelNode inside its own returned JSX (before the unreachable legacy branch starts)', () => {
     const liveBranch = source.indexOf('if (melsCanvasEnabled) {');
-    const mountSite = source.indexOf('{ideaRightPanelNode}');
+    // ★ ZAKTUALIZOWANE 2026-09-05 (decyzja CTO „jeden prawy panel"). Do tego
+    // dnia panel Menu 3 był OSOBNĄ kolumną (`{ideaRightPanelNode}` obok
+    // płótna) — i to właśnie dawało DWA panele obok siebie, o które właściciel
+    // się awanturował. Wymóg „panel MUSI się realnie renderować" zostaje bez
+    // zmian; zmienia się MIEJSCE: ta sama, jedyna kolumna prawego panelu
+    // (`elementInspectorRail`), na zasadzie wykluczenia z panelem elementu.
+    const mountSite = source.indexOf('ideaRightPanelNode ? (');
     // Legacy/dead branch marker — its own unique comment (unreachable:
     // melsCanvasEnabled is hardcoded true, so this second `return` never
     // executes), used to delimit "the active melsCanvasEnabled-branch" from
@@ -73,27 +79,25 @@ describe('MENU1-RPANEL: Menu 1 (Narzędzia/Kontekst/Sugestie AI) mounts the cano
     expect(mountSite).toBeLessThan(deadLegacyBranchStart);
   });
 
-  it('the panel column sits in a flex ROW beside the canvas, not in the flex-COL "siblings" overlay layer (which would stack it BELOW the canvas)', () => {
-    // The outer MELS wrapper is flex-col (vertical stack: canvas row, then
-    // floating dialogs). Mounting an <aside> there directly (as `siblings`
-    // does for modals) would place a real accordion column underneath the
-    // canvas instead of beside it. The fix wraps canvasContainerRef + the
-    // panel in their own flex row.
-    const wrapperIdx = source.indexOf(
-      'className="w-full h-full flex flex-col overflow-hidden bg-c-surface-raised dark:bg-c-surface"'
-    );
-    expect(wrapperIdx).toBeGreaterThan(0);
-    const rowWrapperIdx = source.indexOf(
-      'className="flex flex-1 min-w-0 min-h-0 overflow-hidden"',
-      wrapperIdx
-    );
-    expect(rowWrapperIdx).toBeGreaterThan(wrapperIdx);
+  it('JEDEN PRAWY PANEL: panel Menu 3 dzieli kolumnę z panelem elementu i nie jest osobną kolumną obok płótna', () => {
+    // Decyzja CTO 2026-09-05: na tym ekranie w danej chwili istnieje DOKŁADNIE
+    // jeden prawy panel. Panel Menu 3 wchodzi więc do slotu
+    // `elementInspectorRail` powłoki (ta sama kolumna co inspektor), a nie
+    // jako drugi węzeł w wierszu obok `canvasContainerRef`.
+    const railProp = source.indexOf('elementInspectorRail={');
+    expect(railProp).toBeGreaterThan(0);
+    const mountSite = source.indexOf('ideaRightPanelNode ? (', railProp);
+    expect(mountSite).toBeGreaterThan(railProp);
+    // Zamknięty panel = zero kolumny (płótno pełnej szerokości).
+    expect(source).toContain('panelZamkniety ? undefined : ideaRightPanelNode ? (');
+    // Stary wzorzec osobnej kolumny nie może wrócić.
+    const rowWrapperIdx = source.indexOf('className="flex flex-1 min-w-0 min-h-0 overflow-hidden"');
+    expect(rowWrapperIdx).toBeGreaterThan(0);
     const canvasContainerIdx = source.indexOf(
       '<div ref={canvasContainerRef} className="flex-1 min-w-0 min-h-0 relative">',
       rowWrapperIdx
     );
-    const mountSite = source.indexOf('{ideaRightPanelNode}', rowWrapperIdx);
     expect(canvasContainerIdx).toBeGreaterThan(rowWrapperIdx);
-    expect(mountSite).toBeGreaterThan(canvasContainerIdx);
+    expect(source).not.toContain('\n        {ideaRightPanelNode}\n');
   });
 });
