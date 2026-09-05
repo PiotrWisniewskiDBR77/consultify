@@ -1,8 +1,8 @@
 # CODEX DAY 374 — i18n Czat, domknięcie
 
-Data: 2026-09-05  
-Branch: `codex/day374-i18n-czat-domkniecie-20260905`  
-Marker: `8f60ab998734adcdf61a080f4e1270c3dbdffceb`  
+Data: 2026-09-05
+Branch: `codex/day374-i18n-czat-domkniecie-20260905`
+Marker: `8f60ab998734adcdf61a080f4e1270c3dbdffceb`
 Wynik: **PARTIAL / NIE DOMKNIĘTO pełnego mianownika R3**
 
 ## R0 — granice
