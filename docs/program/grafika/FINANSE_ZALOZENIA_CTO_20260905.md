@@ -40,3 +40,27 @@ Działa: import pakietu (po dzisiejszej naprawie okresu porównawczego bilansu),
 
 ## 5. Kryterium „gotowe” dla właściciela
 CFO importuje sprawozdanie 2025 z porównawczym 2024, zatwierdza, tworzy analizę i model, i **widzi jedną tabelę RZiS · Bilans · CF z trzema latami historii i horyzontem prognozy**, zmienia założenie, przelicza, tworzy scenariusz, wycenia firmę ze wskazanym źródłem i eksportuje raport do Materiałów — bez jednego zapytania SQL i bez pustego ekranu.
+
+## 6. Uzupełnienie właściciela 05.09 — rodowód w każdej tabeli, sprawozdanie jako dokument podstawowy
+> „W tej tabeli zawsze musi być oznaczenie, która analiza — ta na poziomie 2, 3, 4, 5, 6, a nawet 7 — do sprawozdania finansowego. Musimy mieć swoją nazwę; czasem można robić analizę na bazie kilku sprawozdań … to gdzieś w tych tabelach, w tych raportach musi być podpięte.” „Podstawowym dokumentem jest sprawozdanie finansowe pełne, tak jak mamy je tutaj dobrane i opisane.”
+
+Wiążące:
+1. **Dokument podstawowy = pełne sprawozdanie finansowe** (RZiS · Bilans · CF, okres + porównawczy), w kształcie z pakietu sprawozdań. Wszystko wyżej (analiza, model, scenariusz, wycena, business case, przegląd korzyści) jest **pochodną** i musi wskazywać swoje sprawozdania.
+2. **Każda tabela poziomu 1 ma kolumnę „SPRAWOZDANIE ŹRÓDŁOWE”** (jedno lub kilka: „DBR77 2025 (v2) + DBR77 2024 (v1)”), a każda karta ma sekcję **Rodowód** z pełnym łańcuchem do sprawozdań (analiza → pakiet; model → analiza + pakiet; scenariusz → model; wycena → model/scenariusz). Klik na nazwę sprawozdania otwiera jego pakiet w zatwierdzonej wersji.
+3. **Każda analiza ma własną nazwę** nadaną przez użytkownika (np. „Analiza 3-letnia DBR77 do wyceny 2026”), niezależną od nazw sprawozdań; system proponuje nazwę, użytkownik ją zmienia.
+4. Analiza może stać na **kilku sprawozdaniach** (lata, jednostki, wersje) — powiązanie wiele-do-wielu, wszystkie wymienione w kolumnie i w Rodowodzie; „różne historie” = różne zestawy źródeł, jawnie nazwane.
+5. Brak wskazanego źródła = stan uczciwy („bez sprawozdania źródłowego”) widoczny w tabeli, a nie ukryty; liczenie bez źródła jest zablokowane z komunikatem, czego brakuje.
+
+## 7. Wzory analiz (standard, który wchodzi do §1 pkt 2 „Analiza historyczna” i do wyceny) — żeby właściciel nie musiał ich szukać
+- **Rentowność**: marża brutto, EBITDA, EBIT, netto (ROS); ROA; ROE; DuPont (ROE = marża × rotacja aktywów × dźwignia).
+- **Płynność**: bieżąca, szybka, gotówkowa; kapitał obrotowy netto.
+- **Zadłużenie i obsługa długu**: dług/EBITDA, dług/kapitał własny (D/E), pokrycie odsetek (EBIT/odsetki), DSCR.
+- **Efektywność / cykl gotówki**: DSO, DIO, DPO, cykl konwersji gotówki (CCC), rotacja aktywów, rotacja zapasów.
+- **Wzrost**: przychody r/r, EBITDA r/r, CAGR 3-letni; struktura kosztów (% przychodów).
+- **Cash flow**: FCF (CFO − capex), konwersja gotówki (FCF/EBITDA), CFO/zysk netto.
+- **Sygnały ryzyka**: Altman Z (wariant dla spółek nienotowanych), trend marż, koncentracja.
+- **Wycena**: DCF/FCFF (WACC, g, wartość rezydualna Gordona), mnożniki (EV/EBITDA, P/E, EV/S) z grupą porównawczą, most wartości EV → equity (dług netto), football field, wrażliwość WACC × g.
+Każdy wskaźnik w karcie analizy: wartość per rok, trend, definicja (metoda liczenia) w dymku, benchmark branżowy jeśli jest, interpretacja Teresy oznaczona jako interpretacja.
+
+## 8. Dlaczego dotąd nie było dobrze (odpowiedź na pytanie właściciela, uczciwie)
+Nie brak wiedzy o analizie finansowej był przyczyną. Zmierzone 05.09: pięć kanonicznych tabel danych nie ma ani jednego producenta w kodzie produkcyjnym, kreator modelu zapisuje tylko starą tabelę, krawędzie powiązań nikt nie tworzy, a kontekst modelu ma dziewięć bramek, których żaden ekran nie spełnia. Budowano **elementy** (import, analiza, wycena, komentarze, panel wyceny z 21 panelami) bez jednej osoby prowadzącej **jeden przepływ CFO od sprawozdania do tabeli** do końca i bez testu na realnej bazie. Naprawa to nie „poszukać wzorów”, tylko spiąć łańcuch (program F, 6 ogniw, test = klikany przepływ CFO + komplet zrzutów). Wzory analiz z §7 są standardem podręcznikowym i wchodzą do specyfikacji od razu; właściciel nie musi ich szukać.
