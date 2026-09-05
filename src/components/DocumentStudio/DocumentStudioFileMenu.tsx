@@ -38,7 +38,10 @@
 
 import { Check, ChevronDown, Copy, FilePlus, FolderOpen, Loader2, Save, Wand2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+
+import { useAnchorFixedMenuPosition } from '@/hooks/useFixedMenuPosition';
 
 import type { DocumentAutosaveStatus } from './editor';
 
@@ -62,12 +65,18 @@ export interface DocumentStudioFileMenuProps {
   onSaveAsTemplate?: () => void;
 }
 
-function useOutsideClose(open: boolean, onClose: () => void): React.RefObject<HTMLDivElement> {
+function useOutsideClose(
+  open: boolean,
+  onClose: () => void,
+  extraRef?: React.RefObject<HTMLElement | null>
+): React.RefObject<HTMLDivElement> {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent): void => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (extraRef?.current && extraRef.current.contains(target)) return;
+      if (ref.current && !ref.current.contains(target)) onClose();
     };
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') onClose();
@@ -78,7 +87,7 @@ function useOutsideClose(open: boolean, onClose: () => void): React.RefObject<HT
       document.removeEventListener('mousedown', onDocClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, extraRef]);
   return ref as React.RefObject<HTMLDivElement>;
 }
 
@@ -92,7 +101,22 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const ref = useOutsideClose(open, () => setOpen(false));
+  // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały, różnica #8) — menu „Plik"
+  // otwierało się w DOM z pełnym kompletem pozycji, ale było NIEWIDOCZNE i
+  // NIEKLIKALNE. Przyczyna zmierzona: panel był `position: absolute` WEWNĄTRZ
+  // `mels-topbar-chips` (`TopBar.tsx`), którego klasa `overflow-x-auto` tworzy
+  // kontekst przycinania w OBU osiach — dropdown wychodzący POD pasek był
+  // obcinany przez przodka (260×208 px, opacity 1, z-index 40, a mimo to
+  // niedostępny; automat odmawiał kliknięcia jako elementu zasłoniętego).
+  // `right-0`/`z-dropdown` tego nie ratują: `z-index` nie przebija przycięcia
+  // przez `overflow`. Naprawa: panel renderuje się PRZEZ PORTAL do `body`
+  // (poza kontekstem przycinania) i jest pozycjonowany `position: fixed`
+  // względem prostokąta przycisku — `useAnchorFixedMenuPosition`, ten sam
+  // współdzielony przyrząd, który powstał dla menu kontekstowych My Work
+  // (dotąd BEZ ani jednego wywołania w `src/`).
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { ref: panelRef, style: panelStyle } = useAnchorFixedMenuPosition(triggerRef.current, open);
+  const ref = useOutsideClose(open, () => setOpen(false), panelRef);
 
   const saveAsDisabled = !onSaveAs || saveAsBusy;
 
@@ -141,6 +165,7 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
     <div className="relative flex-shrink-0" ref={ref}>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
         className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle px-2.5 text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         aria-haspopup="menu"
@@ -150,98 +175,107 @@ export const DocumentStudioFileMenu: React.FC<DocumentStudioFileMenuProps> = ({
         <span className="hidden sm:inline">{t('documentStudio.fileMenu.trigger', 'Plik')}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
-      {open ? (
-        <div
-          role="menu"
-          aria-label={t('documentStudio.fileMenu.trigger', 'Plik')}
-          // U4 (odbiór "menu pliku") — was `left-0`, which overflowed past the
-          // right edge of the viewport at 1280px when the trigger sits near
-          // the right side of the bar (now more likely per U3's reordering).
-          // `right-0` mirrors the existing `⋯` OverflowMenu in `TopBar.tsx`,
-          // which already solves this exact viewport-collision problem the
-          // same way. Verified at 1280px and 1024px.
-          className="absolute right-0 top-full z-dropdown mt-1 min-w-[260px] max-w-[calc(100vw-2rem)] rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
-          data-testid="document-file-menu"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={closeAnd(onNew)}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-            data-testid="document-file-menu-new"
-          >
-            <FilePlus className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
-            <span className="flex-1 truncate">{t('documentStudio.fileMenu.new', 'Nowy')}</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={closeAnd(onOpen)}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-            data-testid="document-file-menu-open"
-          >
-            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
-            <span className="flex-1 truncate">{t('documentStudio.fileMenu.open', 'Otwórz')}</span>
-          </button>
-          <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
-          {/* Zapisz — status only, not a manual-save button: Document Studio
+      {open && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              role="menu"
+              ref={panelRef}
+              aria-label={t('documentStudio.fileMenu.trigger', 'Plik')}
+              // U4 (odbiór "menu pliku") — kolizja z prawą krawędzią viewportu
+              // rozwiązana wcześniej przez `right-0`; dziś robi to samo
+              // `useAnchorFixedMenuPosition` (klamruje lewą krawędź do
+              // viewportu i odwraca panel do góry, gdy pod paskiem brakuje
+              // miejsca), a przy okazji wyprowadza panel spod `overflow-x-auto`
+              // paska nagłówka — patrz komentarz przy `triggerRef` wyżej.
+              style={panelStyle}
+              className="z-dropdown min-w-[260px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-token-md border border-c-border-subtle bg-c-surface p-1 shadow-lg"
+              data-testid="document-file-menu"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={closeAnd(onNew)}
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                data-testid="document-file-menu-new"
+              >
+                <FilePlus className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                <span className="flex-1 truncate">{t('documentStudio.fileMenu.new', 'Nowy')}</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={closeAnd(onOpen)}
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                data-testid="document-file-menu-open"
+              >
+                <FolderOpen className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                <span className="flex-1 truncate">
+                  {t('documentStudio.fileMenu.open', 'Otwórz')}
+                </span>
+              </button>
+              <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+              {/* Zapisz — status only, not a manual-save button: Document Studio
               autosaves. A clickable "Save" here would either be a no-op
               (dishonest) or duplicate the debounce logic (a second save
               engine). Showing the true state satisfies N20 ("gdzie jest
               Zapisz") without lying about what happens on click. */}
-          <div
-            role="menuitem"
-            aria-disabled="true"
-            className="flex w-full cursor-default items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary"
-            data-testid="document-file-menu-save"
-          >
-            {saveStatusMeta.icon}
-            <span className="flex-1 truncate">{t('documentStudio.fileMenu.save', 'Zapisz')}</span>
-            <span className="shrink-0 truncate text-[11px] text-c-text-muted">
-              {saveStatusMeta.label}
-            </span>
-          </div>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={saveAsDisabled ? undefined : closeAnd(onSaveAs!)}
-            disabled={saveAsDisabled}
-            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
-            data-testid="document-file-menu-save-as"
-          >
-            {saveAsBusy ? (
-              <Loader2
-                className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted"
-                aria-hidden
-              />
-            ) : (
-              <Copy className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
-            )}
-            <span className="flex-1 truncate">
-              {saveAsBusy
-                ? t('documentStudio.fileMenu.saveAsBusy', 'Duplikuję…')
-                : t('documentStudio.fileMenu.saveAs', 'Zapisz jako')}
-            </span>
-          </button>
-          {onSaveAsTemplate ? (
-            <>
-              <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+              <div
+                role="menuitem"
+                aria-disabled="true"
+                className="flex w-full cursor-default items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary"
+                data-testid="document-file-menu-save"
+              >
+                {saveStatusMeta.icon}
+                <span className="flex-1 truncate">
+                  {t('documentStudio.fileMenu.save', 'Zapisz')}
+                </span>
+                <span className="shrink-0 truncate text-[11px] text-c-text-muted">
+                  {saveStatusMeta.label}
+                </span>
+              </div>
               <button
                 type="button"
                 role="menuitem"
-                onClick={closeAnd(onSaveAsTemplate)}
-                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-                data-testid="document-file-menu-save-as-template"
+                onClick={saveAsDisabled ? undefined : closeAnd(onSaveAs!)}
+                disabled={saveAsDisabled}
+                className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-40"
+                data-testid="document-file-menu-save-as"
               >
-                <Wand2 className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                {saveAsBusy ? (
+                  <Loader2
+                    className="h-3.5 w-3.5 shrink-0 animate-spin text-c-text-muted"
+                    aria-hidden
+                  />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                )}
                 <span className="flex-1 truncate">
-                  {t('documentStudio.fileMenu.saveAsTemplate', 'Zrób z tego wzorzec')}
+                  {saveAsBusy
+                    ? t('documentStudio.fileMenu.saveAsBusy', 'Duplikuję…')
+                    : t('documentStudio.fileMenu.saveAs', 'Zapisz jako')}
                 </span>
               </button>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+              {onSaveAsTemplate ? (
+                <>
+                  <div className="my-1 border-t border-c-border-subtle" aria-hidden="true" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={closeAnd(onSaveAsTemplate)}
+                    className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                    data-testid="document-file-menu-save-as-template"
+                  >
+                    <Wand2 className="h-3.5 w-3.5 shrink-0 text-c-text-muted" aria-hidden />
+                    <span className="flex-1 truncate">
+                      {t('documentStudio.fileMenu.saveAsTemplate', 'Zrób z tego wzorzec')}
+                    </span>
+                  </button>
+                </>
+              ) : null}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };
