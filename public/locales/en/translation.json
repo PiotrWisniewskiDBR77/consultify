@@ -8084,7 +8084,7 @@
       },
       "matrix": {
         "skips": "Skipped questions",
-        "gridLabel": "DRD matrix — areas \u00d7 levels"
+        "gridLabel": "DRD matrix — areas × levels"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",
@@ -28453,7 +28453,9 @@
       "expand": "Expand",
       "changeToneTitle": "Change tone",
       "tone": {
-        "label": "Tone"
+        "label": "Tone",
+        "tone_formal": "Formal",
+        "tone_simple": "Simpler"
       },
       "explainTitle": "Explain selection (does not modify the document)",
       "explain": "Explain",
@@ -28461,7 +28463,20 @@
       "actions": "Actions",
       "teresaSuggestion": "Teresa suggestion",
       "accept": "Accept",
-      "reject": "Reject"
+      "reject": "Reject",
+      "quickAction": {
+        "expand": "Expand",
+        "shorten": "Shorten",
+        "rewrite": "Rewrite",
+        "final_polish": "Final polish",
+        "length_concise": "Length: concise",
+        "length_detailed": "Length: detailed",
+        "level_exec": "For: executive",
+        "level_expert": "For: expert",
+        "level_beginner": "For: beginner",
+        "translate_en": "Translate → EN",
+        "translate_pl": "Translate → PL"
+      }
     },
     "editor": {
       "teresaWriting": "Teresa is writing...",
