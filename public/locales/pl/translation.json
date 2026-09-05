@@ -1977,7 +1977,16 @@
       "statusFailedForbidden": "Nie zapisano: brak uprawnień do zmiany statusu zadania „{{title}}\". Poproś właściciela zadania o zmianę.",
       "statusFailedServer": "Nie zapisano „{{title}}\" → {{column}}: błąd serwera ({{code}}). Karta wróciła na miejsce — spróbuj ponownie za chwilę.",
       "statusFailedOffline": "Nie zapisano „{{title}}\" → {{column}}: brak połączenia z serwerem. Karta wróciła na miejsce — sprawdź internet i spróbuj ponownie.",
-      "statusFailedGeneric": "Nie zapisano „{{title}}\" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie."
+      "statusFailedGeneric": "Nie zapisano „{{title}}\" → {{column}} ({{code}}). Karta wróciła na miejsce — spróbuj ponownie.",
+      "columns": {
+        "toDo": "Do zrobienia",
+        "inProgress": "W trakcie",
+        "blocked": "Zablokowane",
+        "done": "Ukończone",
+        "noTasks": "Brak zadań",
+        "addTask": "Dodaj zadanie",
+        "dropHere": "Upuść tutaj"
+      }
     },
     "title": "Moja Praca",
     "home": "Strona główna",
@@ -3714,7 +3723,8 @@
         "tasksDeletedCount": "Usunięto {{count}} zadań",
         "updatePriorityFailed": "Nie udało się zaktualizować priorytetu",
         "updateTaskFailed": "Nie udało się zaktualizować zadania"
-      }
+      },
+      "untitled": "Zadanie bez tytułu"
     },
     "notificationsContent": {
       "recently": "Niedawno",
