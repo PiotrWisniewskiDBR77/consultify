@@ -27799,6 +27799,7 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "fileFormat": {"docx": "Dokument DOCX", "pdf": "Dokument PDF", "xlsx": "Arkusz XLSX", "pptx": "Prezentacja PPTX", "unknown": "—"},
       "ai": {
         "suggestNext": "Zaproponuj kolejne kroki",
         "summarize": "Podsumuj"

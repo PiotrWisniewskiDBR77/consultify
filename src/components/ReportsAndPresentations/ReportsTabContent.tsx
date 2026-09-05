@@ -25,7 +25,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
-import { MATERIAL_FILE_FORMATS } from './materialFileFormat';
+import { MATERIAL_FILE_FORMAT_LABEL_KEYS, MATERIAL_FILE_FORMATS } from './materialFileFormat';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
@@ -144,10 +144,17 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         sortAccessor: (rawRow: Record<string, unknown>) =>
           MATERIAL_FILE_FORMATS.indexOf((rawRow as unknown as ReportItem).fileFormat || 'Unknown'),
         filterable: true,
-        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({ value: format, label: format })),
+        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({
+          value: format,
+          label: t(MATERIAL_FILE_FORMAT_LABEL_KEYS[format]),
+        })),
         render: (rawRow: Record<string, unknown>) => (
           <span className="text-xs font-medium text-c-text-secondary">
-            {(rawRow as unknown as ReportItem).fileFormat || 'Unknown'}
+            {t(
+              MATERIAL_FILE_FORMAT_LABEL_KEYS[
+                (rawRow as unknown as ReportItem).fileFormat || 'Unknown'
+              ]
+            )}
           </span>
         ),
       },

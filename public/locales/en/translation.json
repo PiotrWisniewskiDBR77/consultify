@@ -26316,6 +26316,7 @@
       "retry": "Retry"
     },
     "outputs": {
+      "fileFormat": {"docx": "DOCX document", "pdf": "PDF document", "xlsx": "XLSX spreadsheet", "pptx": "PPTX presentation", "unknown": "—"},
       "launcher": {
         "title": "New output",
         "subtitle": "Pick what you want to create",
