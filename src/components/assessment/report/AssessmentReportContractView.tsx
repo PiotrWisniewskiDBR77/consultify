@@ -239,21 +239,29 @@ function AreaComment({
 function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
   const { t } = useTranslation();
   return (
-    <div className="mx-auto max-w-[760px] space-y-8 bg-c-surface p-8" data-axis-id={chapter.axisId}>
-      <section>
+    <div className="space-y-8 bg-c-surface p-8" data-axis-id={chapter.axisId}>
+      <section className="mx-auto w-full max-w-[760px]">
         <h3 className="mb-3 text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.introduction')}
         </h3>
         <EmptySlot min={chapter.introduction.minWords} max={chapter.introduction.maxWords} />
       </section>
-      <section className="space-y-3">
+      {/* ★ MACIERZ SZERZEJ NIŻ KOLUMNA TEKSTU. Rozdział jest kolumną
+          czytelniczą 760 px, a oś 1 ma 9 obszarów: zmierzone na zrzucie
+          `evidence/drd-raport-20260905/…__PO__pl__1440__light.png` — w kolumnie
+          760 px mieściły się 4 kolumny z 9, a pozostałe 5 tylko po przewinięciu
+          w bok. Macierz to nie akapit, więc dostaje własną, szerszą kolumnę;
+          akapity zostają w 760 px, bo tam szerokość szkodzi czytaniu.
+          Przewijanie poziome zostaje zabezpieczeniem dla wąskiego okna — nie
+          jest rozwiązaniem, bo domyślny kadr ma pokazywać macierz, nie jej ćwiartkę. */}
+      <section className="mx-auto w-full max-w-[1180px] space-y-3">
         <h3 className="text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.matrix')}
         </h3>
         <Matrix chapter={chapter} />
         <EmptySlot min={chapter.matrix.caption.minWords} max={chapter.matrix.caption.maxWords} />
       </section>
-      <section className="space-y-4">
+      <section className="mx-auto w-full max-w-[760px] space-y-4">
         <h3 className="text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.comments')}
         </h3>
@@ -261,7 +269,7 @@ function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
           <AreaComment key={comment.unitId} comment={comment} chapter={chapter} />
         ))}
       </section>
-      <section className="space-y-3">
+      <section className="mx-auto w-full max-w-[760px] space-y-3">
         <h3 className="text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.conclusion')}
         </h3>
