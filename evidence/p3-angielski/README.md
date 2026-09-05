@@ -13,7 +13,7 @@ Stop-lista użyta do pomiaru:
 
 `Approve|Cancel|Overview|Tasks|Definition|Economics|Team|History|Not assigned|No tasks|Start Date|End Date|Business Owner|Drop initiatives|New conversation|sources|Unknown|Initiatives|Organization|Audits|Product|Triage|Summarize|Build an initial`
 
-Wszystkie pliki `*.png.json` zawierają pole `tekst`, odczytane z `body`. Każdy z 22 plików ma 0 trafień. Zrzut 05 ma jeden błąd 501 z niepodłączonego źródła Google Calendar; sama karta została otwarta z wydarzenia kalendarza i wyrenderowana, a pozostałe 21 zrzutów ma 0 błędów konsoli.
+Wszystkie pliki `*.png.json` zawierają pole `tekst`, odczytane z `body`. Każdy z 22 plików ma 0 trafień i 0 błędów konsoli.
 
 ## Ekrany dowodowe
 
