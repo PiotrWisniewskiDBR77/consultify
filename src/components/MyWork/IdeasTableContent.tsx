@@ -956,7 +956,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                             setPreviewIdeaId(target.id);
                           }
                         }}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-slate-900/[0.06] hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] dark:hover:bg-white/10"
+                        className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-slate-900/[0.06] hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] dark:hover:bg-white/10"
                         aria-label={isPolish ? 'Pokaż panel' : 'Show panel'}
                         title={isPolish ? 'Pokaż panel' : 'Show panel'}
                       >
