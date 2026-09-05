@@ -25776,6 +25776,65 @@
     }
   },
   "results": {
+    "okr": {
+      "report": {
+        "columns": {
+          "name": "NAME",
+          "scope": "SCOPE",
+          "cycle": "CYCLE",
+          "objectives": "OBJECTIVES",
+          "keyResults": "KEY RESULTS",
+          "state": "STATE",
+          "owners": "OWNERS",
+          "lastCheckIn": "LAST CHECK-IN",
+          "objective": "OBJECTIVE",
+          "keyResult": "KEY RESULT",
+          "owner": "OWNER",
+          "values": "START / TARGET / CURRENT",
+          "progress": "PROGRESS",
+          "confidence": "CONFIDENCE",
+          "deadline": "DEADLINE",
+          "stateOne": "STATE",
+          "team": "TEAM"
+        },
+        "ambition": {
+          "committed": "Committed",
+          "aspirational": "Aspirational",
+          "standard": "Standard"
+        },
+        "stateTooltip": "on track {{onTrack}} · at risk {{atRisk}} · critical {{critical}} · no check-in {{noSignal}}",
+        "stateWithCheckIn": "{{state}} · check-in {{date}}",
+        "stateWithoutCheckIn": "{{state}} · no check-in yet",
+        "newReport": "New report",
+        "openReport": "Open report",
+        "openObjective": "Open objective card",
+        "addObjective": "Add objective",
+        "registryCrumb": "OKR reports",
+        "summary": "Summary",
+        "noTheme": "No theme",
+        "groupOwner": "parent owner: {{name}}",
+        "groupOwners": "{{count}} objective owners",
+        "chipOwnerAll": "Owner: everyone",
+        "chipOwnerNamed": "Owner: {{name}}",
+        "chipAll": "All",
+        "chipRisk": "At risk",
+        "chipMissing": "No check-in",
+        "ownerFilter": "Owner",
+        "owner": "Owner",
+        "ownerLoad": "Key results and risks",
+        "ownerBreakdownValue": "{{total}} key results · {{atRisk}} at risk · {{critical}} critical",
+        "reportOwner": "Report owner",
+        "reportGoal": "Report goal",
+        "aboutReport": "About this report",
+        "noOwners": "No key result owners",
+        "noKeyResults": "No key results",
+        "noKeyResultsHint": "This objective has no key result yet.",
+        "emptyTitle": "No OKR reports",
+        "emptyDescription": "There is no OKR report in this organization yet. A report is created together with a set of objectives for a chosen cycle.",
+        "emptyRowsTitle": "No rows for this filter",
+        "emptyRowsDescription": "No key result matches the selected filter. Change the filter or add an objective to the report."
+      }
+    },
     "sampleData": {
       "banner": "Sample data — not from the database"
     },

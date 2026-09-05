@@ -364,6 +364,9 @@ export const RESULTS_VNEXT_SAMPLE_OKR_SETS: OkrSetDto[] = [
     lastCheckinAt: '2026-08-21T09:00:00.000Z',
     nextCheckinDueAt: '2026-08-28T09:00:00.000Z',
     carriedFromSetId: null,
+    // P7K: fikstura odbiorowa nie udaje danych, których seed nie ma.
+    description: null,
+    reportGoal: null,
     rowVersion: 7,
     createdBy: 'Piotr Wiśniewski',
     createdAt: '2026-06-20T08:00:00.000Z',
@@ -397,6 +400,9 @@ export const RESULTS_VNEXT_SAMPLE_OKR_SETS: OkrSetDto[] = [
     lastCheckinAt: '2026-08-22T09:00:00.000Z',
     nextCheckinDueAt: '2026-08-29T09:00:00.000Z',
     carriedFromSetId: null,
+    // P7K: fikstura odbiorowa nie udaje danych, których seed nie ma.
+    description: null,
+    reportGoal: null,
     rowVersion: 9,
     createdBy: 'Anna Kowalska',
     createdAt: '2026-06-21T08:00:00.000Z',
@@ -430,6 +436,9 @@ export const RESULTS_VNEXT_SAMPLE_OKR_SETS: OkrSetDto[] = [
     lastCheckinAt: null,
     nextCheckinDueAt: null,
     carriedFromSetId: null,
+    // P7K: fikstura odbiorowa nie udaje danych, których seed nie ma.
+    description: null,
+    reportGoal: null,
     rowVersion: 1,
     createdBy: 'Marek Nowak',
     createdAt: '2026-08-20T08:00:00.000Z',

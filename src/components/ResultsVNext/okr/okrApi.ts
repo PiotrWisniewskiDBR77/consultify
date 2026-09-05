@@ -122,6 +122,14 @@ export interface OkrSetDto {
   lastCheckinAt: string | null;
   nextCheckinDueAt: string | null;
   carriedFromSetId: string | null;
+  /**
+   * P7K część A — nagłówek raportu OKR: opis i cel raportu (pola
+   * „Description”/„Goal” ze wzorca właściciela „OKR Planning (Q4)”).
+   * Migracja `20262102_okr_p7k_report_fields.sql`, oba NULLable bez
+   * backfillu — brak wartości pokazujemy jako „—”, nigdy jako pusty napis.
+   */
+  description: string | null;
+  reportGoal: string | null;
   rowVersion: number;
   createdBy: string;
   createdAt: string;

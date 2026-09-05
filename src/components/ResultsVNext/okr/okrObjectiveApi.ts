@@ -132,6 +132,13 @@ export interface OkrObjectiveDto {
   /** Same reason-string mechanism as `progressCalcReason`, for the
    * confidence rollup (`okrProgressEngine.ts` L300-396). */
   confidenceCalcReason: string | null;
+  /**
+   * P7K część A — TEMAT celu, oś grupowania tabeli raportu OKR
+   * (TEMAT → CEL, SSOT §3). Migracja `20262102_okr_p7k_report_fields.sql`.
+   * `null` = cel bez tematu; tabela grupuje go wtedy pod jawnym „Bez
+   * tematu”, nigdy nie zgaduje tematu z opisu ani z zakresu zestawu.
+   */
+  theme: string | null;
   sortOrder: number;
   rowVersion: number;
   createdBy: string;
@@ -176,6 +183,15 @@ export interface OkrKeyResultDto {
   status: OkrKeyResultStatus;
   sourceType: OkrKeyResultSourceType;
   sourceReference: string | null;
+  /**
+   * P7K część A — ZESPÓŁ i TERMIN rezultatu (kolumny „Team”/„Deadline” ze
+   * wzorca właściciela). Migracja `20262102_okr_p7k_report_fields.sql`.
+   * `deadline` to `DATE` (napis `RRRR-MM-DD` na drucie). Oba `null` =
+   * brak — koniec cyklu NIE jest podstawiany za termin rezultatu, a zakres
+   * zestawu NIE jest podstawiany za zespół.
+   */
+  teamName: string | null;
+  deadline: string | null;
   weight: string | null;
   rowVersion: number;
   createdBy: string;
