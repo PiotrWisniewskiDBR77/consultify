@@ -78,6 +78,7 @@ import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrga
 import { getOkrSet, type OkrSetDto } from './okrApi';
 import { getOkrCycle, type OkrCycleDto } from './okrAdminApi';
 import { listCheckIns, type OkrCheckInDto } from './okrCheckInApi';
+import { OKR_CHECKIN_STATUS_TONE, okrCheckInStatusLabel } from './okrCheckInMappers';
 import {
   getObjectiveWithKeyResults,
   type OkrKeyResultDto,
@@ -814,7 +815,10 @@ export const OkrObjectiveCardPage: React.FC = () => {
                       />
                     </span>
                     {entry.ownerDeclaredStatus ? (
-                      <StatusChip label={entry.ownerDeclaredStatus} tone="neutral" />
+                      <StatusChip
+                        label={okrCheckInStatusLabel(entry.ownerDeclaredStatus, isPolish)}
+                        tone={OKR_CHECKIN_STATUS_TONE[entry.ownerDeclaredStatus]}
+                      />
                     ) : null}
                     <span>{resolveMemberName(entry.submittedBy)}</span>
                   </div>
