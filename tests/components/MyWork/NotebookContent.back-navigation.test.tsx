@@ -72,6 +72,16 @@ vi.mock('@/store/useAppStore', () => ({
     setChatKickoffMessage: vi.fn(),
     isChatCollapsed: false,
     toggleChatCollapse: vi.fn(),
+    clearChatKickoffMessage: vi.fn(),
+    chatKickoffMessage: '',
+    // ★ 2026-09-05: od naprawy „jeden prawy panel" Notatnik otwiera swój panel
+    // z EFEKTU (gdy czat jest odsłonięty), nie tylko z uchwytu kliknięcia —
+    // atrapa sklepu musi nieść te same akcje co realny sklep
+    // (`src/store/slices/uiSlice.ts`).
+    notebookRailOpen: false,
+    notebookRailTab: 'work' as const,
+    setNotebookRailOpen: vi.fn(),
+    setNotebookRailTab: vi.fn(),
   }),
 }));
 

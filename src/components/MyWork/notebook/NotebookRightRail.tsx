@@ -34,6 +34,7 @@ import {
   Layers,
   ListTree,
   Loader2,
+  Plus,
   RefreshCw,
   Share2,
   ShieldCheck,
@@ -119,6 +120,25 @@ function captureSourceLabel(raw: string | null | undefined, isPolish: boolean): 
   return isPolish ? entry.pl : entry.en;
 }
 
+/**
+ * Etykieta dojrzałości notatki — te same napisy co odznaka w centrum
+ * dokumentu (`MATURITY_CONFIG` w `NotebookContent.tsx`). Panel ich nie
+ * wymyśla: „status" w główce ma brzmieć dokładnie tak, jak przy tytule.
+ */
+const MATURITY_LABELS: Record<string, { pl: string; en: string }> = {
+  seed: { pl: 'Ziarno', en: 'Seed' },
+  growing: { pl: 'Rośnie', en: 'Growing' },
+  mature: { pl: 'Dojrzała', en: 'Mature' },
+  actionable: { pl: 'Do działania', en: 'Actionable' },
+};
+
+function maturityLabel(raw: string | null | undefined, isPolish: boolean): string | null {
+  if (!raw) return null;
+  const entry = MATURITY_LABELS[String(raw).trim().toLowerCase()];
+  if (!entry) return String(raw);
+  return isPolish ? entry.pl : entry.en;
+}
+
 const RAIL_SECTION_ORDER = ARTIFACT_PANEL_SECTION_ORDER.filter(
   (id): id is 'actions' | 'properties' | 'relations' | 'evidence' | 'comments' | 'history' =>
     id !== 'results'
@@ -193,7 +213,43 @@ interface NotebookRightRailProps {
    * dev-render, który robi deterministyczne zrzuty każdego trybu.
    */
   defaultRailModeId?: string;
+
+  /**
+   * ★ JEDEN PRAWY PANEL — Teresa jako ZAKŁADKA (decyzja CTO 2026-09-05).
+   * Kontrakt 1:1 z `IdeaElementInspector` (mapa myśli, `teresaContent`):
+   * gdy gospodarz poda treść rozmowy, nagłówek panelu dostaje dwie zakładki
+   * („Notatka" | „Teresa") i pokazuje w ciele albo notatkę, albo rozmowę.
+   * Bez tego propsa nagłówek nie ma zakładek i panel renderuje się jak dotąd.
+   */
+  teresaContent?: React.ReactNode;
+  /** Aktywna zakładka (sterowana przez gospodarza). Domyślnie 'note'. */
+  panelTab?: NotebookPanelTab;
+  onPanelTabChange?: (tab: NotebookPanelTab) => void;
+
+  /**
+   * ★ 05.09 — „Wstaw blok" zdjęty ze środka dokumentu do sekcji „Akcje".
+   * TEN SAM slash-menu co dotąd (`SlashMenu`, tryb `insert`) — gospodarz
+   * kotwiczy go na kursorze edytora zamiast na przycisku, bo przycisk
+   * przeniósł się do panelu.
+   */
+  onInsertBlock?: () => void;
+
+  /**
+   * ★ 05.09 — TAGI notatki. Do dziś jedyne miejsce edycji tagów było pod
+   * tytułem w centrum, a bliźniacza metadana („Tematy") mieszkała już w
+   * panelu — ta sama klasa informacji w dwóch miejscach. Handlery są te
+   * same co w centrum (żadnej drugiej implementacji).
+   */
+  tags?: string[];
+  tagInput?: string;
+  onTagInputChange?: (value: string) => void;
+  onAddTag?: () => void;
+  onRemoveTag?: (tag: string) => void;
+  onTagKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
+
+/** Zakładki JEDNEGO prawego panelu Notatnika (decyzja CTO 2026-09-05). */
+export type NotebookPanelTab = 'note' | 'teresa';
 
 /**
  * Struktura notatki — nagłówki H1–H3 wprost z dokumentu.
@@ -354,6 +410,16 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   onReviewAIProposal,
   onHandoffInitiatives,
   onOpenTopic,
+  teresaContent,
+  panelTab = 'note',
+  onPanelTabChange,
+  onInsertBlock,
+  tags,
+  tagInput = '',
+  onTagInputChange,
+  onAddTag,
+  onRemoveTag,
+  onTagKeyDown,
 }) => {
   const { t, i18n } = useTranslation();
   // Nazwy sekcji kanonu pochodzą z JEDNEGO miejsca w całej aplikacji
@@ -513,6 +579,17 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             ) : null}
 
             <div className="space-y-0.5">
+            {/* ★ 05.09 — „Wstaw blok" zszedł ze środka dokumentu. To ten sam
+                slash-menu (`SlashMenu`, tryb `insert`), tylko zakotwiczony na
+                kursorze edytora, bo przycisk nie stoi już przy treści. */}
+            {onInsertBlock ? (
+              <ActionRow
+                actionId="rail:insert-block"
+                icon={<Plus size={15} />}
+                label={t('notebook.rightRail.insertBlock', 'Wstaw blok')}
+                onClick={onInsertBlock}
+              />
+            ) : null}
             <ActionRow
               actionId="rail:export"
               icon={<Download size={15} />}
@@ -823,6 +900,51 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
               )}
             </div>
 
+            {/* ★ 05.09 — TAGI. Do dziś edycja tagów była wyłącznie pod tytułem
+                w centrum dokumentu, podczas gdy bliźniacza metadana („Tematy",
+                niżej) mieszkała już w panelu. Ta sama klasa informacji stała w
+                dwóch miejscach — to jest właśnie „rozjazd", na który skarży się
+                właściciel. Tu są TE SAME handlery co w centrum, nie druga
+                implementacja. */}
+            {onAddTag && onRemoveTag && onTagInputChange && onTagKeyDown ? (
+              <div className="space-y-1 border-t border-c-border-subtle pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('notebook.rightRail.tags', 'Tagi')}
+                </p>
+                <div
+                  className="flex flex-wrap items-center gap-1.5"
+                  data-testid="notebook-rail-tags"
+                >
+                  <Tag size={11} className="shrink-0 text-c-text-secondary" aria-hidden="true" />
+                  {(tags ?? []).map((tag) => (
+                    <span
+                      key={tag}
+                      className="group/tag inline-flex items-center gap-1 rounded-md bg-c-surface-raised px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:text-c-text"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => onRemoveTag(tag)}
+                        className="opacity-0 transition-opacity hover:text-c-danger group-hover/tag:opacity-100"
+                        aria-label={t('notebook.rightRail.removeTag', 'Usuń tag {{tag}}', { tag })}
+                      >
+                        <X size={9} />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    value={tagInput}
+                    onChange={(e) => onTagInputChange(e.target.value)}
+                    onKeyDown={onTagKeyDown}
+                    onBlur={onAddTag}
+                    aria-label={t('notebook.rightRail.tags', 'Tagi')}
+                    placeholder={t('notebook.rightRail.addTag', '+ tag')}
+                    className="min-w-[50px] max-w-[140px] bg-transparent text-[11px] text-c-text-secondary outline-none placeholder:text-c-text-muted"
+                  />
+                </div>
+              </div>
+            ) : null}
+
             {/* ★ 05.09 — TEMATY. Chipy stały pod tytułem notatki, w centrum
                 ekranu; to metadana O notatce, więc jej miejsce jest tutaj.
                 Ten sam komponent (`NotebookTopicChips`), to samo API. */}
@@ -968,7 +1090,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 w jednym pasie to dokładnie ten rozjazd, który likwidujemy.
                 Przy fladze OFF przycisk zostaje bez zmian — to jedyne wejście
                 starej szyny i nie wolno go zabrać razem z niczym innym. */}
-            {onOpenAIChat && !artifactRailEnabled ? (
+            {onOpenAIChat && !artifactRailEnabled && !teresaContent ? (
               <button
                 type="button"
                 data-notebook-action-id="rail:open-teresa"
@@ -1096,20 +1218,69 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
     );
   }
 
-  const specAPanel = (
-    <div className="flex h-full shrink-0 flex-col overflow-hidden bg-c-surface">
-      {/*
-        ★ Pomiar na żywo 05.09 (`mywork-notebook-rail-speca`): nagłówek pasa
-        pokazywał sam tytuł notatki + X, a zatwierdzony obraz ma dwuwierszową
-        główkę „NOTEBOOK / Szczegóły notatki” (nadkreślnik modułu + stała
-        nazwa panelu). Tytuł notatki stoi już w nagłówku samego dokumentu na
-        lewo od pasa, więc powtarzanie go tutaj nie niosło informacji, a
-        zabierało jedyny wiersz główki. Ta sama struktura co w powłoce
-        `IdeaNotebookRightPanelPrototype` — nagłówek jest wspólnym kanonem
-        obu pasów, niezależnym od flagi prototypu (której NIE ruszamy:
-        decyzja właściciela w toku).
-      */}
-      <div className="flex h-12 items-center gap-2 border-b border-c-border-subtle px-4">
+  /**
+   * ★ JEDEN PRAWY PANEL — powłoka wspólna (decyzja CTO 2026-09-05).
+   * Ta sama główka co na płótnach Pomysłów (`IdeaElementInspector`):
+   * jeden rząd z zakładkami („Notatka" | „Teresa") i JEDNYM przyciskiem X.
+   * Bez `teresaContent` rząd zakładek nie powstaje i zostaje sam X — czyli
+   * dotychczasowe zachowanie dla wołaczy, którzy Teresy nie osadzają.
+   */
+  const zakladkaAktywna: NotebookPanelTab = teresaContent ? panelTab : 'note';
+  const zakladki = teresaContent ? (
+    <div
+      role="tablist"
+      aria-label={t('notebook.rightRail.tabsAria', 'Zakładki panelu')}
+      className="inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5"
+    >
+      {(
+        [
+          { id: 'note' as const, label: t('notebook.rightRail.tabNote', 'Notatka') },
+          { id: 'teresa' as const, label: t('notebook.rightRail.tabTeresa', 'Teresa') },
+        ] as const
+      ).map((tab) => {
+        const aktywna = zakladkaAktywna === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={aktywna}
+            data-testid={`notebook-panel-tab-${tab.id}`}
+            onClick={() => onPanelTabChange?.(tab.id)}
+            className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+              aktywna
+                ? 'bg-c-surface text-c-text shadow-sm'
+                : 'text-c-text-secondary hover:text-c-text'
+            }`}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
+  const przyciskZamknij = (
+    <button
+      type="button"
+      data-notebook-action-id="rail:close"
+      data-testid="notebook-panel-close"
+      onClick={onClose}
+      aria-label={t('notebook.rightRail.closePanel', 'Close panel')}
+      className="shrink-0 rounded-md p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+      title={t('notebook.rightRail.closePanel', 'Close panel')}
+    >
+      <X size={15} />
+    </button>
+  );
+
+  const powlokaNaglowka = (
+    <div className="flex items-center gap-2 border-b border-c-border-subtle px-3 py-2">
+      {zakladki ?? (
+        /*
+          Bez zakładek zostaje dotychczasowa dwuwierszowa główka
+          („NOTEBOOK / Szczegóły notatki”) — ścieżka dla wołaczy bez Teresy.
+        */
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-medium uppercase tracking-wide text-c-text-muted">
             {t('notebook.rightRail.eyebrow', 'Notebook')}
@@ -1118,28 +1289,78 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             {t('notebook.rightRail.panelTitle', 'Szczegóły notatki')}
           </h2>
         </div>
-        <button
-          type="button"
-          data-notebook-action-id="rail:close"
-          onClick={onClose}
-          aria-label={t('notebook.rightRail.closePanel', 'Close panel')}
-          className="rounded-md p-1 text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-          title={t('notebook.rightRail.closePanel', 'Close panel')}
-        >
-          <X size={15} />
-        </button>
-      </div>
-      <ArtifactRightPanel
-        ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
-        className="min-h-0 flex-1 border-l-0"
-        // ★ 2026-09-01 (dyżur 164): jawne nadpisanie szerokości (360 px)
-        // USUNIĘTE. Pas Notatnika był o 40 px szerszy od kart N, mimo że oba
-        // renderują ten sam `ArtifactRightPanel`. Domyślna szerokość komponentu
-        // to token `--ntype-right-panel-width` — zmierzone przy 320 px: zero
-        // nowych ucięć treści względem poprzedniej szerokości.
-        sections={specASections}
-      />
+      )}
+      <span className="flex-1" />
+      {przyciskZamknij}
     </div>
+  );
+
+  /**
+   * Blok tożsamości — nazwa OBIEKTU + stan, dokładnie jak w panelu elementu na
+   * płótnach (decyzja CTO: „nagłówek: nazwa obiektu + status + X"). Powstaje
+   * tylko przy zakładkach, żeby ścieżka bez Teresy została bajt w bajt taka
+   * jak dotąd (nagłówek niesie tam stałą nazwę panelu, nie nazwę notatki).
+   */
+  const blokTozsamosci = teresaContent ? (
+    <header className="px-4 pb-3 pt-3.5">
+      <h2 className="min-w-0 truncate text-[15px] font-semibold leading-snug tracking-tight text-c-text">
+        {activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
+      </h2>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
+        <span>{t('notebook.rightRail.objectKind', 'Notatka')}</span>
+        {notePage?.maturity ? (
+          <>
+            <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+            <span data-testid="notebook-panel-status">
+              {maturityLabel(notePage.maturity, isPolishRail)}
+            </span>
+          </>
+        ) : null}
+        {activePage.visibility ? (
+          <>
+            <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-c-border-strong" />
+            <span>
+              {activePage.visibility === 'project'
+                ? t('notebook.rightRail.visibilityProject', 'Projekt')
+                : t('notebook.rightRail.visibilityPrivate', 'Prywatne')}
+            </span>
+          </>
+        ) : null}
+      </div>
+    </header>
+  ) : null;
+
+  const specAPanel = (
+    <aside
+      data-testid="notebook-right-panel"
+      aria-label={t('notebook.rightRail.label', 'Document details and context')}
+      className="flex h-full shrink-0 flex-col overflow-hidden border-l border-c-border-subtle bg-c-surface text-c-text"
+      // ★ 2026-09-01 (dyżur 164): jedno źródło szerokości prawego pasa —
+      // token `--ntype-right-panel-width` (320 px), ten sam co karty N.
+      style={{
+        width: 'var(--ntype-right-panel-width)',
+        minWidth: 'var(--ntype-right-panel-width)',
+      }}
+    >
+      {powlokaNaglowka}
+      {zakladkaAktywna === 'teresa' ? (
+        <div className="min-h-0 flex-1 overflow-hidden">{teresaContent}</div>
+      ) : (
+        <>
+          {blokTozsamosci}
+          <ArtifactRightPanel
+            // Ten komponent JEST już `<aside aria-label>` — accordion renderuje
+            // się jako `div`, żeby panel miał JEDEN korzeń (decyzja CTO
+            // 2026-09-05: „policz aside — ma być 1 albo 0").
+            renderAs="div"
+            ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
+            sections={specASections}
+            width="100%"
+            className="min-h-0 flex-1 border-l-0"
+          />
+        </>
+      )}
+    </aside>
   );
 
   return (

@@ -29,9 +29,40 @@ describe('Notebook right rail owner contract (SPEC-A accordion)', () => {
     // rozjazd 300/320/360/400 px zmierzony 2026-09-01.
     expect(source).not.toContain('width: 360');
     expect(source).not.toContain('width={360}');
-    expect(source).not.toContain('role="tablist"');
-    expect(source).not.toContain('role="tab"');
+    // ★ 2026-09-05 (decyzja CTO „jeden prawy panel"). Zakaz z DEC-69 dotyczył
+    // ZAKŁADEK TREŚCI (Praca | Kontekst) — one dzieliły jedną kartę dokumentu
+    // na dwie ekskluzywne połówki i to je zastąpił akordeon. Kanoniczna główka
+    // panelu (obiekt | Teresa) to CO INNEGO: przełącza CAŁE ciało panelu między
+    // obiektem a rozmową, dokładnie tak jak `IdeaElementInspector` na płótnach.
+    // Test pilnuje więc, żeby nie wróciły tamte zakładki, a nie żeby panel nie
+    // miał główki.
     expect(source).not.toContain('role="tabpanel"');
+    // Dokladnie JEDNA lista zakladek i JEDEN szablon przycisku zakladki —
+    // czyli ta kanoniczna glowka, a nie druga para zakladek tresci.
+    expect(source.match(/role="tablist"/g)).toHaveLength(1);
+    expect(source.match(/role="tab"/g)).toHaveLength(1);
+    const dozwoloneZakladki = source.match(/data-testid={`notebook-panel-tab-\$\{tab\.id\}`}/g);
+    expect(dozwoloneZakladki).toHaveLength(1);
+    expect(source).toContain("{ id: 'note' as const");
+    expect(source).toContain("{ id: 'teresa' as const");
+  });
+
+  // ★ Powłoka wspólna: główka Notatnika ma być TYM SAMYM kształtem, co główka
+  // panelu elementu na płótnach Pomysłów — inaczej „jeden panel w całej
+  // aplikacji" znaczyłby dwa różne panele o tej samej nazwie.
+  it('has the same tab header shape as the canvas element panel (IdeaElementInspector)', () => {
+    const inspektor = fs.readFileSync(
+      path.resolve(__dirname, '../../panel/IdeaElementInspector.tsx'),
+      'utf8'
+    );
+    const pigulka =
+      "className=\"inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5\"";
+    expect(inspektor).toContain(pigulka);
+    expect(source).toContain(pigulka);
+    // Jeden przycisk zamknięcia na panel, w tej samej główce.
+    expect(source).toContain('data-testid="notebook-panel-close"');
+    // Ciało zakładki Teresy = treść podana przez gospodarza, nie druga kolumna.
+    expect(source).toContain('{teresaContent}');
   });
 
   it('declares the five canonical sections in the fixed order, sourced from the ArtifactRightPanel canon (not a private copy)', () => {

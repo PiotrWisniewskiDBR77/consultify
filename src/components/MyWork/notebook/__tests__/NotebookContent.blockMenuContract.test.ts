@@ -12,8 +12,17 @@ describe('Notebook native block-menu contract', () => {
     expect(source).toContain('setSlashState({');
     expect(source).toContain("mode: 'context'");
     expect(source).toContain('<SlashMenu');
-    expect(source).toContain("'Insert block'");
+    // ★ 2026-09-05 (decyzja CTO „lekkie centrum"): przycisk „Wstaw blok" nie
+    // stoi już przy treści — jest akcją JEDYNEGO prawego panelu. Tryb `insert`
+    // tego samego rejestru SlashMenu musi zostać osiągalny: z panelu przez
+    // `handleInsertBlockFromPanel`, kotwiczony na kursorze edytora.
+    expect(source).toContain('const handleInsertBlockFromPanel');
+    expect(source).toContain('editor.view.coordsAtPos(triggerPos)');
     expect(source).toContain("mode: 'insert'");
+    expect(source).toContain('onInsertBlock={handleInsertBlockFromPanel}');
+    const rail = fs.readFileSync(path.resolve(__dirname, '../NotebookRightRail.tsx'), 'utf8');
+    expect(rail).toContain("t('notebook.rightRail.insertBlock', 'Wstaw blok')");
+    expect(rail).toContain('actionId="rail:insert-block"');
   });
 
   it('moves the editor selection to the contextual click before opening actions', () => {

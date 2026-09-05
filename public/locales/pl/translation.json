@@ -35775,7 +35775,18 @@
       "workflow": "Przepływ pracy",
       "topics": "Tematy",
       "structure": "Struktura notatki",
-      "structureEmpty": "Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek."
+      "structureEmpty": "Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek.",
+      "tabsAria": "Zakładki panelu",
+      "tabNote": "Notatka",
+      "tabTeresa": "Teresa",
+      "objectKind": "Notatka",
+      "visibilityPrivate": "Prywatne",
+      "visibilityProject": "Projekt",
+      "insertBlock": "Wstaw blok",
+      "tags": "Tagi",
+      "addTag": "+ tag",
+      "removeTag": "Usuń tag {{tag}}",
+      "untitled": "Bez tytułu"
     },
     "slashMenu": {
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"
