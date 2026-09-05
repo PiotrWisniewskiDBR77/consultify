@@ -774,6 +774,13 @@ function buildPreview(
 // my/org KPI-definition table, `selectedScorecardId` for the Scorecards
 // table — same shape, no third mechanism invented. The one KPI-specific
 // wrinkle (handled in the deep-link effect below, not here): a restored
+/**
+ * Identyfikatory pigułek NAWIGACYJNYCH Menu 3 (nie filtrów statusu).
+ * Prefiks `view:` gwarantuje, że nigdy nie zderzą się z wartością `KpiStatus`.
+ */
+const SCORECARDS_CHIP_ID = 'view:scorecards';
+const KPI_CHIP_ID = 'view:kpi';
+
 // `tab: 'scorecards'` must not be allowed to swallow a `?kpiId=` deep link,
 // since the KPI table/preview do not even render on that branch.
 const UI_STATE_KEY = 'results-vnext.kpi-registry.ui-state';
@@ -926,6 +933,28 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   useEffect(() => {
     if (initialTab) setTab(initialTab);
   }, [initialTab]);
+
+  /**
+   * WEJŚCIE DO REJESTRU KART WYNIKÓW — deep link `?kpiView=scorecards`.
+   *
+   * Do 2026-09-05 stan `tab === 'scorecards'` dało się ustawić WYŁĄCZNIE
+   * propem `initialTab`, którego żadna trasa nigdy nie przekazywała, a w całym
+   * pliku nie było ani jednego `onClick`, który by go zmienił z akcji
+   * użytkownika. Rejestr „Kart wyników" (i wraz z nim CAŁA trasa
+   * `/results/kpi/scorecards/:scorecardId`, osiągalna tylko klikiem w wiersz
+   * tego rejestru) był zbudowany i nieosiągalny — klasyczna „biblioteka bez
+   * wywołania" (odbiór na żywo 05.09, `results-vnext-kpi-scorecards`).
+   * Wejście klikiem dokłada pigułka „Karty wyników" w Menu 3 (niżej);
+   * ten efekt daje ten sam widok z adresu — do dzielenia się linkiem i do zrzutów.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    if (typeof window === 'undefined') return;
+    const view = new URLSearchParams(window.location.search).get('kpiView');
+    if (view === 'scorecards') setTab('scorecards');
+    // Jednorazowo, po włączeniu ekranu — dalej stan należy do pigułek Menu 3.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
 
   useEffect(() => {
     if (!createNonce || initialTab !== 'scorecards') return;
@@ -1361,6 +1390,12 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
         label: statusLabel(s, isPolish),
         count: counts[s] ?? 0,
       })),
+      // Pigułka NAWIGACYJNA (nie filtr statusu) — jedyne wejście do rejestru
+      // „Kart wyników" w całym produkcie. Ten sam kształt, którym ExecutionHub
+      // dokłada pigułki-wejścia obok filtrów Menu 3 (`work-intelligence-report`
+      // i rodzeństwo): identyfikator z prefiksem `view:` odróżnia je od
+      // wartości `KpiStatus`, więc `setStatusFilter` nigdy ich nie zobaczy.
+      { id: SCORECARDS_CHIP_ID, label: isPolish ? 'Karty wyników' : 'Scorecards' },
     ];
   }, [scopedRows, isPolish]);
 
@@ -1461,6 +1496,25 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
+            // Droga POWROTNA do rejestru KPI — bez niej wejście w „Karty
+            // wyników" byłoby ślepą uliczką (jedynym wyjściem byłoby Menu 2,
+            // czyli zmiana domeny). Ta sama para pigułek nawigacyjnych co
+            // w gałęzi KPI wyżej.
+            chips: [
+              { id: KPI_CHIP_ID, label: isPolish ? 'Rejestr KPI' : 'KPI registry' },
+              {
+                id: SCORECARDS_CHIP_ID,
+                label: isPolish ? 'Karty wyników' : 'Scorecards',
+                count: scorecardRows.length,
+              },
+            ],
+            activeChip: SCORECARDS_CHIP_ID,
+            onChipChange: (id) => {
+              if (id === KPI_CHIP_ID) {
+                setSelectedScorecardId(null);
+                setTab('org');
+              }
+            },
             // RN-G6 UI fix — makes `createKpiScorecard` (already wired in
             // kpiScorecardApi.ts) reachable from the UI, see
             // CreateKpiScorecardModal.tsx header.
@@ -1593,7 +1647,14 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             viewMode: 'table',
             chips,
             activeChip: statusFilter ?? 'all',
-            onChipChange: (id) => setStatusFilter(id === 'all' ? null : (id as KpiStatus)),
+            onChipChange: (id) => {
+              if (id === SCORECARDS_CHIP_ID) {
+                setSelectedId(null);
+                setTab('scorecards');
+                return;
+              }
+              setStatusFilter(id === 'all' ? null : (id as KpiStatus));
+            },
             // RN-G5 — "Nowy KPI" quick-create (see file header). Only on
             // this tab (`my`/`org` — this whole branch never renders for
             // `scorecards`, see the `tab === 'scorecards'` early return
