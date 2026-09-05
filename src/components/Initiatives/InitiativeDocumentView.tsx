@@ -10577,7 +10577,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         return [
           {
             id: 'symptom',
-            label: isPolish ? 'Problem' : 'Problem',
+            label: 'Problem',
             value: symptomDraft,
             kind: 'text',
             writable: true,
@@ -10693,7 +10693,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const buildInitiativeAnalysisInput = useCallback(() => {
     const ctx = [
-      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${'Status'}: ${status}`,
       `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
       `${isPolish ? 'Zadania' : 'Tasks'}: ${tasks.length}`,
       `${isPolish ? 'KPI' : 'KPIs'}: ${localKpis.length}`,
