@@ -53,12 +53,34 @@ const Pair = ({
   actual: string;
   tone?: 'neutral' | 'warn' | 'bad';
 }) => (
-  <div className="min-w-[108px] whitespace-nowrap text-right tabular-nums">
-    <div className="whitespace-nowrap text-[10px] text-c-text-muted">CEL&nbsp; {target}</div>
-    <div
-      className={`whitespace-nowrap ${tone === 'bad' ? 'font-semibold text-c-danger' : tone === 'warn' ? 'font-semibold text-c-warning' : 'font-medium text-c-text'}`}
-    >
-      Rezultat&nbsp; {actual}
+  /**
+   * K10 — para CEL / Rezultat musi zmiescic sie w 108 px tresci kolumny okresu.
+   *
+   * DEFEKT 1b i pierwszego podejscia 1c: `min-w-[108px]` rozpychalo komorke, a
+   * caly napis „Rezultat  11 620" w 14 px polgrubym ma 120–124 px (zmierzone) —
+   * czyli o 12–16 px wiecej, niz kolumna moze dac. `FilterableTable` przy
+   * tabeli szerszej niz obszar schodzi do PODLOG (`text` = 140 px) i wiecej
+   * kolumnie dac nie mozna, wiec to TRESC musi sie zmiescic.
+   *
+   * ROZWIAZANIE: etykiety `CEL` i `Rezultat` sa opisami (10 px, wyciszone),
+   * wartosc rezultatu zostaje duza i czytelna (14 px). Zmierzone: 105 px.
+   * Kolejnosc „CEL nad Rezultatem" — zgodnie z SSOT i akceptem 1b.
+   */
+  <div
+    title={`CEL ${target} · Rezultat ${actual}`}
+    className="w-full overflow-hidden whitespace-nowrap text-right tabular-nums"
+  >
+    <div className="flex items-baseline justify-end gap-1.5 whitespace-nowrap text-[10px] text-c-text-muted">
+      <span>CEL</span>
+      <span>{target}</span>
+    </div>
+    <div className="flex items-baseline justify-end gap-1.5 whitespace-nowrap">
+      <span className="text-[10px] text-c-text-muted">Rezultat</span>
+      <span
+        className={`text-sm ${tone === 'bad' ? 'font-semibold text-c-danger' : tone === 'warn' ? 'font-semibold text-c-warning' : 'font-medium text-c-text'}`}
+      >
+        {actual}
+      </span>
     </div>
   </div>
 );
@@ -181,22 +203,58 @@ const roiRows = [
   },
 ];
 
+/**
+ * KOREKTA 1c — K11 / K12 / K13.
+ *
+ * DEFEKT 1b: `col()` renderowało KAŻDĄ wartość jako `<span whitespace-nowrap>`
+ * bez `overflow`, więc tekst dłuższy niż kolumna wychodził poza własną komórkę
+ * i kładł się na sąsiedniej („…z 42 do 28 min" na „Marek Zieliński",
+ * „spawalniczego" na „Robotyzacja"). Własny `render` omija przy okazji warstwę
+ * `CELL_TEXT_CLAMP_CLASS` + `OverflowTooltip`, którą `FilterableTable` zakłada
+ * gołemu tekstowi — czyli prototyp sam sobie wyłączył mechanikę wspólną.
+ *
+ * NAPRAWA: komórka NIGDY nie wylewa się poza swój boks.
+ *   · domyślnie jedna linia + `truncate` (nowrap + overflow-hidden + wielokropek),
+ *   · `wrap: true` → dwie linie (`line-clamp-2`) dla treści opisowych (K11/K12),
+ *   · pełna treść ZAWSZE w `title` (wymóg pomiaru 1c: zero uciętych bez dymka).
+ * `dataType` steruje podłogą szerokości w mechanice P2 (`FilterableTable`
+ * `COLUMN_MIN_WIDTH_BY_DATA_TYPE`) — dzięki temu kolumny liczbowe/statusowe nie
+ * zjadają budżetu 140 px przeznaczonego dla kolumn tekstowych.
+ */
 const col = (
   id: string,
   label: string,
   width = '140px',
   render?: (row: any) => React.ReactNode,
-  defaultVisible = true
+  defaultVisible = true,
+  opts: { wrap?: boolean; dataType?: TableColumn['dataType'] } = {}
 ): TableColumn => ({
   id,
   label,
   width,
   defaultVisible,
+  ...(opts.dataType ? { dataType: opts.dataType } : {}),
   render:
     render ||
-    ((r: any) => (
-      <span className="whitespace-nowrap text-sm text-c-text-secondary">{r[id] ?? ''}</span>
-    )),
+    ((r: any) => {
+      const value = r[id];
+      if (value === undefined || value === null || value === '')
+        return <span className="text-sm text-c-text-muted">—</span>;
+      return (
+        <span
+          title={String(value)}
+          /* UWAGA: przy `wrap` NIE dokladamy `block` — `line-clamp-2` ustawia
+             `display: -webkit-box`, a `block` z tej samej warstwy Tailwinda
+             wygrywa kolejnoscia w arkuszu i klamra przestaje dzialac (wiersz
+             puchl do trzech linii, zmierzone 76 px zamiast 56 px). */
+          className={`text-sm text-c-text-secondary ${
+            opts.wrap ? 'line-clamp-2 break-normal' : 'block truncate'
+          }`}
+        >
+          {String(value)}
+        </span>
+      );
+    }),
 });
 const table = (
   data: any[],
@@ -209,7 +267,7 @@ const table = (
   <StandardTable
     data={data}
     columns={columns}
-    persistKey={`p7k.prototype.1b.${key}`}
+    persistKey={`p7k.prototype.1c.${key}`}
     minTableWidth={minTableWidth}
     density="compact"
     rowClassName={rowClassName}
@@ -235,7 +293,13 @@ const periodColumns = [
   'LIS',
   'GRU',
 ].map((label, index) =>
-  col(`period-${index + 1}`, `${label} 2026`, '132px', (row) => {
+  /* 136 px = zmierzona treść „Rezultat  11 520" (103 px) + `px-4` z obu stron
+     (32 px) + 1 px zapasu; nagłówek „STY 2026" ma podłogę 91 px — mieści się. */
+  col(
+    `period-${index + 1}`,
+    `${label} 2026`,
+    '136px',
+    (row) => {
     if (row.group) return null;
     if (index === 6) return row.jul;
     if (index === 7) return row.aug;
@@ -246,8 +310,29 @@ const periodColumns = [
         actual={index < 8 ? (row.id === 'k3' ? '77%' : '11 520') : '—'}
       />
     );
-  })
+    },
+    true,
+    /* SWIADOMIE `text` (podloga 140 px), nie `number` (90 px).
+       Pomiar 1c: `FilterableTable` przycina `minTableWidth` do szerokosci
+       kontenera (`effectiveMinTableWidth = min(minTableWidth, viewport)`), wiec
+       przy 22 kolumnach tabela ZAWSZE wchodzi w galaz „nawet podlogi sie nie
+       mieszcza” i kazda kolumna dostaje swoja PODLOGE. Przy `number` (90 px)
+       zostawalo 58 px na tresc i „Rezultat 11 520” (103 px) wychodzilo poza
+       komorke. Podloga `text` = 140 px daje 108 px — tresc miesci sie co do
+       piksela, a poziome przewijanie miesiecy (SSOT) bierze sie wlasnie z tego,
+       ze suma podlog jest szersza niz obszar. */
+    {}
+  )
 );
+
+/**
+ * Suma zadeklarowanych szerokości KPI L2 + 80 px strukturalnej kolumny akcji
+ * (`ROW_ACTIONS_COLUMN_WIDTH`). Podana jako `minTableWidth`, żeby
+ * `columnFit` nie skalował kolumn — skalowanie rozjeżdżało szerokości
+ * nagłówka i wierszy (defekt K10).
+ * 220 + 178 + 140 + 140 + 144 + 110 + 92 + 12x136 + 136 + 132 + 80 = 3004.
+ */
+const KPI_L2_TABLE_WIDTH = 3155;
 
 const kpiItems = [
   {
@@ -486,7 +571,7 @@ const CardShell = ({
   active: string;
   children: React.ReactNode;
 }) => (
-  <div className="grid grid-cols-[178px_minmax(0,1fr)_300px] gap-4">
+  <div className="grid grid-cols-[150px_minmax(0,1fr)_270px] gap-4">
     <nav aria-label="Sekcje karty" className="rounded-xl border border-c-border bg-c-surface p-2">
       {sections.map((s, i) => {
         const Icon = navIcons[i % navIcons.length]!;
@@ -540,19 +625,82 @@ function Content() {
         cells[0].style.position = 'sticky';
         cells[0].style.left = '0';
         cells[0].style.zIndex = '30';
+        /* Przypieta komorka MUSI byc nieprzezroczysta (K10) — tlo grupy siedzi
+           na `tr`, a `td` dziedziczy przezroczystosc i przepuszcza spod siebie
+           przewijana tresc. */
+        cells[0].style.background = 'var(--c-surface-raised)';
       }
       for (let i = 1; i < cells.length; i += 1) cells[i]!.style.display = 'none';
     });
-    const scroller = document.querySelector<HTMLElement>('[data-p7k-kpi-periods] .overflow-x-auto');
-    if (scroller) {
-      scroller.scrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth - 330);
-      document
-        .querySelectorAll<HTMLElement>('[data-p7k-kpi-periods] tr.p7k-group-row td:first-child > *')
+    /**
+     * ── K10 · przypięte kolumny z REALNYCH szerokości ─────────────────────
+     *
+     * DEFEKT 1b: offsety `right` przypiętych kolumn były wpisane na sztywno
+     * (STAN `right-44`, YTD `right-234`) i zakładały, że kolumna akcji ma 44 px,
+     * a YTD/STAN po 190 px. W rzeczywistości kolumna akcji ma 80 px
+     * (`ROW_ACTIONS_COLUMN_WIDTH`, klasa `w-20`), a `columnFit` skalował YTD/STAN
+     * do ~139 px. Efekt na zrzucie: między YTD a STAN zostawało 51 px okna, przez
+     * które przebijała przewijana kolumna GRU („CEL —"), a YTD nachodziło na
+     * sąsiada. Offsety liczymy więc PO renderze, z `getBoundingClientRect()`.
+     */
+    const host = document.querySelector<HTMLElement>('[data-p7k-kpi-periods]');
+    const scroller = host?.querySelector<HTMLElement>('.overflow-x-auto');
+    if (!host || !scroller) return undefined;
+    const headRow = host.querySelector<HTMLTableRowElement>('thead tr');
+    const headCells = [...(headRow?.children ?? [])] as HTMLElement[];
+    const widthOf = (el?: HTMLElement) => (el ? el.getBoundingClientRect().width : 0);
+    const actionsWidth = widthOf(headCells[headCells.length - 1]);
+    const stanWidth = widthOf(headCells[headCells.length - 2]);
+    host.querySelectorAll<HTMLTableRowElement>('tr').forEach((row) => {
+      if (row.classList.contains('p7k-group-row')) return;
+      const cells = [...row.children] as HTMLElement[];
+      const stan = cells[cells.length - 2];
+      const ytd = cells[cells.length - 3];
+      if (stan) stan.style.right = `${Math.round(actionsWidth)}px`;
+      if (ytd) ytd.style.right = `${Math.round(actionsWidth + stanWidth)}px`;
+    });
+
+    // Wiersz grupy (colSpan) jedzie z przewijaniem, żeby nazwa grupy była
+    // zawsze widoczna obok przypiętej kolumny MIERNIK.
+    const syncGroupRows = () => {
+      host
+        .querySelectorAll<HTMLElement>('tr.p7k-group-row td:first-child > *')
         .forEach((content) => {
           content.style.transform = `translateX(${scroller.scrollLeft}px)`;
           content.style.width = `${scroller.clientWidth - 32}px`;
         });
-    }
+    };
+
+    /**
+     * Domyślnie widok stoi na WRZ 2026 (bieżący miesiąc, SSOT). `?scroll=start`
+     * daje drugi zrzut od STY 2026 — dowód, że przypięcie działa na obu
+     * krańcach przewijania (wymóg 1c).
+     */
+    const atStart = new URLSearchParams(window.location.search).get('scroll') === 'start';
+    const pinnedLeft = Math.round(widthOf(headCells[0]));
+    const wrzHeader = headCells.find((cell) => cell.textContent?.trim().startsWith('WRZ'));
+    const styHeader = headCells.find((cell) => cell.textContent?.trim().startsWith('STY'));
+    /**
+     * PRZYCIAGANIE DO KRAWEDZI KOLUMNY. Samo `offsetLeft - pinnedLeft` bywa
+     * przyciete przez maksymalne przewiniecie i wtedy spod przypietej kolumny
+     * MIERNIK wystaje OGON sasiedniej kolumny („…2026" bez nazwy miesiaca).
+     * Wybieramy najdalsza krawedz kolumny, ktora jeszcze miesci sie w zakresie
+     * przewijania — pierwszy przewijany miesiac zaczyna sie wtedy dokladnie za
+     * kolumna przypieta.
+     */
+    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    /* `?scroll=start` = POCZATEK ROKU, czyli STY 2026 tuz za kolumna przypieta
+       (a nie `scrollLeft = 0`, przy ktorym widac same kolumny kontraktu i ani
+       jednego miesiaca). */
+    const cel = atStart ? styHeader : wrzHeader;
+    const chciane = cel ? Math.max(0, cel.offsetLeft - pinnedLeft) : 0;
+    const krawedzie = headCells
+      .map((cell) => cell.offsetLeft - pinnedLeft)
+      .filter((offset) => offset >= 0 && offset <= Math.min(chciane, maxScroll));
+    scroller.scrollLeft = cel ? Math.max(0, ...krawedzie) : 0;
+    syncGroupRows();
+    scroller.addEventListener('scroll', syncGroupRows);
+    return () => scroller.removeEventListener('scroll', syncGroupRows);
   }, []);
   if (view === 'kpi-l1')
     return (
@@ -564,14 +712,26 @@ function Content() {
         {table(
           reportsKpi,
           [
-            col('name', 'NAZWA RAPORTU', '260px'),
-            col('scope', 'ZAKRES'),
-            col('period', 'OKRES'),
-            col('count', 'MIERNIKI', '90px'),
-            col('state', 'STAN · norma / ostrz. / kryt. / brak', '220px'),
-            col('actions', 'OTWARTE DZIAŁANIA'),
-            col('owner', 'PRZYGOTOWAŁ'),
-            col('updated', 'AKTUALIZACJA'),
+            /**
+             * Naglowek „STAN · norma / ostrz. / kryt. / brak" ma podloge 268 px
+             * (pomiar canvas) i sam jeden wypychal tabele poza obszar 1374 px:
+             * ostatnia kolumna chowala sie pod przypieta kolumna akcji
+             * („AKTUALIZACJA" -> „AKTU…", „05.09.2026" -> „05.0"). Legenda
+             * skrocona do liter; pelne znaczenie zostaje w kolejnosci kolumn
+             * i w opisie modulu.
+             */
+            col('name', 'NAZWA RAPORTU', '320px'),
+            col('scope', 'ZAKRES', '130px', undefined, true, { dataType: 'status' }),
+            col('period', 'OKRES', '145px', undefined, true, { dataType: 'number' }),
+            col('count', 'MIERNIKI', '90px', undefined, true, { dataType: 'number' }),
+            col('state', 'STAN · N / O / K / B', '128px', undefined, true, {
+              dataType: 'number',
+            }),
+            col('actions', 'OTWARTE DZIAŁANIA', '168px', undefined, true, {
+              dataType: 'number',
+            }),
+            col('owner', 'PRZYGOTOWAŁ', '140px', undefined, true, { dataType: 'number' }),
+            col('updated', 'AKTUALIZACJA', '150px', undefined, true, { dataType: 'date' }),
           ],
           view
         )}
@@ -584,14 +744,38 @@ function Content() {
         subtitle="Zakład Tychy · 2026 · edycja 03 · rewizja 05.09.2026 · przygotowała Anna Kowalska"
         action="Dodaj miernik"
       >
+        {/* K10 — przypięte kolumny.
+            · `thead` dostaje NIEPRZEZROCZYSTE tło tokenem (`bg-c-surface-raised`,
+              bez `backdrop-blur`), więc przypięte komórki nagłówka mają dokładnie
+              ten sam kolor co reszta nagłówka i nic spod nich nie przebija;
+            · komórki danych przypięte na `bg-c-surface` (kolor karty),
+              wiersz grupy zostaje na `bg-c-surface-raised`;
+            · OFFSETY `right` nie są już wpisane na sztywno (44/234 px — to była
+              przyczyna nakładania: `columnFit` skalował kolumny i realna
+              szerokość STAN/YTD przestawała się zgadzać). Liczy je `useEffect`
+              z realnych `getBoundingClientRect()` po renderze. */}
         <div
           data-p7k-kpi-periods
-          className="[&_table]:!min-w-[3000px] [&_th]:whitespace-normal [&_th]:leading-tight [&_td]:whitespace-nowrap [&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-20 [&_th:first-child]:bg-c-surface [&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-10 [&_td:first-child]:bg-c-surface [&_th:nth-last-child(2)]:sticky [&_th:nth-last-child(2)]:right-[44px] [&_th:nth-last-child(2)]:z-20 [&_th:nth-last-child(2)]:bg-c-surface [&_td:nth-last-child(2)]:sticky [&_td:nth-last-child(2)]:right-[44px] [&_td:nth-last-child(2)]:z-10 [&_td:nth-last-child(2)]:bg-c-surface [&_th:nth-last-child(3)]:sticky [&_th:nth-last-child(3)]:right-[234px] [&_th:nth-last-child(3)]:z-20 [&_th:nth-last-child(3)]:bg-c-surface [&_td:nth-last-child(3)]:sticky [&_td:nth-last-child(3)]:right-[234px] [&_td:nth-last-child(3)]:z-10 [&_td:nth-last-child(3)]:bg-c-surface"
+          className="[&_thead]:!bg-c-surface-raised [&_thead]:!backdrop-blur-none [&_thead_th:last-child]:!bg-c-surface-raised [&_th]:whitespace-normal [&_th]:leading-tight [&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-20 [&_th:first-child]:bg-c-surface-raised [&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-10 [&_td:first-child]:bg-c-surface [&_tr.p7k-group-row_td:first-child]:!bg-c-surface-raised [&_th:nth-last-child(2)]:sticky [&_th:nth-last-child(2)]:z-20 [&_th:nth-last-child(2)]:bg-c-surface-raised [&_td:nth-last-child(2)]:sticky [&_td:nth-last-child(2)]:z-10 [&_td:nth-last-child(2)]:bg-c-surface [&_th:nth-last-child(3)]:sticky [&_th:nth-last-child(3)]:z-20 [&_th:nth-last-child(3)]:bg-c-surface-raised [&_td:nth-last-child(3)]:sticky [&_td:nth-last-child(3)]:z-10 [&_td:nth-last-child(3)]:bg-c-surface"
         >
           {table(
             kpiItems,
             [
-              col('name', 'MIERNIK', '260px', (r) =>
+              /**
+               * MIERNIK = 324 px. Dwa powody, oba z pomiaru:
+               *  · tresc: „Poziom przyjetych zamowien" POLGRUBYM ma 225 px
+               *    (nie 188 — tamto byl pomiar zwyklej grubosci) + `px-4`x2 = 257;
+               *  · GEOMETRIA ZAMROZONYCH KOLUMN: obszar przewijany to
+               *    1374 (obszar tabeli na 1440) − 324 (MIERNIK) − 350 (YTD 140
+               *    + STAN 130 + akcje 80) = 700 px = DOKLADNIE piec kolumn
+               *    miesiecznych po 140 px. Bez tego jeden z konców przewijania
+               *    zawsze wypada w POLOWIE miesiaca i albo spod MIERNIK wystaje
+               *    ogon kolumny („…2026" bez nazwy), albo YTD przykrywa polowe
+               *    GRU („GRU 202"). To bylo widac na zrzucie 1c/proba 1.
+               * Kolumna pierwotna (`name`) jako jedyna zachowuje zadeklarowana
+               * szerokosc takze w galezi podlog `columnFit`, wiec 324 px jest realne.
+               */
+              col('name', 'MIERNIK', '324px', (r) =>
                 r.group ? (
                   <span className="flex items-center gap-3">
                     <b>{r.name}</b>
@@ -600,22 +784,29 @@ function Content() {
                     </span>
                   </span>
                 ) : (
-                  <b className="whitespace-nowrap">{r.name}</b>
+                  <b className="block truncate" title={r.name}>
+                    {r.name}
+                  </b>
                 )
               ),
-              col('contract', 'KIERUNEK / JEDNOSTKA', '170px'),
-              col('cadence', 'CZĘSTOTLIWOŚĆ', '150px'),
+              col('contract', 'KIERUNEK / JEDNOSTKA', '178px'),
+              /* podłoga typu `text` = 140 px, więc 138 i tak zostałoby podniesione */
+              col('cadence', 'CZĘSTOTLIWOŚĆ', '140px'),
               col('type', 'TYP', '140px'),
-              col('owner', 'ODPOWIEDZIALNY', '170px'),
-              col('benchmark', 'BENCHMARK', '130px'),
-              col('limit', 'LIMIT %', '100px'),
+              col('owner', 'ODPOWIEDZIALNY', '144px'),
+              col('benchmark', 'BENCHMARK', '110px', undefined, true, { dataType: 'number' }),
+              col('limit', 'LIMIT %', '92px', undefined, true, { dataType: 'number' }),
               ...periodColumns,
-              col('ytd', 'YTD', '190px', (r) => r.ytd),
-              col('state', 'STAN', '190px', (r) => r.state),
+              /* jak kolumny okresow: podloga `text` 140 px, bo tresc „Rezultat 94 810” ma 103 px */
+              col('ytd', 'YTD', '140px', (r) => r.ytd),
+              col('state', 'STAN', '132px', (r) => r.state, true, { dataType: 'status' }),
             ],
             view,
             (r) => ((r as any).group ? 'p7k-group-row bg-c-surface-raised font-semibold' : ''),
-            3000
+            /* Suma zadeklarowanych szerokości + 80 px kolumny akcji. Podana
+               DOKŁADNIE, żeby `columnFit` nie skalował (skalowanie = rozjazd
+               szerokości nagłówka i wierszy, czyli defekt K10). */
+            KPI_L2_TABLE_WIDTH
           )}
         </div>
       </Frame>
@@ -669,7 +860,14 @@ function Content() {
             </p>
           </Block>
           <Block title="Odchylenia i karty działania">
-            <div className="[&_th_span]:!whitespace-normal [&_th_span]:!overflow-visible [&_th_span]:!text-clip [&_th_span]:break-all [&_th]:leading-tight [&_td]:leading-tight [&_td>div]:line-clamp-2">
+            {/* K13 — zdjęty `[&_th_span]:break-all`: to on łamał nagłówki
+                w ŚRODKU wyrazu („OSIĄGNI ĘTY", „ODPOWIEDZIA LNY"). Nagłówki
+                łamią się teraz wyłącznie na spacji (`break-normal` z warstwy
+                `CELL_TEXT_CLAMP_CLASS` + `hyphens-none`), a szerokości kolumn
+                pochodzą z pomiaru treści, więc daty, nazwiska i miesiące nie są
+                ucinane. Tabela na całą szerokość karty (`-mx-4`) — inaczej
+                siedem kolumn nie mieści się w 830 px bez ścisku. */}
+            <div className="-mx-4 [&_th]:leading-tight [&_th]:hyphens-none [&_td]:leading-tight">
               {table(
                 [
                   {
@@ -687,20 +885,33 @@ function Content() {
                   },
                 ],
                 [
-                  col('month', 'MIESIĄC', '95px'),
-                  col('goal', 'CEL OSIĄGNIĘTY', '110px'),
-                  col('problem', 'PROBLEM', '145px', (r) => <div>{r.problem}</div>),
-                  col('action', 'DZIAŁANIE', '150px', (r) => <div>{r.action}</div>),
-                  col('owner', 'ODPOWIEDZIALNY', '120px'),
-                  col('due', 'TERMIN', '95px'),
-                  col('state', 'STATUS', '110px', (r) => status(r.state, 'bad')),
-                  col('cause', 'GŁÓWNA PRZYCZYNA', '180px', undefined, false),
-                  col('required', 'DZIAŁANIA?', '120px', undefined, false),
-                  col('comment', 'KOMENTARZ', '180px', undefined, false),
+                  /* Szerokości = zmierzona treść + `px-4`×2:
+                     „Sierpień 2026" 91+32=123 · „Tomasz Nowak" 98+32=130
+                     („ODPOWIEDZIALNY" ma podłogę nagłówka 144) ·
+                     „18.09.2026" 73+32=105. Opisy zawijane do 2 linii. */
+                  col('month', 'MIESIĄC', '124px', undefined, true, { dataType: 'date' }),
+                  col('goal', 'CEL OSIĄGNIĘTY', '133px', undefined, true, { dataType: 'number' }),
+                  col('problem', 'PROBLEM', '150px', undefined, true, { wrap: true }),
+                  col('action', 'DZIAŁANIE', '150px', undefined, true, { wrap: true }),
+                  /* `text` (podloga 140), nie `owner` (150) — tresc „Tomasz Nowak"
+                     ma 130 px z paddingiem, a naglowek 144 px. */
+                  col('owner', 'ODPOWIEDZIALNY', '144px', undefined, true),
+                  col('due', 'TERMIN', '110px', undefined, true, { dataType: 'date' }),
+                  /* 106 px: pill „OTWARTY” ma 73 px razem z obwodka + `px-4`x2 */
+                  col('state', 'STATUS', '106px', (r) => status(r.state, 'bad'), true, {
+                    dataType: 'number',
+                  }),
+                  col('cause', 'GŁÓWNA PRZYCZYNA', '180px', undefined, false, { wrap: true }),
+                  col('required', 'DZIAŁANIA?', '120px', undefined, false, { dataType: 'number' }),
+                  col('comment', 'KOMENTARZ', '180px', undefined, false, { wrap: true }),
                 ],
                 'kpi-actions',
                 undefined,
-                830,
+                /* 124+133+150+150+144+110+106 = 917 przy obszarze 922 px
+                   (karta na calej szerokosci przez `-mx-4`, lewa nawigacja 150,
+                   prawy panel 270). Bez kolumny akcji (`showRowMenu=false`),
+                   wiec tyle wynosi cala tabela — zero skalowania, zero uciec. */
+                917,
                 false
               )}
             </div>
@@ -714,14 +925,17 @@ function Content() {
         {table(
           reportsOkr,
           [
+            /* Szerokosci z pomiaru: „Program automatyzacji" ma 149 px + `px-4`x2. */
             col('name', 'NAZWA', '250px'),
-            col('scope', 'ZAKRES'),
-            col('cycle', 'CYKL'),
-            col('objectives', 'CELE'),
-            col('results', 'REZULTATY'),
-            col('state', 'STAN · droga / zagroż. / kryt. / brak', '230px'),
-            col('owners', 'WŁAŚCICIELE'),
-            col('checkin', 'OSTATNI CHECK-IN'),
+            col('scope', 'ZAKRES', '181px'),
+            col('cycle', 'CYKL', '110px', undefined, true, { dataType: 'number' }),
+            col('objectives', 'CELE', '90px', undefined, true, { dataType: 'number' }),
+            col('results', 'REZULTATY', '105px', undefined, true, { dataType: 'number' }),
+            col('state', 'STAN · D / Z / K / B', '128px', undefined, true, {
+              dataType: 'number',
+            }),
+            col('owners', 'WŁAŚCICIELE', '118px', undefined, true, { dataType: 'number' }),
+            col('checkin', 'OSTATNI CHECK-IN', '148px', undefined, true, { dataType: 'date' }),
           ],
           view
         )}
@@ -734,38 +948,54 @@ function Content() {
         subtitle="Zakład DBR77 · Q4 2026 · mierzalna zmiana operacyjna"
         action="Dodaj cel"
       >
-        <div className="[&_table]:!min-w-[1700px] [&_th_span]:!whitespace-normal [&_th_span]:!overflow-visible [&_th_span]:!text-clip [&_th]:leading-tight">
+        {/* K11 — zero nakładania. Zdjęte hacki `[&_th_span]:!overflow-visible`
+            (to one pozwalały nagłówkom wyjść poza własną komórkę) i `!min-w-[1700px]`
+            (tabela szersza niż obszar → `columnFit` ściskał kolumny i tekst
+            wychodził na sąsiada). Zamiast tego: szerokości z POMIARU treści,
+            teksty opisowe zawijane do 2 linii, a ZESPÓŁ i OSTATNI CHECK-IN
+            schowane domyślnie w pstryczku kolumn — tak samo jak K4/K7 rozwiązały
+            ten sam konflikt w ROI L1 i KPI L3. */}
+        <div className="[&_th]:leading-tight">
           {table(
             okrItems,
             [
-              col('objective', 'CEL', '250px', (r) =>
-                r.group ? (
-                  <span className="flex items-center gap-3">
-                    <b>{r.result}</b>
-                    <span className="text-xs font-normal text-c-text-secondary">
-                      {r.groupOwner}
+              col(
+                'objective',
+                'CEL',
+                '210px',
+                (r) =>
+                  r.group ? (
+                    <span className="flex items-center gap-3">
+                      <b>{r.result}</b>
+                      <span className="text-xs font-normal text-c-text-secondary">
+                        {r.groupOwner}
+                      </span>
                     </span>
-                  </span>
-                ) : (
-                  <div>
-                    <b>{r.objective}</b>
-                    <div className="text-[10px] text-c-text-muted">{r.ambition}</div>
-                  </div>
-                )
+                  ) : (
+                    <div className="min-w-0">
+                      <b className="line-clamp-2 break-normal" title={r.objective}>
+                        {r.objective}
+                      </b>
+                      <div className="truncate text-[10px] text-c-text-muted">{r.ambition}</div>
+                    </div>
+                  ),
+                true,
+                { dataType: 'text' }
               ),
-              col('result', 'KLUCZOWY REZULTAT', '280px'),
-              col('owner', 'WŁAŚCICIEL', '150px'),
-              col('team', 'ZESPÓŁ', '130px'),
-              col('values', 'START / CEL / BIEŻĄCA', '180px'),
-              col('progress', 'POSTĘP', '100px'),
-              col('confidence', 'PEWNOŚĆ', '120px'),
-              col('deadline', 'TERMIN', '130px'),
-              col('checkin', 'OSTATNI CHECK-IN', '170px'),
-              col('state', 'STAN', '160px', (r) => r.state),
+              col('result', 'KLUCZOWY REZULTAT', '270px', undefined, true, { wrap: true }),
+              col('owner', 'WŁAŚCICIEL', '150px', undefined, true, { dataType: 'owner' }),
+              col('values', 'START / CEL / BIEŻĄCA', '170px', undefined, true, {
+                dataType: 'number',
+              }),
+              col('progress', 'POSTĘP', '100px', undefined, true, { dataType: 'number' }),
+              col('confidence', 'PEWNOŚĆ', '130px', undefined, true, { dataType: 'status' }),
+              col('deadline', 'TERMIN', '110px', undefined, true, { dataType: 'date' }),
+              col('state', 'STAN', '140px', (r) => r.state, true, { dataType: 'status' }),
+              col('team', 'ZESPÓŁ', '140px', undefined, false),
+              col('checkin', 'OSTATNI CHECK-IN', '150px', undefined, false, { dataType: 'date' }),
             ],
             view,
-            (r) => ((r as any).group ? 'p7k-group-row bg-c-surface-raised font-semibold' : ''),
-            1700
+            (r) => ((r as any).group ? 'p7k-group-row bg-c-surface-raised font-semibold' : '')
           )}
         </div>
       </Frame>
@@ -820,21 +1050,27 @@ function Content() {
         subtitle="Inwestycje · ekonomika, ryzyko i rekomendacja"
         action="Nowa analiza"
       >
-        <div className="[&_th]:whitespace-normal [&_th]:leading-tight [&_td]:whitespace-nowrap">
+        {/* K12 — zdjęte `[&_td]:whitespace-nowrap`: to ono kazało każdej komórce
+            zostać w jednej linii BEZ przycięcia, więc „Robotyzacja gniazda
+            spawalniczego" kładło się na kolumnie PRZEDMIOT. NAZWA zawija do
+            2 linii (opcja dopuszczona w K12), reszta ma szerokość z pomiaru. */}
+        <div className="[&_th]:leading-tight">
           {table(
             roiRows,
             [
-              col('name', 'NAZWA', '240px'),
-              col('subject', 'PRZEDMIOT', '130px'),
-              col('option', 'WARIANT', '180px'),
-              col('capex', 'CAPEX', '140px'),
-              col('benefit', 'ROCZNA KORZYŚĆ', '165px'),
-              col('roi', 'ROI', '120px'),
-              col('payback', 'PAYBACK', '120px'),
-              col('recommendation', 'REKOMENDACJA', '170px', (r) => status(r.recommendation)),
-              col('phase', 'FAZA', '120px'),
-              col('npv', 'NPV', '130px', undefined, false),
-              col('irr', 'IRR', '100px', undefined, false),
+              col('name', 'NAZWA', '220px', undefined, true, { wrap: true }),
+              col('subject', 'PRZEDMIOT', '130px', undefined, true, { dataType: 'status' }),
+              col('option', 'WARIANT', '140px', undefined, true, { wrap: true }),
+              col('capex', 'CAPEX', '116px', undefined, true, { dataType: 'number' }),
+              col('benefit', 'ROCZNA KORZYŚĆ', '146px', undefined, true, { dataType: 'number' }),
+              col('roi', 'ROI', '118px', undefined, true, { dataType: 'number' }),
+              col('payback', 'PAYBACK', '96px', undefined, true, { dataType: 'number' }),
+              col('recommendation', 'REKOMENDACJA', '172px', (r) => status(r.recommendation), true, {
+                dataType: 'status',
+              }),
+              col('phase', 'FAZA', '130px', undefined, true, { dataType: 'status' }),
+              col('npv', 'NPV', '130px', undefined, false, { dataType: 'number' }),
+              col('irr', 'IRR', '100px', undefined, false, { dataType: 'number' }),
             ],
             view
           )}

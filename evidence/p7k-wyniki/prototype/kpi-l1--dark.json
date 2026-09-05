@@ -6,6 +6,20 @@
   "bledyKonsoli": 0,
   "consoleErrors": [],
   "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 0,
+  "ucieteLacznieSzczegoly": [],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 9,
+    "rozjechane": 0
+  },
   "dom": {
     "aside": {
       "count": 0
@@ -18,5 +32,5 @@
   },
   "bodyScrollWidth": 1440,
   "viewportWidth": 1440,
-  "bodyText": "Wyniki › KPI\nRaporty KPI\n\nProces · zestawienia okresowe zakładów, projektów i działów\n\nKPI\nOKR\nROI\nNowy raport\nNAZWA RAPORTU\n\t\nZAKRES\n\t\nOKRES\n\t\nMIERNIKI\n\t\nSTAN · NORMA / OSTRZ. / KRYT. / BRAK\n\t\nOTWARTE DZIAŁANIA\n\t\nPRZYGOTOWAŁ\n\t\nAKTUALIZACJA\n\t\n\n\nPlant Balanced Scorecard — Zakład DBR77\n\t\nZakład Tychy\n\t\n2026 · edycja 03\n\t\n138\n\t\n93 / 21 / 8 / 16\n\t\n8\n\t\nAnna Kowalska\n\t\n05.09.2026\n\t\n\n\nKPI produkcji — Q3 2026\n\t\nProdukcja\n\t\nQ3 2026\n\t\n24\n\t\n17 / 4 / 2 / 1\n\t\n2\n\t\nMarek Zieliński\n\t\n04.09.2026\n\t\n\n\nKPI jakości — sierpień\n\t\nJakość\n\t\nVIII 2026\n\t\n18\n\t\n13 / 3 / 1 / 1\n\t\n1\n\t\nJoanna Lis\n\t\n03.09.2026\n\t"
+  "bodyText": "Wyniki › KPI\nRaporty KPI\n\nProces · zestawienia okresowe zakładów, projektów i działów\n\nKPI\nOKR\nROI\nNowy raport\nNAZWA RAPORTU\n\t\nZAKRES\n\t\nOKRES\n\t\nMIERNIKI\n\t\nSTAN · N / O / K / B\n\t\nOTWARTE DZIAŁANIA\n\t\nPRZYGOTOWAŁ\n\t\nAKTUALIZACJA\n\t\n\n\nPlant Balanced Scorecard — Zakład DBR77\n\t\nZakład Tychy\n\t\n2026 · edycja 03\n\t\n138\n\t\n93 / 21 / 8 / 16\n\t\n8\n\t\nAnna Kowalska\n\t\n05.09.2026\n\t\n\n\nKPI produkcji — Q3 2026\n\t\nProdukcja\n\t\nQ3 2026\n\t\n24\n\t\n17 / 4 / 2 / 1\n\t\n2\n\t\nMarek Zieliński\n\t\n04.09.2026\n\t\n\n\nKPI jakości — sierpień\n\t\nJakość\n\t\nVIII 2026\n\t\n18\n\t\n13 / 3 / 1 / 1\n\t\n1\n\t\nJoanna Lis\n\t\n03.09.2026\n\t"
 }

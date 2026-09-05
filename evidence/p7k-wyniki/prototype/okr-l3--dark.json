@@ -6,6 +6,16 @@
   "bledyKonsoli": 0,
   "consoleErrors": [],
   "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 0,
+  "ucieteLacznieSzczegoly": [],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": null,
   "dom": {
     "aside": {
       "count": 1

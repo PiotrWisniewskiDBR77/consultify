@@ -6,6 +6,45 @@
   "bledyKonsoli": 0,
   "consoleErrors": [],
   "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 4,
+  "ucieteLacznieSzczegoly": [
+    {
+      "tekst": "Robotyzacja gniazda spawalniczego",
+      "naturalna": 232,
+      "clientWidth": 192,
+      "dymek": true
+    },
+    {
+      "tekst": "2 · pełna automatyzacja",
+      "naturalna": 154,
+      "clientWidth": 111,
+      "dymek": true
+    },
+    {
+      "tekst": "System wizyjny kontroli jakości",
+      "naturalna": 199,
+      "clientWidth": 192,
+      "dymek": true
+    },
+    {
+      "tekst": "Automatyzacja magazynu WIP",
+      "naturalna": 195,
+      "clientWidth": 192,
+      "dymek": true
+    }
+  ],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 10,
+    "rozjechane": 0
+  },
   "dom": {
     "aside": {
       "count": 0
@@ -14,7 +53,9 @@
       "count": 1
     },
     "truncatedHeaders": [],
-    "numericCellsWithWrap": []
+    "numericCellsWithWrap": [
+      "2 · pełna automatyzacja"
+    ]
   },
   "bodyScrollWidth": 1440,
   "viewportWidth": 1440,

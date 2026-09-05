@@ -6,6 +6,20 @@
   "bledyKonsoli": 0,
   "consoleErrors": [],
   "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 0,
+  "ucieteLacznieSzczegoly": [],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 22,
+    "rozjechane": 0
+  },
   "dom": {
     "aside": {
       "count": 0
@@ -18,5 +32,5 @@
   },
   "bodyScrollWidth": 1440,
   "viewportWidth": 1440,
-  "bodyText": "Wyniki › KPI\nPlant Balanced Scorecard — Zakład DBR77\n\nZakład Tychy · 2026 · edycja 03 · rewizja 05.09.2026 · przygotowała Anna Kowalska\n\nKPI\nOKR\nROI\nDodaj miernik\nMIERNIK\n\t\nKIERUNEK / JEDNOSTKA\n\t\nCZĘSTOTLIWOŚĆ\n\t\nTYP\n\t\nODPOWIEDZIALNY\n\t\nBENCHMARK\n\t\nLIMIT %\n\t\nSTY 2026\n\t\nLUT 2026\n\t\nMAR 2026\n\t\nKWI 2026\n\t\nMAJ 2026\n\t\nCZE 2026\n\t\nLIP 2026\n\t\nSIE 2026\n\t\nWRZ 2026\n\t\nPAŹ 2026\n\t\nLIS 2026\n\t\nGRU 2026\n\t\nYTD\n\t\nSTAN\n\t\n\n\nSPRZEDAŻ\nwłaściciel nadrzędny: Dyrektor Sprzedaży\n\n\nWielkość sprzedaży netto\n\t\n↑ min. · LC/1000\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nTomasz Nowak\n\t\n12 400\n\t\n5%\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  12 000\nRezultat  12 180\n\t\nCEL  12 400\nRezultat  11 620\n\t\nCEL  12 800\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  98 200\nRezultat  94 810\n\t\nKrytyczne\n\t\n\n\nPoziom przyjętych zamówień\n\t\n↑ min. · LC/1000\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nEwa Maj\n\t\n10 900\n\t\n4%\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  11 400\nRezultat  11 520\n\t\nCEL  10 500\nRezultat  10 720\n\t\nCEL  10 900\nRezultat  10 540\n\t\nCEL  11 100\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  86 000\nRezultat  85 440\n\t\nOstrzeżenie\n\t\n\n\nPRODUKCJA\nwłaściciel nadrzędny: Dyrektor Operacyjny\n\n\nOEE linii montażowej\n\t\n↑ min. · %\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nMarek Zieliński\n\t\n78%\n\t\n3%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  76%\nRezultat  77%\n\t\nCEL  78%\nRezultat  79%\n\t\nCEL  79%\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  —\nRezultat  —\n\t\nCEL  76%\nRezultat  77%\n\t\nW normie\n\t"
+  "bodyText": "Wyniki › KPI\nPlant Balanced Scorecard — Zakład DBR77\n\nZakład Tychy · 2026 · edycja 03 · rewizja 05.09.2026 · przygotowała Anna Kowalska\n\nKPI\nOKR\nROI\nDodaj miernik\nMIERNIK\n\t\nKIERUNEK / JEDNOSTKA\n\t\nCZĘSTOTLIWOŚĆ\n\t\nTYP\n\t\nODPOWIEDZIALNY\n\t\nBENCHMARK\n\t\nLIMIT %\n\t\nSTY 2026\n\t\nLUT 2026\n\t\nMAR 2026\n\t\nKWI 2026\n\t\nMAJ 2026\n\t\nCZE 2026\n\t\nLIP 2026\n\t\nSIE 2026\n\t\nWRZ 2026\n\t\nPAŹ 2026\n\t\nLIS 2026\n\t\nGRU 2026\n\t\nYTD\n\t\nSTAN\n\t\n\n\nSPRZEDAŻ\nwłaściciel nadrzędny: Dyrektor Sprzedaży\n\n\nWielkość sprzedaży netto\n\t\n↑ min. · LC/1000\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nTomasz Nowak\n\t\n12 400\n\t\n5%\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n12 000\nRezultat\n12 180\n\t\nCEL\n12 400\nRezultat\n11 620\n\t\nCEL\n12 800\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n98 200\nRezultat\n94 810\n\t\nKrytyczne\n\t\n\n\nPoziom przyjętych zamówień\n\t\n↑ min. · LC/1000\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nEwa Maj\n\t\n10 900\n\t\n4%\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n11 400\nRezultat\n11 520\n\t\nCEL\n10 500\nRezultat\n10 720\n\t\nCEL\n10 900\nRezultat\n10 540\n\t\nCEL\n11 100\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n86 000\nRezultat\n85 440\n\t\nOstrzeżenie\n\t\n\n\nPRODUKCJA\nwłaściciel nadrzędny: Dyrektor Operacyjny\n\n\nOEE linii montażowej\n\t\n↑ min. · %\n\t\nMiesiąc\n\t\nRozliczeniowy\n\t\nMarek Zieliński\n\t\n78%\n\t\n3%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n76%\nRezultat\n77%\n\t\nCEL\n78%\nRezultat\n79%\n\t\nCEL\n79%\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n—\nRezultat\n—\n\t\nCEL\n76%\nRezultat\n77%\n\t\nW normie\n\t"
 }

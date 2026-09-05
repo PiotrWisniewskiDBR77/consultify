@@ -36,3 +36,25 @@ Trzy poziomy KPI/OKR i dwa ROI; Menu 2 = KPI · OKR · ROI; StandardTable na L1/
 - Z `.json` (tekst DOM): zero nagłówków kończących się „…”; zero komórek liczbowych z łamaniem (sprawdź `th`/`td` przez `--dom`).
 - Luma pary jasny/ciemny różni się o ≥ 100 dla każdego widoku (`scripts/dev/odbior-zywo/luma-para.mjs` gdy scalone z IV, inaczej PIL).
 - Raport `evidence/p7k-wyniki/KROK_1B_PROTOTYP_RAPORT.md` z tabelą K1–K9 → „zrobione / jak / dowód (plik)”. **STOP do akceptu nadzorcy. KROK 2 nadal zakazany.**
+
+---
+
+# Werdykt 1b (gałąź `codex/p7k-wyniki` @ `7308fc2104`, 05.09 noc)
+
+**Werdykt: NIE do pokazu właścicielowi. Korekta 1c.** Progi §10 1b spełnione mechanicznie (0 `c-accent`, StandardModuleBar ×2, ArtifactRightPanel ×5, luma ≥ 220), ale oko widzi cztery nowe defekty układu tabel.
+
+## Co się poprawiło (zostaje)
+K1 Menu 2 neutralne z ikonami, lupą i przełącznikiem · K5 pill jednowierszowy · K6 wiersze grup jako jedna komórka z właścicielem nadrzędnym, bez „—” · K8 prawy panel accordion (Akcje·Właściwości·Powiązania·Źródła·Komentarze·Historia) z zakładką Teresa, lewa nawigacja z ikonami i kreską · K4 ROI L1 dziewięć kolumn bez ucięcia · K7 siedem kolumn w L3.
+
+## Korekty 1c (obowiązkowe)
+| # | Defekt (zrzut) | Wymagany stan |
+|---|---|---|
+| K10 | KPI L2: przypięte kolumny nachodzą na przewijane — „zultat 11 520” ucięte pod MIERNIK, „Rezult” ucięte przed YTD, YTD zasłonięte kolejną komórką „CEL —”, pusty nagłówek między YTD a STAN, pill „Krytyczne” obcięty. | Przypięte kolumny (MIERNIK z lewej; YTD, STAN, kebab z prawej) mają nieprzezroczyste tło i stałe szerokości; obszar przewijany zaczyna się dokładnie za MIERNIK i kończy dokładnie przed YTD; nagłówek i wiersze dzielą te same szerokości (brak pustych kolumn); pill w całości widoczny. Zrzut po przewinięciu do WRZ 2026 i drugi na początku (STY 2026). |
+| K11 | OKR L2: tekst KLUCZOWY REZULTAT wchodzi na kolumnę WŁAŚCICIEL („…z 42 do 28 min” na „Marek Zieliński”). | Komórki tekstowe zawijają do 2 linii (`line-clamp-2`) albo kolumna ma szerokość z pomiaru treści (mechanika P2). Zero nakładania. |
+| K12 | ROI L1: NAZWA wchodzi na PRZEDMIOT („spawalniczego” na „Robotyzacja”). | Jak K11: zawijanie do 2 linii albo szerokość z pomiaru. |
+| K13 | KPI L3 tabela odchyleń: „Sierpień 2”, „Tomasz Nowa”, „18.09.202”, „poniż…”, nagłówki łamane w środku słowa („OSIĄGNI ĘTY”, „ODPOWIEDZIA LNY”). | Daty, nazwiska i miesiące NIGDY nie są ucinane (`nowrap` + szerokość z treści); teksty opisowe zawijane do 2 linii; nagłówki łamane tylko na spacji (`hyphens: none`, `overflow-wrap: normal`), przy braku miejsca skrót nagłówka („ODPOW.”) z pełną nazwą w `title`. |
+
+**Podstawa:** przed 1c scal lokalnie gałąź `codex/p2-tabela` (`git merge codex/p2-tabela` w worktree p7k — ta sama mechanika `FilterableTable`: typy kolumn, podłogi szerokości, pomiar treści, dymki tylko przy przepełnieniu). Prototyp ma korzystać z tej mechaniki, nie z własnych szerokości.
+
+## Pomiar 1c
+Jak w 1b, plus: z `.json` (`--dom`) zero komórek z tekstem uciętym bez `title`; skrypt zrzutowy dodaje test nakładania: dla każdego wiersza `td` prostokąty (`getBoundingClientRect`) sąsiednich komórek nie nachodzą (suma `right_i > left_{i+1}` = 0) — wynik w `.json` jako `nakladania: 0`. KPI L2: dwa zrzuty (początek i WRZ 2026). Raport `KROK_1C_PROTOTYP_RAPORT.md` z tabelą K10–K13. **STOP do akceptu nadzorcy. KROK 2 zakazany.**

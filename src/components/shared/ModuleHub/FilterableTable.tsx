@@ -866,7 +866,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         measuredLabelWidth > 0
           ? Math.ceil(
               measuredLabelWidth +
-                Math.max(0, c.label.length - 1) * HEADER_TRACKING_PX +
+                /**
+                 * BŁĄD O JEDEN (pomiar 2026-09-05, prototyp P7K KROK 1c).
+                 *
+                 * Było `label.length - 1` — w założeniu „odstępy tylko MIĘDZY
+                 * literami". CSS `letter-spacing` (`tracking-wider` = 0,05em)
+                 * dokłada odstęp TAKŻE PO ostatnim znaku, więc naturalna
+                 * szerokość nagłówka jest o jeden odstęp większa niż budżet.
+                 * Podłoga wychodziła o ~0,5–1 px za mała i nagłówek dostawał
+                 * wielokropek mimo „zmieszczonej" kolumny: zmierzone na KPI L2
+                 * — „BENCHMARK" (9 znaków) w kolumnie 109 px renderowało się
+                 * jako „BENCHMA…", choć formuła liczyła, że się mieści.
+                 * Dowód mutacyjny: przywrócenie `- 1` łamie test
+                 * „budżet odstępów liter obejmuje znak ostatni".
+                 */
+                c.label.length * HEADER_TRACKING_PX +
                 HEADER_HORIZONTAL_PADDING_PX +
                 (c.sortable ? HEADER_SORT_BUDGET_PX : 0) +
                 (c.filterable ? HEADER_FILTER_BUDGET_PX : 0)

@@ -6,6 +6,33 @@
   "bledyKonsoli": 0,
   "consoleErrors": [],
   "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 2,
+  "ucieteLacznieSzczegoly": [
+    {
+      "tekst": "Sprzedaż krajowa poniżej planu",
+      "naturalna": 203,
+      "clientWidth": 118,
+      "dymek": true
+    },
+    {
+      "tekst": "Plan odbiorów i wsparcie wdrożeń",
+      "naturalna": 218,
+      "clientWidth": 118,
+      "dymek": true
+    }
+  ],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 7,
+    "rozjechane": 0
+  },
   "dom": {
     "aside": {
       "count": 1

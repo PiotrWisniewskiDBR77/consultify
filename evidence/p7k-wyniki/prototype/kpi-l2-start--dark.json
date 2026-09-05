@@ -1,7 +1,7 @@
 {
   "view": "kpi-l2",
-  "theme": "light",
-  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=kpi-l2&theme=light&lang=pl&uwagi=0",
+  "theme": "dark",
+  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=kpi-l2&theme=dark&lang=pl&uwagi=0&scroll=start",
   "httpStatus": 200,
   "bledyKonsoli": 0,
   "consoleErrors": [],
