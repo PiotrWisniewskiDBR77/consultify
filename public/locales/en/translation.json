@@ -5851,7 +5851,7 @@
     },
     "ideaInspector": {
       "empty": "Select an element to see its properties",
-      "emptyHint": "Click a node, row, card, or edge",
+      "emptyHint": "Click a node, row, card, or edge to see its fields",
       "recent": "Recently opened",
       "saved": "Saved",
       "advice": "AI advice",
@@ -5881,7 +5881,10 @@
         "evidence": "Evidence and sources",
         "relations": "Relations",
         "outputs": "Output artifacts",
-        "history": "History"
+        "history": "History",
+        "actions": "Actions",
+        "properties": "Properties",
+        "comments": "Comments"
       },
       "tool": {
         "mindmap": "Node appearance",
@@ -5908,7 +5911,11 @@
         "teresa": "Teresa"
       },
       "closePanel": "Close panel",
-      "ariaPanel": "Idea panel"
+      "ariaPanel": "Idea panel",
+      "stageField": "Stage",
+      "createdField": "Created",
+      "updatedField": "Updated",
+      "noActivity": "No activity"
     }
   },
   "step1": {

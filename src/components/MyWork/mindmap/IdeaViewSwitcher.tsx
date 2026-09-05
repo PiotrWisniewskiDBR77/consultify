@@ -137,6 +137,20 @@ export function IdeaViewSwitcher({
         if (el.closest('[data-testid="idea-view-switcher"]')) continue;
         const er = el.getBoundingClientRect();
         if (er.width < 20 || er.height < 15) continue;
+        // ★ NAPRAWA (odbiór CTO 05.09, `11-idea-table-selection.png`): selektor
+        // `[class*="bottom-3"][class*="right-3"]` łapie KAŻDY fixed-pozycjonowany
+        // widget w tym rogu EKRANU, nie tylko klaster zoom/minimapy WEWNĄTRZ
+        // płótna — np. plakietkę admina „N V9 overrides"
+        // (`ChatV9FlagsIndicator.tsx`, też `fixed bottom-3 right-3`), która żyje
+        // w prawym PANELU, poza płótnem. Sam warunek niżej (bliskość rogu w
+        // pikselach ekranu) tego nie odróżniał — plakietka w panelu jest równie
+        // blisko rogu płótna co realny klaster wewnątrz niego, więc przełącznik
+        // parkował się TUŻ OBOK niej, czyli w kolumnie panelu. Klaster
+        // zoom/minimapy zawsze NACHODZI na prostokąt płótna; widget w sąsiedniej
+        // kolumnie (panel) zaczyna się PO jego prawej/dolnej krawędzi — ten
+        // warunek odrzuca drugi przypadek, zanim heurystyka bliskości w ogóle
+        // się wykona.
+        if (er.left >= r.right || er.top >= r.bottom) continue;
         // tylko elementy realnie w prawym-dolnym rogu płótna
         if (er.right > r.right - 320 && er.bottom > r.bottom - 140) {
           lewaKrawedzKlastra = Math.min(lewaKrawedzKlastra, er.left);

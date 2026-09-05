@@ -5174,7 +5174,7 @@
     },
     "ideaInspector": {
       "empty": "Zaznacz element, aby zobaczyć właściwości",
-      "emptyHint": "Kliknij węzeł, wiersz, kartkę albo krawędź",
+      "emptyHint": "Kliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola",
       "recent": "Ostatnio otwarte",
       "saved": "Zapisano",
       "advice": "AI porada",
@@ -5204,7 +5204,10 @@
         "evidence": "Dowody i źródła",
         "relations": "Powiązania",
         "outputs": "Artefakty wyjściowe",
-        "history": "Historia"
+        "history": "Historia",
+        "actions": "Akcje",
+        "properties": "Właściwości",
+        "comments": "Komentarze"
       },
       "tool": {
         "mindmap": "Wygląd węzła",
@@ -5231,7 +5234,11 @@
         "teresa": "Teresa"
       },
       "closePanel": "Zamknij panel",
-      "ariaPanel": "Panel pomysłu"
+      "ariaPanel": "Panel pomysłu",
+      "stageField": "Etap",
+      "createdField": "Utworzono",
+      "updatedField": "Zaktualizowano",
+      "noActivity": "Brak aktywności"
     }
   },
   "step1": {
