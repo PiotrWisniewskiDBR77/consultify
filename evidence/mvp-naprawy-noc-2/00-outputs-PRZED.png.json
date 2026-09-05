@@ -1,0 +1,25 @@
+{
+ "url": "http://localhost:3092/assessment?tab=outputs",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nOcena\nDane\nModel\n2\n15\nAudyt Nocny\nAN\nBiblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nWszystkie\n0\nSzkic\n0 · 0 ukryte\nW przeglądzie\n0 · 0 ukryte\nOczekuje na zatwierdzenie\n0 · 0 ukryte\nZatwierdzony\n0 · 0 ukryte\nOdrzucony\n0 · 0 ukryte\nZarchiwizowany\n0 · 0 ukryte\nAI Triage\nZAKRES\n\t\nMODUŁ\n\t\nWERSJA\n\t\nZAMROŻONO\n\t\n\n\nBrak wniosków\n\nWnioski zamrożone z ukończonej sesji oceny pojawią się tutaj.",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T21:41:16.731Z"
+}
