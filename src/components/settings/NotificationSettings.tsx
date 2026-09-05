@@ -152,22 +152,27 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     fetchPrefs();
   }, [currentUser.id]);
 
-  // Fetch active integrations
-  useEffect(() => {
-    const fetchIntegrations = async () => {
-      if (!currentUser.organizationId) return;
-      try {
-        const response = await Api.getIntegrations(currentUser.organizationId);
-        const data: Integration[] = Array.isArray(response)
-          ? response
-          : response.integrations || [];
-        setIntegrations(data.filter((i) => i.status === 'active' || !i.status));
-      } catch {
-        setIntegrations([]);
-      }
-    };
-    fetchIntegrations();
-  }, [currentUser.organizationId]);
+  // Plan napraw MVP 05.09.2026, poz. (5) `ustawienia-powiadomienia`: ten
+  // fetch generował 1 błąd konsoli 501 na każdym wejściu na ekran.
+  //
+  // GET /api/integrations JEST w pełni zaimplementowany (realne zapytania do
+  // bazy w `server/src/routes/integrations/integrations.routes.ts`), ale
+  // Gateway.ts (`STUB_NAMES_WITH_LIVE_UI_ON_DEMO`) mountuje CAŁY ten router
+  // jako "honest 501" na środowiskach z `enableStubRoutes=false` (staging tu
+  // działa jak produkcja) — to świadoma, platformowa decyzja gatingu obejmująca
+  // też IntegrationHealthDashboard.tsx / NotificationChannelsSettings.tsx /
+  // IntegrationSettings.tsx (patrz komentarz przy `mountStub` w Gateway.ts).
+  // Odgięcie tej bramki dotyka 3+ innych ekranów spoza zakresu tego zlecenia
+  // (i całej platformy integracji) — poza zakresem "drobnego defektu" i
+  // zakazem masowego włączania (CLAUDE.md).
+  //
+  // Na TYM ekranie wywołanie jest jednak martwe w praktyce: przy
+  // `enableStubRoutes=false` zawsze kończy się w `catch` i tak samo pustą
+  // listą `integrations=[]`, jak przed usunięciem — kolumny per-integracja
+  // (`NotificationPreferenceRow`) i tak nigdy się nie renderowały. Usunięte
+  // bez zmiany zachowania widocznego dla użytkownika, tylko bez zbędnego
+  // zapytania sieciowego i jego błędu w konsoli. Gdy integracje zostaną
+  // odblokowane globalnie (decyzja poza tym plikiem), przywrócić ten fetch.
 
   const handleSave = useCallback(async () => {
     setSaving(true);

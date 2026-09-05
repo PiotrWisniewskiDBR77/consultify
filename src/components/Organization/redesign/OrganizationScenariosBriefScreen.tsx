@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { recommendScenario, SCENARIOS } from '../../../data/transformationScenarios';
 import { useContextBuilderStore } from '../../../store/useContextBuilderStore';
@@ -90,6 +91,38 @@ export const OrganizationScenariosBriefScreen: React.FC<{
   const { synthesis, setSynthesis, challenges, goals, companyProfile } = useContextBuilderStore();
   const [activeSection, setActiveSection] = useState<ScenariosBriefSection>('scenarios');
   const [saved, setSaved] = useState(false);
+
+  // Plan napraw MVP 05.09.2026, poz. (6) `org-scenarios`: karty scenariuszy
+  // renderowały `scenario.name`/`scenario.description` wprost z surowych,
+  // zaszytych po angielsku danych (`src/data/transformationScenarios.ts`),
+  // mimo że tłumaczenia PL już ISTNIEJĄ i są kompletne pod
+  // `transformationScenarios.scenarios.<id>.{name,description}` w obu
+  // pl.json/en.json — używa ich od dawna stary, wyłączony domyślnie ekran
+  // (`src/components/Strategy/ScenarioCard.tsx`, wzorzec `t.scenarios?.[id]
+  // ?.name || scenario.name`). Ten ekran (redesign v1, DEFAULT ON od
+  // DEC-2026-08-26-78 — czyli TEN kod jest tym, co realnie widzi
+  // użytkownik) nigdy nie wołał `useTranslation`, więc karty zawsze
+  // pokazywały angielski oryginał niezależnie od języka konta. Ten sam
+  // wzorzec przeniesiony 1:1, bez nowej treści tłumaczeń.
+  const { t: translate } = useTranslation();
+  const scenarioTranslations = useMemo(() => {
+    const raw = translate('transformationScenarios.scenarios', { returnObjects: true });
+    return typeof raw === 'object' && raw !== null ? (raw as Record<string, any>) : {};
+  }, [translate]);
+  const scenarioText = useCallback(
+    (id: string, field: 'name' | 'description', fallback: string): string => {
+      const value = scenarioTranslations[id]?.[field];
+      // `typeof === 'string'` (nie tylko truthy) celowo: testy jednostkowe
+      // mockują `useTranslation` globalnie (tests/setup.ts) i dla
+      // `returnObjects: true` zwracają Proxy-obiekt zamiast realnego
+      // drzewa tłumaczeń — samo `|| fallback` przepuściłoby ten Proxy do
+      // Reacta jako dziecko (błąd runtime "Objects are not valid as a React
+      // child"). W realnym i18next `value` jest zawsze stringiem albo
+      // `undefined`.
+      return typeof value === 'string' ? value : fallback;
+    },
+    [scenarioTranslations]
+  );
 
   const recommended = useMemo(
     () => recommendScenario(challenges.declaredChallenges, companyProfile),
@@ -132,7 +165,7 @@ export const OrganizationScenariosBriefScreen: React.FC<{
       <OrgSectionCard
         id="scenarios"
         title="Scenariusze transformacji"
-        lead={`Na podstawie ${challenges.declaredChallenges.length} zadeklarowanych wyzwań rekomendowany kierunek to „${recommended.name}".`}
+        lead={`Na podstawie ${challenges.declaredChallenges.length} zadeklarowanych wyzwań rekomendowany kierunek to „${scenarioText(recommended.id, 'name', recommended.name)}".`}
       >
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {SCENARIOS.map((scenario) => {
@@ -156,8 +189,12 @@ export const OrganizationScenariosBriefScreen: React.FC<{
                   <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-c-text-muted" />
                   {isRecommended && <OrgStatusChip tone="info">Rekomendowany</OrgStatusChip>}
                 </div>
-                <p className="text-[13px] font-semibold text-c-text">{scenario.name}</p>
-                <p className="text-[12px] text-c-text-secondary">{scenario.description}</p>
+                <p className="text-[13px] font-semibold text-c-text">
+                  {scenarioText(scenario.id, 'name', scenario.name)}
+                </p>
+                <p className="text-[12px] text-c-text-secondary">
+                  {scenarioText(scenario.id, 'description', scenario.description)}
+                </p>
                 <p className="text-[11px] text-c-text-muted">
                   {scenario.typicalDuration} · złożoność {scenario.complexity}
                 </p>
@@ -197,7 +234,9 @@ export const OrganizationScenariosBriefScreen: React.FC<{
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-muted">
               Wybrany scenariusz
             </p>
-            <p className="mt-1 text-[13px] font-semibold text-c-text">{selectedScenario?.name || '—'}</p>
+            <p className="mt-1 text-[13px] font-semibold text-c-text">
+              {selectedScenario ? scenarioText(selectedScenario.id, 'name', selectedScenario.name) : '—'}
+            </p>
           </div>
         </div>
 

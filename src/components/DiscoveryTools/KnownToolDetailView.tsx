@@ -139,6 +139,19 @@ const TOOL_CARD_SPEC_ALL_VISIBLE = {
   ],
 };
 
+/**
+ * Plan napraw MVP 05.09.2026 poz. (2) `karta-tool` (A10): sekcja PRZYKŁAD z
+ * jedną pozycją renderowała się jako jedna wąska kolumna (siatka miała
+ * sztywne `lg:grid-cols-3`). Wyodrębnione z `caseGrid` (2026-08-30, SHA
+ * 05c32fc417) jako czysta funkcja — testowalna bez montowania całego
+ * `KnownToolDetailView` (ciężkie providery: Auth/Org/Help/Tour/...).
+ * 1 pozycja → pełna szerokość (bez klasy kolumn), 2 → dwie kolumny,
+ * 3+ → trzy kolumny.
+ */
+export function exampleCaseGridCols(count: number): string {
+  return count >= 3 ? 'lg:grid-cols-3' : count === 2 ? 'md:grid-cols-2' : '';
+}
+
 export function KnownToolDetailView(props: {
   toolType: string;
   onClose: () => void;
@@ -591,8 +604,7 @@ export function KnownToolDetailView(props: {
        */
       const shown = limitToOne ? cases.slice(0, 1) : cases;
       const single = shown.length === 1;
-      const gridCols =
-        shown.length >= 3 ? 'lg:grid-cols-3' : shown.length === 2 ? 'md:grid-cols-2' : '';
+      const gridCols = exampleCaseGridCols(shown.length);
 
       // Etykiety w i18n kończą się dwukropkiem („Kontekst:") — w układzie
       // mikro-etykiet nad wartością dwukropek jest zbędny, więc ucinamy.

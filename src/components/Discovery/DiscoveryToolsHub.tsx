@@ -696,6 +696,32 @@ interface OutputItem {
   _fullData?: any;
 }
 
+/**
+ * Plan napraw MVP 05.09.2026, poz. (3) `tools-outputs-insights-tab`:
+ * zakładka Insighty pokazywała 3 identyczne wiersze "Sekcja finansowa —
+ * 2025" — ten sam `id` wracał wielokrotnie z listy pojedynczego źródła
+ * (np. `/report-builder` zwrócił duplikat wiersza przy JOIN-ie po stronie
+ * backendu, albo odświeżenie/paginacja sklejone bez deduplikacji).
+ * Właściciel: "deduplikuj u źródła zapytania/mappera, nie w UI ukrywaniem"
+ * — dedupe siedzi w `fetchData` przy mapowaniu KAŻDEGO źródła osobno
+ * (pierwsze wystąpienie wygrywa, kolejność z API zachowana), zanim
+ * cokolwiek trafi do wspólnej listy `mergedOutputs` i do tabeli. Osobno
+ * per-źródło (nie po scaleniu), bo różne źródła teoretycznie mogą mieć ten
+ * sam surowy `id` bez bycia tym samym rekordem (różne tabele w bazie).
+ * Wyeksportowana jako czysta funkcja, żeby dało się ją przetestować bez
+ * montowania całego huba (ciężkie API bootstrap + providery).
+ */
+export function dedupeById<T extends { id: string }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const row of rows) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    out.push(row);
+  }
+  return out;
+}
+
 // Task interface for initiatives
 interface InitiativeTask {
   id: string;
@@ -1130,74 +1156,76 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           }
         };
 
-        const assessmentReportRows: OutputItem[] = (
-          Array.isArray(assessmentReports) ? assessmentReports : []
-        )
-          .slice(0, 200)
-          .map((r: any) => ({
-            kind: 'output' as const,
-            outputKind: 'assessment_report' as const,
-            id: String(r?.id || ''),
-            name: String(r?.name || r?.title || 'Assessment Report'),
-            status: mapOutputStatus(r?.status),
-            statusRaw: r?.status != null ? String(r.status) : undefined,
-            createdAt: r?.createdAt ? normalizeDate(r.createdAt) : undefined,
-            updatedAt: normalizeDate(
-              r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at
-            ),
-            projectId: r?.projectId || r?.project_id || currentProjectId || undefined,
-            sourceType: 'assessment',
-            sourceId: r?.assessmentId || r?.assessment_id || null,
-            _fullData: r,
-          }))
-          .filter((r: any) => Boolean(r.id));
+        const assessmentReportRows: OutputItem[] = dedupeById(
+          (Array.isArray(assessmentReports) ? assessmentReports : [])
+            .slice(0, 200)
+            .map((r: any) => ({
+              kind: 'output' as const,
+              outputKind: 'assessment_report' as const,
+              id: String(r?.id || ''),
+              name: String(r?.name || r?.title || 'Assessment Report'),
+              status: mapOutputStatus(r?.status),
+              statusRaw: r?.status != null ? String(r.status) : undefined,
+              createdAt: r?.createdAt ? normalizeDate(r.createdAt) : undefined,
+              updatedAt: normalizeDate(
+                r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at
+              ),
+              projectId: r?.projectId || r?.project_id || currentProjectId || undefined,
+              sourceType: 'assessment',
+              sourceId: r?.assessmentId || r?.assessment_id || null,
+              _fullData: r,
+            }))
+            .filter((r: any) => Boolean(r.id))
+        );
 
         const reportBuilderRowsRaw =
           (reportBuilderList as any)?.reports || (reportBuilderList as any)?.data || [];
-        const reportBuilderRows: OutputItem[] = (
-          Array.isArray(reportBuilderRowsRaw) ? reportBuilderRowsRaw : []
-        )
-          .slice(0, 200)
-          .map((r: any) => ({
-            kind: 'output' as const,
-            outputKind: 'report_builder' as const,
-            id: String(r?.id || ''),
-            name: String(r?.title || r?.name || 'Report'),
-            status: mapOutputStatus(r?.status),
-            statusRaw: r?.status != null ? String(r.status) : undefined,
-            createdAt: r?.createdAt
-              ? normalizeDate(r.createdAt)
-              : r?.created_at
-                ? normalizeDate(r.created_at)
-                : undefined,
-            updatedAt: normalizeDate(
-              r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at
-            ),
-            projectId: currentProjectId || undefined,
-            sourceType: r?.sourceType || r?.source_type || null,
-            sourceId: r?.sourceId || r?.source_id || null,
-            _fullData: r,
-          }))
-          .filter((r: any) => Boolean(r.id));
+        const reportBuilderRows: OutputItem[] = dedupeById(
+          (Array.isArray(reportBuilderRowsRaw) ? reportBuilderRowsRaw : [])
+            .slice(0, 200)
+            .map((r: any) => ({
+              kind: 'output' as const,
+              outputKind: 'report_builder' as const,
+              id: String(r?.id || ''),
+              name: String(r?.title || r?.name || 'Report'),
+              status: mapOutputStatus(r?.status),
+              statusRaw: r?.status != null ? String(r.status) : undefined,
+              createdAt: r?.createdAt
+                ? normalizeDate(r.createdAt)
+                : r?.created_at
+                  ? normalizeDate(r.created_at)
+                  : undefined,
+              updatedAt: normalizeDate(
+                r?.updatedAt || r?.updated_at || r?.createdAt || r?.created_at
+              ),
+              projectId: currentProjectId || undefined,
+              sourceType: r?.sourceType || r?.source_type || null,
+              sourceId: r?.sourceId || r?.source_id || null,
+              _fullData: r,
+            }))
+            .filter((r: any) => Boolean(r.id))
+        );
 
         const decksRaw = (decksList as any)?.data || [];
-        const deckRows: OutputItem[] = (Array.isArray(decksRaw) ? decksRaw : [])
-          .slice(0, 200)
-          .map((d: any) => ({
-            kind: 'output' as const,
-            outputKind: 'presentation_deck' as const,
-            id: String(d?.id || ''),
-            name: String(d?.title || 'Presentation'),
-            status: mapOutputStatus(d?.status),
-            statusRaw: d?.status != null ? String(d.status) : undefined,
-            createdAt: d?.created_at ? normalizeDate(d.created_at) : undefined,
-            updatedAt: normalizeDate(d?.updated_at || d?.updatedAt || d?.created_at),
-            projectId: currentProjectId || undefined,
-            sourceType: null,
-            sourceId: null,
-            _fullData: d,
-          }))
-          .filter((r: any) => Boolean(r.id));
+        const deckRows: OutputItem[] = dedupeById(
+          (Array.isArray(decksRaw) ? decksRaw : [])
+            .slice(0, 200)
+            .map((d: any) => ({
+              kind: 'output' as const,
+              outputKind: 'presentation_deck' as const,
+              id: String(d?.id || ''),
+              name: String(d?.title || 'Presentation'),
+              status: mapOutputStatus(d?.status),
+              statusRaw: d?.status != null ? String(d.status) : undefined,
+              createdAt: d?.created_at ? normalizeDate(d.created_at) : undefined,
+              updatedAt: normalizeDate(d?.updated_at || d?.updatedAt || d?.created_at),
+              projectId: currentProjectId || undefined,
+              sourceType: null,
+              sourceId: null,
+              _fullData: d,
+            }))
+            .filter((r: any) => Boolean(r.id))
+        );
 
         // DEC-118 repair #1: the module's OWN tool_outputs snapshot rows.
         // `toolOutputsRes.outputs` is `[]` when the flag is off (see the
@@ -1207,24 +1235,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         // reachable via ToolOutputsPanel inside that session's own workspace,
         // matching how `listOutputs` already documents that distinction.
         const toolOutputsRaw = (toolOutputsRes as any)?.outputs;
-        const toolOutputRows: OutputItem[] = (Array.isArray(toolOutputsRaw) ? toolOutputsRaw : [])
-          .filter((o: any) => o?.isCurrent !== false)
-          .slice(0, 200)
-          .map((o: any) => ({
-            kind: 'output' as const,
-            outputKind: 'tool_output' as const,
-            id: String(o?.id || ''),
-            name: String(o?.title || 'Tool Output'),
-            status: mapOutputStatus(o?.status),
-            statusRaw: o?.status != null ? String(o.status) : undefined,
-            createdAt: o?.createdAt ? normalizeDate(o.createdAt) : undefined,
-            updatedAt: normalizeDate(o?.approvedAt || o?.createdAt),
-            projectId: currentProjectId || undefined,
-            sourceType: 'tool_session',
-            sourceId: o?.toolSessionId || null,
-            _fullData: o,
-          }))
-          .filter((r: any) => Boolean(r.id));
+        const toolOutputRows: OutputItem[] = dedupeById(
+          (Array.isArray(toolOutputsRaw) ? toolOutputsRaw : [])
+            .filter((o: any) => o?.isCurrent !== false)
+            .slice(0, 200)
+            .map((o: any) => ({
+              kind: 'output' as const,
+              outputKind: 'tool_output' as const,
+              id: String(o?.id || ''),
+              name: String(o?.title || 'Tool Output'),
+              status: mapOutputStatus(o?.status),
+              statusRaw: o?.status != null ? String(o.status) : undefined,
+              createdAt: o?.createdAt ? normalizeDate(o.createdAt) : undefined,
+              updatedAt: normalizeDate(o?.approvedAt || o?.createdAt),
+              projectId: currentProjectId || undefined,
+              sourceType: 'tool_session',
+              sourceId: o?.toolSessionId || null,
+              _fullData: o,
+            }))
+            .filter((r: any) => Boolean(r.id))
+        );
 
         const mergedOutputs = [
           ...assessmentReportRows,
@@ -2151,7 +2181,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             // zmierzone na tools-outputs-insights-tab). Para `-700 dark:-400`.
             assessment_report: {
               icon: <Activity size={14} />,
-              label: isPolish ? 'Raport assessment' : 'Assessment report',
+              // Plan napraw MVP 05.09.2026 poz. (3): kolumna TYP mieszała PL/EN
+              // — "Raport assessment" trzymał angielskie słowo w polskiej
+              // etykiecie zamiast ustalonego w apce tłumaczenia "Ocena"
+              // (por. i18n `tools.hub.outputs.type.assessmentReport`).
+              label: isPolish ? 'Raport oceny' : 'Assessment report',
               color: 'text-blue-700 dark:text-blue-400',
             },
             report_builder: {
