@@ -57,6 +57,7 @@ import {
   type MethodSession,
   type MethodSessionState,
   type MethodTransitionRequest,
+  type TransitionAuthority,
   type TransitionResult,
 } from './contracts/index.js';
 
@@ -617,12 +618,26 @@ export class MethodSessionService {
       return { ok: false, refusal: { kind: 'illegal_transition', from, to } };
     }
 
+    let authority: TransitionAuthority = 'process_role';
     const requiredRoles = TRANSITION_AUTHORITY[to];
     if (requiredRoles && requiredRoles.length > 0) {
       const actorRoles = await this.getRoles(session.organization_id, session.id, request.actorUserId);
       const authorized = requiredRoles.some((role: MethodProcessRole) => actorRoles.includes(role));
       if (!authorized) {
-        return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
+        // MVP-OWNER-FREEZE (2026-09-05) — patrz `isSameTenantActiveOrganizationOwner`
+        // niżej. Wyłącznie dla celu 'frozen' i wyłącznie dla same-tenant
+        // ACTIVE OWNER organizacji; każdy inny cel i każdy inny aktor
+        // przechodzi tą samą odmową co dotąd.
+        const ownerMayFreeze =
+          to === 'frozen' &&
+          (await this.isSameTenantActiveOrganizationOwner(
+            session.organization_id,
+            request.actorUserId
+          ));
+        if (!ownerMayFreeze) {
+          return { ok: false, refusal: { kind: 'missing_permission', requiredRole: requiredRoles[0] } };
+        }
+        authority = 'organization_owner';
       }
     }
 
@@ -701,7 +716,7 @@ export class MethodSessionService {
         );
       }
 
-      return { ok: true };
+      return { ok: true, authority };
     }
 
     const now = nowIso();
@@ -725,7 +740,61 @@ export class MethodSessionService {
       await this.snapshotOnFreeze(session.organization_id, session.id, session.method_pack_version);
     }
 
-    return { ok: true };
+    return { ok: true, authority };
+  }
+
+  /**
+   * MVP-OWNER-FREEZE (2026-09-05) — dlaczego to w ogóle istnieje.
+   *
+   * `TRANSITION_AUTHORITY.frozen` to `['approver']` i tak zostaje: rozdział
+   * obowiązków (kto pracuje ≠ kto zatwierdza) jest jedyną kontrolą, jaką ma
+   * ta maszyna stanów, a `POST /sessions/:id/roles` słusznie odmawia
+   * samo-nadania roli `approver` (`self_elevation_forbidden`).
+   *
+   * Zmierzony skutek uboczny (odbiór na żywo 05.09,
+   * `evidence/odbior-zywo-20260905/RUNDA2_RAPORT.md`): rola `approver` NIE MA
+   * ŻADNEGO interfejsu w całej aplikacji, więc w organizacji, która ma jedno
+   * konto, zamrożenie oceny jest strukturalnie nieosiągalne — a razem z nim
+   * Output, raport z oceny i prezentacja z oceny. Trzy ekrany blokuje jedno
+   * puste krzesło.
+   *
+   * Rozstrzygnięcie na MVP: właściciel ORGANIZACJI (nie procesowa rola
+   * `owner` sesji!) jest approverem ostatniej instancji. To celowo NIE jest
+   * to samo co `owner` z `METHOD_PROCESS_ROLES` — twórca sesji dostaje rolę
+   * procesową `owner` automatycznie przy `POST /sessions`, więc oparcie się
+   * o nią skasowałoby rozdział obowiązków dla KAŻDEJ sesji. Tu wymagany jest
+   * wiersz w `organization_members` ze statusem ACTIVE i rolą OWNER — ta sama
+   * kanoniczna, autorytatywna ścieżka, z której korzysta
+   * `effectiveAccessService.readApplicationRole` i gate widoczności ROI
+   * (`visibilityResolver.readSameTenantActiveMembershipRole`).
+   *
+   * Fail-closed w każdą stronę: brak wiersza, wiersz nie-ACTIVE, rola inna
+   * niż OWNER albo błąd odczytu tabeli → `false`, czyli odmowa dokładnie
+   * taka jak dotąd. Nieczytelna tabela członkostwa nigdy nie staje się
+   * otwartymi drzwiami.
+   *
+   * Kto zamroził jest zapisywany osobno, poza jądrem: trasa
+   * `POST /sessions/:id/freeze` dopisuje wtedy wiersz do `method_approvals`
+   * (ślad „kto zatwierdził", ten sam, który czyta raport z oceny), a
+   * `POST /sessions/:id/approvals` robi to tak samo jak dotąd.
+   */
+  private async isSameTenantActiveOrganizationOwner(
+    organizationId: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      const row = await DbPromise.get<{ role?: string | null; status?: string | null }>(
+        `SELECT role, status FROM organization_members
+          WHERE organization_id = ? AND user_id = ?
+          LIMIT 1`,
+        [organizationId, userId]
+      );
+      if (!row) return false;
+      if (String(row.status ?? '').toUpperCase() !== 'ACTIVE') return false;
+      return String(row.role ?? '').toUpperCase() === 'OWNER';
+    } catch {
+      return false;
+    }
   }
 
   private async snapshotOnFreeze(
