@@ -1707,8 +1707,10 @@ describe('UnifiedChatPanel (L2)', () => {
           })
         )
       );
+      // 05.09.2026: Agent poza MVP — notatka wskazuje na sam hub /my-work,
+      // nie na usuniętą zakładkę ?tab=agent (patrz chatSlashCommandPolicy.ts).
       expect(addChatMessageMock).toHaveBeenCalledWith(
-        expect.objectContaining({ content: expect.stringContaining('/my-work?tab=agent') })
+        expect.objectContaining({ content: expect.stringContaining('/my-work') })
       );
       expect(addMessageToConversationMock).toHaveBeenCalledWith(
         expect.objectContaining({

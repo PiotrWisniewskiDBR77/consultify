@@ -8099,10 +8099,12 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    // 05.09.2026: Agent poza MVP (decyzja właściciela) — `successor` wskazywał
+    // na usuniętą zakładkę Agent w My Work; teraz wskazuje sam hub.
     return res.status(410).json({
-      error: 'Direct Chat writes are retired. Create a governed proposal in My Work / Agent.',
+      error: 'Direct Chat writes are retired. Create a governed proposal in My Work.',
       code: 'MY_WORK_CHAT_DIRECT_WRITE_RETIRED',
-      successor: '/my-work?tab=agent',
+      successor: '/my-work',
       directWritePerformed: false,
     });
   })

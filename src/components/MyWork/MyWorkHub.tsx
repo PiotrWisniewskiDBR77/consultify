@@ -212,15 +212,10 @@ const ClientDocumentsVault = lazyWithRetry(() =>
     default: m.ClientDocumentsVault,
   }))
 );
-// AGT-003 (relokacja Run agent z menu głównego do My Work) + AGT-010 (powłoka
-// z 2 zakładkami "Moje procesy"/"Szablony" PRZED launcherem — Piotr 2026-07-24:
-// wejście pokazywało od razu 31 gotowców, brakowało warstwy tabeli pozycji jak
-// w Decisions). AgentHubShell renderuje AgentPlanWorkspace dopiero po wybraniu
-// pozycji z tabeli / utworzeniu nowego procesu — the tab entry below is
-// filtered out when isAgentPlanEnabled() is false, mirroring menuConfig.ts.
-const AgentHubShell = lazyWithRetry(() =>
-  import('../AIChat/AgentHubShell').then((m) => ({ default: m.AgentHubShell }))
-);
+// 05.09.2026: Agent poza MVP (decyzja właściciela) — lazy-import mount point
+// dla AgentHubShell usunięty stąd (dawne AGT-003/AGT-010). Sam komponent
+// `src/components/AIChat/AgentHubShell.tsx` zostaje w drzewie, nieużywany
+// (post-MVP), zamrożony pod 13_CHAT w MVP_FINAL_ZAMROZONE.json.
 // M03 (dyżur 20260830): brakujące wejście do ekranu Projektów (stakeholder
 // registry + finance rollup, `MyProjects.tsx`) — działał tylko pod trasą
 // `/projects`, do której nic w realnym menu nie prowadziło (WorkCenter.tsx,
@@ -607,7 +602,8 @@ function getInitialMyWorkTab(
   if (tabParam === 'decisions') return 'decisions';
   if (tabParam === 'manager' && canViewManager) return 'manager';
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
-  if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
+  // 05.09.2026: Agent poza MVP (decyzja właściciela) — `?tab=agent` nie
+  // wybiera już zakładki (dawne AGT-003), spada do domyślnej.
 
   return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
 }
@@ -1795,16 +1791,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresManagerAccess: false,
         requiresVaultFlag: true,
       },
-      // AGT-003 (relokacja Run agent). Same gate as the old sidebar entry
-      // (isAgentPlanEnabled).
-      {
-        id: 'agent' as ModuleTab,
-        label: t('sidebar.agentPlan', 'Run agent'),
-        icon: <Bot size={16} />,
-        color: 'bg-slate-500',
-        requiresManagerAccess: false,
-        requiresAgentFlag: true,
-      },
+      // 05.09.2026: Agent poza MVP (decyzja właściciela) — zakładka Menu 2
+      // „Uruchom agenta" (dawne AGT-003) usunięta bezwarunkowo, niezależnie
+      // od stanu isAgentPlanEnabled(). AgentHubShell.tsx zostaje w drzewie
+      // (post-MVP), tylko to wejście znika.
       {
         id: 'manager' as ModuleTab,
         label: t('myWork.hub.manager', 'Manager'),
@@ -4272,14 +4262,10 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <ClientDocumentsVault />
           </React.Suspense>
         );
-      case 'agent':
-        // AGT-010: powłoka (Moje procesy | Szablony) PRZED AgentPlanWorkspace —
-        // patrz komentarz przy lazy import AgentHubShell powyżej.
-        return (
-          <React.Suspense fallback={lazyFallback}>
-            <AgentHubShell />
-          </React.Suspense>
-        );
+      // 05.09.2026: Agent poza MVP (decyzja właściciela) — case 'agent'
+      // (dawne AGT-010, montował AgentHubShell) usunięty; zakładka nie jest
+      // już osiągalna (patrz getInitialMyWorkTab i lista zakładek powyżej),
+      // więc spada do default.
       default:
         return null;
     }

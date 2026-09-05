@@ -517,7 +517,9 @@ describe('/api/my-work/* — chat-actions write fail-closed, ai-suggestions degr
     expect(res.status).toBe(410);
     expect(res.body).toMatchObject({
       code: 'MY_WORK_CHAT_DIRECT_WRITE_RETIRED',
-      successor: '/my-work?tab=agent',
+      // 05.09.2026: Agent poza MVP — successor wskazuje na sam hub, nie na
+      // usuniętą zakładkę ?tab=agent.
+      successor: '/my-work',
       directWritePerformed: false,
     });
     expect(queryRunMock).not.toHaveBeenCalled();
