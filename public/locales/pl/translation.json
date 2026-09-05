@@ -1,4 +1,14 @@
 {
+  "list": {
+    "rightPanel": {
+      "tabRecord": "Rekord",
+      "tabTeresa": "Teresa",
+      "close": "Zamknij panel",
+      "show": "Pokaż panel",
+      "openTeresa": "Teresa",
+      "teresaEmpty": "Zaznacz wiersz albo zapytaj o cokolwiek z tej listy."
+    }
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Akcje",

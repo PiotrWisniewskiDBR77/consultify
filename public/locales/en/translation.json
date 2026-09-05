@@ -1,4 +1,14 @@
 {
+  "list": {
+    "rightPanel": {
+      "tabRecord": "Record",
+      "tabTeresa": "Teresa",
+      "close": "Close panel",
+      "show": "Show panel",
+      "openTeresa": "Teresa",
+      "teresaEmpty": "Select a row or ask about anything on this list."
+    }
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Actions",
