@@ -57,12 +57,13 @@ import { Blocks, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/states';
 import type { StandardCounterChip, StandardModuleTab } from '@/components/standard';
-import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
+import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { useResultsEntityNames } from '@/hooks/useResultsEntityNames';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { getResultsDomainPath, getResultsDomainTabs, isResultsDomain } from '../resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import {
@@ -71,7 +72,9 @@ import {
   archiveKpiScorecard,
   createKpiScorecardReviewSnapshot,
   getKpiScorecard,
+  getKpiScorecardPeriodMatrix,
   getKpiScorecardStatusDistribution,
+  getPublishedKpiScorecardSnapshot,
   httpErrorCode,
   listKpiScorecardItems,
   listKpiScorecardReviewSnapshots,
@@ -84,8 +87,19 @@ import {
   type KpiScorecardItemRole,
   type KpiScorecardReviewSnapshotDto,
   type KpiScorecardSnapshotStatus,
+  type ScorecardPeriodMatrixDto,
   type ScorecardStatusDistributionDto,
 } from './kpiScorecardApi';
+import {
+  buildKpiReportItemColumns,
+  buildKpiReportItemRows,
+  buildKpiReportSubtitle,
+  KpiReportSummary,
+  renderKpiReportGroupRow,
+  resolveKpiReportPeriodLabel,
+  KPI_PERIOD_COLUMN_WIDTH_PX,
+  type KpiReportItemRowVm,
+} from './kpiReportPresenters';
 import {
   buildKpiScorecardItemColumns,
   buildKpiScorecardItemPreview,
@@ -153,6 +167,19 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   const [itemRoleChip, setItemRoleChip] = useState<'all' | KpiScorecardItemRole>('all');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
+  /**
+   * P7K — matryca CEL/Rezultat per okres dla WSZYSTKICH mierników raportu
+   * (`GET .../periods`). Jedno wywołanie na cały raport; alternatywa
+   * („`GET /kpi/:kpiId/measurements` per miernik") to 138 przelotów dla
+   * raportu właściciela. `null` = jeszcze nie wróciła ⇒ komórki okresów
+   * pokazują „—", nigdy 0.
+   */
+  const [periodMatrix, setPeriodMatrix] = useState<ScorecardPeriodMatrixDto | null>(null);
+  const [periodMatrixLoading, setPeriodMatrixLoading] = useState(false);
+  const [periodMatrixError, setPeriodMatrixError] = useState<string | null>(null);
+  /** Okres, którego raport dotyczy — ta sama reguła co na poziomie 1. */
+  const [reportPeriodLabel, setReportPeriodLabel] = useState<string | null>(null);
+
   const [snapshots, setSnapshots] = useState<KpiScorecardReviewSnapshotDto[] | null>(null);
   const [snapshotsLoading, setSnapshotsLoading] = useState(false);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
@@ -198,6 +225,16 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       .finally(() => setItemsLoading(false));
   }, [scorecardId]);
 
+  const loadPeriodMatrix = useCallback(() => {
+    if (!scorecardId) return;
+    setPeriodMatrixLoading(true);
+    setPeriodMatrixError(null);
+    getKpiScorecardPeriodMatrix(scorecardId)
+      .then((matrix) => setPeriodMatrix(matrix))
+      .catch((err) => setPeriodMatrixError(toUserFacingErrorMessage(err, isPolish)))
+      .finally(() => setPeriodMatrixLoading(false));
+  }, [scorecardId]);
+
   const loadSnapshots = useCallback(() => {
     if (!scorecardId) return;
     setSnapshotsLoading(true);
@@ -211,9 +248,27 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   useEffect(() => {
     if (!enabled || !scorecard) return;
     if (tab === 'items' && items === null && !itemsLoading) loadItems();
+    if (tab === 'items' && periodMatrix === null && !periodMatrixLoading) loadPeriodMatrix();
     if (tab === 'snapshots' && snapshots === null && !snapshotsLoading) loadSnapshots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, scorecard, tab]);
+
+  /* Okres raportu w nagłówku — ostatnia OPUBLIKOWANA migawka przeglądu, a gdy
+     jej nie ma, okres bieżący wg `reviewFrequency`. 404 z
+     `review-snapshots/published` jest tu stanem OCZEKIWANYM (raport nigdy nie
+     opublikował przeglądu), nie błędem. */
+  useEffect(() => {
+    if (!enabled || !scorecard) return;
+    let cancelled = false;
+    getPublishedKpiScorecardSnapshot(scorecard.scorecardId)
+      .catch(() => null)
+      .then((snapshot) => {
+        if (!cancelled) setReportPeriodLabel(resolveKpiReportPeriodLabel(scorecard, snapshot));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, scorecard]);
 
   const runLifecycleAction = useCallback(
     async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {
@@ -449,9 +504,28 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     );
   }
 
-  const tabs: StandardModuleTab[] = [
-    { id: 'items', label: isPolish ? 'Pozycje' : 'Items' },
+  /**
+   * ── MENU 2 = KPI · OKR · ROI (SSOT §6), nie „Pozycje/Migawki" ────────────
+   *
+   * Do 2026-09-05 poziom 2 wstawiał w Menu 2 własne dwie zakładki, przez co
+   * z otwartego raportu NIE dawało się przejść do OKR ani do ROI — Menu 2
+   * przestawało być menu modułu i stawało się menu ekranu. SSOT mówi
+   * jednoznacznie: „Menu 2 modułu Wyniki: KPI · OKR · ROI". Podział
+   * mierniki/migawki schodzi do Menu 3, gdzie mieszkają pigułki poziomu.
+   */
+  const tabs: StandardModuleTab[] = getResultsDomainTabs();
+  const onDomainTabChange = (id: string) => {
+    if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+  };
+  const levelChips: StandardCounterChip[] = [
+    { id: 'items', label: isPolish ? 'Mierniki' : 'Indicators' },
     { id: 'snapshots', label: isPolish ? 'Migawki przeglądu' : 'Review snapshots' },
+  ];
+  /** Okruszek Menu 1: `Wyniki › KPI › <raport>` (SSOT §6, trzy stopnie na L3). */
+  const breadcrumbs = [
+    { id: 'results', label: isPolish ? 'Wyniki' : 'Results', onClick: () => navigate(ROUTES.RESULTS_KPI.ROOT) },
+    { id: 'kpi', label: 'KPI', onClick: () => navigate(ROUTES.RESULTS_KPI.ROOT) },
+    { id: 'report', label: scorecard?.name ?? (isPolish ? 'Raport' : 'Report') },
   ];
 
   // Error resolving the scorecard header itself (network/5xx — distinct from
@@ -461,7 +535,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
         <ResultsVNextRegistryShell
           domain="kpi"
-          moduleBar={{ tabs, activeTab: tab, onTabChange: (id) => setTab(id as DetailTab), showTabCounts: false }}
+          moduleBar={{ tabs, activeTab: 'kpi', onTabChange: onDomainTabChange, showTabCounts: false }}
           table={{
             columns: [],
             data: [],
@@ -483,7 +557,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
         <ResultsVNextRegistryShell
           domain="kpi"
-          moduleBar={{ tabs, activeTab: tab, onTabChange: (id) => setTab(id as DetailTab), showTabCounts: false }}
+          moduleBar={{ tabs, activeTab: 'kpi', onTabChange: onDomainTabChange, showTabCounts: false }}
           table={{ columns: [], data: [], persistKey: 'results-vnext.kpi-scorecards.detail', loading: scorecardLoading || true }}
           preview={null}
         />
@@ -539,12 +613,25 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           domain="kpi"
           moduleBar={{
             tabs,
-            activeTab: tab,
-            onTabChange: (id) => setTab(id as DetailTab),
+            activeTab: 'kpi',
+            onTabChange: onDomainTabChange,
             showTabCounts: false,
-            chips,
-            activeChip: snapshotStatusChip,
-            onChipChange: (id) => setSnapshotStatusChip(id as 'all' | KpiScorecardSnapshotStatus),
+            breadcrumbs,
+            /* Pigułka poziomu na pierwszym miejscu, filtry statusu migawek za
+               nią — z tego ekranu musi dać się wrócić do tabeli mierników. */
+            chips: [...levelChips, ...chips],
+            activeChip: snapshotStatusChip === 'all' ? 'snapshots' : snapshotStatusChip,
+            onChipChange: (id) => {
+              if (id === 'items') {
+                setTab('items');
+                return;
+              }
+              if (id === 'snapshots') {
+                setSnapshotStatusChip('all');
+                return;
+              }
+              setSnapshotStatusChip(id as 'all' | KpiScorecardSnapshotStatus);
+            },
             primaryCta: {
               label: isPolish ? 'Nowa migawka' : 'New snapshot',
               icon: Plus,
@@ -638,22 +725,59 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     );
   }
 
-  const itemRows = filteredItems.map((i) => withId(i, 'itemId'));
-  const itemChips: StandardCounterChip[] = [
-    { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: items?.length ?? 0 },
-    {
-      id: 'primary',
-      label: kpiScorecardItemRoleLabel('primary', isPolish),
-      count: (items ?? []).filter((i) => i.role === 'primary').length,
-    },
-    {
-      id: 'supporting',
-      label: kpiScorecardItemRoleLabel('supporting', isPolish),
-      count: (items ?? []).filter((i) => i.role === 'supporting').length,
-    },
-  ];
+  /**
+   * ── POZIOM 2 = TABELA MIERNIKÓW RAPORTU (SSOT §6) ─────────────────────────
+   *
+   * Wiersze składamy z DWÓCH źródeł: kontraktu pozycji raportu (`items` —
+   * obszar, właściciel nadrzędny, typ, benchmark, limit, jednostka, kierunek,
+   * odpowiedzialny) i matrycy okresów (`periodMatrix` — para CEL/Rezultat na
+   * każdy okres, YTD, stan, otwarte karty działania). Dopóki matryca nie
+   * wróci, kolumny okresów pokazują „—" — geometria tabeli jest już wtedy
+   * poprawna, więc nic nie „skacze" po dojściu danych.
+   *
+   * Grupowanie po OBSZARZE robi jądro tabeli (`isGroupRow`/`renderGroupRow`),
+   * a nie ten ekran — wiersz grupy jest jedną komórką na całą szerokość
+   * (werdykt K6), więc nie rysuje „—" w kolumnach, których grupa nie ma.
+   */
+  const reportItemRows: KpiReportItemRowVm[] = useMemo(
+    () =>
+      buildKpiReportItemRows({
+        items: filteredItems,
+        matrixItems: periodMatrix?.items ?? [],
+        isPolish,
+        resolveOwnerName: (userId) =>
+          userId ? memberNameOrUnknown(resolveMemberName, userId, isPolish) : null,
+      }),
+    [filteredItems, periodMatrix, isPolish, resolveMemberName]
+  );
+
+  const reportItemColumns = useMemo(
+    () => buildKpiReportItemColumns({ isPolish, periods: periodMatrix?.periods ?? [] }),
+    [isPolish, periodMatrix]
+  );
+
+  /**
+   * Szerokość tabeli podana DOKŁADNIE, żeby dopasowanie do kontenera
+   * (`columnFit`) nie skalowało kolumn: skalowanie rozjeżdżało szerokości
+   * nagłówka i wierszy, a przy przypiętych kolumnach kończyło się nakładaniem
+   * (defekt K10). Suma: MIERNIK (324) + okresy (n × 140) + YTD (140) +
+   * STAN (140) + strukturalna kolumna akcji (80).
+   */
+  const reportTableWidth =
+    324 + (periodMatrix?.periods.length ?? 0) * KPI_PERIOD_COLUMN_WIDTH_PX + 140 + 140 + 80;
+
+  const itemRows = reportItemRows.map((r) => r as unknown as Record<string, unknown> & { id: string });
 
   const isScorecardArchived = scorecard?.lifecycleStatus === 'archived';
+  const addItemLockedReason = isPolish
+    ? 'Raport zarchiwizowany — nie można dodawać mierników.'
+    : 'Report archived — indicators cannot be added.';
+
+  /** Otwarcie karty miernika (poziom 3) z pamięcią raportu, z którego przyszedł. */
+  const openKpiCard = (kpiId: string) =>
+    navigate(
+      `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId)}?zbior=${encodeURIComponent(scorecardId ?? '')}`
+    );
 
   return (
     <div className="h-full" data-testid="results-vnext-kpi-scorecard-detail-page">
@@ -661,70 +785,92 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         domain="kpi"
         moduleBar={{
           tabs,
-          activeTab: tab,
-          onTabChange: (id) => setTab(id as DetailTab),
+          activeTab: 'kpi',
+          onTabChange: onDomainTabChange,
           showTabCounts: false,
-          chips: itemChips,
-          activeChip: itemRoleChip,
-          onChipChange: (id) => setItemRoleChip(id as 'all' | KpiScorecardItemRole),
+          breadcrumbs,
+          chips: levelChips,
+          activeChip: 'items',
+          onChipChange: (id) => {
+            if (id === 'snapshots') setTab('snapshots');
+          },
           primaryCta: {
-            label: isPolish ? 'Dodaj KPI' : 'Add KPI',
+            label: isPolish ? 'Dodaj miernik' : 'Add indicator',
             icon: Plus,
             onClick: () =>
-              isScorecardArchived
-                ? toast.error(
-                    isPolish
-                      ? 'Karta wyników zarchiwizowana — nie można dodawać pozycji.'
-                      : 'Scorecard is archived — items cannot be added.'
-                  )
-                : setAddItemOpen(true),
+              isScorecardArchived ? toast.error(addItemLockedReason) : setAddItemOpen(true),
             locked: isScorecardArchived,
-            lockedReason: isScorecardArchived
-              ? isPolish
-                ? 'Karta wyników zarchiwizowana — nie można dodawać pozycji.'
-                : 'Scorecard is archived — items cannot be added.'
-              : undefined,
+            lockedReason: isScorecardArchived ? addItemLockedReason : undefined,
             testId: 'kpi-scorecard-add-item-cta',
           },
         }}
+        /* Nagłówek raportu (SSOT §6): jedna linia opisu i podsumowanie stanów
+           po prawej — dokładnie to, co widać na zaakceptowanym zrzucie
+           `evidence/p7k-wyniki/prototype/kpi-l2--light.png`. */
+        header={
+          scorecard ? (
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-semibold text-c-text">{scorecard.name}</h1>
+                <p className="truncate text-xs text-c-text-secondary">
+                  {buildKpiReportSubtitle(scorecard, reportPeriodLabel, isPolish)}
+                </p>
+              </div>
+              <KpiReportSummary
+                distribution={distribution && distribution !== 'loading' ? distribution : null}
+                isPolish={isPolish}
+              />
+            </div>
+          ) : null
+        }
         table={{
-          columns: buildKpiScorecardItemColumns(isPolish, resolveMemberName),
+          columns: reportItemColumns,
           data: itemRows,
-          persistKey: 'results-vnext.kpi-scorecards.items',
+          persistKey: 'results-vnext.kpi-report-items',
+          minTableWidth: reportTableWidth,
+          density: 'compact',
           loading: itemsLoading,
-          error: itemsError,
-          onRetry: loadItems,
+          error: itemsError ?? periodMatrixError,
+          onRetry: () => {
+            loadItems();
+            loadPeriodMatrix();
+          },
+          isGroupRow: (row) => !!(row as unknown as KpiReportItemRowVm).group,
+          renderGroupRow: (row) =>
+            renderKpiReportGroupRow(row as unknown as KpiReportItemRowVm, isPolish),
           empty:
             !itemsLoading && !itemsError && (items?.length ?? 0) === 0
               ? {
-                  title: isPolish ? 'Brak pozycji na karcie wyników' : 'No items on this scorecard',
+                  title: isPolish ? 'Raport nie ma jeszcze mierników' : 'This report has no indicators yet',
                   description: isPolish
-                    ? 'Dodaj pierwszy KPI do tej karty wyników.'
-                    : 'Add the first KPI to this scorecard.',
+                    ? 'Dodaj pierwszy miernik, aby zacząć śledzić cel i rezultat okres po okresie.'
+                    : 'Add the first indicator to start tracking target and actual period by period.',
                 }
               : undefined,
-          emptyMessage:
-            !itemsLoading && !itemsError && (items?.length ?? 0) > 0 && itemRows.length === 0
-              ? isPolish
-                ? 'Brak pozycji pasujących do filtra.'
-                : 'No item matches this filter.'
-              : undefined,
           selectedRowId: selectedItemId,
-          onRowClick: (row) => setSelectedItemId(String(row.itemId)),
-          rowMenu: (row) =>
-            buildKpiScorecardItemRowMenu(row as unknown as KpiScorecardItemDto, isPolish, {
+          onRowClick: (row) => {
+            const vm = row as unknown as KpiReportItemRowVm;
+            if (!vm.group) setSelectedItemId(vm.id);
+          },
+          // Kanon triady: klik pokazuje podgląd, dwuklik otwiera kartę miernika.
+          onRowDoubleClick: (row) => {
+            const vm = row as unknown as KpiReportItemRowVm;
+            if (vm.kpiId) openKpiCard(vm.kpiId);
+          },
+          rowMenu: (row) => {
+            const vm = row as unknown as KpiReportItemRowVm;
+            if (!vm.item) return { primary: [] };
+            return buildKpiScorecardItemRowMenu(vm.item, isPolish, {
               onPreview: (r) => setSelectedItemId(r.itemId),
-              onOpenKpi,
+              onOpenKpi: openKpiCard,
               onMoveUp: (r) => void moveItem(r, 'up'),
               onMoveDown: (r) => void moveItem(r, 'down'),
               onRemove: (r) => setRemoveItemTarget(r),
-              isFirst: fullSortedItems[0]?.itemId === (row as unknown as KpiScorecardItemDto).itemId,
-              isLast:
-                fullSortedItems[fullSortedItems.length - 1]?.itemId ===
-                (row as unknown as KpiScorecardItemDto).itemId,
+              isFirst: fullSortedItems[0]?.itemId === vm.item.itemId,
+              isLast: fullSortedItems[fullSortedItems.length - 1]?.itemId === vm.item.itemId,
               busy: reorderBusy,
-            }),
-          defaultSort: { columnId: 'sortOrder', direction: 'asc' },
+            });
+          },
         }}
         preview={
           selectedItem
@@ -733,7 +879,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
                 resolveMemberName,
                 busy: removeItemBusy,
                 onClose: () => setSelectedItemId(null),
-                onOpenKpi,
+                onOpenKpi: openKpiCard,
                 onRemove: (r) => setRemoveItemTarget(r),
               })
             : scorecardOverviewPreview
