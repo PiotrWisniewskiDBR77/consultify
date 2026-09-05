@@ -100,6 +100,17 @@ function mockFetch(overrides: { caseStatus?: number; caseBody?: unknown } = {}) 
     if (url.startsWith(`${API_URL}/vnext/results/roi/cases/${CASE_ID}/calculation-policy`)) {
       return jsonResponse({ calculationPolicy: null });
     }
+    // Sekcja „Założenia" karty renderuje od 2026-09-05 narrację
+    // (`RoiCaseAssumptionsNarrative`), która czyta ZAŁOŻENIA i POZYCJE
+    // KOSZTOWE sprawy. Bez tych dwóch tras ten mock rzucałby „Unexpected
+    // fetch", a karta pokazywałaby stan błędu — test przechodziłby, ale
+    // przez przypadek, na ścieżce, której nie zamierza sprawdzać.
+    if (url.startsWith(`${API_URL}/vnext/results/roi/cases/${CASE_ID}/assumptions`)) {
+      return jsonResponse({ assumptions: [] });
+    }
+    if (url.startsWith(`${API_URL}/vnext/results/roi/cases/${CASE_ID}/cost-lines`)) {
+      return jsonResponse({ costLines: [] });
+    }
     throw new Error(`Unexpected fetch ${url}`);
   }) as unknown as typeof fetch;
 }
