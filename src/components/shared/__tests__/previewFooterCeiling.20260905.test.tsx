@@ -25,7 +25,6 @@ import { CANON_PREVIEW, CANON_PREVIEW_BLOCK_HEIGHT } from '@/contracts/tableSurf
 import {
   PREVIEW_BODY_MIN_PX,
   PREVIEW_FOOTER_MAX_HEIGHT,
-  PREVIEW_FOOTER_MIN_PX,
   PREVIEW_HEADER_MIN_PX,
 } from '../PreviewPane/previewGeometry';
 
@@ -50,9 +49,7 @@ describe('podgląd — sufit stopki (kanon §7.3 pkt 3, detailsMin)', () => {
 
   it('sufit odejmuje od panelu nagłówek + kanoniczne minimum treści', () => {
     expect(PREVIEW_FOOTER_MAX_HEIGHT).toBe(
-      `max(${PREVIEW_FOOTER_MIN_PX}px, calc(100% - ${
-        PREVIEW_HEADER_MIN_PX + PREVIEW_BODY_MIN_PX
-      }px))`
+      `calc(100% - ${PREVIEW_HEADER_MIN_PX + PREVIEW_BODY_MIN_PX}px)`
     );
   });
 
