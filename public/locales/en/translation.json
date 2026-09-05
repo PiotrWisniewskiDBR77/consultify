@@ -11983,6 +11983,13 @@
       "message": "The governed V8 Planning service is unavailable, so initiatives are shown from the legacy data source. Some governed features (gates, decision chains, portfolio rollups) may be limited until it is restored."
     },
     "kanban": {
+      "notApplicable": "Not applicable",
+      "health": {
+        "green": "On track",
+        "amber": "At risk",
+        "red": "Blocked",
+        "grey": "Inactive"
+      },
       "noOwner": "Unassigned",
       "nextGate": "Next gate",
       "dragDisabled": "Use the governed gate workspace to advance lifecycle.",

@@ -146,11 +146,17 @@ interface KanbanCardProps {
 }
 
 const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || '').startsWith('pl');
   const priorityStyle = getPriorityStyle(initiative.priority);
   const health = getHealthInfo(initiative);
-  const nextStep = getNextStep(initiative.status);
+  const nextStep = getNextStep(initiative.status, isPolish);
   const owner = initiative.ownerBusiness || initiative.ownerExecution;
+  const priorityLabel = initiative.priority
+    ? t(`initiatives.priority.${initiative.priority.toLowerCase()}`)
+    : t('initiatives.kanban.notApplicable');
+  const healthLabel =
+    health.label === '—' ? health.label : t(`initiatives.kanban.health.${health.level}`);
 
   return (
     <div
@@ -173,11 +179,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
           className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-          {initiative.priority || 'N/A'}
+          {priorityLabel}
         </span>
         <div className="flex items-center gap-1">
           <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-c-text-muted">{health.label}</span>
+          <span className="text-[10px] text-c-text-muted">{healthLabel}</span>
         </div>
       </div>
 

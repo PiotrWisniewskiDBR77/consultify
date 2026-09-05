@@ -11441,6 +11441,13 @@
       "message": "Nadzorowana usługa Planowania V8 jest niedostępna, dlatego inicjatywy są wyświetlane ze starszego źródła danych. Niektóre nadzorowane funkcje (bramki, łańcuchy decyzji, zestawienia portfela) mogą być ograniczone do czasu jej przywrócenia."
     },
     "kanban": {
+      "notApplicable": "Nie dotyczy",
+      "health": {
+        "green": "Na właściwym torze",
+        "amber": "Zagrożona",
+        "red": "Zablokowana",
+        "grey": "Nieaktywna"
+      },
       "noOwner": "Nieprzypisana",
       "nextGate": "Następna bramka",
       "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia.",
