@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:3067/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "button:has-text(\"Kalendarz\")",
+  "text=Cybersecurity Enhancement Program"
+ ],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 501 (Not Implemented)"
+ ],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nZadania\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\ninicjatywa\n✓\nŹRÓDŁO\n✓\nPRZEGLĄD\n3\nPLANOWANIE\n4\nREALIZACJA\n5\nKORZYŚCI\nPlanowanie\nStrategiczna\nKrytyczny\nCybersecurity Enhancement Program\nZatwierdź\nAnuluj\nPrzegląd\nZadania\nDefinicja\nEkonomika\nZespół\nHistoria\nZADANIA (0)\nUkończone: 0\nW toku: 0\n\nBrak zadań\n\nKLUCZOWE WSKAŹNIKI\nCAPEX\n-\nOPEX\n-\nOczekiwany ROI\n-\nHARMONOGRAM\nData rozpoczęcia\n20 mar 2026\nData zakończenia\n2 wrz 2026\nODPOWIEDZIALNOŚĆ\nWłaściciel biznesowy\nNie przypisano\nWłaściciel realizacji\nNie przypisano\nUtworzono\n6 mar 2026\nZaktualizowano\n6 mar 2026",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T18:08:21.820Z"
+}

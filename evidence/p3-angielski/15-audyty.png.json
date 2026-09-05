@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/audit-programs?tab=library",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nDane\nModel\nPiotr Wiśniewski\nPW\nBiblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\nWszystkie\n1\nZweryfikowane\n0\nW przeglądzie\n0\nNiezweryfikowane\n1\nBrak dowodu źródła\n0\nTYTUŁ\n\t\nŹRÓDŁO\n\t\nWERSJA\n\t\nTYP ŹRÓDŁA\n\t\nWERYFIKACJA\n\t\nSTATUS PUBLIKACJI\n\t\nKRYTERIA\n\t\nZAKTUALIZOWANO\n\t\n\n\nAudyt gotowości do robotyzacji — linia spawalnicza\ndbr77-robotyzacja-linia-spawalnicza\n\t\n—\n\t\nv1\n\t\nProcedura wewnętrzna\n\t\nNiezweryfikowane\n\t\nOpublikowany\n\t\n\t\n05/09/2026\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:32.781Z"
+}

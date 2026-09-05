@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/settings/profile",
+ "tytul": "Settings — Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nUstawienia\nProfil\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nUstawienia\n\nPreferencje osobiste\n\nMoje ustawienia\nProfil\nAwatar i zdjęcie\nPodpisy e-mail\nGodziny pracy\nPreferencje pracy\nAI i automatyzacja\nPowiadomienia\nBezpieczeństwo\nIntegracje\nDane i prywatność\nPłatności\nWygląd\nZaawansowane\nWróć do panelu\nUstawienia\nProfil\nProfil\n\nZarządzaj swoimi danymi osobowymi i kontem\n\nZapisz zmiany\nDane osobowe\n\nZarządzaj swoimi danymi osobowymi i preferencjami\n\nZmień zdjęcie\nPiotr Testowy\n\nDBR77\n\npiotr.wisniewski@dbr77.com\nWłaściciel\nProdukt\nPROFIL PUBLICZNY\nNazwa wyświetlana\n\nTak Twoje imię będzie widoczne dla innych. Zostaw puste, aby użyć pełnego imienia i nazwiska.\n\nZaimki\nWolę nie podawać\nOn/Jego\nOna/Jej\nOni/Ich\nInne\nDział\nWybierz dział...\nInżynieria\nProdukt\nProjektowanie\nMarketing\nSprzedaż\nOperacje\nFinanse\nZasoby ludzkie\nPrawny\nSukces klienta\nWsparcie\nZarząd\nInne\nDane osobowe\nImię\nNazwisko\nTelefon\nFirma\nIdentyfikator profilu LinkedIn\n\nWpisz ID profilu z adresu URL LinkedIn (po /in/)\n\nStanowisko\nDostępność i status\nWiadomość statusu\n\nPoinformuj zespół, czym się zajmujesz (0/100)\n\nPoza biurem\n\nAutomatycznie powiadamiaj innych, gdy jesteś nieobecny\n\nUstawienia regionalne\n\nStrefa czasowa, data, godzina, liczba i formaty jednostek są zarządzane razem w Ustawieniach regionalnych.\n\nOtwórz ustawienia regionalne",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:49:15.018Z"
+}

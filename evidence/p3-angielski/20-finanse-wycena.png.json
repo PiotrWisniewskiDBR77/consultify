@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3068/finance?tab=valuation",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nWycena przedsiębiorstw\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowa wycena\nWszystkie\n16\nSzkic\n1\nPrzegląd\n0\nZatwierdzone\n15\nAnalizuj\nAI\nWartość bankowa\nPrognoza gotówki\nPlanowanie czynników wartości\nDrzewo czynników wartości\nRozszerzone wskaźniki\nPlanowanie zatrudnienia\nOcena inwestycji\nPrognoza krocząca\nWizualizacje wyceny\nAtrybucja wartości\nProces przechwytywania wartości\nRejestr wartości\nBiuro wartości\nMost odchyleń\nOpis odchyleń\nKoszyk EV\nMonte Carlo NPV\nOpcje rzeczywiste\nGranica efektywna\nAnaliza co-jeśli\nObliczanie scenariuszy\nSymulacja Monte Carlo NPV\n\nSymuluj wyniki NPV w zakresach niepewności czynników.\n\nCzynnik\nMin\nModa\nMaks\nWaga\n×\nCzynnik\nMin\nModa\nMaks\nWaga\n×\n+ czynnik\nIteracje\nZiarno (seed)\nLiczba przedziałów histogramu\nUruchom symulację\n\nUstaw czynniki i uruchom symulację, aby zobaczyć rozkład NPV.\n\n\t\nTYP\n\t\nNAZWA\n\t\nŹRÓDŁO\n\t\nMETODA\n\t\nHORYZONT\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nVAL\n\t\nDBR77 Sp. z o.o. — wycena Q3 2026\n\t\nManual\n\t\nDCF\n\t\n5 lat\n\t\nSzkic\n\t11 godzin temu\t\n\n\t\nVAL\n\t\nCD PROJEKT Group — Bear DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t9.08.2026\t\n\n\t\nVAL\n\t\nCD PROJEKT Group — Bull DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t9.08.2026\t\n\n\t\nVAL\n\t\nCD PROJEKT Group — Base DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t9.08.2026\t\n\n\t\nVAL\n\t\nGrupa Kapitałowa Apator — Base DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesla, Inc. — Base DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesla, Inc. — Bull DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesla, Inc. — Bear DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesco PLC — Base DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesco PLC — Bull DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nTesco PLC — Bear DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nApator S.A. — Bear DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nApator S.A. — Bull DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nGrupa Kapitałowa Apator — Bear DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nGrupa Kapitałowa Apator — Bull DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nVAL\n\t\nApator S.A. — Base DCF + multiples\n\t\nFinancial_model\n\t\nDCF\n\t\n3 lat\n\t\nZatwierdzone\n\t8.08.2026\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T18:11:48.132Z"
+}
