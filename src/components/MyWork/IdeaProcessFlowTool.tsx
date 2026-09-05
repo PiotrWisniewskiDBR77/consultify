@@ -77,7 +77,6 @@ import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
   isIdeaBottomBarUnifiedEnabled,
 } from '@/utils/ideaBottomBarUnifiedFlag';
-import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
@@ -424,8 +423,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
-  // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
-  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   const currentUser = useAppStore((state) => state.currentUser);
   const isDarkFlow = useIsDark();
   const { dialog: bulkDeleteDialog, confirm: confirmBulkDelete } = useConfirmDialog();
@@ -3541,16 +3538,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       {/* Canvas */}
       {loading ? (
-        vf1CanvasSpecAEnabled ? (
-          // VF1 SPEC-A (flag OFF default): canonical A·Canvas skeleton.
-          <div className="flex-1">
-            <SkeletonState variant="canvas" />
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="animate-spin text-c-text-secondary" size={24} />
-          </div>
-        )
+        <div className="flex-1">
+          <SkeletonState variant="canvas" />
+        </div>
       ) : (
         <div
           ref={flowContainerRef}
