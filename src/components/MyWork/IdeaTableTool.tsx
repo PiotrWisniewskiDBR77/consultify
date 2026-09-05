@@ -181,6 +181,7 @@ import { StickyNoteView } from './table/StickyNoteView';
 import { SyncManager } from './table/sync/SyncManager';
 import { TableBarOverflowMenu, type TableBarOverflowSection } from './table/TableBarOverflowMenu';
 // P15 Table Platform – extracted components
+import { resolveTableEmptyState } from './table/tableEmptyState';
 import { TableDataProvider } from './table/TableDataProvider';
 import { TableStartEmptyState } from './table/TableStartEmptyState';
 import { TableTabStrip } from './table/TableTabStrip';
@@ -649,6 +650,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     tableRenderCap.totalCount - tableRenderCap.shownCount
   );
 
+  // ★ Pomiar na żywo 05.09 (`idea-table-tool-empty-filter`): tabela z sześcioma
+  // wierszami po wpisaniu frazy bez trafień pokazywała komunikat „Tabela jest
+  // jeszcze pusta" wraz z przyciskami budowania struktury — czyli kłamała, że
+  // rekordów nie ma, podczas gdy schował je filtr. Rozdzielamy dwa uczciwe
+  // stany; liczba PRZED filtrem liczona jest z tego samego zbioru węzłów, z
+  // którego liczy `useTableRows` (ramki nie są wierszami).
+  const unfilteredRowCount = useMemo(
+    () => (effectiveNodes || []).filter((n) => String(n?.type || '') !== 'frame').length,
+    [effectiveNodes]
+  );
+
   // ── Persistence hook ────────────────────────────────────────────────────────
   const { loading, saving, saveStatusLabel, handleSave, loadError, refresh } = useTablePersistence({
     open,
@@ -712,6 +724,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     logic: 'and' as const,
     rules: [],
   };
+  const tableEmptyState = resolveTableEmptyState({
+    visibleRowCount: processedRowsWithRollups.length,
+    totalRowCount: unfilteredRowCount,
+    filterInput,
+    filterRuleCount: _filters.rules.length,
+  });
   const _groupBy = usePlatform ? effectiveGroupBy : groupBy;
   const _savedViews = (usePlatform ? effectiveSavedViews : savedViews) ?? [];
   const _activeViewId = usePlatform ? effectiveActiveViewId : activeViewId;
@@ -2450,7 +2468,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           },
           {
             id: 'templates',
-            label: t('ideas.table.templates', 'Templates'),
+            // „Szablony" i „Szablony rekordów" stały obok siebie i znaczyły co
+            // innego (galeria szablonów CAŁEJ TABELI vs zapisane wartości pól
+            // jednego rekordu). Doprecyzowana etykieta usuwa kolizję.
+            label: t('ideas.table.tableTemplates', 'Szablony tabeli'),
             icon: LayoutTemplate,
             onClick: () => setShowTemplateGallery(true),
             show: !locked,
@@ -2556,7 +2577,25 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             label: t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates'),
             icon: Copy,
             onClick: () => setShowRecordTemplateManager(true),
-            show: usePlatform,
+            // ★ Pomiar na żywo 05.09 (`idea-table-record-templates`): menedżera
+            // szablonów rekordu „nie udało się otworzyć klikaniem". Przyczyna
+            // NIE była martwym montażem (RISK-06 podłączył go już wcześniej) —
+            // pozycja była UKRYTA (`show: usePlatform`), bo silnik platformowy
+            // tabeli nie był aktywny. Właściciel czyta ukrytą pozycję jako brak
+            // funkcji, a obok stoi „Szablony" (galeria szablonów TABEL), więc
+            // klika ją i dostaje inny komponent.
+            //
+            // Pozycja jest teraz zawsze widoczna. Poza trybem platformowym jest
+            // WYSZARZONA z jawnym powodem, a nie klikalna-i-zepsuta: backend
+            // (`GET /tables/:tableId/record-templates`) wymaga realnego wiersza
+            // `tp_tables`, którego w trybie zastanym nie ma — otwarcie okna
+            // skończyłoby się „Nie udało się wczytać szablonów".
+            show: true,
+            disabled: !usePlatform,
+            disabledReason: t(
+              'ideas.table.recordTemplates.requiresPlatformTable',
+              'Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym.'
+            ),
             testId: 'idea-table-overflow-record-templates',
           },
           {
@@ -4339,7 +4378,44 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               {cappedRows.map((row, idx) => renderRow(row, idx))}
                             </React.Fragment>
                           ))
-                        ) : processedRowsWithRollups.length === 0 ? (
+                        ) : tableEmptyState === 'no-filter-results' ? (
+                          /*
+                            Rekordy SĄ — schował je filtr. Nie wolno tu pokazać
+                            zachęty „zacznij od struktury": użytkownik zacząłby
+                            budować od zera coś, co już ma.
+                          */
+                          <tr>
+                            <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
+                              <div className="mx-auto max-w-xl text-c-text-muted">
+                                <div className="text-sm font-semibold mb-1">
+                                  {t('ideas.table.noFilterResultsTitle', 'Brak wyników filtra')}
+                                </div>
+                                <div className="text-[11px] leading-relaxed">
+                                  {t('ideas.table.noFilterResultsBody', {
+                                    count: unfilteredRowCount,
+                                    defaultValue:
+                                      'Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.',
+                                  })}
+                                </div>
+                                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setFilterInput('');
+                                      (usePlatform ? effectiveSetFilters : setFilters)({
+                                        logic: _filters.logic,
+                                        rules: [],
+                                      });
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-c-surface-raised text-c-text-secondary hover:bg-c-surface transition-colors"
+                                  >
+                                    <X size={14} />
+                                    {t('ideas.table.clearFilter', 'Wyczyść filtr')}
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : tableEmptyState === 'no-records' ? (
                           <tr>
                             <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
                               <div className="mx-auto max-w-xl text-c-text-muted">

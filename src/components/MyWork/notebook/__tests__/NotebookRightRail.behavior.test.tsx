@@ -116,6 +116,20 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     expect(screen.getByText('Alex Owner')).toBeTruthy();
   });
 
+  // ★ Pomiar na żywo 05.09 (`mywork-notebook-rail-speca`): główka pasa
+  // pokazywała sam tytuł notatki + X, a zatwierdzony obraz ma dwuwierszową
+  // główkę „NOTEBOOK / Szczegóły notatki".
+  it('renders the approved two-line panel header, not the note title', () => {
+    render(<Harness />);
+    expect(screen.getByText('Notebook')).toBeTruthy();
+    const heading = screen.getByRole('heading', { name: 'Szczegóły notatki' });
+    expect(heading).toBeTruthy();
+    // The note title belongs to the document header on the left, not the rail.
+    expect(screen.queryByText('Decision note')).toBeNull();
+    // Close control survives the header rework.
+    expect(screen.getByRole('button', { name: 'Close panel' })).toBeTruthy();
+  });
+
   it('renders the six canonical sections in the fixed order', () => {
     render(<Harness />);
     const headers = screen

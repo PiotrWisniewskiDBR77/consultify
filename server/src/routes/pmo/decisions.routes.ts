@@ -201,6 +201,14 @@ router.post('/:id/generate-section', DecisionController.generateSection);
  */
 router.get('/:id/detail', DecisionController.getDecisionDetail);
 
+/**
+ * GET /api/decisions/:id/history
+ * Read-only audit trail (`decision_history`) for one decision. The card's
+ * HISTORIA section calls this path; it used to 404 because the route was
+ * never mounted next to its `/:id/detail` sibling.
+ */
+router.get('/:id/history', DecisionController.getDecisionHistory);
+
 router.put(
   '/:id/enhancements',
   requireDecisionCapability('decision.update', { shadow: true }),

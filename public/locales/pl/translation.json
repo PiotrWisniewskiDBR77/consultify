@@ -7437,7 +7437,7 @@
       },
       "matrix": {
         "skips": "Pominięcia",
-        "gridLabel": "Macierz DRD — obszary \u00d7 poziomy"
+        "gridLabel": "Macierz DRD — obszary × poziomy"
       },
       "evidence": {
         "evidenced": "Potwierdzono dowodami",
@@ -34318,7 +34318,8 @@
         "manageTemplates": "Zarządzaj szablonami",
         "templateUpdated": "Szablon zaktualizowany",
         "templateCreated": "Szablon utworzony",
-        "failedToSaveTemplate": "Nie udało się zapisać szablonu"
+        "failedToSaveTemplate": "Nie udało się zapisać szablonu",
+        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym."
       },
       "refineDialog": {
         "suggestionAddPriority": "Dodaj pole priorytet",
@@ -34776,7 +34777,12 @@
         "fieldCount_many": "{{count}} pól",
         "fieldCount_other": "{{count}} pola"
       },
-      "recordDetails": "Szczegóły rekordu"
+      "recordDetails": "Szczegóły rekordu",
+      "noFilterResultsTitle": "Brak wyników filtra",
+      "noFilterResultsBody_one": "Jedyny wiersz nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_few": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "tableTemplates": "Szablony tabeli"
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} węzeł",
@@ -35636,7 +35642,9 @@
       "reviewStaleDocument": "Sprawdź nieaktualny dokument",
       "keepCurrent": "Zachowaj bez zmian do następnego przeglądu",
       "technicalLineage": "Pochodzenie techniczne",
-      "openTeresa": "Otwórz Teresę"
+      "openTeresa": "Otwórz Teresę",
+      "eyebrow": "Notebook",
+      "panelTitle": "Szczegóły notatki"
     },
     "slashMenu": {
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"
@@ -36362,7 +36370,28 @@
       "applying": "Stosowanie…",
       "useTemplate": "Użyj szablonu",
       "aiFill": "AI wypełni",
-      "replaceExistingElementsDesc": "Na kanwie znajduje się {{value}} {{word}}. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć."
+      "replaceExistingElementsDesc": "Na kanwie znajduje się {{value}} {{word}}. Zastosowanie szablonu nadpisze całą zawartość. Tej operacji nie można cofnąć.",
+      "otherTemplates": "Pozostałe",
+      "seedUnit": {
+        "branches_few": "{{count}} gałęzie",
+        "branches_many": "{{count}} gałęzi",
+        "branches_one": "{{count}} gałąź",
+        "columns_few": "{{count}} kolumny",
+        "columns_many": "{{count}} kolumn",
+        "columns_one": "{{count}} kolumna",
+        "lanes_few": "{{count}} pasy",
+        "lanes_many": "{{count}} pasów",
+        "lanes_one": "{{count}} pas",
+        "rows_few": "{{count}} wiersze",
+        "rows_many": "{{count}} wierszy",
+        "rows_one": "{{count}} wiersz",
+        "sections_few": "{{count}} sekcje",
+        "sections_many": "{{count}} sekcji",
+        "sections_one": "{{count}} sekcja",
+        "steps_few": "{{count}} kroki",
+        "steps_many": "{{count}} kroków",
+        "steps_one": "{{count}} krok"
+      }
     },
     "aiSuggestionsPanel": {
       "aiSuggestions": "Sugestie AI",

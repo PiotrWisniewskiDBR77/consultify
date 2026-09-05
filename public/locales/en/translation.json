@@ -8094,7 +8094,7 @@
       },
       "matrix": {
         "skips": "Skipped questions",
-        "gridLabel": "DRD matrix — areas \u00d7 levels"
+        "gridLabel": "DRD matrix — areas × levels"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",
@@ -31816,7 +31816,8 @@
         "manageTemplates": "Manage templates",
         "templateUpdated": "Template updated",
         "templateCreated": "Template created",
-        "failedToSaveTemplate": "Failed to save template"
+        "failedToSaveTemplate": "Failed to save template",
+        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine."
       },
       "refineDialog": {
         "suggestionAddPriority": "Add a priority field",
@@ -32270,7 +32271,11 @@
         "fieldCount_one": "{{count}} field",
         "fieldCount_other": "{{count}} fields"
       },
-      "recordDetails": "Record details"
+      "recordDetails": "Record details",
+      "noFilterResultsTitle": "No filter results",
+      "noFilterResultsBody_one": "The only row does not match the current filter. Change the conditions or clear the filter to see every record.",
+      "noFilterResultsBody_other": "None of the {{count}} rows match the current filter. Change the conditions or clear the filter to see every record.",
+      "tableTemplates": "Table templates"
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} node",
@@ -33081,7 +33086,9 @@
       "context": "Context",
       "closePanel": "Close panel",
       "ownerYou": "You",
-      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt."
+      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt.",
+      "eyebrow": "Notebook",
+      "panelTitle": "Note details"
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
@@ -33797,7 +33804,22 @@
       "applying": "Applying…",
       "useTemplate": "Use template",
       "aiFill": "AI fill",
-      "replaceExistingElementsDesc": "The canvas contains {{value}} {{word}}. Applying a template will overwrite all content. This cannot be undone."
+      "replaceExistingElementsDesc": "The canvas contains {{value}} {{word}}. Applying a template will overwrite all content. This cannot be undone.",
+      "otherTemplates": "Other",
+      "seedUnit": {
+        "branches_one": "{{count}} branch",
+        "branches_other": "{{count}} branches",
+        "columns_one": "{{count}} column",
+        "columns_other": "{{count}} columns",
+        "lanes_one": "{{count}} lane",
+        "lanes_other": "{{count}} lanes",
+        "rows_one": "{{count}} row",
+        "rows_other": "{{count}} rows",
+        "sections_one": "{{count}} section",
+        "sections_other": "{{count}} sections",
+        "steps_one": "{{count}} step",
+        "steps_other": "{{count}} steps"
+      }
     },
     "aiSuggestionsPanel": {
       "aiSuggestions": "AI Suggestions",

@@ -35,7 +35,13 @@ import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry'
 import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
 // #10-AB: baza ~40 startowych szablonów konsultingowych (7 kategorii). Import
 // value; moduł importuje z tego pliku wyłącznie TYP (erased) → brak cyklu runtime.
-import { CONSULTING_TEMPLATES } from './ideaConsultingTemplates';
+import {
+  CONSULTING_CATEGORY_LABELS,
+  CONSULTING_CATEGORY_ORDER,
+  CONSULTING_TEMPLATES,
+  type ConsultingCategory,
+} from './ideaConsultingTemplates';
+import { summarizeIdeaTemplateSeed } from './ideaTemplateSeedSummary';
 import { EMPTY_SELECTION, type CanvasToolType } from './ideaSelectionTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 
@@ -2049,6 +2055,44 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
     return true;
   });
 
+  // ★ Pomiar na żywo 05.09 (`idea-templates-catalog`): zatwierdzony katalog
+  // grupuje szablony pod SIEDMIOMA nazwanymi kategoriami biznesowymi
+  // (Strategia · Operacje/Lean · Finanse · Cyfryzacja/AI · Ludzie/Zmiana ·
+  // Klient/Wzrost · PMO), a aplikacja rysowała płaską siatkę. Dane były w
+  // repozytorium od początku — `catalogGroup` na każdym szablonie i gotowa
+  // mapa `CONSULTING_TEMPLATES_BY_GROUP` — ale nikt ich nie wołał
+  // (biblioteka bez wywołania). Grupujemy PO PRZEFILTROWANEJ liście, więc
+  // chipy zakresu/kategorii dalej działają, a pusta kategoria znika.
+  //
+  // Szablony bez `catalogGroup` (starszy zestaw canvas) trafiają do
+  // ostatniej, jawnie nazwanej grupy — nie chowamy ich i nie udajemy, że
+  // należą do którejś z siedmiu kategorii konsultingowych.
+  const groupedTemplates = React.useMemo(() => {
+    const buckets = new Map<string, TemplateDefinition[]>();
+    for (const template of templates) {
+      const key = template.catalogGroup || '__ungrouped__';
+      const bucket = buckets.get(key);
+      if (bucket) bucket.push(template);
+      else buckets.set(key, [template]);
+    }
+    const ordered: { key: string; label: string; items: TemplateDefinition[] }[] = [];
+    for (const category of CONSULTING_CATEGORY_ORDER) {
+      const items = buckets.get(category);
+      if (!items?.length) continue;
+      const labels = CONSULTING_CATEGORY_LABELS[category as ConsultingCategory];
+      ordered.push({ key: category, label: isPl ? labels.pl : labels.en, items });
+    }
+    const rest = buckets.get('__ungrouped__');
+    if (rest?.length) {
+      ordered.push({
+        key: '__ungrouped__',
+        label: t('myWorkIdeas.templateGallery.otherTemplates', isPl ? 'Pozostałe' : 'Other'),
+        items: rest,
+      });
+    }
+    return ordered;
+  }, [isPl, t, templates]);
+
   const handleApply = useCallback(
     async (template: TemplateDefinition, withAIFill = false) => {
       // L-06: szablon nadpisuje cały graf (Api.syncMyIdeaMap zastępuje nodes/edges).
@@ -2235,74 +2279,130 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                 {t('myWorkIdeas.templateGallery.noTemplatesAvailableTool')}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {templates.map((template) => {
-                  const Icon = template.icon;
-                  const governance = template.governance;
-                  return (
-                    <div
-                      key={template.id}
-                      className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
-                          <Icon size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100 mb-0.5">
-                            {isPl ? template.namePl : template.nameEn}
-                          </div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                            {isPl ? template.descPl : template.descEn}
-                          </div>
-                          {governance && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                                {isPl
-                                  ? (CATEGORY_FILTER_LABELS_PL[
-                                      governance.category as keyof typeof CATEGORY_FILTER_LABELS_PL
-                                    ] ?? governance.category)
-                                  : governance.category}
-                              </span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                                {isPl ? SCOPE_FILTER_LABELS_PL[governance.scope] : governance.scope}
-                              </span>
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
-                                v{governance.version}
-                              </span>
-                            </div>
-                          )}
-                          <div className="mt-2 flex items-center gap-2">
-                            <button
-                              onClick={() => runTemplateApplyAction(template, false)}
-                              disabled={!!applying}
-                              className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
-                            >
-                              {applying === template.id && !aiFilling
-                                ? t('myWorkIdeas.templateGallery.applying')
-                                : t('myWorkIdeas.templateGallery.useTemplate')}
-                              <ArrowRight size={10} />
-                            </button>
-                            {template.nodes.length > 0 && (
-                              <button
-                                onClick={() => runTemplateApplyAction(template, true)}
-                                disabled={!!applying}
-                                className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
-                              >
-                                {aiFilling === template.id ? (
-                                  <Loader2 size={10} className="animate-spin" />
-                                ) : (
-                                  <Sparkles size={10} />
-                                )}
-                                {t('myWorkIdeas.templateGallery.aiFill')}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+              <div className="space-y-5">
+                {groupedTemplates.map((group) => (
+                  <section key={group.key} aria-label={group.label}>
+                    {/* Nagłówek kategorii + licznik — jak w zatwierdzonym katalogu. */}
+                    <div className="mb-2 flex items-baseline gap-2">
+                      <h3 className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
+                        {group.label}
+                      </h3>
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                        {group.items.length}
+                      </span>
                     </div>
-                  );
-                })}
+                    <div className="grid grid-cols-2 gap-3">
+                      {group.items.map((template) => {
+                        const Icon = template.icon;
+                        const governance = template.governance;
+                        const seed = summarizeIdeaTemplateSeed(template);
+                        return (
+                          <div
+                            key={template.id}
+                            className="group text-left p-4 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-c-info/40 hover:bg-c-info/[0.02] transition-all duration-200"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-c-info/10 to-c-info/10 flex items-center justify-center text-c-info shrink-0">
+                                <Icon size={18} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
+                                  {isPl ? template.namePl : template.nameEn}
+                                </div>
+                                {/* Druga nazwa (EN pod PL) — katalog pokazuje obie. */}
+                                {isPl && template.nameEn !== template.namePl ? (
+                                  <div className="mb-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                                    {template.nameEn}
+                                  </div>
+                                ) : null}
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                  {isPl ? template.descPl : template.descEn}
+                                </div>
+                                {/*
+                                  Kształt seeda liczony z realnych nodes/extensions —
+                                  z galerii ma być widać, CO szablon wstawi na kanwę,
+                                  a nie tylko jak się nazywa.
+                                */}
+                                {seed.counts.length > 0 && (
+                                  <div className="mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    {seed.counts
+                                      .map((entry) =>
+                                        t(
+                                          `myWorkIdeas.templateGallery.seedUnit.${entry.unit}`,
+                                          {
+                                            count: entry.count,
+                                            defaultValue: `${entry.count} ${entry.unit}`,
+                                          }
+                                        )
+                                      )
+                                      .join(' · ')}
+                                  </div>
+                                )}
+                                {seed.chips.length > 0 && (
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                    {seed.chips.map((chip, index) => (
+                                      <span
+                                        key={`${template.id}-chip-${index}`}
+                                        className="rounded-md border border-slate-200/70 px-1.5 py-0.5 text-[9px] text-slate-600 dark:border-navy-700/60 dark:text-slate-300"
+                                      >
+                                        {chip}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {governance && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                      {isPl
+                                        ? (CATEGORY_FILTER_LABELS_PL[
+                                            governance.category as keyof typeof CATEGORY_FILTER_LABELS_PL
+                                          ] ?? governance.category)
+                                        : governance.category}
+                                    </span>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                      {isPl
+                                        ? SCOPE_FILTER_LABELS_PL[governance.scope]
+                                        : governance.scope}
+                                    </span>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                                      v{governance.version}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="mt-2 flex items-center gap-2">
+                                  <button
+                                    onClick={() => runTemplateApplyAction(template, false)}
+                                    disabled={!!applying}
+                                    className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
+                                  >
+                                    {applying === template.id && !aiFilling
+                                      ? t('myWorkIdeas.templateGallery.applying')
+                                      : t('myWorkIdeas.templateGallery.useTemplate')}
+                                    <ArrowRight size={10} />
+                                  </button>
+                                  {template.nodes.length > 0 && (
+                                    <button
+                                      onClick={() => runTemplateApplyAction(template, true)}
+                                      disabled={!!applying}
+                                      className="inline-flex items-center gap-1 text-[9px] font-semibold text-c-info hover:text-c-info/80 transition-colors disabled:opacity-50"
+                                    >
+                                      {aiFilling === template.id ? (
+                                        <Loader2 size={10} className="animate-spin" />
+                                      ) : (
+                                        <Sparkles size={10} />
+                                      )}
+                                      {t('myWorkIdeas.templateGallery.aiFill')}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
               </div>
             )}
           </div>

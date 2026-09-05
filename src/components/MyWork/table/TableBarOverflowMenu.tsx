@@ -25,6 +25,12 @@ export interface TableBarOverflowItem {
   /** Pozycja odpowiadająca WŁĄCZONEMU stanowi (np. otwarty panel historii). */
   active?: boolean;
   disabled?: boolean;
+  /**
+   * Powód wyszarzenia — pokazywany jako `title`. Wymagany, gdy `disabled`:
+   * pozycja bez powodu wygląda dla właściciela jak zepsuta funkcja, a nie
+   * jak funkcja niedostępna w tym trybie.
+   */
+  disabledReason?: string;
   danger?: boolean;
   /** `false` = pozycja nie dotyczy tego kontekstu (np. tylko platforma). */
   show?: boolean;
@@ -111,6 +117,7 @@ export const TableBarOverflowMenu: React.FC<TableBarOverflowMenuProps> = ({
                     type="button"
                     role="menuitem"
                     disabled={item.disabled}
+                    title={item.disabled ? item.disabledReason : undefined}
                     data-testid={item.testId}
                     onClick={() => {
                       item.onClick();
