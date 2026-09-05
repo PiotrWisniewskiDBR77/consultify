@@ -174,4 +174,12 @@ if [ -n "$Z31_FILES" ]; then
   fi
 fi
 
+# 12) ZAMROŻENIE MVP FINAL (2026-09-05) — moduł odebrany przez właściciela nie ma być
+#     już zmieniany. TU TYLKO OSTRZEGA (exit 0): pre-commit nie widzi jeszcze komunikatu
+#     tego commita — .git/COMMIT_EDITMSG trzyma w tym momencie komunikat POPRZEDNIEGO
+#     commita (zmierzone 2026-09-05), więc czytanie go tutaj byłoby teatrem zgodności.
+#     BLOKUJE .husky/commit-msg, gdzie komunikat przychodzi jako $1.
+#     SSOT: docs/program/MVP_FINAL_PROCEDURA.md, rejestr: docs/program/MVP_FINAL_ZAMROZONE.json
+bash scripts/mvp-final/check-freeze.sh --tylko-ostrzez || true
+
 exit 0
