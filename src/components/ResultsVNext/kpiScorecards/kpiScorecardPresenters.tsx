@@ -42,6 +42,14 @@ import React from 'react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives';
+import {
+  memberNameOrUnknown,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
+import {
+  resultsEntityNameOrUnknown,
+  type ResultsEntityNameResolver,
+} from '@/hooks/useResultsEntityNames';
 
 import { LifecycleLockBadge, lockedRowMenuAction } from '../LifecycleLockBadge';
 import type {
@@ -56,7 +64,6 @@ import {
   isKpiScorecardLocked,
   kpiScorecardItemRoleLabel,
   kpiScorecardLockReason,
-  kpiScorecardOwnerDisplay,
   kpiScorecardReviewFrequencyLabel,
   kpiScorecardScopeLabel,
   kpiScorecardSnapshotStatusLabel,
@@ -64,7 +71,7 @@ import {
   KPI_SCORECARD_SNAPSHOT_STATUS_TONE,
   KPI_SCORECARD_STATUS_TONE,
   noMembersActivationReason,
-  shortKpiScorecardId,
+  shortTechnicalHash,
 } from './kpiScorecardMappers';
 
 // ==========================================
@@ -271,6 +278,8 @@ export function buildKpiScorecardRowMenu(row: KpiScorecardDto, ctx: KpiScorecard
 export interface KpiScorecardPreviewCtx {
   isPolish: boolean;
   currentUserId: string | null | undefined;
+  resolveMemberName?: MemberNameResolver;
+  resolveScopeName?: ResultsEntityNameResolver;
   busy: boolean;
   /** `undefined` while in flight, a real distribution once resolved. Only
    * ever passed by the DETAIL page — the Scorecards-tab list preview omits
@@ -351,7 +360,9 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
       ? []
       : ctx.items.map((item) => ({
           id: item.itemId,
-          label: item.kpiName ?? shortKpiScorecardId(item.kpiId),
+          label:
+            item.kpiName ??
+            resultsEntityNameOrUnknown(undefined, item.kpiId, ctx.isPolish, 'indicator'),
           value: kpiScorecardItemRoleLabel(item.role, ctx.isPolish),
           type: 'kpi',
           title: item.kpiId,
@@ -385,14 +396,22 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
         {
           id: 'owner',
           label: t('Właściciel', 'Owner'),
-          value: row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, ctx.currentUserId, ctx.isPolish),
+          value:
+            row.ownerName ??
+            (ctx.currentUserId && row.ownerUserId === ctx.currentUserId
+              ? t('Ty', 'You')
+              : memberNameOrUnknown(ctx.resolveMemberName, row.ownerUserId, ctx.isPolish)),
         },
         {
           id: 'reviewFrequency',
           label: t('Częstotliwość przeglądu', 'Review frequency'),
           value: kpiScorecardReviewFrequencyLabel(row.reviewFrequency, ctx.isPolish),
         },
-        { id: 'scopeId', label: t('Cel zakresu', 'Scope target'), value: shortKpiScorecardId(row.scopeId) },
+        {
+          id: 'scopeId',
+          label: t('Cel zakresu', 'Scope target'),
+          value: resultsEntityNameOrUnknown(ctx.resolveScopeName, row.scopeId, ctx.isPolish, 'scope'),
+        },
         { id: 'description', label: t('Opis', 'Description'), value: row.description ?? '—' },
         { id: 'created', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },
         ...distributionProperties,
@@ -472,15 +491,18 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
 // Items table (detail page — "Pozycje" tab)
 // ==========================================
 
-export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
+export function buildKpiScorecardItemColumns(
+  isPolish: boolean,
+  resolveMemberName?: MemberNameResolver
+): TableColumn[] {
   return [
     {
       id: 'kpiId',
       label: 'KPI',
       width: '220px',
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm font-mono text-c-text" title={row.kpiId}>
-          {row.kpiName ?? shortKpiScorecardId(row.kpiId)}
+        <span className="text-sm text-c-text">
+          {row.kpiName ?? resultsEntityNameOrUnknown(undefined, row.kpiId, isPolish, 'indicator')}
         </span>
       ),
     },
@@ -515,7 +537,9 @@ export function buildKpiScorecardItemColumns(isPolish: boolean): TableColumn[] {
       label: isPolish ? 'Dodane przez' : 'Added by',
       width: '150px',
       render: (row: KpiScorecardItemDto) => (
-        <span className="text-sm text-c-text-secondary" title={row.addedBy}>{row.addedByName ?? shortKpiScorecardId(row.addedBy)}</span>
+        <span className="text-sm text-c-text-secondary">
+          {row.addedByName ?? memberNameOrUnknown(resolveMemberName, row.addedBy, isPolish)}
+        </span>
       ),
     },
     {
@@ -593,6 +617,7 @@ export function buildKpiScorecardItemRowMenu(
 
 export interface KpiScorecardItemPreviewCtx {
   isPolish: boolean;
+  resolveMemberName?: MemberNameResolver;
   busy?: boolean;
   onClose: () => void;
   onOpenKpi: (kpiId: string) => void;
@@ -605,7 +630,7 @@ export function buildKpiScorecardItemPreview(
 ): StandardPreviewProps {
   const t = (pl: string, en: string) => (ctx.isPolish ? pl : en);
   return {
-    title: `KPI ${row.kpiName ?? shortKpiScorecardId(row.kpiId)}`,
+    title: `KPI ${row.kpiName ?? resultsEntityNameOrUnknown(undefined, row.kpiId, ctx.isPolish, 'indicator')}`,
     onClose: ctx.onClose,
     meta: {
       pills: [{ label: kpiScorecardItemRoleLabel(row.role, ctx.isPolish), tone: row.role === 'primary' ? 'info' : 'neutral' }],
@@ -619,9 +644,21 @@ export function buildKpiScorecardItemPreview(
       propertyLabel: t('Właściwość', 'Property'),
       valueLabel: t('Wartość', 'Value'),
       properties: [
-        { id: 'kpiId', label: 'KPI ID', value: row.kpiId, mono: true },
+        {
+          id: 'kpi',
+          label: t('Wskaźnik', 'Indicator'),
+          value:
+            row.kpiName ??
+            resultsEntityNameOrUnknown(undefined, row.kpiId, ctx.isPolish, 'indicator'),
+        },
         { id: 'sortOrder', label: t('Kolejność', 'Sort order'), value: String(row.sortOrder) },
-        { id: 'addedBy', label: t('Dodane przez', 'Added by'), value: row.addedByName ?? shortKpiScorecardId(row.addedBy) },
+        {
+          id: 'addedBy',
+          label: t('Dodane przez', 'Added by'),
+          value:
+            row.addedByName ??
+            memberNameOrUnknown(ctx.resolveMemberName, row.addedBy, ctx.isPolish),
+        },
         { id: 'addedAt', label: t('Dodano', 'Added'), value: formatKpiScorecardDate(row.addedAt, ctx.isPolish) },
       ],
     },
@@ -746,6 +783,7 @@ export function buildKpiScorecardSnapshotRowMenu(
 
 export interface KpiScorecardSnapshotPreviewCtx {
   isPolish: boolean;
+  resolveMemberName?: MemberNameResolver;
   busy?: boolean;
   onClose: () => void;
   onPublish: (row: KpiScorecardReviewSnapshotDto) => void;
@@ -783,16 +821,29 @@ export function buildKpiScorecardSnapshotPreview(
       propertyLabel: t('Właściwość', 'Property'),
       valueLabel: t('Wartość', 'Value'),
       properties: [
-        { id: 'createdBy', label: t('Utworzono przez', 'Created by'), value: row.createdByName ?? shortKpiScorecardId(row.createdBy) },
+        {
+          id: 'createdBy',
+          label: t('Utworzono przez', 'Created by'),
+          value:
+            row.createdByName ??
+            memberNameOrUnknown(ctx.resolveMemberName, row.createdBy, ctx.isPolish),
+        },
         { id: 'createdAt', label: t('Utworzono', 'Created'), value: formatKpiScorecardDate(row.createdAt, ctx.isPolish) },
-        { id: 'publishedBy', label: t('Opublikowano przez', 'Published by'), value: row.publishedByName ?? shortKpiScorecardId(row.publishedBy) },
+        {
+          id: 'publishedBy',
+          label: t('Opublikowano przez', 'Published by'),
+          value: row.publishedBy
+            ? row.publishedByName ??
+              memberNameOrUnknown(ctx.resolveMemberName, row.publishedBy, ctx.isPolish)
+            : '—',
+        },
         { id: 'publishedAt', label: t('Opublikowano', 'Published'), value: formatKpiScorecardDate(row.publishedAt, ctx.isPolish) },
         {
           id: 'supersededAt',
           label: t('Zastąpiono', 'Superseded'),
           value: formatKpiScorecardDate(row.supersededAt, ctx.isPolish),
         },
-        { id: 'contentHash', label: t('Suma treści', 'Content hash'), value: row.contentHash ? shortKpiScorecardId(row.contentHash) : '—', mono: true },
+        { id: 'contentHash', label: t('Suma treści', 'Content hash'), value: row.contentHash ? shortTechnicalHash(row.contentHash) : '—', mono: true },
       ],
     },
     ai: { hints: [], disabled: true, disabledTooltip: t('Wkrótce', 'Coming soon') },
