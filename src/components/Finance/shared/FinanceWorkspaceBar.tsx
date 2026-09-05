@@ -114,6 +114,31 @@ const CONTEXT_FIELD_LABEL_PL: Record<WorkspaceBarContextField, string> = {
 const CONTROL_BASE_CLASS =
   'inline-flex min-h-[2.75rem] items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50';
 
+/**
+ * Plan napraw MVP 05.09.2026, poz. (7) `finance-valuation-workspace` (A32):
+ * właściciel — treść warsztatu wyceny jest merytorycznie ok, ale przyciski
+ * nagłówka są słowami, nie okrągłymi ikonami jak w innych warsztatach.
+ *
+ * Kontrakt `WorkspaceBarPrimaryAction`/`WorkspaceBarSecondaryAction`
+ * (financeWorkspaceBar.contract.ts) jest CELOWO bit-identyczny z
+ * `server/src/services/finance/workspace/workspaceBarContract.ts` (patrz
+ * nagłówek tamtego pliku) — dopisanie tam pola `icon` rozjechałoby ten port.
+ * Zamiast rozszerzać wspólny kontrakt (wpłynęłoby na 5 warsztatów naraz —
+ * zakaz masowego włączania, CLAUDE.md), ikona jest lokalną, opt-in mapą po
+ * `action.id` w SAMYM rendererze: tylko akcje wymienione tutaj przełączają
+ * się na okrągły przycisk ikonowy (dokładnie ten sam wzorzec co istniejący
+ * już obok przycisk pełnego ekranu — `min-w-[2.75rem]`, `rounded-full`,
+ * podpis tylko w `title`/`aria-label`). Każdy inny warsztat, którego akcja
+ * nie jest tu wymieniona, renderuje się bit-w-bit jak dziś (zero zmiany
+ * wizualnej poza tym jednym ekranem). `primary.refresh-step` to jedyny id
+ * używany przez `ValuationWorkspace.tsx` (zweryfikowane grepem — Baseline
+ * używa `primary.compute`, StatementPackWorkspaceV2 `primary.refresh`,
+ * Prediction `primary-compute`).
+ */
+const ICON_ONLY_ACTION_IDS: ReadonlySet<string> = new Set(['primary.refresh-step']);
+const ROUND_ICON_CONTROL_CLASS =
+  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-c-text text-c-surface transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50';
+
 export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.ReactElement {
   const { config, evaluationContext, contextValues, onCommitRename } = props;
   const { t, i18n } = useTranslation();
@@ -489,22 +514,45 @@ export function FinanceWorkspaceBar(props: FinanceWorkspaceBarProps): React.Reac
             </div>
           )}
 
-          <button
-            type="button"
-            disabled={!primaryState.available}
-            onClick={props.onPrimaryAction}
-            title={
-              primaryState.available
-                ? undefined
-                : `${t('finance.workspaceBar.unavailable', 'Niedostępne')}: ${primaryState.reason}`
+          {(() => {
+            const primaryAccessibleLabel = primaryMerged.prefix
+              ? `${pick(primaryMerged.prefix)} · ${pick(primaryMerged.action)}`
+              : pick(primaryMerged.action);
+            const primaryTitle = primaryState.available
+              ? primaryAccessibleLabel
+              : `${t('finance.workspaceBar.unavailable', 'Niedostępne')}: ${primaryState.reason}`;
+
+            if (ICON_ONLY_ACTION_IDS.has(actions.primary.id)) {
+              return (
+                <button
+                  type="button"
+                  disabled={!primaryState.available}
+                  onClick={props.onPrimaryAction}
+                  title={primaryTitle}
+                  aria-label={primaryAccessibleLabel}
+                  className={ROUND_ICON_CONTROL_CLASS}
+                  data-testid="finance-workspace-bar-primary"
+                >
+                  <RefreshIcon />
+                </button>
+              );
             }
-            className={`${CONTROL_BASE_CLASS} bg-c-text px-3.5 text-c-surface hover:brightness-95`}
-            data-testid="finance-workspace-bar-primary"
-          >
-            {primaryMerged.prefix && <span className="opacity-80">{pick(primaryMerged.prefix)}</span>}
-            {primaryMerged.prefix && <span aria-hidden="true">·</span>}
-            <span>{pick(primaryMerged.action)}</span>
-          </button>
+
+            return (
+              <button
+                type="button"
+                disabled={!primaryState.available}
+                onClick={props.onPrimaryAction}
+                title={primaryState.available ? undefined : primaryTitle}
+                className={`${CONTROL_BASE_CLASS} bg-c-text px-3.5 text-c-surface hover:brightness-95`}
+                data-testid="finance-workspace-bar-primary"
+              >
+                {primaryMerged.prefix && <span className="opacity-80">{pick(primaryMerged.prefix)}</span>}
+                {primaryMerged.prefix && <span aria-hidden="true">·</span>}
+                <span>{pick(primaryMerged.action)}</span>
+              </button>
+            );
+          })()}
 
           <button
             type="button"
@@ -879,6 +927,21 @@ function FullscreenIcon(): React.ReactElement {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path
         d="M2 6V3a1 1 0 011-1h3M10 2h3a1 1 0 011 1v3M14 10v3a1 1 0 01-1 1h-3M6 14H3a1 1 0 01-1-1v-3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Plan napraw MVP 05.09.2026 poz. (7) — patrz komentarz przy ICON_ONLY_ACTION_IDS. */
+function RefreshIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M13.5 8a5.5 5.5 0 10-1.66 3.94M13.5 8V4.5M13.5 8H10"
         stroke="currentColor"
         strokeWidth="1.4"
         strokeLinecap="round"
