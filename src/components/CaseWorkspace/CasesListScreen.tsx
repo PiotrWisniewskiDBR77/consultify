@@ -22,6 +22,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   autonomyPolicyLabel,
   caseProfileLabel,
@@ -1056,8 +1057,7 @@ export const CasesListScreen: React.FC = () => {
                   rowMenu={rowMenu}
                 />
               </div>
-              {selected ? (
-                <aside className="w-full shrink-0 border-t border-c-border bg-c-surface-raised p-3 lg:w-[400px] lg:border-l lg:border-t-0">
+              <JedenPrawyPanel rekord={selected ? (
                   <StandardPreview
                     title={nazwaZlecenia(selected, naming[selected.caseId])}
                     onClose={() => setSelectedId(null)}
@@ -1090,8 +1090,7 @@ export const CasesListScreen: React.FC = () => {
                       items: previewNextItems,
                     }}
                   />
-                </aside>
-              ) : null}
+              ) : null} />
             </div>
           ) : null}
         </div>

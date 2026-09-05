@@ -40,6 +40,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/shared/states';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   StandardModuleBar,
   StandardPreview,
@@ -942,8 +943,7 @@ export const PartnerSettlementsView: React.FC = () => {
             />
           </div>
 
-          {previewCommission ? (
-            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewCommission ? (
               <StandardPreview
                 title={previewCommission.partnerName || previewCommission.id}
                 onClose={() => setPreviewCommissionId(null)}
@@ -981,8 +981,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 }}
                 actions={commissionPreviewActions}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
 
@@ -1075,8 +1074,7 @@ export const PartnerSettlementsView: React.FC = () => {
             />
           </div>
 
-          {previewAttribution ? (
-            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewAttribution ? (
               <StandardPreview
                 title={previewAttribution.organizationName || previewAttribution.organizationId}
                 onClose={() => setPreviewAttributionId(null)}
@@ -1125,8 +1123,7 @@ export const PartnerSettlementsView: React.FC = () => {
                 }}
                 actions={attributionPreviewActions}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
 
@@ -1150,8 +1147,7 @@ export const PartnerSettlementsView: React.FC = () => {
             />
           </div>
 
-          {previewExpiring ? (
-            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewExpiring ? (
               <StandardPreview
                 title={previewExpiring.organizationName}
                 onClose={() => setPreviewExpiringId(null)}
@@ -1197,8 +1193,7 @@ export const PartnerSettlementsView: React.FC = () => {
                     .join('\n\n'),
                 }}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
 
@@ -1222,8 +1217,7 @@ export const PartnerSettlementsView: React.FC = () => {
             />
           </div>
 
-          {previewAnalytics ? (
-            <aside className="w-[380px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewAnalytics ? (
               <StandardPreview
                 title={previewAnalytics.referralCode}
                 onClose={() => setPreviewAnalyticsCode(null)}
@@ -1258,8 +1252,7 @@ export const PartnerSettlementsView: React.FC = () => {
                   },
                 }}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
     </div>

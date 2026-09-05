@@ -47,6 +47,7 @@ import {
   type StandardCounterChip,
   type StandardModuleTab,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
@@ -258,11 +259,7 @@ export const ResultsAttentionPage: React.FC = () => {
               onRowClick={(row) => setSelectedRowId(String(row.id))}
             />
           </div>
-          {selectedRow && activeBucket ? (
-            <aside
-              className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden"
-              style={{ width: PREVIEW_PANE_WIDTH }}
-            >
+          <JedenPrawyPanel rekord={selectedRow && activeBucket ? (
               <StandardPreview
                 {...buildAttentionRowPreview(selectedRow, {
                   isPolish,
@@ -276,8 +273,7 @@ export const ResultsAttentionPage: React.FC = () => {
                   resolveMemberName,
                 })}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       </StandardModuleBar>
     </div>
