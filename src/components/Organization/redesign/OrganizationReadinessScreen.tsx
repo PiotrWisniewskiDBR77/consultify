@@ -149,13 +149,19 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
           const key = claimValueKey(entry.value);
           if (!uniqueByKey.has(key)) uniqueByKey.set(key, entry.value);
         });
+        // Konflikt jest realny, gdy jest ≥2 STRUKTURALNIE różnych wartości
+        // (`uniqueByKey.size`) — ale dwie różne złożone wartości bez pola
+        // title/name/label mogą dać ten sam TEKST po streszczeniu (np. oba
+        // „Złożona wartość (4 pól)"); nie duplikuj identycznego tekstu
+        // dziesiątki razy w UI, dedupe DISPLAY osobno od wykrycia konfliktu.
         return {
           path,
           entries,
-          values: [...uniqueByKey.values()].map(summarizeClaimValue),
+          conflicting: uniqueByKey.size > 1,
+          values: [...new Set([...uniqueByKey.values()].map(summarizeClaimValue))],
         };
       })
-      .filter((entry) => entry.values.length > 1);
+      .filter((entry) => entry.conflicting);
   }, [claims]);
 
   const pending = useMemo(

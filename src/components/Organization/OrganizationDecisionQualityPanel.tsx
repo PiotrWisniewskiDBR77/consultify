@@ -70,13 +70,17 @@ export const OrganizationDecisionQualityPanel: React.FC<{
           const key = claimValueKey(entry.value);
           if (!uniqueByKey.has(key)) uniqueByKey.set(key, entry.value);
         });
+        // Konflikt jest realny, gdy jest ≥2 STRUKTURALNIE różnych wartości —
+        // ale dwie różne złożone wartości bez pola title/name/label mogą dać
+        // ten sam TEKST po streszczeniu; dedupe DISPLAY osobno od wykrycia.
         return {
           path,
           entries,
-          values: [...uniqueByKey.values()].map(summarizeClaimValue),
+          conflicting: uniqueByKey.size > 1,
+          values: [...new Set([...uniqueByKey.values()].map(summarizeClaimValue))],
         };
       })
-      .filter((item) => item.values.length > 1);
+      .filter((item) => item.conflicting);
   }, [claims]);
   const pending = claims.filter((claim) => claim.reviewState === 'pending');
   const rejected = claims.filter((claim) => claim.reviewState === 'rejected');
