@@ -106,6 +106,7 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
     apiMock.getAssessmentReports.mockResolvedValue([]);
     apiMock.get.mockResolvedValue([]);
     apiMock.listReportImports.mockResolvedValue({ data: [] });
@@ -153,7 +154,21 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
     expect(screen.queryByText('DRD with real completion')).not.toBeInTheDocument();
   });
 
+  /**
+   * Odbiór 05.09 runda 3: POSTĘP zszedł z DOMYŚLNEGO zestawu kolumn do
+   * pstryczka — na jego miejscu, zgodnie z zatwierdzonym obrazem, stoi
+   * JEDNOSTKA (patrz AssessmentHub.columnsFromApprovedImage.test.tsx).
+   * Ten test celuje w MAPOWANIE danych, nie w domyślny układ, więc jawnie
+   * włącza kolumnę zapisanym układem użytkownika — dokładnie tak, jak zrobiłby
+   * to człowiek pstryczkiem. Gdyby mapowanie
+   * `completionPercent`/`completion_percent` -> `row.progress` znowu zniknęło,
+   * ten test dalej upadnie.
+   */
   it('falls back to the raw snake_case completion_percent when camelCase is absent (non-DRD / DRD-without-areas-yet row shape)', async () => {
+    window.localStorage.setItem(
+      'filterableTable.cols.assessment.hub.list',
+      JSON.stringify({ visibility: { progress: true } })
+    );
     apiMock.listAssessments.mockResolvedValue({
       items: [
         {
@@ -177,6 +192,12 @@ describe('AssessmentHub — Processes list reads server-derived completion (Code
     );
 
     expect(await screen.findByText('SIRI assessment')).toBeInTheDocument();
+    const headers = Array.from(document.querySelectorAll('th')).map((th) =>
+      (th.textContent || '').replace(/\s+/g, ' ').trim()
+    );
+    // dowód, że mierzymy WŁAŚCIWĄ kolumnę, a nie przypadkowe „65%" gdzie indziej
+    // ten plik nie podmienia i18n, więc nagłówek to domyślny literał kolumny
+    expect(headers.join(' | ')).toContain('Progress');
     expect(screen.getByText('65%')).toBeInTheDocument();
   });
 

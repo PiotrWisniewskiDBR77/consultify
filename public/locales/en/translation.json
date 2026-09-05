@@ -8158,7 +8158,8 @@
         "owner": "Owner",
         "updatedAt": "Updated",
         "score": "Score",
-        "confidence": "Confidence"
+        "confidence": "Confidence",
+        "businessUnit": "Business unit"
       },
       "editNoteImported": "Edit via the imported-PDF review flow",
       "triagePrompt": "Give me an AI pre-screen of the \"{{lane}}\" list ({{count}} items): what needs attention first, and why?",

@@ -370,6 +370,12 @@ router.get(
         scoreSummary: parseJsonSafely(row.score_summary as string | null | undefined, {}),
         assessmentDefinitionId: row.assessment_definition_id || null,
         assessmentDefinitionVersion: row.assessment_definition_version || null,
+        // Odbiór 05.09 (05-ocena, `assessment-list`): kolumna JEDNOSTKA
+        // z zatwierdzonego obrazu. `...row` niesie już surowe `business_unit`
+        // (SELECT *), ale klient czyta camelCase — bez tej linii kolumna
+        // milczy na każdym kliencie, który nie zna nazwy snake_case.
+        // Migracja: server/migrations/20260905_assessment_business_unit.sql.
+        businessUnit: (row.business_unit as string | null | undefined) ?? null,
         ...(derivedCompletionPercent !== undefined
           ? {
               completion_percent: derivedCompletionPercent,
@@ -469,6 +475,9 @@ router.get(
       navigation: parseJsonSafely(assessment.navigation_json as string | null | undefined, null),
       assessmentDefinitionId: assessment.assessment_definition_id || null,
       assessmentDefinitionVersion: assessment.assessment_definition_version || null,
+      // Odbiór 05.09 (05-ocena): jednostka organizacyjna oceny — ta sama
+      // camelCase co na liście, żeby podgląd i lista czytały jedno pole.
+      businessUnit: (assessment.business_unit as string | null | undefined) ?? null,
       ...(derivedCompletionPercent !== undefined
         ? {
             completion_percent: derivedCompletionPercent,
@@ -503,6 +512,15 @@ router.post(
     // middleware escaped, before storing — mirrors AssessmentController.createAssessment.
     const name = decodeHtmlEntities(String(req.body?.name || '').trim());
     const projectId = req.body?.projectId ? String(req.body.projectId) : null;
+    // Odbiór 05.09 (05-ocena): JEDNOSTKA z zatwierdzonego obrazu. Etykieta
+    // jednostki organizacyjnej, opcjonalna — pusty string zapisuje się jako
+    // NULL, żeby lista rysowała „—", a nie pustą komórkę bez znaczenia.
+    // Ta sama sanityzacja co `name` (globalny middleware escape'uje encje).
+    const businessUnitRaw =
+      typeof req.body?.businessUnit === 'string'
+        ? decodeHtmlEntities(req.body.businessUnit).trim()
+        : '';
+    const businessUnit = businessUnitRaw ? businessUnitRaw.slice(0, 200) : null;
 
     if (!assessmentType || !name) {
       return res.status(400).json({
@@ -586,8 +604,8 @@ router.post(
         id, organization_id, project_id, assessment_type, name, status,
         completion_percent, confidence_avg, answers_json, context_snapshot,
         assessment_definition_id, assessment_definition_version,
-        created_by, updated_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        business_unit, created_by, updated_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         organizationId,
@@ -601,6 +619,7 @@ router.post(
         '{}',
         boundDefinitionId,
         boundDefinitionVersion,
+        businessUnit,
         userId,
         userId,
         now,
@@ -625,6 +644,7 @@ router.post(
           assessmentType,
           name,
           projectId,
+          businessUnit,
           status: 'DRAFT',
           backendStatus: 'DRAFT',
           assessmentDefinitionId: boundDefinitionId,
@@ -747,8 +767,9 @@ router.put(
       assessment_type?: string | null;
       framework_type?: string | null;
       status?: string | null;
+      business_unit?: string | null;
     }>(
-      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type, framework_type, status
+      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type, framework_type, status, business_unit
        FROM assessments
        WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
@@ -764,6 +785,7 @@ router.put(
       assessment_type?: string | null;
       framework_type?: string | null;
       status?: string | null;
+      business_unit?: string | null;
     } | null;
 
     if (!existing) {
@@ -866,12 +888,22 @@ router.put(
       typeof req.body?.name === 'string'
         ? decodeHtmlEntities(req.body.name)
         : (req.body?.name ?? null);
+    // Odbiór 05.09 (05-ocena): JEDNOSTKA jest edytowalna tą samą ścieżką co
+    // nazwa. Pominięcie pola w body ZOSTAWIA zapisaną wartość (klienci robią
+    // autosave częściowy); jawny pusty string / null ją czyści.
+    const nextBusinessUnit =
+      req.body?.businessUnit === undefined
+        ? (existing.business_unit ?? null)
+        : typeof req.body.businessUnit === 'string'
+          ? decodeHtmlEntities(req.body.businessUnit).trim().slice(0, 200) || null
+          : null;
 
     await queryHelpers.queryRun(
       `UPDATE assessments
        SET name = COALESCE(?, name),
            answers_json = ?, context_snapshot = ?, completion_percent = ?, confidence_avg = ?,
-           score_summary = ?, current_section_id = ?, navigation_json = ?, updated_by = ?, updated_at = ?
+           score_summary = ?, current_section_id = ?, navigation_json = ?, business_unit = ?,
+           updated_by = ?, updated_at = ?
        WHERE id = ? AND organization_id = ?`,
       [
         nextName,
@@ -882,6 +914,7 @@ router.put(
         JSON.stringify(nextScoreSummary || {}),
         nextCurrentSectionId,
         JSON.stringify(nextNavigation || {}),
+        nextBusinessUnit,
         userId,
         now,
         assessmentId,
@@ -901,6 +934,7 @@ router.put(
       data: {
         id: assessmentId,
         updatedAt: now,
+        businessUnit: nextBusinessUnit,
         // ASM-001A: surfaced so callers don't need a round-trip GET to see the
         // server-derived value for DRD; harmless additive field for non-DRD.
         completionPercent: nextCompletionPercent,

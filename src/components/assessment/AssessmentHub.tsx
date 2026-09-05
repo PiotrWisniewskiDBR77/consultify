@@ -213,6 +213,13 @@ interface AssessmentFromAPI {
   // so raw rows carry snake_case created_by even though this type isn't formally normalized.
   createdBy?: string;
   created_by?: string;
+  /**
+   * Odbiór 05.09 (05-ocena, `assessment-list`): kolumna JEDNOSTKA. Serwer daje
+   * camelCase (router v8 + AssessmentController.listAssessments); snake_case
+   * przychodzi surowo z `SELECT *` i zostaje jako fallback.
+   */
+  businessUnit?: string | null;
+  business_unit?: string | null;
   /** Identifies the canonical Method Core DRD rows from legacy assessments. */
   source?: 'method-core' | 'legacy';
 }
@@ -928,20 +935,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       label: t('assessment.hub.table.progressHeader', 'Progress'),
       width: '150px',
     };
+    const businessUnitCol: TableColumn = {
+      id: 'businessUnit',
+      label: t('assessment.hub.table.businessUnit', 'Jednostka'),
+      width: '170px',
+      sortable: true,
+      render: (row) => {
+        const label = typeof row?.businessUnit === 'string' ? row.businessUnit.trim() : '';
+        return label ? (
+          <span className="text-sm text-c-text">{label}</span>
+        ) : (
+          <span className="text-sm text-c-text-muted">—</span>
+        );
+      },
+    };
     /* Odbiór 05.09 (05-ocena, defekt 3): zatwierdzony obraz listy ocen ma
        NAZWA OCENY | JEDNOSTKA | STATUS | WYNIK | PEWNOŚĆ | WŁAŚCICIEL |
        AKTUALIZACJA. Na żywo było TYP | NAZWA | STATUS | POSTĘP | AUTOR |
        ZAKTUALIZOWANO. TYP i POSTĘP schodzą z domyślnego zestawu (zostają
        w pstryczku), WYNIK i PEWNOŚĆ wchodzą z realnych kolumn bazy
        (`overall_score`, `confidence_avg`), a etykiety NAZWA/AUTOR/
-       ZAKTUALIZOWANO idą po nazwach z obrazu.
-
-       Czego ŚWIADOMIE NIE dokładam: kolumny JEDNOSTKA. Na obrazie niesie
-       wartości „Logistics BU", „Grupa — Zarząd", „Sales BU" — a tabela
-       `assessments` nie ma ani jednego pola jednostki organizacyjnej
-       (sprawdzone: GET /api/v8/assessment/:id zwraca tylko organization_id
-       i project_id). Zrobienie tej kolumny wymaga najpierw pola w danych;
-       wypełnienie jej czymkolwiek innym byłoby atrapą. Zgłoszone w raporcie. */
+       ZAKTUALIZOWANO idą po nazwach z obrazu. */
+    /* Runda 3 odbioru: kolumna JEDNOSTKA — ostatnia różnica wobec obrazu.
+       W rundzie 2 jej nie było, bo tabela `assessments` nie miała ŻADNEGO
+       pola jednostki organizacyjnej. Dołożone dwuwarstwowo:
+       server/migrations/20260905_assessment_business_unit.sql (nullowalna
+       kolumna `business_unit`) + zwrócenie jej jako `businessUnit` w obu
+       trasach listy. Brak wartości rysuje „—" — nigdy atrapy. */
     const scoreCol: TableColumn = {
       id: 'overallScore',
       label: t('assessment.hub.table.score', 'Wynik'),
@@ -1106,6 +1126,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     return [
       { ...frameworkCol, defaultVisible: false },
       { ...nameCol, label: t('assessment.hub.table.assessmentName', 'Nazwa oceny') },
+      businessUnitCol,
       {
         id: 'status',
         label: t('assessment.hub.table.status', 'Status'),
@@ -1120,14 +1141,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       scoreCol,
       confidenceCol,
       { ...authorCol, label: t('assessment.hub.table.owner', 'Właściciel') },
-      /* POSTĘP zostaje widoczny, choć obrazu nie ma. Powód: obraz na jego
-         miejscu ma JEDNOSTKĘ, której nie da się dziś zbudować (brak pola
-         w danych — patrz komentarz wyżej), a postęp jest liczony po stronie
-         serwera i pilnowany testem regresji
-         (tests/components/assessment/AssessmentHub.processes-completion.test.tsx).
-         Schowanie go usunęłoby pokrytą testem informację i zostawiło pustą
-         kolumnę zamiast niej. Odchylenie od obrazu zgłoszone w raporcie. */
-      progressCol,
+      /* POSTĘP schodzi z domyślnego zestawu do pstryczka: na obrazie na jego
+         miejscu stoi JEDNOSTKA, a ta jest już zbudowana (migracja + API).
+         Kolumna NIE znika — dalej jest w pstryczku i dalej pilnuje jej test
+         regresji tests/components/assessment/AssessmentHub.processes-completion.test.tsx,
+         bo mapowanie `completionPercent` na wiersz zostaje nietknięte. */
+      { ...progressCol, defaultVisible: false },
       { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Aktualizacja') },
     ];
   }, [activeTab, t, getAuthorLabel, getReportContextLabel]);
@@ -1446,6 +1465,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             overallScore?: number | null;
             confidence_avg?: number | null;
             confidenceAvg?: number | null;
+            businessUnit?: string | null;
+            business_unit?: string | null;
           };
           return {
             id: item.id,
@@ -1462,6 +1483,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             // wiersza, więc nie dało się ich w ogóle pokazać.
             overallScore: rawItem.overallScore ?? rawItem.overall_score ?? item.overallScore ?? null,
             confidenceAvg: rawItem.confidenceAvg ?? rawItem.confidence_avg ?? null,
+            // Runda 3 odbioru: kolumna JEDNOSTKA. camelCase to pole dołożone
+            // przez router; snake_case przychodzi surowo z `SELECT *` i jest
+            // fallbackiem dla backendu bez tej linii.
+            businessUnit: rawItem.businessUnit ?? rawItem.business_unit ?? null,
           };
         });
         if (frameworkFilter) {

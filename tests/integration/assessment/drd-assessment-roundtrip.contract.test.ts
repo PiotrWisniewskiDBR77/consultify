@@ -156,6 +156,9 @@ describe('H3 DRD assessment round-trip (create → save → resume → guarded u
         navigation_json TEXT,
         assessment_definition_id TEXT,
         assessment_definition_version TEXT,
+        -- Odbiór 05.09 (05-ocena): kolumna JEDNOSTKA listy ocen
+        -- (server/migrations/20260905_assessment_business_unit.sql).
+        business_unit TEXT,
         created_by TEXT,
         updated_by TEXT,
         created_at TEXT,
