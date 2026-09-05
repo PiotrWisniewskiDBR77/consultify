@@ -1096,6 +1096,65 @@ export async function listRegisteredInitiatives(
   }
 }
 
+/**
+ * Shape of one row from the classic `GET /api/initiatives` (legacy PMO CRUD
+ * table, `InitiativeController.getInitiatives`) — a different, older data
+ * store than the runtime-v1 event-sourced projection this file otherwise
+ * talks to (`ie_aggregate_state`).
+ */
+export interface LegacyInitiativeApiRow {
+  id: string;
+  projectId?: string | null;
+  name?: string | null;
+  title?: string | null;
+  summary?: string | null;
+  hypothesis?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  progress?: number | null;
+  estimatedBudget?: number | null;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  sourceId?: string | null;
+  sourceType?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  ownerBusiness?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  ownerExecution?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  [key: string]: unknown;
+}
+
+/**
+ * MVP fix 2026-09-05 (DEC-397, moduł 05_INITIATIVES odmrożony punktowo):
+ * mierzone na stanowisku lokalnym — `GET /api/initiatives` (ten legacy
+ * endpoint) zwracał 71 rekordów dla org DBR77, a lista w
+ * `InitiativesHub` (karmiona wyłącznie `listRegisteredInitiatives` →
+ * `/api/initiatives/runtime-v1/initiatives`, czyli projekcją
+ * `ie_aggregate_state`) pokazywała 0. Dwie osobne tabele/rejestry: rekordy
+ * zasiane bezpośrednio do klasycznej tabeli `initiatives` (np. przez skrypt
+ * seed, albo utworzone przed migracją na runtime-v1) nigdy nie trafiają do
+ * projekcji event-sourced, więc runtime-v1 uczciwie zwraca pustą listę — ale
+ * rekordy realnie istnieją. Ten odczyt zasila most w
+ * `mergeLegacyInitiativesIntoRegister` (initiativeRegisterProjection.ts),
+ * żeby żaden rekord nie znikał tylko dlatego, że powstał inną ścieżką zapisu.
+ */
+export async function listLegacyInitiatives(signal?: AbortSignal): Promise<LegacyInitiativeApiRow[]> {
+  const response = await fetch('/api/initiatives', { credentials: 'include', signal });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  return Array.isArray(body) ? (body as LegacyInitiativeApiRow[]) : [];
+}
+
 export async function readInitiativeCards(
   initiativeId: string,
   signal?: AbortSignal
