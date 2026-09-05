@@ -252,6 +252,7 @@ import {
 } from '@/components/ResultsVNext/okr/okrKeyResultPresenters';
 import { OkrKeyResultRedirect } from '@/components/ResultsVNext/okr/p7k/OkrKeyResultRedirect';
 import { OkrReportPage } from '@/components/ResultsVNext/okr/p7k/OkrReportPage';
+import { OkrReportRegistryPage } from '@/components/ResultsVNext/okr/p7k/OkrReportRegistryPage';
 import { OkrObjectiveCardPage } from '@/components/ResultsVNext/okr/OkrObjectiveCardPage';
 import { OKR_OBJECTIVE_CARD_SECTIONS } from '@/components/ResultsVNext/okr/OkrObjectiveCardSections';
 import { ROUTES } from '@/routes/routeConfig';
@@ -334,6 +335,39 @@ describe('OKR — TRZY poziomy (SSOT §1, korekta P7K §4/§6)', () => {
     expect(screen.getByTestId('location').textContent).toBe(
       '/results/okr/set-1/objectives/obj-1?sekcja=kluczowe-rezultaty&rezultat=kr-1'
     );
+  });
+});
+
+describe('Poziom 1 — TABELA RAPORTÓW OKR', () => {
+  /**
+   * DLACZEGO TEN TEST ISTNIEJE (defekt zmierzony 05.09 na żywym ekranie):
+   * jedna kolumna straciła pole `label` przy edycji szerokości. Testy, które
+   * sprawdzają tylko KSZTAŁT tablicy kolumn, tego nie łapią —
+   * `FilterableTable` woła `column.label.toUpperCase()` dopiero przy
+   * renderze, więc brakująca etykieta wywracała CAŁĄ tabelę w
+   * `RouteErrorBoundary`. Ten test RENDERUJE ekran, jak przeglądarka.
+   */
+  it('renderuje tabelę raportów na realnych kolumnach — każda kolumna ma etykietę', async () => {
+    render(
+      <MemoryRouter initialEntries={['/results/okr']}>
+        <Routes>
+          <Route path={ROUTES.RESULTS_OKR.ROOT} element={<OkrReportRegistryPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(screen.getAllByText(OKR_SET.title).length).toBeGreaterThan(0));
+    for (const naglowek of [
+      'NAZWA',
+      'ZAKRES',
+      'CYKL',
+      'CELE',
+      'REZULTATY',
+      'STAN',
+      'WŁAŚCICIELE',
+      'OSTATNI CHECK-IN',
+    ]) {
+      expect(screen.getAllByText(naglowek).length).toBeGreaterThan(0);
+    }
   });
 });
 

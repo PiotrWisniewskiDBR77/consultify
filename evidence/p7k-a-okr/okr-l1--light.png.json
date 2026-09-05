@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:3072/results/okr",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nResultaty\nDane\nModel\nAnna Kowalczyk\nAK\nSearch\nKPI\nOKR\nROI\nNowy raport\nUwaga\nNAZWA\n\t\nZAKRES\n\t\nCYKL\n\t\nCELE\n\t\nREZULTATY\n\t\nSTAN\n\t\nWŁAŚCICIELE\n\t\nOSTATNI CHECK-IN\n\t\n\n\nOKR zakładu — Q4 2026\n\t\nFirma\n\t\nQ4 2026\n\t\n4\n\t\n11\n\t\n7\n·\n3\n·\n1\n·\n—\n\t\n5\n\t\n5 wrz 2026\n\t\n\n\nOKR automatyzacji — Q4 2026\n\t\nJednostka biznesowa\n\t\nQ4 2026\n\t\n3\n\t\n8\n\t\n6\n·\n2\n·\n—\n·\n—\n\t\n5\n\t\n3 wrz 2026\n\t\n\n\nOKR sprzedaży — H2 2026\n\t\nJednostka biznesowa\n\t\nH2 2026\n\t\n3\n\t\n9\n\t\n5\n·\n2\n·\n1\n·\n1\n\t\n5\n\t\n1 wrz 2026\n\t",
+ "dom": {
+  "aside": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "table": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 97,
+     "y": 184,
+     "width": 1288,
+     "height": 234
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T21:34:39.429Z"
+}

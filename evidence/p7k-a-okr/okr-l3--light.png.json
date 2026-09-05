@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:3072/results/okr/8804de85-4601-570d-b8cf-4935015c23f3/objectives/0bc842d8-7d27-50f0-9976-61aeb4fc4503?sekcja=kluczowe-rezultaty",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nResultaty\nDane\nModel\nAnna Kowalczyk\nAK\nRaporty OKR\nOKR zakładu — Q4 2026\nUstabilizować terminowość dostaw do klienta\nCel — Ustabilizować terminowość dostaw do klienta\nAktywny\nZapisano\nCel\nKluczowe rezultaty\nCheck-iny\nPowiązania\nRefleksja\nJak liczony jest postęp\n\nPostęp kluczowego rezultatu = (bieżąca − startowa) ÷ (docelowa − startowa), liczony przez silnik postępu po stronie serwera i ograniczony do przedziału 0–100%. Kierunek pomiaru („rośnie\" / „maleje\" / „utrzymanie zakresu\") jest kolumną kontraktu każdego rezultatu. Gdy wartości kontraktu nie da się policzyć, karta pisze to wprost zamiast pokazywać zero.\n\nKażdy kluczowy rezultat jest blokiem poniżej — z własnym check-inem. Osobnej strony rezultatu nie ma.\n\nKR1 — Skrócić średni czas realizacji zlecenia z 12 do 8 dni\n\nWłaściciel: Marek Zieliński · Zespół: Planowanie i logistyka · Termin: 15 gru 2026\n\nSTART\n12 dni\nSpadek\nCEL\n8 dni\nBIEŻĄCA\n9 dni\n5 wrz 2026\nPostęp\n75% · Zagrożony\nCheck-in\nKR2 — Terminowość dostaw OTIF z 84% do 95%\n\nWłaściciel: Anna Kowalczyk · Zespół: Planowanie i logistyka · Termin: 15 gru 2026\n\nSTART\n84 %\nWzrost\nCEL\n95 %\nBIEŻĄCA\n89 %\n5 wrz 2026\nPostęp\n45% · Zgodnie z planem\nCheck-in\nKR3 — Zero opóźnień powyżej 5 dni w kwartale\n\nWłaściciel: Joanna Lis · Zespół: Planowanie i logistyka · Termin: 15 gru 2026\n\nSTART\n7 szt.\nSpadek\nCEL\n0 szt.\nBIEŻĄCA\n2 szt.\n5 wrz 2026\nPostęp\n71% · Zgodnie z planem\nCheck-in\nAKCJE\nKluczowe rezultaty i check-in\nOtwórz raport OKR\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalczyk\nStatus\tAktywny\nAmbicja\tZobowiązanie\nZestaw OKR\tOKR zakładu — Q4 2026\nOkres\tQ4 2026 (1 paź 2026 – 31 gru 2026)\nPostęp\t63,7%\nPewność\tWysoka\nKluczowe rezultaty\t3\nUtworzono\t5 wrz 2026\nZaktualizowano\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1088,
+     "y": 80,
+     "width": 320,
+     "height": 820
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T21:34:02.620Z"
+}
