@@ -56,4 +56,4 @@ Agent (wykonawcy etapów + producent rozpoznawania sprawy; worker `ENABLE_AI_TAS
 | P3 | `codex/p3-angielski` | W TOKU (21 commitów + 10 plików niecommitowanych) | 05.09 | — | czeka na raport |
 | P5 | `codex/p5-ladowanie` | W TOKU (9 commitów + 4 niecommitowane) | 05.09 | — | czeka na raport |
 | IV | `codex/iv-tryb-ciemny` | W TOKU (2 commity + evidence niecommitowane) | 05.09 | — | czeka na raport |
-| F0/F1 | — | W PRZYGOTOWANIU (Opus) | 05.09 | — | audyt luki backend↔frontend Finansów + program dokończenia (polecenie właściciela 05.09 wieczór) |
+| F0/F1 | — | **GOTOWE (dokumenty)** | 05.09 wieczór | — | `F0_FINANSE_AUDYT_LUKI_20260905.md` (teza „backend kompletny, frontend nieprzygotowany” obalona w obie strony: 6 tabel bez producenta, 23 % zdolności z pełnym przewodem, 27 % za 3 flagami; 21 etykiet EN) + `F1_FINANSE_PROGRAM_DOKONCZENIA_20260905.md` (MINIMUM 7 paczek ≈ 8 sesji Codexa, PEŁNY +11 ≈ 24; blokada F‑P4: nikt nie zakłada wierszy selekcji KPI). Decyzja właściciela: MINIMUM do MVP czy nie — po powrocie |
