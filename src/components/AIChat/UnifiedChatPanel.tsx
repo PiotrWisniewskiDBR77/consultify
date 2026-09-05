@@ -1482,6 +1482,15 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const autoTriggered = options?.autoTriggered === true;
 
       try {
+        const created = await Api.createIdeaFromChat({
+          title,
+          seedText: trimmed,
+          sourceConversationId: activeConversationId || undefined,
+          sourceMessageId: messageId,
+          startMode: 'describe_with_ai',
+          preferredSystem: 'mindmap',
+        });
+
         if (navigateToMyWork) {
           const creationPayload: IdeaWorkspaceCreationPayload = {
             title,
@@ -1501,7 +1510,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             structuredBrief: null,
             source: 'chat_handoff',
           };
-          const draftId = `new-idea-${Date.now()}`;
+          const draftId = created.ideaId;
 
           trackFunnelEvent('my_idea_saved', {
             source: autoTriggered ? 'chat_auto' : 'chat',
@@ -1536,15 +1545,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           }
           return;
         }
-
-        const created = await Api.createIdeaFromChat({
-          title,
-          seedText: trimmed,
-          sourceConversationId: activeConversationId || undefined,
-          sourceMessageId: messageId,
-          startMode: 'describe_with_ai',
-          preferredSystem: 'mindmap',
-        });
 
         trackFunnelEvent('my_idea_saved', {
           source: autoTriggered ? 'chat_auto' : 'chat',
@@ -5625,7 +5625,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   // Deep Thinking: Save output as Decision
   const handleSaveAsDecision = useCallback(
-    async (messageId: string, content: string) => {
+    async (
+      messageId: string,
+      content: string,
+      type: 'decision' | 'initiative' = 'decision'
+    ) => {
       if (!activeConversationId) return;
       setDtSavingDecision(messageId);
       try {
@@ -5633,6 +5637,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           sessionId: activeConversationId,
           conversationId: activeConversationId,
           content,
+          type,
         });
         setDtDecisionSaved((prev) => new Set(prev).add(messageId));
       } catch (err) {

@@ -27,6 +27,7 @@ const h = vi.hoisted(() => ({
     chatConfirm: vi.fn(),
     createResearchSession: vi.fn(),
     createMyIdea: vi.fn(),
+    createIdeaFromChat: vi.fn(),
     deepThinkingEvent: vi.fn(),
     getConversationProposals: vi.fn(),
     saveDeepThinkingDecision: vi.fn(),
@@ -576,6 +577,7 @@ describe('UnifiedChatPanel (L2)', () => {
       session: { sessionId: 'rs-chat-canvas-1', status: 'planned' },
     });
     h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
+    h.apiMock.createIdeaFromChat.mockResolvedValue({ ideaId: 'idea-1700000000000-a1b2c3' });
     h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
     h.apiMock.getConversationBranches.mockResolvedValue({
       conversationId: 'conv-branch-test',
@@ -615,6 +617,29 @@ describe('UnifiedChatPanel (L2)', () => {
 
     renderWithRouter(<UnifiedChatPanel />);
     expect(screen.getByTestId('chat-lang')).toHaveTextContent('de');
+  });
+
+  it('Day 370 saves an idea before navigation and hands off the real persisted id', async () => {
+    conversationStoreState.activeConversationId = 'conv-day370';
+    conversationStoreState.activeMessages = [
+      { id: 'msg-day370', role: 'ai', content: 'Idea', timestamp: new Date(), isStreaming: false },
+    ];
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'save-idea' }));
+
+    await waitFor(() => expect(setCurrentViewMock).toHaveBeenCalled());
+    expect(h.apiMock.createIdeaFromChat).toHaveBeenCalledWith(expect.objectContaining({
+      sourceConversationId: 'conv-day370',
+      sourceMessageId: 'msg-day370',
+    }));
+    expect(h.apiMock.createIdeaFromChat.mock.invocationCallOrder[0]).toBeLessThan(
+      setMyWorkIntentMock.mock.invocationCallOrder[0]
+    );
+    expect(setMyWorkIntentMock).toHaveBeenCalledWith(expect.objectContaining({
+      open: expect.objectContaining({ id: 'idea-1700000000000-a1b2c3' }),
+    }));
+    expect('idea-1700000000000-a1b2c3'.startsWith('new-idea-')).toBe(false);
   });
 
   it('renders welcome state, skip link, and key header actions', () => {
