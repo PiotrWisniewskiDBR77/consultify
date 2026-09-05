@@ -34,7 +34,7 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 
 function readEnvFlag(): boolean | null {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
     return parseFlag(meta?.env?.[ENV_KEY]);
   } catch {
     return null;

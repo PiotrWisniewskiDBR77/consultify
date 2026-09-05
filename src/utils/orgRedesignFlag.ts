@@ -51,7 +51,7 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 
 function readEnvFlag(): boolean {
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
     // DEC 03.09 wieczór (A3, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
     // wiersz A3 — "Przeprojektowana Organizacja: zatwierdzony ekran ma być

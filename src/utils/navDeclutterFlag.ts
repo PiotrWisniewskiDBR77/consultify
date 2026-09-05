@@ -46,7 +46,7 @@ function readEnvFlag(): boolean {
   // Default OFF: when no build-time override is set, today's nav (unchanged) is
   // the default surface. An explicit `1`/`true` env value opts in.
   try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
     const parsed = parseFlag(meta?.env?.[ENV_KEY]);
     return parsed === null ? false : parsed;
   } catch {

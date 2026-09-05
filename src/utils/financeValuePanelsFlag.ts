@@ -24,7 +24,7 @@ export function isFinanceValuePanelsEnabled(): boolean {
       query === null && typeof window !== 'undefined'
         ? parseFlag(window.localStorage.getItem(LS_KEY))
         : null;
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
+    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
     return query ?? local ?? parseFlag(meta.env?.[ENV_KEY]) ?? false;
   } catch {
     return false;
