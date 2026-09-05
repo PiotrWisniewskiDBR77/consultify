@@ -1153,7 +1153,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         {
                           id: 'folder',
                           kind: 'manage' as const,
-                          label: isPolish ? 'Folder' : 'Folder',
+                          label: 'Folder',
                           actions: [
                             {
                               id: 'folder-none',

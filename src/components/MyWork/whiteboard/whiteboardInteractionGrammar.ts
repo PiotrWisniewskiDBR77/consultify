@@ -25,7 +25,7 @@ export function getWhiteboardModeCopy(
   if (mode === 'draw') {
     return {
       modeLabel: isPolish ? 'Tryb rysowania' : 'Draw mode',
-      toggleLabel: isPolish ? 'Canvas' : 'Canvas',
+      toggleLabel: isPolish ? 'Obszar roboczy' : 'Canvas',
       helper: isPolish
         ? 'Rysujesz po warstwie boardu. Elementy tablicy są chwilowo zablokowane, aby uniknąć przypadkowych przesunięć.'
         : 'You are drawing on top of the board. Board elements are temporarily locked to avoid accidental moves.',
