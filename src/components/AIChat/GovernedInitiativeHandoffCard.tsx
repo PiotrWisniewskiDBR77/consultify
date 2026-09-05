@@ -1,5 +1,5 @@
 import { ArrowRight, CheckCircle2, CircleAlert, Clock3, Loader2, ShieldCheck } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export type GovernedInitiativeHandoffState =
@@ -42,6 +42,28 @@ export const GovernedInitiativeHandoffCard: React.FC<GovernedInitiativeHandoffCa
     initiativeOwnerId: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const clientRequestId = `chat-draft-adopt:${initiativeId}`;
+
+    void fetch(
+      `/api/initiatives/runtime-v1/command-receipts/${encodeURIComponent(clientRequestId)}/read-back`,
+      { credentials: 'include' }
+    )
+      .then(async (response) => {
+        if (!active || !response.ok) return;
+        const body = await readJson(response);
+        if (active && body?.readBackState === 'CONFIRMED') setState('adopted');
+      })
+      .catch(() => {
+        // A missing/unavailable receipt preserves the safe idle state.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [initiativeId]);
 
   const checkReadiness = async () => {
     setState('checking');

@@ -192,19 +192,89 @@ describe('day371 proposal-card family remount behavior', () => {
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
   });
 
-  it('GovernedInitiativeHandoffCard shows an already adopted handoff after remount', () => {
+  it('GovernedInitiativeHandoffCard shows an already adopted handoff after remount', async () => {
     const pendingProps = {
       initiativeId: 'initiative-1',
       title: 'Chat draft',
       onOpenInitiative: vi.fn(),
       onAdopted: vi.fn(),
     };
+    let adopted = false;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/initiatives/initiative-1') {
+        return {
+          ok: true,
+          json: async () => ({
+            projectId: 'project-1',
+            ownerExecutionId: 'owner-1',
+            problemStatement: 'Measured problem',
+          }),
+        } as Response;
+      }
+      if (url === '/api/initiatives/runtime-v1/adoptions/chat-draft' && init?.method === 'POST') {
+        adopted = true;
+        return {
+          ok: true,
+          json: async () => ({ response: { initiativeId: 'initiative-1' } }),
+        } as Response;
+      }
+      if (
+        url ===
+        '/api/initiatives/runtime-v1/command-receipts/chat-draft-adopt%3Ainitiative-1/read-back'
+      ) {
+        return {
+          ok: adopted,
+          status: adopted ? 200 : 404,
+          json: async () =>
+            adopted ? { readBackState: 'CONFIRMED' } : { error: { code: 'NOT_FOUND' } },
+        } as Response;
+      }
+      if (
+        url ===
+        '/api/initiatives/runtime-v1/command-receipts/chat-draft-adopt%3Ainitiative-hidden/read-back'
+      ) {
+        return {
+          ok: false,
+          status: 404,
+          json: async () => ({ error: { code: 'NOT_FOUND' } }),
+        } as Response;
+      }
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
     const first = render(<GovernedInitiativeHandoffCard {...pendingProps} />);
     expect(screen.getByText('Awaiting consent')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/initiatives/runtime-v1/command-receipts/chat-draft-adopt%3Ainitiative-1/read-back',
+        { credentials: 'include' }
+      )
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Check before handoff' }));
+    await screen.findByRole('button', { name: 'Pass to execution' });
+    fireEvent.click(screen.getByRole('button', { name: 'Pass to execution' }));
+    await screen.findByText('Adopted');
+    expect(
+      JSON.parse(
+        String(fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')?.[1]?.body)
+      )
+    ).toMatchObject({ clientRequestId: 'chat-draft-adopt:initiative-1' });
     first.unmount();
 
-    render(<GovernedInitiativeHandoffCard {...({ ...pendingProps, state: 'adopted' } as any)} />);
-    expect(screen.getByText('Adopted')).toBeInTheDocument();
+    const remounted = render(<GovernedInitiativeHandoffCard {...pendingProps} />);
+    await screen.findByText('Adopted');
     expect(screen.queryByRole('button', { name: 'Check before handoff' })).not.toBeInTheDocument();
+
+    remounted.unmount();
+    render(<GovernedInitiativeHandoffCard {...pendingProps} initiativeId="initiative-hidden" />);
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/initiatives/runtime-v1/command-receipts/chat-draft-adopt%3Ainitiative-hidden/read-back',
+        { credentials: 'include' }
+      )
+    );
+    expect(screen.getByText('Awaiting consent')).toBeInTheDocument();
   });
 });
