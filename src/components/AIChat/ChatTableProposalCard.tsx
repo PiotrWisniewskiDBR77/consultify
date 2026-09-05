@@ -3,7 +3,7 @@
  * with Accept / Reject / Refine actions.
  */
 import { Check, Loader2, MessageSquare, Table2, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -42,8 +42,10 @@ export const ChatTableProposalCard: React.FC<Props> = ({
   const [refineMode, setRefineMode] = useState(false);
   const [refineText, setRefineText] = useState('');
   const [currentProposal, setCurrentProposal] = useState(proposal);
-  const [executed, setExecuted] = useState(false);
-  const [rejected, setRejected] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<'executed' | 'rejected' | null>(null);
+  const onStatusChangeRef = useRef(onStatusChange);
+  const proposalRef = useRef(proposal);
+  proposalRef.current = proposal;
   // FIX (M01-P07A — consistent error states): accept/reject/refine only ever
   // did `console.error` on failure — no toast, no inline message, nothing
   // rendered. A failed accept looked IDENTICAL to a slow-but-pending one:
@@ -52,18 +54,53 @@ export const ChatTableProposalCard: React.FC<Props> = ({
   // PL/EN like the rest of this card) instead of leaving it invisible.
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+  }, [onStatusChange]);
+
+  useEffect(() => {
+    let active = true;
+    setCurrentProposal(proposalRef.current);
+    setOptimisticStatus(null);
+
+    void TablePlatformApi.getSchemaProposal(proposal.id)
+      .then((freshProposal) => {
+        if (!active || !freshProposal) return;
+        const next = freshProposal as SchemaProposal;
+        setCurrentProposal(next);
+        if (next.status === 'executed' || next.status === 'rejected') {
+          onStatusChangeRef.current(next.status);
+        }
+      })
+      .catch((fetchError) => {
+        console.error('Proposal status refresh failed', fetchError);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [proposal.id]);
+
+  const effectiveStatus = optimisticStatus ?? currentProposal.status;
+
   const handleAccept = async () => {
     setLoading(true);
     setError(null);
     try {
       const result = await TablePlatformApi.executeSchemaProposal(currentProposal.id);
-      setExecuted(true);
+      setOptimisticStatus('executed');
       onStatusChange('executed');
       if (result?.createdIds?.baseId && onNavigateToTable) {
         onNavigateToTable(result.createdIds.baseId);
       }
     } catch (err) {
       console.error('Execute failed', err);
+      const httpError = err as { status?: number; data?: { code?: string } };
+      if (httpError.status === 409 && httpError.data?.code === 'PROPOSAL_ALREADY_EXECUTED') {
+        setOptimisticStatus('executed');
+        onStatusChange('executed');
+        return;
+      }
       setError(
         isPl
           ? 'Nie udało się utworzyć tabeli. Spróbuj ponownie.'
@@ -79,7 +116,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
     setError(null);
     try {
       await TablePlatformApi.rejectSchemaProposal(currentProposal.id);
-      setRejected(true);
+      setOptimisticStatus('rejected');
       onStatusChange('rejected');
     } catch (err) {
       console.error('Reject failed', err);
@@ -117,7 +154,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
     }
   };
 
-  if (executed) {
+  if (effectiveStatus === 'executed') {
     return (
       <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4 my-2">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-medium">
@@ -128,7 +165,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
     );
   }
 
-  if (rejected) {
+  if (effectiveStatus === 'rejected') {
     return (
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-4 my-2 opacity-60">
         <div className="flex items-center gap-2 text-slate-500 text-sm">

@@ -400,3 +400,10 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | --- | --- | --- | --- | --- |
 | AG1 | `POST /api/cloud/sources` tworzył aktywne źródło bez tokenu; dziewięć operacji dostawców czytało token z `cloud_sources`. | Bramka używa teraz aktywnego tokenu per-user z `integration_oauth_tokens`, ignoruje body, a operacje pobierają żywy token z auto-refresh. | ZAMKNIĘTE lokalnie / REALPG | `CODEX_DAY369_CHMURA_OAUTH_REPORT.md`, `evidence/chmura-oauth-20260905/day369/` |
 | AG2 | `/settings/integrations` na markerze prowadzi do `ConnectedAppsSettings.tsx`, nie do `IntegrationSettings.tsx`; governed connect dla Google Drive dał świeżo `500 {}` zamiast oczekiwanego `authUrl`. | Audyt/instrukcja wskazywały nieaktualny reachable komponent; trzeci mechanizm nadal wymaga osobnego dyżuru i decyzji właściciela. | PARTIAL / DO DECYZJI WŁAŚCICIELA | `evidence/chmura-oauth-20260905/day369/R1-rodzina.md`, `R5-governed-oauth-proposal.md` |
+## AJ. Dyżur 371 — żywy status propozycji i granica Case Intake
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AG1 | `ChatTableProposalCard` po remoncie opierał się na zamrożonym metadata, a ponowne wykonanie dawało ogólne 500. | Karta pobiera żywy rekord; ponowienie daje typowane 409, bez drugiej zmiany `resolved_at`. | ZAMKNIĘTE lokalnie | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY371_KARTY_PROPOZYCJI_REPORT.md`, `evidence/day371-karty-propozycji/` |
+| AG2 | Usunięcie martwego UI Case Intake osieroca `CaseWorkspace/apiIntake.ts`; podłączenie producenta wymaga wyjścia poza licencję. | Ani A, ani B nie jest uczciwie wykonalne w zakresie dyżuru; kod wariantu B odwrócono. | STOP / DECYZJA WŁAŚCICIELA | `evidence/day371-karty-propozycji/R4-case-intake-stop.md` |
+| AG3 | `GovernedInitiativeHandoffCard` nie odtwarza stanu adopted po remoncie i nie ma wskazanego żywego kontraktu w licencji. | Rodzina kart pozostaje PARTIAL mimo naprawy rdzenia tabel. | STOP / KONTRAKT NIEUSTALONY | `evidence/day371-karty-propozycji/R1-family-measurement.md` |

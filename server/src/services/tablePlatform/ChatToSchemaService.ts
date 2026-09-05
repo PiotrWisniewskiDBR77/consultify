@@ -24,6 +24,7 @@ import {
 import { groundSchema } from '../chatToSchema/schemaGrounder.js';
 import { getStack } from '../chatToSchema/undoRedoStack.js';
 import auditService from './AuditService.js';
+import { TablePlatformError } from './ErrorHandling.js';
 import metadataService from './MetadataService.js';
 import recordsService from './RecordsService.js';
 import schemaValidationService from './SchemaValidationService.js';
@@ -479,7 +480,12 @@ const chatToSchemaService = {
       throw new Error('Proposal not found');
     }
     if (proposal.status !== 'pending' && proposal.status !== 'approved') {
-      throw new Error(`Proposal status is '${proposal.status}', cannot execute`);
+      throw new TablePlatformError(
+        `Proposal status is '${proposal.status}', cannot execute`,
+        'PROPOSAL_ALREADY_EXECUTED',
+        409,
+        { status: proposal.status }
+      );
     }
 
     // --- Stale proposal detection (WS-D §6.3) ---
