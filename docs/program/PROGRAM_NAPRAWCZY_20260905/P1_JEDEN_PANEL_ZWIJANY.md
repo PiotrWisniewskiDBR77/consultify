@@ -412,3 +412,53 @@ pliki, zero konfliktów. Kroki 6 i 9 mogą iść równolegle z 5. **Sekwencyjne 
 
 **Krok 11 (poza MVP):** 0,5 osobodnia Sonnet, do fali po MVP — wymaga dwóch dodatkowych odmrożeń
 i nie zmienia niczego, co właściciel widzi.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu)
+
+Komendy po każdym kroku (z katalogu roboczego worktree):
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx esbuild <zmieniony plik> --bundle --platform=browser --outdir=/tmp/esb --log-level=error --loader:.png=file --loader:.svg=file` | brak wyjścia (exit 0) dla KAŻDEGO zmienionego pliku |
+| `npx vitest run src/components/shared/PreviewPane/__tests__ src/layouts/__tests__ tests/components/MyWork/IdeasTableContent.previewPanelClose.ownerFeedback.test.tsx` | wszystkie testy PASS; testy z §6.1 mają dowód mutacyjny: po tymczasowym przywróceniu drugiego `aside` w `TableWithPreviewLayout` co najmniej 2 testy padają, po cofnięciu wszystkie zielone (wpisać liczby do raportu) |
+| `bash scripts/check-list-canon.sh` | `OK`, dług nie rośnie |
+| `bash scripts/check-artefakt.sh` | `OK`, crimson ≤ baseline |
+| `git log --oneline origin/staging..HEAD` | każdy krok = osobny commit; commity dotykające plików z §5.1 mają w treści `[ODMROZENIE <MODUL> DEC-397]` |
+
+Pomiar na żywo (własny vite: `cp /private/tmp/m03/.env.local . && npx vite --port <wolny> --strictPort --host 127.0.0.1 &`; sesja `ODBIOR_AUTH_STATE=/private/tmp/odbior-auth/auth.json`; tło = staging):
+
+```
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --port=<p> --host=127.0.0.1 --dom=aside --out=ev/skrzynka-1440.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --port=<p> --host=127.0.0.1 --dom=aside --szerokosc=1280 --out=ev/skrzynka-1280.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/interview --port=<p> --host=127.0.0.1 --dom=aside --klik="css=tbody tr:first-child" --out=ev/wywiad-rekord.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/audit-programs --port=<p> --host=127.0.0.1 --dom=aside --klik="css=tbody tr:first-child" --klik="text=Teresa" --out=ev/audyty-teresa.png
+```
+
+Progi (czytane z `.json` obok zrzutu):
+
+- `dom.aside.count` = **1** przy zaznaczonym wierszu i przy otwartej Teresie; = **0** po kliknięciu `X`; nigdy 2 lub 3 — na 8 ekranach: Skrzynka, Pomysły, Zadania, Wywiad Skrzynka, Ocena lista, Audyty program, Materiały biblioteka, Realizacja praca.
+- Po `X` i kliknięciu innego wiersza `aside.count` nadal **0**.
+- Skrzynka 1280 px: szerokość `table` ≥ **1000 px** (dziś 294); 1440 px ≥ 830; 1920 px ≥ 1180 (odczyt `dom` z selektorem `table`).
+- `bledyKonsoli` = 0, wpisy z `status ≥ 400` = 0 na każdym zrzucie.
+- Zakładki panelu mają ten sam kształt pigułki co `IdeaElementInspector` (test kontraktowy porównuje klasy — PASS).
+- Zrzut odniesienia (identyczna powłoka panelu): `evidence/odbior-zywo-20260905/02-moja-praca/mapa-jeden-panel/02-element.png`.
+
+**STOP:** wszystkie progi spełnione na 8 ekranach × 3 szerokości → commit `evidence/p1-jeden-panel/` + raport z liczbami. Jeżeli próg wymaga edycji `MainLayout.tsx` lub pliku modułu zamrożonego poza listą §5.1 → zatrzymać się i opisać, nie obchodzić. Zakazy: `--no-verify`, `git stash`, nowe flagi, własny skrypt zrzutów obok kanonicznego.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE P1 — Jeden prawy panel, zwijany (ekrany listowe). Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/p1-jeden-panel <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>.
+Pełna specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/P1_JEDEN_PANEL_ZWIJANY.md — przeczytaj całą przed pierwszą zmianą.
+
+CEL: na każdym ekranie listowym prawa krawędź ma dokładnie JEDEN panel (TableWithPreviewLayout): wiersz zaznaczony → zakładki „Rekord | Teresa” + X; bez zaznaczenia i Teresa otwarta z Menu 3 → ta sama kolumna, zakładka „Teresa”; X zamyka, klik w wiersz NIE otwiera ponownie; wracasz pigułką „Pokaż panel”/„Teresa” w Menu 3; poniżej 1440 px panel jest nakładką. Globalny dok Teresy gaśnie przez rejestr gospodarzy (registerEmbeddedModuleChatHost), nie przez ścieżki.
+
+KROKI (kolejność wymuszona): §5 tabela, kroki 1→2→3→4→(5‖6)→7→8→9→10. Krok 5 dotyka 6 modułów zamrożonych — commit z markerem [ODMROZENIE <MODUL> DEC-397] (lista §5.1). MainLayout.tsx NIE edytować.
+KANON: StandardModuleBar/StandardPreview/ArtifactRightPanel, tokeny c-*, zero primary-*, kebab pionowy, i18n pl+en (6 kluczy §4.6).
+
+CEL OSIĄGNIĘTY = §10: wszystkie komendy z oczekiwanym wynikiem + na 8 ekranach × 1280/1440/1920 licznik aside = 1 (0 po X), tabela Skrzynki ≥ 1000 px przy 1280, zero błędów konsoli i ≥400, testy z dowodem mutacyjnym. Dopiero wtedy raport (liczby, ścieżki zrzutów, SHA). Gdy próg wymaga decyzji właściciela lub pliku poza §5.1 — STOP i opis. Zakazy: --no-verify, git stash, flagi, skrypty obok zrzut.mjs.
+```

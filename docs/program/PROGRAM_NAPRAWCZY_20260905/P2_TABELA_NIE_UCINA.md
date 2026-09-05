@@ -328,3 +328,49 @@ przeglądarki.
 naraz na tym samym pliku to konflikt merge, więc realistycznie **sekwencyjnie w jednym worktree**, nie
 równolegle na dwóch gałęziach tego samego pliku. Testy wizualne i skrypt-strażnik mogą iść równolegle
 z krokiem 5, bo nie modyfikują `FilterableTable.tsx`.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu)
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx esbuild src/components/shared/ModuleHub/FilterableTable.tsx --bundle --platform=browser --outdir=/tmp/esb --log-level=error --loader:.png=file --loader:.svg=file` | exit 0, brak wyjścia |
+| `npx vitest run src/components/shared/ModuleHub/__tests__/FilterableTable.columnWidth.test.tsx src/components/shared/ModuleHub/__tests__` | wszystkie PASS; asercje 1–4 z §6 obecne; **dowód mutacyjny**: floor `status` zmieniony na 90 → asercja 1 pada; `mergePersisted` bez `Math.max` → asercja 3 pada; po cofnięciu zielone (liczby do raportu) |
+| `bash scripts/check-list-canon.sh` | `OK`, dług nie rośnie |
+| `git diff --stat origin/staging..HEAD -- src` | zmiany TYLKO w `FilterableTable.tsx` (+ test) — krok 6 nie wchodzi do tej paczki |
+
+Pomiar na żywo (własny vite, sesja `ODBIOR_AUTH_STATE`, `--dom="thead th span"` daje w `.json` szerokości `scrollWidth`/`clientWidth` per nagłówek):
+
+```
+for s in 1280 1440 1920; do
+  node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --port=<p> --host=127.0.0.1 --szerokosc=$s --dom="thead th span" --out=ev/skrzynka-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url="/my-work?tab=vault" --port=<p> --host=127.0.0.1 --szerokosc=$s --dom="thead th span" --out=ev/sejf-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url=/interview --port=<p> --host=127.0.0.1 --szerokosc=$s --dom="thead th span" --out=ev/wywiad-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url="/assessment?tab=processes" --port=<p> --host=127.0.0.1 --szerokosc=$s --dom="thead th span" --out=ev/ocena-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url="/finance?tab=statements" --port=<p> --host=127.0.0.1 --szerokosc=$s --dom="thead th span" --out=ev/finanse-$s.png
+done
+```
+
+Progi:
+- Na 5 tabelach × 3 szerokości: liczba nagłówków z `scrollWidth > clientWidth` = **0** (dziś: Skrzynka 1440 ≥ 3, Sejf ≥ 2).
+- Żaden widoczny nagłówek nie kończy się „…” (kontrola wzrokiem zrzutów PO, obok PRZED z `evidence/audyt-award-20260905/moja-praca/01-skrzynka-lista.png`).
+- Hover na najdłuższej wartości kolumny `status`: element dymka komponentu `Tooltip` obecny, atrybut `title` na komórce pusty.
+- Persistencja: w localStorage zapisać `filterableTable.cols.mywork.inbox` z szerokością 95 dla kolumny właściciela → po przeładowaniu kolumna ma ≥ 150 px.
+- `bledyKonsoli` = 0, `status ≥ 400` = 0 na każdym zrzucie.
+
+**STOP:** progi spełnione → commit `evidence/p2-tabela/` + raport. Jeśli naprawa wymaga edycji jakiegokolwiek pliku poza `FilterableTable.tsx` i jego testem → STOP i opis (to znaczy, że floor nie wygrywa i projekt §4.4 wymaga korekty). Zakazy: `--no-verify`, `git stash`, dotykanie 122 plików z `width:` (krok 6, osobna paczka).
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE P2 — Tabela nie ucina (naprawa u źródła). Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/p2-tabela <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/P2_TABELA_NIE_UCINA.md — przeczytaj całą.
+
+CEL: żadna tabela aplikacji nie ucina nagłówków ani wartości bez dymka. Naprawa WYŁĄCZNIE w src/components/shared/ModuleHub/FilterableTable.tsx (+ jego test): pole dataType per kolumna, minimalne szerokości per typ (text 140 / status 130 / date 110 / owner 150 / number 90), Math.max(zadeklarowana, floor) także na ścieżce odczytu zapisanych układów (mergePersisted), pomiar etykiety nagłówka canvas.measureText + budżet ikon, dymek z komponentu Tooltip zamiast natywnego title tylko przy realnym przepełnieniu, FIT_MIN_* nie schodzi poniżej floora. Krok 6 (usuwanie width: w 122 plikach) — NIE w tej paczce.
+
+KROKI: §5, kolejność 1→2→3→4→5 (4 równolegle z 2–3). Krok 0: potwierdź liczby zakresu rg-iem na swoim HEAD.
+CEL OSIĄGNIĘTY = §10: esbuild czysty, testy z dowodem mutacyjnym, canon OK, a na 5 tabelach × 1280/1440/1920 zero nagłówków z scrollWidth > clientWidth (odczyt z .json zrzutów --dom="thead th span"), dymek komponentowy na hover, floor działa też dla zapisanego układu. Raport z liczbami i ścieżkami zrzutów. Gdy próg wymaga zmiany poza FilterableTable.tsx — STOP i opis. Zakazy: --no-verify, git stash, flagi.
+```

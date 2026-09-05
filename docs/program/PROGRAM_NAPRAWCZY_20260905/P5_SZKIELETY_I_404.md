@@ -344,3 +344,54 @@ Kroki 3, 4, 5 dzielą hook z kroku 1, ale nie dzielą plików między sobą — 
 Krok 12 musi być ostatni (mierzy efekt reszty). Krok 8 jest wąskim gardłem nie-technicznym
 (czeka na decyzję właściciela), więc warto go OTWORZYĆ najwcześniej (zadać pytanie od razu),
 nawet jeśli kodowanie idzie na końcu.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu)
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx vitest run src/hooks/__tests__/useDeferredLoading.test.ts` | PASS; fake timers: `idle`→`pending`(300 ms)→`slow`(8 s)→`timeout`(15 s); dowód mutacyjny: zmiana progu 300→0 ms → test pada |
+| `npx vitest run tests/unit/execution/executionCaseFanOut.test.ts src/components/Execution/__tests__` | PASS; sygnatura `fanOutExecutionCases` bez zmian (test kontraktowy) |
+| `npx vitest run server/src/routes/__tests__/ai.routes*.test.ts server/src/routes/__tests__/my-work*.test.ts server/src/routes/__tests__/kpiScorecard.routes.test.ts` | PASS; `kpiScorecard.routes.test.ts:625` asertuje `200` + `snapshot:null` (po decyzji z kroku 8) |
+| `cd server && NODE_OPTIONS=--max-old-space-size=4096 ../node_modules/.bin/tsc --build tsconfig.build.json` | exit 0 (kroki 6, 7, 8, 11 dotykają serwera) |
+| `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:<api>/api/megatrends/baseline -H "Authorization: Bearer <token z sesji>"` (po wdrożeniu na staging: `https://staging.consultify.ai`) | **200** (dziś 503) |
+| `bash scripts/check-list-canon.sh && bash scripts/check-artefakt.sh` | `OK` |
+| `git log --format=%s origin/staging..HEAD` | commity w `06_EXECUTION`, `07_MY_WORK_AGENT`, `03_TOOLS` z `[ODMROZENIE <MODUL> DEC-397]` |
+
+Pomiar na żywo (własny vite; `.json` zrzutu ma `bledyKonsoli` i listę żądań ze statusem):
+
+```
+node scripts/dev/odbior-zywo/zrzut.mjs --url="/execution?tab=work" --port=<p> --host=127.0.0.1 --czekaj=400 --out=ev/praca-0.4s.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url="/execution?tab=work" --port=<p> --host=127.0.0.1 --czekaj=9000 --out=ev/praca-9s.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work/ideas/<id>/workspace/mindmap --port=<p> --host=127.0.0.1 --czekaj=800 --out=ev/mapa-0.8s.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work/ideas/<id>/workspace/mindmap --port=<p> --host=127.0.0.1 --czekaj=7000 --out=ev/mapa-7s.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url="/my-work?tab=notebook" --port=<p> --host=127.0.0.1 --czekaj=500 --dom="[data-testid=tab-count]" --out=ev/notatnik-0.5s.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/chat/<id-historycznej-rozmowy> --port=<p> --host=127.0.0.1 --out=ev/czat-historia.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=/discovery-tools/strategic/megatrends --port=<p> --host=127.0.0.1 --czekaj=3000 --out=ev/megatrendy.png
+```
+
+Progi:
+- `praca-0.4s`: widoczny szkielet z ruchem (nie pusty prostokąt, nie sam tekst); `praca-9s`: komunikat „trwa dłużej niż zwykle” LUB dane; nigdy pusty ekran.
+- `mapa-0.8s`: szkielet płótna (nie biały prostokąt) — porównać z `evidence/audyt-award-20260905/moja-praca/09b-idea-mapa-myśli.png` (PRZED = pustka).
+- `notatnik-0.5s`: liczniki zakładek pokazują „—” lub szkielet, **nigdy „0”**, gdy zapytanie w locie.
+- Żądania ze statusem 404 na: `/api/ai/stream/partial/*`, `/api/my-work/my-ideas/*/map/candidate`, `review-snapshots/published` = **0** (dziś 2× candidate na każde otwarcie); `map/candidate` wywołany **1** raz.
+- Karta inicjatywy DEMO_STORY: żądania do `v8-planning/*` = **0** (dziś 11 × 404).
+- `megatrendy.png`: dane widoczne, `status ≥ 400` = 0.
+- Przebieg harnessu console-clean (krok 12) na 16 modułach: liczba ekranów z `bledyKonsoli > 0` podana PRZED/PO; cel paczki: spadek ≥ 80 % względem PRZED.
+
+**STOP:** progi spełnione → commit `evidence/p5-ladowanie/` + raport. Krok 8 (kontrakt `review-snapshots/published`, decyzja #6b) — przed zmianą opisać w raporcie i czekać na słowo nadzorcy; krok 10 (`organizations/current`) kończy się raportem z reprodukcji, nie kodem, jeśli 404 nie da się odtworzyć. Zakazy: `--no-verify`, `git stash`, tłumienie błędów przez `catch(()=>{})` zamiast naprawy kontraktu.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE P5 — Szkielety ładowania i koniec 404 jako kontraktu. Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/p5-ladowanie <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>. Serwer: po każdej zmianie cd server && tsc --build tsconfig.build.json musi przejść.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/P5_SZKIELETY_I_404.md — przeczytaj całą.
+
+CEL: (A) żaden ekran nie ładuje się w ciszy — po 300 ms szkielet z ruchem, „—” zamiast „0” przy liczbach w locie, po 8 s komunikat „trwa dłużej niż zwykle”, po 15 s uczciwy baner; biblioteka szkieletów w src/components/shared/states już istnieje, trzeba ją WPIĄĆ (Realizacja Praca/Zasoby, płótna pomysłu, Narzędzia, liczniki Notatnika). (B) brak zasobu = 200 z null, nie 404: stream/partial, map/candidate (plus deduplikacja podwójnego wywołania), 11 zapytań planowania na karcie inicjatywy DEMO_STORY wyłączone po origin; Megatrendy: naprawić import modelu (dziś stałe 503) + kontrola startowa.
+
+KROKI: §5 (1→2→3/4/5 równolegle z 6/7/9/11; 8 tylko po słowie nadzorcy; 10 = reprodukcja, nie kod; 12 = harness console-clean). Markery [ODMROZENIE <MODUL> DEC-397] dla 06_EXECUTION, 07_MY_WORK_AGENT, 03_TOOLS.
+CEL OSIĄGNIĘTY = §10: testy hooka i fan-outu z dowodem mutacyjnym, tsc serwera czysty, megatrendy 200, zero 404 na trzech trasach-kontraktach i zero zapytań v8-planning na karcie DEMO_STORY (odczyt z .json zrzutów), szkielety widoczne na zrzutach 0,4–0,8 s, liczniki bez „0”, harness console-clean pokazuje spadek ≥80% ekranów z błędami. Raport z liczbami PRZED/PO. Zakazy: --no-verify, git stash, catch(()=>{}) zamiast naprawy kontraktu.
+```

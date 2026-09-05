@@ -353,3 +353,44 @@ na końcu, osobno, z Opus.
 
 Całościowy szacunek zgodny z oceną audytu źródłowego (`D_SYNTEZA_I_PLAN.md:52`): **effort
 L, impact H** dla całej paczki P3.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu)
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx esbuild <każdy zmieniony .tsx/.ts> --bundle --platform=browser --outdir=/tmp/esb --log-level=error --loader:.png=file --loader:.svg=file` | exit 0 |
+| `node -e "JSON.parse(require('fs').readFileSync('public/locales/pl/translation.json'))" && node -e "JSON.parse(require('fs').readFileSync('public/locales/en/translation.json'))"` | oba parsują; każdy nowy klucz istnieje w OBU plikach (skrypt: porównać zbiory kluczy dodanych w diffie — różnica = 0) |
+| `rg --pcre2 -n "isPolish \? '([^']+)' : '\1'" src \| wc -l` | **0** (dziś 70) |
+| `rg -n "'Drop initiatives here'\|'New conversation'\|'Product'\|Marza\|Jakosc\|Terminowosc" src server/src` | 0 trafień w renderowanych stringach (dopuszczalne tylko w komentarzach/testach) |
+| `npx vitest run tests/unit/angielskieResztkiPL.test.ts tests/i18n` | PASS; test rozszerzony o stop-listę EN (§6) — dowód mutacyjny: dopisanie literału `'Approve'` w dowolnym komponencie → test pada |
+| `node scripts/i18n-sweep/check-global.mjs` | liczba `bare-missing` mniejsza niż 3023 o liczbę kluczy dodanych w paczce (podać przed/po) |
+| `cd server && NODE_OPTIONS=--max-old-space-size=4096 ../node_modules/.bin/tsc --build tsconfig.build.json` (tylko gdy krok 11/12 dotknął serwera) | exit 0 |
+| `bash scripts/check-list-canon.sh && bash scripts/check-artefakt.sh` | `OK`, dług nie rośnie |
+| `git log --format=%s origin/staging..HEAD` | każdy commit dotykający plików z §5 „Moduły zamrożone” ma `[ODMROZENIE <MODUL> DEC-397]` |
+
+Pomiar na żywo (własny vite, sesja `ODBIOR_AUTH_STATE`, `--dom=body` daje w `.json` pole `tekst`): przejść 16 modułów po jednym ekranie głównym + 6 ekranów z audytu (karta inicjatywy z kalendarza, Menu 3 Planu i Obciążenia Inicjatyw, pasek wyceny Finansów, historia Czatu, chipy Teresy w Skrzynce, nagłówki Audyty/Organizacja) i policzyć trafienia stop-listy EN: `Approve|Cancel|Overview|Tasks|Definition|Economics|Team|History|Not assigned|No tasks|Start Date|End Date|Business Owner|Drop initiatives|New conversation|sources|Unknown|Initiatives|Organization|Audits|Product|Triage|Summarize|Build an initial`.
+
+Progi:
+- Trafienia stop-listy na 22 ekranach = **0** (dziś: karta inicjatywy sama > 40).
+- Dwa zrzuty PRZED/PO dla karty inicjatywy (`evidence/audyt-award-20260905/moja-praca/18-kalendarz-preview.png` = PRZED) — PO bez jednego angielskiego słowa poza nazwami własnymi.
+- Historia Czatu: brak pozycji „New conversation” (puste tytuły renderują „Nowa rozmowa”).
+- `bledyKonsoli` = 0 na każdym zrzucie.
+
+**STOP:** progi spełnione → commit `evidence/p3-angielski/` + raport z liczbami PRZED/PO. Gdy tłumaczenie wymaga decyzji o nazwie (np. nazwa narzędzia finansowego bez polskiego odpowiednika) → zostawić angielską nazwę własną, zapisać listę w raporcie, nie zgadywać. Zakazy: `--no-verify`, `git stash`, wpisywanie angielskiego tekstu do `pl.json` jako „tłumaczenia”.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE P3 — Koniec angielskiego w polskim interfejsie. Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/p3-angielski <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/P3_KONIEC_ANGIELSKIEGO.md — przeczytaj całą.
+
+CEL: przejście przez 16 modułów nie pokazuje ani jednego angielskiego słowa poza nazwami własnymi. Największe źródła: InitiativeFullView.tsx (100% EN, >150 literałów), initiativeLifecycle.ts (14 statusów + 13 akcji — jedno SSOT karmi Kanban/Siatkę/Tabelę/kartę), Menu 3 Planu/Obciążenia (18 chipów), pasek wyceny (22 nazwy), breadcrumby Audits/Organization w AppRoutes.tsx, brakujący klucz trust.badge.sources, „New conversation” z bazy, diakrytyki w kreatorze inicjatyw, 70 miejsc isPolish ? 'X' : 'X'.
+ZASADA: 1 literał = 1 klucz (pl + en w tym samym commicie), zero zgadywania treści; stan/enum → mapa etykiet SSOT; wartość z bazy → pusty + placeholder i18n.
+
+KROKI: §5 (1→2→3/4/5→6→7→8→9→10→11), kroki w modułach zamrożonych z markerem [ODMROZENIE <MODUL> DEC-397] (Inicjatywy, Czat, Moja Praca, Audyty, Organizacja, Materiały, Spotkania, Realizacja — wg §5 „Moduły zamrożone”). Serwer (krok 11/12): tsc --build musi przejść.
+CEL OSIĄGNIĘTY = §10: zero trafień stop-listy EN na 22 ekranach (odczyt z .json zrzutów), rg identycznych gałęzi isPolish = 0, testy z rozszerzoną stop-listą i dowodem mutacyjnym, słowniki parsują i są symetryczne, dług canon nie rośnie. Raport z liczbami PRZED/PO i listą nazw własnych zostawionych po angielsku. Zakazy: --no-verify, git stash, angielski tekst w pl.json.
+```
