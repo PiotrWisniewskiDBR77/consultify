@@ -383,3 +383,10 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AF1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
 | AF2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
 | AF3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
+
+## AG. Dyżur 369 — chmura OAuth: rdzeń spięty, reachable teza obalona
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| AG1 | `POST /api/cloud/sources` tworzył aktywne źródło bez tokenu; dziewięć operacji dostawców czytało token z `cloud_sources`. | Bramka używa teraz aktywnego tokenu per-user z `integration_oauth_tokens`, ignoruje body, a operacje pobierają żywy token z auto-refresh. | ZAMKNIĘTE lokalnie / REALPG | `CODEX_DAY369_CHMURA_OAUTH_REPORT.md`, `evidence/chmura-oauth-20260905/day369/` |
+| AG2 | `/settings/integrations` na markerze prowadzi do `ConnectedAppsSettings.tsx`, nie do `IntegrationSettings.tsx`; governed connect dla Google Drive dał świeżo `500 {}` zamiast oczekiwanego `authUrl`. | Audyt/instrukcja wskazywały nieaktualny reachable komponent; trzeci mechanizm nadal wymaga osobnego dyżuru i decyzji właściciela. | PARTIAL / DO DECYZJI WŁAŚCICIELA | `evidence/chmura-oauth-20260905/day369/R1-rodzina.md`, `R5-governed-oauth-proposal.md` |
