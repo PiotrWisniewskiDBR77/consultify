@@ -120,7 +120,7 @@ function getEntityColor(type: string): string {
  * tylko wartość danych. Klucz nieznanego typu wraca surowy — lepiej pokazać
  * identyfikator niż pustkę.
  */
-function entityTypeLabel(type: string, t: TFunction): string {
+export function entityTypeLabel(type: string, t: TFunction): string {
   const key = type.toLowerCase();
   return t(`organization.knowledgeGraph.entityTypes.${key}`, type);
 }

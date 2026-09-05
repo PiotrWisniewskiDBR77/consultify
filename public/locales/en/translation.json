@@ -24424,7 +24424,18 @@
         "technology": "Technology",
         "location": "Location",
         "process": "Process",
-        "metric": "Metric"
+        "metric": "Metric",
+        "project": "Project",
+        "initiative": "Initiative",
+        "vendor": "Vendor",
+        "risk": "Risk",
+        "decision": "Decision",
+        "goal": "Goal",
+        "department": "Department",
+        "skill": "Skill",
+        "regulation": "Regulation",
+        "artifact": "Artifact",
+        "system": "System"
       }
     }
   },

@@ -25680,7 +25680,18 @@
         "technology": "Technologia",
         "location": "Lokalizacja",
         "process": "Proces",
-        "metric": "Miernik"
+        "metric": "Miernik",
+        "project": "Projekt",
+        "initiative": "Inicjatywa",
+        "vendor": "Dostawca",
+        "risk": "Ryzyko",
+        "decision": "Decyzja",
+        "goal": "Cel",
+        "department": "Dział",
+        "skill": "Umiejętność",
+        "regulation": "Regulacja",
+        "artifact": "Artefakt",
+        "system": "System"
       }
     }
   },
