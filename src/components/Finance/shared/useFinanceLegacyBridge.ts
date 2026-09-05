@@ -29,7 +29,10 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { resolveLegacyFinanceArtifact } from '@/services/api/financeV2.api';
+import {
+  ensureLegacyFinanceArtifactIdentity,
+  resolveLegacyFinanceArtifact,
+} from '@/services/api/financeV2.api';
 import {
   describeFinanceV2Error,
   type FinanceArtifactType,
@@ -64,7 +67,13 @@ export interface UseFinanceLegacyBridgeResult {
 
 export function useFinanceLegacyBridge(
   legacyTable: LegacyFinanceTable,
-  legacyId: string
+  legacyId: string,
+  /**
+   * Typ kanoniczny warsztatu, który ma się zamontować. Rozstrzyga
+   * `financial_models` → Baseline vs Predykcja (jeden wiersz legacy karmi dwa
+   * warsztaty) i jest przekazywany do materializacji, żeby nie zgadywała.
+   */
+  expectedArtifactType?: FinanceArtifactType | null
 ): UseFinanceLegacyBridgeResult {
   const [state, setState] = useState<FinanceLegacyBridgeState>({ kind: 'loading' });
   // Bumped by `retry()` to re-trigger the effect below without adding
@@ -76,7 +85,31 @@ export function useFinanceLegacyBridge(
     cancelledRef.current = false;
     setState({ kind: 'loading' });
 
-    resolveLegacyFinanceArtifact(legacyTable, legacyId)
+    // ★ NAPRAWA 2026-09-05 (pomiar `evidence/finance-gate-20260905/`): sam
+    // odczyt mostu zwracał `NOT_MIGRATED` dla KAŻDEGO rekordu zastanego —
+    // aliasy pisał wyłącznie backfill WP-C03, którego nigdy nie uruchomiono na
+    // żywym środowisku. Dlatego po definitywnym „nie ma mapowania" próbujemy
+    // JEDEN raz zmaterializować tożsamość (POST .../ensure) i dopiero jej wynik
+    // rozstrzyga stan ekranu. To NIE jest ukrywanie stanu: materializacja działa
+    // tylko dla wiersza legacy, który naprawdę istnieje w tej organizacji, nie
+    // omija kwarantanny, a gdy się nie uda — wracamy do dokładnie tego samego
+    // `unresolved`, który był tu wcześniej (uczciwy widok klasyczny).
+    resolveLegacyFinanceArtifact(legacyTable, legacyId, expectedArtifactType)
+      .then((dto) =>
+        dto.status === 'NOT_MIGRATED'
+          ? // `Promise.resolve().then(...)` (a nie gołe wywołanie) łapie także
+            // rzut SYNCHRONICZNY z warstwy API — inaczej awaria materializacji
+            // wywróciłaby ekran w stan „błąd" zamiast pokazać uczciwy widok
+            // klasyczny, który był tu przed naprawą.
+            Promise.resolve()
+              .then(() =>
+                ensureLegacyFinanceArtifactIdentity(legacyTable, legacyId, expectedArtifactType)
+              )
+              // Materializacja jest naprawą, nie warunkiem oglądania rekordu:
+              // gdy padnie (brak uprawnień/5xx), pokazujemy stan sprzed niej.
+              .catch(() => dto)
+          : dto
+      )
       .then((dto) => {
         if (cancelledRef.current) return;
         if (dto.status === 'RESOLVED') {
@@ -102,7 +135,7 @@ export function useFinanceLegacyBridge(
     return () => {
       cancelledRef.current = true;
     };
-  }, [legacyTable, legacyId, attempt]);
+  }, [legacyTable, legacyId, expectedArtifactType, attempt]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 

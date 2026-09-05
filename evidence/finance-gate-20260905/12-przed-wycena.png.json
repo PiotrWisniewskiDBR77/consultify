@@ -1,0 +1,9 @@
+{
+ "url": "http://localhost:3112/finance/valuations/b6b3ef81b04d4023bec372253e7f4e72?tab=valuation",
+ "tytul": "Consultify",
+ "kliki": [],
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)"
+ ],
+ "kiedy": "2026-09-05T05:56:35.655Z"
+}

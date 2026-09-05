@@ -29,6 +29,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const apiMocks = vi.hoisted(() => ({
   resolveLegacyFinanceArtifact: vi.fn(),
+  // Naprawa 2026-09-05: po definitywnym NOT_MIGRATED hook próbuje JEDEN raz
+  // zmaterializować tożsamość. Domyślnie atrapa oddaje ten sam NOT_MIGRATED,
+  // żeby wszystkie dotychczasowe scenariusze opisywały nadal to samo
+  // zachowanie ekranu (uczciwy widok klasyczny).
+  ensureLegacyFinanceArtifactIdentity: vi.fn().mockResolvedValue({ status: 'NOT_MIGRATED' }),
 }));
 vi.mock('@/services/api/financeV2.api', () => apiMocks);
 
@@ -36,6 +41,7 @@ import { FinanceLegacyBridgeGate } from '../FinanceLegacyBridgeGate';
 
 afterEach(() => {
   vi.clearAllMocks();
+  apiMocks.ensureLegacyFinanceArtifactIdentity.mockResolvedValue({ status: 'NOT_MIGRATED' });
 });
 
 describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with real ids)', () => {
@@ -68,8 +74,11 @@ describe('FinanceLegacyBridgeGate — RESOLVED (list row -> real workspace with 
     expect(screen.getByTestId('mounted-workspace').textContent).not.toContain('legacy-model-1');
     expect(apiMocks.resolveLegacyFinanceArtifact).toHaveBeenCalledWith(
       'financial_models',
-      'legacy-model-1'
+      'legacy-model-1',
+      undefined
     );
+    // Most rozwiązał się od razu — nie ma po co niczego materializować.
+    expect(apiMocks.ensureLegacyFinanceArtifactIdentity).not.toHaveBeenCalled();
   });
 
   it('shows a loading state before resolution, never mounts children early', async () => {
@@ -250,5 +259,92 @@ describe('FinanceLegacyBridgeGate — ERROR (network/server failure, distinct fr
     await userEvent.click(screen.getByRole('button', { name: /Spróbuj ponownie/i }));
     await waitFor(() => expect(screen.getByTestId('mounted-workspace')).toBeInTheDocument());
     expect(apiMocks.resolveLegacyFinanceArtifact).toHaveBeenCalledTimes(2);
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// NAPRAWA 2026-09-05 — samorozwiązujący się most.
+//
+// Pomiar na żywo pokazał, że dla KAŻDEGO realnego rekordu stagingu odczyt
+// mostu zwracał NOT_MIGRATED (aliasy pisał tylko backfill, którego nie
+// uruchomiono) i zatwierdzony ekran nigdy się nie montował. Bramka ma teraz
+// spróbować JEDEN raz zmaterializować tożsamość, zanim ogłosi „nie ma
+// odpowiednika" — i nadal ogłosić to uczciwie, gdy materializacja odmówi.
+// ---------------------------------------------------------------------------
+describe('FinanceLegacyBridgeGate — samorozwiązanie mostu (naprawa 2026-09-05)', () => {
+  it('po NOT_MIGRATED materializuje tożsamość i montuje ZATWIERDZONY warsztat z prawdziwymi id', async () => {
+    apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({ status: 'NOT_MIGRATED' });
+    apiMocks.ensureLegacyFinanceArtifactIdentity.mockResolvedValue({
+      status: 'RESOLVED',
+      artifactId: 'canonical-artifact-99',
+      businessVersionId: 'canonical-bv-99',
+      artifactType: 'PREDICTION_SCENARIO',
+      mappingConfidence: 'AUTO_MIGRATE',
+    });
+
+    render(
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_models"
+        legacyId="legacy-model-9"
+        expectedArtifactType="PREDICTION_SCENARIO"
+        onBackToList={() => {}}
+        unresolvedFallback={<div data-testid="legacy-fallback">stary widok</div>}
+      >
+        {(resolved) => <div data-testid="mounted-workspace">{resolved.artifactId}</div>}
+      </FinanceLegacyBridgeGate>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('mounted-workspace')).toBeInTheDocument());
+    expect(screen.getByTestId('mounted-workspace').textContent).toContain('canonical-artifact-99');
+    expect(screen.queryByTestId('legacy-fallback')).not.toBeInTheDocument();
+    expect(apiMocks.ensureLegacyFinanceArtifactIdentity).toHaveBeenCalledWith(
+      'financial_models',
+      'legacy-model-9',
+      'PREDICTION_SCENARIO'
+    );
+  });
+
+  it('gdy materializacja odmówi (np. brak uprawnień), ekran wraca do UCZCIWEGO widoku klasycznego, nie do błędu', async () => {
+    apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({ status: 'NOT_MIGRATED' });
+    apiMocks.ensureLegacyFinanceArtifactIdentity.mockRejectedValue(new Error('403'));
+
+    render(
+      <FinanceLegacyBridgeGate
+        legacyTable="valuations"
+        legacyId="legacy-val-9"
+        expectedArtifactType="VALUATION_CASE"
+        onBackToList={() => {}}
+        unresolvedFallback={<div data-testid="legacy-fallback">stary widok</div>}
+      >
+        {() => <div data-testid="mounted-workspace">nie powinno się zamontować</div>}
+      </FinanceLegacyBridgeGate>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('legacy-fallback')).toBeInTheDocument());
+    expect(screen.queryByTestId('mounted-workspace')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('finance-bridge-error')).not.toBeInTheDocument();
+  });
+
+  it('KWARANTANNA nie jest obchodzona — materializacja nie jest nawet wołana', async () => {
+    apiMocks.resolveLegacyFinanceArtifact.mockResolvedValue({
+      status: 'QUARANTINED',
+      mappingConfidence: 'QUARANTINE',
+      reason: 'approved_without_snapshot',
+    });
+
+    render(
+      <FinanceLegacyBridgeGate
+        legacyTable="financial_analyses"
+        legacyId="legacy-analysis-9"
+        expectedArtifactType="HISTORICAL_ANALYSIS"
+        onBackToList={() => {}}
+      >
+        {() => <div data-testid="mounted-workspace">nie powinno się zamontować</div>}
+      </FinanceLegacyBridgeGate>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('finance-bridge-unresolved')).toBeInTheDocument());
+    expect(apiMocks.ensureLegacyFinanceArtifactIdentity).not.toHaveBeenCalled();
   });
 });

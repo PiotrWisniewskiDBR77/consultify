@@ -3499,6 +3499,7 @@ export const FinanceHub: React.FC = () => {
                 <FinanceLegacyBridgeGate
                   legacyTable="financial_statement_packs"
                   legacyId={activeDocument.id}
+                  expectedArtifactType="STATEMENT_PACK"
                   onBackToList={handleShowList}
                   unresolvedFallback={
                     <FinancialStatementPackWorkspace
@@ -3549,6 +3550,7 @@ export const FinanceHub: React.FC = () => {
                 <FinanceLegacyBridgeGate
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
+                  expectedArtifactType="BASELINE_MODEL"
                   onBackToList={handleShowList}
                   unresolvedFallback={
                     <FinancialModelWorkspace
@@ -3588,6 +3590,7 @@ export const FinanceHub: React.FC = () => {
                 <FinanceLegacyBridgeGate
                   legacyTable="financial_models"
                   legacyId={activeDocument.id}
+                  expectedArtifactType="PREDICTION_SCENARIO"
                   onBackToList={handleShowList}
                   unresolvedFallback={
                     <FinancialModelWorkspace
@@ -3631,6 +3634,7 @@ export const FinanceHub: React.FC = () => {
                 <FinanceLegacyBridgeGate
                   legacyTable="financial_analyses"
                   legacyId={activeDocument.id}
+                  expectedArtifactType="HISTORICAL_ANALYSIS"
                   onBackToList={handleShowList}
                   unresolvedFallback={
                     <FinancialAnalysisWorkspace
@@ -3668,6 +3672,7 @@ export const FinanceHub: React.FC = () => {
                 <FinanceLegacyBridgeGate
                   legacyTable="valuations"
                   legacyId={activeDocument.id}
+                  expectedArtifactType="VALUATION_CASE"
                   onBackToList={handleShowList}
                   unresolvedFallback={
                     <ValuationWorkspace
