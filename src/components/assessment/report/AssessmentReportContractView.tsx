@@ -246,15 +246,18 @@ function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
         </h3>
         <EmptySlot min={chapter.introduction.minWords} max={chapter.introduction.maxWords} />
       </section>
-      {/* ★ MACIERZ SZERZEJ NIŻ KOLUMNA TEKSTU. Rozdział jest kolumną
-          czytelniczą 760 px, a oś 1 ma 9 obszarów: zmierzone na zrzucie
-          `evidence/drd-raport-20260905/…__PO__pl__1440__light.png` — w kolumnie
-          760 px mieściły się 4 kolumny z 9, a pozostałe 5 tylko po przewinięciu
-          w bok. Macierz to nie akapit, więc dostaje własną, szerszą kolumnę;
-          akapity zostają w 760 px, bo tam szerokość szkodzi czytaniu.
-          Przewijanie poziome zostaje zabezpieczeniem dla wąskiego okna — nie
-          jest rozwiązaniem, bo domyślny kadr ma pokazywać macierz, nie jej ćwiartkę. */}
-      <section className="mx-auto w-full max-w-[1180px] space-y-3">
+      {/* ★ MACIERZ DOSTAJE CAŁĄ DOSTĘPNĄ SZEROKOŚĆ (poprawka 2026-09-05).
+          Rozdział jest kolumną czytelniczą 760 px, bo tam szerokość szkodzi
+          czytaniu akapitu. Macierz akapitem nie jest — 05.08 dostała własną
+          kolumnę 1180 px i to NIE POMOGŁO: 1180 px było sufitem, a nie
+          podłogą, a faktyczny kadr wynosił 503 px (zmierzone na żywo 05.09,
+          `evidence/odbior-zywo-20260905/05-ocena/drd-macierz-w-raporcie.png`)
+          — z dziewięciu obszarów właściciel widział trzy. Sufit znika:
+          macierz bierze pełną szerokość dokumentu i wychodzi poza jego
+          wewnętrzny margines (`-mx-8 px-4`), a siatka sama dobiera szerokość
+          kolumn do kadru (`minimumKolumnyMacierzy`). Przewijanie w bok
+          zostaje wyłącznie zabezpieczeniem dla naprawdę wąskiego okna. */}
+      <section className="-mx-8 w-auto space-y-3 px-4">
         <h3 className="text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.matrix')}
         </h3>
