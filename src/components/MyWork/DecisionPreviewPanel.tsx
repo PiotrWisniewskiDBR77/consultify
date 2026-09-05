@@ -197,6 +197,19 @@ export const DecisionPreviewBody: React.FC<{
   // canon §4.1 — status color driven by statusChipTone() on neutral shell, no hardcoded fills.
   const status = String(decision?.status || 'PENDING').toUpperCase();
   const statusTone = statusChipTone(decision?.status || 'pending');
+  // ★ NAPRAWA (odbiór CTO 05.09): przy isPolish=true pigułka statusu pokazywała
+  // SUROWY angielski enum ('PENDING'/'APPROVED'/…) zamiast tłumaczenia — ternary
+  // niżej tłumaczył TYLKO priorytet, status w ogóle nie przechodził przez t().
+  // Zmierzone na żywym ekranie: podgląd decyzji „Oczekuje" w tabeli, „PENDING"
+  // w tym samym podglądzie obok. Te same klucze co `statusLabel()` w
+  // DecisionsPanelContent.tsx (tabela), żeby oba miejsca mówiły identycznie.
+  const statusLabelPl: Record<string, string> = {
+    APPROVED: t('myWork.decisionsPanel.approved', 'Approved'),
+    REJECTED: t('myWork.decisionsPanel.rejected', 'Rejected'),
+    DEFERRED: t('myWork.decisionsPanel.deferred', 'Deferred'),
+    ESCALATED: t('myWork.decisionsPanel.escalated', 'Escalated'),
+    PENDING: t('myWork.decisionsPanel.pending', 'Pending'),
+  };
 
   // canon §4.0 — priority carries a signal tone only when it warrants attention.
   const pri = String(decision?.priority || 'MEDIUM').toUpperCase();
@@ -215,7 +228,9 @@ export const DecisionPreviewBody: React.FC<{
 
   const pills: MetaPill[] = [
     {
-      label: isPolish ? status : status[0] + status.slice(1).toLowerCase(),
+      label: isPolish
+        ? (statusLabelPl[status] ?? status)
+        : status[0] + status.slice(1).toLowerCase(),
       tone: statusTone,
     },
     { label: priLabel, tone: priTone },

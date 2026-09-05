@@ -318,8 +318,16 @@ const statusLabel = (status: string | undefined, t: TFunction): string => {
 };
 
 // Date formatting
+// ★ NAPRAWA (odbiór CTO 05.09): twarde 'Today'/'Tomorrow'/'Yesterday'/
+// '…d overdue'/'…d left' niezależnie od języka aplikacji — ta sama rodzina
+// defektu co `DecisionsKanbanBoard.tsx`/`MyTasksListContent.tsx`/
+// `TasksKanbanBoard.tsx` (cztery kopie tej samej funkcji, po jednej na
+// widok listy/kanbanu Zadań i Decyzji). `i18n` jest już importowany w tym
+// pliku (`statusLabel` wyżej używa `t` z hooka; tu — moduł-scope singleton,
+// bo `formatDate` nie jest komponentem).
 const formatDate = (dateStr?: string): string => {
   if (!dateStr) return '-';
+  const isPl = i18n.language?.startsWith('pl');
   const date = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -328,13 +336,19 @@ const formatDate = (dateStr?: string): string => {
 
   const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays < -1) return `${Math.abs(diffDays)}d overdue`;
-  if (diffDays <= 7) return `${diffDays}d left`;
+  if (diffDays === 0) return i18n.t('myWork.decisionsPanel.dueToday', 'Today');
+  if (diffDays === 1) return i18n.t('myWork.decisionsPanel.dueTomorrow', 'Tomorrow');
+  if (diffDays === -1) return i18n.t('myWork.decisionsPanel.dueYesterday', 'Yesterday');
+  if (diffDays < -1) {
+    return i18n.t('myWork.decisionsPanel.overdueDays', '{{count}}d overdue', {
+      count: Math.abs(diffDays),
+    });
+  }
+  if (diffDays <= 7) {
+    return i18n.t('myWork.decisionsPanel.daysLeft', '{{count}}d left', { count: diffDays });
+  }
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
 // Overdue/waiting timing is derived from the shared, finality-aware

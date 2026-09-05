@@ -4150,7 +4150,14 @@
       "delayDays_many": "+{{count}}d",
       "delayDays_other": "+{{count}}d",
       "escalateUrgent": "Escalate (urgent)",
-      "escalate": "Escalate"
+      "escalate": "Escalate",
+      "dueToday": "Today",
+      "dueTomorrow": "Tomorrow",
+      "dueYesterday": "Yesterday",
+      "overdueDays_one": "{{count}}d overdue",
+      "overdueDays_other": "{{count}}d overdue",
+      "daysLeft_one": "{{count}}d left",
+      "daysLeft_other": "{{count}}d left"
     },
     "decisionWorkspace": {
       "notFound": "This decision no longer exists or you do not have access to it.",
@@ -4416,6 +4423,9 @@
         "review": "Review",
         "todo": "To Do"
       },
+      "noDueDate": "No due date",
+      "dueToday": "Today",
+      "dueTomorrow": "Tomorrow",
       "toast": {
         "completeTasksFailed": "Failed to complete tasks",
         "deleteTaskFailed": "Failed to delete task",

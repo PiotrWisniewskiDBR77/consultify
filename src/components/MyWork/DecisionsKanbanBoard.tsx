@@ -54,6 +54,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { ErrorState } from '@/components/ui/primitives';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -241,8 +242,14 @@ const getPriorityCardStyle = (priority?: string) => {
 
 /* ─── Date helpers ─── */
 
+// ★ NAPRAWA (odbiór CTO 05.09): ta sama rodzina defektu co
+// `DecisionsPanelContent.tsx`/`TasksKanbanBoard.tsx`/`MyTasksListContent.tsx`
+// — twarde angielskie stringi i locale 'en-US' niezależnie od języka
+// aplikacji. Te same klucze i18n co `DecisionsPanelContent.tsx`, żeby lista
+// i Kanban Decyzji mówiły identycznie.
 const formatDueDate = (dateStr?: string): string | null => {
   if (!dateStr) return null;
+  const isPl = i18n.language?.startsWith('pl');
   const date = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -250,15 +257,25 @@ const formatDueDate = (dateStr?: string): string | null => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);
-  if (dateOnly.getTime() === today.getTime()) return 'Today';
-  if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
+  if (dateOnly.getTime() === today.getTime()) {
+    return i18n.t('myWork.decisionsPanel.dueToday', 'Today');
+  }
+  if (dateOnly.getTime() === tomorrow.getTime()) {
+    return i18n.t('myWork.decisionsPanel.dueTomorrow', 'Tomorrow');
+  }
 
   const diffDays = Math.ceil((dateOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays < -1) return `${Math.abs(diffDays)}d overdue`;
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays <= 7) return `${diffDays}d left`;
+  if (diffDays < -1) {
+    return i18n.t('myWork.decisionsPanel.overdueDays', '{{count}}d overdue', {
+      count: Math.abs(diffDays),
+    });
+  }
+  if (diffDays === -1) return i18n.t('myWork.decisionsPanel.dueYesterday', 'Yesterday');
+  if (diffDays <= 7) {
+    return i18n.t('myWork.decisionsPanel.daysLeft', '{{count}}d left', { count: diffDays });
+  }
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
 const isOverdue = (dateStr?: string, status?: string): boolean => {
