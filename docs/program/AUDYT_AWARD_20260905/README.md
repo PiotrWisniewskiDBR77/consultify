@@ -7,10 +7,10 @@
 **Wzorce „złota”:** `evidence/odbior-cto-20260905/moja-praca/polish/a-table-no-selection.png`, `evidence/odbior-zywo-20260905/08-wyniki/okr-cel/proof-okr-L2.png`, `evidence/odbior-zywo-20260905/02-moja-praca/mapa-jeden-panel/02-element.png`.
 
 ## Części
-- `A_moja-praca_czat_wywiad_narzedzia.md`
-- `B_ocena_inicjatywy_realizacja_wyniki.md`
-- `C_finanse_materialy_audyty_spotkania_org_admin_ustawienia_partner.md`
-- `D_SYNTEZA_I_PLAN.md` — ranking wniosków (wpływ × wysiłek), ekrany flagowe per moduł, plan w kolejności; powstaje po A–C.
+- `A_moja-praca_czat_wywiad_narzedzia.md` — **jest** (51 ekranów; A = 2,41 · B = 2,18).
+- `B_ocena_inicjatywy_realizacja_wyniki.md` — **jest** (47 ekranów; A = 2,28 · B = 1,96).
+- `C_finanse_materialy_audyty_spotkania_org_admin_ustawienia_partner.md` — **jest** (27 ekranów; A = 1,89 · B = 1,74).
+- `D_SYNTEZA_I_PLAN.md` — **jest**: „gdzie jesteśmy" (16 modułów, 125 ekranów, A = 2,25 · B = 2,00), sześć przyczyn wyjaśniających większość znalezisk, plan w czterech falach, mapa uwag właściciela ze stagingu, skonsolidowana lista `NIE_DOTARŁEM`.
 
 Dowody: `evidence/audyt-award-20260905/<modul>/`.
 
