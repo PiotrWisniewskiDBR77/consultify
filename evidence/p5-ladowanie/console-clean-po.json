@@ -1,0 +1,172 @@
+{
+  "kiedy": "2026-09-05T20:48:25.756Z",
+  "baza": "http://127.0.0.1:3097",
+  "allowlista": 0,
+  "wyniki": [
+    {
+      "trasa": "/organization",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 31211
+    },
+    {
+      "trasa": "/interview",
+      "konsolowychBledow": 13,
+      "siecUprawnien4xx5xx": [
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/settings/preferences/accessibility"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/auth/me"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/v8/admin/flags"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/feature-flags/runtime"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/v10/teresa/voice-event"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/organizations/current"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/v10/teresa/voice-event"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/auth/refresh"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/feature-flags/runtime"
+        }
+      ],
+      "czasMs": 1945
+    },
+    {
+      "trasa": "/discovery-tools",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 2065
+    },
+    {
+      "trasa": "/assessment",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 2113
+    },
+    {
+      "trasa": "/initiatives",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1956
+    },
+    {
+      "trasa": "/execution",
+      "konsolowychBledow": 8,
+      "siecUprawnien4xx5xx": [
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/demo/status"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/mfa/status"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/my-work/personal-tasks"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/organizations/current"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/my-work/personal-tasks"
+        },
+        {
+          "status": 401,
+          "url": "http://127.0.0.1:3097/api/organizations/current"
+        }
+      ],
+      "czasMs": 2001
+    },
+    {
+      "trasa": "/my-work",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1934
+    },
+    {
+      "trasa": "/meeting",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1951
+    },
+    {
+      "trasa": "/results",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1939
+    },
+    {
+      "trasa": "/finance",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1948
+    },
+    {
+      "trasa": "/presentations",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1928
+    },
+    {
+      "trasa": "/audit-programs",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1930
+    },
+    {
+      "trasa": "/chat",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1924
+    },
+    {
+      "trasa": "/admin",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1923
+    },
+    {
+      "trasa": "/settings",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1930
+    },
+    {
+      "trasa": "/partner",
+      "konsolowychBledow": 0,
+      "siecUprawnien4xx5xx": [],
+      "czasMs": 1928
+    }
+  ],
+  "podsumowanie": {
+    "tras": 16,
+    "ekranyZBledami": 2,
+    "konsolowychBledow": 21,
+    "odpowiedzi4xx5xx": 15,
+    "gate": "FAIL"
+  }
+}

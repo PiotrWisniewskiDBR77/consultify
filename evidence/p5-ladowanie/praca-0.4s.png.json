@@ -1,0 +1,32 @@
+{
+ "url": "http://127.0.0.1:3097/login?redirect=%2Fexecution%3Ftab%3Dwork",
+ "tytul": "Logowanie — Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "[OrgContext] Error fetching orgs: Error: Failed to fetch organizations\n    at http://127.0.0.1:3097/src/contexts/OrgContext.tsx:63:15",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "[TokenService] Refresh failed: 401",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:3097/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:3097/src/services/api.ts:709:15)\n   ",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:3097/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:3097/src/services/api.ts:709:15)\n   ",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to fetch tasks Error: Failed to fetch personal tasks\n    at Object.getPersonalTasks (http://127.0.0.1:3097/src/services/api.ts:3371:26)\n    at async fetchTasks (http://127.0.0.1:3097/src/compon",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to fetch tasks Error: Failed to fetch personal tasks\n    at Object.getPersonalTasks (http://127.0.0.1:3097/src/services/api.ts:3371:26)\n    at async fetchTasks (http://127.0.0.1:3097/src/compon"
+ ],
+ "kiedy": "2026-09-05T20:48:56.514Z"
+}
