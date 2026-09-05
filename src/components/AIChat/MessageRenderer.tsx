@@ -900,7 +900,12 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 <div className="not-prose">
                   <ChatTableProposalCard
                     proposal={(msg as any).metadata.proposal}
-                    onStatusChange={() => {}}
+                    onStatusChange={(status) => {
+                      console.debug('[ChatTableProposalCard] status changed', {
+                        proposalId: (msg as any).metadata.proposal.id,
+                        status,
+                      });
+                    }}
                     onNavigateToTable={(baseId) => {
                       const path = `/my-work/ideas/${encodeURIComponent(baseId)}/workspace/table`;
                       window.location.href = path;

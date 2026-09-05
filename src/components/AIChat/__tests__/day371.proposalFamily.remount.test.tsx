@@ -1,6 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 import { ChatTableProposalCard, type SchemaProposal } from '../ChatTableProposalCard';
 import { ExecutionProposalMessage } from '../ExecutionProposalMessage';
@@ -39,8 +41,7 @@ vi.mock('../../../hooks/usePermissions', () => ({
 }));
 
 vi.mock('../../../store/useProposalLifecycleStore', () => ({
-  useProposalLifecycle: () =>
-    lifecycle.state ? { lifecycleState: lifecycle.state } : undefined,
+  useProposalLifecycle: () => (lifecycle.state ? { lifecycleState: lifecycle.state } : undefined),
 }));
 
 vi.mock('@/store/portfolioSlice', () => ({
@@ -93,20 +94,23 @@ const governedProposal = (state: 'pending' | 'materialized') => ({
 
 describe('day371 proposal-card family remount behavior', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     lifecycle.state = undefined;
   });
 
-  it('ChatTableProposalCard shows an already executed proposal after remount', () => {
+  it('ChatTableProposalCard shows the live executed proposal after remount with stale metadata', async () => {
+    vi.mocked(TablePlatformApi.getSchemaProposal).mockResolvedValue(schemaProposal('executed'));
     const first = render(
       <ChatTableProposalCard proposal={schemaProposal('pending')} onStatusChange={vi.fn()} />
     );
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
     first.unmount();
 
-    render(
-      <ChatTableProposalCard proposal={schemaProposal('executed')} onStatusChange={vi.fn()} />
+    render(<ChatTableProposalCard proposal={schemaProposal('pending')} onStatusChange={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByText('Table created successfully!')).toBeInTheDocument()
     );
-    expect(screen.getByText('Table created successfully!')).toBeInTheDocument();
+    expect(TablePlatformApi.getSchemaProposal).toHaveBeenCalledWith('schema-proposal-1');
     expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
   });
 
@@ -118,6 +122,26 @@ describe('day371 proposal-card family remount behavior', () => {
     render(<TeresaProposalCard proposal={teresaProposal('completed') as any} />);
     expect(screen.getByText('Completed')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+  });
+
+  it('ChatTableProposalCard treats the typed already-executed conflict as executed', async () => {
+    vi.mocked(TablePlatformApi.getSchemaProposal).mockResolvedValue(schemaProposal('pending'));
+    vi.mocked(TablePlatformApi.executeSchemaProposal).mockRejectedValue({
+      status: 409,
+      data: { code: 'PROPOSAL_ALREADY_EXECUTED' },
+    });
+    const onStatusChange = vi.fn();
+    render(
+      <ChatTableProposalCard proposal={schemaProposal('pending')} onStatusChange={onStatusChange} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Table created successfully!')).toBeInTheDocument()
+    );
+    expect(onStatusChange).toHaveBeenCalledWith('executed');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('ExecutionProposalMessage prefers the live executed lifecycle after remount', () => {
