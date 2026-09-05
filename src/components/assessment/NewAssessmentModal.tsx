@@ -61,9 +61,9 @@ const FRAMEWORKS: FrameworkCardMeta[] = (
       description:
         'Comprehensive digital maturity diagnosis across 7 transformation axes (39 areas)',
       icon: <Activity size={20} />,
-      gradient: 'from-primary-500/20 to-primary-600/10',
-      border: 'border-primary-500/30 hover:border-primary-500/60',
-      textColor: 'text-primary-400',
+      gradient: 'from-indigo-500/20 to-indigo-600/10',
+      border: 'border-indigo-500/30 hover:border-indigo-500/60',
+      textColor: 'text-indigo-400',
     },
     {
       value: 'SIRI',
@@ -588,9 +588,11 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                   type="submit"
                   className="
                     flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium
-                    bg-gradient-to-r from-primary-500 to-primary-600
-                    text-white
-                    hover:from-primary-400 hover:to-primary-500
+                    text-white dark:text-navy-950
+                    bg-navy-900 dark:bg-[#F4F7FB]
+                    hover:bg-navy-800 dark:hover:bg-[#DDE5EF]
+                    active:bg-navy-950 dark:active:bg-[#C9D4E3]
+                    focus-visible:ring-c-focus
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-all
                   "
