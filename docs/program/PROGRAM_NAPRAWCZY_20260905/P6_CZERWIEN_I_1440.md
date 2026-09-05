@@ -304,3 +304,48 @@ decyzji o kroku 3. Krok 5 zależny od odpowiedzi właściciela (§3.6). Krok 6 o
 równolegle z 1-4, ale WYMAGAJĄ Opusa (bezpiecznik źle skalibrowany = albo fałszywe alarmy blokujące
 wszystkich, albo cisza, która nie łapie regresji — oba złe). Krok 3 osobno, po 1/2/4, bo dotyka
 najszerszej powierzchni.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu)
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx vitest run src/labels/__tests__/stateToneMap.test.ts src/components/shared/NModeLayout/__tests__` | PASS; `stateToneMap`: statusy „Nieaktywny/Oceny/Szkic/Final” mapują na tony neutralne, `danger` tylko dla `error/blocked/overdue`; dowód mutacyjny: zmiana tonu `inactive`→`danger` → test pada |
+| `rg -n "text-danger\|bg-danger" src/components/Discovery/DiscoveryToolsHub.tsx src/components/DiscoveryTools/KnownToolPreviewV3.tsx` | 0 trafień poza realnymi błędami (każde pozostawione użycie ma komentarz `/* danger-ok: real error */`) |
+| `bash scripts/check-artefakt.sh --report` | crimson w powłoce ≤ baseline; nowy raport `danger-*` bez adnotacji nie rośnie względem pierwszego przebiegu (liczbę PRZED zapisać w raporcie) |
+| `bash scripts/check-list-canon.sh` | `OK` |
+| `git log --format=%s origin/staging..HEAD` | commity w `03_TOOLS`, `04_ASSESSMENT` z `[ODMROZENIE <MODUL> DEC-397]`; krok 2 (kolor FINAL w Ocenie) i krok 5 (Partner) TYLKO po słowie nadzorcy zapisanym w raporcie |
+
+Pomiar na żywo (własny vite; `--dom` z selektorem nagłówka daje pozycje elementów w `.json`):
+
+```
+for s in 1280 1440 1920; do
+  node scripts/dev/odbior-zywo/zrzut.mjs --url=/discovery-tools --port=<p> --host=127.0.0.1 --szerokosc=$s --out=ev/narzedzia-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url=/discovery-tools --port=<p> --host=127.0.0.1 --szerokosc=$s --klik="text=Dynamic SWOT" --klik="text=Otwórz" --dom="[data-nmode-header] *" --out=ev/swot-naglowek-$s.png
+  node scripts/dev/odbior-zywo/zrzut.mjs --url=/interview --port=<p> --host=127.0.0.1 --szerokosc=$s --klik="text=Inicjatywy" --dom="nav,header" --out=ev/wywiad-stepper-$s.png
+done
+```
+
+Progi:
+- Nagłówek SWOT (i po jednym ekranie z każdego z 5 archetypów SPEC-A: Canvas, Dokument, Rekord, Matryca, Deck) przy 1280/1440/1920: **zero par elementów tekstowych o nakładających się prostokątach** (`.json` → pozycje `dom`; skrypt liczy przecięcia); PRZED = `evidence/audyt-award-20260905/narzedzia/13-dynamicswot-fullopen.png`.
+- Kategoria „Oceny” i status „Nieaktywny” bez czerwieni (kontrola wzrokiem PO obok PRZED `01e-root-oceny.png`, `07-operational-row-open.png`); czerwień w tabeli tylko dla realnych błędów.
+- Wywiad: kliknięcie ostatniej pigułki steppera nie przewija nagłówka (breadcrumb „Wywiad” widoczny na zrzucie PO; PRZED = `wywiad/07-tab-inicjatywy.png`).
+- CTA „Dodaj narzędzie” przy 1280 px w jednej linii, pasek Menu 2 bez przepełnienia (`przepelnieniaPoziome` = 0).
+- `bledyKonsoli` = 0.
+
+**STOP:** progi spełnione → commit `evidence/p6-czerwien-1440/` + raport. Krok 2 (kolor FINAL, moduł zatwierdzony) i krok 5 (Partner, decyzja marka vs kanon) — nie wykonywać bez słowa nadzorcy; opisać obie opcje w raporcie i przejść dalej. Zakazy: `--no-verify`, `git stash`, dopisywanie `danger-ok` do użyć, które nie są realnym błędem.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE P6 — Czerwień tylko dla krytycznych stanów + nagłówki bez nakładania przy 1440 px. Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/p6-czerwien-1440 <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/P6_CZERWIEN_I_1440.md — przeczytaj całą.
+
+CEL: (1) czerwień (danger/crimson) wyłącznie dla realnych błędów i stanów krytycznych — kategoria „Oceny” w Narzędziach, status „Nieaktywny”, i podobne stany spokojne dostają ton neutralny z jednej mapy src/labels/stateToneMap.ts (współdzielonej z P4); (2) nagłówek SPEC-A (NModeHeader) ma budżet szerokości: przy 1280/1440/1920 żadne teksty nie nakładają się na 5 archetypach; stepper Wywiadu nie przewija nagłówka; CTA „Dodaj narzędzie” w jednej linii; (3) strażnik check-artefakt raportuje nieadnotowane danger-* (ratchet, nie blokada).
+
+KROKI: §5 (1→3→4→7; 2 i 5 tylko po słowie nadzorcy; 6 poza MVP). Markery [ODMROZENIE 03_TOOLS DEC-397] / [ODMROZENIE 04_ASSESSMENT DEC-397] gdzie §5 wskazuje.
+CEL OSIĄGNIĘTY = §10: testy mapy tonów z dowodem mutacyjnym, rg danger w dwóch plikach Narzędzi = 0 poza adnotowanymi, check-artefakt ≤ baseline, a na zrzutach 1280/1440/1920 zero nakładających się prostokątów tekstu w nagłówku 5 archetypów (odczyt pozycji z .json --dom), stepper nie przewija breadcrumba, CTA w jednej linii, zero błędów konsoli. Raport z liczbami PRZED/PO. Zakazy: --no-verify, git stash, fałszywe adnotacje danger-ok.
+```
