@@ -2110,9 +2110,14 @@ export const UnifiedNodeDetailDrawer: React.FC<UnifiedNodeDetailDrawerProps> = (
   );
 
   // IDE-025: ta sama treść, inne miejsce. Gdy slot panelu istnieje — portalujemy
-  // tam; gdy go nie ma — zostaje dotychczasowa nakładka, więc treść nigdy nie
-  // znika przez brak celu portalu.
-  return zadokowany && slotPanelu ? createPortal(tresc, slotPanelu) : tresc;
+  // tam. Gdy go nie ma (nakładka `fixed z-modal`) — MUSIMY też portalować do
+  // document.body: bez tego drzewo zostaje uwięzione w lokalnym
+  // stacking-context kontenera mindmapy i przegrywa (realne kliknięcia myszy)
+  // z sąsiednim `aside[data-testid=mels-element-inspector-rail]`
+  // (position:relative, montowany w ExecutiveModuleShell), mimo klasy
+  // `fixed z-modal` na korzeniu — patrz runda 5 odbioru (mindmap-i18n-smoke).
+  if (zadokowany && slotPanelu) return createPortal(tresc, slotPanelu);
+  return createPortal(tresc, document.body);
 };
 
 // ── Depth field (mindmap collapse-when-empty style) ─────────────────────────────
