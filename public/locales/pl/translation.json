@@ -23482,7 +23482,7 @@
       "horizon": "Horyzont (miesiące)",
       "granularity": "Granulacja",
       "currency": "Waluta",
-      "valuateModel": "Wycen model",
+      "valuateModel": "Wyceń model",
       "eventTypes": {
         "revenue": "Przychody",
         "cogs": "Koszt sprzedaży",
@@ -23505,7 +23505,10 @@
         "accountsReceivable": "Należności",
         "inventory": "Zapasy",
         "accountsPayable": "Zobowiązania"
-      }
+      },
+      "manualModeNotice": "Brak sprawozdania źródłowego — dane historyczne nie zostaną wczytane. Salda otwarcia zaczynają się od zera. Użyj „Oprzyj na sprawozdaniu”, aby zainicjować model z zatwierdzonego sprawozdania.",
+      "seededFromManualBaseline": "Ręczny / przygotowany punkt odniesienia",
+      "manualBaselineHint": "Ten model korzysta z ręcznie przygotowanego punktu odniesienia. Przejrzyj założenia przed zatwierdzeniem."
     },
     "tabs": {
       "models": "Modele",
@@ -23614,7 +23617,7 @@
       "reanalyzed": "Analiza przeliczona",
       "valuationApproved": "Wycena zatwierdzona",
       "valuationComputed": "Wycena obliczona",
-      "statementConfirmed": "Statement potwierdzony",
+      "statementConfirmed": "Sprawozdanie potwierdzone",
       "valuationCreated": "Wycena utworzona",
       "createFailed": "Nie udało się utworzyć",
       "budgetCreated": "Budżet utworzony",
@@ -23835,7 +23838,12 @@
         "hasRejected": "Co najmniej jedno sprawozdanie zostało odrzucone przy weryfikacji",
         "hasPending": "Co najmniej jedno sprawozdanie czeka na weryfikację",
         "hasRecoverable": "Co najmniej jedno sprawozdanie wymaga poprawek, zanim będzie użyteczne",
-        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć"
+        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć",
+        "invalidPeriodCount": "Pakiet musi obejmować dokładnie dwa okresy sprawozdawcze",
+        "invalidMemberCount": "W pakiecie brakuje co najmniej jednego wymaganego sprawozdania",
+        "missingPeriodStatement": "W co najmniej jednym okresie sprawozdawczym brakuje sprawozdania",
+        "inconsistentEntity": "Sprawozdania dotyczą różnych podmiotów prawnych",
+        "inconsistentSource": "Sprawozdania pochodzą z różnych źródeł"
       }
     },
     "counters": {
@@ -24205,7 +24213,8 @@
       "validation": {
         "MAPPING_COVERAGE": "Pokrycie mapowania",
         "DUAL_PERIOD": "Dwa okresy porównawcze",
-        "LOW_MAPPING_COVERAGE": "Niskie pokrycie mapowania"
+        "LOW_MAPPING_COVERAGE": "Niskie pokrycie mapowania",
+        "ariaLabel": "Wyniki walidacji"
       }
     },
     "mappingEditor": {
@@ -24331,7 +24340,9 @@
         "p50": "P50 (mediana)",
         "p90": "P90",
         "probPositive": "P(NPV > 0)",
-        "var5": "VaR (5%)"
+        "var5": "VaR (5%)",
+        "histogramEmptyAriaLabel": "Histogram rozkładu NPV — brak danych",
+        "histogramAriaLabel": "Histogram rozkładu NPV"
       },
       "sensitivity": {
         "title": "Analiza wrażliwości what-if",
@@ -24340,7 +24351,7 @@
         "driverName": "Nazwa",
         "driverValue": "Wartość",
         "weight": "Waga",
-        "addDriver": "+ driver",
+        "addDriver": "+ czynnik",
         "intercept": "Wyraz wolny (intercept)",
         "tornadoTitle": "Tornado — analiza jednokierunkowa",
         "swingPct": "Wychylenie tornado (%)",
@@ -24661,6 +24672,39 @@
       "valuationsRealSourceFailed": "Nie udało się wczytać wycen z aktywnego źródła danych.",
       "budgetsRealSourceFailed": "Nie udało się wczytać budżetów z aktywnego źródła danych.",
       "demoModeRequiresRealSource": "Tryb demo jest włączony, ale ten moduł wymaga realnych danych źródłowych."
+    },
+    "valuePanels": {
+      "bankingValue": "Wartość bankowa",
+      "cashForecast": "Prognoza gotówkowa",
+      "driverPlanner": "Planer czynników",
+      "driverTree": "Drzewo czynników",
+      "extendedRatios": "Wskaźniki rozszerzone",
+      "headcountPlanner": "Planer zatrudnienia",
+      "investmentAppraisal": "Ocena inwestycji",
+      "rollingForecast": "Prognoza krocząca",
+      "valuationVisuals": "Wizualizacje wyceny",
+      "valueAttribution": "Atrybucja wartości",
+      "valueCapture": "Ścieżka przechwytywania wartości",
+      "valueLedger": "Rejestr wartości",
+      "valueOffice": "Biuro wartości",
+      "varianceBridge": "Mostek odchyleń",
+      "varianceNarration": "Komentarz do odchyleń",
+      "evBasket": "Koszyk EV",
+      "monteCarlo": "Symulacja Monte Carlo NPV",
+      "realOptions": "Opcje rzeczywiste",
+      "frontier": "Granica efektywna",
+      "sensitivity": "Analiza wrażliwości (what-if)",
+      "scenarios": "Obliczenia scenariuszy",
+      "ariaLabel": "Panele analizy wyceny",
+      "loading": "Wczytywanie panelu…"
+    },
+    "blocked": "Dostęp do modułu Finanse jest ograniczony przez politykę Twojej organizacji.",
+    "filters": {
+      "status": {
+        "draft": "Szkic",
+        "review": "W przeglądzie",
+        "approved": "Zatwierdzone"
+      }
     }
   },
   "portfolio": {
@@ -43987,7 +44031,12 @@
     "completed_with_errors": "Zakończone z błędami",
     "skipped": "Pominięte",
     "deprecated": "Wycofane z użycia",
-    "paid": "Wypłacone"
+    "paid": "Wypłacone",
+    "recoverable": "Do poprawy",
+    "needs_changes": "Wymaga zmian",
+    "ready_for_review": "Gotowe do przeglądu",
+    "superseded": "Zastąpione",
+    "invalidated": "Unieważnione"
   },
   "state": {
     "save": {

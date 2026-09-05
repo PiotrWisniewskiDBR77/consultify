@@ -1599,11 +1599,15 @@ export const FinanceHub: React.FC = () => {
   // ---- Per-tab columns ----
   const statusFilterOptions = useMemo(
     () => [
-      { value: 'DRAFT', label: t('common.status.draft', 'Draft'), color: 'bg-slate-400' },
-      { value: 'REVIEW', label: t('common.status.review', 'In Review'), color: 'bg-amber-400' },
+      { value: 'DRAFT', label: t('finance.filters.status.draft', 'Draft'), color: 'bg-slate-400' },
+      {
+        value: 'REVIEW',
+        label: t('finance.filters.status.review', 'In Review'),
+        color: 'bg-amber-400',
+      },
       {
         value: 'APPROVED',
-        label: t('common.status.approved', 'Approved'),
+        label: t('finance.filters.status.approved', 'Approved'),
         color: 'bg-emerald-400',
       },
     ],
