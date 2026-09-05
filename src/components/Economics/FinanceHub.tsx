@@ -1770,6 +1770,14 @@ export const FinanceHub: React.FC = () => {
           id: 'currency',
           label: t('common.currency', 'Currency'),
           width: '90px',
+          // Kod waluty ("PLN") jest krótką, zwartą wartością — podłoga
+          // domyślna dla `dataType` nieustawionego ('text' → 140px) jest
+          // znacznie szersza niż faktycznie potrzebna. Przy 8 kolumnach
+          // zakładki Sprawozdania (natural width > dostępny obszar 1440px)
+          // `columnFit` schodzi WSZYSTKIE kolumny do podłóg — bez tego
+          // 'currency' zabierała 140px z budżetu, który powinien trafić
+          // do kolumny "Aktualizacja" (patrz komentarz przy `baseUpdatedCol`).
+          dataType: 'number',
           filterable: true,
           filterOptions: currencyFilterOptions,
           render: (row: FinanceRow) =>
@@ -1783,6 +1791,10 @@ export const FinanceHub: React.FC = () => {
           id: 'sourceStatementCount',
           label: t('finance.columns.mappedLines', 'Docs'),
           width: '90px',
+          // Liczba dokumentów źródłowych — tak jak 'currency' wyżej, wartość
+          // jest krótka (1-2 cyfry); bez `dataType` dostawała podłogę 'text'
+          // (140px), kradnąc budżet kolumnie "Aktualizacja".
+          dataType: 'number',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
               <span className="text-sm text-c-text-secondary">
