@@ -198,3 +198,6 @@ Pomiar (w toku, `ODBIOR_CTO_20260905/AGENT_RUNTIME.md`): Agent Hub ma plan trans
 
 ## I. Decyzja właściciela 05.09 ~15:10: **podział na projekty = fala 2**
 Zakładka „Projekty” usunięta z Menu 2 Mojej Pracy, trasy `/my-work/projects*` przekierowują do Mojej Pracy, kod zostaje; wymagane pola „Projekt” w kreatorach stają się opcjonalne tam, gdzie serwer na to pozwala. Bez flagi.
+
+## J. Decyzja właściciela 05.09 ~15:12: **Menedżer (pill Menu 2 Mojej Pracy) = fala 2**
+Pill „Menedżer” usunięty, trasa przekierowuje do Mojej Pracy, kod zostaje. Menu 2 Mojej Pracy na MVP: Pomysły · Notatnik · Skrzynka · Kalendarz · Zadania · Decyzje · Sejf klienta.
