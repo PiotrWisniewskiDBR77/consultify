@@ -2166,6 +2166,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { emitMyWorkEvent } = useAppStore();
+  const displayInboxTitle = useCallback(
+    (item: InboxItem): string => {
+      if (item.source?.type !== 'system') return item.title;
+      if (item.title === 'Fix Critical Production Bug') {
+        return t('myWork.inboxContent.systemTitles.fixCriticalProductionBug');
+      }
+      return item.title;
+    },
+    [t]
+  );
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2618,11 +2628,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         render: (row: StandardTableRow) => {
           const r = row as unknown as InboxStandardRow;
           const item = r.__item;
+          const displayTitle = displayInboxTitle(item);
           const showDupeCount = r.__isGroupHeader && r.__groupCount > 1;
           return (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-c-text truncate" title={item.title}>
-                {item.title}
+              <span className="text-sm font-semibold text-c-text truncate" title={displayTitle}>
+                {displayTitle}
               </span>
               {item.suggestedAction && (
                 <span
@@ -2837,7 +2848,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         },
       },
     ];
-  }, [t, isPolish, useInboxStandardTable, toggleGroupExpanded, inboxSemanticDuplicateGroups]);
+  }, [
+    t,
+    isPolish,
+    useInboxStandardTable,
+    toggleGroupExpanded,
+    inboxSemanticDuplicateGroups,
+    displayInboxTitle,
+  ]);
 
   // ── Triage ──
   const triage = useCallback(

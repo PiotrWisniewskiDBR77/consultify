@@ -2995,6 +2995,9 @@
     },
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
+      "systemTitles": {
+        "fixCriticalProductionBug": "Napraw krytyczny błąd produkcyjny"
+      },
       "justNow": "Przed chwilą",
       "dToLocaleDateString": "pl-PL",
       "language": "pl",

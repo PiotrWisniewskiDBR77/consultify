@@ -3650,6 +3650,9 @@
     },
     "openDocuments": "Open documents",
     "inboxContent": {
+      "systemTitles": {
+        "fixCriticalProductionBug": "Fix Critical Production Bug"
+      },
       "justNow": "Just now",
       "dToLocaleDateString": "en-US",
       "language": "en",
