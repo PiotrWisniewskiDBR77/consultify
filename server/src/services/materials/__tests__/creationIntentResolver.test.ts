@@ -475,10 +475,39 @@ describe('resolveDocumentTemplateForCreation — rejection paths', () => {
 // =============================================================================
 
 describe('resolvePresentationTemplateForCreation — canonical presentation template', () => {
-  it('quarantines an otherwise approved presentation template with unknown provenance', async () => {
+  // AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 (decyzja CTO 2026-09-05) — do
+  // 05.09 ten test dowodził, że BRAMKA blokuje wszystko z
+  // `provenance_status <> 'approved'`, systemowe wzorce włącznie.
+  // `presentationTemplateRow()` domyślnie jest wzorcem SYSTEMOWYM
+  // (`organization_id: null, is_system: true`) — po decyzji CTO taki wiersz
+  // jest zaufany z definicji niezależnie od `provenance_status`, więc stary
+  // test opisywał stan, który świadomie przestał być prawdą. Zastąpiony
+  // dwoma testami: systemowy wzorzec NIE jest już blokowany (dowód naprawy),
+  // a wzorzec ORGANIZACJI nadal jest (dowód, że bramka nie zniknęła w
+  // ogóle — tylko przestała dotyczyć systemu).
+  it('a SYSTEM template (organization_id IS NULL) with unapproved provenance resolves OK — trusted by definition', async () => {
     routeDb({ presentationTemplate: presentationTemplateRow({ provenance_status: 'quarantined' }) });
-    await expectPresentationResolveError(
+    const resolved = await resolvePresentationTemplateForCreation(
       { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      { organizationId: ORG }
+    );
+    expect(resolved.canonicalTemplateId).toBe('pt-steering');
+  });
+  it('quarantines an ORGANIZATION-owned presentation template with unapproved provenance', async () => {
+    routeDb({
+      presentationTemplate: presentationTemplateRow({
+        id: 'pt-custom-quarantined',
+        organization_id: ORG,
+        is_system: false,
+        provenance_status: 'quarantined',
+      }),
+    });
+    await expectPresentationResolveError(
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-custom-quarantined',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_PROVENANCE_UNVERIFIED'
     );
   });

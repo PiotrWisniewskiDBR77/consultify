@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
+import { resolveTemplateProvenancePath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { LoadingState } from '@/components/ui/primitives';
@@ -118,9 +119,18 @@ function buildTemplateOutlinePreview(
  */
 const TemplateResolveBlockedCard: React.FC<{
   message: string | null;
+  errorCode?: string | null;
   onBack: () => void;
-}> = ({ message, onBack }) => {
+}> = ({ message, errorCode, onBack }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  // AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 — po decyzji CTO 05.09 wzorce
+  // SYSTEMOWE nigdy nie trafiają już w ten kod (zaufane z definicji, patrz
+  // `creationIntent.ts`); 409 TEMPLATE_PROVENANCE_UNVERIFIED zostaje więc
+  // wyłącznie dla wzorców ORGANIZACJI, dla których atestacja jest realną
+  // ścieżką wyjścia z kwarantanny — stąd drugi przycisk prowadzący wprost do
+  // kolejki, zamiast samego opisu słownego.
+  const showProvenanceCta = errorCode === 'TEMPLATE_PROVENANCE_UNVERIFIED';
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-6">
       <div
@@ -134,13 +144,25 @@ const TemplateResolveBlockedCard: React.FC<{
           {t('documentStudio.view.templateResolveTitle', 'Nie da się użyć tego wzorca')}
         </h2>
         <p className="text-sm leading-relaxed text-c-text-secondary">{message}</p>
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-6 rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        >
-          {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
-        </button>
+        <div className="mt-6 flex flex-col items-center gap-2">
+          {showProvenanceCta ? (
+            <button
+              type="button"
+              data-testid="template-resolve-provenance-cta"
+              onClick={() => navigate(resolveTemplateProvenancePath())}
+              className="rounded-lg border border-c-border-strong bg-c-text px-4 py-2 text-sm font-medium text-c-surface transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {t('documentStudio.view.goToProvenance', 'Przejdź do Pochodzenie i prawa')}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {t('documentStudio.view.backToLibrary', 'Wróć do Biblioteki wzorców')}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1034,6 +1056,7 @@ export const DocumentStudioView: React.FC = () => {
           ) : intakeGate === 'template-blocked' ? (
             <TemplateResolveBlockedCard
               message={templateResolveMessage}
+              errorCode={templateResolveErrorCode}
               onBack={() => navigate('/presentations?tab=templates')}
             />
           ) : intakeGate === 'blank-creating' ? (

@@ -144,6 +144,23 @@ export function resolveTemplateClonePath(templateId: string, templateType: Templ
   return `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateId)}`;
 }
 
+/**
+ * Trasa „Przejdź do Pochodzenie i prawa" (AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905).
+ *
+ * Cel: kolejka atestacji dla wzorców ORGANIZACJI (`TemplateProvenanceApprovalDialog`,
+ * zamontowany w `ReportsAndPresentationsHub` pod zakładką „Szablony"). Komunikat
+ * 409 `TEMPLATE_PROVENANCE_UNVERIFIED` (Document Studio / Report Builder /
+ * Prezentacje — wszystkie trzy resolwery w `creationIntent.ts`) prowadzi tu
+ * jednym klikiem zamiast zostawiać użytkownika z samym opisem "otwórz
+ * Bibliotekę → Pochodzenie i prawa" bez działającego przycisku.
+ *
+ * `openProvenance=1` czyta `resolveTemplatesDeepLink` niżej — wymusza zakładkę
+ * „Szablony" i sygnalizuje Hubowi, że ma od razu otworzyć dialog.
+ */
+export function resolveTemplateProvenancePath(): string {
+  return '/presentations?tab=templates&openProvenance=1';
+}
+
 export function appendArtifactOpenAction(path: string | null, action: string): string | null {
   const normalizedPath = String(path || '').trim();
   const normalizedAction = String(action || '').trim();
@@ -178,32 +195,46 @@ export interface TemplatesDeepLinkTarget {
   workbookTemplateId: string | null;
   /** `true`, gdy adres wymusza zakładkę „Szablony" niezależnie od `?tab=`. */
   forcesTemplatesTab: boolean;
+  /**
+   * `true`, gdy adres ma od razu otworzyć dialog „Pochodzenie i prawa"
+   * (`?openProvenance=1`, produkowane przez `resolveTemplateProvenancePath`).
+   */
+  openProvenance: boolean;
 }
 
 export function resolveTemplatesDeepLink(search: string | URLSearchParams): TemplatesDeepLinkTarget {
   const params = typeof search === 'string' ? new URLSearchParams(search) : search;
+  const openProvenance = (params.get('openProvenance') || '').trim() === '1';
   const editWorkbookTemplateId = (params.get('editWorkbookTemplateId') || '').trim();
   if (editWorkbookTemplateId) {
     return {
       templatesView: 'workbookTemplates',
       workbookTemplateId: editWorkbookTemplateId,
       forcesTemplatesTab: true,
+      openProvenance,
     };
   }
   const tab = (params.get('tab') || '').trim();
   if (tab === 'template_architect') {
-    return { templatesView: 'deckArchitect', workbookTemplateId: null, forcesTemplatesTab: true };
+    return {
+      templatesView: 'deckArchitect',
+      workbookTemplateId: null,
+      forcesTemplatesTab: true,
+      openProvenance,
+    };
   }
   if (tab === 'workbook_templates') {
     return {
       templatesView: 'workbookTemplates',
       workbookTemplateId: (params.get('workbookTemplateId') || '').trim() || null,
       forcesTemplatesTab: true,
+      openProvenance,
     };
   }
   return {
     templatesView: 'library',
     workbookTemplateId: (params.get('workbookTemplateId') || '').trim() || null,
-    forcesTemplatesTab: false,
+    forcesTemplatesTab: openProvenance,
+    openProvenance,
   };
 }

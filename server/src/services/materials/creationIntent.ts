@@ -141,6 +141,18 @@ export type TemplateResolveErrorCode =
    *
    * Dwa różne stany, dwa różne kody: 403 = cudza organizacja; 409 = własny
    * wzorzec bez atestacji.
+   *
+   * DOPISEK 2026-09-05 (AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905): powyższy
+   * "wzorzec systemowy" w opisie problemu okazał się kodowym FANTOMEM — bramka
+   * 409 rzeczywiście trafiała też wzorce SYSTEM_ORG_ID, a kolejka
+   * `/templates-provenance/pending` i `approveTemplateProvenance` filtrują
+   * `organization_id = <wołający>`, więc SYSTEM_ORG_ID nie miał i nie mógł
+   * mieć drogi do atestacji — 409 dla wzorca systemowego było ślepym
+   * zaułkiem, nie tylko złym komunikatem. DECYZJA CTO: wzorzec systemowy
+   * dostarczony z produktem jest zaufany Z DEFINICJI (pochodzenie: „systemowy
+   * Consultify", prawa: „licencja produktu") — trzy resolvery niżej pomijają
+   * `provenance_status` dla SYSTEM_ORG_ID / `organization_id IS NULL` /
+   * `is_system`, bramka zostaje wyłącznie dla wzorców organizacji.
    */
   | 'TEMPLATE_PROVENANCE_UNVERIFIED'
   | 'TEMPLATE_DEPRECATED'
@@ -364,7 +376,16 @@ async function resolveDocumentStudioTemplate(
       { canonicalTemplateId, originRuntime: 'document_template' }
     );
   }
-  if (row.provenance_status !== 'approved') {
+  // DECYZJA CTO 2026-09-05 (patrz AGENT_MATERIALY_DEFEKTY_20260905.md pkt 1):
+  // wzorzec systemowy (`organization_id = SYSTEM_ORG_ID`, dostarczony z
+  // produktem) jest zaufany Z DEFINICJI — nie ma i nigdy nie miał drogi do
+  // ręcznej atestacji (kolejka `/templates-provenance/pending` oraz
+  // `approveTemplateProvenance` filtrują `organization_id = <wołający>`,
+  // co z definicji wyklucza SYSTEM_ORG_ID). Pochodzenie: „systemowy
+  // Consultify"; prawa: „licencja produktu". Bramka provenance zostaje
+  // WYŁĄCZNIE dla wzorców organizacji (`ownedByCaller`) — te nadal muszą
+  // przejść przez `/templates/:id/provenance/approve`.
+  if (!systemVisible && row.provenance_status !== 'approved') {
     throw new TemplateResolveError(
       'TEMPLATE_PROVENANCE_UNVERIFIED',
       'Template provenance is not approved',
@@ -449,7 +470,16 @@ async function resolveLegacyReportTemplate(
       { canonicalTemplateId, originRuntime: 'report_template' }
     );
   }
-  if (row.provenance_status !== 'approved') {
+  // DECYZJA CTO 2026-09-05: wzorce systemowe (`report_builder_templates` z
+  // `organization_id IS NULL` lub `is_system = true` — np. „Raport
+  // diagnostyczny DRD") dostarczone z produktem są zaufane z definicji;
+  // atestacja ręczna dotyczy WYŁĄCZNIE wzorców organizacji. Ten sam znacznik
+  // (`orgId === '' || isSystem`), którego już używa predykat widoczności
+  // powyżej, odróżnia „systemowy" od „obcej organizacji" — cross-org PUBLIC
+  // wzorzec (`isPublic`, nie systemowy) nadal wymaga atestacji, bo ma
+  // rzeczywistego właściciela-organizację.
+  const systemTrusted = orgId === '' || isSystem;
+  if (!systemTrusted && row.provenance_status !== 'approved') {
     throw new TemplateResolveError(
       'TEMPLATE_PROVENANCE_UNVERIFIED',
       'Template provenance is not approved',
@@ -552,7 +582,11 @@ export async function resolvePresentationTemplateForCreation(
       { canonicalTemplateId, originRuntime: 'presentation_template' }
     );
   }
-  if (row.provenance_status !== 'approved') {
+  // DECYZJA CTO 2026-09-05: wzorzec systemowy (`presentation_templates` z
+  // `is_system = true` lub `organization_id IS NULL`) jest zaufany z
+  // definicji — atestacja ręczna dotyczy WYŁĄCZNIE wzorców organizacji
+  // (`ownedByCaller`).
+  if (!systemVisible && row.provenance_status !== 'approved') {
     throw new TemplateResolveError(
       'TEMPLATE_PROVENANCE_UNVERIFIED',
       'Template provenance is not approved',

@@ -195,8 +195,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // odpowiednim `templatesView` zamiast na osobnej zakładce.
   type TemplatesLibraryView = 'library' | 'deckArchitect' | 'workbookTemplates';
 
-  const { initialTab, initialArtifactId, initialTemplatesView, initialWorkbookTemplateId } =
-    useMemo(() => {
+  const {
+    initialTab,
+    initialArtifactId,
+    initialTemplatesView,
+    initialWorkbookTemplateId,
+    initialOpenProvenance,
+  } = useMemo(() => {
       const params = new URLSearchParams(location.search || '');
       const fromQuery = parseRapTabFromQuery(params.get('tab'));
       // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały, obserwacja „martwy
@@ -229,6 +234,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         initialArtifactId: params.get('artifactId') || params.get('deck') || null,
         initialTemplatesView: templatesView,
         initialWorkbookTemplateId: deepLink.workbookTemplateId,
+        initialOpenProvenance: deepLink.openProvenance,
       };
     }, [location.pathname, location.search]);
 
@@ -620,7 +626,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     // `setWorkbookTemplateId(id)` po zapisie) — nadpisujemy wyłącznie wtedy,
     // gdy adres realnie NIESIE identyfikator.
     if (initialWorkbookTemplateId) setWorkbookTemplateId(initialWorkbookTemplateId);
-  }, [initialTab, initialTemplatesView, initialWorkbookTemplateId]);
+    // AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 — `?openProvenance=1`
+    // (`resolveTemplateProvenancePath`, przycisk „Przejdź do Pochodzenie i
+    // prawa" na komunikacie 409 TEMPLATE_PROVENANCE_UNVERIFIED w Document
+    // Studio / Report Builder / Prezentacje) otwiera dialog od razu, zamiast
+    // zostawiać użytkownika na samej liście szablonów.
+    if (initialOpenProvenance) setTemplateProvenanceOpen(true);
+  }, [initialTab, initialTemplatesView, initialWorkbookTemplateId, initialOpenProvenance]);
 
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   React.useEffect(() => {
