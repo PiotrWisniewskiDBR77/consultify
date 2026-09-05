@@ -1,6 +1,7 @@
 import { type Request, type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { resolveNativeArtifactOpenTarget } from './artifactOpenPath.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
@@ -111,10 +112,12 @@ function buildActionTargetPayload(artifact: {
   artifactId: string;
   originRuntime?: string | null;
   originRecordId?: string | null;
+  originSummary?: Record<string, unknown> | null;
 }) {
   const originRuntime = String(artifact.originRuntime || '');
   const originRecordId = String(artifact.originRecordId || '');
   const reviewPath = `/api/artifacts/${artifact.artifactId}/start-review`;
+  const originSummary = (artifact.originSummary ?? null) as Record<string, unknown> | null;
 
   if (!originRuntime || !originRecordId) {
     return {
@@ -183,15 +186,20 @@ function buildActionTargetPayload(artifact: {
   // Document Studio resume URL, which this same runtime's GET
   // /api/document-studio/:artifactId actually resolves.
   if (originRuntime === 'native_artifact') {
+    // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — dokument z czatu NIE JEST
+    // dokumentem Document Studio i nie może dostać jego adresu (pomiar i pełne
+    // uzasadnienie: `artifactOpenPath.ts`). Decyzja wydzielona do czystej
+    // funkcji, żeby dała się przetestować bez montowania routera.
+    const target = resolveNativeArtifactOpenTarget({ originRecordId, originSummary });
     return {
       artifactId: artifact.artifactId,
       originRuntime,
       originRecordId,
-      openPath: `/document-studio/${originRecordId}`,
-      exportPath: `/api/document-studio/${originRecordId}/export/pdf`,
+      openPath: target.openPath,
+      exportPath: target.exportPath,
       deletePath: null,
       reviewPath,
-      authority: 'document_studio',
+      authority: target.authority,
     };
   }
 
@@ -1441,7 +1449,9 @@ router.post(
       }
     } catch (error) {
       if (error instanceof publishReviewService.PublishReviewError) {
-        return res.status(409).json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
+        return res
+          .status(409)
+          .json({ ...mapAppErrorResponse(error, req, 'error'), code: error.code });
       }
       throw error;
     }

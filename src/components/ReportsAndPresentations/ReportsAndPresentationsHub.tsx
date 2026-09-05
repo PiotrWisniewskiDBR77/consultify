@@ -49,6 +49,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { resolveTemplatesDeepLink } from './artifactNavigation';
+import { countRowsByStatus } from './statusCounts';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -1241,16 +1242,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           ? artifactOutputRows.filter((row) => row.kind === 'document')
           : presentations;
 
-    const statusKey = 'status' as const;
-
-    const counts = (items || []).reduce(
-      (acc, it: any) => {
-        const s = String(it?.[statusKey] ?? '').toLowerCase();
-        if (!s) return acc;
-        acc[s] = (acc[s] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
+    // Liczniki statusów — patrz `statusCounts.ts` (pomiar 05.09: licznik czytał
+    // `status`, a wiersze „Dokumentów" trzymają status w `statusKey`, więc każdy
+    // chip pokazywał 0 przy 79 rekordach).
+    const counts = countRowsByStatus(
+      items as unknown as ReadonlyArray<Record<string, unknown>>,
+      activeTab === 'outputs_documents'
+        ? 'outputs_documents'
+        : activeTab === 'templates'
+          ? 'templates'
+          : 'presentations'
     );
 
     // ★ Chipy dla 'templates' MUSZĄ pokrywać wszystkie statusy realnie zapisywane
