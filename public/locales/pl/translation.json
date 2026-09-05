@@ -11273,8 +11273,7 @@
       "toReview": "{{count}} do rozpatrzenia",
       "empty": "Brak sugerowanych zmian",
       "accept": "Akceptuj",
-      "reject": "Odrzuć",
-      "tooLong": "Zaznaczony tekst jest za długi dla tej akcji AI. Skróć zaznaczenie i spróbuj ponownie."
+      "reject": "Odrzuć"
     },
     "initiativeProposalBoard": {
       "title": "Tablica propozycji",
@@ -30916,6 +30915,7 @@
       "teresaSuggestion": "Propozycja Teresy",
       "accept": "Akceptuj",
       "reject": "Odrzuć",
+      "tooLong": "Zaznaczony tekst jest za długi dla tej akcji AI. Skróć zaznaczenie i spróbuj ponownie.",
       "quickAction": {
         "expand": "Rozwiń",
         "shorten": "Skróć",

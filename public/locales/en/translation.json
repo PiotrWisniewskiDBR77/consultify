@@ -11876,8 +11876,7 @@
       "toReview": "{{count}} to review",
       "empty": "No suggested changes",
       "accept": "Accept",
-      "reject": "Reject",
-      "tooLong": "The selected text is too long for this AI action. Shorten the selection and try again."
+      "reject": "Reject"
     },
     "initiativeProposalBoard": {
       "title": "Proposal board",
@@ -28585,6 +28584,7 @@
       "teresaSuggestion": "Teresa suggestion",
       "accept": "Accept",
       "reject": "Reject",
+      "tooLong": "The selected text is too long for this AI action. Shorten the selection and try again.",
       "quickAction": {
         "expand": "Expand",
         "shorten": "Shorten",
