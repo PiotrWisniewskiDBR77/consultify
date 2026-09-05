@@ -294,6 +294,14 @@ export interface StandardTableProps {
    * grouped-rows jak Inbox). Addytywne — bez propa ZERO zmian wizualnych.
    */
   rowClassName?: string | ((row: TableRow) => string);
+  /**
+   * Wiersz grupujący (opt-in) — przelot do `FilterableTable`. Raport KPI grupuje
+   * mierniki po obszarze (SSOT §6, werdykt K6): wiersz grupy jest JEDNĄ komórką
+   * na całą szerokość, więc nie rysuje „—" w kolumnach, których grupa nie ma.
+   * Bez tych dwóch propów fasada zachowuje się identycznie jak dotąd.
+   */
+  isGroupRow?: (row: TableRow) => boolean;
+  renderGroupRow?: (row: TableRow) => React.ReactNode;
 
   /** Lejki kolumn — kontrolowane z zewnątrz lub stan wewnętrzny fasady. */
   activeFilters?: FilterChip[];
@@ -345,6 +353,8 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   rowActions,
   rowDescription,
   rowClassName,
+  isGroupRow,
+  renderGroupRow,
   activeFilters,
   onFilterChange,
   defaultSort,
@@ -593,6 +603,8 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       persistKey={effectivePersistKey}
       selection={selectionDriver}
       rowClassName={rowClassName}
+      isGroupRow={isGroupRow}
+      renderGroupRow={renderGroupRow}
       /* `undefined` → domyślka `FilterableTable` (980 px). Zero zmiany dla
          ekranów, które tego propa nie podają. */
       minTableWidth={minTableWidth}

@@ -62,6 +62,28 @@ export interface TableColumn {
    * Zapisany układ użytkownika (persistKey) ma pierwszeństwo nad tym domyślnym.
    */
   defaultVisible?: boolean;
+  /**
+   * ── PRZYPIĘCIE KOLUMNY PRZY PRZEWIJANIU POZIOMYM (opt-in, 2026-09-05) ─────
+   *
+   * Po co: raport KPI (SSOT `docs/modules/07_rezultaty/SSOT_WYNIKI_KPI_OKR_ROI.md`
+   * §6) ma dwanaście kolumn okresów przewijanych poziomo, a kolumna MIERNIK
+   * musi zostać widoczna z lewej, YTD i STAN z prawej. Do 2026-09-05 jądro
+   * umiało przypiąć WYŁĄCZNIE strukturalną kolumnę akcji (`sticky right-0`),
+   * więc każdy ekran, który potrzebował czegoś więcej, robił to sam —
+   * prototyp P7K liczył offsety w `useEffect` z `getBoundingClientRect()`
+   * i doklejał warianty `[&_td:nth-last-child(2)]:sticky`. To jest dokładnie
+   * ten kształt, przed którym ostrzega „naprawa per-wywołanie odrasta":
+   * mechanika należy do jądra, nie do wywołania.
+   *
+   * Offsety liczymy z TYCH SAMYCH szerokości, którymi renderują się komórki
+   * (`columnFit.widths` → `columnWidths` → `parsePx(column.width)`), więc
+   * nagłówek i wiersz nigdy się nie rozjadą — bez pomiaru DOM po renderze.
+   *
+   * ADDYTYWNE: bez tego pola tabela zachowuje się co do piksela jak dotąd
+   * (`pinnedLayout` jest wtedy pustym obiektem i żadna komórka nie dostaje
+   * ani jednej dodatkowej klasy).
+   */
+  pinned?: 'left' | 'right';
   render?: (row: any) => React.ReactNode;
 }
 
@@ -160,6 +182,25 @@ interface FilterableTableProps {
    * Omit for zero visual change (default undefined → no-op).
    */
   rowClassName?: string | ((row: TableRow) => string);
+  /**
+   * ── WIERSZ GRUPUJĄCY (opt-in, 2026-09-05) ────────────────────────────────
+   *
+   * Po co: raport KPI grupuje mierniki po OBSZARZE (SSOT §6, werdykt K6:
+   * „wiersz grupy = jedna komórka na całą szerokość (`colSpan`) z nazwą grupy
+   * i właścicielem nadrzędnym; zero »—« w wierszu grupy"). Bez tego wiersz
+   * grupy przechodził przez normalną ścieżkę komórek i każda kolumna, której
+   * grupa nie ma, rysowała „—".
+   *
+   * `isGroupRow(row)` decyduje, `renderGroupRow(row)` daje treść. Komórka
+   * dostaje `colSpan` na wszystkie widoczne kolumny + strukturalną kolumnę
+   * akcji, nieprzezroczyste tło (inaczej przewijana treść przebija spod
+   * przypiętych kolumn) i sticky-owiniętą treść, żeby nazwa grupy została
+   * widoczna także po przewinięciu w prawo.
+   *
+   * ADDYTYWNE: bez `isGroupRow` żaden wiersz nie wchodzi w tę gałąź.
+   */
+  isGroupRow?: (row: TableRow) => boolean;
+  renderGroupRow?: (row: TableRow) => React.ReactNode;
   /**
    * ── Minimalna szerokość elementu `table` (opt-in) ─────────────────────────
    *
@@ -717,6 +758,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   defaultSort = null,
   rowDescription,
   rowClassName,
+  isGroupRow,
+  renderGroupRow,
   minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
   const horizontalViewportRef = useRef<HTMLDivElement>(null);
@@ -1179,6 +1222,100 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     effectiveMinTableWidth,
   ]);
 
+  /**
+   * ── GEOMETRIA PRZYPIĘTYCH KOLUMN (`column.pinned`) ────────────────────────
+   *
+   * Offset liczymy z tej samej szerokości, którą dostaje `style.width` komórki
+   * (`columnFit.widths` → `columnWidths` → `parsePx`), więc nagłówek i wiersz
+   * mają IDENTYCZNE `left`/`right` bez pomiaru DOM. Kolumny przypięte z prawej
+   * startują za strukturalną kolumną akcji (`sticky right-0`, 80 px), inaczej
+   * pierwsza z nich schowałaby się pod kebabem.
+   *
+   * `edge` oznacza kolumnę na granicy obszaru przewijanego — tylko ona dostaje
+   * cień, żeby granica przypięcia była widoczna, a nie sześć cieni na sobie.
+   */
+  const pinnedLayout = useMemo<
+    Record<string, { side: 'left' | 'right'; offset: number; edge: boolean }>
+  >(() => {
+    const map: Record<string, { side: 'left' | 'right'; offset: number; edge: boolean }> = {};
+    if (!visibleColumns.some((c) => c.pinned)) return map;
+    const widthOf = (column: TableColumn) =>
+      columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
+
+    let left = 0;
+    let lastLeftId: string | null = null;
+    for (const column of visibleColumns) {
+      if (column.pinned !== 'left') continue;
+      map[column.id] = { side: 'left', offset: left, edge: false };
+      left += widthOf(column);
+      lastLeftId = column.id;
+    }
+    if (lastLeftId && map[lastLeftId]) map[lastLeftId]!.edge = true;
+
+    let right = hideRowActions ? 0 : ROW_ACTIONS_COLUMN_WIDTH;
+    let lastRightId: string | null = null;
+    for (let i = visibleColumns.length - 1; i >= 0; i -= 1) {
+      const column = visibleColumns[i]!;
+      if (column.pinned !== 'right') continue;
+      map[column.id] = { side: 'right', offset: right, edge: false };
+      right += widthOf(column);
+      lastRightId = column.id;
+    }
+    if (lastRightId && map[lastRightId]) map[lastRightId]!.edge = true;
+    return map;
+  }, [visibleColumns, columnFit, columnWidths, parsePx, hideRowActions]);
+
+  /** Klasy komórki NAGŁÓWKA przypiętej kolumny — tło musi być NIEPRZEZROCZYSTE
+   *  (`thead` ma `bg-…/80 backdrop-blur`, spod którego przebijałaby przewijana
+   *  treść). Te same wartości co strukturalna kolumna akcji, żeby nie było
+   *  widocznego szwu koloru między nią a przypiętą kolumną obok. */
+  const pinnedHeaderClass = (column: TableColumn): string => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return '';
+    return [
+      'sticky top-0 z-[12] bg-slate-50 dark:bg-navy-900',
+      pin.edge
+        ? pin.side === 'left'
+          ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12)]'
+          : 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]'
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  };
+
+  /** Klasy komórki DANYCH przypiętej kolumny. Stan wiersza (zaznaczony/hover)
+   *  nakładamy jako `box-shadow: inset` — dokładnie tak, jak robi to kolumna
+   *  akcji: `background-color` jest tu zajęty przez nieprzezroczyste tło, więc
+   *  odcień stanu musi przyjść INNĄ właściwością CSS. */
+  const pinnedCellClass = (column: TableColumn, isSelected: boolean): string => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return '';
+    /* UWAGA: klasy MUSZĄ być zapisane jako pełne, statyczne literały. Tailwind
+       skanuje ŹRÓDŁO tekstowo — `shadow-[${zmienna}]` nie wygeneruje reguły
+       i cień po prostu nie powstanie. Dlatego sześć kombinacji jest wypisanych,
+       a nie sklejanych. */
+    const edge: 'left' | 'right' | 'none' = pin.edge ? pin.side : 'none';
+    const shadow = isSelected
+      ? edge === 'left'
+        ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+        : edge === 'right'
+          ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+          : 'shadow-[inset_0_0_0_999px_var(--state-selected)]'
+      : edge === 'left'
+        ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+        : edge === 'right'
+          ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+          : 'group-hover:shadow-[inset_0_0_0_999px_var(--state-hover)]';
+    return `sticky z-[11] bg-white dark:bg-navy-900 ${shadow}`;
+  };
+
+  const pinnedStyle = (column: TableColumn): React.CSSProperties => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return {};
+    return pin.side === 'left' ? { left: `${pin.offset}px` } : { right: `${pin.offset}px` };
+  };
+
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(
     () => visibleColumns.find((c) => c.type !== 'select')?.id ?? null,
@@ -1402,11 +1539,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   return (
                     <th
                       key={column.id}
-                      className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${pinnedHeaderClass(column)}`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
                         maxWidth: `${maxWidth}px`,
+                        ...pinnedStyle(column),
                       }}
                     >
                       {isSelectCol ? (
@@ -1667,7 +1805,36 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                sortedData.map((row) => (
+                sortedData.map((row) =>
+                  isGroupRow?.(row) ? (
+                    /**
+                     * WIERSZ GRUPUJĄCY (K6) — jedna komórka na całą szerokość.
+                     * Nie jest klikalny, nie ma kebaba i NIE przechodzi przez
+                     * ścieżkę komórek, więc żadna kolumna nie rysuje w nim „—".
+                     * Treść owinięta w `sticky left-0`: przy przewijaniu okresów
+                     * nazwa obszaru zostaje przy lewej krawędzi, obok przypiętej
+                     * kolumny pierwotnej, zamiast wyjeżdżać z kadru.
+                     */
+                    <tr
+                      key={row.id}
+                      data-group-row="true"
+                      className={[
+                        'bg-[color:var(--c-surface-raised)]',
+                        typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <td
+                        colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} bg-[color:var(--c-surface-raised)]`}
+                      >
+                        <div className="sticky left-0 inline-flex max-w-full items-center gap-3">
+                          {renderGroupRow ? renderGroupRow(row) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
                   <tr
                     key={row.id}
                     // DOSTĘPNOŚĆ KLAWIATURY — wiersz jest interaktywny, więc musi
@@ -1806,7 +1973,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
                         // zostaje tu jako ostatnia deska ratunku dla treści,
                         // którą moduł renderuje jako własne ELEMENTY.
-                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''} ${pinnedCellClass(column, row.id === selectedRowId)}`}
+                        style={pinnedStyle(column)}
                       >
                         {column.type === 'select' && selection ? (
                           <input
@@ -1999,7 +2167,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       </td>
                     ) : null}
                   </tr>
-                ))
+                  )
+                )
               )}
             </tbody>
           </table>
