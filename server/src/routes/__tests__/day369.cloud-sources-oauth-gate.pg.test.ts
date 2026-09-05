@@ -6,12 +6,13 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { assertRealPostgresTestEnvironment } from '../../../../tests/integration/_helpers/assertRealPostgres.js';
 import config from '../../config/Config.js';
 import { ApiGateway } from '../../Gateway.js';
 import { getStoredToken } from '../../services/integrationOAuthEngine.js';
+import { listCloudFiles } from '../../services/cloudDataService.js';
 import { encryptSecret } from '../../utils/secretEncryption.js';
 
 describe('Day 369 — cloud sources require the real per-user OAuth token', () => {
@@ -58,6 +59,8 @@ describe('Day 369 — cloud sources require the real per-user OAuth token', () =
       { algorithm: 'HS256', expiresIn: '10m' }
     );
   }, 30000);
+
+  afterEach(() => vi.unstubAllGlobals());
 
   afterAll(async () => {
     await pool.query('DELETE FROM cloud_sources WHERE organization_id = ANY($1)', [[orgA, orgB]]);
@@ -126,6 +129,27 @@ describe('Day 369 — cloud sources require the real per-user OAuth token', () =
     console.log('DAY369_SHAREPOINT_HTTP', response.status, JSON.stringify(response.body));
     expect(response.status).toBe(400);
     expect(response.body.code).toBe('CLOUD_PROVIDER_UNSUPPORTED');
+  });
+
+  it('uses the live OAuth-engine token for the Google Drive HTTP request', async () => {
+    const source = await pool.query(
+      'SELECT id FROM cloud_sources WHERE organization_id=$1 AND name=$2',
+      [orgA, 'Verified Drive']
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ files: [] }),
+      text: async () => '',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await listCloudFiles(source.rows[0].id, orgA);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [url, init] = fetchMock.mock.calls[0];
+    console.log('DAY369_GOOGLE_FETCH', url, JSON.stringify(init));
+    expect(String(url)).toContain('www.googleapis.com/drive/v3/files');
+    expect(init.headers.Authorization).toBe('Bearer fake-google-token-day369');
   });
 
 });

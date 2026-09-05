@@ -6,6 +6,7 @@
  */
 
 import logger from '../utils/Logger.js';
+import { getValidAccessToken } from './integrationOAuthEngine.js';
 
 export interface CloudSource {
   id: string;
@@ -69,6 +70,12 @@ export type CloudDownloadResult = {
   mimeType: string;
   content: Buffer;
 };
+
+async function resolveLiveAccessToken(source: CloudSource, providerLabel: string): Promise<string> {
+  const accessToken = await getValidAccessToken(source.userId, source.provider);
+  if (!accessToken) throw new Error(`${providerLabel} access token not configured`);
+  return accessToken;
+}
 
 export async function listCloudSources(organizationId: string): Promise<CloudSource[]> {
   const db = await getDb();
@@ -158,16 +165,14 @@ export async function listCloudFiles(
 }
 
 async function listGoogleDriveFiles(source: CloudSource, folderId?: string): Promise<CloudFile[]> {
-  if (!source.accessToken) {
-    throw new Error('Google Drive access token not configured');
-  }
+  const accessToken = await resolveLiveAccessToken(source, 'Google Drive');
 
   const parentId = folderId || source.rootFolderId || 'root';
   const query = `'${parentId}' in parents and trashed = false`;
   const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,modifiedTime)&pageSize=100`;
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${source.accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!response.ok) {
@@ -215,14 +220,12 @@ async function downloadGoogleDriveFile(
   source: CloudSource,
   fileId: string
 ): Promise<CloudDownloadResult> {
-  if (!source.accessToken) {
-    throw new Error('Google Drive access token not configured');
-  }
+  const accessToken = await resolveLiveAccessToken(source, 'Google Drive');
 
   const metadataRes = await fetch(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType`,
     {
-      headers: { Authorization: `Bearer ${source.accessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
   if (!metadataRes.ok) {
@@ -272,7 +275,7 @@ async function downloadGoogleDriveFile(
   }
 
   const contentRes = await fetch(downloadUrl, {
-    headers: { Authorization: `Bearer ${source.accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!contentRes.ok) {
     const errText = await contentRes.text();
@@ -400,7 +403,7 @@ async function uploadGoogleDriveFile(
   content: Buffer,
   folderId?: string
 ): Promise<CloudUploadResult> {
-  if (!source.accessToken) throw new Error('Google Drive access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'Google Drive');
 
   const boundary = `-------consultify-${Date.now()}`;
   const metadata: any = { name: fileName };
@@ -427,7 +430,7 @@ async function uploadGoogleDriveFile(
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${source.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': `multipart/related; boundary=${boundary}`,
       'Content-Length': String(multipartBody.length),
     },
@@ -457,7 +460,7 @@ async function uploadOneDriveFile(
   content: Buffer,
   folderId?: string
 ): Promise<CloudUploadResult> {
-  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'OneDrive');
 
   const safeName = encodeURIComponent(fileName);
   const uploadUrl = folderId
@@ -467,7 +470,7 @@ async function uploadOneDriveFile(
   const response = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
-      Authorization: `Bearer ${source.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': mimeType,
     },
     body: content,
@@ -492,7 +495,7 @@ async function uploadOneDriveFile(
 // ── OneDrive / SharePoint: List + Download ──────────────────────
 
 async function listOneDriveFiles(source: CloudSource, folderId?: string): Promise<CloudFile[]> {
-  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'OneDrive');
 
   const itemPath = folderId
     ? `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(folderId)}/children`
@@ -501,7 +504,7 @@ async function listOneDriveFiles(source: CloudSource, folderId?: string): Promis
   const url = `${itemPath}?$select=id,name,size,lastModifiedDateTime,file,folder&$top=200`;
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${source.accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (response.status === 401) throw new Error('OneDrive token expired — reauth required');
@@ -536,18 +539,18 @@ async function downloadOneDriveFile(
   source: CloudSource,
   fileId: string
 ): Promise<CloudDownloadResult> {
-  if (!source.accessToken) throw new Error('OneDrive access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'OneDrive');
 
   const metaResp = await fetch(
     `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(fileId)}?$select=name,file`,
-    { headers: { Authorization: `Bearer ${source.accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!metaResp.ok) throw new Error(`OneDrive metadata error: ${metaResp.status}`);
   const meta = (await metaResp.json()) as { name?: string; file?: { mimeType?: string } };
 
   const contentResp = await fetch(
     `https://graph.microsoft.com/v1.0/me/drive/items/${encodeURIComponent(fileId)}/content`,
-    { headers: { Authorization: `Bearer ${source.accessToken}` }, redirect: 'follow' }
+    { headers: { Authorization: `Bearer ${accessToken}` }, redirect: 'follow' }
   );
   if (!contentResp.ok) throw new Error(`OneDrive download error: ${contentResp.status}`);
 
@@ -562,14 +565,14 @@ async function downloadOneDriveFile(
 // ── Dropbox: List + Download + Upload ───────────────────────────
 
 async function listDropboxFiles(source: CloudSource, folderId?: string): Promise<CloudFile[]> {
-  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'Dropbox');
 
   const path = folderId || source.rootFolderId || '';
 
   const response = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${source.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ path: path || '', recursive: false, limit: 200 }),
@@ -607,12 +610,12 @@ async function downloadDropboxFile(
   source: CloudSource,
   fileId: string
 ): Promise<CloudDownloadResult> {
-  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'Dropbox');
 
   const response = await fetch('https://content.dropboxapi.com/2/files/download', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${source.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Dropbox-API-Arg': JSON.stringify({ path: fileId }),
     },
   });
@@ -645,14 +648,14 @@ async function uploadDropboxFile(
   content: Buffer,
   folderId?: string
 ): Promise<CloudUploadResult> {
-  if (!source.accessToken) throw new Error('Dropbox access token not configured');
+  const accessToken = await resolveLiveAccessToken(source, 'Dropbox');
 
   const path = `${folderId || source.rootFolderId || ''}/${fileName}`;
 
   const response = await fetch('https://content.dropboxapi.com/2/files/upload', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${source.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Dropbox-API-Arg': JSON.stringify({
         path,
         mode: 'add',
