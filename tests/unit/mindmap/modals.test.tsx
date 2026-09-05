@@ -94,6 +94,28 @@ describe('AddEvidenceModal', () => {
     expect(onAdd).toHaveBeenCalledWith('Research paper', 'https://example.com');
     expect(onClose).toHaveBeenCalled();
   });
+
+  // Acceptance round 3: mounted inline, this modal's `fixed inset-0` overlay
+  // was confined to UnifiedNodeDetailDrawer's `backdrop-blur-xl` box (a CSS
+  // filter/backdrop-filter ancestor becomes the containing block for
+  // `position:fixed` descendants) instead of the viewport, so clicks over
+  // the visible dialog landed on IdeaElementInspector's <aside> underneath.
+  // It must now render into document.body via a portal, escaping any
+  // ancestor's containing block, same as the app's other floating dialogs.
+  it('renders via a portal into document.body, not inline in its call site', () => {
+    const { container } = render(
+      <AddEvidenceModal open={true} onClose={vi.fn()} onAdd={vi.fn()} />
+    );
+
+    // The component's own render position stays empty — the dialog escaped it.
+    expect(container.innerHTML).toBe('');
+
+    // The dialog is a direct portal child of <body>, not nested under container.
+    const dialog = document.body.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    expect(container.contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
+  });
 });
 
 describe('ImageUrlModal', () => {

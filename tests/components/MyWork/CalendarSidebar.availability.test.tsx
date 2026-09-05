@@ -244,4 +244,28 @@ describe('CalendarSidebar external source availability', () => {
     expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
     expect(screen.getByText('Start reauthorization in Integrations.')).toBeInTheDocument();
   });
+
+  // Acceptance round 3: the v2 source list hardcoded
+  // ['consultify','task','event','google','outlook'] and silently dropped
+  // 'initiative' and 'decision', even though both exist in ALL_SOURCES,
+  // SOURCE_LABELS and SOURCE_COLORS. The approved image expects Initiatives
+  // and Decisions to show up as their own filterable rows in v2 mode too.
+  it('includes Initiatives and Decisions as source rows in v2 mode', () => {
+    renderSidebar(
+      <CalendarSidebar
+        v2
+        filter={{
+          sources: ['consultify', 'task', 'initiative', 'decision', 'event', 'google', 'outlook'],
+        }}
+        onFilterChange={vi.fn()}
+        currentDate={new Date('2026-03-28T00:00:00Z')}
+        onDateChange={vi.fn()}
+      />
+    );
+
+    // The row label sits alongside a "(count)" suffix in the same <span>
+    // (e.g. "Initiatives (0)"), so match on a prefix rather than exact text.
+    expect(screen.getByText(/^Initiatives/)).toBeInTheDocument();
+    expect(screen.getByText(/^Decisions/)).toBeInTheDocument();
+  });
 });

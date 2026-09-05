@@ -4,6 +4,7 @@
  */
 import { FileText, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
@@ -32,8 +33,19 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
   }, [onAdd, onClose, title, url]);
 
   if (!open) return null;
+  // Rendered inline (not portaled) this modal sits inside
+  // UnifiedNodeDetailDrawer's `backdrop-blur-xl` root: any `filter`/
+  // `backdrop-filter` ancestor becomes the containing block for
+  // `position:fixed` descendants (CSS Filter Effects §3), so `fixed
+  // inset-0` here was confined to the drawer's 420px box instead of the
+  // viewport — the overlay never reached the rest of the screen, and
+  // `elementFromPoint` over the (visually full-screen-looking) dialog hit
+  // whatever sits underneath, e.g. IdeaElementInspector's `<aside>`.
+  // Portaling to `document.body` escapes that containing block, matching
+  // the app's convention for floating dialogs (see Modal.tsx).
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-context-menu flex items-center justify-center bg-c-bg"
       onClick={onClose}
@@ -107,6 +119,7 @@ export const AddEvidenceModal: React.FC<AddEvidenceModalProps> = ({ open, onClos
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
