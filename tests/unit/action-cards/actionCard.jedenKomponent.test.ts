@@ -18,4 +18,12 @@ describe('P9 action-card spine static gates', () => {
     expect(result.status).toBe(1);
     expect(result.stdout.trim()).toBe('');
   });
+
+  it('migracja jest addytywna i zachowuje identyfikatory tekstowe SSOT', () => {
+    const migration = readFileSync(resolve(root, 'server/migrations/20261105_action_cards_spine.sql'), 'utf8');
+    expect(migration).not.toMatch(/\bDROP\b/i);
+    expect(migration).not.toMatch(/\bALTER\s+TABLE\b/i);
+    expect(migration).toContain('organization_id TEXT NOT NULL');
+    expect(migration).toContain('owner_user_id TEXT NOT NULL');
+  });
 });

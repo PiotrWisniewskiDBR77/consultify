@@ -1,7 +1,7 @@
 -- P9 / DEC-397: canonical action-card spine. Additive only.
 CREATE TABLE IF NOT EXISTS action_cards (
   id UUID PRIMARY KEY,
-  organization_id UUID NOT NULL,
+  organization_id TEXT NOT NULL,
   source_kind TEXT NOT NULL CHECK (source_kind IN (
     'kpi_deviation', 'execution_delay', 'audit_finding', 'finance_variance', 'meeting_action'
   )),
@@ -13,13 +13,13 @@ CREATE TABLE IF NOT EXISTS action_cards (
   problem TEXT NOT NULL,
   root_cause TEXT NOT NULL,
   action_text TEXT NOT NULL,
-  owner_user_id UUID NOT NULL,
+  owner_user_id TEXT NOT NULL,
   due_date DATE NOT NULL,
   comment TEXT,
   status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED')),
-  created_by UUID NOT NULL,
+  created_by TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_by UUID NOT NULL,
+  updated_by TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT action_cards_period_order CHECK (period_end >= period_start),
   CONSTRAINT action_cards_source_unique UNIQUE (organization_id, source_kind, source_id)
