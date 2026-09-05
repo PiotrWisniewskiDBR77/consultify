@@ -504,22 +504,30 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
               {
                 label: t('partner.referrals.v8TotalClicks', 'Governed total clicks'),
                 value: String(v8Analytics.totalClicks ?? 0),
-                detail: `${v8Analytics.uniqueClicks ?? 0} unique`,
+                detail: t('partner.metrics.detailUnique', '{{count}} unique', {
+                  count: v8Analytics.uniqueClicks ?? 0,
+                }),
               },
               {
                 label: t('partner.referrals.v8Signups', 'Governed signups'),
                 value: String(v8Analytics.signups ?? 0),
-                detail: `${v8Analytics.trials ?? 0} trials`,
+                detail: t('partner.metrics.detailTrials', '{{count}} trials', {
+                  count: v8Analytics.trials ?? 0,
+                }),
               },
               {
                 label: t('partner.referrals.v8PaidCustomers', 'Governed paid customers'),
                 value: String(v8Analytics.paidCustomers ?? 0),
-                detail: `${v8Analytics.clicksBySource?.length ?? 0} sources`,
+                detail: t('partner.referrals.detailSources', '{{count}} sources', {
+                  count: v8Analytics.clicksBySource?.length ?? 0,
+                }),
               },
               {
                 label: t('partner.referrals.v8ConversionRate', 'Governed conversion rate'),
                 value: `${v8Analytics.conversionRate ?? 0}%`,
-                detail: `${v8Analytics.clicksByDay?.length ?? 0} tracked days`,
+                detail: t('partner.referrals.detailTrackedDays', '{{count}} tracked days', {
+                  count: v8Analytics.clicksByDay?.length ?? 0,
+                }),
               },
             ].map((card) => (
               <div

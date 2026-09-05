@@ -58,14 +58,19 @@ export const PartnerApplicationView: React.FC = () => {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error((data as any)?.error || 'Failed to submit partner application');
+        throw new Error(
+          (data as any)?.error ||
+            t('partner.apply.errors.submitFailed', 'Failed to submit partner application')
+        );
       }
 
       setIsSubmitted(true);
       setForm(INITIAL_FORM);
     } catch (submitError) {
       setError(
-        submitError instanceof Error ? submitError.message : 'Failed to submit partner application'
+        submitError instanceof Error
+          ? submitError.message
+          : t('partner.apply.errors.submitFailed', 'Failed to submit partner application')
       );
     } finally {
       setIsSubmitting(false);
@@ -74,7 +79,7 @@ export const PartnerApplicationView: React.FC = () => {
 
   return (
     <MarketingLayout>
-      <section className="relative overflow-hidden px-6 py-20">
+      <section className="relative z-10 overflow-hidden px-6 py-20">
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(160deg,#0B1220,#0F172A,#0B1220)]" />
         <div className="absolute left-[10%] top-[0%] -z-10 h-80 w-80 rounded-full bg-c-accent/20 blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[8%] -z-10 h-96 w-96 rounded-full bg-c-info/10 blur-[120px]" />
@@ -99,9 +104,12 @@ export const PartnerApplicationView: React.FC = () => {
 
             <div className="mt-10 space-y-4">
               {[
-                'No login required for the first step',
-                'Reviewed in the superadmin approval queue',
-                'Built to qualify serious commercial partners quickly',
+                t('partner.apply.checklist.noLogin', 'No login required for the first step'),
+                t('partner.apply.checklist.reviewed', 'Reviewed in the superadmin approval queue'),
+                t(
+                  'partner.apply.checklist.qualify',
+                  'Built to qualify serious commercial partners quickly'
+                ),
               ].map((item) => (
                 <div
                   key={item}
@@ -145,10 +153,10 @@ export const PartnerApplicationView: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-c-accent">
-                      Public lead form
+                      {t('partner.apply.formBadge', 'Public lead form')}
                     </p>
                     <h2 className="mt-1 text-2xl font-black text-c-text">
-                      Tell us how you want to grow with Consultify
+                      {t('partner.apply.formTitle', 'Tell us how you want to grow with Consultify')}
                     </h2>
                   </div>
                 </div>
@@ -156,13 +164,13 @@ export const PartnerApplicationView: React.FC = () => {
                 <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
-                      label="Full name"
+                      label={t('partner.apply.fields.fullName', 'Full name')}
                       value={form.fullName}
                       onChange={(value) => updateField('fullName', value)}
                       required
                     />
                     <Input
-                      label="Business email"
+                      label={t('partner.apply.fields.email', 'Business email')}
                       type="email"
                       value={form.email}
                       onChange={(value) => updateField('email', value)}
@@ -172,13 +180,13 @@ export const PartnerApplicationView: React.FC = () => {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
-                      label="Company"
+                      label={t('partner.apply.fields.company', 'Company')}
                       value={form.company}
                       onChange={(value) => updateField('company', value)}
                       required
                     />
                     <Input
-                      label="Website"
+                      label={t('partner.apply.fields.website', 'Website')}
                       value={form.website}
                       onChange={(value) => updateField('website', value)}
                     />
@@ -186,12 +194,12 @@ export const PartnerApplicationView: React.FC = () => {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
-                      label="Country"
+                      label={t('partner.apply.fields.country', 'Country')}
                       value={form.country}
                       onChange={(value) => updateField('country', value)}
                     />
                     <Input
-                      label="Your role"
+                      label={t('partner.apply.fields.role', 'Your role')}
                       value={form.role}
                       onChange={(value) => updateField('role', value)}
                     />
@@ -199,12 +207,12 @@ export const PartnerApplicationView: React.FC = () => {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
-                      label="Team size"
+                      label={t('partner.apply.fields.teamSize', 'Team size')}
                       value={form.teamSize}
                       onChange={(value) => updateField('teamSize', value)}
                     />
                     <Input
-                      label="Primary focus area"
+                      label={t('partner.apply.fields.focusArea', 'Primary focus area')}
                       value={form.focusArea}
                       onChange={(value) => updateField('focusArea', value)}
                     />
@@ -212,14 +220,17 @@ export const PartnerApplicationView: React.FC = () => {
 
                   <label className="grid gap-2">
                     <span className="text-sm font-semibold text-c-text-secondary">
-                      Why do you want to join?
+                      {t('partner.apply.fields.message', 'Why do you want to join?')}
                     </span>
                     <textarea
                       value={form.message}
                       onChange={(event) => updateField('message', event.target.value)}
                       rows={5}
                       className="rounded-2xl border border-c-border bg-c-surface-raised px-4 py-3 text-sm text-c-text outline-none transition focus:border-c-focus-solid focus:bg-c-surface"
-                      placeholder="Tell us about your market, clients, or rollout ambitions."
+                      placeholder={t(
+                        'partner.apply.fields.messagePlaceholder',
+                        'Tell us about your market, clients, or rollout ambitions.'
+                      )}
                     />
                   </label>
 

@@ -17,6 +17,16 @@ export interface PartnerRuntimeSummary {
   program: V8PartnerProgramStatus | null;
 }
 
+// Matches the fallback map in PartnerCanonicalRuntimePanel.tsx — keep both in sync.
+const LIFECYCLE_PHASE_FALLBACK: Record<string, string> = {
+  active: 'Aktywny',
+  certified: 'Certyfikowany',
+  earn: 'Rozliczenia',
+  onboarding: 'W trakcie uruchamiania',
+  pending: 'Oczekuje',
+  suspended: 'Wstrzymany',
+};
+
 function unwrapLegacyPayload(payload: any): any {
   if (payload?.success && payload?.data) {
     return payload.data;
@@ -124,28 +134,47 @@ export const PartnerRuntimeSummaryStrip: React.FC<{ summary: PartnerRuntimeSumma
           {
             label: t('partner.metrics.runtimeReferralClicks', 'Referral clicks'),
             value: String(summary.analytics.totalClicks ?? 0),
-            detail: `${summary.analytics.uniqueClicks ?? 0} unique`,
+            detail: t('partner.metrics.detailUnique', '{{count}} unique', {
+              count: summary.analytics.uniqueClicks ?? 0,
+            }),
           },
           {
             label: t('partner.metrics.runtimePaidCustomers', 'Paid customers'),
             value: String(summary.analytics.paidCustomers ?? 0),
-            detail: `${summary.analytics.signups ?? 0} signups`,
+            detail: t('partner.metrics.detailSignups', '{{count}} signups', {
+              count: summary.analytics.signups ?? 0,
+            }),
           },
           {
             label: t('partner.metrics.runtimeConversionRate', 'Conversion rate'),
             value: `${summary.analytics.conversionRate ?? 0}%`,
-            detail: `${summary.analytics.trials ?? 0} trials`,
+            detail: t('partner.metrics.detailTrials', '{{count}} trials', {
+              count: summary.analytics.trials ?? 0,
+            }),
           },
           {
             label: t('partner.metrics.runtimeReadyForPayout', 'Ready for payout'),
-            value: `${summary.program?.balances.currency ?? summary.earnings.currency ?? 'EUR'} ${(
-              summary.program?.balances.availableToPayout ??
-              summary.earnings.readyForPayout ??
-              0
-            ).toLocaleString()}`,
+            value: `${new Intl.NumberFormat('pl-PL', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(
+              Number(
+                summary.program?.balances.availableToPayout ?? summary.earnings.readyForPayout ?? 0
+              )
+            )} ${summary.program?.balances.currency ?? summary.earnings.currency ?? 'EUR'}`,
             detail: summary.program
-              ? `${summary.program.lifecyclePhase} lifecycle`
-              : `${summary.earnings.totalPending ?? 0} pending`,
+              ? t('partner.metrics.detailLifecycle', '{{phase}} lifecycle', {
+                  phase: (() => {
+                    const phaseKey = String(summary.program.lifecyclePhase || '').toLowerCase();
+                    return t(
+                      `partner.canonicalRuntime.lifecycle.${phaseKey}`,
+                      LIFECYCLE_PHASE_FALLBACK[phaseKey] || summary.program.lifecyclePhase
+                    );
+                  })(),
+                })
+              : t('partner.metrics.detailPending', '{{count}} pending', {
+                  count: summary.earnings.totalPending ?? 0,
+                }),
           },
         ].map((card) => (
           <div

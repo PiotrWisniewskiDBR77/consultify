@@ -100,6 +100,23 @@ interface EarningsSectionProps {
   subsection?: 'earnings' | 'statements' | 'payouts' | 'payout-settings';
 }
 
+// Canonical values: server/src/services/partnerCommissionService.ts TRANSACTION_TYPES.
+// Mock/legacy data may send compound variants (e.g. SUBSCRIPTION_RENEWAL) — the fallback
+// below title-cases anything unmapped so it never crashes, but known values must stay here
+// in sync so this table doesn't leak raw English enum text.
+const TRANSACTION_TYPE_LABEL_FALLBACK: Record<string, string> = {
+  initial: 'Pierwsza wpłata',
+  subscription: 'Subskrypcja',
+  subscription_renewal: 'Odnowienie subskrypcji',
+  renewal: 'Odnowienie',
+  upsell: 'Dosprzedaż',
+  subscription_upgrade: 'Rozszerzenie subskrypcji',
+  one_time: 'Jednorazowa',
+  new_contract: 'Nowy kontrakt',
+  refund: 'Zwrot',
+  bonus: 'Bonus',
+};
+
 const unwrapApiData = (response: any) => {
   const descriptor = response ? Object.getOwnPropertyDescriptor(response, 'data') : undefined;
   return descriptor?.value ?? response?.data ?? response;
@@ -858,11 +875,17 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
                   id: 'transactionType',
                   label: t('partner.earnings.col.type', 'Type'),
                   width: '140px',
-                  render: (tx) => (
-                    <span className="text-sm text-c-text-secondary capitalize">
-                      {String(tx.transactionType).toLowerCase().replace('_', ' ')}
-                    </span>
-                  ),
+                  render: (tx) => {
+                    const key = String(tx.transactionType || '').toLowerCase();
+                    const fallback =
+                      TRANSACTION_TYPE_LABEL_FALLBACK[key] ||
+                      key.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+                    return (
+                      <span className="text-sm text-c-text-secondary">
+                        {t(`partner.earnings.transactionType.${key}`, fallback)}
+                      </span>
+                    );
+                  },
                 },
                 {
                   id: 'grossAmount',
