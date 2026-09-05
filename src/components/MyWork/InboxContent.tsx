@@ -2166,6 +2166,23 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { emitMyWorkEvent } = useAppStore();
+  const displayInboxTitle = useCallback(
+    (item: InboxItem): string => {
+      if (item.source?.type !== 'system') return item.title;
+      const keyByTitle: Record<string, string> = {
+        'Define target process and acceptance criteria': 'defineTargetProcess',
+        'Submit Compliance Documentation': 'submitComplianceDocumentation',
+        'Fix Critical Production Bug': 'fixCriticalProductionBug',
+        'Select AI model provider for production workloads': 'selectAiModelProvider',
+        'Finalize API rate-limiting policy for public launch': 'finalizeApiRateLimitingPolicy',
+        'Launch public beta — go/no-go decision': 'launchPublicBetaDecision',
+        'Interview Assignment Overdue': 'interviewAssignmentOverdue',
+      };
+      const key = keyByTitle[item.title];
+      return key ? t(`myWork.inboxContent.systemTitles.${key}`) : item.title;
+    },
+    [t]
+  );
 
   const [data, setData] = useState<InboxResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2618,11 +2635,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         render: (row: StandardTableRow) => {
           const r = row as unknown as InboxStandardRow;
           const item = r.__item;
+          const displayTitle = displayInboxTitle(item);
           const showDupeCount = r.__isGroupHeader && r.__groupCount > 1;
           return (
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-semibold text-c-text truncate" title={item.title}>
-                {item.title}
+              <span className="text-sm font-semibold text-c-text truncate" title={displayTitle}>
+                {displayTitle}
               </span>
               {item.suggestedAction && (
                 <span
@@ -2837,7 +2855,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         },
       },
     ];
-  }, [t, isPolish, useInboxStandardTable, toggleGroupExpanded, inboxSemanticDuplicateGroups]);
+  }, [
+    t,
+    isPolish,
+    useInboxStandardTable,
+    toggleGroupExpanded,
+    inboxSemanticDuplicateGroups,
+    displayInboxTitle,
+  ]);
 
   // ── Triage ──
   const triage = useCallback(

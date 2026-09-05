@@ -269,7 +269,7 @@ export function buildRoiCalculationRunColumns(isPolish: boolean): TableColumn[] 
   return [
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '110px',
       render: (row: RoiCalculationRun) => (
         <StatusChip
@@ -600,7 +600,7 @@ export function buildRoiForecastVersionColumns(isPolish: boolean): TableColumn[]
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '110px',
       render: (row: RoiForecastVersion) => (
         <StatusChip
@@ -1413,7 +1413,7 @@ export function buildRoiVarianceColumns(isPolish: boolean): TableColumn[] {
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '140px',
       render: (row: RoiVariance) => (
         <StatusChip
@@ -1596,7 +1596,7 @@ export function buildRoiPirColumns(isPolish: boolean): TableColumn[] {
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '120px',
       render: (row: RoiPostInvestmentReview) => (
         <StatusChip
@@ -1931,7 +1931,7 @@ export function buildRoiFinanceReconciliationColumns(isPolish: boolean): TableCo
   return [
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '160px',
       render: (row: RoiFinanceReconciliation) => (
         <StatusChip

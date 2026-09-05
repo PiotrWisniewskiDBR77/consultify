@@ -105,8 +105,8 @@
     },
     "09_RESULTS": {
       "nazwa": "Wyniki",
-      "stan": "GOTOWY",
-      "cto_werdykt": "Wyniki po przebudowie wg Twoich słów: KPI = tabela zestawień → lista zestawienia z opisem i pozycjami → karta N wskaźnika (ścieżka „Rejestr KPI › zestawienie › wskaźnik”); OKR = zestaw → cele → karta celu → rezultaty; ROI z narracją z realnych danych. Sprawdzone moimi oczami na trzech poziomach. Dane: jedno zestawienie z jedną pozycją, bez opublikowanej migawki (wartości „—”).",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Właściciel 05.09 wieczorem: budowa KPI/OKR rozminęła się z koncepcją trzech poziomów z 30.08 (raporty okresowe → tabela pozycji → karta; KR jako sekcja karty celu). Korekta P7K wydana Codexowi. Nie zatwierdzać do czasu przebudowy.",
       "zrzuty": [
         "evidence/odbior-zywo-20260905/kpi-3poziomy/L1-tabela-zestawien-podglad.png",
         "evidence/odbior-zywo-20260905/kpi-3poziomy/L2-lista-zestawienia.png",
@@ -114,7 +114,7 @@
         "evidence/odbior-zywo-20260905/08-wyniki/okr-cel/proof-okr-L2.png"
       ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T17:28"
+      "sprawdzono": "2026-09-05T18:36"
     },
     "10_FINANCE": {
       "nazwa": "Finanse",

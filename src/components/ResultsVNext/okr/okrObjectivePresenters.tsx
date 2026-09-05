@@ -60,7 +60,10 @@ export function buildOkrObjectiveColumns(
         <div className="flex flex-wrap items-center gap-1.5">
           <StatusChip label={okrObjectiveStatusLabel(row.status, isPolish)} tone={OKR_OBJECTIVE_STATUS_TONE[row.status]} />
           {childLock ? (
-            <span className="inline-flex shrink-0" title={isPolish ? childLock.reason.pl : childLock.reason.en}>
+            <span
+              className="inline-flex shrink-0"
+              title={isPolish ? childLock.diagnosticTitle.pl : childLock.diagnosticTitle.en}
+            >
               <Lock size={13} className="shrink-0 text-c-text-muted" aria-label={isPolish ? childLock.label.pl : childLock.label.en} />
             </span>
           ) : null}
@@ -237,7 +240,10 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
     title: row.title,
     onClose,
     headerExtra: childLock ? (
-      <LifecycleLockBadge label={isPolish ? childLock.label.pl : childLock.label.en} reason={isPolish ? childLock.reason.pl : childLock.reason.en} />
+      <LifecycleLockBadge
+        label={isPolish ? childLock.label.pl : childLock.label.en}
+        reason={isPolish ? childLock.diagnosticTitle.pl : childLock.diagnosticTitle.en}
+      />
     ) : undefined,
     meta: {
       pills: [

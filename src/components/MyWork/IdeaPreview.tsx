@@ -1,3 +1,5 @@
+import { sourceLabel } from '../../labels/ideaSourceLabels';
+
 /**
  * IdeaPreview — JEDEN podgląd (preview pane) Idei dla całego My Work.
  *
@@ -180,7 +182,7 @@ export const IdeaPreviewBody: React.FC<IdeaPreviewBodyProps> = ({
           {
             id: 'source',
             label: isPolish ? 'Źródło' : 'Source',
-            value: String(idea.sourceType),
+            value: sourceLabel(idea.sourceType, isPolish),
           },
         ]
       : []),
@@ -315,7 +317,7 @@ export const IdeaPreviewFooter: React.FC<IdeaPreviewFooterProps> = ({
   const relationItems: RelationItem[] = [];
   if (idea.sourceType) {
     relationItems.push({
-      label: `${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`,
+      label: `${isPolish ? 'Źródło' : 'Source'}: ${sourceLabel(idea.sourceType, isPolish)}`,
       tone: 'text-c-text-secondary',
     });
   }

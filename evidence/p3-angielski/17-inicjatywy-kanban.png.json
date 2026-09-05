@@ -1,0 +1,26 @@
+{
+ "url": "http://127.0.0.1:3067/initiatives?tab=list",
+ "tytul": "Consultify",
+ "kliki": [
+  "[data-testid=\"view-mode-kanban\"]"
+ ],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nInicjatywy\nPlan\nObciążenie\nPriorytet\nWszystkie priorytety\nKrytyczny\nWysoki\nŚredni\nNiski\nAktywne\nWszystkie\nNowa inicjatywa\nWszystkie\n15\nW przygotowaniu\n4\nDo decyzji\n3\nZatwierdzony backlog\n1\nZaplanowane\n1\nW realizacji\n4\nRezultaty\n1\nZamknięte\n0\nSZKIC\n4\nRedukcja zużycia energii w zakładzie\nWysoki\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nDo przeglądu\nPoprawa realizacji korzyści programu\nNie dotyczy\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nDo przeglądu\nEnergy Reduction Programme\nNie dotyczy\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nDo przeglądu\nEnergy Reduction Programme\nNie dotyczy\nNa właściwym torze\nM\nManual Energy Draft Owner\nNASTĘPNA BRAMKA\nDo przeglądu\nDO PRZEGLĄDU\n0\nPrzeciągnij inicjatywy tutaj\nW PRZEGLĄDZIE\n4\nCyfrowe planowanie produkcji\nWysoki\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nPromocja do Inicjatyw\nSponsor projektu\nAutomatyzacja kontroli jakości\nWysoki\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nPromocja do Inicjatyw\nSponsor projektu\nAutomated Changeover Optimization — decision candidate\nNie dotyczy\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nPromocja do Inicjatyw\nSponsor projektu\nAutomated Changeover Optimization — decision candidate\nNie dotyczy\nNa właściwym torze\nM\nManual Aco Ready Owner\nNASTĘPNA BRAMKA\nPromocja do Inicjatyw\nSponsor projektu\nPROMOWANA\n0\nPrzeciągnij inicjatywy tutaj\nPLANOWANIE\n0\nPrzeciągnij inicjatywy tutaj\nZATWIERDZONA\n1\nPredykcyjne utrzymanie ruchu\nWysoki\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nZaplanowanie realizacji\nPMO\nZAPLANOWANA\n1\nAkademia liderów transformacji\nŚredni\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nW realizacji\nW REALIZACJI\n4\nPełna identyfikowalność partii\nŚredni\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nZakończenie realizacji\nPMO\nS&OP oparty na jednym źródle danych\nŚredni\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nZakończenie realizacji\nPMO\nProgram poprawy OEE linii montażowej\nŚredni\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nZakończenie realizacji\nPMO\nOptymalizacja zapasów komponentów\nŚredni\nNa właściwym torze\nP\nPiotr Testowy\nNASTĘPNA BRAMKA\nZakończenie realizacji\nPMO\nZABLOKOWANA\n0\nPrzeciągnij inicjatywy tutaj\nŚLEDZENIE\n1\nStandaryzacja realizacji korzyści\nŚredni\nNa właściwym torze\nP\nPiotr Testowy",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T18:03:26.554Z"
+}

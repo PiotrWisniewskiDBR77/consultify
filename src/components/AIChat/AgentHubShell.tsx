@@ -914,7 +914,7 @@ export const AgentHubShell: React.FC = () => {
     },
     {
       id: 'status',
-      label: t('agentPlan.hub.columns.status', isPolish ? 'Status' : 'Status'),
+      label: t('agentPlan.hub.columns.status', 'Status'),
       width: '150px',
       render: (row: TableRow) => {
         const plan = row as unknown as AgentPlan;
@@ -1203,7 +1203,7 @@ export const AgentHubShell: React.FC = () => {
                 <PreviewMetaCard
                   pills={[
                     {
-                      label: isPolish ? 'Status' : 'Status',
+                      label: 'Status',
                       value: planStatusLabel(previewPlan.status, isPolish),
                       tone: PLAN_STATUS_TONE[previewPlan.status],
                     },
@@ -1583,11 +1583,11 @@ export const AgentHubShell: React.FC = () => {
             label={
               activeFolderId
                 ? (folderNameById.get(activeFolderId) ??
-                  t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder'))
-                : t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')
+                  t('agentPlan.hub.folders.chip', 'Folder'))
+                : t('agentPlan.hub.folders.chip', 'Folder')
             }
             active={Boolean(activeFolderId)}
-            ariaLabel={t('agentPlan.hub.folders.chip', isPolish ? 'Folder' : 'Folder')}
+            ariaLabel={t('agentPlan.hub.folders.chip', 'Folder')}
             items={[
               {
                 id: 'all',

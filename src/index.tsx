@@ -9,6 +9,7 @@ import { createRoot } from 'react-dom/client';
 import { bootstrapClientWebVitals } from './bootstrap/clientWebVitals';
 import { installDocumentLifecycleWebPerf } from './bootstrap/documentLifecycleWebPerf';
 import { RuntimeDiagnosticPanel } from './components/RuntimeDiagnosticPanel';
+import { installCsrfFetchInterceptor } from './services/csrfClient';
 import { installFeedbackCollector } from './services/feedbackCollector';
 import { getRuntimeDiagnosticMode, logRuntimeDiagnosticMarker } from './utils/runtimeDiagnostics';
 
@@ -28,6 +29,16 @@ try {
   });
 } catch (collectorError) {
   console.warn('[index.tsx] Feedback collector bootstrap failed:', collectorError);
+}
+
+// CSRF Faza 1 (evidence/sec-20260905/04_CSRF_FAZA1_RAPORT.md): no-op on the
+// wire unless the server has CSRF_MODE=report|enforce, but installed
+// unconditionally so the header is already flowing once the server flag
+// flips — no separate frontend deploy needed for Faza 2/3.
+try {
+  installCsrfFetchInterceptor();
+} catch (csrfInterceptorError) {
+  console.warn('[index.tsx] CSRF fetch interceptor bootstrap failed:', csrfInterceptorError);
 }
 
 bootstrapClientWebVitals();

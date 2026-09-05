@@ -34,6 +34,8 @@ Consultinity ma kilka **rozłącznych rodzajów prawdy**:
 | Jaki jest kierunek przyszłego rozwoju? | strategia; strategia nie dowodzi, że funkcja już działa |
 | Kiedy plik wychodzący do klienta jest gotowy? | rubryka odbioru deliverable'u oraz kanon eksportu — sekcja „Deliverable" poniżej |
 | Która decyzja właściciela obowiązuje i od kiedy? | rejestr decyzji właściciela — [`program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`](program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md) |
+| Co wolno asystentowi AI (Teresie) i gdzie on jest? | [`ssot/ZASADY_AI_TERESA_SSOT.md`](ssot/ZASADY_AI_TERESA_SSOT.md) — zasady dla całej aplikacji |
+| Co Teresa robi w konkretnym module lub narzędziu? | [`ssot/KONTRAKTY_NARZEDZI_AI.md`](ssot/KONTRAKTY_NARZEDZI_AI.md) — kontrakt per moduł/narzędzie + stan z pomiaru kodu |
 
 ## Hierarchia autorytetu
 
@@ -186,3 +188,6 @@ Kontrola:
 ```bash
 npm run check:ssot
 ```
+
+## Wyniki (KPI · OKR · ROI) — źródło prawdy produktu docelowego
+- `docs/modules/07_rezultaty/SSOT_WYNIKI_KPI_OKR_ROI.md` — decyzje właściciela 30.08 + 05.09, załączniki (`docs/modules/07_rezultaty/zalaczniki/`), metodyka ROI (`docs/program/grafika/ROI_METODYKA_WLASCICIELA_20260905.md`), założenia graficzne (`docs/program/grafika/WYNIKI_ZALOZENIA_GRAFICZNE_20260905.md`). Ma pierwszeństwo przed `CURRENT_CONTRACT.md` w zakresie nawigacji i struktury raportów.

@@ -31,7 +31,7 @@
  * client-side. Disabling e.g. "Verify" on an already-verified row would be
  * inventing a business rule this package has no authority to invent (task
  * brief: "Nigdy nie wymyślaj... reguły uprawnień, której nie definiuje...
- * realny kod serwera"). Documented as a real backend gap in the task report,
+ * realną regułę backendu"). Documented as a real backend gap in the task report,
  * not silently patched over with an invented client-side guard.
  */
 import React from 'react';

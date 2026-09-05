@@ -112,11 +112,16 @@ export interface MeetingFollowUpRecordDto {
 export interface MeetingOperatorBriefDto {
   meetingId: string;
   title: string;
-  prepSummary: string;
-  stakeholderNotes: Array<{ name: string; note: string }>;
-  agendaGaps: string[];
-  followUpSuggestions: string[];
-  executiveBrief: { headline: string; bullets: string[] };
+  prepSummary: I18nMessageDto;
+  stakeholderNotes: Array<{ name: string; note: I18nMessageDto }>;
+  agendaGaps: I18nMessageDto[];
+  followUpSuggestions: I18nMessageDto[];
+  executiveBrief: { headline: I18nMessageDto; bullets: I18nMessageDto[] };
+}
+
+export interface I18nMessageDto {
+  key: string;
+  params?: Record<string, string | number | null>;
 }
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
@@ -17655,7 +17660,7 @@ export const Api = {
 
   // Integration Settings
   getIntegrations: async (_orgId?: string) => {
-    const res = await fetchWithRetry(`${API_URL}/integrations`, { headers: getHeaders() });
+    const res = await fetchWithRetry(`${API_URL}/settings/integrations`, { headers: getHeaders() });
     return handleResponse(res, 'Failed to fetch integrations');
   },
 

@@ -671,7 +671,7 @@ export const ContextStep: React.FC<ContextStepProps> = ({
       } as Partial<SWOTData['context']>);
     };
 
-    const composeList = (values: string[]) => values.join(isPolish ? ', ' : ', ');
+    const composeList = (values: string[]) => values.join(', ');
 
     const question4Options = (() => {
       const basedOnDirection = displayedContext.directionChoices || [];

@@ -49,6 +49,7 @@ import {
 } from './financeTypes';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 import { normalizeSensitivityGrid } from './normalizeSensitivityGrid';
+import { statementReadinessLabel } from '../Finance/labels/financeEnums';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -168,7 +169,10 @@ interface FinancePreviewPanelProps {
   loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
-  loadAnalysisPreviewRatios: (id: string) => Promise<void>;
+  loadAnalysisPreviewRatios: (
+    id: string,
+    canonicalBusinessVersionId?: string | null
+  ) => Promise<void>;
   loadBudgets: () => Promise<void>;
   loadBudgetPreviewScenarios: (id: string) => Promise<void>;
   loadPredictionPreview: (id: string) => Promise<void>;
@@ -204,6 +208,7 @@ export function useFinancePreview({
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
   const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  const isPolishLocale = numberLocale === 'pl-PL';
 
   const ModelStatementPreview: React.FC<{
     detail: NonNullable<PreviewDataState['modelPreviewDetail']>;
@@ -475,11 +480,13 @@ export function useFinancePreview({
           row.kind === 'investment'
             ? t('finance.preview.investmentCaseLabel', 'Investment case')
             : t('finance.preview.financialAnalysisLabel', 'Financial analysis');
+        // F-P5 §5 — bez tego podgląd renderował „Analiza finansowa: \nWaluta: \nLiczba okresów: 0"
+        // (puste wartości przed dwukropkiem). Brak danych ma wyglądać jak „—", nie jak zero.
         detailsText = t('finance.preview.analysisDetails', '{{kindLabel}}: {{analysisType}}', {
           kindLabel,
-          analysisType: row.analysisType,
-          currency: row.currency,
-          periods: row.periodCount,
+          analysisType: row.analysisType || '—',
+          currency: row.currency || '—',
+          periods: row.periodCount ? String(row.periodCount) : '—',
         });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
@@ -580,7 +587,11 @@ export function useFinancePreview({
                           {statement.statementType}
                         </span>
                         <span className="font-mono text-slate-900 dark:text-white">
-                          {statement.readinessStatus || 'pending'} / {statement.mappedLineCount}
+                          {statementReadinessLabel(
+                            statement.readinessStatus || 'pending',
+                            isPolishLocale
+                          )}{' '}
+                          / {statement.mappedLineCount}
                         </span>
                       </div>
                     ))}
@@ -1099,7 +1110,7 @@ export function useFinancePreview({
             try {
               await runCanonicalFinancialAnalysis(row.id);
               await loadAnalyses();
-              await loadAnalysisPreviewRatios(row.id);
+              await loadAnalysisPreviewRatios(row.id, row.canonicalBusinessVersionId ?? null);
               toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
             } catch (e: any) {
               toast.error(

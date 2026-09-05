@@ -41,6 +41,7 @@ import {
   executionLocalReviewEnabled,
   executionReviewCases,
   executionReviewPeople,
+  executionReviewRoleLabel,
   getExecutionReviewCase,
   getExecutionReviewMilestones,
   getExecutionReviewWork,
@@ -151,12 +152,13 @@ const isOpaqueIdentifier = (value: string) =>
  */
 const actorLabel = (
   value: string,
+  t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
 ) => {
   const fromDirectory = value ? resolveMemberName?.(value) : null;
   if (fromDirectory) return fromDirectory;
-  const fromDemo = executionReviewPeople[value];
+  const fromDemo = executionReviewRoleLabel(value, t) ?? executionReviewPeople[value];
   if (fromDemo) return fromDemo;
   if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
   return value
@@ -172,7 +174,12 @@ const buildCols = (
   resolveMemberName?: MemberNameResolver,
   isPolish = true
 ): TableColumn[] => [
-  { id: 'title', label: t('execution.work.columns.title', 'Work item'), sortable: true, width: '240px' },
+  {
+    id: 'title',
+    label: t('execution.work.columns.title', 'Work item'),
+    sortable: true,
+    width: '240px',
+  },
   {
     id: 'kind',
     label: t('execution.work.columns.kind', 'Type'),
@@ -190,7 +197,7 @@ const buildCols = (
     id: 'owner',
     label: t('execution.work.columns.owner', 'Owner / decision maker'),
     sortable: true,
-    render: (row) => actorLabel(row.owner, resolveMemberName, isPolish),
+    render: (row) => actorLabel(row.owner, t, resolveMemberName, isPolish),
   },
   { id: 'dueAt', label: t('execution.work.columns.dueAt', 'Due / SLA'), sortable: true },
 ];
@@ -225,6 +232,7 @@ const formatDateTime = (value: string | null | undefined) => {
 const businessLabel = (
   value: string | null | undefined,
   fallback: string,
+  t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
   isPolish = true
 ) => {
@@ -235,7 +243,8 @@ const businessLabel = (
   if (fromDirectory) return fromDirectory;
   // Osoba ma nazwisko w katalogu; `\b\w` nie podnosi liter spoza ASCII, więc
   // granica liczona po Unicode (ten sam kontrakt co `actorLabel` wyżej).
-  if (executionReviewPeople[value]) return executionReviewPeople[value];
+  const fromDemo = executionReviewRoleLabel(value, t) ?? executionReviewPeople[value];
+  if (fromDemo) return fromDemo;
   if (isOpaqueIdentifier(value)) return memberNameOrUnknown(resolveMemberName, value, isPolish);
   return value
     .replace(/^(task|decision|case|initiative)[-_:]/i, '')
@@ -745,11 +754,7 @@ export const ExecutionWorkSurface = ({
             <button type="button" className="btn-secondary" onClick={() => setToolMode('TASK')}>
               {t('execution.actions.newTask', 'New Task')}
             </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setToolMode('DECISION')}
-            >
+            <button type="button" className="btn-secondary" onClick={() => setToolMode('DECISION')}>
               {t('execution.actions.newDecision', 'New Decision')}
             </button>
             <button
@@ -867,153 +872,158 @@ export const ExecutionWorkSurface = ({
          * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
          */
         <div className="flex min-h-0 flex-1 flex-col">
-        <TableWithPreviewLayout<Row>
-          selectedId={selectedId}
-          selectedItem={selected}
-          onSelect={(id) => {
-            if (showWorkspace) return;
-            setSelectedId(id);
-          }}
-          onOpenFull={(id) => {
-            const row = rows.find((candidate) => candidate.id === id);
-            if (row) void openWorkspace(row);
-          }}
-          itemIds={rows.map((r) => r.id)}
-          getItemById={(id) => rows.find((r) => r.id === id) ?? null}
-          previewOpen={!showWorkspace && Boolean(selectedId)}
-          renderPreview={(r) => (
-            <StandardPreview
-              embedded
-              title={r.title}
-              onClose={() => setSelectedId(null)}
-              onOpenFull={() => void openWorkspace(r)}
-              openLabel="Otwórz element pracy"
-              meta={{
-                pills: [
-                  { label: workKindLabel[r.kind], tone: 'neutral' },
-                  {
-                    label: workStatusLabel[r.status] ?? r.status,
-                    tone: r.status === 'COMPLETED' ? 'success' : 'info',
-                  },
-                ],
-                trailing: <span className="text-xs">v{r.version}</span>,
-                recommendation: r.source.nextAction ?? 'Sprawdź kompletność i następny krok.',
-              }}
-              details={{
-                label: 'Szczegóły pracy',
-                text: r.source.description || 'Brak dodatkowego opisu.',
-                properties: [
-                  {
-                    id: 'owner',
-                    label: 'Odpowiedzialny',
-                    value: businessLabel(r.owner, 'Nieprzypisany', resolveMemberName, isPolish),
-                  },
-                  { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
-                  { id: 'case', label: 'Realizacja', value: caseLabel(r.executionCaseId) },
-                  {
-                    id: 'evidence',
-                    label: 'Dowody',
-                    value: r.source.evidenceRefs?.length
-                      ? `${r.source.evidenceRefs.length} ${liczebnik(r.source.evidenceRefs.length, [
-                          'powiązany dowód',
-                          'powiązane dowody',
-                          'powiązanych dowodów',
-                        ])}`
-                      : 'Brak wymaganych dowodów',
-                  },
-                ],
-                onCopy: () => void navigator.clipboard?.writeText(r.title),
-              }}
-              relations={[
-                { label: caseLabel(r.executionCaseId), onClick: () => undefined },
-                { label: 'Powiązana inicjatywa', onClick: () => undefined },
-              ]}
-              relationsEmptyLabel="Brak powiązań"
-              actions={{
-                informational: [
-                  {
-                    id: 'open',
-                    label: 'Otwórz element pracy',
-                    variant: 'positive',
-                    icon: Eye,
-                    shortcut: 'O',
-                    onClick: () => void openWorkspace(r),
-                  },
-                ],
-              }}
-            />
-          )}
-        >
-          <StandardTable
-            columns={cols}
-            data={visibleRows}
-            selectedRowId={selectedId}
-            onRowClick={(r) => {
+          <TableWithPreviewLayout<Row>
+            selectedId={selectedId}
+            selectedItem={selected}
+            onSelect={(id) => {
               if (showWorkspace) return;
-              setSelectedId(r.id);
+              setSelectedId(id);
             }}
-            onRowDoubleClick={(r) => {
-              void openWorkspace(r as Row);
+            onOpenFull={(id) => {
+              const row = rows.find((candidate) => candidate.id === id);
+              if (row) void openWorkspace(row);
             }}
-            rowMenu={(row) => {
-              const work = row as Row;
-              const openWorkspaceForAction = () => {
-                setSelectedId(work.id);
-                setToolMode(work.kind);
-                void openWorkspace(work);
-              };
-              return {
-                primary: [
-                  {
-                    id: 'open',
-                    label: work.kind === 'TASK' ? 'Otwórz zadanie' : 'Otwórz decyzję',
-                    icon: ArrowRight,
-                    onClick: openWorkspaceForAction,
+            itemIds={rows.map((r) => r.id)}
+            getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+            previewOpen={!showWorkspace && Boolean(selectedId)}
+            renderPreview={(r) => (
+              <StandardPreview
+                embedded
+                title={r.title}
+                onClose={() => setSelectedId(null)}
+                onOpenFull={() => void openWorkspace(r)}
+                openLabel="Otwórz element pracy"
+                meta={{
+                  pills: [
+                    { label: workKindLabel[r.kind], tone: 'neutral' },
+                    {
+                      label: workStatusLabel[r.status] ?? r.status,
+                      tone: r.status === 'COMPLETED' ? 'success' : 'info',
+                    },
+                  ],
+                  trailing: <span className="text-xs">v{r.version}</span>,
+                  recommendation: r.source.nextAction ?? 'Sprawdź kompletność i następny krok.',
+                }}
+                details={{
+                  label: 'Szczegóły pracy',
+                  text: r.source.description || 'Brak dodatkowego opisu.',
+                  properties: [
+                    {
+                      id: 'owner',
+                      label: 'Odpowiedzialny',
+                      value: businessLabel(
+                        r.owner,
+                        'Nieprzypisany',
+                        t,
+                        resolveMemberName,
+                        isPolish
+                      ),
+                    },
+                    { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
+                    { id: 'case', label: 'Realizacja', value: caseLabel(r.executionCaseId) },
+                    {
+                      id: 'evidence',
+                      label: 'Dowody',
+                      value: r.source.evidenceRefs?.length
+                        ? `${r.source.evidenceRefs.length} ${liczebnik(
+                            r.source.evidenceRefs.length,
+                            ['powiązany dowód', 'powiązane dowody', 'powiązanych dowodów']
+                          )}`
+                        : 'Brak wymaganych dowodów',
+                    },
+                  ],
+                  onCopy: () => void navigator.clipboard?.writeText(r.title),
+                }}
+                relations={[
+                  { label: caseLabel(r.executionCaseId), onClick: () => undefined },
+                  { label: 'Powiązana inicjatywa', onClick: () => undefined },
+                ]}
+                relationsEmptyLabel="Brak powiązań"
+                actions={{
+                  informational: [
+                    {
+                      id: 'open',
+                      label: 'Otwórz element pracy',
+                      variant: 'positive',
+                      icon: Eye,
+                      shortcut: 'O',
+                      onClick: () => void openWorkspace(r),
+                    },
+                  ],
+                }}
+              />
+            )}
+          >
+            <StandardTable
+              columns={cols}
+              data={visibleRows}
+              selectedRowId={selectedId}
+              onRowClick={(r) => {
+                if (showWorkspace) return;
+                setSelectedId(r.id);
+              }}
+              onRowDoubleClick={(r) => {
+                void openWorkspace(r as Row);
+              }}
+              rowMenu={(row) => {
+                const work = row as Row;
+                const openWorkspaceForAction = () => {
+                  setSelectedId(work.id);
+                  setToolMode(work.kind);
+                  void openWorkspace(work);
+                };
+                return {
+                  primary: [
+                    {
+                      id: 'open',
+                      label: work.kind === 'TASK' ? 'Otwórz zadanie' : 'Otwórz decyzję',
+                      icon: ArrowRight,
+                      onClick: openWorkspaceForAction,
+                    },
+                    ...(work.kind === 'TASK' && work.status !== 'COMPLETED'
+                      ? [
+                          {
+                            id: 'update-task',
+                            label: 'Zaktualizuj zadanie',
+                            onClick: openWorkspaceForAction,
+                          },
+                        ]
+                      : []),
+                    ...(work.kind === 'DECISION' && work.status === 'DRAFT'
+                      ? [
+                          {
+                            id: 'request-decision',
+                            label: 'Przekaż do decyzji',
+                            onClick: openWorkspaceForAction,
+                          },
+                        ]
+                      : []),
+                    ...(work.kind === 'DECISION' && work.status === 'PENDING'
+                      ? [
+                          {
+                            id: 'decide',
+                            label: 'Rozstrzygnij decyzję',
+                            onClick: openWorkspaceForAction,
+                          },
+                        ]
+                      : []),
+                  ],
+                  universalHandlers: {
+                    preview: () => {
+                      setSelectedId(String(row.id));
+                      setShowWorkspace(false);
+                    },
+                    archiveNote: 'Elementy pracy podlegają retencji Execution Case.',
                   },
-                  ...(work.kind === 'TASK' && work.status !== 'COMPLETED'
-                    ? [
-                        {
-                          id: 'update-task',
-                          label: 'Zaktualizuj zadanie',
-                          onClick: openWorkspaceForAction,
-                        },
-                      ]
-                    : []),
-                  ...(work.kind === 'DECISION' && work.status === 'DRAFT'
-                    ? [
-                        {
-                          id: 'request-decision',
-                          label: 'Przekaż do decyzji',
-                          onClick: openWorkspaceForAction,
-                        },
-                      ]
-                    : []),
-                  ...(work.kind === 'DECISION' && work.status === 'PENDING'
-                    ? [
-                        {
-                          id: 'decide',
-                          label: 'Rozstrzygnij decyzję',
-                          onClick: openWorkspaceForAction,
-                        },
-                      ]
-                    : []),
-                ],
-                universalHandlers: {
-                  preview: () => {
-                    setSelectedId(String(row.id));
-                    setShowWorkspace(false);
+                  destructive: {
+                    label: 'Usuń',
+                    note: 'Kanoniczny element pracy nie może zostać usunięty.',
                   },
-                  archiveNote: 'Elementy pracy podlegają retencji Execution Case.',
-                },
-                destructive: {
-                  label: 'Usuń',
-                  note: 'Kanoniczny element pracy nie może zostać usunięty.',
-                },
-              };
-            }}
-            persistKey="execution.work.canonical-register.v2"
-          />
-        </TableWithPreviewLayout>
+                };
+              }}
+              persistKey="execution.work.canonical-register.v2"
+            />
+          </TableWithPreviewLayout>
         </div>
       )}
       {showWorkspace && selected && (
@@ -1068,7 +1078,7 @@ export const ExecutionWorkSurface = ({
                     {workStatusLabel[m.status] ?? m.status} · gotowość{' '}
                     {workStatusLabel[m.readiness] ?? m.readiness}
                   </div>
-                  <div>Właściciel: {actorLabel(m.ownerId, resolveMemberName, isPolish)}</div>
+                  <div>Właściciel: {actorLabel(m.ownerId, t, resolveMemberName, isPolish)}</div>
                   <div>
                     Termin {formatDateTime(m.targetAt)} · prognoza {formatDateTime(m.forecastAt)}
                   </div>

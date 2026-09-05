@@ -1,0 +1,27 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=results-vnext-okr-objectives&lang=pl&level=objectives&setStatus=approved&state=ready&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [
+  "text=Zwiększyć przepustowość linii 3 ponad plan"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "Zestawy OKR\nWdrożyć MES na 3 liniach produkcyjnych\nNowy cel\nUwaga\nCEL (OBJECTIVE)\n\t\nSTATUS\n\t\nAMBICJA\n\t\nWŁAŚCICIEL\n\t\nPOSTĘP\n\t\nPEWNOŚĆ\n\t\nKLUCZOWE REZULTATY\n\t\nZAKTUALIZOWANO\n\t\n\n\nZwiększyć przepustowość linii 3 ponad plan\n\t\nAktywny\n\t\nAspiracyjny\n\t\nAnna Kowalska\n\t\n132%\n\t\nWysoka\n\t\n0\n\t\n6 sie 2026\n\t\n\n\nUruchomić linię MES-1 w pełnej automatyzacji\n\t\nAktywny\n\t\nZobowiązanie\n\t\nAnna Kowalska\n\t\n82%\n\t\nWysoka\n\t\n4\n\t\n5 sie 2026\n\t\n\n\nZredukować przestoje planowane na liniach 2 i 3\n\t\nZagrożony\n\t\nStandardowy\n\t\nTomasz Nowak\n\t\nN.D.\n\t\nN.D.\n\t\n0\n\t\n1 sie 2026\n\t\n\n\nWdrożyć raportowanie zmianowe (bez rollupu — decyzja polityki)\n\t\nSzkic\n\t\nStandardowy\n\t\nTomasz Nowak\n\t\n—\n\t\n—\n\t\n0\n\t\n20 lip 2026\n\t\n\n\nPilotaż czujników IoT na linii 1 (anulowany)\n\t\nAnulowany\n\t\nAspiracyjny\n\t\nAnna Kowalska\n\t\nN.D.\n\t\n—\n\t\n0\n\t\n15 lip 2026\n\t\nZwiększyć przepustowość linii 3 ponad plan\nZablokowane\nAktywny\nAspiracyjny\nCele i Kluczowe Rezultaty można dodawać i edytować tylko, gdy zestaw OKR ma status „Szkic” lub „Wymaga poprawek”.\nSZCZEGÓŁY\nWłaściwość\tWartość\nWłaściciel\tAnna Kowalska\nOpis\t—\nUzasadnienie\t—\nPostęp\t132%\nPewność\tWysoka\nLiczba Kluczowych Rezultatów\t0\nZaakceptowano\t16 cze 2026\nUtworzono\t15 cze 2026\nZaktualizowano\t6 sie 2026\nAI\nPOWIĄZANIA\nBrak powiązań\nOtwórz kartę celu\nKluczowe Rezultaty\nEdytuj\nAnuluj",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:10:04.679Z"
+}

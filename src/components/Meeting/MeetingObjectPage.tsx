@@ -103,6 +103,7 @@ import {
 } from '@/services/api';
 
 import { deriveMeetingLifecycle, formatDateTime, type MeetingItem } from './MeetingHub';
+import { translateOperatorMessage } from './meetingOperatorBriefI18n';
 
 type Section = 'details' | 'minutes' | 'decisions';
 
@@ -673,19 +674,21 @@ export const MeetingObjectPage: React.FC = () => {
             className="space-y-2 text-sm text-c-text-secondary"
             data-testid="meeting-operator-brief"
           >
-            {operatorBrief.prepSummary ? <p>{operatorBrief.prepSummary}</p> : null}
+            {operatorBrief.prepSummary ? (
+              <p>{translateOperatorMessage(operatorBrief.prepSummary, t)}</p>
+            ) : null}
             {Array.isArray(operatorBrief.agendaGaps) && operatorBrief.agendaGaps.length ? (
               <ul className="list-disc space-y-1 pl-5">
-                {operatorBrief.agendaGaps.map((item: string, index: number) => (
-                  <li key={`gap-${index}`}>{item}</li>
+                {operatorBrief.agendaGaps.map((item, index: number) => (
+                  <li key={`gap-${index}`}>{translateOperatorMessage(item, t)}</li>
                 ))}
               </ul>
             ) : null}
             {Array.isArray(operatorBrief.followUpSuggestions) &&
             operatorBrief.followUpSuggestions.length ? (
               <ul className="list-disc space-y-1 pl-5">
-                {operatorBrief.followUpSuggestions.map((item: string, index: number) => (
-                  <li key={`follow-up-${index}`}>{item}</li>
+                {operatorBrief.followUpSuggestions.map((item, index: number) => (
+                  <li key={`follow-up-${index}`}>{translateOperatorMessage(item, t)}</li>
                 ))}
               </ul>
             ) : null}
@@ -805,7 +808,10 @@ export const MeetingObjectPage: React.FC = () => {
             />
             <textarea
               className={`${decisionInputClass} min-h-16`}
-              placeholder={t('meeting.decisionRecords.rationalePlaceholder', 'Rationale (optional)')}
+              placeholder={t(
+                'meeting.decisionRecords.rationalePlaceholder',
+                'Rationale (optional)'
+              )}
               value={decisionRationale}
               onChange={(e) => setDecisionRationale(e.target.value)}
             />

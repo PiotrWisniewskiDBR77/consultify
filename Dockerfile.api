@@ -505,6 +505,11 @@ WORKDIR /app
 # compiled server layer for every exact-SHA candidate and fails closed when the
 # deployment operator did not supply the identity expected by /api/health.
 ARG APP_BUILD_SHA
+# Branch-connected Railway deploys (staging) carry the identity in RAILWAY_GIT_COMMIT_SHA and
+# nobody sets APP_BUILD_SHA per push, so fall back to it. Manual `railway up` uploads still
+# fail closed because neither variable is present.
+ARG RAILWAY_GIT_COMMIT_SHA
+ENV APP_BUILD_SHA=${APP_BUILD_SHA:-$RAILWAY_GIT_COMMIT_SHA}
 RUN test -n "$APP_BUILD_SHA" && echo "Building backend for $APP_BUILD_SHA"
 
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)

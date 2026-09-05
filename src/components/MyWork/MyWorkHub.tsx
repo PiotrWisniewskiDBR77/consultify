@@ -333,63 +333,17 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
 
 // Q3: Per-tab quick prompts shown as chips in the chat panel
 const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
-  home: [
-    'What deserves the highest attention right now?',
-    'Translate these signals into a plan',
-    'What is the strongest transformation move this week?',
-    'Where are we losing momentum?',
-  ],
-  ideas: [
-    'Build an initial structure for my idea',
-    'Challenge my assumptions',
-    'What am I missing?',
-    'Suggest next steps',
-    'Turn this into a decision matrix',
-    'Find root causes',
-  ],
-  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
-  inbox: [
-    'Triage all new items for me',
-    'Summarize notifications since yesterday',
-    'What needs urgent attention?',
-  ],
-  calendar: [
-    'Find a free slot for deep work this week',
-    'What conflicts do I have tomorrow?',
-    'Suggest an optimal schedule for today',
-  ],
-  tasks: [
-    'Reprioritize my tasks',
-    'Summarize what I did this week',
-    'Which tasks should I delegate?',
-    'Break down my top task',
-  ],
-  decisions: [
-    'Summarize pending decisions',
-    'Analyze the most urgent decision',
-    'What decisions are blocking progress?',
-  ],
-  projects: [
-    'Which projects are over budget?',
-    'Show projects missing stakeholders',
-    'Summarize program rollups',
-  ],
-  manager: [
-    'Give me a 30-second briefing',
-    'What needs my attention most?',
-    'Portfolio risk summary',
-    'Team capacity overview',
-  ],
-  vault: [
-    'What do we already know about this?',
-    'Which sources back this claim?',
-    'What is missing from our evidence?',
-  ],
-  agent: [
-    'Propose a process for this goal',
-    'What inputs does this step need?',
-    'Why did the last run stop here?',
-  ],
+  home: ['home.attention', 'home.plan', 'home.move', 'home.momentum'],
+  ideas: ['ideas.structure', 'ideas.challenge', 'ideas.missing', 'ideas.nextSteps', 'ideas.matrix', 'ideas.causes'],
+  notebook: ['notebook.summarize', 'notebook.actions', 'notebook.perspectives'],
+  inbox: ['inbox.triage', 'inbox.summarize', 'inbox.urgent'],
+  calendar: ['calendar.freeSlot', 'calendar.conflicts', 'calendar.schedule'],
+  tasks: ['tasks.reprioritize', 'tasks.summary', 'tasks.delegate', 'tasks.breakDown'],
+  decisions: ['decisions.summary', 'decisions.analyze', 'decisions.blocking'],
+  projects: ['projects.overBudget', 'projects.stakeholders', 'projects.rollups'],
+  manager: ['manager.briefing', 'manager.attention', 'manager.risk', 'manager.capacity'],
+  vault: ['vault.known', 'vault.sources', 'vault.missing'],
+  agent: ['agent.propose', 'agent.inputs', 'agent.stopped'],
 };
 type ItemStatus =
   | 'todo'
@@ -1396,13 +1350,16 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
 
     setChatSystemPrompt(prompt || null);
-    setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
+    setChatQuickPrompts(
+      TAB_QUICK_PROMPTS[activeTab]?.map((key) => t(`myWork.quickPrompts.${key}`)) || null
+    );
   }, [
     activeTab,
     activeIdeaWorkspaceState,
     contextSummary,
     activeIdeaToolLabel,
     setChatSystemPrompt,
+    t,
     setChatQuickPrompts,
     activeIdeaDoc,
   ]);
@@ -2067,12 +2024,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: String(initiativeId),
         type: 'initiative',
-        name: initiativeData?.name || initiativeData?.title || 'Initiative',
+        name:
+          initiativeData?.name || initiativeData?.title || t('common.documentTypes.initiative'),
         status: 'in_progress',
         data: initiativeData,
       });
     },
-    [handleOpenDocument]
+    [handleOpenDocument, t]
   );
 
   // Handle document saved/updated
@@ -3458,7 +3416,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 type="button"
               >
                 <Sparkles size={14} />
-                {t('myWork.hub.aITriage', 'AI Triage')}
+                {t('myWork.hub.aITriage', 'Wstępna klasyfikacja AI')}
               </button>
             </div>
           </div>

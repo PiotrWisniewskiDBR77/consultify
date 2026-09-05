@@ -500,7 +500,7 @@ export const OkrKeyResultFormModal: React.FC<OkrKeyResultFormModalProps> = ({
               data-testid="okr-kr-source-type"
             >
               <option value="manual">{isPolish ? 'Ręczny' : 'Manual'}</option>
-              <option value="import">{isPolish ? 'Import' : 'Import'}</option>
+              <option value="import">{'Import'}</option>
               <option value="connector">{isPolish ? 'Konektor' : 'Connector'}</option>
               <option value="mcp">MCP</option>
               <option value="calculated">{isPolish ? 'Wyliczany' : 'Calculated'}</option>

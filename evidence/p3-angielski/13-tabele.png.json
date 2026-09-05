@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/tabele",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nTabele Studio\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nTabele Studio\n\nTabele operacyjne, master data, rejestry, logi, OKR-y, decyzje\n\nZacznij nowy\nWzorce\nOstatnie\nZapisane\n\nDashboard KPI\n\nTabela wskaźników KPI z celami i aktualnymi wynikami. Kolumny: wskaźnik, cel, wynik, odchylenie, trend.\n\nRejestr ryzyk\n\nTabela do śledzenia ryzyk projektu lub organizacji. Kolumny: ryzyko, prawdopodobieństwo, wpływ, właściciel, status.\n\nRejestr inicjatyw\n\nTabela do śledzenia inicjatyw/zadań z priorytetem i postępem. Kolumny: inicjatywa, właściciel, priorytet, status, postęp.\n\nPodręcznik zespołu\n\nZasady, procedury i zasoby\n\nKalendarz treści\n\nPlanowanie i harmonogramowanie treści\n\nMapa drogowa produktu\n\nPlanowanie i ustalanie priorytetów funkcji produktu\n\nRejestr zgłoszeń\n\nŚledzenie błędów i próśb o nowe funkcje\n\nZarządzanie projektami\n\nZadania, kamienie milowe i terminy\n\nLejek CRM\n\nŚledzenie transakcji i kontaktów\n\nPortfolio Transformation Control — XLSX — 20260806 — FINAL-2\n\nAudytowalny portfel transformacji z osobnym arkuszem Inputs, danymi startowymi, kamieniami milowymi i formułą podsumowania.\n\nPortfolio Transformation Control — XLSX — 20260806 — FINAL\n\nPortfel transformacji: inicjatywy, kamienie milowe i podsumowanie KPI z formułą.\n\nRejestr ról\n\nRole, właściciele, macierz RACI per inicjatywa\n\nMaster danych dostawców\n\nMaster danych dostawców, umowy, status, SLA\n\nZestaw OKR\n\nCele i kluczowe rezultaty z check-inami\n\nLog incydentów\n\nIncydenty operacyjne z severity i właścicielami\n\nRejestr klientów\n\nKonta klientów, segment, cykl życia\n\nTracker zadań\n\nBacklog zadań między zespołami z właścicielami i terminami\n\nBacklog spotkań\n\nOczekujące spotkania, punkty agendy, follow-upy\n\nLog decyzji\n\nZapisane decyzje, właściciele, uzasadnienie, status",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:50:43.028Z"
+}

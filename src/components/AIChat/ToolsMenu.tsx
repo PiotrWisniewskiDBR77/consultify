@@ -622,7 +622,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                   }}
                   disabled={isSavingInstructions}
                 >
-                  Reset
+                  {t('common.reset', 'Reset')}
                 </Button>
                 <Button
                   variant="primary"

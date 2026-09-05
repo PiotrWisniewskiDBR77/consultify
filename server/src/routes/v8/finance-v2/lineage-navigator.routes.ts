@@ -58,6 +58,10 @@ import type { Response } from 'express';
 import { Router } from 'express';
 
 import { withPinnedPostgresTransaction } from '../../../database/PostgresDatabase.js';
+import {
+  createAnalysisDefinitionWithSelection,
+  type AnalysisDefinitionSelectionSummary,
+} from '../../../services/finance/canonical/analysisDefinitionService.js';
 import type { AuthRequest } from '../../../middleware/auth.middleware.js';
 import { getV8Context } from '../../../middleware/v8Auth.middleware.js';
 import {
@@ -148,7 +152,11 @@ async function loadLineageNodeMetadata(
   return map;
 }
 
-function collectVersionIds(focusVersionId: string, ancestors: readonly LineageEdgeRow[], descendants: readonly LineageEdgeRow[]): string[] {
+function collectVersionIds(
+  focusVersionId: string,
+  ancestors: readonly LineageEdgeRow[],
+  descendants: readonly LineageEdgeRow[]
+): string[] {
   const ids = new Set<string>([focusVersionId]);
   for (const edge of ancestors) {
     ids.add(edge.source_version_id);
@@ -164,7 +172,9 @@ function collectVersionIds(focusVersionId: string, ancestors: readonly LineageEd
 const TERMINAL_VISIBILITY_VALUES: readonly LineageTerminalVisibility[] = ['show', 'dim', 'hide'];
 
 function isTerminalVisibility(value: unknown): value is LineageTerminalVisibility {
-  return typeof value === 'string' && (TERMINAL_VISIBILITY_VALUES as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (TERMINAL_VISIBILITY_VALUES as readonly string[]).includes(value)
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +208,21 @@ const LINEAGE_TRANSFORMATION_KIND_VALUES = [
   'RETRACTION',
 ] as const;
 
+/**
+ * F-P4 — nośnik odmowy z producenta selekcji. Rzucany WEWNĄTRZ transakcji, żeby
+ * `withPgTransaction` wycofał artefakt i krawędź rodowodu; łapany zaraz za nią i mapowany
+ * na 409 z kodem domenowym (nigdy 500).
+ */
+class DerivedAnalysisSelectionError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string
+  ) {
+    super(message);
+    this.name = 'DerivedAnalysisSelectionError';
+  }
+}
+
 interface DerivedAnalysisReplay {
   artifact_id: string;
   business_version_id: string;
@@ -208,11 +233,15 @@ interface DerivedAnalysisReplay {
 
 type DerivedAnalysisResult =
   | { kind: 'error'; error: 'NOT_FOUND' | 'INVALID_SOURCE_TYPE' | 'IDEMPOTENCY_KEY_COLLISION' }
+  // F-P4: pakiet źródłowy bez okresów/jednostek/katalogu — odmowa BEZ ZAPISU
+  // (transakcja wycofana, artefakt i krawędź nie zostają).
+  | { kind: 'selection_error'; code: string; message: string }
   | { kind: 'replay'; replay: DerivedAnalysisReplay }
   | {
       kind: 'created';
       created: Awaited<ReturnType<typeof createArtifact>>;
       edge: LineageEdgeRow;
+      selection: AnalysisDefinitionSelectionSummary;
     };
 
 // ---------------------------------------------------------------------------
@@ -228,6 +257,29 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const sourceVersionId = String(req.params.sourceVersionId || '');
+    const body = (req.body ?? {}) as {
+      name?: unknown;
+      periodIds?: unknown;
+      kpiCodes?: unknown;
+      industryCode?: unknown;
+    };
+    // F-P4/F-P5: kreator Analizy zbiera nazwę, okresy i wskaźniki (analysisCreatorWizard.contract.ts)
+    // — do tej pory nie miał ich gdzie oddać. Wszystkie trzy są OPCJONALNE: bez nich producent
+    // bierze komplet okresów pakietu i cały aktywny katalog wskaźników.
+    const analysisName =
+      typeof body.name === 'string' && body.name.trim() ? body.name.trim() : null;
+    const requestedPeriodIds = Array.isArray(body.periodIds)
+      ? body.periodIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      : undefined;
+    const requestedKpiCodes = Array.isArray(body.kpiCodes)
+      ? body.kpiCodes.filter(
+          (code): code is string => typeof code === 'string' && code.trim().length > 0
+        )
+      : undefined;
+    const industryCode =
+      typeof body.industryCode === 'string' && body.industryCode.trim()
+        ? body.industryCode.trim()
+        : null;
     const idempotencyKey = readIdempotencyKey(req);
     if (!idempotencyKey) {
       return sendError(res, 400, 'IDEMPOTENCY_KEY_REQUIRED', 'Idempotency-Key is required');
@@ -235,33 +287,35 @@ router.post(
     const keyHash = createHash('sha256').update(idempotencyKey).digest('hex');
     const naturalKey = `derived-analysis:${keyHash}`;
 
-    const result = await withPgTransaction<DerivedAnalysisResult>(async (tx) => {
-      await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
-        `${organizationId}:${naturalKey}`,
-      ]);
+    const result: DerivedAnalysisResult = await (async (): Promise<DerivedAnalysisResult> => {
+      try {
+        return await withPgTransaction<DerivedAnalysisResult>(async (tx) => {
+          await tx.query(`SELECT pg_advisory_xact_lock(hashtextextended(?, 0))`, [
+            `${organizationId}:${naturalKey}`,
+          ]);
 
-      const source = (
-        await tx.query<{
-          business_version_id: string;
-          artifact_id: string;
-          artifact_type: FinanceArtifactType;
-        }>(
-          `SELECT bv.business_version_id, bv.artifact_id, a.artifact_type
+          const source = (
+            await tx.query<{
+              business_version_id: string;
+              artifact_id: string;
+              artifact_type: FinanceArtifactType;
+            }>(
+              `SELECT bv.business_version_id, bv.artifact_id, a.artifact_type
              FROM finance_business_versions bv
              JOIN finance_artifacts a
                ON a.artifact_id = bv.artifact_id AND a.organization_id = bv.organization_id
             WHERE bv.organization_id = ? AND bv.business_version_id = ?`,
-          [organizationId, sourceVersionId]
-        )
-      ).rows[0];
-      if (!source) return { kind: 'error', error: 'NOT_FOUND' };
-      if (source.artifact_type !== 'STATEMENT_PACK') {
-        return { kind: 'error', error: 'INVALID_SOURCE_TYPE' };
-      }
+              [organizationId, sourceVersionId]
+            )
+          ).rows[0];
+          if (!source) return { kind: 'error', error: 'NOT_FOUND' };
+          if (source.artifact_type !== 'STATEMENT_PACK') {
+            return { kind: 'error', error: 'INVALID_SOURCE_TYPE' };
+          }
 
-      const replay = (
-        await tx.query<DerivedAnalysisReplay>(
-          `SELECT a.artifact_id, bv.business_version_id, wr.working_revision_id,
+          const replay = (
+            await tx.query<DerivedAnalysisReplay>(
+              `SELECT a.artifact_id, bv.business_version_id, wr.working_revision_id,
                   e.id AS edge_id, e.source_version_id
              FROM finance_artifacts a
              JOIN finance_business_versions bv
@@ -273,35 +327,65 @@ router.post(
                ON e.target_version_id = bv.business_version_id
               AND e.organization_id = bv.organization_id
             WHERE a.organization_id = ? AND a.natural_key = ?`,
-          [organizationId, naturalKey]
-        )
-      ).rows[0];
-      if (replay) {
-        if (replay.source_version_id !== sourceVersionId) {
-          return { kind: 'error', error: 'IDEMPOTENCY_KEY_COLLISION' };
-        }
-        return { kind: 'replay', replay };
-      }
+              [organizationId, naturalKey]
+            )
+          ).rows[0];
+          if (replay) {
+            if (replay.source_version_id !== sourceVersionId) {
+              return { kind: 'error', error: 'IDEMPOTENCY_KEY_COLLISION' };
+            }
+            return { kind: 'replay', replay };
+          }
 
-      const created = await createArtifact({
-        organizationId,
-        artifactType: 'HISTORICAL_ANALYSIS',
-        naturalKey,
-        createdBy: userId,
-      });
-      const lineage = await insertEdge({
-        organizationId,
-        sourceVersionId,
-        sourceArtifactType: 'STATEMENT_PACK',
-        targetVersionId: created.businessVersion.business_version_id,
-        targetArtifactType: 'HISTORICAL_ANALYSIS',
-        edgeType: 'STATEMENT_TO_ANALYSIS',
-        transformationKind: 'MANUAL_LINK',
-        authorId: userId,
-      });
-      if (!lineage.ok) throw new Error(`derived analysis lineage failed: ${lineage.code}`);
-      return { kind: 'created', created, edge: lineage.edge };
-    });
+          const created = await createArtifact({
+            organizationId,
+            artifactType: 'HISTORICAL_ANALYSIS',
+            naturalKey,
+            createdBy: userId,
+          });
+          const lineage = await insertEdge({
+            organizationId,
+            sourceVersionId,
+            sourceArtifactType: 'STATEMENT_PACK',
+            targetVersionId: created.businessVersion.business_version_id,
+            targetArtifactType: 'HISTORICAL_ANALYSIS',
+            edgeType: 'STATEMENT_TO_ANALYSIS',
+            transformationKind: 'MANUAL_LINK',
+            authorId: userId,
+          });
+          if (!lineage.ok) throw new Error(`derived analysis lineage failed: ${lineage.code}`);
+
+          // F-P4 — siódmy producent: definicja analizy + wiersze SELEKCJI wskaźników.
+          // Bez tego `POST /analysis/:bv/compute` zawsze zwracał resultsCount: 0
+          // (kpiComputeService liczy WYŁĄCZNIE na istniejących wierszach).
+          const selection = await createAnalysisDefinitionWithSelection({
+            organizationId,
+            analysisBusinessVersionId: created.businessVersion.business_version_id,
+            sourceStatementPackVersionId: sourceVersionId,
+            createdBy: userId,
+            analysisName,
+            industryCode,
+            periodIds: requestedPeriodIds,
+            kpiCodes: requestedKpiCodes,
+          });
+          if (!selection.ok) {
+            // Odmowa BEZ ZAPISU — wyjątek wycofuje całą transakcję (artefakt + krawędź).
+            throw new DerivedAnalysisSelectionError(selection.code, selection.message);
+          }
+          return { kind: 'created', created, edge: lineage.edge, selection: selection.summary };
+        });
+      } catch (error) {
+        if (error instanceof DerivedAnalysisSelectionError) {
+          return { kind: 'selection_error', code: error.code, message: error.message };
+        }
+        throw error;
+      }
+    })();
+
+    if (result.kind === 'selection_error') {
+      // 409 + kod domenowy, komunikat po polsku. Zero zapisu: transakcja wycofana.
+      return sendError(res, 409, result.code, result.message);
+    }
 
     if (result.kind === 'error') {
       if (result.error === 'NOT_FOUND') {
@@ -337,6 +421,20 @@ router.post(
         sourceVersionId,
         artifactType: 'HISTORICAL_ANALYSIS',
         replayed,
+        // F-P4 — ile wskaźników × okresów faktycznie wybrano dla tej analizy. Przy powtórce
+        // (`replayed`) selekcja powstała w pierwszym wywołaniu, więc pole jest `null`.
+        selection: replayed
+          ? null
+          : {
+              definitionId: result.selection.definitionId,
+              analysisName: result.selection.analysisName,
+              presentationCurrency: result.selection.presentationCurrency,
+              unit: result.selection.unit,
+              periodIds: result.selection.periodIds,
+              kpiCodes: result.selection.kpiCodes,
+              selectionRowsInserted: result.selection.selectionRowsInserted,
+              selectionRowsTotal: result.selection.selectionRowsTotal,
+            },
       },
       meta: financeV2Meta(),
     });
@@ -370,16 +468,38 @@ router.post(
       return sendError(res, 400, 'INVALID_BODY', 'targetVersionId is required');
     }
     if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.sourceArtifactType)) {
-      return sendError(res, 400, 'INVALID_BODY', `sourceArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `sourceArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`
+      );
     }
     if (!(FinanceArtifactTypeValues as readonly string[]).includes(body.targetArtifactType)) {
-      return sendError(res, 400, 'INVALID_BODY', `targetArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `targetArtifactType must be one of ${FinanceArtifactTypeValues.join(', ')}`
+      );
     }
     if (!(LINEAGE_EDGE_TYPE_VALUES as readonly string[]).includes(body.edgeType)) {
-      return sendError(res, 400, 'INVALID_BODY', `edgeType must be one of ${LINEAGE_EDGE_TYPE_VALUES.join(', ')}`);
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `edgeType must be one of ${LINEAGE_EDGE_TYPE_VALUES.join(', ')}`
+      );
     }
-    if (!(LINEAGE_TRANSFORMATION_KIND_VALUES as readonly string[]).includes(body.transformationKind)) {
-      return sendError(res, 400, 'INVALID_BODY', `transformationKind must be one of ${LINEAGE_TRANSFORMATION_KIND_VALUES.join(', ')}`);
+    if (
+      !(LINEAGE_TRANSFORMATION_KIND_VALUES as readonly string[]).includes(body.transformationKind)
+    ) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        `transformationKind must be one of ${LINEAGE_TRANSFORMATION_KIND_VALUES.join(', ')}`
+      );
     }
 
     // Tenant-scoped existence pre-check on BOTH ends — without it, a foreign
@@ -407,8 +527,10 @@ router.post(
       edgeType: body.edgeType,
       transformationKind: body.transformationKind,
       authorId: userId,
-      assumptionSnapshotHash: typeof body.assumptionSnapshotHash === 'string' ? body.assumptionSnapshotHash : undefined,
-      assumptionSnapshotId: typeof body.assumptionSnapshotId === 'string' ? body.assumptionSnapshotId : undefined,
+      assumptionSnapshotHash:
+        typeof body.assumptionSnapshotHash === 'string' ? body.assumptionSnapshotHash : undefined,
+      assumptionSnapshotId:
+        typeof body.assumptionSnapshotId === 'string' ? body.assumptionSnapshotId : undefined,
       computeRunId: typeof body.computeRunId === 'string' ? body.computeRunId : undefined,
     };
 
@@ -448,14 +570,19 @@ router.get(
     const businessVersionId = String(req.params.businessVersionId || '');
 
     const maxDepthRaw = req.query.maxDepth;
-    const maxDepth = typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw)) ? Number(maxDepthRaw) : undefined;
+    const maxDepth =
+      typeof maxDepthRaw === 'string' && Number.isFinite(Number(maxDepthRaw))
+        ? Number(maxDepthRaw)
+        : undefined;
     if (maxDepthRaw !== undefined && maxDepth === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'maxDepth must be a finite number');
     }
 
     const maxTrailNodesRaw = req.query.maxTrailNodes;
     const maxTrailNodes =
-      typeof maxTrailNodesRaw === 'string' && Number.isFinite(Number(maxTrailNodesRaw)) ? Number(maxTrailNodesRaw) : undefined;
+      typeof maxTrailNodesRaw === 'string' && Number.isFinite(Number(maxTrailNodesRaw))
+        ? Number(maxTrailNodesRaw)
+        : undefined;
     if (maxTrailNodesRaw !== undefined && maxTrailNodes === undefined) {
       return sendError(res, 400, 'INVALID_QUERY', 'maxTrailNodes must be a finite number');
     }
@@ -464,7 +591,12 @@ router.get(
     let terminalVisibility: LineageTerminalVisibility = LINEAGE_TERMINAL_VISIBILITY_DEFAULT;
     if (terminalVisibilityRaw !== undefined) {
       if (!isTerminalVisibility(terminalVisibilityRaw)) {
-        return sendError(res, 400, 'INVALID_QUERY', `terminalVisibility must be one of ${TERMINAL_VISIBILITY_VALUES.join(', ')}`);
+        return sendError(
+          res,
+          400,
+          'INVALID_QUERY',
+          `terminalVisibility must be one of ${TERMINAL_VISIBILITY_VALUES.join(', ')}`
+        );
       }
       terminalVisibility = terminalVisibilityRaw;
     }

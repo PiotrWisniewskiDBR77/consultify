@@ -63,6 +63,7 @@ import {
 import { StandardTable } from '@/components/standard';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { resolveToolStatus } from '@/domain/toolStatus';
+import { STATE_TONE_DOT_CLASS, STATE_TONE_TEXT_CLASS, toneForState } from '@/labels/stateToneMap';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, clearGlobalTransportFailure, resetAuthLoopGuard } from '@/services/api';
@@ -216,8 +217,8 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
   {
     id: 'blocked',
     label: 'Blocked',
-    color: 'text-danger-400',
-    bgColor: 'bg-danger-500',
+    color: 'text-danger-400', // danger-ok: real error — blocked task genuinely needs reaction
+    bgColor: 'bg-danger-500', // danger-ok: real error
   },
 ];
 
@@ -236,7 +237,14 @@ const INITIATIVES_STATUSES: StatusFilterOption[] = [
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'cancelled', label: 'Cancelled', color: 'text-danger-400', bgColor: 'bg-danger-500' },
+  // P6 rodzina §3.1: "Cancelled" to terminalny stan cyklu życia, nie awaria (ta sama klasa co
+  // archived/expired w statusChipTone() SSOT: EntityStatusChip.tsx) — było danger, teraz neutral.
+  {
+    id: 'cancelled',
+    label: 'Cancelled',
+    color: STATE_TONE_TEXT_CLASS[toneForState('genericLifecycle', 'cancelled')],
+    bgColor: STATE_TONE_DOT_CLASS[toneForState('genericLifecycle', 'cancelled')],
+  },
 ];
 
 // Tool type codes
@@ -319,13 +327,21 @@ const CATEGORY_META: Record<
   licensed: {
     name: 'Oceny',
     icon: <Shield size={16} />,
-    textClass: 'text-danger-700 dark:text-danger-400',
-    dotClass: 'bg-danger-400',
+    // P6 §3.1: "Oceny" to kategoria narzędzi, nie stan błędu — danger-* tu było przypadkową
+    // podmianą koloru, nie decyzją. Ton przez stateToneMap.ts (SSOT), nie klasa wprost.
+    textClass: STATE_TONE_TEXT_CLASS[toneForState('discoveryToolCategory', 'licensed')],
+    dotClass: STATE_TONE_DOT_CLASS[toneForState('discoveryToolCategory', 'licensed')],
     count: 5,
   },
 };
 
 type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+
+// P6 rodzina §3.1: framework oceny = tożsamość narzędzia, nie stan błędu — jeden ton dla
+// wszystkich ikon frameworków (był per-ikonka crimson/danger, ten sam kopiuj-wklej wzorzec).
+const ASSESSMENT_FRAMEWORK_TONE_CLASS = STATE_TONE_TEXT_CLASS[
+  toneForState('discoveryToolCategory', 'licensed')
+];
 
 const ASSESSMENT_FRAMEWORK_META: Record<
   AssessmentFramework,
@@ -336,34 +352,37 @@ const ASSESSMENT_FRAMEWORK_META: Record<
     tags: string[];
   }
 > = {
+  // P6 rodzina §3.1: nazwy/ikony frameworkow oceny (DRD/SIRI/ADMA/CMMI/LEAN) to TOZSAMOSC
+  // narzedzia, nie stan bledu — byly danger-400 (ten sam kopiuj-wklej co kategoria "Oceny").
+  // ASSESSMENT_FRAMEWORK_TONE_CLASS = STATE_TONE_TEXT_CLASS[toneForState('discoveryToolCategory', 'licensed')]
   DRD: {
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
-    icon: <Activity size={16} className="text-danger-400" />,
+    icon: <Activity size={16} className={ASSESSMENT_FRAMEWORK_TONE_CLASS} />,
     tags: ['assessment', 'digital', 'readiness'],
   },
   SIRI: {
     name: 'Smart Industry Readiness Index',
     shortName: 'SIRI',
-    icon: <Cpu size={16} className="text-danger-400" />,
+    icon: <Cpu size={16} className={ASSESSMENT_FRAMEWORK_TONE_CLASS} />,
     tags: ['assessment', 'industry-4.0', 'readiness'],
   },
   ADMA: {
     name: 'Advanced Digital Maturity Assessment',
     shortName: 'ADMA',
-    icon: <Database size={16} className="text-danger-400" />,
+    icon: <Database size={16} className={ASSESSMENT_FRAMEWORK_TONE_CLASS} />,
     tags: ['assessment', 'maturity', 'digital'],
   },
   CMMI: {
     name: 'Capability Maturity Model Integration',
     shortName: 'CMMI',
-    icon: <Layers size={16} className="text-danger-400" />,
+    icon: <Layers size={16} className={ASSESSMENT_FRAMEWORK_TONE_CLASS} />,
     tags: ['assessment', 'process', 'maturity'],
   },
   LEAN: {
     name: 'Lean 4.0',
     shortName: 'LEAN',
-    icon: <Workflow size={16} className="text-danger-400" />,
+    icon: <Workflow size={16} className={ASSESSMENT_FRAMEWORK_TONE_CLASS} />,
     tags: ['assessment', 'lean', 'operations'],
   },
 };
@@ -1838,7 +1857,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             const meta = (ASSESSMENT_FRAMEWORK_META as any)?.[fw];
             return (
               <div className="flex items-center gap-2">
-                <span className="text-danger-400">{meta?.icon || <Shield size={16} />}</span>
+                <span className={ASSESSMENT_FRAMEWORK_TONE_CLASS}>
+                  {meta?.icon || <Shield size={16} />}
+                </span>
                 <span className="font-mono text-xs font-bold text-c-text-secondary">
                   {fw || 'ASSESS'}
                 </span>
@@ -2043,7 +2064,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'availability',
-        label: isPolish ? 'Status' : 'Status',
+        label: 'Status',
         width: '120px',
         filterable: true,
         filterOptions: [
@@ -2209,7 +2230,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           };
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
-            label: isPolish ? 'Output' : 'Output',
+            label: isPolish ? 'Wynik' : 'Output',
             color: 'text-c-text-secondary',
           };
           return (
@@ -3326,7 +3347,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-danger-500/20 text-danger-400';
+        return 'bg-danger-500/20 text-danger-400'; // danger-ok: real error — BLOCKED task
       default:
         return 'bg-slate-500/20 text-c-text-secondary';
     }
@@ -3335,7 +3356,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-danger-400';
+        return 'text-danger-400'; // danger-ok: real error — CRITICAL priority
       case 'HIGH':
         return 'text-amber-400';
       case 'MEDIUM':
@@ -3484,7 +3505,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-danger-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-danger-400" /* danger-ok: real error — blocked count */>
+                        {taskStats.blocked} Blocked
+                      </span>
                     )}
                   </div>
                 </div>
@@ -3528,7 +3551,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-danger-400'
+                                  ? 'bg-danger-400' // danger-ok: real error — BLOCKED task dot
                                   : 'bg-c-text-muted'
                           }`}
                         />
@@ -3718,7 +3741,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (loadError) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" />
+          <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" /* danger-ok: real error — degraded UX state */ />
           <h3 className="text-xl font-semibold text-c-text mb-2">
             {loadError.isTransportBlock
               ? isPolish
@@ -4103,7 +4126,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           label:
                             row?.kind === 'assessment'
                               ? isPolish
-                                ? 'Start assessment'
+                                ? 'Rozpocznij ocenę'
                                 : 'Start assessment'
                               : isPolish
                                 ? 'Rozpocznij sesję'
@@ -4759,7 +4782,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                         onClick={() => void copyLink()}
                         className={extraPillNeutral}
                       >
-                        {isPolish ? 'Link' : 'Link'}
+                        {'Link'}
                       </button>
                       <button
                         type="button"
@@ -5209,7 +5232,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             toolType: slug,
             shortCode: slug,
             name: titleFromSlug(slug),
-            description: isPolish ? 'Framework (docs-driven)' : 'Framework (docs-driven)',
+            description: isPolish ? 'Model ramowy (oparty na dokumentacji)' : 'Framework (docs-driven)',
             category: 'strategic' as ToolCategory,
             kind: 'catalog' as const,
             isActive: false,
@@ -5237,17 +5260,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   // PrimaryCta: no leading `+` icon per §2.2 / §2.1 canon.
   // Chevron is allowed because the button opens a tool-picker menu (variants).
   const PrimaryCta = (
-    <div ref={addMenuRef} className="relative">
+    <div ref={addMenuRef} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setIsAddMenuOpen((v) => !v)}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
+        // P6 §5 krok 4 (N8): shrink-0 + whitespace-nowrap — przy 1280 px przycisk
+        // łamał etykietę do 2 linii i przepełniał pasek Menu 2 o 27 px (audyt A §N8).
+        className="inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-full text-sm font-medium whitespace-nowrap bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
       >
-        <span>{isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}</span>
+        <span className="whitespace-nowrap">
+          {isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}
+        </span>
         <ChevronDown
           size={16}
-          className={`text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -5470,7 +5497,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         <Filter size={16} className="text-c-text-secondary" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
         <span>
-          {isPolish ? 'Status' : 'Status'}:{' '}
+          {'Status'}:{' '}
           {getStatusOptionLabel(selectedStatusOption.id, selectedStatusOption.label)}
         </span>
         <ChevronDown
@@ -5569,7 +5596,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   id: 'licensed' as const,
                   label: isPolish ? 'Oceny' : 'Assessments',
                   count: libraryCategoryCounts.licensed,
-                  dot: 'bg-danger-500',
+                  // P6 rodzina §3.1: druga instancja tego samego błędu co CATEGORY_META.licensed.
+                  dot: STATE_TONE_DOT_CLASS[toneForState('discoveryToolCategory', 'licensed')],
                 },
                 {
                   id: 'other' as const,

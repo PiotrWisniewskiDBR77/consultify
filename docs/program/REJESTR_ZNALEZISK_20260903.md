@@ -420,3 +420,20 @@ Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 k
 - `InputHintStrip.tsx` jest `test-only`, ale ma dodatkowy realny mock w `tests/components/AIChat/EnhancedChatInput.teresa-error-toast.test.tsx:85`, poza imienną licencją dyżuru; plik pozostawiono zamiast stworzyć dziurawy test.
 - `reachability --update-baseline` odmawia przez zastany nowy `test-only` `src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts`; po day373 zbiory globalnie maleją, ale baseline pozostaje uczciwie czerwony.
 - Trzy martwe barrele `AIChat/Artifacts/**/index*.ts` i `MyWork/table/SmartSuggestionsBar.tsx` pozostają poza zakresem.
+
+## AN. Dyżur 374 — i18n czatu domknięte częściowo
+
+- R2, R4, R5 i R6 mają dowody GREEN; R3 zmniejszono z 194 do 141 wystąpień.
+- STOP merytoryczny: kolizje string/obiekt w słownikach oraz dwa różne znaczenia `myWork.ideas.plantInGarden`; bez rozszerzenia licencji nie wolno mechanicznie nadpisać istniejących wartości.
+- Szczegóły i bramki: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY374_I18N_CZAT_DOMKNIECIE_REPORT.md`.
+## AN. Dyżur 375 — karty propozycji po F5 używały zamrożonego stanu
+
+- `TeresaProposalCard` po remoncie ufała wyłącznie metadata wiadomości mimo istniejącego `GET /v8/teresa/proposal/:id`; naprawa odświeża stan fail-soft i ma test z identycznym przestarzałym propem.
+- `GovernedInitiativeHandoffCard` po remoncie wracała do `idle`; naprawa czyta istniejący kwit `chat-draft-adopt:*`, respektuje backendowy `404` dla braku widoczności i pokazuje `adopted` tylko dla `CONFIRMED`.
+- Dowód konfliktu 500→409 odtworzono na lokalnym RealPG jako PASS→mutacja RED→PASS. Osobny realny HTTP/JWT/PG dowód kwitu adopcji pozostaje `NOT PROVEN`; szczegóły: `CODEX_DAY375_KARTY_DOMKNIECIE_REPORT.md`.
+## AN. Dyżur 377 — governed connect odmawiał nieczytelnym 500
+
+- `buildGovernedExternalAuthSession` ma sześć miejsc wywołania. Na gołym `ApiGateway` dwa realnie zmierzone wejścia zwracały `500 {}` dla niezatwierdzonego `google_drive`; dwa wywołania v8 miały zastany, niespójny `403` z surowym komunikatem.
+- Polityka `SET-MVP-OAUTH-001` pozostaje fail-closed. Dyżur 377 ujednolicił wszystkie sześć miejsc do `501` + `GOVERNED_CONNECTOR_NOT_APPROVED` + „Integracja nie jest dostępna w tej wersji”, bez zatwierdzania dostawców i bez zmiany callbacku.
+- `ConnectedAppsSettings.tsx` zatrzymuje redirect OAuth dla `teams` po błędzie i pokazuje komunikat serwera. RealPG + JWT + dwa tenanty potwierdziły zero zapisanych wierszy.
+- Do decyzji właściciela: przyszłość `OAUTH_APPROVED_PROVIDER_REGISTRY` dla chmury, brak pól `client_id/client_secret` dla Jira we froncie oraz los martwych wołaczy `UserIntegrations`/`NotificationChannelsSettings`.

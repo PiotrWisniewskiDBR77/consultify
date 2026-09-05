@@ -1,0 +1,47 @@
+{
+ "url": "http://localhost:3061/?screen=karta-task&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1440,
+ "sidebarSimulated": 288,
+ "found": true,
+ "items": [
+  {
+   "text": "Przygotować mapę procesu raportowania AS",
+   "x": 401,
+   "y": 55,
+   "right": 993.453125,
+   "bottom": 85
+  },
+  {
+   "text": "W trakcie",
+   "x": 401,
+   "y": 95,
+   "right": 467.53125,
+   "bottom": 115
+  },
+  {
+   "text": "Zapisano",
+   "x": 477.53125,
+   "y": 97,
+   "right": 529.375,
+   "bottom": 113
+  },
+  {
+   "text": "AI",
+   "x": 1044.453125,
+   "y": 62,
+   "right": 1057.859375,
+   "bottom": 82
+  },
+  {
+   "text": "Wyślij do przeglądu",
+   "x": 1127.859375,
+   "y": 62,
+   "right": 1257,
+   "bottom": 82
+  }
+ ],
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:20:21.647Z"
+}

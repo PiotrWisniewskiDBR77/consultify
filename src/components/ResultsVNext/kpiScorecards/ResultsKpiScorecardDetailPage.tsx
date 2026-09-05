@@ -57,6 +57,8 @@ import { Blocks, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/states';
 import type { StandardCounterChip, StandardModuleTab } from '@/components/standard';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
+import { useResultsEntityNames } from '@/hooks/useResultsEntityNames';
 import { useAppStore } from '@/store/useAppStore';
 import { ROUTES } from '@/routes/routeConfig';
 
@@ -126,6 +128,11 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const currentUser = useAppStore((s) => s.currentUser);
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const resolveMemberName = useOrganizationMemberNames();
+  const resolveScopeName = useResultsEntityNames(
+    currentOrganization ? [currentOrganization] : []
+  );
   const { scorecardId } = useParams<{ scorecardId: string }>();
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
 
@@ -489,6 +496,8 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       ? buildKpiScorecardPreview(scorecard, {
           isPolish,
           currentUserId: currentUser?.id,
+          resolveMemberName,
+          resolveScopeName,
           busy: pending !== null,
           statusDistribution: distribution,
           memberCount: items?.length,
@@ -592,6 +601,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             selectedSnapshot
               ? buildKpiScorecardSnapshotPreview(selectedSnapshot, {
                   isPolish,
+                  resolveMemberName,
                   busy: publishBusy,
                   onClose: () => setSelectedSnapshotId(null),
                   onPublish: (r) => setPublishTarget(r),
@@ -678,7 +688,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           },
         }}
         table={{
-          columns: buildKpiScorecardItemColumns(isPolish),
+          columns: buildKpiScorecardItemColumns(isPolish, resolveMemberName),
           data: itemRows,
           persistKey: 'results-vnext.kpi-scorecards.items',
           loading: itemsLoading,
@@ -720,6 +730,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           selectedItem
             ? buildKpiScorecardItemPreview(selectedItem, {
                 isPolish,
+                resolveMemberName,
                 busy: removeItemBusy,
                 onClose: () => setSelectedItemId(null),
                 onOpenKpi,

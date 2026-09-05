@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/meetings",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nSpotkania\nDane\nModel\nPiotr Wiśniewski\nPW\nSpotkania\nŁadowanie przestrzeni\nNowe spotkanie\nWszystkie\n0\nNadchodzące\n0\nPo terminie — wymaga aktualizacji\n0\nWymaga follow-upu\n0\nZakończone\n0\nBrief operatora\nLoading\nŁadowanie",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:29.054Z"
+}

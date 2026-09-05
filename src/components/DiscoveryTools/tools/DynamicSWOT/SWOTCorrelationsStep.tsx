@@ -88,18 +88,18 @@ export const SWOTCorrelationsStep: React.FC<SWOTCorrelationsStepProps> = ({
             <h4 className={`font-medium text-${config.color}-700 dark:text-${config.color}-300`}>
               {type === 'SO'
                 ? isPolish
-                  ? 'Attack'
+                  ? 'Atakuj'
                   : 'Attack'
                 : type === 'WO'
                   ? isPolish
-                    ? 'Repair'
+                    ? 'Napraw'
                     : 'Repair'
                   : type === 'ST'
                     ? isPolish
-                      ? 'Defend'
+                      ? 'Broń'
                       : 'Defend'
                     : isPolish
-                      ? 'Protect'
+                      ? 'Chroń'
                       : 'Protect'}{' '}
               · {config.label[lang]}
             </h4>

@@ -22,6 +22,7 @@ import {
 } from '@/components/standard';
 import { LoadingState, StatusChip } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { fileFormatLabel } from '@/labels/fileFormatLabels';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
@@ -144,10 +145,13 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         sortAccessor: (rawRow: Record<string, unknown>) =>
           MATERIAL_FILE_FORMATS.indexOf((rawRow as unknown as ReportItem).fileFormat || 'Unknown'),
         filterable: true,
-        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({ value: format, label: format })),
+        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({
+          value: format,
+          label: fileFormatLabel(format, isPolish),
+        })),
         render: (rawRow: Record<string, unknown>) => (
           <span className="text-xs font-medium text-c-text-secondary">
-            {(rawRow as unknown as ReportItem).fileFormat || 'Unknown'}
+            {fileFormatLabel((rawRow as unknown as ReportItem).fileFormat, isPolish)}
           </span>
         ),
       },
