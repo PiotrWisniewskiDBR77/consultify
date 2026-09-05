@@ -19,7 +19,6 @@ import {
   getAssessmentReportContract,
   isOfflineError,
   MethodCoreApiError,
-  type AssessmentReportArea,
   type AssessmentReportAreaComment,
   type AssessmentReportChapter,
   type AssessmentReportContract,
@@ -31,6 +30,7 @@ import { isAssessmentDocxEnabled } from '@/utils/assessmentDocxFlag';
 import { getHeaders } from '@/services/api/baseClient';
 
 import { SKIP_REASON_LABELS } from '../../method-workspace/skipReasonCodes';
+import { DRDMatrixReadOnly, drdOdpowiedziZOutputu } from '../drd/DRDMatrixReadOnly';
 
 export interface AssessmentReportContractViewProps {
   readonly sessionId: string;
@@ -117,62 +117,53 @@ function SkipSummary({
   );
 }
 
-// FIX P1-3 (day-27 acceptance): the "skips" column used to sit inside the
-// matrix table (a bulleted list crammed into a <td>), pushing the table past
-// its `min-w-[720px]` inside a `max-w-[760px]` chapter column — the last
-// header ("Pominięcia") was clipped at the default width, never fully in
-// frame without an undiscoverable horizontal scroll. Skips are now rendered
-// as a full-width block BELOW the table (one per area that actually has
-// them), so the table itself only needs its five narrow columns and fits
-// comfortably inside the chapter column with no overflow at all.
+// ★ MACIERZ RAPORTU = MACIERZ WŁAŚCICIELA (2026-09-05, PIĄTE zgłoszenie tej
+// samej sprawy). Do dziś ten ekran rysował WŁASNĄ tabelę „Obszar / Poziom
+// obecny / Poziom docelowy / Luka / Stan dowodów" (aria-label „Axis matrix
+// table"). To jest dokładnie ten kształt, który właściciel odrzucił
+// (`docs/program/grafika/DZIENNIK_GRAFIKA.md` Z-10) — pięć liczb w wierszu,
+// zero drogi rozwoju obszaru po drabinie poziomów, a przy nieocenionej sesji
+// pięć kolumn „(nie oceniono)".
+//
+// Prezentacja (`presentation/slides.tsx`, 7e262a2b9c) i dokument raportu
+// (`AssessmentReportDocument.tsx`, 81b1d9669f) dostały to naprawione 01.09 —
+// ten ekran został pominięty. Teraz rysuje TĘ SAMĄ siatkę: `DRDMatrixGrid`
+// przez wspólne opakowanie `DRDMatrixReadOnly`, czyli macierz z ekranu
+// „Macierz oceny DRD — obszary x poziomy" (ocena B od właściciela 01.09):
+// wiersze = poziomy (najwyższy u góry), kolumny = obszary, treść komórek
+// z kanonu (`docs/program/grafika/MACIERZ_TRESC_KOMOREK.md`), wypełnienie
+// kumulatywne, chipy `AS n` / `TO n` w dolnym pasku „Area".
+//
+// ★ EKSPORT, NIE KOPIA — kopii tej macierzy jest w repo już kilka (Z-12:
+// „kopii jest w tym repo więcej niż oryginałów") i to one są powodem
+// kolejnych pudeł. Szósta kopia byłaby powtórzeniem tego samego błędu.
+//
+// ★ CO ZE ZNIKNIĘTYMI KOLUMNAMI. Nic nie ubywa z EKRANU: „poziom obecny"
+// i „docelowy" niosą chipy `AS`/`TO` w pasku obszarów (luka = ich różnica),
+// a „stan dowodów" per obszar jest w sekcji „Komentarz per obszar" niżej
+// (`AreaComment` → `assessment.reportView.evidence.*`). Pominięcia zostają
+// pełnowymiarowym blokiem POD siatką — tak jak dotąd (FIX P1-3 day-27:
+// w komórce tabeli rozpychały ją poza kolumnę rozdziału).
 function Matrix({ chapter }: { readonly chapter: AssessmentReportChapter }) {
   const { t } = useTranslation();
-  const value = (v: number | null) =>
-    v === null ? t('assessment.reportView.notAssessedValue') : String(v);
   const areasWithSkips = chapter.matrix.areas.filter((area) => area.skips.length > 0);
+  const value = React.useMemo(
+    () =>
+      drdOdpowiedziZOutputu(
+        chapter.matrix.areas.map((area) => area.unitId),
+        Object.fromEntries(chapter.matrix.areas.map((area) => [area.unitId, area.currentLevel])),
+        Object.fromEntries(chapter.matrix.areas.map((area) => [area.unitId, area.targetLevel]))
+      ),
+    [chapter]
+  );
   return (
     <div className="space-y-3">
-      {/* axe scrollable-region-focusable: at narrower widths (e.g. 1024px) the
-          table's min-w-[480px] genuinely exceeds the chapter column, making
-          this a real horizontally-scrollable region with no keyboard access —
-          tabIndex + role="region" + aria-label fix it without touching scroll. */}
       <div
-        className="overflow-x-auto rounded-xl border border-c-border-subtle"
-        tabIndex={0}
-        role="region"
-        aria-label={t('assessment.reportView.matrix.regionLabel', 'Axis matrix table — scrolls horizontally')}
+        data-testid="assessment-report-drd-matrix"
+        role="group"
+        aria-label={t('assessment.reportView.matrix.gridLabel')}
       >
-        {/* prettier-ignore */}
-        <table className="w-full min-w-[480px] border-collapse text-xs" data-table-canon="§27-exempt-document-matrix">
-          <thead className="bg-c-surface-raised text-left text-c-text-muted" data-table-canon="§27-exempt">
-            <tr>
-              {['area', 'current', 'target', 'gap', 'evidence'].map((key) => (
-                <th key={key} className="border-b border-c-border-subtle px-3 py-2 font-semibold">
-                  {t(`assessment.reportView.matrix.${key}`)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody data-table-canon="§27-exempt">
-            {chapter.matrix.areas.map((area: AssessmentReportArea) => (
-              <tr key={area.unitId} className="align-top text-c-text">
-                <td className="border-b border-c-border-subtle px-3 py-3 font-medium">
-                  {area.unitId} · {area.unitNamePL ?? area.unitName}
-                </td>
-                <td className="border-b border-c-border-subtle px-3 py-3">
-                  {value(area.currentLevel)}
-                </td>
-                <td className="border-b border-c-border-subtle px-3 py-3">
-                  {value(area.targetLevel)}
-                </td>
-                <td className="border-b border-c-border-subtle px-3 py-3">{value(area.gap)}</td>
-                <td className="border-b border-c-border-subtle px-3 py-3">
-                  {t(`assessment.reportView.evidence.${evidenceKey[area.evidenceState]}`)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DRDMatrixReadOnly axisNumber={chapter.axisId} value={value} columnMinPx={120} />
       </div>
       {areasWithSkips.length > 0 ? (
         <div className="space-y-2">
