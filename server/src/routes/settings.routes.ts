@@ -20,6 +20,7 @@ import { setIntegrationOwner } from '../services/integrationOwnershipService.js'
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
+  isGovernedConnectorApprovalError,
 } from '../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../services/v8/pmSyncInventoryService.js';
 import { setConnectorAuthState } from '../services/v8/pmSyncTruthService.js';
@@ -1917,15 +1918,26 @@ router.post(
       // transition behind.
       const willAttemptExternalAuth =
         connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
-      const preparedExternalAuth = willAttemptExternalAuth
-        ? buildGovernedExternalAuthSession(req, {
+      let preparedExternalAuth: ReturnType<typeof buildGovernedExternalAuthSession> | null = null;
+      if (willAttemptExternalAuth) {
+        try {
+          preparedExternalAuth = buildGovernedExternalAuthSession(req, {
             integrationId,
             organizationId,
             connectorId: connector.id,
             mode: 'connect',
             config,
-          })
-        : null;
+          });
+        } catch (error) {
+          if (isGovernedConnectorApprovalError(error)) {
+            return res.status(501).json({
+              error: 'Integracja nie jest dostępna w tej wersji',
+              code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+            });
+          }
+          throw error;
+        }
+      }
 
       await dbRun(
         `INSERT INTO integrations (
@@ -2438,13 +2450,24 @@ router.post(
 
     // Approval must be consulted before the pending-status write or the
     // connecting-state transition, so a denied connector leaves no trace.
-    const externalAuth = buildGovernedExternalAuthSession(req, {
-      integrationId: item.id,
-      organizationId,
-      connectorId: connector.id,
-      mode: 'reauth',
-      config,
-    });
+    let externalAuth: ReturnType<typeof buildGovernedExternalAuthSession>;
+    try {
+      externalAuth = buildGovernedExternalAuthSession(req, {
+        integrationId: item.id,
+        organizationId,
+        connectorId: connector.id,
+        mode: 'reauth',
+        config,
+      });
+    } catch (error) {
+      if (isGovernedConnectorApprovalError(error)) {
+        return res.status(501).json({
+          error: 'Integracja nie jest dostępna w tej wersji',
+          code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+        });
+      }
+      throw error;
+    }
 
     await updateIntegrationStatus(item.id, 'pending');
     await setConnectorAuthState({
@@ -2518,15 +2541,26 @@ router.put(
     // and before the connecting-state transition — never after.
     const willAttemptExternalAuth =
       connector.authType === 'oauth2' && onboardingStatus === 'pending_external_auth';
-    const preparedExternalAuth = willAttemptExternalAuth
-      ? buildGovernedExternalAuthSession(req, {
+    let preparedExternalAuth: ReturnType<typeof buildGovernedExternalAuthSession> | null = null;
+    if (willAttemptExternalAuth) {
+      try {
+        preparedExternalAuth = buildGovernedExternalAuthSession(req, {
           integrationId: item.id,
           organizationId,
           connectorId: connector.id,
           mode: 'connect',
           config: nextConfig,
-        })
-      : null;
+        });
+      } catch (error) {
+        if (isGovernedConnectorApprovalError(error)) {
+          return res.status(501).json({
+            error: 'Integracja nie jest dostępna w tej wersji',
+            code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+          });
+        }
+        throw error;
+      }
+    }
 
     await dbRun(
       `UPDATE integrations

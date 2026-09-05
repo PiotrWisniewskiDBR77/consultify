@@ -42,6 +42,7 @@ import {
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
+  isGovernedConnectorApprovalError,
 } from '../../services/v8/pmSyncExternalAuthMaterializationService.js';
 import { listGovernedIntegrations } from '../../services/v8/pmSyncInventoryService.js';
 import {
@@ -1064,13 +1065,13 @@ router.post(
           config: nextConfig,
         });
       } catch (error) {
-        return res.status(403).json({
-          error:
-            error instanceof Error
-              ? error.message
-              : 'Governed external auth provider is not approved',
-          code: 'GOVERNED_EXTERNAL_AUTH_NOT_APPROVED',
-        });
+        if (isGovernedConnectorApprovalError(error)) {
+          return res.status(501).json({
+            error: 'Integracja nie jest dostępna w tej wersji',
+            code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+          });
+        }
+        throw error;
       }
     }
 
@@ -1252,13 +1253,13 @@ router.post(
           config,
         });
       } catch (error) {
-        return res.status(403).json({
-          error:
-            error instanceof Error
-              ? error.message
-              : 'Governed external auth provider is not approved',
-          code: 'GOVERNED_EXTERNAL_AUTH_NOT_APPROVED',
-        });
+        if (isGovernedConnectorApprovalError(error)) {
+          return res.status(501).json({
+            error: 'Integracja nie jest dostępna w tej wersji',
+            code: 'GOVERNED_CONNECTOR_NOT_APPROVED',
+          });
+        }
+        throw error;
       }
     }
 
