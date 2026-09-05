@@ -365,6 +365,15 @@ const mapApiFramework = (type: string | undefined): AssessmentFramework => {
 
 interface AssessmentHubProps {
   initialTab?: ModuleTab;
+  /**
+   * Odbiór 05.09 (05-ocena, defekt 3): wejście `/assessment/drd` lądowało na
+   * zakładce „Biblioteka" z tabelą pięciu metodyk, a po ręcznym przełączeniu
+   * na „Procesy" lista NIE była zawężona do DRD (były też SIRI). Trasy
+   * frameworkowe podają teraz swój framework tutaj, a lista sesji filtruje się
+   * do niego — dokładnie to, co pokazuje zatwierdzony obraz („Ocena >
+   * Biblioteka > Procesy" z listą sesji tej metodyki).
+   */
+  frameworkFilter?: AssessmentFramework;
 }
 
 // ASM-001A: the 5 stable tab ids behind `assessmentFiveSurfacesV1`. `list` is
@@ -388,7 +397,7 @@ function resolveFiveSurfacesTabFromUrl(raw: string | null): ModuleTab | null {
   return 'processes';
 }
 
-export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
+export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, frameworkFilter }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -891,6 +900,52 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       label: t('assessment.hub.table.progressHeader', 'Progress'),
       width: '150px',
     };
+    /* Odbiór 05.09 (05-ocena, defekt 3): zatwierdzony obraz listy ocen ma
+       NAZWA OCENY | JEDNOSTKA | STATUS | WYNIK | PEWNOŚĆ | WŁAŚCICIEL |
+       AKTUALIZACJA. Na żywo było TYP | NAZWA | STATUS | POSTĘP | AUTOR |
+       ZAKTUALIZOWANO. TYP i POSTĘP schodzą z domyślnego zestawu (zostają
+       w pstryczku), WYNIK i PEWNOŚĆ wchodzą z realnych kolumn bazy
+       (`overall_score`, `confidence_avg`), a etykiety NAZWA/AUTOR/
+       ZAKTUALIZOWANO idą po nazwach z obrazu.
+
+       Czego ŚWIADOMIE NIE dokładam: kolumny JEDNOSTKA. Na obrazie niesie
+       wartości „Logistics BU", „Grupa — Zarząd", „Sales BU" — a tabela
+       `assessments` nie ma ani jednego pola jednostki organizacyjnej
+       (sprawdzone: GET /api/v8/assessment/:id zwraca tylko organization_id
+       i project_id). Zrobienie tej kolumny wymaga najpierw pola w danych;
+       wypełnienie jej czymkolwiek innym byłoby atrapą. Zgłoszone w raporcie. */
+    const scoreCol: TableColumn = {
+      id: 'overallScore',
+      label: t('assessment.hub.table.score', 'Wynik'),
+      width: '110px',
+      align: 'right',
+      sortable: true,
+      render: (row) => {
+        const value = Number(row?.overallScore);
+        return Number.isFinite(value) && row?.overallScore !== null ? (
+          <span className="tabular-nums text-sm text-c-text">{value.toFixed(1)}</span>
+        ) : (
+          <span className="text-sm text-c-text-muted">—</span>
+        );
+      },
+    };
+    const confidenceCol: TableColumn = {
+      id: 'confidenceAvg',
+      label: t('assessment.hub.table.confidence', 'Pewność'),
+      width: '110px',
+      align: 'right',
+      sortable: true,
+      render: (row) => {
+        const raw = Number(row?.confidenceAvg);
+        if (!Number.isFinite(raw) || row?.confidenceAvg === null) {
+          return <span className="text-sm text-c-text-muted">—</span>;
+        }
+        // confidence_avg jest w skali 0–1 (server: DEFAULT 0, ustawiane
+        // ułamkiem); obraz pokazuje procent.
+        const percent = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+        return <span className="tabular-nums text-sm text-c-text">{percent}%</span>;
+      },
+    };
     const updatedCol: TableColumn = {
       id: 'updatedAt',
       label: t('assessment.hub.table.updated', 'Updated'),
@@ -996,8 +1051,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
 
     // Default: assessment list
     return [
-      frameworkCol,
-      nameCol,
+      { ...frameworkCol, defaultVisible: false },
+      { ...nameCol, label: t('assessment.hub.table.assessmentName', 'Nazwa oceny') },
       {
         id: 'status',
         label: t('assessment.hub.table.status', 'Status'),
@@ -1009,9 +1064,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           color: s.bgColor,
         })),
       },
+      scoreCol,
+      confidenceCol,
+      { ...authorCol, label: t('assessment.hub.table.owner', 'Właściciel') },
+      /* POSTĘP zostaje widoczny, choć obrazu nie ma. Powód: obraz na jego
+         miejscu ma JEDNOSTKĘ, której nie da się dziś zbudować (brak pola
+         w danych — patrz komentarz wyżej), a postęp jest liczony po stronie
+         serwera i pilnowany testem regresji
+         (tests/components/assessment/AssessmentHub.processes-completion.test.tsx).
+         Schowanie go usunęłoby pokrytą testem informację i zostawiło pustą
+         kolumnę zamiast niej. Odchylenie od obrazu zgłoszone w raporcie. */
       progressCol,
-      authorCol,
-      updatedCol,
+      { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Aktualizacja') },
     ];
   }, [activeTab, t, getAuthorLabel]);
 
@@ -1325,6 +1389,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
           const rawItem = item as unknown as {
             completionPercent?: number;
             completion_percent?: number;
+            overall_score?: number | null;
+            overallScore?: number | null;
+            confidence_avg?: number | null;
+            confidenceAvg?: number | null;
           };
           return {
             id: item.id,
@@ -1335,8 +1403,19 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
             updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
             // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
             createdBy: item.createdBy || item.created_by,
+            // Odbiór 05.09 (05-ocena, defekt 3): kolumny WYNIK i PEWNOŚĆ
+            // z zatwierdzonego obrazu istniały w bazie (`overall_score`,
+            // `confidence_avg` — lista to `SELECT *`), ale nie docierały do
+            // wiersza, więc nie dało się ich w ogóle pokazać.
+            overallScore: rawItem.overallScore ?? rawItem.overall_score ?? item.overallScore ?? null,
+            confidenceAvg: rawItem.confidenceAvg ?? rawItem.confidence_avg ?? null,
           };
         });
+        if (frameworkFilter) {
+          data = data.filter(
+            (row) => String(row.framework || '').toUpperCase() === frameworkFilter
+          );
+        }
         break;
       case 'reports': {
         const builderReports = reports.map((item) => ({
@@ -1415,7 +1494,16 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     }
 
     return data;
-  }, [activeTab, assessments, reports, initiatives, importedReports, searchQuery, statusFilter]);
+  }, [
+    activeTab,
+    assessments,
+    reports,
+    initiatives,
+    importedReports,
+    searchQuery,
+    statusFilter,
+    frameworkFilter,
+  ]);
 
   // Convert to grid items
   const gridItems: GridItem[] = useMemo(() => {

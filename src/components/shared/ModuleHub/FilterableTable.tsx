@@ -52,6 +52,14 @@ export interface TableColumn {
    * the header cell and body cells so header and data never desync.
    */
   align?: 'left' | 'center' | 'right';
+  /**
+   * Kanon triady: „kolumny domyślnie widoczne + pstryczek". Kolumna z
+   * `defaultVisible: false` istnieje w pstryczku, ale nie jest w domyślnym
+   * zestawie — użytkownik może ją dołożyć, a domyślny widok trzyma się
+   * zatwierdzonego obrazu. Brak pola = widoczna (zachowanie sprzed zmiany).
+   * Zapisany układ użytkownika (persistKey) ma pierwszeństwo nad tym domyślnym.
+   */
+  defaultVisible?: boolean;
   render?: (row: any) => React.ReactNode;
 }
 
@@ -775,7 +783,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     return columns.map((c, idx) => ({
       id: c.id,
       label: c.label,
-      visible: true,
+      visible: c.defaultVisible !== false,
       order: idx,
       width: parsePx(c.width, c.id === 'title' || c.id === 'name' ? 260 : 140),
       minWidth: c.id === 'title' || c.id === 'name' ? 200 : 90,

@@ -55,8 +55,26 @@ vi.mock('@/contexts/FeatureFlagsContext', () => ({
   FeatureFlagsProvider: ({ children }: any) => children,
 }));
 
+// Odbiór 05.09: ta atrapa nie oddawała `METHODOLOGY_CATALOG`, którego
+// AssessmentHub używa do chipów Menu 3 — cały plik był CZERWONY (3/3,
+// „No METHODOLOGY_CATALOG export is defined on the mock") jeszcze przed
+// zmianami tej gałęzi. Bez tego regresja postępu nie była faktycznie pilnowana.
 vi.mock('../../../src/components/assessment/library/AssessmentLibraryTab', () => ({
   AssessmentLibraryTab: () => <div data-testid="assessment-library-tab">Library stub</div>,
+  METHODOLOGY_CATALOG: [
+    {
+      id: 'DRD',
+      name: 'Digital Readiness Diagnosis',
+      area: { pl: 'Transformacja cyfrowa', en: 'Digital transformation' },
+      status: 'active',
+    },
+    {
+      id: 'SIRI',
+      name: 'Smart Industry Readiness Index',
+      area: { pl: 'Inteligentna produkcja', en: 'Smart manufacturing' },
+      status: 'draft',
+    },
+  ],
 }));
 
 vi.mock('../../../src/components/Initiatives/InitiativeCompactPanel', () => ({

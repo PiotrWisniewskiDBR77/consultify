@@ -8151,7 +8151,12 @@
       "progress": "Progress:",
       "saving": "Saving...",
       "table": {
-        "author": "Author"
+        "author": "Author",
+        "assessmentName": "Assessment name",
+        "owner": "Owner",
+        "updatedAt": "Updated",
+        "score": "Score",
+        "confidence": "Confidence"
       },
       "editNoteImported": "Edit via the imported-PDF review flow",
       "triagePrompt": "Give me an AI pre-screen of the \"{{lane}}\" list ({{count}} items): what needs attention first, and why?",

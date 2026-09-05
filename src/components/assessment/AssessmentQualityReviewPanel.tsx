@@ -325,13 +325,19 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
               </div>
             ) : null}
             <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="p-3 rounded-lg border border-slate-200 dark:border-navy-700">
+              <div
+                data-testid="assessment-quality-tile-completeness"
+                className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
+              >
                 <div className="text-xs text-slate-500 dark:text-slate-400">Kompletność</div>
                 <div className="text-lg font-semibold text-navy-900 dark:text-white">
                   {scoring.completionPercent}%
                 </div>
               </div>
-              <div className="p-3 rounded-lg border border-slate-200 dark:border-navy-700">
+              <div
+                data-testid="assessment-quality-tile-avg-level"
+                className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
+              >
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   Śr. poziom osiągnięty
                 </div>
@@ -339,7 +345,10 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
                   {scoring.overallAvgAchievedLevel.toFixed(1)}
                 </div>
               </div>
-              <div className="p-3 rounded-lg border border-slate-200 dark:border-navy-700">
+              <div
+                data-testid="assessment-quality-tile-evidence-coverage"
+                className="p-3 rounded-lg border border-slate-200 dark:border-navy-700"
+              >
                 <div className="text-xs text-slate-500 dark:text-slate-400">Pokrycie dowodami</div>
                 <div className="text-lg font-semibold text-navy-900 dark:text-white">
                   {scoring.evidenceCoverage}%
@@ -356,8 +365,18 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             </div>
           </>
         ) : (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Ocena dostępna tylko dla assessmentów DRD.
+          // Odbiór 05.09 (defekt 2): ten komunikat pojawiał się NA REKORDZIE DRD,
+          // bo serwer rozstrzygał framework tylko po `assessment_type`, a rekordy
+          // właściciela trzymają go w `framework_type` (assessment_type=MATURITY,
+          // framework_type=DRD). Serwer poprawiony (isDrdAssessmentRow); tutaj
+          // zostaje uczciwy komunikat dla frameworków, które faktycznie nie mają
+          // wyliczanego pokrycia — bez sugerowania, że rekord DRD nim nie jest.
+          <p
+            className="text-sm text-slate-500 dark:text-slate-400"
+            data-testid="assessment-quality-scoring-unavailable"
+          >
+            Ta ocena nie ma wyliczonego pokrycia dowodami — pokrycie liczymy dziś dla
+            frameworku DRD.
           </p>
         )}
       </section>
