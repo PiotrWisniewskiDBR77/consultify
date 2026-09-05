@@ -20124,7 +20124,9 @@
           "total": "Łącznie",
           "used": "Zajęte",
           "remaining": "Wolne",
-          "utilization": "Wykorzystanie"
+          "utilization": "Wykorzystanie",
+          "notConfigured": "Brak ustawionego limitu",
+          "notConfiguredHint": "Ta organizacja nie ma jeszcze skonfigurowanego planu z limitem miejsc — pokazujemy tylko liczbę zajętych miejsc."
         },
         "autoAdd": {
           "enabled": "Włączone",

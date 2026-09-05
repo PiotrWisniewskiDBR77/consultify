@@ -119,22 +119,46 @@ export const AdminSeatsLicencesPanel: React.FC = () => {
           {error}
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-4">
-        {[
-          [t('admin.billing.seats-licences.summary.total'), config.total_seats_available ?? 0],
-          [t('admin.billing.seats-licences.summary.used'), config.seats_used ?? 0],
-          [t('admin.billing.seats-licences.summary.remaining'), config.seats_remaining ?? 0],
-          [
-            t('admin.billing.seats-licences.summary.utilization'),
-            `${config.utilization_percent ?? 0}%`,
-          ],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
-            <p className="text-xs text-c-text-secondary">{label}</p>
-            <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
-          </div>
-        ))}
-      </div>
+      {(() => {
+        // admin-billing-seats-licences defekt 05.09: the org may have no
+        // seat-limited plan configured at all. Rather than silently showing
+        // "0" for Total/Remaining/Utilization next to a real "Used" count
+        // (a self-contradictory summary — 8 used out of 0 total), say so
+        // honestly and only render the number we actually know: seats used.
+        const limitConfigured = config.seats_limit_configured !== false;
+        const notConfiguredLabel = t('admin.billing.seats-licences.summary.notConfigured');
+        return (
+          <>
+            <div className="grid gap-3 sm:grid-cols-4">
+              {[
+                [
+                  t('admin.billing.seats-licences.summary.total'),
+                  limitConfigured ? String(config.total_seats_available ?? 0) : notConfiguredLabel,
+                ],
+                [t('admin.billing.seats-licences.summary.used'), String(config.seats_used ?? 0)],
+                [
+                  t('admin.billing.seats-licences.summary.remaining'),
+                  limitConfigured ? String(config.seats_remaining ?? 0) : notConfiguredLabel,
+                ],
+                [
+                  t('admin.billing.seats-licences.summary.utilization'),
+                  limitConfigured ? `${config.utilization_percent ?? 0}%` : notConfiguredLabel,
+                ],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-c-border bg-c-surface p-4">
+                  <p className="text-xs text-c-text-secondary">{label}</p>
+                  <p className="mt-1 text-xl font-semibold text-c-text">{value}</p>
+                </div>
+              ))}
+            </div>
+            {!limitConfigured && (
+              <p className="text-xs text-c-text-secondary">
+                {t('admin.billing.seats-licences.summary.notConfiguredHint')}
+              </p>
+            )}
+          </>
+        );
+      })()}
       <section className="rounded-xl border border-c-border bg-c-surface p-4">
         <h3 className="font-semibold text-c-text">
           {t('admin.billing.seats-licences.autoAdd.title')}

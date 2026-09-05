@@ -18877,7 +18877,9 @@
           "total": "Total",
           "used": "Used",
           "remaining": "Available",
-          "utilization": "Utilization"
+          "utilization": "Utilization",
+          "notConfigured": "No limit set",
+          "notConfiguredHint": "This organization has no seat-limited plan configured yet — only the seats in use are shown."
         },
         "autoAdd": {
           "enabled": "Enabled",

@@ -34,6 +34,8 @@ interface SeatConfiguration {
   max_seats?: number;
   utilization_percent?: string;
   seats_remaining?: number;
+  /** False when the org has no subscription plan configuring a seat limit yet. */
+  seats_limit_configured?: boolean;
 }
 
 interface PurchaseSeatsResult {
@@ -137,14 +139,30 @@ export async function getSeatConfiguration(orgId: string): Promise<SeatConfigura
     return getSeatConfiguration(orgId);
   }
 
+  // admin-billing-seats-licences defekt 05.09: `sp.seats_included` (the org's
+  // CURRENT subscription plan, via the LEFT JOIN above) is the only honest
+  // signal of "is a seat limit configured at all". `os.base_seats_included`
+  // is frozen at initializeSeatConfiguration() time and defaults to 0 when
+  // no plan existed yet (e.g. an internal org with no organization_billing
+  // row) — treating that frozen 0 as a real hard limit produced the
+  // contradictory summary "Łącznie: 0 / Zajęte: 8 / Wykorzystanie: 0%"
+  // instead of admitting the limit was never set.
+  const seatsLimitConfigured = row.seats_included !== null && row.seats_included !== undefined;
+
   // Calculate total seats available
   const totalAvailable = (row.base_seats_included || 0) + (row.additional_seats_purchased || 0);
   return {
     ...row,
     total_seats_available: totalAvailable,
-    seats_remaining: Math.max(0, totalAvailable - (row.seats_used || 0)),
-    utilization_percent:
-      totalAvailable > 0 ? (((row.seats_used || 0) / totalAvailable) * 100).toFixed(2) : '0',
+    seats_limit_configured: seatsLimitConfigured,
+    seats_remaining: seatsLimitConfigured
+      ? Math.max(0, totalAvailable - (row.seats_used || 0))
+      : undefined,
+    utilization_percent: !seatsLimitConfigured
+      ? undefined
+      : totalAvailable > 0
+        ? (((row.seats_used || 0) / totalAvailable) * 100).toFixed(2)
+        : '0',
   };
 }
 
