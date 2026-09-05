@@ -8064,7 +8064,6 @@
       "property": "Property",
       "value": "Value",
       "noFrozenOutput": "No frozen output",
-      "notAssessedValue": "— (not assessed)",
       "skipWriteError": "The skip code was not saved — try again.",
       "toComplete": "To be completed",
       "emptySlot": "Section to be completed — {{min}}–{{max}} word limit.",
@@ -8084,13 +8083,8 @@
         "conclusion": "Axis conclusions"
       },
       "matrix": {
-        "area": "Area",
-        "current": "Current level",
-        "target": "Target level",
-        "gap": "Gap",
-        "evidence": "Evidence state",
         "skips": "Skipped questions",
-        "regionLabel": "Axis matrix table — scrolls horizontally"
+        "gridLabel": "DRD matrix — areas \u00d7 levels"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",

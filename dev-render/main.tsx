@@ -488,9 +488,6 @@ const DrdEmbeddedMatrixAxisLevelsScreen = React.lazy(
   () => import('./screens/drd-embedded-matrix-axis-levels')
 );
 const DrdMacierzOcenyScreen = React.lazy(() => import('./screens/drd-macierz-oceny'));
-const DrdMacierzObszaryPoziomyScreen = React.lazy(
-  () => import('./screens/drd-macierz-obszary-poziomy')
-);
 const IdeasPreviewOverlayScreen = React.lazy(() => import('./screens/ideas-preview-overlay'));
 const SheetArtifactScreen = React.lazy(() => import('./screens/sheet-artifact'));
 const ExceleEdytowalnaSiatkaScreen = React.lazy(() => import('./screens/excele-edytowalna-siatka'));
@@ -2222,11 +2219,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DRD — MACIERZ OCENY, stan zastany do AUDYTU (realny DRDAssessmentEditor, żywy w produkcie), &os=1..7',
     render: () => <DrdMacierzOcenyScreen />,
-  },
-  'drd-macierz-obszary-poziomy': {
-    label:
-      'DRD — MACIERZ 2D obszary (kolumny) × poziomy (wiersze), realny AreaMatrixTable, &os=1..7',
-    render: () => <DrdMacierzObszaryPoziomyScreen />,
   },
   'excele-edytowalna-siatka': {
     label:

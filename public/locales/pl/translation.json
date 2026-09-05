@@ -7407,7 +7407,6 @@
       "property": "Właściwość",
       "value": "Wartość",
       "noFrozenOutput": "Brak zamrożonego wyniku",
-      "notAssessedValue": "— (nie oceniono)",
       "skipWriteError": "Kod pominięcia nie został zapisany — spróbuj ponownie.",
       "toComplete": "Do uzupełnienia",
       "emptySlot": "Sekcja do uzupełnienia — limit {{min}}–{{max}} słów.",
@@ -7427,13 +7426,8 @@
         "conclusion": "Wnioski osi"
       },
       "matrix": {
-        "area": "Obszar",
-        "current": "Poziom obecny",
-        "target": "Poziom docelowy",
-        "gap": "Luka",
-        "evidence": "Stan dowodów",
         "skips": "Pominięcia",
-        "regionLabel": "Tabela macierzy osi — przewijana poziomo"
+        "gridLabel": "Macierz DRD — obszary \u00d7 poziomy"
       },
       "evidence": {
         "evidenced": "Potwierdzono dowodami",

@@ -2,7 +2,12 @@ import { AlertTriangle, CheckCircle, Info, Minus, TrendingDown, TrendingUp } fro
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DRD_AXIS_KEY_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+import { DRD_AXIS_KEY_MAP, DRD_KEY_TO_AXIS_MAP, DRD_STRUCTURE } from '@/services/drdStructure';
+
+import {
+  DRDMatrixReadOnly,
+  drdOdpowiedziZOutputu,
+} from '@/components/assessment/drd/DRDMatrixReadOnly';
 
 // DRD Axis Configuration — thin adapter over the single source of truth
 // (src/services/drdStructure.ts). Do NOT hand-maintain axis names/maxLevel
@@ -263,7 +268,10 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
   }, [data.areaScores]);
 
   const axisConfig = DRD_AXES[axisId];
-  if (!axisConfig) return null;
+  // Klucz osi ('processes'...) → numer osi metodyki (1..7), którego oczekuje
+  // macierz właściciela. Bez zgadywania: mapa odwrotna z jedynego źródła prawdy.
+  const axisNumber = DRD_KEY_TO_AXIS_MAP[axisId];
+  if (!axisConfig || !axisNumber) return null;
 
   const gap = (data.target || 0) - (data.actual || 0);
 
@@ -353,56 +361,34 @@ const AxisDetailMatrix: React.FC<{ axisId: string; data: AxisData }> = ({ axisId
         </div>
       </div>
 
-      {/* Area scores table */}
+      {/* ★ MACIERZ OBSZARÓW = MACIERZ DRD WŁAŚCICIELA (2026-09-05). Do dziś
+          rozdział osi kończył się tabelą „Area / Current / Target / Gap /
+          Progress" — kształt, który właściciel odrzucił wprost
+          (`docs/program/grafika/DZIENNIK_GRAFIKA.md` Z-10): pięć liczb
+          w wierszu i ani śladu drogi obszaru po drabinie poziomów.
+
+          Teraz rysuje TĘ SAMĄ siatkę, co prezentacja, dokument raportu
+          i ekran raportu Oceny — `DRDMatrixGrid` przez `DRDMatrixReadOnly`,
+          czyli macierz z ekranu „Macierz oceny DRD — obszary x poziomy"
+          (ocena B od właściciela 01.09). ŻADNEJ nowej kopii: kopie tej
+          macierzy są powodem kolejnych pudeł w tej sprawie (Z-12).
+
+          Liczby nad siatką (poziom obecny · docelowy · luka · priorytet ·
+          pasek postępu) zostają — to jest wynik CAŁEJ osi, a nie macierz. */}
       {areaScores.length > 0 && (
         <>
           <h5 className="text-sm font-semibold text-navy-900 dark:text-white mb-3">
             {t('reports.areaBreakdown', 'Area Breakdown')}
           </h5>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-navy-700">
-                  <th className="pb-2 font-medium">{t('reports.area', 'Area')}</th>
-                  <th className="pb-2 font-medium text-center">
-                    {t('reports.current', 'Current')}
-                  </th>
-                  <th className="pb-2 font-medium text-center">{t('reports.target', 'Target')}</th>
-                  <th className="pb-2 font-medium text-center">{t('reports.gap', 'Gap')}</th>
-                  <th className="pb-2 font-medium w-24">{t('reports.progress', 'Progress')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-                {areaScores.map((area) => (
-                  <tr key={area.id}>
-                    <td className="py-2 font-medium text-navy-900 dark:text-white">{area.id}</td>
-                    <td className="py-2 text-center font-mono">{area.actual || '-'}</td>
-                    <td className="py-2 text-center font-mono text-slate-500 dark:text-slate-400">
-                      {area.target || '-'}
-                    </td>
-                    <td className="py-2 text-center">
-                      <span
-                        className={`font-mono ${
-                          area.gap > 0
-                            ? 'text-danger-600 dark:text-danger-400'
-                            : 'text-green-600 dark:text-green-400'
-                        }`}
-                      >
-                        {area.gap > 0 ? `+${area.gap}` : area.gap}
-                      </span>
-                    </td>
-                    <td className="py-2">
-                      <ProgressBar
-                        actual={area.actual}
-                        target={area.target}
-                        maxLevel={axisConfig.maxLevel}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DRDMatrixReadOnly
+            axisNumber={axisNumber}
+            value={drdOdpowiedziZOutputu(
+              areaScores.map((area) => area.id),
+              Object.fromEntries(areaScores.map((area) => [area.id, area.actual || null])),
+              Object.fromEntries(areaScores.map((area) => [area.id, area.target || null]))
+            )}
+            columnMinPx={120}
+          />
         </>
       )}
     </div>
