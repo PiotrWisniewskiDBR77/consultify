@@ -502,3 +502,31 @@ osobnych, punktowych napraw poza fundamentami (macierz raportu w Ocenie, fan-out
 wynikiem P5, MP16/MP9 w Mojej Pracy, nawigacja steppera w Wywiadzie, routing Organizacji/Panelu
 Administratora, rozjazdy słowników „Średnia"/rola, crimson na stronie marketingowej — każda z nich
 ma już przypisany Effort/Impact w dokumencie II lub w audycie źródłowym).
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (dla każdego scenariusza)
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx playwright test tests/e2e/przeplywy/<modul>.spec.ts --reporter=list` (własny vite na wolnym porcie, sesja `ODBIOR_AUTH_STATE`, host 127.0.0.1, backend staging) | PASS na 3 kolejnych uruchomieniach (stabilność, nie jednorazowa zieleń); allowlista błędów per scenariusz jawnie w pliku testu, każdy wpis z odwołaniem do paczki P5 |
+| `node scripts/dev/odbior-zywo/zrzut.mjs …` po ostatnim kroku scenariusza | zrzut końcowy pokazuje stan „po” (rekord zapisany / wynik widoczny) — kontrola wzrokiem |
+| `rg -n "BLOKADA DZIŚ" tests/e2e/przeplywy/<modul>.spec.ts` | każda blokada ma numer paczki (P1–P6/F) i jest `test.fixme`, nie cichy `skip` |
+| `git diff --stat origin/staging..HEAD -- src server` | **0** — ta paczka NIE zmienia produktu, tylko dodaje testy i dane; defekty wracają do paczek P |
+
+Progi (z raportu Playwright i `.json` zrzutów): zero błędów konsoli poza allowlistą; zero ≥400 poza allowlistą; stan przeżywa `reload` i `goBack` (asercje w kroku); żaden krok nie czeka > 2 s bez elementu informacji zwrotnej (asercja `toBeVisible` na szkielet/spinner w ≤ 2 s); każdy rekord utworzony przez scenariusz zalogowany w `evidence/odbior-zywo-20260905/UTWORZONE_REKORDY.md` i ma realistyczną treść DBR77 (nie „test”/„asdf”).
+
+**STOP:** scenariusz zielony 3× lub każdy czerwony krok oznaczony `BLOKADA DZIŚ (Pn)` z dowodem (zrzut + wpis .json) → commit testu + raport „ile kroków zielonych / ile blokad / które paczki”. Zakazy: `--no-verify`, `git stash`, podnoszenie progów pod dzisiejszy stan, `test.skip` bez powodu, dane testowe bez sensu biznesowego.
+
+## 11. Wklejka dla Codexa (szablon — wstaw moduł)
+
+```
+ZADANIE III-<nr> — Przepływ klikany konsultanta: <MODUŁ>. Praca do celu (test, nie zmiana produktu).
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/przeplyw-<modul> <dir> origin/staging). Commit per scenariusz, bez push, autor Piotr <piotr.wisniewski@dbr77.com>. Zero zmian w src/ i server/ — defekty opisujesz jako BLOKADA DZIŚ (Pn), nie naprawiasz tutaj.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/III_PRZEPLYWY_KLIKANE.md — „Skeleton Playwright”, „Kryteria zdania” i sekcja „<nr>. <MODUŁ>” (kroki, oczekiwane wyniki, dane wstępne).
+
+CEL: realny scenariusz konsultanta na danych DBR77 przechodzi od wejścia do wyniku klikaniem (Playwright, selektory po roli/tekście, sesja właściciela, host 127.0.0.1, backend staging), 3 kolejne przebiegi zielone: zero błędów konsoli i ≥400 poza jawną allowlistą, stan przeżywa odświeżenie i „Wstecz”, żaden krok nie wisi > 2 s bez informacji zwrotnej. Rekordy tworzone przez UI, realistyczne, zalogowane w UTWORZONE_REKORDY.md.
+
+CEL OSIĄGNIĘTY = §10: test w tests/e2e/przeplywy/<modul>.spec.ts zielony 3× lub każdy czerwony krok = test.fixme z „BLOKADA DZIŚ (Pn)” + dowód; zrzut końcowy; raport: kroki zielone / blokady / paczki. Zakazy: --no-verify, git stash, zmiany produktu, progi dopasowane do dzisiejszego stanu.
+```

@@ -257,3 +257,31 @@ danych już zebranych, nie nowy pomiar.
 
 **Razem: ~8,5-10,5 dnia**, w większości niezależne od siebie i od harmonogramu dokumentu II —
 jedyna twarda zależność: 4.3 dla pozycji 11-15 czeka na naprawy paczek II odpowiednich modułów.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `node --check scripts/dev/odbior-zywo/zrzut.mjs && node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --port=<p> --host=127.0.0.1 --out=ev/a.png && node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --port=<p> --host=127.0.0.1 --motyw=dark --out=ev/a__dark.png` | oba zrzuty powstają; domyślne zachowanie (bez `--motyw`) bajt w bajt jak dotąd (porównać `.json` z wcześniejszym przebiegiem) |
+| `node scripts/dev/odbior-zywo/luma-para.mjs ev/a.png ev/a__dark.png` (nowy bezpiecznik 4.2) | `mean_luma` jasny > 150, ciemny < 110, różnica ≥ 40; para identyczna → exit 1 |
+| `npx vitest run tests/unit/odbior/lumaPara.test.ts tests/unit/odbior/zrzutMotyw.test.ts` | PASS; dowód mutacyjny: podanie tej samej ścieżki dwa razy → `luma-para` pada |
+| Przebieg 16-modułowy: `for m in <16 url>; do zrzut --motyw=dark …; done` + `luma-para` na każdej parze | 16/16 par przechodzi bezpiecznik; lista ekranów z defektami ciemnego motywu (kontrast, „wyprane” separatory, białe wyspy) zapisana w `docs/program/AUDYT_AWARD_20260905/E_TRYB_CIEMNY.md` z dowodami |
+| Klawiatura: `npx playwright test tests/e2e/dostepnosc/klawiatura.spec.ts` | 16 ekranów: Tab dochodzi do CTA Menu 2 w ≤ 12 krokach, Esc zamyka panel/modal, fokus widoczny (`c-focus`) — raport PASS/FAIL per ekran |
+| Kalendarz „Dzień”: `node scripts/dev/odbior-zywo/zrzut.mjs --url="/my-work?tab=calendar" --klik="css=[data-testid=calendar-view-day]:visible" …` | zrzut widoku Dzień (dziś selektor trafia w inny element) |
+
+**STOP:** flaga + bezpiecznik + 16 par ciemnych + raport E gotowe → commit narzędzi (`scripts/`, `tests/`, `git add -f` dla nowych plików w `tests/`) i dokumentu. Superadmin (B) tylko po decyzji o osobnym koncie — do tego czasu `NIE_ZMIERZONO` z powodem. Zakazy: `--no-verify`, `git stash`, osobny skrypt zrzutów obok kanonicznego, wymuszanie motywu przez edycję kodu produktu.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE IV — Tryb ciemny i luki pomiarowe (narzędzia pomiaru, nie produkt). Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/iv-tryb-ciemny <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>. Zero zmian w src/ i server/.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/IV_TRYB_CIEMNY_I_LUKI_POMIAROWE.md — przeczytaj całą.
+
+CEL: (1) kanoniczny scripts/dev/odbior-zywo/zrzut.mjs dostaje opt-in --motyw=dark (init script ustawia consultify-storage.state.theme='dark' i klasę dark; nazwa pliku z sufiksem __dark), domyślne zachowanie bez zmian; (2) bezpiecznik luma-para.mjs odrzuca pary bliźniacze (jasny >150, ciemny <110, różnica ≥40); (3) pierwszy przebieg ciemnego motywu przez 16 modułów z raportem defektów E_TRYB_CIEMNY.md z dowodami; (4) test klawiatury Tab/Esc na 16 ekranach; (5) selektor widoku „Dzień” kalendarza bez kolizji (:visible + data-testid); (6) superadmin — tylko po decyzji o koncie, inaczej NIE_ZMIERZONO.
+
+CEL OSIĄGNIĘTY = §10: zrzuty jasny/ciemny powstają, domyślny .json identyczny jak przed zmianą, bezpiecznik z dowodem mutacyjnym, 16/16 par przechodzi, raport E z listą defektów i ścieżkami, test klawiatury z wynikiem per ekran, zrzut widoku Dzień. Zakazy: --no-verify, git stash, skrypt obok kanonicznego, dotykanie kodu produktu.
+```
