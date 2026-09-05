@@ -12,28 +12,23 @@
  *   `DocumentStudioGeneratingPanel`, który przejmuje ten sam ekran zaraz po
  *   pierwszej wiadomości).
  *
- * ★★★ ZMIANA 2026-09-01 — „JEDNA TERESA, W SWOIM OKNIE" ★★★
- * (decyzja właściciela, `docs/program/grafika/KANON_Z_ODBIOROW.md`)
- * Prawa kolumna BYŁA drugim czatem (`UnifiedChatPanel` w trybie „split", ten
- * sam wzorzec co zdjęta dziś kolumna Decka). Czat znika — zostaje JEDNO POLE
- * BRIEFU i jeden przycisk. Powody, w kolejności ważności:
- *
- *  1. Reguła: żadne narzędzie nie osadza czatu; rozmowa ma jedno miejsce.
- *  2. Zdolność MUSI przeżyć: to pole jest jedynym wejściem trybu „Z AI" —
- *     wycięcie kolumny bez zamiennika zostawiłoby ekran, z którego NIE DA SIĘ
- *     nic zrobić. Dlatego nie kasujemy wejścia, tylko przestajemy udawać, że
- *     brief jest rozmową: to jednorazowe zlecenie („napisz mi dokument o…"),
- *     a nie wątek. Walidacja (`MIN_DESCRIPTION_LENGTH`) i handler
- *     (`onFirstMessage`) zostają DOKŁADNIE te same — zmienia się wyłącznie
- *     powierzchnia, którą człowiek dotyka.
- *  3. Rozmowa nie znika z ekranu: pod polem stoi kanoniczny
- *     `TeresaEntryButton` („Porozmawiaj z Teresą o tym dokumencie"), który
- *     otwiera GŁÓWNE okno Teresy.
- *
- * ⚠️ DO ODBIORU WŁAŚCICIELA NA ZRZUCIE — flaga `ff_zai_teresa` nadal OFF.
- * To jedyne z pięciu posprzątanych miejsc, gdzie osadzony czat nie był
- * „panelem o obiekcie", tylko JEDYNYM sposobem stworzenia obiektu; zamiana
- * na pole briefu jest rozstrzygnięciem wykonawcy i wymaga potwierdzenia.
+ * ★★★ WYJĄTEK WŁAŚCICIELA 2026-09-05 OD REGUŁY „JEDNA TERESA, W SWOIM OKNIE" ★★★
+ * (01.09 zdjęło tu osadzony czat na rzecz pola briefu + przycisku do
+ * globalnego okna Teresy — patrz historia gita `f2aa36b882`. Na żywym
+ * odbiorze 05.09, ekran `document-studio-ai-teresa`, właściciel PRZYWRÓCIŁ
+ * osadzony czat, dosłownie: „Nie, nie, tutaj praca się dzieje z Teresą; tu
+ * nie ma po co dodawać kolejnego okna." To świadomy, imienny wyjątek TYLKO
+ * dla Document Studio — reguła „jedna Teresa, w swoim oknie" zostaje
+ * kanonem wszędzie indziej. Prawa kolumna wraca do `UnifiedChatPanel` w
+ * trybie „split" (ten sam komponent i ten sam wzorzec co dawny czat Decka
+ * — `DeckBuilder.tsx` `aiEntrySlot`, sprzed 01.09). `onModuleIntent`
+ * przechwytuje PIERWSZĄ wystarczająco długą wiadomość i oddaje ją rodzicowi
+ * (`DocumentStudioView.buildAiChatIntake`) jako brief generacji — dokładnie
+ * ten sam kontrakt co przed 01.09 i co dawne pole briefu (próg
+ * `MIN_DESCRIPTION_LENGTH`, `onFirstMessage` odpalane RAZ). Osobny przycisk
+ * „Porozmawiaj z Teresą o tym dokumencie" (otwierający GŁÓWNE okno) znika —
+ * po przywróceniu czatu w panelu byłby drugim wejściem do tej samej
+ * rozmowy, czego właściciel wprost nie chciał.
  *
  * Wzorzec wybrany świadomie zamiast silnika Excela (`useKimiArtifactPipeline`
  * / `KimiWorkspaceShell`): ten silnik to zdegradowany/legacy Kimi
@@ -49,13 +44,10 @@
  */
 
 import { FileText, Sparkles } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-/* `UnifiedChatPanel` NIE jest tu już importowany (2026-09-01, „jedna Teresa"):
-   ten ekran nie renderuje własnego czatu. */
-import { TeresaEntryButton } from '@/components/standard/TeresaEntryButton';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { useAppStore } from '@/store/useAppStore';
 
 /** Minimalna długość opisu, żeby uruchomić generację — te same widły co stary
@@ -104,39 +96,23 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
   // powodu został na ekranie) trafia do normalnej rozmowy z Teresą zamiast
   // ponownie odpalać generację.
   const firedRef = useRef(false);
-  const [brief, setBrief] = useState('');
-  const openChatWithContext = useOpenChatWithContext();
-
-  const trimmedBrief = brief.trim();
-  const briefTooShort = trimmedBrief.length < MIN_DESCRIPTION_LENGTH;
-
-  const submitBrief = useCallback(() => {
-    if (firedRef.current || busy) return;
-    const trimmed = brief.trim();
-    if (trimmed.length < MIN_DESCRIPTION_LENGTH) return;
-    firedRef.current = true;
-    void onFirstMessage(trimmed);
-  }, [brief, busy, onFirstMessage]);
-
-  /*
-    Wejście do JEDNEGO okna Teresy. Dokument jeszcze nie istnieje, więc nie ma
-    `entityId` — kontekstem jest sam zamiar („piszę dokument") plus to, co
-    człowiek zdążył wpisać w brief. Mówimy to wprost zamiast wysyłać puste
-    `entityId` udające obiekt.
-  */
-  const openTeresaAboutDraft = useCallback(() => {
-    void openChatWithContext({
-      entityType: 'document',
-      entityId: 'document-studio-draft',
-      entityName: t('documentStudio.aiEntry.draftName', 'Nowy dokument'),
-      reuseActiveConversation: true,
-      contextData: {
-        artifactType: 'document',
-        stage: 'intake',
-        brief: trimmedBrief || null,
-      },
-    });
-  }, [openChatWithContext, t, trimmedBrief]);
+  const handleModuleIntent = useCallback(
+    (content: string): boolean | { handled: boolean; reply?: string } => {
+      if (firedRef.current) return false;
+      const trimmed = content.trim();
+      if (trimmed.length < MIN_DESCRIPTION_LENGTH) return false;
+      firedRef.current = true;
+      void onFirstMessage(trimmed);
+      return {
+        handled: true,
+        reply: t(
+          'documentStudio.aiEntry.startingReply',
+          'Zaczynam planować i pisać dokument — pojawi się obok w kilka chwil.'
+        ),
+      };
+    },
+    [onFirstMessage, t]
+  );
 
   return (
     <div
@@ -180,9 +156,11 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
         ) : null}
       </div>
 
-      {/* Z boku — BRIEF (nie czat). Patrz „ZMIANA 2026-09-01" w nagłówku pliku:
-          jedno pole + jeden przycisk zamiast drugiej rozmowy. */}
-      <div className="flex h-full w-full shrink-0 flex-col md:w-[380px] md:min-w-[320px] md:max-w-[420px]">
+      {/* Z boku — Teresa (N11: "Z boku okno AI (czat)"), osadzona wprost w
+          panelu — wyjątek właściciela z 05.09 opisany w nagłówku pliku. Ten
+          sam komponent i tryb ("split") co trwały czat Decka sprzed 01.09
+          (DeckBuilder.tsx aiEntrySlot). */}
+      <div className="flex h-full w-full flex-col shrink-0 md:w-[380px] md:min-w-[320px] md:max-w-[420px]">
         {currentOrganization?.name ? (
           <div
             data-testid="docstudio-ai-entry-context-chip"
@@ -197,50 +175,16 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
             </span>
           </div>
         ) : null}
-        <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
-          <label
-            htmlFor="docstudio-ai-entry-brief"
-            className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary"
-          >
-            {t('documentStudio.aiEntry.briefLabel', 'Jaki dokument mam napisać?')}
-          </label>
-          <textarea
-            id="docstudio-ai-entry-brief"
-            data-testid="docstudio-ai-entry-brief"
-            value={brief}
-            onChange={(e) => setBrief(e.target.value)}
+        <div className="min-h-0 flex-1">
+          <UnifiedChatPanel
+            mode="split"
+            title={t('documentStudio.aiEntry.teresaTitle', 'Teresa')}
+            onModuleIntent={handleModuleIntent}
+            showModeToggle={false}
+            showHistoryTrigger={false}
+            showFocusMode={false}
             disabled={busy}
-            rows={6}
-            placeholder={t(
-              'documentStudio.aiEntry.briefPlaceholder',
-              'Np. raport z audytu procesu zakupowego dla zarządu — stan obecny, trzy rekomendacje i plan wdrożenia.'
-            )}
-            className="min-h-[140px] flex-1 resize-none rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          {/* Wyłączone MUSI powiedzieć dlaczego — standard stanów akcji. */}
-          {briefTooShort ? (
-            <p className="text-xs text-c-text-muted">
-              {t(
-                'documentStudio.aiEntry.briefTooShort',
-                'Napisz przynajmniej jedno zdanie — z dwóch słów nie da się zaplanować dokumentu.'
-              )}
-            </p>
-          ) : null}
-          <button
-            type="button"
-            data-testid="docstudio-ai-entry-submit"
-            onClick={submitBrief}
-            disabled={busy || briefTooShort}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-c-border bg-c-surface-raised px-3 py-2 text-sm font-semibold text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FileText size={14} className="text-c-text-muted" aria-hidden />
-            {busy
-              ? t('documentStudio.aiEntry.submitBusy', 'Piszę dokument…')
-              : t('documentStudio.aiEntry.submit', 'Napisz dokument')}
-          </button>
-          <TeresaEntryButton
-            label={t('documentStudio.aiEntry.askTeresa', 'Porozmawiaj z Teresą o tym dokumencie')}
-            onClick={openTeresaAboutDraft}
+            maxHeight="100%"
           />
         </div>
       </div>
