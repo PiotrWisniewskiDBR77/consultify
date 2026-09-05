@@ -20,6 +20,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -76,7 +77,7 @@ import {
   type IdeaInspectorItem,
   type IdeaInspectorTool,
 } from './panel/IdeaElementInspector';
-import { setCanvasAnalysisHost } from './panel/canvasAnalysisSlot';
+import { setCanvasAnalysisHost, useCanvasAnalysisSlot } from './panel/canvasAnalysisSlot';
 import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
@@ -446,6 +447,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     setCanvasAnalysisHost(true);
     return () => setCanvasAnalysisHost(false);
   }, []);
+  // ★ NAPRAWA (odbiór CTO 05.09): pigułka „Przejrzyj kandydaturę"
+  // (MYW-IDEAS-010, niżej) pływała nad płótnem (`absolute bottom-4
+  // right-4`) mimo decyzji CTO „nad płótnem nie pływa nic" — jedyny
+  // pływający element, jaki został po fali porządkującej Analizę płótna.
+  // Hook wołany tu, na najwyższym poziomie funkcji (nie w gałęzi
+  // `melsCanvasEnabled` niżej) — zasada hooków React: warunek nie może
+  // decydować, czy hook się wykona. Gdy panel jest zamknięty (`slot ===
+  // null`), treść nie renderuje się WCALE (zero fallbacku do pływania) —
+  // użytkownik wraca do niej przyciskiem „Pokaż panel”, tak jak karty
+  // Analizy płótna.
+  const { slot: gniazdoAnalizyPlotna } = useCanvasAnalysisSlot();
   // Otwarcie Teresy (skądkolwiek) musi też otworzyć panel — inaczej klik
   // „Omów z Teresą" przy zamkniętym panelu byłby martwy.
   useEffect(() => {
@@ -4848,9 +4860,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* MYW-IDEAS-010: previously gated to activeTool === 'process_flow'
             only — the candidate is idea-level (see the fetch effect above),
             so the affordance is now available from every tool, not just
-            whichever one happened to be open when the candidate was created. */}
-        {Boolean(realId) && (
-          <div className="absolute bottom-4 right-4 z-sticky flex items-center gap-2 rounded-xl border border-c-border bg-c-surface-raised p-2 shadow-lg">
+            whichever one happened to be open when the candidate was created.
+            ★ NAPRAWA (odbiór CTO 05.09): treść nie pływa już nad płótnem —
+            portal do gniazda „Akcje” prawego panelu (ten sam rejestr, co
+            karty Analizy płótna). Brak gniazda (panel zamknięty) → nic się
+            nie renderuje, zero fallbacku do pływania. */}
+        {Boolean(realId) &&
+          gniazdoAnalizyPlotna &&
+          createPortal(
+            <div className="flex flex-col items-start gap-2 border-t border-c-border-subtle pt-2 first:border-t-0 first:pt-0">
             {candidateHandoff?.candidate?.id || candidateHandoff?.candidate_id ? (
               <button
                 type="button"
@@ -4936,8 +4954,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                     ? 'Confirm candidate'
                     : 'Review candidate'}
             </button>
-          </div>
-        )}
+            </div>,
+            gniazdoAnalizyPlotna
+          )}
       </div>
     );
   }
