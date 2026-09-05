@@ -1,0 +1,130 @@
+data: {"type":"thought","step":"starting","status":"in_progress","label":"Starting…"}
+
+data: {"type":"thought","step":"policy","status":"in_progress","label":"Checking safety policy and evidence requirements…"}
+
+data: {"type":"policy_decision","decision":{"id":"c471dfa3-843f-4907-9be6-745cdb17e729","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}}}
+
+data: {"type":"thought","step":"memory","status":"in_progress","label":"Loading conversation context and memory…"}
+
+data: {"type":"thought","step":"knowledge","status":"in_progress","label":"Searching knowledge base and documentation…"}
+
+data: {"type":"thought","step":"web_search_check","status":"in_progress","label":"Checking if web search is needed…"}
+
+data: {"type":"citations","citations":[{"id":"module_task_1_seed_task_1788642392883_14_b9730303-41ca","type":"module_data","title":"Zadanie: DBR77: Zweryfikować eksport raportów publicznych","reference":"tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005","excerpt":"status: review; priorytet: critical; termin: Wed Sep 02"},{"id":"module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-","type":"module_data","title":"Zadanie: DBR77: Przygotować plan warsztatu z interesariuszami","reference":"tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2","excerpt":"status: todo; priorytet: medium; termin: Thu Sep 03"},{"id":"module_task_3_seed_task_1788642392883_15_6397cd82-2a7b","type":"module_data","title":"Zadanie: DBR77: Zadbać o backup i rollback plan","reference":"tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1","excerpt":"status: todo; priorytet: low; termin: Thu Sep 03"},{"id":"module_task_4_seed_task_1788642392883_16_a4a57d28-8a71","type":"module_data","title":"Zadanie: DBR77: Przegląd wydajności: indeksy i cache","reference":"tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e","excerpt":"status: in_progress; priorytet: medium; termin: Fri Sep 04"},{"id":"module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-","type":"module_data","title":"Zadanie: DBR77: Zmapować zależności i ryzyka wdrożenia","reference":"tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9","excerpt":"status: in_progress; priorytet: high; termin: Sat Sep 05"},{"id":"module_task_6_seed_task_1788642392883_17_c4d7364a-4748","type":"module_data","title":"Zadanie: DBR77: Porządek w notyfikacjach (grupowanie)","reference":"tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c","excerpt":"status: blocked; priorytet: high; termin: Sat Sep 05"},{"id":"module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-","type":"module_data","title":"Zadanie: DBR77: Zamknąć krytyczne bugi przed cutover","reference":"tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494","excerpt":"status: review; priorytet: medium; termin: Sun Sep 06"},{"id":"module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-","type":"module_data","title":"Zadanie: DBR77: Ustalić SLA dla kluczowych procesów","reference":"tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78","excerpt":"status: todo; priorytet: high; termin: Mon Sep 07"},{"id":"module_task_9_seed_task_1788642392883_19_32bc2c23-bb61","type":"module_data","title":"Zadanie: DBR77: Weryfikacja E2E smoke po deploy","reference":"tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b","excerpt":"status: review; priorytet: low; termin: Mon Sep 07"},{"id":"module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-","type":"module_data","title":"Zadanie: DBR77: Ustawić monitoring i alerting dla backendu","reference":"tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053","excerpt":"status: blocked; priorytet: critical; termin: Tue Sep 08"},{"id":"module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-","type":"module_data","title":"Zadanie: DBR77: Przegląd jakości danych po migracji","reference":"tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a","excerpt":"status: in_progress; priorytet: critical; termin: Tue Sep 08"},{"id":"module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-","type":"module_data","title":"Zadanie: DBR77: Przygotować checklistę go-live","reference":"tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852","excerpt":"status: blocked; priorytet: low; termin: Wed Sep 09"},{"id":"module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-","type":"module_data","title":"Zadanie: DBR77: Skonfigurować integracje (webhooks)","reference":"tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e","excerpt":"status: review; priorytet: high; termin: Fri Sep 11"},{"id":"module_task_14_seed_task_1788642392883_10_81fb0b43-89c8","type":"module_data","title":"Zadanie: DBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)","reference":"tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c","excerpt":"status: todo; priorytet: critical; termin: Sat Sep 12"},{"id":"module_task_15_seed_task_1788642392883_11_601ab222-a8a4","type":"module_data","title":"Zadanie: DBR77: Audyt kosztów i budżetu AI","reference":"tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd","excerpt":"status: in_progress; priorytet: low; termin: Sun Sep 13"}]}
+
+data: {"type":"thought","step":"generating","status":"in_progress","label":"Generating response based on gathered context…"}
+
+data: {"text":"Mod"}
+
+data: {"text":"u"}
+
+data: {"text":"ł"}
+
+data: {"text":" \""}
+
+data: {"text":"Mo"}
+
+data: {"text":"ja"}
+
+data: {"text":" Pr"}
+
+data: {"text":"aca"}
+
+data: {"text":"\""}
+
+data: {"text":" umo"}
+
+data: {"text":"żli"}
+
+data: {"text":"wia"}
+
+data: {"text":" zar"}
+
+data: {"text":"ządz"}
+
+data: {"text":"anie"}
+
+data: {"text":" zad"}
+
+data: {"text":"ani"}
+
+data: {"text":"ami"}
+
+data: {"text":","}
+
+data: {"text":" decyz"}
+
+data: {"text":"j"}
+
+data: {"text":"ami"}
+
+data: {"text":" i"}
+
+data: {"text":" pow"}
+
+data: {"text":"iad"}
+
+data: {"text":"om"}
+
+data: {"text":"ieni"}
+
+data: {"text":"ami"}
+
+data: {"text":" przyp"}
+
+data: {"text":"is"}
+
+data: {"text":"any"}
+
+data: {"text":"mi"}
+
+data: {"text":" do"}
+
+data: {"text":" użytk"}
+
+data: {"text":"ownika"}
+
+data: {"text":","}
+
+data: {"text":" co"}
+
+data: {"text":" wsp"}
+
+data: {"text":"iera"}
+
+data: {"text":" efek"}
+
+data: {"text":"tyw"}
+
+data: {"text":"ne"}
+
+data: {"text":" ś"}
+
+data: {"text":"led"}
+
+data: {"text":"zenie"}
+
+data: {"text":" post"}
+
+data: {"text":"ęp"}
+
+data: {"text":"ów"}
+
+data: {"text":" w"}
+
+data: {"text":" projekt"}
+
+data: {"text":"ach"}
+
+data: {"text":"."}
+
+data: {"type":"quality_score","relevance":0.5,"groundedness":0.5,"completeness":1,"coherence":0.5,"actionability":0.3,"meceQuality":0.4,"overall":0.53,"flags":[],"llmJudged":false}
+
+data: {"type":"source_ledger","decisionId":"c471dfa3-843f-4907-9be6-745cdb17e729","used_sources":[{"id":"module_task_1_seed_task_1788642392883_14_b9730303-41ca","type":"module_data","title":"Zadanie: DBR77: Zweryfikować eksport raportów publicznych","reference":"tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005","link":null},{"id":"module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-","type":"module_data","title":"Zadanie: DBR77: Przygotować plan warsztatu z interesariuszami","reference":"tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2","link":null},{"id":"module_task_3_seed_task_1788642392883_15_6397cd82-2a7b","type":"module_data","title":"Zadanie: DBR77: Zadbać o backup i rollback plan","reference":"tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1","link":null},{"id":"module_task_4_seed_task_1788642392883_16_a4a57d28-8a71","type":"module_data","title":"Zadanie: DBR77: Przegląd wydajności: indeksy i cache","reference":"tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e","link":null},{"id":"module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-","type":"module_data","title":"Zadanie: DBR77: Zmapować zależności i ryzyka wdrożenia","reference":"tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9","link":null},{"id":"module_task_6_seed_task_1788642392883_17_c4d7364a-4748","type":"module_data","title":"Zadanie: DBR77: Porządek w notyfikacjach (grupowanie)","reference":"tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c","link":null},{"id":"module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-","type":"module_data","title":"Zadanie: DBR77: Zamknąć krytyczne bugi przed cutover","reference":"tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494","link":null},{"id":"module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-","type":"module_data","title":"Zadanie: DBR77: Ustalić SLA dla kluczowych procesów","reference":"tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78","link":null},{"id":"module_task_9_seed_task_1788642392883_19_32bc2c23-bb61","type":"module_data","title":"Zadanie: DBR77: Weryfikacja E2E smoke po deploy","reference":"tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b","link":null},{"id":"module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-","type":"module_data","title":"Zadanie: DBR77: Ustawić monitoring i alerting dla backendu","reference":"tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053","link":null},{"id":"module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-","type":"module_data","title":"Zadanie: DBR77: Przegląd jakości danych po migracji","reference":"tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a","link":null},{"id":"module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-","type":"module_data","title":"Zadanie: DBR77: Przygotować checklistę go-live","reference":"tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852","link":null},{"id":"module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-","type":"module_data","title":"Zadanie: DBR77: Skonfigurować integracje (webhooks)","reference":"tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e","link":null},{"id":"module_task_14_seed_task_1788642392883_10_81fb0b43-89c8","type":"module_data","title":"Zadanie: DBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)","reference":"tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c","link":null},{"id":"module_task_15_seed_task_1788642392883_11_601ab222-a8a4","type":"module_data","title":"Zadanie: DBR77: Audyt kosztów i budżetu AI","reference":"tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd","link":null}],"blocked_sources":[{"category":"cross_tenant","reason":"forbidden_by_policy","detail":null},{"category":"other_user_private","reason":"forbidden_by_policy","detail":null}],"degraded":null,"scope_resolution":{"privateMode":false,"knowledgeSources":{}}}
+
+data: {"type":"citations","citations":[{"id":"module_task_1_seed_task_1788642392883_14_b9730303-41ca","status":"stale"},{"id":"module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-","status":"stale"},{"id":"module_task_3_seed_task_1788642392883_15_6397cd82-2a7b","status":"stale"},{"id":"module_task_4_seed_task_1788642392883_16_a4a57d28-8a71","status":"stale"},{"id":"module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-","status":"stale"},{"id":"module_task_6_seed_task_1788642392883_17_c4d7364a-4748","status":"stale"},{"id":"module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-","status":"stale"},{"id":"module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-","status":"stale"},{"id":"module_task_9_seed_task_1788642392883_19_32bc2c23-bb61","status":"stale"},{"id":"module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-","status":"stale"},{"id":"module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-","status":"stale"},{"id":"module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-","status":"stale"},{"id":"module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-","status":"stale"},{"id":"module_task_14_seed_task_1788642392883_10_81fb0b43-89c8","status":"stale"},{"id":"module_task_15_seed_task_1788642392883_11_601ab222-a8a4","status":"stale"}]}
+
+data: {"type":"trust_bundle","bundle":{"version":"TrustBundleV1","answerId":"answer-stream-76015d70-9117-444f-97a6-4f5eda9d7ad5-1788644297011","conversationId":null,"messageId":"463e8de0-0977-435f-a4f3-3b3e3af66647","decisionId":"c471dfa3-843f-4907-9be6-745cdb17e729","model":"openai/gpt-4o-mini","provider":"openrouter","tier":null,"sourceClasses":["general"],"citationsCount":15,"citations":[{"id":"module_task_1_seed_task_1788642392883_14_b9730303-41ca","type":"module_data","title":"Zadanie: DBR77: Zweryfikować eksport raportów publicznych","reference":"tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005","excerpt":"status: review; priorytet: critical; termin: Wed Sep 02"},{"id":"module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-","type":"module_data","title":"Zadanie: DBR77: Przygotować plan warsztatu z interesariuszami","reference":"tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2","excerpt":"status: todo; priorytet: medium; termin: Thu Sep 03"},{"id":"module_task_3_seed_task_1788642392883_15_6397cd82-2a7b","type":"module_data","title":"Zadanie: DBR77: Zadbać o backup i rollback plan","reference":"tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1","excerpt":"status: todo; priorytet: low; termin: Thu Sep 03"},{"id":"module_task_4_seed_task_1788642392883_16_a4a57d28-8a71","type":"module_data","title":"Zadanie: DBR77: Przegląd wydajności: indeksy i cache","reference":"tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e","excerpt":"status: in_progress; priorytet: medium; termin: Fri Sep 04"},{"id":"module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-","type":"module_data","title":"Zadanie: DBR77: Zmapować zależności i ryzyka wdrożenia","reference":"tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9","excerpt":"status: in_progress; priorytet: high; termin: Sat Sep 05"},{"id":"module_task_6_seed_task_1788642392883_17_c4d7364a-4748","type":"module_data","title":"Zadanie: DBR77: Porządek w notyfikacjach (grupowanie)","reference":"tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c","excerpt":"status: blocked; priorytet: high; termin: Sat Sep 05"},{"id":"module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-","type":"module_data","title":"Zadanie: DBR77: Zamknąć krytyczne bugi przed cutover","reference":"tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494","excerpt":"status: review; priorytet: medium; termin: Sun Sep 06"},{"id":"module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-","type":"module_data","title":"Zadanie: DBR77: Ustalić SLA dla kluczowych procesów","reference":"tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78","excerpt":"status: todo; priorytet: high; termin: Mon Sep 07"},{"id":"module_task_9_seed_task_1788642392883_19_32bc2c23-bb61","type":"module_data","title":"Zadanie: DBR77: Weryfikacja E2E smoke po deploy","reference":"tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b","excerpt":"status: review; priorytet: low; termin: Mon Sep 07"},{"id":"module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-","type":"module_data","title":"Zadanie: DBR77: Ustawić monitoring i alerting dla backendu","reference":"tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053","excerpt":"status: blocked; priorytet: critical; termin: Tue Sep 08"},{"id":"module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-","type":"module_data","title":"Zadanie: DBR77: Przegląd jakości danych po migracji","reference":"tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a","excerpt":"status: in_progress; priorytet: critical; termin: Tue Sep 08"},{"id":"module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-","type":"module_data","title":"Zadanie: DBR77: Przygotować checklistę go-live","reference":"tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852","excerpt":"status: blocked; priorytet: low; termin: Wed Sep 09"},{"id":"module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-","type":"module_data","title":"Zadanie: DBR77: Skonfigurować integracje (webhooks)","reference":"tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e","excerpt":"status: review; priorytet: high; termin: Fri Sep 11"},{"id":"module_task_14_seed_task_1788642392883_10_81fb0b43-89c8","type":"module_data","title":"Zadanie: DBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)","reference":"tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c","excerpt":"status: todo; priorytet: critical; termin: Sat Sep 12"},{"id":"module_task_15_seed_task_1788642392883_11_601ab222-a8a4","type":"module_data","title":"Zadanie: DBR77: Audyt kosztów i budżetu AI","reference":"tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd","excerpt":"status: in_progress; priorytet: low; termin: Sun Sep 13"}],"sourceLedgerSummary":{"usedCount":15,"blockedCount":2,"degraded":null,"scope":{"privateMode":false,"knowledgeSources":{}}},"policyDecision":{"id":"c471dfa3-843f-4907-9be6-745cdb17e729","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}},"policyNotices":[],"generatedAt":"2026-09-05T21:38:18.218Z","degraded":null,"outputLength":162,"confidence":0.52,"citationVerification":{"total":15,"verified":0,"unverified":15,"broken":0,"score":0},"cost":null,"tokens":{"input":11,"output":41,"total":52},"routingTrace":null,"coverage":null,"warnings":[],"assistant":"teresa","assistantSurface":"workspace_copilot","actionSurface":"governed_execution"}}
+
+data: [DONE]
+

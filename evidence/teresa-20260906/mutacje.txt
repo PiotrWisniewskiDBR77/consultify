@@ -1,0 +1,26 @@
+== M0 baseline ==
+ Test Files  1 passed (1)       Tests  21 passed (21) 
+== M1: DEFAULT_AI_LANGUAGE = 'en' ==
+ Test Files  1 failed (1)       Tests  4 failed | 17 passed (21) 
+== M2: usunieta etykieta [LANGUAGE INSTRUCTION:] ==
+ Test Files  1 failed (1)       Tests  1 failed | 20 passed (21) 
+== M3: normalizeAiLanguage zwraca 'en' zamiast null ==
+ Test Files  1 failed (1)       Tests  2 failed | 19 passed (21) 
+== M4: przywrocone zachowanie 'pierwszy niepusty' bez normalizacji (regresja routow) ==
+ Test Files  1 failed (1)       Tests  1 failed | 20 passed (21) 
+== M5 przywrocenie oryginalu ==
+ Test Files  1 passed (1)       Tests  21 passed (21) 
+
+### moduleContextGrounding.ts
+== M0 baseline ==
+      Tests  10 passed (10) 
+== M1: brak cytatow dla inicjatyw (usuniete pushCitation) ==
+      Tests  1 failed | 9 passed (10) 
+== M2: zapytanie o inicjatywy bez organization_id (wyciek tenanta) ==
+      Tests  1 failed | 9 passed (10) 
+== M3: pusty modul zwraca obiekt zamiast null (zmyslone zrodla) ==
+      Tests  1 failed | 9 passed (10) 
+== M4: ignorowany allowOrganizationData=false (czytanie w trybie prywatnym) ==
+      Tests  1 failed | 9 passed (10) 
+== M5 przywrocenie oryginalu ==
+      Tests  10 passed (10) 
