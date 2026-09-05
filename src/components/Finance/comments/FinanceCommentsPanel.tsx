@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { FinanceStatusAnnouncer } from '@/components/Finance/shared/FinanceStatusAnnouncer';
 import { useFinanceCommentsFlag } from '@/hooks/useFinanceCommentsFlag';
+import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import {
   addFinanceReviewChecklistItem,
   checkFinanceReviewChecklistItem,
@@ -67,7 +68,11 @@ export function FinanceCommentsPanel({
   businessVersionId,
   className,
 }: FinanceCommentsPanelProps): React.ReactElement | null {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
+  // Nazwiska autorów/wzmianek z realnej listy członków organizacji — patrz
+  // komentarz przy renderze autora niżej.
+  const resolveMemberName = useOrganizationMemberNames();
   const { enabled } = useFinanceCommentsFlag();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [draftBody, setDraftBody] = useState('');
@@ -262,8 +267,19 @@ export function FinanceCommentsPanel({
                   data-resolved={comment.resolvedAt ? 'true' : 'false'}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-c-text-primary">
-                      {comment.authorId}
+                    {/* 2026-09-05 (runda 3 odbioru, `finance-comments-panel`):
+                      tu stał surowy `authorId`
+                      („d2b6a316-08c5-47cf-9bf7-4ba50311d5a2"), a obraz
+                      zatwierdzony ma w tym miejscu człowieka
+                      („piotr.wisniewski"). Nazwisko/login bierzemy z realnej
+                      listy członków organizacji (`useOrganizationMemberNames`);
+                      surowe id zostaje wyłącznie w podpowiedzi `title`. */}
+                    <span
+                      className="text-xs font-medium text-c-text-primary"
+                      title={comment.authorId}
+                      data-testid="comment-author"
+                    >
+                      {memberNameOrUnknown(resolveMemberName, comment.authorId, isPolish)}
                     </span>
                     <span className="text-[11px] text-c-text-secondary">
                       {formatDate(comment.createdAt)}
@@ -278,7 +294,12 @@ export function FinanceCommentsPanel({
                     ) : null}
                     {comment.mentions.length > 0 ? (
                       <span className="text-[11px] text-c-text-secondary">
-                        {t('finance.comments.mentions', 'Wzmianki')}: {comment.mentions.join(', ')}
+                        {t('finance.comments.mentions', 'Wzmianki')}:{' '}
+                        {comment.mentions
+                          .map((mentionId) =>
+                            memberNameOrUnknown(resolveMemberName, mentionId, isPolish)
+                          )
+                          .join(', ')}
                       </span>
                     ) : null}
                     {comment.resolvedAt ? (

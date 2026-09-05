@@ -27,6 +27,7 @@
 import React from 'react';
 
 import type { StandardPreviewProps, TableColumn } from '@/components/standard';
+import { memberNameOrUnknown } from '@/hooks/useOrganizationMemberNames';
 
 import type {
   KpiAttentionIneffectiveCorrectiveActionRow,
@@ -94,7 +95,8 @@ function userCol(
   id: string,
   label: string,
   width: string,
-  resolveMemberName: MemberNameResolver
+  resolveMemberName: MemberNameResolver,
+  isPolish: boolean
 ): TableColumn {
   return {
     id,
@@ -103,10 +105,12 @@ function userCol(
     render: (row: Record<string, unknown>) => {
       const userId = row[id] as string | null | undefined;
       if (!userId) return <span className="text-sm text-c-text">—</span>;
-      const name = resolveMemberName(userId);
+      // 2026-09-05 (runda 3 odbioru): nierozpoznany człowiek to „Nieznany
+      // użytkownik", nie skrócony UUID — ta sama zasada w całej rodzinie
+      // kolumn osobowych (patrz `useOrganizationMemberNames`).
       return (
         <span className="text-sm text-c-text" title={userId}>
-          {name || shortId(userId)}
+          {memberNameOrUnknown(resolveMemberName, userId, isPolish)}
         </span>
       );
     },
@@ -223,7 +227,7 @@ function rebuildColumns(
         return [
           shortIdCol('obligationId', t('ID obowiązku', 'Obligation ID'), '150px'),
           shortIdCol('kpiId', 'KPI ID', '150px'),
-          userCol('assigneeUserId', t('Przypisano', 'Assignee'), '170px', resolveMemberName),
+          userCol('assigneeUserId', t('Przypisano', 'Assignee'), '170px', resolveMemberName, isPolish),
           textCol('obligationType', t('Typ', 'Type'), '150px'),
           textCol('dueAt', t('Termin', 'Due'), '170px'),
         ];
@@ -243,7 +247,7 @@ function rebuildColumns(
         ];
       case 'ownerLoad':
         return [
-          userCol('ownerUserId', t('Właściciel', 'Owner'), '200px', resolveMemberName),
+          userCol('ownerUserId', t('Właściciel', 'Owner'), '200px', resolveMemberName, isPolish),
           numberCol('activeKpiCount', t('Aktywne KPI', 'Active KPIs'), '140px'),
           numberCol('openDeviationCaseCount', t('Otwarte odchylenia', 'Open deviation cases'), '170px'),
         ];
@@ -282,7 +286,7 @@ function rebuildColumns(
       return [
         shortIdCol('requestId', t('ID prośby', 'Request ID'), '150px'),
         shortIdCol('objectiveId', t('ID celu', 'Objective ID'), '150px'),
-        userCol('assignedToUserId', t('Przypisano', 'Assigned to'), '170px', resolveMemberName),
+        userCol('assignedToUserId', t('Przypisano', 'Assigned to'), '170px', resolveMemberName, isPolish),
         textCol('status', 'Status', '130px'),
       ];
     case 'openBlockers':

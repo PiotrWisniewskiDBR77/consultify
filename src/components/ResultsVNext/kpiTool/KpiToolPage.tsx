@@ -80,10 +80,9 @@ import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
+import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { EmptyState } from '@/components/shared/states';
-import { OrganizationApi } from '@/services/api/organizations.api';
-import { useAppStore } from '@/store/useAppStore';
 
 import { HonestValueCell } from '../HonestValue';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
@@ -274,32 +273,14 @@ export const KpiToolPage: React.FC = () => {
   // `kpiRepository.ts` only joins `dv.name`, never a users/members table), so
   // this is a client-side stitch against a real, already-fetched-elsewhere
   // endpoint, not a fabricated field.
-  const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (!currentOrganization?.id) return;
-    let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
-      .then((members) => {
-        if (cancelled) return;
-        const map: Record<string, string> = {};
-        members.forEach((m) => {
-          const label = (m.name && m.name.trim()) || m.email || m.userId;
-          if (label) map[m.userId] = label;
-        });
-        setMemberNameById(map);
-      })
-      .catch(() => {
-        if (!cancelled) setMemberNameById({});
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentOrganization?.id]);
+  // 2026-09-05 (runda 3 odbioru): wspólny hak; fallback to już nie skrócony
+  // identyfikator, tylko uczciwe „Nieznany użytkownik" (UUID w kolumnie
+  // z człowiekiem był defektem rodziny zgłoszonym przez właściciela).
+  const resolveMemberNameRaw = useOrganizationMemberNames();
   const resolveMemberName = useCallback(
     (userId: string | null | undefined): string =>
-      (userId && memberNameById[userId]) || shortId(userId),
-    [memberNameById]
+      memberNameOrUnknown(resolveMemberNameRaw, userId, isPolish),
+    [resolveMemberNameRaw, isPolish]
   );
 
   const [measurement, setMeasurement] = useState<KpiMeasurementDto | null | 'loading'>(null);

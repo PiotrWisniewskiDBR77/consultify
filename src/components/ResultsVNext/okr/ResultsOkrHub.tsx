@@ -78,8 +78,8 @@ import { useNavigate } from 'react-router-dom';
 
 import type { StandardBreadcrumb, StandardCounterChip, TableRow } from '@/components/standard';
 import { Button } from '@/components/ui/primitives';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
-import { OrganizationApi } from '@/services/api/organizations.api';
 import { useAppStore } from '@/store/useAppStore';
 
 import {
@@ -175,33 +175,14 @@ export const ResultsOkrHub: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const navigate = useNavigate();
-  const currentOrganization = useAppStore((s) => s.currentOrganization);
   const currentUser = useAppStore((s) => s.currentUser);
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (!currentOrganization?.id) return;
-    let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
-      .then((members) => {
-        if (cancelled) return;
-        const names: Record<string, string> = {};
-        members.forEach((member) => {
-          const label = (member.name && member.name.trim()) || member.email || member.userId;
-          if (label) names[member.userId] = label;
-        });
-        setMemberNameById(names);
-      })
-      .catch(() => {
-        if (!cancelled) setMemberNameById({});
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentOrganization?.id]);
-  const resolveMemberName = useCallback(
-    (userId: string) => memberNameById[userId] || null,
-    [memberNameById]
-  );
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  // 2026-09-05 (runda 3 odbioru): wspólny hak zamiast czwartej kopii — i, co
+  // ważniejsze, kopia czytała `m.userId`/`m.name`, których API
+  // `/organizations/:id/members` NIE ZWRACA (serwer oddaje surowe wiersze SQL:
+  // `user_id`/`first_name`/`last_name`), więc mapa była pusta i kolumna
+  // WŁAŚCICIEL pokazywała surowy UUID.
+  const resolveMemberName = useOrganizationMemberNames();
 
   const restoredUiState = useMemo(() => readOkrHubUiState(), []);
   const [tab] = useState<OkrTab>(restoredUiState.tab ?? 'org');

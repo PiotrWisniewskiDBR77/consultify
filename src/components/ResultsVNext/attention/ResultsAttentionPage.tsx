@@ -48,9 +48,8 @@ import {
   type StandardModuleTab,
 } from '@/components/standard';
 import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
-import { OrganizationApi } from '@/services/api/organizations.api';
-import { useAppStore } from '@/store/useAppStore';
 
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import {
@@ -87,32 +86,12 @@ export const ResultsAttentionPage: React.FC = () => {
   // `/organizations/:id/members` endpoint — no server change, no invented
   // data; unresolved ids — e.g. a deactivated account — still fall back to
   // the short id honestly).
-  const currentOrganization = useAppStore((s) => s.currentOrganization);
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
-  useEffect(() => {
-    if (!currentOrganization?.id) return;
-    let cancelled = false;
-    OrganizationApi.getOrganizationMembers(currentOrganization.id)
-      .then((members) => {
-        if (cancelled) return;
-        const map: Record<string, string> = {};
-        members.forEach((m) => {
-          const label = (m.name && m.name.trim()) || m.email || m.userId;
-          if (label) map[m.userId] = label;
-        });
-        setMemberNameById(map);
-      })
-      .catch(() => {
-        if (!cancelled) setMemberNameById({});
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentOrganization?.id]);
-  const resolveMemberName = useCallback(
-    (userId: string) => memberNameById[userId] || null,
-    [memberNameById]
-  );
+  // 2026-09-05 (runda 3 odbioru): własna kopia bloku „lista członków →
+  // mapa id→nazwisko" usunięta na rzecz wspólnego haka. Kopia czytała
+  // `m.userId`/`m.name`, których API `/organizations/:id/members` NIE ZWRACA
+  // (serwer oddaje surowe wiersze SQL: `user_id`/`first_name`/`last_name`),
+  // więc mapa była pusta i ekran pokazywał UUID.
+  const resolveMemberName = useOrganizationMemberNames();
 
   const [source, setSource] = useState<SourceTab>('kpi');
 

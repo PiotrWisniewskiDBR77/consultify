@@ -22,7 +22,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : k),
+    // Atrapa musi umieć to, co umie realne i18next: `t(key, 'tekst')`
+    // ORAZ `t(key, { defaultValue, ...zmienne })` z interpolacją `{{...}}`.
+    // Bez drugiej gałęzi atrapa zwracała goły klucz i test „mierzył" własne
+    // ubóstwo zamiast produktu (2026-09-05).
+    t: (k: string, fallback?: unknown) => {
+      if (typeof fallback === 'string') return fallback;
+      if (fallback && typeof fallback === 'object') {
+        const opts = fallback as Record<string, unknown>;
+        const wzorzec = typeof opts.defaultValue === 'string' ? opts.defaultValue : k;
+        return wzorzec.replace(/\{\{(\w+)\}\}/g, (_m, name) => String(opts[name] ?? ''));
+      }
+      return k;
+    },
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
@@ -118,15 +130,27 @@ describe('Praca (ExecutionWorkSurface)', () => {
       return OK_WORK;
     });
 
-    render(<ExecutionWorkSurface activePreset="all" />);
+    // 2026-09-05 (runda 3 odbioru): komunikat o degradacji NIE jest już
+    // akapitem między Menu 3 a tabelą — jest plakietką rejestrowaną do Menu 2
+    // (`onRegisterFilterControl`), bo kanon każe zaczynać tabelę pod Menu 3.
+    const registerFilterControl = vi.fn();
+    render(
+      <ExecutionWorkSurface activePreset="all" onRegisterFilterControl={registerFilterControl} />
+    );
 
     await waitFor(() =>
       expect(screen.getByText('Walidacja danych dostawców')).toBeInTheDocument()
     );
     expect(screen.queryByText(/Wczytuję kanoniczny rejestr pracy/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/Nie udało się pobrać pracy z 1 realizacji/)
-    ).toBeInTheDocument();
+    // nic o degradacji NIE stoi w kolumnie treści (regresja układu)
+    expect(screen.queryByText(/Nie udało się pobrać pracy/)).not.toBeInTheDocument();
+
+    await waitFor(() => expect(registerFilterControl).toHaveBeenCalled());
+    const lastNode = registerFilterControl.mock.calls.at(-1)?.[0];
+    const registered = render(<div>{lastNode}</div>);
+    expect(registered.getByTestId('execution-work-degraded-chip')).toHaveTextContent(
+      /Niepełne dane: 1 realizacja bez odpowiedzi/
+    );
   });
 
   it('nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE', async () => {
@@ -242,12 +266,24 @@ describe('Praca — etykiety realnych danych', () => {
     expect(document.body.textContent).toContain('SLA brak');
   });
 
-  it('nie robi z UUID-a imienia i nazwiska', async () => {
+  /**
+   * KONTRAKT ZMIENIONY 2026-09-05 (runda 3 odbioru, uwaga właściciela).
+   *
+   * Poprzednia wersja tego testu utrwalała stan przejściowy: „skoro nie mamy
+   * katalogu osób, pokaż UUID". Właściciel odebrał to jako defekt — obraz
+   * zatwierdzony (`UW-06-01__execution-tab-work`) ma w tej kolumnie ludzi
+   * („Anna Kowalska", „Marek Nowak"). Katalog JEST
+   * (`GET /api/organizations/:id/members`), więc kontrakt brzmi teraz:
+   * UUID nie wychodzi na ekran ANI jako identyfikator, ANI — tym bardziej —
+   * przerobiony na coś, co wygląda jak nazwisko. Gdy katalogu nie ma
+   * (jak w tym teście: atrapa store'a bez organizacji), zostaje uczciwe
+   * „Nieznany użytkownik".
+   */
+  it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko', async () => {
     render(<ExecutionWorkSurface activePreset="all" />);
     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
-    expect(
-      screen.getByText('d2b6a316-08c5-47cf-9bf7-4ba50311d5a2')
-    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('d2b6a316-08c5-47cf-9bf7-4ba50311d5a2');
     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+    expect(screen.getAllByText('Nieznany użytkownik').length).toBeGreaterThan(0);
   });
 });

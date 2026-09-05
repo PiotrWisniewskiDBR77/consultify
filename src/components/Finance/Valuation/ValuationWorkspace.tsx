@@ -31,12 +31,15 @@ import {
   listValuationAdvisorOutputs,
   listValuationMethods,
   setValuationMethodBasketWeights,
+  transitionFinanceVersion,
   upsertValuationWaccInputs,
+  type RoutableTransitionAction,
   type UpsertValuationWaccInputsParams,
   type ValuationBasketUpdate,
 } from '@/services/api/financeV2.api';
 import {
   describeFinanceV2Error,
+  type BusinessVersionStatus,
   type ValuationAdvisorFindingGeneratedDto,
   type ValuationAdvisorFindingStoredDto,
   type ValuationCompareVariantsResultDto,
@@ -62,8 +65,15 @@ import {
   ENABLEMENT_ALWAYS,
   type WorkspaceBarConfig,
   type WorkspaceBarEvaluationContext,
+  type WorkspaceBarLifecycleTransition,
+  type WorkspaceBarMoreMenuItem,
   type WorkspaceBarViewStateKind,
 } from '../shared/financeWorkspaceBar.contract';
+import {
+  lifecycleShortLabel,
+  lifecycleShortLabelEn,
+  lifecycleTransitionsFor,
+} from '../shared/financeVersionLifecycle';
 import { AdvisorStep } from './steps/AdvisorStep';
 import { AssumptionsStep } from './steps/AssumptionsStep';
 import { ExportStep } from './steps/ExportStep';
@@ -107,6 +117,33 @@ const STEP_LABELS_EN: Record<ValuationStepId, string> = {
   advisor: 'Valuation advisor',
   export: 'Export',
 };
+
+/**
+ * Pozycje kebaba paska wyceny — WYŁĄCZNIE takie, które ten ekran naprawdę
+ * potrafi wykonać (2026-09-05). „Duplikuj"/„Archiwizuj"/„Eksportuj do PPTX"
+ * celowo NIE ma: pierwsze dwie nie mają endpointu dla wyceny, trzecia ma
+ * (`POST /valuation/legacy/:legacyId/export/pptx`), ale wymaga identyfikatora
+ * legacy, którego ta powłoka nie posiada — martwy przycisk byłby gorszy niż
+ * jego brak.
+ */
+const VALUATION_MORE_ITEMS: readonly WorkspaceBarMoreMenuItem[] = [
+  {
+    id: 'more.source',
+    label: { key: 'valuation.more.source', pl: 'Źródło i pochodzenie danych', en: 'Source and lineage' },
+    group: 'navigation',
+    enablement: ENABLEMENT_ALWAYS,
+    destructive: false,
+    requiresConfirmation: false,
+  },
+  {
+    id: 'more.copy-link',
+    label: { key: 'valuation.more.copyLink', pl: 'Kopiuj link do wyceny', en: 'Copy valuation link' },
+    group: 'document',
+    enablement: ENABLEMENT_ALWAYS,
+    destructive: false,
+    requiresConfirmation: false,
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Injectable API surface — real functions by default, overridable in tests so
@@ -194,6 +231,24 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
   const [activeStep, setActiveStep] = useState<ValuationStepId>(initialStepId);
   const [variant, setVariant] = useState<ValuationVariantDto | null>(null);
   const [variantError, setVariantError] = useState<string | null>(null);
+  /**
+   * 2026-09-05 (runda 3 odbioru, `finance-workspace-bar`). Pasek tego jednego
+   * adaptera miał na sztywno `secondary: null, lifecycle: null, more: null`,
+   * więc brakowało trzech kontrolek z obrazu zatwierdzonego: „Eksportuj",
+   * rozwijanego statusu cyklu życia i kebaba. Poniżej REALNE akcje — żadnego
+   * martwego przycisku:
+   *   · Eksportuj → siódmy, kanoniczny krok tego kreatora („Eksport"),
+   *   · status cyklu → `transitionFinanceVersion` (ten sam automat co
+   *     `BaselineWorkspace`/`StatementPackWorkspaceV2`, teraz wspólny plik),
+   *   · kebab → nawigacja do kroku „Źródło" i kopiowanie linku do wyceny.
+   * Świadomie POMINIĘTE (brak drogi w tym ekranie, zgłoszone w raporcie):
+   * duplikacja, archiwizacja i eksport PPTX (endpoint istnieje, ale wymaga
+   * `legacyId`, którego ta powłoka nie zna — ma tylko `businessVersionId`).
+   */
+  const [lifecycleStatus, setLifecycleStatus] = useState<BusinessVersionStatus | null>(null);
+  const [lifecycleVersion, setLifecycleVersion] = useState<number | null>(null);
+  const [lifecycleError, setLifecycleError] = useState<string | null>(null);
+  const [moreNotice, setMoreNotice] = useState<string | null>(null);
 
   const [lineage, setLineage] = useState<ValuationLineageDto | null>(null);
   const [wacc, setWacc] = useState<ValuationWaccInputsRawDto | null>(null);
@@ -342,8 +397,12 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
 
   const config: WorkspaceBarConfig = useMemo(() => {
     const name = variant?.name ?? 'Wycena przedsiębiorstwa';
-    const status =
-      (variant?.status as WorkspaceBarEvaluationContext['status'] | undefined) ?? 'DRAFT';
+    // Status po przejściu cyklu życia (`lifecycleStatus`) ma pierwszeństwo nad
+    // tym z ostatniego pobrania wariantu — inaczej pigułka i menu statusu
+    // wracałyby do starej wartości do czasu odświeżenia.
+    const status = (lifecycleStatus ??
+      (variant?.status as WorkspaceBarEvaluationContext['status'] | undefined) ??
+      'DRAFT') as WorkspaceBarEvaluationContext['status'];
     const freshness =
       (variant?.freshness as WorkspaceBarConfig['identity']['freshness'] | undefined) ??
       'NEVER_COMPUTED';
@@ -404,9 +463,31 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
           mergesFreshness: false,
           keyboardCommandId: null,
         },
-        secondary: null,
-        lifecycle: null,
-        more: null,
+        secondary: {
+          kind: 'secondary',
+          id: 'secondary.export',
+          label: { key: 'export', pl: 'Eksportuj', en: 'Export' },
+          enablement: ENABLEMENT_ALWAYS,
+          keyboardCommandId: null,
+        },
+        lifecycle: {
+          kind: 'lifecycle',
+          id: 'lifecycle.status',
+          label: {
+            key: 'status',
+            pl: lifecycleShortLabel(status),
+            en: lifecycleShortLabelEn(status),
+          },
+          enablement: ENABLEMENT_ALWAYS,
+          transitions: lifecycleTransitionsFor(status),
+        },
+        more: {
+          kind: 'more',
+          id: 'more.menu',
+          label: { key: 'more', pl: 'Więcej', en: 'More' },
+          enablement: ENABLEMENT_ALWAYS,
+          items: VALUATION_MORE_ITEMS,
+        },
         fullscreen: {
           kind: 'fullscreen',
           id: 'fullscreen.toggle',
@@ -418,7 +499,7 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         extraDirectControls: [],
       },
     };
-  }, [variant, businessVersionId, activeStep, stepState]);
+  }, [variant, businessVersionId, activeStep, stepState, lifecycleStatus]);
 
   const evaluationContext: WorkspaceBarEvaluationContext = {
     status: config.identity.status,
@@ -450,6 +531,55 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
     setAdvisorFindings(generated.findings);
   }
 
+  /**
+   * Przejścia cyklu życia idą przez ten sam endpoint, co Baseline i Pakiet
+   * sprawozdań (`transitionFinanceVersion`). `approve`/`reopen` mają w
+   * Finansach osobne endpointy MODELU (`approveFinanceModel`/`reopenFinanceModel`),
+   * których wycena nie ma — dlatego zamiast cichego no-opu mówimy wprost, że
+   * ta operacja nie ma tu odpowiednika (fail-closed, nie udawanie sukcesu).
+   */
+  async function handleLifecycleTransition(
+    transition: WorkspaceBarLifecycleTransition
+  ): Promise<void> {
+    setLifecycleError(null);
+    setMoreNotice(null);
+    if (transition.action === 'approve' || transition.action === 'reopen') {
+      setLifecycleError(
+        'Zatwierdzenie i ponowne otwarcie wyceny nie mają dziś endpointu — zgłoszone jako niepokryte.'
+      );
+      return;
+    }
+    if (transition.action === 'save_draft' || transition.action === 'new_version') {
+      setLifecycleError('Ta operacja nie ma dziś odpowiednika w API — zgłoszone jako niepokryte.');
+      return;
+    }
+    try {
+      const result = await transitionFinanceVersion({
+        businessVersionId,
+        action: transition.action as RoutableTransitionAction,
+        expectedVersion: lifecycleVersion ?? variant?.versionNo ?? 1,
+      });
+      setLifecycleStatus(result.status);
+      setLifecycleVersion(result.version);
+    } catch (e) {
+      setLifecycleError(describeFinanceV2Error(e).detail);
+    }
+  }
+
+  function handleMoreItem(item: WorkspaceBarMoreMenuItem): void {
+    setLifecycleError(null);
+    if (item.id === 'more.source') {
+      setActiveStep('source');
+      setMoreNotice(null);
+      return;
+    }
+    if (item.id === 'more.copy-link') {
+      void navigator.clipboard?.writeText(window.location.href);
+      setMoreNotice('Link do tej wyceny skopiowany do schowka.');
+      return;
+    }
+  }
+
   return (
     <div data-testid="valuation-workspace" className="flex min-h-screen flex-col bg-c-bg">
       <FinanceWorkspaceBar
@@ -462,8 +592,9 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
         onNavigateBack={onNavigateBack}
         onSelectView={(viewId) => setActiveStep(viewId as ValuationStepId)}
         onPrimaryAction={refreshActiveStep}
-        onLifecycleTransition={() => {}}
-        onMoreItem={() => {}}
+        onSecondaryAction={() => setActiveStep('export')}
+        onLifecycleTransition={handleLifecycleTransition}
+        onMoreItem={handleMoreItem}
         onEnterFocusMode={() => focusMode.enter('fullscreen.toggle', 'toggle-control')}
         onCommitRename={async () => ({
           ok: false,
@@ -478,6 +609,26 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
           data-testid="valuation-variant-error"
         >
           {variantError}
+        </div>
+      )}
+
+      {lifecycleError && !focusMode.active && (
+        <div
+          role="alert"
+          className="mx-6 mt-4 rounded-lg border border-c-danger/30 bg-c-danger/10 px-4 py-2 text-sm text-c-danger"
+          data-testid="valuation-lifecycle-error"
+        >
+          {lifecycleError}
+        </div>
+      )}
+
+      {moreNotice && !focusMode.active && (
+        <div
+          role="status"
+          className="mx-6 mt-4 rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-2 text-sm text-c-text-secondary"
+          data-testid="valuation-more-notice"
+        >
+          {moreNotice}
         </div>
       )}
 

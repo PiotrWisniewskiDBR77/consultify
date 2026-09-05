@@ -9,6 +9,7 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 
 import type { StandardPreviewProps, StandardRowMenu, TableColumn } from '@/components/standard';
+import { memberNameOrUnknown } from '@/hooks/useOrganizationMemberNames';
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
@@ -26,7 +27,6 @@ import {
   okrObjectiveStatusLabel,
   parseOkrObjectiveConfidence,
   parseOkrObjectiveProgress,
-  shortOkrId,
 } from './okrObjectiveMappers';
 
 // ==========================================
@@ -80,13 +80,12 @@ export function buildOkrObjectiveColumns(
       label: isPolish ? 'Właściciel' : 'Owner',
       width: '140px',
       render: (row: OkrObjectiveWithKeyResultsDto) => {
-        const name = resolveMemberName(row.ownerUserId);
+        // 2026-09-05 (runda 3 odbioru): fallbackiem kolumny osobowej NIE jest
+        // identyfikator — patrz `okrRegistryPresenters.tsx` i
+        // `useOrganizationMemberNames`. Surowe id zostaje w `title`.
         return (
-          <span
-            className={`block truncate text-sm text-c-text-secondary${name ? '' : ' font-mono'}`}
-            title={row.ownerUserId}
-          >
-            {name || shortOkrId(row.ownerUserId)}
+          <span className="block truncate text-sm text-c-text-secondary" title={row.ownerUserId}>
+            {memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish)}
           </span>
         );
       },
@@ -243,8 +242,7 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
         {
           id: 'owner',
           label: isPolish ? 'Właściciel' : 'Owner',
-          value: deps.resolveMemberName?.(row.ownerUserId) || row.ownerUserId,
-          mono: !deps.resolveMemberName?.(row.ownerUserId),
+          value: memberNameOrUnknown(deps.resolveMemberName, row.ownerUserId, isPolish),
         },
         { id: 'description', label: isPolish ? 'Opis' : 'Description', value: row.description ?? '—' },
         { id: 'rationale', label: isPolish ? 'Uzasadnienie' : 'Rationale', value: row.rationale ?? '—' },
