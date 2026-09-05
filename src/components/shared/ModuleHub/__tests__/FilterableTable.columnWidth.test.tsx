@@ -5,8 +5,8 @@
  * Dowód mutacyjny: status=90 łamie pierwszy test; usunięcie Math.max z
  * mergePersisted łamie drugi.
  */
-import { render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   FilterableTable,
@@ -30,11 +30,10 @@ const renderTable = (columns: TableColumn[], persistKey?: string) =>
 
 describe('FilterableTable — podłogi szerokości P2', () => {
   beforeEach(() => window.localStorage.clear());
+  afterEach(() => vi.restoreAllMocks());
 
   it('status podbija zadeklarowane 90 px do floora 130 px', () => {
-    const getContext = vi
-      .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue({
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         font: '',
         measureText: () => ({ width: 0 }),
       } as unknown as CanvasRenderingContext2D);
@@ -45,7 +44,6 @@ describe('FilterableTable — podłogi szerokości P2', () => {
     const header = getByRole('columnheader');
     expect(header.style.width).toBe('130px');
     expect(header.style.minWidth).toBe('130px');
-    getContext.mockRestore();
   });
 
   it('mergePersisted podbija zapisane 95 px właściciela do 150 px', () => {
@@ -66,9 +64,7 @@ describe('FilterableTable — podłogi szerokości P2', () => {
 
   it('długa etykieta mieści pomiar canvas oraz budżet ikon', () => {
     const measuredTextPx = 180;
-    const getContext = vi
-      .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue({
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         font: '',
         measureText: () => ({ width: measuredTextPx }),
       } as unknown as CanvasRenderingContext2D);
@@ -90,6 +86,32 @@ describe('FilterableTable — podłogi szerokości P2', () => {
         HEADER_SORT_BUDGET_PX +
         HEADER_FILTER_BUDGET_PX
     );
-    getContext.mockRestore();
+  });
+
+  it('pokazuje komponentowy Tooltip tylko przy realnym przepełnieniu', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(180);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(90);
+    const { container, getByRole } = renderTable([
+      { id: 'urgency', label: 'PILNOŚĆ', dataType: 'status' },
+    ]);
+    const trigger = container.querySelector('[data-overflow-tooltip-trigger]') as HTMLElement;
+    expect(trigger).toBeTruthy();
+    expect(trigger.getAttribute('title')).toBeNull();
+
+    fireEvent.mouseEnter(trigger);
+    await waitFor(() => expect(getByRole('tooltip')).toHaveTextContent('PILNOŚĆ'));
+  });
+
+  it('nie pokazuje Tooltipa, gdy tekst faktycznie się mieści', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(90);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(90);
+    const { container, queryByRole } = renderTable([
+      { id: 'urgency', label: 'PILNOŚĆ', dataType: 'status' },
+    ]);
+    const trigger = container.querySelector('[data-overflow-tooltip-trigger]') as HTMLElement;
+
+    fireEvent.mouseEnter(trigger);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(queryByRole('tooltip')).toBeNull();
   });
 });

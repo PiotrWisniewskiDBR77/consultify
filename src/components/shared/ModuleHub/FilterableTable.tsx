@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
+import { Tooltip } from '@/components/ui/primitives/Tooltip';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
 
 import { type RowAction, type RowActionSection, RowActionsMenu } from '../RowActionsMenu';
@@ -307,6 +308,41 @@ export const CELL_TEXT_CLAMP_CLASS = 'block break-normal overflow-hidden text-el
  * spanie), łamanie w połowie wyrazu — nie jest i nie może być.
  */
 export const CELL_ELEMENT_WRAP_CLASS = 'min-w-0 break-normal';
+
+const OverflowTooltip: React.FC<{
+  content: string;
+  className: string;
+  children?: React.ReactNode;
+}> = ({ content, className, children }) => {
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const element = textRef.current;
+    if (!element) return undefined;
+    const measure = () => setIsOverflowing(element.scrollWidth > element.clientWidth);
+    measure();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [content]);
+
+  return (
+    <Tooltip content={content} delay={0} disabled={!isOverflowing}>
+      <span className="min-w-0 flex-1" data-overflow-tooltip-trigger>
+        <span ref={textRef} className={className} data-overflow-tooltip-text>
+          {children ?? content}
+        </span>
+      </span>
+    </Tooltip>
+  );
+};
 
 // True when a regular cell value should render as an em-dash placeholder
 // (null / undefined / empty-or-whitespace string).
@@ -1402,21 +1438,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                 column: column.label,
                               })}
                             >
-                              <span
+                              <OverflowTooltip
                                 className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
-                                title={column.label}
+                                content={column.label}
                               >
                                 {column.label}
-                              </span>
+                              </OverflowTooltip>
                               <SortIcon columnId={column.id} />
                             </button>
                           ) : (
-                            <span
+                            <OverflowTooltip
                               className={`min-w-0 ${CELL_TEXT_CLAMP_CLASS}`}
-                              title={column.label}
+                              content={column.label}
                             >
                               {column.label}
-                            </span>
+                            </OverflowTooltip>
                           )}
                           {column.filterable && (
                             <FilterDropdown
@@ -1764,9 +1800,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           />
                         ) : column.render ? (
                           renderedIsPlainText ? (
-                            <span className={CELL_TEXT_CLAMP_CLASS} title={String(rendered)}>
+                            <OverflowTooltip
+                              className={CELL_TEXT_CLAMP_CLASS}
+                              content={String(rendered)}
+                            >
                               {rendered}
-                            </span>
+                            </OverflowTooltip>
                           ) : (
                             <div className={CELL_ELEMENT_WRAP_CLASS}>{rendered}</div>
                           )
@@ -1782,7 +1821,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           <span className="text-sm text-slate-400">—</span>
                         ) : (
                           <div className="min-w-0">
-                            <span
+                            <OverflowTooltip
                               className={[
                                 'text-sm text-slate-700 dark:text-slate-200',
                                 // `title`/`name` mają WŁASNY, ostrzejszy kanon:
@@ -1793,12 +1832,10 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                   ? 'block truncate'
                                   : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}
-                              title={
-                                typeof row[column.id] === 'string' ? row[column.id] : undefined
-                              }
+                              content={String(row[column.id])}
                             >
                               {row[column.id]}
-                            </span>
+                            </OverflowTooltip>
                           </div>
                         )}
                         {rowDescription?.show &&
