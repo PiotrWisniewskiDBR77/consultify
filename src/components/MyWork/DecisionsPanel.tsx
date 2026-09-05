@@ -187,12 +187,12 @@ const OverdueBadge: React.FC<{ days: number }> = ({ days }) => {
 /**
  * New Decision Modal
  *
- * Exported (I1-I3 Faza 0) so `UnifiedCreateLauncher`
- * (src/components/shared/UnifiedCreateLauncher.tsx) can delegate to it directly
- * — zero change to the component itself, just visibility. Previously this was
- * only reachable via `DecisionsPanel` → `WorkCenter.tsx`, which has 0 live
- * callers (orphaned) — the unified launcher is now this component's only live
- * caller.
+ * Exported (I1-I3 Faza 0) for the now-removed `UnifiedCreateLauncher`
+ * (D-01, 05.09.2026: dead code deleted — see the D-01 comment in
+ * `MyWorkHub.tsx`). Only reachable via `DecisionsPanel` → `WorkCenter.tsx`,
+ * which has 0 live callers — this component is orphaned again, same as
+ * before the launcher briefly wired it in. Decisions are created today via
+ * „New Decision" (DecisionDetailView).
  */
 export const NewDecisionModal: React.FC<{
   isOpen: boolean;
