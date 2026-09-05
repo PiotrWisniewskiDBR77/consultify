@@ -129,10 +129,15 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
     {
       id: 'title',
       label: isPolish ? 'Tytuł' : 'Title',
+      // KOSMETYKA RAPORT_B #8 (evidence/audyt-mvp-20260906/B/RAPORT_B.md,
+      // pozycja 12-2): pod tytułem audytu widniał surowy techniczny slug
+      // ("dbr77–robotyzacja–linia–spawalnicza") bez żadnej etykiety
+      // kontekstowej — `row.packKey` to identyfikator wewnętrzny, nie treść
+      // dla użytkownika. `row.title` (nazwa) już jest widoczna wyżej, więc
+      // ukrywamy surową wartość zamiast dorabiać jej etykietę "ID:".
       render: (row: AuditPackSummary) => (
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-c-text">{row.title}</span>
-          <span className="font-mono text-[11px] text-c-text-muted">{row.packKey}</span>
         </div>
       ),
     },
