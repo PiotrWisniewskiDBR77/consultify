@@ -234,6 +234,7 @@ export const MeetingObjectPage: React.FC = () => {
   const [notes, setNotes] = useState<GovernedMeetingNoteDto[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [actionItemTasks, setActionItemTasks] = useState<Record<string, 'saving' | 'created'>>({});
 
   const [operatorBrief, setOperatorBrief] = useState<MeetingOperatorBriefDto | null>(null);
   const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
@@ -335,6 +336,29 @@ export const MeetingObjectPage: React.FC = () => {
       setNotesError(t('meeting.notes.errors.loadFailed', 'Could not load meeting note proposals.'));
     } finally {
       setNotesLoading(false);
+    }
+  };
+
+  const createTaskFromActionItem = async (noteIdValue: string, actionIndex: number) => {
+    const key = `${noteIdValue}:${actionIndex}`;
+    if (actionItemTasks[key]) return;
+    setActionItemTasks((current) => ({ ...current, [key]: 'saving' }));
+    try {
+      const response = await fetch(
+        `/api/meeting/${encodeURIComponent(meetingId)}/notes/${encodeURIComponent(noteIdValue)}/action-items/${actionIndex}/task`,
+        { method: 'POST', credentials: 'include' }
+      );
+      if (!response.ok) throw new Error(`HTTP_${response.status}`);
+      setActionItemTasks((current) => ({ ...current, [key]: 'created' }));
+      toast.success(t('meetingActionItemsP9.taskCreated', 'Zadanie utworzone'));
+    } catch (error) {
+      console.error('Failed to create task from meeting action item:', error);
+      setActionItemTasks((current) => {
+        const next = { ...current };
+        delete next[key];
+        return next;
+      });
+      toast.error(t('meetingActionItemsP9.taskCreateFailed', 'Nie udało się utworzyć zadania'));
     }
   };
 
@@ -758,14 +782,25 @@ export const MeetingObjectPage: React.FC = () => {
                       </div>
                       {actions.length ? (
                         <ul className="space-y-1">
-                          {actions.map((a, idx) => (
-                            <li key={idx} className="text-xs text-c-text-secondary">
-                              {a.task}
-                              {a.owner ? (
-                                <span className="text-c-text-muted"> — {a.owner}</span>
-                              ) : null}
+                          {actions.map((a, idx) => {
+                            const taskState = actionItemTasks[`${note.id}:${idx}`];
+                            return (
+                            <li key={idx} className="flex items-center justify-between gap-2 text-xs text-c-text-secondary">
+                              <span>{a.task}{a.owner ? <span className="text-c-text-muted"> — {a.owner}</span> : null}</span>
+                              <button
+                                type="button"
+                                disabled={Boolean(taskState)}
+                                onClick={() => void createTaskFromActionItem(note.id, idx)}
+                                className="shrink-0 rounded-md border border-c-border px-2 py-1 font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {taskState === 'created'
+                                  ? t('meetingActionItemsP9.taskCreated', 'Zadanie utworzone')
+                                  : taskState === 'saving'
+                                    ? t('common.saving', 'Zapisywanie…')
+                                    : t('meetingActionItemsP9.createTask', 'Zrób zadanie')}
+                              </button>
                             </li>
-                          ))}
+                          )})}
                         </ul>
                       ) : (
                         <div className="text-xs text-c-text-muted">—</div>
