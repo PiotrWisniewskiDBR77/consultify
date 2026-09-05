@@ -15,27 +15,42 @@
     },
     "02_INTERVIEW": {
       "nazwa": "Wywiad",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Wywiad: 6 ekranów, polskie nazwy i Skrzynka; jedyny kontekstowy przycisk na zakładkę zgodnie z Twoją decyzją D-01.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/03-wywiad/_r3-interview-hub.png",
+        "evidence/odbior-zywo-20260905/03-wywiad/drd-http-workspace.png",
+        "evidence/odbior-zywo-20260905/03-wywiad/interview-creator-shell.png",
+        "evidence/odbior-zywo-20260905/03-wywiad/interview-preview-canon.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:26"
     },
     "03_TOOLS": {
       "nazwa": "Narzędzia",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Narzędzia: 10 ekranów, naprawione angielskie etykiety kategorii i nazwy sesji; wszystkie renderują się poprawnie na żywo.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/04-narzedzia/karta-tool.png",
+        "evidence/odbior-zywo-20260905/04-narzedzia/prompt-registry-tab.png",
+        "evidence/odbior-zywo-20260905/04-narzedzia/tools-biblioteka.png",
+        "evidence/odbior-zywo-20260905/04-narzedzia/tools-outputs-insights-tab.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:26"
     },
     "04_ASSESSMENT": {
       "nazwa": "Ocena",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Ocena: macierz DRD 9×7 z otoczką z obrazu (nagłówek, AS-IS/TO-BE, kafle, pełny ekran), szyna Oś 1–7, kolumny KONTEKST i JEDNOSTKA, raporty i prezentacja z zamrożonej sesji; treść części komórek macierzy do korekty danych wg Twojego kanonu (nie kod).",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/05-ocena/drd-macierz-oceny.png",
+        "evidence/odbior-zywo-20260905/05-ocena/assessment-list.png",
+        "evidence/odbior-zywo-20260905/05-ocena/assessment-report-contract.png",
+        "evidence/odbior-zywo-20260905/05-ocena/assessment-five-surfaces.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:26"
     },
     "05_INITIATIVES": {
       "nazwa": "Inicjatywy",
