@@ -273,7 +273,7 @@ export const OkrSetDraftFormModal: React.FC<OkrSetDraftFormModalProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={LABEL_CLASS} htmlFor="okr-set-program">
-              {isPolish ? 'Program' : 'Program'}
+              {'Program'}
             </label>
             <select
               id="okr-set-program"

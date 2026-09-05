@@ -5914,7 +5914,7 @@ Use userId only from this list:
 
   const buildDecisionAnalysisInput = useCallback(() => {
     const ctx = [
-      `${isPolish ? 'Status' : 'Status'}: ${status}`,
+      `${'Status'}: ${status}`,
       // „gotowość do zatwierdzenia" bez etapu workflow byłaby zgadywaniem.
       `${isPolish ? 'Etap workflow' : 'Workflow stage'}: ${workflowStatus}`,
       `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,

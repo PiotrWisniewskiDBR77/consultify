@@ -560,7 +560,7 @@ const ReviewStep: React.FC<{
               <thead className="sticky top-0 bg-slate-50 dark:bg-navy-800">
                 <tr>
                   <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Element' : 'Element'}
+                    {'Element'}
                   </th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400">
                     {isPolish ? 'Ocena' : 'Score'}
@@ -686,7 +686,7 @@ const TargetStep: React.FC<{
               {isPolish ? 'Edycja' : 'Edit'}
             </span>
             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded">
-              {isPolish ? 'Workflow' : 'Workflow'}
+              {isPolish ? 'Przepływ pracy' : 'Workflow'}
             </span>
             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs rounded">
               {isPolish ? 'Inicjatywy' : 'Initiatives'}

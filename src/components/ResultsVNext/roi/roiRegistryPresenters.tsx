@@ -67,7 +67,7 @@ export function buildRoiCaseColumns(
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '210px',
       filterable: true,
       filterOptions: (Object.keys(ROI_STATUS_TONE) as RoiCaseListItem['status'][]).map((s) => ({
@@ -186,7 +186,7 @@ export function buildRoiBenefitsRealizationColumns(isPolish: boolean): TableColu
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '170px',
       render: (row: RoiBenefitsRealizationRowVm) => (
         <StatusChip

@@ -245,29 +245,29 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
     () => [
       {
         id: 'list' as ModuleTab,
-        label: 'Reports',
+        label: t('reports.tabs.reports', 'Raporty'),
         icon: <FileBarChart2 size={16} />,
         count: filteredReports.length,
       },
       {
         id: 'reports' as ModuleTab,
-        label: 'Templates',
+        label: t('reports.tabs.templates', 'Szablony'),
         icon: <Wand2 size={16} />,
         count: templates.length,
       },
       {
         id: 'initiatives' as ModuleTab,
-        label: 'Schedules',
+        label: t('reports.tabs.schedules', 'Harmonogramy'),
         icon: <CalendarClock size={16} />,
         count: schedules.filter((s) => s.isActive).length,
       },
       {
         id: 'automation' as ModuleTab,
-        label: 'Automation',
+        label: t('reports.tabs.automation', 'Automatyzacja'),
         icon: <Zap size={16} />,
       },
     ],
-    [filteredReports.length, templates.length, schedules]
+    [filteredReports.length, templates.length, schedules, t]
   );
 
   // Table columns for Reports (canon §3.3: title left · identity chips left ·
@@ -1010,7 +1010,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         onNewItem={handleNewReport}
-        newItemLabel="New Report"
+        newItemLabel={t('reports.actions.newReport', 'Nowy raport')}
         viewModes={['table']}
       >
         {renderContent()}

@@ -601,9 +601,9 @@ interface InitiativeWizardModalProps {
 }
 
 const BUSINESS_PRIORITIES: Array<{ id: string; label: Record<WizardLanguage, string> }> = [
-  { id: 'margin', label: { pl: 'Marza / EBITDA', en: 'Margin / EBITDA' } },
-  { id: 'quality', label: { pl: 'Jakosc', en: 'Quality' } },
-  { id: 'speed', label: { pl: 'Terminowosc', en: 'On-time delivery' } },
+  { id: 'margin', label: { pl: 'Marża / EBITDA', en: 'Margin / EBITDA' } },
+  { id: 'quality', label: { pl: 'Jakość', en: 'Quality' } },
+  { id: 'speed', label: { pl: 'Terminowość', en: 'On-time delivery' } },
   { id: 'automation', label: { pl: 'Automatyzacja', en: 'Automation' } },
   { id: 'governance', label: { pl: 'Governance', en: 'Governance' } },
   { id: 'risk', label: { pl: 'Redukcja ryzyka', en: 'Risk reduction' } },

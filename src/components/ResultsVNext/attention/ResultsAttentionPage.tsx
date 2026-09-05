@@ -192,7 +192,7 @@ export const ResultsAttentionPage: React.FC = () => {
   }
 
   const tabs: StandardModuleTab[] = [
-    { id: 'kpi', label: isPolish ? 'KPI' : 'KPI' },
+    { id: 'kpi', label: 'KPI' },
     { id: 'okr', label: 'OKR' },
   ];
 

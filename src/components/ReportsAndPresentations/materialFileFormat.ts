@@ -2,6 +2,14 @@ export const MATERIAL_FILE_FORMATS = ['DOCX', 'PDF', 'XLSX', 'PPTX', 'Unknown'] 
 
 export type MaterialFileFormat = (typeof MATERIAL_FILE_FORMATS)[number];
 
+export const MATERIAL_FILE_FORMAT_LABEL_KEYS: Record<MaterialFileFormat, string> = {
+  DOCX: 'rap.outputs.fileFormat.docx',
+  PDF: 'rap.outputs.fileFormat.pdf',
+  XLSX: 'rap.outputs.fileFormat.xlsx',
+  PPTX: 'rap.outputs.fileFormat.pptx',
+  Unknown: 'rap.outputs.fileFormat.unknown',
+};
+
 type MaterialFormatSource = {
   exportFormat?: unknown;
   export_format?: unknown;

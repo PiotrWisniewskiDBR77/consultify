@@ -205,7 +205,7 @@ export const InitiativeStatusPipeline: React.FC = () => {
                         : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  {meta.label}
+                  {t(meta.labelKey)}
                 </span>
                 {isCurrent && (
                   <span className="mt-0.5 px-1 py-0.5 text-[8px] font-bold rounded bg-navy-900 text-white uppercase tracking-wider">

@@ -1,5 +1,5 @@
 {
-  "maxUnjustifiedIdentical": 4,
+  "maxUnjustifiedIdentical": 0,
   "minFiles": 451,
-  "minTernaries": 789
+  "minTernaries": 780
 }

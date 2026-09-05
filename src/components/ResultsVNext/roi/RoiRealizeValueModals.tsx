@@ -495,7 +495,7 @@ export const RoiVarianceStatusModal: React.FC<RoiVarianceStatusModalProps> = ({
       </>}>
       <div className="space-y-4">
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-variance-status-select">{isPolish ? 'Status' : 'Status'}</label>
+          <label className={LABEL_CLASS} htmlFor="roi-variance-status-select">{'Status'}</label>
           <select id="roi-variance-status-select" value={status} onChange={(e) => setStatus(e.target.value as RoiVarianceStatus)} className={FIELD_CLASS} data-testid="roi-variance-status-select">
             {ROI_VARIANCE_STATUSES.map((s) => (<option key={s} value={s}>{roiVarianceStatusLabel(s, isPolish)}</option>))}
           </select>

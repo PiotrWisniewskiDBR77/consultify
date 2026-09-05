@@ -114,7 +114,7 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
         <span className="text-sm font-medium text-c-text">
           {row.kind === 'baseline'
             ? isPolish
-              ? 'Baseline'
+              ? 'Poziom bazowy'
               : 'Baseline'
             : isPolish
               ? 'Polityka kalkulacji'
@@ -212,7 +212,7 @@ export function buildRoiSettingsPreview(
   if (row.kind === 'baseline') {
     const b = row.baseline;
     return {
-      title: isPolish ? 'Baseline' : 'Baseline',
+      title: isPolish ? 'Poziom bazowy' : 'Baseline',
       onClose,
       headerExtra,
       meta: {

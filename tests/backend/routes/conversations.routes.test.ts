@@ -179,16 +179,16 @@ describe('Conversations Routes', () => {
       vi.mocked(dbRun).mockResolvedValueOnce(undefined);
       vi.mocked(dbGet).mockResolvedValueOnce({
         id: 'test-uuid-123',
-        title: 'New conversation',
+        title: '',
         title_source: 'auto',
       });
 
       const created = {
-        title: 'New conversation',
+        title: '',
         title_source: 'auto',
       };
 
-      expect(created.title).toBe('New conversation');
+      expect(created.title).toBe('');
       expect(created.title_source).toBe('auto');
     });
   });

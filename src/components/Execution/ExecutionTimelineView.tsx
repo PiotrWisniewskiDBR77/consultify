@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
+import { getLocalizedStatusLabel } from '../../services/initiativeLifecycle';
 import { FullInitiative, InitiativeStatus } from '../../types';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 
@@ -1549,14 +1550,14 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       <div className="shrink-0 flex items-center gap-6 px-4 py-2 border-t border-c-border-subtle bg-c-surface text-xs flex-wrap">
         <div className="flex items-center gap-4">
           {[
-            { status: InitiativeStatus.APPROVED, label: 'Ready' },
-            { status: InitiativeStatus.EXECUTING, label: 'In Progress' },
-            { status: InitiativeStatus.BLOCKED, label: 'Blocked' },
-            { status: InitiativeStatus.DONE, label: 'Done' },
-          ].map(({ status, label }) => (
+            InitiativeStatus.APPROVED,
+            InitiativeStatus.EXECUTING,
+            InitiativeStatus.BLOCKED,
+            InitiativeStatus.DONE,
+          ].map((status) => (
             <div key={status} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded ${STATUS_COLORS[status].progress}`} />
-              <span className="text-c-text-muted">{label}</span>
+              <span className="text-c-text-muted">{getLocalizedStatusLabel(status, t)}</span>
             </div>
           ))}
         </div>

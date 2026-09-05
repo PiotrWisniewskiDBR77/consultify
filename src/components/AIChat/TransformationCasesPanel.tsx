@@ -111,7 +111,7 @@ const GovernedProposalReview: React.FC<{
             isPolish ? 'Zatwierdź zakres' : 'Approve scope',
             isPolish ? 'Poproś o korektę' : 'Request revision',
             isPolish ? 'Utwórz rewizję' : 'Create revision',
-            isPolish ? 'Ustal nowy punkt odniesienia' : 'Rebaseline',
+            isPolish ? 'Aktualizuj poziom bazowy' : 'Rebaseline',
           ].map((label) => (
             <button
               key={label}
@@ -937,7 +937,7 @@ export const TransformationCasesPanel: React.FC<{
       },
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: 'Status',
         width: '150px',
         render: (raw) => {
           const item = (raw as TransformationCaseRow).transformationCase;

@@ -233,7 +233,7 @@ const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) =
       <ResultsVNextRegistryShell
         domain="okr"
         moduleBar={{
-          breadcrumbs: [{ label: isPolish ? 'Wyniki' : 'Results' }, { label: isPolish ? 'OKR' : 'OKR' }, { label: isPolish ? 'Programy' : 'Programs' }],
+          breadcrumbs: [{ label: isPolish ? 'Wyniki' : 'Results' }, { label: 'OKR' }, { label: isPolish ? 'Programy' : 'Programs' }],
           breadcrumbCta: { label: isPolish ? 'Nowy program' : 'New program', onClick: openCreate, testId: 'okr-program-create-cta' },
         }}
         table={{

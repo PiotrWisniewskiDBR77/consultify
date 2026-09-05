@@ -532,18 +532,6 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     [t]
   );
 
-  /**
-   * Etykiety przejść statusu pochodzą ze wspólnego `getStatusActions` (services/
-   * initiativeLifecycle), które niesie parę `label`/`labelPl` — bierzemy polską
-   * wersję przy polskim UI (ten sam wzór co ControlSection.tsx). Bez tego kebab
-   * i szybka zmiana statusu zostawały po angielsku mimo reszty ekranu po polsku.
-   */
-  const statusActionLabel = useCallback(
-    (action: { label: string; labelPl?: string }): string =>
-      i18n.language?.startsWith('pl') ? action.labelPl || action.label : action.label,
-    [i18n.language]
-  );
-
   const priorityLabel = useCallback(
     (priority: InitiativePriority): string => {
       const cfg = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;

@@ -381,8 +381,8 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
 
   const Icon = hasSources ? CheckCircle2 : AlertCircle;
   const sourceLabel = hasSources
-    ? t('trust.badge.sources', '{{count}} sources', { count })
-    : t('trust.badge.noSources', 'No cited sources');
+    ? t('trust.badge.sources', { count })
+    : t('trust.badge.noSources');
 
   // Two tones — emerald when sources are present, amber when they are
   // not. The amber is not a warning per se; it's an honest "this reply

@@ -8710,7 +8710,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   const buildInsightAnalysisInput = useCallback(() => {
     const ctx = [
-      `${isPolish ? 'Status' : 'Status'}: ${insight?.status ?? '—'}`,
+      `${'Status'}: ${insight?.status ?? '—'}`,
       `${isPolish ? 'Status przeglądu' : 'Review status'}: ${insight?.reviewStatus ?? '—'}`,
       `${isPolish ? 'Liczba sesji źródłowych' : 'Source sessions'}: ${insight?.sourceSessionCount ?? 0}`,
       // „brakujące źródła" i „jakość dowodów" bez tych dwóch pól byłyby zgadywaniem.

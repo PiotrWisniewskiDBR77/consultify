@@ -229,7 +229,7 @@ export const MoveToProjectModal: React.FC<MoveToProjectModalProps> = ({
               {t('aiChat.moveToFolder', 'Move to folder')}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-              {conversation?.title || t('aiChat.newConversation', 'New conversation')}
+              {conversation?.title || t('aiChat.newConversation')}
             </div>
           </div>
           <button
