@@ -18861,7 +18861,8 @@
     "send": "Wyślij",
     "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
     "workPanel": {
-      "open": "Otwórz panel roboczy"
+      "open": "Otwórz panel roboczy",
+      "close": "Zamknij panel roboczy"
     },
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",

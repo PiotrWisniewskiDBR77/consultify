@@ -108,6 +108,14 @@ export interface UseFeatureFlagsReturn {
 
 export const DEFAULT_FLAGS: FeatureFlag[] = [
   {
+    id: 'chatBusinessActionsNav',
+    name: 'Chat: Business Actions navigation',
+    description: 'Shows the Business Actions shortcut in Chat and routes it to AI Actions',
+    defaultValue: false,
+    category: 'beta',
+    allowLocalOverride: true,
+  },
+  {
     id: 'myWorkNotebookV2',
     name: 'My Work Notebook (V2)',
     description: 'Backend-persisted Notebook with search + active notes surfaces',

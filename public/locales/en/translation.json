@@ -17614,7 +17614,8 @@
     "send": "Send",
     "startDictation": "Dictate (fills input; review and send)",
     "workPanel": {
-      "open": "Open work panel"
+      "open": "Open work panel",
+      "close": "Close work panel"
     },
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",

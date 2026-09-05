@@ -407,3 +407,8 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AG1 | `ChatTableProposalCard` po remoncie opierał się na zamrożonym metadata, a ponowne wykonanie dawało ogólne 500. | Karta pobiera żywy rekord; ponowienie daje typowane 409, bez drugiej zmiany `resolved_at`. | ZAMKNIĘTE lokalnie | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY371_KARTY_PROPOZYCJI_REPORT.md`, `evidence/day371-karty-propozycji/` |
 | AG2 | Usunięcie martwego UI Case Intake osieroca `CaseWorkspace/apiIntake.ts`; podłączenie producenta wymaga wyjścia poza licencję. | Ani A, ani B nie jest uczciwie wykonalne w zakresie dyżuru; kod wariantu B odwrócono. | STOP / DECYZJA WŁAŚCICIELA | `evidence/day371-karty-propozycji/R4-case-intake-stop.md` |
 | AG3 | `GovernedInitiativeHandoffCard` nie odtwarza stanu adopted po remoncie i nie ma wskazanego żywego kontraktu w licencji. | Rodzina kart pozostaje PARTIAL mimo naprawy rdzenia tabel. | STOP / KONTRAKT NIEUSTALONY | `evidence/day371-karty-propozycji/R1-family-measurement.md` |
+## AK. Dyżur 368 — przerwane przewody propsów czatu
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AG1 | Żaden z 11 montaży `UnifiedChatPanel` nie przekazywał celu „Akcje biznesowe”; `/chat` nie odbierał globalnego kickoffu z Pomocy; etykieta panelu roboczego pozostawała „otwórz” po otwarciu. | Dodano publiczny fallback `/ai-actions` za flagą `chatBusinessActionsNav` default OFF, store jako fallback kickoffu oraz stanową etykietę PL/EN. Wszystkie trzy naprawy mają test realnego komponentu i selektywną mutację RED→GREEN. | KOD I TESTY ZAMKNIĘTE / ZRZUT BLOCKED_AUTH | `evidence/przewody-chat/`, `CODEX_DAY368_PRZEWODY_CHAT_REPORT.md` |

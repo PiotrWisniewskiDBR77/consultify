@@ -87,6 +87,7 @@ import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { resolveTeresaWorkspaceContext } from '../../store/teresaEntityContext';
 import { useConversationStore } from '../../store/useConversationStore';
 import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
+import { ROUTES } from '../../routes/routeConfig';
 import {
   AppView,
   Artifact,
@@ -812,6 +813,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
   const teresaAdoptChatDraftEnabled = isEnabled('ENABLE_TERESA_ADOPT_CHAT_DRAFT');
+  const chatBusinessActionsNavEnabled = isEnabled('chatBusinessActionsNav');
+  const handleNavigateToActions =
+    onNavigateToActions ??
+    (chatBusinessActionsNavEnabled ? () => navigateToRoute(ROUTES.AI_ACTIONS) : undefined);
 
   const routeInfo = useMemo(
     () => ({
@@ -840,6 +845,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     isAuthInitializing,
     chatModuleIntent,
   } = useAppStore();
+  const storedKickoffMessage = useAppStore((state) => state.chatKickoffMessage);
+  const effectiveKickoffMessage = kickoffMessage ?? storedKickoffMessage;
 
   // MOST „Teresa sama poprawia artefakt" (2026-09-01). Props zostaje pierwszy
   // — osadzone czaty, które jeszcze go podają, działają jak dotąd. Gdy propsa
@@ -5002,27 +5009,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [handleChatAction, handleSendMessage]
   );
 
-  // One-shot kickoff: when panel opens in split mode, auto-send the configured message.
+  // One-shot kickoff: explicit embedded-panel props win; otherwise every mount
+  // can consume the global handoff written by Help and cross-tool redirects.
   useEffect(() => {
-    if (!kickoffMessage) return;
+    if (!effectiveKickoffMessage) return;
     if (isDisabled) return;
     if (isStreaming) return;
     if ((customMessages || []).length > 0) return;
     if ((activeMessages || []).length > 0) return;
-    if (lastKickoffSentRef.current === kickoffMessage) return;
+    if (lastKickoffSentRef.current === effectiveKickoffMessage) return;
 
     // Fire-and-forget; handleSendMessage creates conversation if needed
-    void handleSendMessage(kickoffMessage);
-    lastKickoffSentRef.current = kickoffMessage;
-    onKickoffConsumed?.();
+    void handleSendMessage(effectiveKickoffMessage);
+    lastKickoffSentRef.current = effectiveKickoffMessage;
+    if (onKickoffConsumed) {
+      onKickoffConsumed();
+    } else if (kickoffMessage === undefined) {
+      useAppStore.getState().clearChatKickoffMessage();
+    }
   }, [
-    kickoffMessage,
+    effectiveKickoffMessage,
     isDisabled,
     isStreaming,
     customMessages,
     activeMessages,
     handleSendMessage,
     onKickoffConsumed,
+    kickoffMessage,
   ]);
 
   const handleDeepThinkingProceed = useCallback(async () => {
@@ -6788,14 +6801,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )}
 
             {/* Show the business/actions button only when a real navigation target exists. */}
-            {onNavigateToActions && (
+            {handleNavigateToActions && (
               <button
                 onClick={() => {
                   trackFunnelEvent('chat_business_button_clicked', {
                     mode: isSplitMode ? 'split' : 'full',
                     pendingCount: pendingActionsCount,
                   });
-                  onNavigateToActions();
+                  handleNavigateToActions();
                 }}
                 data-testid="chat-business-button"
                 className={`relative ${CHAT_HEADER_ICON_CONTROL_CLASS}`}
@@ -6853,8 +6866,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 data-testid="chat-work-panel-button"
                 aria-pressed={showWorkPanel}
                 className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${showWorkPanel ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
-                title={t('aiChat.workPanel.open', 'Open work panel')}
-                aria-label={t('aiChat.workPanel.open', 'Open work panel')}
+                title={
+                  showWorkPanel
+                    ? t('aiChat.workPanel.close', 'Close work panel')
+                    : t('aiChat.workPanel.open', 'Open work panel')
+                }
+                aria-label={
+                  showWorkPanel
+                    ? t('aiChat.workPanel.close', 'Close work panel')
+                    : t('aiChat.workPanel.open', 'Open work panel')
+                }
               >
                 <PanelRight size={18} strokeWidth={1.75} />
               </button>
