@@ -10,7 +10,7 @@
  * DOWÓD MUTACYJNY (wykonany w tej sesji, transkrypt w raporcie dyżuru):
  *  - usunięcie wywołania `ensureLegacyFinanceArtifactIdentity` z hooka/serwisu
  *    → test 1 („most rozwiązuje się bez wiersza mostu") CZERWONY.
- *  - usunięcie `legacyRowExists` (fail-closed) → testy 4 i 5 CZERWONE
+ *  - usunięcie `readLegacyRow` (fail-closed) → testy 4 i 5 CZERWONE
  *    (tożsamość powstawałaby dla zmyślonego id i dla cudzej organizacji).
  *  - usunięcie `UPDATE ... current_business_version_id` → test 6 CZERWONY
  *    (to jest przyczyna 409 `LEGACY_IDENTITY_UNMAPPED` na ekranie Wyceny).
@@ -184,12 +184,20 @@ describe('Finance ID BRIDGE — materializacja tożsamości (realDB)', { retry: 
     expect(second.artifactId).toBe(first.artifactId);
     expect(second.created).toBe(false);
 
-    const artifacts = await pool.query(
+    const artifacts = await pool.query<{ c: number }>(
       `SELECT count(*)::int AS c FROM finance_artifacts
-        WHERE organization_id = $1 AND natural_key = $2`,
-      [ORG, `valuations:${valuationId}`]
+        WHERE organization_id = $1 AND artifact_type = 'VALUATION_CASE' AND artifact_id = $2`,
+      [ORG, first.artifactId]
     );
     expect(artifacts.rows[0].c).toBe(1);
+    // Nazwa artefaktu to NAZWA rekordu widziana przez właściciela, nie ciąg
+    // `valuations:<uuid>` — `natural_key` jest w tym kodzie tytułem (pasek
+    // tożsamości zapisuje właśnie ją przy zmianie nazwy).
+    const named = await pool.query<{ natural_key: string | null }>(
+      `SELECT natural_key FROM finance_artifacts WHERE artifact_id = $1`,
+      [first.artifactId]
+    );
+    expect(named.rows[0].natural_key).toBe('Wycena spolki');
     const aliases = await pool.query(
       `SELECT count(*)::int AS c FROM finance_artifact_aliases
         WHERE organization_id = $1 AND legacy_table = 'valuations' AND legacy_id = $2`,

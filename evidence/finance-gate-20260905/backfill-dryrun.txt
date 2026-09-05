@@ -1,0 +1,7 @@
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] tryb=DRY-RUN organizacja=org-repro-fingate limit=(brak)[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] financial_statement_packs: kandydaci=0 utworzone=0 już-istniało=0 kwarantanna=0 pominięte=0 błędy=0[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] financial_analyses: kandydaci=0 utworzone=0 już-istniało=0 kwarantanna=0 pominięte=0 błędy=0[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] financial_models: kandydaci=1 utworzone=0 już-istniało=0 kwarantanna=0 pominięte=0 błędy=0[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] valuations: kandydaci=0 utworzone=0 już-istniało=0 kwarantanna=0 pominięte=0 błędy=0[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] RAZEM kandydaci=1 utworzone=0 już-istniało=0 kwarantanna=0 pominięte=0 błędy=0[39m
+2026-09-05 07:41:56:4156 [32minfo[39m: [32m[finance-bridge-backfill] DRY-RUN — nic nie zapisano. Dodaj --write, aby zastosować.[39m

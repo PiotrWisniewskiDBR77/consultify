@@ -23,7 +23,7 @@
  * własny, uczciwy stan pusty — nigdy dane udawane.
  *
  * Fail-closed: tożsamość powstaje TYLKO dla wiersza legacy, który naprawdę
- * istnieje w tej organizacji (`legacyRowExists`). Nieznane/obce id nigdy nie
+ * istnieje w tej organizacji (`readLegacyRow`). Nieznane/obce id nigdy nie
  * dostaje artefaktu — zwracamy `NOT_MIGRATED` tak samo jak dotąd.
  *
  * Idempotencja (trzy warstwy, każda samodzielnie wystarczająca):
@@ -51,12 +51,36 @@ import {
   type LegacyFinanceTable,
 } from './legacyIdBridgeService.js';
 
-/** Tabele legacy → kolumna id. Nazwy tabel są WYŁĄCZNIE z tej stałej (nigdy z wejścia użytkownika) — `legacyTable` jest wcześniej zawężony przez `isLegacyFinanceTable`. */
-const LEGACY_ROW_SOURCES: Record<LegacyFinanceTable, string> = {
-  financial_statement_packs: 'financial_statement_packs',
-  financial_analyses: 'financial_analyses',
-  financial_models: 'financial_models',
-  valuations: 'valuations',
+/**
+ * Tabele legacy → wyrażenie SQL z NAZWĄ rekordu, jaką widzi użytkownik na
+ * liście. Nazwy tabel i kolumn są WYŁĄCZNIE z tej stałej (nigdy z wejścia
+ * użytkownika) — `legacyTable` jest wcześniej zawężony przez
+ * `isLegacyFinanceTable`.
+ *
+ * ★ Po co nazwa: `finance_artifacts.natural_key` pełni w tym kodzie rolę
+ * NAZWY artefaktu, a nie tylko klucza (patrz `renameFinanceArtifact` —
+ * zmiana nazwy w pasku zapisuje właśnie `natural_key`, a
+ * `AnalysisWorkspace` wyświetla `artifact.naturalKey` jako tytuł). Gdyby
+ * materializacja wstawiała tu `financial_analyses:<uuid>`, właściciel
+ * zobaczyłby w nagłówku surowy ciąg maszynowy zamiast nazwy swojego rekordu
+ * — zmierzone na zrzucie `evidence/finance-gate-20260905/05-po-analiza.png`
+ * w pierwszym podejściu.
+ */
+const LEGACY_ROW_SOURCES: Record<LegacyFinanceTable, { table: string; nameSql: string }> = {
+  financial_statement_packs: {
+    table: 'financial_statement_packs',
+    // Ta tabela nie ma kolumny z nazwą — składamy etykietę z pól, które
+    // użytkownik i tak widzi na liście sprawozdań (podmiot + okres).
+    nameSql: `COALESCE(NULLIF(TRIM(COALESCE(entity_name, '')), ''), 'Sprawozdanie') || COALESCE(' ' || NULLIF(TRIM(COALESCE(period_label, '')), ''), '')`,
+  },
+  financial_analyses: { table: 'financial_analyses', nameSql: 'title' },
+  financial_models: { table: 'financial_models', nameSql: 'name' },
+  valuations: { table: 'valuations', nameSql: 'title' },
+};
+
+/** Sufiks odróżniający dwa artefakty kanoniczne wywodzące się z JEDNEGO wiersza `financial_models` (Baseline i Predykcja) — etykieta, nie zmyślona treść. */
+const ARTIFACT_TYPE_NAME_SUFFIX: Partial<Record<string, string>> = {
+  PREDICTION_SCENARIO: ' (predykcja)',
 };
 
 export interface EnsureLegacyIdentityParams {
@@ -78,19 +102,23 @@ export type EnsureLegacyIdentityResult = LegacyBridgeResolution & {
   created?: boolean;
 };
 
-/** Czy wiersz legacy o tym id naprawdę istnieje w TEJ organizacji. Fail-closed: brak wiersza = nigdy nie tworzymy tożsamości. */
-async function legacyRowExists(
+/** Wiersz legacy o tym id w TEJ organizacji (z nazwą widoczną dla użytkownika) albo `null`. Fail-closed: brak wiersza = nigdy nie tworzymy tożsamości. */
+async function readLegacyRow(
   tx: { queryOne<T>(sql: string, params?: unknown[]): Promise<T | null> },
   legacyTable: LegacyFinanceTable,
   legacyId: string,
   organizationId: string
-): Promise<boolean> {
-  const table = LEGACY_ROW_SOURCES[legacyTable];
-  const row = await tx.queryOne<{ id: string }>(
-    `SELECT id FROM ${table} WHERE id = ? AND organization_id = ? LIMIT 1`,
+): Promise<{ displayName: string | null } | null> {
+  const source = LEGACY_ROW_SOURCES[legacyTable];
+  const row = await tx.queryOne<{ id: string; display_name: string | null }>(
+    `SELECT id, ${source.nameSql} AS display_name
+       FROM ${source.table}
+      WHERE id = ? AND organization_id = ? LIMIT 1`,
     [legacyId, organizationId]
   );
-  return Boolean(row);
+  if (!row) return null;
+  const displayName = String(row.display_name ?? '').trim();
+  return { displayName: displayName || null };
 }
 
 interface AliasLookupRow {
@@ -205,25 +233,45 @@ export async function ensureLegacyFinanceArtifactIdentity(
     });
     if (existing) return { ...aliasToResolution(existing), created: false };
 
-    if (!(await legacyRowExists(tx, params.legacyTable, legacyId, params.organizationId))) {
+    const legacyRow = await readLegacyRow(
+      tx,
+      params.legacyTable,
+      legacyId,
+      params.organizationId
+    );
+    if (!legacyRow) {
       // Nieznane id albo id z innej organizacji — nigdy nie zakładamy tożsamości
       // dla czegoś, czego nie ma. Ten sam wynik co dotąd.
       return { status: 'NOT_MIGRATED' };
     }
 
-    const naturalKey = `${params.legacyTable}:${legacyId}`;
+    // Nazwa artefaktu = nazwa rekordu, którą właściciel widzi na liście. Ciąg
+    // techniczny `<tabela>:<id>` służy TYLKO jako ostatnia deska ratunku dla
+    // rekordu bez nazwy — nigdy jako domyślny tytuł.
+    const fallbackKey = `${params.legacyTable}:${legacyId}`;
+    const preferredKey =
+      (legacyRow.displayName ?? '') +
+      (ARTIFACT_TYPE_NAME_SUFFIX[artifactType] ?? '');
+    const naturalKeyCandidates = [
+      legacyRow.displayName ? preferredKey : null,
+      // Kolizja nazw w organizacji (dwa rekordy o tym samym tytule) nie może
+      // wywrócić otwierania ekranu — rozstrzygamy krótkim, stabilnym sufiksem id.
+      legacyRow.displayName ? `${preferredKey} · ${legacyId.slice(0, 8)}` : null,
+      allowedTypes.size > 1 ? `${fallbackKey}:${artifactType}` : fallbackKey,
+    ].filter((value): value is string => Boolean(value));
+
+    let artifactId: string | null = null;
+    let businessVersionId: string | null = null;
+    let created = false;
+
+    // Artefakt mógł już powstać (przerwany przebieg backfillu) i brakuje tylko
+    // aliasu — wtedy dowiązujemy, nie duplikujemy.
     const artifact = await tx.queryOne<ArtifactRow>(
       `SELECT * FROM finance_artifacts
-        WHERE organization_id = ? AND natural_key = ? AND artifact_type = ?`,
-      [params.organizationId, naturalKey, artifactType]
+        WHERE organization_id = ? AND artifact_type = ? AND natural_key = ANY(?)`,
+      [params.organizationId, artifactType, naturalKeyCandidates]
     );
-
-    let artifactId: string;
-    let businessVersionId: string | null;
-    let created = false;
     if (artifact) {
-      // Artefakt istnieje (np. z wcześniejszego, przerwanego przebiegu backfillu),
-      // brakuje tylko aliasu — dowiązujemy, nie duplikujemy.
       artifactId = artifact.artifact_id;
       businessVersionId =
         artifact.current_business_version_id ??
@@ -236,18 +284,29 @@ export async function ensureLegacyFinanceArtifactIdentity(
           )
         )?.business_version_id ?? null;
     } else {
-      const createdArtifact = await createArtifact({
-        organizationId: params.organizationId,
-        artifactType,
-        naturalKey:
-          // `financial_models` karmi dwa typy — natural_key musi je rozróżniać,
-          // inaczej drugi warsztat wpada w unikat (organization_id, natural_key).
-          allowedTypes.size > 1 ? `${naturalKey}:${artifactType}` : naturalKey,
-        createdBy: params.userId,
-      });
-      artifactId = createdArtifact.artifact.artifact_id;
-      businessVersionId = createdArtifact.businessVersion.business_version_id;
-      created = true;
+      for (const candidate of naturalKeyCandidates) {
+        const taken = await tx.queryOne<{ artifact_id: string }>(
+          `SELECT artifact_id FROM finance_artifacts
+            WHERE organization_id = ? AND natural_key = ?`,
+          [params.organizationId, candidate]
+        );
+        if (taken) continue;
+        const createdArtifact = await createArtifact({
+          organizationId: params.organizationId,
+          artifactType,
+          naturalKey: candidate,
+          createdBy: params.userId,
+        });
+        artifactId = createdArtifact.artifact.artifact_id;
+        businessVersionId = createdArtifact.businessVersion.business_version_id;
+        created = true;
+        break;
+      }
+    }
+    if (!artifactId) {
+      // Wszystkie kandydatury nazw są zajęte przez INNE artefakty — nie
+      // zgadujemy kolejnej i nie podpinamy się pod cudzy artefakt.
+      return { status: 'NOT_MIGRATED' };
     }
 
     // ★ `finance_artifacts.current_business_version_id` NIGDY nie było ustawiane
