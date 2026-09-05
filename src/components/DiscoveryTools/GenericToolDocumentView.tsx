@@ -1,3 +1,12 @@
+/**
+ * Odbiór na żywo 05.09 (04-narzędzia, defekt 5): ten ekran był ANGIELSKIM
+ * zrzutem surowego JSON-a i to on witał właściciela na 29 sesjach. Główna
+ * przyczyna (sesje `MYWORK`) jest naprawiona osobnym ekranem
+ * (MyWorkTraceDocumentView); ten widok zostaje jako ostatnia deska ratunku dla
+ * typu, który naprawdę nie ma jeszcze warsztatu — ale mówi po polsku i prowadzi
+ * treścią, a nie zrzutem danych. JSON zostaje, bo bywa jedynym sposobem odzyskania
+ * pracy — tyle że zwinięty, opisany jako materiał dla wsparcia.
+ */
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -39,7 +48,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
         setSession(data);
       } catch (e: any) {
         if (!mounted) return;
-        setError(String(e?.message || 'Failed to load tool session'));
+        setError(String(e?.message || 'Nie udało się wczytać sesji narzędzia'));
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -83,11 +92,11 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   }, [toolSlug]);
 
   const computedTitle = useMemo(() => {
-    return title || session?.name || 'Tool session';
+    return title || session?.name || 'Sesja narzędzia';
   }, [title, session?.name]);
 
   const computedType = useMemo(() => {
-    return toolTypeLabel || session?.toolType || session?.tool_type || 'Unknown';
+    return toolTypeLabel || session?.toolType || session?.tool_type || 'Nieznany typ';
   }, [toolTypeLabel, session?.toolType, session?.tool_type]);
 
   const computedStatus = useMemo(() => {
@@ -97,16 +106,16 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
   const copyJson = async (payload: any) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(payload ?? {}, null, 2));
-      toast.success('Copied to clipboard');
+      toast.success('Skopiowano do schowka');
     } catch {
-      toast.error('Failed to copy');
+      toast.error('Nie udało się skopiować');
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <LoadingState variant="spinner" label="Loading tool session..." />
+        <LoadingState variant="spinner" label="Wczytywanie sesji narzędzia…" />
       </div>
     );
   }
@@ -121,7 +130,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             onClick={onBack}
             className="mt-4 px-4 py-2 bg-slate-200 dark:bg-navy-700 hover:bg-slate-300 dark:hover:bg-navy-600 text-slate-900 dark:text-white rounded-lg text-sm transition-colors"
           >
-            Back to List
+            Wróć do listy
           </button>
         </div>
       </div>
@@ -137,7 +146,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               onClick={onBack}
               className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
-              ← Back to List
+              ← Wróć do listy
             </button>
             <div className="mt-3">
               <div className="text-xs text-slate-500">
@@ -154,7 +163,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               onClick={() => copyJson(session)}
               className="px-3 py-2 bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-900 dark:text-white rounded-lg text-sm border border-slate-200 dark:border-navy-700 transition-colors"
             >
-              Copy JSON
+              Kopiuj dane (JSON)
             </button>
           </div>
         </div>
@@ -166,7 +175,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
                 <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Loading tool documentation...</span>
+                  <span className="text-sm">Wczytywanie dokumentacji narzędzia…</span>
                 </div>
               </div>
             )}
@@ -175,10 +184,10 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700/60">
                   <div className="text-sm font-semibold text-slate-900 dark:text-white">
-                    Tool documentation (catalog)
+                    Dokumentacja narzędzia (katalog)
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Source: wdrozenia/modules/tools/catalog/strategy/{toolSlug}.md
+                    Źródło: wdrozenia/modules/tools/catalog/strategy/{toolSlug}.md
                   </div>
                 </div>
                 <MarkdownRenderer content={catalogMarkdown} className="p-0" />
@@ -188,13 +197,13 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Context Snapshot
+                  Kontekst sesji (dane techniczne)
                 </h3>
                 <button
                   onClick={() => copyJson(session?.contextSnapshot)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  Copy
+                  Kopiuj
                 </button>
               </div>
               <pre className="mt-3 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
@@ -205,13 +214,13 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Answers / Data
+                  Odpowiedzi i dane sesji (dane techniczne)
                 </h3>
                 <button
                   onClick={() => copyJson(session?.answers)}
                   className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  Copy
+                  Kopiuj
                 </button>
               </div>
               <pre className="mt-3 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">
@@ -224,7 +233,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
           <div className="space-y-6">
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                Session Info
+                Informacje o sesji
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -234,7 +243,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500 dark:text-slate-400">Tool Type</span>
+                  <span className="text-slate-500 dark:text-slate-400">Typ narzędzia</span>
                   <span className="text-slate-700 dark:text-slate-200">
                     {session?.toolType || computedType}
                   </span>
@@ -246,7 +255,7 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-slate-500 dark:text-slate-400">Project</span>
+                  <span className="text-slate-500 dark:text-slate-400">Projekt</span>
                   <span className="text-slate-700 dark:text-slate-200 font-mono text-xs">
                     {session?.projectId || '—'}
                   </span>
@@ -256,12 +265,12 @@ export const GenericToolDocumentView: React.FC<GenericToolDocumentViewProps> = (
 
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                Why you saw the placeholder
+                Dlaczego widzisz ten ekran
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                This session uses a tool type that doesn’t have a dedicated UI yet. Instead of
-                blocking you, this generic view shows the full session payload so you can work with
-                it now.
+                Ta sesja korzysta z typu narzędzia, który nie ma jeszcze własnego warsztatu.
+                Zamiast blokować, pokazujemy komplet danych sesji — dzięki temu nic nie ginie
+                i można je skopiować albo przekazać dalej.
               </p>
             </div>
           </div>

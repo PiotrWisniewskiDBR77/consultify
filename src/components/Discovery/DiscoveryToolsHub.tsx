@@ -89,6 +89,11 @@ import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { hasDedicatedToolDocumentView } from '../DiscoveryTools/dedicatedToolTypes';
 import { GenerateInitiativesModal } from '../DiscoveryTools/GenerateInitiativesModal';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
+import { MyWorkTraceDocumentView } from '../DiscoveryTools/MyWorkTraceDocumentView';
+import {
+  isMyWorkTraceToolType,
+  toolShortCodeFallback,
+} from '../DiscoveryTools/toolSessionKinds';
 import { KnownToolDetailView } from '../DiscoveryTools/KnownToolDetailView';
 import {
   type KnownToolFull,
@@ -931,8 +936,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   // Transform API data to display format
   const transformToolSession = useCallback((session: ToolSessionData): DisplayItem => {
+    // Odbiór 05.09 (04-narzędzia, defekt 5): brak mapowania NIE znaczy „SWOT".
+    // Każdy nieznany `tool_type` — u właściciela 29 wierszy `MYWORK`, czyli
+    // śladów pochodzenia z Mojej Pracy — meldował się w kolumnie TYP jako SWT.
+    // Bez mapowania pokazujemy skrót zbudowany z PRAWDZIWEGO typu (MYWORK →
+    // MYW), a nie cudzy kod narzędzia.
     const mapping = TOOL_TYPE_TO_SHORT[session.toolType] || {
-      short: 'SWT' as ToolType,
+      short: toolShortCodeFallback(session.toolType),
       category: 'strategic' as ToolCategory,
     };
     // Canonical mapper (src/domain/toolStatus.ts) — closes the defect where
@@ -3821,6 +3831,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             />
           );
         }
+      }
+
+      // Odbiór 05.09 (04-narzędzia, defekt 5): `MYWORK` to nie narzędzie, tylko
+      // ślad pochodzenia zapisywany przy konwersji pomysłu/notatki z Mojej Pracy
+      // (server/src/routes/my-work.routes.ts `createMyWorkToolSession`). Nie ma
+      // i nie powinien mieć warsztatu — ale musi otwierać czytelny polski stan,
+      // a nie angielski zrzut JSON-a.
+      if (isMyWorkTraceToolType(doc?.subType)) {
+        return (
+          <MyWorkTraceDocumentView
+            sessionId={doc?.id || ''}
+            title={doc?.name}
+            onBack={handleShowList}
+          />
+        );
       }
 
       // Fallback for unsupported tools
