@@ -4252,6 +4252,71 @@ router.post(
         }
       }
 
+      // ================================================================
+      // Dane modulu jako ZRODLO (2026-09-06) — naprawa `degraded: no_sources`.
+      //
+      // `used_sources` liczy sie WYLACZNIE z ramek SSE `citations`, a te emitowaly
+      // tylko: baze wiedzy produktu, web, zalaczniki i korpus dokumentow org.
+      // Korpus org jest pusty (knowledge_chunks = 0 dla DBR77), wiec kazda rozmowa
+      // o wlasnych danych klienta konczyla sie `no_sources` — mimo ze dane modulu
+      // (71 inicjatyw, 84 zadania) BYLY w promptcie przez AIContextBuilder.
+      // Rodowod klamal w druga strone: odpowiedz ugruntowana, ledger pusty.
+      //
+      // SSOT Z1 wymienia „dane modulu w zasiegu" jako trzecia klase zrodel.
+      // Ten blok ja realizuje: czyta rekordy org (zawsze org-scoped), wklada je do
+      // promptu i emituje jako cytaty. Gdy modul nic nie ma — `no_sources` zostaje.
+      // ================================================================
+      try {
+        const allowOrganizationData =
+          !privateMode &&
+          (knowledgeSources as any)?.organizationData !== false &&
+          !userNarrowedContextScope;
+        if (allowOrganizationData && req.organizationId && message && message.trim().length > 0) {
+          const { buildModuleContextGrounding } = await import(
+            '../services/ai/moduleContextGrounding.js'
+          );
+          const moduleGrounding = await buildModuleContextGrounding({
+            organizationId: req.organizationId,
+            userId: String(req.userId || (req as any).user?.id || ''),
+            screenContext: (screenContext as any) || null,
+            projectId,
+            language,
+            allowOrganizationData: true,
+          });
+          if (moduleGrounding) {
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${moduleGrounding.systemInstructionAddon}\n`,
+              },
+            } as any;
+            emitSSE({ type: 'citations', citations: moduleGrounding.citations });
+            hasGovernedGrounding = true;
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'module_context', {
+                    moduleKey: moduleGrounding.moduleKey,
+                    citationsCount: moduleGrounding.citations.length,
+                    counts: moduleGrounding.counts,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
+          }
+        }
+      } catch (moduleCtxErr: any) {
+        logger.warn(
+          '[AI Stream] Module context grounding failed, continuing without it:',
+          moduleCtxErr?.message || String(moduleCtxErr)
+        );
+      }
+
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
         emitSSE({
           type: 'thought',
