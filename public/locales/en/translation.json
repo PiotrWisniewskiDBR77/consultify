@@ -1974,6 +1974,9 @@
     "completed": "Completed",
     "name": "Name",
     "backToList": "Back to list",
+    "documentTypes": {
+      "initiative": "initiative"
+    },
     "missing": "missing",
     "today": "Today",
     "unknown": "unknown",

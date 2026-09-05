@@ -173,6 +173,8 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
             const isActive = doc.id === activeDocumentId;
             const leftBorderColor = TYPE_BORDER_COLORS[doc.subType] || 'border-l-slate-500';
             const statusColor = STATUS_COLORS[doc.status];
+            const subTypeLabel =
+              doc.subType === 'initiative' ? t('common.documentTypes.initiative') : doc.subType;
 
             return (
               <div
@@ -184,7 +186,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                 <span
                   className={`font-mono text-xs ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}`}
                 >
-                  {doc.subType}
+                  {subTypeLabel}
                 </span>
 
                 {/* Name (truncated) */}
@@ -250,6 +252,10 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                     {overflowDocs.map((doc) => {
                       const isActive = doc.id === activeDocumentId;
                       const statusColor = STATUS_COLORS[doc.status];
+                      const subTypeLabel =
+                        doc.subType === 'initiative'
+                          ? t('common.documentTypes.initiative')
+                          : doc.subType;
 
                       return (
                         <div
@@ -268,7 +274,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                       `}
                         >
                           <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
-                            {doc.subType}
+                            {subTypeLabel}
                           </span>
                           <span className="flex-1 truncate">{doc.name}</span>
                           <span className={`w-2 h-2 rounded-full ${statusColor}`} />

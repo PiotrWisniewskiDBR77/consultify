@@ -447,6 +447,9 @@
     "completed": "Zakończony",
     "name": "Nazwa",
     "backToList": "Wróć do listy",
+    "documentTypes": {
+      "initiative": "inicjatywa"
+    },
     "missing": "brak danych",
     "today": "Dziś",
     "unknown": "nieznana",
