@@ -2012,10 +2012,17 @@ export const AssessmentSessionEditorView: React.FC = () => {
     );
   };
 
+  // Any of the expandable lanes below the compact header open?
+  const hasHeaderLanes =
+    Boolean(sessionAiPanel) || framework !== 'drd' || showGovernance || isInfoOpen;
+
   return (
     <div className="h-full flex flex-col bg-c-bg">
       {/* Top Header (compact, ClickUp-like) */}
-      <div className="flex flex-col border-b border-c-border bg-white/80 dark:bg-navy-950/70 backdrop-blur">
+      <div
+        data-testid="assessment-editor-header"
+        className="shrink-0 flex flex-col border-b border-c-border bg-white/80 dark:bg-navy-950/70 backdrop-blur"
+      >
         {/* Topbar */}
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -2319,6 +2326,23 @@ export const AssessmentSessionEditorView: React.FC = () => {
           chips={sessionMenu3Chips}
           actions={sessionAiActions}
         />
+      </div>
+
+      {/* Expandable lanes (AI panel · governance · info).
+          They used to live INSIDE the compact header, which is a flex-column
+          child with min-height:auto — once the governance lane grew taller than
+          the viewport it squeezed the editor region to zero height and pushed it
+          (and the Manage panel inside it) below the fold with nothing to scroll.
+          They now sit in their own bounded, scrollable band so the editor region
+          always keeps height and the Manage panel stays inside the viewport. */}
+      <div
+        data-testid="assessment-editor-lanes"
+        className={
+          hasHeaderLanes
+            ? 'shrink-0 max-h-[45vh] overflow-y-auto border-b border-c-border bg-white/80 dark:bg-navy-950/70 backdrop-blur'
+            : 'hidden'
+        }
+      >
 
         {sessionAiPanel ? (
           <div className="px-6 pt-4">
@@ -2597,7 +2621,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-auto">{renderEditor()}</div>
+      <div data-testid="assessment-editor-region" className="flex-1 min-h-0 overflow-auto">
+        {renderEditor()}
+      </div>
 
       <ReportTemplatePickerModal
         isOpen={isReportTemplatePickerOpen}
