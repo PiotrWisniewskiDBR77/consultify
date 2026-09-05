@@ -91,4 +91,49 @@ describe('NewAssessmentModal Method Core DRD cutover', () => {
     expect(onSuccess).not.toHaveBeenCalled();
     expect(legacyCreateMock).not.toHaveBeenCalled();
   });
+
+  it('renders the optional business unit field for non-DRD frameworks and sends it in the create payload (odbiór 05.09, 05-ocena)', async () => {
+    legacyCreateMock.mockResolvedValue({ id: 'siri-1', status: 'DRAFT' });
+    const onSuccess = vi.fn();
+
+    render(<NewAssessmentModal isOpen onClose={vi.fn()} onSuccess={onSuccess} />);
+    fireEvent.click(screen.getByRole('button', { name: /Smart Industry Readiness Index/i }));
+
+    const businessUnitInput = screen.getByLabelText(/Business unit/i);
+    expect(businessUnitInput).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Assessment Name'), {
+      target: { value: 'SIRI pilot' },
+    });
+    fireEvent.change(businessUnitInput, { target: { value: 'Logistyka' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Assessment' }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(legacyCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assessmentType: 'SIRI',
+        name: 'SIRI pilot',
+        businessUnit: 'Logistyka',
+      })
+    );
+  });
+
+  it('omits businessUnit from the create payload when left blank', async () => {
+    legacyCreateMock.mockResolvedValue({ id: 'siri-2', status: 'DRAFT' });
+    const onSuccess = vi.fn();
+
+    render(<NewAssessmentModal isOpen onClose={vi.fn()} onSuccess={onSuccess} />);
+    fireEvent.click(screen.getByRole('button', { name: /Smart Industry Readiness Index/i }));
+    fireEvent.change(screen.getByLabelText('Assessment Name'), {
+      target: { value: 'SIRI pilot 2' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Assessment' }));
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(legacyCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ businessUnit: undefined })
+    );
+  });
 });

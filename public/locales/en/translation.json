@@ -8518,7 +8518,9 @@
       "previousBlock": "Previous Block",
       "completeAssessment": "Complete Assessment",
       "nextBlock": "Next Block",
-      "nextAxis": "Next Axis"
+      "nextAxis": "Next Axis",
+      "businessUnit": "Business unit",
+      "businessUnitPlaceholder": "e.g. Logistics, Group Management"
     },
     "initiatives": {
       "submitted": "Initiative submitted for review",
