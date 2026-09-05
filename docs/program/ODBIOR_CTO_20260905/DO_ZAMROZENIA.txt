@@ -1,0 +1,2 @@
+# Moduły zatwierdzone przez CTO na ekranie /final — czekają na scripts/mvp-final/zamroz.mjs.
+# Format wiersza: <ISO> <MODUL_ID>. Dopisywane automatycznie przez serwer (POST /decyzja-zywo, klucz FINAL:<MODUL_ID>).

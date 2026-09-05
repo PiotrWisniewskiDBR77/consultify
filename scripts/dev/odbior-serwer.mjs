@@ -63,6 +63,7 @@ import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyz
 import { STYL_MODULOW } from './lib/stylModulow.mjs';
 import { stronaZywo, indeksZatwierdzonychLight } from './lib/odbiorZywo.mjs';
 import { stronaDecyzje, stronaKrok } from './lib/odbiorDecyzje.mjs';
+import { stronaFinal, stronaPytania, dopiszDoZamrozenia } from './lib/odbiorFinal.mjs';
 
 /**
  * ODBIÓR NA ŻYWO 05.09 (dodane 2026-09-05). Właściciel odbiera MVP i chce
@@ -94,6 +95,17 @@ const DECYZJE_DZIS = path.join(ROOT, 'docs/program/grafika/DECYZJE_20260905.json
 const PAKIETY_DIR = process.env.ODBIOR_PAKIETY || path.join(ROOT, 'docs/program/grafika/pakiety-odbior-zywo');
 /** Strona startowa pod `/` — `ODBIOR_START=decyzje` prowadzi właściciela od razu na listę decyzji. */
 const START = process.env.ODBIOR_START || '';
+
+/**
+ * EKRAN FINALNYCH ZATWIERDZEŃ (2026-09-05) — `/final`. SSOT stanu modułów
+ * edytowany ręcznie przez CTO; `DO_ZAMROZENIA_TXT` to kolejka modułów, które
+ * właściciel kliknął jako zatwierdzone i czekają na `scripts/mvp-final/zamroz.mjs`.
+ * `ODBIOR_START=final` prowadzi właściciela od razu tutaj (patrz niżej przy `/`).
+ */
+const ODBIOR_CTO_DIR = path.join(ROOT, 'docs/program/ODBIOR_CTO_20260905');
+const STATUS_FINAL = path.join(ODBIOR_CTO_DIR, 'status.json');
+const DO_ZAMROZENIA_TXT = path.join(ODBIOR_CTO_DIR, 'DO_ZAMROZENIA.txt');
+const PYTANIA_MD = path.join(ODBIOR_CTO_DIR, 'PYTANIA.md');
 
 /**
  * KOLEJNOŚĆ MODUŁÓW W WIDOKU — ustalona przez nadzorcę z rozliczenia korpusu uwag,
@@ -1067,6 +1079,22 @@ http
         try {
           const { id, ...reszta } = JSON.parse(body);
           const wiersz = zapiszDecyzjeZywo(id, reszta);
+          /*
+           * EKRAN `/final` (2026-09-05): klucze `FINAL:<MODUL_ID>` idą przez
+           * TEN SAM `/decyzja-zywo` co reszta odbioru (jeden rejestr, nie
+           * trzeci sprzeczny) — ale samo zatwierdzenie (`decyzja: 'AKCEPT'`,
+           * nie sama zmiana pola uwagi) ma dodatkowy skutek: dopisanie do
+           * kolejki `DO_ZAMROZENIA.txt`, którą CTO odpala przez
+           * `scripts/mvp-final/zamroz.mjs`. Bez tego kliknięcie właściciela
+           * ginęłoby w bazie, a nikt by o nim nie wiedział.
+           */
+          if (typeof id === 'string' && id.startsWith('FINAL:') && reszta.decyzja === 'AKCEPT') {
+            try {
+              dopiszDoZamrozenia(DO_ZAMROZENIA_TXT, id.slice('FINAL:'.length), wiersz.kiedy);
+            } catch (e2) {
+              console.error('BŁĄD dopisywania do DO_ZAMROZENIA.txt:', e2);
+            }
+          }
           res
             .writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
             .end(JSON.stringify({ ok: true, wiersz }));
@@ -1122,6 +1150,35 @@ http
           .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
           .end(`<h1>Strona /krok nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
       }
+    }
+    if (req.url === '/final' || req.url.startsWith('/final?')) {
+      try {
+        const html = stronaFinal({ root: ROOT, statusPath: STATUS_FINAL, zapisaneZywo: czytajDecyzjeZywo() });
+        return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).end(html);
+      } catch (e) {
+        console.error('BLAD renderu /final:', e);
+        return res
+          .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+          .end(`<h1>Strona /final nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
+      }
+    }
+    if (req.url === '/pytania' || req.url.startsWith('/pytania?')) {
+      try {
+        return res
+          .writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' })
+          .end(stronaPytania(PYTANIA_MD));
+      } catch (e) {
+        console.error('BLAD renderu /pytania:', e);
+        return res
+          .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+          .end(`<h1>Strona /pytania nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
+      }
+    }
+    if (START === 'final' && (req.url === '/' || req.url === '')) {
+      // Właściciel 05.09: „zrób mi ekran finalnych zatwierdzeń" — to jest
+      // dziś jego jedyny punkt wejścia. `ODBIOR_START=decyzje` (wizard
+      // ekran-po-ekranie) zostaje jako osobny tryb, patrz blok niżej.
+      return res.writeHead(302, { location: '/final' }).end();
     }
     if (START === 'decyzje' && (req.url === '/' || req.url === '')) {
       // Właściciel wpisuje sam adres serwera — ma trafić tam, gdzie dziś pracuje

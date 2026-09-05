@@ -1,0 +1,138 @@
+{
+  "_opis": "SSOT dla ekranu /final (port 3100) — jedna karta na moduł, właściciel klika 'Zatwierdzam moduł jako MVP final' tylko przy stan=GOTOWY. CTO edytuje ten plik ręcznie w miarę odbioru; strona czyta go przy KAŻDYM żądaniu (bez cache), więc zmiana widać od razu po zapisaniu. Kolejność i nazwy modułów: scripts/mvp-final/moduly.mjs (ten sam SSOT co scripts/mvp-final/zamroz.mjs i docs/FUNCTIONAL_DOCUMENTATION.md).",
+  "moduly": {
+    "01_ORGANIZATION": {
+      "nazwa": "Organizacja",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "02_INTERVIEW": {
+      "nazwa": "Wywiad",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "03_TOOLS": {
+      "nazwa": "Narzędzia",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "04_ASSESSMENT": {
+      "nazwa": "Ocena",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "05_INITIATIVES": {
+      "nazwa": "Inicjatywy",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "06_EXECUTION": {
+      "nazwa": "Realizacja",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "07_MY_WORK_AGENT": {
+      "nazwa": "Moja praca / Agent",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "08_MEETINGS": {
+      "nazwa": "Spotkania",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "09_RESULTS": {
+      "nazwa": "Wyniki",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "10_FINANCE": {
+      "nazwa": "Finanse",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "11_MATERIALS": {
+      "nazwa": "Materiały",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "12_AUDITS": {
+      "nazwa": "Audyty",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "13_CHAT": {
+      "nazwa": "Czat",
+      "stan": "ZAMROZONY",
+      "cto_werdykt": "Zamrożony dziś — właściciel zaakceptował grafikę bez uwag (decyzja A na stronie odbioru 3100), zgodnie z docs/program/MVP_FINAL_ZAMROZONE.json.",
+      "zrzuty": [
+        "evidence/mvp-final/13_CHAT/chat-split-teresa-right.png",
+        "evidence/mvp-final/13_CHAT/teresa-chipy-panel-artefaktu.png",
+        "evidence/mvp-final/13_CHAT/mindmap-canvas.png",
+        "evidence/mvp-final/13_CHAT/canvas-new-doc.png"
+      ],
+      "zamrozony": true,
+      "sprawdzono": "2026-09-05T10:33:27.379Z"
+    },
+    "14_ADMIN": {
+      "nazwa": "Administracja",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "15_SETTINGS": {
+      "nazwa": "Ustawienia",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    },
+    "16_PARTNER": {
+      "nazwa": "Partner",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Odbiór CTO w toku.",
+      "zrzuty": [],
+      "zamrozony": false,
+      "sprawdzono": "2026-09-05T12:01:00.000Z"
+    }
+  }
+}
