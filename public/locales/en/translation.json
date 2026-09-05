@@ -9292,6 +9292,18 @@
     }
   },
   "initiatives": {
+    "fullView": {
+      "loading": "Loading initiative…",
+      "error": {"title": "Failed to load initiative", "notFound": "Initiative not found", "backToList": "Back to list"},
+      "lifecycle": {"source": "Source", "review": "Review", "planning": "Planning", "execution": "Execution", "benefits": "Benefits"},
+      "tabs": {"overview": "Overview", "tasks": "Tasks", "definition": "Definition", "economics": "Economics", "team": "Team", "history": "History"},
+      "overview": {"completion": "Completion", "startDate": "Start date", "endDate": "End date"},
+      "tasks": {"empty": "No tasks yet", "emptyDescription": "Tasks will be added during the planning phase"},
+      "definition": {"deliverables": "Deliverables", "keyRisks": "Key risks"},
+      "economics": {"capexDescription": "Capital expenditure", "opexDescription": "Annual operational expenditure", "roiDescription": "Return on investment"},
+      "team": {"businessOwner": "Business owner", "executionOwner": "Execution owner", "sponsor": "Sponsor", "notAssigned": "Not assigned", "businessOwnerDescription": "Responsible for business decisions", "executionOwnerDescription": "Responsible for delivery", "sponsorDescription": "Executive sponsor"},
+      "history": {"title": "History", "created": "Created", "updated": "Updated", "empty": "Activity history will be shown here"}
+    },
     "menu3": {
       "plan": {
         "unscheduled": "Unscheduled",

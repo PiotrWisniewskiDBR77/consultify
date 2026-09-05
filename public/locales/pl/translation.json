@@ -8687,6 +8687,18 @@
     }
   },
   "initiatives": {
+    "fullView": {
+      "loading": "Ładowanie inicjatywy…",
+      "error": {"title": "Nie udało się wczytać inicjatywy", "notFound": "Nie znaleziono inicjatywy", "backToList": "Wróć do listy"},
+      "lifecycle": {"source": "Źródło", "review": "Przegląd", "planning": "Planowanie", "execution": "Realizacja", "benefits": "Korzyści"},
+      "tabs": {"overview": "Przegląd", "tasks": "Zadania", "definition": "Definicja", "economics": "Ekonomika", "team": "Zespół", "history": "Historia"},
+      "overview": {"completion": "Ukończenie", "startDate": "Data rozpoczęcia", "endDate": "Data zakończenia"},
+      "tasks": {"empty": "Brak zadań", "emptyDescription": "Zadania zostaną dodane podczas planowania"},
+      "definition": {"deliverables": "Rezultaty", "keyRisks": "Kluczowe ryzyka"},
+      "economics": {"capexDescription": "Nakłady inwestycyjne", "opexDescription": "Roczne koszty operacyjne", "roiDescription": "Zwrot z inwestycji"},
+      "team": {"businessOwner": "Właściciel biznesowy", "executionOwner": "Właściciel realizacji", "sponsor": "Sponsor", "notAssigned": "Nie przypisano", "businessOwnerDescription": "Odpowiada za decyzje biznesowe", "executionOwnerDescription": "Odpowiada za realizację", "sponsorDescription": "Sponsor zarządczy"},
+      "history": {"title": "Historia", "created": "Utworzono", "updated": "Zaktualizowano", "empty": "Historia aktywności pojawi się tutaj"}
+    },
     "menu3": {
       "plan": {
         "unscheduled": "Niezaplanowane",
