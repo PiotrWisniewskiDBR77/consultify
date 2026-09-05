@@ -7893,7 +7893,9 @@
       "previousBlock": "Poprzedni blok",
       "completeAssessment": "Zakończ ocenę",
       "nextBlock": "Następny blok",
-      "nextAxis": "Następna oś"
+      "nextAxis": "Następna oś",
+      "businessUnit": "Jednostka",
+      "businessUnitPlaceholder": "np. Logistyka, Zarząd Grupy"
     },
     "initiatives": {
       "submitted": "Inicjatywa przesłana do przeglądu",

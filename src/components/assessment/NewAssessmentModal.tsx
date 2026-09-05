@@ -123,6 +123,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
   // Form state
   const [selectedFramework, setSelectedFramework] = useState<AssessmentFramework | null>(null);
   const [assessmentName, setAssessmentName] = useState('');
+  const [assessmentBusinessUnit, setAssessmentBusinessUnit] = useState('');
   const [assessmentDescription, setAssessmentDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
     if (isOpen) {
       setSelectedFramework(null);
       setAssessmentName('');
+      setAssessmentBusinessUnit('');
       setAssessmentDescription('');
       setError(null);
       drdIdempotencyKeyRef.current = null;
@@ -269,6 +271,7 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                 name: assessmentName.trim(),
                 description: assessmentDescription.trim() || undefined,
                 projectId: currentProjectId || null,
+                businessUnit: assessmentBusinessUnit.trim() || undefined,
               });
 
         toast.success('Assessment created successfully');
@@ -292,7 +295,16 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
         setIsSubmitting(false);
       }
     },
-    [selectedFramework, assessmentName, currentProjectId, onSuccess, onClose, t]
+    [
+      selectedFramework,
+      assessmentName,
+      assessmentBusinessUnit,
+      assessmentDescription,
+      currentProjectId,
+      onSuccess,
+      onClose,
+      t,
+    ]
   );
 
   // Get selected framework data
@@ -469,6 +481,41 @@ export const NewAssessmentModal: React.FC<NewAssessmentModalProps> = ({
                       {assessmentName.length}/200
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Odbiór 05.09 (05-ocena): opcjonalna jednostka organizacyjna —
+                  zasila kolumnę JEDNOSTKA na liście ocen. Method Core (DRD) nie
+                  ma jeszcze trwałego kontraktu metadanych, więc pole tylko
+                  przy pozostałych frameworkach (jak nazwa/opis powyżej). */}
+              {selectedFramework !== 'DRD' && (
+                <div>
+                  <label
+                    htmlFor="assessment-business-unit"
+                    className="block text-sm font-medium text-c-text-secondary mb-2"
+                  >
+                    {t('assessment.form.businessUnit', 'Business unit')}{' '}
+                    <span className="text-c-text-muted">
+                      ({t('common.optional', 'optional')})
+                    </span>
+                  </label>
+                  <input
+                    id="assessment-business-unit"
+                    type="text"
+                    value={assessmentBusinessUnit}
+                    onChange={(e) => setAssessmentBusinessUnit(e.target.value)}
+                    placeholder={t(
+                      'assessment.form.businessUnitPlaceholder',
+                      'e.g. Logistics, Group Management'
+                    )}
+                    maxLength={120}
+                    className="
+                    w-full h-11 px-4 bg-c-surface-raised border border-c-border-subtle rounded-lg
+                    text-c-text placeholder-c-text-muted
+                    focus:outline-none focus:border-c-focus-solid/50 focus:ring-1 focus:ring-c-focus
+                    transition-colors
+                  "
+                  />
                 </div>
               )}
 
