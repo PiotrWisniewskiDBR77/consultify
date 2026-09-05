@@ -619,6 +619,7 @@ const ResultsVNextKpiScorecardsScreen = React.lazy(
 );
 const ResultsVNextKpiToolScreen = React.lazy(() => import('./screens/results-vnext-kpi-tool'));
 const P7kWynikiPrototypeScreen = React.lazy(() => import('./screens/p7k-wyniki-prototype'));
+const P7kWynikiKpiScreen = React.lazy(() => import('./screens/p7k-wyniki-kpi'));
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
@@ -879,6 +880,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'p7k-wyniki-prototype': {
     label: 'P7K — prototyp SSOT KPI/OKR/ROI. &view=kpi-l1|kpi-l2|kpi-l3|okr-l1|okr-l2|okr-l3|roi-l1|roi-l2',
     render: () => <P7kWynikiPrototypeScreen />,
+  },
+  'p7k-wyniki-kpi': {
+    label:
+      'P7K część A — REALNE ekrany produkcyjne Wyników → KPI (nie prototyp): <ResultsKpiRegistryPage> / <ResultsKpiScorecardDetailPage> / <KpiToolPage> z podstawioną WARSTWĄ SIECI, dane DBR77. &widok=l1|l2|l3 &podglad=1 &przewin=start',
+    render: () => <P7kWynikiKpiScreen />,
   },
   'results-vnext-teresa-kpi-deviation': {
     label:

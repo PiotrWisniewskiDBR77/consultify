@@ -93,7 +93,13 @@ export const KpiStateCounts: React.FC<KpiStateCountsProps> = ({
   return (
     <span
       title={parts.map((p) => `${p.label} ${p.value}`).join(' · ')}
-      className="inline-flex items-center whitespace-nowrap text-xs tabular-nums text-c-text-secondary"
+      /* `max-w-full overflow-hidden`: przy otwartym podglądzie obszar tabeli
+         zwęża się o ~400 px i kolumny schodzą do podłóg. Bez klamry treść
+         komórki malowała się POZA swoją kolumną i liczba z sąsiedniej kolumny
+         siadała na stanie („93 · 21 · 88 · 16" zamiast „…8 · 16" plus osobne
+         „8") — zmierzone na zrzucie `L1-podglad--light.png`. Pełne znaczenie
+         zostaje w dymku. */
+      className="inline-flex max-w-full items-center overflow-hidden whitespace-nowrap text-xs tabular-nums text-c-text-secondary"
     >
       {parts.map((part, index) => (
         <React.Fragment key={part.tone}>
@@ -192,8 +198,19 @@ export const KpiPeriodPair: React.FC<KpiPeriodPairProps> = ({
   isPolish,
 }) => {
   const t = (pl: string, en: string) => (isPolish ? pl : en);
-  const target = formatKpiValue(targetValue, unit, isPolish) ?? DASH;
-  const actual = formatKpiValue(actualValue, unit, isPolish) ?? DASH;
+  /**
+   * JEDNOSTKA W KOMÓRCE OKRESU — tylko procent.
+   *
+   * Procent przykleja się do liczby („79%") i bez niego liczba kłamie o
+   * rzędzie wielkości. Każda inna jednostka („LC/1000", „min", „szt.")
+   * powtórzona dwanaście razy w wierszu zjada tyle miejsca, że para
+   * CEL/Rezultat przestaje się mieścić — a jednostka miernika stoi raz,
+   * w kolumnie KIERUNEK / JEDNOSTKA i w karcie. Zmierzone: „11 050 LC/1000"
+   * ma 145 px przy 108 px treści kolumny.
+   */
+  const jednostkaWKomorce = unit?.trim() === '%' ? unit : null;
+  const target = formatKpiValue(targetValue, jednostkaWKomorce, isPolish) ?? DASH;
+  const actual = formatKpiValue(actualValue, jednostkaWKomorce, isPolish) ?? DASH;
   const tone = actualValue === null ? 'neutral' : kpiPerformanceStatusTone(status);
   const actualClass =
     tone === 'bad'
@@ -203,7 +220,7 @@ export const KpiPeriodPair: React.FC<KpiPeriodPairProps> = ({
         : 'font-medium text-c-text';
   return (
     <div
-      title={`${t('CEL', 'TARGET')} ${target} · ${t('Rezultat', 'Actual')} ${actual}`}
+      title={`${t('CEL', 'TARGET')} ${formatKpiValue(targetValue, unit, isPolish) ?? DASH} · ${t('Rezultat', 'Actual')} ${formatKpiValue(actualValue, unit, isPolish) ?? DASH}`}
       className="w-full overflow-hidden whitespace-nowrap text-right tabular-nums"
     >
       <div className="flex items-baseline justify-end gap-1.5 whitespace-nowrap text-[10px] text-c-text-muted">
@@ -242,18 +259,44 @@ export interface KpiReportRowVm {
   scorecard: KpiScorecardDto;
 }
 
+/**
+ * Szerokości kolumn poziomu 1 są ZMIERZONE, nie dobrane na oko: ich suma
+ * (380 + 118 + 124 + 96 + 140 + 172 + 146 + 140 = 1316 px) plus strukturalna
+ * kolumna akcji (80 px) jest o kilkadziesiąt pikseli szersza niż obszar tabeli
+ * przy 1440 px (zmierzone: 1384 px) — świadomie, bo `columnFit` rozdziela ten
+ * nadmiar PROPORCJONALNIE i kolumna NAZWA RAPORTU kończy z ~330 px, czyli
+ * mieści pełną nazwę raportu zakładu. Przy sumie równej obszarowi przeglądarka
+ * (`table-fixed`, `w-full`) rozdaje resztę po równo i zabiera nazwie na rzecz
+ * kolumn liczbowych — zmierzone: NAZWA dostawała 304 px i ucinała nazwę. Przy sumie większej niż obszar
+ * `columnFit` ściska KAŻDĄ kolumnę do podłogi i nazwa raportu, zakres oraz
+ * okres kończą wielokropkiem — zmierzone na pierwszym zrzucie z harnessu.
+ * Te same wartości ma zaakceptowany prototyp.
+ */
+/**
+ * Suma zadeklarowanych szerokości poziomu 1 + strukturalna kolumna akcji.
+ * Podana jako `minTableWidth`, tabela ZACHOWUJE geometrię i przewija się
+ * poziomo, gdy otworzy się podgląd (zabiera ~400 px). Bez tego `columnFit`
+ * ściskał kolumny poniżej treści i wartość „OTWARTE DZIAŁANIA" nachodziła na
+ * komórkę STAN — zmierzone na zrzucie `L1-podglad--light.png`.
+ */
+export const KPI_REPORT_TABLE_WIDTH_PX = 1316 + 80;
+
 export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
   const t = (pl: string, en: string) => (isPolish ? pl : en);
   const numberCell = (value: number | null) =>
-    value === null ? <MutedDash /> : <span className="text-sm tabular-nums text-c-text-secondary">{value}</span>;
+    value === null ? (
+      <MutedDash />
+    ) : (
+      <span className="block truncate text-sm tabular-nums text-c-text-secondary">{value}</span>
+    );
   return [
     {
       id: 'name',
       label: t('NAZWA RAPORTU', 'REPORT NAME'),
-      width: '320px',
+      width: '380px',
       sortable: true,
       render: (row: KpiReportRowVm) => (
-        <span className="block truncate text-sm font-medium text-c-text" title={row.name}>
+        <span className="block truncate text-sm text-c-text" title={row.name}>
           {row.name}
         </span>
       ),
@@ -261,11 +304,14 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'scope',
       label: t('ZAKRES', 'SCOPE'),
-      width: '150px',
+      width: '118px',
       dataType: 'status',
       sortable: true,
+      /* Zawijanie do dwóch linii, nie wielokropek: nazwa zakresu bywa dłuższa
+         niż kolumna („Jednostka biznesowa"), a ucięcie jej w połowie było
+         defektem K11/K12 na prototypie. */
       render: (row: KpiReportRowVm) => (
-        <span className="block truncate text-sm text-c-text-secondary" title={row.scope}>
+        <span className="line-clamp-2 break-normal text-sm text-c-text-secondary" title={row.scope}>
           {row.scope}
         </span>
       ),
@@ -273,7 +319,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'period',
       label: t('OKRES', 'PERIOD'),
-      width: '160px',
+      width: '124px',
       dataType: 'number',
       sortable: true,
       render: (row: KpiReportRowVm) =>
@@ -288,7 +334,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'indicatorCount',
       label: t('MIERNIKI', 'INDICATORS'),
-      width: '110px',
+      width: '96px',
       dataType: 'number',
       sortable: true,
       render: (row: KpiReportRowVm) => numberCell(row.indicatorCount),
@@ -296,7 +342,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'state',
       label: t('STAN', 'STATUS'),
-      width: '160px',
+      width: '140px',
       dataType: 'number',
       render: (row: KpiReportRowVm) =>
         row.distribution ? (
@@ -314,7 +360,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'openActions',
       label: t('OTWARTE DZIAŁANIA', 'OPEN ACTIONS'),
-      width: '175px',
+      width: '172px',
       dataType: 'number',
       sortable: true,
       render: (row: KpiReportRowVm) => numberCell(row.openActions),
@@ -322,7 +368,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'preparedBy',
       label: t('PRZYGOTOWAŁ', 'PREPARED BY'),
-      width: '160px',
+      width: '146px',
       dataType: 'owner',
       sortable: true,
       render: (row: KpiReportRowVm) =>
@@ -337,7 +383,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'updatedAt',
       label: t('AKTUALIZACJA', 'UPDATED'),
-      width: '150px',
+      width: '140px',
       dataType: 'date',
       sortable: true,
       render: (row: KpiReportRowVm) =>
@@ -363,8 +409,12 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
  *   2. gdy migawki nie ma — okres BIEŻĄCY wyliczony z `reviewFrequency`;
  *      raport istnieje i dotyczy trwającego okresu, więc puste „—" byłoby
  *      mniej prawdziwe niż nazwa okresu.
- * `editionLabel` (gdy jest) dokleja się jako drugi człon — tak jak w arkuszu
- * właściciela: „2026 · edycja 03".
+ * EDYCJA NIE WCHODZI DO TEJ ETYKIETY. Kolumna OKRES odpowiada na pytanie
+ * „za jaki okres", a numer edycji jest atrybutem raportu, nie okresu —
+ * doklejony („VIII 2026 · edycja 03") nie mieścił się w kolumnie i kończył
+ * wielokropkiem (zmierzone: treść 131 px w kolumnie o 129 px). Edycja jest
+ * tam, gdzie należy: w podglądzie raportu i w nagłówku poziomu 2
+ * (`buildKpiReportSubtitle`).
  */
 export function resolveKpiReportPeriodLabel(
   scorecard: KpiScorecardDto,
@@ -378,9 +428,8 @@ export function resolveKpiReportPeriodLabel(
         ? 'year'
         : 'month';
   const anchorDate = publishedSnapshot ? new Date(publishedSnapshot.reviewPeriodStart) : now;
-  if (Number.isNaN(anchorDate.getTime())) return scorecard.editionLabel ?? null;
-  const base = kpiReportPeriodLabel(kpiPeriodKeyForDate(anchorDate, granularity));
-  return scorecard.editionLabel ? `${base} · ${scorecard.editionLabel}` : base;
+  if (Number.isNaN(anchorDate.getTime())) return null;
+  return kpiReportPeriodLabel(kpiPeriodKeyForDate(anchorDate, granularity));
 }
 
 // ==========================================
@@ -426,6 +475,18 @@ export function buildKpiReportPreview(
       properties: [
         { id: 'description', label: t('Opis', 'Description'), value: row.description ?? DASH },
         {
+          id: 'edition',
+          label: t('Edycja', 'Edition'),
+          value: row.scorecard.editionLabel ?? DASH,
+        },
+        {
+          id: 'revision',
+          label: t('Data rewizji', 'Revision date'),
+          value: row.scorecard.revisionDate
+            ? formatKpiScorecardDate(row.scorecard.revisionDate, ctx.isPolish)
+            : DASH,
+        },
+        {
           id: 'prepared',
           label: t('Przygotował', 'Prepared by'),
           value: row.preparedBy ?? DASH,
@@ -447,13 +508,14 @@ export function buildKpiReportPreview(
             areas.length === 0 ? (
               DASH
             ) : (
-              <span className="flex flex-col gap-1">
+              /* Nazwa obszaru NAD liczbami, nie obok: przy pięciu obszarach
+                 układ „nazwa | liczby" w jednej linii rozpychał tabelę
+                 właściwości szerzej niż panel podglądu i obcinał kolumnę
+                 „Wartość" (zmierzone na zrzucie `L1-podglad--light.png`). */
+              <span className="flex w-full min-w-0 flex-col gap-1.5">
                 {areas.map((area) => (
-                  <span
-                    key={area.areaName ?? '__none__'}
-                    className="flex items-baseline justify-between gap-2 text-xs"
-                  >
-                    <span className="min-w-0 truncate text-c-text-secondary">
+                  <span key={area.areaName ?? '__none__'} className="flex min-w-0 flex-col">
+                    <span className="truncate text-[11px] uppercase tracking-wide text-c-text-muted">
                       {area.areaName ?? t('Bez obszaru', 'No area')}
                     </span>
                     <KpiStateCounts

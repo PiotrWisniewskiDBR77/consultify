@@ -202,6 +202,19 @@ interface FilterableTableProps {
   isGroupRow?: (row: TableRow) => boolean;
   renderGroupRow?: (row: TableRow) => React.ReactNode;
   /**
+   * ── STARTOWE PRZEWINIĘCIE DO KOLUMNY (opt-in, 2026-09-05) ────────────────
+   *
+   * SSOT raportu KPI §6: „kolumny okresów przewijane, (…) domyślnie
+   * przewinięte do bieżącego miesiąca". Bez tego raport otwiera się na
+   * STYCZNIU i użytkownik za każdym razem przewija do miesiąca, o który mu
+   * chodzi. Offset liczymy z TYCH SAMYCH szerokości, którymi renderują się
+   * komórki — bez mierzenia DOM po renderze.
+   *
+   * Działa RAZ, przy pierwszym pojawieniu się kolumny o tym id; późniejsze
+   * przewinięcie użytkownika nie jest nadpisywane. Bez propa — zero zmiany.
+   */
+  scrollToColumnId?: string | null;
+  /**
    * ── Minimalna szerokość elementu `table` (opt-in) ─────────────────────────
    *
    * (W komentarzach tego pliku NIE piszemy znacznika `table` w ostrych
@@ -760,6 +773,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   rowClassName,
   isGroupRow,
   renderGroupRow,
+  scrollToColumnId = null,
   minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
   const horizontalViewportRef = useRef<HTMLDivElement>(null);
@@ -1005,11 +1019,36 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     }
   }, [columnConfigs, columnWidths, storageKey]);
 
+  /**
+   * ── KOLEJNOŚĆ KOLUMN: ZAPISANA TYLKO WTEDY, GDY JEST JEDNOZNACZNA ─────────
+   *
+   * DEFEKT ZMIERZONY 2026-09-05 na raporcie KPI (poziom 2), zrzut
+   * `evidence/p7k-a-kpi/L2-raport--light.png` z pierwszego przelotu:
+   * kolejność kolumn wyszła „MIERNIK · STY 2026 · YTD · LUT 2026 · STAN ·
+   * MAR 2026…", czyli YTD i STAN wylądowały W ŚRODKU miesięcy.
+   *
+   * Przyczyna: ekran z DYNAMICZNYM zestawem kolumn renderuje się najpierw bez
+   * nich (matryca okresów jeszcze leci), więc `persist` zapisuje kolejność dla
+   * KRÓTKIEJ listy (…, ytd=7, state=8). Po dojściu danych dochodzi dwanaście
+   * kolumn okresów o indeksach 7…18 — i `order` zapisane dla `ytd`/`state`
+   * ZDERZA SIĘ z indeksami nowych kolumn. Sort po zderzonych wartościach
+   * przeplata jedne z drugimi. To NIE jest problem tego jednego ekranu:
+   * dotyczy każdej tabeli, której zestaw kolumn zmienia się w czasie.
+   *
+   * Reguła: zapisana kolejność jest używana WYŁĄCZNIE gdy jest kompletna
+   * i różnowartościowa dla BIEŻĄCEGO zestawu kolumn. Gdy się zderza — znaczy,
+   * że pochodzi z innego zestawu i wygrywa kolejność DEKLARACJI modułu.
+   * Układ użytkownika nie ginie: gdy tylko zapisze się dla pełnego zestawu,
+   * znów jest jednoznaczny i znów obowiązuje.
+   */
   const visibleColumns = useMemo(() => {
     const byId = new Map(columnConfigs.map((c) => [c.id, c]));
-    return columns
-      .filter((c) => byId.get(c.id)?.visible !== false)
-      .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
+    const widoczne = columns.filter((c) => byId.get(c.id)?.visible !== false);
+    const kolejnosci = widoczne.map((c) => byId.get(c.id)?.order);
+    const kompletna = kolejnosci.every((o) => typeof o === 'number');
+    const jednoznaczna = new Set(kolejnosci).size === kolejnosci.length;
+    if (!kompletna || !jednoznaczna) return widoczne;
+    return [...widoczne].sort((a, b) => (byId.get(a.id)!.order ?? 0) - (byId.get(b.id)!.order ?? 0));
   }, [columns, columnConfigs]);
 
   /**
@@ -1235,9 +1274,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
    * cień, żeby granica przypięcia była widoczna, a nie sześć cieni na sobie.
    */
   const pinnedLayout = useMemo<
-    Record<string, { side: 'left' | 'right'; offset: number; edge: boolean }>
+    Record<string, { side: 'left' | 'right'; offset: number; edge: boolean; width: number }>
   >(() => {
-    const map: Record<string, { side: 'left' | 'right'; offset: number; edge: boolean }> = {};
+    const map: Record<string, { side: 'left' | 'right'; offset: number; edge: boolean; width: number }> = {};
     if (!visibleColumns.some((c) => c.pinned)) return map;
     const widthOf = (column: TableColumn) =>
       columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
@@ -1246,8 +1285,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     let lastLeftId: string | null = null;
     for (const column of visibleColumns) {
       if (column.pinned !== 'left') continue;
-      map[column.id] = { side: 'left', offset: left, edge: false };
-      left += widthOf(column);
+      const w = widthOf(column);
+      map[column.id] = { side: 'left', offset: left, edge: false, width: w };
+      left += w;
       lastLeftId = column.id;
     }
     if (lastLeftId && map[lastLeftId]) map[lastLeftId]!.edge = true;
@@ -1257,8 +1297,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     for (let i = visibleColumns.length - 1; i >= 0; i -= 1) {
       const column = visibleColumns[i]!;
       if (column.pinned !== 'right') continue;
-      map[column.id] = { side: 'right', offset: right, edge: false };
-      right += widthOf(column);
+      const w = widthOf(column);
+      map[column.id] = { side: 'right', offset: right, edge: false, width: w };
+      right += w;
       lastRightId = column.id;
     }
     if (lastRightId && map[lastRightId]) map[lastRightId]!.edge = true;
@@ -1310,11 +1351,51 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     return `sticky z-[11] bg-white dark:bg-navy-900 ${shadow}`;
   };
 
+  /**
+   * Offset przypięcia MUSI być policzony z DOKŁADNIE tej szerokości, którą
+   * komórka naprawdę dostanie — inaczej między kolumnami przypiętymi z prawej
+   * zostaje szczelina, przez którą przebija przewijana treść (defekt K10 na
+   * prototypie). `table-fixed` zaokrągla i rozdziela resztę, więc kolumnie
+   * przypiętej narzucamy jej szerokość ZAMKNIĘTĄ (`width` = `min` = `max`) —
+   * geometria staje się wtedy zgodna z konstrukcji, a nie z nadziei.
+   */
   const pinnedStyle = (column: TableColumn): React.CSSProperties => {
     const pin = pinnedLayout[column.id];
     if (!pin) return {};
-    return pin.side === 'left' ? { left: `${pin.offset}px` } : { right: `${pin.offset}px` };
+    const fixed = {
+      width: `${pin.width}px`,
+      minWidth: `${pin.width}px`,
+      maxWidth: `${pin.width}px`,
+    };
+    return pin.side === 'left'
+      ? { ...fixed, left: `${pin.offset}px` }
+      : { ...fixed, right: `${pin.offset}px` };
   };
+
+  /** Startowe przewinięcie do kolumny (`scrollToColumnId`) — patrz prop. */
+  const scrolledToColumnRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!scrollToColumnId) return;
+    if (scrolledToColumnRef.current === scrollToColumnId) return;
+    const scroller = horizontalViewportRef.current;
+    if (!scroller) return;
+    const index = visibleColumns.findIndex((c) => c.id === scrollToColumnId);
+    if (index < 0) return;
+    const widthOf = (column: TableColumn) =>
+      columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
+    let offset = 0;
+    let pinnedLeftTotal = 0;
+    for (let i = 0; i < index; i += 1) {
+      const column = visibleColumns[i]!;
+      offset += widthOf(column);
+      if (column.pinned === 'left') pinnedLeftTotal += widthOf(column);
+    }
+    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const cel = Math.min(Math.max(0, Math.round(offset - pinnedLeftTotal)), maxScroll);
+    if (maxScroll <= 0) return;
+    scroller.scrollLeft = cel;
+    scrolledToColumnRef.current = scrollToColumnId;
+  }, [scrollToColumnId, visibleColumns, columnFit, columnWidths, parsePx]);
 
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(

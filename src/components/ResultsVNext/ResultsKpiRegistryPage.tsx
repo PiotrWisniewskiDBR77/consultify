@@ -148,6 +148,7 @@ import {
 import {
   buildKpiReportColumns,
   buildKpiReportPreview,
+  KPI_REPORT_TABLE_WIDTH_PX,
   resolveKpiReportPeriodLabel,
   type KpiReportRowVm,
 } from './kpiScorecards/kpiReportPresenters';
@@ -1718,6 +1719,10 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             columns: buildKpiReportColumns(isPolish),
             data: scorecardTableRows,
             persistKey: 'results-vnext.kpi-reports',
+            /* Geometria kolumn jest ZMIERZONA (patrz `KPI_REPORT_TABLE_WIDTH_PX`).
+               Gdy otwiera się podgląd, tabela ma się PRZEWIJAĆ poziomo, a nie
+               ściskać kolumny poniżej ich treści. */
+            minTableWidth: KPI_REPORT_TABLE_WIDTH_PX,
             loading: scorecardsLoading,
             error: scorecardsError,
             onRetry: () => void fetchScorecardRows(),

@@ -844,6 +844,12 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             loadItems();
             loadPeriodMatrix();
           },
+          /* SSOT §6: „domyślnie przewinięte do bieżącego miesiąca". Kolumnę
+             bieżącego okresu wskazuje SERWER (`isCurrent` w siatce okresów) —
+             front nie liczy własnej daty i nie może się z serwerem rozjechać. */
+          scrollToColumnId: periodMatrix?.periods.find((p) => p.isCurrent)
+            ? `period:${periodMatrix.periods.find((p) => p.isCurrent)!.key}`
+            : null,
           isGroupRow: (row) => !!(row as unknown as KpiReportItemRowVm).group,
           renderGroupRow: (row) =>
             renderKpiReportGroupRow(row as unknown as KpiReportItemRowVm, isPolish),
@@ -881,6 +887,11 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             });
           },
         }}
+        /* Podgląd otwiera się DOPIERO po kliknięciu w miernik. Wcześniej ekran
+           startował z otwartym podglądem raportu, który zjadał ~400 px i
+           zostawiał na tabelę trzy kolumny okresów zamiast pięciu — a raport
+           ma być widoczny od razu, nie po zamknięciu panelu. Podgląd samego
+           raportu jest tam, gdzie należy: na poziomie 1. */
         preview={
           selectedItem
             ? buildKpiScorecardItemPreview(selectedItem, {
@@ -891,7 +902,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
                 onOpenKpi: openKpiCard,
                 onRemove: (r) => setRemoveItemTarget(r),
               })
-            : scorecardOverviewPreview
+            : null
         }
         forbidden={forbidden}
         onForbiddenBack={() => navigate(ROUTES.RESULTS_KPI.ROOT)}

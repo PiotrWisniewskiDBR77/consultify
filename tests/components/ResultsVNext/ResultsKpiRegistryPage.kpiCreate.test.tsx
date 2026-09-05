@@ -240,12 +240,21 @@ function makeFakeBackend() {
  * `initialTab`, żeby test nadal przechodził tą samą drogą co użytkownik.
  */
 async function renderPage() {
+  /**
+   * P7K (2026-09-05): pigułka „Wszystkie wskaźniki" ZNIKA z Menu 3 — poziom 1
+   * to tabela RAPORTÓW, a płaska lista wskaźników nie jest punktem wejścia
+   * (SSOT §1, decyzja właściciela nr 2 z 30.08). Rejestr wskaźników — jedyne
+   * miejsce cyklu definicji miernika, którego dotyczy TEN test — zostaje
+   * osiągalny adresem `?kpiView=wskazniki`, więc test wchodzi w niego tak, jak
+   * zrobi to człowiek po zmianie: adresem, nie pigułką, której już nie ma.
+   */
+  (window.location as unknown as { search: string }).search = '?kpiView=wskazniki';
   const utils = render(
-    <MemoryRouter initialEntries={['/results/kpi']}>
+    <MemoryRouter initialEntries={['/results/kpi?kpiView=wskazniki']}>
       <ResultsKpiRegistryPage />
     </MemoryRouter>
   );
-  fireEvent.click(await screen.findByText('Wszystkie wskaźniki'));
+  await screen.findByTestId('results-vnext-kpi-registry-page');
   return utils;
 }
 

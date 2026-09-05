@@ -302,6 +302,8 @@ export interface StandardTableProps {
    */
   isGroupRow?: (row: TableRow) => boolean;
   renderGroupRow?: (row: TableRow) => React.ReactNode;
+  /** Startowe przewinięcie do kolumny (SSOT raportu KPI §6) — przelot do jądra. */
+  scrollToColumnId?: string | null;
 
   /** Lejki kolumn — kontrolowane z zewnątrz lub stan wewnętrzny fasady. */
   activeFilters?: FilterChip[];
@@ -355,6 +357,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   rowClassName,
   isGroupRow,
   renderGroupRow,
+  scrollToColumnId,
   activeFilters,
   onFilterChange,
   defaultSort,
@@ -605,6 +608,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       rowClassName={rowClassName}
       isGroupRow={isGroupRow}
       renderGroupRow={renderGroupRow}
+      scrollToColumnId={scrollToColumnId}
       /* `undefined` → domyślka `FilterableTable` (980 px). Zero zmiany dla
          ekranów, które tego propa nie podają. */
       minTableWidth={minTableWidth}

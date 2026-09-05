@@ -129,6 +129,13 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
     const ile = zapis.uwagi.length;
     return (
       <div
+        /* PRZYRZĄD NIE JEST PRODUKTEM (lekcja „przyrząd kłamie, a oko
+           przywyka"): pigułki panelu uwag i przycisk powrotu to kontrolki
+           HARNESSU. Bez tego znacznika `shot.mjs --bez-chrome` ich nie
+           znajdował i wchodziły w kadr każdego zrzutu odbiorowego —
+           właściciel oceniał kompozycję z dwoma przyciskami, których w
+           produkcie nie ma. */
+        data-dev-render-chrome
         style={{
           position: 'fixed',
           right: 16,
@@ -150,6 +157,7 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
 
   return (
     <div
+      data-dev-render-chrome
       style={{
         position: 'fixed',
         right: 16,

@@ -110,8 +110,10 @@ import {
 } from '../kpiApi';
 import {
   getKpiScorecard,
+  getKpiScorecardPeriodMatrix,
   listKpiScorecardsForKpi,
   type KpiScorecardDto,
+  type ScorecardPeriodMatrixItemDto,
 } from '../kpiScorecards/kpiScorecardApi';
 import {
   KPI_SCORECARD_STATUS_TONE,
@@ -326,6 +328,15 @@ export const KpiToolPage: React.FC = () => {
   // 404, same discipline `ResultsKpiRegistryPage.tsx`'s own effect uses for
   // this same call) — never conflated with `'loading'`.
   const [definitionVersion, setDefinitionVersion] = useState<KpiDefinitionVersionDto | null | 'loading'>('loading');
+  /**
+   * YTD miernika (SSOT §2, sekcja „Wyniki"). Liczy je serwer dla CAŁEGO
+   * raportu (`GET .../scorecards/:id/periods`) — karta bierze z tej odpowiedzi
+   * SWÓJ wiersz, zamiast liczyć drugą, własną sumę. Dwie prawdy o YTD (jedna
+   * na poziomie 2, druga na karcie) byłyby gorsze niż brak YTD na karcie.
+   * Bez `?zbior=` w adresie nie wiadomo, w którym raporcie liczyć — wtedy
+   * kafelek pokazuje „—" z podpisem, a nie zgadniętą liczbę.
+   */
+  const [ytdWiersz, setYtdWiersz] = useState<ScorecardPeriodMatrixItemDto | null>(null);
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
   const [scorecards, setScorecards] = useState<KpiScorecardDto[] | 'loading'>('loading');
@@ -444,6 +455,26 @@ export const KpiToolPage: React.FC = () => {
       .then((sc) => setPathCardSetName(sc?.name ?? null))
       .catch(() => setPathCardSetName(null));
   }, [enabled, fromCardSetId]);
+
+  /* YTD z matrycy okresów RAPORTU, z którego przyszliśmy — patrz `ytdWiersz`. */
+  useEffect(() => {
+    if (!enabled || !kpiId || !fromCardSetId || isUnassignedCardSetId(fromCardSetId)) {
+      setYtdWiersz(null);
+      return;
+    }
+    let anulowane = false;
+    getKpiScorecardPeriodMatrix(fromCardSetId)
+      .then((matrix) => {
+        if (anulowane) return;
+        setYtdWiersz(matrix?.items.find((i) => i.kpiId === kpiId) ?? null);
+      })
+      .catch(() => {
+        if (!anulowane) setYtdWiersz(null);
+      });
+    return () => {
+      anulowane = true;
+    };
+  }, [enabled, kpiId, fromCardSetId]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -643,7 +674,7 @@ export const KpiToolPage: React.FC = () => {
     { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     {
       id: 'cardSets',
-      label: t('Należy do zestawień', 'Belongs to card sets'),
+      label: t('Występuje w raportach', 'Appears in reports'),
       value:
         scorecards === 'loading'
           ? '…'
@@ -824,6 +855,38 @@ export const KpiToolPage: React.FC = () => {
   ];
 
   // ── Section 1: Performance ──
+  /**
+   * ── SEKCJA „WYNIKI" (SSOT §2) ─────────────────────────────────────────────
+   *
+   * SSOT: „ostatni okres (CEL / Rezultat / odchylenie / stan), (…) YTD".
+   * Do 2026-09-05 sekcja pokazywała TYLKO Rezultat — bez CELU nie da się
+   * powiedzieć, czy 11 620 to dużo, czy mało, a odchylenie musiał liczyć
+   * w głowie czytelnik.
+   *
+   * CEL i odchylenie liczymy z pomiaru (`periodTargetValue`, kolumna dołożona
+   * migracją 20261124 z fallbackiem na zapis seeda). Gdy celu okresu nie ma —
+   * pokazujemy „—" i NIE podstawiamy rocznego celu wersji definicji: cel roku
+   * w kratce miesiąca byłby liczbą wymyśloną.
+   */
+  const okresowyCel =
+    measurement && measurement !== 'loading' ? (measurement.periodTargetValue ?? null) : null;
+  const okresowyWynik = measurement && measurement !== 'loading' ? measurement.actualValue : null;
+  const odchylenieProc =
+    okresowyCel != null && okresowyCel !== 0 && okresowyWynik != null
+      ? ((okresowyWynik - okresowyCel) / Math.abs(okresowyCel)) * 100
+      : null;
+  /* `== null` (nie `=== null`) ŚWIADOMIE: pole `periodTargetValue` może być
+     nieobecne w odpowiedzi sprzed tej zmiany, a `undefined.toLocaleString()`
+     wywraca całą kartę na biało. Złapane testem `KpiToolPage.test.tsx`, nie
+     oglądaniem — w harnessie fikstura pole miała. Nieliczba też daje „—". */
+  const liczba = (v: number | null | undefined, ulamek = 0) =>
+    v == null || !Number.isFinite(v)
+      ? '—'
+      : v.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+          minimumFractionDigits: ulamek,
+          maximumFractionDigits: ulamek,
+        });
+
   const performanceSection: NModeSection = {
     id: 'performance',
     icon: Activity,
@@ -835,37 +898,76 @@ export const KpiToolPage: React.FC = () => {
         {/* Pigułka statusu NIE jest tu powtarzana — mieszka w Menu 1 obok
             tytułu (zatwierdzony obraz karty KPI). */}
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <p className={LABEL_CLASS}>{t('Ostatni pomiar', 'Latest measurement')}</p>
+          <p className={LABEL_CLASS}>
+            {measurement && measurement !== 'loading'
+              ? `${t('Wyniki · okres', 'Results · period')} ${formatDate(measurement.periodStart, isPolish)} – ${formatDate(measurement.periodEnd, isPolish)}`
+              : t('Wyniki · ostatni okres', 'Results · latest period')}
+          </p>
           {measurement === 'loading' ? (
             <span className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</span>
-          ) : (
-            <div className="flex items-center gap-4">
-              <HonestValueCell
-                isPolish={isPolish}
-                value={measurement ? measurement.actualValue : null}
-                format={(v) => <span className="text-2xl font-semibold tabular-nums text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
-              />
-              {measurement ? (
-                <div className="text-xs text-c-text-muted">
-                  <div>
-                    {t('Okres: ', 'Period: ')}
-                    {formatDate(measurement.periodStart, isPolish)} – {formatDate(measurement.periodEnd, isPolish)}
+          ) : measurement ? (
+            <>
+              <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('CEL', 'TARGET')}</div>
+                  <div className="whitespace-nowrap text-xl font-semibold tabular-nums text-c-text">
+                    {liczba(okresowyCel)}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
-                    <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
-                  </div>
-                  <p className="mt-2 text-[11px] text-c-text-muted">
-                    {t(
-                      'Wynik i jakość danych to DWA NIEZALEŻNE wymiary (plan §4.3/§4.4) — nigdy jedno pole.',
-                      'Performance and data quality are TWO INDEPENDENT dimensions (plan §4.3/§4.4) — never one field.'
-                    )}
-                  </p>
                 </div>
-              ) : (
-                <span className="text-xs text-c-text-muted">{t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}</span>
-              )}
-            </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('Rezultat', 'Actual')}</div>
+                  <div
+                    className={`whitespace-nowrap text-xl font-semibold tabular-nums ${
+                      measurement.performanceStatus === 'critical'
+                        ? 'text-c-danger'
+                        : measurement.performanceStatus === 'warning'
+                          ? 'text-c-warning'
+                          : 'text-c-text'
+                    }`}
+                  >
+                    {liczba(okresowyWynik)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('Odchylenie', 'Deviation')}</div>
+                  <div
+                    className={`whitespace-nowrap text-xl font-semibold tabular-nums ${
+                      odchylenieProc !== null && odchylenieProc < 0 ? 'text-c-danger' : 'text-c-text'
+                    }`}
+                  >
+                    {odchylenieProc === null
+                      ? '—'
+                      : `${odchylenieProc > 0 ? '+' : '−'}${Math.abs(odchylenieProc).toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">
+                    {t('YTD (rezultat / cel)', 'YTD (actual / target)')}
+                  </div>
+                  <div
+                    className="whitespace-nowrap text-xl font-semibold tabular-nums text-c-text"
+                    title={
+                      ytdWiersz
+                        ? undefined
+                        : t(
+                            'YTD liczy się w kontekście raportu — otwórz miernik z raportu, żeby je zobaczyć.',
+                            'YTD is computed in the context of a report — open the indicator from a report to see it.'
+                          )
+                    }
+                  >
+                    {ytdWiersz
+                      ? `${liczba(ytdWiersz.ytdActualValue)} / ${liczba(ytdWiersz.ytdTargetValue)}`
+                      : '—'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
+                <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
+              </div>
+            </>
+          ) : (
+            <span className="text-xs text-c-text-muted">{t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}</span>
           )}
         </div>
         <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setActiveSection('measurements')}>
