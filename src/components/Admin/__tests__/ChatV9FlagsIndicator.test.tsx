@@ -114,3 +114,66 @@ describe('ChatV9FlagsIndicator', () => {
     setIntervalSpy.mockRestore();
   });
 });
+
+/**
+ * 2026-09-05: this pill used to render for any authorised admin with
+ * at least one override, on every screen — noise on otherwise clean
+ * MVP acceptance screenshots. It now also requires local Vite dev, or
+ * an explicit `?debug=1` opt-in (persisted in sessionStorage — see
+ * `src/utils/debugOverlays.ts`). The suite above runs under vitest's
+ * always-`DEV=true` default, which already satisfies the new gate for
+ * every one of its cases — so it does not exercise the gate itself.
+ * These tests stub `DEV` to `false` to simulate a production build.
+ */
+describe('ChatV9FlagsIndicator debug gate (production build simulation)', () => {
+  // `tests/setup.ts` replaces `window.location` with a plain object
+  // snapshot (to stub navigation methods), so it no longer tracks
+  // `history.pushState` — mutate `.search` directly instead.
+  const setSearch = (search: string) => {
+    (window.location as unknown as { search: string }).search = search;
+  };
+
+  beforeEach(() => {
+    vi.stubEnv('DEV', false as unknown as string);
+    window.sessionStorage.clear();
+    setSearch('');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    window.sessionStorage.clear();
+    setSearch('');
+  });
+
+  it('stays hidden outside dev for an authorised admin with overrides and no ?debug opt-in', () => {
+    render(<ChatV9FlagsIndicator isAuthorized overrideCount={2} pollIntervalMs={0} />);
+    expect(screen.queryByTestId('chat-v9-flags-indicator')).not.toBeInTheDocument();
+  });
+
+  it('shows outside dev once ?debug=1 is present and persists the opt-in', () => {
+    setSearch('?debug=1');
+    render(<ChatV9FlagsIndicator isAuthorized overrideCount={2} pollIntervalMs={0} />);
+    expect(screen.getByTestId('chat-v9-flags-indicator')).toBeInTheDocument();
+    expect(window.sessionStorage.getItem('consultify.debugOverlays')).toBe('1');
+  });
+
+  it('keeps showing on a later render with no query param, once opted in', () => {
+    window.sessionStorage.setItem('consultify.debugOverlays', '1');
+    render(<ChatV9FlagsIndicator isAuthorized overrideCount={2} pollIntervalMs={0} />);
+    expect(screen.getByTestId('chat-v9-flags-indicator')).toBeInTheDocument();
+  });
+
+  it('?debug=0 clears a standing opt-in and hides the pill again', () => {
+    window.sessionStorage.setItem('consultify.debugOverlays', '1');
+    setSearch('?debug=0');
+    render(<ChatV9FlagsIndicator isAuthorized overrideCount={2} pollIntervalMs={0} />);
+    expect(screen.queryByTestId('chat-v9-flags-indicator')).not.toBeInTheDocument();
+    expect(window.sessionStorage.getItem('consultify.debugOverlays')).toBeNull();
+  });
+
+  it('the debug opt-in alone does not bypass the authorisation gate', () => {
+    setSearch('?debug=1');
+    render(<ChatV9FlagsIndicator isAuthorized={false} overrideCount={2} pollIntervalMs={0} />);
+    expect(screen.queryByTestId('chat-v9-flags-indicator')).not.toBeInTheDocument();
+  });
+});
