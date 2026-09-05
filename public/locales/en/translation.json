@@ -11871,7 +11871,8 @@
     "kanban": {
       "noOwner": "Unassigned",
       "nextGate": "Next gate",
-      "dragDisabled": "Use the governed gate workspace to advance lifecycle."
+      "dragDisabled": "Use the governed gate workspace to advance lifecycle.",
+      "emptyColumn": "Drop initiatives here"
     },
     "archive": {
       "hint": "Finish or cancel it first"

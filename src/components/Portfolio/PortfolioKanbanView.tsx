@@ -69,11 +69,11 @@ interface PortfolioKanbanViewProps {
 // COLUMN CONFIG
 // ==========================================
 
-function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; label: string }[] {
+function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; labelKey: string }[] {
   const statuses = scope === 'active' ? ACTIVE_STATUSES : ALL_STATUSES;
   return statuses.map((s) => ({
     id: s,
-    label: STATUS_METADATA[s]?.label || s,
+    labelKey: STATUS_METADATA[s]?.labelKey ?? 'initiatives.status.unknown',
   }));
 }
 
@@ -289,6 +289,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   canDrag = true,
   dragDisabledReason,
 }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id });
   const statusStyle = getStatusStyle(id);
 
@@ -337,7 +338,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </SortableContext>
 
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-c-text-muted text-xs">Drop initiatives here</div>
+          <div className="p-3 text-center text-c-text-muted text-xs">
+            {t('initiatives.kanban.emptyColumn')}
+          </div>
         )}
       </div>
     </div>
@@ -424,7 +427,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
             <KanbanColumn
               key={column.id}
               id={column.id}
-              label={column.label}
+              label={t(column.labelKey)}
               initiatives={columnData[column.id] || []}
               onInitiativeClick={onInitiativeClick}
               isCompact={isCompact}

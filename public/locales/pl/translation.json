@@ -11272,7 +11272,8 @@
     "kanban": {
       "noOwner": "Nieprzypisana",
       "nextGate": "Następna bramka",
-      "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia."
+      "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia.",
+      "emptyColumn": "Przeciągnij inicjatywy tutaj"
     },
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"

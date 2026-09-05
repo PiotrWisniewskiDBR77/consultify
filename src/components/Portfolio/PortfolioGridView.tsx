@@ -71,7 +71,7 @@ function axisAccentVar(axis: string): string | undefined {
   return varName.startsWith('c-tag-') ? `var(--${varName})` : undefined;
 }
 
-function toGridCard(initiative: PortfolioInitiative): StandardGridCardData {
+function toGridCard(initiative: PortfolioInitiative, t: (key: string) => string): StandardGridCardData {
   const chips: StandardGridCardData['chips'] = [
     {
       id: 'priority',
@@ -107,7 +107,9 @@ function toGridCard(initiative: PortfolioInitiative): StandardGridCardData {
     id: initiative.id,
     title: initiative.name,
     subtitle: initiative.projectName,
-    statusLabel: STATUS_METADATA[initiative.status as InitiativeStatus]?.label ?? initiative.status,
+    statusLabel: t(
+      STATUS_METADATA[initiative.status as InitiativeStatus]?.labelKey ?? 'initiatives.status.unknown'
+    ),
     statusTone: STATUS_TONE[initiative.status] ?? 'neutral',
     accentColorVar: axisAccentVar(initiative.axis),
     chips,
@@ -245,7 +247,7 @@ export const PortfolioGridView: React.FC<PortfolioGridViewProps> = ({
         {initiatives.map((initiative) => {
           const onClick = () => onInitiativeClick(initiative);
           const card: StandardGridCardData = {
-            ...toGridCard(initiative),
+            ...toGridCard(initiative, t),
             rowMenuSections: buildKebabSections(initiative, { isPolish, onClick, onArchive, onOpenFull }),
           };
           return <StandardGridCard key={initiative.id} card={card} onClick={onClick} />;

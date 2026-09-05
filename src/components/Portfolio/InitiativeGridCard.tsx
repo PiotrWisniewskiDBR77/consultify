@@ -176,7 +176,10 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
         <div className="flex flex-wrap items-center gap-1.5">
           <EntityStatusChip
             status={initiative.status}
-            label={STATUS_METADATA[initiative.status as InitiativeStatus]?.label}
+            label={t(
+              STATUS_METADATA[initiative.status as InitiativeStatus]?.labelKey ??
+                'initiatives.status.unknown'
+            )}
           />
           {priorityLevel && <PriorityChip level={priorityLevel} label={initiative.priority} />}
           <span className="inline-flex items-center gap-1.5 text-[11px] text-c-text-muted">
