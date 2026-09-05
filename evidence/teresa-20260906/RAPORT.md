@@ -1,7 +1,7 @@
 # Teresa — język polski i realne źródła (2026-09-06)
 
 Gałąź `ai/teresa-polski-zrodla`, odgałęziona od `origin/staging` = `59e282df88`.
-Commity: `5ded4ddd1c` (język), `45adcccf33` (źródła), `<HEAD>` (dowody + skrypty).
+Commity: `5ded4ddd1c` (język), `45adcccf33` (źródła), `e4ad77f1d8` (dowody + skrypty).
 
 ---
 
