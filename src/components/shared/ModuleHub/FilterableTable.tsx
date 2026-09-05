@@ -344,7 +344,7 @@ const OverflowTooltip: React.FC<{
 
   return (
     <Tooltip content={content} delay={0} disabled={!isOverflowing}>
-      <span className="min-w-0 flex-1" data-overflow-tooltip-trigger>
+      <span className={`min-w-0 flex-1 ${className}`} data-overflow-tooltip-trigger>
         <span ref={textRef} className={className} data-overflow-tooltip-text>
           {children ?? content}
         </span>
