@@ -127,6 +127,18 @@ export interface ReportApproval {
   readonly createdAt: string;
 }
 
+/** Treść raportu ZASTANEGO (`assessment_reports`), gdy raport otwarto dla
+ * oceny z magazynu zastanego. To są ZAPISANE akapity konsultanta, nie tekst
+ * wyliczony przez ten ekran — dokument pokazuje je z jawnym wskazaniem źródła. */
+export interface LegacyReportNarrative {
+  readonly reportId: string;
+  readonly reportName: string | null;
+  readonly reportStatus: string | null;
+  readonly executiveSummary: string | null;
+  readonly detailedAnalysis: string | null;
+  readonly recommendations: readonly string[];
+}
+
 /** Everything the presentational document needs, already resolved — the
  * container's one job is to produce this bag (or explain why it can't). */
 export interface AssessmentReportData {
@@ -135,4 +147,13 @@ export interface AssessmentReportData {
   readonly supersededByOutputId: string | null;
   readonly session: ReportSessionMeta | null;
   readonly approvals: readonly ReportApproval[];
+  /** `'method-core'` = zamrożony Output jądra (domyślne, gdy pole nie ma).
+   * `'legacy'` = projekcja oceny z tabeli `assessments`
+   * (`src/components/assessment/assessmentOutputProjection.ts`). */
+  readonly source?: 'method-core' | 'legacy';
+  /** Notatki konsultanta per obszar (`answers.drd.areas[*].levelNotes`
+   * dla poziomu OBECNEGO). Wyłącznie dla `source === 'legacy'`. */
+  readonly unitNotes?: Readonly<Record<string, string>>;
+  /** Treść raportu zastanego powiązanego z tą oceną, gdy taki wiersz istnieje. */
+  readonly narrative?: LegacyReportNarrative | null;
 }

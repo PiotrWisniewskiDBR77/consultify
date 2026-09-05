@@ -1,0 +1,194 @@
+{
+ "data": {
+  "assessment": {
+   "id": "assess-drd-manufacturing-01",
+   "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+   "name": "DRD — Testowy (Manufacturing)",
+   "status": "APPROVED",
+   "framework_type": "DRD",
+   "created_at": "2026-09-05T21:08:23.703Z",
+   "updated_at": "2026-09-02T21:08:23.703Z",
+   "completionPercent": 100,
+   "answers": {
+    "drd": {
+     "areas": {
+      "1A": {
+       "achievedLevel": 3,
+       "targetLevel": 6,
+       "levelNotes": {
+        "3": "CRM wdrożony, integracja z ERP zaplanowana na Q2. Obsługa klienta częściowo zdigitalizowana — portal self-service dla top 20 klientów."
+       }
+      },
+      "1B": {
+       "achievedLevel": 4,
+       "targetLevel": 6
+      },
+      "1C": {
+       "achievedLevel": 5,
+       "targetLevel": 6
+      },
+      "1D": {
+       "achievedLevel": 3,
+       "targetLevel": 6
+      },
+      "1E": {
+       "achievedLevel": 4,
+       "targetLevel": 6
+      },
+      "1F": {
+       "achievedLevel": 5,
+       "targetLevel": 6,
+       "levelNotes": {
+        "5": "MES działa na 2 z 3 linii produkcyjnych. Pełne OEE tracking z raportowaniem real-time na dashboardach shop-floor."
+       }
+      },
+      "1G": {
+       "achievedLevel": 3,
+       "targetLevel": 6
+      },
+      "1H": {
+       "achievedLevel": 4,
+       "targetLevel": 6
+      },
+      "1I": {
+       "achievedLevel": 5,
+       "targetLevel": 6
+      },
+      "2A": {
+       "achievedLevel": 4,
+       "targetLevel": 5
+      },
+      "2B": {
+       "achievedLevel": 5,
+       "targetLevel": 5
+      },
+      "2C": {
+       "achievedLevel": 5,
+       "targetLevel": 5
+      },
+      "2D": {
+       "achievedLevel": 4,
+       "targetLevel": 5
+      },
+      "2E": {
+       "achievedLevel": 5,
+       "targetLevel": 5
+      },
+      "3A": {
+       "achievedLevel": 4,
+       "targetLevel": 5
+      },
+      "3B": {
+       "achievedLevel": 2,
+       "targetLevel": 5
+      },
+      "3C": {
+       "achievedLevel": 3,
+       "targetLevel": 5
+      },
+      "3D": {
+       "achievedLevel": 4,
+       "targetLevel": 5
+      },
+      "3E": {
+       "achievedLevel": 2,
+       "targetLevel": 5
+      },
+      "4A": {
+       "achievedLevel": 4,
+       "targetLevel": 6
+      },
+      "4B": {
+       "achievedLevel": 5,
+       "targetLevel": 6
+      },
+      "4C": {
+       "achievedLevel": 3,
+       "targetLevel": 6
+      },
+      "4D": {
+       "achievedLevel": 4,
+       "targetLevel": 6,
+       "levelNotes": {
+        "4": "Data warehouse z Power BI, ale brak governance frameworku. Dane jakościowe niespójne między lokalizacjami."
+       }
+      },
+      "4E": {
+       "achievedLevel": 5,
+       "targetLevel": 6
+      },
+      "5A": {
+       "achievedLevel": 2,
+       "targetLevel": 6,
+       "levelNotes": {
+        "2": "Change management program w fazie planowania. Szkolenia digital literacy dla 200 pracowników zakończone."
+       }
+      },
+      "5B": {
+       "achievedLevel": 3,
+       "targetLevel": 6
+      },
+      "5C": {
+       "achievedLevel": 4,
+       "targetLevel": 6
+      },
+      "5D": {
+       "achievedLevel": 2,
+       "targetLevel": 6
+      },
+      "5E": {
+       "achievedLevel": 3,
+       "targetLevel": 6
+      },
+      "6A": {
+       "achievedLevel": 5,
+       "targetLevel": 5
+      },
+      "6B": {
+       "achievedLevel": 3,
+       "targetLevel": 5,
+       "levelNotes": {
+        "3": "Firewall OT zainstalowany. Brak segmentacji sieci OT/IT. Audit cyberbezpieczeństwa zaplanowany na Q2 2026."
+       }
+      },
+      "6C": {
+       "achievedLevel": 4,
+       "targetLevel": 5
+      },
+      "6D": {
+       "achievedLevel": 5,
+       "targetLevel": 5
+      },
+      "6E": {
+       "achievedLevel": 3,
+       "targetLevel": 5
+      },
+      "7A": {
+       "achievedLevel": 2,
+       "targetLevel": 5,
+       "levelNotes": {
+        "2": "Pilotaż AI do predykcji jakości na linii 2 — wyniki obiecujące (30% redukcja defektów). Brak MLOps pipeline."
+       }
+      },
+      "7B": {
+       "achievedLevel": 3,
+       "targetLevel": 5
+      },
+      "7C": {
+       "achievedLevel": 1,
+       "targetLevel": 5
+      },
+      "7D": {
+       "achievedLevel": 2,
+       "targetLevel": 5
+      },
+      "7E": {
+       "achievedLevel": 3,
+       "targetLevel": 5
+      }
+     }
+    }
+   }
+  }
+ }
+}
