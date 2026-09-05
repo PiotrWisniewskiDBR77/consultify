@@ -164,7 +164,7 @@ export const OkrReportRegistryPage: React.FC = () => {
       {
         id: 'name',
         label: t('results.okr.report.columns.name', 'NAZWA'),
-        width: '250px',
+        width: '236px',
         dataType: 'text',
         sortable: true,
         render: (row: RegistryRow) => <OkrTextCell value={row.set.title} wrap strong />,
@@ -172,7 +172,11 @@ export const OkrReportRegistryPage: React.FC = () => {
       {
         id: 'scope',
         label: t('results.okr.report.columns.scope', 'ZAKRES'),
-        width: '181px',
+        // 200 px z POMIARU: najdłuższa etykieta zakresu to „Jednostka
+        // biznesowa" (~150 px w 14 px) + `px-4` z obu stron. Przy 181 px
+        // (szerokość z prototypu, gdzie zakresem była krótka NAZWA zakładu)
+        // etykieta łamała się wielokropkiem — a kanon zabrania „…".
+        width: '200px',
         dataType: 'text',
         sortable: true,
         render: (row: RegistryRow) => (

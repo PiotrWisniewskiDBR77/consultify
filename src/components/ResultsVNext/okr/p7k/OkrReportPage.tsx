@@ -113,14 +113,42 @@ function useOkrGroupRowLayout(
 ): void {
   useLayoutEffect(() => {
     const host = containerRef.current;
-    if (!host) return;
-    host.querySelectorAll<HTMLTableRowElement>('tr.okr-report-group-row').forEach((row) => {
-      const cells = Array.from(row.querySelectorAll<HTMLTableCellElement>('td'));
-      const [first, ...rest] = cells;
-      if (!first) return;
-      first.colSpan = cells.length;
-      for (const cell of rest) cell.style.display = 'none';
-    });
+    if (!host) return undefined;
+    const table = host.querySelector<HTMLTableElement>('table');
+    const applyGroupRows = () => {
+      host.querySelectorAll<HTMLTableRowElement>('tr.okr-report-group-row').forEach((row) => {
+        const cells = Array.from(row.querySelectorAll<HTMLTableCellElement>('td'));
+        const [first, ...rest] = cells;
+        if (!first) return;
+        first.colSpan = cells.length;
+        /**
+         * ZMIERZONE, nie założone (zrzut 05.09, pierwsze podejście): sam
+         * `colSpan` w tabeli o układzie stałym NIE rozciąga komórki na całą
+         * szerokość — nazwa tematu łamała się na trzy linie, a przypięta
+         * (`sticky right-0`, białe tło) kolumna akcji zostawiała biały
+         * prostokąt na prawym krańcu wiersza grupy. Dlatego komórka grupy
+         * dostaje własne, NIEPRZEZROCZYSTE tło, przypięcie do lewej i
+         * jawną szerokość równą szerokości tabeli — dokładnie ta sama
+         * mechanika, którą przyjął zatwierdzony prototyp.
+         */
+        first.style.position = 'sticky';
+        first.style.left = '0';
+        first.style.zIndex = '30';
+        first.style.background = 'var(--c-surface-raised)';
+        const content = first.firstElementChild as HTMLElement | null;
+        if (content && table) {
+          content.style.width = `${Math.max(0, table.clientWidth - 32)}px`;
+        }
+        for (const cell of rest) cell.style.display = 'none';
+      });
+    };
+    applyGroupRows();
+    // Szerokość tabeli zmienia się przy zmianie okna i przy pstryczku kolumn —
+    // bez tego wiersz grupy zostawałby na starej szerokości.
+    if (typeof ResizeObserver === 'undefined' || !table) return undefined;
+    const observer = new ResizeObserver(applyGroupRows);
+    observer.observe(table);
+    return () => observer.disconnect();
   }, [containerRef, layoutKey]);
 }
 
@@ -225,7 +253,7 @@ export const OkrReportPage: React.FC = () => {
                     count: group.ownerUserIds.length,
                   });
             return (
-              <span className="flex items-center gap-3">
+              <span className="flex items-center gap-3 whitespace-nowrap">
                 <b className="uppercase">
                   {group.theme ?? t('results.okr.report.noTheme', 'Bez tematu')}
                 </b>
@@ -331,7 +359,10 @@ export const OkrReportPage: React.FC = () => {
       {
         id: 'deadline',
         label: t('results.okr.report.columns.deadline', 'TERMIN'),
-        width: '118px',
+        // K13: data NIGDY nie jest ucinana. „15 gru 2026" w 14 px ma ~96 px,
+        // z `px-4` z obu stron potrzeba 128 px — przy 118 px wychodziło
+        // „15 gru 20…" (zmierzone na zrzucie 05.09).
+        width: '132px',
         dataType: 'date',
         render: (row: OkrReportRow) => {
           if (isOkrReportGroupRow(row)) return null;
