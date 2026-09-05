@@ -2566,6 +2566,63 @@ export class DecisionController {
   // ==========================================
 
   /**
+   * GET /api/decisions/:id/history
+   *
+   * Read-only audit trail of one decision, straight from `decision_history`
+   * (the same table `getDecisionById`/`getDecisionDetail` project into their
+   * `auditTrail` field). The frontend (`Api.getDecisionHistory` in
+   * src/services/api.ts, consumed by the HISTORIA section of
+   * DecisionDetailView.tsx) has been calling this path all along; the route
+   * simply never existed on the server, so every card load logged a 404 and
+   * fell back to re-fetching the whole decision. Same organization scoping
+   * as its siblings: a decision belonging to another org is a 404, never a
+   * 403 (no existence oracle).
+   */
+  static getDecisionHistory = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { id } = req.params;
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const decision = await queryHelpers.queryOne<{ id: string; organization_id: string }>(
+        `SELECT id, organization_id FROM decisions WHERE id = ?`,
+        [id]
+      );
+      if (!decision || decision.organization_id !== orgId) {
+        res.status(404).json({ error: 'Decision not found' });
+        return;
+      }
+
+      const history = await queryHelpers.queryAll(
+        `SELECT dh.id, dh.action, dh.old_status, dh.new_status, dh.changed_by, dh.changed_at, dh.details,
+                TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
+         FROM decision_history dh
+         LEFT JOIN users u ON dh.changed_by = u.id
+         WHERE dh.decision_id = ?
+         ORDER BY dh.changed_at ASC`,
+        [id]
+      );
+
+      res.json({
+        history: history.map((entry: any) => ({
+          id: entry.id,
+          action: entry.action,
+          changedBy: entry.changed_by,
+          changedByName: entry.changed_by_name || undefined,
+          changedAt: entry.changed_at,
+          oldStatus: normalizeStatus(entry.old_status || null),
+          newStatus: normalizeStatus(entry.new_status || null),
+          notes: parseHistoryNotes(entry.details),
+          details: parseHistoryDetails(entry.details) || {},
+        })),
+      });
+    }
+  );
+
+  /**
    * GET /api/decisions/:id/detail
    * Single aggregate read: decision + impacts + audit history + comments +
    * alternatives + risks + evidence links (link_graph_edges). Exists so the
