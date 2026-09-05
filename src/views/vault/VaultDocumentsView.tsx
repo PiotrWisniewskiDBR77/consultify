@@ -510,7 +510,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name'),
       t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
       t('vault.docs.colTags', isPolish ? 'Tagi' : 'Tags'),
-      t('vault.docs.colFolder', isPolish ? 'Folder' : 'Folder'),
+      t('vault.docs.colFolder', 'Folder'),
       t('vault.docs.colLevel', isPolish ? 'Poziom' : 'Level'),
       t('vault.docs.colSize', isPolish ? 'Rozmiar' : 'Size'),
       t('vault.docs.colAdded', isPolish ? 'Dodano' : 'Added'),
@@ -585,7 +585,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       // §"jedna akcja = jeden dom" — patrz `filterBarNode`).
       {
         id: 'folder',
-        label: t('vault.docs.colFolder', isPolish ? 'Folder' : 'Folder'),
+        label: t('vault.docs.colFolder', 'Folder'),
         width: '120px',
         sortable: true,
         sortAccessor: (row: TableRow) =>

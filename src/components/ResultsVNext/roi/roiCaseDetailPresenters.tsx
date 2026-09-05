@@ -212,7 +212,7 @@ export function buildRoiSettingsPreview(
   if (row.kind === 'baseline') {
     const b = row.baseline;
     return {
-      title: isPolish ? 'Baseline' : 'Baseline',
+      title: isPolish ? 'Poziom bazowy' : 'Baseline',
       onClose,
       headerExtra,
       meta: {

@@ -468,7 +468,7 @@ export const RoiFinanceReconciliationStatusModal: React.FC<RoiFinanceReconciliat
       </>}>
       <div className="space-y-4">
         <div>
-          <label className={LABEL_CLASS} htmlFor="roi-recon-status-select">{isPolish ? 'Status' : 'Status'}</label>
+          <label className={LABEL_CLASS} htmlFor="roi-recon-status-select">{'Status'}</label>
           <select id="roi-recon-status-select" value={status} onChange={(e) => setStatus(e.target.value as RoiFinanceReconciliationStatus)} className={FIELD_CLASS} data-testid="roi-recon-status-select">
             {ROI_FINANCE_RECONCILIATION_STATUSES.map((s) => (<option key={s} value={s}>{roiFinanceReconciliationStatusLabel(s, isPolish)}</option>))}
           </select>

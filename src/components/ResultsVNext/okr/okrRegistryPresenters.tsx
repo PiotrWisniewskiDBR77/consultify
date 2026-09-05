@@ -355,7 +355,7 @@ export function buildOkrSetPreview(row: OkrSetDto, deps: OkrSetPreviewDeps): Sta
         },
         {
           id: 'program',
-          label: isPolish ? 'Program' : 'Program',
+          label: 'Program',
           value: row.programId,
           mono: true,
         },

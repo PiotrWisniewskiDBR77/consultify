@@ -2043,7 +2043,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'availability',
-        label: isPolish ? 'Status' : 'Status',
+        label: 'Status',
         width: '120px',
         filterable: true,
         filterOptions: [
@@ -2209,7 +2209,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           };
           const c = cfg[kind] || {
             icon: <FileText size={14} />,
-            label: isPolish ? 'Output' : 'Output',
+            label: isPolish ? 'Wynik' : 'Output',
             color: 'text-c-text-secondary',
           };
           return (
@@ -4759,7 +4759,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                         onClick={() => void copyLink()}
                         className={extraPillNeutral}
                       >
-                        {isPolish ? 'Link' : 'Link'}
+                        {'Link'}
                       </button>
                       <button
                         type="button"
@@ -5209,7 +5209,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             toolType: slug,
             shortCode: slug,
             name: titleFromSlug(slug),
-            description: isPolish ? 'Framework (docs-driven)' : 'Framework (docs-driven)',
+            description: isPolish ? 'Model ramowy (oparty na dokumentacji)' : 'Framework (docs-driven)',
             category: 'strategic' as ToolCategory,
             kind: 'catalog' as const,
             isActive: false,
@@ -5470,7 +5470,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         <Filter size={16} className="text-c-text-secondary" />
         <span className={`w-2 h-2 rounded-full ${selectedStatusOption.bgColor}`} />
         <span>
-          {isPolish ? 'Status' : 'Status'}:{' '}
+          {'Status'}:{' '}
           {getStatusOptionLabel(selectedStatusOption.id, selectedStatusOption.label)}
         </span>
         <ChevronDown
