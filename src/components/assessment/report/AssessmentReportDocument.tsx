@@ -41,6 +41,7 @@ import {
   BookOpen,
   CheckCircle2,
   ClipboardList,
+  FileText,
   FileWarning,
   HelpCircle,
   Lightbulb,
@@ -246,7 +247,21 @@ const AreaBlock: React.FC<{
   gap: number | null;
   levelCount: number;
   hasFinding: boolean;
-}> = ({ unitId, unitName, methodPackId, methodPackVersion, current, target, gap, levelCount, hasFinding }) => {
+  /** Notatka konsultanta z zapisu sesji (`answers.drd.areas[*].levelNotes`
+   * dla poziomu obecnego) — tekst zapisany, nie wyliczony. */
+  note?: string | null;
+}> = ({
+  unitId,
+  unitName,
+  methodPackId,
+  methodPackVersion,
+  current,
+  target,
+  gap,
+  levelCount,
+  hasFinding,
+  note,
+}) => {
   const currentLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, current);
   const targetLevel = resolveDrdLevelNarrative(methodPackId, methodPackVersion, unitId, target);
   return (
@@ -315,6 +330,15 @@ const AreaBlock: React.FC<{
         </p>
       ) : null}
 
+      {note ? (
+        <div className="mt-2 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2.5 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+            Notatka z oceny
+          </p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-c-text">{note}</p>
+        </div>
+      ) : null}
+
       {!hasFinding ? (
         <p className="mt-2 text-[11px] font-medium text-c-warning">
           Brak przyjętego dowodu dla tego obszaru — liczby powyżej pochodzą z zapisu sesji, ale nie są
@@ -339,7 +363,8 @@ const AxisSection: React.FC<{
   unitIds: readonly string[];
   output: AssessmentReportData['output'];
   aggregatedLevel: number | null | undefined;
-}> = ({ axis, unitIds, output, aggregatedLevel }) => {
+  unitNotes?: Readonly<Record<string, string>>;
+}> = ({ axis, unitIds, output, aggregatedLevel, unitNotes }) => {
   const findingUnitIds = new Set((output.findings ?? []).map((f) => f.unitId));
   const assessed = axis.areas.filter((a) => unitIds.includes(a.id));
   const notAssessed = axis.areas.filter((a) => !unitIds.includes(a.id));
@@ -400,6 +425,7 @@ const AxisSection: React.FC<{
               gap={output.gap?.[area.id] ?? null}
               levelCount={axis.levelCount}
               hasFinding={findingUnitIds.has(area.id)}
+              note={unitNotes?.[area.id] ?? null}
             />
           ))}
         </div>
@@ -437,6 +463,12 @@ export interface AssessmentReportDocumentProps {
 export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> = ({ data }) => {
   const { t } = useTranslation();
   const { output, session, approvals, superseded, supersededByOutputId } = data;
+  // Magazyn, z którego przyszedł wynik — patrz
+  // `src/components/assessment/assessmentOutputProjection.ts`. Brak pola =
+  // stary, kanoniczny przypadek (zamrożony Output jądra).
+  const zZapisuSesji = data.source === 'legacy';
+  const unitNotes = data.unitNotes;
+  const narrative = data.narrative ?? null;
 
   const latestApproval = useMemo(() => {
     const approved = approvals.filter((a) => a.decision === 'approved');
@@ -610,10 +642,19 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   const aggregationEntries = aggregation?.byGroup ? Object.entries(aggregation.byGroup) : [];
   const evidenceCompleteness = output.evidenceCompleteness ?? null;
 
-  const lifecycleTone = superseded ? 'neutral' : 'success';
-  const lifecycleLabel = superseded
-    ? t('assessment.report.lifecycleSuperseded', 'Zamrożony — zastąpiony nowszą rewizją')
-    : t('assessment.report.lifecycleFrozen', 'Zamrożony (niezmienny)');
+  // Wynik z magazynu zastanego NIE jest zamrożony — chip nie może twierdzić
+  // inaczej, bo „Zamrożony (niezmienny)" to obietnica, której ten zapis nie
+  // spełnia (ocena wciąż może się zmienić w warsztacie).
+  const lifecycleTone: 'neutral' | 'success' | 'warning' = zZapisuSesji
+    ? 'warning'
+    : superseded
+      ? 'neutral'
+      : 'success';
+  const lifecycleLabel = zZapisuSesji
+    ? t('assessment.report.lifecycleSessionRecord', 'Zapis sesji oceny — jeszcze nie zamrożony')
+    : superseded
+      ? t('assessment.report.lifecycleSuperseded', 'Zamrożony — zastąpiony nowszą rewizją')
+      : t('assessment.report.lifecycleFrozen', 'Zamrożony (niezmienny)');
 
   // ── Formuła właściciela, punkt 2: „siedem osi" ────────────────────────────
   // Rozdziały osi powstają z metodyki (wszystkie 7, także te NIEobjęte tą
@@ -686,6 +727,23 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
         </div>
       ) : null}
 
+      {/* ── Skąd pochodzi ten wynik — gdy NIE z zamrożonego Outputu jądra ──
+          Dokument dla zarządu klienta nie może milczeć o tym, że liczby
+          pochodzą z zapisu sesji, a nie z zamrożonego, niezmiennego wyniku.
+          Baner jest częścią treści, nie ostrzeżeniem technicznym. */}
+      {zZapisuSesji ? (
+        <div className="flex items-start gap-2 rounded-xl border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-xs text-c-text-secondary">
+          <FileWarning size={16} className="mt-0.5 shrink-0 text-c-text-muted" aria-hidden="true" />
+          <p>
+            Ten raport powstał z <strong className="text-c-text">zapisu sesji oceny</strong> — obszary,
+            poziomy obecne i docelowe pochodzą z odpowiedzi zapisanych w warsztacie, a nie z zamrożonego,
+            niezmiennego Outputu jądra metodycznego. Struktura osi, nazwy obszarów i opisy poziomów
+            pochodzą z metodyki w wersji skompilowanej w tej aplikacji. Dopóki wynik nie zostanie
+            zamrożony, liczby mogą się jeszcze zmienić.
+          </p>
+        </div>
+      ) : null}
+
       {/* ── 1. Header ───────────────────────────────────────────────────── */}
       <header className="rounded-2xl border border-c-border-subtle bg-c-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -712,8 +770,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             value={session?.projectId ?? t('assessment.report.noProject', 'Brak przypisanego projektu')}
             mono={!!session?.projectId}
           />
-          <Property label={t('assessment.report.session', 'Sesja')} value={output.sessionId} mono />
-          <Property label={t('assessment.report.outputVersion', 'Wersja Outputu')} value={`v${output.outputVersion}`} />
+          <Property
+            label={t('assessment.report.session', 'Sesja')}
+            value={output.sessionId || '—'}
+            mono={!!output.sessionId}
+          />
+          <Property
+            label={t('assessment.report.outputVersion', 'Wersja Outputu')}
+            value={zZapisuSesji ? '—' : `v${output.outputVersion}`}
+          />
           <Property
             label={t('assessment.report.frozenAt', 'Data zamrożenia')}
             value={formatDateTime(output.frozenAt)}
@@ -903,6 +968,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               unitIds={unitIdsByAxis.get(axis.axisId) ?? []}
               output={output}
               aggregatedLevel={output.aggregation?.byGroup?.[axis.axisId]}
+              unitNotes={unitNotes}
             />
           ))
         )}
@@ -1112,9 +1178,68 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </div>
         </SectionCard>
 
+        {/* ── Treść raportu zapisanego w module Ocena ──────────────────────
+            Wyłącznie dla wyniku z magazynu zastanego i wyłącznie z wiersza
+            `assessment_reports` powiązanego z tą oceną: to są akapity, które
+            KTOŚ napisał i zapisał, przepisane bez zmian. Gdy raportu nie ma
+            albo pole jest puste — blok się nie pojawia, zamiast drukować
+            wypełniacz. */}
+        {narrative &&
+        (narrative.executiveSummary ||
+          narrative.detailedAnalysis ||
+          narrative.recommendations.length > 0) ? (
+          <SectionCard
+            id="tresc-raportu-oceny"
+            title="Treść raportu zapisanego w module Ocena"
+            icon={FileText}
+          >
+            <p className="mb-2.5 text-[11px] text-c-text-muted">
+              Źródło: raport „{narrative.reportName ?? narrative.reportId}"
+              {narrative.reportStatus ? ` (status: ${narrative.reportStatus})` : null} — treść przepisana
+              z zapisu, bez zmian.
+            </p>
+            {narrative.executiveSummary ? (
+              <div className="mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  Streszczenie dla zarządu
+                </p>
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-c-text">
+                  {narrative.executiveSummary}
+                </p>
+              </div>
+            ) : null}
+            {narrative.detailedAnalysis ? (
+              <div className="mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  Analiza szczegółowa
+                </p>
+                <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-c-text">
+                  {narrative.detailedAnalysis}
+                </p>
+              </div>
+            ) : null}
+            {narrative.recommendations.length > 0 ? (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  Zapisane pozycje raportu ({narrative.recommendations.length})
+                </p>
+                <ol className="mt-1 list-decimal space-y-1 pl-5 text-xs text-c-text-secondary">
+                  {narrative.recommendations.map((r, i) => (
+                    <li key={`${i}-${r}`}>{r}</li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+          </SectionCard>
+        ) : null}
+
       <SectionCard id="recommendations" title="Rekomendacje priorytetowe" icon={Lightbulb}>
         {recommendations.length === 0 ? (
-          <p className="text-xs italic text-c-text-muted">Brak rekomendacji w tym Outpucie.</p>
+          <p className="text-xs italic text-c-text-muted">
+            {zZapisuSesji
+              ? 'Rekomendacje per obszar powstają przy zamrożeniu wyniku (wnioski jądra metodycznego). Ta ocena nie została jeszcze zamrożona — powyżej jest to, co zapisano w raporcie oceny, a luki per obszar widać w zestawieniu zbiorczym w rozdziale 2.'
+              : 'Brak rekomendacji w tym Outpucie.'}
+          </p>
         ) : (
           <ol className="space-y-3">
             {recommendations.map((f, idx) => (

@@ -49,8 +49,16 @@ import {
   type MethodOutputListItem,
   type MethodOutputSummary,
 } from '@/method-core/api/methodCoreApi';
+import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
 import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { formatListDate } from '@/utils/listDateFormat';
+
+import {
+  idOcenyZWierszaZastanego,
+  type LegacyAssessmentListRow,
+  projektujOceneZastanaNaWierszListy,
+  scalOcenyZastaneZOutputami,
+} from './assessmentOutputProjection';
 
 import { PreviewPaneAside } from '../shared/PreviewPane';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
@@ -80,6 +88,25 @@ function statusLabel(isPolish: boolean, isSuperseded: boolean | null): string {
   if (isSuperseded === false) return isPolish ? 'Aktualny' : 'Current';
   if (isSuperseded === true) return isPolish ? 'Zastąpiony' : 'Superseded';
   return isPolish ? 'Status nieznany' : 'Status unknown';
+}
+
+/** Oceny z magazynu ZASTANEGO (`GET /api/assessments` → tabela `assessments`),
+ * znormalizowane do kształtu wiersza listy Outputów. Awaria tego wywołania NIE
+ * może wywrócić listy — kanoniczne Outputy muszą się pokazać nawet wtedy. */
+async function pobierzOcenyZastane(): Promise<MethodOutputListItem[]> {
+  try {
+    const res = await fetchWithRetry('/api/assessments', {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { assessments?: LegacyAssessmentListRow[] };
+    return (body.assessments ?? [])
+      .filter((row) => typeof row?.id === 'string' && row.id.length > 0)
+      .map(projektujOceneZastanaNaWierszListy);
+  } catch {
+    return [];
+  }
 }
 
 interface AssessmentOutputsTabProps {
@@ -123,17 +150,24 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
     setLoading(true);
     setHasLoadError(false);
     setForbidden(false);
-    listOutputs()
-      .then((res) => {
+    Promise.all([listOutputs(), pobierzOcenyZastane()])
+      .then(([res, zastane]) => {
         if (cancelled) return;
         // `/api/method/outputs` is org-wide across Assessment, Tools and
         // Audits. This module must not present another module's immutable
         // output as an Assessment result.
         const assessmentOutputs = res.outputs.filter(
           (output) => output.module === 'assessment'
-        ) as OutputRow[];
-        setItems(assessmentOutputs);
-        onCountChangeRef.current?.(assessmentOutputs.length);
+        );
+        // ★ DWA MAGAZYNY. Jądro method-core to nie jedyne miejsce, w którym
+        // moduł Ocena trzyma wyniki — realne oceny właściciela leżą w tabeli
+        // `assessments` (pomiar 06.09: staging, org właściciela — 10 ocen
+        // zastanych wobec 1 Outputu jądra; stanowisko lokalne — 4 wobec 0).
+        // Czytanie samego jądra pokazywało mu pustą listę. Reguła scalania
+        // 1:1 jak w Inicjatywach — patrz `assessmentOutputProjection.ts`.
+        const scalone = scalOcenyZastaneZOutputami(assessmentOutputs, zastane) as OutputRow[];
+        setItems(scalone);
+        onCountChangeRef.current?.(scalone.length);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -170,6 +204,14 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   useEffect(() => {
     if (!selectedOutputId) {
       setSelectedDetail(null);
+      return;
+    }
+    // Wiersz zastany (`ocena~<id>`) nie istnieje w jądrze — pytanie o niego
+    // dałoby pewne 404 i wpis w konsoli. Podgląd korzysta wtedy z danych
+    // wiersza listy, a pełną treść pokazuje dopiero raport.
+    if (idOcenyZWierszaZastanego(selectedOutputId)) {
+      setSelectedDetail(null);
+      setDetailLoading(false);
       return;
     }
     let cancelled = false;
@@ -260,13 +302,20 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         sortable: true,
         render: (row) => {
           const version = row.outputVersion as number | null;
+          const zastany = !!idOcenyZWierszaZastanego(String(row.id));
           const superseded = isRowSuperseded(row as OutputRow);
           return (
             <div className="flex items-center gap-1.5">
               <span className="font-mono text-[11px]">{version != null ? `v${version}` : '—'}</span>
               <StatusChip
-                label={statusLabel(isPolish, superseded)}
-                tone={statusTone(superseded)}
+                label={
+                  zastany
+                    ? isPolish
+                      ? 'Zapis sesji'
+                      : 'Session record'
+                    : statusLabel(isPolish, superseded)
+                }
+                tone={zastany ? 'warning' : statusTone(superseded)}
                 size="sm"
               />
             </div>

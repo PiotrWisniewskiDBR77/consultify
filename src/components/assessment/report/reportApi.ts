@@ -41,7 +41,18 @@ import {
 } from '@/method-core/api/methodCoreApi';
 import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
 
-import type { FullAssessmentOutput, ReportApproval, ReportSessionMeta } from './types';
+import {
+  idOcenyZWierszaZastanego,
+  projektujOceneZastanaNaOutput,
+  projektujRaportZastanyNaTresc,
+  type LegacyAssessmentDetail,
+} from '../assessmentOutputProjection';
+import type {
+  FullAssessmentOutput,
+  LegacyReportNarrative,
+  ReportApproval,
+  ReportSessionMeta,
+} from './types';
 
 export { isAuthError, isOfflineError, MethodCoreApiError };
 
@@ -74,12 +85,64 @@ export interface OutputFetchResult {
   readonly output: FullAssessmentOutput;
   readonly superseded: boolean;
   readonly supersededByOutputId: string | null;
+  /** Z którego magazynu przyszedł ten wynik — patrz
+   * `src/components/assessment/assessmentOutputProjection.ts`. */
+  readonly source: 'method-core' | 'legacy';
+  readonly unitNotes?: Readonly<Record<string, string>>;
+  readonly narrative?: LegacyReportNarrative | null;
+}
+
+/** Pełna ocena zastana z `answers.drd.areas`. Endpoint `/api/assessments/:id`
+ * NIE nadaje się: świadomie wycina `answers_json` (`assessment-hub.routes.ts`),
+ * więc macierz nie miałaby z czego powstać — sprawdzone na żywym serwerze,
+ * nie wyczytane z typów. */
+async function pobierzOceneZastana(assessmentId: string): Promise<LegacyAssessmentDetail | null> {
+  try {
+    const res = await handleJson<{ data?: { assessment?: LegacyAssessmentDetail } }>(
+      fetchWithRetry(`/api/v8/assessment/${encodeURIComponent(assessmentId)}`, {
+        method: 'GET',
+        headers: getHeaders(),
+      })
+    );
+    return res.data?.assessment ?? null;
+  } catch (err) {
+    if (err instanceof MethodCoreApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
+/** Raport zastany powiązany z oceną — treść, nie liczby. Brak raportu to NIE
+ * jest błąd: ocena bez raportu i tak wyświetla macierz oraz rozdziały osi. */
+async function pobierzTrescRaportuZastanego(
+  assessmentId: string
+): Promise<LegacyReportNarrative | null> {
+  try {
+    const lista = await handleJson<{ reports?: { id?: string; assessmentId?: string }[] }>(
+      fetchWithRetry('/api/assessment-reports', { method: 'GET', headers: getHeaders() })
+    );
+    const dopasowany = (lista.reports ?? []).find((r) => r.assessmentId === assessmentId);
+    if (!dopasowany?.id) return null;
+    const szczegol = await handleJson<Record<string, unknown>>(
+      fetchWithRetry(`/api/assessment-reports/${encodeURIComponent(dopasowany.id)}`, {
+        method: 'GET',
+        headers: getHeaders(),
+      })
+    );
+    return projektujRaportZastanyNaTresc(szczegol);
+  } catch {
+    return null;
+  }
 }
 
 /** Fetches the immutable Output. Returns `null` on a 404 ("this id does not
  * exist / does not belong to this org") — the caller renders the honest
  * "not frozen" state, never a substitute calculation. */
 export async function fetchOutputForReport(outputId: string): Promise<OutputFetchResult | null> {
+  // Wiersz z przestrzeni zastanej (`ocena~<id>`) nigdy nie istnieje w jądrze —
+  // pytanie o niego dałoby tylko 404 i mylący log.
+  const idOcenyZastanej = idOcenyZWierszaZastanego(outputId);
+  if (idOcenyZastanej) return pobierzRaportZMagazynuZastanego(idOcenyZastanej);
+
   try {
     const res = await getOutputSummary(outputId);
     // See module header comment — the wire payload is the FULL record.
@@ -87,11 +150,36 @@ export async function fetchOutputForReport(outputId: string): Promise<OutputFetc
       output: res.output as unknown as FullAssessmentOutput,
       superseded: res.superseded,
       supersededByOutputId: res.supersededByOutputId,
+      source: 'method-core',
     };
   } catch (err) {
-    if (err instanceof MethodCoreApiError && err.status === 404) return null;
+    if (err instanceof MethodCoreApiError && err.status === 404) {
+      // Ten sam identyfikator BEZ prefiksu też sprawdzamy w magazynie
+      // zastanym: linki wystawione zanim lista dostała prefiks (a także
+      // ręcznie wklejone id oceny) mają dalej otwierać raport, nie ścianę.
+      return pobierzRaportZMagazynuZastanego(outputId);
+    }
     throw err;
   }
+}
+
+/** Druga połowa projekcji scalającej po stronie trasy raportu: ocena zastana
+ * + jej raport → dokładnie ten sam kształt, co zamrożony Output jądra. */
+async function pobierzRaportZMagazynuZastanego(
+  assessmentId: string
+): Promise<OutputFetchResult | null> {
+  const assessment = await pobierzOceneZastana(assessmentId);
+  if (!assessment) return null;
+  const { output, notatkiObszarow } = projektujOceneZastanaNaOutput(assessment);
+  const narrative = await pobierzTrescRaportuZastanego(assessmentId);
+  return {
+    output,
+    superseded: false,
+    supersededByOutputId: null,
+    source: 'legacy',
+    unitNotes: notatkiObszarow,
+    narrative,
+  };
 }
 
 /** Fetches session metadata for the header block (module, pinned method
