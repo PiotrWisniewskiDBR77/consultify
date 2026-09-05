@@ -102,12 +102,9 @@ import {
   NotebookMentionMenu,
 } from './notebook/NotebookMentionMenu';
 import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
-import { NotebookProgressChip } from './notebook/NotebookProgressChip';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
-import { NotebookToolbar } from './notebook/NotebookToolbar';
-import { NotebookTopicChips } from './notebook/NotebookTopicChips';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
 import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
@@ -3382,9 +3379,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
                 {/* Compact toolbar (text editing only) */}
                 <div className="border-b border-c-border-subtle bg-c-surface/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* Toolbar */}
-                    {editor && <NotebookToolbar editor={editor} />}
+                  {/* ★ ODRZUCENIE WŁAŚCICIELA 05.09 (ekran `notebook-quick-capture`):
+                      „Nie może być tak, że absolutnie większość ekranu to są
+                      przyciski. To wszystko musi być wyrzucone do panelu albo
+                      w ogóle usunięte." Pasek formatowania (21 przycisków) NIE
+                      stoi już nad dokumentem — dokładnie te same akcje
+                      (`NotebookToolbar`, te same identyfikatory
+                      `format:toolbar:*`) renderuje prawy panel w sekcji AKCJE,
+                      a w centrum zostają dymek zaznaczenia
+                      (`NotebookBubbleToolbar`) i menu „/" (`SlashMenu`).
+                      W tym pasku zostają wyłącznie dwa wejścia: przełącznik
+                      prawego panelu i kebab notatki. */}
+                  <div className="flex items-center gap-2 flex-wrap px-3 py-1.5">
                     <div
                       className="ml-auto flex shrink-0 items-center gap-1"
                       data-testid="notebook-toolbar-right-actions"
@@ -3906,74 +3912,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       {/* Subtle divider */}
                       <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
 
-                      <NotebookProgressChip
-                        isPolish={isPolish}
-                        hasPendingAIProposals={pendingAIProposals.length > 0}
-                        canConvertDeliverable={canConvertDeliverable}
-                        convertBlockedReason={deliverableGuardMessage}
-                        onOpenAttachments={() =>
-                          attachmentsSectionRef.current?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start',
-                          })
-                        }
-                        onCreateAIProposal={() => setAiCommand('action')}
-                        onReviewAIProposal={() =>
-                          proposalReviewRef.current?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start',
-                          })
-                        }
-                        onConvert={() => void handleConvertFromPanel('report')}
-                        onHandoffInitiatives={handleHandoffInitiatives}
-                      />
+                      {/* Pasek przepływu (Źródła › AI › Przegląd › Zamień ›
+                          Inicjatywy) — 5 przycisków — przeniesiony do prawego
+                          panelu (sekcja AKCJE). Ten sam komponent
+                          `NotebookProgressChip`, te same handlery. */}
                     </div>
 
-                    {activePage && (
-                      <div className="mb-3">
-                        <NotebookTopicChips
-                          noteId={activePage.id}
-                          canEdit={true}
-                          onOpenTopic={(topicId) => setOpenTopicId(topicId)}
-                        />
-                      </div>
-                    )}
+                    {/* Chipy tematów — metadana o notatce, nie treść — stoją
+                        teraz w prawym panelu (WŁAŚCIWOŚCI → Tematy). */}
 
-                    {headingOutline.length > 0 && (
-                      <div className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3">
-                        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                          {t('notebook.notebookContent.label70', 'Mini outline')}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {headingOutline.map((heading, index) => (
-                            <button
-                              key={`${heading.level}-${heading.text}-${index}`}
-                              type="button"
-                              onClick={() => {
-                                if (!editor) return;
-                                let selectionPos = 1;
-                                editor.state.doc.descendants((node, pos) => {
-                                  if (
-                                    node.type.name === 'heading' &&
-                                    Number(node.attrs?.level || 1) === heading.level &&
-                                    extractText(node.toJSON()) === heading.text
-                                  ) {
-                                    selectionPos = pos + 1;
-                                    return false;
-                                  }
-                                  return true;
-                                });
-                                editor.chain().focus().setTextSelection(selectionPos).run();
-                                editor.view.dispatch(editor.state.tr.scrollIntoView());
-                              }}
-                              className="rounded-full bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-                            >
-                              {`H${heading.level} ${heading.text}`}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Mini-spis („Mini outline") — nawigacja po nagłówkach —
+                        stoi teraz w prawym panelu (WŁAŚCIWOŚCI → Struktura),
+                        gdzie już żyje `NotebookOutlineList`. */}
 
                     {proposalLoadError ? (
                       <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
@@ -4416,6 +4366,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               onShare={handleShareEmail}
               onToggleVersionHistory={() => setShowVersionHistory((value) => !value)}
               versionHistoryOpen={showVersionHistory}
+              // ★ 05.09 — to, co zostało zdjęte ze środka ekranu, dostaje
+              // TE SAME handlery tutaj (żadnej drugiej implementacji).
+              hasPendingAIProposals={pendingAIProposals.length > 0}
+              onOpenSources={() =>
+                attachmentsSectionRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                })
+              }
+              onCreateAIProposal={() => setAiCommand('action')}
+              onReviewAIProposal={() =>
+                proposalReviewRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                })
+              }
+              onHandoffInitiatives={handleHandoffInitiatives}
+              onOpenTopic={(topicId) => setOpenTopicId(topicId)}
             />
           )}
         </div>

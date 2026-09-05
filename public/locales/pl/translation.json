@@ -35707,7 +35707,12 @@
       "technicalLineage": "Pochodzenie techniczne",
       "openTeresa": "Otwórz Teresę",
       "eyebrow": "Notebook",
-      "panelTitle": "Szczegóły notatki"
+      "panelTitle": "Szczegóły notatki",
+      "formatting": "Formatowanie",
+      "workflow": "Przepływ pracy",
+      "topics": "Tematy",
+      "structure": "Struktura notatki",
+      "structureEmpty": "Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek."
     },
     "slashMenu": {
       "receiptUnavailable": "Niedostępne, dopóki serwer nie zwróci trwałego potwierdzenia"

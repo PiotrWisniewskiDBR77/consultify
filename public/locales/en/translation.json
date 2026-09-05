@@ -33151,7 +33151,12 @@
       "ownerYou": "You",
       "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt.",
       "eyebrow": "Notebook",
-      "panelTitle": "Note details"
+      "panelTitle": "Note details",
+      "formatting": "Formatting",
+      "workflow": "Workflow",
+      "topics": "Topics",
+      "structure": "Note structure",
+      "structureEmpty": "This note has no headings yet — the structure appears once you add one."
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
