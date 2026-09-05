@@ -144,6 +144,7 @@ describe.skipIf(!enabled).sequential('Day 314 — the eight 500 routes on real P
   }, 60_000);
 
   afterAll(async () => {
+    await pool?.query(`DELETE FROM imported_reports WHERE organization_id IN ($1,$2)`, [orgUuid, orgLegacy]);
     await pool?.query(`DELETE FROM billing_webhook_events WHERE organization_id IN ($1,$2)`, [orgUuid, orgLegacy]);
     await pool?.query(`DELETE FROM knowledge_graph_entities WHERE organization_id IN ($1,$2)`, [orgUuid, orgLegacy]);
     await pool?.query(`DELETE FROM organization_members WHERE organization_id IN ($1,$2)`, [orgUuid, orgLegacy]);
@@ -275,6 +276,35 @@ describe.skipIf(!enabled).sequential('Day 314 — the eight 500 routes on real P
       .set('Authorization', `Bearer ${token(ownerUuid, orgUuid, 'OWNER')}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.sources)).toBe(true);
+  });
+
+  // Day 313 closed `coverage_percent`; the same divergence between
+  // DatabaseInitializer's runtime DDL and the migration set left
+  // canonical_markdown / auto_summary behind, and the sibling by-id route reads
+  // both. On a database built from migrations it answered 500.
+  it('GET /api/report-builder/sources/upload_bundle/:sourceId reads the canonical columns', async () => {
+    const importId = `d314-import-${suffix}`;
+    await pool.query(
+      `INSERT INTO imported_reports(id,organization_id,source_file_name,source_format,detected_framework,
+                                    status,canonical_markdown,auto_summary,coverage_percent,created_at,updated_at)
+       VALUES($1,$2,'day314.pdf','pdf','UPLOAD','ready_for_review','# Day 314','Streszczenie',42,now(),now())`,
+      [importId, orgUuid]
+    );
+
+    const res = await request(reportBuilderApp)
+      .get(`/api/report-builder/sources/upload_bundle/${importId}`)
+      .set('Authorization', `Bearer ${token(ownerUuid, orgUuid, 'OWNER')}`);
+    expect(res.status).toBe(200);
+    expect(res.body.canonicalMarkdown).toBe('# Day 314');
+    expect(res.body.summary).toBe('Streszczenie');
+    expect(res.body.coveragePercent).toBe(42);
+
+    // And the list route sees the same row.
+    const list = await request(reportBuilderApp)
+      .get('/api/report-builder/sources/upload_bundle')
+      .set('Authorization', `Bearer ${token(ownerUuid, orgUuid, 'OWNER')}`);
+    expect(list.status).toBe(200);
+    expect(list.body.sources.map((x: { id: string }) => x.id)).toContain(importId);
   });
 
   it('GET /api/admin/service-accounts answers without a driver error for both tenant shapes', async () => {
