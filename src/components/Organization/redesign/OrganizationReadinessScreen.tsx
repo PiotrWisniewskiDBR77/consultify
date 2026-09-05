@@ -50,9 +50,11 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../../../lib/utils';
 import { Api } from '../../../services/api';
 import {
+  claimValueKey,
   type GovernedClaim,
   type GovernedSnapshotVersion,
   organizationGovernedContextApi,
+  summarizeClaimValue,
 } from '../../../services/organizationGovernedContextApi';
 import { useAppStore } from '../../../store/useAppStore';
 import {
@@ -72,15 +74,6 @@ interface ReadinessDimension {
   tone: OrgStatusTone;
   actionLabel?: string;
   onAction?: () => void;
-}
-
-function renderClaimValue(value: unknown): string {
-  if (typeof value === 'string') return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }
 
 function daysSince(iso: string): number {
@@ -146,11 +139,22 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       byPath.set(claim.claimPath, [...(byPath.get(claim.claimPath) ?? []), claim])
     );
     return [...byPath.entries()]
-      .map(([path, entries]) => ({
-        path,
-        entries,
-        values: [...new Set(entries.map((entry) => renderClaimValue(entry.value)))],
-      }))
+      .map(([path, entries]) => {
+        // Rozróżniaj wartości po kluczu STRUKTURALNYM (`claimValueKey`), nie
+        // po tekście do wyświetlenia — dwa różne złożone obiekty bez pola
+        // title/name/label mogłyby dać ten sam czytelny opis i ukryć
+        // prawdziwy konflikt.
+        const uniqueByKey = new Map<string, unknown>();
+        entries.forEach((entry) => {
+          const key = claimValueKey(entry.value);
+          if (!uniqueByKey.has(key)) uniqueByKey.set(key, entry.value);
+        });
+        return {
+          path,
+          entries,
+          values: [...uniqueByKey.values()].map(summarizeClaimValue),
+        };
+      })
       .filter((entry) => entry.values.length > 1);
   }, [claims]);
 
