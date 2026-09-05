@@ -110,6 +110,7 @@ export function JedenPrawyPanel({ rekord, kontekst, className }: JedenPrawyPanel
       <PreviewPaneShell
         title={panel.zakladka === 'teresa' ? t('list.rightPanel.tabTeresa', 'Teresa') : props?.title ?? t('list.rightPanel.tabRecord', 'Record')}
         onClose={zamknij}
+        closeLabel={t('list.rightPanel.close', 'Close panel')}
         bodyClassName="p-4"
         actions={
           <>

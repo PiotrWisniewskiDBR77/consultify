@@ -12,6 +12,7 @@ export interface PreviewPaneShellProps {
   kicker?: string;
   title: string;
   onClose?: () => void;
+  closeLabel?: string;
   actions?: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export interface PreviewPaneShellProps {
 export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
   title,
   onClose,
+  closeLabel,
   actions,
   footer,
   children,
@@ -71,8 +73,8 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
               <button
                 onClick={onClose}
                 className="inline-flex items-center justify-center h-9 w-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                aria-label={t('common.close', 'Close')}
-                title={t('common.close', 'Close')}
+                aria-label={closeLabel ?? t('common.close', 'Close')}
+                title={closeLabel ?? t('common.close', 'Close')}
               >
                 <X size={16} />
               </button>

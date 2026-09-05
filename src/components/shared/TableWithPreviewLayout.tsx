@@ -712,6 +712,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 <PreviewPaneShell
                   title={tytulPanelu}
                   onClose={handleClose}
+                  closeLabel={t('list.rightPanel.close', 'Close panel')}
                   actions={previewActions}
                   footer={
                     zakladka === 'rekord' && selectedItem
@@ -758,6 +759,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               <PreviewPaneShell
                 title={tytulPanelu}
                 onClose={handleClose}
+                closeLabel={t('list.rightPanel.close', 'Close panel')}
                 actions={previewActions}
                 footer={
                   zakladka === 'rekord' && selectedItem
