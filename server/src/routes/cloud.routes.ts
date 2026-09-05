@@ -40,6 +40,14 @@ const invalidateCachedSources = (organizationId: string) => {
   cloudSourcesCache.delete(organizationId);
 };
 
+const OAUTH_CLOUD_PROVIDERS = new Set(['google_drive', 'onedrive', 'dropbox']);
+
+async function hasActiveCloudToken(userId: string, provider: string): Promise<boolean> {
+  if (!OAUTH_CLOUD_PROVIDERS.has(provider)) return false;
+  const { getStoredToken } = await import('../services/integrationOAuthEngine.js');
+  return (await getStoredToken(userId, provider)) !== null;
+}
+
 /**
  * GET /api/cloud/sources
  * List all cloud sources for the user's organization
@@ -87,9 +95,22 @@ router.post('/sources', verifyToken, async (req: AuthRequest, res: Response) => 
       return res.status(400).json({ error: 'Organization and user context required' });
     }
 
-    const { provider, name, accessToken, refreshToken, rootFolderId, settings } = req.body;
+    const { provider, name, rootFolderId, settings } = req.body;
     if (!provider || !name) {
       return res.status(400).json({ error: 'Provider and name are required' });
+    }
+
+    if (!OAUTH_CLOUD_PROVIDERS.has(provider)) {
+      return res.status(400).json({
+        error: 'Cloud provider is not supported',
+        code: 'CLOUD_PROVIDER_UNSUPPORTED',
+      });
+    }
+    if (!(await hasActiveCloudToken(userId, provider))) {
+      return res.status(409).json({
+        error: 'Cloud provider is not connected',
+        code: 'CLOUD_PROVIDER_NOT_CONNECTED',
+      });
     }
 
     invalidateCachedSources(organizationId);
@@ -100,8 +121,8 @@ router.post('/sources', verifyToken, async (req: AuthRequest, res: Response) => 
       userId,
       provider,
       name,
-      accessToken,
-      refreshToken,
+      accessToken: undefined,
+      refreshToken: undefined,
       rootFolderId,
       settings,
     });
