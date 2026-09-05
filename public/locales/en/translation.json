@@ -1,4 +1,10 @@
 {
+  "notFoundPage": {
+    "title": "Page not found",
+    "message": "The address you followed doesn't exist or has moved.",
+    "backToChat": "Back to Chat",
+    "goBack": "Go back"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Actions",

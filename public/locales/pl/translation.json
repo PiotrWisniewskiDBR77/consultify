@@ -1,4 +1,10 @@
 {
+  "notFoundPage": {
+    "title": "Nie ma takiej strony",
+    "message": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",
+    "backToChat": "Wróć do Czatu",
+    "goBack": "Wstecz"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Akcje",

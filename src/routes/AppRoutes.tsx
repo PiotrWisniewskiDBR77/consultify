@@ -16,6 +16,7 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
+import { NotFoundPage } from '@/components/NotFoundPage';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
@@ -3806,14 +3807,21 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* 404 - Redirect based on auth status */}
+        {/* 404 — WAŻNY RAPORT_B #4: nieznana trasa dostaje realny ekran „Nie ma
+            takiej strony" po polsku, nie ciche przekierowanie. Zalogowany widzi
+            go WEWNĄTRZ powłoki aplikacji (MainLayout); niezalogowany — bez
+            powłoki, samodzielnie. Wszystkie znane legacy-przekierowania mają
+            własne dedykowane <Route> WYŻEJ w tym pliku i nigdy tu nie trafiają —
+            ten wildcard łapie WYŁĄCZNIE naprawdę nieznane adresy. */}
         <Route
           path="*"
           element={
             currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
+              <MainLayout breadcrumbs={breadcrumbs || [t('notFoundPage.title', 'Nie ma takiej strony')]}>
+                <NotFoundPage />
+              </MainLayout>
             ) : (
-              <Navigate to={ROUTES.WELCOME} replace />
+              <NotFoundPage />
             )
           }
         />
