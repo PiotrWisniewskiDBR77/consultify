@@ -45,6 +45,7 @@ import { AppView } from '@/types';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import { exportToPDF } from '@/utils/pdfExport';
 
+import ToolOutputsPanel from './report/ToolOutputsPanel';
 import { buildToolSessionOverflowItems } from './toolSessionOverflowItems';
 
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
@@ -1538,6 +1539,31 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
     const outputsSection = (
       <div className="space-y-8">
+        {/*
+          Odbiór na żywo 05.09 (04-narzędzia, defekt 6 „tools-swot-report"):
+          raport SWOT z zatwierdzonego obrazu (pole strategiczne 2×2, napięcia
+          z wagami, dowody FAKT/HIPOTEZA, bloki CO JEST / CO TO ZNACZY /
+          CO ROBIĆ NAJPIERW / JAKI EFEKT + TRADE-OFF) ISTNIEJE w kodzie:
+          renderuje go `ToolReportView` z dokumentu produkowanego przez
+          `renderToolReport` (src/toolOutputs/renderReport.ts) z zatwierdzonego
+          Outputu. Listuje je `ToolOutputsPanel`.
+
+          Zmierzony brak PRZEWODU: `ToolOutputsPanel` był renderowany wyłącznie
+          w `ToolWorkspace`, a hub narzędzi dla sesji z własnym warsztatem
+          renderuje `ToolDocumentView` (DiscoveryToolsHub.tsx ~3800).
+          `ToolWorkspace` zostaje dziś tylko w `OperationalToolsView`, którego
+          NIE MA w AppRoutes.tsx — czyli z realnej sesji nie dało się dojść do
+          raportu żadną trasą. Ten panel to ten sam, read-only widok, pod tą
+          samą bramką co w ToolWorkspace (APPROVED + id sesji).
+        */}
+        {toolStatus === 'APPROVED' && toolSessionId ? (
+          <div className="space-y-3" data-testid="tool-session-outputs-panel">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {isPolish ? 'Zatwierdzone rezultaty' : 'Approved outputs'}
+            </h2>
+            <ToolOutputsPanel toolSessionId={toolSessionId} />
+          </div>
+        ) : null}
         {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -2137,6 +2163,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     toolPermissions.canApproveTool,
     toolPermissions.canGenerate,
     toolPermissions.canRequestReview,
+    toolSessionId,
     toolStatus,
     toolType,
   ]);
