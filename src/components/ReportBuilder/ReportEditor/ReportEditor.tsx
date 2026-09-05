@@ -20,7 +20,7 @@ import {
   Layers,
   Loader2,
   Monitor,
-  MoreHorizontal,
+  MoreVertical,
   Palette,
   Plus,
   Presentation,

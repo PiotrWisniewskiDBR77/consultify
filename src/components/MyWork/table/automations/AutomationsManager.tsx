@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   Clock,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   Pause,
   Pencil,
   Play,
@@ -521,7 +521,7 @@ export const AutomationsManager: React.FC<AutomationsManagerProps> = ({
                     onClick={() => setMenuOpen(menuOpen === auto.id ? null : auto.id)}
                     className="rounded-lg p-1.5 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-muted"
                   >
-                    <MoreHorizontal size={16} />
+                    <MoreVertical size={16} />
                   </button>
 
                   {menuOpen === auto.id && (

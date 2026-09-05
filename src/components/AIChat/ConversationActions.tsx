@@ -12,7 +12,7 @@ import {
   Folder,
   FolderPlus,
   Link2,
-  MoreHorizontal,
+  MoreVertical,
   Star,
   StarOff,
   Trash2,
@@ -149,7 +149,7 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                     transition-colors
                 "
       >
-        <MoreHorizontal size={16} className="pointer-events-none" />
+        <MoreVertical size={16} className="pointer-events-none" />
       </button>
 
       {/* Dropdown Menu */}

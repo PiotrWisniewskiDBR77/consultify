@@ -1,4 +1,4 @@
-import { GripVertical, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, MoreVertical, Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { ReportBlock, TableBlockContent } from '../../../types';

@@ -11,7 +11,7 @@ import {
   GripVertical,
   Layers,
   Map,
-  MoreHorizontal,
+  MoreVertical,
   Package,
   Plus,
   Settings,

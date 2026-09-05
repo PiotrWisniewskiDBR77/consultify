@@ -25,7 +25,7 @@ import {
   Folder,
   FolderInput,
   FolderPlus,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   RefreshCw,
   Search,
@@ -360,7 +360,7 @@ const FolderSection: React.FC<FolderSectionProps> = ({
                           }}
                           className="opacity-0 group-hover:opacity-100 p-0.5 text-c-text-muted hover:text-c-text rounded transition-all"
                         >
-                          <MoreHorizontal size={13} />
+                          <MoreVertical size={13} />
                         </button>
 
                         {/* Project Menu */}

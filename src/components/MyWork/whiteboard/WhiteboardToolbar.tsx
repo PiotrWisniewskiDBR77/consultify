@@ -9,7 +9,7 @@ import {
   LayoutGrid,
   Link2,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   Redo2,
   Save,
   Shapes,
@@ -153,7 +153,7 @@ const ToolbarOverflow: React.FC<{ label: string; items: OverflowItem[] }> = ({ l
             : 'text-c-text-secondary hover:bg-c-surface-raised'
         }`}
       >
-        <MoreHorizontal size={14} />
+        <MoreVertical size={14} />
       </button>
       {open &&
         coords &&

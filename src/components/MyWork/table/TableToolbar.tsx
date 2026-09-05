@@ -36,7 +36,7 @@ import {
   Link2,
   Loader2,
   Mic,
-  MoreHorizontal,
+  MoreVertical,
   Network,
   Paintbrush,
   Palette,
@@ -325,7 +325,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
   // rather than tripled across three menus. `showToolsMenu` state removed
   // with it.
   // Editor Shell Canon §2 GÓRNA: the desktop secondary tools collapse under a
-  // single overflow "…" (MoreHorizontal) button instead of a flat 15-icon row.
+  // single overflow "…" (MoreVertical) button instead of a flat 15-icon row.
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const [aiSchemaSheetOpen, setAiSchemaSheetOpen] = useState(false);
@@ -850,7 +850,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           title={t('ideas.table.toolbar.more', 'More')}
           className="!px-2"
         >
-          <MoreHorizontal size={14} />
+          <MoreVertical size={14} />
         </ToolbarIconButton>
         {showMoreMenu && (
           <div

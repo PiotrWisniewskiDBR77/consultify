@@ -30,7 +30,7 @@ import {
   Loader2,
   MessageCircle,
   Minus,
-  MoreHorizontal,
+  MoreVertical,
   MoveRight,
   Palette,
   Plus,
@@ -3031,7 +3031,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                       {
                         id: 'dashed',
                         label: t('canvasEditBar.lineDashed', 'Kreskowana'),
-                        icon: MoreHorizontal,
+                        icon: MoreVertical,
                         onClick: () => handleEdgeStyleOverrideChange(edgeId, 'dashed'),
                       },
                     ]}

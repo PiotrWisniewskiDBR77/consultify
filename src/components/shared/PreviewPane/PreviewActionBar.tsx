@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -147,7 +147,7 @@ const OverflowTrigger: React.FC<{
         aria-expanded={open}
         className={actionPillClass('neutral', 'h-full')}
       >
-        <MoreHorizontal size={14} />
+        <MoreVertical size={14} />
       </button>
       {open && typeof document !== 'undefined'
         ? createPortal(

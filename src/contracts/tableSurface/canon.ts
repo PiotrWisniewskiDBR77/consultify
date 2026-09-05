@@ -230,7 +230,7 @@ export const CANON_ACTION_ICON = {
   report: 'FileText',
   presentation: 'Presentation',
   table: 'Table',
-  /** Trigger kebaba (§7 Trigger — glyph `MoreVertical`, nie `MoreHorizontal`). */
+  /** Trigger kebaba (§7 Trigger — glyph `MoreVertical`, nie `MoreVertical`). */
   rowMenuTrigger: 'MoreVertical',
 } as const;
 

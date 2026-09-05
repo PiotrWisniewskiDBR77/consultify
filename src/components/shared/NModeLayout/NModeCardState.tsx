@@ -39,7 +39,7 @@ import {
   Eye,
   History,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   RotateCw,
   Sparkles,
@@ -235,7 +235,7 @@ const CardKebab: React.FC<CardKebabProps> = ({ onClear, onHistory, onHide, t }) 
         aria-label={t('sharedComponents.nModeCardState.moreCardActionsLabel')}
         className="inline-flex items-center justify-center p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
-        <MoreHorizontal size={15} />
+        <MoreVertical size={15} />
       </button>
       {open && (
         <div

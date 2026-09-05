@@ -18,7 +18,7 @@ vi.mock('@/store/useAppStore', () => ({
 import { WorkCanvasDocumentPanel } from '../../../src/components/AIChat/WorkCanvasDocumentPanel';
 
 // The Dock/Markdown view toggle moved into the Canvas menu (the
-// "Canvas menu" / MoreHorizontal control) after the rich-editor rollout.
+// "Canvas menu" / MoreVertical control) after the rich-editor rollout.
 // These helpers open that menu (if needed) before flipping the view mode so
 // the tests interact with the current UI rather than a stale top-level toggle.
 async function switchView(
@@ -111,7 +111,7 @@ describe('WorkCanvasDocumentPanel', () => {
     expect(screen.queryByText('Start pracy')).not.toBeInTheDocument();
 
     // The view toggle, capability badges and starter templates now live inside
-    // the Canvas menu (the "Canvas menu" / MoreHorizontal control).
+    // the Canvas menu (the "Canvas menu" / MoreVertical control).
     await user.click(screen.getByRole('button', { name: /Canvas menu/i }));
     expect(await screen.findByTestId('canvas-view-actions')).toBeInTheDocument();
     expect(screen.getByTestId('canvas-template-capability-document')).toHaveTextContent('Real');

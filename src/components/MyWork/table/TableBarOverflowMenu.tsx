@@ -14,7 +14,7 @@
  *
  * Tokeny wyłącznie `c-*`; zero crimson poza `danger` (semantyka krytyczna).
  */
-import { type LucideIcon, MoreHorizontal } from 'lucide-react';
+import { type LucideIcon, MoreVertical } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 export interface TableBarOverflowItem {
@@ -89,7 +89,7 @@ export const TableBarOverflowMenu: React.FC<TableBarOverflowMenuProps> = ({
             : 'text-c-text-muted hover:bg-c-surface-raised hover:text-c-text-secondary'
         }`}
       >
-        <MoreHorizontal size={14} />
+        <MoreVertical size={14} />
       </button>
       {open && (
         <div

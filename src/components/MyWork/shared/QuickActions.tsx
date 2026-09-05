@@ -13,7 +13,7 @@ import {
   Clock,
   Copy,
   Flag,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Play,
   Trash2,
@@ -375,7 +375,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           className="p-1.5 rounded-lg text-slate-600 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-all"
           title={t('myWork.quickActions.title3', 'More actions')}
         >
-          <MoreHorizontal size={16} />
+          <MoreVertical size={16} />
         </button>
 
         <AnimatePresence>

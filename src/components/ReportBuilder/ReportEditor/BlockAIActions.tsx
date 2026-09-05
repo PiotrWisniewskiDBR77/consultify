@@ -17,7 +17,7 @@ import {
   Loader2,
   MessageCircle,
   Minimize2,
-  MoreHorizontal,
+  MoreVertical,
   RefreshCw,
   Send,
   Sparkles,
@@ -158,7 +158,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   // Format
   {
     id: 'to_bullets',
-    icon: <MoreHorizontal className="w-4 h-4" />,
+    icon: <MoreVertical className="w-4 h-4" />,
     label: 'Convert to Bullets',
     labelPl: 'Zamień na punkty',
     instruction:

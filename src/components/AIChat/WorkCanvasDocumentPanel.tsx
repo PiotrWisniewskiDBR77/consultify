@@ -11,7 +11,7 @@ import {
   Gavel,
   History,
   Lightbulb,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   Presentation,
   RefreshCw,
@@ -3790,7 +3790,7 @@ function WorkCanvasMarkdownDocumentPanel({
               aria-expanded={isDiagnosticsOpen}
               title={t('canvas.panel.menuAria', 'Canvas menu')}
             >
-              <MoreHorizontal size={15} />
+              <MoreVertical size={15} />
             </button>
             {isDiagnosticsOpen ? (
               <div

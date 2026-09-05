@@ -20,7 +20,7 @@ import {
   ListTree,
   Loader2,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   RotateCcw,
   Share2,
   ShieldCheck,
@@ -663,7 +663,7 @@ function OutlinePanel({
                 }
                 className="absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-md text-c-text-secondary opacity-0 transition-opacity hover:bg-c-surface-raised hover:text-c-text focus:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100"
               >
-                <MoreHorizontal size={15} aria-hidden="true" />
+                <MoreVertical size={15} aria-hidden="true" />
               </button>
               {openSectionMenuId === section.sectionId ? (
                 <div
@@ -2880,7 +2880,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       {
         id: 'more',
         label: t('documentStudio.panel.toolMore', 'More tools'),
-        icon: MoreHorizontal,
+        icon: MoreVertical,
       },
     ],
     [primaryRightRailTools, t]

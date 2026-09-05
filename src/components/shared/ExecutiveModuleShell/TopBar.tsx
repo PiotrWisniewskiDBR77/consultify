@@ -18,7 +18,7 @@
  *     equal-weight buttons.
  */
 
-import { ArrowLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -275,7 +275,7 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
         aria-expanded={open}
         data-testid="mels-topbar-overflow"
       >
-        <MoreHorizontal size={16} aria-hidden="true" />
+        <MoreVertical size={16} aria-hidden="true" />
       </button>
       {open ? (
         <div

@@ -23,7 +23,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react';
-import { GitFork, Monitor, MoreHorizontal } from 'lucide-react';
+import { GitFork, Monitor, MoreVertical } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -191,7 +191,7 @@ const OverflowTrigger: React.FC<{
       aria-expanded={open}
       className={`${BASE} p-1.5 text-c-text-muted hover:bg-state-hover focus-visible:ring-c-focus`}
     >
-      <MoreHorizontal size={14} />
+      <MoreVertical size={14} />
     </button>
     {open ? (
       <>

@@ -27,7 +27,7 @@ import {
   LayoutGrid,
   LogOut,
   MessageSquareText,
-  MoreHorizontal,
+  MoreVertical,
   FileText,
   Settings,
 } from 'lucide-react';
@@ -300,7 +300,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             aria-label={t('methodWorkspace.moreOptions', 'Więcej opcji')}
             className="rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
-            <MoreHorizontal size={16} />
+            <MoreVertical size={16} />
           </button>
           {menu3Open && (
             <div

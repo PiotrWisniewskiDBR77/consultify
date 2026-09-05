@@ -1,4 +1,4 @@
-import { MoreHorizontal, X } from 'lucide-react';
+import { MoreVertical, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 interface MobileToolbarMenuProps {
@@ -27,7 +27,7 @@ export const MobileToolbarMenu: React.FC<MobileToolbarMenuProps> = ({ children }
         className="p-2 rounded-lg bg-c-surface-raised text-c-text-secondary transition-colors"
         aria-label={open ? 'Close menu' : 'More actions'}
       >
-        {open ? <X size={16} /> : <MoreHorizontal size={16} />}
+        {open ? <X size={16} /> : <MoreVertical size={16} />}
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 z-overlay bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] shadow-xl p-2 min-w-[200px] max-h-[70vh] overflow-y-auto">

@@ -135,7 +135,7 @@ import {
   Link2,
   ListChecks,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Paintbrush,
   Plus,
   Rocket,
@@ -848,7 +848,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     flat.push({
       id: 'ctx_group_more',
       label: t('myWorkMindmap.ctxMenu.group.more', 'More'),
-      icon: <MoreHorizontal size={14} />,
+      icon: <MoreVertical size={14} />,
       disabled: moreChildren.every((c) => c.disabled),
       onSelect: () => undefined,
       children: moreChildren,

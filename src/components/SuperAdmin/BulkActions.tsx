@@ -7,7 +7,7 @@ import {
   Download,
   FolderOpen,
   Globe,
-  MoreHorizontal,
+  MoreVertical,
   RefreshCw,
   Send,
   Square,
@@ -299,7 +299,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
             {/* More Actions Dropdown */}
             <div className="relative">
               <ActionButton
-                icon={<MoreHorizontal size={16} />}
+                icon={<MoreVertical size={16} />}
                 label=""
                 onClick={() => setShowMoreActions(!showMoreActions)}
                 disabled={isProcessing}

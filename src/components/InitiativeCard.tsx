@@ -8,7 +8,7 @@ import {
   Flag,
   Globe,
   Layers,
-  MoreHorizontal,
+  MoreVertical,
   Play,
   RefreshCw,
   Target,

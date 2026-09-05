@@ -35,7 +35,7 @@
  * Model akcji po stronie fasady należy do `StandardTable` i NIE jest tu ruszany.
  */
 
-import { ChevronDown, ChevronRight, MoreHorizontal, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -531,7 +531,9 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   // triggerem — ikona pozycji menu jest kanoniczne 16 px niezależnie od wariantu.
   const iconSize = size === 'sm' ? 16 : 16;
   const buttonHit = 'h-8 w-8 inline-flex items-center justify-center';
-  const MenuIcon = iconVariant === 'vertical' ? MoreVertical : MoreHorizontal;
+  // Wlasciciel 05.09: kebaby w calej aplikacji PIONOWE — wariant 'horizontal' zachowany w API, ale rysuje te sama ikone.
+  void iconVariant;
+  const MenuIcon = MoreVertical;
 
   // §7: wszystkie zwykłe akcje mają ten sam neutralny kolor; WYŁĄCZNIE danger
   // jest czerwony. `primary` nie wyróżnia się kolorem w menu wiersza.

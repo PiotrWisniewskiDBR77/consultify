@@ -8,7 +8,7 @@ import {
   Link2,
   Loader2,
   Minus,
-  MoreHorizontal,
+  MoreVertical,
   Scale,
   Target,
   X,
@@ -569,7 +569,7 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
           title={t('myWorkNotebook.contextPanel.actions')}
           onClick={onInsert}
         >
-          <MoreHorizontal size={14} />
+          <MoreVertical size={14} />
         </button>
       </div>
       <div className="mt-2 flex items-center gap-2">

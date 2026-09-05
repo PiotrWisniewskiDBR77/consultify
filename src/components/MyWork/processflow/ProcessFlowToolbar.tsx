@@ -6,7 +6,7 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   Redo2,
   Rocket,
@@ -543,7 +543,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               title={t('processFlow.toolbar.moreActions', 'More actions')}
               aria-label={t('processFlow.toolbar.moreActions', 'More actions')}
             >
-              <MoreHorizontal size={16} />
+              <MoreVertical size={16} />
               {t('processFlow.toolbar.more', 'More')}
             </button>
             {overflowOpen && (

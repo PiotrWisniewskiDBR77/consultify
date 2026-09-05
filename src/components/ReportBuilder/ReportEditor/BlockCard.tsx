@@ -35,7 +35,7 @@ import {
   MessageCircle,
   MessageSquarePlus,
   Minimize2,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Play,
   Plus,
@@ -1563,7 +1563,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
             }}
             className="p-1 text-c-text-secondary hover:text-c-text-secondary hover:bg-c-surface-raised rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <MoreVertical className="w-4 h-4" />
           </button>
           {showMenu && (
             <div className="absolute right-0 top-full mt-1 w-40 bg-c-surface rounded-lg shadow-lg border border-slate-200/60 dark:border-white/[0.03] py-1 z-20">

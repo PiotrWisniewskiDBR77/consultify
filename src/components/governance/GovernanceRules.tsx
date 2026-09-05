@@ -1,4 +1,4 @@
-import { Gavel, MoreHorizontal, Plus, Search } from 'lucide-react';
+import { Gavel, MoreVertical, Plus, Search } from 'lucide-react';
 import React from 'react';
 
 export const GovernanceRules: React.FC = () => {
@@ -67,7 +67,7 @@ export const GovernanceRules: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button className="text-gray-600 hover:text-gray-600 dark:text-gray-400 p-1">
-                      <MoreHorizontal className="w-5 h-5" />
+                      <MoreVertical className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>

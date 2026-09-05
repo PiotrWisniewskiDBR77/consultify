@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   Clock,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Reply,
   Send,
   Trash2,
@@ -103,7 +103,7 @@ const CommentItem: React.FC<{
               aria-label="More options"
               className="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-200 dark:hover:bg-navy-700 rounded transition-all"
             >
-              <MoreHorizontal size={16} className="text-slate-600 dark:text-slate-500" />
+              <MoreVertical size={16} className="text-slate-600 dark:text-slate-500" />
             </button>
 
             {showMenu && (

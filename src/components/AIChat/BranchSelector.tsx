@@ -23,7 +23,7 @@ import {
   ChevronDown,
   GitBranch,
   GitFork,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -175,7 +175,7 @@ const BranchItem: React.FC<BranchItemProps> = ({
             aria-expanded={showMenu}
             aria-haspopup="menu"
           >
-            <MoreHorizontal size={14} />
+            <MoreVertical size={14} />
           </button>
 
           {showMenu && (

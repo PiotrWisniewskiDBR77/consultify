@@ -2,7 +2,7 @@ import {
   Check,
   ChevronLeft,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Play,
   Plus,
@@ -279,7 +279,7 @@ export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceI
                   onClick={() => setMenuOpen(menuOpen === relay.id ? null : relay.id)}
                   className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
                 >
-                  <MoreHorizontal size={16} />
+                  <MoreVertical size={16} />
                 </button>
 
                 {menuOpen === relay.id && (

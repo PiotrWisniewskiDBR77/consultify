@@ -11,7 +11,7 @@ import {
   History,
   Link2,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Plus,
   SearchCheck,
@@ -1426,7 +1426,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                 disabled={!sheet.id}
                 className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-c-text-muted hover:bg-c-surface-raised hover:text-c-text disabled:opacity-30"
               >
-                <MoreHorizontal size={15} aria-hidden="true" />
+                <MoreVertical size={15} aria-hidden="true" />
               </button>
               {openSheetMenuId === sheetId ? (
                 <div

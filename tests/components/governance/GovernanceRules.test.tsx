@@ -9,7 +9,7 @@ vi.mock('lucide-react', () => ({
   Gavel: () => <div data-testid="icon-gavel" />,
   Plus: () => <div data-testid="icon-plus" />,
   Search: () => <div data-testid="icon-search" />,
-  MoreHorizontal: () => <div data-testid="icon-more" />,
+  MoreVertical: () => <div data-testid="icon-more" />,
 }));
 
 describe('GovernanceRules Component', () => {
@@ -49,6 +49,6 @@ describe('GovernanceRules Component', () => {
 
   it('renders the action button for rules', () => {
     render(<GovernanceRules />);
-    expect(screen.getAllByRole('button')).toHaveLength(4); // Search is input, Plus + 3 MoreHorizontal
+    expect(screen.getAllByRole('button')).toHaveLength(4); // Search is input, Plus + 3 MoreVertical
   });
 });

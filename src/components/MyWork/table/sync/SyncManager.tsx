@@ -10,7 +10,7 @@ import {
   ChevronLeft,
   Clock,
   Loader2,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Play,
   Plus,

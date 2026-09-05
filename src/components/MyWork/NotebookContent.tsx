@@ -23,7 +23,7 @@ import {
   Layers,
   Lightbulb,
   Lock,
-  MoreHorizontal,
+  MoreVertical,
   Paperclip,
   Pen,
   Pin,
@@ -3430,7 +3430,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
                         className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
                       >
-                        <MoreHorizontal size={16} />
+                        <MoreVertical size={16} />
                       </button>
                     </div>
                   </div>

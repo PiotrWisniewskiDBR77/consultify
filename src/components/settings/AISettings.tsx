@@ -18,7 +18,7 @@ import {
   LayoutGrid,
   Lock,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Network,
   Pause,
   Plus,

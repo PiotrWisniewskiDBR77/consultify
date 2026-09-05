@@ -13,7 +13,7 @@ import {
   Loader2,
   Lock,
   Mail,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   Shield,
   Trash2,

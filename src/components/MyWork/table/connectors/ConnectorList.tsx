@@ -1,7 +1,7 @@
 import {
   Clock,
   History,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Play,
   Plus,
@@ -165,7 +165,7 @@ export const ConnectorList: React.FC<ConnectorListProps> = ({
                 onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}
                 className="p-1.5 rounded-lg text-c-text-secondary hover:text-c-text-muted hover:bg-c-surface-raised transition-colors"
               >
-                <MoreHorizontal size={16} />
+                <MoreVertical size={16} />
               </button>
 
               {menuOpen === c.id && (

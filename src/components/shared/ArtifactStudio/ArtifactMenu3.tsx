@@ -1,4 +1,4 @@
-import { ChevronDown, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, MoreVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
@@ -149,7 +149,7 @@ export const ArtifactMenu3: React.FC<ArtifactMenu3Props> = ({
             aria-label="Więcej narzędzi"
             data-testid="artifact-menu3-overflow"
           >
-            <MoreHorizontal size={16} aria-hidden="true" />
+            <MoreVertical size={16} aria-hidden="true" />
             <span>Więcej</span>
             <ChevronDown size={14} aria-hidden="true" />
           </button>

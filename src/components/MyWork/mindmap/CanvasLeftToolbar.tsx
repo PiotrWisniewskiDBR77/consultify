@@ -13,7 +13,7 @@ import {
   Link2,
   Magnet,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   MousePointer2,
   Pen,
   Play,
@@ -349,7 +349,7 @@ const SHARED_BOTTOM: ToolSlot[] = [
   },
   {
     id: 'more',
-    icon: MoreHorizontal,
+    icon: MoreVertical,
     tkey: 'myWorkMindmap.toolbar.moreTools',
     labelEn: 'More tools',
     popover: 'more',

@@ -6,7 +6,7 @@ import {
   History,
   MessageSquare,
   Monitor,
-  MoreHorizontal,
+  MoreVertical,
   Palette,
   Redo2,
   Share2,
@@ -287,7 +287,7 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
             aria-haspopup="menu"
             aria-expanded={moreOpen}
           >
-            <MoreHorizontal size={16} />
+            <MoreVertical size={16} />
             {governanceVerdict && (
               <span
                 aria-hidden="true"

@@ -14,7 +14,7 @@ import {
   Loader2,
   Mail,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   Pause,
   Play,
   Plus,
