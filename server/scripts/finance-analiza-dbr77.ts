@@ -183,6 +183,7 @@ async function main(): Promise<void> {
   // z „duplicate key value violates unique constraint uq_finance_artifacts_org_natural_key"
   // (zmierzone). Jeśli analiza o tym kluczu już istnieje, wchodzimy w tryb POWTÓRKI: nie
   // tworzymy drugiego artefaktu, tylko dokładamy brakujące wiersze selekcji i przeliczamy je.
+  const ANALYSIS_DISPLAY_NAME = 'Analiza wskaźnikowa 2024–2025 — CD PROJEKT';
   const analysisNaturalKey = `derived-analysis:script:${chosen.business_version_id}`;
   const existingAnalysis = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ artifact_id: string; business_version_id: string }>(
@@ -268,6 +269,17 @@ async function main(): Promise<void> {
     )
   );
   console.log(`# Komórek z realną wartością (odczyt na zimno): ${Number(filled?.count ?? 0)}`);
+
+  // ★ Nazwa dla człowieka (migracja 20261102). Bez tego karta analizy pokazywała
+  // w nagłówku `natural_key`, czyli „derived-analysis:script:4db71c39-…" —
+  // audyt FIN 2026-09-06 defekt #3, zrzut `06-analiza-karta.png`.
+  await withPgTransaction(async (tx) => {
+    await tx.query(
+      `UPDATE finance_artifacts SET display_name = ? WHERE artifact_id = ? AND organization_id = ?`,
+      [ANALYSIS_DISPLAY_NAME, created.artifactId, org.id]
+    );
+  });
+  console.log(`# Nazwa wyświetlana analizy: "${ANALYSIS_DISPLAY_NAME}"`);
 
   const bv = await getBusinessVersion(org.id, created.analysisBvId);
   console.log(`# Status analizy: ${bv?.status ?? '(nieznany)'}`);

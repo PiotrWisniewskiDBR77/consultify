@@ -40,6 +40,7 @@
  * (Pakiet C już to zapewnia dla tamtych trzech).
  */
 import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
+import { financeKpiFormula } from '../../../labels/financeKpiLabels';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceAnalysisWorkspaceFlag } from '../../../hooks/useFinanceAnalysisWorkspaceFlag';
@@ -286,9 +287,17 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     useMemo(() => {
       const map: Record<string, AnalysisKpiCatalogFormulaInfo | undefined> = {};
       for (const c of catalog) {
+        // ★ Audyt FIN 2026-09-06 defekt #6c: `catalog.description` to NOTATKA
+        // INŻYNIERSKA autora formuły („…via formula_ref (DRY at the AST level,
+        // ADR section 5.4)."), a nie wzór ani interpretacja — i była wpisywana
+        // w OBIE kolumny naraz. Słownik `financeKpiFormula` rozdziela te dwie
+        // treści i podaje je po polsku; `description` zostaje ostatnią deską
+        // ratunku wyłącznie dla KPI własnych organizacji (spoza katalogu P0),
+        // dla których nie mamy prawa zmyślić wzoru.
+        const known = financeKpiFormula(c.kpiCode);
         map[c.kpiCode] = {
-          formulaDisplay: c.description ?? c.kpiCode,
-          interpretationGeneral: c.description ?? '—',
+          formulaDisplay: known?.formulaPl ?? c.description ?? '—',
+          interpretationGeneral: known?.interpretationPl ?? c.description ?? '—',
           downstreamUses: [],
         };
       }

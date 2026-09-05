@@ -536,12 +536,12 @@ export async function listStatementLines(
          JOIN finance_stmt_entities e ON e.id = l.entity_id
          JOIN finance_stmt_periods p ON p.period_id = l.period_id
         WHERE ${conditions.join(' AND ')}
-        -- ★ KOLEJNOŚĆ PREZENTACJI (audyt FIN 2026-09-06, zrzut 03e-canonical-direct.png):
-        -- sortowanie po `line_code` dawało czytelnikowi alfabet (AP, AR, CASH,
-        -- CURRENT_ASSETS…) zamiast układu sprawozdania. `sort_order` to kolumna
-        -- porządkowa taksonomii — ona rządzi; `line_code` zostaje wyłącznie jako
-        -- rozstrzygacz remisu, żeby wynik był deterministyczny (dwie linie mogą
-        -- mieć ten sam `sort_order`), a NULL ląduje na końcu, nie na początku.
+        -- KOLEJNOSC PREZENTACJI (audyt FIN 2026-09-06, zrzut 03e-canonical-direct.png):
+        -- sortowanie po line_code dawalo czytelnikowi alfabet (AP, AR, CASH,
+        -- CURRENT_ASSETS...) zamiast ukladu sprawozdania. sort_order to kolumna
+        -- porzadkowa taksonomii - ona rzadzi; line_code zostaje wylacznie jako
+        -- rozstrzygacz remisu, zeby wynik byl deterministyczny (dwie linie moga
+        -- miec ten sam sort_order), a NULL laduje na koncu, nie na poczatku.
         ORDER BY l.statement_type ASC, fsl.sort_order ASC NULLS LAST, fsl.line_code ASC,
                  e.entity_code ASC, p.period_start ASC`,
       params

@@ -6,6 +6,8 @@
  * panel WEWNĄTRZ workspace'u Analysis, wzorowany na istniejącym
  * Table+Preview layoutcie (`TableWithPreviewLayout`), nie osobny artefakt.
  */
+import { financeKpiCommentLabel } from '../../../labels/financeKpiCommentLabels';
+import { financeKpiCategory, financeKpiName } from '../../../labels/financeKpiLabels';
 import { X } from 'lucide-react';
 import React from 'react';
 
@@ -82,12 +84,18 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
     <aside
       data-testid="analysis-kpi-detail-card"
       className="w-full max-w-md shrink-0 border-l border-c-border-subtle bg-c-surface flex flex-col h-full"
-      aria-label={`Szczegóły wskaźnika ${kpiValue.kpiName}`}
+      aria-label={`Szczegóły wskaźnika ${financeKpiName(kpiValue.kpiCode, kpiValue.kpiName)}`}
     >
       <header className="flex items-start justify-between gap-2 p-4 border-b border-c-border-subtle">
         <div className="min-w-0">
-          <p className="text-xs text-c-text-muted">{kpiValue.category ?? 'Bez kategorii'}</p>
-          <h3 className="text-sm font-semibold text-c-text truncate">{kpiValue.kpiName}</h3>
+          {/* Karta szczegółowa dzieli słownik PL z tabelą — inaczej ten sam
+              wskaźnik miałby dwie różne nazwy na dwóch powierzchniach. */}
+          <p className="text-xs text-c-text-muted">
+            {kpiValue.category ? financeKpiCategory(kpiValue.category) : 'Bez kategorii'}
+          </p>
+          <h3 className="text-sm font-semibold text-c-text truncate">
+            {financeKpiName(kpiValue.kpiCode, kpiValue.kpiName)}
+          </h3>
         </div>
         <button
           type="button"
@@ -155,7 +163,11 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
 
         <section>
           <p className="text-xs font-medium text-c-text-muted uppercase tracking-wide mb-1">Interpretacja tego wyniku</p>
-          <p className="text-c-text">{kpiValue.interpretationText ?? 'Brak zapisanej interpretacji dla tego wyniku.'}</p>
+          <p className="text-c-text">
+            {kpiValue.interpretationText
+              ? financeKpiCommentLabel(kpiValue.interpretationText)
+              : 'Brak zapisanej interpretacji dla tego wyniku.'}
+          </p>
         </section>
 
         <section>

@@ -16,6 +16,8 @@
 
 import { Decimal } from 'decimal.js';
 
+import { financeKpiCommentLabel } from '../../../labels/financeKpiCommentLabels';
+import { financeKpiCategory, financeKpiName } from '../../../labels/financeKpiLabels';
 import type { TableColumn, TableRow } from '../../standard/StandardTable';
 import type { AnalysisKpiTier, AnalysisKpiValueDto } from '../../../services/api/financeV2.types';
 import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
@@ -208,8 +210,12 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
   return {
     id: group.kpiCode,
     kpiCode: group.kpiCode,
-    kpiName: group.kpiName,
-    category: group.category ?? '—',
+    // ★ Audyt FIN 2026-09-06 defekt #6a/#6b: `group.kpiName` i `group.category`
+    // to surowe pola katalogu — angielskie nazwy („Cash Conversion Cycle") i
+    // kategorie SCREAMING_CASE („EFFICIENCY"). Słownik PL jest JEDNYM miejscem
+    // decyzji; KPI spoza katalogu P0 zachowuje nazwę z katalogu organizacji.
+    kpiName: financeKpiName(group.kpiCode, group.kpiName),
+    category: financeKpiCategory(group.category),
     tier: group.tier,
     valueDisplay: display.text,
     valueIsMissingLike: display.isMissingLikeGlyph,
@@ -218,7 +224,11 @@ export function toAnalysisKpiTableRow(input: AnalysisKpiTableRowInput): TableRow
     yoyDelta: yoy,
     formulaDisplay: input.formulaInfo?.formulaDisplay ?? '—',
     interpretationGeneral: input.formulaInfo?.interpretationGeneral ?? '—',
-    interpretationSpecific: group.latestValue.interpretationText ?? '—',
+    // ★ Audyt FIN 2026-09-06 defekt #6c: to pole niesie dla nieobliczonych
+    // wskaźników komunikat diagnostyczny silnika z kodem i UUID okresu
+    // („NA_REASON:DENOMINATOR_MISSING — … got 'FY' for 3206a8c3-…"). Mapper
+    // przepuszcza komentarz człowieka bez zmian, a komunikat silnika tłumaczy.
+    interpretationSpecific: financeKpiCommentLabel(group.latestValue.interpretationText),
     benchmark: group.latestValue.benchmark,
     qualityFlag: group.latestValue.qualityFlag ?? 'OK',
     downstreamUses: input.formulaInfo?.downstreamUses ?? [],
