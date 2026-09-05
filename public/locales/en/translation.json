@@ -12140,16 +12140,20 @@
       "advanceCta": "Submit for review"
     },
     "status": {
+      "draft": "Draft",
       "pendingReview": "Pending review",
+      "review": "In review",
       "promoted": "Promoted",
       "planning": "Planning",
+      "approved": "Approved",
       "scheduled": "Scheduled",
       "executing": "Executing",
       "blocked": "Blocked",
       "done": "Done",
       "tracking": "Tracking",
       "cancelled": "Cancelled",
-      "archived": "Archived"
+      "archived": "Archived",
+      "unknown": "Unknown status"
     },
     "priorityLevels": {
       "critical": "Critical",

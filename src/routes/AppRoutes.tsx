@@ -1139,7 +1139,7 @@ export const AppRoutes: React.FC = () => {
     if (validUser.organizationId) {
       setCurrentOrganization({
         id: validUser.organizationId,
-        name: validUser.organizationName || 'Organization',
+        name: validUser.organizationName || t('layout.breadcrumb.module.organization'),
       });
     }
     // IMPORTANT: RouterSync is the single source of truth for auth redirects.

@@ -4103,7 +4103,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           label:
                             row?.kind === 'assessment'
                               ? isPolish
-                                ? 'Start assessment'
+                                ? 'Rozpocznij ocenę'
                                 : 'Start assessment'
                               : isPolish
                                 ? 'Rozpocznij sesję'

@@ -1237,12 +1237,12 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                    Business Owner
+                    {t('initiatives.fullView.team.businessOwner')}
                   </div>
                   <div className="text-sm font-medium text-slate-900 dark:text-white">
                     {initiative.ownerBusiness
                       ? `${initiative.ownerBusiness.firstName} ${initiative.ownerBusiness.lastName}`
-                      : 'Not assigned'}
+                      : t('initiatives.fullView.team.notAssigned')}
                   </div>
                 </div>
               </div>
@@ -1255,12 +1255,12 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                    Execution Owner
+                    {t('initiatives.fullView.team.executionOwner')}
                   </div>
                   <div className="text-sm font-medium text-slate-900 dark:text-white">
                     {initiative.ownerExecution
                       ? `${initiative.ownerExecution.firstName} ${initiative.ownerExecution.lastName}`
-                      : 'Not assigned'}
+                      : t('initiatives.fullView.team.notAssigned')}
                   </div>
                 </div>
               </div>

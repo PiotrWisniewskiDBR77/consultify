@@ -11598,16 +11598,20 @@
       "advanceCta": "Prześlij do przeglądu"
     },
     "status": {
+      "draft": "Szkic",
       "pendingReview": "Do przeglądu",
+      "review": "W przeglądzie",
       "promoted": "Promowana",
       "planning": "Planowanie",
+      "approved": "Zatwierdzona",
       "scheduled": "Zaplanowana",
       "executing": "W realizacji",
       "blocked": "Zablokowana",
       "done": "Zakończona",
       "tracking": "Śledzenie",
       "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana"
+      "archived": "Zarchiwizowana",
+      "unknown": "Nieznany status"
     },
     "priorityLevels": {
       "critical": "Krytyczny",
