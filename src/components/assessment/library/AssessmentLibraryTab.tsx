@@ -288,19 +288,23 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const [startError, setStartError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<MethodologyId | null>(null);
-  useState(() => {
-    if (typeof window === 'undefined') return false;
-    const key = 'filterableTable.cols.assessment.hub.library';
-    if (window.localStorage.getItem(key)) return true;
-    const compact = window.innerWidth < 1200;
-    const visibility = Object.fromEntries(
-      ['name', 'area', 'description', 'questionCount', 'duration', 'status', 'lastUsed'].map(
-        (id) => [id, compact ? ['name', 'area', 'description', 'status'].includes(id) : true]
-      )
-    );
-    window.localStorage.setItem(key, JSON.stringify({ visibility }));
-    return true;
-  });
+  /*
+   * Odbiór 05.09 (05-ocena, defekt 3) — USUNIĘTY zasiew widoczności kolumn.
+   *
+   * Stał tu blok, który przy pierwszym wejściu WPISYWAŁ do localStorage klucz
+   * `filterableTable.cols.assessment.hub.library` z `visibility` = wszystko
+   * widoczne (poniżej 1200 px: cztery kolumny). FilterableTable czyta ten klucz
+   * PRZED zastosowaniem domyślnej widoczności kolumn, więc zasiew skutecznie
+   * unieważniał `defaultVisible` — zmierzone na żywo: tabela dalej rysowała
+   * osiem kolumn, a w localStorage siedziało `"description":true`.
+   *
+   * Zasiew był też nieaktualny: jego lista id nie znała kolumny `actions`,
+   * dodanej razem z przyciskiem „Uruchom".
+   *
+   * Domyślny zestaw deklarują teraz same kolumny (`defaultVisible`), zgodnie
+   * z zatwierdzonym obrazem, a użytkownik dokłada resztę pstryczkiem — jego
+   * wybór nadal wygrywa, bo zapisany układ ma pierwszeństwo.
+   */
 
   // ASM-BVP-001 production cutover: the mounted DRD Library row has exactly
   // one writer. It always creates a method-core session and the editor always

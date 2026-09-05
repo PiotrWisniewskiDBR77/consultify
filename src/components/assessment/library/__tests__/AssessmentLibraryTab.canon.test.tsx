@@ -149,3 +149,20 @@ describe('AssessmentLibraryTab — kolumna DZIAŁANIA z obrazu', () => {
     ]);
   });
 });
+
+/**
+ * Odbiór 05.09 — zasiew widoczności kolumn unieważniał `defaultVisible`.
+ * Zmierzone na żywo: po dodaniu `defaultVisible: false` tabela DALEJ rysowała
+ * osiem kolumn, bo komponent przy pierwszym wejściu wpisywał do localStorage
+ * `filterableTable.cols.assessment.hub.library` z `visibility` = wszystko
+ * widoczne, a FilterableTable czyta ten klucz PRZED domyślkami kolumn.
+ */
+describe('AssessmentLibraryTab — nie zasiewa widoczności kolumn do localStorage', () => {
+  it('po zamontowaniu localStorage nie ma wpisu układu kolumn', () => {
+    window.localStorage.removeItem('filterableTable.cols.assessment.hub.library');
+    render(<AssessmentLibraryTab />);
+    expect(
+      window.localStorage.getItem('filterableTable.cols.assessment.hub.library')
+    ).toBeNull();
+  });
+});
