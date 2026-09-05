@@ -2350,10 +2350,10 @@ const ResourcesSection: React.FC<{
   };
 
   const titles: Record<string, string> = {
-    documentation: 'Documentation',
-    marketing: 'Marketing Materials',
-    'case-studies': 'Case Studies',
-    templates: 'PMO Templates',
+    documentation: t('partner.sidebar.documentation', 'Dokumentacja'),
+    marketing: t('partner.sidebar.marketing', 'Materiały marketingowe'),
+    'case-studies': t('partner.sidebar.caseStudies', 'Studia przypadków'),
+    templates: t('partner.sidebar.templates', 'Szablony PMO'),
   };
 
   // Loading skeleton

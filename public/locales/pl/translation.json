@@ -17504,7 +17504,29 @@
       "successTitle": "Zgłoszenie zostało wysłane",
       "title": "Dołącz do programu partnerskiego Consultify",
       "subtitle": "To krótki etap kwalifikacji dla nowych kandydatów. Sprawdzimy dopasowanie, model biznesowy i możliwości współpracy przed zaproszeniem do kolejnego kroku.",
-      "successBody": "Twoje zgłoszenie czeka na weryfikację. Na podstawie podanych informacji zdecydujemy o zaproszeniu do kolejnego kroku."
+      "successBody": "Twoje zgłoszenie czeka na weryfikację. Na podstawie podanych informacji zdecydujemy o zaproszeniu do kolejnego kroku.",
+      "checklist": {
+        "noLogin": "Pierwszy krok bez logowania",
+        "reviewed": "Weryfikowane w tej samej kolejce zatwierdzeń co inne zgłoszenia superadmina",
+        "qualify": "Zbudowane, aby szybko kwalifikować poważnych partnerów komercyjnych"
+      },
+      "formBadge": "Formularz zgłoszeniowy",
+      "formTitle": "Opowiedz nam, jak chcesz rozwijać się z Consultify",
+      "fields": {
+        "fullName": "Imię i nazwisko",
+        "email": "Służbowy adres e-mail",
+        "company": "Firma",
+        "website": "Strona internetowa",
+        "country": "Kraj",
+        "role": "Twoja rola",
+        "teamSize": "Wielkość zespołu",
+        "focusArea": "Główny obszar działania",
+        "message": "Dlaczego chcesz dołączyć?",
+        "messagePlaceholder": "Opowiedz nam o swoim rynku, klientach lub planach wdrożenia."
+      },
+      "errors": {
+        "submitFailed": "Nie udało się wysłać zgłoszenia partnerskiego"
+      }
     },
     "layout": {
       "closeNavigation": "Zamknij nawigację partnera",
@@ -17857,6 +17879,10 @@
       "employees": "Pracownicy",
       "compliance": "Zgodność",
       "totalClients": "Łączna liczba klientów",
+      "fallbackOrganization": "Organizacja",
+      "fallbackTeamMember": "Członek zespołu",
+      "fallbackMember": "Członek",
+      "fallbackAccessLevel": "dostęp partnerski",
       "getAccessLink": "Pobierz link dostępu",
       "generatedLink": "Twój link dostępu jest gotowy:",
       "linkGenerated": "Link dostępu wygenerowany!",
@@ -17936,6 +17962,11 @@
       "runtimeReferralClicks": "Kliknięcia linków polecających",
       "runtimeTitle": "Podsumowanie programu partnerskiego",
       "runtimeSubtitle": "Aktualne dane o wynikach zalogowanego partnera.",
+      "detailUnique": "{{count}} unikalnych",
+      "detailSignups": "{{count}} rejestracji",
+      "detailTrials": "{{count}} okresów próbnych",
+      "detailLifecycle": "etap: {{phase}}",
+      "detailPending": "{{count}} oczekujących",
       "title": "Metryki",
       "subtitle": "Przegląd Twoich wyników partnerskich",
       "totalRevenue": "Przychód całkowity",
@@ -18256,6 +18287,18 @@
         "status": "Status",
         "date": "Data"
       },
+      "transactionType": {
+        "initial": "Pierwsza wpłata",
+        "subscription": "Subskrypcja",
+        "subscription_renewal": "Odnowienie subskrypcji",
+        "renewal": "Odnowienie",
+        "upsell": "Dosprzedaż",
+        "subscription_upgrade": "Rozszerzenie subskrypcji",
+        "one_time": "Jednorazowa",
+        "new_contract": "Nowy kontrakt",
+        "refund": "Zwrot",
+        "bonus": "Bonus"
+      },
       "status": {
         "paid": "Wypłacone",
         "approved": "Zatwierdzone",
@@ -18370,6 +18413,8 @@
       "v8ReferredOrganizationsRuntimeSubtitle": "Rejestracje, okresy próbne i przejścia do płatnej usługi wśród poleconych klientów.",
       "v8Signups": "Rejestracje",
       "v8TotalClicks": "Łączna liczba kliknięć",
+      "detailSources": "{{count}} źródeł",
+      "detailTrackedDays": "{{count}} śledzonych dni",
       "campaignName": "Nazwa kampanii",
       "utmSource": "Źródło UTM",
       "utmMedium": "Medium UTM",

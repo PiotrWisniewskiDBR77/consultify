@@ -24,6 +24,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import i18n from '../../i18n';
 import { FilterableTable, type FilterChip } from '../../components/shared/ModuleHub';
 import { EntityStatusChip } from '../../components/ui/primitives/chips';
 import { Api } from '../../services/api';
@@ -86,7 +87,10 @@ function normalizeClient(client: LegacyPartnerClient): Client {
   return {
     id: String(client.id || client.organizationId || client.clientId || client.name || 'client'),
     clientName: String(
-      client.clientName || client.organizationName || client.name || 'Organization'
+      client.clientName ||
+        client.organizationName ||
+        client.name ||
+        i18n.t('partner.clientAccess.fallbackOrganization', 'Organizacja')
     ),
     organizationName:
       typeof client.organizationName === 'string'
@@ -96,7 +100,10 @@ function normalizeClient(client: LegacyPartnerClient): Client {
           : undefined,
     region: typeof client.region === 'string' ? client.region : '',
     status: typeof client.status === 'string' ? client.status.toUpperCase() : 'ACTIVE',
-    accessLevel: typeof client.accessLevel === 'string' ? client.accessLevel : 'partner access',
+    accessLevel:
+      typeof client.accessLevel === 'string'
+        ? client.accessLevel
+        : i18n.t('partner.clientAccess.fallbackAccessLevel', 'dostęp partnerski'),
     plan: typeof client.plan === 'string' ? client.plan : undefined,
     userCount:
       typeof client.userCount === 'number'
@@ -117,9 +124,12 @@ function normalizeEmployee(employee: LegacyPartnerEmployee): Employee {
     employeeName:
       typeof employee.employeeName === 'string' && employee.employeeName.trim().length > 0
         ? employee.employeeName
-        : combinedName || String(employee.email || 'Team Member'),
+        : combinedName ||
+          String(employee.email || i18n.t('partner.clientAccess.fallbackTeamMember', 'Członek zespołu')),
     email: String(employee.email || ''),
-    accessType: String(employee.accessType || employee.role || 'Member'),
+    accessType: String(
+      employee.accessType || employee.role || i18n.t('partner.clientAccess.fallbackMember', 'Członek')
+    ),
     permissionSet:
       typeof employee.permissionSet === 'string'
         ? employee.permissionSet
