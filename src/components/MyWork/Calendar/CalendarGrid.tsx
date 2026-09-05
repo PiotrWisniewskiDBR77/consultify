@@ -253,11 +253,17 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     [v2]
   );
 
+  // Odbiór na żywo 05.09 (16-kanon/mw-007-calendar-narrow-viewport, ROZNI_SIE):
+  // przełącznik widoku miał TRZY pozycje zamiast czterech z zatwierdzonego
+  // obrazu — V2 (be0d6e6b2c, "add calendar v2 layers") ukrywał "Lista" bez
+  // uzasadnienia w commit message. FullCalendar renderuje 'listWeek' (VIEW_MAP
+  // poniżej) identycznie w obu trybach — nie ma v2-specyficznej przyczyny do
+  // wykluczenia, więc czwarta pozycja wraca dla wszystkich.
   const viewButtons: { id: CalendarViewMode; label: string }[] = [
     { id: 'month', label: t('myWork.calendarGrid.viewMonth') },
     { id: 'week', label: t('myWork.calendarGrid.viewWeek') },
     { id: 'day', label: t('myWork.calendarGrid.viewDay') },
-    ...(v2 ? [] : [{ id: 'list' as const, label: t('myWork.calendarGrid.viewList') }]),
+    { id: 'list', label: t('myWork.calendarGrid.viewList') },
   ];
 
   const goToday = () => {
