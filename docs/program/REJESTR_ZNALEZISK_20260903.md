@@ -383,3 +383,7 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AF1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
 | AF2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
 | AF3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
+
+## AG. Dyżur 372 — i18n Czat AI pozostaje PARTIAL
+
+Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 kluczy menu AI edytora; 237 pozycji R2/R4/R5 pozostaje jawnie wymienionych w `evidence/i18n-czat/`. Rozszerzenie strażnika etykiet ujawniło dodatkowy dług `TransformationCasesPanel.tsx:114` (`Rebaseline`), lecz nie mogło zostać utrzymane bez złamania ratcheta i licencji.
