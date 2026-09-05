@@ -892,10 +892,9 @@ export function zbierzPozycje(p) {
     });
   }
 
-  // Nieodpowiedziane najpierw (w porządku A→B→C ustalonym wyżej), odpowiedziane na koniec.
-  const bez = pozycje.filter((x) => !x.stan);
-  const z = pozycje.filter((x) => x.stan);
-  const finalne = [...bez, ...z];
+  // 05.09 ~14:20, właściciel: „ile razy mam ci to potwierdzić, jak już raz potwierdziłem” —
+  // kreator pokazuje WYŁĄCZNIE pozycje bez odpowiedzi. Odpowiedziane są tylko w widoku /decyzje (lista).
+  const finalne = pozycje.filter((x) => !x.stan);
   finalne.forEach((x, i) => {
     x.nr = i + 1;
   });
