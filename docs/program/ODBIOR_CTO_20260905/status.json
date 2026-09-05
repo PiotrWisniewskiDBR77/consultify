@@ -105,15 +105,16 @@
     },
     "09_RESULTS": {
       "nazwa": "Wyniki",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Właściciel 05.09: „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N.” Przebudowa nawigacji KPI w toku: tabela zestawień → lista z opisem i pozycjami → karta N wskaźnika.",
+      "stan": "GOTOWY",
+      "cto_werdykt": "Wyniki po przebudowie wg Twoich słów: KPI = tabela zestawień → lista zestawienia z opisem i pozycjami → karta N wskaźnika (ścieżka „Rejestr KPI › zestawienie › wskaźnik”); OKR = zestaw → cele → karta celu → rezultaty; ROI z narracją z realnych danych. Sprawdzone moimi oczami na trzech poziomach. Dane: jedno zestawienie z jedną pozycją, bez opublikowanej migawki (wartości „—”).",
       "zrzuty": [
-        "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-okr-registry.png",
-        "evidence/odbior-zywo-20260905/08-wyniki/roi-jedna-karta.png",
-        "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-kpi-scorecards.png"
+        "evidence/odbior-zywo-20260905/kpi-3poziomy/L1-tabela-zestawien-podglad.png",
+        "evidence/odbior-zywo-20260905/kpi-3poziomy/L2-lista-zestawienia.png",
+        "evidence/odbior-zywo-20260905/kpi-3poziomy/L3-karta-N-wskaznika.png",
+        "evidence/odbior-zywo-20260905/08-wyniki/okr-cel/proof-okr-L2.png"
       ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T16:58"
+      "sprawdzono": "2026-09-05T17:28"
     },
     "10_FINANCE": {
       "nazwa": "Finanse",
