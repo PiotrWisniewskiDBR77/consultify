@@ -1,4 +1,26 @@
 {
+  "actionCard": {
+    "title": "Karta działania",
+    "open": "Otwórz kartę",
+    "fields": {
+      "period": "Okres",
+      "goalMet": "Cel osiągnięty?",
+      "actionRequired": "Działania wymagane?",
+      "problem": "Opis problemu",
+      "rootCause": "Główna przyczyna",
+      "action": "Opis działania",
+      "owner": "Odpowiedzialność",
+      "dueDate": "Termin",
+      "comment": "Komentarz",
+      "status": "Status"
+    },
+    "status": { "open": "OTWARTY", "closed": "ZAMKNIĘTY" }
+  },
+  "meetingActionItemsP9": {
+    "createTask": "Zrób zadanie",
+    "taskCreated": "Zadanie utworzone",
+    "taskCreateFailed": "Nie udało się utworzyć zadania"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Akcje",
