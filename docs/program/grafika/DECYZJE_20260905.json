@@ -1,0 +1,51 @@
+{
+ "_opis": "Odpowiedzi wlasciciela 05.09 ze strony /decyzje. Klucz \"DEC:<id>\" = decyzja produktowa, samo id = ekran. \"wybor\" = litera opcji przyjetej przy akcepcie rekomendacji.",
+ "_wyeksportowano": "2026-09-05T10:18:02",
+ "_ile": 8,
+ "odpowiedzi": {
+  "DEC:d01-launcher-wywiad": {
+   "uwaga": "OK",
+   "kiedy": "2026-09-05T10:07:35.479Z"
+  },
+  "DEC:jednostka-formularz": {
+   "decyzja": "AKCEPT",
+   "wybor": "A",
+   "kiedy": "2026-09-05T09:40:56.644Z"
+  },
+  "DEC:siri-warsztat": {
+   "decyzja": "AKCEPT",
+   "uwaga": "ale zapisz to do fali 2 po MVP",
+   "wybor": "B",
+   "kiedy": "2026-09-05T10:08:22.292Z"
+  },
+  "DEC:finanse-porownanie-wersji": {
+   "decyzja": "AKCEPT",
+   "uwaga": "Wpisz to do fali 2 ",
+   "wybor": "B",
+   "kiedy": "2026-09-05T10:09:20.617Z"
+  },
+  "DEC:silnik-tabeli-pomyslow": {
+   "decyzja": "AKCEPT",
+   "uwaga": "ja mam tylko wielki problem z tym panelem prawym bo on powinien być zamykany jak nie jest potrzebny - a teraz nie moge go znamknać. poza tym całosć koncepcji wierze w to ze masz dorbry pomysł na to. ",
+   "wybor": "A",
+   "kiedy": "2026-09-05T10:15:19.714Z"
+  },
+  "DEC:szyna-notatnika-fala2": {
+   "decyzja": "AKCEPT",
+   "uwaga": "prawy panel jest super i pamietaj ze on przejac ma mozliwie duzo z ekranu głównego. tam ama byc super lekko. ",
+   "wybor": "A",
+   "kiedy": "2026-09-05T10:16:05.554Z"
+  },
+  "DEC:baseline-v3": {
+   "decyzja": "POPRAWKA",
+   "uwaga": "no nie to co teraz mamy to nie jest nawet ciec rozwiazania dla finansistów. pracujemy tutaj nie na uproszczonych liczbach tylko na całej tabeli ",
+   "kiedy": "2026-09-05T10:17:15.469Z"
+  },
+  "DEC:drd-http-source-of-truth": {
+   "decyzja": "AKCEPT",
+   "uwaga": "warto dodac widok pełnego ekranu maciezy ale tak to jest nasza maciez ",
+   "wybor": "A",
+   "kiedy": "2026-09-05T10:18:02.776Z"
+  }
+ }
+}
