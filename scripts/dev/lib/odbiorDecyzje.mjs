@@ -218,7 +218,7 @@ export function normalizujDecyzje(d) {
 }
 
 /** Ścieżka do pliku, jeśli istnieje — inaczej pusty string. Zero zgadywania. */
-function jesliJest(root, rel) {
+export function jesliJest(root, rel) {
   try {
     return fs.existsSync(path.join(root, rel)) ? rel : '';
   } catch {
@@ -752,4 +752,418 @@ window.addEventListener('pagehide', () => {
   });
 });
 przelicz();
+`;
+
+/**
+ * TRYB `/krok` (2026-09-05, prośba właściciela wprost): „przebuduj ją w taki
+ * sposób, żeby było czytelne, łatwe i zrozumiałe, bo w obecnej strukturze na
+ * pewno popełnimy błędy. Zatem jest to strasznie męczące." `/decyzje` pokazuje
+ * WSZYSTKO naraz w trzech sekcjach — dobre do przeglądu, męczące do
+ * rozstrzygania jeden po drugim. `/krok` to JEDEN ekran naraz: jedno pytanie,
+ * jeden obraz, dwa duże przyciski. Zero starego obrazu (właściciel 05.09:
+ * ocenia TYLKO obraz na żywo), zero prozy technicznej — to jest zredukowany,
+ * nie inny, widok tych samych danych. Ten sam rejestr (`decyzje_zywo`, klucze
+ * `DEC:<id>` / id ekranu) — jedna prawda, dwa okna na nią.
+ *
+ * `<id-pierwszy-znak>` w id ekranu: `-` → spacja, pierwsza litera wielka.
+ * Używane tylko gdy `status.json`/pakiet nie znają ludzkiej nazwy ekranu.
+ */
+function humanizujId(id) {
+  const s = String(id || '').replace(/-/g, ' ').trim();
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Płaska, uporządkowana lista pozycji do rozstrzygnięcia — jedna pozycja =
+ * jeden ekran wizarda. Budowana z TYCH SAMYCH źródeł co `stronaDecyzje`
+ * (sekcje A/B/C), więc `/krok` i `/decyzje` nigdy nie rozjadą się co do tego,
+ * co jest do zrobienia — różni je tylko to, ile naraz się pokazuje.
+ *
+ * KOLEJNOŚĆ (żądanie właściciela): najpierw nieodpowiedziane, w porządku
+ * sekcji A→B→C, grupowane wg modułu — tak, jak i tak grupuje je budowa sekcji
+ * B (wg katalogu) i C (wg `NAPRAWIONE_DZIS`); potem odpowiedziane, w tym samym
+ * porządku sekcji, żeby dało się je przejrzeć na końcu.
+ */
+export function zbierzPozycje(p) {
+  const {
+    decyzjeOtwarte = { decyzje: [] },
+    status = { moduly: [] },
+    zywoDir,
+    evidenceRoot,
+    mdSeryjny,
+    zapisane = {},
+  } = p;
+
+  const wyniki = zbierzWyniki(zywoDir);
+  const nazwy = indeksNazw(status);
+  const nazwa = (id) => (nazwy[id] ? nazwy[id].nazwa : humanizujId(id));
+  const modulEkranu = (id) => (nazwy[id] ? nazwy[id].modul : '');
+  const urlZywego = (id) => {
+    const w = wyniki[id];
+    return w && w.zrzut ? urlEv(w.zrzut) : '';
+  };
+
+  const pozycje = [];
+
+  /* ---------- A. DECYZJE ---------- */
+  for (const d of decyzjeOtwarte.decyzje || []) {
+    const klucz = 'DEC:' + d.id;
+    const zapis = zapisane[klucz];
+    const zapisana = normalizujDecyzje(zapis && zapis.decyzja);
+    const litera = d.rekomendacja === 'B' ? 'B' : 'A';
+    const inna = litera === 'A' ? 'B' : 'A';
+    // wersja 1 zapisywała samą literę wybranej opcji — patrz `stanA` w `stronaDecyzje`.
+    const stan =
+      zapisana === 'A' || zapisana === 'B' ? (zapisana === d.rekomendacja ? 'AKCEPT' : 'POPRAWKA') : zapisana;
+    const pierwszyEkran = (d.ekrany || [])[0] || '';
+    pozycje.push({
+      klucz,
+      sekcja: 'A',
+      modul: d.modul || '',
+      tytul: (pierwszyEkran && nazwa(pierwszyEkran)) || d.modul || d.id,
+      zywyUrl: pierwszyEkran ? urlZywego(pierwszyEkran) : '',
+      pytanie: d.pytanie || '',
+      proponuje: (d.opcje && d.opcje[litera]) || '',
+      alternatywa: (d.opcje && d.opcje[inna]) || '',
+      wybor: litera,
+      stan,
+      zapis,
+    });
+  }
+
+  /* ---------- B. AKCEPT SERYJNY ---------- */
+  const ZDANIE_B = 'Ten ekran wygląda dziś tak. Czy tak ma zostać?';
+  const nowe = Object.values(wyniki)
+    .filter((w) => w.werdykt === 'NOWY_WZORZEC')
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const wgKatalogu = new Map();
+  for (const w of nowe) {
+    if (!wgKatalogu.has(w._katalog)) wgKatalogu.set(w._katalog, []);
+    wgKatalogu.get(w._katalog).push(w);
+  }
+  for (const katalog of [...wgKatalogu.keys()].sort((a, b) => a.localeCompare(b))) {
+    for (const w of wgKatalogu.get(katalog)) {
+      const zapis = zapisane[w.id];
+      pozycje.push({
+        klucz: w.id,
+        sekcja: 'B',
+        modul: modulEkranu(w.id) || ladnyKatalog(katalog),
+        tytul: nazwa(w.id),
+        zywyUrl: urlZywego(w.id),
+        zdanie: ZDANIE_B,
+        stan: normalizujDecyzje(zapis && zapis.decyzja),
+        zapis,
+      });
+    }
+  }
+  const idNowe = new Set(nowe.map((w) => w.id));
+  wierszeNigdyNieogladane(mdSeryjny, idNowe).forEach((w, i) => {
+    const klucz = w.id || 'SER:' + i;
+    const zapis = zapisane[klucz];
+    pozycje.push({
+      klucz,
+      sekcja: 'B',
+      modul: w.sekcja,
+      tytul: w.id ? nazwa(w.id) : 'Pozycja z pakietu',
+      zywyUrl: w.id ? urlZywego(w.id) : '',
+      zdanie: ZDANIE_B,
+      stan: normalizujDecyzje(zapis && zapis.decyzja),
+      zapis,
+    });
+  });
+
+  /* ---------- C. NAPRAWIONE DZIŚ ---------- */
+  const ZDANIE_C = 'Ten ekran został dziś naprawiony. Czy wygląda dobrze?';
+  for (const n of NAPRAWIONE_DZIS) {
+    const zapis = zapisane[n.id];
+    const dowodRel = n.dowod ? jesliJest(evidenceRoot, path.join(path.basename(zywoDir), n.katalog, n.dowod)) : '';
+    const zwykly = jesliJest(evidenceRoot, path.join(path.basename(zywoDir), n.katalog, n.id + '.png'));
+    const dowodUrl = dowodRel ? urlEv(dowodRel) : zwykly ? urlEv(zwykly) : urlZywego(n.id);
+    pozycje.push({
+      klucz: n.id,
+      sekcja: 'C',
+      modul: modulEkranu(n.id) || ladnyKatalog(n.katalog),
+      tytul: nazwa(n.id),
+      zywyUrl: dowodUrl,
+      zdanie: ZDANIE_C,
+      stan: normalizujDecyzje(zapis && zapis.decyzja),
+      zapis,
+    });
+  }
+
+  // Nieodpowiedziane najpierw (w porządku A→B→C ustalonym wyżej), odpowiedziane na koniec.
+  const bez = pozycje.filter((x) => !x.stan);
+  const z = pozycje.filter((x) => x.stan);
+  const finalne = [...bez, ...z];
+  finalne.forEach((x, i) => {
+    x.nr = i + 1;
+  });
+  return finalne;
+}
+
+/** Etykiety przycisków wizarda — sekcja A pyta o zgodę na propozycję, B/C o obraz na żywo. */
+const ETYKIETY_KROK = {
+  A: { tak: 'Tak, zgadzam się', nie: 'Nie' },
+  BC: { tak: 'Tak, tak ma być', nie: 'Nie, ma być inaczej' },
+};
+
+function pozycjaHtml(x) {
+  const etyk = x.sekcja === 'A' ? ETYKIETY_KROK.A : ETYKIETY_KROK.BC;
+  const uwaga = (x.zapis && x.zapis.uwaga) || '';
+  const obraz = x.zywyUrl
+    ? `<a href="${x.zywyUrl}" target="_blank" rel="noopener"><img loading="lazy" src="${x.zywyUrl}" alt="${esc(x.tytul)}"></a>`
+    : `<div class="brakObrazu">brak obrazu na żywo</div>`;
+  const tresc =
+    x.sekcja === 'A'
+      ? `<p class="tresc"><span class="pyt">${esc(x.pytanie)}</span> <b>Proponuję:</b> ${esc(x.proponuje)}</p>
+         ${x.alternatywa ? `<p class="inaczej">Inaczej: ${esc(x.alternatywa)}</p>` : ''}`
+      : `<p class="tresc jedno">${esc(x.zdanie)}</p>`;
+  return `<article class="krok" data-nr="${x.nr}" data-klucz="${esc(x.klucz)}" data-sekcja="${esc(x.sekcja)}"
+    data-modul="${esc(x.modul)}" data-stan="${esc(x.stan || '')}" ${x.wybor ? `data-w="${esc(x.wybor)}"` : ''}>
+    <div class="modul">${esc(x.modul)}</div>
+    <h2 class="tytul">${esc(x.tytul)}</h2>
+    ${tresc}
+    <div class="obraz">${obraz}</div>
+    <div class="przyciski">
+      <button type="button" class="dbtn tak ${x.stan === 'AKCEPT' ? 'on' : ''}" data-d="AKCEPT">${esc(etyk.tak)}</button>
+      <button type="button" class="dbtn nie ${x.stan === 'POPRAWKA' ? 'on' : ''}" data-d="POPRAWKA">${esc(etyk.nie)}</button>
+    </div>
+    <div class="zapis ${x.zapis && x.zapis.kiedy ? 'jest' : ''}">${x.zapis && x.zapis.kiedy ? `zapisano ${esc(godzina(x.zapis.kiedy))}` : ''}</div>
+    <label class="uwPole">
+      <span class="uwEtykieta">Co ma być inaczej? (jedno zdanie)</span>
+      <textarea class="uw" rows="2" placeholder="napisz jednym zdaniem, co ma być inaczej">${esc(uwaga)}</textarea>
+    </label>
+    <div class="dalejWrap"><button type="button" class="dalejDuzy" hidden>Dalej →</button></div>
+    <nav class="male">
+      <button type="button" class="lnk wstecz">← wstecz</button>
+      <button type="button" class="lnk pomin">pomiń</button>
+      <button type="button" class="lnk dalej">dalej →</button>
+    </nav>
+  </article>`;
+}
+
+/**
+ * Buduje całą stronę `/krok` — WSZYSTKIE pozycje wyrenderowane od razu
+ * (jak `/decyzje`/`/zywo`), ale ukryte poza jedną aktywną: `SKRYPT_KROK`
+ * przełącza widoczność i wysyła te same żądania `POST /decyzja-zywo` co
+ * `/decyzje`. Zero przeładowania strony między ekranami — właściciel nie ma
+ * czekać na sieć między jednym pytaniem a drugim.
+ */
+export function stronaKrok(p) {
+  const pozycje = zbierzPozycje(p);
+  const karty = pozycje.map(pozycjaHtml).join('\n');
+  return `<!doctype html><html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Do rozstrzygnięcia — jeden ekran naraz</title><style>${STYL_KROK}</style></head><body>
+<header class="paskKrok">
+  <div class="gora">
+    <span id="opisEkranu"></span>
+    <a class="lista" href="/decyzje">lista</a>
+  </div>
+  <div class="torProgresu"><div class="progres" id="progres"></div></div>
+</header>
+<main id="glowna">
+${karty || '<p class="pusto">Brak pozycji do rozstrzygnięcia.</p>'}
+<section class="podsumowanie" id="podsumowanie" hidden>
+  <h2>Gotowe</h2>
+  <p id="podsumowanieTekst"></p>
+  <a class="lista duza" href="/decyzje">zobacz listę →</a>
+</section>
+</main>
+<script>const CALKEM = ${pozycje.length};\n${SKRYPT_KROK}</script>
+</body></html>`;
+}
+
+export const STYL_KROK = `
+:root{--tlo:#f6f7f9;--karta:#fff;--tekst:#111827;--drugi:#4b5563;--kres:#dfe3e8;--ok:#15803d;--pop:#b45309;--blad:#9f1239;--nieb:#1d4ed8;--wybrany:#111827}
+*{box-sizing:border-box}
+body{margin:0;background:var(--tlo);color:var(--tekst);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.paskKrok{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--kres);padding:14px 26px 12px}
+.paskKrok .gora{display:flex;align-items:center;gap:16px;font-size:16px;color:var(--drugi)}
+#opisEkranu{font-weight:650;color:var(--tekst)}
+.lista{margin-left:auto;font-size:14px;color:var(--nieb);text-decoration:none}
+.lista:hover{text-decoration:underline}
+.torProgresu{margin-top:10px;height:6px;border-radius:999px;background:#eef1f5;overflow:hidden}
+.progres{height:100%;background:var(--nieb);border-radius:999px;width:0%;transition:width .25s ease}
+main{padding:26px 20px 90px;max-width:820px;margin:0 auto}
+.krok{display:none;background:var(--karta);border:1px solid var(--kres);border-radius:16px;padding:26px 28px 22px}
+.krok.aktywny{display:block}
+.modul{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--drugi);margin-bottom:8px}
+.tytul{font-size:22px;margin:0 0 14px;font-weight:700;letter-spacing:-.2px}
+.tresc{font-size:18px;line-height:1.6;margin:0 0 6px}
+.tresc.jedno{font-size:19px}
+.inaczej{margin:0 0 16px;font-size:14.5px;color:var(--drugi);line-height:1.5}
+.obraz{margin:14px 0 20px}
+.obraz a{display:block}
+.obraz img{width:100%;max-height:70vh;display:block;object-fit:contain;object-position:top center;border:1px solid var(--kres);border-radius:11px;background:#f8fafc;cursor:zoom-in}
+.brakObrazu{border:1px dashed var(--kres);border-radius:11px;padding:40px 10px;text-align:center;font-size:14px;color:#9aa3ad;background:#fbfcfd}
+.przyciski{display:flex;gap:12px}
+.dbtn{flex:1 1 0;border:1.5px solid #c9ced6;background:#fff;color:var(--tekst);border-radius:13px;padding:18px 18px;cursor:pointer;font:700 18px/1.25 inherit;text-align:center}
+.dbtn:hover{border-color:var(--wybrany)}
+.dbtn.on{background:var(--wybrany);border-color:var(--wybrany);color:#fff}
+.dbtn:focus-visible,.uw:focus-visible,.dalejDuzy:focus-visible{outline:2px solid var(--nieb);outline-offset:2px}
+.zapis{font-size:14px;margin-top:10px;min-height:20px;color:var(--ok);font-weight:650}
+.zapis.jest{color:var(--ok)}
+.zapis.blad{color:var(--blad)}
+.uwPole{display:block;margin-top:10px}
+.uwEtykieta{display:block;font-size:14px;color:var(--drugi);margin-bottom:6px}
+.uw{width:100%;border:1px solid var(--kres);border-radius:10px;padding:11px 13px;font:16px/1.5 inherit;resize:vertical;background:#fff;color:var(--tekst)}
+.uw::placeholder{color:#9aa3ad}
+.dalejWrap{margin-top:14px;min-height:0}
+.dalejDuzy{border:1.5px solid var(--kres);background:#fff;color:var(--drugi);border-radius:12px;padding:13px 20px;font:650 16px/1.2 inherit;cursor:pointer;width:100%}
+.dalejDuzy.pelne{background:var(--nieb);border-color:var(--nieb);color:#fff;font-weight:700}
+.male{display:flex;gap:22px;justify-content:center;margin-top:22px}
+.lnk{background:none;border:0;color:var(--drugi);font-size:14.5px;cursor:pointer;padding:4px 6px}
+.lnk:hover{color:var(--nieb);text-decoration:underline}
+.podsumowanie{background:var(--karta);border:1px solid var(--kres);border-radius:16px;padding:40px 28px;text-align:center}
+.podsumowanie h2{font-size:26px;margin:0 0 10px}
+.podsumowanie p{font-size:18px;color:var(--drugi);margin:0 0 22px}
+.lista.duza{display:inline-block;font-size:16px;font-weight:650;padding:12px 22px;border-radius:11px;background:var(--wybrany);color:#fff;text-decoration:none}
+.pusto{color:var(--drugi);text-align:center;padding:40px}
+`;
+
+export const SKRYPT_KROK = `
+let obecny = 1;
+const glowna = document.getElementById('glowna');
+const opis = document.getElementById('opisEkranu');
+const progres = document.getElementById('progres');
+const podsum = document.getElementById('podsumowanie');
+function aktywnyKrok() { return glowna.querySelector('.krok[data-nr="' + obecny + '"]'); }
+function odswiezDalejDuzy(krok) {
+  if (!krok) return;
+  const btn = krok.querySelector('.dalejDuzy');
+  const pole = krok.querySelector('.uw');
+  const trzeba = krok.dataset.stan === 'POPRAWKA';
+  btn.hidden = !trzeba;
+  btn.classList.toggle('pelne', trzeba && !!pole.value.trim());
+}
+function pokaz(n) {
+  obecny = Math.max(1, Math.min(CALKEM + 1, n));
+  document.querySelectorAll('.krok').forEach((k) => {
+    k.classList.toggle('aktywny', Number(k.dataset.nr) === obecny);
+  });
+  if (obecny > CALKEM || !CALKEM) {
+    podsum.hidden = false;
+    opis.textContent = 'Gotowe';
+    progres.style.width = '100%';
+    const wszystkie = [...document.querySelectorAll('.krok')];
+    const tak = wszystkie.filter((k) => k.dataset.stan === 'AKCEPT').length;
+    const nie = wszystkie.filter((k) => k.dataset.stan === 'POPRAWKA').length;
+    const pominiete = wszystkie.length - tak - nie;
+    document.getElementById('podsumowanieTekst').textContent =
+      'Gotowe: ' + tak + ' tak · ' + nie + ' nie · ' + pominiete + ' pominięte';
+    return;
+  }
+  podsum.hidden = true;
+  const krok = aktywnyKrok();
+  opis.textContent = 'Ekran ' + obecny + ' z ' + CALKEM + (krok ? ' · ' + krok.dataset.modul : '');
+  progres.style.width = (obecny / CALKEM * 100) + '%';
+  odswiezDalejDuzy(krok);
+}
+function ustawStan(krok, stan) {
+  krok.dataset.stan = stan;
+  krok.querySelectorAll('.dbtn').forEach((b) => b.classList.toggle('on', b.dataset.d === stan));
+  odswiezDalejDuzy(krok);
+}
+function dwie(n) { return String(n).padStart(2, '0'); }
+function wyslij(klucz, dane) {
+  return fetch('/decyzja-zywo', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: klucz, ...dane }) })
+    .then(async (r) => {
+      const odp = await r.json().catch(() => ({}));
+      if (!r.ok || !odp.ok) throw new Error(odp.blad || ('serwer odpowiedział ' + r.status));
+      return odp;
+    })
+    .catch((e) => {
+      const krok = glowna.querySelector('.krok[data-klucz="' + klucz.replace(/"/g, '') + '"]');
+      const znacznik = krok && krok.querySelector('.zapis');
+      if (znacznik) { znacznik.textContent = 'NIE ZAPISANO — ' + e.message; znacznik.className = 'zapis blad'; }
+    });
+}
+const ostatniaUwaga = new Map();
+document.querySelectorAll('.krok').forEach((k) => {
+  const u = k.querySelector('.uw');
+  ostatniaUwaga.set(k.dataset.klucz, u.value);
+});
+function zapiszUwage(krok) {
+  const u = krok.querySelector('.uw');
+  if (ostatniaUwaga.get(krok.dataset.klucz) === u.value) return;
+  ostatniaUwaga.set(krok.dataset.klucz, u.value);
+  odswiezDalejDuzy(krok);
+  wyslij(krok.dataset.klucz, { uwaga: u.value });
+}
+function idzDalej() {
+  const krok = aktywnyKrok();
+  if (krok) zapiszUwage(krok);
+  pokaz(obecny + 1);
+}
+function idzWstecz() { pokaz(obecny - 1); }
+function naciskTak(krok) {
+  ustawStan(krok, 'AKCEPT');
+  const znacznik = krok.querySelector('.zapis');
+  if (znacznik) { znacznik.textContent = 'zapisano ✓'; znacznik.className = 'zapis jest'; }
+  const dane = { decyzja: 'AKCEPT' };
+  if (krok.dataset.sekcja === 'A' && krok.dataset.w) dane.wybor = krok.dataset.w;
+  wyslij(krok.dataset.klucz, dane);
+  setTimeout(idzDalej, 600);
+}
+function naciskNie(krok) {
+  ustawStan(krok, 'POPRAWKA');
+  wyslij(krok.dataset.klucz, { decyzja: 'POPRAWKA' });
+  const pole = krok.querySelector('.uw');
+  pole.focus();
+  // Kursor na KONIEC istniejącej treści — pole bywa już wypełnione starszą
+  // uwagą właściciela, dopisujemy się za nią zamiast wjeżdżać na jej początek.
+  const koniec = pole.value.length;
+  pole.setSelectionRange(koniec, koniec);
+}
+document.addEventListener('click', (ev) => {
+  const dbtn = ev.target.closest('.dbtn');
+  if (dbtn) {
+    const krok = dbtn.closest('.krok');
+    if (dbtn.dataset.d === 'AKCEPT') naciskTak(krok); else naciskNie(krok);
+    return;
+  }
+  if (ev.target.closest('.dalejDuzy') || ev.target.closest('.dalej') || ev.target.closest('.pomin')) return idzDalej();
+  if (ev.target.closest('.wstecz')) return idzWstecz();
+});
+document.addEventListener('input', (ev) => {
+  const u = ev.target.closest('.uw');
+  if (!u) return;
+  odswiezDalejDuzy(u.closest('.krok'));
+});
+document.addEventListener('focusout', (ev) => {
+  const u = ev.target.closest('.uw');
+  if (u) zapiszUwage(u.closest('.krok'));
+});
+document.addEventListener('keydown', (ev) => {
+  const wPolu = ev.target.closest('.uw') || ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA';
+  if (wPolu) {
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      zapiszUwage(ev.target.closest('.krok'));
+      idzDalej();
+    }
+    return;
+  }
+  const krok = aktywnyKrok();
+  // PUŁAPKA zmierzona Playwrightem (05.09): „N" przełącza fokus na pole uwagi
+  // W TYM SAMYM zdarzeniu klawisza — bez preventDefault przeglądarka i tak
+  // wpisuje literę „n" do pola, które właśnie dostało fokus. Jedna owocna
+  // uwaga właściciela dostała wtedy obcy znak na początku.
+  if (ev.key === 't' || ev.key === 'T') { ev.preventDefault(); if (krok) naciskTak(krok); }
+  else if (ev.key === 'n' || ev.key === 'N') { ev.preventDefault(); if (krok) naciskNie(krok); }
+  else if (ev.key === 'ArrowRight') { ev.preventDefault(); idzDalej(); }
+  else if (ev.key === 'ArrowLeft') { ev.preventDefault(); idzWstecz(); }
+});
+window.addEventListener('pagehide', () => {
+  const krok = aktywnyKrok();
+  if (krok) {
+    const u = krok.querySelector('.uw');
+    if (u && ostatniaUwaga.get(krok.dataset.klucz) !== u.value) {
+      navigator.sendBeacon('/decyzja-zywo', new Blob([JSON.stringify({ id: krok.dataset.klucz, uwaga: u.value })], { type: 'application/json' }));
+    }
+  }
+});
+pokaz(1);
 `;

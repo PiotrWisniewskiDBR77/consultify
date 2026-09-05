@@ -62,7 +62,7 @@ const EVID = path.join(ROOT, 'evidence/grafika');
 import { czytajMape, korpus, naprawioneDzis, wstrzymane, nazwyEkranow, oknoDecyzji, kartaModulu, pozaOdbiorem, coDomyka } from './lib/kartyModulow.mjs';
 import { STYL_MODULOW } from './lib/stylModulow.mjs';
 import { stronaZywo, indeksZatwierdzonychLight } from './lib/odbiorZywo.mjs';
-import { stronaDecyzje } from './lib/odbiorDecyzje.mjs';
+import { stronaDecyzje, stronaKrok } from './lib/odbiorDecyzje.mjs';
 
 /**
  * ODBIÓR NA ŻYWO 05.09 (dodane 2026-09-05). Właściciel odbiera MVP i chce
@@ -1105,9 +1105,30 @@ http
           .end(`<h1>Strona /decyzje nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
       }
     }
+    if (req.url === '/krok' || req.url.startsWith('/krok?')) {
+      try {
+        const html = stronaKrok({
+          decyzjeOtwarte: JSON.parse(fs.readFileSync(DECYZJE_OTWARTE, 'utf8')),
+          status: JSON.parse(fs.readFileSync(STATUS, 'utf8')),
+          zywoDir: ZYWO_DIR,
+          evidenceRoot: EVIDENCE_ROOT,
+          mdSeryjny: ODBIOR_SERYJNY_MD,
+          zapisane: czytajDecyzjeZywo(),
+        });
+        return res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }).end(html);
+      } catch (e) {
+        console.error('BLAD renderu /krok:', e);
+        return res
+          .writeHead(500, { 'content-type': 'text/html; charset=utf-8' })
+          .end(`<h1>Strona /krok nie zbudowała się</h1><pre>${esc(String(e && e.stack))}</pre>`);
+      }
+    }
     if (START === 'decyzje' && (req.url === '/' || req.url === '')) {
-      // Właściciel wpisuje sam adres serwera — ma trafić tam, gdzie dziś pracuje.
-      return res.writeHead(302, { location: '/decyzje' }).end();
+      // Właściciel wpisuje sam adres serwera — ma trafić tam, gdzie dziś pracuje
+      // (WIZARD 05.09: jeden ekran naraz, nie cała lista — prośba właściciela
+      // wprost o mniej męczącą strukturę). Lista zostaje pod `/decyzje`, link
+      // „lista” w pasku wizarda prowadzi tam, kto woli przegląd całości.
+      return res.writeHead(302, { location: '/krok' }).end();
     }
     if (req.url.startsWith('/png/')) {
       const rel = decodeURIComponent(req.url.slice(5));
