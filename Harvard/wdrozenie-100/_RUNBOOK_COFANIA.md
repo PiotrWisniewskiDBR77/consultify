@@ -4,6 +4,8 @@ Ustalenie Piotra: „zrób tak, żebyśmy mogli cofnąć jeżeli będzie dramat"
 ## Bezpieczny punkt (zawsze = ostatni stan zaakceptowany przez Piotra)
 - Tag: **`demo-safe-2026-07-11`** → `2cfc701abc` (na origin). Re-tagowany po KAŻDEJ partii, którą Piotr zaakceptuje.
 - Railway zdrowy deploy: `f846b1f9` (10:40, SUCCESS).
+- P5 / DEC-397, przed pierwszą zmianą zamrożonego `06_EXECUTION`: **`960b15a92c`**
+  na `codex/p5-ladowanie` (lokalny punkt do forward-revert; bez push/tagowania origin).
 
 ## WARSTWA 1 — WIZUALNY dramat (brzydko/gwiazda) → NATYCHMIAST, bez deployu
 Każda zmiana wizualna jest ZA FLAGĄ, default OFF. Cofnięcie = **wyłącz flagę** (usuń `?ff_*=1` z URL lub ustaw env OFF). Domyślny ekran to zawsze stary. Piotr nigdy nie utknie z brzydkim ekranem.

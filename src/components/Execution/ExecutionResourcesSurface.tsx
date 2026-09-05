@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
+import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { persistentCommandId } from '@/services/initiatives-execution/persistentCommandId';
 import {
   listExecutionCases,
@@ -144,6 +146,7 @@ export const ExecutionResourcesSurface = ({
     [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
     [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
+  const loadingPhase = useDeferredLoading(state === 'LOADING');
   const loadCases = useCallback(async () => {
     setState('LOADING');
     try {
@@ -469,7 +472,23 @@ export const ExecutionResourcesSurface = ({
        * obszar bez jednego słowa wyjaśnienia — dokładnie to zgłoszono w odbiorze
        * na żywo 05.09 (`execution-tab-resources`).
        */}
-      {state === 'LOADING' && <p role="status">Wczytuję kanoniczny rejestr zasobów…</p>}
+      {state === 'LOADING' && loadingPhase === 'timeout' && (
+        <ErrorState
+          variant="timeout"
+          compact
+          onRetry={() => (caseId ? void load(caseId) : void loadCases())}
+        />
+      )}
+      {state === 'LOADING' && (loadingPhase === 'pending' || loadingPhase === 'slow') && (
+        <div data-testid="execution-resources-loading" className="flex min-h-0 flex-1 flex-col gap-3">
+          {loadingPhase === 'slow' && (
+            <p role="status" className="text-sm text-c-text-muted">
+              Wczytywanie trwa dłużej niż zwykle…
+            </p>
+          )}
+          <SkeletonState variant="table" rows={6} label="Wczytuję kanoniczny rejestr zasobów" />
+        </div>
+      )}
       {state === 'READY' && unreachableCaseIds.length > 0 && (
         <p
           role="status"
