@@ -45,8 +45,33 @@ const axisData = {
   digitalProducts: { actual: 1, target: 5 },
   businessModels: { actual: 2, target: 5 },
   dataManagement: { actual: 5, target: 7 },
-  culture: { actual: 6, target: 6 },
-  cybersecurity: { actual: 6, target: 6 },
+  // `areaScores` obsadzone dla obu osi pokazywanych niżej w trybie
+  // `axis_detail` — od 2026-09-05 to one karmią macierz DRD właściciela
+  // (`DRDMatrixReadOnly`), która zastąpiła tabelę „Area/Current/Target/Gap".
+  // Bez nich sekcja obszarów w ogóle się nie rysuje i harness nie pokazywałby
+  // tego, co pokazuje realny raport. Id obszarów z `DRD_STRUCTURE` (5A..5E, 6A..6E).
+  culture: {
+    actual: 6,
+    target: 6,
+    areaScores: {
+      '5A': { actual: 4, target: 6 },
+      '5B': { actual: 3, target: 5 },
+      '5C': { actual: 5, target: 6 },
+      '5D': { actual: 2, target: 4 },
+      '5E': { actual: 6, target: 6 },
+    },
+  },
+  cybersecurity: {
+    actual: 6,
+    target: 6,
+    areaScores: {
+      '6A': { actual: 5, target: 6 },
+      '6B': { actual: 2, target: 5 },
+      '6C': { actual: 4, target: 6 },
+      '6D': { actual: 3, target: 4 },
+      '6E': { actual: 1, target: 3 },
+    },
+  },
   aiMaturity: { actual: 4, target: 4 },
 };
 
