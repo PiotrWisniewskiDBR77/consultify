@@ -1973,6 +1973,19 @@
     }
   },
   "myWork": {
+    "quickPrompts": {
+      "home": {"attention": "Co wymaga teraz największej uwagi?", "plan": "Przełóż te sygnały na plan", "move": "Jaki jest najmocniejszy ruch transformacyjny w tym tygodniu?", "momentum": "Gdzie tracimy tempo?"},
+      "ideas": {"structure": "Zbuduj początkową strukturę mojego pomysłu", "challenge": "Podważ moje założenia", "missing": "Czego nie zauważam?", "nextSteps": "Zaproponuj kolejne kroki", "matrix": "Przekształć to w macierz decyzyjną", "causes": "Znajdź przyczyny źródłowe"},
+      "notebook": {"summarize": "Podsumuj tę notatkę", "actions": "Wyodrębnij działania", "perspectives": "Jakich perspektyw nie uwzględniam?"},
+      "inbox": {"triage": "Uporządkuj wszystkie nowe elementy", "summarize": "Podsumuj powiadomienia od wczoraj", "urgent": "Co wymaga pilnej uwagi?"},
+      "calendar": {"freeSlot": "Znajdź w tym tygodniu wolny czas na pracę w skupieniu", "conflicts": "Jakie konflikty mam jutro?", "schedule": "Zaproponuj optymalny plan na dziś"},
+      "tasks": {"reprioritize": "Zmień priorytety moich zadań", "summary": "Podsumuj moją pracę w tym tygodniu", "delegate": "Które zadania warto delegować?", "breakDown": "Podziel moje najważniejsze zadanie"},
+      "decisions": {"summary": "Podsumuj oczekujące decyzje", "analyze": "Przeanalizuj najpilniejszą decyzję", "blocking": "Które decyzje blokują postęp?"},
+      "projects": {"overBudget": "Które projekty przekraczają budżet?", "stakeholders": "Pokaż projekty bez wskazanych interesariuszy", "rollups": "Podsumuj zestawienia programów"},
+      "manager": {"briefing": "Przekaż mi podsumowanie w 30 sekund", "attention": "Co najbardziej wymaga mojej uwagi?", "risk": "Podsumuj ryzyka portfela", "capacity": "Przedstaw obciążenie zespołu"},
+      "vault": {"known": "Co już o tym wiemy?", "sources": "Które źródła potwierdzają to twierdzenie?", "missing": "Czego brakuje w naszych dowodach?"},
+      "agent": {"propose": "Zaproponuj proces dla tego celu", "inputs": "Jakich danych wejściowych wymaga ten krok?", "stopped": "Dlaczego ostatnie uruchomienie zatrzymało się tutaj?"}
+    },
     "kanban": {
       "statusMoved": "Przeniesiono do „{{column}}\"",
       "statusFailedNotFound": "Nie zapisano: zadanie „{{title}}\" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.",

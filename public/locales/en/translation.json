@@ -2685,6 +2685,19 @@
     }
   },
   "myWork": {
+    "quickPrompts": {
+      "home": {"attention": "What deserves the highest attention right now?", "plan": "Translate these signals into a plan", "move": "What is the strongest transformation move this week?", "momentum": "Where are we losing momentum?"},
+      "ideas": {"structure": "Build an initial structure for my idea", "challenge": "Challenge my assumptions", "missing": "What am I missing?", "nextSteps": "Suggest next steps", "matrix": "Turn this into a decision matrix", "causes": "Find root causes"},
+      "notebook": {"summarize": "Summarize this note", "actions": "Extract action items", "perspectives": "What perspectives am I missing?"},
+      "inbox": {"triage": "Triage all new items for me", "summarize": "Summarize notifications since yesterday", "urgent": "What needs urgent attention?"},
+      "calendar": {"freeSlot": "Find a free slot for deep work this week", "conflicts": "What conflicts do I have tomorrow?", "schedule": "Suggest an optimal schedule for today"},
+      "tasks": {"reprioritize": "Reprioritize my tasks", "summary": "Summarize what I did this week", "delegate": "Which tasks should I delegate?", "breakDown": "Break down my top task"},
+      "decisions": {"summary": "Summarize pending decisions", "analyze": "Analyze the most urgent decision", "blocking": "What decisions are blocking progress?"},
+      "projects": {"overBudget": "Which projects are over budget?", "stakeholders": "Show projects missing stakeholders", "rollups": "Summarize program rollups"},
+      "manager": {"briefing": "Give me a 30-second briefing", "attention": "What needs my attention most?", "risk": "Portfolio risk summary", "capacity": "Team capacity overview"},
+      "vault": {"known": "What do we already know about this?", "sources": "Which sources back this claim?", "missing": "What is missing from our evidence?"},
+      "agent": {"propose": "Propose a process for this goal", "inputs": "What inputs does this step need?", "stopped": "Why did the last run stop here?"}
+    },
     "kanban": {
       "statusMoved": "Moved to \"{{column}}\"",
       "statusFailedNotFound": "Not saved: task \"{{title}}\" no longer exists (it may have been deleted or reassigned). Refresh the board.",
