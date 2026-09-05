@@ -6,6 +6,10 @@
  *   node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --out=evidence/odbior-zywo-20260905/02/mywork-inbox.png \
  *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900]
  * --klik można podać wiele razy (kolejno). Selektor w składni Playwright (text=, css=, role=…).
+ * --przewin=<selektor> (OPT-IN, dodane 2026-09-05): po klikach przewija podany element do widoku
+ *   i dopiero wtedy robi zrzut. Potrzebne, gdy odbierany blok leży poniżej pierwszego ekranu, a
+ *   `--pelna` daje obraz zbyt wysoki, żeby cokolwiek na nim zobaczyć (np. panel EV football-field
+ *   na kroku „Wyniki" wyceny). Bez tego parametru zachowanie skryptu jest bajt w bajt jak dotąd.
  * Zapisuje też <out>.json z adresem końcowym, tytułem i listą błędów konsoli (do werdyktu).
  */
 import { chromium } from 'playwright';
@@ -14,6 +18,7 @@ import path from 'node:path';
 const args = process.argv.slice(2);
 const get = (k, d) => { const a = args.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7));
+const przewin = get('przewin', '');
 const url = get('url', '/chat'); const out = get('out'); const czekaj = Number(get('czekaj', '1200'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const auth = process.env.ODBIOR_AUTH_STATE;
@@ -42,8 +47,12 @@ for (const k of kliki) {
   try { await page.locator(k).first().click({ timeout: 8000 }); await page.waitForTimeout(900); }
   catch (e) { bledy.push(`klik nieudany: ${k}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
 }
+if (przewin) {
+  try { await page.locator(przewin).first().scrollIntoViewIfNeeded({ timeout: 8000 }); await page.waitForTimeout(700); }
+  catch (e) { bledy.push(`przewiniecie nieudane: ${przewin}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
+}
 await page.waitForTimeout(600);
 await page.screenshot({ path: out, fullPage: pelna });
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, bledy, kiedy: new Date().toISOString() }, null, 1));
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 await browser.close();
