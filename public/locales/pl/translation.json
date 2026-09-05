@@ -2258,7 +2258,8 @@
         "zoomQuarter": "Kwartał",
         "priorityFilter": "Priorytet",
         "empty": "Brak decyzji w zakresie"
-      }
+      },
+      "createdFromChatToast": "Utworzono decyzję z czatu"
     },
     "errors": {
       "fetchFailed": "Nie udało się załadować",
@@ -2366,7 +2367,9 @@
           "summarizeTable": "Podsumuj tę tabelę dla Teresy",
           "open": "Zapytaj Teresę"
         }
-      }
+      },
+      "savedFromChatToast": "Zapisano z czatu w Moich Pomysłach",
+      "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę"
     },
     "whiteboard": {
       "regionLabel": "Tablica idei z elementami swobodnymi",
@@ -2724,7 +2727,8 @@
       "context": {
         "private": "Prywatny",
         "org": "Kontekst org"
-      }
+      },
+      "savedFromChatToast": "Zapisano z czatu w Notatniku"
     },
     "processFlow": {
       "degraded": "Dane przepływu niedostępne — ponowne łączenie",
@@ -18704,7 +18708,12 @@
       "submitReviewPrompt": "Prześlij ten insight do recenzji",
       "exportInsight": "Eksportuj insight do inicjatywy",
       "exportInsightPrompt": "Eksportuj ten insight do inicjatywy",
-      "viewEvidence": "Zobacz mapę dowodów"
+      "viewEvidence": "Zobacz mapę dowodów",
+      "generateReport": "Utwórz dokument",
+      "generatePresentation": "Utwórz prezentację",
+      "browseTemplates": "Przeglądaj szablony",
+      "useTemplate": "Użyj tego szablonu",
+      "recordKpi": "Zapisz wartość KPI"
     },
     "feedback": {
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
@@ -18746,10 +18755,13 @@
       "reject": "Odrzuć",
       "createDocument": "Utwórz dokument",
       "created": "Dokument utworzony",
-      "rejected": "Propozycja odrzucona"
+      "rejected": "Propozycja odrzucona",
+      "defaultTitle": "Dokument z czatu",
+      "createFailed": "Nie udało się utworzyć propozycji."
     }
   },
   "aiChat": {
+    "confirmDeleteBulk": "Usunąć {{count}} rozmów?",
     "confirmDeleteBulk_one": "Usunąć {{count}} rozmowę?",
     "confirmDeleteBulk_few": "Usunąć {{count}} rozmowy?",
     "confirmDeleteBulk_many": "Usunąć {{count}} rozmów?",
@@ -18867,7 +18879,9 @@
     "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
     "workPanel": {
       "open": "Otwórz panel roboczy",
-      "close": "Zamknij panel roboczy"
+      "close": "Zamknij panel roboczy",
+      "title": "Obszar roboczy Canvas",
+      "resizeDivider": "Zmień szerokość panelu Canvas"
     },
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",
@@ -18893,7 +18907,8 @@
     },
     "quickClicks": {
       "brief": {
-        "label": "Dzienny brief"
+        "label": "Dzienny brief",
+        "prompt": "Przygotuj krótki dzienny brief: priorytety, ryzyka, decyzje i najlepsze kolejne działania."
       },
       "savings": {
         "label": "Szybkie oszczędności",
@@ -19123,7 +19138,9 @@
       "delete": "Usuń",
       "addToProject": "Dodaj do folderu",
       "moveProject": "Zmień folder",
-      "shareLink": "Udostępnij link"
+      "shareLink": "Udostępnij link",
+      "export": "Eksportuj",
+      "purge": "Usuń trwale"
     },
     "feedback": {
       "thankYou": "Dziękujemy za opinię!",
@@ -19589,7 +19606,25 @@
       "3": "Cześć",
       "4": "Miło, że jesteś",
       "5": "Bierzmy się do pracy"
-    }
+    },
+    "business": "Działania biznesowe",
+    "muteNow": "Wycisz teraz",
+    "streamError": "Ostatnie żądanie nie powiodło się. Możesz spróbować ponownie.",
+    "folderColor": "Kolor",
+    "folder": "folder",
+    "confirmDeleteFolderWithConvs": "Usunąć folder „${name}”? ${count} rozmów w środku NIE zostanie usuniętych — zostaną tylko odłączone od folderu.",
+    "confirmDeleteFolder": "Usunąć folder „${name}”?",
+    "deleteFolderFailed": "Nie udało się usunąć folderu. Spróbuj ponownie.",
+    "confirmMovePrivateToOrganization": "Przenieść tę prywatną rozmowę do folderu organizacji? Członkowie organizacji z dostępem do folderu będą mogli ją zobaczyć.",
+    "visibilityConsentRecorded": "Zarejestrowano widoczność w organizacji. Potwierdzenie",
+    "exportTooLarge": "Ta rozmowa jest zbyt duża do pełnego eksportu. Użyj filtrów dat.",
+    "confirmDeleteDestructive": "Usunąć „${title}”?\\n\\nTa operacja jest destrukcyjna. Rozmowa trafi do kosza i zostanie trwale usunięta po 30 dniach. Tej operacji nie można cofnąć.",
+    "confirmPurge": "Trwale usunąć „${conversation.title || 'tę rozmowę'}”?\\n\\nWszystkie wiadomości i załączniki zostaną bezpowrotnie usunięte. Zapis audytowy zostanie zachowany. Tej operacji NIE MOŻNA cofnąć.",
+    "visibilityHistoryUnavailable": "Nie udało się wczytać historii widoczności.",
+    "visibilityHistory": "Historia widoczności",
+    "noVisibilityChanges": "Nie zarejestrowano zmian widoczności w organizacji.",
+    "visibilityChanged": "Zmieniono widoczność",
+    "visibilityChangedBy": "Osoba"
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -19680,7 +19715,10 @@
     "resources": "Twoje zasoby",
     "storage": "Pamięć",
     "apiCalls": "Wywołania API (miesiąc)",
-    "lastUpdate": "Automatyczne odświeżanie co 30s"
+    "lastUpdate": "Automatyczne odświeżanie co 30s",
+    "demoDataTitle": "Sesja danych demonstracyjnych",
+    "demoData": "Dane demonstracyjne",
+    "dataAccess": "Dostęp do danych"
   },
   "llm": {
     "model": "Model",
@@ -30803,7 +30841,13 @@
     "memberTypeObserver": "Obserwator"
   },
   "branch": {
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "loadFailed": "Nie udało się wczytać gałęzi.",
+    "switchFailed": "Nie udało się przełączyć na tę gałąź.",
+    "createFailed": "Nie udało się utworzyć gałęzi.",
+    "renameFailed": "Nie udało się zmienić nazwy gałęzi.",
+    "deleteFailed": "Nie udało się usunąć gałęzi.",
+    "backToParent": "Wróć do rozmowy źródłowej"
   },
   "canvas": {
     "actions": {
@@ -31401,7 +31445,8 @@
       "copy": {
         "failed": "Błąd"
       }
-    }
+    },
+    "bargeInToast": "Odczytywanie przerwane."
   },
   "integrations": {
     "syncHub": {

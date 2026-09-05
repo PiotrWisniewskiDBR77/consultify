@@ -2970,7 +2970,8 @@
         "zoomQuarter": "Quarter",
         "priorityFilter": "Priority",
         "empty": "No decisions in range"
-      }
+      },
+      "createdFromChatToast": "Decision created from chat"
     },
     "errors": {
       "fetchFailed": "Failed to load",
@@ -3078,7 +3079,9 @@
           "summarizeTable": "Summarise this table for Teresa",
           "open": "Ask Teresa"
         }
-      }
+      },
+      "savedFromChatToast": "Saved from chat to My Ideas",
+      "sentToWorkspaceToast": "Opened in Ideas workspace"
     },
     "whiteboard": {
       "regionLabel": "Idea whiteboard with freeform elements",
@@ -3432,7 +3435,8 @@
       "context": {
         "private": "Private",
         "org": "Org context"
-      }
+      },
+      "savedFromChatToast": "Saved from chat to Notebook"
     },
     "processFlow": {
       "degraded": "Flow data unavailable — reconnecting",
@@ -17483,7 +17487,12 @@
       "submitReviewPrompt": "Submit this insight for review",
       "exportInsight": "Export insight to initiative",
       "exportInsightPrompt": "Export this insight to an initiative",
-      "viewEvidence": "View evidence map"
+      "viewEvidence": "View evidence map",
+      "generateReport": "Create document",
+      "generatePresentation": "Create presentation",
+      "browseTemplates": "Browse templates",
+      "useTemplate": "Use this template",
+      "recordKpi": "Record KPI value"
     },
     "feedback": {
       "missingInfoPlaceholder": "Describe what was missing from the answer..."
@@ -17503,6 +17512,7 @@
     "conversationLandmark": "Conversation"
   },
   "aiChat": {
+    "confirmDeleteBulk": "Delete {{count}} conversations?",
     "confirmDeleteBulk_one": "Delete {{count}} conversation?",
     "confirmDeleteBulk_few": "Delete {{count}} conversations?",
     "confirmDeleteBulk_many": "Delete {{count}} conversations?",
@@ -17620,7 +17630,9 @@
     "startDictation": "Dictate (fills input; review and send)",
     "workPanel": {
       "open": "Open work panel",
-      "close": "Close work panel"
+      "close": "Close work panel",
+      "title": "Canvas work area",
+      "resizeDivider": "Resize Canvas panel"
     },
     "openSidebar": "Open sidebar",
     "newChat": "New conversation",
@@ -17646,7 +17658,8 @@
     },
     "quickClicks": {
       "brief": {
-        "label": "Daily brief"
+        "label": "Daily brief",
+        "prompt": "Give me a short daily brief: priorities, risks, decisions, and next best actions."
       },
       "savings": {
         "label": "Quick savings",
@@ -17876,7 +17889,9 @@
       "delete": "Delete",
       "addToProject": "Add to folder",
       "moveProject": "Change folder",
-      "shareLink": "Share link"
+      "shareLink": "Share link",
+      "export": "Export",
+      "purge": "Permanently Delete"
     },
     "feedback": {
       "thankYou": "Thank you for your feedback!",
@@ -18342,7 +18357,25 @@
       "3": "Hello",
       "4": "Nice to have you here",
       "5": "Let's get to work"
-    }
+    },
+    "business": "Business actions",
+    "muteNow": "Mute now",
+    "streamError": "Last request failed. You can retry.",
+    "folderColor": "Color",
+    "folder": "folder",
+    "confirmDeleteFolderWithConvs": "Delete folder \"${name}\"? The ${count} conversation(s) inside will NOT be deleted, just detached from this folder.",
+    "confirmDeleteFolder": "Delete folder \"${name}\"?",
+    "deleteFolderFailed": "Could not delete folder. Please try again.",
+    "confirmMovePrivateToOrganization": "Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.",
+    "visibilityConsentRecorded": "Organization visibility recorded. Receipt",
+    "exportTooLarge": "This conversation is too large for full export. Please use date filters.",
+    "confirmDeleteDestructive": "Delete \"${title}\"?\\n\\nThis action is destructive. The conversation will be moved to trash and permanently removed after 30 days. This cannot be undone.",
+    "confirmPurge": "Permanently delete \"${conversation.title || 'this conversation'}\"?\\n\\nAll messages and attachments will be irreversibly removed. An audit record will be kept. This CANNOT be undone.",
+    "visibilityHistoryUnavailable": "Visibility history could not be loaded.",
+    "visibilityHistory": "Visibility history",
+    "noVisibilityChanges": "No organization visibility changes recorded.",
+    "visibilityChanged": "Visibility changed",
+    "visibilityChangedBy": "Actor"
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -18433,7 +18466,10 @@
     "resources": "Your Resources",
     "storage": "Storage",
     "apiCalls": "API Calls (month)",
-    "lastUpdate": "Auto-refresh every 30s"
+    "lastUpdate": "Auto-refresh every 30s",
+    "demoDataTitle": "Demo data session",
+    "demoData": "Demo Data",
+    "dataAccess": "Data Access"
   },
   "llm": {
     "model": "Model",
@@ -28474,7 +28510,13 @@
     "memberTypeObserver": "Observer"
   },
   "branch": {
-    "delete": "Delete"
+    "delete": "Delete",
+    "loadFailed": "Could not load branches.",
+    "switchFailed": "Could not switch to that branch.",
+    "createFailed": "Could not create branch.",
+    "renameFailed": "Could not rename branch.",
+    "deleteFailed": "Could not delete branch.",
+    "backToParent": "Back to source conversation"
   },
   "canvas": {
     "actions": {
@@ -29051,7 +29093,8 @@
       "copy": {
         "failed": "Failed"
       }
-    }
+    },
+    "bargeInToast": "Reading interrupted."
   },
   "integrations": {
     "syncHub": {
