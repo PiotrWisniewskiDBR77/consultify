@@ -183,6 +183,7 @@ import {
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { upsertFinancialBlock } from './financialNarrativeBlocks';
 import { GateOverrideModal } from './gate-ai';
+import { buildFallbackGateReadiness } from './gateReadinessFallback';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import {
   extractInitiativeKpiRows,
@@ -557,6 +558,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   // Core state
   const [initiative, setInitiative] = useState<any | null>(null);
+  // A20: status widziany przez lokalny fallback zdolnosci, gdy gate-readiness
+  // zwraca 404 (patrz `gateReadinessFallback.ts`). Ref, nie zmienna z domkniecia
+  // — pobranie startuje zanim rekord dojedzie.
+  const initiativeStatusRef = useRef<string | null>(null);
   const [initiativeTemplate, setInitiativeTemplate] = useState<any | null>(null);
   const [sectionTypes, setSectionTypes] = useState<SectionTypeInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1434,6 +1439,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ? rawStatus
       : InitiativeStatus.DRAFT
   ) as InitiativeStatus;
+  initiativeStatusRef.current = status;
   const statusMeta = getStatusMeta(status);
   // D-B: Menu 1 status pill. Label comes from INITIATIVE_STATUS_METADATA (already
   // bilingual — no new i18n key, no raw key on screen); tone from the fold above.
@@ -2804,11 +2810,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           .catch(() => Api.get(`/initiatives/${initiativeId}/gate-readiness-check`))
           .then((rc: any) => {
             const payload = normalizeGateReadinessPayload(rc);
+            // A20: pusta odpowiedź traktowana jak brak zdania serwera, nie jak
+            // „wszystko zablokowane" — inaczej AI gaśnie po cichu.
+            if (!payload?.capabilities) throw new Error('GATE_READINESS_WITHOUT_CAPABILITIES');
             setGateReadiness((payload as GateReadinessCheck | null) || null);
             setUserGateRoles(payload?.userRoles || []);
           })
           .catch(() => {
-            setGateReadiness(null);
+            // A20 (uwaga właściciela 2026-09-05: „brak przycisku AI w górnym
+            // pasku do wypełnienia karty"). ZMIERZONE: obie trasy
+            // gate-readiness-check zwracają 404 dla rekordów rejestru
+            // runtime-v1, więc `gateReadiness` zostawało `null`, a przyciski
+            // „Wypełnij z AI" / „Analizuj z AI" / „Zapytaj Teresę" były trwale
+            // `disabled` na KAŻDYM realnym rekordzie. Zdolności liczymy wtedy
+            // lokalnie tą samą regułą co macierz serwera (canUseAi =
+            // !isTerminal); gdy serwer odpowie, jego kontrakt wygrywa.
+            setGateReadiness(
+              buildFallbackGateReadiness(initiativeStatusRef.current) as GateReadinessCheck
+            );
             setUserGateRoles([]);
           }),
         V8PlanningApi.getStatusHistory(initiativeId)
