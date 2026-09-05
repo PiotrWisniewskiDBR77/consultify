@@ -1636,6 +1636,14 @@ export const AppRoutes: React.FC = () => {
           path="/my-work/sheets/:workspaceId/tables/:tableId"
           element={<MyWorkSheetsDeepLinkRedirect />}
         />
+        {/* 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — pill usunięty z
+            Menu 2 (MyWorkHub.tsx). This route is kept only so old
+            /my-work/manager links never 404 — it always redirects to My Work,
+            without any feature flag. */}
+        <Route
+          path="/my-work/manager"
+          element={<Navigate to={ROUTES.MY_WORK} replace />}
+        />
         <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
         {/* Projects — Zwornik (#78): stakeholder registry + finance rollup */}
