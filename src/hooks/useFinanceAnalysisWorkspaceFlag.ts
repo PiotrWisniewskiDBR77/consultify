@@ -25,9 +25,10 @@ const FINANCE_ANALYSIS_WORKSPACE_FLAG: FeatureFlag = {
   description:
     'Włącza Kreator Analizy (Quick Create/Customize, OWN-FIN-008), lifecycle Analysis workspace ' +
     '(OWN-FIN-012/013) i StandardTable-based tabelę wskaźników z kontrolerem kolumn (OWN-FIN-014). ' +
-    'OFF = Analysis workspace nie istnieje jeszcze w żadnym produkcyjnym ekranie (nowy w tym pakiecie). ' +
-    'Domyślnie OFF do akceptu Piotra na zrzutach (CLAUDE.md #7).',
-  defaultValue: false,
+    'F-P5 (05.09.2026): flaga jest domyślnie ON — kreator woła `derived-analysis` (F-P4), ' +
+    'więc analiza powstaje z krawędzią rodowodu i z wypełnioną selekcją wskaźników. ' +
+    'Praca nie chowa się za flagą; wyłączenie jest awaryjne (lokalny override).',
+  defaultValue: true,
   category: 'beta',
   allowLocalOverride: true,
 };

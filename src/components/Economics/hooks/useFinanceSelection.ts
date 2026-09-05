@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { getAnalysisKpiValues } from '@/services/api/financeV2.api';
 import { valuationDisplayMultiplier, valuationDisplayValue } from '@/utils/valuationMonetaryUnit';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
@@ -798,35 +799,60 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     }
   }, []);
 
-  const loadAnalysisPreviewRatios = useCallback(async (analysisId: string) => {
-    try {
-      let ratios: any[] | null = null;
+  /**
+   * F-P5 §3 — DIAGNOZA 2× 404 przy otwarciu Analizy (zmierzona, nie zgadnięta):
+   * `GET /api/v8/finance/analyses/:id/ratios` sprawdza id w `listAnalyses()`, czyli w LEGACY
+   * rejestrze `financial_analyses` (`server/src/services/financialAnalysisService.ts:446`),
+   * a kanoniczna analiza (`HISTORICAL_ANALYSIS`) ma id z `finance_artifacts`. To DWIE różne
+   * przestrzenie identyfikatorów — dla rekordu kanonicznego ta trasa MUSI zwrócić 404, tak samo
+   * jak legacy fallback `/api/economics/financial-analyses/:id/ratios` (ten sam rejestr).
+   * Naprawa: dla rekordu kanonicznego w ogóle NIE wołamy tras legacy — czytamy wskaźniki
+   * z `GET /finance-v2/analysis/:businessVersionId/kpi-values` (pusto = pusto, nie 404).
+   */
+  const loadAnalysisPreviewRatios = useCallback(
+    async (analysisId: string, canonicalBusinessVersionId?: string | null) => {
       try {
-        const data = await V8FinanceApi.getAnalysisRatios(analysisId);
-        ratios = Array.isArray(data?.ratios) ? data.ratios : null;
-      } catch (error) {
-        if (!shouldFallbackToLegacyFinance(error)) {
-          throw error;
+        let ratios: any[] | null = null;
+        if (canonicalBusinessVersionId) {
+          const values = await getAnalysisKpiValues(canonicalBusinessVersionId);
+          ratios = (Array.isArray(values) ? values : [])
+            .filter((value) => value?.value?.valueDecimal != null)
+            .map((value) => ({
+              category: value.category,
+              ratio_code: value.kpiCode,
+              ratio_name: value.kpiName,
+              value: value.value.valueDecimal,
+            }));
+        } else {
+          try {
+            const data = await V8FinanceApi.getAnalysisRatios(analysisId);
+            ratios = Array.isArray(data?.ratios) ? data.ratios : null;
+          } catch (error) {
+            if (!shouldFallbackToLegacyFinance(error)) {
+              throw error;
+            }
+            const data = await Api.get(`/api/economics/financial-analyses/${analysisId}/ratios`);
+            ratios = Array.isArray((data as any)?.ratios) ? (data as any).ratios : null;
+          }
         }
-        const data = await Api.get(`/api/economics/financial-analyses/${analysisId}/ratios`);
-        ratios = Array.isArray((data as any)?.ratios) ? (data as any).ratios : null;
-      }
-      if (Array.isArray(ratios) && ratios.length > 0) {
-        setAnalysisPreviewRatios(
-          ratios.map((r: any) => ({
-            category: r.category,
-            ratio_code: r.ratio_code,
-            ratio_name: r.ratio_name,
-            value: r.value != null ? Number(r.value) : null,
-          }))
-        );
-      } else {
+        if (Array.isArray(ratios) && ratios.length > 0) {
+          setAnalysisPreviewRatios(
+            ratios.map((r: any) => ({
+              category: r.category,
+              ratio_code: r.ratio_code,
+              ratio_name: r.ratio_name,
+              value: r.value != null ? Number(r.value) : null,
+            }))
+          );
+        } else {
+          setAnalysisPreviewRatios(null);
+        }
+      } catch {
         setAnalysisPreviewRatios(null);
       }
-    } catch {
-      setAnalysisPreviewRatios(null);
-    }
-  }, []);
+    },
+    []
+  );
 
   const loadValuationPreviewResults = useCallback(async (valuationId: string) => {
     try {
@@ -926,7 +952,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
         setValuationPreviewDetail(null);
-        loadAnalysisPreviewRatios(row.id);
+        loadAnalysisPreviewRatios(row.id, row.canonicalBusinessVersionId ?? null);
       } else if (row.kind === 'valuation') {
         setStatementPreviewDetail(null);
         setStatementPreviewRatios(null);

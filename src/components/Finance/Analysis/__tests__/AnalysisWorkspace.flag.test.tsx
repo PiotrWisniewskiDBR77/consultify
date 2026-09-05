@@ -10,10 +10,14 @@
  * would fire real network calls the instant it was ever rendered, flag or
  * no flag — because it never read its own flag in the first place.
  *
+ * F-P5 (05.09.2026): domyślna wartość flagi to teraz **ON** — praca nie chowa się za flagą,
+ * kreator woła `derived-analysis` (F-P4) i analiza ma wskaźniki. Bramka NIE zniknęła: awaryjny
+ * lokalny override `false` dalej wyłącza cały ekran PRZED efektem `reload()`.
+ *
  * Proves:
- *   - flag OFF (no override, i.e. real production default): renders nothing
+ *   - flag OFF (jawny lokalny override — hamulec awaryjny): renders nothing
  *     AND never calls any of the four load functions.
- *   - flag ON (local override): mounts and calls them.
+ *   - flag ON (domyślna wartość produkcyjna): mounts and calls them.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -46,7 +50,8 @@ afterEach(() => {
 });
 
 describe('AnalysisWorkspace — flag gate (AP_MOUNT §A)', () => {
-  it('OFF (default): renders nothing and calls zero of the four mount-time load functions', () => {
+  it('OFF (jawny override awaryjny): renders nothing and calls zero of the four mount-time load functions', () => {
+    setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: false });
     const { container } = render(
       <AnalysisWorkspace
         artifactId="art-1"
@@ -62,7 +67,7 @@ describe('AnalysisWorkspace — flag gate (AP_MOUNT §A)', () => {
     expect(apiMocks.getAnalysisKpiCatalog).not.toHaveBeenCalled();
   });
 
-  it('ON (local override): mounts and calls the four load functions', async () => {
+  it('ON (wartość domyślna po F-P5): mounts and calls the four load functions', async () => {
     apiMocks.getFinanceArtifact.mockResolvedValue({
       artifactId: 'art-1',
       naturalKey: 'Analiza',
@@ -78,7 +83,7 @@ describe('AnalysisWorkspace — flag gate (AP_MOUNT §A)', () => {
     });
     apiMocks.getAnalysisKpiValues.mockResolvedValue([]);
     apiMocks.getAnalysisKpiCatalog.mockResolvedValue([]);
-    setFeatureFlagOverrides({ financeAnalysisWorkspaceV1: true });
+    // Celowo BEZ override — to jest pomiar wartości DOMYŚLNEJ flagi (F-P5: ON).
     render(
       <AnalysisWorkspace
         artifactId="art-1"
