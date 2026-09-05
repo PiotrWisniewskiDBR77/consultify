@@ -85,3 +85,86 @@ export function etykietyPoziomowZMetodyki(
   }
   return out;
 }
+
+/**
+ * NAZWA OBSZARU W MACIERZY — jedno źródło dla wszystkich czterech miejsc,
+ * w których ta siatka żyje (edytor · sesja · raport z oceny · prezentacja).
+ *
+ * ★ ZGŁOSZENIE WŁAŚCICIELA 2026-09-05: w raporcie z oceny dolny pasek macierzy
+ * podpisywał kolumny po angielsku („Sales Processes", „Marketing Processes"),
+ * podczas gdy drzewo obszarów W TYM SAMYM OKNIE, dwadzieścia centymetrów obok,
+ * pisało „Procesy Sprzedaży", „Procesy Marketingowe". Jeden ekran mówił dwoma
+ * językami o tej samej rzeczy.
+ *
+ * ★ GRANICA JĘZYKOWA — CO SIĘ ZMIENIA, A CO NIE. `KANON_Z_ODBIOROW.md`
+ * (31.08) stanowi, że metodyka DRD zostaje po angielsku, bo książka jest po
+ * angielsku. Ta zmiana tego NIE odwraca: nazwy poziomów (etykiety wierszy)
+ * i technologie w komórkach zostają angielskie — nie ma dla nich polskich
+ * odpowiedników w metodyce (`DRDLevel` nie ma pola `titlePL`, patrz
+ * `MACIERZ_TRESC_KOMOREK.md` §2.4). Zmienia się WYŁĄCZNIE nazwa obszaru,
+ * bo dla niej polski odpowiednik JEST w SSOT (`DRDArea.namePL`, 48 wpisów)
+ * i całą resztą produktu — drzewem sesji (`DrdMethodWorkspaceScreen`,
+ * `DrdHttpMethodWorkspaceScreen`), panelem jakości (`AssessmentQualityReview
+ * Panel`), mapami SIRI/ADMA — już się posługuje. Macierz była jedynym
+ * miejscem, które go ignorowało.
+ *
+ * Wynik zależy od JĘZYKA INTERFEJSU, nie od miejsca użycia: w angielskim
+ * interfejsie wraca `name`, więc angielska wersja produktu zostaje spójnie
+ * angielska.
+ */
+export function etykietaObszaru(
+  area: Pick<DRDArea, 'name' | 'namePL'>,
+  polskiInterfejs: boolean
+): string {
+  if (!polskiInterfejs) return area.name;
+  return area.namePL?.trim() || area.name;
+}
+
+/**
+ * Próg czytelności kolumny macierzy. Poniżej tej szerokości komórka przestaje
+ * mieścić choćby `Reporting` w dwóch wierszach przy 10 px — węższa kolumna nie
+ * jest już „ciasną macierzą", tylko dziewięcioma paskami bez treści. Wtedy
+ * lepiej przewijać w bok niż udawać, że wszystko widać.
+ */
+export const MIN_CZYTELNA_KOLUMNA_PX = 56;
+
+/**
+ * MINIMUM SZEROKOŚCI KOLUMNY OBSZARU — liczone z faktycznego kadru siatki.
+ *
+ * `gridTemplateColumns` używa `minmax(min, 1fr)`: kolumny ROSNĄ, gdy jest
+ * miejsce, i wypychają siatkę w przewijanie, gdy suma minimów przekracza kadr.
+ * Sterujemy więc minimum:
+ *  - kadr jeszcze nie zmierzony (`kadrPx <= 0`, pierwsza klatka albo jsdom) →
+ *    minimum bazowe, czyli dokładnie zachowanie sprzed 05.09;
+ *  - wszystkie kolumny mieszczą się przy minimum bazowym → zostaje bazowe
+ *    (edytor i prezentacja mają szeroki kadr i nic tam nie chudnie);
+ *  - nie mieszczą się → minimum schodzi do szerokości, która mieści komplet,
+ *    ale nigdy poniżej `MIN_CZYTELNA_KOLUMNA_PX`.
+ *
+ * Zwracana liczba jest całkowita — ułamek piksela w `minmax()` potrafi dodać
+ * 1 px zaokrąglenia na kolumnę, co przy 9 kolumnach wystarcza, żeby siatka
+ * mimo wszystko wpadła w przewijanie.
+ */
+export function minimumKolumnyMacierzy(wejscie: {
+  kadrPx: number;
+  liczbaObszarow: number;
+  labelColumnPx: number;
+  gapPx: number;
+  columnMinPx: number;
+}): number {
+  const { kadrPx, liczbaObszarow, labelColumnPx, gapPx, columnMinPx } = wejscie;
+  const bazowy =
+    liczbaObszarow >= 9
+      ? Math.min(columnMinPx, 92)
+      : liczbaObszarow >= 7
+        ? Math.min(columnMinPx, 120)
+        : columnMinPx;
+  if (liczbaObszarow <= 0 || kadrPx <= 0) return bazowy;
+  // `clientWidth` zawiera padding kadru (p-2 = 8 px z każdej strony) i jedną
+  // przerwę na każdą granicę kolumn (etykieta + N obszarów = N przerw).
+  const naKolumny = kadrPx - 16 - labelColumnPx - gapPx * liczbaObszarow;
+  if (naKolumny <= 0) return bazowy;
+  const zmieszczone = Math.floor(naKolumny / liczbaObszarow);
+  if (zmieszczone >= bazowy) return bazowy;
+  return Math.max(MIN_CZYTELNA_KOLUMNA_PX, zmieszczone);
+}
