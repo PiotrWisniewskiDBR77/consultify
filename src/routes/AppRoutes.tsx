@@ -3081,11 +3081,12 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* POZIOM 3 trzypoziomowej formuły KPI (2026-09-05). MainLayout bez
-            `breadcrumbs` — ekran sam renderuje pełną ścieżkę poziomów w
-            Menu 1 (`StandardModuleBar breadcrumbs`), tak jak karta KPI
-            renderuje swoją (`ArtifactBreadcrumb`); pasek aplikacji na górze
-            by ją zdublował. */}
+        {/* POZIOM 2 trzypoziomowej formuły KPI (odrzucenie właściciela
+            2026-09-05): LISTA zestawienia — jego opis i pozycje. Wchodzi się
+            tu z tabeli zestawień (`RESULTS_KPI.ROOT`), wychodzi w kartę N
+            wskaźnika (`RESULTS_KPI.TOOL`). Ekran sam renderuje ścieżkę
+            poziomów w Menu 1 (`StandardModuleBar breadcrumbs`), tak jak karta
+            KPI renderuje swoją (`ArtifactBreadcrumb`). */}
         <Route
           path={ROUTES.RESULTS_KPI.CARD_SET}
           element={

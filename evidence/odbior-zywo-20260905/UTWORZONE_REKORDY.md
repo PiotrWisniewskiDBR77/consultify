@@ -65,3 +65,18 @@ do tego celu.
 | Odkryty efekt uboczny | Nawet z flagą włączoną lokalnie, jedyny kanoniczny artefakt BASELINE_MODEL dla DBR77 (0073fc01-9072-4cae-8a2b-38caa06a0b75 / businessVersionId e63de345-6f7b-45da-b9f1-d927ac452c06, utworzony w Rundzie 2) daje 409 `BASELINE_CONTEXT_NOT_CONFIGURED` — kontekst modelu nigdy nie został skonfigurowany. Nie próbowałem tego naprawić przez PUT (wymaga danych domenowych — okresy prognozy/okres otwarcia — których nie mam pewności, że dobrałbym poprawnie; ryzyko utworzenia strukturalnie złych danych). Zgłoszone jako spec dla robotnika w `09-finanse/wyniki.json` (finance-baseline-workspace, runda 6). |
 
 - 05.09 ~13:00 — feature_flags.financeBaselineWorkspaceV1 → enabled=true (decyzja właściciela POPRAWKA: Baseline v3 pełna tabela).
+
+## 2026-09-05 — KPI, trzypoziomowa formuła (odbiór na żywo, agent `agent/kpi-tabela-lista-karta`)
+
+| Co | Gdzie | Jak utworzone | Po co |
+|---|---|---|---|
+| Pozycja zestawienia: `Acceptance KPI — benefits realization` w zestawieniu `Karta wyników transformacji` | staging (baza `trolley`), `rvn_kpi_scorecard_items`; zestawienie `4fdc1bb9-dd71-4dda-a4a4-9e03fa87faf4`, KPI `e635d6a0-eee1-448b-a932-a8a435eb9f14` | PRZEZ UI — ekran pełnej karty wyników → dialog „Dodaj KPI do karty wyników" (`kpi-scorecard-add-item-cta`), notatka: „Odbiór trzypoziomowej formuły KPI 05.09…"; skrypt klików: `scripts/dev/kpi-3poziomy-20260905/dodaj-kpi-do-zestawienia.mjs` | Staging miał JEDNO zestawienie z ZEREM pozycji — poziomu 2 (lista zestawienia z pozycjami) nie było na czym pokazać ani odebrać |
+
+Nic poza tym nie zostało utworzone ani zmienione. Rekord jest odwracalny z UI
+(kebab pozycji → „Usuń pozycję"), gdyby właściciel chciał wrócić do pustego
+zestawienia.
+
+Zrzuty odbioru: `evidence/odbior-zywo-20260905/kpi-3poziomy/`
+(`L1-tabela-zestawien.png` — stan przed dodaniem, z wierszem systemowym
+„Bez zestawienia"; `L1-tabela-zestawien-podglad.png` — poziom 1 z otwartym
+podglądem; `L2-lista-zestawienia.png`; `L3-karta-N-wskaznika.png`).

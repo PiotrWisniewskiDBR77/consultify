@@ -1,47 +1,63 @@
 /**
  * Trzypoziomowa formuła KPI — jeden plik z definicją ŚCIEŻKI POZIOMU.
  *
- * POWÓD (odrzucenie właściciela 2026-09-05, cytat): „nad kartą jest ich
- * zestawienie. To jest trzypoziomowe menu (…) mamy tabelę, pod nią kartę KPI,
- * piętro niżej – zbiór kart KPI, a poniżej kolejna karta KPI."
+ * POWÓD (odrzucenie właściciela 2026-09-05, cytat dosłowny):
+ *   „To nie jest, niestety, to, co wcześniej zgłosiliśmy i omawialiśmy.
+ *    Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis
+ *    KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N. Tego tu nie mamy
+ *    teraz."
  *
- * Poziomy:
- *   1. `/results/kpi`                                  — rejestr (StandardTable)
- *   2. `/results/kpi/:kpiId`                           — karta KPI (NModeShell)
- *   3. `/results/kpi/:kpiId/zestawienie/:scorecardId`  — ZBIÓR kart KPI
- *   4. `/results/kpi/:childKpiId?zbior=…&zKarty=…`     — kolejna karta KPI
+ * Poziomy (dokładnie TRZY — nie cztery):
+ *   1. `/results/kpi`                            — TABELA ZESTAWIEŃ
+ *      (rejestr grup wskaźników: nazwa · opis · liczba wskaźników ·
+ *      właściciel · status · aktualizacja), `StandardTable` + `StandardPreview`.
+ *   2. `/results/kpi/zestawienie/:scorecardId`    — LISTA zestawienia:
+ *      nagłówek z nazwą i OPISEM zestawienia + jego pozycje jako
+ *      `StandardGridCard`.
+ *   3. `/results/kpi/:kpiId?zbior=<scorecardId>`  — KARTA N wskaźnika
+ *      (`KpiToolPage`), ścieżka „Rejestr KPI › <zestawienie> › <wskaźnik>".
  *
- * Poziom 4 to DOKŁADNIE ten sam komponent co poziom 2 (`KpiToolPage`) — różni
- * je wyłącznie ścieżka w breadcrumbie, przenoszona w querystringu (a nie w
- * `location.state`), żeby przetrwała odświeżenie i dała się podlinkować.
+ * POPRZEDNIA (ODRZUCONA) FORMUŁA — czterostopniowa „tabela KPI → karta KPI →
+ * zbiór kart → kolejna karta" — miała zestawienie SCHOWANE wewnątrz karty
+ * wskaźnika. Właściciel odrzucił ją 05.09: zestawienie jest POZIOMEM WYŻEJ
+ * niż wskaźnik, nie sekcją w nim. Trasa `/results/kpi/:kpiId/zestawienie/:id`
+ * i parametr `zKarty` zniknęły razem z nią (żyły jeden dzień, nigdy nie
+ * odebrane).
  *
- * UCZCIWOŚĆ DANYCH: relacja „zbiór" to REALNE `rvn_kpi_scorecard_items`
- * (`GET /vnext/results/kpi/scorecards/:id/items`). W całym backendzie NIE MA
- * relacji rodzic→dziecko między samymi KPI (`parentKpiId`/`children` —
- * zero trafień w `server/src`), więc hierarchii nie udajemy: piętrem niżej
- * jest zestawienie, którego ten wskaźnik jest członkiem.
+ * UCZCIWOŚĆ DANYCH: „zestawienie" to REALNE `rvn_kpi_scorecards` +
+ * `rvn_kpi_scorecard_items` (`GET /vnext/results/kpi/scorecards`,
+ * `.../:id/items`). W backendzie NIE MA relacji rodzic→dziecko między samymi
+ * KPI (`parentKpiId`/`children` — zero trafień w `server/src`), więc żadnej
+ * hierarchii nie udajemy.
  */
 
-/** Nazwa parametru niosącego id zestawienia (poziom 3), z którego przyszliśmy. */
+/** Nazwa parametru niosącego id zestawienia (poziom 2), z którego przyszliśmy. */
 export const KPI_CARD_SET_PARAM = 'zbior';
-/** Nazwa parametru niosącego id karty KPI (poziom 2), od której zaczęła się ścieżka. */
-export const KPI_CARD_SET_FROM_PARAM = 'zKarty';
 
-/** Poziom 3 — zbiór kart KPI otwarty z karty `fromKpiId`. */
-export function kpiCardSetPath(fromKpiId: string, scorecardId: string): string {
-  return `/results/kpi/${encodeURIComponent(fromKpiId)}/zestawienie/${encodeURIComponent(scorecardId)}`;
+/**
+ * ZESTAWIENIE SYSTEMOWE „Bez zestawienia" — wskaźniki, które nie należą do
+ * żadnego zestawienia. Poziom 1 pokazuje je jako osobny wiersz, żeby przejście
+ * na tabelę zestawień NICZEGO nie ukryło: każdy widoczny KPI ma swoją drogę
+ * z poziomu 1. To NIE jest rekord w bazie (nie ma `scorecardId`), tylko
+ * wyliczenie po stronie klienta — dlatego id jest czytelnym słowem, nie UUID,
+ * i nigdy nie trafia do żadnego wywołania API.
+ */
+export const UNASSIGNED_CARD_SET_ID = 'bez-zestawienia';
+
+export function isUnassignedCardSetId(id: string | null | undefined): boolean {
+  return id === UNASSIGNED_CARD_SET_ID;
 }
 
-/** Poziom 4 — kolejna karta KPI, z zachowaną ścieżką poziomów. */
-export function kpiCardFromSetPath(
-  childKpiId: string,
-  scorecardId: string,
-  fromKpiId: string
-): string {
+/** Poziom 2 — lista zestawienia (opis + pozycje). */
+export function kpiCardSetPath(scorecardId: string): string {
+  return `/results/kpi/zestawienie/${encodeURIComponent(scorecardId)}`;
+}
+
+/** Poziom 3 — karta N wskaźnika, z zapamiętanym zestawieniem w ścieżce. */
+export function kpiCardFromSetPath(kpiId: string, scorecardId: string): string {
   const qs = new URLSearchParams();
   qs.set(KPI_CARD_SET_PARAM, scorecardId);
-  qs.set(KPI_CARD_SET_FROM_PARAM, fromKpiId);
-  return `/results/kpi/${encodeURIComponent(childKpiId)}?${qs.toString()}`;
+  return `/results/kpi/${encodeURIComponent(kpiId)}?${qs.toString()}`;
 }
 
 /**

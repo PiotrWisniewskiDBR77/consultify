@@ -1,22 +1,25 @@
 /**
  * @vitest-environment jsdom
  *
- * Rejestr „Kart wyników" MUSI mieć wejście — klikiem i adresem.
+ * POZIOM 1 trzypoziomowej formuły KPI — `/results/kpi` MUSI otwierać się na
+ * TABELI ZESTAWIEŃ, a lista pojedynczych wskaźników musi zostać osiągalna.
  *
- * ZMIERZONY DEFEKT (odbiór na żywo 05.09, `results-vnext-kpi-scorecards`):
- * gałąź `tab === 'scorecards'` w `ResultsKpiRegistryPage` była w pełni
- * zbudowana (własna tabela, podgląd, kebab cyklu życia, modal tworzenia),
- * ale stan `tab` dało się ustawić WYŁĄCZNIE propem `initialTab`, którego
- * żadna trasa nigdy nie przekazywała — i w całym pliku nie było ani jednego
- * `onClick`, który by go zmienił. Wraz z rejestrem nieosiągalna była CAŁA
- * trasa `/results/kpi/scorecards/:scorecardId` (jedyne wejście do niej to
- * klik w wiersz tego rejestru) — a to ONA jest zatwierdzonym obrazem
- * `results-vnext-kpi-scorecards__PO__light.png`.
+ * HISTORIA (dwa zmierzone defekty, ten sam plik):
+ *  1. Odbiór na żywo 05.09 (`results-vnext-kpi-scorecards`): gałąź
+ *     `tab === 'scorecards'` w `ResultsKpiRegistryPage` była w pełni
+ *     zbudowana (tabela, podgląd, kebab cyklu życia, modal tworzenia), ale
+ *     stan `tab` dało się ustawić WYŁĄCZNIE propem `initialTab`, którego
+ *     żadna trasa nie przekazywała — rejestr zestawień był nieosiągalny.
+ *  2. Odrzucenie właściciela 05.09 („Omawialiśmy tabelę; z poziomu tabeli
+ *     otwiera się lista"): zestawienia były zakładką POBOCZNĄ, a domyślną
+ *     tabelą była lista pojedynczych wskaźników. Od tej zmiany jest
+ *     odwrotnie — zestawienia to poziom 1, wskaźniki to pigułka „Wszystkie
+ *     wskaźniki" obok nich.
  *
- * DOWÓD MUTACYJNY (wykonany 2026-09-05): usunięcie pigułki
- * `SCORECARDS_CHIP_ID` z tablicy `chips` → pada test „pigułka jest widoczna",
- * a usunięcie gałęzi `if (id === SCORECARDS_CHIP_ID)` z `onChipChange` →
- * pada test przełączenia klikiem (ekran zostaje na rejestrze KPI).
+ * DOWÓD MUTACYJNY (wykonany 2026-09-05): zmiana domyślnego stanu `tab` z
+ * `'scorecards'` z powrotem na `'org'` wywraca test „domyślną tabelą są
+ * zestawienia", a usunięcie gałęzi `if (id === KPI_CHIP_ID)` z
+ * `onChipChange` wywraca test przejścia na listę wskaźników.
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -101,32 +104,42 @@ afterEach(() => {
   setSearch('');
 });
 
-describe('wejście do rejestru Kart wyników', () => {
-  it('pigułka „Karty wyników" jest widoczna w Menu 3 rejestru KPI', async () => {
+describe('poziom 1 — tabela zestawień jako domyślny widok /results/kpi', () => {
+  it('domyślną tabelą /results/kpi są ZESTAWIENIA (bez żadnego kliknięcia)', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('Karty wyników')).toBeInTheDocument());
-  });
-
-  it('klik w pigułkę przełącza na rejestr Kart wyników', async () => {
-    renderPage();
-    fireEvent.click(await screen.findByText('Karty wyników'));
     await waitFor(() => expect(listKpiScorecards).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
   });
 
-  it('deep-link ?kpiView=scorecards otwiera ten sam rejestr', async () => {
-    setSearch('?kpiView=scorecards');
+  it('pigułka „Zestawienia" jest widoczna w Menu 3 i jest zakładką aktywną', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Zestawienia')).toBeInTheDocument());
   });
 
-  it('z rejestru Kart wyników da się wrócić do KPI (nie jest ślepą uliczką)', async () => {
-    setSearch('?kpiView=scorecards');
+  it('pigułka „Wszystkie wskaźniki" przełącza na listę pojedynczych KPI', async () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('Rejestr KPI'));
+    fireEvent.click(screen.getByText('Wszystkie wskaźniki'));
     await waitFor(() =>
       expect(screen.queryByText('Karta wyników operacji')).not.toBeInTheDocument()
     );
+    await waitFor(() => expect(listKpis).toHaveBeenCalled());
+  });
+
+  it('z listy wskaźników da się wrócić na poziom 1 (nie jest ślepą uliczką)', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Wszystkie wskaźniki'));
+    await waitFor(() =>
+      expect(screen.queryByText('Karta wyników operacji')).not.toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByText('Zestawienia'));
+    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
+  });
+
+  it('deep-link ?kpiView=scorecards otwiera ten sam poziom 1', async () => {
+    setSearch('?kpiView=scorecards');
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
   });
 });

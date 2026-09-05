@@ -128,14 +128,23 @@ import {
   archiveKpiScorecard,
   createKpiScorecard,
   type KpiScorecardDto,
+  type KpiScorecardItemDto,
+  listKpiScorecardItems,
   listKpiScorecards,
   suspendKpiScorecard,
 } from './kpiScorecards/kpiScorecardApi';
+import { kpiScorecardOwnerDisplay } from './kpiScorecards/kpiScorecardMappers';
 import {
-  buildKpiScorecardColumns,
+  buildKpiCardSetColumns,
   buildKpiScorecardPreview,
   buildKpiScorecardRowMenu,
+  type KpiCardSetRowVm,
 } from './kpiScorecards/kpiScorecardPresenters';
+import {
+  kpiCardFromSetPath,
+  kpiCardSetPath,
+  UNASSIGNED_CARD_SET_ID,
+} from './kpiTool/kpiCardSetPath';
 import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {
@@ -869,7 +878,13 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the my/org KPI-filtering meaning it always had — renamed nowhere, kept
   // separate from `tab` so the scorecards branch never touches KPI-scope
   // logic.
-  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(initialTab ?? 'org');
+  // POZIOM 1 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05):
+  // domyślną tabelą `/results/kpi` jest TABELA ZESTAWIEŃ, nie lista
+  // pojedynczych wskaźników. Lista wskaźników nie znika — zostaje pigułką
+  // Menu 3 („Wszystkie wskaźniki"), a każdy wskaźnik spoza zestawień ma
+  // własny wiersz systemowy „Bez zestawienia", więc przejście niczego nie
+  // ukrywa.
+  const [tab, setTab] = useState<'my' | 'org' | 'scorecards'>(initialTab ?? 'scorecards');
   const scope: 'my' | 'org' = tab === 'org' ? 'org' : 'my';
   const [statusFilter, setStatusFilter] = useState<KpiStatus | null>(
     restoredUiState.statusFilter ?? null
@@ -920,6 +935,20 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     restoredUiState.selectedScorecardId ?? null
   );
   const [scorecardPending, setScorecardPending] = useState(false);
+  /**
+   * Pozycje KAŻDEGO widocznego zestawienia — `null` dopóki nie policzone.
+   * Potrzebne do DWÓCH kolumn/wierszy poziomu 1, których inaczej nie da się
+   * uczciwie pokazać: „liczba wskaźników" oraz wiersz systemowy „Bez
+   * zestawienia" (KPI spoza wszystkich zestawień). Backend nie ma ani
+   * licznika w liście zestawień, ani zbiorczego endpointu pozycji
+   * (sprawdzone w `kpiScorecard.routes.ts` — jest tylko `.../:id/items`),
+   * więc jedyną uczciwą drogą jest równoległy wachlarz żądań po już
+   * pobranej, ograniczonej liście zestawień. Dopóki nie wróci — kolumna
+   * pokazuje „—", nie zero.
+   */
+  const [scorecardItems, setScorecardItems] = useState<Record<string, KpiScorecardItemDto[]> | null>(
+    null
+  );
 
   // RN-G6 UI fix — quick-create for scorecards (was wired-up API with zero
   // UI entry point, see CreateKpiScorecardModal.tsx header). Own state,
@@ -1320,6 +1349,31 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, tab]);
 
+  // Wachlarz pozycji — po KAŻDEJ zmianie listy zestawień (także po
+  // utworzeniu nowego). Błąd pojedynczego zestawienia nie wywraca tabeli:
+  // to zestawienie zostaje bez licznika („—"), reszta się liczy.
+  useEffect(() => {
+    if (!enabled || tab !== 'scorecards') return;
+    let cancelled = false;
+    setScorecardItems(null);
+    (async () => {
+      const lists = await Promise.all(
+        scorecardRows.map((row) =>
+          listKpiScorecardItems(row.scorecardId).catch(() => [] as KpiScorecardItemDto[])
+        )
+      );
+      if (cancelled) return;
+      const byScorecard: Record<string, KpiScorecardItemDto[]> = {};
+      scorecardRows.forEach((row, i) => {
+        byScorecard[row.scorecardId] = lists[i] ?? [];
+      });
+      setScorecardItems(byScorecard);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, scorecardRows, tab]);
+
   const runScorecardLifecycleAction = useCallback(
     async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {
       setScorecardPending(true);
@@ -1384,18 +1438,20 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     for (const s of KPI_STATUSES) counts[s] = 0;
     for (const r of scopedRows) counts[r.status] = (counts[r.status] ?? 0) + 1;
     return [
+      // Pigułka NAWIGACYJNA (nie filtr statusu) — POWRÓT NA POZIOM 1, czyli
+      // do tabeli zestawień. Stoi pierwsza, bo lista pojedynczych wskaźników
+      // jest widokiem pomocniczym względem zestawień (odrzucenie właściciela
+      // 05.09). Ten sam kształt, którym ExecutionHub dokłada pigułki-wejścia
+      // obok filtrów Menu 3 (`work-intelligence-report` i rodzeństwo):
+      // identyfikator z prefiksem `view:` odróżnia je od wartości
+      // `KpiStatus`, więc `setStatusFilter` nigdy ich nie zobaczy.
+      { id: SCORECARDS_CHIP_ID, label: isPolish ? 'Zestawienia' : 'Card sets' },
       { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: scopedRows.length },
       ...KPI_STATUSES.map((s) => ({
         id: s,
         label: statusLabel(s, isPolish),
         count: counts[s] ?? 0,
       })),
-      // Pigułka NAWIGACYJNA (nie filtr statusu) — jedyne wejście do rejestru
-      // „Kart wyników" w całym produkcie. Ten sam kształt, którym ExecutionHub
-      // dokłada pigułki-wejścia obok filtrów Menu 3 (`work-intelligence-report`
-      // i rodzeństwo): identyfikator z prefiksem `view:` odróżnia je od
-      // wartości `KpiStatus`, więc `setStatusFilter` nigdy ich nie zobaczy.
-      { id: SCORECARDS_CHIP_ID, label: isPolish ? 'Karty wyników' : 'Scorecards' },
     ];
   }, [scopedRows, isPolish]);
 
@@ -1470,17 +1526,66 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   }
 
   if (tab === 'scorecards') {
-    // RN-G2 P1 #8 — see file header. Entirely separate table/preview wiring
-    // from the KPI-definition branch below (different DTO, different
-    // `persistKey` — `results-vnext.kpi-scorecards`, NEVER the legacy
-    // `results.kpi-scorecards` T36 key, see kpiScorecardApi.ts/task brief).
-    const scorecardTableRows = scorecardRows.map(
-      (r) => ({ ...r, id: r.scorecardId }) as unknown as Record<string, unknown> & { id: string }
+    // ── POZIOM 1: TABELA ZESTAWIEŃ ──────────────────────────────────────────
+    // Odrzucenie właściciela 2026-09-05 (dosłownie): „Omawialiśmy tabelę; z
+    // poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a
+    // każdy KPI ma swoją kartę typu N."
+    // Wiersz = ZESTAWIENIE (grupa wskaźników). Klik = podgląd (opis + jego
+    // wskaźniki), dwuklik / „Otwórz listę" = poziom 2, a stamtąd karta N
+    // wskaźnika (poziom 3). Osobne `persistKey`
+    // (`results-vnext.kpi-scorecards`, NIGDY legacy `results.kpi-scorecards`
+    // T36 — patrz kpiScorecardApi.ts).
+    const memberKpiIds = new Set<string>();
+    if (scorecardItems) {
+      for (const list of Object.values(scorecardItems)) {
+        for (const item of list) memberKpiIds.add(item.kpiId);
+      }
+    }
+    // Wskaźniki spoza wszystkich zestawień — `rows` to REALNA lista KPI
+    // (`listKpis`), pobierana na tym ekranie niezależnie od zakładki.
+    // Liczymy DOPIERO gdy OBIE listy są kompletne. Bez tego warunku ekran
+    // migał wierszem „Bez zestawienia: <wszystkie KPI>" w tej jednej klatce,
+    // w której zestawienia jeszcze nie wróciły — czyli mówił nieprawdę,
+    // zanim zdążył powiedzieć prawdę.
+    const membershipKnown = !loading && !scorecardsLoading && scorecardItems !== null;
+    const unassignedKpis = membershipKnown ? rows.filter((r) => !memberKpiIds.has(r.kpiId)) : [];
+
+    const cardSetRows: KpiCardSetRowVm[] = scorecardRows.map((row) => ({
+      id: row.scorecardId,
+      name: row.name,
+      description: row.description,
+      itemCount: scorecardItems ? (scorecardItems[row.scorecardId]?.length ?? 0) : null,
+      owner: row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, currentUser?.id, isPolish),
+      status: row.lifecycleStatus,
+      updatedAt: row.updatedAt,
+      scorecard: row,
+    }));
+    // Wiersz systemowy dokładamy TYLKO gdy naprawdę coś zostaje poza
+    // zestawieniami — pusty „Bez zestawienia" byłby szumem, a nie uczciwością.
+    if (unassignedKpis.length > 0) {
+      cardSetRows.push({
+        id: UNASSIGNED_CARD_SET_ID,
+        name: isPolish ? 'Bez zestawienia' : 'Not in any card set',
+        description: isPolish
+          ? 'Wskaźniki, które nie należą do żadnego widocznego zestawienia (wiersz systemowy, nie rekord w bazie).'
+          : 'Indicators that belong to no visible card set (a system row, not a stored record).',
+        itemCount: unassignedKpis.length,
+        owner: null,
+        status: null,
+        updatedAt: null,
+        scorecard: null,
+      });
+    }
+
+    const scorecardTableRows = cardSetRows.map(
+      (r) => r as unknown as Record<string, unknown> & { id: string }
     );
-    const selectedScorecard =
-      scorecardRows.find((r) => r.scorecardId === selectedScorecardId) ?? null;
+    const selectedCardSet = cardSetRows.find((r) => r.id === selectedScorecardId) ?? null;
     const openDetail = (scorecardId: string) =>
       navigate(ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', scorecardId));
+    const openCardSet = (cardSetId: string) => navigate(kpiCardSetPath(cardSetId));
+    const openKpiFromCardSet = (kpiId: string, cardSetId: string) =>
+      navigate(kpiCardFromSetPath(kpiId, cardSetId));
 
     return (
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
@@ -1496,17 +1601,16 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            // Droga POWROTNA do rejestru KPI — bez niej wejście w „Karty
-            // wyników" byłoby ślepą uliczką (jedynym wyjściem byłoby Menu 2,
-            // czyli zmiana domeny). Ta sama para pigułek nawigacyjnych co
-            // w gałęzi KPI wyżej.
+            // Pigułki nawigacyjne Menu 3: ZESTAWIENIA (poziom 1) na pierwszym
+            // miejscu, obok nich pełna lista wskaźników — żeby przejście na
+            // tabelę zestawień nie odcięło nikomu drogi do rejestru KPI.
             chips: [
-              { id: KPI_CHIP_ID, label: isPolish ? 'Rejestr KPI' : 'KPI registry' },
               {
                 id: SCORECARDS_CHIP_ID,
-                label: isPolish ? 'Karty wyników' : 'Scorecards',
-                count: scorecardRows.length,
+                label: isPolish ? 'Zestawienia' : 'Card sets',
+                count: cardSetRows.length,
               },
+              { id: KPI_CHIP_ID, label: isPolish ? 'Wszystkie wskaźniki' : 'All indicators' },
             ],
             activeChip: SCORECARDS_CHIP_ID,
             onChipChange: (id) => {
@@ -1519,54 +1623,116 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             // kpiScorecardApi.ts) reachable from the UI, see
             // CreateKpiScorecardModal.tsx header.
             primaryCta: {
-              label: isPolish ? 'Nowa karta wyników' : 'New scorecard',
+              label: isPolish ? 'Nowe zestawienie' : 'New card set',
               icon: Plus,
               onClick: openCreateScorecard,
               testId: 'kpi-scorecard-new-cta',
             },
           }}
           table={{
-            columns: buildKpiScorecardColumns(isPolish, currentUser?.id),
+            columns: buildKpiCardSetColumns(isPolish),
             data: scorecardTableRows,
             persistKey: 'results-vnext.kpi-scorecards',
             loading: scorecardsLoading,
             error: scorecardsError,
             onRetry: () => void fetchScorecardRows(),
             empty:
-              !scorecardsLoading && !scorecardsError && scorecardRows.length === 0
+              !scorecardsLoading && !scorecardsError && cardSetRows.length === 0
                 ? {
-                    title: isPolish ? 'Brak kart wyników' : 'No scorecards yet',
+                    title: isPolish ? 'Brak zestawień' : 'No card sets yet',
                     description: isPolish
-                      ? 'Utwórz pierwszą kartę wyników, aby zacząć grupować KPI.'
-                      : 'Create the first scorecard to start grouping KPIs.',
+                      ? 'Utwórz pierwsze zestawienie, aby zacząć grupować wskaźniki.'
+                      : 'Create the first card set to start grouping indicators.',
                   }
                 : undefined,
             selectedRowId: selectedScorecardId,
             onRowClick: (row) => setSelectedScorecardId(String(row.id)),
-            rowMenu: (row) =>
-              buildKpiScorecardRowMenu(row as unknown as KpiScorecardDto, {
+            // Dwuklik = poziom 2 (lista zestawienia) — kanon triady: klik
+            // pokazuje, dwuklik otwiera obiekt.
+            onRowDoubleClick: (row) => openCardSet(String(row.id)),
+            rowMenu: (row) => {
+              const vm = row as unknown as KpiCardSetRowVm;
+              if (!vm.scorecard) {
+                // Wiersz systemowy nie ma cyklu życia — jedyna uczciwa akcja
+                // to otwarcie jego listy.
+                return {
+                  primary: [
+                    {
+                      id: 'open-list',
+                      label: isPolish ? 'Otwórz listę wskaźników' : 'Open indicator list',
+                      onClick: () => openCardSet(vm.id),
+                    },
+                  ],
+                };
+              }
+              return buildKpiScorecardRowMenu(vm.scorecard, {
                 isPolish,
                 busy: scorecardPending,
+                memberCount: vm.itemCount ?? undefined,
+                onOpenCardSet: openCardSet,
                 onOpenDetail: openDetail,
                 onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
                 onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
                 onArchive: (r) => void runScorecardLifecycleAction(r, 'archive'),
-              }),
+              });
+            },
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
           preview={
-            selectedScorecard
-              ? buildKpiScorecardPreview(selectedScorecard, {
+            selectedCardSet && selectedCardSet.scorecard
+              ? buildKpiScorecardPreview(selectedCardSet.scorecard, {
                   isPolish,
                   currentUserId: currentUser?.id,
                   busy: scorecardPending,
+                  memberCount: selectedCardSet.itemCount ?? undefined,
+                  items: scorecardItems ? (scorecardItems[selectedCardSet.id] ?? []) : 'loading',
+                  onOpenKpi: (kpiId) => openKpiFromCardSet(kpiId, selectedCardSet.id),
+                  onOpenCardSet: openCardSet,
                   onOpenDetail: openDetail,
                   onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
                   onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
                   onArchive: (r) => void runScorecardLifecycleAction(r, 'archive'),
                   onClose: () => setSelectedScorecardId(null),
                 })
-              : null
+              : selectedCardSet
+                ? {
+                    // Podgląd wiersza systemowego — te same bloki, ale bez
+                    // ani jednego pola, którego ten wiersz nie ma (właściciel,
+                    // status, cykl życia): kanon „widoczne i wyłączone z
+                    // powodem", nie zmyślone wartości.
+                    title: selectedCardSet.name,
+                    onClose: () => setSelectedScorecardId(null),
+                    onOpenFull: () => openCardSet(selectedCardSet.id),
+                    openLabel: isPolish ? 'Otwórz listę' : 'Open list',
+                    meta: {
+                      pills: [{ label: isPolish ? 'Systemowe' : 'System', tone: 'neutral' as const }],
+                    },
+                    details: {
+                      propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                      valueLabel: isPolish ? 'Wartość' : 'Value',
+                      properties: [
+                        {
+                          id: 'description',
+                          label: isPolish ? 'Opis' : 'Description',
+                          value: selectedCardSet.description ?? '—',
+                        },
+                        {
+                          id: 'count',
+                          label: isPolish ? 'Liczba wskaźników' : 'Indicators',
+                          value: String(selectedCardSet.itemCount ?? '—'),
+                        },
+                      ],
+                    },
+                    relations: unassignedKpis.map((kpi) => ({
+                      id: kpi.kpiId,
+                      label: kpi.name || kpi.kpiCode,
+                      value: kpi.kpiCode,
+                      type: 'kpi',
+                      title: kpi.kpiId,
+                      onClick: () => openKpiFromCardSet(kpi.kpiId, UNASSIGNED_CARD_SET_ID),
+                    })),
+                  }
+                : null
           }
         />
         <CreateKpiScorecardModal

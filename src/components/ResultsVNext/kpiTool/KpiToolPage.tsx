@@ -133,7 +133,7 @@ import {
 } from './kpiInitiativeImpactApi';
 import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
 import {
-  KPI_CARD_SET_FROM_PARAM,
+  isUnassignedCardSetId,
   KPI_CARD_SET_PARAM,
   kpiCardSetPath,
   withOwnerSampleData,
@@ -276,16 +276,14 @@ export const KpiToolPage: React.FC = () => {
   const { kpiId } = useParams<{ kpiId: string }>();
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
 
-  // ── POZIOM 4 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05) ──
-  // Ta sama karta KPI otwarta Z ZESTAWIENIA (poziom 3) niesie ścieżkę
-  // poziomów w querystringu — dzięki temu breadcrumb pokazuje pełne
-  // „Rejestr KPI › karta › zestawienie › karta", a ścieżka przeżywa
-  // odświeżenie i daje się podlinkować (patrz `kpiCardSetPath.ts`).
+  // ── POZIOM 3 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05) ──
+  // Karta N wskaźnika otwarta Z LISTY ZESTAWIENIA (poziom 2) niesie id tego
+  // zestawienia w querystringu — dzięki temu ścieżka pokazuje pełne
+  // „Rejestr KPI › <zestawienie> › <wskaźnik>", przeżywa odświeżenie i daje
+  // się podlinkować (patrz `kpiCardSetPath.ts`).
   const [searchParams] = useSearchParams();
   const fromCardSetId = searchParams.get(KPI_CARD_SET_PARAM);
-  const fromKpiId = searchParams.get(KPI_CARD_SET_FROM_PARAM);
   const [pathCardSetName, setPathCardSetName] = useState<string | null>(null);
-  const [pathParentKpiName, setPathParentKpiName] = useState<string | null>(null);
 
   const [kpi, setKpi] = useState<KpiDefinitionDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -424,10 +422,14 @@ export const KpiToolPage: React.FC = () => {
       });
   }, [enabled, isPolish, kpiId]);
 
-  // Nazwy do ścieżki poziomów (poziom 4). Pobierane TYLKO gdy w adresie jest
-  // ścieżka — zero dodatkowych żądań na zwykłej karcie (poziom 2).
+  // Nazwa zestawienia do ścieżki poziomów. Pobierana TYLKO gdy adres niesie
+  // `?zbior=<id>` i NIE jest to zestawienie systemowe „Bez zestawienia"
+  // (tamto nie ma rekordu w bazie — pytanie o nie API byłoby żądaniem o
+  // zasób, którego nie ma). Wejście bez parametru nie robi żadnego żądania
+  // ekstra — nazwę zestawienia bierze wtedy z sekcji „Zestawienia", którą ta
+  // karta i tak już pobrała (`listKpiScorecardsForKpi`).
   useEffect(() => {
-    if (!enabled || !fromCardSetId) {
+    if (!enabled || !fromCardSetId || isUnassignedCardSetId(fromCardSetId)) {
       setPathCardSetName(null);
       return;
     }
@@ -435,16 +437,6 @@ export const KpiToolPage: React.FC = () => {
       .then((sc) => setPathCardSetName(sc?.name ?? null))
       .catch(() => setPathCardSetName(null));
   }, [enabled, fromCardSetId]);
-
-  useEffect(() => {
-    if (!enabled || !fromKpiId) {
-      setPathParentKpiName(null);
-      return;
-    }
-    getKpi(fromKpiId)
-      .then((parent) => setPathParentKpiName(parent?.name || parent?.kpiCode || null))
-      .catch(() => setPathParentKpiName(null));
-  }, [enabled, fromKpiId]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -1099,8 +1091,8 @@ export const KpiToolPage: React.FC = () => {
         <div className="space-y-3" data-testid="kpi-tool-scorecards-list">
           <p className="text-[11px] text-c-text-muted">
             {t(
-              'Piętro niżej: wejdź w zestawienie, żeby zobaczyć ZBIÓR kart KPI, do którego ten wskaźnik należy — i stamtąd otworzyć kolejną kartę.',
-              'One level down: open a card set to see the SET of KPI cards this indicator belongs to — and open another card from there.'
+              'Piętro WYŻEJ: wejdź w zestawienie, żeby zobaczyć jego listę — opis i wszystkie wskaźniki, do których ten należy.',
+              'One level UP: open a card set to see its list — the description and every indicator it holds, including this one.'
             )}
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -1117,7 +1109,7 @@ export const KpiToolPage: React.FC = () => {
                 <div key={scorecard.scorecardId} data-testid={`kpi-tool-scorecard-tile-${scorecard.scorecardId}`}>
                   <StandardGridCard
                     card={card}
-                    onClick={() => (kpiId ? navigate(withOwnerSampleData(kpiCardSetPath(kpiId, scorecard.scorecardId))) : undefined)}
+                    onClick={() => navigate(withOwnerSampleData(kpiCardSetPath(scorecard.scorecardId)))}
                   />
                 </div>
               );
@@ -1173,21 +1165,27 @@ export const KpiToolPage: React.FC = () => {
   ];
 
   // ── ŚCIEŻKA POZIOMÓW (element ㉛ Menu 1, SPEC-A §9.2/§11.2) ──────────────
-  // Poziom 2: „Rejestr KPI › <ta karta>".
-  // Poziom 4 (wejście z zestawienia): „Rejestr KPI › <karta> › <zestawienie>
-  //           › <ta karta>" — dokładnie ta trzypoziomowa formuła, o którą
-  //           upomniał się właściciel 2026-09-05.
+  // Trzy stopnie, dokładnie te, o które upomniał się właściciel 05.09:
+  //   „Rejestr KPI (tabela zestawień) › <zestawienie> › <ten wskaźnik>".
+  // Stopień środkowy pochodzi z adresu (`?zbior=`), a gdy go nie ma — z
+  // REALNEJ przynależności wskaźnika (`listKpiScorecardsForKpi`, już pobrane
+  // na tę stronę). Gdy wskaźnik nie należy do żadnego widocznego zestawienia,
+  // środkowym stopniem jest zestawienie systemowe „Bez zestawienia" — nigdy
+  // pusty stopień ani zmyślona nazwa.
+  const fallbackCardSet =
+    !fromCardSetId && Array.isArray(scorecards) && scorecards.length > 0 ? scorecards[0] : null;
+  const crumbCardSetId = fromCardSetId ?? fallbackCardSet?.scorecardId ?? null;
+  const crumbCardSetName = isUnassignedCardSetId(crumbCardSetId)
+    ? t('Bez zestawienia', 'Not in any card set')
+    : (pathCardSetName ?? fallbackCardSet?.name ?? null);
+
   const breadcrumbItems: { label: string; onClick?: () => void }[] = [
     { label: t('Rejestr KPI', 'KPI registry'), onClick: () => navigate(withOwnerSampleData(ROUTES.RESULTS_KPI.ROOT)) },
   ];
-  if (fromKpiId && fromCardSetId) {
+  if (crumbCardSetId) {
     breadcrumbItems.push({
-      label: pathParentKpiName ?? t('Karta KPI', 'KPI card'),
-      onClick: () => navigate(withOwnerSampleData(`/results/kpi/${fromKpiId}`)),
-    });
-    breadcrumbItems.push({
-      label: pathCardSetName ?? t('Zestawienie', 'Card set'),
-      onClick: () => navigate(withOwnerSampleData(kpiCardSetPath(fromKpiId, fromCardSetId))),
+      label: crumbCardSetName ?? t('Zestawienie', 'Card set'),
+      onClick: () => navigate(withOwnerSampleData(kpiCardSetPath(crumbCardSetId))),
     });
   }
   breadcrumbItems.push({ label: kpiTitle });
