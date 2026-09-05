@@ -113,3 +113,31 @@ Odczyt CTO (do potwierdzenia wyłącznie zrzutem, nie pytaniem):
 - **ROI** = dwa poziomy (tabela analiz → karta N analizy) — bez zmian.
 
 Co 05.09 zbudowano niezgodnie i podlega korekcie (P7K): poziom 2 jako siatka kafelków (`KpiCardSetPage`, trasa `/results/kpi/zestawienie/:id`) zamiast istniejącej tabeli zestawienia; OKR z czterema poziomami (zestaw → cele → karta celu → zbiór KR → karta KR) zamiast trzech; rejestr KPI bez wymiaru okresu.
+
+## Załącznik właściciela 05.09: „Apator szablon.xlsx” = raport KPI za miesiąc (analiza CTO)
+
+Plik: `~/Downloads/Apator szablon (1).xlsx` (34 arkusze). Arkusz „Ogólny” = **Plant Balanced Scorecard** zakładu na rok (nagłówek: Zakład, Rok 2024, Edycja 01, Data rewizji, Przygotowany przez). To jest **poziom 2** koncepcji: jeden raport = jedna tabela = wiele mierników za okres.
+
+**Wiersz tabeli = miernik, każdy z zestawem elementów (kolumny):**
+| Element | Kolumna w szablonie | Znaczenie |
+| --- | --- | --- |
+| Właściciel nadrzędny | MD (np. `GD (SALES)`) | dyrektor odpowiadający za grupę |
+| Obszar | MT / OBSZAR (`SPRZEDAŻ`, `Produkcja`, `Dyrektor Logistyka`, `Dyrektor Jakość`, `Dyrektor HR`, `CFO`, `Dyrektor Zakupy`, `Utrzymanie Ruchu`, `Growth Officer`, `R&D`, `EHS`, `Product Manager`, `Dyrektor IT/OT`, `PLANT DIRECTOR`) | 14 obszarów, 138 mierników — grupowanie wierszy |
+| Nazwa wskaźnika | WSKAŹNIK | np. „WIELKOŚĆ SPRZEDAŻY NETTO (narastająco)” |
+| Metoda liczenia | podkolumna | formuła słowna |
+| Definicja | podkolumna | opis biznesowy |
+| Kierunek + jednostka | Jednostka: `min.`/`max.` w 1. wierszu, jednostka (`LC/1000`, `%`, `szt.`) w 2. wierszu | „min.” = im więcej, tym lepiej (cel minimalny); „max.” = limit górny |
+| Częstotliwość | `Miesiąc` (109), `Narastająco`, `Kwartał`, `2 tygodnie`, `Roczny` | okres rozliczenia miernika |
+| Typ wskaźnika | `Rozliczeniowy` (93) / `Informacyjny` (29) | rozliczany z odpowiedzialnością vs. tylko obserwowany |
+| Odpowiedzialność | dział/rola (`Sprzedaż`, `Technologia`, `COO`…) | kto raportuje |
+| Benchmark | BENCHMARK TYC/SKA | wartość odniesienia (typowa/skala) |
+| Dopuszczalne limity [%] | próg tolerancji odchylenia | z niego status Bezpieczne/Ostrzeżenie/Krytyczne |
+| **Okresy** | 12 kolumn miesięcy + `YTD`, każda w **dwóch wierszach: CEL i Rezultat** | to jest sedno raportu: plan vs wykonanie per okres, narastająco |
+
+**Arkusz per miernik (np. „OEE”, „Karta wskaźnika PRZYKŁAD”) = poziom 3, karta wskaźnika:** nagłówek (nazwa, lata), tabela **miesiąc → Czy osiągnięto cel? → Czy wymagane działania? → Opis problemu → Główna przyczyna → Opis działań → Odpowiedzialność → Data zakończenia → Komentarze → Status (OTWARTY/ZAMKNIĘTY)**. Czyli karta = historia okresów + odchylenie + RCA + działania korygujące + status — dokładnie sekcje dzisiejszego `KpiToolPage` (Wyniki · Kontrakt · Pomiary · Odchylenia · Działania korygujące · Historia).
+
+**Wnioski wiążące dla P7K:**
+1. Poziom 1 = raporty (np. „Plant Balanced Scorecard — Zakład X — 2024”, „OKR zakładu — maj”, „OKR projektu — czerwiec”, „OKR — Q1”); wiersz raportu ma: nazwa, zakres (zakład/projekt/dział), okres, edycja/rewizja, przygotowany przez, liczba mierników, stan.
+2. Poziom 2 = **tabela mierników raportu** z kolumnami z tabeli wyżej, grupowana po Obszarze, z okresami jako kolumnami (CEL / Rezultat), YTD, i podsumowaniem stanu w nagłówku. Nie siatka kafelków. Dodawanie miernika do raportu w tym miejscu.
+3. Poziom 3 = karta miernika: kontrakt (metoda, definicja, jednostka, kierunek, częstotliwość, typ, odpowiedzialność, benchmark, limity) + pomiary per okres (cel/rezultat) + odchylenia z RCA/działaniami/statusem + historia przez lata.
+4. Model danych KPI musi nieść: kierunek (min/max), typ (rozliczeniowy/informacyjny), benchmark, limity %, obszar, właściciel nadrzędny, odpowiedzialność, częstotliwość (w tym „narastająco”), CEL i Rezultat per okres, YTD. Sprawdzić w `kpiTool`/`kpiScorecard` schemacie, które pola już są (rg `direction|target|threshold|frequency|owner` w `server/src/routes/resultsVnext` i migracjach `rvn_kpi_*`); brakujące = addytywna migracja.
