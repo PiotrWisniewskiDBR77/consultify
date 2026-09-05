@@ -25988,6 +25988,33 @@
       }
     },
     "roi": {
+      "card": {
+        "breadcrumb": "ROI analysis",
+        "registryTitle": "ROI analyses",
+        "registrySubtitle": "Investments · economics, risk and recommendation",
+        "parts": {
+          "assumptions": "Assumptions",
+          "calculations": "Calculations",
+          "realization": "Realization"
+        },
+        "recommendation": {
+          "go": "GO",
+          "conditional_go": "CONDITIONAL GO",
+          "no_go": "NO-GO"
+        },
+        "benefitClass": {
+          "hard": "Hard",
+          "avoided": "Avoided",
+          "soft": "Soft (not monetized)",
+          "strategic": "Strategic (not monetized)"
+        },
+        "verdict": {
+          "confirmed": "Confirmed",
+          "partially_confirmed": "Partially confirmed",
+          "refuted": "Refuted"
+        },
+        "empty": "No data"
+      },
       "totalPlanned": "Total Planned ROI",
       "totalRealized": "Total Realized ROI",
       "overallVariance": "Overall Variance",

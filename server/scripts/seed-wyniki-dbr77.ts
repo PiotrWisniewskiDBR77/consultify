@@ -1000,7 +1000,7 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
         recommendation:
           'Korekta planu korzyści: roczna korzyść 312 tys. zł zamiast 400 tys. zł; utrzymać inwestycję, przegląd po 12 miesiącach.',
         realizedRoiPct: 44.4,
-        realizedNpv: 102_727,
+        realizedNpv: 102_725,
         realizedPaybackPeriods: 3.4615,
       },
       policyNotes:
@@ -1039,11 +1039,15 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
         totalCosts: 1_000_000,
         totalBenefits: 2_000_000,
         simpleRoi: 1,
+        // Liczby ODTWARZALNE z tego samego modelu (CAPEX 1 000 000 zł,
+        // 400 000 zł/rok przez 5 lat, stopa 10 %) — sprawdzone testem
+        // `roiCardMetrics.test.ts`. Wcześniej stało tu IRR 28,7 i DPP 3,1,
+        // czyli liczby, których z tych wejść nie da się otrzymać.
         npv: 516_315,
-        irrPct: 28.7,
+        irrPct: 28.65,
         irrStatus: 'computed',
         paybackPeriods: 2.5,
-        discountedPaybackPeriods: 3.1,
+        discountedPaybackPeriods: 3.02,
         benefitCostRatio: 2,
       },
     }),

@@ -85,7 +85,12 @@ const SECTION_IDS = ['zalozenia', 'wyliczenia', 'realizacja'] as const;
 type RoiCardSectionId = (typeof SECTION_IDS)[number];
 
 export const RoiCaseCardPage: React.FC = () => {
-  const { i18n } = useTranslation();
+  // `tr` = klucze i18n (`results.roi.card.*`, pl+en w public/locales) tam,
+  // gdzie etykieta jest NAZWĄ CZĘŚCI karty i pojawia się też poza tym plikiem
+  // (okruszek, nawigacja). Reszta tekstów zostaje przy `t(pl, en)` — tak samo
+  // jak KpiToolPage i ResultsRoiHub obok; mieszanie dwóch mechanizmów w jednym
+  // zdaniu byłoby dwiema prawdami o tym samym napisie.
+  const { t: tr, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
   const navigate = useNavigate();
@@ -180,7 +185,10 @@ export const RoiCaseCardPage: React.FC = () => {
       {
         id: 'zalozenia',
         icon: ClipboardList,
-        label: { pl: 'Założenia', en: 'Assumptions' },
+        label: {
+          pl: tr('results.roi.card.parts.assumptions', 'Założenia'),
+          en: tr('results.roi.card.parts.assumptions', 'Assumptions'),
+        },
         hasData: true,
         alwaysShow: true,
         component: <RoiAssumptionsPart card={card} isPolish={isPolish} />,
@@ -188,7 +196,10 @@ export const RoiCaseCardPage: React.FC = () => {
       {
         id: 'wyliczenia',
         icon: Calculator,
-        label: { pl: 'Wyliczenia', en: 'Calculations' },
+        label: {
+          pl: tr('results.roi.card.parts.calculations', 'Wyliczenia'),
+          en: tr('results.roi.card.parts.calculations', 'Calculations'),
+        },
         hasData: !!card.storedRun,
         alwaysShow: true,
         component: <RoiCalculationsPart card={card} isPolish={isPolish} />,
@@ -196,13 +207,16 @@ export const RoiCaseCardPage: React.FC = () => {
       {
         id: 'realizacja',
         icon: Target,
-        label: { pl: 'Realizacja', en: 'Realization' },
+        label: {
+          pl: tr('results.roi.card.parts.realization', 'Realizacja'),
+          en: tr('results.roi.card.parts.realization', 'Realization'),
+        },
         hasData: card.variances.length > 0 || card.pirs.length > 0,
         alwaysShow: true,
         component: <RoiRealizationPart card={card} isPolish={isPolish} />,
       },
     ];
-  }, [card, isPolish]);
+  }, [card, isPolish, tr]);
 
   const openTeresa = useCallback(() => {
     if (!card) return;
