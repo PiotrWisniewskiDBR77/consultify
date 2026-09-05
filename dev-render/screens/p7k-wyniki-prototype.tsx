@@ -85,6 +85,56 @@ const Pair = ({
   </div>
 );
 
+/**
+ * K-1d — kolumna STAN w L1 (KPI/OKR raporty).
+ *
+ * DEFEKT werdyktu 1c: nagłówek „STAN · N / O / K / B" jest skrót-kodem —
+ * czytelny tylko po odgadnięciu, co znaczą litery. Naprawa: nagłówek samo
+ * „STAN", a cztery liczby (w normie/ostrzeżenie/krytyczne/brak) dostają
+ * kolorowe kropki zamiast liter, plus pełny opis w `title` (dymek).
+ *
+ * Format wejściowy z danych: `"93 / 21 / 8 / 16"` (kolejność zawsze
+ * N/O/K/B). Wyjście: `● 93 · ● 21 · ● 8 · ● 16` z kropką koloru
+ * `c-success`/`c-warning`/`c-danger`/`c-text-muted` przed każdą liczbą.
+ */
+const StateCounts = ({ value }: { value: string }) => {
+  const [ok = '—', warn = '—', bad = '—', missing = '—'] = value.split('/').map((p) => p.trim());
+  const dotClass = (tone: 'ok' | 'warn' | 'bad' | 'muted') =>
+    `inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+      tone === 'ok'
+        ? 'bg-c-success'
+        : tone === 'warn'
+          ? 'bg-c-warning'
+          : tone === 'bad'
+            ? 'bg-c-danger'
+            : 'bg-c-text-muted'
+    }`;
+  return (
+    <span
+      title={`w normie ${ok} · ostrzeżenie ${warn} · krytyczne ${bad} · brak ${missing}`}
+      className="inline-flex items-center whitespace-nowrap text-xs tabular-nums text-c-text-secondary"
+    >
+      <i aria-hidden="true" className={`${dotClass('ok')} mr-1`} />
+      {ok}
+      <span aria-hidden="true" className="mx-1 text-c-text-muted">
+        ·
+      </span>
+      <i aria-hidden="true" className={`${dotClass('warn')} mr-1`} />
+      {warn}
+      <span aria-hidden="true" className="mx-1 text-c-text-muted">
+        ·
+      </span>
+      <i aria-hidden="true" className={`${dotClass('bad')} mr-1`} />
+      {bad}
+      <span aria-hidden="true" className="mx-1 text-c-text-muted">
+        ·
+      </span>
+      <i aria-hidden="true" className={dotClass('muted')} />
+      <span className="ml-1">{missing}</span>
+    </span>
+  );
+};
+
 const reportsKpi = [
   {
     id: '1',
@@ -279,6 +329,10 @@ const table = (
   />
 );
 
+/** Kolejnosc kluczy danych na wierszu, wyrownana z etykietami miesiecy ponizej
+ *  (STY..WRZ = index 0..8); PAZ/LIS/GRU (9..11) nie maja jeszcze danych. */
+const periodKeys = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'jul', 'aug', 'sep'];
+
 const periodColumns = [
   'STY',
   'LUT',
@@ -301,15 +355,16 @@ const periodColumns = [
     '136px',
     (row) => {
     if (row.group) return null;
-    if (index === 6) return row.jul;
-    if (index === 7) return row.aug;
-    if (index === 8) return row.sep;
-    return (
-      <Pair
-        target={index < 8 ? (row.id === 'k3' ? '76%' : '11 400') : '—'}
-        actual={index < 8 ? (row.id === 'k3' ? '77%' : '11 520') : '—'}
-      />
-    );
+    /**
+     * K-1d: STY–CZE renderowały tą samą pare CEL 11 400 / Rezultat 11 520
+     * (albo 76%/77% dla OEE) w KAŻDYM miesiacu i dla KAZDEGO wiersza —
+     * dane probne wygladaly na atrape. Kazdy wiersz (`k1`/`k2`/`k3`) ma
+     * teraz WLASNE pole na kazdy miesiac (`sty`..`sep`), z rosnacym trendem
+     * sprzedazy (k1/k2) i OEE w widelkach 74-78% (k3); LIP/SIE/WRZ zostaja
+     * bez zmian (juz byly zroznicowane w 1c).
+     */
+    const key = periodKeys[index];
+    return key && row[key] !== undefined ? row[key] : <Pair target="—" actual="—" />;
     },
     true,
     /* SWIADOMIE `text` (podloga 140 px), nie `number` (90 px).
@@ -352,6 +407,12 @@ const kpiItems = [
     owner: 'Tomasz Nowak',
     benchmark: '12 400',
     limit: '5%',
+    sty: <Pair target="11 200" actual="11 050" />,
+    lut: <Pair target="11 300" actual="11 260" />,
+    mar: <Pair target="11 400" actual="11 480" />,
+    kwi: <Pair target="11 600" actual="11 690" />,
+    maj: <Pair target="11 800" actual="11 750" tone="warn" />,
+    cze: <Pair target="11 900" actual="12 050" />,
     jul: <Pair target="12 000" actual="12 180" />,
     aug: <Pair target="12 400" actual="11 620" tone="bad" />,
     sep: <Pair target="12 800" actual="—" />,
@@ -368,6 +429,12 @@ const kpiItems = [
     owner: 'Ewa Maj',
     benchmark: '10 900',
     limit: '4%',
+    sty: <Pair target="9 800" actual="9 900" />,
+    lut: <Pair target="9 950" actual="10 050" />,
+    mar: <Pair target="10 100" actual="10 200" />,
+    kwi: <Pair target="10 250" actual="10 340" />,
+    maj: <Pair target="10 400" actual="10 460" />,
+    cze: <Pair target="10 450" actual="10 600" />,
     jul: <Pair target="10 500" actual="10 720" />,
     aug: <Pair target="10 900" actual="10 540" tone="warn" />,
     sep: <Pair target="11 100" actual="—" />,
@@ -391,6 +458,12 @@ const kpiItems = [
     owner: 'Marek Zieliński',
     benchmark: '78%',
     limit: '3%',
+    sty: <Pair target="74%" actual="75%" />,
+    lut: <Pair target="75%" actual="75%" />,
+    mar: <Pair target="75%" actual="76%" />,
+    kwi: <Pair target="76%" actual="76%" />,
+    maj: <Pair target="76%" actual="77%" />,
+    cze: <Pair target="77%" actual="78%" />,
     jul: <Pair target="76%" actual="77%" />,
     aug: <Pair target="78%" actual="79%" />,
     sep: <Pair target="79%" actual="—" />,
@@ -713,18 +786,19 @@ function Content() {
           reportsKpi,
           [
             /**
-             * Naglowek „STAN · norma / ostrz. / kryt. / brak" ma podloge 268 px
-             * (pomiar canvas) i sam jeden wypychal tabele poza obszar 1374 px:
-             * ostatnia kolumna chowala sie pod przypieta kolumna akcji
-             * („AKTUALIZACJA" -> „AKTU…", „05.09.2026" -> „05.0"). Legenda
-             * skrocona do liter; pelne znaczenie zostaje w kolejnosci kolumn
-             * i w opisie modulu.
+             * K-1d: naglowek „STAN · norma / ostrz. / kryt. / brak" (a wczesniej
+             * skrot-kod „STAN · N / O / K / B") mial podloge 268 px i sam jeden
+             * wypychal tabele poza obszar 1374 px: ostatnia kolumna chowala sie
+             * pod przypieta kolumna akcji („AKTUALIZACJA" -> „AKTU…",
+             * „05.09.2026" -> „05.0"). Naprawa: naglowek samo „STAN", cztery
+             * liczby z kolorowymi kropkami w komorce (`StateCounts`), pelne
+             * znaczenie w `title` komorki — zero skrotow tekstowych.
              */
             col('name', 'NAZWA RAPORTU', '320px'),
             col('scope', 'ZAKRES', '130px', undefined, true, { dataType: 'status' }),
             col('period', 'OKRES', '145px', undefined, true, { dataType: 'number' }),
             col('count', 'MIERNIKI', '90px', undefined, true, { dataType: 'number' }),
-            col('state', 'STAN · N / O / K / B', '128px', undefined, true, {
+            col('state', 'STAN', '148px', (r) => <StateCounts value={r.state} />, true, {
               dataType: 'number',
             }),
             col('actions', 'OTWARTE DZIAŁANIA', '168px', undefined, true, {
@@ -931,7 +1005,9 @@ function Content() {
             col('cycle', 'CYKL', '110px', undefined, true, { dataType: 'number' }),
             col('objectives', 'CELE', '90px', undefined, true, { dataType: 'number' }),
             col('results', 'REZULTATY', '105px', undefined, true, { dataType: 'number' }),
-            col('state', 'STAN · D / Z / K / B', '128px', undefined, true, {
+            /* K-1d: naglowek byl skrot-kodem „STAN · D / Z / K / B" — patrz
+               komentarz przy analogicznej kolumnie w KPI L1. */
+            col('state', 'STAN', '148px', (r) => <StateCounts value={r.state} />, true, {
               dataType: 'number',
             }),
             col('owners', 'WŁAŚCICIELE', '118px', undefined, true, { dataType: 'number' }),

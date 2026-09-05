@@ -1,7 +1,7 @@
 {
   "view": "okr-l2",
   "theme": "light",
-  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=okr-l2&theme=light&lang=pl&uwagi=0",
+  "url": "http://127.0.0.1:3037/?screen=p7k-wyniki-prototype&view=okr-l2&theme=light&lang=pl&uwagi=0",
   "httpStatus": 200,
   "bledyKonsoli": 0,
   "consoleErrors": [],

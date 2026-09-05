@@ -103,3 +103,67 @@ w tabeli wyżej byłyby bezwartościowe.
    wiersza grupy, która ma nasłuch `scroll`) nie zostało zmierzone.
 
 **STOP do akceptu nadzorcy. KROK 2 nadal zakazany.**
+
+## Dopisek 1d — korekta dwóch drobiazgów z werdyktu nadzorcy
+
+Zakres: robotnik frontendu, worktree `/private/tmp/wt-p7k1c` (`cto/p7k-1c`), tylko
+`dev-render/screens/p7k-wyniki-prototype.tsx` + `evidence/`. Zero zmian w kodzie produkcyjnym.
+
+### 1. Kolumna STAN (KPI L1, OKR L1) — koniec ze skrót-kodem
+
+Punkt 5 „Granica dowodu" wyżej przyznał: `STAN · N / O / K / B` / `STAN · D / Z / K / B` to
+skrót-kod nieczytelny bez odgadywania liter. Naprawa:
+
+- nagłówek → samo **„STAN"**;
+- komórka → `StateCounts` (nowy komponent, tuż nad `reportsKpi`): cztery liczby
+  `93 · 21 · 8 · 16` z kolorową kropką PRZED każdą (`c-success`/`c-warning`/`c-danger`/
+  `c-text-muted`), zero liter-skrótów;
+- `title` komórki = pełne słowa: `"w normie 93 · ostrzeżenie 21 · krytyczne 8 · brak 16"`;
+- szerokość kolumny podniesiona z 128 → **148 px** (w obu tabelach był zapas: KPI L1 miała
+  1374 − 1351 = 23 px luzu, OKR L1 jeszcze więcej — węższy niż KPI L1 o ~140 px), żeby cztery
+  kropki + liczby miały oddech bez ryzyka przycięcia.
+
+Pomiar (18 zrzutów, jasny + ciemny, wszystkie 8 widoków): `nakladania=0`, `wyciekiTekstu=0`,
+`uciete=0`, `ucieteLacznie=0`, `bledyKonsoli=0` — na WSZYSTKICH 18 plikach `.json`, nie tylko na
+kpi-l1/okr-l1. `grep -c -E "text-c-accent|bg-c-accent|primary-"` → **0**. `esbuild` prototypu →
+exit **0**.
+
+Zrzut `kpi-l1--light.png`: trzy wiersze raportów KPI, kolumna STAN między MIERNIKI a OTWARTE
+DZIAŁANIA pokazuje np. `● 93 · ● 21 · ● 8 · ● 16` (zielona/bursztynowa/czerwona/szara kropka) —
+mieści się w jednej linii, bez wielokropka, nagłówek to czyste „STAN". `okr-l1--light.png`:
+analogicznie, plus poprawnie renderowany brak danych („—" z szarą kropką) tam, gdzie surowe dane
+mają `—` zamiast liczby (np. „OKR automatyzacji" → krytyczne i brak oba „—").
+
+### 2. KPI L2 — dane próbne styczeń–czerwiec przestały być kalką
+
+Defekt: generyczny `Pair` w `periodColumns` zwracał TĘ SAMĄ parę (CEL 11 400 / Rezultat 11 520,
+albo 76%/77% dla OEE) dla KAŻDEGO miesiąca STY–CZE i dla KAŻDEGO wiersza — jedyne realne dane
+były w LIP/SIE/WRZ (`row.jul`/`row.aug`/`row.sep`, już zróżnicowane w 1c). Naprawa: każdy wiersz
+(`k1`/`k2`/`k3`) dostał WŁASNE pole na każdy miesiąc STY–CZE (`sty`…`cze`), `periodColumns`
+odczytuje je przez `periodKeys[index]` zamiast trzech `if`-ów + fallbacku na stałe. LIP/SIE/WRZ
+nietknięte.
+
+Dane (rosnący trend, jeden miesiąc z ostrzeżeniem, OEE w widełkach 74–78%):
+
+| wiersz | STY | LUT | MAR | KWI | MAJ | CZE | (LIP — bez zmian) |
+|---|---|---|---|---|---|---|---|
+| Wielkość sprzedaży netto | 11 200/11 050 | 11 300/11 260 | 11 400/11 480 | 11 600/11 690 | 11 800/**11 750 (ostrzeżenie)** | 11 900/12 050 | 12 000/12 180 |
+| Poziom przyjętych zamówień | 9 800/9 900 | 9 950/10 050 | 10 100/10 200 | 10 250/10 340 | 10 400/10 460 | 10 450/10 600 | 10 500/10 720 |
+| OEE linii montażowej | 74%/75% | 75%/75% | 75%/76% | 76%/76% | 76%/77% | 77%/78% | 76%/77% |
+
+Jedyny miesiąc z tonem `warn` w całym STY–CZE: **MAJ, „Wielkość sprzedaży netto"** (Rezultat
+11 750 < CEL 11 800) — widać na `kpi-l2-start--light.png` jako bursztynowa liczba.
+
+Zrzut `kpi-l2-start--light.png` (przewinięty na STY 2026, `?scroll=start`): pięć kolumn miesięcy
+(STY–MAJ) + YTD + STAN widoczne naraz, każdy miesiąc ma inną parę CEL/Rezultat, trend sprzedaży
+i zamówień rośnie miesiąc po miesiącu, OEE trzyma się 74–77% w tym zakresie (78% dopiero w CZE,
+poza kadrem startowym). `kpi-l2--light.png` (domyślny widok, WRZ 2026) — bez zmian wizualnych
+względem 1c, bo pokazuje LIP/SIE/WRZ/YTD/STAN, których nie ruszałem.
+
+### Pomiar zbiorczy po 1d (wszystkie 18 plików)
+
+`nakladania=0`, `wyciekiTekstu=0`, `uciete=0`, `bledyKonsoli=0` na każdym z 18 zrzutów (jasny +
+ciemny × 8 widoków + `kpi-l2-start`). `grep -c -E "text-c-accent|bg-c-accent|primary-"
+dev-render/screens/p7k-wyniki-prototype.tsx` → 0. `esbuild` prototypu → exit 0.
+
+**STOP do akceptu nadzorcy. KROK 2 nadal zakazany.**

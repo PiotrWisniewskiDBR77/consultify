@@ -1,7 +1,7 @@
 {
   "view": "okr-l1",
   "theme": "dark",
-  "url": "http://127.0.0.1:3027/?screen=p7k-wyniki-prototype&view=okr-l1&theme=dark&lang=pl&uwagi=0",
+  "url": "http://127.0.0.1:3037/?screen=p7k-wyniki-prototype&view=okr-l1&theme=dark&lang=pl&uwagi=0",
   "httpStatus": 200,
   "bledyKonsoli": 0,
   "consoleErrors": [],
@@ -32,5 +32,5 @@
   },
   "bodyScrollWidth": 1440,
   "viewportWidth": 1440,
-  "bodyText": "Wyniki › OKR\nRaporty OKR\n\nCzłowiek · zakres i cykl\n\nKPI\nOKR\nROI\nNowy raport\nNAZWA\n\t\nZAKRES\n\t\nCYKL\n\t\nCELE\n\t\nREZULTATY\n\t\nSTAN · D / Z / K / B\n\t\nWŁAŚCICIELE\n\t\nOSTATNI CHECK-IN\n\t\n\n\nOKR zakładu — Q4 2026\n\t\nZakład DBR77\n\t\nQ4 2026\n\t\n4\n\t\n11\n\t\n7 / 3 / 1 / —\n\t\n7\n\t\n04.09.2026\n\t\n\n\nOKR automatyzacji — Q4 2026\n\t\nProgram automatyzacji\n\t\nQ4 2026\n\t\n3\n\t\n8\n\t\n6 / 2 / — / —\n\t\n5\n\t\n03.09.2026\n\t\n\n\nOKR sprzedaży — H2 2026\n\t\nSprzedaż\n\t\nH2 2026\n\t\n3\n\t\n9\n\t\n5 / 2 / 1 / 1\n\t\n6\n\t\n01.09.2026\n\t"
+  "bodyText": "Wyniki › OKR\nRaporty OKR\n\nCzłowiek · zakres i cykl\n\nKPI\nOKR\nROI\nNowy raport\nNAZWA\n\t\nZAKRES\n\t\nCYKL\n\t\nCELE\n\t\nREZULTATY\n\t\nSTAN\n\t\nWŁAŚCICIELE\n\t\nOSTATNI CHECK-IN\n\t\n\n\nOKR zakładu — Q4 2026\n\t\nZakład DBR77\n\t\nQ4 2026\n\t\n4\n\t\n11\n\t\n7\n·\n3\n·\n1\n·\n—\n\t\n7\n\t\n04.09.2026\n\t\n\n\nOKR automatyzacji — Q4 2026\n\t\nProgram automatyzacji\n\t\nQ4 2026\n\t\n3\n\t\n8\n\t\n6\n·\n2\n·\n—\n·\n—\n\t\n5\n\t\n03.09.2026\n\t\n\n\nOKR sprzedaży — H2 2026\n\t\nSprzedaż\n\t\nH2 2026\n\t\n3\n\t\n9\n\t\n5\n·\n2\n·\n1\n·\n1\n\t\n6\n\t\n01.09.2026\n\t"
 }
