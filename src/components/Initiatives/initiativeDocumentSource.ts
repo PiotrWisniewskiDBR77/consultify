@@ -52,6 +52,13 @@ export const toInitiativeDocumentFromRegistration = (
     description: problem || row.description || '',
     problemDefinition: problem ? { symptom: problem } : undefined,
     expectedOutcome: record.initiative.proposedOutcome || undefined,
+    // `toCanonicalInitiativeRegisterItem` zostawia `displayStatus` w słowniku
+    // CYKLU ŻYCIA rejestru ('IN_EXECUTION'), a karta czyta `displayStatus`
+    // PRZED `status` (`getWorkflowStatusForInitiative`) i nieznaną wartość
+    // ścina do DRAFT — realny rekord „W realizacji" pokazywał się jako „Szkic".
+    // Karta dostaje więc ten sam słownik, którego sama używa; `lifecycle`
+    // (nietknięty wyżej) dalej niesie stan rejestru.
+    displayStatus: row.status,
     canonicalVersion: record.version,
     documentOrigin: 'initiatives-runtime-v1' as InitiativeDocumentOrigin,
   };
