@@ -2,7 +2,7 @@
 doc_id: przekazanie-20260906-rano
 status: canonical
 truth_type: program-status
-established: 2026-09-06 (rano, ~03:30)
+established: 2026-09-06 (rano, ~03:35)
 author: CTO (Fable), sesja d26477da
 poprzednie: PRZEKAZANIE_20260905_NOC.md
 ---
@@ -10,7 +10,7 @@ poprzednie: PRZEKAZANIE_20260905_NOC.md
 # Meldunek poranny 06.09 — noc przed ogłoszeniem MVP
 
 ## 1. Co jest na stagingu (`origin/staging` = `codex/m03-admin-20260824`)
-125 commitów i 21 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+~150 commitów i 27 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
 
 **Zbudowane od zera tej nocy**
 - **Wyniki KPI · OKR · ROI** — trzy poziomy wg SSOT i zaakceptowanego prototypu, na realnych danych DBR77 (138 mierników z Twojego arkusza, 3 zestawy OKR z check-inem end-to-end, 3 analizy ROI z NPV/IRR/wrażliwością/PIR). Trzy migracje addytywne. Pierwsze uruchomienie zapytań KPI na Postgresie złapało i naprawiło błąd 500.
@@ -25,7 +25,7 @@ Inicjatywy 0 → 62 (dwa rejestry), raport z Oceny renderuje treść z macierzą
 ## 2. Werdykty końcowego re-audytu (lokalne stanowisko, najnowszy kod)
 **Moduły A (Czat, Moja Praca, Wywiad, Narzędzia, Ocena, Inicjatywy, Realizacja) — `evidence/audyt-mvp-20260906/A3/RAPORT_A3.md`:** zero modułów NIEGOTOWYCH (wieczorem trzy). GOTOWE: Czat, Wywiad, Inicjatywy (67 wierszy). GOTOWE Z KOSMETYKĄ: Moja Praca, Narzędzia (35/36 narzędzi „już wkrótce” — dane biblioteki, nie kod), Ocena, Realizacja. Naprawy nocy potwierdzone 10/12; tryb ciemny na 7 modułach zmierzony; Teresa po polsku ze „Źródła: 12”. Resztki naprawione falą 5 (`b469b29d26`): prezentacja Oceny dla niezamrożonych, typ Realizacji („—” przy pustej osi, 0 „Nieznany typ”), nagłówek panelu podglądu dwuwierszowy.
 
-**Moduły B + Wyniki + Finanse — `B3/RAPORT_B3.md`:** naprawy nocy 7/9 potwierdzone żywo, 1 tylko w kodzie (rola „user”), 1 częściowo (nagłówki dat: Audyty tak, Finanse nie). **Finanse CD PROJEKT: TAK z zastrzeżeniem** (wczoraj NIE) — 4 blokery naprawione i potwierdzone. **Wyniki: blisko, ale 3 blokery**: dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2. **Materiały: NOWY BLOKER** — Dokumenty → „+ Nowy” → „Czysto” utyka na „Brak wczytanego dokumentu” (cichy fail; prezentacje działają). Ważne: „PL · Silesia” w danych Organizacji, Szablony ustawień po angielsku (dane API). Fala 6 (Opus na Document Studio + Sonnet na resztę) uruchomiona o 02:15.
+**Moduły B + Wyniki + Finanse — `B3/RAPORT_B3.md`:** naprawy nocy 7/9 potwierdzone żywo, 1 tylko w kodzie (rola „user”), 1 częściowo (nagłówki dat: Audyty tak, Finanse nie). **Finanse CD PROJEKT: TAK z zastrzeżeniem** (wczoraj NIE) — 4 blokery naprawione i potwierdzone. **Wyniki: blisko, ale 3 blokery**: dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2. **Materiały: NOWY BLOKER** — Dokumenty → „+ Nowy” → „Czysto” utyka na „Brak wczytanego dokumentu” (cichy fail; prezentacje działają). Ważne: „PL · Silesia” w danych Organizacji, Szablony ustawień po angielsku (dane API). Fala 6 scalona (`e6b0a152e3` Document Studio „Czysto” działa end-to-end: utwórz → tytuł → zapis → lista → otwórz; `e5201bde50` nazwa „Wyniki”, Check-iny OKR, nagłówek Finansów, Silesia, szablony ustawień).
 
 ## 3. Ścieżka pokazu na 06.09 (kolejność menu)
 Pełne ścieżki per moduł w `A3/RAPORT_A3.md` i `B3/RAPORT_B3.md`. Skrót:
@@ -35,9 +35,9 @@ Pełne ścieżki per moduł w `A3/RAPORT_A3.md` i `B3/RAPORT_B3.md`. Skrót:
 - **Narzędzia:** Dynamiczny SWOT (jedyne pełne narzędzie; 35/36 „już wkrótce” — nie otwierać innych).
 - **Ocena:** lista Outputów → raport oceny (`--pelna`: sekcje + macierz DRD z treścią). „Pokaż jako prezentację” działa też dla niezamrożonych (fala 5).
 - **Inicjatywy:** lista (67) → wiersz → podgląd → karta. **Realizacja:** Realizacje → wiersz → panel Rekord|Teresa.
-- **Wyniki:** KPI L1 → raport (widok miesięczny: bieżący miesiąc widoczny, ogon sąsiada to kosmetyka) → miernik L3; OKR L1 → zestaw → cel L3 (bloki KR, Check-in → anuluj; zakładki Check-iny dopiero po fali 6); ROI L1 → analiza (Założenia → Wyliczenia → Realizacja) — bezpieczne w całości.
+- **Wyniki:** KPI L1 → raport (widok miesięczny: bieżący miesiąc widoczny, ogon sąsiada to kosmetyka) → miernik L3; OKR L1 → zestaw → cel L3 (bloki KR, Check-in → anuluj, zakładka Check-iny po polsku); ROI L1 → analiza (Założenia → Wyliczenia → Realizacja) — bezpieczne w całości.
 - **Finanse:** Sprawozdania → CD PROJEKT → podgląd → Otwórz → pakiet (119 linii, AKTYWA RAZEM 3 503 320) → Analiza → karta 18 wskaźników. **Nie klikać Baseline.**
-- **Materiały:** Prezentacje „Czysto” (edytor po polsku); Dokumenty „Czysto” dopiero po fali 6. **Audyty, Spotkania, Administracja, Ustawienia, Organizacja, Partner:** listy i karty gotowe; Szablony ustawień po angielsku (fala 6).
+- **Materiały:** Prezentacje „Czysto” (edytor po polsku); Dokumenty „Czysto” działają (nowy dokument, tytuł, zapis, otwarcie z listy). **Audyty, Spotkania, Administracja, Ustawienia, Organizacja, Partner:** listy i karty gotowe; Szablony ustawień po polsku.
 
 ## 4. Co zostało (uczciwie)
 - Zrzuty na żywo ze stagingu na Twoim koncie: sesja automatu padła wieczorem (przyrząd nadpisywał plik sesji; naprawione), dlatego noc stała na lokalnym stanowisku z Twoimi seedami. Pierwsze przejście na stagingu robisz Ty.
