@@ -11,6 +11,7 @@ import {
   Lightbulb,
   MessageSquare,
   MessageSquarePlus,
+  PanelRight,
   Presentation,
   Rocket,
   Sparkles,
@@ -129,6 +130,33 @@ function saveIdeaRowDescriptionSetting(showDescription: boolean) {
   }
 }
 
+// Uwaga właściciela (05.09, verbatim): „mam tylko wielki problem z tym panelem
+// prawym bo on powinien być zamykany jak nie jest potrzebny — a teraz nie
+// mogę go zamknąć". Klik na X w `PreviewPaneShell` DZIAŁA (zamyka podgląd),
+// ale każdy kolejny klik w wiersz natychmiast otwierał go z powrotem — więc
+// z perspektywy właściciela panelu "nie da się zamknąć" podczas normalnego
+// przeglądania tabeli. `sessionStorage` (nie localStorage): zamknięcie ma
+// przetrwać sesję przeglądarki, nie zostać na zawsze.
+const IDEAS_TABLE_PREVIEW_DISMISSED_STORAGE_KEY = 'consultify.mywork.ideas.previewDismissed.v1';
+
+function loadIdeaPreviewDismissed(): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    return window.sessionStorage.getItem(IDEAS_TABLE_PREVIEW_DISMISSED_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function persistIdeaPreviewDismissed(dismissed: boolean) {
+  try {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem(IDEAS_TABLE_PREVIEW_DISMISSED_STORAGE_KEY, String(dismissed));
+  } catch {
+    /* ignore persistence errors */
+  }
+}
+
 // Icon/badge styling only — label TEXT comes from IDEA_STAGE_BUCKET_LABELS
 // (ideaEntryTypes.ts, 2026-07-24 SSOT unification: this dict used to carry its
 // own "Rosnie"/"Ksztaltuje" (no diacritics), drifted from the other Ideas-list
@@ -220,6 +248,18 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onRefresh,
 }) => {
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
+  /**
+   * Uwaga właściciela 05.09 — panel prawy „powinien być zamykany jak nie jest
+   * potrzebny". Prawda: X w nagłówku już zamykał podgląd, ale klik w
+   * DOWOLNY wiersz natychmiast otwierał go z powrotem (kanon "single click →
+   * selection + preview"), więc z perspektywy przeglądania tabeli panel
+   * nigdy realnie nie zostawał zamknięty. Ten flag pamięta świadome
+   * zamknięcie (X / Escape) na czas sesji przeglądarki i wstrzymuje
+   * auto-otwieranie przy zwykłym kliku w wiersz, dopóki użytkownik nie
+   * poprosi o podgląd ponownie (przycisk „Pokaż panel" albo kebab „Otwórz
+   * podgląd").
+   */
+  const [previewDismissed, setPreviewDismissed] = useState<boolean>(loadIdeaPreviewDismissed);
   /** Stan Rozwin/Zwin bloku 3 podgladu (kanon 7.3 pkt 3) - przezywa zmiane wiersza. */
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   // MYW-IDEA-REC-001 — PPM-mirror (ANEKS #3b, same contract as
@@ -630,7 +670,16 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       <TableWithPreviewLayout<MyIdea>
         selectedId={previewIdeaId}
         selectedItem={previewIdea}
-        onSelect={setPreviewIdeaId}
+        onSelect={(id) => {
+          // id === null ⇒ świadome zamknięcie (X w nagłówku, Escape, tło na
+          // mobile) — zapamiętaj to na sesję, żeby kolejny klik w wiersz
+          // (poniżej) nie otwierał panelu z powrotem.
+          if (id === null) {
+            setPreviewDismissed(true);
+            persistIdeaPreviewDismissed(true);
+          }
+          setPreviewIdeaId(id);
+        }}
         previewOpen={Boolean(previewIdeaId)}
         autoOpenPreview={false}
         onOpenFull={(id) => {
@@ -894,7 +943,27 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   className="sticky right-0 z-sticky px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-c-text-muted bg-c-surface-raised border-l border-c-border-subtle"
                   style={{ width: columnWidths.actions, right: -scrollerPaddingRight }}
                 >
-                  <div className="flex items-center justify-end normal-case tracking-normal">
+                  <div className="flex items-center justify-end gap-1 normal-case tracking-normal">
+                    {previewDismissed ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewDismissed(false);
+                          persistIdeaPreviewDismissed(false);
+                          const target =
+                            (focusedIndex >= 0 ? ideas[focusedIndex] : undefined) ?? ideas[0];
+                          if (target) {
+                            setPreviewIdeaId(target.id);
+                          }
+                        }}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-slate-900/[0.06] hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] dark:hover:bg-white/10"
+                        aria-label={isPolish ? 'Pokaż panel' : 'Show panel'}
+                        title={isPolish ? 'Pokaż panel' : 'Show panel'}
+                      >
+                        <PanelRight size={14} />
+                        <span>{isPolish ? 'Pokaż panel' : 'Show panel'}</span>
+                      </button>
+                    ) : null}
                     <TableSettingsPopover
                       columns={[
                         {
@@ -1115,6 +1184,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         label: isPolish ? 'Otwórz podgląd' : 'Open preview',
                         icon: ChevronRight,
                         onClick: () => {
+                          // Kebab = prośba wprost o podgląd — zdejmij zamknięcie,
+                          // żeby zwykły klik w wiersz znów otwierał panel.
+                          setPreviewDismissed(false);
+                          persistIdeaPreviewDismissed(false);
                           setPreviewIdeaId(idea.id);
                           onFocusIndexChange(index);
                         },
@@ -1146,8 +1219,15 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   <tr
                     key={idea.id}
                     onClick={() => {
-                      setPreviewIdeaId(idea.id);
                       onFocusIndexChange(index);
+                      // Panel świadomie zamknięty (X/Escape) w tej sesji —
+                      // zwykły klik w wiersz go NIE otwiera z powrotem
+                      // (uwaga właściciela 05.09). Zaznaczenie/focus wiersza
+                      // dalej działa; podgląd wraca przez „Pokaż panel" albo
+                      // kebab „Otwórz podgląd".
+                      if (!previewDismissed) {
+                        setPreviewIdeaId(idea.id);
+                      }
                     }}
                     onDoubleClick={() => onOpenIdea(idea)}
                     onContextMenu={(e) => {
