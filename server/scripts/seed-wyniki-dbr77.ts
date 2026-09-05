@@ -905,8 +905,10 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
     key,
     caseId: det(orgId, 'roi_case', key),
     // initiatives.id jest TEXT — deterministyczny, czytelny prefiks pozwala
-    // rozpoznać i wycofać dokładnie te wiersze.
-    initiativeId: `${SEED_TAG}|${key}`,
+    // rozpoznać i wycofać dokładnie te wiersze. Organizacja MUSI być częścią
+    // klucza: bez niej ten sam id powtórzyłby się w dwóch organizacjach
+    // (kolizja klucza głównego i fałszywe „już jest w bazie").
+    initiativeId: `${SEED_TAG}|${orgId}|${key}`,
   });
 
   return [
@@ -1286,7 +1288,12 @@ export async function countExisting(client: PoolClient, ctx: SeedContext, plan: 
     plan.okr.sets.flatMap((s) => s.objectives.flatMap((o) => o.keyResults.map((k) => det(ctx.org.id, 'okr_checkin', k.keyResultId))))
   );
   c.initiatives = Number(
-    (await client.query<{ n: string }>(`SELECT count(*)::text n FROM initiatives WHERE id = ANY($1::text[])`, [plan.roi.map((r) => r.initiativeId)])).rows[0]?.n ?? 0
+    (
+      await client.query<{ n: string }>(
+        `SELECT count(*)::text n FROM initiatives WHERE organization_id = $1 AND id = ANY($2::text[])`,
+        [ctx.org.id, plan.roi.map((r) => r.initiativeId)]
+      )
+    ).rows[0]?.n ?? 0
   );
   c.roiCases = await one(`SELECT count(*)::text n FROM rvn_roi_cases WHERE case_id = ANY($1::uuid[])`, plan.roi.map((r) => r.caseId));
   c.roiLines =
@@ -1437,7 +1444,7 @@ export async function applySeed(client: PoolClient, ctx: SeedContext, plan: Seed
         cyc.cycleId, org, ctx.okrProgramId, cyc.name, cyc.start, cyc.end,
         `${cyc.start}T00:00:00.000Z`, `${cyc.start}T00:00:00.000Z`, `${cyc.start}T00:00:00.000Z`,
         `${cyc.end}T00:00:00.000Z`, `${cyc.end}T00:00:00.000Z`, `${cyc.end}T00:00:00.000Z`,
-        `${cyc.end}T00:00:00.000Z`, cyc.status, ctx.okrPolicyVersionId, actor, NOW,
+        cyc.status, ctx.okrPolicyVersionId, actor, NOW,
       ]
     );
   }
@@ -1677,10 +1684,10 @@ export async function rollbackSeed(client: PoolClient, ctx: SeedContext, plan: S
   await del(`DELETE FROM rvn_roi_assumptions WHERE case_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_calculation_policy WHERE case_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_baselines WHERE case_id = ANY($1::uuid[])`, [caseIds]);
-  await del(`DELETE FROM rvn_platform_obligations WHERE reference_type = 'roi_case' AND reference_id = ANY($1::text[])`, [caseIds]);
+  await del(`DELETE FROM rvn_platform_obligations WHERE reference_type = 'roi_case' AND reference_id = ANY($1::uuid[])`, [caseIds]);
   await del(`DELETE FROM rvn_platform_resource_acl WHERE resource_type = 'roi_case' AND resource_id = ANY($1::text[])`, [caseIds]);
   await del(`DELETE FROM rvn_roi_cases WHERE case_id = ANY($1::uuid[])`, [caseIds]);
-  await del(`DELETE FROM initiatives WHERE id = ANY($1::text[])`, [plan.roi.map((r) => r.initiativeId)]);
+  await del(`DELETE FROM initiatives WHERE organization_id = $1 AND id = ANY($2::text[])`, [org, plan.roi.map((r) => r.initiativeId)]);
 
   await del(`DELETE FROM okr_vnext_checkins WHERE key_result_id = ANY($1::uuid[])`, [krIds]);
   await del(`DELETE FROM okr_vnext_key_results WHERE key_result_id = ANY($1::uuid[])`, [krIds]);
