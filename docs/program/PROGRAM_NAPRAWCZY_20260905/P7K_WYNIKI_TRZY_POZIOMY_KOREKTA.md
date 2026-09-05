@@ -80,3 +80,10 @@ Wiążący wzorzec poziomów 2 i 3: „Apator szablon.xlsx” (analiza w `docs/p
 - KPI: podmiot wiersza = proces/obszar; kolumny OBSZAR i ODPOWIEDZIALNOŚĆ; podsumowanie raportu per obszar.
 - OKR: podmiot wiersza = człowiek; kolumna WŁAŚCICIEL jest filtrem domyślnym i osią podsumowania („Fred: 3 rezultaty, 1 zagrożony”); karta celu pokazuje osoby i zespoły przy każdym KR; puste stany i etykiety używają słów „właściciel rezultatu”, nie „zasób”.
 - §10 dodatkowo: podgląd raportu OKR ma rozkład stanu per właściciel; podgląd raportu KPI ma rozkład per obszar.
+
+## 15. Mechanika odchylenia (właściciel 05.09) — zakres P7K część B
+- Wyzwalacz: zapis rezultatu okresu → porównanie z CEL i limitem [%] (`rvn_kpi_*` progi; rg `threshold|tolerance|deviation` w `server/src/routes/resultsVnext` i `kpiTool`) → status wiersza (Bezpieczne/Ostrzeżenie/Krytyczne) w L2 i podsumowaniu raportu.
+- Poza limitem: (1) kolor na wierszu L2 i w L1 (stan raportu), (2) zgłoszenie do osoby z ODPOWIEDZIALNOŚĆ: powiadomienie in-app + pozycja w Skrzynce Mojej Pracy z linkiem, (3) automatyczne otwarcie **karty działania** dla okresu (istniejący przypadek odchylenia RES-F-007 / KPI Recovery Card RES-F-011 — rg `DeviationCase`, `RecoveryCard`, `deviation-cases` w src/components/ResultsVNext i trasach), z polami z arkusza: problem, główna przyczyna, działania, odpowiedzialny, termin, komentarz, status OTWARTY/ZAMKNIĘTY.
+- Karta działania widoczna w L3 (sekcja Odchylenia) i w L2 (ikona/liczba otwartych przy wierszu); zamknięcie zmienia stan.
+- Kolejność: najpierw część A (poziomy, §4–§14), potem część B (wyzwalacz i karta); część B ma własny §10: test jednostkowy „rezultat poza limitem → status + zgłoszenie + karta utworzona” z dowodem mutacyjnym (usunięcie porównania → test pada), test Playwright: wpisz rezultat poza limitem → wiersz czerwony → Skrzynka odpowiedzialnego ma wpis → karta otwarta w L3; przy rezultacie w limicie nic się nie tworzy.
+- E-mail do odpowiedzialnego: NIE w tej paczce (do potwierdzenia).
