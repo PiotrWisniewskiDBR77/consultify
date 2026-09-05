@@ -11,7 +11,13 @@ describe('persona helpers', () => {
   it('detectLanguage prefers conversation language, then user preference, then default', () => {
     expect(detectLanguage('en-US', 'pl')).toBe('en');
     expect(detectLanguage(undefined, 'de-DE')).toBe('de');
-    expect(detectLanguage(undefined, undefined)).toBe('en');
+    // ZMIANA 2026-09-06 (SSOT jezyka): domyslka to `pl`, nie `en`.
+    // Poprzednia asercja (`toBe('en')`) utrwalala defekt zmierzony 05.09:
+    // `/api/ai/chat/stream` z polskim pytaniem odpowiadalo po angielsku, bo
+    // KAZDY wolacz bez jawnego `language` trafial na `|| 'en'`.
+    // `docs/ssot/ZASADY_AI_TERESA_SSOT.md` par.8 J1: „Polski jest domyslny".
+    // Wybor EN nadal dziala — musi byc jawny (patrz asercja wyzej).
+    expect(detectLanguage(undefined, undefined)).toBe('pl');
   });
 
   it('detectLanguage maps unsupported common languages to english fallback', () => {

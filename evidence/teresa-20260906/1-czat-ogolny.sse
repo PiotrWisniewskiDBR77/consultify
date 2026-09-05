@@ -1,0 +1,116 @@
+data: {"type":"thought","step":"starting","status":"in_progress","label":"Starting…"}
+
+data: {"type":"thought","step":"policy","status":"in_progress","label":"Checking safety policy and evidence requirements…"}
+
+data: {"type":"policy_decision","decision":{"id":"ffc2bc64-b9f6-4966-98d0-12b6a2e8412a","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}}}
+
+data: {"type":"thought","step":"memory","status":"in_progress","label":"Loading conversation context and memory…"}
+
+data: {"type":"thought","step":"knowledge","status":"in_progress","label":"Searching knowledge base and documentation…"}
+
+data: {"type":"thought","step":"web_search_check","status":"in_progress","label":"Checking if web search is needed…"}
+
+data: {"type":"citations","citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","excerpt":"Status: EXECUTING"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","excerpt":"Status: EXECUTING"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","excerpt":"Status: EXECUTING"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","excerpt":"Status: BLOCKED"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","excerpt":"Status: EXECUTING"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","excerpt":"Status: SCHEDULED"},{"id":"module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b","type":"module_data","title":"Decyzja: Digital Workplace — M365 E5 license upgrade","reference":"decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b","excerpt":"status: PENDING"},{"id":"module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775","type":"module_data","title":"Decyzja: SAP go-live date rebaseline approval","reference":"decisions/01190bb1-9182-4757-96c6-c5f9951f5775","excerpt":"status: PENDING"},{"id":"module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a","type":"module_data","title":"Decyzja: Supply chain AI vendor shortlist","reference":"decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a","excerpt":"status: PENDING"},{"id":"module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","type":"module_data","title":"Decyzja: DevOps toolchain consolidation","reference":"decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","excerpt":"status: PENDING"},{"id":"module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c","type":"module_data","title":"Decyzja: Data platform — Databricks vs Snowflake","reference":"decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c","excerpt":"status: PENDING"},{"id":"module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703","type":"module_data","title":"Decyzja: Compliance remediation deadline extension","reference":"decisions/2c52fb12-841b-447e-9abb-d7e829a26703","excerpt":"status: PENDING"}]}
+
+data: {"type":"thought","step":"generating","status":"in_progress","label":"Generating response based on gathered context…"}
+
+data: {"text":"Mod"}
+
+data: {"text":"u"}
+
+data: {"text":"ł"}
+
+data: {"text":" \""}
+
+data: {"text":"Initi"}
+
+data: {"text":"atives"}
+
+data: {"text":"\""}
+
+data: {"text":" zar"}
+
+data: {"text":"ząd"}
+
+data: {"text":"za"}
+
+data: {"text":" inic"}
+
+data: {"text":"j"}
+
+data: {"text":"aty"}
+
+data: {"text":"wami"}
+
+data: {"text":" transform"}
+
+data: {"text":"acy"}
+
+data: {"text":"jn"}
+
+data: {"text":"ymi"}
+
+data: {"text":","}
+
+data: {"text":" prz"}
+
+data: {"text":"eks"}
+
+data: {"text":"z"}
+
+data: {"text":"tał"}
+
+data: {"text":"c"}
+
+data: {"text":"ając"}
+
+data: {"text":" diagno"}
+
+data: {"text":"zy"}
+
+data: {"text":" w"}
+
+data: {"text":" pri"}
+
+data: {"text":"ory"}
+
+data: {"text":"t"}
+
+data: {"text":"ety"}
+
+data: {"text":"z"}
+
+data: {"text":"owane"}
+
+data: {"text":" projek"}
+
+data: {"text":"ty"}
+
+data: {"text":" z"}
+
+data: {"text":" kart"}
+
+data: {"text":"ami"}
+
+data: {"text":" projekt"}
+
+data: {"text":"ów"}
+
+data: {"text":" i"}
+
+data: {"text":" roadmap"}
+
+data: {"text":"ami"}
+
+data: {"text":"."}
+
+data: {"type":"quality_score","relevance":0.5,"groundedness":0.5,"completeness":1,"coherence":0.5,"actionability":0.3,"meceQuality":0.4,"overall":0.53,"flags":[],"llmJudged":false}
+
+data: {"type":"source_ledger","decisionId":"ffc2bc64-b9f6-4966-98d0-12b6a2e8412a","used_sources":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","link":null},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","link":null},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","link":null},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","link":null},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","link":null},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","link":null},{"id":"module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b","type":"module_data","title":"Decyzja: Digital Workplace — M365 E5 license upgrade","reference":"decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b","link":null},{"id":"module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775","type":"module_data","title":"Decyzja: SAP go-live date rebaseline approval","reference":"decisions/01190bb1-9182-4757-96c6-c5f9951f5775","link":null},{"id":"module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a","type":"module_data","title":"Decyzja: Supply chain AI vendor shortlist","reference":"decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a","link":null},{"id":"module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","type":"module_data","title":"Decyzja: DevOps toolchain consolidation","reference":"decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","link":null},{"id":"module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c","type":"module_data","title":"Decyzja: Data platform — Databricks vs Snowflake","reference":"decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c","link":null},{"id":"module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703","type":"module_data","title":"Decyzja: Compliance remediation deadline extension","reference":"decisions/2c52fb12-841b-447e-9abb-d7e829a26703","link":null}],"blocked_sources":[{"category":"cross_tenant","reason":"forbidden_by_policy","detail":null},{"category":"other_user_private","reason":"forbidden_by_policy","detail":null}],"degraded":null,"scope_resolution":{"privateMode":false,"knowledgeSources":{}}}
+
+data: {"type":"citations","citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","status":"stale"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","status":"stale"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","status":"stale"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","status":"stale"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","status":"stale"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","status":"stale"},{"id":"module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b","status":"stale"},{"id":"module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775","status":"stale"},{"id":"module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a","status":"stale"},{"id":"module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","status":"stale"},{"id":"module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c","status":"stale"},{"id":"module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703","status":"stale"}]}
+
+data: {"type":"trust_bundle","bundle":{"version":"TrustBundleV1","answerId":"answer-stream-76015d70-9117-444f-97a6-4f5eda9d7ad5-1788644293496","conversationId":null,"messageId":"641eff41-d9ae-40a3-8c73-5a7a3cb4f8ab","decisionId":"ffc2bc64-b9f6-4966-98d0-12b6a2e8412a","model":"openai/gpt-4o-mini","provider":"openrouter","tier":null,"sourceClasses":["general"],"citationsCount":12,"citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","excerpt":"Status: EXECUTING"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","excerpt":"Status: EXECUTING"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","excerpt":"Status: EXECUTING"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","excerpt":"Status: BLOCKED"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","excerpt":"Status: EXECUTING"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","excerpt":"Status: SCHEDULED"},{"id":"module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b","type":"module_data","title":"Decyzja: Digital Workplace — M365 E5 license upgrade","reference":"decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b","excerpt":"status: PENDING"},{"id":"module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775","type":"module_data","title":"Decyzja: SAP go-live date rebaseline approval","reference":"decisions/01190bb1-9182-4757-96c6-c5f9951f5775","excerpt":"status: PENDING"},{"id":"module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a","type":"module_data","title":"Decyzja: Supply chain AI vendor shortlist","reference":"decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a","excerpt":"status: PENDING"},{"id":"module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","type":"module_data","title":"Decyzja: DevOps toolchain consolidation","reference":"decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","excerpt":"status: PENDING"},{"id":"module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c","type":"module_data","title":"Decyzja: Data platform — Databricks vs Snowflake","reference":"decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c","excerpt":"status: PENDING"},{"id":"module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703","type":"module_data","title":"Decyzja: Compliance remediation deadline extension","reference":"decisions/2c52fb12-841b-447e-9abb-d7e829a26703","excerpt":"status: PENDING"}],"sourceLedgerSummary":{"usedCount":12,"blockedCount":2,"degraded":null,"scope":{"privateMode":false,"knowledgeSources":{}}},"policyDecision":{"id":"ffc2bc64-b9f6-4966-98d0-12b6a2e8412a","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}},"policyNotices":[],"generatedAt":"2026-09-05T21:38:15.733Z","degraded":null,"outputLength":147,"confidence":0.52,"citationVerification":{"total":12,"verified":0,"unverified":12,"broken":0,"score":0},"cost":null,"tokens":{"input":11,"output":37,"total":48},"routingTrace":null,"coverage":null,"warnings":[],"assistant":"teresa","assistantSurface":"workspace_copilot","actionSurface":"governed_execution"}}
+
+data: [DONE]
+
