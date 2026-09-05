@@ -287,6 +287,14 @@ import {
   UpdateRoiPostInvestmentReviewDraftSchema,
 } from '../../validators/resultsVnextRoiPir.validators.js';
 import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
+// ROI (P7K C) — odczyt rejestru analiz i karty N w trzech częściach
+// (Założenia → Wyliczenia → Realizacja). Osobny moduł, żeby nie dokładać
+// kolumn wskaźników do `listRoiCases`, którego kontrakt zjadło już
+// czternaście innych ekranów.
+import {
+  getRoiCaseCard,
+  listRoiRegistryRows,
+} from '../../services/resultsVnext/roi/card/roiCaseCardRepository.js';
 
 const router = Router();
 
@@ -3502,6 +3510,79 @@ router.post(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'flagEvidenceLinkFreshnessCheck');
+    }
+  }
+);
+
+// ==========================================
+// ROI (P7K C) — GET /api/vnext/results/roi/registry
+// ==========================================
+// Poziom 1 wg SSOT §4: tabela analiz ze wskaźnikami i rekomendacją. Osobna
+// ścieżka od `/cases`, a nie `/cases/registry`, bo `/cases/:caseId` już
+// istnieje i statyczny segment po `/cases` byłby pułapką na identyfikator
+// o tej samej nazwie. Ta sama bramka governance, co przy `/cases`:
+// odmowa = zero wierszy, nigdy 403 (nie wyciekamy istnienia analiz).
+
+router.get('/registry', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const governed = await resolveRoiGovernedVisibility({
+      userId: auth.userId,
+      organizationId: auth.organizationId,
+    });
+    if (!governed.allow) {
+      res.status(200).json({ rows: [] });
+      return;
+    }
+    const rows = await listRoiRegistryRows({
+      userId: auth.userId,
+      organizationId: auth.organizationId,
+    });
+    res.status(200).json({ rows });
+  } catch (err) {
+    handleRoiRouteError(res, err, 'listRoiRegistryRows');
+  }
+});
+
+// ==========================================
+// ROI (P7K C) — GET /api/vnext/results/roi/cases/:caseId/card
+// ==========================================
+// Poziom 2: JEDNA analiza w trzech częściach. Jedno wywołanie zamiast
+// dziewięciu (baseline, polityka, założenia, koszty, korzyści, ryzyka,
+// scenariusze, wariancje, PIR) — karta otwiera się jednym żądaniem, a nie
+// kaskadą, w której każdy brak wygląda jak błąd.
+
+router.get(
+  '/cases/:caseId/card',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const governed = await resolveRoiGovernedVisibility({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+      });
+      if (!governed.allow) {
+        res.status(404).json({ error: 'ROI case not found' });
+        return;
+      }
+      const card = await getRoiCaseCard({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+      });
+      if (!card) {
+        // „Nie istnieje" i „nie widzisz" zwracają IDENTYCZNE 404 — ta sama
+        // zasada, którą trzyma GET /cases/:caseId wyżej (D06/D07).
+        res.status(404).json({ error: 'ROI case not found' });
+        return;
+      }
+      res.status(200).json({ card });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiCaseCard');
     }
   }
 );
