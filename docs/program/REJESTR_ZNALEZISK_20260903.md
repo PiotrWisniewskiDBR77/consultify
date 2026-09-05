@@ -426,3 +426,8 @@ Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 k
 - R2, R4, R5 i R6 mają dowody GREEN; R3 zmniejszono z 194 do 141 wystąpień.
 - STOP merytoryczny: kolizje string/obiekt w słownikach oraz dwa różne znaczenia `myWork.ideas.plantInGarden`; bez rozszerzenia licencji nie wolno mechanicznie nadpisać istniejących wartości.
 - Szczegóły i bramki: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY374_I18N_CZAT_DOMKNIECIE_REPORT.md`.
+## AN. Dyżur 375 — karty propozycji po F5 używały zamrożonego stanu
+
+- `TeresaProposalCard` po remoncie ufała wyłącznie metadata wiadomości mimo istniejącego `GET /v8/teresa/proposal/:id`; naprawa odświeża stan fail-soft i ma test z identycznym przestarzałym propem.
+- `GovernedInitiativeHandoffCard` po remoncie wracała do `idle`; naprawa czyta istniejący kwit `chat-draft-adopt:*`, respektuje backendowy `404` dla braku widoczności i pokazuje `adopted` tylko dla `CONFIRMED`.
+- Dowód konfliktu 500→409 odtworzono na lokalnym RealPG jako PASS→mutacja RED→PASS. Osobny realny HTTP/JWT/PG dowód kwitu adopcji pozostaje `NOT PROVEN`; szczegóły: `CODEX_DAY375_KARTY_DOMKNIECIE_REPORT.md`.
