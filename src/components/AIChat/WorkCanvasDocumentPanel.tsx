@@ -4236,43 +4236,13 @@ function WorkCanvasMarkdownDocumentPanel({
                   ) : null}
 
                   {pendingDataset ? (
-                    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-white/10 dark:bg-white/[0.03]">
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        {t('canvas.panel.dataset.readyPrefix', 'Dataset ready:')}{' '}
-                        {pendingDataset.filename}
-                      </div>
-                      <div className="mt-1 text-slate-500 dark:text-slate-400">
-                        {t(
-                          'canvas.panel.dataset.analysisNote',
-                          'Deterministic Canvas analysis. No code execution.'
-                        )}
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {datasetArtifactActions.map((action) => (
-                          <button
-                            key={`${action.kind}-${action.analysisKind || 'default'}`}
-                            type="button"
-                            onClick={() =>
-                              void createArtifactFromDataset(
-                                action.kind,
-                                action.analysisKind,
-                                action.titlePrefix
-                              )
-                            }
-                            className="rounded-full border border-slate-200 px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
-                          >
-                            {action.label}
-                          </button>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => setPendingDataset(null)}
-                          className="rounded-full px-3 py-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                        >
-                          {t('canvas.panel.dismiss', 'Dismiss')}
-                        </button>
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDiagnosticsOpen(false)}
+                      className="mt-3 w-full rounded-xl px-2.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                      {t('canvas.panel.dataset.showAnalyses', 'Show analyses')}
+                    </button>
                   ) : null}
 
                   <div className="space-y-1.5">

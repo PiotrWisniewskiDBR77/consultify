@@ -28742,7 +28742,8 @@
       },
       "dataset": {
         "analysisNote": "Deterministic Canvas analysis. No code execution.",
-        "readyPrefix": "Dataset ready:"
+        "readyPrefix": "Dataset ready:",
+        "showAnalyses": "Show analyses"
       }
     },
     "aiStream": {

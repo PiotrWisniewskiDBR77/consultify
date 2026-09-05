@@ -31092,7 +31092,8 @@
       },
       "dataset": {
         "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
-        "readyPrefix": "Zbiór danych gotowy:"
+        "readyPrefix": "Zbiór danych gotowy:",
+        "showAnalyses": "Pokaż analizy"
       }
     },
     "aiStream": {
