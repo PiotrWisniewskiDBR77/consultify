@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     chat_project_id TEXT,
     
     -- Conversation metadata
-    title VARCHAR(255) NOT NULL DEFAULT '',
+    title VARCHAR(255) NOT NULL DEFAULT 'New conversation',
     title_source VARCHAR(20) DEFAULT 'auto' CHECK (title_source IN ('auto', 'user')),
     
     -- Organization flags
@@ -166,6 +166,7 @@ COMMENT ON TABLE conversation_messages IS 'Stores individual messages within con
 COMMENT ON COLUMN conversations.pmo_context IS 'Links to PMO entities (assessments, initiatives, roadmaps) discussed in conversation';
 COMMENT ON COLUMN conversations.tags IS 'Auto-generated tags based on conversation content';
 COMMENT ON COLUMN conversation_messages.metadata IS 'Rich data: citations, actions, tool calls, etc.';
+
 
 
 
