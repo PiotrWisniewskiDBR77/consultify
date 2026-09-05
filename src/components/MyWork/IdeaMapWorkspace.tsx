@@ -517,6 +517,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  // ★ NAPRAWA (odbiór CTO 05.09, panel bez zaznaczenia): brakowało daty
+  // UTWORZENIA idei w stanie warsztatu (tylko `lastSavedAt`/"zaktualizowano"
+  // było śledzone) — sekcja „Właściwości" nowego panelu na poziomie idei
+  // (patrz `IdeaElementInspector`'s `!draft` branch) pokazuje obie daty.
+  const [ideaCreatedAt, setIdeaCreatedAt] = useState<number | null>(null);
 
   const [tableContext, setTableContext] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
@@ -1780,6 +1785,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
         setMaturityGates((created as any)?.maturityGates ?? {});
         setMaturityGatesSupported(Boolean((created as any)?.maturityGatesSupported));
+        setIdeaCreatedAt(
+          (created as any)?.createdAt ? new Date((created as any).createdAt).getTime() : Date.now()
+        );
         hydrateConfidentiality(created as any);
         onSaved(created as MyIdea);
         setDirty(true);
@@ -1843,6 +1851,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setPriority(Number.isFinite(Number(idea?.priority)) ? Number(idea.priority) : 50);
         setDirty(false);
         setLastSavedAt(idea?.updatedAt ? new Date(idea.updatedAt).getTime() : null);
+        setIdeaCreatedAt(idea?.createdAt ? new Date(idea.createdAt).getTime() : null);
         setIdeaSourceType(idea?.sourceType ?? null);
         setIdeaPromotedTo(idea?.promotedTo ?? null);
         setIdeaEvidenceRefsCount(Array.isArray(idea?.evidenceRefs) ? idea.evidenceRefs.length : 0);
@@ -4647,6 +4656,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                   activeTab={zakladkaPanelu}
                   onTabChange={ustawZakladkePanelu}
                   showCanvasAnalysis
+                  // ★ NAPRAWA (odbiór CTO 05.09): tożsamość IDEI dla stanu panelu
+                  // bez zaznaczenia (patrz komentarz w IdeaElementInspector.tsx
+                  // przy `!draft`) — te same wartości, które już zasilają nagłówek
+                  // warsztatu (`title`/`stage`/`activeToolLabel`) i wskaźnik zapisu
+                  // (`lastSavedAt`).
+                  ideaTitle={title || safeTitleFromSeed(seedText, isPolish) || t('mindmap.untitled')}
+                  ideaStage={stage}
+                  ideaToolLabel={activeToolLabel}
+                  ideaCreatedAt={ideaCreatedAt}
+                  ideaUpdatedAt={lastSavedAt}
                   onClosePanel={() => {
                     setPanelZamkniety(true);
                     zapiszPanelZamkniety(true);
@@ -4936,11 +4955,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               // brak w tailwind.config.js i src/index.css) — klasa nic nie robi, więc
               // przycisk renderował się z przezroczystym tłem + twardo wpisanym białym
               // tekstem: niewidoczny na jasnym motywie (biały tekst na jasnej stronie),
-              // przypadkiem czytelny na ciemnym. Zamiana na kanoniczny neutralny wzorzec
-              // przycisku głównego (`bg-c-text`/`text-c-bg`, wzorzec z
-              // DecisionDetailView.tsx:5121 `rpActionPrimary`) — auto-inwersja
-              // light/dark, zero crimson.
-              className="rounded-lg bg-c-text px-3 py-2 text-xs font-semibold text-c-bg hover:bg-c-text-secondary disabled:opacity-50"
+              // przypadkiem czytelny na ciemnym.
+              // ★ NAPRAWA (odbiór CTO 05.09, panel bez zaznaczenia): przycisk siedzi
+              // teraz w sekcji „Akcje" nowego panelu idei razem z kartami „Analiza
+              // płótna" (neutralnymi, obrysowanymi) — ciemna pigułka (`bg-c-text`)
+              // wyglądała jak jedyna „prawdziwa" akcja modułu i biła się z resztą
+              // sekcji. Neutralny obrysowany przycisk (wzorzec `IdeaTeresaSection.tsx`
+              // `rounded-lg border border-c-border bg-c-surface … hover:bg-c-surface-raised`),
+              // zero zmiany semantyki/handlerów.
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] focus-visible:ring-inset disabled:opacity-50"
             >
               {candidateHandoffBusy
                 ? isPolish

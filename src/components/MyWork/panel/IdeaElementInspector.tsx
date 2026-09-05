@@ -4,11 +4,15 @@ import { useTranslation } from 'react-i18next';
 
 import { setCanvasAnalysisSlot } from './canvasAnalysisSlot';
 
+import { IdeaStageChip } from '../IdeaCanvasMenu1Bits';
+
 import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
+import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
+import { useAppStore } from '@/store/useAppStore';
 
 export type IdeaInspectorTool = 'mindmap' | 'process' | 'whiteboard' | 'table';
 
@@ -104,6 +108,20 @@ export interface IdeaElementInspectorProps {
    * „Akcje"). Karty trafiają tam portalem — patrz `canvasAnalysisSlot.ts`.
    */
   showCanvasAnalysis?: boolean;
+  /**
+   * ★ NAPRAWA (odbiór CTO 05.09, `09-idea-mapa.png`): tożsamość IDEI dla
+   * stanu BEZ zaznaczenia. Bez tych propsów panel nie miał żadnej informacji
+   * o tym, W CZYM w ogóle jest ten pusty stan — 600 px pustki z wyśrodkowaną
+   * podpowiedzią. Panel na poziomie idei pokazuje jej tytuł + etap + narzędzie
+   * w nagłówku, tak jak panel elementu pokazuje tytuł + typ elementu.
+   */
+  ideaTitle?: string;
+  /** Surowy etap idei (np. `'seed'`) — renderowany przez kanoniczny `IdeaStageChip`. */
+  ideaStage?: string;
+  /** Nazwa aktywnego narzędzia po polsku/angielsku (np. „Tabela"), do metadanych nagłówka. */
+  ideaToolLabel?: string;
+  ideaCreatedAt?: string | number | Date | null;
+  ideaUpdatedAt?: string | number | Date | null;
 }
 
 const UUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
@@ -193,8 +211,15 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
   onTabChange,
   onClosePanel,
   showCanvasAnalysis = false,
+  ideaTitle,
+  ideaStage,
+  ideaToolLabel,
+  ideaCreatedAt,
+  ideaUpdatedAt,
 }) => {
   const { t } = useTranslation();
+  const resolveMemberName = useOrganizationMemberNames();
+  const currentUser = useAppStore((s) => s.currentUser);
   const [draft, setDraft] = useState(element);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -256,12 +281,12 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
 
   const historyAiCount = (activity?.length ?? 0) + (aiInsights?.length ?? 0);
 
-  const formatActivityTime = (iso: string) => {
+  const formatActivityTime = (iso: string | number | Date) => {
     try {
       const d = new Date(iso);
       return `${d.toLocaleDateString(language)} ${d.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}`;
     } catch {
-      return iso;
+      return String(iso);
     }
   };
 
@@ -401,48 +426,168 @@ export const IdeaElementInspector: React.FC<IdeaElementInspectorProps> = ({
 
   if (!draft) {
     const emptyText = t('myWork.ideaInspector.empty', 'Zaznacz element, aby zobaczyć właściwości');
+    /**
+     * ★ NAPRAWA (odbiór CTO 05.09, `09-idea-mapa.png`/`10-idea-whiteboard.png`):
+     * dawniej ten stan był 600-pikselową pustką — wyśrodkowana podpowiedź na
+     * środku panelu, a karty „Analiza płótna" + „Przejrzyj kandydaturę"
+     * przybite na sam dół, zderzające się z plakietkami (LOCAL/V9 overrides).
+     * Bez zaznaczenia panel pokazuje teraz IDEĘ jako całość: nagłówek =
+     * tytuł idei + etap + narzędzie (dokładnie ta sama tożsamość, którą widać
+     * w nagłówku warsztatu), podpowiedź to JEDNA wyciszona linia pod
+     * nagłówkiem (nie pustka), a ciało to ten sam kanoniczny `ArtifactRightPanel`
+     * co przy zaznaczeniu: „Akcje" (karty Analizy płótna + „Przejrzyj
+     * kandydaturę") i „Właściwości" idei otwarte, reszta złożona uczciwie
+     * pusta.
+     */
+    const ideaOwnerLabel = memberNameOrUnknown(
+      resolveMemberName,
+      currentUser?.id ?? null,
+      language === 'pl'
+    );
+    const emptySections: ArtifactRightPanelSection[] = [
+      {
+        id: 'actions',
+        label: t('myWork.ideaInspector.sections.actions', 'Akcje'),
+        defaultOpen: true,
+        isEmpty: !gniazdoAnalizy,
+        emptyLabel: t('myWork.ideaInspector.actionsEmpty', 'Brak dostępnych akcji.'),
+        children: gniazdoAnalizy,
+      },
+      {
+        id: 'properties',
+        label: t('myWork.ideaInspector.sections.properties', 'Właściwości'),
+        defaultOpen: true,
+        children: (
+          <>
+            <FieldRow label={t('myWork.ideaInspector.labelField', 'Etykieta')} stacked>
+              {safeText(ideaTitle) || (
+                <span className="text-c-text-muted">
+                  {t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
+                </span>
+              )}
+            </FieldRow>
+            <FieldRow label={t('myWork.ideaInspector.stageField', 'Etap')}>
+              <IdeaStageChip stage={ideaStage || 'seed'} isPolish={language === 'pl'} />
+            </FieldRow>
+            <FieldRow label={t('myWork.ideaInspector.ownerField', 'Właściciel')}>
+              {ideaOwnerLabel}
+            </FieldRow>
+            <FieldRow label={t('myWork.ideaInspector.createdField', 'Utworzono')}>
+              {ideaCreatedAt ? (
+                formatActivityTime(ideaCreatedAt)
+              ) : (
+                <span className="text-c-text-muted">—</span>
+              )}
+            </FieldRow>
+            <FieldRow label={t('myWork.ideaInspector.updatedField', 'Zaktualizowano')}>
+              {ideaUpdatedAt ? (
+                formatActivityTime(ideaUpdatedAt)
+              ) : (
+                <span className="text-c-text-muted">—</span>
+              )}
+            </FieldRow>
+            {recentItems?.length ? (
+              <div className="mt-3 space-y-1 border-t border-c-border-subtle pt-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+                  {t('myWork.ideaInspector.recent', 'Ostatnio otwarte')}
+                </p>
+                <ul className="space-y-0.5" aria-label={t('myWork.ideaInspector.recent', 'Ostatnio otwarte')}>
+                  {recentItems.slice(0, 3).map((item) => (
+                    <li key={item.id ?? item.title}>
+                      <button
+                        type="button"
+                        className="-mx-1.5 w-full rounded-md px-1.5 py-1 text-left hover:bg-c-surface-raised"
+                        onClick={() => item.id && onOpenRecent?.(item.id)}
+                      >
+                        <span className="block truncate text-[12.5px] text-c-text">
+                          {safeText(item.title)}
+                        </span>
+                        <span className="text-[11px] text-c-text-muted">
+                          {safeText(item.type)} {safeText(item.date)}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        id: 'relations',
+        label: t('myWork.ideaInspector.sections.relations', 'Powiązania'),
+        defaultOpen: false,
+        badge: 0,
+        showZeroBadge: true,
+        isEmpty: true,
+        emptyLabel: t('myWork.ideaInspector.relationsEmpty', 'Brak powiązań.'),
+        children: null,
+      },
+      {
+        id: 'evidence',
+        label: t('myWork.ideaInspector.sections.evidence', 'Dowody i źródła'),
+        defaultOpen: false,
+        badge: 0,
+        showZeroBadge: true,
+        isEmpty: true,
+        emptyLabel: t('myWork.ideaInspector.evidenceEmpty', 'Brak zapisanych źródeł i założeń.'),
+        children: null,
+      },
+      {
+        id: 'comments',
+        label: t('myWork.ideaInspector.sections.comments', 'Komentarze'),
+        defaultOpen: false,
+        badge: 0,
+        showZeroBadge: true,
+        isEmpty: true,
+        emptyLabel: t('myWork.ideaInspector.commentsEmpty', 'Brak komentarzy.'),
+        children: null,
+      },
+      {
+        id: 'history',
+        label: t('myWork.ideaInspector.sections.history', 'Historia'),
+        defaultOpen: false,
+        badge: 0,
+        showZeroBadge: true,
+        isEmpty: true,
+        emptyLabel: t('myWork.ideaInspector.noActivity', 'Brak aktywności'),
+        children: null,
+      },
+    ];
     return (
       <aside
         ref={rootRef}
         {...wspolneAtrybutyKorzenia}
-        aria-label={emptyText}
+        aria-label={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
         data-testid="idea-right-panel"
       >
         {powlokaNaglowka}
-        <div className="m-auto max-w-xs p-6 text-center">
-          <p className="font-medium text-c-text">{emptyText}</p>
-          <p className="mt-1 text-sm text-c-text-secondary">
-            {t('myWork.ideaInspector.emptyHint', 'Kliknij węzeł, wiersz, kartkę albo krawędź')}
+        <header className="px-4 pb-3 pt-3.5">
+          <h2 className="min-w-0 truncate text-[15px] font-semibold leading-snug tracking-tight">
+            {safeText(ideaTitle) || t('myWork.ideaInspector.untitledElement', 'Element bez nazwy')}
+          </h2>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11.5px] text-c-text-muted">
+            <IdeaStageChip stage={ideaStage || 'seed'} isPolish={language === 'pl'} />
+            {safeText(ideaToolLabel) ? <span>{safeText(ideaToolLabel)}</span> : null}
+          </div>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-c-text-secondary">
+            {t(
+              'myWork.ideaInspector.emptyHint',
+              'Kliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola'
+            )}
           </p>
-          {recentItems?.length ? (
-            <section className="mt-6 text-left" aria-labelledby="idea-recent-title">
-              <h3
-                id="idea-recent-title"
-                className="text-xs font-semibold uppercase text-c-text-secondary"
-              >
-                {t('myWork.ideaInspector.recent', 'Ostatnio otwarte')}
-              </h3>
-              <ul className="mt-2 space-y-1">
-                {recentItems.slice(0, 3).map((item) => (
-                  <li key={item.id ?? item.title}>
-                    <button
-                      className="w-full rounded p-2 text-left text-sm hover:bg-c-surface-raised"
-                      onClick={() => item.id && onOpenRecent?.(item.id)}
-                    >
-                      <span className="block text-c-text">{safeText(item.title)}</span>
-                      <span className="text-xs text-c-text-secondary">
-                        {safeText(item.type)} {safeText(item.date)}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          <p className="sr-only">{emptyText}</p>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <ArtifactRightPanel
+            renderAs="div"
+            ariaLabel={t('myWork.ideaInspector.ariaPanel', 'Panel pomysłu')}
+            sections={emptySections}
+            width="100%"
+            className="min-h-0 flex-1 border-0"
+          />
         </div>
-        {/* Analiza płótna dotyczy CAŁEGO płótna, nie zaznaczenia — pokazujemy
-            ją także wtedy, gdy nic nie jest zaznaczone. */}
-        {gniazdoAnalizy ? <div className="px-4 pb-4">{gniazdoAnalizy}</div> : null}
       </aside>
     );
   }
