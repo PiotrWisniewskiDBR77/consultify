@@ -358,6 +358,22 @@ const OverflowTooltip: React.FC<{
 const isEmptyCell = (value: unknown): boolean =>
   value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 
+// KOSMETYKA RAPORT_B #10: `OverflowTooltip` w komórkach bez `column.render`
+// dostawał `content={String(row[column.id])}`, chronione tylko przez
+// `isEmptyCell()` (null/undefined/pusty string → myślnik). Rzadki, ale
+// realny przypadek — surowy obiekt/tablica przekazana bez `column.render` —
+// przechodzi `isEmptyCell` (nie jest null/undefined/pustym stringiem), więc
+// trafia do `String()`, który dla obiektu daje literał "[object Object]": to
+// jest TRUTHY string, więc `Tooltip`'s own `!content` guard go nie złapie —
+// użytkownik zobaczyłby dosłowny techniczny tekst w tooltipie. Tylko
+// genuine string/number/boolean dostają tekst; wszystko inne dostaje pusty
+// string (tooltip wtedy się po prostu nie pokazuje, zamiast kłamać).
+export const toTooltipSafeString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+};
+
 // Progress bar component
 // Per Table+Preview canon §4.0/§4.3: progress is NEVER red/crimson. Generic
 // progress uses an info/neutral fill while in-progress and transitions to
@@ -1824,7 +1840,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           renderedIsPlainText ? (
                             <OverflowTooltip
                               className={CELL_TEXT_CLAMP_CLASS}
-                              content={String(rendered)}
+                              content={toTooltipSafeString(rendered)}
                             >
                               {rendered}
                             </OverflowTooltip>
@@ -1854,7 +1870,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                   ? 'block truncate'
                                   : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}
-                              content={String(row[column.id])}
+                              content={toTooltipSafeString(row[column.id])}
                             >
                               {row[column.id]}
                             </OverflowTooltip>

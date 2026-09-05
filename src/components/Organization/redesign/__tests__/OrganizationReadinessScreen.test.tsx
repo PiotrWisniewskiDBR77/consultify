@@ -23,6 +23,7 @@ vi.mock('react-i18next', () => ({
         fallback
       );
     },
+    i18n: { language: 'pl', resolvedLanguage: 'pl' },
   }),
 }));
 
@@ -108,7 +109,9 @@ describe('OrganizationReadinessScreen', () => {
         '1 rozbieżności'
       )
     );
-    expect(screen.getByText(/Konflikt: profile.annualRevenue/)).toBeInTheDocument();
+    // BLOKER RAPORT_B #2: spolszczona etykieta pola, nie surowy claimPath.
+    expect(screen.getByText(/Konflikt: Przychód roczny/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('profile.annualRevenue');
   });
 
   it('zatwierdzenie pokazuje realną opublikowaną wersję, „Brak" gdy jej nie ma', async () => {
@@ -153,11 +156,14 @@ describe('OrganizationReadinessScreen', () => {
 
       render(<OrganizationReadinessScreen title="Gotowość organizacji" />);
 
+      // BLOKER RAPORT_B #2: etykieta pola musi być spolszczona ("Notatki kontekstowe"),
+      // NIGDY surowy claimPath techniczny ("notes.manualContext").
       await waitFor(() =>
-        expect(screen.getByText(/Konflikt: notes.manualContext/)).toBeInTheDocument()
+        expect(screen.getByText(/Konflikt: Notatki kontekstowe/)).toBeInTheDocument()
       );
+      expect(document.body.textContent).not.toContain('notes.manualContext');
 
-      const blockersSection = screen.getByText(/Konflikt: notes.manualContext/).closest('div');
+      const blockersSection = screen.getByText(/Konflikt: Notatki kontekstowe/).closest('div');
       expect(blockersSection).not.toBeNull();
       // Zero surowego JSON-u widocznego użytkownikowi — ani nawiasów klamrowych,
       // ani cudzysłowów kluczy obiektu.

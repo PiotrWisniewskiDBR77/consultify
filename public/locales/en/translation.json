@@ -1,4 +1,10 @@
 {
+  "notFoundPage": {
+    "title": "Page not found",
+    "message": "The address you followed doesn't exist or has moved.",
+    "backToChat": "Back to Chat",
+    "goBack": "Go back"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Actions",
@@ -14804,6 +14810,12 @@
         "admin": "Administrator",
         "member": "Member",
         "superadmin": "Super administrator",
+        "super_admin": "Super administrator",
+        "user": "User",
+        "guest": "Guest",
+        "viewer": "Viewer",
+        "project_manager": "Project manager",
+        "team_member": "Team member",
         "product": "Product",
         "sales": "Sales",
         "operations": "Operations",

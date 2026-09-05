@@ -278,4 +278,22 @@ describe('AuditLibraryTab', () => {
     expect(screen.getByText('No audit packs yet')).toBeInTheDocument();
     expect(screen.getByText(/library is empty/i)).toBeInTheDocument();
   });
+
+  // KOSMETYKA RAPORT_B #8 (evidence/audyt-mvp-20260906/B/RAPORT_B.md, 12-2):
+  // pod tytułem pakietu widniał surowy slug techniczny (`row.packKey`, np.
+  // "dbr77–robotyzacja–linia–spawalnicza") bez żadnej etykiety kontekstowej.
+  // `row.title` (nazwa) jest już widoczna — surowy klucz jest ukryty, nie
+  // ozdobiony etykietą "ID:".
+  it('never renders the raw technical packKey under the title (RAPORT_B #8)', () => {
+    const packWithDistinctiveKey = makePack({
+      id: 'pack-5',
+      title: 'Audyt gotowości do robotyzacji — linia spawalnicza',
+      packKey: 'dbr77-robotyzacja-linia-spawalnicza',
+    });
+    renderTab({ packs: [packWithDistinctiveKey] });
+    expect(
+      screen.getByText('Audyt gotowości do robotyzacji — linia spawalnicza')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('dbr77-robotyzacja-linia-spawalnicza')).not.toBeInTheDocument();
+  });
 });
