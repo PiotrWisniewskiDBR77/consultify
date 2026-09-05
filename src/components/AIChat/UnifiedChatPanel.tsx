@@ -87,6 +87,7 @@ import { useArtifactsStore } from '../../store/useArtifactsStore';
 import { resolveTeresaWorkspaceContext } from '../../store/teresaEntityContext';
 import { useConversationStore } from '../../store/useConversationStore';
 import { useProposalLifecycleStore } from '../../store/useProposalLifecycleStore';
+import { ROUTES } from '../../routes/routeConfig';
 import {
   AppView,
   Artifact,
@@ -812,6 +813,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
   const teresaAdoptChatDraftEnabled = isEnabled('ENABLE_TERESA_ADOPT_CHAT_DRAFT');
+  const chatBusinessActionsNavEnabled = isEnabled('chatBusinessActionsNav');
+  const handleNavigateToActions =
+    onNavigateToActions ??
+    (chatBusinessActionsNavEnabled ? () => navigateToRoute(ROUTES.AI_ACTIONS) : undefined);
 
   const routeInfo = useMemo(
     () => ({
@@ -6783,14 +6788,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )}
 
             {/* Show the business/actions button only when a real navigation target exists. */}
-            {onNavigateToActions && (
+            {handleNavigateToActions && (
               <button
                 onClick={() => {
                   trackFunnelEvent('chat_business_button_clicked', {
                     mode: isSplitMode ? 'split' : 'full',
                     pendingCount: pendingActionsCount,
                   });
-                  onNavigateToActions();
+                  handleNavigateToActions();
                 }}
                 data-testid="chat-business-button"
                 className={`relative ${CHAT_HEADER_ICON_CONTROL_CLASS}`}
