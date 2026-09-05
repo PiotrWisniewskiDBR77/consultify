@@ -195,3 +195,6 @@ Backlog danych (nie kod): 7 z 10 ocen DBR77 to legacy DRD zastąpione w zakładc
 
 ## H. Decyzja właściciela 05.09 ~15:05: **Agent poza MVP** („wywal agenta z MVP”)
 Pomiar (w toku, `ODBIOR_CTO_20260905/AGENT_RUNTIME.md`): Agent Hub ma plan transformacji (zatwierdzony, 15 etapów), ale 0/15 etapów ma podłączonego wykonawcę — „Uruchom” zablokowane. Skutek decyzji: wejście „Uruchom agenta” usunięte z Menu 2 Mojej Pracy, trasa `/my-work/agent*` przekierowuje do Mojej Pracy, kod zostaje (post-MVP). Bez flagi (zakaz właściciela). Autonomiczne wykonywanie etapów = kamień milowy po MVP, wycena po pomiarze.
+
+## I. Decyzja właściciela 05.09 ~15:10: **podział na projekty = fala 2**
+Zakładka „Projekty” usunięta z Menu 2 Mojej Pracy, trasy `/my-work/projects*` przekierowują do Mojej Pracy, kod zostaje; wymagane pola „Projekt” w kreatorach stają się opcjonalne tam, gdzie serwer na to pozwala. Bez flagi.
