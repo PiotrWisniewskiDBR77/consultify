@@ -25918,6 +25918,10 @@
       "emptyMethods": "Brak metod wyceny — uruchom wycenę.",
       "emptySensitivity": "Brak analizy wrażliwości — uruchom wycenę.",
       "emptyDrivers": "Brak driverów wrażliwości — uruchom wycenę."
+    },
+    "archiveOnly": {
+      "title": "Dane z archiwum wyceny",
+      "body": "Ten rekord nie ma jeszcze odpowiednika w nowym modelu finansowym, więc wyniki i założenia pochodzą wprost z zapisanej wyceny. Nic nie jest przeliczane ani symulowane."
     }
   },
   "capability": {

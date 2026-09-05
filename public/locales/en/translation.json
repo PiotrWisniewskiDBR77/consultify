@@ -24601,6 +24601,10 @@
       "emptyMethods": "No valuation methods — run the valuation.",
       "emptySensitivity": "No sensitivity analysis — run the valuation.",
       "emptyDrivers": "No sensitivity drivers — run the valuation."
+    },
+    "archiveOnly": {
+      "title": "Archived valuation data",
+      "body": "This record has no counterpart in the new financial model yet, so results and assumptions come straight from the saved valuation. Nothing is recomputed or simulated."
     }
   },
   "capability": {
