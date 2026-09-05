@@ -6184,6 +6184,7 @@
       "existingInterviewInitiatives": "Existing interview initiatives",
       "pendingReview2": "Pending review",
       "newSessionModalTitle": "New interview session",
+      "newSessionDefaultName": "Interview {{date}}",
       "sessionNameLabel": "Session name",
       "create": "Create",
       "creatingInterviewSession": "Creating interview session...",

@@ -5574,6 +5574,7 @@
       "existingInterviewInitiatives": "Istniejących inicjatyw interview",
       "pendingReview2": "Dopuszczenie",
       "newSessionModalTitle": "Nowa sesja wywiadu",
+      "newSessionDefaultName": "Wywiad {{date}}",
       "sessionNameLabel": "Nazwa sesji",
       "create": "Utwórz",
       "creatingInterviewSession": "Tworzenie sesji wywiadu...",
