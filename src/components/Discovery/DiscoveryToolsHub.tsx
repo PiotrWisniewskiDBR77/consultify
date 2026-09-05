@@ -289,35 +289,35 @@ const CATEGORY_META: Record<
   }
 > = {
   strategic: {
-    name: 'Strategy',
+    name: 'Strategiczne',
     icon: <Target size={16} />,
     textClass: 'text-emerald-700 dark:text-emerald-400',
     dotClass: 'bg-emerald-400',
     count: 10,
   },
   operational: {
-    name: 'Operations',
+    name: 'Operacyjne',
     icon: <Settings size={16} />,
     textClass: 'text-blue-700 dark:text-blue-400',
     dotClass: 'bg-blue-400',
     count: 10,
   },
   digital: {
-    name: 'Digital',
+    name: 'Cyfrowe',
     icon: <Cpu size={16} />,
     textClass: 'text-blue-700 dark:text-blue-400',
     dotClass: 'bg-blue-400',
     count: 10,
   },
   automation: {
-    name: 'Process Auto',
+    name: 'Automatyzacja procesów',
     icon: <Zap size={16} />,
     textClass: 'text-amber-700 dark:text-amber-400',
     dotClass: 'bg-amber-400',
     count: 1,
   },
   licensed: {
-    name: 'Assessments',
+    name: 'Oceny',
     icon: <Shield size={16} />,
     textClass: 'text-danger-700 dark:text-danger-400',
     dotClass: 'bg-danger-400',
@@ -2087,13 +2087,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'category',
-        label: t('tools.hub.initiatives.columns.axis', 'Axis'),
+        label: t('tools.hub.initiatives.columns.axis', 'Oś'),
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'strategic', label: t('tools.axis.strategic', 'Strategic') },
-          { value: 'operational', label: t('tools.axis.operational', 'Operational') },
-          { value: 'digital', label: t('tools.axis.digital', 'Digital') },
+          { value: 'strategic', label: t('tools.axis.strategic', 'Strategiczna') },
+          { value: 'operational', label: t('tools.axis.operational', 'Operacyjna') },
+          { value: 'digital', label: t('tools.axis.digital', 'Cyfrowa') },
         ],
         render: (row) => {
           const axisColors: Record<string, string> = {
@@ -2785,7 +2785,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       try {
         const sessionName =
           String(params.name || '').trim() ||
-          `${assessmentType} — ${isPolish ? 'Assessment' : 'Assessment'}`;
+          `${assessmentType} — ${isPolish ? 'Ocena' : 'Assessment'}`;
         const created = await Api.createAssessmentSession({
           assessmentType: assessmentType as any,
           name: sessionName,
@@ -2829,7 +2829,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         if (row?.kind === 'assessment') {
           void createAndOpenAssessmentSession({
             assessmentType: String(row?.toolType || '').trim(),
-            name: `${String(row?.toolType || '').trim()} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+            name: `${String(row?.toolType || '').trim()} — ${isPolish ? 'Ocena' : 'Assessment'}`,
             source: 'library',
           });
           return;
@@ -2846,7 +2846,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           if (!fw) return;
           void createAndOpenAssessmentSession({
             assessmentType: fw,
-            name: `${fw} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+            name: `${fw} — ${isPolish ? 'Ocena' : 'Assessment'}`,
             source: 'library',
           });
           return;
@@ -5393,7 +5393,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                         if (item.kind === 'assessment') {
                           void createAndOpenAssessmentSession({
                             assessmentType: item.toolType,
-                            name: `${item.shortCode} — ${isPolish ? 'Assessment' : 'Assessment'}`,
+                            name: `${item.shortCode} — ${isPolish ? 'Ocena' : 'Assessment'}`,
                             source: 'add_menu',
                           });
                         } else {
@@ -5555,7 +5555,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 },
                 {
                   id: 'digital' as const,
-                  label: 'Digital',
+                  label: isPolish ? 'Cyfrowe' : 'Digital',
                   count: libraryCategoryCounts.digital,
                   dot: 'bg-blue-500',
                 },
@@ -5567,7 +5567,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 },
                 {
                   id: 'licensed' as const,
-                  label: isPolish ? 'Assessments' : 'Assessments',
+                  label: isPolish ? 'Oceny' : 'Assessments',
                   count: libraryCategoryCounts.licensed,
                   dot: 'bg-danger-500',
                 },
