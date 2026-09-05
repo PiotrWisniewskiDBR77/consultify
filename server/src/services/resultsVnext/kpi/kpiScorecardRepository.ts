@@ -278,8 +278,18 @@ export interface GetScorecardStatusDistributionParams {
   asOf?: string;
 }
 
+export interface ScorecardAreaStatusDistribution extends ScorecardStatusCounts {
+  /** `null` = pozycja bez zadeklarowanego obszaru („Bez obszaru" w UI). */
+  areaName: string | null;
+  totalVisible: number;
+}
+
 export interface ScorecardStatusDistribution extends ScorecardStatusCounts {
   totalVisible: number;
+  /** Otwarte karty działania w całym raporcie (SSOT §6, kolumna L1). */
+  openDeviationCases: number;
+  /** Rozkład stanu per OBSZAR — podgląd raportu KPI (SSOT §6 / paczka §14). */
+  byArea: ScorecardAreaStatusDistribution[];
 }
 
 export async function getScorecardStatusDistribution(
@@ -287,22 +297,66 @@ export async function getScorecardStatusDistribution(
 ): Promise<ScorecardStatusDistribution> {
   const { userId, organizationId, scorecardId, asOf } = params;
   const asOfTimestamp = asOf ?? new Date().toISOString();
+  /**
+   * P7K — do rozkładu dochodzą DWIE rzeczy, obie potrzebne na poziomie 1
+   * (SSOT §6: kolumna OTWARTE DZIAŁANIA; podgląd raportu KPI ma „rozkład
+   * stanu PER OBSZAR"):
+   *   · `open_deviation_cases` — liczba otwartych kart działania w raporcie,
+   *   · `by_area` — ten sam rozkład w rozbiciu na obszary.
+   * Obie liczone w TYM SAMYM zapytaniu i za TYM SAMYM filtrem widoczności,
+   * żeby poziom 1 nie musiał ściągać całej matrycy okresów tylko po to, by
+   * narysować podgląd.
+   *
+   * `by_area` bierze obszar tak samo jak `toKpiScorecardItem`: kolumna
+   * `area_name`, a gdy pusta — zapis seeda w `display_config->>'obszar'`.
+   * Pozycja bez obszaru trafia do klucza NULL i UI opisuje ją „Bez obszaru",
+   * zamiast być cicho doliczona do cudzej grupy.
+   */
   const baseQuerySql = `
+    WITH scoped_items AS (
+      SELECT si.kpi_id,
+             COALESCE(si.area_name, NULLIF(TRIM(si.display_config->>'obszar'), '')) AS area_name,
+             latest.performance_status,
+             (
+               SELECT COUNT(*) FROM rvn_kpi_deviation_cases dc
+                WHERE dc.kpi_id = si.kpi_id
+                  AND dc.organization_id = si.organization_id
+                  AND dc.status <> 'closed'
+             ) AS open_cases
+        FROM rvn_kpi_scorecard_items si
+        INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
+        LEFT JOIN LATERAL (
+          SELECT m.performance_status FROM rvn_kpi_measurements m
+           WHERE m.kpi_id = si.kpi_id AND m.period_end <= $${VISIBILITY_CTE_PARAM_COUNT + 2}
+             AND NOT EXISTS (SELECT 1 FROM rvn_kpi_measurements newer WHERE newer.correction_of_measurement_id = m.measurement_id)
+           ORDER BY m.period_end DESC, m.recorded_at DESC LIMIT 1
+        ) latest ON true
+       WHERE si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND si.organization_id = $1
+    )
     SELECT
-        COUNT(*) FILTER (WHERE latest.performance_status = 'on_target') AS safe_count,
-        COUNT(*) FILTER (WHERE latest.performance_status = 'warning')   AS warning_count,
-        COUNT(*) FILTER (WHERE latest.performance_status = 'critical')  AS critical_count,
-        COUNT(*) FILTER (WHERE latest.performance_status IS NULL OR latest.performance_status = 'neutral') AS missing_count,
-        COUNT(*) AS total_count
-      FROM rvn_kpi_scorecard_items si
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
-      LEFT JOIN LATERAL (
-        SELECT m.performance_status FROM rvn_kpi_measurements m
-         WHERE m.kpi_id = si.kpi_id AND m.period_end <= $${VISIBILITY_CTE_PARAM_COUNT + 2}
-           AND NOT EXISTS (SELECT 1 FROM rvn_kpi_measurements newer WHERE newer.correction_of_measurement_id = m.measurement_id)
-         ORDER BY m.period_end DESC, m.recorded_at DESC LIMIT 1
-      ) latest ON true
-     WHERE si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND si.organization_id = $1`;
+        COUNT(*) FILTER (WHERE performance_status = 'on_target') AS safe_count,
+        COUNT(*) FILTER (WHERE performance_status = 'warning')   AS warning_count,
+        COUNT(*) FILTER (WHERE performance_status = 'critical')  AS critical_count,
+        COUNT(*) FILTER (WHERE performance_status IS NULL OR performance_status = 'neutral') AS missing_count,
+        COUNT(*) AS total_count,
+        COALESCE(SUM(open_cases), 0) AS open_deviation_cases,
+        COALESCE(
+          (
+            SELECT json_agg(area ORDER BY area.area_name NULLS LAST)
+              FROM (
+                SELECT area_name,
+                       COUNT(*) FILTER (WHERE performance_status = 'on_target') AS safe,
+                       COUNT(*) FILTER (WHERE performance_status = 'warning')   AS warning,
+                       COUNT(*) FILTER (WHERE performance_status = 'critical')  AS critical,
+                       COUNT(*) FILTER (WHERE performance_status IS NULL OR performance_status = 'neutral') AS missing,
+                       COUNT(*) AS total
+                  FROM scoped_items
+                 GROUP BY area_name
+              ) area
+          ),
+          '[]'::json
+        ) AS by_area
+      FROM scoped_items`;
   const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
   const values = [...wrapped.values, scorecardId, asOfTimestamp];
   const rows = await withReadClient((c) =>
@@ -312,16 +366,45 @@ export async function getScorecardStatusDistribution(
       critical_count: string;
       missing_count: string;
       total_count: string;
+      open_deviation_cases: string;
+      by_area:
+        | {
+            area_name: string | null;
+            safe: string | number;
+            warning: string | number;
+            critical: string | number;
+            missing: string | number;
+            total: string | number;
+          }[]
+        | null;
     }>(c, wrapped.sql, values)
   );
   const row = rows[0];
-  if (!row) return { safe: 0, warning: 0, critical: 0, missing: 0, totalVisible: 0 };
+  if (!row)
+    return {
+      safe: 0,
+      warning: 0,
+      critical: 0,
+      missing: 0,
+      totalVisible: 0,
+      openDeviationCases: 0,
+      byArea: [],
+    };
   return {
     safe: Number(row.safe_count),
     warning: Number(row.warning_count),
     critical: Number(row.critical_count),
     missing: Number(row.missing_count),
     totalVisible: Number(row.total_count),
+    openDeviationCases: Number(row.open_deviation_cases),
+    byArea: (row.by_area ?? []).map((area) => ({
+      areaName: area.area_name,
+      safe: Number(area.safe),
+      warning: Number(area.warning),
+      critical: Number(area.critical),
+      missing: Number(area.missing),
+      totalVisible: Number(area.total),
+    })),
   };
 }
 
