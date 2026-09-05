@@ -134,7 +134,7 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '130px',
       render: (row: AuditOutputSummary) =>
         row.supersededBy ? (
@@ -224,7 +224,7 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
     ? [
         {
           id: 'program',
-          label: isPolish ? 'Program' : 'Program',
+          label: 'Program',
           value: programNameById.get(selected.programId) || selected.programName || '—',
         },
         {
@@ -254,7 +254,7 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
         },
         {
           id: 'status',
-          label: isPolish ? 'Status' : 'Status',
+          label: 'Status',
           value: selected.supersededBy
             ? isPolish
               ? 'Zastąpiony nowszą wersją'

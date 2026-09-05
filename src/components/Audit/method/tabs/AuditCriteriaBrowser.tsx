@@ -133,7 +133,7 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
   const columns: TableColumn[] = [
     {
       id: 'refCode',
-      label: isPolish ? 'Ref.' : 'Ref.',
+      label: isPolish ? 'Nr ref.' : 'Ref.',
       width: '110px',
       render: (row: AuditCriterionSummary) => (
         <span className="text-xs font-medium text-c-text-muted tabular-nums">{row.refCode || '—'}</span>
@@ -148,7 +148,7 @@ export const AuditCriteriaBrowser: React.FC<AuditCriteriaBrowserProps> = ({
     },
     {
       id: 'workStatus',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '170px',
       filterable: true,
       filterOptions: CRITERION_WORK_STATUS_ORDER.map((value) => ({
