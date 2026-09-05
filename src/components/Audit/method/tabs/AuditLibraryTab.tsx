@@ -24,6 +24,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -327,8 +328,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
           }}
         />
       </div>
-      {selectedPack ? (
-        <div className="w-[380px] shrink-0 border-l border-c-border-subtle">
+      <JedenPrawyPanel
+        className="border-l border-c-border-subtle"
+        rekord={selectedPack ? (
           <StandardPreview
             title={selectedPack.title}
             onClose={() => setSelectedId(null)}
@@ -384,8 +386,8 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
               ],
             }}
           />
-        </div>
-      ) : null}
+        ) : null}
+      />
     </div>
   );
 };

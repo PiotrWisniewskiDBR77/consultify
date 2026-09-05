@@ -21,6 +21,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -332,8 +333,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
           }}
         />
       </div>
-      {selected ? (
-        <div className="w-[380px] shrink-0 border-l border-c-border-subtle">
+      <JedenPrawyPanel
+        className="border-l border-c-border-subtle"
+        rekord={selected ? (
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
@@ -360,8 +362,8 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
               </div>
             ) : null}
           </StandardPreview>
-        </div>
-      ) : null}
+        ) : null}
+      />
       <Modal
         open={remediationOutput !== null}
         onClose={() => {
