@@ -117,9 +117,29 @@ i18n
     // Backend configuration for loading translation files
     backend: {
       loadPath: `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || ''}/locales/{{lng}}/{{ns}}.json`,
-      // Locale JSON must always refresh after deploys; otherwise browsers keep stale
-      // translation payloads and render raw i18n keys until users clear cache manually.
-      requestOptions: { cache: 'no-store' },
+      // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — „język interfejsu
+      // przeskakuje PL/EN między wczytaniami tego samego ekranu".
+      //
+      // Było `cache: 'no-store'`, czyli ZAKAZ używania cache'u przeglądarki:
+      // każde wejście na dowolny ekran ściągało `pl/translation.json`
+      // (1,95 MB) od zera, po sieci. Przy `react.useSuspense: false` aplikacja
+      // maluje się NIE CZEKAJĄC na ten plik, więc do czasu jego dojścia `t()`
+      // zwraca wartości domyślne wpisane wprost w kodzie — a te są mieszanką
+      // polskiego i angielskiego. Stąd dokładnie ten objaw, który zgłosił
+      // właściciel: „Purpose (wymagane)" — „Purpose" to angielska wartość
+      // domyślna z `DocumentStudioTemplateArchitectView.tsx`, „(wymagane)" to
+      // polski literał obok niej. (Sprawdzone: klucz
+      // `documentStudio.templateArchitect.purpose` MA w `pl/translation.json`
+      // tłumaczenie „Cel" — więc to nie brak tłumaczenia, tylko brak PLIKU w
+      // momencie renderu.) To, czy dany ekran wyjdzie polski czy angielski,
+      // było wyścigiem z siecią, rozstrzyganym inaczej przy każdym wczytaniu.
+      //
+      // `'no-cache'` (NIE `'no-store'`) zachowuje intencję pierwotnego
+      // komentarza — przeglądarka ZAWSZE pyta serwer, więc po deployu nie
+      // zostaje przy starym pliku — ale przy niezmienionej treści dostaje 304
+      // i używa kopii z dysku zamiast pobierać 1,95 MB od nowa. Wyścig znika
+      // po pierwszym wczytaniu, a świeżość po deployu zostaje.
+      requestOptions: { cache: 'no-cache' },
     },
 
     // Language detection configuration

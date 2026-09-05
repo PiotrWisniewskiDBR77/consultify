@@ -118,6 +118,31 @@ export type TemplateResolveErrorCode =
   | 'TEMPLATE_NOT_INDEXED'
   | 'TEMPLATE_ORPHANED'
   | 'TEMPLATE_FORBIDDEN'
+  /**
+   * ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — „Użyj wzorca" kończyło się
+   * 403 „Nie masz dostępu do tego wzorca" i dla wzorca systemowego, i dla
+   * WŁASNEGO, w Bibliotece oznaczonego jako ZATWIERDZONY wzorca organizacji
+   * („Board Control Template — DBR77"). Właściciel jest OWNER-em tej
+   * organizacji, więc komunikat był po prostu nieprawdziwy.
+   *
+   * ZMIERZONE (GET z tokenem właściciela, staging, 05.09):
+   * `GET /api/deliverables/templates-provenance/pending` zwraca 26 wzorców tej
+   * organizacji z `provenanceStatus: "unknown"`, a wśród nich dokładnie
+   * „Board Control Template — DBR77 — 20260806". Czyli to NIE była kwestia
+   * uprawnień: rekord jest widoczny i należy do organizacji pytającego, ale nie
+   * ma zatwierdzonego POCHODZENIA I PRAW (`provenance_status <> 'approved'`).
+   *
+   * Bramka jest CELOWA (MAT-POL / AMD-MAT-PROVENANCE-WRITER-002, decyzja
+   * właściciela 3B: nieatestowany wzorzec zostaje w kwarantannie z definicji) i
+   * NIE jest tu usuwana. Zmienia się jedno: przestaje udawać brak uprawnień.
+   * Osobny kod pozwala pokazać prawdziwy powód i wskazać istniejące wyjście z
+   * kwarantanny — „Pochodzenie i prawa" w Bibliotece wzorców
+   * (`TemplateProvenanceApprovalDialog`).
+   *
+   * Dwa różne stany, dwa różne kody: 403 = cudza organizacja; 409 = własny
+   * wzorzec bez atestacji.
+   */
+  | 'TEMPLATE_PROVENANCE_UNVERIFIED'
   | 'TEMPLATE_DEPRECATED'
   | 'TEMPLATE_FORMAT_UNSUPPORTED';
 
@@ -340,9 +365,15 @@ async function resolveDocumentStudioTemplate(
     );
   }
   if (row.provenance_status !== 'approved') {
-    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'document_template', provenanceStatus: row.provenance_status ?? 'unknown',
-    });
+    throw new TemplateResolveError(
+      'TEMPLATE_PROVENANCE_UNVERIFIED',
+      'Template provenance is not approved',
+      {
+        canonicalTemplateId,
+        originRuntime: 'document_template',
+        provenanceStatus: row.provenance_status ?? 'unknown',
+      }
+    );
   }
 
   const status = normalizeTemplateStatus(row.status);
@@ -419,9 +450,15 @@ async function resolveLegacyReportTemplate(
     );
   }
   if (row.provenance_status !== 'approved') {
-    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'report_template', provenanceStatus: row.provenance_status ?? 'unknown',
-    });
+    throw new TemplateResolveError(
+      'TEMPLATE_PROVENANCE_UNVERIFIED',
+      'Template provenance is not approved',
+      {
+        canonicalTemplateId,
+        originRuntime: 'report_template',
+        provenanceStatus: row.provenance_status ?? 'unknown',
+      }
+    );
   }
 
   const isActive = toBool(row.is_active);
@@ -516,9 +553,15 @@ export async function resolvePresentationTemplateForCreation(
     );
   }
   if (row.provenance_status !== 'approved') {
-    throw new TemplateResolveError('TEMPLATE_FORBIDDEN', 'Template provenance is not approved', {
-      canonicalTemplateId, originRuntime: 'presentation_template', provenanceStatus: row.provenance_status ?? 'unknown',
-    });
+    throw new TemplateResolveError(
+      'TEMPLATE_PROVENANCE_UNVERIFIED',
+      'Template provenance is not approved',
+      {
+        canonicalTemplateId,
+        originRuntime: 'presentation_template',
+        provenanceStatus: row.provenance_status ?? 'unknown',
+      }
+    );
   }
 
   // `is_active = false` is the older kill-switch (still checked by the list

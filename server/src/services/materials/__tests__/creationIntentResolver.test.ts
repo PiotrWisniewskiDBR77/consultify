@@ -168,9 +168,44 @@ beforeEach(() => {
 });
 
 describe('resolveDocumentTemplateForCreation — canonical Document Studio template', () => {
+  /**
+   * ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały) — KWARANTANNA ZOSTAJE,
+   * ZMIENIA SIĘ TYLKO KOD. Do 05.09 nieatestowany wzorzec wracał jako
+   * TEMPLATE_FORBIDDEN, przez co OWNER organizacji dostawał komunikat „Nie masz
+   * dostępu do tego wzorca" dla WŁASNEGO, w Bibliotece oznaczonego jako
+   * zatwierdzony wzorca („Board Control Template — DBR77"; zmierzone na
+   * stagingu: `GET /api/deliverables/templates-provenance/pending` pokazuje ten
+   * wzorzec z `provenanceStatus: "unknown"` wśród 26 innych). Komunikat był
+   * nieprawdziwy — to nie brak uprawnień, tylko brak atestacji praw.
+   *
+   * Bramka (MAT-POL, decyzja właściciela 3B) NIE jest tu rozluźniana: nadal
+   * rzuca, nadal nie da się użyć wzorca. Poniższe asercje pilnują OBU rzeczy —
+   * że wciąż odrzuca ORAZ że robi to pod właściwą nazwą.
+   */
   it('quarantines an otherwise approved template when provenance is unknown', async () => {
     routeDb({ docStudio: docStudioRow({ provenance_status: 'unknown' }) });
     mockGetTemplate.mockReturnValue(registeredDocTemplate());
+    await expectResolveError(
+      { kind: 'internal', canonicalTemplateId: 'dst-exec-memo-001', originRuntime: 'document_template' },
+      'TEMPLATE_PROVENANCE_UNVERIFIED'
+    );
+  });
+
+  it('nieatestowany wzorzec NIE jest mylony z brakiem uprawnień (dwa różne kody)', async () => {
+    // Ten sam wiersz, ta sama organizacja — jedyna różnica to atestacja.
+    routeDb({ docStudio: docStudioRow({ provenance_status: 'unknown' }) });
+    mockGetTemplate.mockReturnValue(registeredDocTemplate());
+    await expect(
+      resolveDocumentTemplateForCreation(
+        { kind: 'internal', canonicalTemplateId: 'dst-exec-memo-001', originRuntime: 'document_template' },
+        { organizationId: ORG }
+      )
+    ).rejects.toMatchObject({ code: 'TEMPLATE_PROVENANCE_UNVERIFIED' });
+
+    // A wzorzec CUDZEJ organizacji nadal jest 'FORBIDDEN' — kody się nie zlały.
+    routeDb({
+      docStudio: docStudioRow({ organization_id: 'org-inna', provenance_status: 'approved' }),
+    });
     await expectResolveError(
       { kind: 'internal', canonicalTemplateId: 'dst-exec-memo-001', originRuntime: 'document_template' },
       'TEMPLATE_FORBIDDEN'
@@ -444,7 +479,7 @@ describe('resolvePresentationTemplateForCreation — canonical presentation temp
     routeDb({ presentationTemplate: presentationTemplateRow({ provenance_status: 'quarantined' }) });
     await expectPresentationResolveError(
       { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
-      'TEMPLATE_FORBIDDEN'
+      'TEMPLATE_PROVENANCE_UNVERIFIED'
     );
   });
   it('returns the outline_json blueprint fresh from the registry, matching the fixture row', async () => {

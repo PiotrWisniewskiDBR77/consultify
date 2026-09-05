@@ -353,6 +353,17 @@ export const DocumentStudioView: React.FC = () => {
         return t('documentStudio.view.templateForbidden', {
           defaultValue: 'Nie masz dostępu do tego wzorca.',
         });
+      // ODBIÓR NA ŻYWO 05.09 — do 05.09 ten stan wracał jako
+      // TEMPLATE_FORBIDDEN i mówił właścicielowi OWNER-owi, że nie ma dostępu
+      // do WŁASNEGO, oznaczonego w Bibliotece jako zatwierdzony wzorca. To był
+      // nieprawdziwy komunikat: wzorzec jest widoczny i należy do organizacji,
+      // brakuje mu jedynie zatwierdzonego POCHODZENIA I PRAW. Komunikat mówi
+      // teraz prawdę i wskazuje istniejące wyjście z kwarantanny.
+      case 'TEMPLATE_PROVENANCE_UNVERIFIED':
+        return t('documentStudio.view.templateProvenanceUnverified', {
+          defaultValue:
+            'Ten wzorzec nie ma jeszcze zatwierdzonego pochodzenia i praw, więc nie może sterować generacją. Otwórz Bibliotekę wzorców → „Pochodzenie i prawa" i zatwierdź go (potrzebne: źródło, podstawa licencji, organ decyzyjny, wersja i dowód).',
+        });
       case 'TEMPLATE_DEPRECATED':
         return t('documentStudio.view.templateDeprecated', {
           defaultValue:
