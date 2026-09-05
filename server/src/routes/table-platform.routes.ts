@@ -33,6 +33,7 @@ import * as reportsPresModelService from '../services/v8/reportsPresModelService
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
+import { validateUUID } from '../utils/validation.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -4405,11 +4406,29 @@ router.post('/relays/:relayId/test', async (req: Request, res: Response) => {
 // SSO (SAML 2.0 / OIDC) ADMIN API
 // ==========================================
 
+/**
+ * Day 314 — every `tp_*` admin table keys the tenant with a `uuid` column while
+ * `organizations.id` is TEXT. Binding a legacy non-UUID tenant id aborted the
+ * statement with `invalid input syntax for type uuid` and the route answered
+ * 500. Reads now degrade to "nothing here" inside the services; writes cannot
+ * degrade — they must say plainly that the tenant identifier is unusable.
+ */
+function rejectNonUuidTenant(res: Response, organizationId: string): boolean {
+  if (validateUUID(organizationId)) return false;
+  res.status(400).json({
+    error:
+      'Identyfikator organizacji nie jest prawidłowym UUID, więc nie można zapisać tej konfiguracji.',
+    code: 'INVALID_ORGANIZATION_IDENTIFIER',
+  });
+  return true;
+}
+
 router.post('/admin/sso/saml', async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { entityId, ssoUrl, certificate, signatureAlgorithm, nameIdFormat } = req.body ?? {};
     if (!entityId || !ssoUrl || !certificate) {
       return res.status(400).json({ error: 'entityId, ssoUrl, and certificate are required' });
@@ -4432,6 +4451,7 @@ router.post('/admin/sso/oidc', async (req: Request, res: Response) => {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { issuer, clientId, clientSecret, authorizationUrl, tokenUrl, userInfoUrl, scopes } =
       req.body ?? {};
     if (!issuer || !clientId || !clientSecret || !authorizationUrl || !tokenUrl || !userInfoUrl) {
@@ -4473,6 +4493,7 @@ router.patch('/admin/sso/toggle', async (req: Request, res: Response) => {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { enabled } = req.body ?? {};
     if (typeof enabled !== 'boolean')
       return res.status(400).json({ error: 'enabled (boolean) is required' });
@@ -4535,6 +4556,7 @@ router.post('/admin/service-accounts', async (req: Request, res: Response) => {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { name, description, scopes, expiresInDays } = req.body ?? {};
     if (!name || typeof name !== 'string')
       return res.status(400).json({ error: 'name is required' });
@@ -4571,6 +4593,7 @@ router.delete('/admin/service-accounts/:id', async (req: Request, res: Response)
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'id is required' });
     const db = (await import('../database/Database.js')).getDatabase();

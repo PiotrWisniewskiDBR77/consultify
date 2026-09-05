@@ -9,6 +9,7 @@ import crypto from 'crypto';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { validateUUID } from '../../utils/validation.js';
 
 export interface ServiceAccount {
   id: string;
@@ -93,6 +94,13 @@ export class ServiceAccountService {
   }
 
   async listServiceAccounts(organizationId: string): Promise<ServiceAccount[]> {
+    // Day 314 — `tp_service_accounts.organization_id` is typed `uuid` while
+    // `organizations.id` is TEXT; a legacy non-UUID tenant made Postgres abort
+    // with `invalid input syntax for type uuid`, so
+    // GET /api/table-platform/admin/service-accounts returned 500 instead of an
+    // empty list. Such a tenant can own no row in a uuid-keyed table, so the
+    // truthful answer is "none" — same contract the admin route already uses.
+    if (!validateUUID(organizationId)) return [];
     const db = getDatabase();
     const result = await db.query(
       `SELECT id, name, description, token_prefix, scopes, last_used_at, expires_at, created_at
