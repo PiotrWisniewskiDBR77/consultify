@@ -54,8 +54,11 @@ Odczyt `users.language` jest best-effort i pomijany, gdy język podano wprost �
 2. Cytaty emitowały tylko cztery ścieżki: baza wiedzy produktu (`:3580`), wyszukiwanie web
    (`:4008`), załączniki rozmowy (`:4411`) i korpus dokumentów organizacji (`:4237`).
 3. Korpus organizacji jest za flagą `ENABLE_ORG_KNOWLEDGE_RETRIEVAL` (`ai.routes.ts:4160`).
-   **Na stanowisku i na stagingu ta zmienna nie jest ustawiona** — potwierdzone odczytem
-   środowiska działającego procesu (`ps eww 69883`) i `server.env`. Blok jest bezczynny.
+   **Na stanowisku ta zmienna nie jest ustawiona** — potwierdzone odczytem środowiska
+   działającego procesu (`ps eww 69883`) oraz `server.env`. Blok jest bezczynny.
+   *Zastrzeżenie: stagingu NIE zmierzyłem sam* — nie mam dostępu do zmiennych Railway.
+   `server.env` stanowiska ma być kopią kluczy stagingu (informacja od nadzorcy), więc
+   najprawdopodobniej tam też jest wyłączona, ale to trzeba potwierdzić pomiarem.
    Druga flaga, `ENABLE_TERESA_RETRIEVAL` (`:3624`, notatki/wnioski/inicjatywy po słowach
    kluczowych), też nie jest ustawiona.
 4. Nawet po ich włączeniu nic by nie znalazł. Pomiar na `consultify_noc`, org DBR77
