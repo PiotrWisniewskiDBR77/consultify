@@ -19562,6 +19562,13 @@
       },
       "retry": "Spróbuj ponownie",
       "adminDetails": "Szczegóły (tylko administrator)"
+    },
+    "teresaGreetings": {
+      "1": "Dobrze Cię widzieć",
+      "2": "Witaj z powrotem",
+      "3": "Cześć",
+      "4": "Miło, że jesteś",
+      "5": "Bierzmy się do pracy"
     }
   },
   "agentAudit": {

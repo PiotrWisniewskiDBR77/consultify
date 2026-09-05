@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   getHydratedTeresaWelcomeFirstName,
   getSafeTeresaWelcomeFirstName,
+  pickTeresaWelcomeGreetingIndex,
+  TERESA_WELCOME_GREETING_COUNT,
 } from '../teresaWelcome';
 
 describe('Teresa welcome owner feedback', () => {
@@ -44,13 +46,17 @@ describe('Teresa welcome owner feedback', () => {
 
   it('uses the broader personalized Teresa direction and keeps punctuation neutral', () => {
     const source = fs.readFileSync(path.resolve(__dirname, '../UnifiedChatPanel.tsx'), 'utf8');
-    expect(source).toContain("t('aiChat.teresaWelcome', 'Talk to Teresa')");
+    // 05.09 (odbiór MVP): nagłówek jest powitaniem (H1, 5 rotujących wariantów), bez podtytułu.
+    expect(source).toContain('aiChat.teresaGreetings.${teresaWelcomeGreetingIndex}');
+    expect(source).toContain('data-testid="chat-welcome-greeting"');
+    expect(source).not.toContain("t(\n                  'aiChat.teresaWelcomeSubtitle'");
     expect(source).toContain('getHydratedTeresaWelcomeFirstName({');
     expect(source).toContain('isAuthInitializing,');
     expect(source).toContain('<span className="text-c-ai">{teresaWelcomeFirstName}</span>');
     expect(source).toContain('<span className="text-c-text">.</span>');
     expect(source).not.toContain("Let's start your transformation");
-    expect(source).toContain('Bring a challenge, decision, idea, or document.');
+    // 05.09: podtytul usuniety na zyczenie wlasciciela (krotsze powitania).
+    expect(source).not.toContain('Bring a challenge, decision, idea, or document.');
     expect(source).toContain('text-4xl font-semibold tracking-tight text-c-text/70');
 
     const en = JSON.parse(
@@ -65,9 +71,19 @@ describe('Teresa welcome owner feedback', () => {
         'utf8'
       )
     );
-    expect(en.aiChat.teresaWelcome).toBe('Talk to Teresa');
-    expect(pl.aiChat.teresaWelcome).toBe('Porozmawiaj z Teresą');
+    for (const i of ['1', '2', '3', '4', '5']) {
+      expect(typeof en.aiChat.teresaGreetings[i]).toBe('string');
+      expect(typeof pl.aiChat.teresaGreetings[i]).toBe('string');
+      expect(pl.aiChat.teresaGreetings[i]).not.toBe(en.aiChat.teresaGreetings[i]);
+    }
     expect(en.aiChat.teresaWelcomeSubtitle).not.toMatch(/transformation/i);
     expect(pl.aiChat.teresaWelcomeSubtitle).not.toMatch(/transformacj/i);
+  });
+
+  it('rotates the greeting across five variants (owner 05.09: first impression must not repeat)', () => {
+    expect(TERESA_WELCOME_GREETING_COUNT).toBe(5);
+    const seen = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.999].map((seed) => pickTeresaWelcomeGreetingIndex(seed)));
+    expect(seen).toEqual(new Set([1, 2, 3, 4, 5]));
+    expect(pickTeresaWelcomeGreetingIndex(Number.NaN)).toBe(1);
   });
 });

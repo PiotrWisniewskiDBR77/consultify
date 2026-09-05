@@ -18315,6 +18315,13 @@
       },
       "retry": "Try again",
       "adminDetails": "Details (administrator only)"
+    },
+    "teresaGreetings": {
+      "1": "Good to see you",
+      "2": "Welcome back",
+      "3": "Hello",
+      "4": "Nice to have you here",
+      "5": "Let's get to work"
     }
   },
   "agentAudit": {

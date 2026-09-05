@@ -24,3 +24,18 @@ export function getHydratedTeresaWelcomeFirstName(input: {
   if (typeof input.userId !== 'string' || !input.userId.trim()) return null;
   return getSafeTeresaWelcomeFirstName(input.firstName);
 }
+
+/**
+ * Powitanie Teresy (właściciel 05.09, odbiór MVP): nagłówek ma być POWITANIEM, nie „Porozmawiaj
+ * z Teresą", i ma rotować między pięcioma wariantami, żeby pierwsze wrażenie nie było zawsze
+ * tym samym zdaniem. Klucze i18n: `aiChat.teresaGreetings.1`…`.5`. Wybór jest losowy per
+ * zamontowanie ekranu (seed podaje komponent), deterministyczny w testach.
+ */
+export const TERESA_WELCOME_GREETING_COUNT = 5;
+
+export function pickTeresaWelcomeGreetingIndex(seed: number = Math.random()): number {
+  const n = TERESA_WELCOME_GREETING_COUNT;
+  if (!Number.isFinite(seed)) return 1;
+  const unit = seed >= 0 && seed < 1 ? seed : Math.abs(seed % 1);
+  return Math.min(n, Math.floor(unit * n) + 1);
+}

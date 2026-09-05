@@ -150,11 +150,14 @@ import {
 } from './teresaRuntimeCopy';
 import { readAiErrorCode } from './aiProviderErrorCopy';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
-import { getHydratedTeresaWelcomeFirstName } from './teresaWelcome';
+import { getHydratedTeresaWelcomeFirstName,
+  pickTeresaWelcomeGreetingIndex } from './teresaWelcome';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
 import { type ActiveCanvasDocument, WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
+const TERESA_GREETING_FALLBACKS = ['Good to see you', 'Welcome back', 'Hello', 'Nice to have you here', "Let's get to work"] as const;
+
 
 // ============================================================================
 // Types
@@ -6679,6 +6682,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     isAuthenticated: currentUser?.isAuthenticated,
     isAuthInitializing,
   });
+  const teresaWelcomeGreetingIndex = useMemo(() => pickTeresaWelcomeGreetingIndex(), []);
 
   return (
     <div
@@ -6940,10 +6944,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               data-testid="chat-full-welcome"
               className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
             >
-              <h3
-                className={`${isCompact ? 'text-2xl' : 'text-[32px]'} leading-tight font-semibold text-c-text`}
+              {/* Właściciel 05.09 (odbiór MVP): nagłówek = powitanie (H1, większy), pięć rotujących
+                  wariantów, bez podtytułu — „dzisiaj są krótsze powitania". */}
+              <h1
+                data-testid="chat-welcome-greeting"
+                className={`${isCompact ? 'text-3xl' : 'text-[40px]'} leading-tight font-semibold text-c-text`}
               >
-                {t('aiChat.teresaWelcome', 'Talk to Teresa')}
+                {t(`aiChat.teresaGreetings.${teresaWelcomeGreetingIndex}`, TERESA_GREETING_FALLBACKS[teresaWelcomeGreetingIndex - 1])}
                 {teresaWelcomeFirstName ? (
                   <>
                     <span className="text-c-text">, </span>
@@ -6951,31 +6958,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                   </>
                 ) : null}
                 <span className="text-c-text">.</span>
-              </h3>
-              <p
-                className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-c-text-secondary`}
-              >
-                {t(
-                  'aiChat.teresaWelcomeSubtitle',
-                  'Bring a challenge, decision, idea, or document. Teresa will help you think it through and turn it into concrete next steps.'
-                )}
-              </p>
+              </h1>
 
               {teresaVoice.voiceAvailable && (
                 <button
                   type="button"
                   onClick={() => void teresaVoice.handleVoiceToggle()}
                   data-testid="welcome-voice-cta"
-                  className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-navy-700/20 bg-navy-900 px-3.5 py-1.5 text-xs font-medium text-white transition-colors duration-200 hover:bg-navy-800 dark:border-white/20 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className="mt-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border bg-transparent text-c-text-muted border-c-border-subtle hover:bg-slate-100 dark:hover:bg-white/5 hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {teresaVoice.voiceStatus === 'connecting' ? (
-                    <Loader2 size={13} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <span className="relative flex h-3.5 w-3.5 items-center justify-center">
                       {teresaVoice.voiceStatus === 'live' && (
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/50" />
                       )}
-                      <Mic size={13} />
+                      <Mic size={14} />
                     </span>
                   )}
                   {teresaVoice.voiceStatus === 'live'
@@ -7150,9 +7149,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     bg: 'bg-blue-50 dark:bg-blue-900/20',
                   },
                 ].map((cap) => (
+                  /* Wlasciciel 05.09 (odbior MVP): kafel = ikona + nazwa narzedzia, bez opisu i bez
+                     napisu "Otworz" - tylko delikatna ikona przejscia w prawym dolnym rogu. */
                   <div
                     key={cap.label}
-                    className="group flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 text-left transition-[background-color,border-color] duration-200 hover:border-c-border-subtle hover:bg-c-surface-raised"
+                    className="group relative flex flex-col items-start gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 pr-7 text-left transition-[background-color,border-color] duration-200 hover:border-c-border-subtle hover:bg-c-surface-raised"
                   >
                     <button
                       type="button"
@@ -7163,35 +7164,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       <div className={`rounded-md p-1.5 ${cap.bg}`}>
                         <cap.icon size={15} className={cap.color} />
                       </div>
-                      <div>
-                        <div className="text-[11px] font-semibold text-c-text">{cap.label}</div>
-                        <div className="mt-0.5 text-[9px] leading-tight text-c-text-secondary">
-                          {cap.desc}
-                        </div>
-                      </div>
+                      <div className="text-[11px] font-semibold text-c-text">{cap.label}</div>
                     </button>
                     <button
                       type="button"
                       onClick={() =>
                         handleCapabilityDeepLink(cap.id, cap.label, cap.route, cap.prompt)
                       }
-                      className="mt-1 inline-flex items-center gap-1 text-[9px] font-semibold text-c-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      className="absolute bottom-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       aria-label={`${t('aiChat.homeCards.openCapability', 'Open capability')}: ${cap.label}`}
+                      title={t('aiChat.homeCards.openCapability', 'Open capability')}
                     >
-                      {t('aiChat.homeCards.openCapability', 'Open capability')}
-                      <ExternalLink size={10} aria-hidden="true" />
+                      <ExternalLink size={11} aria-hidden="true" />
                     </button>
                   </div>
                 ))}
               </div>
 
-              <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-c-text-secondary">
-                <Sparkles size={11} />
-                {t(
-                  'aiChat.onboarding.acceptanceHint',
-                  'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
-                )}
-              </p>
 
               <div className="mt-12 flex flex-col items-center gap-1.5 pointer-events-none select-none">
                 <p className="text-4xl font-semibold tracking-tight text-c-text/70">Consultify®</p>
