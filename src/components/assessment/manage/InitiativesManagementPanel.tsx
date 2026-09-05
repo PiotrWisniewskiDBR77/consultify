@@ -1107,38 +1107,48 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
           </div>
         </div>
 
-        {/* Tabela inicjatyw — TA SAMA co /initiatives (A19/A13). */}
-        <CanonicalInitiativeRegister
-          rows={registerRows}
-          selectedId={selectedRegisterRowId}
-          onSelect={(row) => setSelectedRegisterRowId(row ? String(row.id) : null)}
-          onOpen={(row) => handleOpenInitiative(String(row.id))}
-          persistKey="assessment.manage.initiatives.list"
-          loading={loading}
-          columnOptions={{ includeSource: true }}
-          emptyTitle={
-            searchQuery
-              ? t('assessment.initiativesPanel.empty.noMatch', 'No initiatives match your search')
-              : t('assessment.initiativesPanel.empty.none', 'No initiatives yet')
-          }
-          emptyDescription={
-            isApproved
-              ? t(
-                  'assessment.initiativesPanel.empty.hintApproved',
-                  'Generate initiatives from the assessment data'
-                )
-              : t(
-                  'assessment.initiativesPanel.empty.hintNotApproved',
-                  'Approve the assessment to generate initiatives'
-                )
-          }
-          emptyActionLabel={t('assessment.initiativesPanel.empty.generate', 'Generate Initiatives')}
-          onEmptyAction={
-            isApproved && canManage && canGenerateInitiatives
-              ? () => setShowGenerateModal(true)
-              : undefined
-          }
-        />
+        {/* Tabela inicjatyw — TA SAMA co /initiatives (A19/A13).
+            Host (`AssessmentManagePanel`) daje tylko `<div className="p-4">` bez
+            wysokosci, a `TableWithPreviewLayout` stoi na `h-full` — bez tego
+            kontenera wysokosc procentowa nie mialaby sie do czego odniesc i
+            podglad kanoniczny nie mialby miejsca. To SAMA wysokosc, zero ramki:
+            bez obramowania, tla i zaokraglen (kanon: nie „raport w raporcie"). */}
+        <div className="flex h-[calc(100vh-320px)] min-h-[420px] flex-col">
+          <CanonicalInitiativeRegister
+            rows={registerRows}
+            selectedId={selectedRegisterRowId}
+            onSelect={(row) => setSelectedRegisterRowId(row ? String(row.id) : null)}
+            onOpen={(row) => handleOpenInitiative(String(row.id))}
+            persistKey="assessment.manage.initiatives.list"
+            loading={loading}
+            columnOptions={{ includeSource: true }}
+            emptyTitle={
+              searchQuery
+                ? t('assessment.initiativesPanel.empty.noMatch', 'No initiatives match your search')
+                : t('assessment.initiativesPanel.empty.none', 'No initiatives yet')
+            }
+            emptyDescription={
+              isApproved
+                ? t(
+                    'assessment.initiativesPanel.empty.hintApproved',
+                    'Generate initiatives from the assessment data'
+                  )
+                : t(
+                    'assessment.initiativesPanel.empty.hintNotApproved',
+                    'Approve the assessment to generate initiatives'
+                  )
+            }
+            emptyActionLabel={t(
+              'assessment.initiativesPanel.empty.generate',
+              'Generate Initiatives'
+            )}
+            onEmptyAction={
+              isApproved && canManage && canGenerateInitiatives
+                ? () => setShowGenerateModal(true)
+                : undefined
+            }
+          />
+        </div>
 
         {/* Batches Section */}
         {batches.length > 0 && (
