@@ -178,11 +178,48 @@ async function main(): Promise<void> {
   const actorId = await resolveActor(org.id);
   const analysisName = nameArg || `Analiza: ${chosen.natural_key ?? 'pakiet sprawozdań'}`;
 
-  const created = await withPgTransaction(async () => {
+  // IDEMPOTENCJA (poprawka F-M5). `finance_artifacts` ma `uq_finance_artifacts_org_natural_key`,
+  // a `createArtifact` nie ma `ON CONFLICT` — powtórny `--apply` na tym samym pakiecie padał
+  // z „duplicate key value violates unique constraint uq_finance_artifacts_org_natural_key"
+  // (zmierzone). Jeśli analiza o tym kluczu już istnieje, wchodzimy w tryb POWTÓRKI: nie
+  // tworzymy drugiego artefaktu, tylko dokładamy brakujące wiersze selekcji i przeliczamy je.
+  const analysisNaturalKey = `derived-analysis:script:${chosen.business_version_id}`;
+  const existingAnalysis = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ artifact_id: string; business_version_id: string }>(
+      `SELECT a.artifact_id, bv.business_version_id
+         FROM finance_artifacts a
+         JOIN finance_business_versions bv
+           ON bv.artifact_id = a.artifact_id AND bv.organization_id = a.organization_id
+        WHERE a.organization_id = ? AND a.natural_key = ?
+        ORDER BY bv.version_no DESC LIMIT 1`,
+      [org.id, analysisNaturalKey]
+    )
+  );
+
+  const created = existingAnalysis
+    ? await (async () => {
+        console.log(
+          `# Analiza o tym kluczu już istnieje: ${existingAnalysis.business_version_id} — tryb POWTÓRKI.`
+        );
+        const selection = await createAnalysisDefinitionWithSelection({
+          organizationId: org.id,
+          analysisBusinessVersionId: existingAnalysis.business_version_id,
+          sourceStatementPackVersionId: chosen.business_version_id,
+          createdBy: await resolveActor(org.id),
+          analysisName: nameArg || `Analiza: ${chosen.natural_key ?? 'pakiet sprawozdań'}`,
+        });
+        if (!selection.ok) throw new Error(`${selection.code}: ${selection.message}`);
+        return {
+          analysisBvId: existingAnalysis.business_version_id,
+          artifactId: existingAnalysis.artifact_id,
+          selection: selection.summary,
+        };
+      })()
+    : await withPgTransaction(async () => {
     const artifact = await createArtifact({
       organizationId: org.id,
       artifactType: 'HISTORICAL_ANALYSIS',
-      naturalKey: `derived-analysis:script:${chosen.business_version_id}`,
+      naturalKey: analysisNaturalKey,
       createdBy: actorId,
     });
     const analysisBvId = artifact.businessVersion.business_version_id;
