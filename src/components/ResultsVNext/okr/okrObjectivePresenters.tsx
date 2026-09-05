@@ -133,7 +133,8 @@ export function buildOkrObjectiveColumns(
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '130px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: OkrObjectiveWithKeyResultsDto) => (
         <span className="text-sm text-c-text-muted tabular-nums">{formatOkrDate(row.updatedAt, isPolish)}</span>

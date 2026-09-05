@@ -522,7 +522,8 @@ export const ReportsManagementPanel: FC<ReportsManagementPanelProps> = ({
       {
         id: 'updatedAt',
         label: t('assessment.reportsManagePanel.columns.updated'),
-        width: '110px',
+        width: '200px',
+        dataType: 'date',
         sortable: true,
         render: (row) => {
           const report = row as unknown as Report;

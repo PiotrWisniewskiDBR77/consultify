@@ -171,7 +171,8 @@ export function buildRoiSettingsColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '130px',
+      width: '200px',
+      dataType: 'date',
       render: (row: RoiSettingsRowVm) => {
         const value = row.kind === 'baseline' ? row.baseline?.updatedAt : row.policy?.updatedAt;
         return <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(value ?? null, isPolish)}</span>;
@@ -309,7 +310,7 @@ export function buildRoiAssumptionColumns(isPolish: boolean): TableColumn[] {
       render: (row: RoiAssumption) => <HonestValueCell isPolish={isPolish} value={row.upsideValue} align="right" format={(v) => <span className="tabular-nums">{formatRoiNumber(v, isPolish)}</span>} />,
     },
     { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', width: '110px', render: (row: RoiAssumption) => <span className="text-sm text-c-text-secondary">{roiConfidenceLabel(row.confidence, isPolish)}</span> },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiAssumption) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '200px', dataType: 'date', sortable: true, render: (row: RoiAssumption) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
   ];
 }
 
@@ -365,7 +366,7 @@ export function buildRoiCostLineColumns(isPolish: boolean): TableColumn[] {
       render: (row: RoiCostLine) => <span className="text-sm text-c-text-secondary">{describeRoiLineTiming(row, isPolish, formatRoiDate)}</span>,
     },
     { id: 'confidence', label: isPolish ? 'Pewność' : 'Confidence', width: '110px', render: (row: RoiCostLine) => <span className="text-sm text-c-text-secondary">{roiConfidenceLabel(row.confidence, isPolish)}</span> },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiCostLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '200px', dataType: 'date', sortable: true, render: (row: RoiCostLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
   ];
 }
 
@@ -433,7 +434,7 @@ export function buildRoiBenefitLineColumns(isPolish: boolean): TableColumn[] {
       width: '200px',
       render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-secondary">{describeRoiLineTiming(row, isPolish, formatRoiDate)}</span>,
     },
-    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '130px', sortable: true, render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
+    { id: 'updatedAt', label: isPolish ? 'Zaktualizowano' : 'Updated', width: '200px', dataType: 'date', sortable: true, render: (row: RoiBenefitLine) => <span className="text-sm text-c-text-muted tabular-nums">{formatRoiDate(row.updatedAt, isPolish)}</span> },
   ];
 }
 

@@ -157,7 +157,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditProposalSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
