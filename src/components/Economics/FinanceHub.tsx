@@ -55,7 +55,7 @@ import {
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
-import { MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { MetaChip, statusChipLabel, statusChipTone } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 // AP_MOUNT §B — the four "finished, tested, unreachable" Finance v3 (AP-09/10/11)
 // detail workspaces (Prediction/Baseline/Analysis/Valuation, Pakiety G/F/E/H) each
@@ -2898,7 +2898,11 @@ export const FinanceHub: React.FC = () => {
               meta={{
                 pills: [
                   {
-                    label: String(selectedStatementRow.status || 'DRAFT'),
+                    // ★ Audyt FIN 2026-09-06 defekt #6: podgląd pokazywał surowe
+                    // „APPROVED", a tabela OBOK — „Zatwierdzone". Ta sama encja,
+                    // dwa napisy na jednym ekranie. Most `statusChip.*` istniał,
+                    // podgląd go nie wołał.
+                    label: statusChipLabel(selectedStatementRow.status || 'DRAFT', t),
                     tone: statusChipTone(selectedStatementRow.status),
                   },
                   {

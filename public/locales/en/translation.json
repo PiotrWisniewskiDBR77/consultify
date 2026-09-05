@@ -22707,7 +22707,7 @@
       "scenario": "Scenario",
       "horizon": "Horizon",
       "horizonYears": "Horizon",
-      "analysisType": "Type",
+      "analysisType": "Analysis type",
       "periods": "Periods",
       "subtype": "Subtype",
       "source": "Source",

@@ -604,7 +604,7 @@ async function ensureCanonicalAlias(
             business_version_id, mapping_confidence, mapping_reason, created_by)
          VALUES ('financial_statement_packs', ?, '', ?, ?, ?, 'AUTO_MIGRATE', ?, ?)
          ON CONFLICT (legacy_table, legacy_id, legacy_version) DO NOTHING`,
-        [legacyPackId, artifactId, organizationId, businessVersionId, `seed:${DEFAULT_TAG}`, actorId]
+        [legacyPackId, artifactId, organizationId, businessVersionId, DEFAULT_TAG, actorId]
       );
     });
     console.log(`# ALIAS legacy→kanoniczny ZAŁOŻONY: ${legacyPackId} → ${artifactId}`);
@@ -633,7 +633,7 @@ async function ensureCanonicalAlias(
       `UPDATE finance_artifact_aliases
           SET artifact_id = ?, business_version_id = ?, mapping_reason = ?
         WHERE alias_id = ?`,
-      [artifactId, businessVersionId, `seed:${DEFAULT_TAG}:repointed`, before.alias_id]
+      [artifactId, businessVersionId, `${DEFAULT_TAG}:repointed`, before.alias_id]
     );
     if (ghostLines === 0 && cameFromMaterialization) {
       await tx.query(
@@ -662,12 +662,38 @@ async function ensureCanonicalAlias(
   }
 }
 
+/**
+ * Czy kolumna `finance_artifacts.display_name` istnieje w TEJ bazie.
+ *
+ * ★ Środowisko może być STARSZE niż ta gałąź: migracja
+ * `20261102_finance_artifact_display_name.sql` wjeżdża dopiero z wdrożeniem.
+ * Skrypt NIE tworzy jej sam (zakaz ręcznego DDL na cudzym środowisku) i NIE
+ * wywraca się — mówi wprost, że nazwa wyświetlana wejdzie po wdrożeniu, a
+ * resztę (most legacy→kanoniczny) robi normalnie.
+ */
+async function hasDisplayNameColumn(): Promise<boolean> {
+  const row = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ n: string }>(
+      `SELECT count(*) AS n FROM information_schema.columns
+        WHERE table_name = 'finance_artifacts' AND column_name = 'display_name'`
+    )
+  );
+  return Number(row?.n ?? 0) > 0;
+}
+
 /** Nazwa widoczna dla użytkownika (kolumna rozdzielona od `natural_key` migracją 20261102). */
 async function setDisplayName(
   organizationId: string,
   artifactId: string,
   displayName: string
 ): Promise<void> {
+  if (!(await hasDisplayNameColumn())) {
+    console.log(
+      `# POMIJAM nazwę wyświetlaną: ta baza nie ma jeszcze kolumny finance_artifacts.display_name ` +
+        `(migracja 20261102 wejdzie z wdrożeniem gałęzi). Nazwa "${displayName}" pojawi się po wdrożeniu — uruchom wtedy --apply ponownie.`
+    );
+    return;
+  }
   await withPgTransaction(async (tx) => {
     await tx.query(
       `UPDATE finance_artifacts SET display_name = ? WHERE artifact_id = ? AND organization_id = ?`,
@@ -1368,14 +1394,16 @@ async function main(): Promise<void> {
     )
   );
   const packNow = await findExistingPack(org.id, naturalKey);
-  const displayNow = packNow
-    ? await withPinnedPostgresTransaction((tx) =>
-        tx.queryOne<{ display_name: string | null }>(
-          `SELECT display_name FROM finance_artifacts WHERE artifact_id = ?`,
-          [packNow.artifactId]
+  const displayColumnExists = await hasDisplayNameColumn();
+  const displayNow =
+    packNow && displayColumnExists
+      ? await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ display_name: string | null }>(
+            `SELECT display_name FROM finance_artifacts WHERE artifact_id = ?`,
+            [packNow.artifactId]
+          )
         )
-      )
-    : null;
+      : null;
   console.log('');
   console.log(
     `# MOST legacy→kanoniczny: alias = ${
@@ -1388,7 +1416,9 @@ async function main(): Promise<void> {
           : ' → --apply ZAŁOŻY alias')
   );
   console.log(
-    `# Nazwa wyświetlana: teraz "${displayNow?.display_name ?? '(brak — UI pokazuje klucz techniczny)'}" → po --apply "${PACK_DISPLAY_NAME}"`
+    displayColumnExists
+      ? `# Nazwa wyświetlana: teraz "${displayNow?.display_name ?? '(brak — UI pokazuje klucz techniczny)'}" → po --apply "${PACK_DISPLAY_NAME}"`
+      : `# Nazwa wyświetlana: kolumna finance_artifacts.display_name NIE ISTNIEJE w tej bazie (migracja 20261102 wejdzie z wdrożeniem) — --apply jej NIE ustawi.`
   );
 
   if (!apply) {

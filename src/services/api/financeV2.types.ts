@@ -1114,6 +1114,11 @@ export interface LineageEdgeDto {
   computeRunId: string | null;
   authorId: string | null;
   createdAt: string;
+  /** Nazwy artefaktów na końcach krawędzi — panel powiązań pokazuje NAZWĘ, nie hash wersji. */
+  sourceDisplayName?: string | null;
+  sourceNaturalKey?: string | null;
+  targetDisplayName?: string | null;
+  targetNaturalKey?: string | null;
 }
 
 /** crosscutting.routes.ts:68-71 (GET /versions/:id/lineage), całość. Relacje po
@@ -1829,6 +1834,11 @@ export function financeLineageTransformationKindLabel(kind: string | null): stri
       return 'Scenariusz predykcji na bazie modelu bazowego';
     case 'analysis_from_statement':
       return 'Analiza na bazie sprawozdania';
+    // MANUAL_LINK realnie występuje w bazie (zmierzone na pakiecie CD PROJEKT) i
+    // spadało do fallbacku, renderując po angielsku „Manual link" obok w pełni
+    // polskiego sąsiedztwa — audyt FIN 2026-09-06 defekt #12.
+    case 'MANUAL_LINK':
+      return 'Powiązanie ręczne';
     default:
       return kind
         .toLowerCase()
