@@ -51,6 +51,8 @@ function fakeApi(): ValuationWorkspaceApi {
     getValuationSensitivityGrid: vi.fn(),
     generateValuationAdvisorOutput: vi.fn(),
     listValuationAdvisorOutputs: vi.fn().mockResolvedValue(null),
+    listFinanceArtifacts: vi.fn().mockResolvedValue({ artifacts: [], count: 0 }),
+    bindValuationSource: vi.fn(),
   } as unknown as ValuationWorkspaceApi;
 }
 

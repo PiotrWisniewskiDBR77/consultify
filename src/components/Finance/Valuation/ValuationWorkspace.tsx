@@ -21,6 +21,7 @@ import { useFinanceFocusMode } from '@/hooks/useFinanceFocusMode';
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import { API_URL, getHeaders } from '@/services/api';
 import {
+  bindValuationSource,
   createValuationMethod,
   generateValuationAdvisorOutput,
   getFinanceVersionLineage,
@@ -28,6 +29,7 @@ import {
   getValuationSensitivityGrid,
   getValuationVariant,
   getValuationWaccInputs,
+  listFinanceArtifacts,
   listValuationAdvisorOutputs,
   listValuationMethods,
   setValuationMethodBasketWeights,
@@ -48,6 +50,7 @@ import {
   type ValuationMethodType,
   type ValuationResultsDto,
   type ValuationSensitivityGridRawDto,
+  type ValuationSourceKind,
   type ValuationVariantDto,
   type ValuationWaccInputsRawDto,
   type ValuationWeightedRecommendationDto,
@@ -80,7 +83,7 @@ import { ExportStep } from './steps/ExportStep';
 import { MethodsWeightsStep } from './steps/MethodsWeightsStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SensitivityStep } from './steps/SensitivityStep';
-import { SourceStep } from './steps/SourceStep';
+import { SourceStep, type ValuationSourceOption } from './steps/SourceStep';
 
 // ---------------------------------------------------------------------------
 // The seven canonical steps, in order — never reorderable by a caller.
@@ -162,6 +165,9 @@ export interface ValuationWorkspaceApi {
   getValuationSensitivityGrid: typeof getValuationSensitivityGrid;
   generateValuationAdvisorOutput: typeof generateValuationAdvisorOutput;
   listValuationAdvisorOutputs: typeof listValuationAdvisorOutputs;
+  /** „Wskazanie źródła wyceny" (decyzja właściciela 05.09) — lista kandydatów + zapis powiązania. */
+  listFinanceArtifacts: typeof listFinanceArtifacts;
+  bindValuationSource: typeof bindValuationSource;
 }
 
 export const REAL_VALUATION_WORKSPACE_API: ValuationWorkspaceApi = {
@@ -176,6 +182,8 @@ export const REAL_VALUATION_WORKSPACE_API: ValuationWorkspaceApi = {
   getValuationSensitivityGrid,
   generateValuationAdvisorOutput,
   listValuationAdvisorOutputs,
+  listFinanceArtifacts,
+  bindValuationSource,
 };
 
 export interface ValuationWorkspaceProps {
@@ -372,6 +380,42 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
   }, [api, businessVersionId, activeStep, reloadNonce]);
 
   const refreshActiveStep = useCallback(() => setReloadNonce((n) => n + 1), []);
+
+  /**
+   * „Wskazanie źródła wyceny" (decyzja właściciela 05.09). Kandydaci = ZATWIERDZONE (`APPROVED`)
+   * bieżące wersje artefaktów Baseline i Scenariusz w tej organizacji — czytane istniejącym
+   * `GET /artifacts?artifactType=…`, bez nowego endpointu listującego. Filtr po statusie jest
+   * TYLKO wygodą UI: `POST .../source` i tak odrzuca każdą wersję niezatwierdzoną
+   * (`SOURCE_VERSION_NOT_APPROVED`), więc lista nie jest tu bramką bezpieczeństwa.
+   */
+  const loadSourceOptions = useCallback(async (): Promise<ValuationSourceOption[]> => {
+    const [baselines, scenarios] = await Promise.all([
+      api.listFinanceArtifacts({ artifactType: 'BASELINE_MODEL' }),
+      api.listFinanceArtifacts({ artifactType: 'PREDICTION_SCENARIO' }),
+    ]);
+    const toOptions = (
+      list: Awaited<ReturnType<typeof listFinanceArtifacts>>,
+      sourceKind: ValuationSourceKind
+    ): ValuationSourceOption[] =>
+      list.artifacts
+        .filter((artifact) => artifact.currentBusinessVersion?.status === 'APPROVED')
+        .map((artifact) => ({
+          sourceKind,
+          businessVersionId: artifact.currentBusinessVersion!.businessVersionId,
+          label: `${artifact.naturalKey ?? artifact.artifactId} · v${artifact.currentBusinessVersion!.versionNo}`,
+        }));
+    return [...toOptions(baselines, 'baseline'), ...toOptions(scenarios, 'scenario')];
+  }, [api]);
+
+  const handleBindSource = useCallback(
+    async (params: { sourceKind: ValuationSourceKind; sourceVersionId: string }): Promise<void> => {
+      await api.bindValuationSource(businessVersionId, params);
+      // Re-fetch: the step renders the REAL lineage read back from the registry, never the
+      // optimistic shape of what we just posted.
+      setReloadNonce((n) => n + 1);
+    },
+    [api, businessVersionId]
+  );
 
   const focusMode = useFinanceFocusMode<{ activeStep: ValuationStepId }>({
     workspaceState: { activeStep },
@@ -644,7 +688,13 @@ function ValuationWorkspaceInner(props: ValuationWorkspaceProps): React.ReactEle
           onBackToList={onNavigateBack}
         >
           {activeStep === 'source' && (
-            <SourceStep businessVersionId={businessVersionId} variant={variant} lineage={lineage} />
+            <SourceStep
+              businessVersionId={businessVersionId}
+              variant={variant}
+              lineage={lineage}
+              loadSourceOptions={loadSourceOptions}
+              onBindSource={handleBindSource}
+            />
           )}
           {activeStep === 'assumptions' && <AssumptionsStep wacc={wacc} onSave={handleSaveWacc} />}
           {activeStep === 'methods' && (

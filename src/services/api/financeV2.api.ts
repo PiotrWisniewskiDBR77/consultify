@@ -95,6 +95,9 @@ import type {
   ValuationResultsDto,
   ValuationSensitivityGridRawDto,
   ValuationSensitivityWriteResultDto,
+  ValuationSourceBindingResultDto,
+  ValuationSourceKind,
+  ValuationSourceStateDto,
   ValuationTerminalRowRawDto,
   ValuationVariantDto,
   ValuationWaccInputsRawDto,
@@ -1174,6 +1177,30 @@ export async function getValuationVariant(businessVersionId: string): Promise<Va
   );
 }
 
+/**
+ * „Wskazanie źródła wyceny" (decyzja właściciela 2026-09-05). Do dziś wycena nie miała ŻADNEJ drogi
+ * do zapisania powiązania pochodzenia Baseline/Scenariusz → Wycena, więc DCF/FCFF zwracał
+ * `NO_VALUATION_SOURCE_EDGE`, a zakładka „Źródło" pokazywała ślepy komunikat. Serwer:
+ * `valuation.routes.ts` sekcja 2b.
+ */
+export async function getValuationSourceBinding(
+  businessVersionId: string
+): Promise<ValuationSourceStateDto> {
+  return v8Get<ValuationSourceStateDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/source`
+  );
+}
+
+export async function bindValuationSource(
+  businessVersionId: string,
+  params: { sourceKind: ValuationSourceKind; sourceVersionId: string }
+): Promise<ValuationSourceBindingResultDto> {
+  return v8Post<ValuationSourceBindingResultDto>(
+    `${BASE}/valuation/variants/${encodeURIComponent(businessVersionId)}/source`,
+    { sourceKind: params.sourceKind, sourceVersionId: params.sourceVersionId }
+  );
+}
+
 export async function renameValuationVariant(
   businessVersionId: string,
   params: { name?: string; description?: string | null }
@@ -1576,6 +1603,8 @@ export const FinanceV2Api = {
   getValuationCase,
   createValuationVariant,
   getValuationVariant,
+  getValuationSourceBinding,
+  bindValuationSource,
   renameValuationVariant,
   compareValuationVariants,
   listValuationMethods,

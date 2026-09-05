@@ -22513,7 +22513,20 @@
       "horizonYears": "Horizon (years)",
       "dcfResults": "DCF Results",
       "sensitivity": "Sensitivity Analysis",
-      "advisory": "Advisory"
+      "advisory": "Advisory",
+      "sourceBinding": {
+        "emptyTitle": "No source selected",
+        "emptyHelp": "This valuation does not point at a Baseline or Scenario version yet. Pick the exact approved source version — only then can we compute DCF/FCFF and show the lineage chain.",
+        "emptyHelpReadOnly": "This valuation does not point at a Baseline or Scenario version yet. Selecting a source is not available in this view.",
+        "selectLabel": "Source version",
+        "placeholder": "Choose an approved version…",
+        "loading": "Loading candidates…",
+        "groupBaseline": "Baseline model",
+        "groupScenario": "Prediction scenario",
+        "submit": "Set source",
+        "submitting": "Saving…",
+        "noCandidates": "No approved Baseline or Scenario versions in this organization. Approve a baseline model or a scenario first."
+      }
     },
     "budget": {
       "valuate": "Valuate Budget",
