@@ -89,6 +89,7 @@ import { Api, API_URL, getHeaders } from '@/services/api';
 import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import { V8ResultsApi } from '@/services/api/v8/results';
+import { readRegisteredInitiative } from '@/services/initiatives-execution/runtimeApi';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -188,6 +189,7 @@ import {
   type InitiativeKpiEditorRow,
   toInitiativeKpiEditorRow,
 } from './initiativeKpiContract';
+import { resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource } from './initiativeDocumentSource';
 import {
   createInitiativesDemoDataset,
   isShowcaseArtifactId,
@@ -2310,21 +2312,20 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       const showcaseDetail = isShowcaseInitiativeId(initiativeId)
         ? initiativesDemoData.initiativeDetailsById[initiativeId]
         : null;
+      // PRZEJŚCIE NA ŻYWO 2026-09-05: rozstrzyganie źródła rekordu wyniesione do
+      // `resolveInitiativeDocumentSource` — karta pyta TAKŻE rejestr runtime-v1,
+      // czyli tę samą trasę, z której pochodzi wiersz listy. Bez tego KAŻDY realny
+      // rekord rejestru kończył się czerwonym „Nie udało się załadować karty".
       const data =
         showcaseDetail?.initiative ||
-        (await V8PlanningApi.getInitiative(initiativeId).catch(async () =>
-          Api.getInitiativeById(initiativeId).catch(async () => {
-            const interviewResponse = await Api.get('/initiatives?source=interview_insight');
-            const interviewInitiatives = unwrapApiList(interviewResponse, 'initiatives');
-            const interviewInitiative = interviewInitiatives.find(
-              (item: any) => String(item?.id) === String(initiativeId)
-            );
-            if (!interviewInitiative) {
-              throw new Error(t('initiatives.initiativeNotFound2'));
-            }
-            return interviewInitiative;
-          })
-        ));
+        (await resolveInitiativeDocumentSource(initiativeId, {
+          readPlanningInitiative: (id) => V8PlanningApi.getInitiative(id),
+          readLegacyInitiative: (id) => Api.getInitiativeById(id),
+          readRegisteredInitiative: (id) => readRegisteredInitiative(id),
+          readInterviewInitiatives: async () =>
+            unwrapApiList(await Api.get('/initiatives?source=interview_insight'), 'initiatives'),
+          notFoundMessage: t('initiatives.initiativeNotFound2'),
+        }));
       setInitiative(data);
       setInitiativeTemplate(null);
       setTitleDraft(String(data.title || data.name || '').trim());

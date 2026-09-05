@@ -230,13 +230,52 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     }
   }, []);
 
+  // PRZEJŚCIE NA ŻYWO 2026-09-05 — ekran „Enterprise Value: przedział rekomendowany"
+  // (EV football-field) był NIEOSIĄGALNY z realnego rekordu wyceny. Zmierzone na
+  // stagingu dla realnej wyceny `ab2dcfe8…` („CD PROJEKT Group — Bear DCF + multiples"):
+  //   GET /api/economics/valuations/:id                      → 200 (pełny rekord, results.dcf)
+  //   GET /api/economics/valuations/:id/basket               → 200 (realny koszyk 4 metod)
+  //   GET /api/v8/finance-v2/artifacts/resolve-legacy/…      → 200 { status: NOT_MIGRATED }
+  //   GET /api/v8/finance-v2/valuation/legacy/:id/inputs     → 409 LEGACY_IDENTITY_UNMAPPED
+  // `FinanceLegacyBridgeGate` świadomie kieruje takie NIEPRZENIESIONE rekordy do tego
+  // („sprawdzony widok klasyczny"), ale `Promise.all` wiązał odczyt archiwum z odczytem
+  // kanonicznym — jedno 409 wywracało CAŁE ładowanie, ekran zostawał na „Select a
+  // valuation to continue", a panel EV (wymaga `dcf`) nigdy się nie renderował.
+  // Naprawa: warstwa kanoniczna jest WZBOGACENIEM, nie warunkiem. Gdy jej nie ma,
+  // pokazujemy wartości z archiwum i mówimy to wprost (pasek niżej), zamiast pustki.
+  const [canonicalInputsUnavailable, setCanonicalInputsUnavailable] = useState(false);
+
   const fetchValuation = useCallback(async (id: string) => {
     try {
-      const [res,canonical]=await Promise.all([fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() }),getCanonicalValuationInputs(id)]);
+      const res = await fetch(`${API_URL}/economics/valuations/${id}`, { headers: getHeaders() });
       if (!res.ok) throw new Error(t('valuation.load.failed','Valuation archive read failed'));
       const d = (await res.json()) as any;
       const v = d?.valuation || null;
       if (!v || typeof v !== 'object') throw new Error(t('valuation.load.invalid','Valuation archive response is invalid'));
+
+      let canonical: Awaited<ReturnType<typeof getCanonicalValuationInputs>> | null = null;
+      try {
+        canonical = await getCanonicalValuationInputs(id);
+      } catch {
+        canonical = null;
+      }
+
+      if (!canonical) {
+        // Rekord nieprzeniesiony do modelu kanonicznego — archiwum jest jedynym,
+        // uczciwym źródłem. `results` zostają takie, jakie zapisała wycena.
+        setCanonicalInputsUnavailable(true);
+        const archiveResults = safeJson<any>(v.results, {});
+        setSelected(v);
+        setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...(safeJson<any>(v.assumptions, {}) ?? {}) } as AssumptionsState);
+        const archivePeers = safeJson<any>(v.peers, null);
+        setMultiples({
+          ...DEFAULT_MULTIPLES,
+          ...(Array.isArray(archivePeers) ? archivePeers[0] : archivePeers),
+        });
+        return { businessVersionId: null, dcf: archiveResults?.dcf ?? null };
+      }
+
+      setCanonicalInputsUnavailable(false);
       const canonicalResults:any=await getCanonicalValuationResults(canonical.businessVersionId);
       const dcfMethod=canonicalResults?.methods?.find((method:any)=>method.methodType==='DCF_FCFF');
       const bridge=canonicalResults?.bridge?.header;
@@ -652,6 +691,22 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
             </div>
           ) : (
             <>
+              {canonicalInputsUnavailable && (
+                <div
+                  data-testid="valuation-archive-only-notice"
+                  className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-c-text-secondary"
+                >
+                  <div className="font-medium text-c-text">
+                    {t('valuation.archiveOnly.title', 'Dane z archiwum wyceny')}
+                  </div>
+                  <div className="mt-1">
+                    {t(
+                      'valuation.archiveOnly.body',
+                      'Ten rekord nie ma jeszcze odpowiednika w nowym modelu finansowym, więc wyniki i założenia pochodzą wprost z zapisanej wyceny. Nic nie jest przeliczane ani symulowane.'
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
                   <div className="text-sm font-semibold text-c-text dark:text-white">

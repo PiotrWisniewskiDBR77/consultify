@@ -1,0 +1,15 @@
+{
+ "url": "http://localhost:3111/finance/valuations/ab2dcfe8805042efb7e3e420f1028a48?tab=valuation",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=#valuation-tab-results"
+ ],
+ "przewin": "css=[data-testid=ev-basket-football]",
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)",
+  "Each child in a list should have a unique \"key\" prop.%s%s See https://react.dev/link/warning-keys for more information. \n\nCheck the render method of `ValuationWorkspace`. "
+ ],
+ "kiedy": "2026-09-05T05:47:04.526Z"
+}
