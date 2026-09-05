@@ -77,7 +77,7 @@ w `getRoiGovernedVisibilityPolicyStatus` (zawsze `canPublish: true`) → test 1 
 (`expected true to be false`), test 2 nadal PASS. Kod przywrócony, `git diff` czysty.
 
 **Regresja:** `roiGovernedVisibility20.realdb.test.ts` + `roi.routes.test.ts` +
-`roiFinanceSeam.routes.test.ts` → **72/72 PASS**.
+`roiFinanceSeam.routes.test.ts` → **72/72 PASS** (część z 163 wyżej).
 
 ---
 
@@ -237,13 +237,34 @@ status konta `piotr.wisniewski@dbr77.com`.
 
 ## Jak powtórzyć pomiary
 
-Baza: pełny schemat Postgres w kontenerze `mat-prov-wzorce-system-20260905` (port 5440),
-sklonowana do `blokady_20260905` (`CREATE DATABASE … TEMPLATE …`), żeby nie ruszać cudzej.
+**Baza — i lekcja przy okazji.** Pierwszy przebieg zrobiłem na cudzym, cudzym-agenta
+kontenerze (`mat-prov-wzorce-system-20260905`, port 5440), klonując z niego bazę przez
+`CREATE DATABASE … TEMPLATE …`. W trakcie mojej pracy **ten kontener zniknął** (usunął go
+właściciel), a razem z nim mój klon — czyli zielony bieg zacząłby wisieć na dowodzie,
+którego już nie ma (kształt „dowód poza repo wyparowuje"). Nawiasem: bezpiecznik w moim
+własnym teście zadziałał — przy nieosiągalnej bazie `beforeAll` **rzucił** zamiast
+zameldować zielone.
+
+Dlatego wszystkie liczby w tym raporcie pochodzą z bazy zbudowanej **od zera z migracji
+tego repozytorium**, którą da się odtworzyć jedną komendą:
+
+```
+docker run -d --name blokady-pg-20260905 -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=blokady_20260905 -p 5441:5432 pgvector/pgvector:pg17
+docker exec blokady-pg-20260905 psql -U postgres -d blokady_20260905 \
+  -c "CREATE EXTENSION IF NOT EXISTS vector"
+NODE_ENV=test DB_TYPE=postgres \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5441/blokady_20260905" \
+npx tsx server/scripts/migrate.postgres.ts      # strict, przechodzi w całości na PUSTEJ bazie
+```
+
+Na tej bazie: **7/7 PASS** (dwa nowe pliki) i **163/163 PASS** (osiem plików regresji:
+5 × method-core + `roiGovernedVisibility20.realdb` + `roi.routes` + `roiFinanceSeam.routes`).
 
 ```
 NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false \
 POSTGRES_SKIP_INIT_IN_TEST=1 AI_PROVIDER_MODE=mock \
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5440/blokady_20260905" \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5441/blokady_20260905" \
 npx vitest run \
   server/src/services/resultsVnext/platform/__tests__/roiGovernedVisibilityStatus.realdb.test.ts \
   server/src/method-core/__tests__/ownerFreeze.http.pg.test.ts
