@@ -1006,10 +1006,26 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
 
   const specAPanel = (
     <div className="flex h-full shrink-0 flex-col overflow-hidden bg-c-surface">
-      <div className="flex h-11 items-center gap-2 border-b border-c-border-subtle px-4">
-        <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-c-text">
-          {activePage.title || t('notebook.rightRail.untitled', 'Bez tytułu')}
-        </span>
+      {/*
+        ★ Pomiar na żywo 05.09 (`mywork-notebook-rail-speca`): nagłówek pasa
+        pokazywał sam tytuł notatki + X, a zatwierdzony obraz ma dwuwierszową
+        główkę „NOTEBOOK / Szczegóły notatki” (nadkreślnik modułu + stała
+        nazwa panelu). Tytuł notatki stoi już w nagłówku samego dokumentu na
+        lewo od pasa, więc powtarzanie go tutaj nie niosło informacji, a
+        zabierało jedyny wiersz główki. Ta sama struktura co w powłoce
+        `IdeaNotebookRightPanelPrototype` — nagłówek jest wspólnym kanonem
+        obu pasów, niezależnym od flagi prototypu (której NIE ruszamy:
+        decyzja właściciela w toku).
+      */}
+      <div className="flex h-12 items-center gap-2 border-b border-c-border-subtle px-4">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-c-text-muted">
+            {t('notebook.rightRail.eyebrow', 'Notebook')}
+          </p>
+          <h2 className="truncate text-sm font-semibold text-c-text">
+            {t('notebook.rightRail.panelTitle', 'Szczegóły notatki')}
+          </h2>
+        </div>
         <button
           type="button"
           data-notebook-action-id="rail:close"

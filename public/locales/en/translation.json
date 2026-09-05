@@ -8084,7 +8084,7 @@
       },
       "matrix": {
         "skips": "Skipped questions",
-        "gridLabel": "DRD matrix — areas \u00d7 levels"
+        "gridLabel": "DRD matrix — areas × levels"
       },
       "evidence": {
         "evidenced": "Evidence confirmed",
@@ -33061,7 +33061,9 @@
       "context": "Context",
       "closePanel": "Close panel",
       "ownerYou": "You",
-      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt."
+      "receiptUnavailable": "Editing controls are unavailable until the server can return a durable action receipt.",
+      "eyebrow": "Notebook",
+      "panelTitle": "Note details"
     },
     "slashMenu": {
       "receiptUnavailable": "Unavailable until the server can return a durable action receipt"
