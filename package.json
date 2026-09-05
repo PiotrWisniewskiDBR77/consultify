@@ -267,7 +267,7 @@
     "mvp-final:zamroz": "node scripts/mvp-final/zamroz.mjs",
     "mvp-final:porownaj": "node scripts/mvp-final/porownaj.mjs",
     "mvp-final:sprawdz": "bash scripts/mvp-final/check-freeze.sh --tylko-ostrzez",
-    "mvp-final:test": "node --test tests/unit/mvp-final/",
+    "mvp-final:test": "node --test tests/unit/mvp-final/resolverImportow.test.mjs tests/unit/mvp-final/rejestr.test.mjs tests/unit/mvp-final/checkFreeze.test.mjs tests/unit/mvp-final/porownanieObrazow.test.mjs",
     "check:z31": "bash scripts/check-z31.sh",
     "check:z31:ci": "bash scripts/check-z31.sh --ci",
     "check:z31:update": "bash scripts/check-z31.sh --update-baseline",
