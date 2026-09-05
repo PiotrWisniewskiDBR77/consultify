@@ -48,10 +48,13 @@ function readLocalStorageOverride(): boolean | null {
 
 function readEnvFlag(): boolean {
   try {
-    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
     // DEC 03.09 wieczór (A4): domyślna wartość ON w kodzie (nie w env) —
     // produkcja bez żadnej zmiennej pokazuje zatwierdzony kreator.
-    return parseFlag(meta.env?.[ENV_KEY]) ?? true;
+    return (
+      parseFlag(
+        (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+      ) ?? true
+    );
   } catch {
     // fail-CLOSED na błąd odczytu środowiska pozostaje bezpieczniejszym
     // fallbackiem niż fail-open (wzorzec `orgRedesignFlag.ts`/`chatSignalsFeedFlag.ts`).

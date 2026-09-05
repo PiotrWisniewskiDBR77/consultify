@@ -218,8 +218,10 @@ function useInsightCardContractEnabled(): boolean {
       }
     }
     try {
-      const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
-      const env = parseInsightCardContractFlag(meta?.env?.VITE_VF1_INSIGHT_CARD_CONTRACT);
+      const env = parseInsightCardContractFlag(
+        (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+          ?.VITE_VF1_INSIGHT_CARD_CONTRACT
+      );
       if (env !== null) return env;
     } catch {
       /* ignore */
@@ -1610,27 +1612,30 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
   const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
 
-  const loadPersistedFindings = useCallback(async (currentInsightId: string) => {
-    setFindingsPresentation(
-      unknownPresentation(t('presentationState.findingsPendingReason', 'findings are loading'))
-    );
-    try {
-      const findingsRes = await V8InterviewApi.listFindings(currentInsightId).then(
-        (r) => r.findings
-      );
-      const nextFindings = Array.isArray(findingsRes) ? findingsRes : [];
-      setFindings(nextFindings);
-      setFindingsPresentation(knownPresentation(nextFindings.length));
-    } catch (err) {
-      warnInsightSilentFailure(`loadPersistedFindings(${currentInsightId}) failed`, err);
-      setFindings([]);
+  const loadPersistedFindings = useCallback(
+    async (currentInsightId: string) => {
       setFindingsPresentation(
-        unknownPresentation(
-          t('presentationState.findingsLoadFailedReason', 'findings could not be loaded')
-        )
+        unknownPresentation(t('presentationState.findingsPendingReason', 'findings are loading'))
       );
-    }
-  }, [t]);
+      try {
+        const findingsRes = await V8InterviewApi.listFindings(currentInsightId).then(
+          (r) => r.findings
+        );
+        const nextFindings = Array.isArray(findingsRes) ? findingsRes : [];
+        setFindings(nextFindings);
+        setFindingsPresentation(knownPresentation(nextFindings.length));
+      } catch (err) {
+        warnInsightSilentFailure(`loadPersistedFindings(${currentInsightId}) failed`, err);
+        setFindings([]);
+        setFindingsPresentation(
+          unknownPresentation(
+            t('presentationState.findingsLoadFailedReason', 'findings could not be loaded')
+          )
+        );
+      }
+    },
+    [t]
+  );
 
   const loadInsightAnalysis = useCallback(async (currentInsightId: string) => {
     try {

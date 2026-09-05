@@ -34,8 +34,9 @@ function readEnvFlag(): boolean {
   // Default OFF: with no build-time override the current valuation surface stays
   // the default. An explicit `1`/`true` env value opts in.
   try {
-    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+    );
     // EV Basket football-field zweryfikowany dev-render (light+dark, 2026-07-16 —
     // triangulacja 4 metod, read-only, zero crimson) → default ON. Opt-out ?ff_evBasket=0.
     return parsed === null ? true : parsed;

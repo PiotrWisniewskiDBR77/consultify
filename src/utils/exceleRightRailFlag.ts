@@ -52,8 +52,9 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 
 function readEnvFlag(): boolean {
   try {
-    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+    );
     // Default ON (2026-07-28) — patrz nagłówek pliku (zlecenie Piotra, akcept
     // na żywej weryfikacji, odstępstwo świadome od reguły #7/#9).
     return parsed === null ? true : parsed;

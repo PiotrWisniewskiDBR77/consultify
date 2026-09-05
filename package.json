@@ -272,6 +272,8 @@
     "check:z31:ci": "bash scripts/check-z31.sh --ci",
     "check:z31:update": "bash scripts/check-z31.sh --update-baseline",
     "check:ssot": "bash scripts/check-ssot-paths.sh && node scripts/docs/check-ssot-registry.mjs",
+    "check:flags-env-static": "node scripts/check-flags-env-static.mjs",
+    "check:flags-env-static:scan-only": "node scripts/check-flags-env-static.mjs --scan-only",
     "check:ui": "bash scripts/check-triada.sh --all && bash scripts/check-gestosc.sh && bash scripts/check-artefakt.sh && bash scripts/check-list-canon.sh --all",
     "test:smoke:hubs": "VITEST_HEAP_MB=8192 vitest run tests/components/smoke/hubs.smoke.test.tsx",
     "branding:generate": "npx tsx scripts/branding/generate-consultinity-assets.ts",

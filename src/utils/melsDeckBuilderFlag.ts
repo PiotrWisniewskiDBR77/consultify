@@ -38,8 +38,9 @@ function readEnvFlag(): boolean {
   // Default ON: when no build-time override is set, the MELS shell is the
   // default DeckBuilder surface. An explicit `0`/`false` env value opts out.
   try {
-    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+    );
     return parsed === null ? true : parsed;
   } catch {
     return true;

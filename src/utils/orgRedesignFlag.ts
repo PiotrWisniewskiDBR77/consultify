@@ -51,8 +51,9 @@ function parseFlag(raw: string | null | undefined): boolean | null {
 
 function readEnvFlag(): boolean {
   try {
-    const meta = { env: import.meta.env } as unknown as { env?: Record<string, string | undefined> };
-    const parsed = parseFlag(meta?.env?.[ENV_KEY]);
+    const parsed = parseFlag(
+      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+    );
     // DEC 03.09 wieczór (A3, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
     // wiersz A3 — "Przeprojektowana Organizacja: zatwierdzony ekran ma być
     // domyślny") ZAMYKA krok (d) reguły 7 z CLAUDE.md, który od 2026-08-29
