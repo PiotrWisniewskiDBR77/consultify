@@ -581,6 +581,38 @@ async function main(): Promise<void> {
     for (const collision of allCollisions.slice(0, 30)) console.log(`    · ${collision}`);
   }
 
+  // PRZEDLOT BILANSU. Baza ma trigger `finance_stmt_check_balance`
+  // (`20260809_finance_v3_d01b_statements_02b_integrity_scope_fix.sql:40-75`), który przy
+  // KOMPLECIE `TOTAL_ASSETS` + `TOTAL_LIABILITIES_EQUITY` odrzuca niebilansujący się rok.
+  // Bez reconciliation-runu tolerancja to JEDNA jednostka prezentacji, więc rozjazd na
+  // realnych danych wywróci `--apply` w połowie. Lepiej powiedzieć to w dry-runie.
+  const balanceIssues: string[] = [];
+  for (const plan of plans) {
+    if (plan.statement.statement_type !== 'BS') continue;
+    const byCode = new Map<string, number>();
+    for (const value of plan.values) {
+      if (!value.line_code || value.value === null) continue;
+      byCode.set(value.line_code, Number(value.value));
+    }
+    const assets = byCode.get('TOTAL_ASSETS');
+    const liabEquity = byCode.get('TOTAL_LIABILITIES_EQUITY');
+    if (assets === undefined || liabEquity === undefined) continue;
+    if (Math.abs(assets - liabEquity) <= 1) continue;
+    balanceIssues.push(
+      `${plan.statement.period_label ?? plan.statement.period_end}: TOTAL_ASSETS=${assets} ` +
+        `vs TOTAL_LIABILITIES_EQUITY=${liabEquity} (różnica ${Math.abs(assets - liabEquity)})`
+    );
+  }
+  if (balanceIssues.length > 0) {
+    console.log('');
+    console.log(`# ⚠ BILANS SIĘ NIE SPINA w ${balanceIssues.length} roku/latach — trigger bazy ODRZUCI zapis:`);
+    for (const issue of balanceIssues) console.log(`    · ${issue}`);
+    console.log(
+      '    Przyczyna jest w torze legacy (zła decyzja mapowania przy imporcie), nie w tym skrypcie. ' +
+        'Napraw mapowanie w sprawozdaniu źródłowym albo wyłącz ten rok z pakietu (--years=…).'
+    );
+  }
+
   const existingPack = await findExistingPack(org.id, naturalKey);
   const canonicalPacks = await loadCanonicalPacks(org.id);
   console.log('');
