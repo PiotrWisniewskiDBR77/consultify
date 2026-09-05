@@ -84,7 +84,7 @@ import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../t
 import { DecisionDetailView } from '../MyWork/DecisionDetailView';
 import { TaskDetailView } from '../MyWork/TaskDetailView';
 // Grid card for grid view
-import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
+import { PortfolioGridView } from '../Portfolio/PortfolioGridView';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 // ModuleHub components
@@ -1940,26 +1940,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               renderPreview={renderInitiativePreview}
               renderPreviewFooter={renderInitiativePreviewFooter}
             >
-              <div className="h-full overflow-auto p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {searchedInitiatives.map((initiative) => (
-                    <InitiativeGridCard
-                      key={initiative.id}
-                      initiative={initiative}
-                      onClick={() => handleInitiativeClick(initiative)}
-                      onArchive={handleArchiveInitiative}
-                      onOpenFull={(initiative) =>
-                        handleOpenDocument({
-                          id: initiative.id,
-                          type: 'initiative',
-                          name: String(initiative.name || ''),
-                          status: String(initiative.status || '').toUpperCase() as any,
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-                {searchedInitiatives.length === 0 && (
+              {searchedInitiatives.length === 0 ? (
+                <div className="h-full overflow-auto p-4">
                   <SharedEmptyState
                     variant="filter"
                     title={t('initiatives.hub.noInitiativesFound', 'No initiatives found')}
@@ -1975,8 +1957,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       },
                     }}
                   />
-                )}
-              </div>
+                </div>
+              ) : (
+                // Kanon #76a — JEDYNY dozwolony renderer karty grid (StandardGridCard),
+                // odbiór 05.09 16-kanon/standard-grid-card: `InitiativeGridCard` był
+                // bespoke i bez akcentu/postępu/kebaba; `PortfolioGridView` już budował
+                // te trzy elementy, ale nie miał wołacza — teraz go ma.
+                <PortfolioGridView
+                  initiatives={searchedInitiatives}
+                  onInitiativeClick={handleInitiativeClick}
+                  onArchive={handleArchiveInitiative}
+                  onOpenFull={(initiative) =>
+                    handleOpenDocument({
+                      id: initiative.id,
+                      type: 'initiative',
+                      name: String(initiative.name || ''),
+                      status: String(initiative.status || '').toUpperCase() as any,
+                    })
+                  }
+                />
+              )}
             </TableWithPreviewLayout>
           </div>
         );
