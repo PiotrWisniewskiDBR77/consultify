@@ -227,6 +227,11 @@ const getColumnTypeFloor = (column: TableColumn): number => {
   return COLUMN_MIN_WIDTH_BY_DATA_TYPE[column.dataType ?? 'text'];
 };
 
+export const HEADER_HORIZONTAL_PADDING_PX = 32;
+export const HEADER_SORT_BUDGET_PX = 16;
+export const HEADER_FILTER_BUDGET_PX = 26;
+const HEADER_TRACKING_PX = 0.55;
+
 /**
  * Podłogi używane WYŁĄCZNIE przy dopasowaniu do kontenera (`columnFit`).
  *
@@ -798,8 +803,31 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, []);
 
   const defaultColumnConfigs = useMemo<ColumnConfig[]>(() => {
+    let measureContext: CanvasRenderingContext2D | null = null;
+    try {
+      if (typeof document !== 'undefined') {
+        measureContext = document.createElement('canvas').getContext('2d');
+        if (measureContext) measureContext.font = '600 11px Inter, system-ui, sans-serif';
+      }
+    } catch {
+      measureContext = null;
+    }
+
     return columns.map((c, idx) => {
-      const floor = getColumnTypeFloor(c);
+      const measuredLabelWidth = measureContext?.measureText(c.label.toUpperCase()).width;
+      const measuredHeaderFloor =
+        typeof measuredLabelWidth === 'number' &&
+        Number.isFinite(measuredLabelWidth) &&
+        measuredLabelWidth > 0
+          ? Math.ceil(
+              measuredLabelWidth +
+                Math.max(0, c.label.length - 1) * HEADER_TRACKING_PX +
+                HEADER_HORIZONTAL_PADDING_PX +
+                (c.sortable ? HEADER_SORT_BUDGET_PX : 0) +
+                (c.filterable ? HEADER_FILTER_BUDGET_PX : 0)
+            )
+          : 0;
+      const floor = Math.max(getColumnTypeFloor(c), measuredHeaderFloor);
       return {
         id: c.id,
         label: c.label,
