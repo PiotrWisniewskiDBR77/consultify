@@ -4,7 +4,8 @@
  * zalogowaną sesją z ODBIOR_AUTH_STATE, domyślnie JASNY motyw i szerokość 1440.
  * Użycie:
  *   node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --out=evidence/odbior-zywo-20260905/02/mywork-inbox.png \
- *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900] [--port=3055]
+ *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900] [--port=3055] [--motyw=dark]
+ * --motyw=light|dark (OPT-IN, 2026-09-05): domyślnie light. Dla dark plik dostaje sufiks __dark.
  * --port: aplikacja na INNYM porcie niż 3000 (kilka rąk naraz — każdy agent ma swój vite).
  *   Sesja z ODBIOR_AUTH_STATE jest zapisana dla origin http://localhost:3000, a localStorage
  *   (w tym `token`) jest zakresowany PER ORIGIN — bez przepisania portu aplikacja uzna, że
@@ -22,7 +23,7 @@
  *   gdy odbiór dotyczy LICZBY paneli/kolumn (np. „ma być dokładnie jeden prawy panel") — samo oko na
  *   zrzucie nie odróżnia dwóch sąsiadujących kolumn od jednej szerokiej.
  * --szerokosc=<px> (OPT-IN): szerokość viewportu; domyślnie 1440.
- * --motyw=jasny|ciemny (OPT-IN): motyw i colorScheme; domyślnie jasny.
+ * --motyw=light|dark (OPT-IN): motyw i colorScheme; domyślnie light (patrz opis wyżej).
  * Zapisuje też <out>.json z adresem końcowym, tytułem i listą błędów konsoli (do werdyktu).
  *
  * ★ OSTRZEŻENIE (BLOKER RAPORT_B #6, naprawione 2026-09-06): TEN SKRYPT NIGDY DOMYŚLNIE
@@ -44,17 +45,20 @@ const args = process.argv.slice(2);
 const get = (k, d) => { const a = args.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7));
 const przewin = get('przewin', '');
-const url = get('url', '/chat'); const out = get('out'); const czekaj = Number(get('czekaj', '1200'));
+const url = get('url', '/chat'); const requestedOut = get('out'); const czekaj = Number(get('czekaj', '1200'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const port = Number(get('port', '3000'));
 const host = get('host', 'localhost');
 const szerokosc = Number(get('szerokosc', '1440'));
-const motyw = get('motyw', 'jasny');
-if (!Number.isFinite(szerokosc) || szerokosc < 320 || !['jasny', 'ciemny'].includes(motyw)) {
-  console.error('Nieprawidłowe --szerokosc (min. 320) lub --motyw (jasny|ciemny)');
+const motyw = get('motyw', 'light');
+if (!Number.isFinite(szerokosc) || szerokosc < 320 || !['light', 'dark'].includes(motyw)) {
+  console.error('Nieprawidłowe --szerokosc (min. 320) lub --motyw (light|dark)');
   process.exit(2);
 }
 const baza = `http://${host}:${port}`;
+const out = motyw === 'dark' && requestedOut
+  ? requestedOut.replace(/(?<!__dark)(\.[^.\/]+)$/, '__dark$1')
+  : requestedOut;
 const domSelektory = args.filter((x) => x.startsWith('--dom=')).map((x) => x.slice(6));
 // OSTRZEŻENIE (BLOKER RAPORT_B #6): zapis sesji z powrotem do pliku NIE jest
 // domyślny. Bez tej opcji skrypt TYLKO CZYTA sesję i nigdy jej nie nadpisuje —
@@ -82,18 +86,19 @@ if (zrodlo) {
     { ...zrodlo, origin: baza },
   ];
 }
-const ctx = await browser.newContext({ storageState: sesja, viewport: { width: szerokosc, height: wysokosc }, colorScheme: motyw === 'ciemny' ? 'dark' : 'light', locale: 'pl-PL' });
-// JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
+const ctx = await browser.newContext({ storageState: sesja, viewport: { width: szerokosc, height: wysokosc }, colorScheme: motyw, locale: 'pl-PL' });
+// Aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
 // src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
-await ctx.addInitScript((wybranyMotyw) => {
+await ctx.addInitScript((theme) => {
   try {
     const raw = localStorage.getItem('consultify-storage');
     const obj = raw ? JSON.parse(raw) : { state: {}, version: 0 };
-    obj.state = { ...(obj.state || {}), theme: wybranyMotyw };
+    obj.state = { ...(obj.state || {}), theme };
     localStorage.setItem('consultify-storage', JSON.stringify(obj));
-    document.documentElement.classList.toggle('dark', wybranyMotyw === 'dark');
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   } catch {}
-}, motyw === 'ciemny' ? 'dark' : 'light');
+}, motyw);
 const page = await ctx.newPage();
 const bledy = [];
 const odpowiedziHttp = [];
