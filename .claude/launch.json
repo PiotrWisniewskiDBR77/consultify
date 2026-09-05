@@ -2,6 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "lokalnie-staging-20260905",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--port",
+        "3000",
+        "--strictPort"
+      ],
+      "port": 3000
+    },
+    {
       "name": "logowanie-i18n-20260902",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
