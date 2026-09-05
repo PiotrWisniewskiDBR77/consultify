@@ -66,6 +66,21 @@ export interface MethodWorkspaceShellProps {
   interviewProps: Omit<InterviewFocusPanelProps, 'className'>;
   teresaProps: Omit<TeresaPreviewPanelProps, 'className'>;
   matrixProps: Omit<LiveMatrixProps, 'className' | 'methodName'>;
+  /**
+   * Macierz metody narysowana po SWOJEMU, zamiast wspólnej `LiveMatrix`.
+   *
+   * ★ DLACZEGO TO ISTNIEJE (2026-09-05). DRD ma własną, ZAAKCEPTOWANĄ przez
+   * właściciela macierz (`DRDMatrixGrid` — obszary × poziomy, treść w komórce,
+   * dolny pasek `AS`/`TO`), a `LiveMatrix` jest siatką stanów jednostka × poziom
+   * wspólną dla wszystkich metod. Do 05.09 zakładka „Macierz" w sesji DRD
+   * pokazywała `LiveMatrix` i właściciel po raz szósty napisał, że to nie jest
+   * jego macierz.
+   *
+   * Nadpisanie, a NIE zamiana na stałe: SIRI (A7) i każda następna metoda
+   * dostają `LiveMatrix` dokładnie jak dotąd, bo nie mają własnej, przyjętej
+   * macierzy. Powłoka nie wie nic o DRD — dostaje gotowy węzeł od ekranu metody.
+   */
+  matrixContent?: React.ReactNode;
   /** Method-specific report workspace; it reads the same session state. */
   reportContent: React.ReactNode;
   /** Runtime provenance shown in Settings instead of occupying a permanent technical stripe. */
@@ -136,6 +151,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   navigatorProps,
   interviewProps,
   matrixProps,
+  matrixContent,
   reportContent,
   documentSourceLabel,
   documentSourceIndicator,
@@ -457,12 +473,23 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
       {/* Body */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="hidden w-60 shrink-0 overflow-y-auto border-r border-c-border-subtle p-3 lg:block">
-            <MethodNavigator {...navigatorProps} />
-          </div>
+          {/* ★ DRZEWO SESJI ZNIKA NA ZAKŁADCE „RAPORT" (2026-09-05).
+              Raport ma WŁASNĄ szynę rozdziałów (osie 1–7) po swojej lewej
+              stronie. Dwie szyny obok siebie kosztowały 240 px z 1440 i to
+              one wypychały macierz właściciela do kadru ~500 px, w którym
+              z dziewięciu obszarów widać było trzy. Nawigator wraca w tej
+              samej sekundzie, w której użytkownik wraca na „Wywiad" albo
+              „Macierz" — nic nie jest chowane na stałe. */}
+          {viewMode === 'report' ? null : (
+            <div className="hidden w-60 shrink-0 overflow-y-auto border-r border-c-border-subtle p-3 lg:block">
+              <MethodNavigator {...navigatorProps} />
+            </div>
+          )}
           {viewMode === 'matrix' ? (
             <div className="min-w-0 flex-1 overflow-auto p-4">
-              <LiveMatrix {...matrixProps} methodName={methodName} className="h-full" />
+              {matrixContent ?? (
+                <LiveMatrix {...matrixProps} methodName={methodName} className="h-full" />
+              )}
             </div>
           ) : viewMode === 'report' ? (
             <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4" data-testid="method-report-workspace">
