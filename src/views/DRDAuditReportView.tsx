@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { InitiativeSuggestionBadge } from '@/components/Initiatives/InitiativeSuggestionBadge';
+import { Button } from '@/components/ui/primitives/Button';
 import { api } from '@/services/api';
 import {
   areaScoresFromAxisData,
@@ -631,23 +632,23 @@ export const DRDAuditReportView: React.FC<DRDAuditReportViewProps> = ({
                 'Generate a complete DRD audit report based on the assessment data. The report will include all 7 axes, gap analysis, and recommendations.'
               )}
             </p>
-            <button
+            {/* Runda 3 odbioru (05.09, id `audyty-drd-report`): ten przycisk
+                miał gradient (`bg-gradient-to-r from-blue-600 to-indigo-600`)
+                poza kanonem (`primary`=neutralny, patrz VISUAL_STANDARD.md
+                §5.1 w `Button.tsx`) — wymieniony na kanoniczny neutralny
+                `Button variant="primary"` (navy-on-light / white-on-dark),
+                bez crimson i bez gradientu. */}
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<Wand2 />}
+              loading={generating}
               onClick={handleGenerateReport}
-              disabled={generating}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50"
             >
-              {generating ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('reports.generating', 'Generating...')}
-                </>
-              ) : (
-                <>
-                  <Wand2 className="w-5 h-5" />
-                  {t('reports.generateReport', 'Generate Full Report')}
-                </>
-              )}
-            </button>
+              {generating
+                ? t('reports.generating', 'Generating...')
+                : t('reports.generateReport', 'Generate Full Report')}
+            </Button>
           </div>
         </div>
       </div>

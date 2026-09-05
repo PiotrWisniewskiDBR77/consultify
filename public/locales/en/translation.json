@@ -27808,7 +27808,8 @@
         "outputs": "Outputs",
         "reports": "Reports",
         "findings": "Findings",
-        "initiatives": "Initiatives"
+        "initiatives": "Initiatives",
+        "drdReports": "DRD reports"
       }
     }
   },
