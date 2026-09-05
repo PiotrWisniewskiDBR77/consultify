@@ -239,8 +239,6 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
       : compact
         ? MATRIX_DENSITY.compact
         : MATRIX_DENSITY.spacious;
-  const { i18n } = useTranslation();
-  const polskiInterfejs = (i18n.language ?? '').toLowerCase().startsWith('pl');
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [hiddenPx, setHiddenPx] = useState(0);
   /** Zmierzona szerokość kadru siatki (0 = jeszcze nie mierzone / brak DOM-u). */
@@ -430,7 +428,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           onCellMouseEnter ? (e) => onCellMouseEnter(area.id, level, e) : undefined
                         }
                         onMouseLeave={onCellMouseLeave}
-                        aria-label={`${etykietaObszaru(area, polskiInterfejs)}, level ${level}`}
+                        aria-label={`${etykietaObszaru(area)}, level ${level}`}
                       >
                         <div
                           className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
@@ -471,7 +469,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                   key={`x-${area.id}`}
                   type="button"
                   onClick={() => onAreaClick(area.id)}
-                  title={etykietaObszaru(area, polskiInterfejs)}
+                  title={etykietaObszaru(area)}
                   className="sticky bottom-0 z-20 rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
@@ -490,7 +488,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                     </div>
                   </div>
                   <div className="text-[11px] font-medium text-c-text leading-tight line-clamp-2">
-                    {etykietaObszaru(area, polskiInterfejs)}
+                    {etykietaObszaru(area)}
                   </div>
                 </button>
               );

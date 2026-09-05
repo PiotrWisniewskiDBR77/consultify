@@ -96,36 +96,28 @@ export function etykietyPoziomowZMetodyki(
  * pisało „Procesy Sprzedaży", „Procesy Marketingowe". Jeden ekran mówił dwoma
  * językami o tej samej rzeczy.
  *
- * ★ GRANICA JĘZYKOWA — CO SIĘ ZMIENIA, A CO NIE. `KANON_Z_ODBIOROW.md`
- * (31.08) stanowi, że metodyka DRD zostaje po angielsku, bo książka jest po
- * angielsku. Ta zmiana tego NIE odwraca: nazwy poziomów (etykiety wierszy)
- * i technologie w komórkach zostają angielskie — nie ma dla nich polskich
- * odpowiedników w metodyce (`DRDLevel` nie ma pola `titlePL`, patrz
- * `MACIERZ_TRESC_KOMOREK.md` §2.4). Zmienia się WYŁĄCZNIE nazwa obszaru,
- * bo dla niej polski odpowiednik JEST w SSOT (`DRDArea.namePL`, 48 wpisów)
- * i całą resztą produktu — drzewem sesji (`DrdMethodWorkspaceScreen`,
- * `DrdHttpMethodWorkspaceScreen`), panelem jakości (`AssessmentQualityReview
- * Panel`), mapami SIRI/ADMA — już się posługuje. Macierz była jedynym
- * miejscem, które go ignorowało.
+ * ★ DLACZEGO BEZ WARUNKU NA JĘZYK INTERFEJSU. Kryterium odbioru brzmi: „te
+ * same nazwy, co w drzewie". Drzewo — `DrdMethodWorkspaceScreen`,
+ * `DrdHttpMethodWorkspaceScreen`, `drdWorkspaceViewModel`, panel jakości,
+ * mapy SIRI/ADMA — bierze `namePL || name` BEZWARUNKOWO, więc warunek na język
+ * w macierzy rozjechałby ją z drzewem dokładnie w tym jednym przypadku, dla
+ * którego ta poprawka powstała (interfejs EN: drzewo po polsku, macierz po
+ * angielsku). Macierz nie wprowadza tu żadnego nowego mieszania języków —
+ * dokłada się do zastanej, spójnej reguły ekranu.
  *
- * Wynik zależy od JĘZYKA INTERFEJSU, nie od miejsca użycia: w angielskim
- * interfejsie wraca `name`, więc angielska wersja produktu zostaje spójnie
- * angielska.
+ * ★ GRANICA JĘZYKOWA — CO SIĘ NIE ZMIENIA. `KANON_Z_ODBIOROW.md` (31.08)
+ * stanowi, że metodyka DRD zostaje po angielsku, bo książka jest po angielsku.
+ * Nazwy poziomów (etykiety wierszy) i technologie w komórkach zostają
+ * angielskie — nie mają polskich odpowiedników w metodyce (`DRDLevel` nie ma
+ * pola `titlePL`, patrz `MACIERZ_TRESC_KOMOREK.md` §2.4). Zmienia się
+ * WYŁĄCZNIE nazwa obszaru, bo dla niej polski odpowiednik JEST w SSOT
+ * (`DRDArea.namePL`, 48 wpisów) i cała reszta produktu już się nim posługuje.
+ * Macierz była jedynym miejscem, które go ignorowało.
  */
-export function etykietaObszaru(
-  area: Pick<DRDArea, 'name' | 'namePL'>,
-  polskiInterfejs: boolean
-): string {
-  if (!polskiInterfejs) return area.name;
+export function etykietaObszaru(area: Pick<DRDArea, 'name' | 'namePL'>): string {
   return area.namePL?.trim() || area.name;
 }
 
-/**
- * Próg czytelności kolumny macierzy. Poniżej tej szerokości komórka przestaje
- * mieścić choćby `Reporting` w dwóch wierszach przy 10 px — węższa kolumna nie
- * jest już „ciasną macierzą", tylko dziewięcioma paskami bez treści. Wtedy
- * lepiej przewijać w bok niż udawać, że wszystko widać.
- */
 export const MIN_CZYTELNA_KOLUMNA_PX = 56;
 
 /**

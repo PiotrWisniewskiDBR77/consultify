@@ -145,7 +145,12 @@ describe('AssessmentReportContractView', () => {
     expect(matrix.textContent).toContain('Order Management System');
     // Dolny pasek obszarów z chipami AS/TO — element, o który właściciel się upomina.
     expect(matrix.textContent).toContain('TO 3');
-    expect(matrix.textContent).toContain('Sales Processes');
+    // ★ 2026-09-05: obszar podpisany PO POLSKU, tak samo jak w drzewie sesji
+    // dwadzieścia centymetrów obok. Do dziś stało tu „Sales Processes" i to
+    // był defekt, który właściciel zgłosił tego dnia — więc angielska nazwa
+    // ma tu prawo NIE występować, a nie tylko „polska ma występować".
+    expect(matrix.textContent).toContain('Procesy Sprzedaży');
+    expect(matrix.textContent).not.toContain('Sales Processes');
     // ...i ani jednej tabeli w miejscu macierzy.
     expect(matrix.querySelector('table')).toBeNull();
   });
