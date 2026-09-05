@@ -141,6 +141,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const containerRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const poprzednieKontrolowaneOtwarcie = useRef(controlledPreviewOpen);
   const poprzednieZaznaczenie = useRef<string | null>(selectedId);
   const jedenPanel = useJedenPanel();
   const teresaWlaczona = teresa?.wylacz !== true;
@@ -191,6 +192,13 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     }
     poprzednieZaznaczenie.current = selectedId;
   }, [jedenPanel.zamkniety, selectedId, ustawZakladke, zakladka]);
+
+  useEffect(() => {
+    if (controlledPreviewOpen === true && poprzednieKontrolowaneOtwarcie.current === false) {
+      jedenPanel.pokazPanel();
+    }
+    poprzednieKontrolowaneOtwarcie.current = controlledPreviewOpen;
+  }, [controlledPreviewOpen, jedenPanel]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;

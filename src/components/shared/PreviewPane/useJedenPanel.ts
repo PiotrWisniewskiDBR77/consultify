@@ -73,7 +73,7 @@ export interface UseJedenPanelResult extends JedenPanelState {
 export function useJedenPanel(): UseJedenPanelResult {
   const { pathname } = useLocation();
   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
-  const isChatCollapsed = useAppStore((state) => state.isChatCollapsed);
+  const isChatCollapsed = useAppStore((state) => state.isChatCollapsed) ?? true;
   const toggleChatCollapse = useAppStore((state) => state.toggleChatCollapse);
   const poprzedniStanCzatu = useRef(isChatCollapsed);
 
@@ -99,8 +99,8 @@ export function useJedenPanel(): UseJedenPanelResult {
     (zakladka: JedenPanelZakladka) => {
       ustawStan(modul, { zamkniety: false, zakladka });
       zapiszZamkniecie(modul, false);
-      if (zakladka === 'teresa' && isChatCollapsed) toggleChatCollapse();
-      if (zakladka === 'rekord' && !isChatCollapsed) toggleChatCollapse();
+      if (zakladka === 'teresa' && isChatCollapsed) toggleChatCollapse?.();
+      if (zakladka === 'rekord' && !isChatCollapsed) toggleChatCollapse?.();
       poprzedniStanCzatu.current = zakladka !== 'teresa';
     },
     [isChatCollapsed, modul, toggleChatCollapse]
@@ -109,14 +109,14 @@ export function useJedenPanel(): UseJedenPanelResult {
   const zamknij = useCallback(() => {
     ustawStan(modul, { zamkniety: true, zakladka: 'rekord' });
     zapiszZamkniecie(modul, true);
-    if (!isChatCollapsed) toggleChatCollapse();
+    if (!isChatCollapsed) toggleChatCollapse?.();
     poprzedniStanCzatu.current = true;
   }, [isChatCollapsed, modul, toggleChatCollapse]);
 
   const pokazPanel = useCallback(() => {
     ustawStan(modul, { zamkniety: false, zakladka: 'rekord' });
     zapiszZamkniecie(modul, false);
-    if (!isChatCollapsed) toggleChatCollapse();
+    if (!isChatCollapsed) toggleChatCollapse?.();
     poprzedniStanCzatu.current = true;
   }, [isChatCollapsed, modul, toggleChatCollapse]);
 

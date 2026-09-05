@@ -37,6 +37,7 @@ const expectOpen = () =>
 import { IdeasTableContent } from '../../../src/components/MyWork/IdeasTableContent';
 import type { MyIdea } from '../../../src/components/MyWork/myIdeasTypes';
 import type { ColumnWidths, FilterOption, TableFilters } from '../../../src/components/ui/ResizableTable';
+import { resetJedenPanelForTests } from '../../../src/components/shared/PreviewPane/useJedenPanel';
 
 const COLUMN_WIDTHS: ColumnWidths = {
   select: 40,
@@ -115,6 +116,8 @@ const getRow = (title: string) => screen.getByText(title).closest('tr') as HTMLT
 describe('IdeasTableContent — right preview panel can actually be closed (owner feedback 05.09)', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    window.localStorage.removeItem('consultify.listPanel.root.closed');
+    resetJedenPanelForTests();
   });
   afterEach(() => {
     window.sessionStorage.clear();
