@@ -39,6 +39,9 @@ const UnifiedChatPanelLazy = React.lazy(() =>
   }))
 );
 
+const PANEL_INLINE_CONTAINER_WIDTH = 1184;
+const PANEL_RESIZE_HYSTERESIS = 24;
+
 export interface PreviewableItem {
   id: string;
   title: string;
@@ -131,7 +134,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const { isMobile, safeAreaInsets } = useDeviceType();
   // #4b — desktop overlay: float the preview above the table (no reflow). Never on mobile
   // (mobile already renders a full-screen `fixed inset-0` drawer below).
-  const overlayMode = desktopPreviewOverlay && !isMobile;
+  const [automatycznaNakladka, setAutomatycznaNakladka] = useState(false);
+  const overlayMode = (desktopPreviewOverlay || automatycznaNakladka) && !isMobile;
   const [reduceMotion, setReduceMotion] = useState(false);
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -146,6 +150,27 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     if (!teresaWlaczona || fullView) return;
     return registerEmbeddedModuleChatHost();
   }, [fullView, teresaWlaczona]);
+
+  useEffect(() => {
+    const kontener = containerRef.current;
+    if (!kontener || typeof ResizeObserver === 'undefined') return;
+
+    let zainicjalizowany = false;
+    const obserwator = new ResizeObserver(([wpis]) => {
+      if (!wpis) return;
+      const szerokosc = wpis.contentRect.width;
+      setAutomatycznaNakladka((poprzednia) => {
+        if (!zainicjalizowany) {
+          zainicjalizowany = true;
+          return szerokosc < PANEL_INLINE_CONTAINER_WIDTH;
+        }
+        if (poprzednia) return szerokosc < PANEL_INLINE_CONTAINER_WIDTH;
+        return szerokosc < PANEL_INLINE_CONTAINER_WIDTH - PANEL_RESIZE_HYSTERESIS;
+      });
+    });
+    obserwator.observe(kontener);
+    return () => obserwator.disconnect();
+  }, []);
 
   const ustawZakladke = useCallback(
     (nowaZakladka: JedenPanelZakladka) => {
