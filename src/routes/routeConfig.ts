@@ -165,14 +165,17 @@ export const ROUTES = {
     // verified against v6's route-ranking algorithm, not order-dependent.
     TOOL: '/results/kpi/:kpiId',
     DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
-    // Odrzucenie właściciela 2026-09-05 („trzypoziomowa formuła"): pod kartą
-    // KPI (poziom 2) leży ZBIÓR kart KPI — realne „zestawienie" (scorecard),
-    // do którego ten wskaźnik należy (`rvn_kpi_scorecard_items`, jedyna
-    // istniejąca w backendzie relacja KPI↔KPI; nie ma żadnego
-    // `parentKpiId`/`children` — zweryfikowane grepem po server/src).
-    // Z tego poziomu wchodzi się w KOLEJNĄ kartę KPI (poziom 4 = ta sama
-    // `KpiToolPage`, z zachowaną ścieżką w breadcrumbie).
-    CARD_SET: '/results/kpi/:kpiId/zestawienie/:scorecardId',
+    // POZIOM 2 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05:
+    // „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis
+    // KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N."). Zestawienie
+    // (`rvn_kpi_scorecards` + `rvn_kpi_scorecard_items`) leży MIĘDZY tabelą a
+    // kartą wskaźnika, a nie wewnątrz karty — dlatego trasa jest samodzielna
+    // (`/results/kpi/zestawienie/:scorecardId`), a nie zagnieżdżona pod
+    // `:kpiId` jak w odrzuconej 05.09 wersji czterostopniowej.
+    // React Router v6 rankuje po specyficzności, więc statyczny segment
+    // `zestawienie` wygrywa z `/results/kpi/:kpiId` niezależnie od kolejności
+    // deklaracji — tak samo jak `/results/kpi/scorecards/:scorecardId` wyżej.
+    CARD_SET: '/results/kpi/zestawienie/:scorecardId',
   },
   RESULTS_ROI: {
     ROOT: '/results/roi',

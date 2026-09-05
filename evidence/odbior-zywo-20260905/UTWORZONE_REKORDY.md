@@ -148,3 +148,17 @@ Czat: jedna wiadomość testowa DEC-396 (redukcja kosztów produkcji) utworzyła
 nową konwersację `cff44da8-274b-4bb3-bfbf-0513e3139e65` — zwykła rozmowa,
 zero rekordów utworzonych (Teresa tylko zapytała, nie kliknięto żadnego
 potwierdzenia).
+## 2026-09-05 — KPI, trzypoziomowa formuła (odbiór na żywo, agent `agent/kpi-tabela-lista-karta`)
+
+| Co | Gdzie | Jak utworzone | Po co |
+|---|---|---|---|
+| Pozycja zestawienia: `Acceptance KPI — benefits realization` w zestawieniu `Karta wyników transformacji` | staging (baza `trolley`), `rvn_kpi_scorecard_items`; zestawienie `4fdc1bb9-dd71-4dda-a4a4-9e03fa87faf4`, KPI `e635d6a0-eee1-448b-a932-a8a435eb9f14` | PRZEZ UI — ekran pełnej karty wyników → dialog „Dodaj KPI do karty wyników" (`kpi-scorecard-add-item-cta`), notatka: „Odbiór trzypoziomowej formuły KPI 05.09…"; skrypt klików: `scripts/dev/kpi-3poziomy-20260905/dodaj-kpi-do-zestawienia.mjs` | Staging miał JEDNO zestawienie z ZEREM pozycji — poziomu 2 (lista zestawienia z pozycjami) nie było na czym pokazać ani odebrać |
+
+Nic poza tym nie zostało utworzone ani zmienione. Rekord jest odwracalny z UI
+(kebab pozycji → „Usuń pozycję"), gdyby właściciel chciał wrócić do pustego
+zestawienia.
+
+Zrzuty odbioru: `evidence/odbior-zywo-20260905/kpi-3poziomy/`
+(`L1-tabela-zestawien.png` — stan przed dodaniem, z wierszem systemowym
+„Bez zestawienia"; `L1-tabela-zestawien-podglad.png` — poziom 1 z otwartym
+podglądem; `L2-lista-zestawienia.png`; `L3-karta-N-wskaznika.png`).

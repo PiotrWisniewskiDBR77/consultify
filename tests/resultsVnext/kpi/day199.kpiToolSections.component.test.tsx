@@ -102,8 +102,14 @@ describe('day199 KPI tool scorecards and history wiring', () => {
     });
     renderTool();
     await openSection('Zestawienia');
-    expect(await screen.findByText('Karta rentowności')).toBeInTheDocument();
-    expect(screen.getByTestId('kpi-tool-scorecards-list')).toBeInTheDocument();
+    // 2026-09-05 (trzypoziomowa formuła KPI): nazwa zestawienia pojawia się
+    // teraz w DWÓCH miejscach — w ścieżce poziomów (środkowy stopień
+    // „Rejestr KPI › <zestawienie> › <wskaźnik>") i na kafelku sekcji. Pierwsze
+    // dopasowanie `findByText` bywa więc breadcrumbem, zanim sekcja zdąży się
+    // rozwinąć — dlatego na LISTĘ sekcji czekamy osobno, zamiast czytać ją
+    // synchronicznie.
+    expect(await screen.findByTestId('kpi-tool-scorecards-list')).toBeInTheDocument();
+    expect(screen.getAllByText('Karta rentowności').length).toBeGreaterThan(0);
   });
 
   it('renders an honest empty state for KPI history', async () => {

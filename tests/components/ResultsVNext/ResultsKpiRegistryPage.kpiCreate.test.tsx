@@ -232,12 +232,21 @@ function makeFakeBackend() {
   return { kpis, versions };
 }
 
-function renderPage() {
-  return render(
+/**
+ * 2026-09-05 (trzypoziomowa formuła KPI, odrzucenie właściciela): `/results/kpi`
+ * otwiera się teraz na TABELI ZESTAWIEŃ (poziom 1). Cały ten plik bada rejestr
+ * pojedynczych WSKAŹNIKÓW — więc wchodzi w niego tak, jak zrobi to człowiek:
+ * klikiem w pigułkę „Wszystkie wskaźniki". Świadomie NIE używamy propa
+ * `initialTab`, żeby test nadal przechodził tą samą drogą co użytkownik.
+ */
+async function renderPage() {
+  const utils = render(
     <MemoryRouter initialEntries={['/results/kpi']}>
       <ResultsKpiRegistryPage />
     </MemoryRouter>
   );
+  fireEvent.click(await screen.findByText('Wszystkie wskaźniki'));
+  return utils;
 }
 
 /** Walk up from a text node to its owning `<tr>` (StandardTable renders a
@@ -271,7 +280,7 @@ describe('ResultsKpiRegistryPage — RN-G5 create/edit/submit/approve/reject', (
 
   it('full happy path: create draft -> edit -> submit -> approve (second actor)', async () => {
     makeFakeBackend();
-    renderPage();
+    await renderPage();
 
     await screen.findByText('EXISTING-DRAFT');
 
@@ -329,7 +338,7 @@ describe('ResultsKpiRegistryPage — RN-G5 create/edit/submit/approve/reject', (
 
   it('locks Edit/Submit for a KPI whose definition version this session never created/mutated (confirmed backend gap)', async () => {
     makeFakeBackend();
-    renderPage();
+    await renderPage();
 
     const row = rowFor(await screen.findByText('EXISTING-DRAFT'));
     fireEvent.click(within(row).getByLabelText("Row actions"));
@@ -345,7 +354,7 @@ describe('ResultsKpiRegistryPage — RN-G5 create/edit/submit/approve/reject', (
 
   it('reject requires a non-empty reason — negative control for the required-field guard', async () => {
     makeFakeBackend();
-    renderPage();
+    await renderPage();
 
     fireEvent.click(screen.getByTestId('kpi-registry-create-cta'));
     fireEvent.change(await screen.findByTestId('kpi-draft-code'), { target: { value: 'REJECT-ME' } });

@@ -68,75 +68,112 @@ import {
 } from './kpiScorecardMappers';
 
 // ==========================================
-// Scorecard registry columns (Scorecards tab on /results/kpi)
+// POZIOM 1 trzypoziomowej formuły KPI — TABELA ZESTAWIEŃ (`/results/kpi`)
+//
+// Odrzucenie właściciela 2026-09-05: „Omawialiśmy tabelę; z poziomu tabeli
+// otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją
+// kartę typu N." Tabela poziomu 1 wymienia więc ZESTAWIENIA (grupy
+// wskaźników), a nie pojedyncze wskaźniki, i pokazuje dokładnie te kolumny,
+// które właściciel wymienił: NAZWA · OPIS · LICZBA WSKAŹNIKÓW · WŁAŚCICIEL ·
+// STATUS · AKTUALIZACJA. Zakres i częstotliwość przeglądu zeszły do podglądu
+// (`buildKpiScorecardPreview` pokazuje je dalej) — tabela ma wymieniać, nie
+// streszczać cały rekord.
+//
+// Wiersze to `KpiCardSetRowVm`, a NIE surowe `KpiScorecardDto`, bo jeden
+// wiersz tej tabeli — zestawienie systemowe „Bez zestawienia" — nie jest
+// rekordem w bazie (patrz `../kpiTool/kpiCardSetPath.ts`). Wspólny kształt
+// wiersza jest tu po to, żeby ten JEDEN wiersz nie musiał udawać scorecarda
+// ze statusem i właścicielem, których nie ma: pokazuje uczciwe „—".
 // ==========================================
 
-export function buildKpiScorecardColumns(
-  isPolish: boolean,
-  currentUserId: string | null | undefined
-): TableColumn[] {
+export interface KpiCardSetRowVm {
+  /** `scorecardId` albo `UNASSIGNED_CARD_SET_ID` — id wiersza tabeli. */
+  id: string;
+  name: string;
+  description: string | null;
+  /** `null` = jeszcze nie policzone (pozycje w locie) ⇒ uczciwe „—". */
+  itemCount: number | null;
+  /** `null` = zestawienie systemowe (nie ma właściciela) ⇒ „—". */
+  owner: string | null;
+  /** `null` = zestawienie systemowe (nie ma cyklu życia) ⇒ pigułka „Systemowe". */
+  status: KpiScorecardLifecycleStatus | null;
+  /** `null` = zestawienie systemowe (nic się w nim nie „aktualizuje") ⇒ „—". */
+  updatedAt: string | null;
+  /** Realny rekord — `null` WYŁĄCZNIE dla wiersza systemowego. */
+  scorecard: KpiScorecardDto | null;
+}
+
+export function buildKpiCardSetColumns(isPolish: boolean): TableColumn[] {
+  const t = (pl: string, en: string) => (isPolish ? pl : en);
   return [
     {
       id: 'name',
-      label: isPolish ? 'Nazwa' : 'Name',
-      width: '260px',
+      label: t('Nazwa', 'Name'),
+      width: '240px',
       sortable: true,
-      render: (row: KpiScorecardDto) => (
-        <span className="text-sm font-medium text-c-text" title={row.scorecardId}>
+      render: (row: KpiCardSetRowVm) => (
+        <span className="text-sm font-medium text-c-text" title={row.scorecard ? row.id : undefined}>
           {row.name}
         </span>
       ),
     },
     {
-      id: 'lifecycleStatus',
-      label: 'Status',
-      width: '160px',
-      filterable: true,
-      filterOptions: (Object.keys(KPI_SCORECARD_STATUS_TONE) as KpiScorecardLifecycleStatus[]).map(
-        (s) => ({ value: s, label: kpiScorecardStatusLabel(s, isPolish) })
-      ),
-      render: (row: KpiScorecardDto) => (
-        <StatusChip
-          label={kpiScorecardStatusLabel(row.lifecycleStatus, isPolish)}
-          tone={KPI_SCORECARD_STATUS_TONE[row.lifecycleStatus]}
-        />
+      id: 'description',
+      label: t('Opis', 'Description'),
+      width: '320px',
+      render: (row: KpiCardSetRowVm) => (
+        <span className="block truncate text-sm text-c-text-secondary" title={row.description ?? undefined}>
+          {row.description ?? '—'}
+        </span>
       ),
     },
     {
-      id: 'scopeType',
-      label: isPolish ? 'Zakres' : 'Scope',
-      width: '160px',
-      render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-secondary">{kpiScorecardScopeLabel(row.scopeType, isPolish)}</span>
-      ),
-    },
-    {
-      id: 'reviewFrequency',
-      label: isPolish ? 'Częstotliwość przeglądu' : 'Review frequency',
-      width: '170px',
-      render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-secondary">
-          {kpiScorecardReviewFrequencyLabel(row.reviewFrequency, isPolish)}
+      id: 'itemCount',
+      label: t('Liczba wskaźników', 'Indicators'),
+      width: '150px',
+      align: 'right',
+      sortable: true,
+      render: (row: KpiCardSetRowVm) => (
+        <span className="text-sm tabular-nums text-c-text-secondary">
+          {row.itemCount === null ? '—' : row.itemCount}
         </span>
       ),
     },
     {
       id: 'owner',
-      label: isPolish ? 'Właściciel' : 'Owner',
-      width: '140px',
-      render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-secondary">
-          {row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, currentUserId, isPolish)}
-        </span>
+      label: t('Właściciel', 'Owner'),
+      width: '160px',
+      render: (row: KpiCardSetRowVm) => (
+        <span className="text-sm text-c-text-secondary">{row.owner ?? '—'}</span>
       ),
     },
     {
+      id: 'status',
+      label: 'Status',
+      width: '150px',
+      filterable: true,
+      filterOptions: (Object.keys(KPI_SCORECARD_STATUS_TONE) as KpiScorecardLifecycleStatus[]).map(
+        (s) => ({ value: s, label: kpiScorecardStatusLabel(s, isPolish) })
+      ),
+      render: (row: KpiCardSetRowVm) =>
+        row.status ? (
+          <StatusChip
+            label={kpiScorecardStatusLabel(row.status, isPolish)}
+            tone={KPI_SCORECARD_STATUS_TONE[row.status]}
+          />
+        ) : (
+          <StatusChip label={t('Systemowe', 'System')} tone="neutral" />
+        ),
+    },
+    {
       id: 'updatedAt',
-      label: isPolish ? 'Zaktualizowano' : 'Updated',
+      label: t('Aktualizacja', 'Updated'),
       width: '150px',
       sortable: true,
-      render: (row: KpiScorecardDto) => (
-        <span className="text-sm text-c-text-secondary">{formatKpiScorecardDate(row.updatedAt, isPolish)}</span>
+      render: (row: KpiCardSetRowVm) => (
+        <span className="text-sm text-c-text-secondary">
+          {row.updatedAt ? formatKpiScorecardDate(row.updatedAt, isPolish) : '—'}
+        </span>
       ),
     },
   ];
@@ -156,6 +193,13 @@ export interface KpiScorecardRowMenuCtx {
   isPolish: boolean;
   busy: boolean;
   memberCount?: number;
+  /**
+   * Otwarcie LISTY zestawienia (poziom 2 trzypoziomowej formuły). Gdy podane,
+   * staje się PIERWSZĄ pozycją kebaba — bo to jest droga w dół, o którą
+   * upomniał się właściciel 05.09 — a „Otwórz pełną kartę wyników" (rekord z
+   * cyklem życia i migawkami) zostaje obok niej, nieusunięta.
+   */
+  onOpenCardSet?: (scorecardId: string) => void;
   onOpenDetail: (scorecardId: string) => void;
   onActivate: (row: KpiScorecardDto) => void;
   onSuspend: (row: KpiScorecardDto) => void;
@@ -193,7 +237,16 @@ export function buildKpiScorecardRowMenu(row: KpiScorecardDto, ctx: KpiScorecard
 
   return {
     primary: [
-      { id: 'open', label: t('Otwórz kartę', 'Open scorecard'), onClick: () => ctx.onOpenDetail(row.scorecardId) },
+      ...(ctx.onOpenCardSet
+        ? [
+            {
+              id: 'open-list',
+              label: t('Otwórz listę wskaźników', 'Open indicator list'),
+              onClick: () => ctx.onOpenCardSet?.(row.scorecardId),
+            },
+          ]
+        : []),
+      { id: 'open', label: t('Otwórz pełną kartę wyników', 'Open full scorecard'), onClick: () => ctx.onOpenDetail(row.scorecardId) },
     ],
     statusTransitions,
     universalHandlers: isArchived
@@ -225,6 +278,17 @@ export interface KpiScorecardPreviewCtx {
    * other RN-G2 lazy-preview-only fetch in this program). */
   statusDistribution?: ScorecardStatusDistributionDto | 'loading';
   memberCount?: number;
+  /**
+   * Pozycje zestawienia pokazywane w bloku Relacje podglądu — poziom 1 ma
+   * pokazywać „opis zestawienia i jego wskaźniki" (odrzucenie właściciela
+   * 05.09), a nie samą metrykę rekordu. `undefined` = wołający ich nie zna
+   * (ekran szczegółu) ⇒ blok jak dotąd pusty; `'loading'` = w locie.
+   */
+  items?: KpiScorecardItemDto[] | 'loading';
+  /** Klik w pozycję z bloku Relacje → karta N tego wskaźnika (poziom 3). */
+  onOpenKpi?: (kpiId: string) => void;
+  /** Otwarcie LISTY zestawienia (poziom 2) — główna droga w dół z tabeli. */
+  onOpenCardSet?: (scorecardId: string) => void;
   onOpenDetail?: (scorecardId: string) => void;
   onActivate: (row: KpiScorecardDto) => void;
   onSuspend: (row: KpiScorecardDto) => void;
@@ -278,9 +342,27 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
             },
           ];
 
+  // Pozycje zestawienia jako chipy relacji — każda prowadzi w kartę N
+  // wskaźnika (poziom 3). Nazwa pozycji bierze się WYŁĄCZNIE z odpowiedzi
+  // serwera (`kpiName`); gdy jej nie ma, pokazujemy skrócony identyfikator,
+  // nigdy zmyśloną nazwę.
+  const itemRelations =
+    ctx.items === undefined || ctx.items === 'loading'
+      ? []
+      : ctx.items.map((item) => ({
+          id: item.itemId,
+          label: item.kpiName ?? shortKpiScorecardId(item.kpiId),
+          value: kpiScorecardItemRoleLabel(item.role, ctx.isPolish),
+          type: 'kpi',
+          title: item.kpiId,
+          onClick: ctx.onOpenKpi ? () => ctx.onOpenKpi?.(item.kpiId) : undefined,
+        }));
+
   return {
     title: row.name,
     onClose: ctx.onClose,
+    onOpenFull: ctx.onOpenCardSet ? () => ctx.onOpenCardSet?.(row.scorecardId) : undefined,
+    openLabel: ctx.onOpenCardSet ? t('Otwórz listę', 'Open list') : undefined,
     headerExtra: lockBadge,
     meta: {
       pills: [
@@ -321,7 +403,13 @@ export function buildKpiScorecardPreview(row: KpiScorecardDto, ctx: KpiScorecard
       disabled: true,
       disabledTooltip: t('Wkrótce', 'Coming soon'),
     },
-    relations: [],
+    relations: itemRelations,
+    relationsEmptyLabel:
+      ctx.items === 'loading'
+        ? t('Ładowanie wskaźników…', 'Loading indicators…')
+        : ctx.items === undefined
+          ? undefined
+          : t('To zestawienie nie ma jeszcze wskaźników.', 'This card set has no indicators yet.'),
     actions: isArchived
       ? {
           informational: [

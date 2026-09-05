@@ -1,42 +1,42 @@
 /**
- * `/results/kpi/:kpiId/zestawienie/:scorecardId` — POZIOM 3 trzypoziomowej
- * formuły KPI: ZBIÓR KART KPI.
+ * `/results/kpi/zestawienie/:scorecardId` — POZIOM 2 trzypoziomowej formuły
+ * KPI: LISTA ZESTAWIENIA (opis + pozycje).
  *
  * POWÓD ISTNIENIA (odrzucenie właściciela 2026-09-05, cytat dosłowny):
- *   „Zatwierdzona wersja, czyli karta KPI, jest OK. I teraz nad kartą jest ich
- *    zestawienie. To jest trzypoziomowe menu. (…) Tutaj mamy tabelę, pod nią
- *    kartę KPI, piętro niżej – zbiór kart KPI, a poniżej kolejna karta KPI."
+ *   „To nie jest, niestety, to, co wcześniej zgłosiliśmy i omawialiśmy.
+ *    Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis
+ *    KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N. Tego tu nie mamy
+ *    teraz."
  *
- * Ten ekran jest brakującym „piętrem niżej". Wchodzi się w niego z sekcji
- * „Zestawienia" karty KPI (poziom 2), a wychodzi w KOLEJNĄ kartę KPI
- * (poziom 4 = ta sama `KpiToolPage`). Ścieżka poziomów jest widoczna cały
+ * Ten ekran jest tą LISTĄ. Wchodzi się w niego KLIKIEM W WIERSZ tabeli
+ * zestawień (poziom 1, `../ResultsKpiRegistryPage.tsx`), a wychodzi w KARTĘ N
+ * wskaźnika (poziom 3 = `KpiToolPage`). Ścieżka poziomów jest widoczna cały
  * czas w Menu 1 (`StandardModuleBar breadcrumbs`) — patrz `kpiCardSetPath.ts`.
  *
  * ── KANON (CLAUDE.md §UI): powłoka NARZUCA wygląd ────────────────────────────
- * Ekran NIE buduje własnej tabeli ani własnego kafelka: Menu 1/2/3 to
- * `StandardModuleBar` (ten sam, którego używa rejestr KPI), a KAŻDY kafelek to
+ * Ekran NIE buduje własnej tabeli ani własnego kafelka: Menu 1/2 to
+ * `StandardModuleBar` (ten sam, którego używa rejestr KPI), a KAŻDA pozycja to
  * `StandardGridCard` — jedyny dozwolony renderer karty w widoku kafelkowym
  * (kanon #76a). Zero `primary-*`/crimson, wyłącznie tokeny `c-*`.
  *
  * ── UCZCIWOŚĆ DANYCH (zmierzone, nie założone) ───────────────────────────────
- * 1. W backendzie NIE MA relacji rodzic→dziecko między KPI. `rg parentKpiId|
- *    parent_kpi_id|childKpi|kpiChildren` po `server/src` + `src` = ZERO
- *    trafień (jedyny `linkedKpis` to lokalna zmienna w
- *    `executionResultsBridge.ts`, inicjatywa→KPI, nie KPI→KPI). Hierarchii
- *    NIE udajemy danymi pokazowymi — „zbiorem" jest REALNE zestawienie
- *    (`rvn_kpi_scorecards` + `rvn_kpi_scorecard_items`), do którego wskaźnik
- *    z poziomu 2 należy; to jedyna istniejąca relacja KPI↔KPI.
- * 2. `rvn_kpi_scorecard_items` „carries NO KPI-fact column" (komentarz
+ * 1. `rvn_kpi_scorecard_items` „carries NO KPI-fact column" (komentarz
  *    migracji, cytowany w `kpiScorecardApi.ts`) — sama pozycja zestawienia
  *    zna WYŁĄCZNIE `kpiName`/`role`/`sortOrder`/`addedAt`. Wartości liczbowe
  *    biorą się jedynie z OPUBLIKOWANEJ migawki przeglądu
  *    (`GET .../review-snapshots/published`); gdy zestawienie nigdy jej nie
  *    opublikowało, kafelek uczciwie nie pokazuje żadnej liczby (nie zeruje,
  *    nie zgaduje) i mówi to wprost w pasku pod Menu.
- * 3. `GET /:scorecardId` zwraca 404 zarówno dla „nie istnieje", jak i dla
+ * 2. `GET /:scorecardId` zwraca 404 zarówno dla „nie istnieje", jak i dla
  *    „brak widoczności" (nagłówek `kpiScorecardApi.ts`) — dlatego pusty wynik
  *    renderujemy jako uczciwy stan „nie widzisz tego zestawienia", nigdy jako
  *    „zestawienie jest puste".
+ * 3. ZESTAWIENIE SYSTEMOWE „Bez zestawienia" (`UNASSIGNED_CARD_SET_ID`) nie
+ *    jest rekordem w bazie — to wyliczenie po stronie klienta: wszystkie
+ *    widoczne KPI MINUS te, które są pozycją jakiegokolwiek widocznego
+ *    zestawienia. Istnieje po to, żeby przejście poziomu 1 na tabelę zestawień
+ *    niczego nie ukryło. Nie ma opublikowanej migawki (bo nie jest
+ *    zestawieniem), więc nigdy nie pokazuje wartości liczbowych.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -51,18 +51,24 @@ import { ROUTES } from '@/routes/routeConfig';
 import { getResultsDomainPath, getResultsDomainTabs, isResultsDomain } from '../resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
-import { getKpi, type KpiDefinitionDto } from '../kpiApi';
+import { listKpis, type KpiDefinitionDto } from '../kpiApi';
 import {
   getKpiScorecard,
   getPublishedKpiScorecardSnapshot,
   listKpiScorecardItems,
+  listKpiScorecards,
   type KpiScorecardDto,
   type KpiScorecardItemDto,
   type KpiScorecardReviewSnapshotDto,
   type ScorecardSnapshotItemFactDto,
 } from '../kpiScorecards/kpiScorecardApi';
 import { kpiScorecardItemRoleLabel } from '../kpiScorecards/kpiScorecardMappers';
-import { kpiCardFromSetPath, withOwnerSampleData } from './kpiCardSetPath';
+import {
+  isUnassignedCardSetId,
+  kpiCardFromSetPath,
+  UNASSIGNED_CARD_SET_ID,
+  withOwnerSampleData,
+} from './kpiCardSetPath';
 
 /** `performanceStatus` migawki → ton pigułki `StandardGridCard` (kanon: kolor
  * TYLKO jako sygnał, nigdy dekoracja; brak wartości = brak pigułki). */
@@ -93,22 +99,36 @@ function formatDate(iso: string | null | undefined, isPolish: boolean): string {
   return d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+/** Jedna pozycja LISTY — wspólny kształt dla realnego zestawienia
+ * (`KpiScorecardItemDto`) i dla wyliczonego zestawienia systemowego
+ * (`KpiDefinitionDto`), żeby renderować JEDNYM kodem. */
+interface CardSetEntry {
+  kpiId: string;
+  kpiName: string;
+  /** Podpis pod nazwą: rola w zestawieniu albo kod KPI (systemowe). */
+  subtitle: string;
+  /** Data w stopce: dodania do zestawienia albo aktualizacji KPI. */
+  footerDate: string | null;
+}
+
 export const KpiCardSetPage: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
   const navigate = useNavigate();
-  const { kpiId, scorecardId } = useParams<{ kpiId: string; scorecardId: string }>();
+  const { scorecardId } = useParams<{ scorecardId: string }>();
   const enabled = isResultsVNextFlagEnabled('kpiRegistry');
+  const isUnassigned = isUnassignedCardSetId(scorecardId);
 
   const [scorecard, setScorecard] = useState<KpiScorecardDto | null | 'loading'>('loading');
   const [items, setItems] = useState<KpiScorecardItemDto[] | 'loading'>('loading');
   const [snapshot, setSnapshot] = useState<KpiScorecardReviewSnapshotDto | null | 'loading'>('loading');
-  const [parentKpi, setParentKpi] = useState<KpiDefinitionDto | null>(null);
+  /** Pozycje zestawienia SYSTEMOWEGO — KPI spoza wszystkich zestawień. */
+  const [unassigned, setUnassigned] = useState<KpiDefinitionDto[] | 'loading'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !scorecardId) return;
+    if (!enabled || !scorecardId || isUnassigned) return;
     setScorecard('loading');
     setLoadError(null);
     getKpiScorecard(scorecardId)
@@ -117,33 +137,52 @@ export const KpiCardSetPage: React.FC = () => {
         setScorecard(null);
         setLoadError(toUserFacingErrorMessage(err, isPolish));
       });
-  }, [enabled, isPolish, scorecardId]);
+  }, [enabled, isPolish, isUnassigned, scorecardId]);
 
   useEffect(() => {
-    if (!enabled || !scorecardId) return;
+    if (!enabled || !scorecardId || isUnassigned) return;
     setItems('loading');
     listKpiScorecardItems(scorecardId)
       .then(setItems)
       .catch(() => setItems([]));
-  }, [enabled, scorecardId]);
+  }, [enabled, isUnassigned, scorecardId]);
 
   useEffect(() => {
-    if (!enabled || !scorecardId) return;
+    if (!enabled || !scorecardId || isUnassigned) return;
     setSnapshot('loading');
     getPublishedKpiScorecardSnapshot(scorecardId)
       .then(setSnapshot)
       .catch(() => setSnapshot(null));
-  }, [enabled, scorecardId]);
+  }, [enabled, isUnassigned, scorecardId]);
 
-  // Nazwa karty KPI POZIOMU 2 do breadcrumbu — bez niej ścieżka poziomów
-  // pokazywałaby surowy identyfikator (defekt rodziny „UUID w miejscu
-  // człowieka/nazwy", zgłoszony przez właściciela).
+  // ZESTAWIENIE SYSTEMOWE — te same dwa realne wywołania, których używa
+  // poziom 1 do policzenia wiersza „Bez zestawienia": lista KPI minus
+  // członkowie wszystkich widocznych zestawień. Zero zmyślonych danych.
   useEffect(() => {
-    if (!enabled || !kpiId) return;
-    getKpi(kpiId)
-      .then(setParentKpi)
-      .catch(() => setParentKpi(null));
-  }, [enabled, kpiId]);
+    if (!enabled || !isUnassigned) return;
+    let cancelled = false;
+    setUnassigned('loading');
+    setLoadError(null);
+    (async () => {
+      try {
+        const [kpis, scorecards] = await Promise.all([listKpis({}), listKpiScorecards({})]);
+        const memberLists = await Promise.all(
+          scorecards.map((sc) => listKpiScorecardItems(sc.scorecardId).catch(() => []))
+        );
+        const members = new Set<string>();
+        for (const list of memberLists) for (const item of list) members.add(item.kpiId);
+        if (cancelled) return;
+        setUnassigned(kpis.filter((kpi) => !members.has(kpi.kpiId)));
+      } catch (err) {
+        if (cancelled) return;
+        setUnassigned([]);
+        setLoadError(toUserFacingErrorMessage(err, isPolish));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, isPolish, isUnassigned]);
 
   /** Fakty z OPUBLIKOWANEJ migawki, po `kpiId` — jedyne realne źródło liczb. */
   const factsByKpi = useMemo(() => {
@@ -154,33 +193,51 @@ export const KpiCardSetPage: React.FC = () => {
     return map;
   }, [snapshot]);
 
+  const entries: CardSetEntry[] | 'loading' = useMemo(() => {
+    if (isUnassigned) {
+      if (unassigned === 'loading') return 'loading';
+      return unassigned.map((kpi) => ({
+        kpiId: kpi.kpiId,
+        kpiName: kpi.name || kpi.kpiCode,
+        subtitle: kpi.kpiCode,
+        footerDate: kpi.updatedAt,
+      }));
+    }
+    if (items === 'loading') return 'loading';
+    return items.map((item) => ({
+      kpiId: item.kpiId,
+      kpiName: item.kpiName ?? item.kpiId,
+      // Etykieta roli z SSOT mapperów zestawień — jedna nazwa w całej
+      // rodzinie, żadna powierzchnia nie wymyśla własnego słownika.
+      subtitle: `${t('Rola', 'Role')}: ${kpiScorecardItemRoleLabel(item.role, isPolish)}`,
+      footerDate: item.addedAt,
+    }));
+  }, [isPolish, isUnassigned, items, t, unassigned]);
+
   const cards: StandardGridCardData[] = useMemo(() => {
-    if (items === 'loading') return [];
-    return items.map((item) => {
-      const fact = factsByKpi.get(item.kpiId);
+    if (entries === 'loading') return [];
+    return entries.map((entry) => {
+      const fact = factsByKpi.get(entry.kpiId);
       const statusLabel = performanceLabel(fact?.performanceStatus ?? null, isPolish);
       const valueText =
         fact && fact.actualValue !== null && fact.actualValue !== undefined
           ? `${fact.actualValue.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}${fact.unit ? ` ${fact.unit}` : ''}`
           : '—';
       return {
-        id: item.kpiId,
-        title: item.kpiName ?? item.kpiId,
-        // Etykieta roli z SSOT mapperów zestawień — jedna nazwa w całej
-        // rodzinie, żadna powierzchnia nie wymyśla własnego słownika.
-        subtitle: `${t('Rola', 'Role')}: ${kpiScorecardItemRoleLabel(item.role, isPolish)}`,
+        id: entry.kpiId,
+        title: entry.kpiName,
+        subtitle: entry.subtitle,
         statusLabel,
         statusTone: statusLabel ? PERFORMANCE_TONE[fact?.performanceStatus ?? 'neutral'] : undefined,
-        metrics: [
-          {
-            id: 'value',
-            label: `${t('Ostatnia opublikowana wartość', 'Latest published value')}: ${valueText}`,
-          },
-        ],
-        footerRight: formatDate(item.addedAt, isPolish),
+        // Krótka etykieta metryki — kafelek ma ~200 px w siatce 4-kolumnowej,
+        // a długi podpis nachodził na datę w stopce (zmierzone na zrzucie
+        // L2, 05.09). Skąd bierze się (albo nie bierze) wartość, mówi pasek
+        // nad siatką — nie powtarzamy tego na każdym kafelku.
+        metrics: [{ id: 'value', label: `${t('Wartość', 'Value')}: ${valueText}` }],
+        footerRight: formatDate(entry.footerDate, isPolish),
       } satisfies StandardGridCardData;
     });
-  }, [factsByKpi, isPolish, items, t]);
+  }, [entries, factsByKpi, isPolish, t]);
 
   if (!enabled) {
     return (
@@ -199,14 +256,29 @@ export const KpiCardSetPage: React.FC = () => {
     );
   }
 
-  const scorecardName =
-    scorecard && scorecard !== 'loading'
+  const scorecardName = isUnassigned
+    ? t('Bez zestawienia', 'Not in any card set')
+    : scorecard && scorecard !== 'loading'
       ? scorecard.name
       : t('Zestawienie wskaźników', 'Indicator card set');
-  const parentTitle = parentKpi?.name || parentKpi?.kpiCode || t('Karta KPI', 'KPI card');
 
-  const snapshotNotice =
-    snapshot === 'loading'
+  // OPIS ZESTAWIENIA — to jest ten „opis KPI", którego brak właściciel
+  // wypunktował 05.09 („Lista ma opis KPI, kilka pozycji").
+  const scorecardDescription = isUnassigned
+    ? t(
+        'Wskaźniki, które nie należą do żadnego widocznego zestawienia. To wyliczenie, nie rekord w bazie — istnieje po to, żeby żaden KPI nie zniknął z rejestru.',
+        'Indicators that belong to no visible card set. A computed list, not a stored record — it exists so that no KPI disappears from the registry.'
+      )
+    : scorecard && scorecard !== 'loading'
+      ? (scorecard.description ?? t('Brak opisu zestawienia.', 'This card set has no description.'))
+      : '';
+
+  const snapshotNotice = isUnassigned
+    ? t(
+        'Zestawienie systemowe nie ma przeglądu ani migawki — dlatego kafelki nie pokazują wartości liczbowych.',
+        'The system card set has no review and no snapshot — that is why the tiles show no numbers.'
+      )
+    : snapshot === 'loading'
       ? null
       : snapshot === null
         ? t(
@@ -218,12 +290,17 @@ export const KpiCardSetPage: React.FC = () => {
             `Values come from the published review snapshot for ${formatDate(snapshot.reviewPeriodStart, isPolish)} – ${formatDate(snapshot.reviewPeriodEnd, isPolish)}.`
           );
 
+  const notVisible = !isUnassigned && scorecard === null;
+  const loadingList = entries === 'loading' || (!isUnassigned && scorecard === 'loading');
+
   return (
     <div className="h-full" data-testid="results-vnext-kpi-card-set-page">
       <StandardModuleBar
         breadcrumbs={[
-          { label: t('Rejestr KPI', 'KPI registry'), onClick: () => navigate(withOwnerSampleData(ROUTES.RESULTS_KPI.ROOT)) },
-          { label: parentTitle, onClick: () => (kpiId ? navigate(withOwnerSampleData(`/results/kpi/${kpiId}`)) : undefined) },
+          {
+            label: t('Rejestr KPI', 'KPI registry'),
+            onClick: () => navigate(withOwnerSampleData(ROUTES.RESULTS_KPI.ROOT)),
+          },
           { label: scorecardName },
         ]}
         // Menu 2 = te same pigułki domen co rejestr KPI i ekran karty wyników
@@ -237,9 +314,25 @@ export const KpiCardSetPage: React.FC = () => {
         showTabCounts={false}
       >
         <div className="flex h-full min-h-0 flex-col gap-4 p-6" data-testid="kpi-card-set-body">
-          <p className="text-[11px] text-c-text-muted" data-testid="kpi-card-set-snapshot-notice">
-            {snapshotNotice}
-          </p>
+          {/* NAGŁÓWEK LISTY — nazwa zestawienia, jego OPIS i liczba pozycji. */}
+          <header className="flex flex-col gap-1" data-testid="kpi-card-set-header">
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <h1 className="text-base font-semibold text-c-text">{scorecardName}</h1>
+              <span className="text-xs text-c-text-secondary" data-testid="kpi-card-set-count">
+                {entries === 'loading'
+                  ? t('Wskaźniki: …', 'Indicators: …')
+                  : `${t('Wskaźniki', 'Indicators')}: ${entries.length}`}
+              </span>
+            </div>
+            {scorecardDescription ? (
+              <p className="max-w-3xl text-sm text-c-text-secondary" data-testid="kpi-card-set-description">
+                {scorecardDescription}
+              </p>
+            ) : null}
+            <p className="text-[11px] text-c-text-muted" data-testid="kpi-card-set-snapshot-notice">
+              {snapshotNotice}
+            </p>
+          </header>
 
           {loadError ? (
             <EmptyState
@@ -249,7 +342,7 @@ export const KpiCardSetPage: React.FC = () => {
               description={loadError}
               compact
             />
-          ) : scorecard === null ? (
+          ) : notVisible ? (
             <EmptyState
               variant="new"
               icon={LayoutGrid}
@@ -260,19 +353,30 @@ export const KpiCardSetPage: React.FC = () => {
               )}
               compact
             />
-          ) : items === 'loading' || scorecard === 'loading' ? (
+          ) : loadingList ? (
             <p className="text-sm text-c-text-muted" data-testid="kpi-card-set-loading">
-              {t('Ładowanie zbioru kart…', 'Loading card set…')}
+              {t('Ładowanie listy wskaźników…', 'Loading the indicator list…')}
             </p>
           ) : cards.length === 0 ? (
             <EmptyState
               variant="new"
               icon={LayoutGrid}
-              title={t('Zestawienie nie ma jeszcze wskaźników', 'This card set has no indicators yet')}
-              description={t(
-                'Dodaj wskaźniki do zestawienia w narzędziu kart wyników.',
-                'Add indicators to this card set in the scorecards tool.'
-              )}
+              title={
+                isUnassigned
+                  ? t('Każdy KPI należy do zestawienia', 'Every KPI belongs to a card set')
+                  : t('Zestawienie nie ma jeszcze wskaźników', 'This card set has no indicators yet')
+              }
+              description={
+                isUnassigned
+                  ? t(
+                      'Nie ma wskaźnika poza zestawieniami — dlatego ta lista jest pusta.',
+                      'No indicator sits outside a card set — that is why this list is empty.'
+                    )
+                  : t(
+                      'Dodaj wskaźniki do zestawienia w narzędziu kart wyników.',
+                      'Add indicators to this card set in the scorecards tool.'
+                    )
+              }
               compact
             />
           ) : (
@@ -285,9 +389,11 @@ export const KpiCardSetPage: React.FC = () => {
                   key={card.id}
                   card={card}
                   onClick={() =>
-                    kpiId && scorecardId
-                      ? navigate(withOwnerSampleData(kpiCardFromSetPath(card.id, scorecardId, kpiId)))
-                      : undefined
+                    navigate(
+                      withOwnerSampleData(
+                        kpiCardFromSetPath(card.id, scorecardId ?? UNASSIGNED_CARD_SET_ID)
+                      )
+                    )
                   }
                 />
               ))}
