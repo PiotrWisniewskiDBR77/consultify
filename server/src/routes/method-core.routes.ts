@@ -1524,6 +1524,7 @@ router.post(
     }
 
     if (session.state !== 'frozen') {
+      const revisionUnderReview = session.version; // stamped BEFORE the write
       const result = await sessionService.transition({
         sessionId: session.id,
         to: 'frozen',
@@ -1543,6 +1544,30 @@ router.post(
         }
         res.status(422).json({ error: refusal.kind, refusal });
         return;
+      }
+      // MVP-OWNER-FREEZE (2026-09-05) — ślad „kto zamroził".
+      //
+      // Ta trasa (w odróżnieniu od `POST /approvals`) nigdy nie zapisywała
+      // ani jednego wiersza decyzji, więc zamrożenie zrobione stąd nie
+      // zostawiało nazwiska nigdzie — a raport z oceny czyta „kto
+      // zatwierdził" właśnie z `GET /sessions/:id/approvals`
+      // (src/components/assessment/report/reportApi.ts). Dopisujemy wiersz
+      // TYLKO wtedy, gdy prawo do zamrożenia wzięło się z roli właściciela
+      // ORGANIZACJI zamiast z procesowej roli `approver`: to jest ten
+      // przypadek, w którym trzeba wprost widzieć, kto wystąpił w
+      // zastępstwie nieobsadzonej roli. Zamrożenie przez prawdziwego
+      // approvera idzie ścieżką `POST /approvals`, która swój wiersz
+      // zapisuje sama — nie dublujemy go.
+      if (result.authority === 'organization_owner') {
+        await sessionService.recordApproval({
+          organizationId,
+          sessionId: session.id,
+          revision: revisionUnderReview,
+          decision: 'approved',
+          comment:
+            'Zamrożone przez właściciela organizacji (rola approvera nieobsadzona w tej sesji).',
+          actorUserId,
+        });
       }
       const reloaded = await sessionService.getSession(session.id);
       if (!reloaded) {

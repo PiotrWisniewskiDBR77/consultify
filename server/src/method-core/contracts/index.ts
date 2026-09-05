@@ -50,6 +50,7 @@ export type {
   MethodSaveState,
   MethodReadiness,
   MethodTransitionRequest,
+  TransitionAuthority,
   TransitionRefusal,
   TransitionResult,
 } from './session.js';

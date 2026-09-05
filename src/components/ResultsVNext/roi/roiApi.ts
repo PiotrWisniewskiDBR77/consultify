@@ -418,6 +418,58 @@ export async function createRoiCase(input: CreateRoiCaseInput): Promise<CreateRo
 }
 
 // ==========================================
+// Polityka widoczności ROI (AMD-FLOW-ROI-VISIBILITY-002) — dodane 2026-09-05
+// ==========================================
+//
+// Domena ROI jest fail-closed: dopóki organizacja nie opublikuje polityki
+// `ROI_GOVERNED`, `GET /cases` zwraca pustą listę (celowo, bez 403), a
+// `POST /cases` odmawia z kodem `ROI_CASE_CREATION_NOT_AUTHORIZED`. Do
+// 05.09.2026 endpoint publikujący (`POST /vnext/results/roi/visibility-policy`,
+// `roi.routes.ts`) NIE MIAŁ ANI JEDNEGO WOŁACZA w `src/` — właściciel
+// organizacji nie miał żadnej drogi, żeby domenę włączyć, i widział tylko
+// pusty rejestr. Te dwie funkcje są tym brakującym przewodem.
+
+export type RoiVisibilityPolicyBlocker =
+  | 'ALREADY_PUBLISHED'
+  | 'NOT_ACTIVE_MEMBER'
+  | 'ORDINARY_MEMBER_DENIED';
+
+export interface RoiVisibilityPolicyStatus {
+  published: boolean;
+  publication: {
+    organizationId: string;
+    publishedBy: string;
+    publishedAt: string;
+    policyKey: string;
+  } | null;
+  canPublish: boolean;
+  blocker: RoiVisibilityPolicyBlocker | null;
+}
+
+// GET /api/vnext/results/roi/visibility-policy
+export async function getRoiVisibilityPolicyStatus(): Promise<RoiVisibilityPolicyStatus> {
+  return getJson<RoiVisibilityPolicyStatus>('/vnext/results/roi/visibility-policy');
+}
+
+export interface PublishRoiVisibilityPolicyResponse {
+  outcome: 'applied' | 'replayed';
+  publication: NonNullable<RoiVisibilityPolicyStatus['publication']>;
+}
+
+// POST /api/vnext/results/roi/visibility-policy — klucz polityki NIGDY nie
+// jedzie z klienta (serwer publikuje jedyną przypiętą politykę); ciało niesie
+// wyłącznie klucz idempotencji.
+export async function publishRoiVisibilityPolicy(
+  idempotencyKey: string
+): Promise<PublishRoiVisibilityPolicyResponse> {
+  return mutateJson<PublishRoiVisibilityPolicyResponse>(
+    'POST',
+    '/vnext/results/roi/visibility-policy',
+    { idempotencyKey }
+  );
+}
+
+// ==========================================
 // Lifecycle transitions (RN_G2_UI_SCOPE.md §G #16 subset — exactly the 7
 // endpoints this package is scoped to). Each mirrors its route's exact body
 // shape read from `roi.routes.ts`/the validator files cited in the file

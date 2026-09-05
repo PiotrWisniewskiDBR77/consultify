@@ -69,7 +69,9 @@ import {
 } from '@/method-core/methods/drd/drdHttpSessionRuntime';
 import type { MethodReadiness, TeresaCommitRequest } from '@/method-core/contracts';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { useAppStore } from '@/store/useAppStore';
 import { isAssessmentReportViewEnabled } from '@/utils/assessmentReportViewFlag';
+import { normalizeAppRole } from '@/utils/roleGuards';
 
 import {
   buildMatrixRowsForAxis,
@@ -410,6 +412,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
   HttpScreenProps & { forceState?: DrdHttpDebugForcedState }
 > = ({ storage: storageProp, demoSessionId, onExit, seedTo, initialViewMode, forceState }) => {
   const { t } = useTranslation();
+  // MVP-OWNER-FREEZE (2026-09-05) — czytane NA GÓRZE komponentu, przed
+  // jakimkolwiek wczesnym `return` (reguły hooków); używane dopiero przy
+  // `canFreeze` niżej.
+  const currentUserRole = useAppStore((s) => s.currentUser?.role);
+  const isOrganizationOwner = normalizeAppRole(currentUserRole) === 'OWNER';
   const storage = storageProp ?? window.localStorage;
   const runtimeRef = useRef<DrdHttpSessionRuntime | null>(null);
   // React 18 StrictMode (dev only) double-invokes effects: mount -> cleanup
@@ -1012,7 +1019,21 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
 
   const canSendToReview = canWrite && session.state === 'active';
   const canSendBack = canWrite && session.state === 'in_review';
-  const canFreeze = session.state === 'in_review' && state.roles.includes('approver');
+  // MVP-OWNER-FREEZE (2026-09-05). Do 05.09 warunkiem był WYŁĄCZNIE
+  // `state.roles.includes('approver')` — a rola `approver` nie ma w tej
+  // aplikacji ŻADNEGO ekranu, którym dałoby się ją komukolwiek nadać
+  // (`POST /sessions/:id/roles` istnieje, ale nie ma wołacza w src/, a
+  // samo-nadanie tej roli jest słusznie odmawiane). W organizacji z jednym
+  // kontem przycisk „Zamroź" był więc wyłączony na zawsze, a razem z nim
+  // Output, raport z oceny i prezentacja z oceny.
+  //
+  // Właściciel ORGANIZACJI jest teraz approverem ostatniej instancji —
+  // decyzję egzekwuje serwer (`MethodSessionService.transition`, wiersz
+  // ACTIVE/OWNER w `organization_members`), nie ten warunek. Tutaj rola z
+  // magazynu odblokowuje wyłącznie WIDOK przycisku; gdyby serwer odmówił,
+  // trafi to na pasek błędu nad warsztatem, a nie w ciszę.
+  const canFreeze =
+    session.state === 'in_review' && (state.roles.includes('approver') || isOrganizationOwner);
 
   return (
     <div className="flex h-full flex-col">
@@ -1264,7 +1285,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               </button>
               <button
                 type="button"
-                onClick={() => void runtime?.freeze()}
+                onClick={() => void runtime?.freeze().catch(() => undefined)}
                 disabled={!canFreeze}
                 data-testid="freeze-button"
                 className="inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-2.5 py-1 font-semibold text-c-text disabled:opacity-40 hover:bg-c-border-subtle"
