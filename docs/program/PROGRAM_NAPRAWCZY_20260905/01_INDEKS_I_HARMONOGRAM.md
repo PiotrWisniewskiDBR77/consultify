@@ -52,7 +52,7 @@ Agent (wykonawcy etapów + producent rozpoznawania sprawy; worker `ENABLE_AI_TAS
 | --- | --- | --- | --- | --- | --- |
 | P4 | `codex/p4-kody` | **ODEBRANE, scalone** | 05.09 wieczór | `0a288a8f4f` | §10 zmierzone niezależnie (Sonnet): testy PASS, 2 mutacje RED→GREEN, 7 ekranów 0 UUID/SCREAMING/Unknown/manual, 0 błędów konsoli; CTO obejrzał zrzuty 05 i 07; serwer nietknięty |
 | P2 | `codex/p2-tabela` | W TOKU u Codexa | 05.09 | — | mechanika w SSOT (`FilterableTable.tsx`, +160/−30, 38/38 testów, mutacja RED); brakuje `evidence/p2-tabela/`, pomiaru na żywo 5 ekranów × 3 szerokości, zrzutów jasny+ciemny, raportu |
-| P7K | `codex/p7k-wyniki` | KROK 1 **NIE** — korekta 1b | 05.09 | — | werdykt `P7K_KROK1_WERDYKT_20260905.md` (9 korekt: crimson w stanach aktywnych, liczby łamane, nagłówki i FAZA ucięte, pill 3 linie, wiersze grup z „—”, panel bez accordionu/Teresy); KROK 2 zakazany |
+| P7K | `codex/p7k-wyniki` | KROK 1b **NIE** — korekta 1c | 05.09 noc | — | 1b (`7308fc2104`) spełnia progi mechaniczne, oko widzi 4 nowe defekty układu tabel (przypięte kolumny nachodzą, teksty wchodzą na sąsiednie kolumny, L3 ucina daty/nazwiska); werdykt 1b + korekta 1c w `P7K_KROK1_WERDYKT_20260905.md`; podstawa 1c = mechanika P2 (`codex/p2-tabela`) |
 | P1 | `codex/p1-jeden-panel` | W TOKU (14 commitów + 4 pliki niecommitowane) | 05.09 | — | czeka na raport |
 | P3 | `codex/p3-angielski` | W TOKU (21 commitów + 10 plików niecommitowanych) | 05.09 | — | czeka na raport |
 | P5 | `codex/p5-ladowanie` | W TOKU (9 commitów + 4 niecommitowane) | 05.09 | — | czeka na raport |
