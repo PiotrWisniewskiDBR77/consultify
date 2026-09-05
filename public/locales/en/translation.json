@@ -4416,6 +4416,9 @@
         "review": "Review",
         "todo": "To Do"
       },
+      "noDueDate": "No due date",
+      "dueToday": "Today",
+      "dueTomorrow": "Tomorrow",
       "toast": {
         "completeTasksFailed": "Failed to complete tasks",
         "deleteTaskFailed": "Failed to delete task",

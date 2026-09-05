@@ -3710,6 +3710,9 @@
         "review": "Przegląd",
         "todo": "Do zrobienia"
       },
+      "noDueDate": "Brak terminu",
+      "dueToday": "Dziś",
+      "dueTomorrow": "Jutro",
       "toast": {
         "completeTasksFailed": "Nie udało się ukończyć zadań",
         "deleteTaskFailed": "Nie udało się usunąć zadania",

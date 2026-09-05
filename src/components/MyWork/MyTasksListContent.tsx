@@ -342,8 +342,15 @@ const getStatusConfig = (status?: string) => {
 };
 
 // Date formatting
+// ★ NAPRAWA (odbiór CTO 05.09): funkcja zwracała twarde angielskie stringi
+// ('No due date'/'Today'/'Tomorrow') i formatowała datę w locale 'en-US'
+// niezależnie od języka aplikacji — jedyne miejsce w tym pliku, które nie
+// przechodzi przez `i18n.t` (statusy w `getStatusConfig` wyżej już go
+// używają, ten sam moduł-scope import). Kolumna „Termin" w tabeli Zadań
+// pokazywała „Feb 5”/„No due date” na w pełni polskim ekranie.
 const formatDueDate = (dueDate?: string | Date): string => {
-  if (!dueDate) return 'No due date';
+  const isPl = i18n.language?.startsWith('pl');
+  if (!dueDate) return i18n.t('myWork.tasksList.noDueDate', 'No due date');
   const date = new Date(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -352,9 +359,13 @@ const formatDueDate = (dueDate?: string | Date): string => {
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);
 
-  if (dateOnly.getTime() === today.getTime()) return 'Today';
-  if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (dateOnly.getTime() === today.getTime()) {
+    return i18n.t('myWork.tasksList.dueToday', 'Today');
+  }
+  if (dateOnly.getTime() === tomorrow.getTime()) {
+    return i18n.t('myWork.tasksList.dueTomorrow', 'Tomorrow');
+  }
+  return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
 const isOverdue = (dueDate?: string | Date, status?: string): boolean => {
