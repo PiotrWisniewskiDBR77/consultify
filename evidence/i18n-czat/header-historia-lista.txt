@@ -1,0 +1,64 @@
+src/components/AIChat/UnifiedChatPanel.tsx:1374	chat.governedHandoff.defaultTitle	Document from Chat
+src/components/AIChat/UnifiedChatPanel.tsx:1387	chat.governedHandoff.createFailed	Proposal creation failed.
+src/components/AIChat/UnifiedChatPanel.tsx:1514	myWork.ideas.savedFromChatToast	Saved from chat to My Ideas
+src/components/AIChat/UnifiedChatPanel.tsx:1515	myWork.ideas.sentToWorkspaceToast	Opened in Ideas workspace
+src/components/AIChat/UnifiedChatPanel.tsx:1556	myWork.ideas.savedFromChatToast	Saved from chat to My Ideas
+src/components/AIChat/UnifiedChatPanel.tsx:1614	myWork.notebook.savedFromChatToast	Saved from chat to Notebook
+src/components/AIChat/UnifiedChatPanel.tsx:2265	myWork.ideas.sentToWorkspaceToast	Opened in Ideas workspace
+src/components/AIChat/UnifiedChatPanel.tsx:2285	myWork.notebook.savedFromChatToast	Saved from chat to Notebook
+src/components/AIChat/UnifiedChatPanel.tsx:2304	myWork.tasks.createdFromChatToast	Task created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2305	myWork.decisions.createdFromChatToast	Decision created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2325	chat.initiativeHandoff.createdDraft	The initiative draft is ready. Review it before passing it to execution.
+src/components/AIChat/UnifiedChatPanel.tsx:2340	myWork.initiatives.createdFromChatToast	Initiative created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2353	myWork.initiatives.createdFromChatToast	Initiative created from chat
+src/components/AIChat/UnifiedChatPanel.tsx:2914	chat.suggestions.generateReport	Create document
+src/components/AIChat/UnifiedChatPanel.tsx:2920	chat.suggestions.generatePresentation	Create presentation
+src/components/AIChat/UnifiedChatPanel.tsx:2926	chat.suggestions.browseTemplates	Browse templates
+src/components/AIChat/UnifiedChatPanel.tsx:2934	chat.suggestions.useTemplate	Use this template
+src/components/AIChat/UnifiedChatPanel.tsx:2946	chat.suggestions.recordKpi	Record KPI value
+src/components/AIChat/UnifiedChatPanel.tsx:4581	aiChat.errors.messageSaveFailed	Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds.
+src/components/AIChat/UnifiedChatPanel.tsx:5854	branch.loadFailed	Could not load branches.
+src/components/AIChat/UnifiedChatPanel.tsx:5890	branch.switchFailed	Could not switch to that branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5919	branch.createFailed	Could not create branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5938	branch.renameFailed	Could not rename branch.
+src/components/AIChat/UnifiedChatPanel.tsx:5960	branch.deleteFailed	Could not delete branch.
+src/components/AIChat/UnifiedChatPanel.tsx:6764	branch.backToParent	Back to source conversation
+src/components/AIChat/UnifiedChatPanel.tsx:6765	branch.backToParent	Back to source conversation
+src/components/AIChat/UnifiedChatPanel.tsx:6797	aiChat.business	Business actions
+src/components/AIChat/UnifiedChatPanel.tsx:6798	aiChat.business	Business actions
+src/components/AIChat/UnifiedChatPanel.tsx:6869	voice.bargeInToast	Reading interrupted.
+src/components/AIChat/UnifiedChatPanel.tsx:6883	aiChat.muteNow	Mute now
+src/components/AIChat/UnifiedChatPanel.tsx:6890	aiChat.muteNow	Mute now
+src/components/AIChat/UnifiedChatPanel.tsx:6993	aiChat.streamError	Last request failed. You can retry.
+src/components/AIChat/UnifiedChatPanel.tsx:7042	aiChat.quickClicks.brief.prompt	Give me a short daily brief: priorities, risks, decisions, and next best actions.
+src/components/AIChat/UnifiedChatPanel.tsx:7377	aiChat.streamError	Last request failed. You can retry.
+src/components/AIChat/UnifiedChatPanel.tsx:7490	aiChat.workPanel.title	Canvas work area
+src/components/AIChat/UnifiedChatPanel.tsx:7495	aiChat.workPanel.resizeDivider	Resize Canvas panel
+36 src/components/AIChat/UnifiedChatPanel.tsx
+src/components/AIChat/ChatHistorySidebar.tsx:386	aiChat.folderColor	Color
+src/components/AIChat/ChatHistorySidebar.tsx:895	aiChat.folder	folder
+src/components/AIChat/ChatHistorySidebar.tsx:898	aiChat.confirmDeleteFolderWithConvs	Delete folder "${name}"? The ${count} conversation(s) inside will NOT be deleted, just detached from this folder.
+src/components/AIChat/ChatHistorySidebar.tsx:902	aiChat.confirmDeleteFolder	Delete folder "${name}"?
+src/components/AIChat/ChatHistorySidebar.tsx:910	aiChat.deleteFolderFailed	Could not delete folder. Please try again.
+src/components/AIChat/ChatHistorySidebar.tsx:942	aiChat.confirmMovePrivateToOrganization	Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.
+src/components/AIChat/ChatHistorySidebar.tsx:956	aiChat.visibilityConsentRecorded	Organization visibility recorded. Receipt
+7 src/components/AIChat/ChatHistorySidebar.tsx
+src/components/AIChat/ConversationActions.tsx:340	aiChat.exportTooLarge	This conversation is too large for full export. Please use date filters.
+src/components/AIChat/ConversationActions.tsx:356	aiChat.actions.export	Export
+src/components/AIChat/ConversationActions.tsx:367	aiChat.confirmDeleteDestructive	Delete "${title}"?\n\nThis action is destructive. The conversation will be moved to trash and permanently removed after 30 days. This cannot be undone.
+src/components/AIChat/ConversationActions.tsx:391	aiChat.confirmPurge	Permanently delete "${conversation.title || 'this conversation'}"?\n\nAll messages and attachments will be irreversibly removed. An audit record will be kept. This CANNOT be undone.
+src/components/AIChat/ConversationActions.tsx:407	aiChat.actions.purge	Permanently Delete
+5 src/components/AIChat/ConversationActions.tsx
+src/components/AIChat/MoveToProjectModal.tsx:88	aiChat.visibilityHistoryUnavailable	Visibility history could not be loaded.
+src/components/AIChat/MoveToProjectModal.tsx:152	aiChat.confirmMovePrivateToOrganization	Move this private conversation to an organization folder? Organization members with access to the folder will be able to see it.
+src/components/AIChat/MoveToProjectModal.tsx:168	aiChat.visibilityConsentRecorded	Organization visibility recorded. Receipt
+src/components/AIChat/MoveToProjectModal.tsx:337	aiChat.visibilityHistory	Visibility history
+src/components/AIChat/MoveToProjectModal.tsx:349	aiChat.noVisibilityChanges	No organization visibility changes recorded.
+src/components/AIChat/MoveToProjectModal.tsx:356	aiChat.visibilityChanged	Visibility changed
+src/components/AIChat/MoveToProjectModal.tsx:365	aiChat.visibilityChangedBy	Actor
+7 src/components/AIChat/MoveToProjectModal.tsx
+src/components/SystemHealth.tsx:118	system.demoDataTitle	Demo data session
+src/components/SystemHealth.tsx:122	system.demoData	Demo Data
+src/components/SystemHealth.tsx:191	system.dataAccess	Data Access
+3 src/components/SystemHealth.tsx
+RAZEM: 58

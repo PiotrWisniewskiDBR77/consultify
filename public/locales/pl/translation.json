@@ -30821,7 +30821,9 @@
       "expand": "Rozwiń",
       "changeToneTitle": "Zmień ton tekstu",
       "tone": {
-        "label": "Ton"
+        "label": "Ton",
+        "tone_formal": "Formalny",
+        "tone_simple": "Prostszy"
       },
       "explainTitle": "Wyjaśnij zaznaczenie (nie zmienia dokumentu)",
       "explain": "Wyjaśnij",
@@ -30829,7 +30831,20 @@
       "actions": "Akcje",
       "teresaSuggestion": "Propozycja Teresy",
       "accept": "Akceptuj",
-      "reject": "Odrzuć"
+      "reject": "Odrzuć",
+      "quickAction": {
+        "expand": "Rozwiń",
+        "shorten": "Skróć",
+        "rewrite": "Przepisz",
+        "final_polish": "Doszlifuj",
+        "length_concise": "Długość: zwięzła",
+        "length_detailed": "Długość: rozbudowana",
+        "level_exec": "Dla: zarządu",
+        "level_expert": "Dla: eksperta",
+        "level_beginner": "Dla: laika",
+        "translate_en": "Tłumacz → EN",
+        "translate_pl": "Tłumacz → PL"
+      }
     },
     "editor": {
       "teresaWriting": "Teresa pisze...",

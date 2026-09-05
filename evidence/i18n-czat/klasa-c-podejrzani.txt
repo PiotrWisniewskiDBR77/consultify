@@ -1,0 +1,26 @@
+Pomiar: 25 identycznych wartości PL/EN w przestrzeniach canvas/aiChat/chat/system.
+Werdykt dla mianownika R1: 0 potwierdzonych defektów klasy (c) w licencjonowanej rodzinie.
+
+Uzasadnione nazwy własne / skróty / formaty techniczne:
+- chat.coThinker.title = Co-Thinker
+- aiChat.composer.commands.agents.label = Multi-agent
+- aiChat.chatMenuTitle = Menu
+- aiChat.homeCards.finance.m16.monteCarlo.min/max/p10/p90/probPositive/var5 = oznaczenia matematyczne
+- aiChat.menu.urlLabel/urlPlaceholder = URL i format adresu
+- aiChat.menu.sources.pmoDocuments.desc = ISO 21500, PMBOK, PRINCE2
+- canvas.viewMode.markdown = MD
+
+Naturalne w języku polskim albo identyczne zapożyczenia branżowe:
+- chat.orgMemory.problemLabel = Problem:
+- system.online/offline = Online/Offline
+- canvas.panel.addElement.diagram = Diagram
+- canvas.panel.diagnostics.format = Format
+- canvas.workShell.statusLabel/readBack.status = Status
+- canvas.workShell.kind.markdown = markdown
+- canvas.workShell.target.project_brief = Brief
+
+Poza licencjonowaną rodziną / bez potwierdzonego konsumenta w rodzinie:
+- aiChat.homeCards.finance.m16.monteCarlo.addDriver = + driver
+- aiChat.homeCards.finance.m16.sensitivity.addDriver = + driver
+
+Powyższe dwa wpisy brzmią angielsko, ale skan kodu rodziny nie znalazł konsumenta; zgodnie z R0 nie zaliczam ich do widocznego mianownika bez dowodu renderu i nie zmieniam.

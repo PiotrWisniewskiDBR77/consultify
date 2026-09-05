@@ -412,3 +412,6 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | AG1 | Żaden z 11 montaży `UnifiedChatPanel` nie przekazywał celu „Akcje biznesowe”; `/chat` nie odbierał globalnego kickoffu z Pomocy; etykieta panelu roboczego pozostawała „otwórz” po otwarciu. | Dodano publiczny fallback `/ai-actions` za flagą `chatBusinessActionsNav` default OFF, store jako fallback kickoffu oraz stanową etykietę PL/EN. Wszystkie trzy naprawy mają test realnego komponentu i selektywną mutację RED→GREEN. | KOD I TESTY ZAMKNIĘTE / ZRZUT BLOCKED_AUTH | `evidence/przewody-chat/`, `CODEX_DAY368_PRZEWODY_CHAT_REPORT.md` |
+## AL. Dyżur 372 — i18n Czat AI pozostaje PARTIAL
+
+Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 kluczy menu AI edytora; 237 pozycji R2/R4/R5 pozostaje jawnie wymienionych w `evidence/i18n-czat/`. Rozszerzenie strażnika etykiet ujawniło dodatkowy dług `TransformationCasesPanel.tsx:114` (`Rebaseline`), lecz nie mogło zostać utrzymane bez złamania ratcheta i licencji.

@@ -1,0 +1,147 @@
+src/components/AIChat/MessageRenderer.tsx:742	policy.refusal.title	Request blocked by policy
+src/components/AIChat/MessageRenderer.tsx:753	policy.refusal.nextSteps	What to do next
+src/components/AIChat/MessageRenderer.tsx:768	policy.uncertainty.title	Uncertainty marker
+src/components/AIChat/MessageRenderer.tsx:773	policy.uncertainty.body	This response includes factual claims without sufficient citations from available sources.
+src/components/AIChat/MessageRenderer.tsx:785	policy.noSources.title	No sources found
+src/components/AIChat/MessageRenderer.tsx:790	policy.noSources.body	This answer could not be verified against available sources in your allowed scope.
+src/components/AIChat/MessageRenderer.tsx:1282	myWork.ideas.gardenSpark	Idea Garden Spark
+src/components/AIChat/MessageRenderer.tsx:1300	myWork.ideas.plantInGarden	Plant in Idea Garden
+src/components/AIChat/MessageRenderer.tsx:1303	myWork.ideas.plantInGarden	Plant
+src/components/AIChat/MessageRenderer.tsx:1684	stream.retrying	Connection issue, retrying...
+src/components/AIChat/MessageRenderer.tsx:1695	stream.complete	Response complete
+src/components/AIChat/MessageRenderer.tsx:1701	stream.costEstimateTooltip	Estimated AI cost for this response based on token usage
+src/components/AIChat/MessageRenderer.tsx:1722	stream.stoppedPartial	Response stopped. Partial answer shown above.
+src/components/AIChat/MessageRenderer.tsx:1725	stream.cancelled	Response cancelled.
+src/components/AIChat/MessageRenderer.tsx:1843	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:1852	chat.actions.edit	Edit
+src/components/AIChat/MessageRenderer.tsx:1864	chat.actions.savedToContext	Saved to Context OS
+src/components/AIChat/MessageRenderer.tsx:1865	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2073	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:2074	chat.actions.copy	Copy
+src/components/AIChat/MessageRenderer.tsx:2092	chat.actions.stop	Stop
+src/components/AIChat/MessageRenderer.tsx:2093	chat.actions.speak	Speak
+src/components/AIChat/MessageRenderer.tsx:2095	chat.actions.speak	Speak
+src/components/AIChat/MessageRenderer.tsx:2110	chat.actions.toggleResponseActions	More actions
+src/components/AIChat/MessageRenderer.tsx:2111	chat.actions.toggleResponseActions	More actions
+src/components/AIChat/MessageRenderer.tsx:2208	chat.governedHandoff.proposeDocument	Propose governed document
+src/components/AIChat/MessageRenderer.tsx:2209	chat.governedHandoff.proposeDocument	Propose governed document
+src/components/AIChat/MessageRenderer.tsx:2225	chat.actions.savedToContext	Saved to Context OS
+src/components/AIChat/MessageRenderer.tsx:2226	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2228	chat.actions.saveToContext	Save to Context OS
+src/components/AIChat/MessageRenderer.tsx:2246	chat.sources.details	Sources details
+src/components/AIChat/MessageRenderer.tsx:2247	chat.sources.details	Sources details
+src/components/AIChat/MessageRenderer.tsx:2373	deepThinking.hint	This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.
+src/components/AIChat/MessageRenderer.tsx:2384	deepThinking.enableHint	Enable Deep Thinking
+src/components/AIChat/MessageRenderer.tsx:2390	deepThinking.dismissHint	Not now
+src/components/AIChat/MessageRenderer.tsx:2408	deepThinking.ctaTitle	What do you want to do with this output?
+src/components/AIChat/MessageRenderer.tsx:2418	deepThinking.saving	Saving…
+src/components/AIChat/MessageRenderer.tsx:2419	deepThinking.saveDecision	Save as Decision
+src/components/AIChat/MessageRenderer.tsx:2427	deepThinking.convertInitiative	Convert to Initiative
+src/components/AIChat/MessageRenderer.tsx:2455	deepThinking.exportReport	Export Report
+src/components/AIChat/MessageRenderer.tsx:2469	deepThinking.saveToNotebook	Save to Notebook
+src/components/AIChat/MessageRenderer.tsx:2480	deepThinking.listenBrief	Listen to Brief
+src/components/AIChat/MessageRenderer.tsx:2493	deepThinking.decisionSaved	Decision saved successfully
+src/components/AIChat/MessageRenderer.tsx:2509	deepThinking.interimInsight	Preliminary insight — dominant paths emerging:
+src/components/AIChat/MessageRenderer.tsx:2522	deepThinking.narrowFocus	Narrow focus on the first path
+src/components/AIChat/MessageRenderer.tsx:2526	deepThinking.narrowFocusBtn	Narrow focus
+src/components/AIChat/MessageRenderer.tsx:2529	deepThinking.goDeeper	Go deeper
+src/components/AIChat/MessageRenderer.tsx:2532	deepThinking.continueDeeper	Continue to full report
+48 src/components/AIChat/MessageRenderer.tsx
+src/components/AIChat/ArtifactBadge.tsx:61	chat.actions.openPanel	Open in panel
+src/components/AIChat/ArtifactBadge.tsx:71	chat.actions.download	Download
+2 src/components/AIChat/ArtifactBadge.tsx
+src/components/AIChat/CitationList.tsx:88	aiChat.citationUnavailable	Source unavailable
+src/components/AIChat/CitationList.tsx:96	aiChat.citationStale	Source may be outdated
+src/components/AIChat/CitationList.tsx:104	aiChat.citationNoAccess	Source not accessible to you
+src/components/AIChat/CitationList.tsx:196	aiChat.deepSearchSources	Deep search sources
+src/components/AIChat/CitationList.tsx:255	aiChat.citationExternalBadge	External
+src/components/AIChat/CitationList.tsx:263	aiChat.citationFragmentBadge	Fragment ${(citation.fragmentIndex as number) + 1}
+src/components/AIChat/CitationList.tsx:313	aiChat.citationFragmentOpenLabel	Fragment ${(citation.fragmentIndex as number) + 1}
+src/components/AIChat/CitationList.tsx:319	aiChat.citationFragmentEmpty	No excerpt available.
+src/components/AIChat/CitationList.tsx:327	aiChat.citationOpenSource	Open source
+9 src/components/AIChat/CitationList.tsx
+src/components/AIChat/ExecutionProposalMessage.tsx:108	chatProposal.step.untitled	Step
+src/components/AIChat/ExecutionProposalMessage.tsx:185	chatProposal.state.proposed	Proposal drafted
+src/components/AIChat/ExecutionProposalMessage.tsx:193	chatProposal.state.pendingReview	Awaiting review
+src/components/AIChat/ExecutionProposalMessage.tsx:201	chatProposal.state.approved	Approved
+src/components/AIChat/ExecutionProposalMessage.tsx:209	chatProposal.state.executing	Executing
+src/components/AIChat/ExecutionProposalMessage.tsx:217	chatProposal.state.executed	Executed
+src/components/AIChat/ExecutionProposalMessage.tsx:233	chatProposal.state.audited	Audited
+src/components/AIChat/ExecutionProposalMessage.tsx:241	chatProposal.state.closed	Closed
+src/components/AIChat/ExecutionProposalMessage.tsx:249	chatProposal.state.rejected	Rejected
+src/components/AIChat/ExecutionProposalMessage.tsx:274	chatProposal.risk.high	High risk
+src/components/AIChat/ExecutionProposalMessage.tsx:281	chatProposal.risk.medium	Medium risk
+src/components/AIChat/ExecutionProposalMessage.tsx:288	chatProposal.risk.low	Low risk
+src/components/AIChat/ExecutionProposalMessage.tsx:404	chatProposal.ariaLabel	Governed execution proposal
+src/components/AIChat/ExecutionProposalMessage.tsx:428	chatProposal.stepCount	{{count}} steps
+src/components/AIChat/ExecutionProposalMessage.tsx:437	chatProposal.expiresAt	Expires {{when}}
+src/components/AIChat/ExecutionProposalMessage.tsx:457	chatProposal.rejectionReason	Reason
+src/components/AIChat/ExecutionProposalMessage.tsx:469	chatProposal.reviewer	Reviewed by {{name}}
+src/components/AIChat/ExecutionProposalMessage.tsx:537	chatProposal.action.execute	Execute
+18 src/components/AIChat/ExecutionProposalMessage.tsx
+src/components/AIChat/GovernedChatHandoffCard.tsx:141	chat.governedHandoff.citations	{{count}} source references preserved.
+1 src/components/AIChat/GovernedChatHandoffCard.tsx
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:62	chat.initiativeHandoff.missing.project	project
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:63	chat.initiativeHandoff.missing.owner	initiative owner
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:64	chat.initiativeHandoff.missing.problem	problem statement
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:75	chat.initiativeHandoff.readFailed	Could not verify the initiative draft.
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:107	chat.initiativeHandoff.adoptionFailed	Adoption failed.
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:114	chat.initiativeHandoff.state.idle	Awaiting consent
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:115	chat.initiativeHandoff.state.checking	Checking
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:118	chat.initiativeHandoff.state.blocked	Needs details
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:120	chat.initiativeHandoff.state.ready	Ready
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:121	chat.initiativeHandoff.state.adopting	Adopting
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:122	chat.initiativeHandoff.state.adopted	Adopted
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:123	chat.initiativeHandoff.state.failed	Failed
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:144	chat.initiativeHandoff.title	Pass the initiative to execution?
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:153	chat.initiativeHandoff.missingPrefix	Missing
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:164	chat.initiativeHandoff.check	Check before handoff
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:173	chat.initiativeHandoff.consent	Pass to execution
+src/components/AIChat/GovernedInitiativeHandoffCard.tsx:182	chat.initiativeHandoff.complete	Complete in Initiatives
+17 src/components/AIChat/GovernedInitiativeHandoffCard.tsx
+src/components/AIChat/InlineResponseFeedback.tsx:252	aiChat.feedback.saving	Zapisywanie…
+src/components/AIChat/InlineResponseFeedback.tsx:274	aiChat.feedback.forbidden	Nie można zapisać oceny dla tej wiadomości.
+src/components/AIChat/InlineResponseFeedback.tsx:275	aiChat.feedback.saveFailed	Nie udało się zapisać oceny.
+3 src/components/AIChat/InlineResponseFeedback.tsx
+src/components/AIChat/ResearchProgress.tsx:117	research.followUp	Follow-up
+src/components/AIChat/ResearchProgress.tsx:274	research.searchingRound	Searching (round ${round}/${totalRounds})...
+src/components/AIChat/ResearchProgress.tsx:279	research.deepening	Deepening research with follow-up queries...
+src/components/AIChat/ResearchProgress.tsx:329	research.generatingFollowUp	Analyzing gaps and generating follow-up queries...
+src/components/AIChat/ResearchProgress.tsx:338	research.synthesizingReport	Synthesizing comprehensive report...
+src/components/AIChat/ResearchProgress.tsx:391	research.round	Round ${round}/${totalRounds}
+src/components/AIChat/ResearchProgress.tsx:427	research.activity	Activity
+src/components/AIChat/ResearchProgress.tsx:439	research.waitingForActivity	Starting research...
+src/components/AIChat/ResearchProgress.tsx:457	research.initialQueries	Initial Queries
+src/components/AIChat/ResearchProgress.tsx:471	research.followUpQueries	Follow-up Queries (Iterative Deepening)
+src/components/AIChat/ResearchProgress.tsx:504	research.noSourcesYet	No sources found yet...
+11 src/components/AIChat/ResearchProgress.tsx
+src/components/AIChat/TeresaProposalCard.tsx:102	aiChat.teresaProposal.approved	Teresa proposal approved.
+src/components/AIChat/TeresaProposalCard.tsx:112	aiChat.teresaProposal.rejected	Teresa proposal rejected.
+src/components/AIChat/TeresaProposalCard.tsx:122	aiChat.teresaProposal.undone	Teresa workbook change undone.
+src/components/AIChat/TeresaProposalCard.tsx:132	aiChat.teresaProposal.executed	Teresa handoff executed.
+src/components/AIChat/TeresaProposalCard.tsx:197	aiChat.teresaProposal.approve	Approve
+src/components/AIChat/TeresaProposalCard.tsx:227	aiChat.teresaProposal.execute	Execute
+src/components/AIChat/TeresaProposalCard.tsx:242	aiChat.teresaProposal.undo	Undo change
+src/components/AIChat/TeresaProposalCard.tsx:252	aiChat.teresaProposal.navigate	Open target
+8 src/components/AIChat/TeresaProposalCard.tsx
+src/components/AIChat/TrustBadge.tsx:384	trust.badge.sources	{{count}} sources
+src/components/AIChat/TrustBadge.tsx:385	trust.badge.noSources	No cited sources
+src/components/AIChat/TrustBadge.tsx:404	trust.badge.ariaLabel	Response sources
+src/components/AIChat/TrustBadge.tsx:422	trust.badge.dialogLabel	Sources for this response
+src/components/AIChat/TrustBadge.tsx:428	trust.badge.dialogLabel	Sources for this response
+src/components/AIChat/TrustBadge.tsx:443	trust.badge.answeredBy	Answered by
+src/components/AIChat/TrustBadge.tsx:492	trust.badge.openSource	Open source in a new tab: {{title}}
+src/components/AIChat/TrustBadge.tsx:508	trust.badge.citationDomain	Source domain: {{domain}}
+src/components/AIChat/TrustBadge.tsx:537	trust.badge.noSourcesBody	This reply is based on the model\u2019s own reasoning, not on retrieved documents or search results.
+src/components/AIChat/TrustBadge.tsx:571	trust.badge.reasoningToggle	Why this answer?
+src/components/AIChat/TrustBadge.tsx:604	trust.badge.copyReasoningAriaLabel	Copy reasoning observations to clipboard
+src/components/AIChat/TrustBadge.tsx:619	trust.badge.copied	Copied
+src/components/AIChat/TrustBadge.tsx:624	trust.badge.copyFailed	Copy failed
+src/components/AIChat/TrustBadge.tsx:629	trust.badge.copy	Copy
+src/components/AIChat/TrustBadge.tsx:645	trust.badge.disclaimer	Sources tell you what was retrieved. Always verify claims that matter to you.
+src/components/AIChat/TrustBadge.tsx:663	trust.badge.copyCitationsAriaLabel	Copy citation list to clipboard
+src/components/AIChat/TrustBadge.tsx:678	trust.badge.copied	Copied
+src/components/AIChat/TrustBadge.tsx:683	trust.badge.copyFailed	Copy failed
+src/components/AIChat/TrustBadge.tsx:688	trust.badge.copy	Copy
+19 src/components/AIChat/TrustBadge.tsx
+RAZEM: 136
