@@ -1,4 +1,9 @@
 /**
+ * [ODMROZENIE 04_ASSESSMENT DEC-397] Ocena z magazynu zastanego (nigdy nie
+ * zamrożona) teraz otwiera prezentację zamiast martwego „Nie znaleziono
+ * Outputu" — patrz gałąź `idOcenyZWierszaZastanego`/`fetchLegacyOutput`
+ * niżej i `RAPORT_A3.md` defekt WAŻNY #1.
+ *
  * AssessmentPresentationView — top-level container for the assessment
  * presentation screen. Fetches ONE frozen Output (`GET /api/method/
  * outputs/:id`, read-only — never POSTs, never creates a Presentation
@@ -18,6 +23,10 @@ import {
   MethodCoreApiError,
 } from '@/method-core/api/methodCoreApi';
 
+import { idOcenyZWierszaZastanego } from '../assessmentOutputProjection';
+import { AssessmentReportDocument } from '../report/AssessmentReportDocument';
+import { fetchOutputForReport, type OutputFetchResult } from '../report/reportApi';
+import type { AssessmentReportData } from '../report/types';
 import {
   buildPresentationDeck,
   type PresentationDeckModel,
@@ -40,6 +49,13 @@ export interface AssessmentPresentationViewProps {
    * shared fetch plumbing (auth headers, retry, timeout) rather than a
    * bespoke fetch call in this package. */
   readonly fetchOutput?: (outputId: string) => Promise<PresentationFetchResult>;
+  /** Injectable for tests; defaults to the real `fetchOutputForReport` (the
+   * SAME projection that fixed `/assessment/outputs/:id/report` for ocena
+   * zastana — `../report/reportApi.ts`, `../assessmentOutputProjection.ts`).
+   * Tried when `outputId` is a legacy row (`ocena~<id>` prefix) or when the
+   * method-core fetch above 404s, so a not-yet-frozen assessment gets the
+   * report's content instead of a dead "Nie znaleziono Outputu" screen. */
+  readonly fetchLegacyOutput?: (outputId: string) => Promise<OutputFetchResult | null>;
 }
 
 type ViewState =
@@ -50,7 +66,12 @@ type ViewState =
   | { readonly kind: 'not-found' }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'unrecognized-shape' }
-  | { readonly kind: 'ready'; readonly model: PresentationDeckModel };
+  | { readonly kind: 'ready'; readonly model: PresentationDeckModel }
+  /** Ocena z magazynu zastanego — nigdy nie przeszła przez zamrożenie
+   * jądra, więc nie ma `aggregation`/`findings` do zbudowania 9-slajdowego
+   * decku. Renderujemy TĘ SAMĄ treść co raport (macierz DRD, rozdziały),
+   * z banerem informującym, że to zapis sesji, nie zamrożony wynik. */
+  | { readonly kind: 'legacy-ready'; readonly data: AssessmentReportData };
 
 async function defaultFetchOutput(outputId: string): Promise<PresentationFetchResult> {
   const res = await getOutput(outputId);
@@ -76,6 +97,7 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
   narrative,
   locale = 'pl',
   fetchOutput = defaultFetchOutput,
+  fetchLegacyOutput = fetchOutputForReport,
 }) => {
   const [state, setState] = useState<ViewState>(() => (outputId ? { kind: 'loading' } : { kind: 'no-output' }));
 
@@ -89,6 +111,46 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
     let cancelled = false;
     setState({ kind: 'loading' });
 
+    // Ocena z magazynu zastanego (`ocena~<id>`) — patrz
+    // `fetchLegacyOutput` doc comment. Ustala honestny wynik: `true` gdy
+    // stan ekranu został ustawiony (gotowy albo faktyczny błąd), `false`
+    // gdy trzeba spaść na „Nie znaleziono Outputu" wyżej w łańcuchu.
+    async function sprobujMagazynZastany(id: string): Promise<boolean> {
+      try {
+        const legacy = await fetchLegacyOutput(id);
+        if (cancelled) return true;
+        if (!legacy || legacy.source !== 'legacy') return false;
+        setState({
+          kind: 'legacy-ready',
+          data: {
+            output: legacy.output,
+            superseded: legacy.superseded,
+            supersededByOutputId: legacy.supersededByOutputId,
+            session: null,
+            approvals: [],
+            source: legacy.source,
+            unitNotes: legacy.unitNotes,
+            narrative: legacy.narrative ?? null,
+          },
+        });
+        return true;
+      } catch {
+        // Magazyn zastany też padł (np. offline) — honest fallback do
+        // „Nie znaleziono", nie do cichej, nieskończonej pętli ładowania.
+        return false;
+      }
+    }
+
+    const idOcenyZastanej = idOcenyZWierszaZastanego(outputId);
+    if (idOcenyZastanej) {
+      sprobujMagazynZastany(outputId).then((obsluzone) => {
+        if (!obsluzone && !cancelled) setState({ kind: 'not-found' });
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     fetchOutput(outputId)
       .then((res) => {
         if (cancelled) return;
@@ -101,10 +163,15 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
         const model = buildPresentationDeck(output, stableNarrative, breakdown);
         setState({ kind: 'ready', model });
       })
-      .catch((err: unknown) => {
+      .catch(async (err: unknown) => {
         if (cancelled) return;
         if (err instanceof MethodCoreApiError && err.status === 404) {
-          setState({ kind: 'not-found' });
+          // Output nie istnieje w jądrze — mógł nigdy przez nie nie
+          // przejść. Zanim ogłosimy „nie znaleziono", sprawdzamy magazyn
+          // zastany (stare linki bez prefiksu `ocena~` też mają działać —
+          // ten sam ruch co `reportApi.fetchOutputForReport`).
+          const obsluzone = await sprobujMagazynZastany(outputId);
+          if (!obsluzone && !cancelled) setState({ kind: 'not-found' });
           return;
         }
         if (isAuthError(err)) {
@@ -124,7 +191,7 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
     return () => {
       cancelled = true;
     };
-  }, [outputId, fetchOutput, stableNarrative]);
+  }, [outputId, fetchOutput, fetchLegacyOutput, stableNarrative]);
 
   switch (state.kind) {
     case 'no-output':
@@ -192,6 +259,22 @@ export const AssessmentPresentationView: React.FC<AssessmentPresentationViewProp
       );
     case 'ready':
       return <PresentationDeck model={state.model} locale={locale} />;
+    case 'legacy-ready':
+      return (
+        <div className="h-full overflow-auto" data-testid="presentation-legacy-report">
+          <div className="mx-auto max-w-[880px] px-4 pt-6 sm:px-8">
+            <div className="flex items-start gap-2 rounded-xl border border-c-warning/40 bg-c-warning/10 px-4 py-3 text-sm text-c-text">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-c-warning" />
+              <p>
+                Ta ocena pochodzi <strong className="text-c-text">z zapisu sesji — jeszcze nie
+                zamrożone</strong>. Prezentacja pokazuje tę samą treść co raport (macierz DRD,
+                rozdziały osi); pełna 9-slajdowa prezentacja pojawi się po zamrożeniu wyniku.
+              </p>
+            </div>
+          </div>
+          <AssessmentReportDocument data={state.data} />
+        </div>
+      );
     default:
       return null;
   }
