@@ -61,6 +61,9 @@ import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ConvertTarget } from './AIChatInlinePanel';
 import { NotebookContextPanel } from './NotebookContextPanel';
+import { NotebookProgressChip } from './NotebookProgressChip';
+import { NotebookToolbar } from './NotebookToolbar';
+import { NotebookTopicChips } from './NotebookTopicChips';
 import { isNotebookSpecAShellEnabled } from './notebookSpecAShellFlag';
 import { IdeaNotebookRightPanelPrototypeGate } from '../prototypes/IdeaNotebookRightPanelPrototype';
 
@@ -164,6 +167,20 @@ interface NotebookRightRailProps {
   onShare?: () => void;
   onToggleVersionHistory?: () => void;
   versionHistoryOpen?: boolean;
+
+  /**
+   * ★ 05.09 — powierzchnie zdjęte ze środka ekranu po odrzuceniu właściciela
+   * („Nie może być tak, że absolutnie większość ekranu to są przyciski…
+   * to wszystko musi być wyrzucone do panelu"). To NIE są nowe akcje: to te
+   * same handlery, które do 05.09 wisiały nad dokumentem
+   * (`NotebookProgressChip` w centrum) i pod tytułem (`NotebookTopicChips`).
+   */
+  hasPendingAIProposals?: boolean;
+  onOpenSources?: () => void;
+  onCreateAIProposal?: () => void;
+  onReviewAIProposal?: () => void;
+  onHandoffInitiatives?: () => void;
+  onOpenTopic?: (topicId: string) => void;
 
   /**
    * Który TRYB wspólnego prawego pasa otwiera się na start
@@ -331,6 +348,12 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   onToggleVersionHistory,
   versionHistoryOpen,
   defaultRailModeId,
+  hasPendingAIProposals = false,
+  onOpenSources,
+  onCreateAIProposal,
+  onReviewAIProposal,
+  onHandoffInitiatives,
+  onOpenTopic,
 }) => {
   const { t, i18n } = useTranslation();
   // Nazwy sekcji kanonu pochodzą z JEDNEGO miejsca w całej aplikacji
@@ -452,7 +475,44 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
           'actions',
           canonLabel('actions'),
           undefined,
-          <div className="space-y-0.5">
+          <div className="space-y-3">
+            {/* ★ 05.09 — pasek formatowania zdjęty ze środka ekranu
+                (odrzucenie właściciela: „większość ekranu to przyciski").
+                TEN SAM komponent i te same identyfikatory `format:toolbar:*`
+                co dotąd — zmieniło się wyłącznie miejsce renderu. */}
+            {editor ? (
+              <div>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('notebook.rightRail.formatting', 'Formatowanie')}
+                </p>
+                <div className="-mx-1 rounded-lg border border-c-border-subtle bg-c-surface-raised">
+                  <NotebookToolbar editor={editor} />
+                </div>
+              </div>
+            ) : null}
+
+            {/* ★ 05.09 — pasek przepływu (Źródła › AI › Przegląd › Zamień ›
+                Inicjatywy) też zszedł ze środka dokumentu. */}
+            {onOpenSources && onCreateAIProposal && onReviewAIProposal && onConvert ? (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  {t('notebook.rightRail.workflow', 'Przepływ pracy')}
+                </p>
+                <NotebookProgressChip
+                  isPolish={isPolishRail}
+                  hasPendingAIProposals={hasPendingAIProposals}
+                  canConvertDeliverable={canConvertDeliverable === true}
+                  convertBlockedReason={convertBlockedReason ?? ''}
+                  onOpenAttachments={onOpenSources}
+                  onCreateAIProposal={onCreateAIProposal}
+                  onReviewAIProposal={onReviewAIProposal}
+                  onConvert={() => onConvert('report')}
+                  onHandoffInitiatives={onHandoffInitiatives}
+                />
+              </div>
+            ) : null}
+
+            <div className="space-y-0.5">
             <ActionRow
               actionId="rail:export"
               icon={<Download size={15} />}
@@ -480,6 +540,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
               onClick={onToggleVersionHistory}
               pressed={versionHistoryOpen}
             />
+            </div>
           </div>
         )}
 
@@ -760,6 +821,37 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                   {t('notebook.rightRail.markReviewed', 'Mark reviewed')}
                 </button>
               )}
+            </div>
+
+            {/* ★ 05.09 — TEMATY. Chipy stały pod tytułem notatki, w centrum
+                ekranu; to metadana O notatce, więc jej miejsce jest tutaj.
+                Ten sam komponent (`NotebookTopicChips`), to samo API. */}
+            <div className="space-y-1 border-t border-c-border-subtle pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                {t('notebook.rightRail.topics', 'Tematy')}
+              </p>
+              <NotebookTopicChips
+                noteId={activePage.id}
+                canEdit={true}
+                onOpenTopic={onOpenTopic}
+              />
+            </div>
+
+            {/* ★ 05.09 — STRUKTURA. „Mini outline" (przycisk na każdy nagłówek)
+                zniknął ze środka dokumentu; nagłówki czyta ta sama funkcja
+                `readNotebookOutline`, której używa tryb „Struktura notatki"
+                wspólnego pasa — jedno źródło, nie druga implementacja. */}
+            <div className="space-y-1 border-t border-c-border-subtle pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                {t('notebook.rightRail.structure', 'Struktura notatki')}
+              </p>
+              <NotebookOutlineList
+                entries={readNotebookOutline(editor, activePage.contentJson)}
+                emptyLabel={t(
+                  'notebook.rightRail.structureEmpty',
+                  'Ta notatka nie ma jeszcze nagłówków — struktura pojawi się, gdy dodasz nagłówek.'
+                )}
+              />
             </div>
 
             <div className="space-y-1 border-t border-c-border-subtle pt-3 text-[12.5px]">
