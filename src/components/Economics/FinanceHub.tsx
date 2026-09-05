@@ -1869,7 +1869,11 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.periods', 'Periods'),
           width: '100px',
           render: (row: FinanceRow) =>
-            row.kind === 'analysis' || row.kind === 'investment' ? (
+            // Rzut z rejestru kanonicznego świadomie NIE niesie pól domenowych
+            // (`canonicalRegistryProjection`) — „0 okresów" byłoby wtedy
+            // FAŁSZEM (analiza CD PROJEKT ma dwa), a nie brakiem danych.
+            // Uczciwy brak to kreska, nie zero.
+            (row.kind === 'analysis' || row.kind === 'investment') && row.periodCount > 0 ? (
               <span className="text-sm text-c-text-secondary">{row.periodCount}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
