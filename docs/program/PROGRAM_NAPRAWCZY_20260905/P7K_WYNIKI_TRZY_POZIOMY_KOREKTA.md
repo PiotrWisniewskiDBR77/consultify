@@ -75,3 +75,8 @@ Wiążący wzorzec poziomów 2 i 3: „Apator szablon.xlsx” (analiza w `docs/p
 - **L2 OKR = tabela rezultatów zgrupowana po temacie i celu**: kolumny TEMAT · CEL (rozpięty na swoje KR) · KLUCZOWY REZULTAT · WŁAŚCICIEL · ZESPÓŁ · TERMIN · POSTĘP · STAN; nagłówek raportu z nazwą, okresem (cykl), opisem i celem raportu; podsumowanie stanu; akcje „Dodaj cel”, „Dodaj rezultat”. StandardTable z grupowaniem wierszy (rg `groupBy`/`rowGroup` w `FilterableTable`; jeśli brak — komórka celu z `rowSpan` w prezenterze, bez nowego komponentu).
 - Klik w wiersz KR → karta celu (L3) przewinięta do tego KR w sekcji „Kluczowe rezultaty”; klik w komórkę celu → karta celu od góry.
 - §10 dodatkowo: zrzut L2 OKR pokazuje grupowanie po temacie i celu z rozpiętą komórką celu oraz kolumny WŁAŚCICIEL/ZESPÓŁ/TERMIN; brak trasy osobnej karty KR.
+
+## 14. Rozstrzygnięcie właściciela 05.09: „OKR dotyczy człowieka, KPI dotyczy procesu”
+- KPI: podmiot wiersza = proces/obszar; kolumny OBSZAR i ODPOWIEDZIALNOŚĆ; podsumowanie raportu per obszar.
+- OKR: podmiot wiersza = człowiek; kolumna WŁAŚCICIEL jest filtrem domyślnym i osią podsumowania („Fred: 3 rezultaty, 1 zagrożony”); karta celu pokazuje osoby i zespoły przy każdym KR; puste stany i etykiety używają słów „właściciel rezultatu”, nie „zasób”.
+- §10 dodatkowo: podgląd raportu OKR ma rozkład stanu per właściciel; podgląd raportu KPI ma rozkład per obszar.
