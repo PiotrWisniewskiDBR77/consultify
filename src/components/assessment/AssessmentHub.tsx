@@ -1900,8 +1900,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         // the click now does something Chat doesn't: opens the hub chat AND
         // posts a framing prompt asking the AI to prioritize the current tab's
         // list (see handleOpenHubTriage).
+        // NAPRAWA (audyt MVP 06.09, "angielskie napisy" — CLAUDE.md zakaz):
+        // literał był twardo po angielsku niezależnie od języka aplikacji —
+        // ten sam wzorzec co `assessment.hub.aiTriageTooltip` obok i jak
+        // `myWork.hub.aIPriorities` ("AI Priorities" → "AI Priorytety").
         id: 'triage',
-        label: 'AI Triage',
+        label: t('assessment.hub.aiTriage', 'AI Triage'),
         icon: Layers,
         onClick: () => void handleOpenHubTriage(),
         active: isHubChatActive,

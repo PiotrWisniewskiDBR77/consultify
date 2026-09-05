@@ -8,7 +8,6 @@ import {
   MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_INACTIVE,
-  MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '@/components/shared/ModuleMenu3';
@@ -53,8 +52,21 @@ export const AssessmentMenu3ActionBar: React.FC<AssessmentMenu3ActionBarProps> =
   className = '',
 }) => {
   return (
-    <div className={`${MENU_3_INNER_CLASS} ${className}`}>
-      <div className={MENU_3_LEFT_CLASS}>
+    // NAPRAWA (audyt MVP 06.09, poz. 5.4): `MENU_3_INNER_CLASS` wsadza
+    // `overflow-x-auto` na CAŁY wiersz (chipy + przyciski AI razem). Przy
+    // liczbie chipów widocznych na 1440 px suma szerokości przekracza pasek,
+    // a że prawy `shrink-0` (przyciski AI, np. „AI Triage") nie może się
+    // skurczyć, to CHIPY powinny przewijać się SAME — zamiast tego cały
+    // wiersz przewijał się razem, więc domyślna (nieprzewinięta) pozycja
+    // ucinała ostatni przycisk AI na prawej krawędzi (widać było „AI Tri…").
+    // Wzorzec 1:1 z `StandardModuleBar.tsx` `chipsContent` (`MENU_3_LEFT_CLASS
+    // app-table-scrollbar overflow-x-auto whitespace-nowrap`): scroll TYLKO
+    // na lewej (chipy), prawa (`MENU_3_RIGHT_CLASS`, już `shrink-0`) zawsze
+    // w całości widoczna.
+    <div className={`flex min-h-8 items-center justify-between gap-3 ${className}`}>
+      <div
+        className={`${MENU_3_LEFT_CLASS} min-w-0 overflow-x-auto whitespace-nowrap no-scrollbar`}
+      >
         {chips.map((chip) => {
           const content = (
             <>

@@ -7681,6 +7681,7 @@
       "initiativePackTooltip": "Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.",
       "resumeLatestLabel": "Wznów ostatni assessment",
       "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
+      "aiTriage": "AI Triaż",
       "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
       "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
       "connectionError": "Błąd połączenia",
@@ -8179,6 +8180,28 @@
       "rowMenu": {
         "openReport": "Pokaż raport",
         "openPresentation": "Pokaż jako prezentację"
+      },
+      "emptyState": {
+        "title": "Brak wniosków",
+        "description": "Wnioski zamrożone z ukończonej sesji oceny pojawią się tutaj."
+      },
+      "forbidden": {
+        "title": "Brak dostępu do wniosków",
+        "description": "To konto nie ma uprawnień do przeglądania wniosków tej organizacji."
+      }
+    },
+    "lineage": {
+      "forbidden": {
+        "title": "Brak dostępu do historii pochodzenia",
+        "description": "To konto nie ma uprawnień do przeglądania historii pochodzenia tej sesji."
+      },
+      "error": {
+        "title": "Nie udało się wczytać historii pochodzenia",
+        "description": "Nie udało się wczytać historii pochodzenia dla tej sesji."
+      },
+      "unrecognized": {
+        "title": "Nie udało się odczytać tej historii pochodzenia",
+        "description": "Serwer zwrócił odpowiedź o nierozpoznanym kształcie."
       }
     },
     "emptyState": {
