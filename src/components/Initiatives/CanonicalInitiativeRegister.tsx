@@ -11,6 +11,7 @@ import {
   createInitiativeRegisterRowMenu,
   formatPlannedWindow,
   INITIATIVE_REGISTER_COLUMN_IDS,
+  type InitiativeRegisterColumnOptions,
   type InitiativeRegisterRow,
 } from './initiativeRegisterColumns.shared';
 import {
@@ -46,6 +47,14 @@ export interface CanonicalInitiativeRegisterProps {
   previewOpen?: boolean;
   onResetFilters?: () => void;
   relationForRow?: (row: CanonicalInitiativeRow) => Array<{ label: string; onClick?: () => void }>;
+  /**
+   * A19/A13 — różnice kontekstu (np. „Źródło: ocena X") wchodzą jako opcjonalne
+   * kolumny TEJ SAMEJ definicji, nigdy jako druga tabela.
+   */
+  columnOptions?: InitiativeRegisterColumnOptions;
+  /** CTA pustego stanu specyficzne dla powierzchni (np. „Wygeneruj inicjatywy" w Ocenie). */
+  emptyActionLabel?: string;
+  onEmptyAction?: () => void;
 }
 
 export const CanonicalInitiativeRegister = ({
@@ -62,8 +71,15 @@ export const CanonicalInitiativeRegister = ({
   previewOpen,
   onResetFilters,
   relationForRow,
+  columnOptions,
+  emptyActionLabel,
+  onEmptyAction,
 }: CanonicalInitiativeRegisterProps) => {
-  const columns = useMemo(() => createCanonicalInitiativeRegisterColumns(), []);
+  const includeSource = !!columnOptions?.includeSource;
+  const columns = useMemo(
+    () => createCanonicalInitiativeRegisterColumns({ includeSource }),
+    [includeSource]
+  );
   const layoutRows = useMemo(
     () => rows.map((row) => ({ ...row, title: row.title || row.name })),
     [rows]
@@ -191,8 +207,12 @@ export const CanonicalInitiativeRegister = ({
           icon: Lightbulb,
           title: emptyTitle,
           description: emptyDescription,
-          actionLabel: onResetFilters ? 'Wyczyść filtry' : undefined,
-          onAction: onResetFilters,
+          actionLabel: onEmptyAction
+            ? emptyActionLabel || 'Wygeneruj inicjatywy'
+            : onResetFilters
+              ? 'Wyczyść filtry'
+              : undefined,
+          onAction: onEmptyAction || onResetFilters,
         }}
         rowMenu={(raw) =>
           createInitiativeRegisterRowMenu({
