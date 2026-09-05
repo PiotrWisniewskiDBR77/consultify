@@ -56,6 +56,9 @@ interface AssessmentRow {
   review_requested_at?: string | null;
   report_approved_at?: string | null;
   approved_at?: string | null;
+  /** Odbiór 05.09 (05-ocena): etykieta jednostki organizacyjnej — kolumna
+   *  JEDNOSTKA na liście ocen (20260905_assessment_business_unit.sql). */
+  business_unit?: string | null;
   created_by: string;
   updated_by?: string | null;
   created_at: string;
@@ -497,7 +500,7 @@ export class AssessmentController {
 
       await ensureAssessmentSchema();
 
-      const { assessmentType, name: rawName, projectId } = req.body;
+      const { assessmentType, name: rawName, projectId, businessUnit: rawBusinessUnit } = req.body;
       if (!assessmentType || !rawName) {
         res.status(400).json({ error: 'assessmentType and name are required' });
         return;
@@ -506,6 +509,12 @@ export class AssessmentController {
       // middleware escaped, mirroring the notebook/tool_sessions.name fix — the
       // DB should hold plain text, not a literal `&amp;`.
       const name = decodeHtmlEntities(String(rawName));
+      // Odbiór 05.09 (05-ocena): JEDNOSTKA z zatwierdzonego obrazu listy ocen.
+      // Ta sama sanityzacja co `name`; pusto = NULL (lista rysuje „—").
+      const businessUnit =
+        typeof rawBusinessUnit === 'string'
+          ? decodeHtmlEntities(rawBusinessUnit).trim().slice(0, 200) || null
+          : null;
 
       const validTypes: AssessmentType[] = ['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'];
       if (!validTypes.includes(assessmentType)) {
@@ -523,8 +532,8 @@ export class AssessmentController {
           `INSERT INTO assessments (
             id, organization_id, project_id, assessment_type, name, status,
             completion_percent, confidence_avg, answers_json, context_snapshot,
-            created_by, updated_by, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            business_unit, created_by, updated_by, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             user.organizationId,
@@ -536,6 +545,7 @@ export class AssessmentController {
             0,
             '{}',
             '{}',
+            businessUnit,
             user.id,
             user.id,
             now,
@@ -549,8 +559,8 @@ export class AssessmentController {
             `INSERT INTO assessments (
               id, organization_id, assessment_type, name, status,
               completion_percent, confidence_avg, answers_json, context_snapshot,
-              created_by, updated_by, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              business_unit, created_by, updated_by, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               id,
               user.organizationId,
@@ -561,6 +571,7 @@ export class AssessmentController {
               0,
               '{}',
               '{}',
+              businessUnit,
               user.id,
               user.id,
               now,
@@ -745,6 +756,7 @@ export class AssessmentController {
         scoreSummary,
         currentSectionId,
         navigation,
+        businessUnit: rawBusinessUnit,
       } = req.body;
       // T5 (Z139 follow-up): decode HTML entities before storing — see createAssessment.
       const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
@@ -763,8 +775,9 @@ export class AssessmentController {
         confidence_avg?: number | null;
         current_section_id?: string | null;
         navigation_json?: string | null;
+        business_unit?: string | null;
       }>(
-        `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json
+        `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, business_unit
          FROM assessments
          WHERE id = ? AND organization_id = ?`,
         [assessmentId, user.organizationId]
@@ -816,12 +829,21 @@ export class AssessmentController {
           : existing.current_section_id || null;
       const nextNavigation =
         navigation !== undefined ? navigation : parseJsonSafely(existing.navigation_json, {});
+      // Odbiór 05.09 (05-ocena): pominięcie pola w częściowym autosave ZOSTAWIA
+      // zapisaną jednostkę; jawny pusty string / null ją czyści.
+      const nextBusinessUnit =
+        rawBusinessUnit === undefined
+          ? (existing.business_unit ?? null)
+          : typeof rawBusinessUnit === 'string'
+            ? decodeHtmlEntities(rawBusinessUnit).trim().slice(0, 200) || null
+            : null;
 
       await queryHelpers.queryRun(
         `UPDATE assessments
          SET name = COALESCE(?, name),
              answers_json = ?, context_snapshot = ?, completion_percent = ?, confidence_avg = ?,
-             score_summary = ?, current_section_id = ?, navigation_json = ?, updated_by = ?, updated_at = ?
+             score_summary = ?, current_section_id = ?, navigation_json = ?, business_unit = ?,
+             updated_by = ?, updated_at = ?
          WHERE id = ? AND organization_id = ?`,
         [
           name ?? null,
@@ -832,6 +854,7 @@ export class AssessmentController {
           JSON.stringify(nextScoreSummary || {}),
           nextCurrentSectionId,
           JSON.stringify(nextNavigation || {}),
+          nextBusinessUnit,
           user.id,
           now,
           assessmentId,
@@ -2061,6 +2084,9 @@ export class AssessmentController {
         backendStatus: a.status,
         answers: a.answers_json ? JSON.parse(a.answers_json) : {},
         scoreSummary: a.score_summary ? JSON.parse(a.score_summary) : {},
+        // Odbiór 05.09 (05-ocena): kolumna JEDNOSTKA — ta sama camelCase co
+        // na liście v8, żeby oba źródła listy dawały klientowi jedno pole.
+        businessUnit: a.business_unit ?? null,
       }));
 
       const lim = Number(limit ?? 100) || 100;

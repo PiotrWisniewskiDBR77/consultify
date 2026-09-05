@@ -13,6 +13,17 @@ export interface V8AssessmentListItem {
   scoreSummary?: Record<string, unknown>;
   assessmentDefinitionId?: string | null;
   assessmentDefinitionVersion?: string | null;
+  /**
+   * Odbiór 05.09 (05-ocena, `assessment-list`): kolumna JEDNOSTKA
+   * z zatwierdzonego obrazu („Logistics BU", „Grupa — Zarząd", „Sales BU").
+   * Serwer zwraca OBIE postaci: `business_unit` przychodzi surowo z `SELECT *`,
+   * `businessUnit` dokłada router — czytamy camelCase, snake_case zostaje jako
+   * fallback dla starszego backendu.
+   * Kolumna bazy: `assessments.business_unit`
+   * (server/migrations/20260905_assessment_business_unit.sql).
+   */
+  businessUnit?: string | null;
+  business_unit?: string | null;
 }
 
 export interface V8AssessmentDetail extends V8AssessmentListItem {
@@ -78,10 +89,14 @@ export interface V8AssessmentCreatePayload {
    */
   definitionId?: string;
   definitionVersion?: string;
+  /** Odbiór 05.09 (05-ocena): etykieta jednostki organizacyjnej (kolumna JEDNOSTKA). */
+  businessUnit?: string | null;
 }
 
 export interface V8AssessmentUpdatePayload {
   name?: string;
+  /** Odbiór 05.09 (05-ocena): pominięcie pola zostawia zapisaną jednostkę; null ją czyści. */
+  businessUnit?: string | null;
   answers?: Record<string, unknown>;
   completionPercent?: number;
   confidenceAvg?: number;

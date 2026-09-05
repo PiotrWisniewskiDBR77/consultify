@@ -7,14 +7,26 @@ import { z } from 'zod';
 
 export const AssessmentTypeSchema = z.enum(['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN']);
 
+/**
+ * Odbiór 05.09 (05-ocena, `assessment-list`): kolumna JEDNOSTKA z zatwierdzonego
+ * obrazu („Logistics BU", „Grupa — Zarząd", „Sales BU"). `validateBody` podmienia
+ * `req.body` na WYNIK parsowania, a `z.object` domyślnie WYCINA nieznane klucze —
+ * bez tego pola `businessUnit` wysłane przez klienta ginęłoby po cichu, zanim
+ * kontroler zdążyłby je zobaczyć. Kolumna: `assessments.business_unit`
+ * (server/migrations/20260905_assessment_business_unit.sql).
+ */
+const BusinessUnitSchema = z.string().max(200).optional().nullable();
+
 export const CreateAssessmentSchema = z.object({
   assessmentType: AssessmentTypeSchema,
   name: z.string().min(1).max(200),
   projectId: z.string().optional().nullable(),
+  businessUnit: BusinessUnitSchema,
 });
 
 export const UpdateAssessmentSchema = z.object({
   name: z.string().min(1).max(200).optional(),
+  businessUnit: BusinessUnitSchema,
   answers: z.record(z.string(), z.unknown()).optional(),
   completionPercent: z.number().min(0).max(100).optional(),
   confidenceAvg: z.number().min(1).max(5).optional(),

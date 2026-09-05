@@ -8,11 +8,11 @@
  * oraz `/assessment/drd` lądowało na „Bibliotece" (pięć metodyk) zamiast na
  * liście sesji DRD.
  *
- * ODCHYLENIA ŚWIADOME, opisane w kodzie i w raporcie:
- *  · JEDNOSTKA — brak pola jednostki organizacyjnej w danych; kolumny nie ma,
- *    bo wypełnienie jej czymkolwiek byłoby atrapą.
- *  · POSTĘP — zostaje widoczny (obraz go nie ma, ale na jego miejscu jest
- *    JEDNOSTKA; postęp jest liczony serwerowo i pilnowany osobnym testem).
+ * RUNDA 3 (05.09): ostatnia różnica — kolumna JEDNOSTKA — zamknięta
+ * dwuwarstwowo (server/migrations/20260905_assessment_business_unit.sql +
+ * zwrócenie `businessUnit` w obu trasach listy). POSTĘP schodzi na jej miejsce
+ * do pstryczka; mapowanie `completionPercent` na wiersz zostaje nietknięte
+ * (pilnuje go AssessmentHub.processes-completion.test.tsx).
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -89,6 +89,7 @@ const SIRI_ROW = {
   completion_percent: 42,
   overall_score: 3.4,
   confidence_avg: 0.72,
+  business_unit: 'Logistics BU',
 };
 const ADMA_ROW = {
   id: 'asm_adma_1',
@@ -136,7 +137,7 @@ describe('AssessmentHub — kolumny listy ocen wg zatwierdzonego obrazu', () => 
     apiMock.listAssessments.mockResolvedValue({ items: [SIRI_ROW, ADMA_ROW] });
   });
 
-  it('domyślnie pokazuje NAZWA OCENY / STATUS / WYNIK / PEWNOŚĆ / WŁAŚCICIEL / AKTUALIZACJA, a TYP chowa do pstryczka', async () => {
+  it('domyślnie pokazuje NAZWA OCENY / JEDNOSTKA / STATUS / WYNIK / PEWNOŚĆ / WŁAŚCICIEL / AKTUALIZACJA, a TYP i POSTĘP chowa do pstryczka', async () => {
     render(
       <MemoryRouter initialEntries={['/assessment']}>
         <AssessmentHub />
@@ -147,15 +148,39 @@ describe('AssessmentHub — kolumny listy ocen wg zatwierdzonego obrazu', () => 
     const headers = headerTexts().join(' | ');
 
     expect(headers).toContain('Nazwa oceny');
+    expect(headers).toContain('Jednostka');
     expect(headers).toContain('Wynik');
     expect(headers).toContain('Pewność');
     expect(headers).toContain('Właściciel');
     expect(headers).toContain('Aktualizacja');
-    // TYP wychodzi z domyślnego zestawu (obraz go nie ma) — zostaje w pstryczku
+    // TYP i POSTĘP wychodzą z domyślnego zestawu (obraz ich nie ma) — zostają
+    // w pstryczku
     expect(headers).not.toContain('Typ');
+    expect(headers).not.toContain('Postęp');
     // stare etykiety zniknęły
     expect(headers).not.toContain('Autor');
     expect(headers).not.toContain('Zaktualizowano');
+
+    // JEDNOSTKA stoi na drugiej pozycji, jak na obrazie (za checkboxem
+    // zaznaczania, zaraz po NAZWIE OCENY)
+    const dataHeaders = headerTexts().filter((h) => h.length > 0);
+    expect(dataHeaders.indexOf('Jednostka')).toBe(dataHeaders.indexOf('Nazwa oceny') + 1);
+  });
+
+  it('rysuje realną jednostkę z pola `business_unit`, a jej brak jako „—"', async () => {
+    render(
+      <MemoryRouter initialEntries={['/assessment']}>
+        <AssessmentHub />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('SIRI — hala 2');
+    // wiersz SIRI ma jednostkę…
+    expect(screen.getByText('Logistics BU')).toBeInTheDocument();
+    // …a ADMA jej nie ma — myślnik, nigdy atrapa ani pusta komórka
+    const admaRow = screen.getByText('ADMA — linia montażowa').closest('tr');
+    expect(admaRow).not.toBeNull();
+    expect(admaRow?.textContent).toContain('—');
   });
 
   it('pokazuje realny WYNIK i PEWNOŚĆ z kolumn bazy, a brak wartości jako „—"', async () => {

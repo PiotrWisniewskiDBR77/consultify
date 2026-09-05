@@ -8224,6 +8224,14 @@ export const Api = {
     name: string;
     description?: string;
     projectId?: string | null;
+    /**
+     * Odbiór 05.09 (05-ocena): etykieta jednostki organizacyjnej — kolumna
+     * JEDNOSTKA na liście ocen. Obie trasy (v8 i legacy fallback) już ją
+     * przyjmują; UWAGA: żaden ekran jej dziś nie wysyła, więc na istniejących
+     * danych kolumna rysuje „—". Pole jest tu, żeby ścieżka zapisu była pełna,
+     * a nie dopisywana później po kawałku.
+     */
+    businessUnit?: string | null;
   }): Promise<{ id: string; status: string }> => {
     const shouldFallbackToLegacy = (error: any) => {
       const status = Number(error?.status);
@@ -8235,6 +8243,7 @@ export const Api = {
         assessmentType: payload.assessmentType,
         name: payload.name,
         projectId: payload.projectId ?? null,
+        businessUnit: payload.businessUnit ?? null,
       });
 
       return {
@@ -8297,6 +8306,9 @@ export const Api = {
       contextSnapshot?: Record<string, unknown>;
       scoreSummary?: Record<string, unknown>;
       currentSectionId?: string | null;
+      /** Odbiór 05.09 (05-ocena): kolumna JEDNOSTKA. Pominięcie pola zostawia
+       *  zapisaną jednostkę; jawny null / pusty string ją czyści. */
+      businessUnit?: string | null;
     }
   ): Promise<any> => {
     const shouldFallbackToLegacy = (error: any) => {

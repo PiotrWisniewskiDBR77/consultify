@@ -7530,7 +7530,8 @@
         "owner": "Właściciel",
         "updatedAt": "Aktualizacja",
         "score": "Wynik",
-        "confidence": "Pewność"
+        "confidence": "Pewność",
+        "businessUnit": "Jednostka"
       },
       "editNoteImported": "Edycja przez przegląd zaimportowanego PDF",
       "triagePrompt": "Zrób wstępną ocenę AI listy „{{lane}}\" ({{count}} pozycji): co wymaga uwagi najpierw i dlaczego?",

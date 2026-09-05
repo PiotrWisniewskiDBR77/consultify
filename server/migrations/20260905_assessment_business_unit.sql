@@ -1,0 +1,33 @@
+-- Odbior na zywo 05.09 (05-ocena, pozycja `assessment-list`, runda 3).
+--
+-- CO BYLO ZMIERZONE
+-- Zatwierdzony obraz listy ocen
+-- (evidence/grafika/20-tabele-szerokosc/assessment-list__PRZED__light.png) ma
+-- kolumny NAZWA OCENY | JEDNOSTKA | STATUS | WYNIK | PEWNOSC | WLASCICIEL |
+-- AKTUALIZACJA, gdzie JEDNOSTKA niesie wartosci „Logistics BU", „Grupa —
+-- Zarzad", „Sales BU". Na zywo tej kolumny nie bylo, bo tabela `assessments`
+-- nie miala ANI JEDNEGO pola jednostki organizacyjnej (GET /api/v8/assessment
+-- oddawal tylko organization_id i project_id).
+--
+-- DLACZEGO ETYKIETA, A NIE FK
+-- W repozytorium nie ma zywej tabeli jednostek organizacyjnych, do ktorej
+-- mozna by sie dowiazac: jedyny kandydat, `locations` (245_project_enhancements.sql,
+-- kolumna `type` z wartoscia 'business_unit'), jest zamontowany w Gateway.ts
+-- jako STUB (`mountStub('/api/locations', ...)` — tryb zdegradowany), nie ma
+-- ekranu w module Organizacja, ktory by go wypelnial, i nie ma seedu dla
+-- organizacji demo. FK do pustej tabeli dalby kolumne, ktora ZAWSZE pokazuje
+-- „—" — czyli dokladnie ten sam defekt, ktory ta migracja ma zamknac.
+-- Dlatego kolumna jest opisowa (TEXT, NULL-owalna) i przechowuje etykiete
+-- jednostki dokladnie w takiej postaci, w jakiej pokazuje ja obraz.
+-- Gdy modul Organizacja dostanie realny rejestr jednostek, dolozenie obok
+-- `business_unit_id` z FK bedzie zmiana addytywna — ta kolumna zostaje wtedy
+-- jako czytelna etykieta/fallback.
+--
+-- BEZPIECZENSTWO
+-- Wylacznie ADD COLUMN IF NOT EXISTS. Zero przepisywania danych, zero DEFAULT,
+-- zero NOT NULL — istniejace wiersze zostaja z NULL, a UI rysuje dla nich „—".
+-- Idempotentne, odtwarzalne na czystej bazie: `assessments` produkuje
+-- 000_z_core_baseline.sql (faza 0), a ten plik ma prefiks daty (faza 1), wiec
+-- w kolejnosci runnera zawsze wypada PO producencie tabeli.
+
+ALTER TABLE assessments ADD COLUMN IF NOT EXISTS business_unit TEXT;
