@@ -3,11 +3,15 @@
   "moduly": {
     "01_ORGANIZATION": {
       "nazwa": "Organizacja",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Organizacja: 21 ekranów redesignu sprawdzonych na żywo i zaakceptowanych przez Ciebie 05.09 (nowy wzorzec). Cztery zgłoszone defekty naprawione (martwa zakładka, podpisy, JSON, polski).",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/14-organizacja/org-summary.png",
+        "evidence/odbior-zywo-20260905/14-organizacja/org-knowledge-graph.png",
+        "evidence/odbior-zywo-20260905/14-organizacja/org-scenarios.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "02_INTERVIEW": {
       "nazwa": "Wywiad",
@@ -35,19 +39,29 @@
     },
     "05_INITIATIVES": {
       "nazwa": "Inicjatywy",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Inicjatywy: 5 ekranów zgodnych, karta i siatka na kartach standardowych; jedyny brak to puste dane pokazowe w części powiązań (nie kod).",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/06-inicjatywy/_finance-lista.png",
+        "evidence/odbior-zywo-20260905/06-inicjatywy/_finance-panels-check.png",
+        "evidence/odbior-zywo-20260905/06-inicjatywy/_finance-panels-evbasket.png",
+        "evidence/odbior-zywo-20260905/06-inicjatywy/_finance-panels-flag.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "06_EXECUTION": {
       "nazwa": "Realizacja",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Realizacja: tabela pracy z nazwiskami, Kokpit zatwierdzony przez Ciebie, zasoby i sterowanie zgodne; historia KPI pusta z braku pomiarów (dane).",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/07-realizacja/execution-tab-work.png",
+        "evidence/odbior-zywo-20260905/07-realizacja/execution-tab-summary.png",
+        "evidence/odbior-zywo-20260905/07-realizacja/execution-tab-resources.png",
+        "evidence/odbior-zywo-20260905/07-realizacja/execution-tab-rollout.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "07_MY_WORK_AGENT": {
       "nazwa": "Moja praca / Agent",
@@ -59,43 +73,65 @@
     },
     "08_MEETINGS": {
       "nazwa": "Spotkania",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Spotkania: 3 ekrany zgodne z obrazami, bez uwag.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/12-spotkania/calendar-sync-settings.png",
+        "evidence/odbior-zywo-20260905/12-spotkania/meetings-module.png",
+        "evidence/odbior-zywo-20260905/12-spotkania/public-booking-widget.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "09_RESULTS": {
       "nazwa": "Wyniki",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Wyniki: karta KPI z ścieżką poziomów, karta celu OKR zbudowana dziś w Twojej formule (cel → zbiór rezultatów → rezultat), ROI z narracją z realnych danych i nazwiskami; 4 błędy runtime w OKR naprawione.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-okr-registry.png",
+        "evidence/odbior-zywo-20260905/08-wyniki/roi-jedna-karta.png",
+        "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-kpi-scorecards.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "10_FINANCE": {
       "nazwa": "Finanse",
       "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "cto_werdykt": "Finanse: sprawozdania, analiza, komentarze, wycena z wyborem źródła gotowe; Baseline v3 (pełna tabela) i porównanie wersji to program po MVP — moduł do zatwierdzenia z tym zastrzeżeniem, gdy skończę odbiór.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/09-finanse/finance-statement-pack-workspace-v2.png",
+        "evidence/odbior-zywo-20260905/09-finanse/finance-analysis-workspace.png",
+        "evidence/odbior-zywo-20260905/09-finanse/finance-comments-panel.png",
+        "evidence/odbior-zywo-20260905/09-finanse/finance-valuation-workspace.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "11_MATERIALS": {
       "nazwa": "Materiały",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Materiały: 35 z 36 ekranów zgodnych, widok Raport dla artefaktu raportu, Teresa wbudowana w Document Studio (Twój wyjątek), polskie nazwy szablonów; arkusz i menu Plik zgodne.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/10-materialy/document-studio-menu-pliku.png",
+        "evidence/odbior-zywo-20260905/10-materialy/report-artifact.png",
+        "evidence/odbior-zywo-20260905/10-materialy/sheet-artifact.png",
+        "evidence/odbior-zywo-20260905/10-materialy/document-studio-ai-teresa.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "12_AUDITS": {
       "nazwa": "Audyty",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Audyty: 4 ekrany zgodne, liczniki kryteriów z realnych danych, zakładka Raporty DRD z wejściem do gotowego raportu.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/11-audyty/audyty-piec-powierzchni.png",
+        "evidence/odbior-zywo-20260905/11-audyty/audyty-warsztat-kryterium.png",
+        "evidence/odbior-zywo-20260905/11-audyty/audyty-drd-report.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "13_CHAT": {
       "nazwa": "Czat",
@@ -112,19 +148,25 @@
     },
     "14_ADMIN": {
       "nazwa": "Administracja",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Administracja: 28 ekranów zgodnych, health po polsku; 8 pustych stanów to brak danych organizacji, 4 ekrany platformy wymagają osobnego konta superadmina (poza MVP).",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/13-administracja/admin-health-dependencies.png",
+        "evidence/odbior-zywo-20260905/13-administracja/admin-billing-seats-licences.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "15_SETTINGS": {
       "nazwa": "Ustawienia",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Odbiór CTO w toku.",
-      "zrzuty": [],
+      "stan": "GOTOWY",
+      "cto_werdykt": "Ustawienia: 8 ekranów zgodnych, powiadomienia działają, sekcje Funkcje beta i Historia obecne.",
+      "zrzuty": [
+        "evidence/odbior-zywo-20260905/18-ustawienia/ustawienia-powiadomienia.png",
+        "evidence/odbior-zywo-20260905/18-ustawienia/ustawienia-zaawansowane.png"
+      ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T12:01:00.000Z"
+      "sprawdzono": "2026-09-05T14:23"
     },
     "16_PARTNER": {
       "nazwa": "Partner",
