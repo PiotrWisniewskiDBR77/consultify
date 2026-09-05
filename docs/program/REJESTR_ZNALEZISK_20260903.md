@@ -383,3 +383,9 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AF1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
 | AF2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
 | AF3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
+
+## AG. Dyżur 370 — akcje wiadomości tworzyły zły rekord albo nie zapisywały przed nawigacją
+
+- K4: „Konwertuj na inicjatywę” zapisywało `ai_decision_outcomes`; gałąź dowodowa rozdziela typy i woła kanoniczny lejek `createInitiative` ze śladem org/source.
+- K8: „Zapisz jako pomysł” używało placeholdera `new-idea-*`; gałąź dowodowa zapisuje przez `createIdeaFromChat` przed nawigacją i przekazuje realne `idea-*`.
+- Stan: `PARTIAL` — RealPG/ApiGateway/JWT i mutacje RED→GREEN przechodzą; pełny test montażu `IdeaMapWorkspace` z licznikiem `createMyIdea=0` oraz wdrożenie/akcept pozostają nieudowodnione. Raport: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY370_AKCJE_WIADOMOSCI_REPORT.md`.
