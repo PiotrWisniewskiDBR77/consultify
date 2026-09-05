@@ -1,0 +1,19 @@
+{
+ "url": "http://localhost:3099/document-studio/artifact-04023439-e40f-42e4-a8f0-cfa3744b04e5",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Notatka z przejścia MVP",
+  "css=button:has-text(\"Otwórz\")"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDokumenty\nDokument\nDane\nModel\n1\nAudyt Nocny\nAN\nWróć do Materiałów\nMateriały\nNotatka z przejścia MVP\nPlik\nKontrola jakości i przegląd\nEdytor AI\nEksportuj DOCX\nUdostępnij\nPL · Wewnętrzne\n0 źródeł\nKONSPEKT\n1 sekcja\nźródła: 0 · założenia: 0\n+ Dodaj sekcję\n1. Sekcja 1\n1 blok\nPodgląd dokumentu\n\nDokument ogólny · PL · Zwięzły (1–3 strony) · Wewnętrzne\n\nOtwórz w kreatorze arkuszy\nMarkdown\nDOCX\nPDF\nZacznij od nowa\nTekst\nH1\nH2\nH3\n• Lista\n1. Lista\nB\nI\nU\nS\nZakreśl\n⇤\n↔\n⇥\nLink\nUsuń link\nWyróżnienie\nCytat\nWykres\nTabela\nKPI\nRyzyka\nRoadmapa\nObraz\nZnajdź\nZamień\nRozmiar czcionki\nAuto\n12\n14\n16\n18\n24\n32\nWgraj / zmień obraz\nKolor\nSekcja 1\n\nDokument utworzony w trybie Czysto podczas przejścia MVP 06.09. Tekst wpisany ręcznie, bez AI.",
+ "kiedy": "2026-09-05T23:41:33.117Z"
+}

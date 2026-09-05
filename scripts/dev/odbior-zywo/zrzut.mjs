@@ -12,6 +12,9 @@
  *   nikt nie jest zalogowany, i przekieruje na /login. Ciasteczka nie mają portu w domenie,
  *   więc wystarczy przepisać `origins`. Robimy to na KOPII w pamięci — plik sesji nietknięty.
  * --klik można podać wiele razy (kolejno). Selektor w składni Playwright (text=, css=, role=…).
+ * --wpisz=<selektor>::<tekst> (OPT-IN, 2026-09-06): wpisuje tekst w pole/edytor. Można podać wiele razy;
+ *   kroki --klik i --wpisz wykonują się w KOLEJNOŚCI Z WIERSZA POLECEŃ. Pola formularza dostają `fill`,
+ *   `contenteditable` (TipTap) — realne pisanie z klawiatury. Bez tego parametru zero zmiany zachowania.
  * --przewin=<selektor> (OPT-IN, dodane 2026-09-05): po klikach przewija podany element do widoku
  *   i dopiero wtedy robi zrzut. Potrzebne, gdy odbierany blok leży poniżej pierwszego ekranu, a
  *   `--pelna` daje obraz zbyt wysoki, żeby cokolwiek na nim zobaczyć (np. panel EV football-field
@@ -44,6 +47,27 @@ import { zapiszSesjeJesliBezpiecznie } from './zrzutSesja.mjs';
 const args = process.argv.slice(2);
 const get = (k, d) => { const a = args.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7));
+// --wpisz=<selektor>::<tekst> (OPT-IN, 2026-09-06): wpisz tekst do pola/edytora.
+// Potrzebne, gdy dowodem jest DZIAŁANIE, a nie sam wygląd (np. „Czysto" w
+// Materiałach: dokument liczy się dopiero wtedy, gdy da się w nim NAPISAĆ i
+// zapisać). Kroki `--klik` i `--wpisz` wykonują się w KOLEJNOŚCI Z WIERSZA
+// POLECEŃ — bez tego parametru zachowanie skryptu jest bajt w bajt jak dotąd.
+// Pola formularza dostają `fill`, edytory `contenteditable` — realne pisanie
+// z klawiatury (TipTap i spółka ignorują podmianę wartości).
+const kroki = args
+  .filter((x) => x.startsWith('--klik=') || x.startsWith('--wpisz='))
+  .map((x) =>
+    x.startsWith('--klik=')
+      ? { rodzaj: 'klik', selektor: x.slice(7) }
+      : (() => {
+          const surowy = x.slice(8);
+          const i = surowy.indexOf('::');
+          return i < 0
+            ? { rodzaj: 'blad', selektor: surowy }
+            : { rodzaj: 'wpisz', selektor: surowy.slice(0, i), tekst: surowy.slice(i + 2) };
+        })()
+  );
+const wpisy = kroki.filter((k) => k.rodzaj === 'wpisz').map((k) => k.selektor);
 const przewin = get('przewin', '');
 const url = get('url', '/chat'); const requestedOut = get('out'); const czekaj = Number(get('czekaj', '1200'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
@@ -109,9 +133,34 @@ page.on('response', (response) => {
 });
 await page.goto(baza + url, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(czekaj);
-for (const k of kliki) {
-  try { await page.locator(k).first().click({ timeout: 8000 }); await page.waitForTimeout(900); }
-  catch (e) { bledy.push(`klik nieudany: ${k}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
+for (const krok of kroki) {
+  if (krok.rodzaj === 'blad') {
+    bledy.push(`--wpisz bez separatora "::": ${krok.selektor}`);
+    continue;
+  }
+  if (krok.rodzaj === 'klik') {
+    try { await page.locator(krok.selektor).first().click({ timeout: 8000 }); await page.waitForTimeout(900); }
+    catch (e) { bledy.push(`klik nieudany: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
+    continue;
+  }
+  try {
+    const cel = page.locator(krok.selektor).first();
+    await cel.waitFor({ state: 'visible', timeout: 8000 });
+    await cel.click({ timeout: 8000 });
+    const edytowalny = await cel.evaluate((el) => el.isContentEditable === true).catch(() => false);
+    if (edytowalny) {
+      // ProseMirror/TipTap ustawia selekcję dopiero po obsłużeniu kliknięcia —
+      // bez tej pauzy PIERWSZY wpisany znak ginie (zmierzone: „Dokument…" →
+      // „okument…" na zrzucie dowodowym).
+      await page.waitForTimeout(400);
+      await page.keyboard.type(krok.tekst, { delay: 12 });
+    } else {
+      await cel.fill(krok.tekst, { timeout: 8000 });
+    }
+    await page.waitForTimeout(900);
+  } catch (e) {
+    bledy.push(`wpisanie nieudane: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`);
+  }
 }
 if (przewin) {
   try { await page.locator(przewin).first().scrollIntoViewIfNeeded({ timeout: 8000 }); await page.waitForTimeout(700); }
@@ -134,7 +183,7 @@ for (const sel of domSelektory) {
 // bezwarunkowo); to jest nadzbior zachowania opt-in z P3 (--dom=body), wiec zadnego wolacza
 // nie psuje — kazdy dostaje co najmniej to, co dostawal wczesniej.
 const tekst = await page.locator('body').innerText().catch(() => '');
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, szerokosc, motyw, bledy, bledyKonsoli: bledy, odpowiedziHttp, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, wpisy, przewin: przewin || null, pelna, wysokosc, szerokosc, motyw, bledy, bledyKonsoli: bledy, odpowiedziHttp, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie, WIEC BYLOBY WYGODNIE zapisac zaktualizowany
 // stan z powrotem — ale TYLKO gdy jawnie o to poproszono (--zapisz-sesje) i tylko gdy

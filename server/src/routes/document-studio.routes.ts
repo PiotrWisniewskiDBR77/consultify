@@ -4793,6 +4793,28 @@ router.put(
       });
       if (respondIfLineageLost(res, versionOutcome)) return;
 
+      // ODBIÓR 06.09 — zmiana nazwy dokumentu musi dojść do listy Materiałów.
+      // Wiersz Biblioteki wyników trzyma `title_snapshot` z chwili utworzenia
+      // („Nowy dokument"), a dokumenty — w odróżnieniu od prezentacji
+      // (`syncArtifactRegistryForDeck`) — rejestrowały pochodzenie tylko raz.
+      // Fail-open: nieudane odświeżenie tytułu nie może przewrócić zapisanej
+      // już treści (zapis przeszedł compare-and-swap wyżej).
+      if (typeof body.title === 'string' && body.title.trim()) {
+        try {
+          await artifactRegistryService.refreshArtifactTitleForOrigin({
+            organizationId,
+            originRuntime: 'native_artifact',
+            originRecordId: artifactId,
+            title: body.title,
+          });
+        } catch (titleSyncError) {
+          logger.warn('[DocumentStudio] Nie udało się odświeżyć tytułu w Bibliotece wyników', {
+            artifactId,
+            error: titleSyncError instanceof Error ? titleSyncError.message : 'unknown',
+          });
+        }
+      }
+
       const staleApprovalIds = markDocumentApprovalsStaleForVersionChange({
         organizationId,
         artifactId,
