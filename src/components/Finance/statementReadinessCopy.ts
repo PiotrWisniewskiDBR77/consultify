@@ -61,6 +61,30 @@ const REASON_COPY: Record<string, ReasonCopy> = {
     key: 'finance.statements.reason.hasRecoverable',
     fallbackEn: 'At least one statement needs corrections before it can be used',
   },
+  // F-M1 (2026-09-05): 5 codes verified against the real emitter
+  // (`server/src/services/financialStatementPackService.ts` `reasonCodes.push`)
+  // that were missing from this map — before this fix they fell through to
+  // the generic "needs review" sentence below instead of a specific one.
+  INVALID_PERIOD_COUNT: {
+    key: 'finance.statements.reason.invalidPeriodCount',
+    fallbackEn: 'The pack must cover exactly two reporting periods',
+  },
+  INVALID_MEMBER_COUNT: {
+    key: 'finance.statements.reason.invalidMemberCount',
+    fallbackEn: 'The pack is missing one or more required statements',
+  },
+  MISSING_PERIOD_STATEMENT: {
+    key: 'finance.statements.reason.missingPeriodStatement',
+    fallbackEn: 'At least one reporting period is missing a statement',
+  },
+  INCONSISTENT_ENTITY: {
+    key: 'finance.statements.reason.inconsistentEntity',
+    fallbackEn: 'Statements belong to different legal entities',
+  },
+  INCONSISTENT_SOURCE: {
+    key: 'finance.statements.reason.inconsistentSource',
+    fallbackEn: 'Statements come from different sources',
+  },
 };
 
 /** Jedno zdanie dla jednego kodu. Nigdy nie zwraca surowego kodu. */

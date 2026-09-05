@@ -22433,7 +22433,10 @@
         "accountsReceivable": "Accounts Receivable",
         "inventory": "Inventory",
         "accountsPayable": "Accounts Payable"
-      }
+      },
+      "manualModeNotice": "No source statement — historical lines will not be pulled in. Opening balances start at zero. Use \"Ground on statement\" to seed the model from an approved statement.",
+      "seededFromManualBaseline": "Manual / prepared baseline",
+      "manualBaselineHint": "This model uses a manually prepared baseline. Review the assumptions before approval."
     },
     "tabs": {
       "models": "Models",
@@ -22663,7 +22666,12 @@
         "hasRejected": "At least one statement was rejected during validation",
         "hasPending": "At least one statement is still awaiting validation",
         "hasRecoverable": "At least one statement needs corrections before it can be used",
-        "unknown": "This statement needs review before it can be used"
+        "unknown": "This statement needs review before it can be used",
+        "invalidPeriodCount": "The pack must cover exactly two reporting periods",
+        "invalidMemberCount": "The pack is missing one or more required statements",
+        "missingPeriodStatement": "At least one reporting period is missing a statement",
+        "inconsistentEntity": "Statements belong to different legal entities",
+        "inconsistentSource": "Statements come from different sources"
       }
     },
     "counters": {
@@ -22953,7 +22961,8 @@
       "validation": {
         "MAPPING_COVERAGE": "Mapping coverage",
         "DUAL_PERIOD": "Dual period",
-        "LOW_MAPPING_COVERAGE": "Low mapping coverage"
+        "LOW_MAPPING_COVERAGE": "Low mapping coverage",
+        "ariaLabel": "Validation results"
       }
     },
     "mappingEditor": {
@@ -23079,7 +23088,9 @@
         "p50": "P50 (median)",
         "p90": "P90",
         "probPositive": "P(NPV > 0)",
-        "var5": "VaR (5%)"
+        "var5": "VaR (5%)",
+        "histogramEmptyAriaLabel": "NPV distribution histogram — no data",
+        "histogramAriaLabel": "NPV distribution histogram"
       },
       "sensitivity": {
         "title": "What-if sensitivity",
@@ -23396,7 +23407,40 @@
         "title": "Select a financial model",
         "body": "The driver tree decomposes a selected model’s forecast (EBIT = Revenue − COGS − Opex − Depreciation). Pick a model from the list to plan and run what-if on its real figures."
       }
-    }
+    },
+    "valuePanels": {
+      "bankingValue": "Banking value",
+      "cashForecast": "Cash forecast",
+      "driverPlanner": "Driver planner",
+      "driverTree": "Driver tree",
+      "extendedRatios": "Extended ratios",
+      "headcountPlanner": "Headcount planner",
+      "investmentAppraisal": "Investment appraisal",
+      "rollingForecast": "Rolling forecast",
+      "valuationVisuals": "Valuation visuals",
+      "valueAttribution": "Value attribution",
+      "valueCapture": "Value capture pipeline",
+      "valueLedger": "Value ledger",
+      "valueOffice": "Value office",
+      "varianceBridge": "Variance bridge",
+      "varianceNarration": "Variance narration",
+      "evBasket": "EV basket",
+      "monteCarlo": "Monte Carlo NPV",
+      "realOptions": "Real options",
+      "frontier": "Efficient frontier",
+      "sensitivity": "What-if sensitivity",
+      "scenarios": "Scenario compute",
+      "ariaLabel": "Valuation analysis panels",
+      "loading": "Loading panel…"
+    },
+    "filters": {
+      "status": {
+        "draft": "Draft",
+        "review": "In Review",
+        "approved": "Approved"
+      }
+    },
+    "blocked": "Access to the Finance module is restricted by your organization's policy."
   },
   "portfolio": {
     "toast": {
@@ -41425,7 +41469,12 @@
     "assigned": "Assigned",
     "not_started": "Not started",
     "todo": "To do",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "recoverable": "Recoverable",
+    "needs_changes": "Needs changes",
+    "ready_for_review": "Ready for review",
+    "superseded": "Superseded",
+    "invalidated": "Invalidated"
   },
   "state": {
     "save": {

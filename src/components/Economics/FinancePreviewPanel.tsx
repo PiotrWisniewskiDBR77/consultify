@@ -49,6 +49,7 @@ import {
 } from './financeTypes';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 import { normalizeSensitivityGrid } from './normalizeSensitivityGrid';
+import { statementReadinessLabel } from '../Finance/labels/financeEnums';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -204,6 +205,7 @@ export function useFinancePreview({
 }: FinancePreviewPanelProps) {
   const { t, i18n } = useTranslation();
   const numberLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
+  const isPolishLocale = numberLocale === 'pl-PL';
 
   const ModelStatementPreview: React.FC<{
     detail: NonNullable<PreviewDataState['modelPreviewDetail']>;
@@ -580,7 +582,8 @@ export function useFinancePreview({
                           {statement.statementType}
                         </span>
                         <span className="font-mono text-slate-900 dark:text-white">
-                          {statement.readinessStatus || 'pending'} / {statement.mappedLineCount}
+                          {statementReadinessLabel(statement.readinessStatus || 'pending', isPolishLocale)}{' '}
+                          / {statement.mappedLineCount}
                         </span>
                       </div>
                     ))}
