@@ -845,6 +845,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     isAuthInitializing,
     chatModuleIntent,
   } = useAppStore();
+  const storedKickoffMessage = useAppStore((state) => state.chatKickoffMessage);
+  const effectiveKickoffMessage = kickoffMessage ?? storedKickoffMessage;
 
   // MOST „Teresa sama poprawia artefakt" (2026-09-01). Props zostaje pierwszy
   // — osadzone czaty, które jeszcze go podają, działają jak dotąd. Gdy propsa
@@ -5007,27 +5009,33 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [handleChatAction, handleSendMessage]
   );
 
-  // One-shot kickoff: when panel opens in split mode, auto-send the configured message.
+  // One-shot kickoff: explicit embedded-panel props win; otherwise every mount
+  // can consume the global handoff written by Help and cross-tool redirects.
   useEffect(() => {
-    if (!kickoffMessage) return;
+    if (!effectiveKickoffMessage) return;
     if (isDisabled) return;
     if (isStreaming) return;
     if ((customMessages || []).length > 0) return;
     if ((activeMessages || []).length > 0) return;
-    if (lastKickoffSentRef.current === kickoffMessage) return;
+    if (lastKickoffSentRef.current === effectiveKickoffMessage) return;
 
     // Fire-and-forget; handleSendMessage creates conversation if needed
-    void handleSendMessage(kickoffMessage);
-    lastKickoffSentRef.current = kickoffMessage;
-    onKickoffConsumed?.();
+    void handleSendMessage(effectiveKickoffMessage);
+    lastKickoffSentRef.current = effectiveKickoffMessage;
+    if (onKickoffConsumed) {
+      onKickoffConsumed();
+    } else if (kickoffMessage === undefined) {
+      useAppStore.getState().clearChatKickoffMessage();
+    }
   }, [
-    kickoffMessage,
+    effectiveKickoffMessage,
     isDisabled,
     isStreaming,
     customMessages,
     activeMessages,
     handleSendMessage,
     onKickoffConsumed,
+    kickoffMessage,
   ]);
 
   const handleDeepThinkingProceed = useCallback(async () => {

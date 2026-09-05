@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -191,5 +191,53 @@ describe('UnifiedChatPanel chat route wiring', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /business actions|akcje biznesowe/i }));
     expect(harness.navigate).toHaveBeenCalledWith('/ai-actions');
+  });
+
+  it('sends and consumes the store kickoff with the exact props used by the chat route', async () => {
+    harness.appState.chatKickoffMessage = 'Przeanalizuj ryzyko dostawcy';
+
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(harness.startStream.mock.calls[0]?.[0]).toBe('Przeanalizuj ryzyko dostawcy');
+    expect(harness.clearKickoff).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves an embedded panel kickoff prop and does not clear the unrelated global handoff', async () => {
+    harness.appState.chatKickoffMessage = 'Globalny kickoff';
+
+    render(
+      <MemoryRouter initialEntries={['/artifact']}>
+        <UnifiedChatPanel mode="split" kickoffMessage="Lokalny kickoff" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(harness.startStream.mock.calls[0]?.[0]).toBe('Lokalny kickoff');
+    expect(harness.clearKickoff).not.toHaveBeenCalled();
+  });
+
+  it('keeps MainLayout-style consumption delegated to the provided callback', async () => {
+    const onKickoffConsumed = vi.fn();
+    harness.appState.chatKickoffMessage = 'Kickoff z MainLayout';
+
+    render(
+      <MemoryRouter initialEntries={['/organization']}>
+        <UnifiedChatPanel
+          mode="split"
+          kickoffMessage={undefined}
+          onKickoffConsumed={onKickoffConsumed}
+        />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(harness.startStream).toHaveBeenCalled());
+    expect(harness.startStream.mock.calls[0]?.[0]).toBe('Kickoff z MainLayout');
+    expect(onKickoffConsumed).toHaveBeenCalledTimes(1);
+    expect(harness.clearKickoff).not.toHaveBeenCalled();
   });
 });
