@@ -93,6 +93,7 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi';
+import { executionTypeLabel } from '@/labels/executionTypeLabels';
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
@@ -491,19 +492,10 @@ const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
   InitiativeStatus.BLOCKED,
 ];
 
-// Type codes
-const getTypeCode = (axis: string): string => {
-  const codes: Record<string, string> = {
-    PROCESSES: 'PRC',
-    DIGITAL: 'DIG',
-    MODELS: 'MDL',
-    DATA: 'DAT',
-    CULTURE: 'CUL',
-    CYBERSECURITY: 'SEC',
-    AI: 'AI',
-  };
-  return codes[axis] || 'EXE';
-};
+// NAPRAWA MVP 06.09 (poz. 7.2, BLOKER): `getTypeCode()` renderowała surowy
+// 3-literowy kod wewnętrzny wprost w UI (kolumna TYP + zakładka otwartego
+// dokumentu) — usunięta, zastąpiona przez `executionTypeLabel()` z
+// src/labels/executionTypeLabels.ts (patrz oba miejsca użycia niżej).
 
 interface ExecutionDecision {
   id: string;
@@ -2274,15 +2266,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         // #12 — TYPE moved AFTER the NAME column.
+        // NAPRAWA (audyt MVP 06.09, poz. 7.2, BLOKER): kolumna renderowala
+        // surowy 3-literowy kod wewnetrzny (`getTypeCode`, np. "EXE" na
+        // KAZDYM wierszu, bo realne `row.axis` z bazy — "Digital Processes",
+        // "Cybersecurity", "AI Maturity"… — nie trafialy w mape enumow tego
+        // kodu). `executionTypeLabel` normalizuje te realne zapisy na
+        // czytelna polska etykiete (pill neutralny, bez mono/kodu) —
+        // patrz src/labels/executionTypeLabels.ts.
         id: 'type',
         label: t('execution.table.type'),
-        width: '80px',
+        width: '140px',
         render: (row) => {
-          const code = getTypeCode(row.axis);
+          const label = executionTypeLabel(row.axis, isPolish);
           return (
             <div className="flex items-center gap-2">
-              <Target size={14} className="text-blue-400" />
-              <span className="font-mono text-xs font-bold text-c-text-secondary">{code}</span>
+              <Target size={14} className="text-blue-400 shrink-0" />
+              <span className="inline-flex h-6 items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text-secondary whitespace-nowrap">
+                {label}
+              </span>
             </div>
           );
         },
@@ -2732,28 +2733,34 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [filteredInitiatives]);
 
   // Handlers
-  const handleOpenDocument = useCallback((row: FullInitiative) => {
-    const code = getTypeCode(row.axis);
-    const doc: OpenDocument = {
-      id: row.id,
-      type: 'initiative',
-      subType: code,
-      name: row.name,
-      status:
-        row.status === InitiativeStatus.BLOCKED
-          ? 'BLOCKED'
-          : row.status === InitiativeStatus.DONE
-            ? 'DONE'
-            : 'DRAFT',
-    };
+  // NAPRAWA (rodzeństwo poz. 7.2 — grep `getTypeCode`): `doc.subType` trafia
+  // wprost do `DynamicTabs.tsx` jako etykieta zakładki otwartego dokumentu
+  // (`font-mono text-xs`, patrz `subTypeLabel`) — surowy kod ('EXE'/'PRC'/…)
+  // wyciekał więc RÓWNIEŻ tam, nie tylko w kolumnie TYP tabeli.
+  const handleOpenDocument = useCallback(
+    (row: FullInitiative) => {
+      const doc: OpenDocument = {
+        id: row.id,
+        type: 'initiative',
+        subType: executionTypeLabel(row.axis, isPolish),
+        name: row.name,
+        status:
+          row.status === InitiativeStatus.BLOCKED
+            ? 'BLOCKED'
+            : row.status === InitiativeStatus.DONE
+              ? 'DONE'
+              : 'DRAFT',
+      };
 
-    setOpenDocuments((prev) => {
-      if (prev.find((d) => d.id === doc.id)) return prev;
-      return [...prev, doc];
-    });
-    setActiveDocumentId(row.id);
-    setIsSidePanelOpen(false);
-  }, []);
+      setOpenDocuments((prev) => {
+        if (prev.find((d) => d.id === doc.id)) return prev;
+        return [...prev, doc];
+      });
+      setActiveDocumentId(row.id);
+      setIsSidePanelOpen(false);
+    },
+    [isPolish]
+  );
 
   const handleOpenReport = useCallback((report: { id: string; title: string }) => {
     const docId = `report:${report.id}`;

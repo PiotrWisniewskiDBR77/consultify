@@ -6251,6 +6251,7 @@
       "existingInterviewInitiatives": "Existing interview initiatives",
       "pendingReview2": "Pending review",
       "newSessionModalTitle": "New interview session",
+      "newSessionDefaultName": "Interview {{date}}",
       "sessionNameLabel": "Session name",
       "create": "Create",
       "creatingInterviewSession": "Creating interview session...",
@@ -8317,6 +8318,7 @@
       "initiativePackTooltip": "Generate an AI initiative pack from the assessment findings.",
       "resumeLatestLabel": "Resume latest assessment",
       "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
+      "aiTriage": "AI Triage",
       "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
       "chatTooltip": "Opens a blank AI chat for this hub.",
       "connectionError": "Connection error",
@@ -8814,6 +8816,28 @@
       "rowMenu": {
         "openReport": "Show report",
         "openPresentation": "Show as presentation"
+      },
+      "emptyState": {
+        "title": "No insights yet",
+        "description": "Insights frozen from a completed assessment session will appear here."
+      },
+      "forbidden": {
+        "title": "No access to Insights",
+        "description": "Your account does not have permission to view this organization’s Insights."
+      }
+    },
+    "lineage": {
+      "forbidden": {
+        "title": "No access to lineage",
+        "description": "Your account does not have permission to view this session’s lineage."
+      },
+      "error": {
+        "title": "Could not load lineage",
+        "description": "The lineage for this session could not be loaded."
+      },
+      "unrecognized": {
+        "title": "Could not read this lineage",
+        "description": "The server returned a lineage response in an unrecognized shape."
       }
     },
     "emptyState": {
