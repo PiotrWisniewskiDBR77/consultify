@@ -154,9 +154,11 @@ describe('Praca (ExecutionWorkSurface)', () => {
 
     render(<ExecutionWorkSurface activePreset="all" onCountsChange={onCountsChange} />);
 
-    await waitFor(() => expect(onCountsChange).toHaveBeenCalled());
+    await waitFor(() => {
+      const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number> | undefined;
+      expect(last?.all).toBe(1);
+    });
     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>;
-    expect(last.all).toBe(1);
     expect(last.tasks).toBe(1);
   });
 });

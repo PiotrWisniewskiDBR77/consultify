@@ -1432,12 +1432,18 @@ export async function publishInitiativeCard(
   };
 }
 
-async function allocationRequest(path: string, method: 'POST' | 'GET', command?: unknown) {
+async function allocationRequest(
+  path: string,
+  method: 'POST' | 'GET',
+  command?: unknown,
+  signal?: AbortSignal
+) {
   const response = await fetch(`/api/initiatives/runtime-v1${path}`, {
     method,
     headers: command === undefined ? undefined : { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: command === undefined ? undefined : JSON.stringify(command),
+    signal,
   });
   const body = await readJson(response);
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
@@ -1466,10 +1472,12 @@ export function transitionOperationalAllocation(allocationId: string, command: u
     command
   );
 }
-export function readOperationalAllocations(executionCaseId: string) {
+export function readOperationalAllocations(executionCaseId: string, signal?: AbortSignal) {
   return allocationRequest(
     `/execution-cases/${encodeURIComponent(executionCaseId)}/allocations`,
-    'GET'
+    'GET',
+    undefined,
+    signal
   );
 }
 export function listMyOperationalAllocations() {
