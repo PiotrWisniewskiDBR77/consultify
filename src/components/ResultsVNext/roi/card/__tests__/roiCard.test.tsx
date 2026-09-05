@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { RoiCaseCard, RoiRegistryRow } from '../roiCardApi';
 import { buildRoiRegistryColumns, buildRoiRegistryPreview } from '../roiCardRegistryPresenters';
-import { fmtRoiWithHorizon, varianceDirection } from '../roiCardFormat';
+import { fmtRoiWithHorizon, fmtYears, varianceDirection } from '../roiCardFormat';
 import { RoiAssumptionsPart, RoiCalculationsPart, RoiRealizationPart } from '../RoiCardSections';
 
 const ROW: RoiRegistryRow = {
@@ -273,7 +273,18 @@ describe('L1 — tabela analiz ROI (werdykt K4)', () => {
     const roi = columns.find((c) => c.id === 'roi')!;
     render(<div>{roi.render!(ROW)}</div>);
     expect(screen.getByText('ROI 5Y 100 %')).toBeInTheDocument();
-    expect(fmtRoiWithHorizon(15.16, 3, true)).toBe('ROI 3Y 15 %');
+    expect(fmtRoiWithHorizon(15.16, 3, true)).toBe('ROI 3Y 15\u00a0%');
+  });
+
+  it('lata odmieniają się po polsku — „2 lata", nie „2 roku" (klasa błędu „8dni")', () => {
+    expect(fmtYears(1, true)).toBe('1\u00a0rok');
+    expect(fmtYears(2, true)).toBe('2\u00a0lata');
+    expect(fmtYears(3, true)).toBe('3\u00a0lata');
+    expect(fmtYears(5, true)).toBe('5\u00a0lat');
+    expect(fmtYears(12, true)).toBe('12\u00a0lat');
+    expect(fmtYears(2.5, true)).toBe('2,5\u00a0roku');
+    expect(fmtYears(3.46, true)).toBe('3,46\u00a0roku');
+    expect(fmtYears(null, true)).toBe('—');
   });
 
   it('brak liczby to „—", nigdy 0 (SSOT §6)', () => {

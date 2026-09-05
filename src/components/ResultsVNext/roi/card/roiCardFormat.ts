@@ -48,7 +48,7 @@ export function fmtPercent(
   digits = 1
 ): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return BRAK;
-  return `${value.toLocaleString(locale(isPolish), { maximumFractionDigits: digits })} %`;
+  return `${value.toLocaleString(locale(isPolish), { maximumFractionDigits: digits })}\u00a0%`;
 }
 
 export function fmtRatio(value: number | null | undefined, isPolish: boolean): string {
@@ -59,12 +59,27 @@ export function fmtRatio(value: number | null | undefined, isPolish: boolean): s
   });
 }
 
-/** Lata z jednostką. Liczba NIGDY się nie łamie (K2/K13) — o `whitespace-nowrap`
- *  dba komórka, tutaj pilnujemy tylko twardej spacji między liczbą a słowem. */
+/**
+ * Lata z jednostką, PO POLSKU POPRAWNIE.
+ *
+ * „2 roku" to ta sama klasa błędu, co osławione „8dni": liczba i słowo sklejone
+ * bez odmiany. Polszczyzna ma tu trzy formy, zależne od tego, czy liczba jest
+ * całkowita, i od jej dwóch ostatnich cyfr:
+ *   1 rok · 2/3/4 lata (ale 12/13/14 lat) · 5-21 lat · ułamki „2,5 roku".
+ * Spacja jest NIEŁAMLIWA — liczba i jednostka nigdy nie rozjadą się na dwie
+ * linie (werdykt K2/K13).
+ */
 export function fmtYears(value: number | null | undefined, isPolish: boolean): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return BRAK;
   const n = value.toLocaleString(locale(isPolish), { maximumFractionDigits: 2 });
-  return isPolish ? `${n} roku` : `${n} yrs`;
+  if (!isPolish) return `${n}\u00a0yrs`;
+  if (!Number.isInteger(value)) return `${n}\u00a0roku`;
+  const abs = Math.abs(value);
+  if (abs === 1) return `${n}\u00a0rok`;
+  const last = abs % 10;
+  const lastTwo = abs % 100;
+  const lata = last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14);
+  return `${n}\u00a0${lata ? 'lata' : 'lat'}`;
 }
 
 export function fmtNumber(

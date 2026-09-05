@@ -59,7 +59,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'title',
       label: t('Nazwa', 'Name'),
-      width: '230px',
+      width: '190px',
       sortable: true,
       sortAccessor: (row: RoiRegistryRow) => row.title,
       render: (row: RoiRegistryRow) => <TextCell value={row.title} strong />,
@@ -67,14 +67,14 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'subjectType',
       label: t('Przedmiot', 'Subject'),
-      width: '130px',
+      width: '110px',
       filterable: true,
       render: (row: RoiRegistryRow) => <TextCell value={row.subjectType} />,
     },
     {
       id: 'variant',
       label: t('Wariant', 'Option'),
-      width: '160px',
+      width: '150px',
       render: (row: RoiRegistryRow) => (
         <TextCell value={variantLabel(row.optionVariant, row.optionVariantLabel)} />
       ),
@@ -82,7 +82,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'capex',
       label: 'CAPEX',
-      width: '130px',
+      width: '120px',
       align: 'right',
       sortable: true,
       sortAccessor: (row: RoiRegistryRow) => row.capex ?? Number.NEGATIVE_INFINITY,
@@ -91,7 +91,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'annualNetBenefit',
       label: t('Roczna korzyść', 'Annual benefit'),
-      width: '140px',
+      width: '130px',
       align: 'right',
       sortable: true,
       sortAccessor: (row: RoiRegistryRow) => row.annualNetBenefit ?? Number.NEGATIVE_INFINITY,
@@ -104,7 +104,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
       // Nagłówek bez horyzontu (horyzont bywa różny w różnych wierszach),
       // horyzont jest przy KAŻDEJ liczbie: „ROI 5Y 100 %" (metodyka §17).
       label: 'ROI',
-      width: '120px',
+      width: '115px',
       align: 'right',
       sortable: true,
       sortAccessor: (row: RoiRegistryRow) => row.roiPct ?? Number.NEGATIVE_INFINITY,
@@ -115,7 +115,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'payback',
       label: 'Payback',
-      width: '110px',
+      width: '95px',
       align: 'right',
       sortable: true,
       sortAccessor: (row: RoiRegistryRow) => row.paybackYears ?? Number.POSITIVE_INFINITY,
@@ -124,15 +124,19 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'recommendation',
       label: t('Rekomendacja', 'Recommendation'),
-      width: '160px',
+      width: '155px',
       filterable: true,
       render: (row: RoiRegistryRow) =>
         row.recommendation ? (
           // Pigułka NEUTRALNA (werdykt K1/K4: stany aktywne i decyzje bez
           // crimsonu — czerwień zostaje wyłącznie dla przekroczeń).
+          // `hideDot`: kropka nic tu nie znaczy (pigułka jest neutralna
+          // z definicji), a zabiera ~14 px, przez które „CONDITIONAL GO"
+          // nie mieściło się w jednej linii na 1440 (defekt klasy K5).
           <StatusChip
             label={RECOMMENDATION_LABEL[row.recommendation]}
             tone="neutral"
+            hideDot
             title={row.recommendationCondition ?? undefined}
           />
         ) : (
@@ -142,7 +146,7 @@ export function buildRoiRegistryColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'phase',
       label: t('Faza', 'Phase'),
-      width: '120px',
+      width: '105px',
       filterable: true,
       render: (row: RoiRegistryRow) => (
         <span className="block whitespace-nowrap text-sm text-c-text-secondary">

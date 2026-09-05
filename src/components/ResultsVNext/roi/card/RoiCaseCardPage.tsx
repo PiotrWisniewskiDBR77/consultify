@@ -97,7 +97,11 @@ export const RoiCaseCardPage: React.FC = () => {
   const { roiCaseId } = useParams<{ roiCaseId: string }>();
   const enabled = isResultsVNextFlagEnabled('roiRegistry');
   const openChat = useOpenChatWithContext();
-  const { members } = useOrganizationMemberNames();
+  // Hak zwraca RESOLVER (funkcję), nie obiekt z listą — destrukturyzacja
+  // `{ members }` dawała `undefined`, a przez to każde nazwisko schodziło na
+  // „Nieznany użytkownik". Złapane na zrzucie, nie w typach: `useCallback`
+  // zwraca funkcję, więc destrukturyzacja jest legalna składniowo.
+  const resolveMemberName = useOrganizationMemberNames();
 
   const [card, setCard] = useState<RoiCaseCard | null>(null);
   const [loading, setLoading] = useState(false);
@@ -147,8 +151,8 @@ export const RoiCaseCardPage: React.FC = () => {
   );
 
   const ownerName = useMemo(
-    () => (card ? memberNameOrUnknown(members, card.ownerUserId, isPolish) : BRAK),
-    [card, members, isPolish]
+    () => (card ? memberNameOrUnknown(resolveMemberName, card.ownerUserId, isPolish) : BRAK),
+    [card, resolveMemberName, isPolish]
   );
 
   const propertyRows: ArtifactPropertyRow[] = useMemo(() => {
@@ -324,7 +328,7 @@ export const RoiCaseCardPage: React.FC = () => {
         ),
       },
       {
-        id: 'sources',
+        id: 'evidence',
         label: t('Źródła i założenia', 'Sources and assumptions'),
         icon: FileText,
         defaultOpen: false,

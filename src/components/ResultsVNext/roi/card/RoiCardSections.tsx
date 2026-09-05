@@ -593,12 +593,12 @@ export const RoiCalculationsPart: React.FC<{ card: RoiCaseCard; isPolish: boolea
               label: t('Sterownik', 'Driver'),
               render: (r) => <span className="text-c-text">{sensitivityDriverLabel(r.driverId, isPolish)}</span>,
             },
-            { id: 'minusNpv', label: t('NPV przy −20 %', 'NPV at −20 %'), align: 'right', nowrap: true, render: (r) => fmtMoney(r.minusNpv, cur, isPolish) },
-            { id: 'minusRoi', label: t('ROI przy −20 %', 'ROI at −20 %'), align: 'right', nowrap: true, render: (r) => fmtPercent(r.minusRoiPct, isPolish, 0) },
-            { id: 'minusPp', label: t('Payback przy −20 %', 'Payback at −20 %'), align: 'right', nowrap: true, render: (r) => fmtYears(r.minusPaybackYears, isPolish) },
-            { id: 'plusNpv', label: t('NPV przy +20 %', 'NPV at +20 %'), align: 'right', nowrap: true, render: (r) => fmtMoney(r.plusNpv, cur, isPolish) },
-            { id: 'plusRoi', label: t('ROI przy +20 %', 'ROI at +20 %'), align: 'right', nowrap: true, render: (r) => fmtPercent(r.plusRoiPct, isPolish, 0) },
-            { id: 'plusPp', label: t('Payback przy +20 %', 'Payback at +20 %'), align: 'right', nowrap: true, render: (r) => fmtYears(r.plusPaybackYears, isPolish) },
+            { id: 'minusNpv', label: t('NPV przy −20\u00a0%', 'NPV at −20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtMoney(r.minusNpv, cur, isPolish) },
+            { id: 'minusRoi', label: t('ROI przy −20\u00a0%', 'ROI at −20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtPercent(r.minusRoiPct, isPolish, 0) },
+            { id: 'minusPp', label: t('Payback przy −20\u00a0%', 'Payback at −20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtYears(r.minusPaybackYears, isPolish) },
+            { id: 'plusNpv', label: t('NPV przy +20\u00a0%', 'NPV at +20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtMoney(r.plusNpv, cur, isPolish) },
+            { id: 'plusRoi', label: t('ROI przy +20\u00a0%', 'ROI at +20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtPercent(r.plusRoiPct, isPolish, 0) },
+            { id: 'plusPp', label: t('Payback przy +20\u00a0%', 'Payback at +20\u00a0%'), align: 'right', nowrap: true, render: (r) => fmtYears(r.plusPaybackYears, isPolish) },
           ]}
           rows={card.sensitivity}
           keyOf={(r) => r.driverId}
