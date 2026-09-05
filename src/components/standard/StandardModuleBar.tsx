@@ -20,12 +20,14 @@
  * Moduły używają WYŁĄCZNIE tej fasady — deklaratywnie, bez własnego chrome.
  */
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight, PanelRightOpen, Sparkles, type LucideIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import { useEmbeddedModuleChatHost } from '../shared/embeddedModuleChatHost';
 import { ModuleNavBar, type StatusFilter } from '../shared/ModuleHub/ModuleNavBar';
+import { useJedenPanel } from '../shared/PreviewPane/useJedenPanel';
 import type {
   CategoryButton,
   ModuleTab,
@@ -289,6 +291,23 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const maJedenPanel = useEmbeddedModuleChatHost();
+  const jedenPanel = useJedenPanel();
+
+  const panelControls = maJedenPanel ? (
+    <>
+      {jedenPanel.zamkniety ? (
+        <Menu3Chip onClick={jedenPanel.pokazPanel} data-testid="show-list-panel">
+          <PanelRightOpen size={12} aria-hidden="true" />
+          <span>{t('list.rightPanel.show', 'Show panel')}</span>
+        </Menu3Chip>
+      ) : null}
+      <Menu3Chip onClick={jedenPanel.otworzTerese} data-testid="open-list-teresa">
+        <Sparkles size={12} aria-hidden="true" />
+        <span>{t('list.rightPanel.openTeresa', 'Teresa')}</span>
+      </Menu3Chip>
+    </>
+  ) : null;
 
   const navTabs = useMemo<TabConfig[]>(
     () =>
@@ -354,6 +373,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
             );
           })}
           {menu3Right}
+          {panelControls}
         </div>
       </div>
     </div>
@@ -396,11 +416,23 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
       ? bulkContent
       : chipsContent;
   const resolvedCommandRowRight = hasOverride
-    ? commandRowRightOverride
+    ? (
+        <>
+          {commandRowRightOverride}
+          {panelControls}
+        </>
+      )
     : bulkActive
       ? undefined
-      : menu3Right;
-  const resolvedForceCommandRow = hasOverride ? !!forceCommandRowOverride : bulkActive;
+      : (
+          <>
+            {menu3Right}
+            {panelControls}
+          </>
+        );
+  const resolvedForceCommandRow = hasOverride
+    ? !!forceCommandRowOverride || !!panelControls
+    : bulkActive || !!panelControls;
 
   const primaryCtaNode = primaryCta ? (
     <button
