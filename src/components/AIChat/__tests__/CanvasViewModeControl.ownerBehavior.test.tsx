@@ -25,11 +25,11 @@ describe('Canvas direct Rich/DOC/MD view control', () => {
     const content = '# Client plan Preserve this content.';
     expect(screen.getByTestId('canonical-content')).toHaveTextContent(content);
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Document' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Doc' }));
     expect(screen.getByTestId('active-mode')).toHaveTextContent('document');
-    expect(screen.getByRole('radio', { name: 'Document' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Doc' })).toHaveAttribute('aria-checked', 'true');
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Markdown' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'MD' }));
     expect(screen.getByTestId('active-mode')).toHaveTextContent('md');
     expect(screen.getByTestId('canonical-content')).toHaveTextContent(content);
   });
@@ -39,7 +39,7 @@ describe('Canvas direct Rich/DOC/MD view control', () => {
     const rich = screen.getByRole('radio', { name: 'Editor' });
     rich.focus();
     fireEvent.keyDown(rich, { key: 'ArrowLeft' });
-    const md = screen.getByRole('radio', { name: 'Markdown' });
+    const md = screen.getByRole('radio', { name: 'MD' });
     expect(md).toHaveFocus();
     expect(md).toHaveAttribute('aria-checked', 'true');
 

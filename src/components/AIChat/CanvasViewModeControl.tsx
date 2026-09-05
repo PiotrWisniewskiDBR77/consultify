@@ -5,8 +5,8 @@ export type CanvasViewMode = 'rich' | 'document' | 'md';
 
 const CANVAS_VIEW_MODES: readonly [CanvasViewMode, string, string][] = [
   ['rich', 'canvas.viewMode.rich', 'Editor'],
-  ['document', 'canvas.viewMode.document', 'Document'],
-  ['md', 'canvas.viewMode.markdown', 'Markdown'],
+  ['document', 'canvas.viewMode.document', 'Doc'],
+  ['md', 'canvas.viewMode.markdown', 'MD'],
 ];
 
 export function CanvasViewModeControl({

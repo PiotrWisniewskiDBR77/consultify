@@ -32,8 +32,8 @@ describe('WorkCanvasDocumentPanel owner feedback', () => {
     expect(source).toContain('<CanvasViewModeControl mode={mode} onModeChange={setMode} />');
     expect(viewControlSource).toContain('data-testid="canvas-direct-view-switcher"');
     expect(viewControlSource).toContain("['rich', 'canvas.viewMode.rich', 'Editor']");
-    expect(viewControlSource).toContain("['document', 'canvas.viewMode.document', 'Document']");
-    expect(viewControlSource).toContain("['md', 'canvas.viewMode.markdown', 'Markdown']");
+    expect(viewControlSource).toContain("['document', 'canvas.viewMode.document', 'Doc']");
+    expect(viewControlSource).toContain("['md', 'canvas.viewMode.markdown', 'MD']");
     expect(viewControlSource).toContain("t('canvas.viewMode.ariaLabel', 'Canvas view')");
     expect(source).not.toContain('data-testid="canvas-view-actions"');
     expect(source).not.toContain('Switch Rich/Dock/MD view');
