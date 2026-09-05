@@ -7,7 +7,7 @@
 | # | Plik | Co daje użytkownikowi | Nakład | Zależności | Odmrożenia |
 | --- | --- | --- | :-: | --- | --- |
 | P1 | `P1_JEDEN_PANEL_ZWIJANY.md` | jeden prawy panel na listach (Rekord \| Teresa), zwijany; Skrzynka przy 1280 px z 294 → 1024 px | 4,3 d | — | 6 modułów |
-| P2 | `P2_TABELA_NIE_UCINA.md` | żadna tabela nie ucina nagłówków/wartości bez dymka (jedno źródło: `FilterableTable`) | 3,5 d | — | 0 |
+| P2 | `codex/p2-tabela` | **ODEBRANE, scalone** (pomiar na żywo po sesji) | 05.09 noc | `730f19d403` | mechanika w SSOT `FilterableTable.tsx` (typy kolumn, podłogi, pomiar treści, dymki przy przepełnieniu), 38/38 testów, mutacja RED→GREEN, canon OK; BRAK pomiaru na żywo 5 ekranów × 3 szerokości (sesja automatu wygasła) — do wykonania po zalogowaniu właściciela; prototyp P7K 1c korzysta z tej mechaniki |
 | P3 | `P3_KONIEC_ANGIELSKIEGO.md` | zero angielskiego w polskim UI (15 źródeł, 3 023 brakujące klucze, karta inicjatywy 100 % EN) | ~8 d | — | 8 modułów |
 | P4 | `P4_KODY_TECHNICZNE_W_UI.md` | zero enumów/UUID/nazw funkcji w UI; słowniki SSOT + resolver nazw + mapper błędów | ~4 d | — | 4 moduły |
 | P5 | `P5_SZKIELETY_I_404.md` | nic nie ładuje się w ciszy; brak = 200/null, nie 404; Megatrendy ożywają | ~8 d | — | 3 moduły |
@@ -15,6 +15,7 @@
 | P7 | — | nawigacja KPI tabela → lista → karta N | **WYKONANE 05.09** (`dda794943e`) | — | — |
 | P8 | (w P3/P5) | sprzątanie danych testowych z historii Czatu | 0,5 d | — | dane, nie kod |
 | SEC | `sec/cross-org-admin-20260905` | **ODEBRANE, scalone** | 05.09 noc | (merge HEAD) | 3 dziury cross-org + 8 tras A52 = już zamknięte na HEAD (pomiar realnym HTTP na jednorazowym Postgresie, mutacja RED→GREEN 6/9 strażników, test `sec20260905.a52-and-cross-org.pg.test.ts` 13/13); CSRF: middleware istnieje, NIGDZIE niezamontowany (plan 4-fazowy w `evidence/sec-20260905/03_CSRF_MFA_PROPOZYCJA.md`); MFA karencja podłączona; `/api/videos` → tabela nie istnieje (defekt produktowy); 2725 tras macierzy 307 nadal niezmierzone |
+| P6 | `ui/p6-czerwien-1440` (Sonnet) | **ODEBRANE, scalone** | 05.09 noc | `0ddaa8e05a` | stateToneMap SSOT (18→0 danger w Narzędziach), NModeHeader bez nakładania (PRZED/PO 1280/1440/1920 obejrzane przez CTO), CTA Menu 1 bez łamania, check-artefakt raport danger-*; kroki 2 (kolor „Final” w Ocenie), 5 (Partner CTA), 6 (Finanse „Przelicz”) odłożone — decyzje; pomiar na dev-render, nie na żywo |
 | F | `F_FINANSE_PELNA_TABELA.md` | CFO: import → zatwierdzenie → analiza → model → **pełna tabela RZiS/Bilans/CF** → wycena ze źródłem (6 ogniw + opcjonalne 7) | 6,75 d Opus + 2,5 d Sonnet; ścieżka krytyczna 6,25 d | — (osobny tor) | 0 (Finanse niezamrożone) |
 | II | `II_EKRANY_FLAGOWE.md` | 16 ekranów flagowych do poziomu sceny (A=3, B=3, 1280/1440/1920, jasny+ciemny) | 22–24 d (równolegle) | P1–P6 per ekran | 8 modułów |
 | III | `III_PRZEPLYWY_KLIKANE.md` | 16 scenariuszy konsultanta klikanych end-to-end (26 kroków dziś zablokowanych) | ~1 d na scenariusz | P1–P6 dla blokad | 0 (testy) |
