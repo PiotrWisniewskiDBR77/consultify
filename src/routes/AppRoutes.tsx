@@ -2301,12 +2301,32 @@ export const AppRoutes: React.FC = () => {
                       <Route index element={<AssessmentHub />} />
                       <Route path="overview" element={<AssessmentHub />} />
                       <Route path="summary" element={<AssessmentHub />} />
-                      {/* Framework-specific routes (backward compatibility) */}
-                      <Route path="drd" element={<AssessmentHub />} />
-                      <Route path="siri" element={<AssessmentHub />} />
-                      <Route path="adma" element={<AssessmentHub />} />
-                      <Route path="cmmi" element={<AssessmentHub />} />
-                      <Route path="lean" element={<AssessmentHub />} />
+                      {/* Framework-specific routes (backward compatibility).
+                          Odbiór 05.09 (05-ocena, defekt 3): te trasy renderowały
+                          goły <AssessmentHub />, więc `/assessment/drd` lądowało
+                          na zakładce „Biblioteka" z tabelą pięciu metodyk zamiast
+                          na liście sesji tej metodyki. Podajemy zakładkę i
+                          framework jawnie. */}
+                      <Route
+                        path="drd"
+                        element={<AssessmentHub initialTab="processes" frameworkFilter="DRD" />}
+                      />
+                      <Route
+                        path="siri"
+                        element={<AssessmentHub initialTab="processes" frameworkFilter="SIRI" />}
+                      />
+                      <Route
+                        path="adma"
+                        element={<AssessmentHub initialTab="processes" frameworkFilter="ADMA" />}
+                      />
+                      <Route
+                        path="cmmi"
+                        element={<AssessmentHub initialTab="processes" frameworkFilter="CMMI" />}
+                      />
+                      <Route
+                        path="lean"
+                        element={<AssessmentHub initialTab="processes" frameworkFilter="LEAN" />}
+                      />
                     </Routes>
                   </RouteErrorBoundary>
                 </ProductionModuleGate>

@@ -412,7 +412,7 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
     () => [
       {
         id: 'name',
-        label: isPolish ? 'Nazwa metodyki' : 'Methodology name',
+        label: isPolish ? 'Metodyka' : 'Methodology',
         sortable: true,
         render: (row: any) => (
           <div className="flex items-center gap-2">
@@ -436,10 +436,15 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
         })),
         render: (row: MethodologyRow) => (isPolish ? row.area.pl : row.area.en),
       },
+      /* Odbiór 05.09 (05-ocena, defekt 3): zatwierdzony obraz biblioteki ma
+         CZTERY kolumny — METODYKA | OBSZAR | STATUS | DZIAŁANIA. Na żywo było
+         ich siedem, bez kolumny DZIAŁANIA. Te trzy (plus „Ostatnio użyta")
+         zostają dostępne w pstryczku, ale wychodzą z domyślnego zestawu. */
       {
         id: 'description',
         label: isPolish ? 'Opis w jednym zdaniu' : 'One-sentence description',
         width: '280px',
+        defaultVisible: false,
         render: (row: MethodologyRow) => (isPolish ? row.description.pl : row.description.en),
       },
       {
@@ -447,12 +452,14 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
         label: isPolish ? 'Liczba pytań' : 'Questions',
         width: '120px',
         align: 'right',
+        defaultVisible: false,
         render: (row: MethodologyRow) => row.questionCount ?? '—',
       },
       {
         id: 'duration',
         label: isPolish ? 'Czas trwania' : 'Duration',
         width: '120px',
+        defaultVisible: false,
         render: () => '—',
       },
       {
@@ -462,14 +469,18 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
         sortable: true,
         filterable: true,
         filterOptions: [
-          { value: 'active', label: isPolish ? 'Aktywna' : 'Active' },
-          { value: 'draft', label: isPolish ? 'Szkic' : 'Draft' },
+          { value: 'active', label: isPolish ? 'Rdzeń metody' : 'Method core' },
+          { value: 'draft', label: isPolish ? 'Planowane' : 'Planned' },
         ],
+        /* Odbiór 05.09: obraz nazywa te dwa stany po ich znaczeniu dla
+           użytkownika — „Rdzeń metody" (silnik działa dziś) i „Planowane"
+           (wiedza jest, uruchomienia jeszcze nie ma) — a nie „Aktywna/Szkic",
+           które opisują wpis w katalogu, nie dostępność metodyki. */
         render: (row: MethodologyRow) => {
           return row.status === 'active' ? (
-            <StatusChip label={isPolish ? 'Aktywna' : 'Active'} tone="success" />
+            <StatusChip label={isPolish ? 'Rdzeń metody' : 'Method core'} tone="success" />
           ) : (
-            <StatusChip label={isPolish ? 'Szkic' : 'Draft'} tone="info" />
+            <StatusChip label={isPolish ? 'Planowane' : 'Planned'} tone="neutral" />
           );
         },
       },
@@ -477,7 +488,49 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
         id: 'lastUsed',
         label: isPolish ? 'Ostatnio użyta' : 'Last used',
         width: '130px',
+        defaultVisible: false,
         render: () => '—',
+      },
+      /* Odbiór 05.09 (05-ocena, defekt 3): „Uruchom" istniało wyłącznie
+         w kebabie wiersza — na obrazie jest własną kolumną DZIAŁANIA
+         z przyciskiem w każdym wierszu. Ten sam handler, ta sama bramka
+         `canStartRow`, więc metodyki planowane mają go wyszarzonego. */
+      {
+        id: 'actions',
+        label: isPolish ? 'Działania' : 'Actions',
+        width: '160px',
+        render: (row: MethodologyRow) => {
+          const startable = canStartRow(row);
+          return (
+            <button
+              type="button"
+              data-testid={`library-start-${row.id}`}
+              disabled={!startable}
+              title={
+                startable
+                  ? isPolish
+                    ? 'Uruchom ocenę tą metodyką'
+                    : 'Start an assessment with this methodology'
+                  : isPolish
+                    ? 'Ta metodyka nie ma jeszcze uruchomienia'
+                    : 'This methodology cannot be started yet'
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!startable) return;
+                void handleStart(row);
+              }}
+              className={`inline-flex items-center gap-2 h-8 px-3 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)] ${
+                startable
+                  ? 'border-c-border bg-c-surface text-c-text hover:bg-c-surface-raised'
+                  : 'border-c-border-subtle bg-c-surface-raised text-c-text-muted cursor-not-allowed'
+              }`}
+            >
+              <PlayCircle size={14} />
+              {isPolish ? 'Uruchom' : 'Start'}
+            </button>
+          );
+        },
       },
     ],
     [canStartRow, handleStart, isPolish]
