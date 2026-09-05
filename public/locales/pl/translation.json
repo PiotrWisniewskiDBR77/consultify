@@ -22737,7 +22737,7 @@
         },
         "type": {
           "report": "Raport",
-          "assessmentReport": "Raport assessment",
+          "assessmentReport": "Raport oceny",
           "presentation": "Prezentacja",
           "toolOutput": "Wynik narzędzia"
         }
