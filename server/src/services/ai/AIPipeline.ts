@@ -27,6 +27,10 @@ import type {
 import logger from '../../utils/Logger.js';
 import { filterDocumentsByVisibility } from './documentGovernance.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
+import {
+  buildLanguageInstruction,
+  resolveAiLanguage,
+} from './languagePolicy.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
 import { isQaAiMode } from './qaAiRuntime.js';
@@ -1002,13 +1006,13 @@ export class AIPipeline {
         }
 
         // i18n-teresa fix 2026-04-18: propagate authoritative UI language
-        const authoritativeLanguageDT =
-          (request as any)?.options?.language ||
-          (request.context as any)?.language ||
-          (lightContext as any)?.conversationLanguage ||
-          (lightContext as any)?.userMemory?.preferences?.language ||
-          'en';
-        (lightContext as any).conversationLanguage = String(authoritativeLanguageDT).split('-')[0];
+        // SSOT jezyka: services/ai/languagePolicy.ts (domyslka `pl`, nie `en`).
+        (lightContext as any).conversationLanguage = resolveAiLanguage(
+          (request as any)?.options?.language,
+          (request.context as any)?.language,
+          (lightContext as any)?.conversationLanguage,
+          (lightContext as any)?.userMemory?.preferences?.language
+        );
 
         return {
           context: lightContext as any,
@@ -1192,12 +1196,13 @@ export class AIPipeline {
         //   2. ctx.conversationLanguage                                (existing thread language)
         //   3. userMemory.preferences.language                         (sticky profile pref)
         //   4. 'en' fallback (NOT 'pl' — previously defaulted to Polish)
-        const authoritativeLanguage =
-          (request as any)?.options?.language ||
-          (request.context as any)?.language ||
-          (fullContext as any)?.conversationLanguage ||
-          userMemory?.preferences?.language ||
-          'en';
+        // SSOT jezyka: services/ai/languagePolicy.ts (domyslka `pl`, nie `en`).
+        const authoritativeLanguage = resolveAiLanguage(
+          (request as any)?.options?.language,
+          (request.context as any)?.language,
+          (fullContext as any)?.conversationLanguage,
+          userMemory?.preferences?.language
+        );
 
         // Merge memory into context
         const contextWithMemory = {
@@ -1281,12 +1286,11 @@ export class AIPipeline {
       logger.info('[AIPipeline] Using fallback context (no userId/organizationId)');
       const fallbackContext: any = { ...(request.context || {}) };
       // i18n-teresa fix 2026-04-18: still propagate authoritative language in fallback
-      const authoritativeLanguageFallback =
-        (request as any)?.options?.language ||
-        fallbackContext?.language ||
-        fallbackContext?.conversationLanguage ||
-        'en';
-      fallbackContext.conversationLanguage = String(authoritativeLanguageFallback).split('-')[0];
+      fallbackContext.conversationLanguage = resolveAiLanguage(
+        (request as any)?.options?.language,
+        fallbackContext?.language,
+        fallbackContext?.conversationLanguage
+      );
       return {
         context: fallbackContext,
         ragResults: 0,
@@ -1746,20 +1750,7 @@ export class AIPipeline {
     // 9. Strict LANGUAGE INSTRUCTION (i18n-teresa fix 2026-04-18).
     //    Appended LAST so it is the most recent / highest-priority directive the LLM sees.
     //    Mirrors the non-negotiable language policy used in /chat/stream & /chat/confirm routes.
-    const langBaseFinal = conversationLang ? String(conversationLang).split('-')[0] : 'en';
-    const languageLabelMap: Record<string, string> = {
-      pl: 'Polish (Polski)',
-      en: 'English',
-      de: 'German (Deutsch)',
-      es: 'Spanish (Español)',
-      ja: 'Japanese (日本語)',
-      jp: 'Japanese (日本語)',
-      ar: 'Arabic (العربية)',
-    };
-    const langLabel = languageLabelMap[langBaseFinal] || 'English';
-    parts.push(
-      `[LANGUAGE INSTRUCTION: You MUST always respond in ${langLabel}. This is the user's chosen application language and takes absolute priority over any other hint (memory, organization terminology, prior conversation). Even if the user writes their message in a different language, your response must be in ${langLabel}. Never mix languages within a single response. This is non-negotiable.]`
-    );
+    parts.push(buildLanguageInstruction(resolveAiLanguage(conversationLang)));
 
     return parts.filter(Boolean).join('\n\n');
   }
