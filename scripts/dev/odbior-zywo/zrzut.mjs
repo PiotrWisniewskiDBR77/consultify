@@ -43,7 +43,19 @@ const browser = await chromium.launch({ headless: true });
 // Kopia sesji z przepisanym originem (patrz --port wyżej). Przy porcie 3000
 // to jest dokładnie ta sama treść co w pliku — zero zmiany zachowania.
 const sesja = JSON.parse(fs.readFileSync(auth, 'utf8'));
-sesja.origins = (sesja.origins || []).map((o) => ({ ...o, origin: String(o.origin).replace('http://localhost:3000', baza) }));
+const originy = sesja.origins || [];
+const zTokenem = originy.find((o) =>
+  (o.localStorage || []).some((entry) => entry.name === 'token' && entry.value)
+);
+const kanoniczny = originy.find((o) => o.origin === 'http://localhost:3000' &&
+  (o.localStorage || []).some((entry) => entry.name === 'token' && entry.value));
+const zrodlo = kanoniczny || zTokenem || originy.find((o) => o.origin === 'http://localhost:3000');
+if (zrodlo) {
+  sesja.origins = [
+    ...originy.filter((o) => o.origin !== baza),
+    { ...zrodlo, origin: baza },
+  ];
+}
 const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: wysokosc }, colorScheme: 'light', locale: 'pl-PL' });
 // JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
 // src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
