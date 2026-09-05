@@ -105,20 +105,20 @@
     },
     "09_RESULTS": {
       "nazwa": "Wyniki",
-      "stan": "GOTOWY",
-      "cto_werdykt": "Wyniki: karta KPI z ścieżką poziomów, karta celu OKR zbudowana dziś w Twojej formule (cel → zbiór rezultatów → rezultat), ROI z narracją z realnych danych i nazwiskami; 4 błędy runtime w OKR naprawione.",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Właściciel 05.09: „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N.” Przebudowa nawigacji KPI w toku: tabela zestawień → lista z opisem i pozycjami → karta N wskaźnika.",
       "zrzuty": [
         "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-okr-registry.png",
         "evidence/odbior-zywo-20260905/08-wyniki/roi-jedna-karta.png",
         "evidence/odbior-zywo-20260905/08-wyniki/results-vnext-kpi-scorecards.png"
       ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T14:23"
+      "sprawdzono": "2026-09-05T16:58"
     },
     "10_FINANCE": {
       "nazwa": "Finanse",
-      "stan": "GOTOWY",
-      "cto_werdykt": "Finanse na MVP: sprawozdania, analiza historyczna, komentarze z nazwiskami, wycena z wyborem źródła, predykcja. Z zastrzeżeniem zapisanym przeze mnie: Baseline v3 (pełna tabela) i porównanie wersji to program po MVP — dziś Baseline pokazuje uczciwy stan braku kontekstu, nie udaje.",
+      "stan": "W_TOKU",
+      "cto_werdykt": "Decyzja właściciela 05.09 (ekran finalny): „Finanse wyrzucamy z MVP.” Moduł poza MVP — fala 2 (pełny łańcuch Baseline v3, porównanie wersji). Zostaje w aplikacji w obecnym stanie, bez dalszych prac w MVP.",
       "zrzuty": [
         "evidence/odbior-zywo-20260905/09-finanse/finance-statement-pack-workspace-v2.png",
         "evidence/odbior-zywo-20260905/09-finanse/finance-analysis-workspace.png",
@@ -126,7 +126,7 @@
         "evidence/odbior-zywo-20260905/09-finanse/finance-valuation-workspace.png"
       ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T14:26"
+      "sprawdzono": "2026-09-05T16:58"
     },
     "11_MATERIALS": {
       "nazwa": "Materiały",

@@ -201,3 +201,8 @@ Zakładka „Projekty” usunięta z Menu 2 Mojej Pracy, trasy `/my-work/project
 
 ## J. Decyzja właściciela 05.09 ~15:12: **Menedżer (pill Menu 2 Mojej Pracy) = fala 2**
 Pill „Menedżer” usunięty, trasa przekierowuje do Mojej Pracy, kod zostaje. Menu 2 Mojej Pracy na MVP: Pomysły · Notatnik · Skrzynka · Kalendarz · Zadania · Decyzje · Sejf klienta.
+
+## K. Decyzje właściciela z ekranu finalnego (05.09, 14:46–14:56)
+- **ZATWIERDZONE (13):** 01 Organizacja, 02 Wywiad („zatwierdzam rozwiązania graficzne, tylko weź pod uwagę, że DRD nie jest w wywiadzie” → sprawdzić i usunąć odniesienia DRD z Wywiadu), 03 Narzędzia, 04 Ocena, 05 Inicjatywy, 06 Realizacja, 07 Moja Praca („mam nadzieję, że prawy panel w IDE można zwinąć” — tak: X zamyka, pigułka „Pokaż panel” przywraca), 08 Spotkania, 11 Materiały, 12 Audyty, 14 Admin, 15 Ustawienia, 16 Partner → zamrożone `zamroz.mjs`.
+- **10 Finanse — POZA MVP** (właściciel: „Finanse wyrzucamy z MVP. Nie jesteś w stanie tego zrobić. To, co pokazałeś, jest gorsze niż to, co było.”). Uchyla decyzję CTO o 2-dniowym torze. Fala 2: łańcuch Baseline v3 (sekcja G), porównanie wersji, źródło wyceny do potwierdzenia na realnych danych.
+- **09 Wyniki — NIE zatwierdzone:** „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N. Tego tu nie mamy teraz.” → przebudowa nawigacji KPI: rejestr = tabela zestawień (kart wyników) → klik = strona listy zestawienia (opis + pozycje KPI) → klik pozycji = karta N wskaźnika. Analogicznie OKR: rejestr zestawów → lista celów → karta celu → KR (już jest).
