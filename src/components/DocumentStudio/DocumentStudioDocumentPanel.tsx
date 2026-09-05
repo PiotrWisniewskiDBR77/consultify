@@ -98,6 +98,7 @@ import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
 import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
+import { DocumentStudioReportView, isReportDocumentType } from './DocumentStudioReportView';
 import { DocumentUndoRedoControls } from './DocumentUndoRedoControls';
 import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
 import { useManualPrompt } from './editor/useManualPrompt';
@@ -2019,6 +2020,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const artifactStudioMode = isArtifactStudioLaneEnabled('document');
   const { requestText, promptDialog } = useManualPrompt();
   const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(() => new Set());
+  /**
+   * ODBIÓR NA ŻYWO 05.09 (`report-artifact`) — raport otwarty z Materiałów
+   * ma się OTWORZYĆ jako dokument do czytania, nie jako edytor bloków
+   * (zatwierdzony obraz, ocena A: „gotowy do pokazania klientowi").
+   * Edytor NIE znika — przełącznik obok eksportów wraca do niego jednym
+   * kliknięciem, a sam `DocumentTipTapEditor` zostaje ZAMONTOWANY (tylko
+   * ukryty), żeby instancja edytora, historia cofania i autozapis przeżyły
+   * przełączenie widoku.
+   */
+  const reportViewAvailable = isReportDocumentType(schema.documentType);
+  const [documentViewMode, setDocumentViewMode] = useState<'report' | 'editor'>(() =>
+    isReportDocumentType(schema.documentType) ? 'report' : 'editor'
+  );
+  const showReportView = reportViewAvailable && documentViewMode === 'report';
   useEffect(() => {
     emitArtifactStudioShellSelected('document');
   }, []);
@@ -3296,14 +3311,49 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
             </div>
           </div>
         ) : null}
-        <DocumentTipTapEditor
-          schema={schema}
-          onSchemaUpdated={onSchemaUpdated}
-          editable
-          artifactId={artifactId}
-          onEditorInstance={setTiptapEditor}
-          onAutosaveStatusChange={setAutosaveStatus}
-        />
+        {reportViewAvailable ? (
+          <div
+            role="group"
+            aria-label={t('documentStudio.panel.viewModeGroup', 'Widok dokumentu')}
+            className="mb-3 flex items-center gap-1 self-start rounded-lg border border-c-border-subtle bg-c-surface-raised p-0.5"
+          >
+            {(['report', 'editor'] as const).map((mode) => {
+              const active = documentViewMode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  data-testid={`document-view-mode-${mode}`}
+                  aria-pressed={active}
+                  onClick={() => setDocumentViewMode(mode)}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
+                    active
+                      ? 'bg-c-surface text-c-text shadow-sm'
+                      : 'text-c-text-secondary hover:text-c-text'
+                  }`}
+                >
+                  {mode === 'report'
+                    ? t('documentStudio.panel.viewReport', 'Raport')
+                    : t('documentStudio.panel.viewEditor', 'Edytor')}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {showReportView ? <DocumentStudioReportView schema={schema} /> : null}
+        {/* Edytor zostaje zamontowany także w trybie „Raport" — patrz komentarz
+            przy `documentViewMode`: odmontowanie zabiłoby historię cofania i
+            oczekujący autozapis. */}
+        <div hidden={showReportView} className={showReportView ? 'hidden' : undefined}>
+          <DocumentTipTapEditor
+            schema={schema}
+            onSchemaUpdated={onSchemaUpdated}
+            editable
+            artifactId={artifactId}
+            onEditorInstance={setTiptapEditor}
+            onAutosaveStatusChange={setAutosaveStatus}
+          />
+        </div>
       </div>
     </div>
   );
