@@ -420,3 +420,9 @@ Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 k
 - `InputHintStrip.tsx` jest `test-only`, ale ma dodatkowy realny mock w `tests/components/AIChat/EnhancedChatInput.teresa-error-toast.test.tsx:85`, poza imienną licencją dyżuru; plik pozostawiono zamiast stworzyć dziurawy test.
 - `reachability --update-baseline` odmawia przez zastany nowy `test-only` `src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts`; po day373 zbiory globalnie maleją, ale baseline pozostaje uczciwie czerwony.
 - Trzy martwe barrele `AIChat/Artifacts/**/index*.ts` i `MyWork/table/SmartSuggestionsBar.tsx` pozostają poza zakresem.
+
+## AN. Dyżur 374 — i18n czatu domknięte częściowo
+
+- R2, R4, R5 i R6 mają dowody GREEN; R3 zmniejszono z 194 do 141 wystąpień.
+- STOP merytoryczny: kolizje string/obiekt w słownikach oraz dwa różne znaczenia `myWork.ideas.plantInGarden`; bez rozszerzenia licencji nie wolno mechanicznie nadpisać istniejących wartości.
+- Szczegóły i bramki: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY374_I18N_CZAT_DOMKNIECIE_REPORT.md`.
