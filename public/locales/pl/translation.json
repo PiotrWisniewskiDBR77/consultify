@@ -32816,7 +32816,9 @@
       "creating": "Tworzenie pustego dokumentu…",
       "description": "Pusty dokument roboczy do samodzielnej edycji.",
       "section": "Sekcja 1",
-      "title": "Nowy dokument"
+      "title": "Nowy dokument",
+      "failed": "Nie udało się utworzyć pustego dokumentu. Spróbuj ponownie albo wróć do Materiałów.",
+      "retry": "Spróbuj ponownie"
     },
     "comments": {
       "addComment": "Dodaj komentarz",
@@ -33173,7 +33175,8 @@
       "backToMaterials": "Wróć do Materiałów",
       "startOverConfirm": "Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.",
       "artifactNotFoundTitle": "Nie ma tu dokumentu",
-      "templateResolveTitle": "Nie da się użyć tego wzorca"
+      "templateResolveTitle": "Nie da się użyć tego wzorca",
+      "noDocumentActionable": "Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów."
     },
     "breadcrumb": {
       "new": "Nowy dokument",

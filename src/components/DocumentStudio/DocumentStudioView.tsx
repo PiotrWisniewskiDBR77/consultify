@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { resolveTemplateProvenancePath } from '@/components/ReportsAndPresentations/artifactNavigation';
+import { BlankCreationState } from '@/components/shared/BlankCreationState';
 import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { LoadingState } from '@/components/ui/primitives';
@@ -263,6 +264,10 @@ export const DocumentStudioView: React.FC = () => {
   // "start a new document". That is silent data-loss-looking behavior. This is
   // a BLOCKING state instead (same pattern as `templateResolveState==='error'`
   // below): no picker, no generation, just the failure + a way back.
+  // Tryb „Czysto" (`?entry=blank` / kafel w bramie trybów): trwały, wychodzalny
+  // stan porażki zamiast wiecznego spinnera albo niemego „Brak wczytanego
+  // dokumentu." — doktryna „zero cichych fallbacków" (patrz `BlankCreationState`).
+  const [blankCreateFailed, setBlankCreateFailed] = useState(false);
   const [artifactLoadFailed, setArtifactLoadFailed] = useState(false);
   const [artifactLoadErrorCode, setArtifactLoadErrorCode] = useState<'not_found' | 'other' | null>(
     null
@@ -802,11 +807,24 @@ export const DocumentStudioView: React.FC = () => {
     );
   };
 
-  // D1 tryb ①CZYSTO — pusty dokument otwarty w edytorze, BEZ AI. Nie ma osobnej
-  // ścieżki create-empty-draft w documentStudio API (zbadane), więc reużywamy
-  // istniejącego kanału materializacji z `useLlm:false` (deterministyczny builder,
-  // zero LLM) i minimalnym, jedno-sekcyjnym outlinem. Ląduje w fazie `document`
-  // (edytor TipTap), gdzie użytkownik pisze ręcznie.
+  // D1 tryb ①CZYSTO — pusty dokument otwarty w edytorze, BEZ AI.
+  //
+  // ★ BLOKER 06.09 (audyt B3, `evidence/audyt-mvp-20260906/B3/RAPORT_B3.md`):
+  // ta ścieżka szła przez `runStreamingGeneration`, czyli przez SSE z
+  // `AbortController`, który efekt sprzątający na odmontowaniu (linia ~292)
+  // przerywa. W React StrictMode efekty mount/cleanup/mount lecą w JEDNYM
+  // commicie, więc `abort()` padał ZANIM `fetch` w ogóle wystartował: zero
+  // żądań do `/document-studio/generate*` (zmierzone na żywo), a `catch`
+  // widział `signal.aborted` i cicho ustawiał `phase='outline'` przy
+  // `outline === null` → ostatnia gałąź ternary → nieme „Brak wczytanego
+  // dokumentu." bez błędu w konsoli i bez wyjścia. Ref-guard `fire-once`
+  // dodatkowo blokował ponowną próbę w drugim przebiegu efektu.
+  //
+  // Pusty dokument nie ma CO streamować (jedna pusta sekcja, `useLlm:false`,
+  // deterministyczny builder), więc idzie teraz PROSTO przez synchroniczne
+  // `POST /document-studio/generate` — bez `AbortSignal`, więc odmontowanie
+  // ani StrictMode nie mają jak go ubić. Porażka nie jest cicha: `failed`
+  // renderuje `BlankCreationState` z polskim komunikatem i „Spróbuj ponownie".
   const handleCreateEmptyDoc = useCallback(async (): Promise<void> => {
     const emptyOutline: DocumentOutline = {
       documentType: 'generic_document',
@@ -833,11 +851,31 @@ export const DocumentStudioView: React.FC = () => {
       language: 'pl',
       density: 'concise',
     };
-    await runStreamingGeneration(
-      { intake: emptyIntake, outline: emptyOutline, useLlm: false },
-      emptyOutline
-    );
-  }, [runStreamingGeneration, t]);
+    setError(null);
+    setBlankCreateFailed(false);
+    setGenerating(true);
+    try {
+      const created = await generateDocumentStudioArtifact({
+        intake: emptyIntake,
+        outline: emptyOutline,
+        useLlm: false,
+      });
+      setArtifactId(created.artifactId);
+      setSchema(created.schema);
+      setGenerationWarnings(created.generationWarnings ?? []);
+      setPhase('document');
+      navigate(`/document-studio/${encodeURIComponent(created.artifactId)}`, { replace: true });
+    } catch (err) {
+      setBlankCreateFailed(true);
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : t('documentStudio.blank.failed', 'Nie udało się utworzyć pustego dokumentu.')
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }, [navigate, t]);
 
   // Materiały wspólny launcher — `?entry=blank`: materializuj pusty dokument
   // automatycznie, bez wymagania drugiego kliknięcia „Czysto" na tym ekranie.
@@ -1060,10 +1098,24 @@ export const DocumentStudioView: React.FC = () => {
               onBack={() => navigate('/presentations?tab=templates')}
             />
           ) : intakeGate === 'blank-creating' ? (
-            <LoadingState
-              variant="spinner"
-              label={t('documentStudio.blank.creating', 'Tworzenie pustego dokumentu…')}
-              className="flex-1"
+            // BLOKER 06.09: sukces przełącza `phase` na `document`, więc ta
+            // gałąź znika sama. Porażka MUSI zostawić trwały, wychodzalny ślad
+            // (a nie spinner bez końca ani nieme „Brak wczytanego dokumentu.").
+            <BlankCreationState
+              status={blankCreateFailed ? 'failed' : 'creating'}
+              creatingLabel={t('documentStudio.blank.creating', 'Tworzenie pustego dokumentu…')}
+              failedMessage={
+                error ??
+                t(
+                  'documentStudio.blank.failed',
+                  'Nie udało się utworzyć pustego dokumentu. Spróbuj ponownie albo wróć do Materiałów.'
+                )
+              }
+              onRetry={() => void handleCreateEmptyDoc()}
+              retryLabel={t('documentStudio.blank.retry', 'Spróbuj ponownie')}
+              onBack={() => navigate('/presentations?tab=documents')}
+              backLabel={t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+              testId="document-studio-blank"
             />
           ) : intakeGate === 'mode-chooser' ? (
             <TriModeChooser
@@ -1152,8 +1204,47 @@ export const DocumentStudioView: React.FC = () => {
             onSchemaUpdated={setSchema}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-c-text-muted">
-            {error ?? t('documentStudio.view.noDocument', 'No document loaded.')}
+          // Ostatnia deska: stan, w którym `phase` nie pasuje do żadnego panelu
+          // (np. powrót na `outline` bez konspektu po przerwanym strumieniu).
+          // Do 06.09 był to NIEMY napis „Brak wczytanego dokumentu." bez
+          // jednego przycisku — ślepy zaułek nie do odróżnienia od zawieszenia.
+          // Teraz zawsze mówi po polsku, co się stało, i daje drogę dalej.
+          <div className="flex min-h-0 flex-1 items-center justify-center p-6">
+            <div
+              data-testid="document-studio-dead-end"
+              className="w-full max-w-md rounded-2xl border border-c-border-subtle bg-c-surface p-8 text-center shadow-sm"
+            >
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-c-surface-raised">
+                <FileQuestion className="h-6 w-6 text-c-text-muted" aria-hidden="true" />
+              </div>
+              <p className="text-sm leading-relaxed text-c-text-secondary">
+                {error ??
+                  t(
+                    'documentStudio.view.noDocumentActionable',
+                    'Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów.'
+                  )}
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setPhase('intake');
+                    setDocEntryMode(triMode ? 'choose' : 'template');
+                  }}
+                  className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {t('documentStudio.blank.retry', 'Spróbuj ponownie')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/presentations?tab=documents')}
+                  className="rounded-lg border border-c-border-strong bg-c-surface-raised px-4 py-2 text-sm font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {t('documentStudio.view.backToMaterials', 'Wróć do Materiałów')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>
