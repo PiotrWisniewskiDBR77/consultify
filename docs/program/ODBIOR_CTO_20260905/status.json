@@ -112,8 +112,8 @@
     },
     "10_FINANCE": {
       "nazwa": "Finanse",
-      "stan": "W_TOKU",
-      "cto_werdykt": "Finanse: sprawozdania, analiza, komentarze, wycena z wyborem źródła gotowe; Baseline v3 (pełna tabela) i porównanie wersji to program po MVP — moduł do zatwierdzenia z tym zastrzeżeniem, gdy skończę odbiór.",
+      "stan": "GOTOWY",
+      "cto_werdykt": "Finanse na MVP: sprawozdania, analiza historyczna, komentarze z nazwiskami, wycena z wyborem źródła, predykcja. Z zastrzeżeniem zapisanym przeze mnie: Baseline v3 (pełna tabela) i porównanie wersji to program po MVP — dziś Baseline pokazuje uczciwy stan braku kontekstu, nie udaje.",
       "zrzuty": [
         "evidence/odbior-zywo-20260905/09-finanse/finance-statement-pack-workspace-v2.png",
         "evidence/odbior-zywo-20260905/09-finanse/finance-analysis-workspace.png",
@@ -121,7 +121,7 @@
         "evidence/odbior-zywo-20260905/09-finanse/finance-valuation-workspace.png"
       ],
       "zamrozony": false,
-      "sprawdzono": "2026-09-05T14:23"
+      "sprawdzono": "2026-09-05T14:26"
     },
     "11_MATERIALS": {
       "nazwa": "Materiały",
