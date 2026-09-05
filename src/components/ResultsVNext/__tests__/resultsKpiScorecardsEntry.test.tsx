@@ -1,27 +1,28 @@
 /**
  * @vitest-environment jsdom
  *
- * POZIOM 1 trzypoziomowej formuły KPI — `/results/kpi` MUSI otwierać się na
- * TABELI ZESTAWIEŃ, a lista pojedynczych wskaźników musi zostać osiągalna.
+ * POZIOM 1 Wyników → KPI — `/results/kpi` MUSI otwierać się na TABELI
+ * RAPORTÓW, a płaska lista pojedynczych wskaźników NIE jest punktem wejścia.
  *
- * HISTORIA (dwa zmierzone defekty, ten sam plik):
+ * HISTORIA (trzy zmierzone defekty, ten sam plik):
  *  1. Odbiór na żywo 05.09 (`results-vnext-kpi-scorecards`): gałąź
  *     `tab === 'scorecards'` w `ResultsKpiRegistryPage` była w pełni
- *     zbudowana (tabela, podgląd, kebab cyklu życia, modal tworzenia), ale
- *     stan `tab` dało się ustawić WYŁĄCZNIE propem `initialTab`, którego
- *     żadna trasa nie przekazywała — rejestr zestawień był nieosiągalny.
- *  2. Odrzucenie właściciela 05.09 („Omawialiśmy tabelę; z poziomu tabeli
- *     otwiera się lista"): zestawienia były zakładką POBOCZNĄ, a domyślną
- *     tabelą była lista pojedynczych wskaźników. Od tej zmiany jest
- *     odwrotnie — zestawienia to poziom 1, wskaźniki to pigułka „Wszystkie
- *     wskaźniki" obok nich.
+ *     zbudowana, ale stan `tab` dało się ustawić WYŁĄCZNIE propem
+ *     `initialTab`, którego żadna trasa nie przekazywała — rejestr był
+ *     nieosiągalny („biblioteka bez wywołania").
+ *  2. Odrzucenie właściciela 05.09: zestawienia były zakładką POBOCZNĄ, a
+ *     domyślną tabelą lista pojedynczych wskaźników. Odwrócone.
+ *  3. Korekta P7K (SSOT §1, decyzja właściciela nr 2 z 30.08): „płaska lista
+ *     wszystkich wskaźników nie jest punktem wejścia" — pigułka „Wszystkie
+ *     wskaźniki" ZNIKA z Menu 3, a rejestr wskaźników (jedyne miejsce cyklu
+ *     definicji miernika) zostaje osiągalny adresem `?kpiView=wskazniki`.
  *
- * DOWÓD MUTACYJNY (wykonany 2026-09-05): zmiana domyślnego stanu `tab` z
- * `'scorecards'` z powrotem na `'org'` wywraca test „domyślną tabelą są
- * zestawienia", a usunięcie gałęzi `if (id === KPI_CHIP_ID)` z
- * `onChipChange` wywraca test przejścia na listę wskaźników.
+ * DOWÓD MUTACYJNY: przywrócenie pigułki „Wszystkie wskaźniki" do Menu 3
+ * wywraca test „pigułka znika"; zmiana domyślnego stanu `tab` z `'scorecards'`
+ * na `'org'` wywraca test „domyślną tabelą są raporty"; usunięcie gałęzi
+ * `view === 'wskazniki'` z efektu deep-linku wywraca test rejestru wskaźników.
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -104,37 +105,32 @@ afterEach(() => {
   setSearch('');
 });
 
-describe('poziom 1 — tabela zestawień jako domyślny widok /results/kpi', () => {
-  it('domyślną tabelą /results/kpi są ZESTAWIENIA (bez żadnego kliknięcia)', async () => {
+describe('poziom 1 — tabela RAPORTÓW jako jedyny widok /results/kpi', () => {
+  it('domyślną tabelą /results/kpi są RAPORTY (bez żadnego kliknięcia)', async () => {
     renderPage();
     await waitFor(() => expect(listKpiScorecards).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
   });
 
-  it('pigułka „Zestawienia" jest widoczna w Menu 3 i jest zakładką aktywną', async () => {
-    renderPage();
-    await waitFor(() => expect(screen.getByText('Zestawienia')).toBeInTheDocument());
-  });
-
-  it('pigułka „Wszystkie wskaźniki" przełącza na listę pojedynczych KPI', async () => {
+  it('Menu 3 ma DOKŁADNIE jedną akcję („Nowy raport") i ZERO pigułek nawigacyjnych', async () => {
     renderPage();
     await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('Wszystkie wskaźniki'));
-    await waitFor(() =>
-      expect(screen.queryByText('Karta wyników operacji')).not.toBeInTheDocument()
-    );
+    expect(screen.getByText('Nowy raport')).toBeInTheDocument();
+    // MUTACJA: przywrócenie którejkolwiek z dwóch pigułek wywraca ten test.
+    expect(screen.queryByText('Wszystkie wskaźniki')).not.toBeInTheDocument();
+    expect(screen.queryByText('Zestawienia')).not.toBeInTheDocument();
+  });
+
+  it('rejestr pojedynczych wskaźników nie został skasowany — otwiera go ?kpiView=wskazniki', async () => {
+    setSearch('?kpiView=wskazniki');
+    renderPage();
+    // Rejestr wskaźników to jedyne miejsce cyklu definicji miernika (szkic →
+    // zgłoszenie → zatwierdzenie → rewizja), więc musi zostać osiągalny mimo
+    // zniknięcia pigułki.
     await waitFor(() => expect(listKpis).toHaveBeenCalled());
-  });
-
-  it('z listy wskaźników da się wrócić na poziom 1 (nie jest ślepą uliczką)', async () => {
-    renderPage();
-    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
-    fireEvent.click(screen.getByText('Wszystkie wskaźniki'));
     await waitFor(() =>
       expect(screen.queryByText('Karta wyników operacji')).not.toBeInTheDocument()
     );
-    fireEvent.click(screen.getByText('Zestawienia'));
-    await waitFor(() => expect(screen.getByText('Karta wyników operacji')).toBeInTheDocument());
   });
 
   it('deep-link ?kpiView=scorecards otwiera ten sam poziom 1', async () => {
