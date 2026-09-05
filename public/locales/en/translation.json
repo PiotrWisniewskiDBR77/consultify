@@ -11871,7 +11871,8 @@
       "toReview": "{{count}} to review",
       "empty": "No suggested changes",
       "accept": "Accept",
-      "reject": "Reject"
+      "reject": "Reject",
+      "tooLong": "The selected text is too long for this AI action. Shorten the selection and try again."
     },
     "initiativeProposalBoard": {
       "title": "Proposal board",
@@ -28573,7 +28574,8 @@
         "list": "List",
         "summary": "Summary",
         "promptPlaceholder": "Describe to Teresa what to add...",
-        "submit": "Add to canvas"
+        "submit": "Add to canvas",
+        "aiFallbackNotice": "AI is unavailable. A template was added instead of AI-generated content."
       },
       "selection": {
         "turnSelectionIntoBlock": "Turn selection into a block",
@@ -28598,7 +28600,8 @@
         "rewrite": "Rewrite",
         "suggest": "Suggest",
         "promptPlaceholder": "Instruction for Teresa on the selected fragment...",
-        "preview": "Preview AI edit"
+        "preview": "Preview AI edit",
+        "aiFallbackNotice": "AI is unavailable. The preview uses a template, not an AI-generated response."
       },
       "manualEdit": {
         "title": "Manual editing",

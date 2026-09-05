@@ -13,6 +13,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getAiErrorLine } from '../aiProviderErrorCopy';
 import { AIAcceptRejectBar, CanvasAIFloatingMenu } from './CanvasAIFloatingMenu';
 import {
   acceptAiDiff,
@@ -47,6 +48,68 @@ interface CanvasRichEditorProps {
 }
 
 const SAVE_DEBOUNCE_MS = 300;
+export const CANVAS_AI_MESSAGE_MAX_LENGTH = 8000;
+
+type CanvasQuickT = (key: string, defaultValue?: string) => string;
+
+export type CanvasQuickAIResult =
+  | { ok: true; text: string }
+  | { ok: false; errorLine: string; reason: 'too_long' | 'provider' };
+
+/** One request boundary shared by the floating editor menu and the canvas kebab. */
+export async function requestCanvasQuickAI({
+  prompt,
+  selectedText,
+  t,
+  language,
+  intent = 'modify',
+}: {
+  prompt: string;
+  selectedText: string;
+  t: CanvasQuickT;
+  language?: string;
+  intent?: 'modify' | 'explain';
+}): Promise<CanvasQuickAIResult> {
+  const message = `${prompt}\n\nText to ${intent}:\n${selectedText}`;
+  if (message.length > CANVAS_AI_MESSAGE_MAX_LENGTH) {
+    return {
+      ok: false,
+      reason: 'too_long',
+      errorLine: t(
+        'canvas.aiMenu.tooLong',
+        'The selected text is too long for this AI action. Shorten the selection and try again.'
+      ),
+    };
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch('/api/ai/chat/quick', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        context: { source: 'canvas_selection', selectedText },
+        ...(language ? { language } : {}),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, data) };
+    }
+    const raw = data?.response ?? data?.content ?? data?.text;
+    const text = typeof raw === 'string' ? raw.trim() : '';
+    if (!text) {
+      return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, 'AI_EMPTY') };
+    }
+    return { ok: true, text };
+  } catch {
+    return { ok: false, reason: 'provider', errorLine: getAiErrorLine(t, 'AI_ERROR') };
+  }
+}
 
 export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
   contentMd,
@@ -78,6 +141,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
 
   const [selection, setSelection] = useState<CanvasSelection | null>(null);
   const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiErrorLine, setAiErrorLine] = useState<string | null>(null);
   const [hasPendingDiff, setHasPendingDiff] = useState(false);
 
   // W2-T2 — give onUpdate access to the live pending-diff state via a ref so
@@ -249,6 +313,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
       if (isStreaming) return null;
       if (hasPendingDiff) return null;
       setAiProcessing(true);
+      setAiErrorLine(null);
 
       // E1 — block-boundary guard. A selection crossing block nodes (e.g.
       // paragraph → heading) would splice the replacement mid-word into the
@@ -266,31 +331,12 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         : selectedText;
 
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/ai/chat/quick', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `${prompt}\n\nText to modify:\n${effectiveText}`,
-            context: { source: 'canvas_selection', selectedText: effectiveText },
-          }),
-        });
-
-        if (!response.ok) {
-          setAiProcessing(false);
+        const result = await requestCanvasQuickAI({ prompt, selectedText: effectiveText, t });
+        if (!result.ok) {
+          setAiErrorLine(result.errorLine);
           return null;
         }
-
-        const data = await response.json();
-        const replacementRaw = data?.response ?? data?.content ?? data?.text;
-        const replacement = typeof replacementRaw === 'string' ? replacementRaw.trim() : '';
-        if (!replacement) {
-          setAiProcessing(false);
-          return null;
-        }
+        const replacement = result.text;
 
         // N-8 — flip the pending-diff guard BEFORE mutating the editor. The
         // diff transactions below fire `onUpdate` synchronously, and the
@@ -334,12 +380,11 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
         setHasPendingDiff(true);
         setAiProcessing(false);
         return replacement;
-      } catch {
+      } finally {
         setAiProcessing(false);
-        return null;
       }
     },
-    [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff]
+    [editor, selection, effectiveProvenanceScope, ensureFallbackScope, isStreaming, hasPendingDiff, t]
   );
 
   // E1 — "Wyjaśnij" handler: same /api/ai/chat/quick pipeline as
@@ -354,37 +399,26 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
       if (isStreaming) return null;
       if (hasPendingDiff) return null;
       setAiProcessing(true);
+      setAiErrorLine(null);
 
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/api/ai/chat/quick', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `${prompt}\n\nText to explain:\n${selectedText}`,
-            context: { source: 'canvas_selection', selectedText },
-            // The explanation is for the reader, so hint the backend with the
-            // UI language; the prompt itself pins output to the text language.
-            language: i18n.language,
-          }),
+        const result = await requestCanvasQuickAI({
+          prompt,
+          selectedText,
+          t,
+          intent: 'explain',
+          language: i18n.language,
         });
-
-        if (!response.ok) return null;
-
-        const data = await response.json();
-        const raw = data?.response ?? data?.content ?? data?.text;
-        const text = typeof raw === 'string' ? raw.trim() : '';
-        return text || null;
-      } catch {
-        return null;
+        if (!result.ok) {
+          setAiErrorLine(result.errorLine);
+          return null;
+        }
+        return result.text;
       } finally {
         setAiProcessing(false);
       }
     },
-    [editor, selection, isStreaming, hasPendingDiff, i18n.language]
+    [editor, selection, isStreaming, hasPendingDiff, i18n.language, t]
   );
 
   // Accept AI suggestion: delete the original (aiRemoved) text, keep the
@@ -464,6 +498,7 @@ export const CanvasRichEditor: React.FC<CanvasRichEditorProps> = ({
             onAIRequest={handleAIRequest}
             onExplainRequest={handleAIExplain}
             isProcessing={aiProcessing}
+            errorLine={aiErrorLine}
           />
         )}
 

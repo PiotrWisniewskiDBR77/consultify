@@ -11268,7 +11268,8 @@
       "toReview": "{{count}} do rozpatrzenia",
       "empty": "Brak sugerowanych zmian",
       "accept": "Akceptuj",
-      "reject": "Odrzuć"
+      "reject": "Odrzuć",
+      "tooLong": "Zaznaczony tekst jest za długi dla tej akcji AI. Skróć zaznaczenie i spróbuj ponownie."
     },
     "initiativeProposalBoard": {
       "title": "Tablica propozycji",
@@ -30902,7 +30903,8 @@
         "list": "Lista",
         "summary": "Podsumowanie",
         "promptPlaceholder": "Opisz Teresie co dodać...",
-        "submit": "Dodaj do canvas"
+        "submit": "Dodaj do canvas",
+        "aiFallbackNotice": "AI jest niedostępne. Dodano szablon zamiast treści wygenerowanej przez AI."
       },
       "selection": {
         "turnSelectionIntoBlock": "Zamień zaznaczenie na blok",
@@ -30927,7 +30929,8 @@
         "rewrite": "Przeredaguj",
         "suggest": "Zaproponuj",
         "promptPlaceholder": "Polecenie dla Teresy dotyczące zaznaczonego fragmentu…",
-        "preview": "Podgląd zmiany AI"
+        "preview": "Podgląd zmiany AI",
+        "aiFallbackNotice": "AI jest niedostępne. Podgląd używa szablonu, a nie odpowiedzi wygenerowanej przez AI."
       },
       "manualEdit": {
         "title": "Ręczna edycja",
