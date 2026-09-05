@@ -72,6 +72,8 @@ function makeApi(overrides: Partial<ValuationWorkspaceApi> = {}): ValuationWorks
     getValuationSensitivityGrid: vi.fn(),
     generateValuationAdvisorOutput: vi.fn(),
     listValuationAdvisorOutputs: vi.fn().mockResolvedValue([]),
+    listFinanceArtifacts: vi.fn().mockResolvedValue({ artifacts: [], count: 0 }),
+    bindValuationSource: vi.fn(),
     ...overrides,
   };
 }

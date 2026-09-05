@@ -1751,6 +1751,40 @@ export interface ValuationLineageEdgeDto {
   createdAt: string;
 }
 
+/**
+ * „Wskazanie źródła wyceny" (decyzja właściciela 2026-09-05) — kształt zwracany przez
+ * `GET/POST /valuation/variants/:businessVersionId/source`
+ * (`valuation.routes.ts` sekcja 2b, reguły w `valuationSourceBindingService.ts`).
+ */
+export type ValuationSourceKind = 'baseline' | 'scenario';
+
+export interface ValuationSourceBindingDto {
+  edgeId: string;
+  sourceKind: ValuationSourceKind;
+  sourceVersionId: string;
+  sourceArtifactType: FinanceArtifactType;
+  targetVersionId: string;
+  edgeType: 'MODEL_TO_VALUATION' | 'SCENARIO_TO_VALUATION';
+  transformationKind: string;
+  assumptionSnapshotHash: string | null;
+  authorId: string | null;
+  createdAt: string;
+}
+
+/** `GET .../source` — `source: null` znaczy „wariant nie ma jeszcze wskazanego źródła". */
+export interface ValuationSourceStateDto {
+  businessVersionId: string;
+  source: ValuationSourceBindingDto | null;
+}
+
+/** `POST .../source` — `created: false` to idempotentne powtórzenie tego samego wskazania (nic nie zapisano). */
+export interface ValuationSourceBindingResultDto {
+  businessVersionId: string;
+  created: boolean;
+  source: ValuationSourceBindingDto;
+  assumptionSnapshotHashOrigin: 'SOURCE_CONTENT_SEMANTIC_HASH' | 'SOURCE_VERSION_IDENTITY';
+}
+
 export interface ValuationLineageDto {
   businessVersionId: string;
   ancestors: ValuationLineageEdgeDto[];

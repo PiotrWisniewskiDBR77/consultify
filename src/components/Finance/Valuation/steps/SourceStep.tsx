@@ -2,13 +2,20 @@
  * Step 1/7 — Source (OWN-FIN-021 point 1): the valuation must point at an exact, APPROVED,
  * immutable Baseline/Scenario version — never "latest" — and lineage must PROVE it.
  *
- * ★ HONEST GAP (see PKG_H_VALUATION_report.md): at base SHA 9604652e27 there is no HTTP endpoint
- * anywhere under `/api/v8/finance-v2/*` that CREATES the lineage edge this step needs to display
- * (`lineageService.insertEdge()` is called only from test files — grep-verified, zero route
- * callers). `POST /valuation/variants/:id/compute/dcf` fails with `NO_VALUATION_SOURCE_EDGE` when
- * this edge is missing. This step therefore RENDERS the edge(s) if any already exist (read-only,
- * via `GET /versions/:id/lineage`) and otherwise says so plainly — it does not pretend a picker
- * that writes anywhere would work.
+ * ★ GAP CLOSED 2026-09-05 (decyzja właściciela). Until this date there was no HTTP endpoint under
+ * `/api/v8/finance-v2/*` that CREATED the lineage edge this step displays, so this step could only
+ * render pre-existing edges and otherwise print a dead-end warning — measured live in round 4 of
+ * the 05.09 acceptance: all three APPROVED CD PROJEKT valuations stuck on „Źródło ZABLOKOWANE",
+ * with the Results tab unreachable for EVERY valuation record in the org. The write path now
+ * exists (`POST /valuation/variants/:businessVersionId/source`, rules in
+ * `server/src/services/finance/canonical/valuationSourceBindingService.ts`) and the empty state is
+ * a real chooser over APPROVED Baseline/Scenario versions instead of an apology.
+ *
+ * ★ What the chooser deliberately does NOT offer: changing an existing source.
+ * `finance_lineage_edges` is append-only at the DB level (`trg_finance_lineage_no_update` /
+ * `trg_finance_lineage_no_delete`), so once a valuation has a source, the chooser is gone and the
+ * chain is shown read-only — the remedy for a wrong source is a new valuation version, and
+ * pretending otherwise would be a button that always 409s.
  *
  * ★ FIXC (martwa przestrzeń, gate-e): `getAncestors()` (`lineageService.ts`) walks the FULL
  * lineage chain with a recursive CTE (`WITH RECURSIVE ancestors ... JOIN ancestors a ON
@@ -40,20 +47,39 @@
  */
 import { ChevronRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { MENU_3_ACTION_NEUTRAL } from '@/components/shared/ModuleMenu3';
 
 import {
+  describeFinanceV2Error,
   financeArtifactTypeLabel,
   financeLineageTransformationKindLabel,
   type ValuationLineageDto,
+  type ValuationSourceKind,
   type ValuationVariantDto,
 } from '@/services/api/financeV2.types';
+
+/** One selectable source: an exact, APPROVED Baseline/Scenario business version. */
+export interface ValuationSourceOption {
+  sourceKind: ValuationSourceKind;
+  businessVersionId: string;
+  /** Already-human label built by the caller (artifact name + version number). */
+  label: string;
+}
 
 export interface SourceStepProps {
   businessVersionId: string;
   variant: ValuationVariantDto | null;
   lineage: ValuationLineageDto | null;
+  /**
+   * Loads the APPROVED Baseline/Scenario versions this valuation may point at. Omitted (undefined)
+   * = the host does not offer binding at all, and the empty state stays purely informational —
+   * that is what keeps this component honest in hosts that have no write path.
+   */
+  loadSourceOptions?: () => Promise<ValuationSourceOption[]>;
+  /** Writes the binding and re-fetches the lineage. Rejects with a FinanceV2 API error on refusal. */
+  onBindSource?: (params: { sourceKind: ValuationSourceKind; sourceVersionId: string }) => Promise<void>;
 }
 
 /**
@@ -81,7 +107,8 @@ function formatLineageDate(iso: string): string {
 }
 
 export function SourceStep(props: SourceStepProps): React.ReactElement {
-  const { businessVersionId, variant, lineage } = props;
+  const { businessVersionId, variant, lineage, loadSourceOptions, onBindSource } = props;
+  const { t } = useTranslation();
   // ★ FIXC: full chain, chronological (root/oldest first) — the DB query has no ORDER BY of its
   // own (`SELECT DISTINCT ... FROM ancestors`, see `lineageService.ts`), so this component owns
   // the display order rather than depending on incidental SQL row order.
@@ -89,6 +116,56 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
     ? [...lineage.ancestors].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     : [];
   const immediateEdge = sourceEdges[sourceEdges.length - 1] ?? null;
+
+  const canBind = typeof loadSourceOptions === 'function' && typeof onBindSource === 'function';
+  const missingSource = lineage !== null && sourceEdges.length === 0;
+
+  const [options, setOptions] = React.useState<ValuationSourceOption[] | null>(null);
+  const [optionsError, setOptionsError] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+  const [bindError, setBindError] = React.useState<string | null>(null);
+
+  // Only fetch the candidate list once the empty state is actually on screen — a valuation that
+  // already has its source never pays for this call.
+  React.useEffect(() => {
+    if (!missingSource || !canBind || !loadSourceOptions) return;
+    let cancelled = false;
+    setOptionsError(null);
+    loadSourceOptions()
+      .then((next) => {
+        if (!cancelled) setOptions(next);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setOptions([]);
+          setOptionsError(describeFinanceV2Error(err).detail);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [missingSource, canBind, loadSourceOptions]);
+
+  const baselineOptions = (options ?? []).filter((o) => o.sourceKind === 'baseline');
+  const scenarioOptions = (options ?? []).filter((o) => o.sourceKind === 'scenario');
+
+  async function handleBind(): Promise<void> {
+    if (!onBindSource || !selected) return;
+    const chosen = (options ?? []).find(
+      (o) => `${o.sourceKind}:${o.businessVersionId}` === selected
+    );
+    if (!chosen) return;
+    setSaving(true);
+    setBindError(null);
+    try {
+      await onBindSource({ sourceKind: chosen.sourceKind, sourceVersionId: chosen.businessVersionId });
+    } catch (err: unknown) {
+      setBindError(describeFinanceV2Error(err).detail);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="w-full space-y-4" data-testid="valuation-source-step">
@@ -171,20 +248,94 @@ export function SourceStep(props: SourceStepProps): React.ReactElement {
         </div>
       )}
 
-      {lineage && sourceEdges.length === 0 && (
+      {missingSource && (
         <div
-          className="rounded-xl border border-c-warning/30 bg-c-warning/10 p-4"
+          className="rounded-xl border border-c-border-subtle bg-c-surface p-4"
           data-testid="source-edge-missing"
         >
-          <p className="text-sm font-medium text-c-text">Brak powiązania ze źródłem</p>
-          <p className="mt-1 text-xs text-c-text-muted">
-            Ten wariant nie ma dziś zapisanego powiązania (lineage edge) z żadną wersją
-            Baseline/Scenario. Obliczenie DCF/FCFF zwróci błąd{' '}
-            <span className="font-mono">NO_VALUATION_SOURCE_EDGE</span>, dopóki powiązanie nie
-            powstanie. W tym pakiecie (B3, baza {'​'}9604652e27) nie istnieje endpoint tworzący to
-            powiązanie — zgłoszone jako luka w raporcie odbiorowym, nie naprawione tutaj (poza
-            allowlistą tego pakietu).
+          <p className="text-sm font-medium text-c-text">
+            {t('finance.valuation.sourceBinding.emptyTitle')}
           </p>
+          <p className="mt-1 text-xs text-c-text-muted">
+            {canBind
+              ? t('finance.valuation.sourceBinding.emptyHelp')
+              : t('finance.valuation.sourceBinding.emptyHelpReadOnly')}
+          </p>
+
+          {canBind && (
+            <div className="mt-3 space-y-2" data-testid="source-chooser">
+              <div className="flex flex-wrap items-center gap-2">
+                <label htmlFor="valuation-source-select" className="text-xs text-c-text-muted">
+                  {t('finance.valuation.sourceBinding.selectLabel')}
+                </label>
+                <select
+                  id="valuation-source-select"
+                  data-testid="source-chooser-select"
+                  className="h-8 min-w-[18rem] max-w-full rounded-full border border-c-border-subtle bg-c-surface px-3 text-xs text-c-text transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:cursor-not-allowed disabled:opacity-45"
+                  value={selected}
+                  disabled={options === null || saving}
+                  onChange={(event) => setSelected(event.target.value)}
+                >
+                  <option value="">
+                    {options === null
+                      ? t('finance.valuation.sourceBinding.loading')
+                      : t('finance.valuation.sourceBinding.placeholder')}
+                  </option>
+                  {baselineOptions.length > 0 && (
+                    <optgroup label={t('finance.valuation.sourceBinding.groupBaseline')}>
+                      {baselineOptions.map((option) => (
+                        <option
+                          key={`baseline:${option.businessVersionId}`}
+                          value={`baseline:${option.businessVersionId}`}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {scenarioOptions.length > 0 && (
+                    <optgroup label={t('finance.valuation.sourceBinding.groupScenario')}>
+                      {scenarioOptions.map((option) => (
+                        <option
+                          key={`scenario:${option.businessVersionId}`}
+                          value={`scenario:${option.businessVersionId}`}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                <button
+                  type="button"
+                  data-testid="source-chooser-submit"
+                  className={MENU_3_ACTION_NEUTRAL}
+                  disabled={!selected || saving}
+                  onClick={() => void handleBind()}
+                >
+                  {saving
+                    ? t('finance.valuation.sourceBinding.submitting')
+                    : t('finance.valuation.sourceBinding.submit')}
+                </button>
+              </div>
+
+              {options !== null && options.length === 0 && !optionsError && (
+                <p className="text-xs text-c-text-muted" data-testid="source-chooser-empty">
+                  {t('finance.valuation.sourceBinding.noCandidates')}
+                </p>
+              )}
+              {optionsError && (
+                <p className="text-xs text-c-danger" data-testid="source-chooser-options-error">
+                  {optionsError}
+                </p>
+              )}
+              {bindError && (
+                <p className="text-xs text-c-danger" data-testid="source-chooser-error">
+                  {bindError}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

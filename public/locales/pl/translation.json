@@ -23608,7 +23608,20 @@
       "horizonYears": "Horyzont (lata)",
       "dcfResults": "Wyniki DCF",
       "sensitivity": "Analiza wrażliwości",
-      "advisory": "Doradztwo"
+      "advisory": "Doradztwo",
+      "sourceBinding": {
+        "emptyTitle": "Brak wskazanego źródła",
+        "emptyHelp": "Ta wycena nie wskazuje jeszcze wersji Baseline ani Scenariusza. Wybierz dokładną, zatwierdzoną wersję źródłową — dopiero wtedy policzymy DCF/FCFF i pokażemy łańcuch pochodzenia.",
+        "emptyHelpReadOnly": "Ta wycena nie wskazuje jeszcze wersji Baseline ani Scenariusza. Wskazanie źródła nie jest dostępne w tym widoku.",
+        "selectLabel": "Wersja źródłowa",
+        "placeholder": "Wybierz zatwierdzoną wersję…",
+        "loading": "Wczytywanie kandydatów…",
+        "groupBaseline": "Model bazowy (Baseline)",
+        "groupScenario": "Scenariusz predykcji",
+        "submit": "Wskaż źródło",
+        "submitting": "Zapisywanie…",
+        "noCandidates": "Brak zatwierdzonych wersji Baseline lub Scenariusza w tej organizacji. Najpierw zatwierdź model bazowy albo scenariusz."
+      }
     },
     "budget": {
       "approve": "Zatwierdź",

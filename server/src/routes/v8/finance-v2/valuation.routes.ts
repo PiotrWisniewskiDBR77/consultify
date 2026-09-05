@@ -74,6 +74,11 @@ import { generateCanonicalLegacyNegotiationPack } from '../../../services/financ
 import { exportCanonicalLegacyValuationPptx } from '../../../services/finance/canonical/valuationPptxExportService.js';
 import { discardCanonicalLegacyValuation } from '../../../services/finance/canonical/valuationDiscardService.js';
 import { createRegisteredValuation, ValuationRegistrationError } from '../../../services/finance/canonical/valuationRegistrationService.js';
+import {
+  bindValuationSource,
+  getValuationSource,
+  type BindValuationSourceErrorCode,
+} from '../../../services/finance/canonical/valuationSourceBindingService.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { financeV2Meta, sendError } from './_shared.js';
 
@@ -498,6 +503,94 @@ router.post(
       }
       throw err;
     }
+  })
+);
+
+// =============================================================================================
+// 2b. Source binding — the lineage edge Baseline/Scenario -> Valuation (decyzja właściciela
+// 2026-09-05). Read + create only; `valuationSourceBindingService.ts` owns every rule and every
+// DB statement (this router stays router-only, per the file header). See that service's header
+// for why `finance_lineage_edges`'s append-only triggers make "change the source" unavailable.
+// =============================================================================================
+
+function statusForBindSourceError(code: BindValuationSourceErrorCode): number {
+  switch (code) {
+    case 'VALUATION_NOT_FOUND':
+    case 'SOURCE_VERSION_NOT_FOUND':
+      return 404;
+    case 'SOURCE_KIND_MISMATCH':
+    case 'SOURCE_VERSION_NOT_APPROVED':
+    case 'SOURCE_IS_TARGET':
+    case 'VALUATION_VERSION_TERMINAL':
+    case 'VALUATION_SOURCE_ALREADY_SET':
+    case 'MULTIPLE_VALUATION_SOURCE_EDGES':
+    case 'LINEAGE_CYCLE_REJECTED':
+    case 'DUPLICATE_EDGE':
+      return 409;
+    default:
+      return 400; // ASSUMPTION_SNAPSHOT_HASH_{REQUIRED,FORBIDDEN} — a caller-shape defect
+  }
+}
+
+router.get(
+  '/valuation/variants/:businessVersionId/source',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const businessVersionId = String(req.params.businessVersionId || '');
+    const result = await getValuationSource(organizationId, businessVersionId);
+    if (!result.ok) {
+      return sendError(res, result.code === 'VALUATION_NOT_FOUND' ? 404 : 409, result.code, result.message);
+    }
+    return res.status(200).json({
+      data: { businessVersionId, source: result.source },
+      meta: financeV2Meta(),
+    });
+  })
+);
+
+const valuationSourceBindingSchema = z
+  .object({
+    sourceKind: z.enum(['baseline', 'scenario']),
+    sourceVersionId: z.string().trim().min(1).max(255),
+  })
+  .strict();
+
+router.post(
+  '/valuation/variants/:businessVersionId/source',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const businessVersionId = String(req.params.businessVersionId || '');
+    const parsed = valuationSourceBindingSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return sendError(
+        res,
+        400,
+        'INVALID_BODY',
+        parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ')
+      );
+    }
+
+    const result = await bindValuationSource({
+      organizationId,
+      valuationBusinessVersionId: businessVersionId,
+      sourceKind: parsed.data.sourceKind,
+      sourceVersionId: parsed.data.sourceVersionId,
+      authorId: userId,
+    });
+    if (!result.ok) {
+      return sendError(res, statusForBindSourceError(result.code), result.code, result.message);
+    }
+    // 201 for a real insert, 200 for the idempotent replay — same convention
+    // `POST /versions/:sourceVersionId/derived-analysis` uses for its replay path.
+    return res.status(result.created ? 201 : 200).json({
+      data: {
+        businessVersionId,
+        created: result.created,
+        source: result.source,
+        assumptionSnapshotHashOrigin: result.assumptionSnapshotHashOrigin,
+      },
+      meta: financeV2Meta(),
+    });
   })
 );
 
