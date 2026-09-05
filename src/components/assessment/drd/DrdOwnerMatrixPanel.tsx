@@ -34,10 +34,18 @@
  * w magazynie zdarzeń, a nie z kliknięcia w kratkę — to celowa różnica wobec
  * starego edytora i jedyna, jaka tu została.
  */
-import { X } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { DRDMatrixGrid } from './DRDAssessmentEditor';
+import {
+  DRDMatrixFullscreenShell,
+  DRDMatrixGrid,
+  DRDMatrixHeaderBlock,
+  DRDMatrixLegend,
+  DRDMatrixSummaryStrip,
+  usePodpisUkrytychKolumn,
+} from './DRDAssessmentEditor';
 import { drdOdpowiedziZOutputu } from './DRDMatrixReadOnly';
 
 import type { MatrixCellState, MatrixRow, MatrixSelection } from '@/components/method-workspace/types';
@@ -55,15 +63,6 @@ export interface DrdOwnerMatrixPanelProps {
     cell: MatrixCellState | null
   ) => React.ReactNode;
   readonly className?: string;
-}
-
-/** Polska odmiana: 1 kolumna · 2-4 kolumny · 5+ kolumn (z wyjątkiem 12-14). */
-function polskaOdmianaKolumn(n: number): string {
-  if (n === 1) return 'kolumna';
-  const dziesiatki = n % 100;
-  const jednosci = n % 10;
-  if (jednosci >= 2 && jednosci <= 4 && !(dziesiatki >= 12 && dziesiatki <= 14)) return 'kolumny';
-  return 'kolumn';
 }
 
 /**
@@ -100,6 +99,15 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
   renderSideSheet,
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const podpisUkrytychKolumn = usePodpisUkrytychKolumn();
+  /**
+   * „Przestronny" i „Pełny ekran" żyją TU, a nie w ekranie sesji: to ustawienia
+   * oglądania macierzy, nie stan warsztatu. Domyślnie gęsto — zakładka dostaje
+   * ~700 px wysokości i przy `spacious` dolny pasek obszarów wypada z kadru.
+   */
+  const [compact, setCompact] = React.useState(true);
+  const [pelnyEkran, setPelnyEkran] = React.useState(false);
   const axis = DRD_STRUCTURE.find((a) => a.id === axisNumber);
   const value = React.useMemo(() => drdOdpowiedziZWierszyMacierzy(rows), [rows]);
   const selectedCell =
@@ -131,14 +139,21 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
     );
   }
 
-  return (
-    <div data-testid="drd-owner-matrix" className={`flex h-full min-h-0 flex-col ${className}`}>
+  const nazwaOsi = axis.namePL ?? axis.name;
+
+  /**
+   * Siatka + otoczka. `siatka(fill)` jest jedną definicją używaną w zakładce
+   * i w nakładce pełnoekranowej — różnica to szerokość kolumn i to, czy siatka
+   * ma wypełniać wysokość (w zakładce tak, bo kafle muszą zostać w kadrze;
+   * na pełnym ekranie nie, bo tam przewija się cała nakładka).
+   */
+  const siatka = (opcje: { readonly kolumnaPx: number; readonly wypelnijWysokosc: boolean }) => (
       <DRDMatrixGrid
         areas={axis.areas}
         levelCount={axis.levelCount}
         value={value}
-        compact
-        columnMinPx={150}
+        compact={compact}
+        columnMinPx={opcje.kolumnaPx}
         /* Krótko: ta podpowiedź powtarza się w KAŻDYM wierszu, więc każde
            dodatkowe słowo kosztuje siedem linijek wysokości i wypycha z kadru
            dolny pasek obszarów z chipami AS/TO — czyli dokładnie to, po czym
@@ -146,15 +161,67 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
         rowHint="Kliknij komórkę"
         /* Siatka wypełnia wysokość zakładki i przewija się w środku, dzięki
            czemu `sticky bottom-0` paska obszarów faktycznie działa. */
-        fillHeight
+        fillHeight={opcje.wypelnijWysokosc}
         selectedCell={
           selection ? { areaId: selection.unitId, level: selection.level } : null
         }
         onCellClick={(areaId, level) => onSelect({ unitId: areaId, level })}
         onAreaClick={(areaId) => onSelect({ unitId: areaId, level: 1 })}
-        areaStripLabel="Area"
-        overflowHint={(n) => `Jeszcze ${n} ${polskaOdmianaKolumn(n)} po prawej — przewiń w bok.`}
+        areaStripLabel={t('drd.matrix.areaStrip', 'Area')}
+        overflowHint={podpisUkrytychKolumn}
       />
+  );
+
+  const legenda = <DRDMatrixLegend compact={compact} onCompactChange={setCompact} />;
+
+  return (
+    /* Zakładka przewija się W CAŁOŚCI (kontener `MethodWorkspaceShell` ma
+       `overflow-auto`), a NIE tylko siatka w środku. Powód zmierzony na zrzucie
+       05.09: przy sztywnej wysokości (`h-full` + `fillHeight`) na otoczkę
+       schodziło ~200 px i przyklejony pasek obszarów nachodził na wiersz „2.",
+       czyli macierz znów była ucinana — dokładnie zarzut właściciela. Obraz
+       zatwierdzony pokazuje macierz W CAŁOŚCI, a kafle pod nią (poniżej
+       pierwszego ekranu). */
+    <div data-testid="drd-owner-matrix" className={`flex min-h-0 flex-col ${className}`}>
+      <DRDMatrixHeaderBlock
+        axisId={axis.id}
+        axisName={nazwaOsi}
+        right={
+          <>
+            {legenda}
+            <button
+              type="button"
+              onClick={() => setPelnyEkran(true)}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-c-border bg-c-surface-subtle text-c-text text-xs font-semibold hover:bg-c-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              title={t('drd.matrix.openFullscreenTitle', 'Open matrix in full screen')}
+            >
+              <Maximize2 className="w-4 h-4" />
+              {t('drd.matrix.fullscreen', 'Full screen')}
+            </button>
+          </>
+        }
+      />
+
+      <div className="mt-4 flex min-h-0 flex-1 flex-col">
+        {siatka({ kolumnaPx: 150, wypelnijWysokosc: false })}
+      </div>
+
+      <DRDMatrixSummaryStrip areas={axis.areas} levelCount={axis.levelCount} value={value} />
+
+      {pelnyEkran && (
+        <DRDMatrixFullscreenShell onClose={() => setPelnyEkran(false)}>
+          <div className="rounded-2xl border border-c-border bg-c-surface p-6">
+            <DRDMatrixHeaderBlock axisId={axis.id} axisName={nazwaOsi} large right={legenda} />
+            {siatka({ kolumnaPx: 180, wypelnijWysokosc: false })}
+            <DRDMatrixSummaryStrip
+              areas={axis.areas}
+              levelCount={axis.levelCount}
+              value={value}
+              large
+            />
+          </div>
+        </DRDMatrixFullscreenShell>
+      )}
 
       {selection && (
         <div

@@ -156,6 +156,12 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
         /* DEC-387 — ten sam uchwyt pomiarowy co w `renderItem` (ścieżka z drag&drop). */
         data-nmode-section-item={section.id}
         onClick={() => onSectionChange(section.id)}
+        /* Etykieta jest ucinana (`truncate`), więc pełna nazwa musi być w dymku. */
+        title={
+          isPolish
+            ? (section.title?.pl ?? section.label.pl)
+            : (section.title?.en ?? section.label.en)
+        }
         className={`flex-1 min-w-0 flex items-center gap-2 text-left py-2.5 pr-3 ${readMode ? 'pl-3' : ''} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)]`}
       >
         <Icon
@@ -293,6 +299,12 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
            nieweryfikowalna teza „kontrakt kasuje 11 z 15". */
         data-nmode-section-item={section.id}
         onClick={() => onSectionChange(section.id)}
+        /* Etykieta jest ucinana (`truncate`), więc pełna nazwa musi być w dymku. */
+        title={
+          isPolish
+            ? (section.title?.pl ?? section.label.pl)
+            : (section.title?.en ?? section.label.en)
+        }
         className={`group w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--c-focus)] ${
           isActive
             ? 'bg-c-surface-raised text-c-text border-l-2 border-c-focus-solid'

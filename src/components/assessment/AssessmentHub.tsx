@@ -539,6 +539,34 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     [authorNameById]
   );
 
+  /**
+   * KONTEKST raportu = nazwa OCENY, z której raport pochodzi (odbiór na żywo
+   * 2026-09-05, `assessment-reports-table`: „bez KONTEKSTU raporty z róznych
+   * ocen sa nierozroznialne").
+   *
+   * Dwa zrodla, w tej kolejnosci i bez zgadywania:
+   *  1. `assessmentName` z payloadu — endpoint `/assessment-reports` robi
+   *     `LEFT JOIN assessments a ON r.assessment_id = a.id`
+   *     (`server/src/routes/assessment-reports.routes.ts:641`), wiec dla raportu
+   *     spietego ze starsza ocena nazwa przychodzi gotowa;
+   *  2. dopasowanie `assessmentId` do listy ocen zaladowanej w tym hubie —
+   *     ratuje raporty sesji Method Core, ktorych `assessment_id` nie ma
+   *     odpowiednika w tabeli `assessments`, wiec JOIN zwraca NULL.
+   * Gdy zadne nie zadziala, kolumna pokazuje myslnik — pusty stan, a nie
+   * wymyslona nazwa.
+   */
+  const getReportContextLabel = useCallback(
+    (row: { assessmentName?: string | null; assessmentId?: string | null }): string => {
+      const zPayloadu = String(row?.assessmentName ?? '').trim();
+      if (zPayloadu) return zPayloadu;
+      const id = row?.assessmentId ? String(row.assessmentId) : '';
+      if (!id) return '';
+      const znaleziona = assessments.find((a) => String(a.id) === id);
+      return String(znaleziona?.name ?? '').trim();
+    },
+    [assessments]
+  );
+
   // Deep link support:
   // - /assessment?assessmentId=<id>
   // - /assessment?reportId=<id>
@@ -968,10 +996,35 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       },
     };
 
+    /**
+     * KONTEKST — z ktorej OCENY pochodzi raport. Dwie linie jak w AUTOR:
+     * nazwa oceny + podpis „Ocena".
+     */
+    const contextCol: TableColumn = {
+      id: 'assessmentName',
+      label: t('assessment.hub.table.context', 'Kontekst'),
+      width: '220px',
+      render: (row) => {
+        const label = getReportContextLabel(row);
+        if (!label) return <span className="text-sm text-c-text-muted">—</span>;
+        return (
+          <div className="min-w-0">
+            <div className="truncate text-sm text-c-text" title={label}>
+              {label}
+            </div>
+            <div className="text-xs text-c-text-muted">
+              {t('assessment.hub.table.contextKind', 'Ocena')}
+            </div>
+          </div>
+        );
+      },
+    };
+
     if (activeTab === 'reports') {
       return [
         frameworkCol,
         nameCol,
+        contextCol,
         {
           id: 'status',
           label: t('assessment.hub.table.status', 'Status'),
@@ -1077,7 +1130,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       progressCol,
       { ...updatedCol, label: t('assessment.hub.table.updatedAt', 'Aktualizacja') },
     ];
-  }, [activeTab, t, getAuthorLabel]);
+  }, [activeTab, t, getAuthorLabel, getReportContextLabel]);
 
   // Handlers
   const handleOpenDocument = useCallback(
@@ -1433,7 +1486,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                   ? 80
                   : 40,
           updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          // KONTEKST: nazwa oceny z JOIN-a serwera + `assessmentId` jako drugie
+          // zrodlo (raporty sesji Method Core nie maja wiersza w `assessments`,
+          // wiec JOIN zwraca NULL i dopasowanie po id jest jedyna droga).
           assessmentName: (item as any).assessmentName,
+          assessmentId: (item as any).assessmentId ?? (item as any).assessment_id ?? null,
           createdBy: (item as any).createdBy,
           _isImported: false,
         }));

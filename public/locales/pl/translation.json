@@ -7527,6 +7527,8 @@
           "failed": "Błąd"
         },
         "assessmentName": "Nazwa oceny",
+        "context": "Kontekst",
+        "contextKind": "Ocena",
         "owner": "Właściciel",
         "updatedAt": "Aktualizacja",
         "score": "Wynik",
@@ -44053,7 +44055,18 @@
       "openFullscreenTitle": "Otwórz macierz w trybie pełnoekranowym",
       "rowHint": "Najedź, aby zobaczyć podgląd · Kliknij, aby zobaczyć szczegóły",
       "rowHintClick": "Kliknij, aby zobaczyć szczegóły",
-      "spacious": "Przestronny"
+      "spacious": "Przestronny",
+      "avgCurrentLevel": "Śr. poziom obecny",
+      "avgTargetLevel": "Śr. poziom docelowy",
+      "avgGap": "Śr. luka",
+      "areasAssessed": "Ocenione obszary",
+      "areaStrip": "Obszar",
+      "overflowHint": "Jeszcze {{count}} {{noun}} po prawej — przewiń w bok.",
+      "columnNounOne": "kolumna",
+      "columnNounFew": "kolumny",
+      "columnNounMany": "kolumn",
+      "fullscreenBack": "Wróć",
+      "fullscreenEsc": "Naciśnij Esc, aby zamknąć"
     }
   },
   "methodWorkspace": {

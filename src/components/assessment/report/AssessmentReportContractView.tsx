@@ -325,7 +325,15 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
       (contract?.chapters ?? []).map((chapter) => ({
         id: `axis-${chapter.axisId}`,
         icon: FileText,
-        label: { pl: chapter.axisNamePL ?? chapter.axisName, en: chapter.axisName },
+        /**
+         * ★ SZYNA MUSI ROZRÓŻNIAĆ ROZDZIAŁY (odbiór na żywo 2026-09-05).
+         * Zmierzone: szyna rozdziałów ma ~140 px, a etykieta z pełnej nazwy osi
+         * („Procesy Cyfrowe", „Cyberbezpieczeństwo") była ucinana do „Pr…",
+         * „Cy…", „Za…" — siedem rozdziałów wyglądało identycznie. Etykieta
+         * = numer osi (jak na obrazie zatwierdzonym), pełna nazwa w dymku.
+         */
+        label: { pl: `Oś ${chapter.axisId}`, en: `Axis ${chapter.axisId}` },
+        title: { pl: chapter.axisNamePL ?? chapter.axisName, en: chapter.axisName },
         alwaysShow: true,
         component: <Chapter chapter={chapter} />,
       })),

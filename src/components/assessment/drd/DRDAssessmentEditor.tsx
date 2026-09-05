@@ -529,7 +529,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
 };
 
 /** Legenda — kropki DOKŁADNIE w kolorach komórek (audyt §B2). */
-const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean) => void }> = ({
+export const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean) => void }> = ({
   compact,
   onCompactChange,
 }) => {
@@ -564,6 +564,181 @@ const DRDMatrixLegend: React.FC<{ compact: boolean; onCompactChange: (v: boolean
       </label>
     </div>
   </div>
+  );
+};
+
+/* ==========================================================================
+ * OTOCZKA MACIERZY — jeden komplet dla edytora, pełnego ekranu i warsztatu
+ * --------------------------------------------------------------------------
+ * ★ PO CO (odbiór na żywo 2026-09-05, `drd-macierz-oceny`): zakładka „Macierz"
+ * warsztatu DRD rysowała samą siatkę — bez nagłówka „Mapa rozwoju cyfrowego",
+ * bez przełącznika AS-IS/TO-BE i „Przestronny", bez „Pełny ekran" i bez
+ * czterech kafli podsumowania. Właściciel poznaje swoją macierz PO OTOCZCE,
+ * nie po samych kratkach.
+ *
+ * ★ EKSPORT, NIE SIÓDMA KOPIA. Do dziś nagłówek i pasek kafli istniały w tym
+ * pliku DWA RAZY (widok zwykły + nakładka pełnoekranowa) i zdążyły się
+ * rozjechać (text-2xl vs text-3xl, text-3xl vs text-4xl w kaflach). Teraz są
+ * RAZ, jako komponenty z parametrem `large`, a warsztat je importuje.
+ * ========================================================================== */
+
+/**
+ * Podpis o kolumnach schowanych poza kadrem — z polską odmianą liczebnika.
+ * Bez `count` i18nexta: liczba mnoga w polskim ma trzy formy, a zmiana
+ * konfiguracji i18n dla jednego napisu jest droższa niż jawny wybór rzeczownika.
+ */
+export function usePodpisUkrytychKolumn(): (ukryte: number) => string {
+  const { t } = useTranslation();
+  return React.useCallback(
+    (n: number) => {
+      const dziesiatki = n % 100;
+      const jednosci = n % 10;
+      const noun =
+        n === 1
+          ? t('drd.matrix.columnNounOne', 'column')
+          : jednosci >= 2 && jednosci <= 4 && !(dziesiatki >= 12 && dziesiatki <= 14)
+            ? t('drd.matrix.columnNounFew', 'columns')
+            : t('drd.matrix.columnNounMany', 'columns');
+      return t('drd.matrix.overflowHint', '{{count}} more {{noun}} to the right — scroll to see them', {
+        count: n,
+        noun,
+      });
+    },
+    [t]
+  );
+}
+
+/** Nagłówek macierzy: nadtytuł metodyki · numer i nazwa osi · podtytuł · slot po prawej. */
+export const DRDMatrixHeaderBlock: React.FC<{
+  axisId?: number | string;
+  axisName?: string;
+  /** `true` = nakładka pełnoekranowa (większy tytuł osi) */
+  large?: boolean;
+  right?: React.ReactNode;
+}> = ({ axisId, axisName, large = false, right }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div>
+        <div className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
+          {t('drd.matrix.title', 'Digital Development Map')}
+        </div>
+        <div
+          className={`mt-1 ${large ? 'text-3xl' : 'text-2xl'} font-bold text-slate-900 dark:text-white`}
+        >
+          {axisId}. {axisName}
+        </div>
+        <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+          {t('drd.matrix.subtitle', 'Process Digitalization Assessment Matrix')}
+        </div>
+      </div>
+      {right ? <div className="flex items-center gap-3">{right}</div> : null}
+    </div>
+  );
+};
+
+/**
+ * Pasek czterech kafli pod macierzą. Liczy z TYCH SAMYCH danych co siatka
+ * (`getAreaState`), więc kafel nie może pokazać czegoś innego niż kratki nad nim.
+ * Obszar nietknięty nie wchodzi do średniej — brak pomiaru to „—", nie zero.
+ */
+export const DRDMatrixSummaryStrip: React.FC<{
+  areas: DRDArea[];
+  levelCount: number;
+  value: DRDEditorAnswers | undefined;
+  large?: boolean;
+}> = ({ areas, levelCount, value, large = false }) => {
+  const { t } = useTranslation();
+  const stats = areas.reduce(
+    (acc, area) => {
+      const s = getAreaState(value, area.id, levelCount);
+      const a = s.achievedLevel || 0;
+      const tgt = s.targetLevel || 0;
+      if (a > 0) {
+        acc.countActual++;
+        acc.sumActual += a;
+      }
+      if (tgt > 0) {
+        acc.countTarget++;
+        acc.sumTarget += tgt;
+      }
+      if (a > 0 || tgt > 0) acc.assessed++;
+      return acc;
+    },
+    { sumActual: 0, sumTarget: 0, countActual: 0, countTarget: 0, assessed: 0 }
+  );
+
+  const avgActual = stats.countActual > 0 ? (stats.sumActual / stats.countActual).toFixed(1) : '—';
+  const avgTarget = stats.countTarget > 0 ? (stats.sumTarget / stats.countTarget).toFixed(1) : '—';
+  const avgGap =
+    stats.countTarget > 0 && stats.countActual > 0
+      ? (Number(avgTarget) - Number(avgActual)).toFixed(1)
+      : '—';
+
+  const kafle: ReadonlyArray<{ key: string; wartosc: string; podpis: string }> = [
+    { key: 'current', wartosc: avgActual, podpis: t('drd.matrix.avgCurrentLevel', 'Avg. Current Level') },
+    { key: 'target', wartosc: avgTarget, podpis: t('drd.matrix.avgTargetLevel', 'Avg. Target Level') },
+    { key: 'gap', wartosc: avgGap, podpis: t('drd.matrix.avgGap', 'Avg. Gap') },
+    {
+      key: 'assessed',
+      wartosc: `${stats.assessed}/${areas.length}`,
+      podpis: t('drd.matrix.areasAssessed', 'Areas Assessed'),
+    },
+  ];
+
+  return (
+    <div data-testid="drd-matrix-summary" className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+      {kafle.map((kafel) => (
+        <div
+          key={kafel.key}
+          className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4"
+        >
+          <div
+            className={`${large ? 'text-4xl' : 'text-3xl'} font-extrabold text-slate-900 dark:text-white tabular-nums`}
+          >
+            {kafel.wartosc}
+          </div>
+          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">{kafel.podpis}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Nakładka pełnoekranowa: tło, pasek powrotu, podpowiedź o Esc. Treść z zewnątrz. */
+export const DRDMatrixFullscreenShell: React.FC<{
+  onClose: () => void;
+  children: React.ReactNode;
+}> = ({ onClose, children }) => {
+  const { t } = useTranslation();
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-[100] bg-slate-100/95 dark:bg-navy-950/95 backdrop-blur-sm">
+      <div className="absolute inset-0 overflow-auto p-4 md:p-8">
+        <div className="mx-auto max-w-[1600px]">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white text-sm font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              {t('drd.matrix.fullscreenBack', 'Back')}
+            </button>
+            <div className="text-xs text-slate-700 dark:text-slate-300">
+              {t('drd.matrix.fullscreenEsc', 'Press Esc to close')}
+            </div>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -615,6 +790,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
   onAssignToMe,
 }) => {
   const { t, i18n } = useTranslation();
+  const podpisUkrytychKolumn = usePodpisUkrytychKolumn();
   const isPl = (i18n.language || '').toLowerCase().startsWith('pl');
   const [axisId, setAxisId] = useState<number>(currentAxisId ?? 1);
   const [areaId, setAreaId] = useState<string>(
@@ -1192,35 +1368,27 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-blue-500/10 blur-3xl hidden dark:block" />
 
             <div className="relative p-6">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div>
-                  <div className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
-                    {t('drd.matrix.title', 'Digital Development Map')}
-                  </div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-                    {axis?.id}. {axis?.name}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                    {t('drd.matrix.subtitle', 'Process Digitalization Assessment Matrix')}
-                  </div>
-                </div>
-
-                {/* Right side: Legend + Fullscreen */}
-                <div className="flex items-center gap-3">
-                  <DRDMatrixLegend compact={matrixCompact} onCompactChange={setMatrixCompact} />
-
-                  <button
-                    type="button"
-                    onClick={() => setIsMatrixFullscreen(true)}
-                    className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-                    title={t('drd.matrix.openFullscreenTitle', 'Open matrix in full screen')}
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                    {t('drd.matrix.fullscreen', 'Full screen')}
-                  </button>
-                </div>
-              </div>
+              <DRDMatrixHeaderBlock
+                axisId={axis?.id}
+                axisName={axis?.name}
+                right={
+                  <>
+                    <DRDMatrixLegend
+                      compact={matrixCompact}
+                      onCompactChange={setMatrixCompact}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsMatrixFullscreen(true)}
+                      className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                      title={t('drd.matrix.openFullscreenTitle', 'Open matrix in full screen')}
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                      {t('drd.matrix.fullscreen', 'Full screen')}
+                    </button>
+                  </>
+                }
+              />
 
               <DRDMatrixGrid
                 areas={axisAreas}
@@ -1252,79 +1420,15 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                   onAreaChange?.(clickedAreaId);
                   setViewMode('surveys');
                 }}
-                areaStripLabel="Area"
-                overflowHint={(n) =>
-                  `${n} more column${n > 1 ? 's' : ''} to the right — scroll to see them`
-                }
+                areaStripLabel={t('drd.matrix.areaStrip', 'Area')}
+                overflowHint={podpisUkrytychKolumn}
               />
 
-              {/* Summary strip */}
-              {(() => {
-                const stats = axisAreas.reduce(
-                  (acc, area) => {
-                    const s = getAreaState(value, area.id, levelCount);
-                    const a = s.achievedLevel || 0;
-                    const t = s.targetLevel || 0;
-                    if (a > 0) {
-                      acc.countActual++;
-                      acc.sumActual += a;
-                    }
-                    if (t > 0) {
-                      acc.countTarget++;
-                      acc.sumTarget += t;
-                    }
-                    if (a > 0 || t > 0) acc.assessed++;
-                    return acc;
-                  },
-                  { sumActual: 0, sumTarget: 0, countActual: 0, countTarget: 0, assessed: 0 }
-                );
-
-                const avgActual =
-                  stats.countActual > 0 ? (stats.sumActual / stats.countActual).toFixed(1) : '—';
-                const avgTarget =
-                  stats.countTarget > 0 ? (stats.sumTarget / stats.countTarget).toFixed(1) : '—';
-                const avgGap =
-                  stats.countTarget > 0 && stats.countActual > 0
-                    ? (Number(avgTarget) - Number(avgActual)).toFixed(1)
-                    : '—';
-
-                return (
-                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                        {avgActual}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                        Avg. Current Level
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                        {avgTarget}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                        Avg. Target Level
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                        {avgGap}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                        Avg. Gap
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                      <div className="text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                        {stats.assessed}/{axisAreas.length}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                        Areas Assessed
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
+              <DRDMatrixSummaryStrip
+                areas={axisAreas}
+                levelCount={levelCount}
+                value={value}
+              />
             </div>
 
             {/* Hover Tooltip (lightweight) */}
@@ -2272,23 +2376,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
 
       {/* Fullscreen Matrix Overlay */}
       {viewMode === 'matrix' && isMatrixFullscreen && (
-        <div className="fixed inset-0 z-[100] bg-slate-100/95 dark:bg-navy-950/95 backdrop-blur-sm">
-          <div className="absolute inset-0 overflow-auto p-4 md:p-8">
-            <div className="mx-auto max-w-[1600px]">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsMatrixFullscreen(false)}
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white text-sm font-semibold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back
-                </button>
-                <div className="text-xs text-slate-700 dark:text-slate-300">
-                  Press <span className="font-semibold text-slate-900 dark:text-white">Esc</span> to
-                  close
-                </div>
-              </div>
+          <DRDMatrixFullscreenShell onClose={() => setIsMatrixFullscreen(false)}>
 
               {/* Re-render the same Matrix panel */}
               <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-950 shadow-lg dark:shadow-2xl">
@@ -2296,23 +2384,17 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                 <div className="pointer-events-none absolute -bottom-48 -left-40 h-[460px] w-[460px] rounded-full bg-blue-500/10 blur-3xl hidden dark:block" />
 
                 <div className="relative p-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <div className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
-                        {t('drd.matrix.title', 'Digital Development Map')}
-                      </div>
-                      <div className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
-                        {axis?.id}. {axis?.name}
-                      </div>
-                      <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                        {t('drd.matrix.subtitle', 'Process Digitalization Assessment Matrix')}
-                      </div>
-                    </div>
-
-                    {/* Legend */}
-                    <DRDMatrixLegend compact={matrixCompact} onCompactChange={setMatrixCompact} />
-                  </div>
+                  <DRDMatrixHeaderBlock
+                    axisId={axis?.id}
+                    axisName={axis?.name}
+                    large
+                    right={
+                      <DRDMatrixLegend
+                        compact={matrixCompact}
+                        onCompactChange={setMatrixCompact}
+                      />
+                    }
+                  />
 
                   <DRDMatrixGrid
                     areas={axisAreas}
@@ -2344,88 +2426,19 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       setViewMode('surveys');
                       setIsMatrixFullscreen(false);
                     }}
-                    areaStripLabel="Area"
-                    overflowHint={(n) =>
-                      `${n} more column${n > 1 ? 's' : ''} to the right — scroll to see them`
-                    }
+                    areaStripLabel={t('drd.matrix.areaStrip', 'Area')}
+                    overflowHint={podpisUkrytychKolumn}
                   />
 
-                  {/* Summary strip */}
-                  {(() => {
-                    const stats = axisAreas.reduce(
-                      (acc, area) => {
-                        const s = getAreaState(value, area.id, levelCount);
-                        const a = s.achievedLevel || 0;
-                        const t = s.targetLevel || 0;
-                        if (a > 0) {
-                          acc.countActual++;
-                          acc.sumActual += a;
-                        }
-                        if (t > 0) {
-                          acc.countTarget++;
-                          acc.sumTarget += t;
-                        }
-                        if (a > 0 || t > 0) acc.assessed++;
-                        return acc;
-                      },
-                      { sumActual: 0, sumTarget: 0, countActual: 0, countTarget: 0, assessed: 0 }
-                    );
-
-                    const avgActual =
-                      stats.countActual > 0
-                        ? (stats.sumActual / stats.countActual).toFixed(1)
-                        : '—';
-                    const avgTarget =
-                      stats.countTarget > 0
-                        ? (stats.sumTarget / stats.countTarget).toFixed(1)
-                        : '—';
-                    const avgGap =
-                      stats.countTarget > 0 && stats.countActual > 0
-                        ? (Number(avgTarget) - Number(avgActual)).toFixed(1)
-                        : '—';
-
-                    return (
-                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                          <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            {avgActual}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                            Avg. Current Level
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                          <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            {avgTarget}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                            Avg. Target Level
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                          <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            {avgGap}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                            Avg. Gap
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-4">
-                          <div className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-                            {stats.assessed}/{axisAreas.length}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                            Areas Assessed
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  <DRDMatrixSummaryStrip
+                    areas={axisAreas}
+                    levelCount={levelCount}
+                    value={value}
+                    large
+                  />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+          </DRDMatrixFullscreenShell>
       )}
     </div>
   );
