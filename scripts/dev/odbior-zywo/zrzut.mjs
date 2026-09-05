@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
  * ODBIÓR NA ŻYWO 05.09 — zrzut realnego ekranu aplikacji (localhost:3000 → backend stagingu),
- * zalogowaną sesją z ODBIOR_AUTH_STATE, JASNY motyw, szerokość 1440.
+ * zalogowaną sesją z ODBIOR_AUTH_STATE, domyślnie JASNY motyw, szerokość 1440.
  * Użycie:
  *   node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --out=evidence/odbior-zywo-20260905/02/mywork-inbox.png \
- *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900] [--port=3055]
+ *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900] [--port=3055] [--motyw=dark]
+ * --motyw=light|dark (OPT-IN, 2026-09-05): domyślnie light. Dla dark plik dostaje sufiks __dark.
  * --port: aplikacja na INNYM porcie niż 3000 (kilka rąk naraz — każdy agent ma swój vite).
  *   Sesja z ODBIOR_AUTH_STATE jest zapisana dla origin http://localhost:3000, a localStorage
  *   (w tym `token`) jest zakresowany PER ORIGIN — bez przepisania portu aplikacja uzna, że
@@ -30,11 +31,16 @@ const args = process.argv.slice(2);
 const get = (k, d) => { const a = args.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7));
 const przewin = get('przewin', '');
-const url = get('url', '/chat'); const out = get('out'); const czekaj = Number(get('czekaj', '1200'));
+const url = get('url', '/chat'); const requestedOut = get('out'); const czekaj = Number(get('czekaj', '1200'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const port = Number(get('port', '3000'));
 const host = get('host', 'localhost');
 const baza = `http://${host}:${port}`;
+const motyw = get('motyw', 'light');
+if (!['light', 'dark'].includes(motyw)) { console.error('Dozwolone: --motyw=light|dark'); process.exit(2); }
+const out = motyw === 'dark' && requestedOut
+  ? requestedOut.replace(/(?<!__dark)(\.[^.\/]+)$/, '__dark$1')
+  : requestedOut;
 const domSelektory = args.filter((x) => x.startsWith('--dom=')).map((x) => x.slice(6));
 const auth = process.env.ODBIOR_AUTH_STATE;
 if (!out || !auth || !fs.existsSync(auth)) { console.error('Wymagane: --out oraz ODBIOR_AUTH_STATE (istniejący plik)'); process.exit(2); }
@@ -44,18 +50,19 @@ const browser = await chromium.launch({ headless: true });
 // to jest dokładnie ta sama treść co w pliku — zero zmiany zachowania.
 const sesja = JSON.parse(fs.readFileSync(auth, 'utf8'));
 sesja.origins = (sesja.origins || []).map((o) => ({ ...o, origin: String(o.origin).replace('http://localhost:3000', baza) }));
-const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: wysokosc }, colorScheme: 'light', locale: 'pl-PL' });
-// JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
+const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: wysokosc }, colorScheme: motyw, locale: 'pl-PL' });
+// Aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
 // src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
-await ctx.addInitScript(() => {
+await ctx.addInitScript((theme) => {
   try {
     const raw = localStorage.getItem('consultify-storage');
     const obj = raw ? JSON.parse(raw) : { state: {}, version: 0 };
-    obj.state = { ...(obj.state || {}), theme: 'light' };
+    obj.state = { ...(obj.state || {}), theme };
     localStorage.setItem('consultify-storage', JSON.stringify(obj));
-    document.documentElement.classList.remove('dark');
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   } catch {}
-});
+}, motyw);
 const page = await ctx.newPage();
 const bledy = [];
 page.on('console', (m) => { if (m.type() === 'error') bledy.push(m.text().slice(0, 200)); });
