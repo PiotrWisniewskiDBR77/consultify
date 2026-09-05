@@ -12,6 +12,7 @@
 | P4 | `P4_KODY_TECHNICZNE_W_UI.md` | zero enumów/UUID/nazw funkcji w UI; słowniki SSOT + resolver nazw + mapper błędów | ~4 d | — | 4 moduły |
 | P5 | `P5_SZKIELETY_I_404.md` | nic nie ładuje się w ciszy; brak = 200/null, nie 404; Megatrendy ożywają | ~8 d | — | 3 moduły |
 | P6 | `P6_CZERWIEN_I_1440.md` | czerwień tylko dla krytycznych; nagłówki bez nakładania przy 1440 px | ~3,5 d | P4 (mapa tonów) | 2 moduły |
+| dyżur 374 | `codex/day374-i18n-czat-domkniecie-20260905` | **ODEBRANE CZĘŚCIOWO, scalone** | 05.09 noc | (merge) | i18n Czatu: R2 43→0 literałów, R4/R5/R6 PASS, mutacja RED→GREEN, dług canon spadł; NIEDOMKNIĘTE → P3: R3 141/194 kluczy (`UnifiedChatPanel.tsx` 5, `MessageRenderer.tsx`+karty 136), R7 zrzuty PL/EN 0, 6 aria-label EN w `WorkCanvasDocumentPanel.tsx:3495,4009,4078,4152,4162,4172` |
 | P7 | — | nawigacja KPI tabela → lista → karta N | **WYKONANE 05.09** (`dda794943e`) | — | — |
 | P8 | (w P3/P5) | sprzątanie danych testowych z historii Czatu | 0,5 d | — | dane, nie kod |
 | SEC | `sec/cross-org-admin-20260905` | **ODEBRANE, scalone** | 05.09 noc | (merge HEAD) | 3 dziury cross-org + 8 tras A52 = już zamknięte na HEAD (pomiar realnym HTTP na jednorazowym Postgresie, mutacja RED→GREEN 6/9 strażników, test `sec20260905.a52-and-cross-org.pg.test.ts` 13/13); CSRF: middleware istnieje, NIGDZIE niezamontowany (plan 4-fazowy w `evidence/sec-20260905/03_CSRF_MFA_PROPOZYCJA.md`); MFA karencja podłączona; `/api/videos` → tabela nie istnieje (defekt produktowy); 2725 tras macierzy 307 nadal niezmierzone |
