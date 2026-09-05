@@ -241,7 +241,7 @@ export const useBreadcrumbs = (): string[] | null => {
     };
     const tabLabel = TAB_LABELS[tab] || null;
     if (tabLabel) {
-      return [t('sidebar.outputsLibrary', 'Outputs'), tabLabel];
+      return [t('sidebar.materialy', 'Materials'), tabLabel];
     }
     return null;
   }
