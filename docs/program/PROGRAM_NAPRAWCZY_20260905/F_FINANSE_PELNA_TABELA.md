@@ -82,24 +82,24 @@ endpointu**, tylko wołacza.
 `GET /api/v8/finance-v2/baseline/:bv/context` przechodzi przez sześć bramek odczytu i **siedemnaście**
 bramek zapisu. Pełna lista (`server/src/services/finance/canonical/baselineContextService.ts`):
 
-**Odczyt (`readContextTx`, `:70`):**
-1. artefakt musi być `BASELINE_MODEL` → 404 `NOT_FOUND` (`:83`)
-2. wiersz w `finance_baseline_workspace_contexts` → 409 `BASELINE_CONTEXT_NOT_CONFIGURED` (`:96`) — **tu dziś ląduje DBR77**
-3. „authority": pakiet `APPROVED` + analiza `APPROVED` + **trzy** krawędzie (`STATEMENT_TO_MODEL`, `STATEMENT_TO_ANALYSIS`, `ANALYSIS_TO_MODEL`) → 409 `BASELINE_CONTEXT_SOURCE_STALE` (`:141`)
-4. komplet okresów prognozy w `finance_stmt_periods` → 409 `BASELINE_CONTEXT_INVALID` (`:161`)
-5. ≥1 wiersz `finance_baseline_assumptions` → 409 `BASELINE_CONTEXT_NOT_READY` (`:194`)
-6. metadane okresu otwarcia rozwiązywalne w TEJ organizacji → 409 `BASELINE_CONTEXT_INVALID` (`:246`)
+**Odczyt (`readContextTx`, `:73`):**
+1. artefakt musi być `BASELINE_MODEL` → 404 `NOT_FOUND` (`:86`)
+2. wiersz w `finance_baseline_workspace_contexts` → 409 `BASELINE_CONTEXT_NOT_CONFIGURED` (`:98-101`) — **tu dziś ląduje DBR77**
+3. „authority": pakiet `APPROVED` + analiza `APPROVED` + **trzy** krawędzie (`STATEMENT_TO_MODEL`, `STATEMENT_TO_ANALYSIS`, `ANALYSIS_TO_MODEL`) → 409 `BASELINE_CONTEXT_SOURCE_STALE` (`:146-150`)
+4. komplet okresów prognozy w `finance_stmt_periods` → 409 `BASELINE_CONTEXT_INVALID` (`:167-171`, kolejność `:176-180`)
+5. ≥1 wiersz `finance_baseline_assumptions` → 409 `BASELINE_CONTEXT_NOT_READY` (`:196-200`)
+6. metadane okresu otwarcia rozwiązywalne w TEJ organizacji → 409 `BASELINE_CONTEXT_INVALID` (`:254-258`)
 
-**Zapis (`configureBaselineWorkspaceContext`, `:280`):** `IDEMPOTENCY_KEY_REQUIRED` ·
+**Zapis (`configureBaselineWorkspaceContext`, `:304`):** `IDEMPOTENCY_KEY_REQUIRED` ·
 `INVALID_EXPECTED_VERSION` · `INVALID_CONTEXT` (komplet pól) · `INVALID_CONTEXT` (unikalność okresów) ·
 `FINANCE_EDIT_FORBIDDEN` (rola z `EDIT_ROLES`, `:7`) · `IDEMPOTENCY_PAYLOAD_COLLISION` ·
-`NOT_FOUND` (JOIN `finance_baseline_models` — **wiersz rejestru musi istnieć**) ·
-`BASELINE_CONTEXT_IMMUTABLE` (status `DRAFT`) · `BASELINE_CONTEXT_HORIZON_MISMATCH`
+`NOT_FOUND` (`:391`, JOIN `finance_baseline_models` — **wiersz rejestru musi istnieć**) ·
+`BASELINE_CONTEXT_IMMUTABLE` (`:394-398`, status `DRAFT`) · `BASELINE_CONTEXT_HORIZON_MISMATCH`
 (`horizon_months === forecastPeriodIds.length`) · `BASELINE_SOURCE_NOT_CONFIGURED` /
 `BASELINE_SOURCE_AMBIGUOUS` (**dokładnie jedna** krawędź z `APPROVED` pakietu) ·
 `BASELINE_ANALYSIS_NOT_CONFIGURED` / `BASELINE_ANALYSIS_AMBIGUOUS` (**dokładnie jedna** zgodna
 `APPROVED` analiza) · `INVALID_CONTEXT_ENTITY` (jednostka z pakietu) · `INVALID_CONTEXT_PERIOD`
-(okresy istnieją; `period_type='MONTH'` — **`:505`**; jeden kalendarz) ·
+(okresy istnieją; `period_type='MONTH'` — **`:506`**; jeden kalendarz) ·
 `INVALID_CONTEXT_PERIOD_ORDER` (ciągły łańcuch `previous_period_id` po okresie otwarcia — **`:518`**) ·
 `INVALID_OPENING_BALANCE_SHEET_PERIOD` (okres otwarcia ma linie `BS` w `finance_stmt_lines`) ·
 `BASELINE_CONTEXT_VERSION_CONFLICT`.
@@ -197,7 +197,7 @@ Projekcja jest **idempotentna po `business_version_id`**: powtórne potwierdzeni
 zakładamy 12 okresów miesięcznych z łańcuchem `previous_period_id`, a linie roczne wiążemy z okresem
 `FY`. Okres zamknięcia ostatniego roku (np. `12/2025`) dostaje **kopię linii Bilansu** — to on będzie
 `openingBalanceSheetPeriodId` w ogniwie 6 i jedyne miejsce, gdzie bramka
-`INVALID_OPENING_BALANCE_SHEET_PERIOD` (`baselineContextService.ts:530`) może przejść.
+`INVALID_OPENING_BALANCE_SHEET_PERIOD` (`baselineContextService.ts:530-544`) może przejść.
 
 ### §5 Kroki wykonania
 
@@ -288,7 +288,7 @@ i18n `pl` + `en`.
 - **Jednostkowe (realny PG):** rozszerzyć `server/src/routes/v8/finance-v2/__tests__/` o przypadek
   `STATEMENT_PACK`: `DRAFT → IN_REVIEW → APPROVED` przez realne HTTP, plus **niezależny odczyt SQL**
   `finance_business_versions.status` (wzorzec z `baseline.routes.pg.test.ts:18-21`).
-  **Dowód mutacyjny:** zdejmij warunek `IN_REVIEW` (`models.routes.ts:139-143`) → test „approve z DRAFT
+  **Dowód mutacyjny:** zdejmij warunek `IN_REVIEW` (`models.routes.ts:142`, komunikat `:146`) → test „approve z DRAFT
   musi dać 409" spada. Drugi: zdejmij `expectedVersion` → test wyścigu (dwa równoległe `transitions`
   z tym samym `expectedVersion` — jeden 200, jeden 409) spada.
 - **Klikany (Playwright):** pakiet → rozwijany status → „Skieruj do przeglądu" → „Zatwierdź" →
@@ -493,8 +493,8 @@ na piśmie.
 Ogniwo 1 zakłada okresy **historii**. Tu zakładamy okresy **prognozy**: `horizonMonths` kolejnych
 okresów `period_type='MONTH'`, w tym samym `fiscal_calendar_id` co okres otwarcia, z ciągłym
 łańcuchem `previous_period_id` zaczynającym się od okresu otwarcia. Dokładnie to sprawdzają bramki
-`baselineContextService.ts:505` (typ `MONTH`), `:509` (jeden kalendarz), `:514-527` (łańcuch i
-uporządkowanie po `period_start`).
+`baselineContextService.ts:506` (typ `MONTH`), `:509-513` (jeden kalendarz), `:517-529` (łańcuch
+i uporządkowanie po `period_start`).
 
 Funkcja `generateForecastPeriods(tx, { organizationId, fiscalCalendarId, openingPeriodId,
 horizonMonths, actorId })` w tym samym serwisie co ogniwo 1
@@ -566,7 +566,7 @@ DBR77 (13 modeli sprzed 05.09):
 
 **(A) Ścieżka szczęśliwa — serwer, przy tworzeniu.** `baselineModelRegistrationService` (ogniwo 4)
 po zapisie rejestru i krawędzi oraz po wygenerowaniu okresów (ogniwo 5) woła
-`configureBaselineWorkspaceContext` (`baselineContextService.ts:280`) **w tej samej transakcji**:
+`configureBaselineWorkspaceContext` (`baselineContextService.ts:304`) **w tej samej transakcji**:
 
 ```
 entityId                    = jedyna jednostka pakietu źródłowego (finance_stmt_entities dla pakietu BV)
@@ -658,7 +658,7 @@ Wycenę i w kroku „Źródło" widzi nazwę tego modelu z numerem wersji.
   (istnieje w `financialModelingService.ts`) przełożonych na `upsertAssumptionsBatch`; test (a)
   ogniwa 6 sprawdza `GET .../context` → 200, co **wymaga** ≥1 założenia.
 - **Ryzyko:** `BASELINE_CONTEXT_IMMUTABLE` — kontekstu nie da się przekonfigurować po wyjściu z `DRAFT`
-  (`:363`). Kreator (B) musi to powiedzieć wprost, zamiast dać 409.
+  (`:394-398`). Kreator (B) musi to powiedzieć wprost, zamiast dać 409.
 - **Ryzyko:** flaga. `financeBaselineWorkspaceV1` była **zdalnie wyłączona** dla DBR77 w tabeli
   `feature_flags`, a zmiana wymaga superadmina (token `OWNER` dostawał 403) — Runda 6.
   Naprawiona i potwierdzona w Rundzie 7, ale **przed odbiorem sprawdzić `GET /api/feature-flags/runtime`**,
@@ -688,7 +688,7 @@ Wycenę i w kroku „Źródło" widzi nazwę tego modelu z numerem wersji.
 **Przyczyna „nie renderuje się" jest jedna i banalna:** `FinanceWorkspaceUtilities` zwraca `null`,
 dopóki `useFinanceWorkspacePlatformFlag().enabled` jest fałszem, a ta flaga ma
 **`defaultValue: false`** (`src/hooks/useFinanceWorkspacePlatformFlag.ts:34`). Sam
-`financeCompareV1` ma `defaultValue: true` (`src/hooks/useFinanceCompareFlag.ts:30`) — to nie on blokuje.
+`financeCompareV1` ma `defaultValue: true` (`src/hooks/useFinanceCompareFlag.ts:29`) — to nie on blokuje.
 Drugi warunek: musi istnieć **druga wersja** artefaktu, inaczej renderuje się tekst zastępczy
 (`FinanceWorkspaceUtilities.tsx:116-120`).
 
@@ -920,7 +920,7 @@ a krawędzie są append-only — częściowy zapis jest nieodwracalny. Jedna rę
 | --- | --- | :-: | --- |
 | R1 | **Append-only rodowód.** `finance_lineage_edges` ma wyzwalacze `deny_update`/`deny_delete` (`…b03_lineage_freshness.sql:150-163`) — zła krawędź jest **nieusuwalna** bez migracji. Ogniwa 3, 4 i 6 tworzą pięć krawędzi na jeden model. | **wysoka** | Walidacja **przed** zapisem (ogniwo 4 krok 1); test „przy 409 zero krawędzi" z dowodem mutacyjnym; wszystko w jednej transakcji; na stagingu **nowe** rekordy, nie doszywanie do skażonych |
 | R2 | **Podwójna prawda legacy/kanon.** Import pisze `financial_statements`/`financial_statement_packs` (migracja `20260316`); kanon to `finance_stmt_*`. `confirmAndRegisterStatementPack:72` zakłada tożsamość kanoniczną, ale `snapshotCanonicalStatementVersion` (`financialStatementService.ts:8403`) pisze **tylko** `financial_statement_versions` (`:8443`). Dwa liczniki będą się rozjeżdżać. | **wysoka** | Projekcja **jednokierunkowa i wyprowadzana** (ogniwo 1), nigdy edytowana ręcznie; legacy pozostaje źródłem; przy sprawdzaniu stanu czytać **obiekt** (`finance_stmt_lines`), nie wpis rejestru |
-| R3 | **Ukryta ósma bramka: `BASELINE_CONTEXT_NOT_READY`** — kontekst zapisany, ale zero `finance_baseline_assumptions` (`baselineContextService.ts:194`). Producent istnieje (`upsertAssumptionsBatch:839`), nikt go nie woła przy tworzeniu. Ogniwa 1–6 mogą być zielone, a ekran dalej pusty. | **wysoka** | Zasiew założeń domyślnych w ścieżce (A) ogniwa 6; test kontraktowy `GET /context` → **200** (a nie „PUT zwrócił 200") |
+| R3 | **Ukryta ósma bramka: `BASELINE_CONTEXT_NOT_READY`** — kontekst zapisany, ale zero `finance_baseline_assumptions` (`baselineContextService.ts:196-200`). Producent istnieje (`upsertAssumptionsBatch:839`), nikt go nie woła przy tworzeniu. Ogniwa 1–6 mogą być zielone, a ekran dalej pusty. | **wysoka** | Zasiew założeń domyślnych w ścieżce (A) ogniwa 6; test kontraktowy `GET /context` → **200** (a nie „PUT zwrócił 200") |
 | R4 | **Higiena danych na stagingu.** Staging dzieli bazę z demo (`trolley`); dane DBR77 = twarz produktu. Trzy nieudane pakiety i model bez kontekstu już tam leżą. | średnia | Zero rekordów testowych; komplet tworzony przez UI (§4); decyzja o kasowaniu starych **dopiero po akcepcie**; zakaz SQL na żywej bazie |
 | R5 | **Flaga zdalna ≠ flaga w kodzie.** `financeBaselineWorkspaceV1` była wyłączona w tabeli `feature_flags` dla DBR77, a token `OWNER` dostawał 403 przy zmianie (Runda 6). Komentarz w `useFinanceBaselineWorkspaceFlag.ts:30-31` twierdzi „domyślnie ON". | średnia | Przed każdym odbiorem `GET /api/feature-flags/runtime`, nie `grep` w kodzie |
 | R6 | **Zmiana kontraktu `POST /finance/models`** psuje istniejących wołaczy (w tym legacy fallback `POST /api/financial-modeling/models`, `CreateModelModal.tsx:108`). | średnia | Nowe pola **opcjonalne** w zod; brak = zachowanie dzisiejsze bit w bit; test regresji na starym ciele żądania |
