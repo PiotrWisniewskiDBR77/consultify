@@ -66,4 +66,7 @@ await page.waitForTimeout(600);
 await page.screenshot({ path: out, fullPage: pelna });
 fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
+// Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
+// zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).
+try { if (!page.url().includes('/login')) await ctx.storageState({ path: auth }); } catch {}
 await browser.close();
