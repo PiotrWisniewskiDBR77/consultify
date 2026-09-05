@@ -33,6 +33,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 export interface ErrorStateProps {
+  /** Shared presentation for a failed request or one that exceeded the loading contract. */
+  variant?: 'error' | 'timeout';
   /** Thesis headline — states what failed, not "Error". */
   title?: string;
   /** One human-authored sentence. NEVER a raw exception message. */
@@ -51,6 +53,7 @@ export interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
+  variant = 'error',
   title,
   description,
   onRetry,
@@ -61,7 +64,18 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
-  const heading = title ?? t('common.errorTitle', { defaultValue: 'Something went wrong' });
+  const heading =
+    title ??
+    (variant === 'timeout'
+      ? t('common.loadingTimeoutTitle', { defaultValue: 'Nie udało się wczytać danych na czas' })
+      : t('common.errorTitle', { defaultValue: 'Something went wrong' }));
+  const body =
+    description ??
+    (variant === 'timeout'
+      ? t('common.loadingTimeoutDescription', {
+          defaultValue: 'Ładowanie trwało dłużej niż 15 sekund. Spróbuj ponownie.',
+        })
+      : undefined);
 
   return (
     <div
@@ -85,9 +99,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         {heading}
       </h3>
 
-      {description && (
+      {body && (
         <p className={`max-w-sm text-[var(--c-text-muted)] ${compact ? 'text-sm' : 'text-[15px]'}`}>
-          {description}
+          {body}
         </p>
       )}
 
