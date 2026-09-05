@@ -44,6 +44,9 @@ const Day235MaterialyArchitektSzablonowScreen = React.lazy(
 const IdeaFinancialCasePersistenceScreen = React.lazy(
   () => import('./screens/idea-financial-case-persistence')
 );
+const PodgladPomysluSufitStopkiScreen = React.lazy(
+  () => import('./screens/podglad-pomyslu-sufit-stopki')
+);
 const MaterialyLauncherScreen = React.lazy(() => import('./screens/materialy-launcher'));
 const MaterialyTemplateLibrarySliceScreen = React.lazy(
   () => import('./screens/materialy-template-library-slice')
@@ -883,6 +886,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 tor PLATFORMY §1 — DEMONSTRACJA przepisu powłoki klasy L (archetyp Rekord): ArtifactBreadcrumb + NModeShell + ArtifactRightPanel/ArtifactPropertiesTable, zero nowego standardu. &save=idle|saving|saved|error|conflict &teresa=1',
     render: () => <RnG3ClassLRecordShellScreen />,
+  },
+  'podglad-pomyslu-sufit-stopki': {
+    label:
+      'PODGLĄD POMYSŁU — sufit stopki (kanon detailsMin=200): REALNY PreviewPaneShell + IdeaPreviewBody/Footer, ?sufit=0 pokazuje stan PRZED',
+    render: () => <PodgladPomysluSufitStopkiScreen />,
   },
   'idea-financial-case-persistence': {
     label:
