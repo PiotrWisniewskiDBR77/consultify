@@ -1584,7 +1584,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.APP_INTRO}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Intro']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.intro')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <AppIntroView />
@@ -1601,7 +1601,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.STUDIO}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Studio']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.studio')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   {isStudioEnabled() ? <StudioView /> : <StudioUnavailableView />}
@@ -1615,7 +1615,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={`${ROUTES.MY_WORK}/*`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.myWork')]}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="My Work"
@@ -2183,7 +2183,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.AI_ACTIONS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI Actions']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.aiActions')]}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
                   <ActionProposalView />
@@ -2366,7 +2366,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.INITIATIVES}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Initiatives']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.initiatives')]} noPadding>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Initiatives"
@@ -2433,7 +2433,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.FINANCE}
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2450,7 +2450,7 @@ export const AppRoutes: React.FC = () => {
           path="/finance/statements/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Statement']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.statement')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2467,7 +2467,7 @@ export const AppRoutes: React.FC = () => {
           path="/finance/models/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Model']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.model')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2484,7 +2484,7 @@ export const AppRoutes: React.FC = () => {
           path="/finance/analyses/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Analysis']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.analysis')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2501,7 +2501,7 @@ export const AppRoutes: React.FC = () => {
           path="/finance/predictions/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Prediction']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.prediction')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2518,7 +2518,7 @@ export const AppRoutes: React.FC = () => {
           path="/finance/valuations/:id"
           element={
             <BetaGate moduleId="MODULE_ECONOMICS">
-              <MainLayout breadcrumbs={breadcrumbs || ['Finance', 'Valuation']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.finance'), t('layout.breadcrumb.page.valuation')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Finance"
@@ -2534,14 +2534,14 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.EXECUTION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.execution')]}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Execution"
               >
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="slideUp">
-                    <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <Suspense fallback={<LoadingScreen message={t('layout.loading.module')} />}>
                       <ExecutionHub />
                     </Suspense>
                   </AnimationWrapper>
@@ -2553,7 +2553,7 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={`${ROUTES.EXECUTION}/:executionCaseId`}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.execution')]}>
               <ProductionModuleGate
                 enabled={!hideNonCoreModulesOnPublicProduction}
                 moduleName="Execution"
@@ -3471,7 +3471,7 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.SETTINGS.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Settings']}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.settings')]}>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
                     <Routes>
@@ -3609,7 +3609,7 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.ADMIN.ROOT}/*`}
           element={
             <ProtectedRoute requiredRole="ADMIN">
-              <MainLayout breadcrumbs={breadcrumbs || ['Admin']}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.admin')]}>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
                     <AdminView

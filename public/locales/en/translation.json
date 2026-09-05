@@ -279,8 +279,8 @@
     }
   },
   "layout": {
-    "breadcrumb": {"module": {"audits": "Audits", "organization": "Organization"}, "page": {"drdReport": "DRD report", "reports": "Reports"}},
-    "loading": {"audits": "Loading audits…", "drdReport": "Loading DRD report…", "report": "Loading report…"},
+    "breadcrumb": {"module": {"audits": "Audits", "organization": "Organization", "intro": "Introduction", "studio": "Studio", "myWork": "My Work", "aiActions": "AI Actions", "initiatives": "Initiatives", "finance": "Finance", "execution": "Execution", "settings": "Settings", "admin": "Administration"}, "page": {"drdReport": "DRD report", "reports": "Reports", "statement": "Statement", "model": "Model", "analysis": "Analysis", "prediction": "Prediction", "valuation": "Valuation"}},
+    "loading": {"audits": "Loading audits…", "drdReport": "Loading DRD report…", "report": "Loading report…", "module": "Loading…"},
     "aiPanel": {
       "open": "Open AI panel",
       "close": "Close AI panel"
