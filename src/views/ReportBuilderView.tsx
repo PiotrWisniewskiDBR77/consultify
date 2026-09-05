@@ -49,6 +49,48 @@ const LIBRARY_TEMPLATE_ERROR_MESSAGES: Record<string, string> = {
 };
 
 /**
+ * ODBIÓR CTO 05.09 — sześć kanonicznych wzorców systemowych źródła ASSESSMENT
+ * (`report_builder_templates`, `is_system=TRUE`) ma w bazie WYŁĄCZNIE
+ * angielskie `name`/`description` (żadna organizacja nie ma polskiej wersji
+ * w danych — sprawdzone `GET /api/report-builder/templates/:id/details` dla
+ * wszystkich sześciu). Poprawa danych źródłowych to osobna praca (migracja +
+ * redeploy); tu tylko WARSTWA WYŚWIETLANIA: gdy interfejs jest po polsku,
+ * pokaż polskie tłumaczenie zamiast surowego angielskiego tekstu z API.
+ * Nowy, nieznany wzorzec (organizacyjny) nadal pokazuje to, co zwróci serwer.
+ */
+const LIBRARY_TEMPLATE_PL_COPY: Record<string, { name: string; description: string }> = {
+  'tpl-assessment-default': {
+    name: 'Raport z oceny (domyślny)',
+    description: 'Domyślny wzorzec raportu na podstawie oceny (assessmentu).',
+  },
+  'tpl-final-transformation-report': {
+    name: 'Raport końcowy transformacji',
+    description:
+      'Raport dla zarządu podsumowujący fazę transformacji: wpływ, ROI, decyzje i plan kolejnych 90 dni.',
+  },
+  'tpl-drd-full-diagnostic-v2': {
+    name: 'Raport dojrzałości cyfrowej DRD — pełna diagnoza',
+    description:
+      'Pełna diagnoza dojrzałości cyfrowej obejmująca wszystkich 7 osi transformacji: szczegółowa analiza luk, pogłębienie per oś, rekomendacje strategiczne i mapa drogowa z priorytetami. Dla zespołów transformacji, konsultantów i interesariuszy technicznych.',
+  },
+  'tpl-drd-board-report-v2': {
+    name: 'Raport DRD dla zarządu',
+    description:
+      'Zwięzły raport decyzyjny dla zarządu i kadry C-level: implikacje strategiczne, decyzje inwestycyjne i kluczowe ryzyka — bez szczegółów technicznych. Do przeczytania w 15 minut.',
+  },
+  'tpl-strategic-review-exec': {
+    name: 'Przegląd strategiczny — podsumowanie dla zarządu',
+    description:
+      'Wysokopoziomowa ocena strategiczna dla członków zarządu i sponsorów. Obejmuje analizę sytuacji, opcje strategiczne, rekomendacje i mapę wdrożenia.',
+  },
+  'tpl-assessment-summary-v2': {
+    name: 'Raport podsumowujący ocenę',
+    description:
+      'Ustrukturyzowany raport podsumowujący ocenę: wyniki dojrzałości, luki, mocne strony i rekomendacje działań. Działa z metodykami DRD, SIRI i ADMA.',
+  },
+};
+
+/**
  * Ekran-bramka dla wejścia `?new=true&templateArtifactId=<id indeksu>`
  * (Biblioteka „Użyj wzorca" / „Klonuj" dla `report_template`, akcja czatu
  * `USE_TEMPLATE`). Klient dostał tylko id wiersza indeksu — kanoniczny rekord
@@ -70,6 +112,8 @@ const LibraryTemplateReportCreateFlow: React.FC<{
   onCreated: (reportId: string) => void;
 }> = ({ templateArtifactId, onCancel, onCreated }) => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
   const [phase, setPhase] = useState<'resolving' | 'ready' | 'error'>('resolving');
   const [errorCode, setErrorCode] = useState<string>('TEMPLATE_RESOLVE_FAILED');
   const [resolvedTemplate, setResolvedTemplate] = useState<{
@@ -98,10 +142,11 @@ const LibraryTemplateReportCreateFlow: React.FC<{
           setPhase('error');
           return;
         }
+        const plCopy = isPl ? LIBRARY_TEMPLATE_PL_COPY[resolved.canonicalTemplateId] : undefined;
         setResolvedTemplate({
           id: resolved.canonicalTemplateId,
-          name: details.name || 'Szablon',
-          description: details.description,
+          name: plCopy?.name || details.name || 'Szablon',
+          description: plCopy?.description ?? details.description,
           reportType: details.reportType,
         });
         setPhase('ready');
