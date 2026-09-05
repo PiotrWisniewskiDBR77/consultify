@@ -13,6 +13,7 @@ import {
   HEADER_FILTER_BUDGET_PX,
   HEADER_HORIZONTAL_PADDING_PX,
   HEADER_SORT_BUDGET_PX,
+  getColumnFitFloor,
   type TableColumn,
 } from '../FilterableTable';
 
@@ -113,5 +114,15 @@ describe('FilterableTable — podłogi szerokości P2', () => {
     fireEvent.mouseEnter(trigger);
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(queryByRole('tooltip')).toBeNull();
+  });
+
+  it.each([
+    ['Skrzynka Moja Praca', { id: 'status', label: 'STATUS', dataType: 'status' }, 130],
+    ['Sejf', { id: 'owner', label: 'WŁAŚCICIEL', dataType: 'owner' }, 150],
+    ['Realizacje', { id: 'deadline', label: 'TERMIN', dataType: 'date' }, 110],
+    ['Sprawozdania Finanse', { id: 'amount', label: 'WARTOŚĆ', dataType: 'number' }, 90],
+    ['Biblioteka Audyty', { id: 'scope', label: 'ZAKRES', dataType: 'text' }, 140],
+  ] as const)('%s: columnFit nie schodzi poniżej floora typu', (_screen, column, floor) => {
+    expect(getColumnFitFloor(column)).toBe(floor);
   });
 });

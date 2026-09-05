@@ -247,8 +247,17 @@ const HEADER_TRACKING_PX = 0.55;
  * słowo nagłówka. Przy 84 px zostawało 39 px i nagłówki łamały się co cztery
  * litery („GOTO WOŚĆ") — sprawdzone zrzutem, odrzucone.
  */
-export const FIT_MIN_COLUMN_WIDTH = 112;
-export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 180;
+export const FIT_MIN_COLUMN_WIDTH = COLUMN_MIN_WIDTH_BY_DATA_TYPE.number;
+export const FIT_MIN_PRIMARY_COLUMN_WIDTH = 200;
+
+export const getColumnFitFloor = (column: TableColumn, configuredFloor?: number): number =>
+  Math.max(
+    getColumnTypeFloor(column),
+    column.id === 'title' || column.id === 'name'
+      ? FIT_MIN_PRIMARY_COLUMN_WIDTH
+      : FIT_MIN_COLUMN_WIDTH,
+    configuredFloor ?? 0
+  );
 
 /**
  * ŁAMANIE TEKSTU W KOMÓRCE — granica wyrazu, nigdy środek wyrazu (2026-08-30).
@@ -1021,6 +1030,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     const declared = visibleColumns.map((c) => {
       const width = columnWidths[c.id] ?? parsePx(c.width, 140);
       const isPrimary = c.id === 'title' || c.id === 'name';
+      const configuredFloor = columnConfigs.find((config) => config.id === c.id)?.minWidth;
       return {
         id: c.id,
         isSelect: c.type === 'select',
@@ -1028,10 +1038,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
         width,
         // Kolumna węższa niż podłoga zostaje na swojej szerokości — podłoga
         // nigdy nie ROZPYCHA, tylko ogranicza kurczenie.
-        floor: Math.min(
-          width,
-          isPrimary ? FIT_MIN_PRIMARY_COLUMN_WIDTH : FIT_MIN_COLUMN_WIDTH
-        ),
+        floor: Math.min(width, getColumnFitFloor(c, configuredFloor)),
       };
     });
     const widths: Record<string, number> = {};
@@ -1151,6 +1158,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   }, [
     visibleColumns,
     columnWidths,
+    columnConfigs,
     parsePx,
     hideRowActions,
     horizontalViewportWidth,
