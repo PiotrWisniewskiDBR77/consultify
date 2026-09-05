@@ -30,6 +30,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 
 import { StandardPreview, type StandardPreviewAction } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   caseStatusLabel,
   caseWaitStatusLabel,
@@ -1526,8 +1527,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
 
       {/* Prawy panel kontekstowy — ZAMKNIĘTY domyślnie, otwiera go dopiero
           kliknięcie wiersza (warunek właściciela #6). */}
-      {selectedWait ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
+      <JedenPrawyPanel rekord={selectedWait ? (
           <StandardPreview
             title={caseWaitTypeLabel(selectedWait.waitType, true)}
             onClose={() => setSelection(null)}
@@ -1614,9 +1614,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               ],
             }}
           />
-        </aside>
       ) : selectedProposal ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
           <StandardPreview
             title={effectClassLabel(selectedProposal.effectClass, true)}
             onClose={() => setSelection(null)}
@@ -1673,9 +1671,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               ],
             }}
           />
-        </aside>
       ) : selectedRun ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
           <StandardPreview
             title={`Przebieg ${runRows.find((r) => r.id === selectedRun.runId)?.numer ?? ''}`}
             onClose={() => setSelection(null)}
@@ -1791,8 +1787,7 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
               ],
             }}
           />
-        </aside>
-      ) : null}
+      ) : null} />
 
       <CommandDialog
         open={pending !== null}

@@ -26,6 +26,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -471,16 +472,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           }}
         />
       </div>
-      {selected ? (
-        <div
-          className="w-[380px] shrink-0 border-l border-c-border-subtle"
-          data-testid="audit-report-preview"
-        >
-          {exportError ? (
-            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
-              {exportError}
-            </div>
-          ) : null}
+      <JedenPrawyPanel
+        className="border-l border-c-border-subtle"
+        rekord={selected ? (
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
@@ -544,9 +538,15 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
                   ]
                 : undefined,
             }}
-          />
-        </div>
-      ) : null}
+          >
+            {exportError ? (
+              <div className="rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+                {exportError}
+              </div>
+            ) : null}
+          </StandardPreview>
+        ) : null}
+      />
     </div>
   );
 };

@@ -70,6 +70,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { EmptyState, ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -661,8 +662,9 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
             </div>
           ) : null}
         </div>
-        {selected ? (
-          <div className="w-[380px] shrink-0 border-l border-c-border-subtle" data-testid="audit-finding-preview">
+        <JedenPrawyPanel
+          className="border-l border-c-border-subtle"
+          rekord={selected ? (
             <StandardPreview
               title={`${selected.referenceCode || selected.id} — ${selected.statement}`}
               onClose={() => setSelectedId(null)}
@@ -687,8 +689,8 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
                 valueLabel: isPolish ? 'Wartość' : 'Value',
               }}
             />
-          </div>
-        ) : null}
+          ) : null}
+        />
       </div>
       <NoteEntryModal
         open={noteModal !== null}

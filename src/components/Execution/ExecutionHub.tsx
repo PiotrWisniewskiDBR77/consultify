@@ -53,6 +53,7 @@ import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -5239,8 +5240,7 @@ Please return:
               />
             </div>
 
-            {selectedReport ? (
-              <PreviewPaneAside>
+            <JedenPrawyPanel rekord={selectedReport ? (
                 <StandardPreview
                   title={selectedReport.title}
                   onClose={() => setReportPreviewId(null)}
@@ -5289,8 +5289,7 @@ Please return:
                       content beyond the 6 canon blocks, canon A7 `children`). */}
                   {renderReportPreviewBody(selectedReport)}
                 </StandardPreview>
-              </PreviewPaneAside>
-            ) : null}
+            ) : null} />
           </div>
         </div>
       );
@@ -5699,8 +5698,7 @@ Please return:
               />
             </div>
 
-            {selectedRow && previewModel ? (
-              <PreviewPaneAside>
+            <JedenPrawyPanel rekord={selectedRow && previewModel ? (
                 <StandardPreview
                   title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
                   onClose={() => setSummaryPreviewInitiativeId(null)}
@@ -5770,8 +5768,7 @@ Please return:
                   relations={sourceRelations}
                   actions={listPreviewActions}
                 />
-              </PreviewPaneAside>
-            ) : null}
+            ) : null} />
           </div>
         </div>
       );

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ODBIÓR NA ŻYWO 05.09 — zrzut realnego ekranu aplikacji (localhost:3000 → backend stagingu),
- * zalogowaną sesją z ODBIOR_AUTH_STATE, JASNY motyw, szerokość 1440.
+ * zalogowaną sesją z ODBIOR_AUTH_STATE, domyślnie JASNY motyw i szerokość 1440.
  * Użycie:
  *   node scripts/dev/odbior-zywo/zrzut.mjs --url=/my-work --out=evidence/odbior-zywo-20260905/02/mywork-inbox.png \
  *     [--klik="text=Zadania"] [--klik="css=button[aria-label='History']"] [--czekaj=1500] [--pelna] [--wysokosc=900] [--port=3055]
@@ -21,6 +21,8 @@
  *   i zapisz ich liczbę oraz prostokąty do <out>.json (klucz `dom`). Można podać wiele razy. Potrzebne,
  *   gdy odbiór dotyczy LICZBY paneli/kolumn (np. „ma być dokładnie jeden prawy panel") — samo oko na
  *   zrzucie nie odróżnia dwóch sąsiadujących kolumn od jednej szerokiej.
+ * --szerokosc=<px> (OPT-IN): szerokość viewportu; domyślnie 1440.
+ * --motyw=jasny|ciemny (OPT-IN): motyw i colorScheme; domyślnie jasny.
  * Zapisuje też <out>.json z adresem końcowym, tytułem i listą błędów konsoli (do werdyktu).
  *
  * ★ OSTRZEŻENIE (BLOKER RAPORT_B #6, naprawione 2026-09-06): TEN SKRYPT NIGDY DOMYŚLNIE
@@ -46,6 +48,12 @@ const url = get('url', '/chat'); const out = get('out'); const czekaj = Number(g
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const port = Number(get('port', '3000'));
 const host = get('host', 'localhost');
+const szerokosc = Number(get('szerokosc', '1440'));
+const motyw = get('motyw', 'jasny');
+if (!Number.isFinite(szerokosc) || szerokosc < 320 || !['jasny', 'ciemny'].includes(motyw)) {
+  console.error('Nieprawidłowe --szerokosc (min. 320) lub --motyw (jasny|ciemny)');
+  process.exit(2);
+}
 const baza = `http://${host}:${port}`;
 const domSelektory = args.filter((x) => x.startsWith('--dom=')).map((x) => x.slice(6));
 // OSTRZEŻENIE (BLOKER RAPORT_B #6): zapis sesji z powrotem do pliku NIE jest
@@ -74,22 +82,26 @@ if (zrodlo) {
     { ...zrodlo, origin: baza },
   ];
 }
-const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: wysokosc }, colorScheme: 'light', locale: 'pl-PL' });
+const ctx = await browser.newContext({ storageState: sesja, viewport: { width: szerokosc, height: wysokosc }, colorScheme: motyw === 'ciemny' ? 'dark' : 'light', locale: 'pl-PL' });
 // JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
 // src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
-await ctx.addInitScript(() => {
+await ctx.addInitScript((wybranyMotyw) => {
   try {
     const raw = localStorage.getItem('consultify-storage');
     const obj = raw ? JSON.parse(raw) : { state: {}, version: 0 };
-    obj.state = { ...(obj.state || {}), theme: 'light' };
+    obj.state = { ...(obj.state || {}), theme: wybranyMotyw };
     localStorage.setItem('consultify-storage', JSON.stringify(obj));
-    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.toggle('dark', wybranyMotyw === 'dark');
   } catch {}
-});
+}, motyw === 'ciemny' ? 'dark' : 'light');
 const page = await ctx.newPage();
 const bledy = [];
+const odpowiedziHttp = [];
 page.on('console', (m) => { if (m.type() === 'error') bledy.push(m.text().slice(0, 200)); });
 page.on('pageerror', (e) => bledy.push('pageerror: ' + String(e).slice(0, 200)));
+page.on('response', (response) => {
+  if (response.status() >= 400) odpowiedziHttp.push({ status: response.status(), url: response.url() });
+});
 await page.goto(baza + url, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(czekaj);
 for (const k of kliki) {
@@ -117,7 +129,7 @@ for (const sel of domSelektory) {
 // bezwarunkowo); to jest nadzbior zachowania opt-in z P3 (--dom=body), wiec zadnego wolacza
 // nie psuje — kazdy dostaje co najmniej to, co dostawal wczesniej.
 const tekst = await page.locator('body').innerText().catch(() => '');
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, bledyKonsoli: bledy, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, szerokosc, motyw, bledy, bledyKonsoli: bledy, odpowiedziHttp, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie, WIEC BYLOBY WYGODNIE zapisac zaktualizowany
 // stan z powrotem — ale TYLKO gdy jawnie o to poproszono (--zapisz-sesje) i tylko gdy

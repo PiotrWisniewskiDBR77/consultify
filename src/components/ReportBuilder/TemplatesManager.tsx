@@ -25,6 +25,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { Api } from '../../services/api';
 import { ReportEditor } from './ReportEditor/ReportEditor';
@@ -687,8 +688,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
           />
         </div>
 
-        {previewTemplate ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+        <JedenPrawyPanel rekord={previewTemplate ? (
             <StandardPreview
               title={previewTemplate.name}
               onClose={() => setPreviewId(null)}
@@ -738,8 +738,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               }}
               actions={previewActions}
             />
-          </aside>
-        ) : null}
+        ) : null} />
       </div>
 
       {/* Template Editor Modal — poza zakresem kanonu list (edytor pelnoekranowy) */}

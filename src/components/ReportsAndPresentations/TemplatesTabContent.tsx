@@ -36,6 +36,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { EmptyState } from '@/components/shared/states';
 import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   type MetaPill,
   StandardPreview,
@@ -779,8 +780,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     />
   );
 
-  const previewAside = selectedItem ? (
-    <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+  const previewAside = (
+    <JedenPrawyPanel rekord={selectedItem ? (
       <StandardPreview
         title={selectedItem.title}
         onClose={() => setSelectedId(null)}
@@ -890,8 +891,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         }
         actions={previewActions}
       />
-    </aside>
-  ) : null;
+    ) : null} />
+  );
 
   // ── Galeria ↔ Tabela (flag ON only) ──────────────────────────────────
   if (galleryEnabled) {
