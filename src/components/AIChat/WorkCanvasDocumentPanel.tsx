@@ -1124,6 +1124,8 @@ function WorkCanvasMarkdownDocumentPanel({
     }));
   }, [canvasConflict, richEditor]);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  const quickAddDetailsRef = React.useRef<HTMLDetailsElement | null>(null);
+  const quickAddPromptRef = React.useRef<HTMLTextAreaElement | null>(null);
   // #87c — dedicated input for "Import Markdown", separate from uploadInputRef
   // (which is the CSV/JSON/XLSX dataset + generic chat-attachment uploader).
   const markdownImportInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -3846,7 +3848,11 @@ function WorkCanvasMarkdownDocumentPanel({
                         'Choose an element type and describe to Teresa what to add to the document.'
                       ),
                       actionLabel: t('canvas.panel.common.addAction', 'Add element'),
-                      onClick: () => setQuickAddElement('text'),
+                      onClick: () => {
+                        setQuickAddElement('text');
+                        if (quickAddDetailsRef.current) quickAddDetailsRef.current.open = true;
+                        quickAddPromptRef.current?.focus();
+                      },
                     },
                     {
                       title: t(
@@ -3915,7 +3921,10 @@ function WorkCanvasMarkdownDocumentPanel({
                   ))}
                 </details>
 
-                <details className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10">
+                <details
+                  ref={quickAddDetailsRef}
+                  className="group mt-3 space-y-1.5 border-b border-slate-200 pb-3 dark:border-white/10"
+                >
                   <summary className="flex cursor-pointer select-none items-center justify-between rounded-xl px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/10">
                     <span>{t('canvas.panel.addElement.title', 'Add element')}</span>
                     <ChevronDown
@@ -3950,6 +3959,7 @@ function WorkCanvasMarkdownDocumentPanel({
                   </div>
                   <div className="px-2.5">
                     <textarea
+                      ref={quickAddPromptRef}
                       value={quickAddPrompt}
                       onChange={(event) => setQuickAddPrompt(event.target.value)}
                       placeholder={t(
