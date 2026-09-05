@@ -579,14 +579,11 @@ const AuditReportDocumentView = lazyWithRetry(
 );
 
 // Assessment Output artifact screens (tor "wołacze" 2026-09-02): two
-// components built and visually accepted by Piotr but previously reachable
-// by ZERO routes (props `{ outputId: string | null }`, both read-only
-// against the frozen method-core Output — GET /api/method/outputs/:id).
-// Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF) — see
-// src/utils/assessmentOutputArtifactsFlag.ts for why: the SCREENS have an
-// accept, the ENTRY POINT (kebab row in AssessmentOutputsTab + these
-// routes) has not yet been shown to Piotr on a dev-render screenshot
-// (CLAUDE.md #7).
+// components built and visually accepted by Piotr, reachable by these two
+// routes. Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON
+// since naprawa MVP 06.09 — evidence/audyt-mvp-20260906/A2/RAPORT_A2.md
+// poz. 5.2, BLOKER: route always redirected regardless of assessment
+// status) — see src/utils/assessmentOutputArtifactsFlag.ts.
 const AssessmentOutputReportView = lazyWithRetry(
   () => import('@/components/assessment/report/AssessmentReportView')
 );
@@ -858,10 +855,9 @@ const AuditReportDocumentRoute: React.FC = () => {
  * outputId that identifies a row in `AssessmentOutputsTab.tsx` (Assessment
  * → zakładka "Wnioski"/Outputs) — that table's kebab is the intended
  * entry point.
- * Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF): OFF →
- * redirects to the Outputs tab so the route is a no-op for every user
- * until Piotr accepts the visual on a dev-render screenshot (canon: "Piotr
- * nigdy nie jest pierwszym testerem wizualnym").
+ * Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON since
+ * naprawa MVP 06.09 — decyzja CTO). OFF (opt-out awaryjny) → redirects to
+ * the Outputs tab, exactly as before this route existed.
  */
 export const AssessmentOutputReportRoute: React.FC = () => {
   const params = useParams<{ outputId: string }>();

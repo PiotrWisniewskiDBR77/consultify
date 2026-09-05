@@ -313,9 +313,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
           onClick: () => setLineageSessionId(sessionId),
         });
       }
-      // Flag-gated (default OFF) — see src/utils/assessmentOutputArtifactsFlag.ts:
-      // the entry point onto AssessmentReportView / AssessmentPresentationView
-      // has not been shown to Piotr yet (CLAUDE.md #7).
+      // Flag-gated (default ON since naprawa MVP 06.09 — decyzja CTO, patrz
+      // src/utils/assessmentOutputArtifactsFlag.ts).
       if (isAssessmentOutputArtifactsEnabled()) {
         primary.push(
           {
@@ -521,8 +520,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
                       onClick: () => setLineageSessionId(selectedRow.sessionId as string),
                     });
                   }
-                  // Flag-gated (default OFF) — see
-                  // src/utils/assessmentOutputArtifactsFlag.ts.
+                  // Flag-gated (default ON since naprawa MVP 06.09 — decyzja
+                  // CTO, patrz src/utils/assessmentOutputArtifactsFlag.ts).
                   if (isAssessmentOutputArtifactsEnabled()) {
                     const rowId = String(selectedRow.id);
                     informational.push(
