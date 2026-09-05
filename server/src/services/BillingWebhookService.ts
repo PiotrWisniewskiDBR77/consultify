@@ -181,19 +181,24 @@ export class BillingWebhookServiceClass {
   async updateEventStatus(eventId: string, status: string): Promise<{ updated: boolean }> {
     await this.#initDeps();
 
-    const updates = [
-      'status = ?',
-      'attempt_count = attempt_count + 1',
-      "last_attempt_at = datetime('now')",
-      "updated_at = datetime('now')",
-    ];
-    const params: any[] = [status];
+    // Day 314 — last_attempt_at / updated_at / next_retry_at are TEXT columns.
+    // `datetime('now')` is rewritten to a Postgres timestamptz, and assigning a
+    // timestamptz to a text column fails. Bind the formatted string instead, in
+    // the same 'YYYY-MM-DD HH:MM:SS' UTC shape the table already stores.
+    const nowText = BillingWebhookServiceClass.formatWebhookTimestamp(new Date());
+    const updates = ['status = ?', 'attempt_count = attempt_count + 1', 'last_attempt_at = ?', 'updated_at = ?'];
+    const params: any[] = [status, nowText, nowText];
 
     if (status === 'failed' || status === 'retrying') {
       const event = await this.getEventById(eventId);
       const attemptCount = (event?.attempt_count || 0) + 1;
       const delayMinutes = Math.min(Math.pow(2, attemptCount) * 5, 1440); // Max 24 hours
-      updates.push(`next_retry_at = datetime('now', '+${delayMinutes} minutes')`);
+      updates.push('next_retry_at = ?');
+      params.push(
+        BillingWebhookServiceClass.formatWebhookTimestamp(
+          new Date(Date.now() + delayMinutes * 60 * 1000)
+        )
+      );
     }
 
     params.push(eventId);
@@ -228,14 +233,18 @@ export class BillingWebhookServiceClass {
    * Get pending events for retry
    */
   async getPendingRetries(limit = 50): Promise<BillingWebhookEvent[]> {
+    // Day 314 — next_retry_at is TEXT; comparing it against the rewritten
+    // `datetime('now')` timestamptz has no Postgres operator (42883). Bind the
+    // cutoff as text in the column's own format instead.
+    const nowText = BillingWebhookServiceClass.formatWebhookTimestamp(new Date());
     const rows = await this.dbAll<any>(
       `SELECT * FROM billing_webhook_events 
              WHERE status IN ('pending', 'retrying') 
-             AND (next_retry_at IS NULL OR next_retry_at <= datetime('now'))
+             AND (next_retry_at IS NULL OR next_retry_at <= ?)
              AND attempt_count < 5
              ORDER BY created_at ASC
              LIMIT ?`,
-      [limit]
+      [nowText, limit]
     );
 
     return rows.map((row) => {
@@ -386,7 +395,53 @@ export class BillingWebhookServiceClass {
   // Analytics
   // ==========================================
 
+  /**
+   * Day 314 — two defects in one statement.
+   *
+   * 1. `period` came straight from `?period=` on
+   *    GET /api/billing/webhook-events/stats and was interpolated into the SQL
+   *    string (`datetime('now', '-${period}')`). Anything the caller typed
+   *    became SQL.
+   * 2. `billing_webhook_events.created_at` is a TEXT column
+   *    ('YYYY-MM-DD HH24:MI:SS', UTC). `datetime('now', ...)` is rewritten to a
+   *    real Postgres timestamp, and `text >= timestamptz` has no operator, so
+   *    the route answered 500 for every caller regardless of the period.
+   *
+   * Both go away by computing the cutoff in JS and BINDING it as a string in
+   * the column's own format: text-vs-text compares correctly in Postgres and in
+   * SQLite, and there is no interpolated fragment left to inject into.
+   */
+  static readonly DEFAULT_STATS_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
+
+  static parseStatsPeriodMs(period: unknown): number {
+    const raw = String(period ?? '')
+      .trim()
+      .toLowerCase();
+    const match = /^(\d{1,4})\s+(hour|day|week|month|year)s?$/.exec(raw);
+    if (!match) return BillingWebhookServiceClass.DEFAULT_STATS_PERIOD_MS;
+    const amount = Number(match[1]);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return BillingWebhookServiceClass.DEFAULT_STATS_PERIOD_MS;
+    }
+    const unitMs: Record<string, number> = {
+      hour: 60 * 60 * 1000,
+      day: 24 * 60 * 60 * 1000,
+      week: 7 * 24 * 60 * 60 * 1000,
+      month: 30 * 24 * 60 * 60 * 1000,
+      year: 365 * 24 * 60 * 60 * 1000,
+    };
+    return amount * unitMs[match[2]];
+  }
+
+  /** Formats a Date the way this table stores created_at: 'YYYY-MM-DD HH:MM:SS' UTC. */
+  static formatWebhookTimestamp(date: Date): string {
+    return date.toISOString().replace('T', ' ').slice(0, 19);
+  }
+
   async getEventStats(organizationId: string, period = '30 days'): Promise<any[]> {
+    const cutoff = BillingWebhookServiceClass.formatWebhookTimestamp(
+      new Date(Date.now() - BillingWebhookServiceClass.parseStatsPeriodMs(period))
+    );
     return this.dbAll(
       `SELECT 
                 event_type,
@@ -394,10 +449,10 @@ export class BillingWebhookServiceClass {
                 COUNT(*) as count
              FROM billing_webhook_events
              WHERE organization_id = ?
-             AND created_at >= datetime('now', '-${period}')
+             AND created_at >= ?
              GROUP BY event_type, status
              ORDER BY count DESC`,
-      [organizationId]
+      [organizationId, cutoff]
     );
   }
 

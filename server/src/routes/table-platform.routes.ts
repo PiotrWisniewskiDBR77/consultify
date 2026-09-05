@@ -33,6 +33,8 @@ import * as reportsPresModelService from '../services/v8/reportsPresModelService
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { mapAppErrorResponse } from '../middleware/appErrorMapper.js';
+import { normalizePlatformRole } from '../utils/platformRoles.js';
+import { validateUUID } from '../utils/validation.js';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -4405,11 +4407,58 @@ router.post('/relays/:relayId/test', async (req: Request, res: Response) => {
 // SSO (SAML 2.0 / OIDC) ADMIN API
 // ==========================================
 
-router.post('/admin/sso/saml', async (req: Request, res: Response) => {
+/**
+ * Day 314 — the whole `/admin/*` block below had NO role gate: it inherited only
+ * `verifyToken` + `requireTablePlatform` + the shared limiter from the top of
+ * this router. Measured on a live server: a VIEWER token could list the org's
+ * service accounts, read the SSO configuration, AND mint a working
+ * service-account token (POST returned 201 with a live token) — a straight
+ * privilege-escalation path, because that token then authenticates with
+ * whatever scopes the VIEWER asked for.
+ *
+ * The correct contract already exists elsewhere for the very same resources:
+ * `/api/admin/service-accounts` and `/api/billing/*` answer 403 to VIEWER and
+ * MEMBER and admit OWNER/ADMIN/SUPERADMIN. This mirrors that gate rather than
+ * inventing a new one; it is applied per-route (the router-wide `router.use`
+ * above is shared with the non-admin table surface, which any table member may
+ * legitimately read).
+ */
+function requireTenantAdmin(req: Request, res: Response, next: NextFunction): void {
+  const authReq = req as AuthRequest;
+  const role = normalizePlatformRole(
+    authReq.user?.role ?? (authReq as unknown as { userRole?: string }).userRole
+  );
+  const allowed = ['OWNER', 'ADMIN', 'SUPERADMIN'];
+  if (authReq.user?.isSuperAdmin || allowed.includes(role)) return next();
+  res.status(403).json({
+    error: 'Uprawnienia administratora organizacji są wymagane.',
+    code: 'ADMIN_ACCESS_REQUIRED',
+  });
+}
+
+/**
+ * Day 314 — every `tp_*` admin table keys the tenant with a `uuid` column while
+ * `organizations.id` is TEXT. Binding a legacy non-UUID tenant id aborted the
+ * statement with `invalid input syntax for type uuid` and the route answered
+ * 500. Reads now degrade to "nothing here" inside the services; writes cannot
+ * degrade — they must say plainly that the tenant identifier is unusable.
+ */
+function rejectNonUuidTenant(res: Response, organizationId: string): boolean {
+  if (validateUUID(organizationId)) return false;
+  res.status(400).json({
+    error:
+      'Identyfikator organizacji nie jest prawidłowym UUID, więc nie można zapisać tej konfiguracji.',
+    code: 'INVALID_ORGANIZATION_IDENTIFIER',
+  });
+  return true;
+}
+
+router.post('/admin/sso/saml', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { entityId, ssoUrl, certificate, signatureAlgorithm, nameIdFormat } = req.body ?? {};
     if (!entityId || !ssoUrl || !certificate) {
       return res.status(400).json({ error: 'entityId, ssoUrl, and certificate are required' });
@@ -4427,11 +4476,12 @@ router.post('/admin/sso/saml', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/admin/sso/oidc', async (req: Request, res: Response) => {
+router.post('/admin/sso/oidc', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { issuer, clientId, clientSecret, authorizationUrl, tokenUrl, userInfoUrl, scopes } =
       req.body ?? {};
     if (!issuer || !clientId || !clientSecret || !authorizationUrl || !tokenUrl || !userInfoUrl) {
@@ -4455,7 +4505,7 @@ router.post('/admin/sso/oidc', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/admin/sso', async (req: Request, res: Response) => {
+router.get('/admin/sso', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
@@ -4468,11 +4518,12 @@ router.get('/admin/sso', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/admin/sso/toggle', async (req: Request, res: Response) => {
+router.patch('/admin/sso/toggle', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { enabled } = req.body ?? {};
     if (typeof enabled !== 'boolean')
       return res.status(400).json({ error: 'enabled (boolean) is required' });
@@ -4530,11 +4581,12 @@ router.post('/sso/callback', async (req: Request, res: Response) => {
 // SERVICE ACCOUNTS API
 // ==========================================
 
-router.post('/admin/service-accounts', async (req: Request, res: Response) => {
+router.post('/admin/service-accounts', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { name, description, scopes, expiresInDays } = req.body ?? {};
     if (!name || typeof name !== 'string')
       return res.status(400).json({ error: 'name is required' });
@@ -4554,7 +4606,7 @@ router.post('/admin/service-accounts', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/admin/service-accounts', async (req: Request, res: Response) => {
+router.get('/admin/service-accounts', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
@@ -4566,11 +4618,12 @@ router.get('/admin/service-accounts', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/admin/service-accounts/:id', async (req: Request, res: Response) => {
+router.delete('/admin/service-accounts/:id', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;
     if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    if (rejectNonUuidTenant(res, organizationId)) return;
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'id is required' });
     const db = (await import('../database/Database.js')).getDatabase();
@@ -5341,7 +5394,7 @@ router.post('/tables/:tableId/fields/reorder', async (req: Request, res: Respons
   }
 });
 
-router.post('/admin/scim/token', async (req: Request, res: Response) => {
+router.post('/admin/scim/token', requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
     const organizationId = authReq.organizationId;

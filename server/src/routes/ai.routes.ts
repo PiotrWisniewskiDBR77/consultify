@@ -330,8 +330,46 @@ export function isAgentHubDatabaseRead(method: string, path: string): boolean {
   );
 }
 
+// Day 314 — the same defect, one surface wider. The chat view polls these GETs
+// in the background while the user is doing nothing: `stream/partial/:sessionId`
+// asks "is there an interrupted answer to resume?" and
+// `conversations/:id/proposals` re-renders the proposal strip. Both are plain
+// tenant-scoped SELECTs. Under aiRateLimiter (30/min in production, keyed by IP
+// when userId is null) thirty background polls exhausted the generative budget
+// and the chat answered "AI request failed (RATE_LIMIT_EXCEEDED)" — a quota
+// error caused by reading, not by generating.
+//
+// Only pure database reads are listed. Every mutation, and every route that can
+// reach a provider (/chat, /chat/stream, /chat/quick, /generate, /refine-text,
+// /recommend, /deep-research/*, ...) stays under aiRateLimiter. Routes with
+// their own budget limiter (aiMemoryRateLimiter, aiActionsRateLimiter) keep it —
+// this only removes the shared *generative* bucket.
+const AI_DATABASE_READ_EXACT_PATHS = new Set([
+  '/actions/pending',
+  '/actions/center',
+  '/actions/runs',
+  '/actions/proposals',
+  '/governance/approval-requests',
+  '/soft-cap-status',
+  '/budget/status',
+  '/tier-limits',
+]);
+
+export function isGenerativeQuotaExemptRead(method: string, path: string): boolean {
+  if (method !== 'GET') return false;
+  if (isAgentHubDatabaseRead(method, path)) return true;
+
+  // GET /api/ai/stream/partial/:sessionId — resume-discovery poll.
+  if (path.startsWith('/stream/partial/')) return true;
+
+  // GET /api/ai/conversations/:id/proposals — proposal strip re-render.
+  if (/^\/conversations\/[^/]+\/proposals$/.test(path)) return true;
+
+  return AI_DATABASE_READ_EXACT_PATHS.has(path);
+}
+
 router.use((req, res, next) => {
-  const bypassGenerativeLimit = isAgentHubDatabaseRead(req.method, req.path);
+  const bypassGenerativeLimit = isGenerativeQuotaExemptRead(req.method, req.path);
 
   if (bypassGenerativeLimit) return next();
   return aiRateLimiter(req, res, next);

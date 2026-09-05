@@ -30,6 +30,7 @@
 
 import { parseMaybeJson } from '../../utils/pgFlags.js';
 import { queryAll, queryOne } from '../../utils/queryHelpers.js';
+import { validateUUID } from '../../utils/validation.js';
 import ReportBuilderService from '../reportBuilderService.js';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -155,15 +156,26 @@ export async function listDefinitions(
   organizationId: string,
   opts?: { kind?: string }
 ): Promise<ReportDefinitionRecord[]> {
-  const params: unknown[] = [organizationId];
+  // Day 314 — `report_definitions.organization_id` is typed `uuid`, but
+  // `organizations.id` is TEXT and legacy tenants carry non-UUID ids. Binding
+  // such an id made Postgres abort the whole statement with
+  // `invalid input syntax for type uuid`, so GET /api/report-builder/definitions
+  // returned 500 and those tenants saw no report catalog at all. A tenant whose
+  // id cannot be a uuid simply owns no org-specific rows — it must still get the
+  // system catalog (organization_id IS NULL), which is what Execution renders.
+  const orgAddressable = validateUUID(organizationId);
+  const params: unknown[] = orgAddressable ? [organizationId] : [];
   let kindClause = '';
+  const orgClause = orgAddressable
+    ? '(organization_id IS NULL OR organization_id = ?)'
+    : 'organization_id IS NULL';
   if (opts?.kind) {
     kindClause = ' AND kind = ?';
     params.push(opts.kind);
   }
   const rows = await queryAll<DefinitionRow>(
     `SELECT * FROM report_definitions
-      WHERE (organization_id IS NULL OR organization_id = ?)${kindClause}
+      WHERE ${orgClause}${kindClause}
       ORDER BY is_system DESC, name ASC`,
     params
   );

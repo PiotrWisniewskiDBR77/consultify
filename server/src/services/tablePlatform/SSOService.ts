@@ -17,6 +17,7 @@ import {
   encryptSecret,
   isEncrypted,
 } from '../../utils/secretEncryption.js';
+import { validateUUID } from '../../utils/validation.js';
 
 export interface SAMLConfig {
   entityId: string;
@@ -75,6 +76,14 @@ export class SSOService {
   }
 
   async getSSOConfig(organizationId: string): Promise<SSOConfigRow | null> {
+    // Day 314 — `tp_sso_configs.organization_id` is typed `uuid` while
+    // `organizations.id` is TEXT; a legacy non-UUID tenant made Postgres abort
+    // with `invalid input syntax for type uuid`, so GET
+    // /api/table-platform/admin/sso returned 500 instead of the "not
+    // configured" answer. Such a tenant cannot own a row here, and the caller
+    // already renders `null` as 404 "No SSO configuration found" — identical to
+    // what a UUID tenant without SSO receives.
+    if (!validateUUID(organizationId)) return null;
     const db = getDatabase();
     const result = await db.query('SELECT * FROM tp_sso_configs WHERE organization_id = $1', [
       organizationId,
