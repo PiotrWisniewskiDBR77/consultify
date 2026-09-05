@@ -334,27 +334,39 @@ export const OrgChoiceSegment: React.FC<{
   onChange: (value: string) => void;
   className?: string;
 }> = ({ label, value, options, onChange, className }) => (
-  <div role="radiogroup" aria-label={label} className={cn('flex flex-wrap gap-2', className)}>
-    {options.map((option) => {
-      const active = option.value === value;
-      return (
-        <button
-          key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={active}
-          onClick={() => onChange(active ? '' : option.value)}
-          className={cn(
-            'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
-            active
-              ? 'border-c-border-strong bg-state-selected text-c-text'
-              : 'border-c-border text-c-text-secondary hover:border-c-border-strong hover:text-c-text'
-          )}
-        >
-          {option.label}
-        </button>
-      );
-    })}
+  <div className={className}>
+    {/*
+     * Podpis MUSI być widoczny, nie tylko `aria-label` — defekt odbioru na
+     * żywo 05.09 (org-stakeholder-expectations): trzy grupy pigułek
+     * (Archetyp transformacji/Rola AI/Rytm nadzoru) renderowały się jedna pod
+     * drugą bez ŻADNEGO widocznego tytułu, więc treść przeniesiona 1:1 ze
+     * starego ekranu wyglądała jak zgubiona. Siostrzany `OrgTagToggleGroup`
+     * już pokazuje etykietę tak samo (`ORG_L1` nad grupą) — to była
+     * niespójność, nie świadomy wybór.
+     */}
+    <p className={cn(ORG_L1, 'mb-2')}>{label}</p>
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(active ? '' : option.value)}
+            className={cn(
+              'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--c-focus)]',
+              active
+                ? 'border-c-border-strong bg-state-selected text-c-text'
+                : 'border-c-border text-c-text-secondary hover:border-c-border-strong hover:text-c-text'
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   </div>
 );
 
