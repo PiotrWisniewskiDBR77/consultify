@@ -10,12 +10,25 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGetBaselineTrends = vi.fn();
+const mockGetRadarData = vi.fn();
+const mockGetTrendDetail = vi.fn();
+const mockCreateCustomTrend = vi.fn();
+const mockUpdateCustomTrend = vi.fn();
 
-// The route dynamically imports the model and uses (default || module).
+// The startup service statically imports and validates every required model export.
 vi.mock('../../models/megatrend.js', () => ({
   default: {
     getBaselineTrends: (...args: unknown[]) => mockGetBaselineTrends(...args),
+    getRadarData: (...args: unknown[]) => mockGetRadarData(...args),
+    getTrendDetail: (...args: unknown[]) => mockGetTrendDetail(...args),
+    createCustomTrend: (...args: unknown[]) => mockCreateCustomTrend(...args),
+    updateCustomTrend: (...args: unknown[]) => mockUpdateCustomTrend(...args),
   },
+  getBaselineTrends: (...args: unknown[]) => mockGetBaselineTrends(...args),
+  getRadarData: (...args: unknown[]) => mockGetRadarData(...args),
+  getTrendDetail: (...args: unknown[]) => mockGetTrendDetail(...args),
+  createCustomTrend: (...args: unknown[]) => mockCreateCustomTrend(...args),
+  updateCustomTrend: (...args: unknown[]) => mockUpdateCustomTrend(...args),
 }));
 
 vi.mock('../../middleware/auth.middleware.js', () => ({
