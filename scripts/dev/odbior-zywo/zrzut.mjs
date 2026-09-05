@@ -22,10 +22,22 @@
  *   gdy odbiór dotyczy LICZBY paneli/kolumn (np. „ma być dokładnie jeden prawy panel") — samo oko na
  *   zrzucie nie odróżnia dwóch sąsiadujących kolumn od jednej szerokiej.
  * Zapisuje też <out>.json z adresem końcowym, tytułem i listą błędów konsoli (do werdyktu).
+ *
+ * ★ OSTRZEŻENIE (BLOKER RAPORT_B #6, naprawione 2026-09-06): TEN SKRYPT NIGDY DOMYŚLNIE
+ *   NIE ZAPISUJE sesji z powrotem do pliku ODBIOR_AUTH_STATE. Wcześniej robił to
+ *   bezwarunkowo za każdym razem, gdy końcowy URL nie był `/login` — w tym gdy trafił na
+ *   stronę PUBLICZNĄ bez ważnej sesji, co przy kilku agentach współdzielących JEDEN plik
+ *   sesji nadpisywało cudzą ważną sesję pustym/bez-tokenowym stanem. Zapis dziś wymaga
+ *   JAWNEJ opcji `--zapisz-sesje` I następuje tylko, gdy w stanie jest realny token oraz
+ *   URL końcowy nie jest `/login` (logika: zrzutSesja.mjs, test: tests/unit/odbior/
+ *   zrzutSesja.test.ts). Zapis jest atomowy (plik tymczasowy + rename). Włączaj
+ *   `--zapisz-sesje` TYLKO gdy świadomie chcesz odświeżyć rotujący token — nie jako
+ *   domyślny nawyk przy każdym wywołaniu.
  */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
+import { zapiszSesjeJesliBezpiecznie } from './zrzutSesja.mjs';
 const args = process.argv.slice(2);
 const get = (k, d) => { const a = args.find((x) => x.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7));
@@ -36,6 +48,12 @@ const port = Number(get('port', '3000'));
 const host = get('host', 'localhost');
 const baza = `http://${host}:${port}`;
 const domSelektory = args.filter((x) => x.startsWith('--dom=')).map((x) => x.slice(6));
+// OSTRZEŻENIE (BLOKER RAPORT_B #6): zapis sesji z powrotem do pliku NIE jest
+// domyślny. Bez tej opcji skrypt TYLKO CZYTA sesję i nigdy jej nie nadpisuje —
+// bezpieczne do uruchamiania równolegle przez kilku agentów na WSPÓLNYM pliku
+// ODBIOR_AUTH_STATE. Włącz `--zapisz-sesje` TYLKO gdy świadomie chcesz
+// odświeżyć rotujący token dla przyszłych zrzutów (patrz zrzutSesja.mjs).
+const zapiszSesje = args.includes('--zapisz-sesje');
 const auth = process.env.ODBIOR_AUTH_STATE;
 if (!out || !auth || !fs.existsSync(auth)) { console.error('Wymagane: --out oraz ODBIOR_AUTH_STATE (istniejący plik)'); process.exit(2); }
 fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -101,15 +119,22 @@ for (const sel of domSelektory) {
 const tekst = await page.locator('body').innerText().catch(() => '');
 fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, bledyKonsoli: bledy, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
-// Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
-// zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).
-// Zapis zrotowanej sesji ZAWSZE pod originem kanonicznym :3000 (05.09: agent na :3011 nadpisal plik
-// wspolny i wylogowal rownolegla sesje na :3000). Kopia w pamieci, origin przepisany z powrotem.
+// Sesja: token odswieza sie rotacyjnie, WIEC BYLOBY WYGODNIE zapisac zaktualizowany
+// stan z powrotem — ale TYLKO gdy jawnie o to poproszono (--zapisz-sesje) i tylko gdy
+// stan faktycznie ma token i nie jest to /login. Patrz zrzutSesja.mjs (BLOKER
+// RAPORT_B #6): bezwarunkowy zapis "gdy nie /login" nadpisywał cudzą ważną sesję,
+// gdy TEN proces trafil na strone publiczna bez tokenu. Zapis (gdy dozwolony) jest
+// atomowy (plik tymczasowy + rename), wiec wspoldzielony plik nigdy nie jest
+// widoczny w stanie polowicznym.
 try {
-  if (!page.url().includes('/login')) {
-    const st = await ctx.storageState();
-    st.origins = (st.origins || []).map((o) => ({ ...o, origin: String(o.origin).replace(baza, 'http://localhost:3000') }));
-    fs.writeFileSync(auth, JSON.stringify(st, null, 2), { mode: 0o600 });
-  }
+  const st = await ctx.storageState();
+  const wynikZapisu = zapiszSesjeJesliBezpiecznie({
+    zapiszSesje,
+    urlKoncowy: page.url(),
+    storageState: st,
+    baza,
+    authPath: auth,
+  });
+  if (zapiszSesje) console.log('sesja:', wynikZapisu.zapisano ? 'zapisana' : `NIE zapisana (${wynikZapisu.powod})`);
 } catch {}
 await browser.close();
