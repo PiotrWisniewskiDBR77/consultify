@@ -5964,18 +5964,6 @@
     "src/components/Reports/GanttChart.tsx"
   ],
   [
-    "reports.empty.noReports",
-    "src/components/Reports/Management/ReportsHub.tsx"
-  ],
-  [
-    "reports.empty.noReportsDesc",
-    "src/components/Reports/Management/ReportsHub.tsx"
-  ],
-  [
-    "reports.actions.generate",
-    "src/components/Reports/Management/ReportsHub.tsx"
-  ],
-  [
     "reports.empty.noTemplates",
     "src/components/Reports/Management/ReportsHub.tsx"
   ],

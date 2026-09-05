@@ -84,6 +84,40 @@ const profileRoleKeys = [
   'consultant',
 ].map((role) => `settings.profile.roles.${role}`);
 
+const runtimeRepairKeys = [
+  'reports.tabs.reports',
+  'reports.tabs.templates',
+  'reports.tabs.schedules',
+  'reports.tabs.automation',
+  'reports.actions.generate',
+  'reports.actions.newReport',
+  'reports.empty.noReports',
+  'reports.empty.noReportsDesc',
+  'myWork.hub.aITriage',
+  'myWork.inboxContent.systemTitles.defineTargetProcess',
+  'myWork.inboxContent.systemTitles.submitComplianceDocumentation',
+  'myWork.inboxContent.systemTitles.fixCriticalProductionBug',
+  'myWork.inboxContent.systemTitles.selectAiModelProvider',
+  'myWork.inboxContent.systemTitles.finalizeApiRateLimitingPolicy',
+  'myWork.inboxContent.systemTitles.launchPublicBetaDecision',
+  'myWork.inboxContent.systemTitles.interviewAssignmentOverdue',
+  'initiatives.kanban.notApplicable',
+  'initiatives.kanban.health.green',
+  'initiatives.kanban.health.amber',
+  'initiatives.kanban.health.red',
+  'initiatives.kanban.health.grey',
+  'initiatives.fullView.overview.tasksCount',
+  'initiatives.fullView.overview.keyMetrics',
+  'initiatives.fullView.overview.timeline',
+  'initiatives.fullView.overview.ownership',
+  'common.documentTypes.initiative',
+  ...['teamHandbook', 'contentCalendar', 'productRoadmap', 'issueTracker', 'projectManagement', 'crmPipeline']
+    .flatMap((template) => [
+      `kimi.template.system.${template}.name`,
+      `kimi.template.system.${template}.description`,
+    ]),
+];
+
 const auditedComponents = [
   'src/components/Initiatives/InitiativeFullView.tsx',
   'src/components/Initiatives/InitiativesHub.tsx',
@@ -150,6 +184,7 @@ describe('P3 — koniec angielskiego', () => {
       'trust.badge.sources',
       'trust.badge.noSources',
       ...profileRoleKeys,
+      ...runtimeRepairKeys,
       'execution.review.roles.executionManager',
       'execution.review.roles.controlsEngineer',
     ];
