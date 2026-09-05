@@ -389,3 +389,8 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | Nr | Znalezisko | Skutek | Stan | Ślad |
 |---|---|---|---|---|
 | AG1 | Kebab zaznaczenia i „Dodaj element” wykonywały deterministyczną podmianę pod etykietą AI; menu pływające milczało przy błędzie i wysyłało `message` ponad limit 8000. | Oba wejścia używają jednej granicy `/api/ai/chat/quick`; fallback jest jawny, błędy wspólne, limit blokowany przed fetch, a panel manualny nadal nie woła AI. | ZAMKNIĘTE lokalnie / REALNY DOSTAWCA NIEZWERYFIKOWANY | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY367_KANWA_AI_REPORT.md`, `evidence/day367-kanwa-ai/R3_REGRESSION_MEASUREMENT.md` |
+## AH. Dyżur 370 — akcje wiadomości tworzyły zły rekord albo nie zapisywały przed nawigacją
+
+- K4: „Konwertuj na inicjatywę” zapisywało `ai_decision_outcomes`; gałąź dowodowa rozdziela typy i woła kanoniczny lejek `createInitiative` ze śladem org/source.
+- K8: „Zapisz jako pomysł” używało placeholdera `new-idea-*`; gałąź dowodowa zapisuje przez `createIdeaFromChat` przed nawigacją i przekazuje realne `idea-*`.
+- Stan: `PARTIAL` — RealPG/ApiGateway/JWT i mutacje RED→GREEN przechodzą; pełny test montażu `IdeaMapWorkspace` z licznikiem `createMyIdea=0` oraz wdrożenie/akcept pozostają nieudowodnione. Raport: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY370_AKCJE_WIADOMOSCI_REPORT.md`.
