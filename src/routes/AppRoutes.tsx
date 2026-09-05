@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
   Navigate,
-  Navigate,
   Outlet,
   Route,
   Routes,
