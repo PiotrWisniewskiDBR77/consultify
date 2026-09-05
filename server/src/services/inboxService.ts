@@ -1,7 +1,7 @@
 /**
  * Canonical Inbox Service (V4-INBX-01)
  *
- * Materializes inbox items from tasks/decisions/notifications into a persistent
+ * Materializes inbox items from tasks/decisions/notifications/action cards into a persistent
  * canonical_inbox_items table with lifecycle, SLA, and delegation support.
  */
 
@@ -192,7 +192,7 @@ export async function materializeInboxItems(
     return count;
   }
 
-  const [tasks, decisions, notifications] = await Promise.all([
+  const [tasks, decisions, notifications, actionCards] = await Promise.all([
     queryHelpers.queryAll<any>(
       `SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date,
               t.initiative_id, t.blocked_reason, t.blocked_by_decision_id
@@ -222,6 +222,16 @@ export async function materializeInboxItems(
         [userId]
       )
       .catch(() => [] as any[]),
+    queryHelpers.queryAll<any>(
+      `SELECT ac.id, ac.action_text, ac.problem, ac.due_date, ac.status,
+              ac.source_kind, ac.source_id
+       FROM action_cards ac
+       WHERE ac.organization_id = ?
+         AND ac.owner_user_id = ?
+         AND ac.status = 'OPEN'
+       LIMIT 500`,
+      [orgId, userId]
+    ),
   ]);
 
   const taskRows = tasks.map((t) => {
@@ -306,12 +316,31 @@ export async function materializeInboxItems(
     ];
   });
 
-  const [taskCount, decisionCount, notifCount] = await Promise.all([
+  const actionCardRows = actionCards.map((card) => [
+    uuidv4(),
+    userId,
+    orgId,
+    'task',
+    'action_card',
+    card.id,
+    card.action_text,
+    card.problem || null,
+    'high',
+    'assigned_tasks',
+    card.due_date || null,
+    card.status,
+    null,
+    now,
+    now,
+  ]);
+
+  const [taskCount, decisionCount, notifCount, actionCardCount] = await Promise.all([
     upsertBatch(taskRows),
     upsertBatch(decisionRows),
     upsertBatch(notifRows),
+    upsertBatch(actionCardRows),
   ]);
-  upserted = taskCount + decisionCount + notifCount;
+  upserted = taskCount + decisionCount + notifCount + actionCardCount;
 
   return { upserted };
 }

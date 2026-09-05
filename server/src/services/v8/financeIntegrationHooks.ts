@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import notificationService from '../notificationService.js';
 
 const LOG_PREFIX = '[V8:FinanceHooks]';
 
@@ -128,36 +129,24 @@ export async function upsertFinanceInboxItems(params: {
   currentStep: string;
 }): Promise<void> {
   try {
-    const now = new Date().toISOString();
-    const id = uuidv4();
     const title =
       params.degradedCount > 0
         ? `Finance lane: ${params.degradedCount} degraded issue(s) at ${params.currentStep}`
         : `Finance lane active — step: ${params.currentStep}`;
 
-    await dbRun(
-      `INSERT INTO canonical_inbox_items
-        (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-         title, description, priority, section, status, created_at, updated_at)
-       VALUES (?, ?, ?, 'signal', 'finance_lane_run', ?, ?, ?, ?, 'finance', 'pending', ?, ?)
-       ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
-         title = excluded.title,
-         description = excluded.description,
-         priority = excluded.priority,
-         updated_at = excluded.updated_at`,
-      [
-        id,
-        params.actor,
-        params.organizationId,
-        params.runId,
-        title,
-        `Lane run ${params.runId} at step ${params.currentStep}`,
-        params.degradedCount > 0 ? 'high' : 'normal',
-        now,
-        now,
-      ]
-    );
-    logger.info(`${LOG_PREFIX} Upserted inbox item for run ${params.runId}`);
+    await notificationService.send({
+      userId: params.actor,
+      organizationId: params.organizationId,
+      type: 'FINANCE_LANE_REVIEW',
+      title,
+      body: `Lane run ${params.runId} at step ${params.currentStep}`,
+      priority: params.degradedCount > 0 ? 'high' : 'normal',
+      entityType: 'finance_lane_run',
+      entityId: params.runId,
+      isActionable: true,
+      dedupeKey: `finance-lane:${params.runId}`,
+    });
+    logger.info(`${LOG_PREFIX} Sent finance inbox notification for run ${params.runId}`);
   } catch (err) {
     logger.warn(`${LOG_PREFIX} upsertFinanceInboxItems failed (non-blocking)`, err);
   }
