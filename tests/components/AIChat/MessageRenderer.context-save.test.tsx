@@ -83,6 +83,25 @@ function buildProps(overrides?: Partial<MessageRendererProps>): MessageRendererP
 }
 
 describe('MessageRenderer context save action', () => {
+  it('routes Deep Thinking decision and initiative CTAs with distinct record types', () => {
+    const handleSaveAsDecision = vi.fn();
+    const msg = {
+      id: 'm-dt-370',
+      role: 'ai',
+      content: '# Executive Summary\nDay 370',
+      timestamp: new Date(),
+      isStreaming: false,
+      metadata: { deepThinking: { kind: 'report' } },
+    } as any;
+    render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg], handleSaveAsDecision })} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save as Decision' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Convert to Initiative' }));
+
+    expect(handleSaveAsDecision).toHaveBeenNthCalledWith(1, 'm-dt-370', '# Executive Summary\nDay 370');
+    expect(handleSaveAsDecision).toHaveBeenNthCalledWith(2, 'm-dt-370', '# Executive Summary\nDay 370', 'initiative');
+  });
+
   it('calls save-to-context handler from the feedback action row', () => {
     const handleSaveToContext = vi.fn();
 

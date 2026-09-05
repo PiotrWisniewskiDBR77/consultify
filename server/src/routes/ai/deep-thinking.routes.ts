@@ -13,6 +13,7 @@ import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.
 import { requireRole } from '../../middleware/rbac.middleware.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { createInitiative } from '../../services/initiative/createInitiativeService.js';
 
 const router = Router();
 
@@ -94,6 +95,24 @@ router.post(
       extractSection(/#{1,3}\s*(?:Definicja|Kontekst)\s+Problemu/i);
 
     const recommendation = extractSection(/#{1,3}\s*Rekomendacja|Recommendation/i);
+
+    const normalizedSaveType = String(saveType || 'decision').trim().toLowerCase();
+    if (normalizedSaveType === 'initiative') {
+      const sourceId = String(conversationId || sid).trim();
+      const initiative = await createInitiative(
+        req.organizationId!,
+        {
+          title: executiveSummary.slice(0, 255),
+          description: text.slice(0, 20000),
+          summary: recommendation || executiveSummary,
+          sourceType: 'ai_chat_deep_thinking',
+          sourceId,
+          sourcePack: { sessionId: sid, conversationId: conversationId || null },
+        },
+        { actor: { id: req.userId! } }
+      );
+      return res.json({ success: true, initiativeId: initiative.id });
+    }
 
     // Count options
     const optionMatches = text.match(/#{1,4}\s*(?:Option|Opcja|Path|Ścieżka)\s+\d/gi);

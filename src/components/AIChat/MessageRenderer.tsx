@@ -316,7 +316,11 @@ export interface MessageRendererProps {
   handleEnableDeepThinking: () => void;
   handleDeepThinkingProceed: () => void;
   handleDeepThinkingReconfirm: () => void;
-  handleSaveAsDecision: (messageId: string, content: string) => void;
+  handleSaveAsDecision: (
+    messageId: string,
+    content: string,
+    type?: 'decision' | 'initiative'
+  ) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
   handleSaveToContext: (messageId: string, content: string, role: 'user' | 'ai') => void;
@@ -2419,7 +2423,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   : t('deepThinking.saveDecision', 'Save as Decision')}
               </button>
               <button
-                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
+                onClick={() =>
+                  handleSaveAsDecision(msg.id, userVisibleContent, 'initiative')
+                }
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-c-surface border border-c-border dark:border-c-border text-c-text-secondary dark:text-c-text-secondary hover:bg-c-surface-hover dark:hover:bg-c-surface-hover disabled:opacity-50 transition-colors flex items-center gap-1"
               >
