@@ -383,3 +383,11 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AF1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
 | AF2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
 | AF3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
+
+## AG. Dyżur 371 — żywy status propozycji i granica Case Intake
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AG1 | `ChatTableProposalCard` po remoncie opierał się na zamrożonym metadata, a ponowne wykonanie dawało ogólne 500. | Karta pobiera żywy rekord; ponowienie daje typowane 409, bez drugiej zmiany `resolved_at`. | ZAMKNIĘTE lokalnie | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY371_KARTY_PROPOZYCJI_REPORT.md`, `evidence/day371-karty-propozycji/` |
+| AG2 | Usunięcie martwego UI Case Intake osieroca `CaseWorkspace/apiIntake.ts`; podłączenie producenta wymaga wyjścia poza licencję. | Ani A, ani B nie jest uczciwie wykonalne w zakresie dyżuru; kod wariantu B odwrócono. | STOP / DECYZJA WŁAŚCICIELA | `evidence/day371-karty-propozycji/R4-case-intake-stop.md` |
+| AG3 | `GovernedInitiativeHandoffCard` nie odtwarza stanu adopted po remoncie i nie ma wskazanego żywego kontraktu w licencji. | Rodzina kart pozostaje PARTIAL mimo naprawy rdzenia tabel. | STOP / KONTRAKT NIEUSTALONY | `evidence/day371-karty-propozycji/R1-family-measurement.md` |
