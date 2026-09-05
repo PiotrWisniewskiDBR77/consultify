@@ -30761,8 +30761,8 @@
     "viewMode": {
       "ariaLabel": "Widok dokumentu",
       "rich": "Edytor",
-      "document": "Dokument",
-      "markdown": "Markdown"
+      "document": "Dok",
+      "markdown": "MD"
     },
     "aiMenu": {
       "promptPlaceholder": "Co Teresa ma zrobić z tym tekstem?",

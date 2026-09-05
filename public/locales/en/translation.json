@@ -28432,8 +28432,8 @@
     "viewMode": {
       "ariaLabel": "Document view",
       "rich": "Editor",
-      "document": "Document",
-      "markdown": "Markdown"
+      "document": "Doc",
+      "markdown": "MD"
     },
     "aiMenu": {
       "promptPlaceholder": "What should Teresa do with this text?",
