@@ -600,7 +600,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ currentUser, o
               <div className="flex items-center gap-2">
                 <Building2 size={14} />
                 <span className="truncate">
-                  {t(`settings.profile.roles.${String(currentUser.role).toLowerCase()}`, currentUser.role)}
+                  {t(`settings.profile.roles.${String(currentUser.role).toLowerCase()}`)}
                 </span>
               </div>
               {formState.department && (
