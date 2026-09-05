@@ -189,10 +189,12 @@ test.describe('M03 My Work organizer — full headless acceptance (39 scenarios)
   });
 
   // ============================ §1 HUB & NAV ============================
-  test('§1.1 hub: landing Inbox, five tabs, breadcrumb', async ({ page }) => {
+  // 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — pill usunięty z Menu 2,
+  // więc "Manager" nie jest już liczony wśród widocznych zakładek hubu.
+  test('§1.1 hub: landing Inbox, four tabs, breadcrumb', async ({ page }) => {
     await gotoSurface(page, '/my-work');
     await expectNoCrash(page);
-    for (const name of [/Inbox/i, /Calendar|Kalendarz/i, /Tasks|Zadania/i, /Decisions|Decyzje/i, /Manager/i]) {
+    for (const name of [/Inbox/i, /Calendar|Kalendarz/i, /Tasks|Zadania/i, /Decisions|Decyzje/i]) {
       await expect(tab(page, name)).toBeVisible({ timeout: 30000 });
     }
     await expect(page.getByText(/My Work|Moja Praca/i).first()).toBeVisible();
@@ -651,52 +653,16 @@ test.describe('M03 My Work organizer — full headless acceptance (39 scenarios)
   });
 
   // ============================= §6 MANAGER ===========================
-  test('§6.1 manager gating: visible for admin and dashboard renders (crash regression)', async ({
+  // 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — pill i trasa wypadły
+  // z Mojej Pracy; §6.1-6.4 (gating/cards/queue/refresh na dashboardzie
+  // ExecutiveDashboard) są NIEAKTUALNE dopóki narzędzie nie wróci w fali 2.
+  // Zostaje jeden test honestly sprawdzający retired-route redirect.
+  test('§6.1 manager route retired: /my-work/manager redirects to My Work (fala 2)', async ({
     page,
   }) => {
     await gotoSurface(page, '/my-work/manager');
     await expectNoCrash(page);
-    const rendered = await page
-      .getByText(/Portfolio|Operator|Decision|Manager|Executive|Good morning|Dzień dobry|KPI/i)
-      .first()
-      .isVisible({ timeout: 30000 })
-      .catch(() => false);
-    expect(rendered).toBeTruthy();
-    await shot(page, 's6.1-manager-dashboard');
-  });
-
-  test('§6.2 manager cards render (portfolio / KPI strip)', async ({ page }) => {
-    await gotoSurface(page, '/my-work/manager');
-    await expectNoCrash(page);
-    // Waiting assertion (isVisible() is immediate and would race the load).
-    await expect(
-      page
-        .getByText(
-          /Portfolio|KPI|Decision Velocity|Team|Risk|Action Required|Operator|readiness|Good morning|Dzień dobry|Health|Stage|Snapshot/i
-        )
-        .first()
-    ).toBeVisible({ timeout: 30000 });
-    await shot(page, 's6.2-manager-cards');
-  });
-
-  test('§6.3 manager decision queue inline approve endpoint consistent', async ({ page }) => {
-    const { token } = readTestSupportState();
-    const decision = await seedDecision(page, token, { title: uniqueLabel('m03-d63') });
-    const res = await apiPatch(page, token, `/api/decisions/${decision.id}/decide`, {
-      decision: 'approved',
-    });
-    expect([200, 201].includes(res.status())).toBeTruthy();
-    await gotoSurface(page, '/my-work/manager');
-    await expectNoCrash(page);
-    await shot(page, 's6.3-manager-queue');
-  });
-
-  test('§6.4 manager refresh keeps the dashboard stable', async ({ page }) => {
-    await gotoSurface(page, '/my-work/manager');
-    await expectNoCrash(page);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await dismissTour(page);
-    await expectNoCrash(page);
-    await shot(page, 's6.4-manager-refresh');
+    await expect(page).toHaveURL(/\/my-work(?:\?.*)?$/);
+    await shot(page, 's6.1-manager-retired-redirect');
   });
 });

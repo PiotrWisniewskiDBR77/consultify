@@ -605,7 +605,7 @@ function getInitialMyWorkTab(
   if (tabParam === 'calendar') return 'calendar';
   if (tabParam === 'tasks') return 'tasks';
   if (tabParam === 'decisions') return 'decisions';
-  if (tabParam === 'manager' && canViewManager) return 'manager';
+  // 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — ?tab=manager nie jest już rozwiązywany.
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
   if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
 
@@ -697,7 +697,7 @@ function parseMyWorkPathIntent(
   if (segments[1] === 'notebook') return { tab: 'notebook' };
   if (segments[1] === 'inbox') return { tab: 'inbox' };
   if (segments[1] === 'calendar') return { tab: 'calendar' };
-  if (segments[1] === 'manager') return { tab: 'manager' };
+  // 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — /my-work/manager nie jest już rozwiązywany tu; patrz redirect route w AppRoutes.tsx.
 
   return null;
 }
@@ -1805,14 +1805,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresManagerAccess: false,
         requiresAgentFlag: true,
       },
-      {
-        id: 'manager' as ModuleTab,
-        label: t('myWork.hub.manager', 'Manager'),
-        icon: <Users size={16} />,
-        count: tabCounts.manager,
-        color: 'bg-sky-500',
-        requiresManagerAccess: true,
-      },
+      // 05.09.2026: Menedżer = fala 2 (decyzja właściciela) — pill usunięty z Menu 2.
     ];
 
     return allTabs.filter((tab) => {
