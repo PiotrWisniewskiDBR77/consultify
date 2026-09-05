@@ -3504,9 +3504,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   <div className="flex items-center gap-3 text-xs">
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
-                    {/* danger-ok: real error — count of genuinely blocked tasks */}
                     {taskStats.blocked > 0 && (
-                      <span className="text-danger-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-danger-400" /* danger-ok: real error — blocked count */>
+                        {taskStats.blocked} Blocked
+                      </span>
                     )}
                   </div>
                 </div>
@@ -3740,8 +3741,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (loadError) {
       return (
         <div className="flex flex-col items-center justify-center h-full min-h-screen bg-slate-50 dark:bg-navy-900 p-8 text-center">
-          {/* danger-ok: real error — degraded UX / transport-safeguard error state */}
-          <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" />
+          <AlertTriangle className="w-12 h-12 text-danger-500 mb-4" /* danger-ok: real error — degraded UX state */ />
           <h3 className="text-xl font-semibold text-c-text mb-2">
             {loadError.isTransportBlock
               ? isPolish

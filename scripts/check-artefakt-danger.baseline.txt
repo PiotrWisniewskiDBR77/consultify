@@ -4,7 +4,6 @@
 # NIE blokada — patrz CZĘŚĆ 3 w nagłówku check-artefakt.sh.
 # Regeneruj TYLKO po świadomym sprzątnięciu długu, nigdy żeby ukryć nową regresję.
 1	src/components/Discovery/DiscoveryCanvas.tsx
-2	src/components/Discovery/DiscoveryToolsHub.tsx
 8	src/components/Discovery/InsightDetailView.tsx
 4	src/components/Discovery/ProjectConversionModal.tsx
 3	src/components/Discovery/RecommendationPanel.tsx
