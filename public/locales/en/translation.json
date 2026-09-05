@@ -14569,7 +14569,13 @@
         "owner": "Owner",
         "admin": "Administrator",
         "member": "Member",
-        "superadmin": "Super administrator"
+        "superadmin": "Super administrator",
+        "product": "Product",
+        "sales": "Sales",
+        "operations": "Operations",
+        "finance": "Finance",
+        "partner": "Partner",
+        "consultant": "Consultant"
       },
       "professional": {
         "saved": "Saved",
@@ -29039,7 +29045,9 @@
   },
   "trust": {
     "badge": {
-      "more": "more"
+      "more": "more",
+      "sources": "{{count}} sources",
+      "noSources": "No cited sources"
     }
   },
   "voice": {

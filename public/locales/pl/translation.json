@@ -14014,7 +14014,13 @@
         "owner": "Właściciel",
         "admin": "Administrator",
         "member": "Użytkownik",
-        "superadmin": "Superadministrator"
+        "superadmin": "Superadministrator",
+        "product": "Produkt",
+        "sales": "Sprzedaż",
+        "operations": "Operacje",
+        "finance": "Finanse",
+        "partner": "Partner",
+        "consultant": "Konsultant"
       },
       "professional": {
         "saved": "Zapisane",
@@ -31438,7 +31444,9 @@
   },
   "trust": {
     "badge": {
-      "more": "więcej"
+      "more": "więcej",
+      "sources": "Źródła: {{count}}",
+      "noSources": "Brak cytowanych źródeł"
     }
   },
   "voice": {
