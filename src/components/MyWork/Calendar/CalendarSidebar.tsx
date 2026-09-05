@@ -177,7 +177,15 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         </h4>
         <div className="space-y-1.5">
           {(v2
-            ? (['consultify', 'task', 'event', 'google', 'outlook'] as CalendarEventSource[])
+            ? ([
+                'consultify',
+                'task',
+                'initiative',
+                'decision',
+                'event',
+                'google',
+                'outlook',
+              ] as CalendarEventSource[])
             : ALL_SOURCES
           ).map((source) => {
             const isExternalSource = source === 'google' || source === 'outlook';
