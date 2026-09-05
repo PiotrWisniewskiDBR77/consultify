@@ -193,3 +193,61 @@ describe('Zasoby (ExecutionResourcesSurface)', () => {
     expect(screen.queryByText(/Nie udało się załadować rejestru zasobów/)).not.toBeInTheDocument();
   });
 });
+
+/**
+ * Etykiety zmierzone na zrzucie PO (05.09) — trzy rzeczy, które właściciel
+ * zobaczyłby od razu po naprawie ładowania:
+ *  · surowy `IN_PROGRESS` obok polskich statusów w tej samej tabeli,
+ *  · angielskie „UNKNOWN" w każdym wierszu kolumny „Termin / SLA",
+ *  · UUID przerobiony na coś, co WYGLĄDA jak imię i nazwisko.
+ *
+ * DOWÓD MUTACYJNY (wykonany 2026-09-05): przywrócenie `IN_PROGRESS` poza mapą
+ * etykiet, `return 'UNKNOWN'` w `formatDateTime` i zamiany UUID-a na Title Case
+ * → każdy z trzech testów pada osobno.
+ */
+describe('Praca — etykiety realnych danych', () => {
+  const REAL_ROW = {
+    tasks: [
+      {
+        taskId: 'task-real',
+        title: 'Wdrożenie i pomiar efektu pierwszego etapu',
+        status: 'IN_PROGRESS',
+        assigneeId: 'd2b6a316-08c5-47cf-9bf7-4ba50311d5a2',
+        dueAt: '2026-09-17T06:01:00.000Z',
+        slaAt: null,
+        version: 1,
+        evidenceRefs: [],
+      },
+    ],
+    decisions: [],
+  };
+
+  beforeEach(() => {
+    listExecutionCases.mockResolvedValue({
+      cases: [{ executionCaseId: 'case-ok', initiativeId: 'init-ok' }],
+    });
+    readExecutionWork.mockResolvedValue(REAL_ROW);
+  });
+
+  it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () => {
+    render(<ExecutionWorkSurface activePreset="all" />);
+    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
+  });
+
+  it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async () => {
+    render(<ExecutionWorkSurface activePreset="all" />);
+    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    expect(document.body.textContent).not.toContain('UNKNOWN');
+    expect(document.body.textContent).toContain('SLA brak');
+  });
+
+  it('nie robi z UUID-a imienia i nazwiska', async () => {
+    render(<ExecutionWorkSurface activePreset="all" />);
+    await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDocument());
+    expect(
+      screen.getByText('d2b6a316-08c5-47cf-9bf7-4ba50311d5a2')
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+  });
+});
