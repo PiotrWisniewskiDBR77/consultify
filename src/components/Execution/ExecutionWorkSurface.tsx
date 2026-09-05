@@ -29,6 +29,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { liczebnik } from '@/utils/liczebnik';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import { fanOutExecutionCases } from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -230,7 +231,10 @@ export const ExecutionWorkSurface = ({
       rationale: '',
       conditions: '',
     }),
-    [state, setState] = useState<'READY' | 'LOADING' | 'ERROR'>('LOADING');
+    [state, setState] = useState<'READY' | 'LOADING' | 'ERROR'>('LOADING'),
+    // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
+    // Stan jawny, bo cicha luka w liście to gorsze kłamstwo niż wisząca zakładka.
+    [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
   const loadCases = useCallback(async () => {
     setState('LOADING');
     try {
@@ -242,14 +246,19 @@ export const ExecutionWorkSurface = ({
             ? executionReviewCases
             : [];
       setCases(nextCases);
-      const workSets = await Promise.all(
-        nextCases.map(async (executionCase: any) => {
+      // Wachlarz odporny na JEDNĄ wiszącą realizację — patrz executionCaseFanOut.ts.
+      // Do 2026-09-05 stało tu `Promise.all`, więc realizacja, której endpoint
+      // /work nie odpowiada (zmierzone na stagingu), zamrażała całą zakładkę na
+      // „Loading canonical work" z licznikami na zerach.
+      const fanOut = await fanOutExecutionCases<Row>(
+        nextCases,
+        async (executionCase: any, signal) => {
           const reviewWork = getExecutionReviewWork(executionCase.executionCaseId);
           const work = executionReviewCases.some(
             (item) => item.executionCaseId === executionCase.executionCaseId
           )
             ? reviewWork
-            : ((await readExecutionWork(executionCase.executionCaseId)) as any);
+            : ((await readExecutionWork(executionCase.executionCaseId, signal)) as any);
           return [
             ...(work.tasks ?? []).map((item: any) => ({
               id: item.taskId,
@@ -278,9 +287,10 @@ export const ExecutionWorkSurface = ({
               source: item,
             })),
           ];
-        })
+        }
       );
-      setRows(workSets.flat());
+      setRows(fanOut.items);
+      setUnreachableCaseIds(fanOut.failedCaseIds);
       setState('READY');
     } catch {
       if (!executionLocalReviewEnabled) {
@@ -288,6 +298,7 @@ export const ExecutionWorkSurface = ({
         return;
       }
       setCases(executionReviewCases);
+      setUnreachableCaseIds([]);
       setRows(
         executionReviewCases.flatMap((executionCase) => {
           const work = getExecutionReviewWork(executionCase.executionCaseId);
@@ -329,6 +340,7 @@ export const ExecutionWorkSurface = ({
   }, [loadCases]);
   const load = async (id: string) => {
     setCaseId(id);
+    setUnreachableCaseIds([]);
     setState('LOADING');
     try {
       const reviewCase = getExecutionReviewCase(id);
@@ -712,7 +724,20 @@ export const ExecutionWorkSurface = ({
           </div>
         </div>
       )}
-      {state === 'LOADING' && <p role="status">Loading canonical work</p>}
+      {state === 'LOADING' && <p role="status">Wczytuję kanoniczny rejestr pracy…</p>}
+      {state === 'READY' && unreachableCaseIds.length > 0 && (
+        /*
+         * Uczciwy stan częściowy: reszta listy JEST widoczna, ale wprost mówimy,
+         * ilu realizacji nie udało się pobrać. Cicha luka w tabeli („po prostu
+         * mniej wierszy") byłaby gorsza niż wisząca zakładka, którą to zastąpiło.
+         */
+        <p
+          role="status"
+          className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
+        >
+          {`Nie udało się pobrać pracy z ${unreachableCaseIds.length} realizacji — poniżej praca z pozostałych.`}
+        </p>
+      )}
       {!caseId && state === 'READY' && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych zadań i decyzji w dostępnych realizacjach.
