@@ -23,6 +23,7 @@ import React from 'react';
 import { LoadingState } from '@/components/shared/states';
 import {
   financeLegacyBridgeQuarantineReasonLabel,
+  type FinanceArtifactType,
   type LegacyFinanceTable,
 } from '@/services/api/financeV2.types';
 
@@ -32,6 +33,8 @@ import { type FinanceLegacyBridgeResolved, useFinanceLegacyBridge } from './useF
 export interface FinanceLegacyBridgeGateProps {
   legacyTable: LegacyFinanceTable;
   legacyId: string;
+  /** Typ kanoniczny warsztatu pod bramką — rozstrzyga `financial_models` → Baseline vs Predykcja i trafia do materializacji tożsamości. */
+  expectedArtifactType?: FinanceArtifactType;
   onBackToList: () => void;
   /** Functional legacy workspace shown when this exact row has not been migrated yet. */
   unresolvedFallback?: React.ReactNode;
@@ -41,11 +44,12 @@ export interface FinanceLegacyBridgeGateProps {
 export const FinanceLegacyBridgeGate: React.FC<FinanceLegacyBridgeGateProps> = ({
   legacyTable,
   legacyId,
+  expectedArtifactType,
   onBackToList,
   unresolvedFallback,
   children,
 }) => {
-  const { state, retry } = useFinanceLegacyBridge(legacyTable, legacyId);
+  const { state, retry } = useFinanceLegacyBridge(legacyTable, legacyId, expectedArtifactType);
 
   if (state.kind === 'loading') {
     return (

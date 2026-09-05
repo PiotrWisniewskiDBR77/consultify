@@ -60,6 +60,35 @@ const canonicalTypesByLegacyTable: Record<
   valuations: new Set(['VALUATION_CASE']),
 };
 
+/** Typy kanoniczne dopuszczalne dla danej listy legacy — jedyne źródło tej mapy w kodzie. */
+export function canonicalArtifactTypesForLegacyTable(
+  legacyTable: LegacyFinanceTable
+): ReadonlySet<ArtifactRow['artifact_type']> {
+  return canonicalTypesByLegacyTable[legacyTable];
+}
+
+/**
+ * Typ używany, gdy wołający nie podał własnego. `financial_models` karmi DWA
+ * warsztaty (Baseline i Predykcja) — domyślny Baseline jest tu świadomym
+ * wyborem „bezpieczniejszej połowy" (to on jest domyślną zakładką listy modeli),
+ * a nie zgadywaniem: wołający, który wie lepiej, przekazuje `expectedArtifactType`.
+ */
+export function defaultCanonicalArtifactTypeForLegacyTable(
+  legacyTable: LegacyFinanceTable
+): ArtifactRow['artifact_type'] {
+  switch (legacyTable) {
+    case 'financial_statement_packs':
+      return 'STATEMENT_PACK';
+    case 'financial_analyses':
+      return 'HISTORICAL_ANALYSIS';
+    case 'valuations':
+      return 'VALUATION_CASE';
+    case 'financial_models':
+    default:
+      return 'BASELINE_MODEL';
+  }
+}
+
 interface AliasRow {
   alias_id: string;
   legacy_table: string;
@@ -118,15 +147,37 @@ export type LegacyBridgeResolution =
 export async function resolveLegacyFinanceArtifact(
   organizationId: string,
   legacyTable: LegacyFinanceTable,
-  legacyId: string
+  legacyId: string,
+  options?: { expectedArtifactType?: ArtifactRow['artifact_type'] | null }
 ): Promise<LegacyBridgeResolution> {
+  // ★ ZAWĘŻENIE DO TYPU (2026-09-05): `financial_models` karmi DWA warsztaty
+  // (Baseline i Predykcja), a `uq_finance_alias_legacy` dopuszcza dwa aliasy dla
+  // tego samego wiersza legacy pod różnym `legacy_version`. Bez tego filtra
+  // „najnowszy alias wygrywa" zwróciłoby Predykcji artefakt Baseline'u (i
+  // odwrotnie), co ekran zgłasza jako `IDENTITY_MISMATCH`. Gdy wołający NIE poda
+  // oczekiwanego typu, zachowanie jest identyczne jak dotąd.
+  const expectedArtifactType =
+    options?.expectedArtifactType &&
+    canonicalTypesByLegacyTable[legacyTable].has(options.expectedArtifactType)
+      ? options.expectedArtifactType
+      : null;
   const alias = await withPinnedPostgresTransaction((tx) =>
-    tx.queryOne<AliasRow>(
-      `SELECT * FROM finance_artifact_aliases
+    expectedArtifactType
+      ? tx.queryOne<AliasRow>(
+          `SELECT aa.* FROM finance_artifact_aliases aa
+             JOIN finance_artifacts a
+               ON a.artifact_id = aa.artifact_id AND a.organization_id = aa.organization_id
+            WHERE aa.legacy_table = ? AND aa.legacy_id = ? AND aa.organization_id = ?
+              AND a.artifact_type = ?
+            ORDER BY aa.created_at DESC LIMIT 1`,
+          [legacyTable, legacyId, organizationId, expectedArtifactType]
+        )
+      : tx.queryOne<AliasRow>(
+          `SELECT * FROM finance_artifact_aliases
        WHERE legacy_table = ? AND legacy_id = ? AND organization_id = ?
        ORDER BY created_at DESC LIMIT 1`,
-      [legacyTable, legacyId, organizationId]
-    )
+          [legacyTable, legacyId, organizationId]
+        )
   );
 
   if (!alias) {
@@ -156,7 +207,8 @@ export async function resolveLegacyFinanceArtifact(
     );
     if (
       !canonicalArtifact ||
-      !canonicalTypesByLegacyTable[legacyTable].has(canonicalArtifact.artifact_type)
+      !canonicalTypesByLegacyTable[legacyTable].has(canonicalArtifact.artifact_type) ||
+      (expectedArtifactType !== null && canonicalArtifact.artifact_type !== expectedArtifactType)
     ) {
       return { status: 'NOT_MIGRATED' };
     }

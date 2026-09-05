@@ -417,10 +417,32 @@ export async function getFinanceArtifact(artifactId: string): Promise<FinanceArt
  */
 export async function resolveLegacyFinanceArtifact(
   legacyTable: LegacyFinanceTable,
-  legacyId: string
+  legacyId: string,
+  /** Podpowiedź rozstrzygająca `financial_models` → BASELINE_MODEL vs PREDICTION_SCENARIO (jeden wiersz legacy karmi dwa warsztaty). */
+  expectedArtifactType?: FinanceArtifactType | null
 ): Promise<LegacyBridgeResolutionDto> {
   return v8Get<LegacyBridgeResolutionDto>(
-    `${BASE}/artifacts/resolve-legacy/${encodeURIComponent(legacyTable)}/${encodeURIComponent(legacyId)}`
+    `${BASE}/artifacts/resolve-legacy/${encodeURIComponent(legacyTable)}/${encodeURIComponent(legacyId)}`,
+    expectedArtifactType ? { artifactType: expectedArtifactType } : {}
+  );
+}
+
+/**
+ * ID BRIDGE — strona ZAPISU (naprawa 2026-09-05). Materializuje brakującą
+ * tożsamość kanoniczną dla wiersza legacy, który naprawdę istnieje w tej
+ * organizacji, i zwraca ten sam DTO co `resolveLegacyFinanceArtifact`.
+ * Idempotentna: powtórzone wywołanie oddaje tę samą tożsamość, nie tworzy drugiej.
+ * Nie tworzy tożsamości dla nieznanego id (dalej `NOT_MIGRATED`) i nie omija
+ * kwarantanny (dalej `QUARANTINED`).
+ */
+export async function ensureLegacyFinanceArtifactIdentity(
+  legacyTable: LegacyFinanceTable,
+  legacyId: string,
+  expectedArtifactType?: FinanceArtifactType | null
+): Promise<LegacyBridgeResolutionDto> {
+  return v8Post<LegacyBridgeResolutionDto>(
+    `${BASE}/artifacts/resolve-legacy/${encodeURIComponent(legacyTable)}/${encodeURIComponent(legacyId)}/ensure`,
+    expectedArtifactType ? { artifactType: expectedArtifactType } : {}
   );
 }
 

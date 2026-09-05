@@ -40,9 +40,11 @@ import {
   renameArtifact,
 } from '../../../services/finance/canonical/artifactVersionService.js';
 import {
+  canonicalArtifactTypesForLegacyTable,
   isLegacyFinanceTable,
   resolveLegacyFinanceArtifact,
 } from '../../../services/finance/canonical/legacyIdBridgeService.js';
+import { ensureLegacyFinanceArtifactIdentity } from '../../../services/finance/canonical/legacyIdentityMaterializationService.js';
 import {
   allowedActionsFromStatus,
   type FinanceArtifactType,
@@ -163,6 +165,22 @@ router.post(
   })
 );
 
+/**
+ * Oczekiwany typ kanoniczny podany przez wołający ekran. Nieznana/niepasująca
+ * wartość jest CICHO ignorowana (a nie odrzucana 400): to podpowiedź
+ * rozstrzygająca `financial_models` → Baseline vs Predykcja, nie kolejny
+ * wymagany parametr trasy — a zawężanie do typu spoza listy i tak nigdy nie
+ * mogłoby nic zwrócić.
+ */
+function readExpectedArtifactType(
+  raw: unknown,
+  legacyTable: Parameters<typeof canonicalArtifactTypesForLegacyTable>[0]
+): FinanceArtifactType | null {
+  if (typeof raw !== 'string' || !raw) return null;
+  const allowed = canonicalArtifactTypesForLegacyTable(legacyTable) as ReadonlySet<string>;
+  return allowed.has(raw) ? (raw as FinanceArtifactType) : null;
+}
+
 // ---------------------------------------------------------------------------
 // GET /artifacts/resolve-legacy/:legacyTable/:legacyId — ID BRIDGE (Gate E).
 //
@@ -211,7 +229,86 @@ router.get(
       return sendError(res, 400, 'INVALID_LEGACY_ID', 'legacyId is required');
     }
 
-    const resolution = await resolveLegacyFinanceArtifact(organizationId, legacyTable, legacyId);
+    const resolution = await resolveLegacyFinanceArtifact(organizationId, legacyTable, legacyId, {
+      expectedArtifactType: readExpectedArtifactType(req.query?.artifactType, legacyTable),
+    });
+
+    if (resolution.status === 'RESOLVED') {
+      return res.status(200).json({
+        data: {
+          status: 'RESOLVED',
+          artifactId: resolution.artifactId,
+          businessVersionId: resolution.businessVersionId,
+          artifactType: resolution.artifactType,
+          mappingConfidence: resolution.mappingConfidence,
+        },
+        meta: financeV2Meta(),
+      });
+    }
+    if (resolution.status === 'QUARANTINED') {
+      return res.status(200).json({
+        data: {
+          status: 'QUARANTINED',
+          mappingConfidence: resolution.mappingConfidence,
+          reason: resolution.reason,
+        },
+        meta: financeV2Meta(),
+      });
+    }
+    return res.status(200).json({
+      data: { status: 'NOT_MIGRATED' },
+      meta: financeV2Meta(),
+    });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// POST /artifacts/resolve-legacy/:legacyTable/:legacyId/ensure — ID BRIDGE,
+// strona ZAPISU (naprawa 2026-09-05).
+//
+// GET wyżej tylko CZYTA `finance_artifact_aliases`; dla każdego rekordu
+// założonego przed wejściem serwisów rejestrujących alias nie istnieje, więc
+// GET uczciwie zwraca NOT_MIGRATED — i zatwierdzony ekran v3 nigdy się nie
+// montuje. Ten POST materializuje brakującą TOŻSAMOŚĆ (artefakt + wersja +
+// alias) dla wiersza legacy, który naprawdę istnieje w tej organizacji, i
+// oddaje TEN SAM kształt odpowiedzi co GET.
+//
+// Dlaczego POST, a nie „GET, który po cichu zapisuje": zapis jest zapisem —
+// GET pozostaje bezpieczny i cache'owalny, a wołający (hook front-endu,
+// `finance-bridge-backfill.ts`) jawnie prosi o utworzenie. Operacja jest
+// idempotentna (advisory lock + dwa unikaty w schemacie), więc powtórzone
+// wywołanie nie tworzy drugiego artefaktu.
+// ---------------------------------------------------------------------------
+
+router.post(
+  '/artifacts/resolve-legacy/:legacyTable/:legacyId/ensure',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const legacyTable = String(req.params.legacyTable || '');
+    const legacyId = String(req.params.legacyId || '');
+
+    if (!isLegacyFinanceTable(legacyTable)) {
+      return sendError(
+        res,
+        400,
+        'INVALID_LEGACY_TABLE',
+        `legacyTable must be one of the known legacy Finance tables, got "${legacyTable}"`
+      );
+    }
+    if (!legacyId.trim()) {
+      return sendError(res, 400, 'INVALID_LEGACY_ID', 'legacyId is required');
+    }
+
+    const resolution = await ensureLegacyFinanceArtifactIdentity({
+      organizationId,
+      userId,
+      legacyTable,
+      legacyId,
+      expectedArtifactType: readExpectedArtifactType(
+        (req.body as { artifactType?: unknown } | undefined)?.artifactType,
+        legacyTable
+      ),
+    });
 
     if (resolution.status === 'RESOLVED') {
       return res.status(200).json({
