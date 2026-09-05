@@ -123,3 +123,33 @@ Decyzja właściciela 05.09 rano: „dziś odbieramy MVP; dziś wszystkie backlo
 ## C. Zasada zamrożenia po odbiorze modułu
 
 Po „tak” właściciela dla modułu: zrzuty na żywo trafiają do `evidence/mvp-final/<modul>/` jako wzorce, pliki modułu na listę `docs/program/MVP_FINAL_ZAMROZONE.txt`, hook `scripts/check-mvp-final-freeze.sh` odrzuca commit dotykający zamrożonego pliku bez `[ODMROZENIE DEC-...]` w opisie, tag `mvp-final-<modul>-20260905`.
+
+## D. Stan na wdrożenie kandydata MVP (05.09, tag `mvp-kandydat-20260905`, staging `5ffdabe05e`)
+
+Scalone dziś do linii m03 (raporty agentów, każdy z testem i dowodem mutacyjnym):
+
+- `AGENT_ADMIN_USTAWIENIA_DEFEKTY_20260905.md` — admin ustawienia defekty
+- `AGENT_BLOKADY_ROI_APPROVER_20260905.md` — blokady roi approver
+- `AGENT_DRD_MACIERZ_RAPORT_20260905.md` — drd macierz raport
+- `AGENT_DRD_MACIERZ_SEDNO_20260905.md` — drd macierz sedno
+- `AGENT_DROBNE_DEFEKTY_20260905.md` — drobne defekty
+- `AGENT_FINANCE_BRIDGE_GATE_20260905.md` — finance bridge gate
+- `AGENT_FLAGI_ENV_STATYCZNY_20260905.md` — flagi env statyczny
+- `AGENT_IDEA_MENU1_PRAWY_PANEL_20260905.md` — idea menu1 prawy panel
+- `AGENT_IDEA_PODGLAD_KANON_20260905.md` — idea podglad kanon
+- `AGENT_INICJATYWY_JEDNA_TABELA_AI_20260905.md` — inicjatywy jedna tabela ai
+- `AGENT_INICJATYWY_KARTA_REALNY_REKORD_20260905.md` — inicjatywy karta realny rekord
+- `AGENT_KANON_KARTY_KALENDARZ_20260905.md` — kanon karty kalendarz
+- `AGENT_MATERIALY_DEFEKTY_20260905.md` — materialy defekty
+- `AGENT_MOJA_PRACA_DEFEKTY_20260905.md` — moja praca defekty
+- `AGENT_MVP_FINAL_FREEZE_20260905.md` — mvp final freeze
+- `AGENT_OCENA_PANEL_NARZEDZIA_SESJE_20260905.md` — ocena panel narzedzia sesje
+- `AGENT_ODBIOR_ZYWO_STRONA_20260905.md` — odbior zywo strona
+- `AGENT_ORG_REDESIGN_DEFEKTY_20260905.md` — org redesign defekty
+- `AGENT_REALIZACJA_PRACA_ZASOBY_KOKPIT_20260905.md` — realizacja praca zasoby kokpit
+- `AGENT_SESJA_EDITOR_POGODZENIE_20260905.md` — sesja editor pogodzenie
+- `AGENT_TRASY_500_LIMITER_20260905.md` — trasy 500 limiter
+- `AGENT_WYWIAD_CZAT_DEFEKTY_20260905.md` — wywiad czat defekty
+- `AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905.md` — wzorce systemowe atestacja
+
+Do decyzji właściciela (nie zrobione celowo): silnik tabeli Pomysłów (zastany vs platformowy), prawy panel Pomysłu/Notatnika (fala 2), chipy statusu Biblioteki ocen (obraz nieaktualny), Baseline v3 (wyłączony do czasu danych), `drdHttpSourceOfTruthV1` (go-live licencyjny), SWOT 7 etapów (fala 2), warsztat SIRI (brak montażu w produkcie — osobne zlecenie), rejestr 4 prototypów Wyników istniejących tylko w przyrządzie.
