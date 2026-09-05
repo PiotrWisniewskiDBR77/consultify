@@ -21,7 +21,17 @@ if (!out || !auth || !fs.existsSync(auth)) { console.error('Wymagane: --out oraz
 fs.mkdirSync(path.dirname(out), { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ storageState: auth, viewport: { width: 1440, height: wysokosc }, colorScheme: 'light', locale: 'pl-PL' });
-await ctx.addInitScript(() => { try { localStorage.setItem('iris-theme', 'light'); } catch {} });
+// JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
+// src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji.
+await ctx.addInitScript(() => {
+  try {
+    const raw = localStorage.getItem('consultify-storage');
+    const obj = raw ? JSON.parse(raw) : { state: {}, version: 0 };
+    obj.state = { ...(obj.state || {}), theme: 'light' };
+    localStorage.setItem('consultify-storage', JSON.stringify(obj));
+    document.documentElement.classList.remove('dark');
+  } catch {}
+});
 const page = await ctx.newPage();
 const bledy = [];
 page.on('console', (m) => { if (m.type() === 'error') bledy.push(m.text().slice(0, 200)); });
