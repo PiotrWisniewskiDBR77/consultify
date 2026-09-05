@@ -1578,7 +1578,33 @@
         "aiGenerateDescription": "Wygeneruj ten slajd ponownie z obrazem AI",
         "aiGenerateInstruction": "Dodaj do tego slajdu pasujący obraz wygenerowany przez AI.",
         "upload": "Prześlij",
-        "uploadDescription": "Prześlij obraz z urządzenia"
+        "uploadDescription": "Prześlij obraz z urządzenia",
+        "layoutItems": {
+          "twoColumns": "2 kolumny",
+          "threeColumns": "3 kolumny",
+          "fourColumns": "4 kolumny",
+          "boxes": "Bloki",
+          "cards": "Karty"
+        },
+        "diagramItems": {
+          "processSteps": "Kroki procesu",
+          "funnel": "Lejek",
+          "timeline": "Oś czasu",
+          "matrix2x2": "Macierz 2x2",
+          "swot": "SWOT",
+          "pyramid": "Piramida",
+          "venn2": "Venn (2)",
+          "venn3": "Venn (3)",
+          "cycle": "Cykl",
+          "roadmap": "Teraz/Dalej/Później",
+          "hierarchy": "Hierarchia",
+          "decisionTree": "Drzewo decyzyjne"
+        },
+        "chartItems": {
+          "bar": "Wykres słupkowy",
+          "line": "Wykres liniowy",
+          "pie": "Wykres kołowy"
+        }
       },
       "blocks": {
         "heading": "Nagłówek",
@@ -1767,7 +1793,27 @@
       },
       "lockSlideAction": "Zablokuj slajd",
       "unlockSlideAction": "Odblokuj slajd",
-      "unlockSlide": "Edytowany ręcznie — chroniony przed przebudową AI. Kliknij, aby odblokować."
+      "unlockSlide": "Edytowany ręcznie — chroniony przed przebudową AI. Kliknij, aby odblokować.",
+      "defaultContent": {
+        "heading": "Nagłówek",
+        "paragraph": "Wpisz tekst tutaj…",
+        "item1": "Punkt 1",
+        "item2": "Punkt 2",
+        "item3": "Punkt 3",
+        "step1": "Krok 1",
+        "step2": "Krok 2",
+        "step3": "Krok 3",
+        "chart": "Wykres",
+        "metric": "Miernik",
+        "callout": "Ważna uwaga",
+        "calloutInfo": "Ważna informacja",
+        "timelineStart": "Początek",
+        "timelineMid": "Środek",
+        "timelineEnd": "Koniec",
+        "image": "Obraz",
+        "newSlide": "Nowy slajd",
+        "untitledArtifact": "Artefakt bez nazwy"
+      }
     },
     "agent": {
       "title": "Agent AI",

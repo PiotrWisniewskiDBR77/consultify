@@ -48,6 +48,12 @@ const IDENTITY_WHITELIST = [
   'Jira', 'Slack', 'Teams', 'Google Drive', 'OneDrive', 'Dropbox', 'e-mail',
   'Email', 'OK', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Excel',
   'Word', 'PowerPoint',
+  // MVP naprawy noc 3 (05/06.09.2026) — Presentations DeckBuilder toolbar
+  // "Diagrams" panel item labels: SWOT and Venn are the internationally
+  // used names of these diagram archetypes, not English words with a
+  // Polish equivalent (nobody calls a SWOT a "MSPZ" in Polish business
+  // usage) — same category as RAID/KPI/OKR above.
+  'SWOT', 'Venn (2)', 'Venn (3)',
 ].map((entry) => entry.trim().toLowerCase());
 const IDENTITY_WHITELIST_SET = new Set(IDENTITY_WHITELIST);
 
