@@ -24114,6 +24114,12 @@
       "status": "Status",
       "mappedLines": "Zmapowane linie",
       "previewTitle": "Stan pakietu",
+      "state": {
+        "ready": "Pakiet jest kompletny: rachunek zysków i strat, bilans oraz rachunek przepływów pieniężnych.",
+        "rejected": "Wszystkie sprawozdania w tym pakiecie zostały odrzucone — pakiet nie może zasilić dalszej pracy.",
+        "needsAttention": "Pakiet wymaga uwagi",
+        "collecting": "Pakiet wciąż zbiera wymagane sprawozdania."
+      },
       "ratios": "Sprawozdania",
       "validation": "Status pakietu",
       "computeRatios": "Przelicz ratios",

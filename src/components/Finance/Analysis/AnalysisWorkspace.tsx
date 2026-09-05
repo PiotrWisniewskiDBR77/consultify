@@ -39,6 +39,7 @@
  * dodane tutaj, tym samym wzorcem co Baseline/Prediction/Valuation
  * (Pakiet C już to zapewnia dla tamtych trzech).
  */
+import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useFinanceAnalysisWorkspaceFlag } from '../../../hooks/useFinanceAnalysisWorkspaceFlag';
@@ -200,7 +201,13 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
         getAnalysisKpiValues(businessVersionId),
         getAnalysisKpiCatalog(),
       ]);
-      setName(artifact.naturalKey ?? 'Analiza bez nazwy');
+      setName(
+        financeArtifactDisplayTitle({
+          displayName: artifact.displayName,
+          naturalKey: artifact.naturalKey,
+          artifactType: 'HISTORICAL_ANALYSIS',
+        })
+      );
       setStatus(bv.status);
       setFreshness(bv.freshness);
       setVersionNo(bv.versionNo);

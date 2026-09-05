@@ -37,6 +37,10 @@ export interface StatementTableRow {
   rowKey: string;
   canonicalLineId: string | null;
   lineCode: string | null;
+  /** Nazwa pozycji z taksonomii tej instalacji (DTO), gdy serwer ją niesie — zapasowe źródło etykiety po słowniku kodów. */
+  lineName: string | null;
+  /** Polska nazwa pozycji z taksonomii tej instalacji (DTO). */
+  lineNamePl: string | null;
   usesLineCodeFallback: boolean;
   cellsByPeriodId: Record<string, StatementTableCell>;
 }
@@ -94,6 +98,8 @@ export function deriveStatementTable(lines: readonly StatementLineDto[]): Derive
         rowKey,
         canonicalLineId: line.canonicalLineId,
         lineCode: line.lineCode,
+        lineName: line.lineName ?? null,
+        lineNamePl: line.lineNamePl ?? null,
         usesLineCodeFallback,
         cellsByPeriodId: {},
       });
