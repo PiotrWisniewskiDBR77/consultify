@@ -48,6 +48,7 @@ import {
   type StandardKanbanUrgency,
 } from '@/components/standard';
 import type { ChipTone } from '@/components/ui/primitives/chips/chipBase';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { Task, TaskStatus } from '@/types';
 
@@ -217,8 +218,15 @@ const getPriorityMeta = (priority?: string) =>
 
 /* ─── Date helpers ─── */
 
+// ★ NAPRAWA (odbiór CTO 05.09): ten sam defekt co `MyTasksListContent.tsx`
+// (rodzina — dwie kopie tej samej funkcji, jedna na widok Lista, jedna na
+// Kanban) — twarde 'Today'/'Tomorrow' i locale 'en-US' niezależnie od języka
+// aplikacji. Zmierzone na żywym ekranie: karty Kanbanu w Zadaniach pokazywały
+// „Feb 9”/„Feb 11” na w pełni polskim ekranie. Te same klucze i18n
+// (myWork.tasksList.dueToday/dueTomorrow), żeby oba widoki mówiły identycznie.
 const formatDueDate = (dueDate?: string | Date): string | null => {
   if (!dueDate) return null;
+  const isPl = i18n.language?.startsWith('pl');
   const date = new Date(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -226,9 +234,13 @@ const formatDueDate = (dueDate?: string | Date): string | null => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const dateOnly = new Date(date);
   dateOnly.setHours(0, 0, 0, 0);
-  if (dateOnly.getTime() === today.getTime()) return 'Today';
-  if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (dateOnly.getTime() === today.getTime()) {
+    return i18n.t('myWork.tasksList.dueToday', 'Today');
+  }
+  if (dateOnly.getTime() === tomorrow.getTime()) {
+    return i18n.t('myWork.tasksList.dueTomorrow', 'Tomorrow');
+  }
+  return date.toLocaleDateString(isPl ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' });
 };
 
 const isOverdue = (dueDate?: string | Date, status?: string): boolean => {

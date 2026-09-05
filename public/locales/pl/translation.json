@@ -3444,7 +3444,18 @@
       "delayDays_many": "+{{count}} dni",
       "delayDays_other": "+{{count}} dni",
       "escalateUrgent": "Eskaluj",
-      "escalate": "Eskaluj"
+      "escalate": "Eskaluj",
+      "dueToday": "Dziś",
+      "dueTomorrow": "Jutro",
+      "dueYesterday": "Wczoraj",
+      "overdueDays_one": "{{count}} dzień po terminie",
+      "overdueDays_few": "{{count}} dni po terminie",
+      "overdueDays_many": "{{count}} dni po terminie",
+      "overdueDays_other": "{{count}} dni po terminie",
+      "daysLeft_one": "{{count}} dzień do terminu",
+      "daysLeft_few": "{{count}} dni do terminu",
+      "daysLeft_many": "{{count}} dni do terminu",
+      "daysLeft_other": "{{count}} dni do terminu"
     },
     "decisionWorkspace": {
       "notFound": "Ta decyzja już nie istnieje lub nie masz do niej dostępu.",
