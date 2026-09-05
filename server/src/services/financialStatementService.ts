@@ -1456,7 +1456,15 @@ export function locateStatementSections(
           cursor > index + 15
         ) {
           const isOwnHeader = cursor === index;
-          if (!isOwnHeader) {
+          // A genuine "start of the notes chapter" heading (e.g. "1. Informacje
+          // ogólne o jednostce") carries no figures. An ordinary numbered BS
+          // line item (e.g. "1. Rezerwy na zobowiązania 2 000 000 1 800 000")
+          // uses the identical "N. Capitalized word" shape but always carries
+          // its period values — mistaking it for a notes heading truncated the
+          // section before the liabilities/equity total, silently dropping the
+          // comparison period for the whole Balance Sheet.
+          const hasFinancialNumbers = (curLine.match(numericGroupRegex) || []).length >= 2;
+          if (!isOwnHeader && !hasFinancialNumbers) {
             end = cursor;
             break;
           }
