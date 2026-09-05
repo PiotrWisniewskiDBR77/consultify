@@ -215,7 +215,7 @@ export const TaskDropdown = () => {
                   onClick={handleNavigateToTasks}
                   className="text-xs text-primary-600 font-medium mt-2"
                 >
-                  {t('taskDropdown.createNew', 'Create new task')}
+                  {t('taskDropdown.createNew', 'Go to tasks')}
                 </button>
               </div>
             ) : (

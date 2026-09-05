@@ -18435,7 +18435,7 @@
     "totalActive": "Total Active",
     "loading": "Loading tasks...",
     "noTasks": "No tasks found",
-    "createNew": "Create new task",
+    "createNew": "Go to tasks",
     "done": "Done",
     "viewMore": "View {{count}} more tasks",
     "noDate": "No date",
