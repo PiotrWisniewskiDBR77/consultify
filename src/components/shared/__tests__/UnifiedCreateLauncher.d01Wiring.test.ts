@@ -7,14 +7,21 @@
  * favour of ONE contextual per-tab CTA. Both commit messages cite the same
  * source: `_ODBIOR_TABELE_PREVIEW_2026-07-27.md §D-01`.
  *
- * This test exists so nobody re-adds the import "to fix the unreachable
- * component" without noticing the decision — treat a red result here as a
- * signal to re-read the D-01 comment in the target file and confirm with the
- * owner before wiring it back in, not as a bug to silently patch around.
+ * 05.09.2026: decyzja potwierdzona na stronie 3100 — the component itself
+ * (`src/components/shared/UnifiedCreateLauncher.tsx`) was confirmed dead
+ * code (zero live callers anywhere in `src/`) and deleted, along with its
+ * own test and the dev-render screen that mounted it. This guard now checks
+ * the stronger invariant directly: the file must stay gone. It still also
+ * checks both hubs, so if someone re-adds the file AND re-wires it into
+ * either hub, both signals go red together — treat either as a signal to
+ * re-read this history and confirm with the owner before undoing it, not as
+ * a bug to silently patch around.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+
+const removedComponentPath = path.resolve(__dirname, '../UnifiedCreateLauncher.tsx');
 
 const interviewHubSource = fs.readFileSync(
   path.resolve(__dirname, '../../Interview/InterviewHub.tsx'),
@@ -26,6 +33,10 @@ const myWorkHubSource = fs.readFileSync(
 );
 
 describe('D-01 — universal "+ Nowy" launcher stays out of Interview/My Work Menu 2', () => {
+  it('confirms the dead UnifiedCreateLauncher component file was removed (05.09.2026)', () => {
+    expect(fs.existsSync(removedComponentPath)).toBe(false);
+  });
+
   it('keeps InterviewHub free of UnifiedCreateLauncher and documents why', () => {
     expect(interviewHubSource).not.toMatch(/<UnifiedCreateLauncher/);
     expect(interviewHubSource).not.toMatch(/import\s+.*UnifiedCreateLauncher/);

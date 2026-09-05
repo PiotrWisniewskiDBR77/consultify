@@ -2343,9 +2343,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           - „Charter" → usunięty tu (2026-07-28): kanon TRIADA A3 dopuszcza po
             prawej stronie Menu 3 WYŁĄCZNIE przyciski AI (wzorzec: `AI Priorities`
             w Tasks), a Charter to akcja tworzenia. Funkcja NIE zniknęła —
-            `InitiativeCharterWizard` ma wejście w globalnym
-            `UnifiedCreateLauncher` (shared/UnifiedCreateLauncher.tsx) oraz
-            w `InitiativeGeneratorModal`.
+            `InitiativeCharterWizard` ma wejście w `InitiativeGeneratorModal`
+            (globalny `UnifiedCreateLauncher` USUNIĘTY jako martwy kod, D-01,
+            05.09.2026).
           #75 — the "AI Initiative Wizard" entry that used to live here was
           removed earlier: it duplicated the source-anchored insight-picker that
           belongs to the SOURCE (Interview/Tools). */}
@@ -2480,7 +2480,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
       {/* P-22 (2026-07-28): `InitiativeCharterWizard` zdjęty razem z przyciskiem
           „Charter" z Menu 3 — bez triggera modal był martwym drzewem. Wejście do
-          kreatora żyje w `UnifiedCreateLauncher` i `InitiativeGeneratorModal`. */}
+          kreatora żyje w `InitiativeGeneratorModal` (globalny
+          `UnifiedCreateLauncher` USUNIĘTY jako martwy kod, D-01, 05.09.2026). */}
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

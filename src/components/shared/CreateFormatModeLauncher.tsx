@@ -6,8 +6,9 @@
  *            w wywołaniu z Biblioteki szablonów).
  *   KROK 2 — tryb (Czysto / Z AI / Z szablonu — równorzędne, jak TriModeChooser).
  *
- * Powłoka wizualna 1:1 z `UnifiedCreateLauncher` (overlay + karta + siatka
- * kafli KROK 1); kafle KROK 2 stylowane jak `TriModeChooser`'s ModeCard.
+ * Powłoka wizualna 1:1 z dawnego globalnego launchera (`UnifiedCreateLauncher`,
+ * USUNIĘTY jako martwy kod, D-01, 05.09.2026) — overlay + karta + siatka
+ * kafli KROK 1; kafle KROK 2 stylowane jak `TriModeChooser`'s ModeCard.
  * Moduł-wywołujący deklaruje TYLKO treść (tiles/copy/handler) — komponent
  * narzuca wygląd, zero własnych tabel/kolorów per caller.
  *
@@ -89,9 +90,10 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
 }: CreateFormatModeLauncherProps<F, M>): React.ReactElement | null {
   const [format, setFormat] = useState<F | null>(defaultFormat ?? null);
 
-  // Re-sync to defaultFormat every time the launcher opens fresh (mirrors
-  // UnifiedCreateLauncher's defaultType re-sync) so a stale KROK 2 selection
-  // from a previous open/close cycle never leaks into a new session.
+  // Re-sync to defaultFormat every time the launcher opens fresh (mirrors the
+  // retired global launcher's defaultType re-sync, see file header) so a
+  // stale KROK 2 selection from a previous open/close cycle never leaks into
+  // a new session.
   useEffect(() => {
     if (isOpen) setFormat(defaultFormat ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps

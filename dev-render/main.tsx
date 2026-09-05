@@ -392,7 +392,6 @@ const TemplateCreateWizardScreen = React.lazy(() => import('./screens/template-c
 const TemplateLibraryNewEntryScreen = React.lazy(
   () => import('./screens/template-library-new-entry')
 );
-const UnifiedCreateLauncherScreen = React.lazy(() => import('./screens/unified-create-launcher'));
 const Wave3CreatorsCrimsonScreen = React.lazy(() => import('./screens/wave3-creators-crimson'));
 const Wave4ChoicesCrimsonScreen = React.lazy(() => import('./screens/wave4-choices-crimson'));
 const Wave5InternalCrimsonScreen = React.lazy(() => import('./screens/wave5-internal-crimson'));
@@ -2144,11 +2143,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'wave5-internal-crimson: naprawa bg-c-accent w Studio (Export/Link modal) — CTA/toggle/selected-tab',
     render: () => <Wave5InternalCrimsonScreen />,
-  },
-  'unified-create-launcher': {
-    label:
-      'I1-I3 Faza 0/1 — UnifiedCreateLauncher "+ Nowy" (Insight/Initiative/Decision), Krok 0 — &context=mywork|interview|initiatives',
-    render: () => <UnifiedCreateLauncherScreen />,
   },
   'vault-scope-selector': {
     label:

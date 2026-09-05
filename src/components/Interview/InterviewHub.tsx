@@ -9602,6 +9602,7 @@ Return ONLY the answer text (no markdown fences).`;
   // w Menu 2 zostaje WYŁĄCZNIE kontekstowe CTA zakładki (`tabPrimaryCta`):
   // Assign (Inbox/Assigned) · New session · New template · New insight ·
   // Add initiatives. Kanon: maks. JEDEN primary CTA, kontekstowy.
+  // 05.09.2026: decyzja potwierdzona na stronie 3100, kod launchera usunięty.
   const primaryCta = tabPrimaryCta ? (
     <div className="flex items-center gap-2">{tabPrimaryCta}</div>
   ) : null;
