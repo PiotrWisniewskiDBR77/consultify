@@ -21,7 +21,6 @@ import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
-import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -47,6 +46,7 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
+import { DeferredRouteLoadingFallback } from './DeferredRouteLoadingFallback';
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
 import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
@@ -1175,13 +1175,7 @@ export const AppRoutes: React.FC = () => {
   );
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-        </div>
-      }
-    >
+    <Suspense fallback={<DeferredRouteLoadingFallback />}>
       <Routes>
         {/* ============================================ */}
         {/* PUBLIC ROUTES - No MainLayout wrapper        */}

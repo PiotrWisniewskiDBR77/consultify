@@ -191,6 +191,7 @@ import {
   toInitiativeKpiEditorRow,
 } from './initiativeKpiContract';
 import { resolveInitiativeDocumentRecord as resolveInitiativeDocumentSource } from './initiativeDocumentSource';
+import { runOriginAwareInitiativeSubresource } from './initiativeOriginSubresources';
 import {
   createInitiativesDemoDataset,
   isShowcaseArtifactId,
@@ -2654,31 +2655,54 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             );
           })
           .catch(() => setDecisions([])),
-        V8PlanningApi.getRaid(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/raid`))
-          .then((r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])))
-          .catch(() => setRaidItems([])),
-        V8PlanningApi.getWatchers(initiativeId)
-          .then((watchers) => setWatchers(Array.isArray(watchers) ? watchers : []))
-          .catch(() =>
-            Api.get(`/initiatives/${initiativeId}/watchers`).then((w: any) =>
-              setWatchers(w?.watchers || (Array.isArray(w) ? w : []))
-            )
-          )
-          .catch(() => setWatchers([])),
-        V8PlanningApi.getKpis(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/kpis`))
-          .then((res: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getRaid(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/raid`)
+            ),
+          onLoaded: (r: any) => setRaidItems(r?.items || r?.raid || (Array.isArray(r) ? r : [])),
+          onSkipped: () => setRaidItems([]),
+          onUnavailable: () => setRaidItems([]),
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getWatchers(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/watchers`)
+            ),
+          onLoaded: (watchers: any) =>
+            setWatchers(
+              Array.isArray(watchers)
+                ? watchers
+                : watchers?.watchers || (Array.isArray(watchers) ? watchers : [])
+            ),
+          onSkipped: () => setWatchers([]),
+          onUnavailable: () => setWatchers([]),
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getKpis(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/kpis`)
+            ),
+          onLoaded: (res: any) => {
             const rows = extractInitiativeKpiRows(res);
             setLocalKpis(rows.map((kpi, idx) => toInitiativeKpiEditorRow(kpi, idx)));
-          })
-          .catch(() => {
+          },
+          onSkipped: () => {
+            // Keep KPI rows projected from the runtime-v1 document payload.
+          },
+          onUnavailable: () => {
             // keep fallback KPI mapping from initiative payload
-          }),
-        V8PlanningApi.getHistory(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/history`))
-          .then((h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : [])))
-          .catch(() => setHistory([])),
+          },
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getHistory(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/history`)
+            ),
+          onLoaded: (h: any) => setHistory(h?.events || h?.history || (Array.isArray(h) ? h : [])),
+          onSkipped: () => setHistory([]),
+          onUnavailable: () => setHistory([]),
+        }),
         Api.get(`/tasks?initiativeId=${initiativeId}`)
           .then((ts: any) => {
             const taskList = Array.isArray(ts) ? ts : ts?.tasks || [];
@@ -2701,17 +2725,28 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             );
           })
           .catch(() => setTasks([])),
-        V8PlanningApi.getTaskDependencies(initiativeId)
-          .then((dependencies) => setDependencies(Array.isArray(dependencies) ? dependencies : []))
-          .catch(() =>
-            Api.get(`/initiatives/${initiativeId}/task-dependencies`).then((d: any) =>
-              setDependencies(Array.isArray(d?.dependencies) ? d.dependencies : [])
-            )
-          )
-          .catch(() => setDependencies([])),
-        V8PlanningApi.getStakeholders(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/stakeholders`))
-          .then((st: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getTaskDependencies(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/task-dependencies`)
+            ),
+          onLoaded: (dependencies: any) =>
+            setDependencies(
+              Array.isArray(dependencies)
+                ? dependencies
+                : Array.isArray(dependencies?.dependencies)
+                  ? dependencies.dependencies
+                  : []
+            ),
+          onSkipped: () => setDependencies([]),
+          onUnavailable: () => setDependencies([]),
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getStakeholders(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/stakeholders`)
+            ),
+          onLoaded: (st: any) => {
             const mapped: Stakeholder[] = (st?.stakeholders || (Array.isArray(st) ? st : [])).map(
               (s: any) => {
                 const raci =
@@ -2743,8 +2778,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               }
             );
             setStakeholders(mapped);
-          })
-          .catch(() => setStakeholders([])),
+          },
+          onSkipped: () => setStakeholders([]),
+          onUnavailable: () => setStakeholders([]),
+        }),
         Api.get('/users')
           .then((u: any) =>
             setUsers(dedupeInitiativeUsersById(Array.isArray(u) ? u : u?.users || []))
@@ -2770,9 +2807,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             setPendingApprovals(approvals);
           })
           .catch(() => setPendingApprovals([])),
-        V8PlanningApi.getComments(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/comments`))
-          .then((c: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getComments(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/comments`)
+            ),
+          onLoaded: (c: any) => {
             const rows = Array.isArray(c?.comments) ? c.comments : Array.isArray(c) ? c : [];
             setComments(
               rows.map((x: any) => ({
@@ -2785,12 +2825,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 likedByMe: !!x.likedByMe,
               }))
             );
-          })
-          .catch(() => setComments([])),
+          },
+          onSkipped: () => setComments([]),
+          onUnavailable: () => setComments([]),
+        }),
         // Gate roles & governance
-        V8PlanningApi.getGateRoles(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/gate-roles`))
-          .then((gr: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getGateRoles(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/gate-roles`)
+            ),
+          onLoaded: (gr: any) => {
             const roles: GateRoleAssignment[] = (gr?.roles || []).map((r: any) => ({
               id: r.id,
               initiativeId: r.initiativeId || initiativeId,
@@ -2804,19 +2849,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               source: r.source || 'explicit',
             }));
             setGateRoles(roles);
-          })
-          .catch(() => setGateRoles([])),
-        V8PlanningApi.getGateReadiness(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/gate-readiness-check`))
-          .then((rc: any) => {
+          },
+          onSkipped: () => setGateRoles([]),
+          onUnavailable: () => setGateRoles([]),
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getGateReadiness(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/gate-readiness-check`)
+            ),
+          onLoaded: (rc: any) => {
             const payload = normalizeGateReadinessPayload(rc);
             // A20: pusta odpowiedź traktowana jak brak zdania serwera, nie jak
             // „wszystko zablokowane" — inaczej AI gaśnie po cichu.
             if (!payload?.capabilities) throw new Error('GATE_READINESS_WITHOUT_CAPABILITIES');
             setGateReadiness((payload as GateReadinessCheck | null) || null);
             setUserGateRoles(payload?.userRoles || []);
-          })
-          .catch(() => {
+          },
+          onSkipped: () => {
+            setGateReadiness(
+              buildFallbackGateReadiness(initiativeStatusRef.current) as GateReadinessCheck
+            );
+            setUserGateRoles([]);
+          },
+          onUnavailable: () => {
             // A20 (uwaga właściciela 2026-09-05: „brak przycisku AI w górnym
             // pasku do wypełnienia karty"). ZMIERZONE: obie trasy
             // gate-readiness-check zwracają 404 dla rekordów rejestru
@@ -2829,15 +2885,24 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               buildFallbackGateReadiness(initiativeStatusRef.current) as GateReadinessCheck
             );
             setUserGateRoles([]);
-          }),
-        V8PlanningApi.getStatusHistory(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/status-history`))
-          .then((sh: any) => setStatusHistory(sh?.history || (Array.isArray(sh) ? sh : [])))
-          .catch(() => setStatusHistory([])),
+          },
+        }),
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getStatusHistory(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/status-history`)
+            ),
+          onLoaded: (sh: any) => setStatusHistory(sh?.history || (Array.isArray(sh) ? sh : [])),
+          onSkipped: () => setStatusHistory([]),
+          onUnavailable: () => setStatusHistory([]),
+        }),
         // Resources: Team / FTE
-        V8PlanningApi.getResources(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/resources`))
-          .then((r: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getResources(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/resources`)
+            ),
+          onLoaded: (r: any) => {
             const rows = Array.isArray(r?.resources) ? r.resources : Array.isArray(r) ? r : [];
             setApiResourceItems(
               rows.map((item: any) => ({
@@ -2855,12 +2920,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 avatarUrl: item.avatarUrl,
               }))
             );
-          })
-          .catch(() => setApiResourceItems([])),
+          },
+          onSkipped: () => setApiResourceItems([]),
+          onUnavailable: () => setApiResourceItems([]),
+        }),
         // Resources: Budget Items
-        V8PlanningApi.getBudgetItems(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/budget-items`))
-          .then((r: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getBudgetItems(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/budget-items`)
+            ),
+          onLoaded: (r: any) => {
             const rows = Array.isArray(r?.budgetItems) ? r.budgetItems : [];
             setApiBudgetItems(
               rows.map((item: any) => ({
@@ -2873,12 +2943,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 description: item.description || undefined,
               }))
             );
-          })
-          .catch(() => setApiBudgetItems([])),
+          },
+          onSkipped: () => setApiBudgetItems([]),
+          onUnavailable: () => setApiBudgetItems([]),
+        }),
         // Resources: Tools
-        V8PlanningApi.getTools(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/tools`))
-          .then((r: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getTools(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/tools`)
+            ),
+          onLoaded: (r: any) => {
             const rows = Array.isArray(r?.tools) ? r.tools : [];
             setApiToolItems(
               rows.map((item: any) => ({
@@ -2893,12 +2968,17 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 notes: item.notes || undefined,
               }))
             );
-          })
-          .catch(() => setApiToolItems([])),
+          },
+          onSkipped: () => setApiToolItems([]),
+          onUnavailable: () => setApiToolItems([]),
+        }),
         // Resources: Intangible Assets (Licenses, Training, Knowledge)
-        V8PlanningApi.getIntangibleAssets(initiativeId)
-          .catch(() => Api.get(`/initiatives/${initiativeId}/intangible-assets`))
-          .then((r: any) => {
+        runOriginAwareInitiativeSubresource(data.documentOrigin, {
+          load: () =>
+            V8PlanningApi.getIntangibleAssets(initiativeId).catch(() =>
+              Api.get(`/initiatives/${initiativeId}/intangible-assets`)
+            ),
+          onLoaded: (r: any) => {
             const rows = Array.isArray(r?.intangibleAssets) ? r.intangibleAssets : [];
             setApiIntangibleAssets(
               rows.map((item: any) => ({
@@ -2916,8 +2996,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 notes: item.notes || undefined,
               }))
             );
-          })
-          .catch(() => setApiIntangibleAssets([])),
+          },
+          onSkipped: () => setApiIntangibleAssets([]),
+          onUnavailable: () => setApiIntangibleAssets([]),
+        }),
       ];
 
       await Promise.allSettled(fetches);
@@ -9827,10 +9909,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setWholeCardAiBusy(false);
     }
     if (failures.length > 0) {
-      toast.error(
-        `${isPolish ? 'Nie uzupełniono' : 'Not filled'}: ${failures.join('; ')}`,
-        { duration: 10000 }
-      );
+      toast.error(`${isPolish ? 'Nie uzupełniono' : 'Not filled'}: ${failures.join('; ')}`, {
+        duration: 10000,
+      });
     } else {
       toast.success(
         isPolish

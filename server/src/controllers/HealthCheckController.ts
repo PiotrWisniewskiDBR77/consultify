@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 
 import { BUILD_SHA_UNKNOWN, resolveBuildSha } from '../config/buildSha.js';
 import { getDatabase } from '../database/Database.js';
+import { megatrendsAvailable } from '../services/megatrendService.js';
 
 /**
  * Deploy identity exposed on the PUBLIC health endpoint.
@@ -69,6 +70,7 @@ export class HealthCheckController {
       redis?: string;
       version: string;
       environment: string;
+      megatrendsAvailable: boolean;
       gitSha?: string;
     } = {
       status: 'ok',
@@ -76,6 +78,7 @@ export class HealthCheckController {
       database: 'connected', // Optimistic default
       version: process.env.npm_package_version || '0.0.1',
       environment: process.env.NODE_ENV || 'development',
+      megatrendsAvailable,
     };
 
     // Precomputed at module load — no work, no child process, on the request path.
