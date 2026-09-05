@@ -27255,6 +27255,65 @@
     }
   },
   "results": {
+    "okr": {
+      "report": {
+        "columns": {
+          "name": "NAZWA",
+          "scope": "ZAKRES",
+          "cycle": "CYKL",
+          "objectives": "CELE",
+          "keyResults": "REZULTATY",
+          "state": "STAN",
+          "owners": "WŁAŚCICIELE",
+          "lastCheckIn": "OSTATNI CHECK-IN",
+          "objective": "CEL",
+          "keyResult": "KLUCZOWY REZULTAT",
+          "owner": "WŁAŚCICIEL",
+          "values": "START / CEL / BIEŻĄCA",
+          "progress": "POSTĘP",
+          "confidence": "PEWNOŚĆ",
+          "deadline": "TERMIN",
+          "stateOne": "STAN",
+          "team": "ZESPÓŁ"
+        },
+        "ambition": {
+          "committed": "Zobowiązanie",
+          "aspirational": "Aspiracja",
+          "standard": "Standardowy"
+        },
+        "stateTooltip": "na dobrej drodze {{onTrack}} · zagrożone {{atRisk}} · krytyczne {{critical}} · bez check-inu {{noSignal}}",
+        "stateWithCheckIn": "{{state}} · check-in {{date}}",
+        "stateWithoutCheckIn": "{{state}} · bez check-inu",
+        "newReport": "Nowy raport",
+        "openReport": "Otwórz raport",
+        "openObjective": "Otwórz kartę celu",
+        "addObjective": "Dodaj cel",
+        "registryCrumb": "Raporty OKR",
+        "summary": "Podsumowanie",
+        "noTheme": "Bez tematu",
+        "groupOwner": "właściciel nadrzędny: {{name}}",
+        "groupOwners": "{{count}} właścicieli celów",
+        "chipOwnerAll": "Właściciel: wszyscy",
+        "chipOwnerNamed": "Właściciel: {{name}}",
+        "chipAll": "Wszystkie",
+        "chipRisk": "Zagrożone",
+        "chipMissing": "Bez check-inu",
+        "ownerFilter": "Właściciel",
+        "owner": "Właściciel",
+        "ownerLoad": "Rezultaty i zagrożenia",
+        "ownerBreakdownValue": "{{total}} rezultatów · {{atRisk}} zagrożonych · {{critical}} krytycznych",
+        "reportOwner": "Właściciel raportu",
+        "reportGoal": "Cel raportu",
+        "aboutReport": "O raporcie",
+        "noOwners": "Brak właścicieli rezultatów",
+        "noKeyResults": "Brak rezultatów",
+        "noKeyResultsHint": "Ten cel nie ma jeszcze ani jednego kluczowego rezultatu.",
+        "emptyTitle": "Brak raportów OKR",
+        "emptyDescription": "Nie ma jeszcze żadnego raportu OKR w tej organizacji. Raport powstaje razem z zestawem celów na wybrany cykl.",
+        "emptyRowsTitle": "Brak wierszy dla tego filtra",
+        "emptyRowsDescription": "Żaden kluczowy rezultat nie pasuje do wybranego filtra. Zmień filtr albo dodaj cel do raportu."
+      }
+    },
     "sampleData": {
       "banner": "Dane przykładowe — nie z bazy"
     },

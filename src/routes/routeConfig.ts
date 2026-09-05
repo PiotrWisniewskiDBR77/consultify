@@ -197,20 +197,28 @@ export const ROUTES = {
     // tabs belonging to a selected Set").
     PROGRAMS: '/results/okr/programs',
     CYCLES: '/results/okr/cycles',
-    // Odrzucenie właściciela 2026-09-05 („trzypoziomowa formuła"): pod tabelą
-    // leży KARTA CELU (poziom 2), pod nią ZBIÓR kart kluczowych rezultatów
-    // (poziom 3), a pod nim KOLEJNA KARTA — tym razem kluczowego rezultatu
-    // (poziom 4). Bliźniak `RESULTS_KPI.TOOL`/`.CARD_SET`, patrz
-    // `src/components/ResultsVNext/okr/okrObjectiveCardPath.ts`.
+    // OKR (P7K A) — TRZY poziomy, nie cztery (SSOT §1, korekta P7K §4/§6):
+    //   1. `/results/okr`                                — tabela raportów
+    //   2. `/results/okr/:setId`                         — raport
+    //   3. `/results/okr/:setId/objectives/:objectiveId` — karta celu
+    // Kluczowy rezultat NIE ma własnego poziomu — jest sekcją karty celu.
+    // Trasy `OBJECTIVE_KEY_RESULTS`/`OBJECTIVE_KEY_RESULT` (dawne poziomy 3
+    // i 4) zostają WYŁĄCZNIE jako przekierowania na kartę celu, żeby
+    // zapisane linki nie kończyły się pustką — patrz `AppRoutes.tsx`.
+    //
     // React Router v6 rankuje po specyficzności, więc statyczne
-    // `/results/okr/programs`, `/results/okr/cycles` i
-    // `/results/okr/sets/:okrSetId` powyżej nadal wygrywają z
-    // `/results/okr/:objectiveId` — tak samo jak
-    // `/results/kpi/scorecards/:scorecardId` wygrywa z `/results/kpi/:kpiId`
+    // `/results/okr/programs`, `/results/okr/cycles`, `/results/okr/sets/…`
+    // i `/results/okr/objectives/…` wygrywają z `/results/okr/:setId`
     // (kolejność deklaracji nie ma tu znaczenia).
-    OBJECTIVE: '/results/okr/:objectiveId',
-    OBJECTIVE_KEY_RESULTS: '/results/okr/:objectiveId/rezultaty',
-    OBJECTIVE_KEY_RESULT: '/results/okr/:objectiveId/rezultaty/:keyResultId',
+    REPORT: '/results/okr/:setId',
+    /** Karta celu w kontekście raportu (poziom 3). */
+    REPORT_OBJECTIVE: '/results/okr/:setId/objectives/:objectiveId',
+    /** Karta celu bez kontekstu raportu — link z wyrównania do innego zestawu. */
+    OBJECTIVE: '/results/okr/objectives/:objectiveId',
+    /** Przekierowanie: dawny „zbiór kart KR" → karta celu. */
+    OBJECTIVE_KEY_RESULTS: '/results/okr/:setId/objectives/:objectiveId/rezultaty',
+    /** Przekierowanie: dawna „karta KR" → karta celu. */
+    OBJECTIVE_KEY_RESULT: '/results/okr/:setId/objectives/:objectiveId/rezultaty/:keyResultId',
   },
   // RN-G5 scopegap task 1 (§G #30) — cross-cutting "Attention" view over the
   // KPI + OKR manager attention read-models. D10: ONE view, not a fourth

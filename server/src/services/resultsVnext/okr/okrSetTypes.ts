@@ -83,6 +83,11 @@ export interface OkrSetRow {
    * created any other way. Additive column, reserved by this epic's own
    * migration. */
   carried_from_set_id: string | null;
+  /** P7K (20262102_okr_p7k_report_fields.sql) — nagłówek raportu OKR:
+   * opis i cel raportu ze wzorca właściciela („Description”/„Goal”).
+   * NULL na każdym wierszu sprzed migracji (bez backfillu). */
+  description?: string | null;
+  report_goal?: string | null;
   row_version: number;
   created_by: string;
   created_at: string;
@@ -122,6 +127,9 @@ export interface OkrSet {
   lastCheckinAt: string | null;
   nextCheckinDueAt: string | null;
   carriedFromSetId: string | null;
+  /** P7K — patrz `OkrSetRow.description`/`report_goal`. */
+  description: string | null;
+  reportGoal: string | null;
   rowVersion: number;
   createdBy: string;
   createdAt: string;
@@ -159,6 +167,8 @@ export function toOkrSet(row: OkrSetRow): OkrSet {
     lastCheckinAt: row.last_checkin_at,
     nextCheckinDueAt: row.next_checkin_due_at,
     carriedFromSetId: row.carried_from_set_id,
+    description: row.description ?? null,
+    reportGoal: row.report_goal ?? null,
     rowVersion: row.row_version,
     createdBy: row.created_by,
     createdAt: row.created_at,

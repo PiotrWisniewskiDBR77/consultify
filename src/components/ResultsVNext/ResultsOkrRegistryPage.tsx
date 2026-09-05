@@ -22,12 +22,16 @@ import { EmptyState } from '@/components/shared/states';
 
 import { ResultsVNextLegacyArchivePanel } from './legacy/ResultsVNextLegacyArchivePanel';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
-import { ResultsOkrHub } from './okr/ResultsOkrHub';
+// OKR (P7K A) — poziom 1 to TABELA RAPORTÓW OKR (SSOT §1/§3), nie rejestr
+// zestawów. `ResultsOkrHub` zostaje w repo jako powierzchnia administracyjna
+// zestawów (drążenie Programy/Cykle, `/results/okr/sets/:okrSetId`) — zmienia
+// się tylko to, co widać po kliknięciu „OKR" w Menu 2.
+import { OkrReportRegistryPage } from './okr/p7k/OkrReportRegistryPage';
 
 export const ResultsOkrRegistryPage: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
-  const title = isPolish ? 'Rejestr OKR' : 'OKR registry';
+  const title = isPolish ? 'Raporty OKR' : 'OKR reports';
   // 2026-09-02 (wołacze duty) — "Archiwum" bypass, same shape as
   // `ResultsRoiRegistryPage.tsx`/`ResultsKpiRegistryPage.tsx`: default OFF
   // (`resultsLegacyArchive`), reachable independently of `okrRegistry`.
@@ -57,7 +61,7 @@ export const ResultsOkrRegistryPage: React.FC = () => {
     );
   }
 
-  return <ResultsOkrHub />;
+  return <OkrReportRegistryPage />;
 };
 
 export default ResultsOkrRegistryPage;

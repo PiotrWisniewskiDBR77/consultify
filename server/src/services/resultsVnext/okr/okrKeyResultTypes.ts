@@ -81,6 +81,12 @@ export interface OkrKeyResultRow {
   source_type: OkrKeyResultSourceType;
   source_reference: string | null;
   weight: string | null;
+  /** P7K (20262102_okr_p7k_report_fields.sql) — ZESPÓŁ i TERMIN rezultatu
+   * ze wzorca właściciela („Team”/„Deadline”). Oba NULLable: brak terminu
+   * NIE jest zastępowany końcem cyklu, brak zespołu NIE jest zastępowany
+   * zakresem zestawu. */
+  team_name?: string | null;
+  deadline?: string | null;
   row_version: number;
   created_by: string;
   created_at: string;
@@ -115,6 +121,9 @@ export interface OkrKeyResult {
   status: OkrKeyResultStatus;
   sourceType: OkrKeyResultSourceType;
   sourceReference: string | null;
+  /** P7K — patrz `OkrKeyResultRow.team_name`/`deadline`. */
+  teamName: string | null;
+  deadline: string | null;
   weight: string | null;
   rowVersion: number;
   createdBy: string;
@@ -152,6 +161,8 @@ export function toOkrKeyResult(row: OkrKeyResultRow): OkrKeyResult {
     sourceType: row.source_type,
     sourceReference: row.source_reference,
     weight: row.weight,
+    teamName: row.team_name ?? null,
+    deadline: row.deadline ?? null,
     rowVersion: row.row_version,
     createdBy: row.created_by,
     createdAt: row.created_at,
