@@ -1,0 +1,57 @@
+---
+doc_id: przekazanie-20260906-rano
+status: canonical
+truth_type: program-status
+established: 2026-09-06 (rano, ~03:30)
+author: CTO (Fable), sesja d26477da
+poprzednie: PRZEKAZANIE_20260905_NOC.md
+---
+
+# Meldunek poranny 06.09 — noc przed ogłoszeniem MVP
+
+## 1. Co jest na stagingu (`origin/staging` = `codex/m03-admin-20260824`)
+125 commitów i 21 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+
+**Zbudowane od zera tej nocy**
+- **Wyniki KPI · OKR · ROI** — trzy poziomy wg SSOT i zaakceptowanego prototypu, na realnych danych DBR77 (138 mierników z Twojego arkusza, 3 zestawy OKR z check-inem end-to-end, 3 analizy ROI z NPV/IRR/wrażliwością/PIR). Trzy migracje addytywne. Pierwsze uruchomienie zapytań KPI na Postgresie złapało i naprawiło błąd 500.
+- **Finanse na CD PROJEKT** — prawdziwe skonsolidowane sprawozdanie 2025/2024 z PDF (sumy zgodne co do złotówki), 238 linii po polsku, analiza 17 z 18 wskaźników po polsku, inne pakiety usunięte/zarchiwizowane. Przepływ: lista → podgląd → Otwórz → pakiet → analiza. **Nie klikać Baseline** (znany 409).
+- **Teresa** — odpowiada po polsku (polityka języka w jednym miejscu zamiast czterech `|| 'en'`) i liczy dane modułu jako źródła (12–15 realnych rekordów zamiast „no_sources”).
+
+**Naprawione z audytu gotowości (fale 1–4 + celowane)**
+Inicjatywy 0 → 62 (dwa rejestry), raport z Oceny renderuje treść z macierzą DRD (10 z 11 Twoich ocen było niewidocznych), klucz roli w Profilu, surowe klucze w Gotowości organizacji, strona 404, okruszki Ustawień i Materiałów, edytor prezentacji po polsku, „Library”, typ Realizacji ze słownika, AI Triaż, rodzina 15 uciętych nagłówków dat w 13 hubach, przewinięcie w KPI L2, przyrząd zrzutów nie nadpisuje już cudzej sesji.
+
+**Codex odebrany:** P2, P3 (+ strażnik treści pl≠en, 484 zastane klucze w ratchecie), P4, P1 (mechanika; zrzuty do powtórki), P5 (kod; zrzuty do powtórki), IV (przyrząd; pomiar do dokończenia), dyżury 374/375/377, sprzątanie danych stagingu (240 usuniętych, 49 zarchiwizowanych, 120 tytułów EN→PL). **Odesłane:** P9 (35 % zakresu, komponent bez wołacza). **Niezaczęte/urwane u Codexa:** P8 (32 niecommitowane pliki), F‑M3/M4 (2 commity).
+
+## 2. Werdykty końcowego re-audytu (lokalne stanowisko, najnowszy kod)
+**Moduły A (Czat, Moja Praca, Wywiad, Narzędzia, Ocena, Inicjatywy, Realizacja) — `evidence/audyt-mvp-20260906/A3/RAPORT_A3.md`:** zero modułów NIEGOTOWYCH (wieczorem trzy). GOTOWE: Czat, Wywiad, Inicjatywy (67 wierszy). GOTOWE Z KOSMETYKĄ: Moja Praca, Narzędzia (35/36 narzędzi „już wkrótce” — dane biblioteki, nie kod), Ocena, Realizacja. Naprawy nocy potwierdzone 10/12; tryb ciemny na 7 modułach zmierzony; Teresa po polsku ze „Źródła: 12”. Resztki (fala 5, w toku o 01:45): prezentacja Oceny dla niezamrożonych, „Nieznany typ” w Realizacji przy pustej osi, ucięty tytuł w panelu Rekord|Teresa.
+
+**Moduły B + Wyniki + Finanse — `B3/RAPORT_B3.md`:** naprawy nocy 7/9 potwierdzone żywo, 1 tylko w kodzie (rola „user”), 1 częściowo (nagłówki dat: Audyty tak, Finanse nie). **Finanse CD PROJEKT: TAK z zastrzeżeniem** (wczoraj NIE) — 4 blokery naprawione i potwierdzone. **Wyniki: blisko, ale 3 blokery**: dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2. **Materiały: NOWY BLOKER** — Dokumenty → „+ Nowy” → „Czysto” utyka na „Brak wczytanego dokumentu” (cichy fail; prezentacje działają). Ważne: „PL · Silesia” w danych Organizacji, Szablony ustawień po angielsku (dane API). Fala 6 (Opus na Document Studio + Sonnet na resztę) uruchomiona o 02:15.
+
+## 3. Ścieżka pokazu na 06.09 (kolejność menu)
+Pełne ścieżki per moduł w `A3/RAPORT_A3.md` i `B3/RAPORT_B3.md`. Skrót:
+- **Czat:** „Podsumuj co tu widzisz” → odpowiedź po polsku ze „Źródła: 12”.
+- **Moja Praca:** Skrzynka → Zadania → wiersz → podgląd → Otwórz kartę zadania.
+- **Wywiad:** lista sesji (nazwy z datą) → sesja → Przydzielone.
+- **Narzędzia:** Dynamiczny SWOT (jedyne pełne narzędzie; 35/36 „już wkrótce” — nie otwierać innych).
+- **Ocena:** lista Outputów → raport oceny (`--pelna`: sekcje + macierz DRD z treścią). Nie klikać „Pokaż jako prezentację” dla niezamrożonej oceny (fala 5).
+- **Inicjatywy:** lista (67) → wiersz → podgląd → karta. **Realizacja:** Realizacje → wiersz → panel Rekord|Teresa.
+- **Wyniki:** KPI L1 → raport (widok miesięczny: bieżący miesiąc widoczny, ogon sąsiada to kosmetyka) → miernik L3; OKR L1 → zestaw → cel L3 (bloki KR, Check-in → anuluj; zakładki Check-iny dopiero po fali 6); ROI L1 → analiza (Założenia → Wyliczenia → Realizacja) — bezpieczne w całości.
+- **Finanse:** Sprawozdania → CD PROJEKT → podgląd → Otwórz → pakiet (119 linii, AKTYWA RAZEM 3 503 320) → Analiza → karta 18 wskaźników. **Nie klikać Baseline.**
+- **Materiały:** Prezentacje „Czysto” (edytor po polsku); Dokumenty „Czysto” dopiero po fali 6. **Audyty, Spotkania, Administracja, Ustawienia, Organizacja, Partner:** listy i karty gotowe; Szablony ustawień po angielsku (fala 6).
+
+## 4. Co zostało (uczciwie)
+- Zrzuty na żywo ze stagingu na Twoim koncie: sesja automatu padła wieczorem (przyrząd nadpisywał plik sesji; naprawione), dlatego noc stała na lokalnym stanowisku z Twoimi seedami. Pierwsze przejście na stagingu robisz Ty.
+- Twoje oceny na stagingu są wypełnione w 0–8 % — raport z Oceny będzie chudy przez dane; do pokazu warto jedną ocenę wypełnić.
+- Dane finansowe legacy DBR77 2023–2025 są niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazujemy na CD PROJEKT.
+- P9 karta działania + Skrzynka (mechanika „coś źle → ktoś działa”) nie weszła; P7K część B (odchylenie → karta) czeka na P9.
+- 484 klucze pl==en w ratchecie (głównie `admin.*`), 141 kluczy Czatu z dyżuru 374, 7 zastanych czerwonych testów.
+- Ogon sąsiedniej kolumny w KPI L2 przy wyczerpanym zakresie przewijania (kosmetyka, zmiana strukturalna tabeli po MVP).
+
+## 5. Decyzje CTO tej nocy (możesz uchylić)
+DEC-397 obejmuje P8/P9 i naprawy nocy · flaga raportu Oceny domyślnie ON · `CSRF_MODE=report` na stagingu · Teresa jako przycisk (decyzja z 01.09), nie zakładka · Finanse tylko CD PROJEKT · P5 krok 8 (`review-snapshots/published` 404) po MVP.
+
+## 6. Incydenty i lekcje (w pamięci nadzorcy)
+Health stagingu przybity zmienną; edycja historycznej migracji odrzucona przez bramkę; przyrząd zrzutów nadpisujący sesję; robotnik z `sparse-checkout` wyrzucił `src/` ze wspólnego worktree, potem worktree stracił `.git` (odzyskany bez utraty); port 5433 to obca baza; dysk pełny od worktree (każdy 3,2 GB).
+
+## 7. Infrastruktura
+Lokalne stanowisko: `scripts/dev/stanowisko-lokalne/` (PG 54400, API 4100, vite 3090, konto `audyt@dbr77.local`, sesja odświeżana `zaloguj-api.mjs`). Staging: Railway auto-deploy z gałęzi; dowód = `railway deployment list` + health (teraz prawdziwy SHA).
