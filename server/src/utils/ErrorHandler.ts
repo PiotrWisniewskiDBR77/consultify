@@ -151,6 +151,63 @@ function detectMulterContractError(err: Error & { code?: string; name?: string }
 }
 
 /**
+ * Day 314 — a deployed environment must never receive a stack trace or a raw
+ * database driver message.
+ *
+ * Measured 2026-09-04: a plain logged-in user calling
+ * GET /api/report-builder/sources/upload_bundle received the literal
+ * `column "coverage_percent" does not exist` plus the full Node stack, because
+ * staging/demo run with NODE_ENV=development and this handler treated that as
+ * "a local developer at a terminal". Two independent guards now apply:
+ *
+ *  1. isVerboseErrorEnv() - the verbose branch only fires for `test`, or for
+ *     `development` that is NOT a hosted deployment (Railway / APP_ENV set to a
+ *     deployed tier).
+ *  2. isDatabaseDriverError() - a driver error (pg / sqlite) never exposes its
+ *     message or stack, in ANY environment. Its message is the SQL surface.
+ */
+function normalizeLowerEnv(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+export function isHostedDeployment(env: NodeJS.ProcessEnv = process.env): boolean {
+  const deployedTiers = ['production', 'staging', 'demo', 'preview'];
+  return Boolean(
+    normalizeLowerEnv(env.RAILWAY_SERVICE_ID) ||
+      normalizeLowerEnv(env.RAILWAY_ENVIRONMENT_ID) ||
+      normalizeLowerEnv(env.RAILWAY_ENVIRONMENT) ||
+      deployedTiers.includes(normalizeLowerEnv(env.APP_ENV)) ||
+      deployedTiers.includes(normalizeLowerEnv(env.RAILWAY_ENVIRONMENT_NAME))
+  );
+}
+
+export function isVerboseErrorEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const nodeEnv = normalizeLowerEnv(env.NODE_ENV);
+  if (nodeEnv === 'test') return true;
+  if (nodeEnv !== 'development') return false;
+  return !isHostedDeployment(env);
+}
+
+/**
+ * pg (node-postgres) errors carry a 5-character SQLSTATE in `code` plus driver
+ * fields such as `severity` / `routine` / `file`; better-sqlite3 uses SQLITE_*.
+ * Their `message` quotes the offending SQL identifier, so it must never be
+ * echoed back to a caller.
+ */
+export function isDatabaseDriverError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const candidate = err as { code?: unknown; severity?: unknown; routine?: unknown; file?: unknown };
+  const code = typeof candidate.code === 'string' ? candidate.code : '';
+  if (code.startsWith('SQLITE_')) return true;
+  return (
+    /^[0-9A-Z]{5}$/.test(code) &&
+    (candidate.severity !== undefined ||
+      candidate.routine !== undefined ||
+      candidate.file !== undefined)
+  );
+}
+
+/**
  * Express error handler middleware
  */
 export function errorHandlerMiddleware(
@@ -224,8 +281,16 @@ export function errorHandlerMiddleware(
     });
   }
 
-  // Development/test response
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+  // A database driver error's message quotes the failing SQL identifier, so it
+  // is redacted before any branch below can serialise it - in EVERY
+  // environment, verbose or not.
+  const driverError = isDatabaseDriverError(err);
+  const safeMessage = driverError ? 'Database request failed' : errorMessage;
+
+  // Local development / automated tests only. Never a hosted deployment: on
+  // staging and demo this branch used to hand a normal logged-in user the raw
+  // SQL error text and the full Node stack.
+  if (!driverError && isVerboseErrorEnv()) {
     res.status(err.statusCode).json({
       status: status,
       correlationId: typeof correlationId === 'string' ? correlationId : null,
@@ -243,26 +308,28 @@ export function errorHandlerMiddleware(
 
   // Production response
   // Treat as operational if it's explicitly marked OR if it has a 4xx status code (e.g. BodyParser)
-  if ((err as AppError).isOperational || (err.statusCode && err.statusCode < 500)) {
+  if (!driverError && ((err as AppError).isOperational || (err.statusCode && err.statusCode < 500))) {
     // Known operational error (AppError) or Client Error
     res.status(err.statusCode || 400).json({
       status: status,
       correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
         code: err.code || 'ERROR',
-        message: errorMessage,
+        message: safeMessage,
         ...(err.details || {}),
         timestamp: new Date().toISOString(),
       },
     });
   } else {
-    // Unknown programming/system error
+    // Unknown programming/system error, or a redacted database driver error.
     res.status(500).json({
       status: 'error',
       correlationId: typeof correlationId === 'string' ? correlationId : null,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'Something went very wrong!',
+        code: driverError ? 'DATABASE_ERROR' : 'INTERNAL_ERROR',
+        message: driverError
+          ? 'Nie udało się odczytać danych. Spróbuj ponownie lub zgłoś identyfikator korelacji.'
+          : 'Something went very wrong!',
         timestamp: new Date().toISOString(),
       },
     });
