@@ -1,0 +1,18 @@
+{
+ "url": "http://localhost:3042/interview",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Ocena Dojrzałości Cyfrowej",
+  "text=Otwórz"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "kiedy": "2026-09-05T06:30:54.406Z"
+}
