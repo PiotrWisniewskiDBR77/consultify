@@ -148,6 +148,13 @@ export interface OkrObjectiveRowMenuHandlers {
   onOpenKeyResults: (row: OkrObjectiveWithKeyResultsDto) => void;
   onEdit: (row: OkrObjectiveWithKeyResultsDto) => void;
   onCancel: (row: OkrObjectiveWithKeyResultsDto) => void;
+  /**
+   * Poziom 2 formuły OKR (odrzucenie właściciela 2026-09-05) — otwarcie
+   * PEŁNEJ KARTY CELU (`/results/okr/:objectiveId`). Opcjonalne, żeby ten
+   * builder dalej działał w miejscach bez routera (i w testach), które
+   * istniały przed dołożeniem karty.
+   */
+  onOpenCard?: (row: OkrObjectiveWithKeyResultsDto) => void;
 }
 
 export function buildOkrObjectiveRowMenu(
@@ -170,6 +177,15 @@ export function buildOkrObjectiveRowMenu(
   return {
     primary: [
       { id: 'open', label: isPolish ? 'Otwórz' : 'Open', onClick: () => handlers.onPreview(row) },
+      ...(handlers.onOpenCard
+        ? [
+            {
+              id: 'open-card',
+              label: isPolish ? 'Otwórz kartę celu' : 'Open objective card',
+              onClick: () => handlers.onOpenCard?.(row),
+            },
+          ]
+        : []),
       {
         id: 'open-key-results',
         label: isPolish ? 'Kluczowe Rezultaty' : 'Key Results',
@@ -206,6 +222,8 @@ export interface OkrObjectivePreviewDeps {
   onOpenKeyResults: (row: OkrObjectiveWithKeyResultsDto) => void;
   onEdit: (row: OkrObjectiveWithKeyResultsDto) => void;
   onCancel: (row: OkrObjectiveWithKeyResultsDto) => void;
+  /** Poziom 2 — pełna karta celu. Opcjonalne, patrz `OkrObjectiveRowMenuHandlers`. */
+  onOpenCard?: (row: OkrObjectiveWithKeyResultsDto) => void;
 }
 
 export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, deps: OkrObjectivePreviewDeps): StandardPreviewProps {
@@ -284,6 +302,16 @@ export function buildOkrObjectivePreview(row: OkrObjectiveWithKeyResultsDto, dep
     relations: [],
     actions: {
       informational: [
+        ...(deps.onOpenCard
+          ? [
+              {
+                id: 'open-card',
+                variant: 'neutral' as const,
+                label: isPolish ? 'Otwórz kartę celu' : 'Open objective card',
+                onClick: () => deps.onOpenCard?.(row),
+              },
+            ]
+          : []),
         {
           id: 'open-key-results',
           variant: 'neutral',

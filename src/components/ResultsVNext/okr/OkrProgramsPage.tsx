@@ -136,6 +136,11 @@ const DEFAULT_POLICY: OkrProgramPolicyFields = {
 };
 
 const OkrProgramsPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => {
+  // 2026-09-05: akcja „Cykle OKR" w podglądzie wołała `navigate`, którego w
+  // TYM komponencie nigdy nie było (hak stał tylko w powłoce `OkrProgramsPage`
+  // niżej) — czyli `ReferenceError: navigate is not defined` po kliknięciu.
+  // Ta sama rodzina defektu co `shortOkrId is not defined` w karcie KR.
+  const navigate = useNavigate();
   const [programs, setPrograms] = useState<OkrProgramDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

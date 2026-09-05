@@ -26,6 +26,11 @@ export type ArtifactType =
   | 'budget'
   | 'valuation'
   | 'analysis'
+  // Cel OKR jako artefakt (karta N poziomu 2, `/results/okr/:objectiveId`).
+  // Dodany 2026-09-05 razem z produkcyjną kartą celu — bez tego wpisu karta
+  // musiałaby podszywać się pod `kpi` w permalinkach, co byłoby nieprawdą
+  // o danych (cel OKR nie jest wskaźnikiem).
+  | 'okr'
   | 'knowledge';
 
 /**
@@ -64,6 +69,7 @@ export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
     prefix: 'INIT',
   },
   idea: { icon: 'Lightbulb', accent: 'violet', labelEn: 'Idea', labelPl: 'Pomysł', prefix: 'IDEA' },
+  okr: { icon: 'Target', accent: 'indigo', labelEn: 'Objective (OKR)', labelPl: 'Cel (OKR)', prefix: 'OKR' },
   task: {
     icon: 'CheckSquare',
     accent: 'emerald',
