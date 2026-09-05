@@ -106,6 +106,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { MetaChip, StatusChip } from '@/components/ui/primitives';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/utils/cn';
@@ -1257,8 +1258,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
           />
         </div>
 
-        {selectedDocument ? (
-          <aside className="w-[400px] shrink-0 overflow-hidden bg-slate-50 p-3 dark:bg-navy-950">
+        <JedenPrawyPanel rekord={selectedDocument ? (
             <StandardPreview
               title={selectedDocument.filename}
               onClose={() => setSelectedId(null)}
@@ -1323,8 +1323,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
               )}
               actions={previewActions}
             />
-          </aside>
-        ) : null}
+        ) : null} />
       </div>
 
       <VaultDocumentPanel
