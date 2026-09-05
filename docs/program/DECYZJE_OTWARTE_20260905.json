@@ -163,6 +163,19 @@
         "B": "ROI zostaje wyłączone do fali 2."
       },
       "rekomendacja": "A"
+    },
+    {
+      "id": "baseline-v3-program",
+      "modul": "09 Finanse",
+      "ekrany": [
+        "finance-baseline-workspace"
+      ],
+      "pytanie": "Odrzuciłeś widok klasyczny („pracujemy na całej tabeli”). Włączyłem Baseline v3 dla DBR77, ale pomiar pokazał, że pełna tabela nie może dziś powstać z żadnego modelu: brakuje pięciu ogniw na serwerze (zatwierdzanie pakietu sprawozdań, analiza historyczna, rejestr modelu bazowego, powiązania, generator okresów prognozy) plus błąd importu bilansu. To program na kilka dyżurów, nie poprawka na dziś.",
+      "opcje": {
+        "A": "Baseline v3 = pierwszy punkt po MVP: pełny łańcuch pakiet→analiza→model→tabela, z odbiorem na realnych danych DBR77. Na MVP ekran Baseline pokazuje uczciwy stan „model bez skonfigurowanego kontekstu” z opisem, co brakuje.",
+        "B": "Wstrzymać MVP do czasu zbudowania Baseline v3 (kilka dni)."
+      },
+      "rekomendacja": "A"
     }
   ]
 }
