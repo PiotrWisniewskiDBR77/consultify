@@ -2996,7 +2996,13 @@
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
       "systemTitles": {
-        "fixCriticalProductionBug": "Napraw krytyczny błąd produkcyjny"
+        "defineTargetProcess": "Zdefiniuj proces docelowy i kryteria akceptacji",
+        "submitComplianceDocumentation": "Prześlij dokumentację zgodności",
+        "fixCriticalProductionBug": "Napraw krytyczny błąd produkcyjny",
+        "selectAiModelProvider": "Wybierz dostawcę modelu AI do obciążeń produkcyjnych",
+        "finalizeApiRateLimitingPolicy": "Sfinalizuj zasady ograniczania liczby wywołań API przed publicznym uruchomieniem",
+        "launchPublicBetaDecision": "Uruchom publiczną wersję beta — decyzja uruchamiamy / nie uruchamiamy",
+        "interviewAssignmentOverdue": "Przekroczony termin przydziału wywiadu"
       },
       "justNow": "Przed chwilą",
       "dToLocaleDateString": "pl-PL",

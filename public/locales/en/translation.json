@@ -3651,7 +3651,13 @@
     "openDocuments": "Open documents",
     "inboxContent": {
       "systemTitles": {
-        "fixCriticalProductionBug": "Fix Critical Production Bug"
+        "defineTargetProcess": "Define target process and acceptance criteria",
+        "submitComplianceDocumentation": "Submit Compliance Documentation",
+        "fixCriticalProductionBug": "Fix Critical Production Bug",
+        "selectAiModelProvider": "Select AI model provider for production workloads",
+        "finalizeApiRateLimitingPolicy": "Finalize API rate-limiting policy for public launch",
+        "launchPublicBetaDecision": "Launch public beta — go/no-go decision",
+        "interviewAssignmentOverdue": "Interview Assignment Overdue"
       },
       "justNow": "Just now",
       "dToLocaleDateString": "en-US",

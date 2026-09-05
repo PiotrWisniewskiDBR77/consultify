@@ -2169,10 +2169,17 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const displayInboxTitle = useCallback(
     (item: InboxItem): string => {
       if (item.source?.type !== 'system') return item.title;
-      if (item.title === 'Fix Critical Production Bug') {
-        return t('myWork.inboxContent.systemTitles.fixCriticalProductionBug');
-      }
-      return item.title;
+      const keyByTitle: Record<string, string> = {
+        'Define target process and acceptance criteria': 'defineTargetProcess',
+        'Submit Compliance Documentation': 'submitComplianceDocumentation',
+        'Fix Critical Production Bug': 'fixCriticalProductionBug',
+        'Select AI model provider for production workloads': 'selectAiModelProvider',
+        'Finalize API rate-limiting policy for public launch': 'finalizeApiRateLimitingPolicy',
+        'Launch public beta — go/no-go decision': 'launchPublicBetaDecision',
+        'Interview Assignment Overdue': 'interviewAssignmentOverdue',
+      };
+      const key = keyByTitle[item.title];
+      return key ? t(`myWork.inboxContent.systemTitles.${key}`) : item.title;
     },
     [t]
   );
