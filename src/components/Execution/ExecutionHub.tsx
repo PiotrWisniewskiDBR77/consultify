@@ -31,6 +31,7 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  Gauge,
   GripVertical,
   LayoutDashboard,
   Link2,
@@ -127,6 +128,10 @@ import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
+import {
+  executionModuleTabIds,
+  isExecutionDeepLinkTabAllowed,
+} from './executionModuleTabs';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { buildExecutionSourceRelations } from './executionSourceRelations';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
@@ -757,6 +762,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     });
   }, [currentUser]);
 
+  // #77 / Z94 — flaga kokpitu. MUSI być zadeklarowana PRZED KAŻDYM swoim użyciem
+  // w ciele komponentu: `tabs` (useMemo) i tablica zależności efektu deep-linku
+  // czytają ją SYNCHRONICZNIE w renderze, więc deklaracja niżej = ReferenceError
+  // (TDZ). Stała stoi więc na samej górze stanu, nad wszystkimi czytelnikami.
+  const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
+
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
@@ -981,7 +992,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       return;
     }
 
-    if (['list', 'work', 'resources', 'control', 'reports'].includes(targetTab)) {
+    // #77 / Z94 — „Kokpit menedżera" (Summary one-look) ma być OSIĄGALNY.
+    // Do 2026-09-05 wartość `summary` nie była na tej liście, więc deep-link
+    // `/execution?tab=summary` cicho lądował na `tab=list` — a ponieważ w całym
+    // pliku nie było ANI JEDNEGO przycisku prowadzącego do tej zakładki, ekran
+    // był zbudowany i całkowicie nieosiągalny (odbiór na żywo 05.09).
+    // Wpuszczamy `summary` TYLKO przy włączonej fladze — przy fladze OFF
+    // (domyślnie wszędzie, reguła #7) deep-link nadal degraduje się do listy,
+    // zamiast pokazywać pustą powierzchnię.
+    if (isExecutionDeepLinkTabAllowed(targetTab, { summaryOneLookEnabled })) {
       setActiveTab(targetTab as ModuleTab);
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
       setDeepLinkHandled(true);
@@ -994,7 +1013,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setDeepLinkHandled(true);
       return;
     }
-  }, [deepLinkHandled, searchParams]);
+  }, [deepLinkHandled, searchParams, summaryOneLookEnabled]);
 
   useEffect(() => {
     if (!deepLinkHandled) return;
@@ -2112,9 +2131,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [activeTab, t, viewMode]
   );
 
-  // #77 / Z94 — flaga kokpitu; MUSI być zadeklarowana PRZED `tabs` (useMemo woła
-  // fabrykę synchronicznie w renderze → użycie przed deklaracją = ReferenceError/TDZ).
-  const summaryOneLookEnabled = isExecutionFlagEnabled('summaryOneLook');
   const execReportsIntelligenceEnabled = isExecutionFlagEnabled('execReportsIntelligence');
 
   const openWorkIntelligenceReport = useCallback(() => {
@@ -2181,37 +2197,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     setActiveDocumentId(docId);
   }, [execReportsIntelligenceEnabled, t]);
 
-  // Tab configuration
-  const tabs = useMemo(
-    () => [
-      {
-        id: 'list' as ModuleTab,
+  // Tab configuration — KOLEJNOŚĆ pozycji Menu 2 pochodzi z
+  // `executionModuleTabIds`, z tego samego źródła co lista wartości `?tab=`
+  // wpuszczanych przez deep-link (patrz nagłówek executionModuleTabs.ts).
+  // Wcześniej te dwie listy stały osobno i rozjechały się: „Kokpit menedżera"
+  // nie miał ani pozycji w Menu 2, ani wpisu w liście deep-linku, więc ekran
+  // — zbudowany, z włączoną flagą — był nieosiągalny (odbiór na żywo 05.09).
+  const tabs = useMemo(() => {
+    // Etykieta kokpitu z istniejącego klucza `execution.tabs.summary`
+    // (pl „Kokpit" / en „Dashboard" — oba realnie przetłumaczone w locales,
+    // nie sam klucz-atrapa).
+    const definitions: Record<string, { label: string; icon: React.ReactNode }> = {
+      summary: { label: t('execution.tabs.summary', 'Dashboard'), icon: <Gauge size={16} /> },
+      list: {
         label: t('execution.tabs.moduleBar.list', 'Deliveries'),
         icon: <LayoutDashboard size={16} />,
       },
-      {
-        id: 'work' as ModuleTab,
+      work: {
         label: t('execution.tabs.moduleBar.work', 'Work'),
         icon: <ClipboardList size={16} />,
       },
-      {
-        id: 'resources' as ModuleTab,
+      resources: {
         label: t('execution.tabs.moduleBar.resources', 'Resources'),
         icon: <Users size={16} />,
       },
-      {
-        id: 'control' as ModuleTab,
+      control: {
         label: t('execution.tabs.moduleBar.control', 'Control'),
         icon: <Target size={16} />,
       },
-      {
-        id: 'reports' as ModuleTab,
+      reports: {
         label: t('execution.tabs.moduleBar.reports', 'Reports'),
         icon: <FileText size={16} />,
       },
-    ],
-    [t]
-  );
+    };
+    return executionModuleTabIds({ summaryOneLookEnabled }).map((id) => ({
+      id: id as ModuleTab,
+      label: definitions[id].label,
+      icon: definitions[id].icon,
+    }));
+  }, [summaryOneLookEnabled, t]);
 
   // Table columns
   const columns: TableColumn[] = useMemo(
@@ -5919,7 +5943,9 @@ Please return:
 
   // Tabs that render their own full-bleed surface (no document tabs / filters / new-item).
   const isChromelessTab =
-    activeTab === ('people_change' as ModuleTab) || activeTab === ('rollout' as ModuleTab);
+    activeTab === ('people_change' as ModuleTab) ||
+    activeTab === ('rollout' as ModuleTab) ||
+    activeTab === ('summary' as ModuleTab);
 
   // #19 — per-view Menu-2 CTA. The right-side primary action depends on the
   // active sub-view. Rollout sub-actions are fired as CustomEvents (the contract
