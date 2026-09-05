@@ -336,6 +336,69 @@ describe('financialStatementService — contract tests', () => {
       );
     });
 
+    it('keeps the Balance Sheet comparison period past an ordinary numbered line item beyond line 15', () => {
+      // Real Polish sprawozdania number BS sub-items exactly like note headings
+      // ("1. Rezerwy na zobowiązania ..."). A liabilities/equity block with more
+      // than ~15 lines of assets above it used to trip the BS-only "start of
+      // notes chapter" heuristic on its own ordinary line items, truncating the
+      // section before PASYWA RAZEM (and silently dropping the comparison
+      // period's total row from the pack).
+      const text = [
+        'Bilans',
+        'na dzień 31.12.2024 roku',
+        'Nota 31.12.2024 31.12.2023',
+        'AKTYWA',
+        'A. Aktywa trwałe 9 011 224 8 004 118',
+        'I. Wartości niematerialne i prawne 1 500 331 1 200 219',
+        'II. Rzeczowe aktywa trwałe 5 002 117 3 502 613',
+        'III. Należności długoterminowe 500 811 400 417',
+        'IV. Inwestycje długoterminowe 3 001 214 2 900 312',
+        'B. Aktywa obrotowe 5 002 519 2 002 116',
+        '1. Zapasy 4 001 118 3 500 617',
+        '2. Należności krótkoterminowe 6 001 214 5 000 719',
+        '3. Inwestycje krótkoterminowe 4 000 921 3 000 415',
+        '4. Środki pieniężne w kasie i na rachunkach 1 001 315 500 219',
+        'AKTYWA RAZEM 5 013 743 3 006 234',
+        'PASYWA',
+        'A. Kapitał własny 9 001 119 7 001 217',
+        'I. Kapitał podstawowy 5 000 611 5 000 611',
+        'II. Zysk netto 4 830 118 3 340 219',
+        'B. Zobowiązania i rezerwy 5 002 517 3 001 316',
+        '1. Rezerwy na zobowiązania 2 001 311 1 800 219',
+        '2. Zobowiązania długoterminowe 5 001 219 4 500 317',
+        '3. Zobowiązania krótkoterminowe 8 001 916 6 700 611',
+        'PASYWA RAZEM 9 003 320 7 002 438',
+      ].join('\n');
+
+      const section = locateStatementSections(text, 'BS')[0];
+      expect(section.text).toContain('PASYWA RAZEM');
+
+      const result = extractFinancialLines(text, 'BS', {
+        selectedPeriodLabel: '2024',
+        comparisonPeriodLabel: '2023',
+      });
+      const total = result.lines.find((line) => /PASYWA RAZEM/i.test(line.originalLabel));
+      expect(total?.value).toBe(9003320);
+      expect(total?.comparisonValue).toBe(7002438);
+    });
+
+    it('still ends the Balance Sheet at a genuine numbered note heading with no figures', () => {
+      const text = [
+        'Bilans',
+        'na dzień 31.12.2024 roku',
+        'Nota 31.12.2024 31.12.2023',
+        ...Array.from({ length: 16 }, (_, i) => `Pozycja bilansowa ${i} ${100 + i} ${90 + i}`),
+        'AKTYWA RAZEM 3 000 3 000',
+        '1. Informacje ogólne o jednostce dominującej',
+        'Grupa Kapitałowa prowadzi działalność na terenie Rzeczypospolitej Polskiej.',
+        'Rachunek zysków i strat za okres od 01.01.2024 do 31.12.2024',
+        'Przychody ze sprzedaży 500 400',
+      ].join('\n');
+
+      const section = locateStatementSections(text, 'BS')[0];
+      expect(section.text).not.toContain('Informacje ogólne o jednostce dominującej');
+    });
+
     it('keeps a leading note reference out of two small period values', () => {
       const text = [
         'Skonsolidowany rachunek zysków i strat',
