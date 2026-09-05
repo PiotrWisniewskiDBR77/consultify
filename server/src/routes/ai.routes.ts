@@ -6480,12 +6480,13 @@ router.get(
       )) as { content: string; updated_at: string; superseded: boolean | number } | null;
 
       if (!row) {
-        return res.status(404).json({ error: 'No partial response found' });
+        return res.json({ found: false });
       }
 
       const stale = row.superseded === true || row.superseded === 1;
 
       return res.json({
+        found: true,
         sessionId: req.params.sessionId,
         content: row.content,
         updatedAt: row.updated_at,
