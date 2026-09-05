@@ -583,6 +583,12 @@ const ResultsZestawieniaScreen = React.lazy(() => import('./screens/results-zest
 const ResultsVNextRoiRegistryScreen = React.lazy(
   () => import('./screens/results-vnext-roi-registry')
 );
+const RoiVisibilityActivationScreen = React.lazy(
+  () => import('./screens/roi-visibility-activation')
+);
+const DrdZamrozenieWlascicielScreen = React.lazy(
+  () => import('./screens/drd-zamrozenie-wlasciciel')
+);
 const ResultsVNextRoiModelScreen = React.lazy(() => import('./screens/results-vnext-roi-model'));
 const ResultsVNextRoiFullToolScreen = React.lazy(
   () => import('./screens/results-vnext-roi-full-tool')
@@ -788,6 +794,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'DECYZJA_WYNIKI_TRZY_POZIOMY (2026-08-30) — prototyp POZIOMU 1: rejestr ZESTAWIEŃ OKRESOWYCH (nie pojedynczych wskaźników), ten sam budulec co results-vnext-kpi-registry (ResultsVNextRegistryShell = StandardModuleBar+StandardTable+StandardPreview) z ręcznymi wierszami — zastępuje treść dzisiejszego rejestru KPI. Klik prowadzi (docelowo) na poziom 2 = results-vnext-kpi-scorecards. &state=ready|loading|empty|error &filter=all|open|closed &selected=<id|none>',
     render: () => <ResultsZestawieniaScreen />,
+  },
+  'drd-zamrozenie-wlasciciel': {
+    label:
+      'BLOKADA ODBIORU 05.09 — REALNY <DrdHttpMethodWorkspaceScreen> w stanie „do przeglądu": przycisk „Zamroź" jest odblokowany dla właściciela ORGANIZACJI, choć nikt nie ma procesowej roli approver (tej roli nie da się w aplikacji nadać). Warstwa HTTP stubowana; zachowanie serwera dowodzi ownerFreeze.http.pg.test.ts. &rola=owner|czlonek',
+    render: () => <DrdZamrozenieWlascicielScreen />,
+  },
+  'roi-visibility-activation': {
+    label:
+      'BLOKADA ODBIORU 05.09 — REALNY <ResultsRoiHub> w stanie „domena ROI wygaszona dla organizacji": zamiast martwego „Brak spraw ROI" ekran mówi, czego brakuje, i daje właścicielowi/adminowi jednorazową akcję „Włącz ROI dla organizacji" (POST /vnext/results/roi/visibility-policy). Warstwa HTTP stubowana w harnessie — nowej trasy nie ma jeszcze na stagingu. &rola=owner|czlonek &stan=wylaczone|wlaczone',
+    render: () => <RoiVisibilityActivationScreen />,
   },
   'results-vnext-roi-registry': {
     label:
