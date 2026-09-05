@@ -341,6 +341,78 @@ function bucketCounts(results: MappedRowResult[]): Record<string, number> {
 }
 
 // ---------------------------------------------------------------------------
+// Naprawa taksonomii kanonicznej (mierzona na stagingu, nie założona)
+// ---------------------------------------------------------------------------
+
+/**
+ * ZNALEZISKO (staging `thomas.proxy.rlwy.net:52567/railway`, 05.09.2026 — zmierzone zapytaniem,
+ * nie przepisane z audytu):
+ *
+ *   SELECT id, statement_type, line_code FROM financial_statement_lines
+ *    WHERE id IN ('fsl-pl-gross','fsl-bs-equity','fsl-cf-operating','fsl-cf-fcf');
+ *     fsl-pl-gross     | P&L | GROSS_PROFIT      <- migracja 565 deklaruje GROSS_MARGIN
+ *     fsl-bs-equity    | BS  | TOTAL_EQUITY      <-                       EQUITY
+ *     fsl-cf-operating | CF  | OPERATING_CF      <-                       CFO
+ *     fsl-cf-fcf       | CF  | FREE_CASH_FLOW    <-                       FCF
+ *
+ * PRZYCZYNA: obie migracje taksonomii (`565_kpi_time_series_roi_attribution_finance.sql`
+ * i `20261058_finance_statement_canonical_mapping_taxonomy.sql`) wstawiają wiersze
+ * `ON CONFLICT (id) DO NOTHING`. Na stagingu te ID-ki istniały WCZEŚNIEJ z innej rodziny nazw,
+ * więc obie migracje zameldowały `success` i NIE wstawiły niczego — a katalog wskaźników P0
+ * (`20260809_..._d03_analysis_03_kpi_p0_catalog.sql`) żąda dokładnie `GROSS_MARGIN`, `EQUITY`,
+ * `CFO`, `FCF`. Efekt: cztery z osiemnastu wskaźników były na stagingu MARTWE od zawsze,
+ * a 134 kodów taksonomii, które są na świeżej bazie, na stagingu nie istnieje w ogóle.
+ * (To jest z nazwiskiem ta sama „dług taksonomiczny" z `evidence/finanse-fm5-20260905/RAPORT.md`
+ * §4 — tam opisany jako obserwacja, tu z przyczyną.)
+ *
+ * CO ROBIMY: dokładamy BRAKUJĄCE cele mapowania jako globalne wiersze systemowe z własnymi,
+ * deterministycznymi ID-kami (`fsl-cdpseed-…`), wyłącznie dla par (typ, kod), których seed
+ * realnie używa i których w bazie NIE MA. Tabela nie ma UNIQUE na (statement_type, line_code)
+ * — tylko PK na `id` — więc nowy wiersz nie koliduje ze starą rodziną nazw i niczego nie nadpisuje.
+ * Idempotentne, addytywne, ZERO nowych migracji (§ zakaz edycji istniejących migracji).
+ *
+ * CZEGO NIE ROBIMY: nie zmieniamy ani nie kasujemy zastanych wierszy `GROSS_PROFIT`/
+ * `TOTAL_EQUITY`/`OPERATING_CF`/`FREE_CASH_FLOW` — wiszą na nich decyzje mapowania starych
+ * importów. Uczciwie: po tej naprawie taksonomia ma DWIE rodziny nazw obok siebie i to zostaje
+ * jako dług do osobnego dyżuru (migracja uzgadniająca), a nie jest tu po cichu „naprawione".
+ */
+async function ensureTaxonomyTargets(data: SeedDataset, actorId: string): Promise<{ added: string[]; present: number }> {
+  const needed = new Map<string, { statementType: StatementType; lineCode: string }>();
+  for (const line of data.lines) {
+    if (!line.code || line.action === 'EXCLUDE') continue;
+    needed.set(`${line.statementType}::${line.code}`, { statementType: line.statementType, lineCode: line.code });
+  }
+
+  const existing = await withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<{ statement_type: string; line_code: string }>(
+      `SELECT statement_type, line_code FROM financial_statement_lines WHERE organization_id IS NULL`
+    )
+  );
+  const have = new Set(existing.map((r) => `${r.statement_type}::${r.line_code}`));
+
+  const missing = Array.from(needed.entries()).filter(([key]) => !have.has(key));
+  if (missing.length === 0) return { added: [], present: needed.size };
+
+  await withPgTransaction(async (tx) => {
+    for (const [, target] of missing) {
+      const slug = `${target.statementType === 'P&L' ? 'pl' : target.statementType.toLowerCase()}-${target.lineCode.toLowerCase().replace(/_/g, '-')}`;
+      await tx.query(
+        `INSERT INTO financial_statement_lines (id, statement_type, line_code, line_name, line_name_pl, sort_order, is_system)
+         VALUES (?, ?, ?, ?, ?, 9000, TRUE)
+         ON CONFLICT (id) DO NOTHING`,
+        [`fsl-cdpseed-${slug}`, target.statementType, target.lineCode, target.lineCode, target.lineCode]
+      );
+    }
+  });
+
+  const added = missing.map(([, t]) => `${t.statementType} ${t.lineCode}`);
+  console.log(`# Taksonomia kanoniczna: dołożono BRAKUJĄCYCH celów mapowania: ${added.length} (aktor ${actorId})`);
+  for (const code of added.slice(0, 20)) console.log(`    + ${code}`);
+  if (added.length > 20) console.log(`    … i ${added.length - 20} więcej (pełna lista w raporcie)`);
+  return { added, present: needed.size };
+}
+
+// ---------------------------------------------------------------------------
 // Tor legacy — lista sprawozdań w UI
 // ---------------------------------------------------------------------------
 
@@ -727,21 +799,109 @@ async function retireCanonicalArtifact(artifactId: string, businessVersionIds: s
   return 'ARCHIVED';
 }
 
-/** Kasowanie pakietu legacy — dokładnie ta sama kaskada, co trasa `DELETE /finance-statements/packs/:id`. */
-async function deleteLegacyPack(organizationId: string, packId: string): Promise<number> {
-  return withPgTransaction(async (tx) => {
-    const children = await tx.query<{ id: string }>(
-      `SELECT s.id FROM financial_statements s
-        WHERE s.statement_pack_id = ? AND s.organization_id = ?`,
+/**
+ * WYCOFANIE PAKIETU LEGACY — usunięcie, a gdy blokują je paragony rządzenia, ARCHIWIZACJA.
+ *
+ * ZMIERZONE NA STAGINGU (05.09.2026), nie założone: kaskada z trasy
+ * `DELETE /finance-statements/packs/:id` (`finance-statements.routes.ts:2945-2974`) NIE ZNA
+ * czterech tabel paragonów, które trzymają FK `NO ACTION` na sprawozdania i pakiety:
+ *   finance_statement_source_receipts        (44 wiersze) -> statements + ingest_runs
+ *   finance_statement_confirmation_receipts  (15 wierszy) -> statements + packs
+ *   finance_statement_manual_mapping_decisions            -> statements
+ *   finance_statement_pack_archive_command_receipts (6)   -> packs
+ * i wszystkie cztery mają trigger `…_immutable` (BEFORE DELETE OR UPDATE), więc paragonu NIE DA SIĘ
+ * usunąć. Pierwsza próba prune na stagingu padła dokładnie tu:
+ *   `update or delete on table "financial_statement_ingest_runs" violates foreign key constraint
+ *    "fk_fin_stmt_source_receipt_ingest_owner"`.
+ * TO JEST DEFEKT ZASTANY: ta sama trasa w UI wywala się tak samo na każdym sprawozdaniu,
+ * które przeszło potwierdzenie. Nie obchodzę triggera i nie zmieniam kontraktu paragonów.
+ *
+ * DECYZJA: sprawdzamy PRZED usunięciem, czy na obiekcie wiszą paragony.
+ *   · brak paragonów  -> twarde usunięcie (ta sama kaskada, co trasa UI),
+ *   · są paragony     -> `status='archived'` / `pack_status='archived'`, czyli dokładnie to,
+ *     czego lista w UI nie pokazuje (`financialStatementPackService.ts:382` i `:835` filtrują
+ *     `COALESCE(status,'draft') <> 'archived'`). Dane zostają, ślad rządzenia zostaje,
+ *     a właściciel widzi tylko CD PROJEKT.
+ * Odwracalne jednym UPDATE-em — komendy w raporcie paczki.
+ */
+async function retireLegacyPack(organizationId: string, packId: string): Promise<{ outcome: 'DELETED' | 'ARCHIVED'; statements: number }> {
+  const children = await withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<{ id: string }>(
+      `SELECT id FROM financial_statements WHERE statement_pack_id = ? AND organization_id = ?`,
       [packId, organizationId]
-    );
-    for (const child of children.rows) {
-      await deleteLegacyStatementRows(tx, child.id);
-    }
+    )
+  );
+  const childIds = children.map((c) => c.id);
+
+  const blocked = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ n: string }>(
+      `SELECT (
+         (SELECT count(*) FROM finance_statement_source_receipts r
+           WHERE r.statement_id = ANY(?) OR r.ingest_run_id IN (SELECT id FROM financial_statement_ingest_runs WHERE statement_id = ANY(?)))
+       + (SELECT count(*) FROM finance_statement_confirmation_receipts r WHERE r.statement_id = ANY(?) OR r.statement_pack_id = ?)
+       + (SELECT count(*) FROM finance_statement_manual_mapping_decisions r WHERE r.statement_id = ANY(?))
+       + (SELECT count(*) FROM finance_statement_pack_archive_command_receipts r WHERE r.pack_id = ?)
+       )::text AS n`,
+      [childIds, childIds, childIds, packId, childIds, packId]
+    )
+  );
+
+  if (Number(blocked?.n ?? 0) > 0) {
+    await withPgTransaction(async (tx) => {
+      await tx.query(
+        `UPDATE financial_statements SET status = 'archived', updated_at = NOW()
+          WHERE statement_pack_id = ? AND organization_id = ? AND COALESCE(status,'draft') <> 'archived'`,
+        [packId, organizationId]
+      );
+      await tx.query(
+        `UPDATE financial_statement_packs SET pack_status = 'archived', updated_at = NOW()
+          WHERE id = ? AND organization_id = ? AND COALESCE(pack_status,'draft') <> 'archived'`,
+        [packId, organizationId]
+      );
+    });
+    console.log(`# Pakiet legacy ${packId} ZARCHIWIZOWANY (paragony rządzenia: ${blocked?.n}) — znika z listy, dane i ślad zostają.`);
+    return { outcome: 'ARCHIVED', statements: childIds.length };
+  }
+
+  await withPgTransaction(async (tx) => {
+    for (const id of childIds) await deleteLegacyStatementRows(tx as unknown as TxLike, id);
     await tx.query(`DELETE FROM financial_statement_validations WHERE statement_pack_id = ?`, [packId]);
     await tx.query(`DELETE FROM financial_statement_packs WHERE id = ? AND organization_id = ?`, [packId, organizationId]);
-    return children.rows.length;
   });
+  return { outcome: 'DELETED', statements: childIds.length };
+}
+
+/** Pojedyncze sprawozdanie bez pakietu — ta sama zasada: usuń, a gdy paragony blokują, zarchiwizuj. */
+async function retireLegacyStatement(organizationId: string, statementId: string): Promise<'DELETED' | 'ARCHIVED'> {
+  const blocked = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ n: string }>(
+      `SELECT (
+         (SELECT count(*) FROM finance_statement_source_receipts r
+           WHERE r.statement_id = ? OR r.ingest_run_id IN (SELECT id FROM financial_statement_ingest_runs WHERE statement_id = ?))
+       + (SELECT count(*) FROM finance_statement_confirmation_receipts r WHERE r.statement_id = ?)
+       + (SELECT count(*) FROM finance_statement_manual_mapping_decisions r WHERE r.statement_id = ?)
+       )::text AS n`,
+      [statementId, statementId, statementId, statementId]
+    )
+  );
+  if (Number(blocked?.n ?? 0) > 0) {
+    await withPgTransaction((tx) =>
+      tx.query(
+        `UPDATE financial_statements SET status = 'archived', updated_at = NOW()
+          WHERE id = ? AND organization_id = ? AND COALESCE(status,'draft') <> 'archived'`,
+        [statementId, organizationId]
+      )
+    );
+    return 'ARCHIVED';
+  }
+  await withPgTransaction((tx) => deleteLegacyStatementRows(tx as unknown as TxLike, statementId));
+  return 'DELETED';
+}
+
+/** Rollback WŁASNEGO pakietu seeda: nasze sprawozdania nie mają paragonów, więc idą twardo. */
+async function deleteLegacyPack(organizationId: string, packId: string): Promise<number> {
+  const result = await retireLegacyPack(organizationId, packId);
+  return result.statements;
 }
 
 interface TxLike {
@@ -784,6 +944,7 @@ async function collectPruneTargets(
               (SELECT count(*)::text FROM financial_statements s WHERE s.statement_pack_id = p.id) AS statements
          FROM financial_statement_packs p
         WHERE p.organization_id = ? AND p.id <> ?
+          AND COALESCE(p.pack_status, 'draft') <> 'archived'
         ORDER BY p.created_at`,
       [organizationId, ids.packId]
     );
@@ -801,12 +962,21 @@ async function collectPruneTargets(
               (SELECT count(*)::text FROM financial_statement_values v WHERE v.statement_id = s.id) AS vals
          FROM financial_statements s
         WHERE s.organization_id = ?
+          AND COALESCE(s.status, 'draft') <> 'archived'
           AND s.statement_pack_id IS DISTINCT FROM ?
+          -- Sprawozdania pakietow ZYWYCH obsluguje sciezka [LEGACY_PACK] wyzej. Tu bierzemy reszte:
+          -- osierocone (pack_id NULL), wskazujace na nieistniejacy pakiet ORAZ - i to jest poprawka
+          -- po pomiarze stagingu - dzieci pakietow JUZ ZARCHIWIZOWANYCH wczesniej przez aplikacje
+          -- (finance_statement_pack_archive_command_receipts: 6 wierszy). Pakiet byl archiwalny,
+          -- ale jego 34 sprawozdania dalej mialy status mapped/confirmed i zostawaly na liscie.
           AND (s.statement_pack_id IS NULL
                OR NOT EXISTS (SELECT 1 FROM financial_statement_packs p
-                               WHERE p.id = s.statement_pack_id AND p.organization_id = ? AND p.id <> ?))
+                               WHERE p.id = s.statement_pack_id AND p.organization_id = ?)
+               OR EXISTS (SELECT 1 FROM financial_statement_packs p
+                           WHERE p.id = s.statement_pack_id AND p.organization_id = ?
+                             AND COALESCE(p.pack_status, 'draft') = 'archived'))
         ORDER BY s.created_at`,
-      [organizationId, ids.packId, organizationId, ids.packId]
+      [organizationId, ids.packId, organizationId, organizationId]
     );
     for (const s of orphanStatements) {
       targets.push({
@@ -896,13 +1066,22 @@ async function pruneOthers(
   let removedArtifacts = 0;
   let shells = 0;
 
+  let archivedPacks = 0;
+  let archivedStatements = 0;
   for (const target of targets) {
     if (target.kind === 'LEGACY_PACK') {
-      removedStatements += await deleteLegacyPack(organizationId, target.id);
-      removedPacks += 1;
+      const result = await retireLegacyPack(organizationId, target.id);
+      if (result.outcome === 'DELETED') {
+        removedPacks += 1;
+        removedStatements += result.statements;
+      } else {
+        archivedPacks += 1;
+        archivedStatements += result.statements;
+      }
     } else if (target.kind === 'LEGACY_STATEMENT') {
-      await withPgTransaction((tx) => deleteLegacyStatementRows(tx as unknown as TxLike, target.id));
-      removedStatements += 1;
+      const outcome = await retireLegacyStatement(organizationId, target.id);
+      if (outcome === 'DELETED') removedStatements += 1;
+      else archivedStatements += 1;
     }
   }
 
@@ -917,6 +1096,16 @@ async function pruneOthers(
     await withPgTransaction(async (tx) => {
       for (const v of versions) {
         await tx.query(`DELETE FROM finance_analysis_kpi_values WHERE business_version_id = ?`, [v.business_version_id]);
+        // ZMIERZONE NA STAGINGU: wiersze wskaźników CUDZEJ analizy trzymają FK na JEDNOSTKI tego
+        // pakietu (`finance_analysis_kpi_values.entity_id`), więc kasowanie po samym
+        // `business_version_id` zostawia je i `DELETE FROM finance_stmt_entities` wywala się na
+        // `finance_analysis_kpi_values_entity_id_fkey`. Kasujemy też po jednostce — analiza
+        // zbudowana na wycofywanym pakiecie i tak nie ma już z czego liczyć.
+        await tx.query(
+          `DELETE FROM finance_analysis_kpi_values
+            WHERE entity_id IN (SELECT id FROM finance_stmt_entities WHERE business_version_id = ?)`,
+          [v.business_version_id]
+        );
         await tx.query(`DELETE FROM finance_analysis_definitions WHERE business_version_id = ?`, [v.business_version_id]);
         await tx.query(`DELETE FROM finance_stmt_lines WHERE business_version_id = ?`, [v.business_version_id]);
         await tx.query(`DELETE FROM finance_stmt_entities WHERE business_version_id = ?`, [v.business_version_id]);
@@ -929,22 +1118,22 @@ async function pruneOthers(
 
   const cold = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ packs: string; statements: string; artifacts: string; entities: string }>(
-      `SELECT (SELECT count(*) FROM financial_statement_packs WHERE organization_id = ?) AS packs,
-              (SELECT count(*) FROM financial_statements WHERE organization_id = ?) AS statements,
+      `SELECT (SELECT count(*) FROM financial_statement_packs WHERE organization_id = ? AND COALESCE(pack_status,'draft') <> 'archived') AS packs,
+              (SELECT count(*) FROM financial_statements WHERE organization_id = ? AND COALESCE(status,'draft') <> 'archived') AS statements,
               (SELECT count(*) FROM finance_artifacts WHERE organization_id = ? AND archived_at IS NULL) AS artifacts,
-              (SELECT count(DISTINCT entity_name) FROM financial_statements WHERE organization_id = ?) AS entities`,
+              (SELECT count(DISTINCT entity_name) FROM financial_statements WHERE organization_id = ? AND COALESCE(status,'draft') <> 'archived') AS entities`,
       [organizationId, organizationId, organizationId, organizationId]
     )
   );
   const names = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{ entity_name: string | null; n: string }>(
       `SELECT entity_name, count(*)::text AS n FROM financial_statements
-        WHERE organization_id = ? GROUP BY entity_name ORDER BY 1`,
+        WHERE organization_id = ? AND COALESCE(status,'draft') <> 'archived' GROUP BY entity_name ORDER BY 1`,
       [organizationId]
     )
   );
   console.log('');
-  console.log(`# Usunięto: pakietów legacy ${removedPacks}, sprawozdań legacy ${removedStatements}, artefaktów kanonicznych usuniętych ${removedArtifacts}, zarchiwizowanych ${shells}`);
+  console.log(`# Usunięto: pakietów legacy ${removedPacks}, sprawozdań legacy ${removedStatements}; ZARCHIWIZOWANO: pakietów legacy ${archivedPacks}, sprawozdań legacy ${archivedStatements}; artefaktów kanonicznych usuniętych ${removedArtifacts}, zarchiwizowanych ${shells}`);
   console.log(
     `# ODCZYT NA ZIMNO organizacji: pakiety legacy=${cold?.packs} sprawozdania legacy=${cold?.statements} ` +
       `artefakty kanoniczne=${cold?.artifacts} różnych firm=${cold?.entities}`
@@ -1031,6 +1220,20 @@ async function main(): Promise<void> {
   const missingP0 = P0_REQUIRED_LINE_CODES.filter((c) => !present.has(c));
   console.log(`# Kody wymagane przez katalog wskaźników P0: ${P0_REQUIRED_LINE_CODES.length}, obecne ${P0_REQUIRED_LINE_CODES.length - missingP0.length}` + (missingP0.length ? `, BRAKUJE: ${missingP0.join(', ')}` : ''));
 
+  const globalTaxonomy = await withPinnedPostgresTransaction((tx) =>
+    tx.queryAll<{ statement_type: string; line_code: string }>(
+      `SELECT statement_type, line_code FROM financial_statement_lines WHERE organization_id IS NULL`
+    )
+  );
+  const haveTaxonomy = new Set(globalTaxonomy.map((r) => `${r.statement_type}::${r.line_code}`));
+  const missingTaxonomy = Array.from(
+    new Set(data.lines.filter((l) => l.code && l.action !== 'EXCLUDE').map((l) => `${l.statementType}::${l.code}`))
+  ).filter((k) => !haveTaxonomy.has(k));
+  console.log(
+    `# Cele mapowania w taksonomii tej bazy: brakuje ${missingTaxonomy.length}` +
+      (missingTaxonomy.length ? ` — --apply DOŁOŻY je jako globalne wiersze systemowe: ${missingTaxonomy.join(', ')}` : ' (komplet)')
+  );
+
   if (!apply) {
     console.log('');
     console.log('DRY-RUN: nic nie zapisano. Komendy zapisu:');
@@ -1041,6 +1244,7 @@ async function main(): Promise<void> {
   }
 
   const actorId = await resolveActor(org.id);
+  await ensureTaxonomyTargets(data, actorId);
   const legacy = await applyLegacy(org.id, actorId, data, ids, plan);
   console.log('');
   console.log(`# LEGACY (odczyt na zimno): sprawozdań ${legacy.statements}, pozycji ${legacy.values}, pack_readiness_status = ${legacy.readiness}`);
