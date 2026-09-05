@@ -157,6 +157,9 @@ const AdminAiScreen = React.lazy(() => import('./screens/admin-ai'));
 // ORGANIZATION_MODULES — flaga orgRedesignV1 OFF od 2026-08-29). Patrz
 // nagłówki dev-render/screens/ustawienia-grupy.tsx i org-legacy.tsx.
 const UstawieniaGrupyScreen = React.lazy(() => import('./screens/ustawienia-grupy'));
+const Day377GovernedConnectScreen = React.lazy(
+  () => import('./screens/day377-governed-connect')
+);
 const OrgLegacyScreen = React.lazy(() => import('./screens/org-legacy'));
 // admin-audit-health (runda pełna) — 7+7 ekranów domen audit i health
 // z adminNavigation.ts, dwa pliki z przełącznikiem `adminScreen`, patrz
@@ -2346,6 +2349,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'Ustawienia — MODULES: INTEGRATIONS (REALNY <SettingsView>, grupa integrations → connected-apps, surowy fetch)',
     render: () => <UstawieniaGrupyScreen grupa="integracje" />,
+  },
+  'day377-governed-connect': {
+    label: 'Dyżur 377 — uczciwa odmowa governed connect',
+    render: () => <Day377GovernedConnectScreen />,
   },
   'ustawienia-dane-prywatnosc': {
     label: 'Ustawienia — DATA & PRIVACY (REALNY <SettingsView>, grupa data-privacy → data-controls)',
