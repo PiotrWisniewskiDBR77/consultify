@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { NewAssessmentReportModal } from '../components/assessment/modals/NewAssessmentReportModal';
+import { resolveTemplateProvenancePath } from '../components/ReportsAndPresentations/artifactNavigation';
 import {
   getReportBuilderTemplateDetails,
   ReportTemplateResolveClientError,
@@ -68,6 +69,7 @@ const LibraryTemplateReportCreateFlow: React.FC<{
   onCancel: () => void;
   onCreated: (reportId: string) => void;
 }> = ({ templateArtifactId, onCancel, onCreated }) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<'resolving' | 'ready' | 'error'>('resolving');
   const [errorCode, setErrorCode] = useState<string>('TEMPLATE_RESOLVE_FAILED');
   const [resolvedTemplate, setResolvedTemplate] = useState<{
@@ -158,6 +160,11 @@ const LibraryTemplateReportCreateFlow: React.FC<{
     const message =
       LIBRARY_TEMPLATE_ERROR_MESSAGES[errorCode] ||
       LIBRARY_TEMPLATE_ERROR_MESSAGES.TEMPLATE_RESOLVE_FAILED;
+    // AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 — po decyzji CTO 05.09 wzorce
+    // systemowe są zaufane z definicji (patrz `creationIntent.ts`), więc ten
+    // kod 409 dotyczy odtąd wyłącznie wzorców ORGANIZACJI, dla których
+    // atestacja jest realną drogą wyjścia — stąd przycisk wprost do kolejki.
+    const showProvenanceCta = errorCode === 'TEMPLATE_PROVENANCE_UNVERIFIED';
     return (
       <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="w-full max-w-md bg-white dark:bg-navy-900 rounded-2xl shadow-2xl p-6">
@@ -172,7 +179,17 @@ const LibraryTemplateReportCreateFlow: React.FC<{
               <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{message}</div>
             </div>
           </div>
-          <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex justify-end gap-2">
+            {showProvenanceCta ? (
+              <button
+                type="button"
+                data-testid="report-builder-template-provenance-cta"
+                onClick={() => navigate(resolveTemplateProvenancePath())}
+                className="h-10 px-4 rounded-lg border border-navy-900 dark:border-white text-navy-900 dark:text-white text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/10"
+              >
+                Przejdź do Pochodzenie i prawa
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onCancel}

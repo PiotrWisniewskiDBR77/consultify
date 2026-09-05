@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 import {
   resolveTemplateClonePath,
   resolveTemplateEditPath,
+  resolveTemplateProvenancePath,
   resolveTemplatesDeepLink,
   resolveTemplateUsePath,
 } from '../artifactNavigation';
@@ -295,6 +296,7 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
       templatesView: 'workbookTemplates',
       workbookTemplateId: CANONICAL_ID,
       forcesTemplatesTab: true,
+      openProvenance: false,
     });
   });
 
@@ -305,6 +307,7 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
       templatesView: 'library',
       workbookTemplateId: null,
       forcesTemplatesTab: false,
+      openProvenance: false,
     });
   });
 
@@ -314,12 +317,34 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
         templatesView: 'workbookTemplates',
         workbookTemplateId: CANONICAL_ID,
         forcesTemplatesTab: true,
+        openProvenance: false,
       }
     );
     expect(resolveTemplatesDeepLink('?tab=template_architect')).toEqual({
       templatesView: 'deckArchitect',
       workbookTemplateId: null,
       forcesTemplatesTab: true,
+      openProvenance: false,
+    });
+  });
+
+  /**
+   * AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 — CZYTELNIK odczytuje adres
+   * wyprodukowany przez `resolveTemplateProvenancePath` (przycisk „Przejdź do
+   * Pochodzenie i prawa" na komunikacie 409 TEMPLATE_PROVENANCE_UNVERIFIED w
+   * Document Studio / Report Builder / Prezentacje). Ten sam wzorzec producent
+   * + czytelnik w jednym pliku/teście co reszta tego kontraktu — żeby nie
+   * powtórzyć „martwego przewodu" z `editWorkbookTemplateId`.
+   */
+  it('CZYTELNIK odczytuje adres wyprodukowany przez resolveTemplateProvenancePath', () => {
+    const path = resolveTemplateProvenancePath();
+    expect(path).toBe('/presentations?tab=templates&openProvenance=1');
+    const search = path.slice(path.indexOf('?'));
+    expect(resolveTemplatesDeepLink(search)).toEqual({
+      templatesView: 'library',
+      workbookTemplateId: null,
+      forcesTemplatesTab: true,
+      openProvenance: true,
     });
   });
 });

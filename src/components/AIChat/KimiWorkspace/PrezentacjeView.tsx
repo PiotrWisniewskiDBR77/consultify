@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { resolveTemplateProvenancePath } from '@/components/ReportsAndPresentations/artifactNavigation';
 import { BlankCreationState } from '@/components/shared/BlankCreationState';
 import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
@@ -792,16 +793,33 @@ export const PrezentacjeView: React.FC = () => {
   // fallbacku do promptu AI ani do pickera — użytkownik musi wrócić do
   // Biblioteki i wybrać inny wzorzec.
   if (templateArtifactId && templateCreateState === 'error') {
+    // AGENT_WZORCE_SYSTEMOWE_ATESTACJA_20260905 — po decyzji CTO 05.09 wzorce
+    // systemowe są zaufane z definicji (patrz `creationIntent.ts`), więc ten
+    // kod 409 dotyczy odtąd wyłącznie wzorców ORGANIZACJI, dla których
+    // atestacja jest realną drogą wyjścia — stąd przycisk wprost do kolejki.
+    const showProvenanceCta = templateCreateErrorCode === 'TEMPLATE_PROVENANCE_UNVERIFIED';
     return (
       <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="max-w-md text-sm text-c-text-secondary">{templateCreateMessage}</p>
-        <button
-          type="button"
-          onClick={handleAllFiles}
-          className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        >
-          {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          {showProvenanceCta ? (
+            <button
+              type="button"
+              data-testid="prezentacje-template-provenance-cta"
+              onClick={() => navigate(resolveTemplateProvenancePath())}
+              className="rounded-md border border-c-border bg-c-text px-3 py-1.5 text-sm text-c-surface hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {t('prezentacje.template.goToProvenance', 'Przejdź do Pochodzenie i prawa')}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleAllFiles}
+            className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
+          </button>
+        </div>
       </div>
     );
   }
