@@ -42,9 +42,13 @@ describe('PersonasPanel', () => {
     expect(await screen.findByText('Nie skonfigurowano żadnych person.')).toBeInTheDocument();
   });
 
-  it('renders an API error', async () => {
-    vi.mocked(Api.aiGetSystemPrompts).mockRejectedValue(new Error('personas service down'));
+  it('renders a localized error, never the raw (English) error/network message', async () => {
+    // admin-ai-personas defekt 05.09: the banner leaked the raw thrown message
+    // (e.g. "Failed to fetch system prompts") straight to the UI, unlocalized.
+    // Whatever the underlying failure says, the user must see the Polish copy.
+    vi.mocked(Api.aiGetSystemPrompts).mockRejectedValue(new Error('Failed to fetch system prompts'));
     render(<PersonasPanel />);
-    expect(await screen.findByText('personas service down')).toBeInTheDocument();
+    expect(await screen.findByText('Nie udało się pobrać person.')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to fetch system prompts')).not.toBeInTheDocument();
   });
 });

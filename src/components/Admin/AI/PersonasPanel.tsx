@@ -16,8 +16,10 @@ export const PersonasPanel: React.FC = () => {
     try {
       setPrompts(await Api.aiGetSystemPrompts());
       setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t('admin.ai.personas.errors.load'));
+    } catch {
+      // Never surface the raw (English) error/network message to the user —
+      // always show the localized copy (admin-ai-personas defekt 05.09).
+      setError(t('admin.ai.personas.errors.load'));
     }
   }, [t]);
   useEffect(() => {
