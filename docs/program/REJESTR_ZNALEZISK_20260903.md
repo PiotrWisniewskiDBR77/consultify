@@ -415,3 +415,8 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 ## AL. Dyżur 372 — i18n Czat AI pozostaje PARTIAL
 
 Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 kluczy menu AI edytora; 237 pozycji R2/R4/R5 pozostaje jawnie wymienionych w `evidence/i18n-czat/`. Rozszerzenie strażnika etykiet ujawniło dodatkowy dług `TransformationCasesPanel.tsx:114` (`Rebaseline`), lecz nie mogło zostać utrzymane bez złamania ratcheta i licencji.
+## AM. Dyżur 373 — baseline i dodatkowy mock blokują pełne sprzątanie
+
+- `InputHintStrip.tsx` jest `test-only`, ale ma dodatkowy realny mock w `tests/components/AIChat/EnhancedChatInput.teresa-error-toast.test.tsx:85`, poza imienną licencją dyżuru; plik pozostawiono zamiast stworzyć dziurawy test.
+- `reachability --update-baseline` odmawia przez zastany nowy `test-only` `src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts`; po day373 zbiory globalnie maleją, ale baseline pozostaje uczciwie czerwony.
+- Trzy martwe barrele `AIChat/Artifacts/**/index*.ts` i `MyWork/table/SmartSuggestionsBar.tsx` pozostają poza zakresem.

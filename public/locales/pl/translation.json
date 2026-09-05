@@ -19703,7 +19703,7 @@
     "totalActive": "Wszystkie aktywne",
     "loading": "Ładowanie zadań...",
     "noTasks": "Nie znaleziono zadań",
-    "createNew": "Utwórz nowe zadanie",
+    "createNew": "Przejdź do zadań",
     "done": "Ukończone",
     "viewMore": "Zobacz jeszcze {{count}} zadań",
     "noDate": "Brak daty",
@@ -31148,7 +31148,8 @@
       },
       "dataset": {
         "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
-        "readyPrefix": "Zbiór danych gotowy:"
+        "readyPrefix": "Zbiór danych gotowy:",
+        "showAnalyses": "Pokaż analizy"
       }
     },
     "aiStream": {

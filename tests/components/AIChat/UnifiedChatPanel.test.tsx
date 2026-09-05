@@ -264,14 +264,6 @@ vi.doMock('../../../src/components/AIChat/ContextBadge', () => ({
   ContextBadge: () => <div data-testid="context-badge" />,
 }));
 
-vi.doMock('../../../src/components/AIChat/PendingActionsIndicator', () => ({
-  PendingActionsIndicator: ({ onViewAll }: { onViewAll?: () => void }) => (
-    <button data-testid="pending-actions" onClick={() => onViewAll?.()}>
-      pending-actions
-    </button>
-  ),
-}));
-
 vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
   EnhancedChatInput: ({
     onSend,

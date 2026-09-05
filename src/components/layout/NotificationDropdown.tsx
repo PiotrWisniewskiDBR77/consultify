@@ -381,17 +381,6 @@ export const NotificationDropdown = () => {
               >
                 <ArrowRight size={14} /> {t('notificationDropdown.inbox', 'Inbox')}
               </button>
-              <button
-                onClick={() => {
-                  setMyWorkIntent({ tab: 'inbox' });
-                  setCurrentView(AppView.MY_WORK);
-                  setIsOpen(false);
-                }}
-                className="text-xs text-c-text-secondary hover:text-c-accent font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md hover:bg-c-surface"
-                title={t('notificationDropdown.openCenter', 'Open Notification Center')}
-              >
-                <ArrowRight size={14} /> {t('notificationDropdown.center', 'Center')}
-              </button>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
