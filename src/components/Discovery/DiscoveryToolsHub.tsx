@@ -5260,17 +5260,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   // PrimaryCta: no leading `+` icon per §2.2 / §2.1 canon.
   // Chevron is allowed because the button opens a tool-picker menu (variants).
   const PrimaryCta = (
-    <div ref={addMenuRef} className="relative">
+    <div ref={addMenuRef} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setIsAddMenuOpen((v) => !v)}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
+        // P6 §5 krok 4 (N8): shrink-0 + whitespace-nowrap — przy 1280 px przycisk
+        // łamał etykietę do 2 linii i przepełniał pasek Menu 2 o 27 px (audyt A §N8).
+        className="inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-full text-sm font-medium whitespace-nowrap bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
       >
-        <span>{isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}</span>
+        <span className="whitespace-nowrap">
+          {isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}
+        </span>
         <ChevronDown
           size={16}
-          className={`text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-white/80 transition-transform duration-200 ${isAddMenuOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
