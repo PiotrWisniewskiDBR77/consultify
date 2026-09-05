@@ -187,6 +187,15 @@ describe('AssessmentSessionEditorView — panel „Zarządzanie" musi zostać w 
     const header = await screen.findByTestId('assessment-editor-header');
     const lanes = await screen.findByTestId('assessment-editor-lanes');
 
+    // Governance (the tall lane used below as proof-content) is secondary for
+    // non-DRD sessions since 2026-09-05 (dyżur "sesja SIRI otwiera warsztat"):
+    // hidden until the user opts in via the „Governance" switch — see
+    // AssessmentSessionEditorView.siriGovernanceLane.test.tsx. Open it here so
+    // this test can still prove ITS structural placement, without weakening
+    // that default-hidden behaviour.
+    const governanceToggle = await screen.findByRole('button', { name: 'Governance' });
+    fireEvent.click(governanceToggle);
+
     // (a) tall governance content is NOT inside the compact header any more
     const canon = await screen.findByTestId('v8-canon-panel');
     expect(header.contains(canon)).toBe(false);

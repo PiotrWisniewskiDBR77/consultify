@@ -2013,8 +2013,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
   };
 
   // Any of the expandable lanes below the compact header open?
-  const hasHeaderLanes =
-    Boolean(sessionAiPanel) || framework !== 'drd' || showGovernance || isInfoOpen;
+  // (`framework !== 'drd'` used to force this band open unconditionally for
+  // non-DRD sessions — a leftover from before the governance lane became
+  // opt-in for every methodology. Governance visibility is now carried
+  // entirely by `showGovernance`, so the stale framework check is dropped:
+  // otherwise a non-DRD session shows an empty bordered strip under the
+  // header even with every lane collapsed.)
+  const hasHeaderLanes = Boolean(sessionAiPanel) || showGovernance || isInfoOpen;
 
   return (
     <div className="h-full flex flex-col bg-c-bg">
