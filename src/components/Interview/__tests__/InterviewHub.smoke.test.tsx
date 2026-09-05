@@ -6,8 +6,9 @@
  * the tab-render branches deterministically and offline.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
+import toast from 'react-hot-toast';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -37,7 +38,7 @@ const tEn = (key: string, opt?: unknown): string => {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: tEn,
-    i18n: { language: 'en' },
+    i18n: { language: 'en', getFixedT: () => tEn },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
   I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -59,6 +60,9 @@ const {
   getProjects,
   createProject,
   setCurrentProjectId,
+  setInterviewBreadcrumbs,
+  getMyAssignments,
+  getSession,
   appStoreState,
 } = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -68,6 +72,9 @@ const {
   getProjects: vi.fn(),
   createProject: vi.fn(),
   setCurrentProjectId: vi.fn(),
+  setInterviewBreadcrumbs: vi.fn(),
+  getMyAssignments: vi.fn(async () => []),
+  getSession: vi.fn(async () => null),
   appStoreState: { currentProjectId: 'proj-1' as string | null },
 }));
 
@@ -88,11 +95,11 @@ vi.mock('@/services/api/v8/interview', () => ({
   V8InterviewApi: {
     getSessions,
     getManagedSessions: vi.fn(async () => []),
-    getMyAssignments: vi.fn(async () => []),
+    getMyAssignments,
     getManagedAssignments: vi.fn(async () => []),
     getOverdueAssignments: vi.fn(async () => []),
     listInsights,
-    getSession: vi.fn(async () => null),
+    getSession,
     remindAssignment: vi.fn(async () => ({})),
     startAssignment: vi.fn(async () => ({})),
     approveAssignment: vi.fn(async () => ({})),
@@ -128,7 +135,7 @@ vi.mock('@/store/useAppStore', () => ({
     setCurrentProjectId,
     currentOrganization: { id: 'org-1', name: 'Acme' },
     currentUser: { id: 'user-1', firstName: 'Test', lastName: 'User', email: 't@e.com' },
-    setInterviewBreadcrumbs: vi.fn(),
+    setInterviewBreadcrumbs,
   }),
 }));
 
@@ -168,6 +175,11 @@ beforeEach(() => {
   }));
   setCurrentProjectId.mockReset();
   appStoreState.currentProjectId = 'proj-1';
+  getMyAssignments.mockReset();
+  getMyAssignments.mockResolvedValue([]);
+  getSession.mockReset();
+  getSession.mockResolvedValue(null);
+  setInterviewBreadcrumbs.mockReset();
 });
 
 afterEach(() => {
@@ -230,6 +242,97 @@ describe('InterviewHub smoke — tab rendering', () => {
     expect(apiGet).toHaveBeenCalledWith('/interview/sessions');
     expect(getSessions).not.toHaveBeenCalled();
     expect(apiGet).not.toHaveBeenCalledWith('/interview/insights');
+  });
+
+  it('karta-interview: falls back to the assignment\'s embedded session summary when both session-fetch endpoints 404, instead of erroring (dyżur 05.09)', async () => {
+    // Reproduces the exact staging record measured live (ia_91d9fbca…,
+    // template lib-tpl-digital-001 "Ocena Dojrzałości Cyfrowej"): the
+    // assignment carries both `sessionId` and an embedded `session` summary,
+    // but the dedicated session-fetch endpoints 404 for that id (orphaned/
+    // stale session row on the backend — data this dyżur cannot touch).
+    const assignment = {
+      id: 'ia_91d9fbca-5463-48a4-8760-202afece725d',
+      organizationId: 'org-1',
+      projectId: 'proj-1',
+      assigneeUserId: 'user-1',
+      templateId: 'lib-tpl-digital-001',
+      templateVersion: 1,
+      status: 'in_progress',
+      sessionId: 'f7847468-f35c-4552-b2f3-36e60f003d7b',
+      dueAt: '2026-07-18T23:59:59.000Z',
+      priority: 'medium',
+      isTeamAssignment: false,
+      createdBy: 'user-1',
+      createdAt: '2026-04-30T18:17:04.091Z',
+      updatedAt: '2026-08-09T07:00:01.893Z',
+      template: {
+        id: 'lib-tpl-digital-001',
+        name: 'Ocena Dojrzałości Cyfrowej',
+        description: 'Kompleksowy szablon do oceny poziomu dojrzałości cyfrowej organizacji.',
+        category: 'digital',
+      },
+      session: {
+        id: 'f7847468-f35c-4552-b2f3-36e60f003d7b',
+        status: null,
+        answeredQuestions: 0,
+        totalQuestions: 0,
+        completenessPercent: 0,
+      },
+      assignee: { id: 'user-1', name: 'Test User', email: 't@e.com' },
+    };
+    getMyAssignments.mockResolvedValue({ assignments: [assignment] });
+    // Both dedicated session-fetch paths reject, exactly like the live 404s.
+    getSession.mockRejectedValue(new Error('404'));
+    apiGet.mockImplementation(async (path: string) =>
+      path === `/interview/sessions/${assignment.sessionId}`
+        ? Promise.reject(new Error('404'))
+        : []
+    );
+
+    renderTab('my_assignments');
+    const matches = await screen.findAllByText('Ocena Dojrzałości Cyfrowej');
+    // TYP and NAZWA columns both show the template name — either instance
+    // sits inside the same clickable row, so double-clicking the last one
+    // (NAZWA cell) triggers the same onRowDoubleClick handler.
+    fireEvent.doubleClick(matches[matches.length - 1]);
+
+    await waitFor(() => {
+      expect(getSession).toHaveBeenCalledWith(assignment.sessionId);
+      expect(apiGet).toHaveBeenCalledWith(`/interview/sessions/${assignment.sessionId}`);
+    });
+
+    // The fix: fall back to the embedded `assignment.session` instead of
+    // throwing. Proof of the fallback taking effect — the breadcrumb effect
+    // fires with the opened document's derived name (no `name` on the
+    // embedded session, so it uses the generic default), and no error toast
+    // is ever raised for this flow.
+    await waitFor(() => {
+      expect(setInterviewBreadcrumbs).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.stringContaining('Interview Session')])
+      );
+    });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350)', async () => {
+    renderTab('my_assignments');
+    const insightsTab = await screen.findByRole('tab', { name: /Insights/i });
+    fireEvent.click(insightsTab);
+    await waitFor(() => expect(insightsTab).toHaveAttribute('aria-selected', 'true'));
+
+    const newInsightButton = await screen.findByRole('button', { name: 'New insight' });
+    expect(newInsightButton).toBeEnabled();
+    fireEvent.click(newInsightButton);
+
+    // Both the stepped shell and the legacy fallback share the WizardStepper
+    // labels, so "Define" alone would pass either way. The "What will be
+    // created" scope band is exclusive to the WizardModal (creatorShellEnabled)
+    // branch — its presence is the actual proof we reached the approved
+    // interview-creator-shell screen, not the pre-03.09 legacy dialog.
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('AI Insight Creator');
+    expect(within(dialog).getByText('Define')).toBeInTheDocument();
+    expect(within(dialog).getByText(/What will be created/i)).toBeInTheDocument();
   });
 
   it('exposes the shared project create control in the new-session modal for a zero-project tenant', async () => {

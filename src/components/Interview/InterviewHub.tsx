@@ -6275,12 +6275,24 @@ export const InterviewHub: React.FC = () => {
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
           const demoSession = interviewDemoData.sessionDetailsById[sid]?.session;
+          // Karta wywiadu (dyżur 05.09): zmierzone na żywym stagingu — dla
+          // przynajmniej jednego prawdziwego przydziału (`ia_91d9fbca…`,
+          // szablon DRD "Ocena Dojrzałości Cyfrowej") ZARÓWNO
+          // `/api/v8/interview/sessions/:id`, JAK I legacy
+          // `/api/interview/sessions/:id` zwracają 404, mimo że sam przydział
+          // niesie wbudowany podsumowujący obiekt `session` (id/status/
+          // liczniki pytań) w tej samej odpowiedzi `/interview/assignments/my`
+          // która dała ten `sid`. Zamiast wyrzucać błąd na dane, które już
+          // realnie MAMY po stronie klienta, użyj tego wbudowanego obiektu
+          // jako ostatniego, uczciwego fallbacku — dopiero brak GO WSZYSTKIEGO
+          // (żadnej z trzech ścieżek) jest prawdziwym "nie udało się wczytać".
+          const embeddedSession = assignment.session;
           const session = isInterviewDemoId(sid)
             ? demoSession
             : await V8InterviewApi.getSession(sid)
                 .then((res) => res.session)
                 .catch(() => Api.get(`/interview/sessions/${sid}`))
-                .catch(() => demoSession || null);
+                .catch(() => demoSession || embeddedSession || null);
           if (!session) {
             throw new Error(
               t('interview.hub.failedToLoadSessionGeneric', 'Failed to load session')
