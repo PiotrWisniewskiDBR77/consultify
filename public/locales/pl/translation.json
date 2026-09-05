@@ -8687,6 +8687,55 @@
     }
   },
   "initiatives": {
+    "status": {
+      "draft": "Szkic",
+      "pendingReview": "Oczekuje na przegląd",
+      "review": "W przeglądzie",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "approved": "Zatwierdzona",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Ukończona",
+      "tracking": "Monitorowanie korzyści",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana",
+      "unknown": "Nieznany status"
+    },
+    "statusDescription": {
+      "draft": "Początkowy szkic, wymaga przeglądu",
+      "pendingReview": "Oczekuje na przegląd kierownika lub lidera",
+      "review": "Przegląd biznesowy i decyzja o kontynuacji",
+      "promoted": "Przyjęta do planowania",
+      "planning": "Trwa planowanie i określanie zakresu",
+      "approved": "Zatwierdzona i gotowa do zaplanowania",
+      "scheduled": "Umieszczona w harmonogramie",
+      "executing": "Obecnie realizowana",
+      "blocked": "Zablokowana przez problem",
+      "done": "Pomyślnie ukończona",
+      "tracking": "Trwa monitorowanie korzyści",
+      "cancelled": "Inicjatywa została anulowana",
+      "archived": "Zarchiwizowana do wglądu",
+      "unknown": "Status nie jest znany"
+    },
+    "transition": {
+      "submitForReview": "Wyślij do przeglądu",
+      "approveToInitiatives": "Przekaż do inicjatyw",
+      "acceptPromote": "Zaakceptuj i promuj",
+      "startPlanning": "Rozpocznij planowanie",
+      "approve": "Zatwierdź",
+      "schedule": "Zaplanuj w harmonogramie",
+      "startExecution": "Rozpocznij realizację",
+      "markComplete": "Oznacz jako ukończoną",
+      "startTracking": "Rozpocznij monitorowanie korzyści",
+      "archive": "Zarchiwizuj",
+      "sendBack": "Zwróć do edycji",
+      "reject": "Odrzuć",
+      "markBlocked": "Oznacz jako zablokowaną",
+      "unblock": "Odblokuj",
+      "cancel": "Anuluj"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",

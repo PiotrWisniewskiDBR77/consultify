@@ -9292,6 +9292,55 @@
     }
   },
   "initiatives": {
+    "status": {
+      "draft": "Draft",
+      "pendingReview": "Pending review",
+      "review": "In review",
+      "promoted": "Promoted",
+      "planning": "Planning",
+      "approved": "Approved",
+      "scheduled": "Scheduled",
+      "executing": "Executing",
+      "blocked": "Blocked",
+      "done": "Done",
+      "tracking": "Benefits tracking",
+      "cancelled": "Cancelled",
+      "archived": "Archived",
+      "unknown": "Unknown status"
+    },
+    "statusDescription": {
+      "draft": "Initial draft, needs review",
+      "pendingReview": "Awaiting manager or lead review",
+      "review": "Business review and go/no-go decision",
+      "promoted": "Accepted for planning",
+      "planning": "Being planned and scoped",
+      "approved": "Approved and ready for scheduling",
+      "scheduled": "Scheduled in the roadmap",
+      "executing": "Currently being implemented",
+      "blocked": "Blocked by an issue",
+      "done": "Successfully completed",
+      "tracking": "Benefits tracking in progress",
+      "cancelled": "The initiative was cancelled",
+      "archived": "Archived for reference",
+      "unknown": "Status is unknown"
+    },
+    "transition": {
+      "submitForReview": "Submit for review",
+      "approveToInitiatives": "Approve to initiatives",
+      "acceptPromote": "Accept and promote",
+      "startPlanning": "Start planning",
+      "approve": "Approve",
+      "schedule": "Schedule",
+      "startExecution": "Start execution",
+      "markComplete": "Mark complete",
+      "startTracking": "Start benefits tracking",
+      "archive": "Archive",
+      "sendBack": "Send back",
+      "reject": "Reject",
+      "markBlocked": "Mark blocked",
+      "unblock": "Unblock",
+      "cancel": "Cancel"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "AI readiness: ready, score {{score}} out of 100",
