@@ -32697,7 +32697,10 @@
       "presenceAssumptions": "{{count}} założeń",
       "diffBaselinePicker": "Porównaj z migawką",
       "diffBaselineLatest": "Najnowsza migawka",
-      "exportPending": "Eksport {{format}} oczekuje na finalizację. Markdown jest dostępny już teraz."
+      "exportPending": "Eksport {{format}} oczekuje na finalizację. Markdown jest dostępny już teraz.",
+      "viewModeGroup": "Widok dokumentu",
+      "viewReport": "Raport",
+      "viewEditor": "Edytor"
     },
     "generationWarnings": {
       "summary_one": "Wygenerowano z ograniczeniami ({{count}})",
@@ -32754,6 +32757,10 @@
       "error": "Błąd AI. Spróbuj ponownie.",
       "close": "Zamknij",
       "trigger": "Popraw z Teresa"
+    },
+    "report": {
+      "empty": "Ten raport nie ma jeszcze treści.",
+      "sectionEmpty": "Ta sekcja jest pusta."
     }
   },
   "priority": {

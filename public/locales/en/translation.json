@@ -30199,7 +30199,10 @@
       "presenceAssumptions": "{{count}} assumptions",
       "diffBaselinePicker": "Compare against snapshot",
       "diffBaselineLatest": "Latest snapshot",
-      "exportPending": "{{format}} export is pending finalization. Markdown is available now."
+      "exportPending": "{{format}} export is pending finalization. Markdown is available now.",
+      "viewModeGroup": "Document view",
+      "viewReport": "Report",
+      "viewEditor": "Editor"
     },
     "generationWarnings": {
       "summary_one": "Generated with limitations ({{count}})",
@@ -30252,6 +30255,10 @@
       "error": "AI error. Please try again.",
       "close": "Close",
       "trigger": "Improve with Teresa"
+    },
+    "report": {
+      "empty": "This report has no content yet.",
+      "sectionEmpty": "This section is empty."
     }
   },
   "priority": {
