@@ -420,3 +420,9 @@ Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 k
 - `InputHintStrip.tsx` jest `test-only`, ale ma dodatkowy realny mock w `tests/components/AIChat/EnhancedChatInput.teresa-error-toast.test.tsx:85`, poza imienną licencją dyżuru; plik pozostawiono zamiast stworzyć dziurawy test.
 - `reachability --update-baseline` odmawia przez zastany nowy `test-only` `src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts`; po day373 zbiory globalnie maleją, ale baseline pozostaje uczciwie czerwony.
 - Trzy martwe barrele `AIChat/Artifacts/**/index*.ts` i `MyWork/table/SmartSuggestionsBar.tsx` pozostają poza zakresem.
+
+## AN. Dyżur 375 — karty propozycji po F5 używały zamrożonego stanu
+
+- `TeresaProposalCard` po remoncie ufała wyłącznie metadata wiadomości mimo istniejącego `GET /v8/teresa/proposal/:id`; naprawa odświeża stan fail-soft i ma test z identycznym przestarzałym propem.
+- `GovernedInitiativeHandoffCard` po remoncie wracała do `idle`; naprawa czyta istniejący kwit `chat-draft-adopt:*`, respektuje backendowy `404` dla braku widoczności i pokazuje `adopted` tylko dla `CONFIRMED`.
+- Dowód konfliktu 500→409 odtworzono na lokalnym RealPG jako PASS→mutacja RED→PASS. Osobny realny HTTP/JWT/PG dowód kwitu adopcji pozostaje `NOT PROVEN`; szczegóły: `CODEX_DAY375_KARTY_DOMKNIECIE_REPORT.md`.
