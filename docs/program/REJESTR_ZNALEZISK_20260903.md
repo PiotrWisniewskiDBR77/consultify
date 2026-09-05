@@ -420,3 +420,10 @@ Mechaniczny mianownik na markerze wynosi 250. Naprawiono i przetestowano 13/13 k
 - `InputHintStrip.tsx` jest `test-only`, ale ma dodatkowy realny mock w `tests/components/AIChat/EnhancedChatInput.teresa-error-toast.test.tsx:85`, poza imienną licencją dyżuru; plik pozostawiono zamiast stworzyć dziurawy test.
 - `reachability --update-baseline` odmawia przez zastany nowy `test-only` `src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts`; po day373 zbiory globalnie maleją, ale baseline pozostaje uczciwie czerwony.
 - Trzy martwe barrele `AIChat/Artifacts/**/index*.ts` i `MyWork/table/SmartSuggestionsBar.tsx` pozostają poza zakresem.
+
+## AN. Dyżur 377 — governed connect odmawiał nieczytelnym 500
+
+- `buildGovernedExternalAuthSession` ma sześć miejsc wywołania. Na gołym `ApiGateway` dwa realnie zmierzone wejścia zwracały `500 {}` dla niezatwierdzonego `google_drive`; dwa wywołania v8 miały zastany, niespójny `403` z surowym komunikatem.
+- Polityka `SET-MVP-OAUTH-001` pozostaje fail-closed. Dyżur 377 ujednolicił wszystkie sześć miejsc do `501` + `GOVERNED_CONNECTOR_NOT_APPROVED` + „Integracja nie jest dostępna w tej wersji”, bez zatwierdzania dostawców i bez zmiany callbacku.
+- `ConnectedAppsSettings.tsx` zatrzymuje redirect OAuth dla `teams` po błędzie i pokazuje komunikat serwera. RealPG + JWT + dwa tenanty potwierdziły zero zapisanych wierszy.
+- Do decyzji właściciela: przyszłość `OAUTH_APPROVED_PROVIDER_REGISTRY` dla chmury, brak pól `client_id/client_secret` dla Jira we froncie oraz los martwych wołaczy `UserIntegrations`/`NotificationChannelsSettings`.
