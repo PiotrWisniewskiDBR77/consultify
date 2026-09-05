@@ -3537,7 +3537,7 @@ export const AppRoutes: React.FC = () => {
           path={`${ROUTES.ORGANIZATION.ROOT}/*`}
           element={
             <ProtectedRoute requireAuth={true}>
-              <MainLayout breadcrumbs={breadcrumbs || ['Organization']} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.organization')]} noPadding>
                 <RouteErrorBoundary>
                   <AnimationWrapper variant="fade">
                     <Routes>

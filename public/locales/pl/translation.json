@@ -279,7 +279,7 @@
     }
   },
   "layout": {
-    "breadcrumb": {"module": {"audits": "Audyty"}, "page": {"drdReport": "Raport DRD", "reports": "Raporty"}},
+    "breadcrumb": {"module": {"audits": "Audyty", "organization": "Organizacja"}, "page": {"drdReport": "Raport DRD", "reports": "Raporty"}},
     "loading": {"audits": "Ładowanie audytów…", "drdReport": "Ładowanie raportu DRD…", "report": "Ładowanie raportu…"},
     "aiPanel": {
       "open": "Otwórz panel AI",
