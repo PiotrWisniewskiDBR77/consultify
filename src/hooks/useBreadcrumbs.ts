@@ -151,7 +151,7 @@ export const useBreadcrumbs = (): string[] | null => {
   // BENEFITS MODULE (Results / KPI)
   // =====================================================
   else if (currentView === AppView.BENEFITS_REALIZATION) {
-    section = t('sidebar.results', 'Results');
+    section = t('sidebar.results', 'Wyniki');
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     const mode = params.get('mode');

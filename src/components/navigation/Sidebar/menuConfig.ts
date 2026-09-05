@@ -109,7 +109,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // 7. Resultaty - śledzenie efektów (KPI/ROI) zrealizowanych inicjatyw
     {
       id: 'MODULE_BENEFITS',
-      label: t('sidebar.results', 'Results'),
+      label: t('sidebar.results', 'Wyniki'),
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
       badge: 'beta',
