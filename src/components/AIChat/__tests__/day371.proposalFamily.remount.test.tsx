@@ -3,6 +3,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+import { Api } from '@/services/api';
 
 import { ChatTableProposalCard, type SchemaProposal } from '../ChatTableProposalCard';
 import { ExecutionProposalMessage } from '../ExecutionProposalMessage';
@@ -29,6 +30,7 @@ vi.mock('@/services/api/tablePlatform.api', () => ({
 
 vi.mock('@/services/api', () => ({
   Api: {
+    getTeresaProposal: vi.fn(),
     approveTeresaProposal: vi.fn(),
     rejectTeresaProposal: vi.fn(),
     executeTeresaProposal: vi.fn(),
@@ -96,6 +98,7 @@ describe('day371 proposal-card family remount behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     lifecycle.state = undefined;
+    vi.mocked(Api.getTeresaProposal).mockResolvedValue(teresaProposal('proposal'));
   });
 
   it('ChatTableProposalCard shows the live executed proposal after remount with stale metadata', async () => {
@@ -121,6 +124,20 @@ describe('day371 proposal-card family remount behavior', () => {
 
     render(<TeresaProposalCard proposal={teresaProposal('completed') as any} />);
     expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+  });
+
+  it('TeresaProposalCard refreshes live state after remount with the same stale proposal', async () => {
+    const staleProposal = teresaProposal('proposal');
+    vi.mocked(Api.getTeresaProposal).mockResolvedValue(teresaProposal('completed'));
+
+    const first = render(<TeresaProposalCard proposal={staleProposal as any} />);
+    expect(screen.getByText('Proposal ready')).toBeInTheDocument();
+    first.unmount();
+
+    render(<TeresaProposalCard proposal={staleProposal as any} />);
+    await waitFor(() => expect(screen.getByText('Completed')).toBeInTheDocument());
+    expect(Api.getTeresaProposal).toHaveBeenCalledWith('teresa-proposal-1');
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
   });
 

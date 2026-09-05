@@ -75,6 +75,24 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
     setCurrentProposal(proposal);
   }, [proposal]);
 
+  useEffect(() => {
+    let active = true;
+
+    void Api.getTeresaProposal(proposal.proposalId)
+      .then((response) => {
+        if (!active) return;
+        const freshProposal = unwrapProposalResponse(response);
+        if (freshProposal) setCurrentProposal(freshProposal);
+      })
+      .catch(() => {
+        // Keep stale message metadata as a fail-soft fallback.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [proposal.proposalId]);
+
   const statusConfig = useMemo(
     () => STATUS_STYLES[currentProposal.state] || STATUS_STYLES.proposal,
     [currentProposal.state]
