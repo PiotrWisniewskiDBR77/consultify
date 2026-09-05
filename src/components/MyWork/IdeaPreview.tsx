@@ -297,9 +297,20 @@ export const IdeaPreviewFooter: React.FC<IdeaPreviewFooterProps> = ({
   onOpenIdeaInProcessFlow,
   onConvertComplete,
 }) => {
+  /**
+   * Blok 4 (AI) — kanon §7.3 pkt 4: „chipy dopasowane do ENCJI".
+   *
+   * Do 2026-09-05 stał tu komplet skopiowany z podglądu ZADAŃ
+   * (`MyTasksListContent.tsx` — „Why urgent? / Action plan / Who can help?",
+   * te same trzy stringi co do znaku). Dla Idei to pytania nie z tej encji:
+   * pomysł na etapie „Iskra" nie ma pilności ani planu działania, ma za to
+   * rozwinięcie, ryzyka i następny krok. Zestaw poniżej jest 1:1 z obrazem
+   * zatwierdzonym przez właściciela (`evidence/grafika/144-runda-pelna-b/
+   * preview-4-zakladki__PO__light.png`, kolumna Ideas).
+   */
   const aiHints = isPolish
-    ? ['Dlaczego pilne?', 'Plan działania', 'Kto może pomóc?']
-    : ['Why urgent?', 'Action plan', 'Who can help?'];
+    ? ['Rozwiń pomysł', 'Znajdź ryzyka', 'Zaproponuj następny krok']
+    : ['Expand the idea', 'Find risks', 'Suggest next step'];
 
   const relationItems: RelationItem[] = [];
   if (idea.sourceType) {
