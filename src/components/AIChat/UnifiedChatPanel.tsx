@@ -6861,8 +6861,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                 data-testid="chat-work-panel-button"
                 aria-pressed={showWorkPanel}
                 className={`${CHAT_HEADER_ICON_CONTROL_CLASS} ${showWorkPanel ? CHAT_HEADER_CONTROL_ACTIVE_CLASS : ''}`}
-                title={t('aiChat.workPanel.open', 'Open work panel')}
-                aria-label={t('aiChat.workPanel.open', 'Open work panel')}
+                title={
+                  showWorkPanel
+                    ? t('aiChat.workPanel.close', 'Close work panel')
+                    : t('aiChat.workPanel.open', 'Open work panel')
+                }
+                aria-label={
+                  showWorkPanel
+                    ? t('aiChat.workPanel.close', 'Close work panel')
+                    : t('aiChat.workPanel.open', 'Open work panel')
+                }
               >
                 <PanelRight size={18} strokeWidth={1.75} />
               </button>

@@ -240,4 +240,21 @@ describe('UnifiedChatPanel chat route wiring', () => {
     expect(onKickoffConsumed).toHaveBeenCalledTimes(1);
     expect(harness.clearKickoff).not.toHaveBeenCalled();
   });
+
+  it('changes the work panel title and accessible label after opening it', () => {
+    render(
+      <MemoryRouter initialEntries={['/chat']}>
+        <UnifiedChatPanel mode="full" />
+      </MemoryRouter>
+    );
+
+    const button = screen.getByTestId('chat-work-panel-button');
+    expect(button).toHaveAttribute('title', 'Open work panel');
+    expect(button).toHaveAttribute('aria-label', 'Open work panel');
+
+    fireEvent.click(button);
+
+    expect(button).toHaveAttribute('title', 'Close work panel');
+    expect(button).toHaveAttribute('aria-label', 'Close work panel');
+  });
 });
