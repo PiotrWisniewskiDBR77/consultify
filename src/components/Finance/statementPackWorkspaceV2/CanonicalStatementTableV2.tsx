@@ -72,8 +72,18 @@ export interface CanonicalStatementCellSelection {
 
 export interface CanonicalStatementTableV2Props {
   lines: readonly StatementLineDto[];
-  /** Etykieta linii (nazwa PL) po `canonicalLineId`/`lineCode` — moduł dostarcza słownik, tabela go nie zna. */
-  resolveLineLabel: (rowKey: string, canonicalLineId: string | null, lineCode: string | null) => string;
+  /**
+   * Etykieta linii (nazwa PL) po `canonicalLineId`/`lineCode` — moduł dostarcza
+   * słownik, tabela go nie zna. Czwarty argument niesie nazwy pozycji z DTO
+   * (taksonomia TEJ instalacji) — zapasowe źródło dla kodu spoza słownika
+   * kanonicznego; opcjonalny, żeby istniejący wołający/testy nie musieli się zmieniać.
+   */
+  resolveLineLabel: (
+    rowKey: string,
+    canonicalLineId: string | null,
+    lineCode: string | null,
+    taxonomyNames?: { lineName: string | null; lineNamePl: string | null }
+  ) => string;
   selectedCellKey: string | null;
   onSelectCell: (selection: CanonicalStatementCellSelection) => void;
   emptyLabel: string;
@@ -142,7 +152,10 @@ export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props)
 
           {/* Wiersze */}
           {table.rows.map((row, rowIdx) => {
-            const rawLabel = resolveLineLabel(row.rowKey, row.canonicalLineId, row.lineCode);
+            const rawLabel = resolveLineLabel(row.rowKey, row.canonicalLineId, row.lineCode, {
+              lineName: row.lineName,
+              lineNamePl: row.lineNamePl,
+            });
             const label =
               row.usesLineCodeFallback && rawLabel ? humanizeFallbackLineCode(rawLabel) : rawLabel;
             const isEven = rowIdx % 2 === 0;

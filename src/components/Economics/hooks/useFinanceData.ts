@@ -6,7 +6,10 @@ import { Api, shouldAllowDemoData } from '@/services/api';
 import { listFinanceArtifacts } from '@/services/api/financeV2.api';
 import type { FinanceArtifactSummaryDto } from '@/services/api/financeV2.types';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { financeArtifactDisplayTitle } from '@/labels/financeArtifactTitle';
 import { isFinanceOwnerReviewModeEnabled } from '@/utils/financeOwnerReviewMode';
+
+import { mergeCanonicalArtifactsIntoFinanceRows } from '../financeCanonicalMerge';
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
@@ -52,10 +55,17 @@ function isInvestmentAnalysisType(value: unknown): boolean {
 
 function canonicalArtifactAsHubRow(artifact: FinanceArtifactSummaryDto) {
   const version = artifact.currentBusinessVersion;
+  // NIGDY `naturalKey` wprost jako tytuł — bywa kluczem technicznym
+  // (`derived-analysis:script:<uuid>`), audyt FIN 2026-09-06 defekt #3.
+  const displayTitle = financeArtifactDisplayTitle({
+    displayName: artifact.displayName,
+    naturalKey: artifact.naturalKey,
+    artifactType: artifact.artifactType,
+  });
   return {
     id: artifact.artifactId,
-    name: artifact.naturalKey || artifact.artifactType,
-    title: artifact.naturalKey || artifact.artifactType,
+    name: displayTitle,
+    title: displayTitle,
     artifact_type: artifact.artifactType,
     status: version?.status || 'DRAFT',
     updated_at: version?.updatedAt || artifact.createdAt,
@@ -222,8 +232,21 @@ export function useFinanceData(
         const data = await Api.get('/api/economics/financial-analyses');
         arr = Array.isArray((data as any)?.analyses) ? (data as any).analyses : [];
       }
+      // ★ Audyt FIN 2026-09-06 defekt #5/#8: rejestr kanoniczny dokładany ZAWSZE,
+      // nie tylko w trybie odbioru właściciela — inaczej analiza istniejąca
+      // wyłącznie jako artefakt kanoniczny (np. policzona skryptem) była
+      // niewidoczna, a lista pokazywała fałszywe „Brak analiz.". Awaria tego
+      // odczytu NIE może wywrócić listy: degraduje się do pustej tablicy, tak
+      // samo jak strona legacy w `InitiativesHub`.
+      let canonicalRows: any[] = [];
+      try {
+        const canonicalData = await listFinanceArtifacts({ artifactType: 'HISTORICAL_ANALYSIS' });
+        canonicalRows = canonicalData.artifacts.map(canonicalArtifactAsHubRow);
+      } catch {
+        canonicalRows = [];
+      }
       setLoadError(null);
-      setAnalyses(arr);
+      setAnalyses(mergeCanonicalArtifactsIntoFinanceRows(arr, canonicalRows));
     } catch {
       setLoadError(
         t(

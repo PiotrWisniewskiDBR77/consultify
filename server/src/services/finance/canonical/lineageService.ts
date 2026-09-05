@@ -135,6 +135,16 @@ export interface LineageEdgeRow {
   compute_run_id: string | null;
   author_id: string;
   created_at: string;
+  /**
+   * Nazwy artefaktow na obu koncach krawedzi (audyt FIN 2026-09-06 defekt #12):
+   * panel "Powiazane artefakty" pokazywal skrocony hash wersji ("v.d7b0b5de")
+   * zamiast nazwy nadanej przez uzytkownika. Hash to identyfikator, nie tytul.
+   * Pola opcjonalne — stary wolajacy bez JOIN-u dostaje `undefined`.
+   */
+  source_display_name?: string | null;
+  source_natural_key?: string | null;
+  target_display_name?: string | null;
+  target_natural_key?: string | null;
 }
 
 export interface InsertEdgeParams {
@@ -268,10 +278,23 @@ export async function getAncestors(
            JOIN ancestors a ON e.target_version_id = a.source_version_id
           WHERE e.organization_id = ? AND a.depth < ?
        )
-       SELECT DISTINCT id, organization_id, source_version_id, source_artifact_type,
-              target_version_id, target_artifact_type, edge_type, transformation_kind,
-              assumption_snapshot_hash, assumption_snapshot_id, compute_run_id, author_id, created_at
-         FROM ancestors`,
+       SELECT DISTINCT edge.id, edge.organization_id, edge.source_version_id, edge.source_artifact_type,
+              edge.target_version_id, edge.target_artifact_type, edge.edge_type, edge.transformation_kind,
+              edge.assumption_snapshot_hash, edge.assumption_snapshot_id, edge.compute_run_id,
+              edge.author_id, edge.created_at,
+              source_artifact.display_name AS source_display_name,
+              source_artifact.natural_key  AS source_natural_key,
+              target_artifact.display_name AS target_display_name,
+              target_artifact.natural_key  AS target_natural_key
+         FROM ancestors edge
+         LEFT JOIN finance_business_versions source_version
+                ON source_version.business_version_id = edge.source_version_id
+         LEFT JOIN finance_artifacts source_artifact
+                ON source_artifact.artifact_id = source_version.artifact_id
+         LEFT JOIN finance_business_versions target_version
+                ON target_version.business_version_id = edge.target_version_id
+         LEFT JOIN finance_artifacts target_artifact
+                ON target_artifact.artifact_id = target_version.artifact_id`,
       [organizationId, businessVersionId, organizationId, maxDepth]
     )
   );
@@ -295,10 +318,23 @@ export async function getDescendants(
            JOIN descendants d ON e.source_version_id = d.target_version_id
           WHERE e.organization_id = ? AND d.depth < ?
        )
-       SELECT DISTINCT id, organization_id, source_version_id, source_artifact_type,
-              target_version_id, target_artifact_type, edge_type, transformation_kind,
-              assumption_snapshot_hash, assumption_snapshot_id, compute_run_id, author_id, created_at
-         FROM descendants`,
+       SELECT DISTINCT edge.id, edge.organization_id, edge.source_version_id, edge.source_artifact_type,
+              edge.target_version_id, edge.target_artifact_type, edge.edge_type, edge.transformation_kind,
+              edge.assumption_snapshot_hash, edge.assumption_snapshot_id, edge.compute_run_id,
+              edge.author_id, edge.created_at,
+              source_artifact.display_name AS source_display_name,
+              source_artifact.natural_key  AS source_natural_key,
+              target_artifact.display_name AS target_display_name,
+              target_artifact.natural_key  AS target_natural_key
+         FROM descendants edge
+         LEFT JOIN finance_business_versions source_version
+                ON source_version.business_version_id = edge.source_version_id
+         LEFT JOIN finance_artifacts source_artifact
+                ON source_artifact.artifact_id = source_version.artifact_id
+         LEFT JOIN finance_business_versions target_version
+                ON target_version.business_version_id = edge.target_version_id
+         LEFT JOIN finance_artifacts target_artifact
+                ON target_artifact.artifact_id = target_version.artifact_id`,
       [organizationId, businessVersionId, organizationId, maxDepth]
     )
   );

@@ -20,7 +20,7 @@ import {
   PreviewMetaCard,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { statusChipTone } from '@/components/ui/primitives/chips';
+import { statusChipLabel, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
   approveCanonicalFinancialAnalysis,
@@ -438,7 +438,11 @@ export function useFinancePreview({
             'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
         },
         {
-          label: row.status,
+          // ★ Audyt FIN 2026-09-06 defekt #6 (zrzut 02-sprawozdania-podglad.png):
+          // podgląd pokazywał surowe „APPROVED", podczas gdy TA SAMA encja w
+          // tabeli obok miała już „Zatwierdzone". Most `statusChip.*` istnieje
+          // (F-M1) — podgląd po prostu go nie wołał.
+          label: statusChipLabel(row.status, t),
           tone: statusChipTone(row.status),
         },
         ...(metaPills.map((mp) => ({

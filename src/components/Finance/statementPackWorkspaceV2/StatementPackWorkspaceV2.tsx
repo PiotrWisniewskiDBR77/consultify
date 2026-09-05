@@ -48,6 +48,7 @@
  * (sourceRef), nie fabrykuje kroku 2.
  */
 
+import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
@@ -171,7 +172,13 @@ const DEFAULT_FETCHERS: StatementPackWorkspaceV2Fetchers = {
     const artifact = await getFinanceArtifact(bv.artifactId);
     return {
       artifactId: bv.artifactId,
-      name: artifact.naturalKey ?? 'Sprawozdanie bez nazwy',
+      // NIGDY `naturalKey` wprost — bywa kluczem technicznym (`seed:…:…`),
+      // audyt FIN 2026-09-06 defekt #3. Jedno miejsce decyzji: `financeArtifactDisplayTitle`.
+      name: financeArtifactDisplayTitle({
+        displayName: artifact.displayName,
+        naturalKey: artifact.naturalKey,
+        artifactType: 'STATEMENT_PACK',
+      }),
       status: bv.status,
       freshness: bv.freshness,
       versionNo: bv.versionNo,

@@ -468,6 +468,12 @@ export interface StatementLineListRow {
   statement_type: StatementType;
   canonical_line_id: string;
   line_code: string;
+  /** Nazwa pozycji z taksonomii `financial_statement_lines` (angielska kolumna bazowa). */
+  line_name: string | null;
+  /** Nazwa pozycji PO POLSKU z taksonomii — pierwsze źródło etykiety w UI po słowniku kodów. */
+  line_name_pl: string | null;
+  /** Porządek prezentacji z taksonomii — sprawozdanie czyta się w kolejności pozycji, nie alfabetycznie po kodzie. */
+  sort_order: number | null;
   entity_id: string;
   entity_code: string;
   period_id: string;
@@ -519,7 +525,8 @@ export async function listStatementLines(
   return withPinnedPostgresTransaction((tx) =>
     tx.queryAll<StatementLineListRow>(
       `SELECT l.id, l.organization_id, l.business_version_id, l.statement_type, l.canonical_line_id,
-              fsl.line_code, l.entity_id, e.entity_code, l.period_id, p.label AS period_label,
+              fsl.line_code, fsl.line_name, fsl.line_name_pl, fsl.sort_order,
+              l.entity_id, e.entity_code, l.period_id, p.label AS period_label,
               l.accumulation_basis, l.consolidation_scope, l.value_status, l.value_decimal,
               l.native_currency, l.presentation_currency, l.unit, l.multiplier, l.source_ref,
               l.is_adjustment, l.adjustment_reason, l.sign_convention, l.accounting_policy,
@@ -529,7 +536,14 @@ export async function listStatementLines(
          JOIN finance_stmt_entities e ON e.id = l.entity_id
          JOIN finance_stmt_periods p ON p.period_id = l.period_id
         WHERE ${conditions.join(' AND ')}
-        ORDER BY l.statement_type ASC, fsl.line_code ASC, e.entity_code ASC, p.period_start ASC`,
+        -- KOLEJNOSC PREZENTACJI (audyt FIN 2026-09-06, zrzut 03e-canonical-direct.png):
+        -- sortowanie po line_code dawalo czytelnikowi alfabet (AP, AR, CASH,
+        -- CURRENT_ASSETS...) zamiast ukladu sprawozdania. sort_order to kolumna
+        -- porzadkowa taksonomii - ona rzadzi; line_code zostaje wylacznie jako
+        -- rozstrzygacz remisu, zeby wynik byl deterministyczny (dwie linie moga
+        -- miec ten sam sort_order), a NULL laduje na koncu, nie na poczatku.
+        ORDER BY l.statement_type ASC, fsl.sort_order ASC NULLS LAST, fsl.line_code ASC,
+                 e.entity_code ASC, p.period_start ASC`,
       params
     )
   );

@@ -22822,7 +22822,7 @@
       "scenario": "Scenario",
       "horizon": "Horizon",
       "horizonYears": "Horizon",
-      "analysisType": "Type",
+      "analysisType": "Analysis type",
       "periods": "Periods",
       "subtype": "Subtype",
       "source": "Source",
@@ -23015,6 +23015,12 @@
       "status": "Status",
       "mappedLines": "Mapped lines",
       "previewTitle": "Pack health",
+      "state": {
+        "ready": "The pack is complete: profit and loss, balance sheet and cash flow statement.",
+        "rejected": "Every statement in this pack was rejected — the pack cannot seed downstream work.",
+        "needsAttention": "The pack needs attention",
+        "collecting": "The pack is still collecting the required statements."
+      },
       "ratios": "Statements",
       "validation": "Pack status",
       "computeRatios": "Compute ratios",

@@ -86,6 +86,14 @@ const DEFAULT_TAG = 'seed:finance-cdprojekt-2025';
 const ENTITY_NAME = 'Grupa Kapitałowa CD PROJEKT';
 const ENTITY_CODE = 'GRUPA_KAPITALOWA_CD_PROJEKT';
 const SOURCE_FILE_NAME = 'CD_PROJEKT_skonsolidowane_2025.pdf';
+/**
+ * Nazwa WIDOCZNA dla właściciela (kolumna `finance_artifacts.display_name`,
+ * migracja `20261102_finance_artifact_display_name.sql`). `natural_key` zostaje
+ * kluczem idempotencji seeda i NIGDY nie jest tytułem — audyt FIN 2026-09-06
+ * defekt #3 pokazał go wprost w nagłówku karty.
+ */
+const PACK_DISPLAY_NAME =
+  'Grupa Kapitałowa CD PROJEKT — skonsolidowane sprawozdanie 2025 (z 2024)';
 
 // ---------------------------------------------------------------------------
 // Dane źródłowe
@@ -552,6 +560,147 @@ async function findExistingPack(
     )
   );
   return row ? { artifactId: row.artifact_id, businessVersionId: row.business_version_id } : null;
+}
+
+/**
+ * ★ MOST legacy ↔ kanoniczny (audyt FIN 2026-09-06, defekt #3 — BLOKER).
+ *
+ * Bez wiersza w `finance_artifact_aliases` klik „Otwórz" na wierszu CD PROJEKT
+ * nie trafiał do pakietu z 238 liniami — materializacja tożsamości zakładała
+ * DRUGI, pusty artefakt i to jemu przypisywała alias (zmierzone lokalnie:
+ * artefakt-widmo `fe74a3a5-…`, `mapping_reason = materialized_on_open:STATEMENT_PACK`).
+ * Seed, który zakłada obie strony (legacy i kanoniczną), jest jedynym miejscem,
+ * które ZNA obie tożsamości — więc to on musi zapiąć most.
+ *
+ * Idempotentna i samonaprawcza:
+ *   - brak aliasu → INSERT,
+ *   - alias wskazuje TEN artefakt → nic (0 zmian przy powtórnym `--apply`),
+ *   - alias wskazuje INNY artefakt → przepięcie na artefakt seeda (to seed jest
+ *     autorytetem dla SWOJEGO pakietu) + archiwizacja artefaktu-widma, o ile
+ *     jest PUSTY i powstał z materializacji. Artefakt z jakąkolwiek treścią NIE
+ *     jest ruszany — wtedy tylko głośny komunikat, żeby człowiek rozstrzygnął.
+ */
+async function ensureCanonicalAlias(
+  organizationId: string,
+  legacyPackId: string,
+  artifactId: string,
+  businessVersionId: string,
+  actorId: string
+): Promise<void> {
+  const before = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ alias_id: string; artifact_id: string; mapping_reason: string | null }>(
+      `SELECT alias_id, artifact_id, mapping_reason FROM finance_artifact_aliases
+        WHERE legacy_table = 'financial_statement_packs' AND legacy_id = ? AND organization_id = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [legacyPackId, organizationId]
+    )
+  );
+
+  if (!before) {
+    await withPgTransaction(async (tx) => {
+      await tx.query(
+        `INSERT INTO finance_artifact_aliases
+           (legacy_table, legacy_id, legacy_version, artifact_id, organization_id,
+            business_version_id, mapping_confidence, mapping_reason, created_by)
+         VALUES ('financial_statement_packs', ?, '', ?, ?, ?, 'AUTO_MIGRATE', ?, ?)
+         ON CONFLICT (legacy_table, legacy_id, legacy_version) DO NOTHING`,
+        [legacyPackId, artifactId, organizationId, businessVersionId, DEFAULT_TAG, actorId]
+      );
+    });
+    console.log(`# ALIAS legacy→kanoniczny ZAŁOŻONY: ${legacyPackId} → ${artifactId}`);
+    return;
+  }
+
+  if (before.artifact_id === artifactId) {
+    console.log(`# ALIAS legacy→kanoniczny JUŻ POPRAWNY: ${legacyPackId} → ${artifactId} (0 zmian).`);
+    return;
+  }
+
+  const ghost = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ lines: string; natural_key: string | null }>(
+      `SELECT (SELECT count(*) FROM finance_stmt_lines l
+                 JOIN finance_business_versions bv ON bv.business_version_id = l.business_version_id
+                WHERE bv.artifact_id = ?) AS lines,
+              (SELECT natural_key FROM finance_artifacts WHERE artifact_id = ?) AS natural_key`,
+      [before.artifact_id, before.artifact_id]
+    )
+  );
+  const ghostLines = Number(ghost?.lines ?? 0);
+  const cameFromMaterialization = String(before.mapping_reason ?? '').startsWith('materialized_on_open');
+
+  await withPgTransaction(async (tx) => {
+    await tx.query(
+      `UPDATE finance_artifact_aliases
+          SET artifact_id = ?, business_version_id = ?, mapping_reason = ?
+        WHERE alias_id = ?`,
+      [artifactId, businessVersionId, `${DEFAULT_TAG}:repointed`, before.alias_id]
+    );
+    if (ghostLines === 0 && cameFromMaterialization) {
+      await tx.query(
+        `UPDATE finance_artifacts
+            SET archived_at = NOW(), archived_reason = ?
+          WHERE artifact_id = ? AND organization_id = ? AND archived_at IS NULL`,
+        [
+          'Pusty duplikat utworzony przez materializacje tozsamosci przy kliknieciu Otworz; alias przepiety na pakiet seeda CD PROJEKT.',
+          before.artifact_id,
+          organizationId,
+        ]
+      );
+    }
+  });
+
+  console.log(
+    `# ALIAS legacy→kanoniczny PRZEPIĘTY: ${legacyPackId} → ${artifactId} ` +
+      `(był: ${before.artifact_id}, klucz "${ghost?.natural_key ?? '?'}", linii ${ghostLines}).`
+  );
+  if (ghostLines === 0 && cameFromMaterialization) {
+    console.log(`# Artefakt-widmo ${before.artifact_id} ZARCHIWIZOWANY (pusty, z materializacji).`);
+  } else if (ghostLines > 0) {
+    console.log(
+      `# UWAGA: poprzedni artefakt ${before.artifact_id} MA ${ghostLines} linii — NIE ruszam go. Rozstrzygnij ręcznie.`
+    );
+  }
+}
+
+/**
+ * Czy kolumna `finance_artifacts.display_name` istnieje w TEJ bazie.
+ *
+ * ★ Środowisko może być STARSZE niż ta gałąź: migracja
+ * `20261102_finance_artifact_display_name.sql` wjeżdża dopiero z wdrożeniem.
+ * Skrypt NIE tworzy jej sam (zakaz ręcznego DDL na cudzym środowisku) i NIE
+ * wywraca się — mówi wprost, że nazwa wyświetlana wejdzie po wdrożeniu, a
+ * resztę (most legacy→kanoniczny) robi normalnie.
+ */
+async function hasDisplayNameColumn(): Promise<boolean> {
+  const row = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ n: string }>(
+      `SELECT count(*) AS n FROM information_schema.columns
+        WHERE table_name = 'finance_artifacts' AND column_name = 'display_name'`
+    )
+  );
+  return Number(row?.n ?? 0) > 0;
+}
+
+/** Nazwa widoczna dla użytkownika (kolumna rozdzielona od `natural_key` migracją 20261102). */
+async function setDisplayName(
+  organizationId: string,
+  artifactId: string,
+  displayName: string
+): Promise<void> {
+  if (!(await hasDisplayNameColumn())) {
+    console.log(
+      `# POMIJAM nazwę wyświetlaną: ta baza nie ma jeszcze kolumny finance_artifacts.display_name ` +
+        `(migracja 20261102 wejdzie z wdrożeniem gałęzi). Nazwa "${displayName}" pojawi się po wdrożeniu — uruchom wtedy --apply ponownie.`
+    );
+    return;
+  }
+  await withPgTransaction(async (tx) => {
+    await tx.query(
+      `UPDATE finance_artifacts SET display_name = ? WHERE artifact_id = ? AND organization_id = ?`,
+      [displayName, artifactId, organizationId]
+    );
+  });
+  console.log(`# Nazwa wyświetlana artefaktu ${artifactId}: "${displayName}"`);
 }
 
 async function applyCanonical(
@@ -1234,6 +1383,44 @@ async function main(): Promise<void> {
       (missingTaxonomy.length ? ` — --apply DOŁOŻY je jako globalne wiersze systemowe: ${missingTaxonomy.join(', ')}` : ' (komplet)')
   );
 
+  // ★ Diagnoza mostu legacy↔kanoniczny — WIDOCZNA także w `--dry-run`, żeby
+  // operator wiedział, co zapis zmieni, ZANIM cokolwiek napisze (audyt FIN #3).
+  const aliasNow = await withPinnedPostgresTransaction((tx) =>
+    tx.queryOne<{ artifact_id: string; mapping_reason: string | null }>(
+      `SELECT artifact_id, mapping_reason FROM finance_artifact_aliases
+        WHERE legacy_table = 'financial_statement_packs' AND legacy_id = ? AND organization_id = ?
+        ORDER BY created_at DESC LIMIT 1`,
+      [ids.packId, org.id]
+    )
+  );
+  const packNow = await findExistingPack(org.id, naturalKey);
+  const displayColumnExists = await hasDisplayNameColumn();
+  const displayNow =
+    packNow && displayColumnExists
+      ? await withPinnedPostgresTransaction((tx) =>
+          tx.queryOne<{ display_name: string | null }>(
+            `SELECT display_name FROM finance_artifacts WHERE artifact_id = ?`,
+            [packNow.artifactId]
+          )
+        )
+      : null;
+  console.log('');
+  console.log(
+    `# MOST legacy→kanoniczny: alias = ${
+      aliasNow ? `${aliasNow.artifact_id} (powód: ${aliasNow.mapping_reason ?? '—'})` : 'BRAK'
+    }; artefakt seeda = ${packNow ? packNow.artifactId : 'jeszcze nie istnieje'}` +
+      (aliasNow && packNow && aliasNow.artifact_id !== packNow.artifactId
+        ? ' → ROZJAZD: --apply PRZEPNIE alias na artefakt seeda'
+        : aliasNow
+          ? ' → zgodne'
+          : ' → --apply ZAŁOŻY alias')
+  );
+  console.log(
+    displayColumnExists
+      ? `# Nazwa wyświetlana: teraz "${displayNow?.display_name ?? '(brak — UI pokazuje klucz techniczny)'}" → po --apply "${PACK_DISPLAY_NAME}"`
+      : `# Nazwa wyświetlana: kolumna finance_artifacts.display_name NIE ISTNIEJE w tej bazie (migracja 20261102 wejdzie z wdrożeniem) — --apply jej NIE ustawi.`
+  );
+
   if (!apply) {
     console.log('');
     console.log('DRY-RUN: nic nie zapisano. Komendy zapisu:');
@@ -1251,6 +1438,15 @@ async function main(): Promise<void> {
 
   const canonical = await applyCanonical(org.id, actorId, data, naturalKey);
   console.log(`# Razem po kubełkach: ${JSON.stringify(canonical.buckets)}`);
+
+  await setDisplayName(org.id, canonical.artifactId, PACK_DISPLAY_NAME);
+  await ensureCanonicalAlias(
+    org.id,
+    ids.packId,
+    canonical.artifactId,
+    canonical.businessVersionId,
+    actorId
+  );
 
   const cold = await withPinnedPostgresTransaction((tx) =>
     tx.queryOne<{ lines: string; periods: string; entities: string; nonzero: string; codes: string }>(

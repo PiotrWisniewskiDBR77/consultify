@@ -91,6 +91,9 @@ router.get(
           artifactId: row.artifact_id,
           artifactType: row.artifact_type,
           naturalKey: row.natural_key,
+          // Nazwa dla człowieka, rozdzielona od klucza idempotencji
+          // (migracja 20261102). `null` = brak własnej nazwy.
+          displayName: row.display_name,
           createdAt: row.created_at,
           currentBusinessVersion: row.current_business_version_id
             ? {
@@ -374,6 +377,7 @@ router.get(
         artifactId: artifact.artifact_id,
         artifactType: artifact.artifact_type,
         naturalKey: artifact.natural_key,
+        displayName: artifact.display_name,
         createdAt: artifact.created_at,
         archivedAt: artifact.archived_at,
         archivedReason: artifact.archived_reason,
