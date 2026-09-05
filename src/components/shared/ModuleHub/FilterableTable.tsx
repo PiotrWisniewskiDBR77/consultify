@@ -314,6 +314,55 @@ export const getColumnFitFloor = (column: TableColumn, configuredFloor?: number)
   );
 
 /**
+ * ── SCROLLLEFT DLA `scrollToColumnId` (defekt: kolumna bieżącego miesiąca
+ * pod przypiętą kolumną MIERNIK przy 1440 px) ──────────────────────────────
+ *
+ * PRZYCZYNA. Poprzednia wersja liczyła `offset - pinnedLeftTotal`, gdzie OBA
+ * składniki brała z sumy szerokości `columnFit.widths` (stan JS) — czyli z
+ * modelu, a nie z tego, co naprawdę stoi na ekranie. Gdy `columnFit` skaluje
+ * kolumny w dół (bo naturalna szerokość tabeli > dostępny obszar — dokładnie
+ * przypadek 1440 px z dwunastoma kolumnami okresów), suma z modelu i
+ * rzeczywista szerokość `<th>` na DOM-ie mogą się rozjechać o kilka-kilkanaście
+ * pikseli (zaokrąglenia `Math.floor(width * ratio)` per kolumna, kumulowane
+ * przez WSZYSTKIE kolumny przed celem). Efekt: `scrollLeft` ustawiony za
+ * PŁYTKO, lewa krawędź kolumny miesiąca ląduje pod sticky MIERNIK-iem
+ * („CEL 6474" czytane jako „L 6474"). Przy ≥1800 px tabela mieści się bez
+ * skalowania (`scale === 1`), model i DOM są identyczne, defekt niewidoczny.
+ *
+ * NAPRAWA. Ta funkcja jest CZYSTA (bez DOM-u) — przyjmuje już ZMIERZONE z
+ * `getBoundingClientRect`/`offsetWidth` realnych sticky `<th>` wartości:
+ * pozycję i szerokość kolumny docelowej oraz sumaryczną szerokość kolumn
+ * przypiętych z lewej i z prawej. Woła ją efekt niżej, PO odczycie DOM-u —
+ * dzięki temu żadne zaokrąglenie modelu nie może już rozjechać się z ekranem.
+ *
+ * Kolumna docelowa ma być W CAŁOŚCI widoczna między przypiętymi: lewa krawędź
+ * nie może wpaść pod pinned-left, prawa — pod pinned-right (YTD/STAN). Gdy obie
+ * granice nie dają się spełnić naraz (kolumna szersza niż dostępny prześwit),
+ * wygrywa lewa krawędź — użytkownik zawsze widzi POCZĄTEK kolumny, do której
+ * go przewinięto, a nie jej ogon.
+ */
+export const obliczScrollDoKolumny = (
+  offsetKolumny: number,
+  szerokoscKolumny: number,
+  szerokoscPrzypietychLewo: number,
+  szerokoscPrzypietychPrawo: number,
+  clientWidth: number,
+  scrollWidth: number
+): number => {
+  const maxScroll = Math.max(0, scrollWidth - clientWidth);
+  // Wyrównanie do lewej krawędzi: kolumna zaczyna się DOKŁADNIE tam, gdzie
+  // kończą się przypięte kolumny z lewej.
+  let scrollLeft = offsetKolumny - szerokoscPrzypietychLewo;
+  // Gdyby to zostawiało prawą krawędź kolumny pod przypiętymi z prawej
+  // (kolumna blisko końca tabeli), dosuwamy scroll tak, by prawa krawędź
+  // też była widoczna — kosztem wyrównania do lewej.
+  const minDlaPrawejKrawedzi =
+    offsetKolumny + szerokoscKolumny - clientWidth + szerokoscPrzypietychPrawo;
+  if (scrollLeft < minDlaPrawejKrawedzi) scrollLeft = minDlaPrawejKrawedzi;
+  return Math.min(Math.max(0, Math.round(scrollLeft)), maxScroll);
+};
+
+/**
  * ŁAMANIE TEKSTU W KOMÓRCE — granica wyrazu, nigdy środek wyrazu (2026-08-30).
  *
  * Skąd to się wzięło: commit „ostatnia kolumna przestaje być ucinana" dołożył
@@ -1388,7 +1437,15 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       : { ...fixed, right: `${pin.offset}px` };
   };
 
-  /** Startowe przewinięcie do kolumny (`scrollToColumnId`) — patrz prop. */
+  /**
+   * Startowe przewinięcie do kolumny (`scrollToColumnId`) — patrz prop.
+   *
+   * Geometria MUSI pochodzić z DOM-u (`getBoundingClientRect`), nie z modelu
+   * JS (`columnFit`/`columnWidths`) — patrz komentarz przy
+   * `obliczScrollDoKolumny`. Model i ekran rozjeżdżają się dokładnie wtedy,
+   * gdy `columnFit` skaluje kolumny w dół (tabela szersza niż kontener), co
+   * jest normalnym stanem tego ekranu przy 1440 px (12 kolumn okresów).
+   */
   const scrolledToColumnRef = useRef<string | null>(null);
   useEffect(() => {
     if (!scrollToColumnId) return;
@@ -1397,19 +1454,35 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     if (!scroller) return;
     const index = visibleColumns.findIndex((c) => c.id === scrollToColumnId);
     if (index < 0) return;
-    const widthOf = (column: TableColumn) =>
-      columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
-    let offset = 0;
-    let pinnedLeftTotal = 0;
-    for (let i = 0; i < index; i += 1) {
-      const column = visibleColumns[i]!;
-      offset += widthOf(column);
-      if (column.pinned === 'left') pinnedLeftTotal += widthOf(column);
-    }
-    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
-    const cel = Math.min(Math.max(0, Math.round(offset - pinnedLeftTotal)), maxScroll);
-    if (maxScroll <= 0) return;
-    scroller.scrollLeft = cel;
+    // Dopasowanie po `dataset` (nie przez selektor CSS ze sklejonym stringiem)
+    // — `scrollToColumnId` bywa postaci `period:2026-09` i nie powinien być
+    // wstrzykiwany w selektor bez escapowania.
+    const targetEl = Array.from(
+      scroller.querySelectorAll<HTMLElement>('thead th[data-column-id]')
+    ).find((el) => el.dataset.columnId === scrollToColumnId);
+    if (!targetEl) return;
+    const scrollerRect = scroller.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+    // Pozycja kolumny w NIEPRZEWIJANEJ treści (niezależna od bieżącego
+    // `scrollLeft`) — dokładnie to, co realnie stoi na ekranie w tym renderze.
+    const offsetKolumny = targetRect.left - scrollerRect.left + scroller.scrollLeft;
+    const szerokoscKolumny = targetRect.width;
+    const sumWidth = (selector: string) =>
+      Array.from(scroller.querySelectorAll<HTMLElement>(selector)).reduce(
+        (sum, el) => sum + el.getBoundingClientRect().width,
+        0
+      );
+    const szerokoscPrzypietychLewo = sumWidth('thead th[data-pinned-side="left"]');
+    const szerokoscPrzypietychPrawo = sumWidth('thead th[data-pinned-side="right"]');
+    if (scroller.scrollWidth - scroller.clientWidth <= 0) return;
+    scroller.scrollLeft = obliczScrollDoKolumny(
+      offsetKolumny,
+      szerokoscKolumny,
+      szerokoscPrzypietychLewo,
+      szerokoscPrzypietychPrawo,
+      scroller.clientWidth,
+      scroller.scrollWidth
+    );
     scrolledToColumnRef.current = scrollToColumnId;
   }, [scrollToColumnId, visibleColumns, columnFit, columnWidths, parsePx]);
 
@@ -1633,9 +1706,12 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   const maxWidth = Math.max(declaredMaxWidth, width);
                   const isLastDataCol = idx === visibleColumns.length - 1;
                   const isSelectCol = column.type === 'select' && !!selection;
+                  const pin = pinnedLayout[column.id];
                   return (
                     <th
                       key={column.id}
+                      data-column-id={column.id}
+                      data-pinned-side={pin?.side}
                       className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${pinnedHeaderClass(column)}`}
                       style={{
                         width: `${width}px`,
