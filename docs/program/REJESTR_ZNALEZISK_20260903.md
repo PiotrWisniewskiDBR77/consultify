@@ -383,3 +383,9 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 | AF1 | Commit 352 zmienił trzy zachowania narzędzia, lecz raportował jedno. Re-klik był równoważny w zmierzonym wywołaniu; licznik kontroli zmienił mianownik `1/2 → 1/1`. | Historyczne pomiary `--wynik-selektor` wymagają przemiaru; wersja przyrządu jest teraz jawna. | ZAMKNIĘTE lokalnie / DŁUG PRZEMIARU | `docs/program/grafika/00_ZASADY_PRACY.md`, `CODEX_DAY365_PODGLAD_DOMKNIECIE_REPORT.md` |
 | AF2 | Finance analysis dublował blok Relations w powłoce i stopce modułu. | Usunięto wystąpienie modułowe, zachowując dane i etykietę przez kanoniczny `StandardPreview`; DOM oraz oględziny potwierdzają `2 → 1`. | ZAMKNIĘTE lokalnie | `evidence/podglad-domkniecie-20260904/finance-analysis/` |
 | AF3 | `audyt-findings` oraz trzy ekrany CaseWorkspace nie mają wejść prowadzących do wymaganych stanów podglądu; commit `a38110231b` zmienił tylko raport. | Pełne domknięcie manifestu pozostaje `PARTIAL`; dostarczono zależności fikstur i brief bez czwartej zmiany harnessu. | OTWARTE / BRAK WEJŚCIA | `evidence/podglad-domkniecie-20260904/R3_POMIAR_I_BRIEF.md` |
+
+## AG. Dyżur 367 — kebab kanwy i błędy AI
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+|---|---|---|---|---|
+| AG1 | Kebab zaznaczenia i „Dodaj element” wykonywały deterministyczną podmianę pod etykietą AI; menu pływające milczało przy błędzie i wysyłało `message` ponad limit 8000. | Oba wejścia używają jednej granicy `/api/ai/chat/quick`; fallback jest jawny, błędy wspólne, limit blokowany przed fetch, a panel manualny nadal nie woła AI. | ZAMKNIĘTE lokalnie / REALNY DOSTAWCA NIEZWERYFIKOWANY | `waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY367_KANWA_AI_REPORT.md`, `evidence/day367-kanwa-ai/R3_REGRESSION_MEASUREMENT.md` |
