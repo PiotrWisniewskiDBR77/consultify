@@ -180,13 +180,25 @@ const KpiDeviationCaseSubview = lazyWithRetry(() =>
     default: m.default,
   }))
 );
-// Odrzucenie właściciela 2026-09-05 — POZIOM 3 („zbiór kart KPI") między
-// kartą KPI a kolejną kartą KPI. Patrz nagłówek `KpiCardSetPage.tsx`.
-const KpiCardSetPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/kpiTool/KpiCardSetPage').then((m) => ({
-    default: m.default,
-  }))
-);
+/**
+ * P7K (2026-09-05) — poziom 2 KPI to RAPORT jako tabela mierników pod
+ * `/results/kpi/scorecards/:scorecardId`, a nie siatka kafelków na osobnym,
+ * starym adresie. Strona siatki została usunięta; stary adres
+ * przekierowuje trwale, żeby linki zapisane 05.09 nie prowadziły donikąd.
+ */
+const KpiLegacyCardSetRedirect: React.FC = () => {
+  const { legacyScorecardId } = useParams<{ legacyScorecardId: string }>();
+  return (
+    <Navigate
+      replace
+      to={
+        legacyScorecardId
+          ? ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', legacyScorecardId)
+          : ROUTES.RESULTS_KPI.ROOT
+      }
+    />
+  );
+};
 // RN-G5 (2026-08-12) — full ROI Case tool (`/results/roi/cases/:roiCaseId`)
 // + full OKR Set tool (`/results/okr/sets/:okrSetId`) deep-link routes. D03
 // (klasa L, no big editors in a preview) is already binding — these mount
@@ -3084,37 +3096,12 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* POZIOM 2 trzypoziomowej formuły KPI (odrzucenie właściciela
-            2026-09-05): LISTA zestawienia — jego opis i pozycje. Wchodzi się
-            tu z tabeli zestawień (`RESULTS_KPI.ROOT`), wychodzi w kartę N
-            wskaźnika (`RESULTS_KPI.TOOL`). Ekran sam renderuje ścieżkę
-            poziomów w Menu 1 (`StandardModuleBar breadcrumbs`), tak jak karta
-            KPI renderuje swoją (`ArtifactBreadcrumb`). */}
+        {/* P7K — trwałe przekierowanie starego adresu poziomu 2 na raport
+            (`RESULTS_KPI.SCORECARD`). Bez tego linki zapisane 05.09
+            prowadziłyby do nieistniejącej trasy. */}
         <Route
-          path={ROUTES.RESULTS_KPI.CARD_SET}
-          element={
-            <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.results', 'Results'),
-                    'KPI',
-                    t('results.kpiCardSet', 'KPI card set'),
-                  ]
-                }
-                noPadding
-              >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Results"
-                >
-                  <RouteErrorBoundary>
-                    <KpiCardSetPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
-          }
+          path={ROUTES.RESULTS_KPI.CARD_SET_REDIRECT}
+          element={<KpiLegacyCardSetRedirect />}
         />
         <Route
           path={ROUTES.RESULTS_KPI.DEVIATION_CASE}

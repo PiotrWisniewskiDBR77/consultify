@@ -165,17 +165,16 @@ export const ROUTES = {
     // verified against v6's route-ranking algorithm, not order-dependent.
     TOOL: '/results/kpi/:kpiId',
     DEVIATION_CASE: '/results/kpi/:kpiId/deviation-cases/:caseId',
-    // POZIOM 2 trzypoziomowej formuły (odrzucenie właściciela 2026-09-05:
-    // „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis
-    // KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N."). Zestawienie
-    // (`rvn_kpi_scorecards` + `rvn_kpi_scorecard_items`) leży MIĘDZY tabelą a
-    // kartą wskaźnika, a nie wewnątrz karty — dlatego trasa jest samodzielna
-    // (`/results/kpi/zestawienie/:scorecardId`), a nie zagnieżdżona pod
-    // `:kpiId` jak w odrzuconej 05.09 wersji czterostopniowej.
-    // React Router v6 rankuje po specyficzności, więc statyczny segment
-    // `zestawienie` wygrywa z `/results/kpi/:kpiId` niezależnie od kolejności
-    // deklaracji — tak samo jak `/results/kpi/scorecards/:scorecardId` wyżej.
-    CARD_SET: '/results/kpi/zestawienie/:scorecardId',
+    // POZIOM 2 to `SCORECARD` wyżej (`/results/kpi/scorecards/:scorecardId`) —
+    // RAPORT jako tabela mierników (SSOT §6, P7K). Osobna strona-siatka
+    // kafelków (poziom 2 sprzed P7K) została USUNIĘTA 2026-09-05: raport jest
+    // TABELĄ mierników, nie siatką kart.
+    //
+    // Stary adres zostaje WYŁĄCZNIE jako trwałe przekierowanie — linki, które
+    // ktoś zapisał albo wkleił w notatce z 05.09, mają dojść do raportu, a nie
+    // do pustej trasy. Parametr nazywa się `legacyScorecardId`, żeby było
+    // widać, że to relikt, a nie druga żywa trasa poziomu 2.
+    CARD_SET_REDIRECT: '/results/kpi/zestawienie/:legacyScorecardId',
   },
   RESULTS_ROI: {
     ROOT: '/results/roi',

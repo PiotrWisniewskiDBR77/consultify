@@ -146,6 +146,20 @@ export const ScorecardStatusQuerySchema = z.object({
 });
 
 // ==========================================
+// GET .../periods — matryca CEL/Rezultat per okres (P7K, SSOT §6)
+//
+// `year` przychodzi jako tekst z query stringu, więc `coerce`; zakres 2000-2100
+// jest granicą zdrowego rozsądku, nie regułą produktu — chroni przed
+// wygenerowaniem siatki dla roku 999999. `granularity` opcjonalne: gdy nie ma,
+// wyprowadzamy je z `review_frequency` raportu, zamiast zgadywać w kliencie.
+// ==========================================
+
+export const ScorecardPeriodsQuerySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+  granularity: z.enum(['month', 'quarter', 'year']).optional(),
+});
+
+// ==========================================
 // POST .../activate | .../suspend | .../archive — shared "CAS + reason"
 // shape, same convention as resultsVnextKpi.validators.ts's
 // `KpiLifecycleActionSchema` being reused across activate/suspend/archive.
