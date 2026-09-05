@@ -44,6 +44,8 @@ import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
 
+import { isDrdAssessmentRow } from './assessmentFramework.js';
+
 const router = Router();
 
 export const V8_ASSESSMENT_READ_CONTRACT = 'assessment_runtime_read_v1';
@@ -354,7 +356,7 @@ router.get(
       // areas yet keep the persisted value untouched. computeDrdCompletion
       // is a pure, in-memory function (no SQL), so looping it over the
       // page's rows is cheap even though this is a list endpoint.
-      const isDrdAssessment = String(row.assessment_type || '').toUpperCase() === 'DRD';
+      const isDrdAssessment = isDrdAssessmentRow(row);
       const drdAreas = isDrdAssessment
         ? (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
         : undefined;
@@ -448,7 +450,7 @@ router.get(
     // never trusted from whatever was last written to the row by a client.
     // Non-DRD frameworks (SIRI/ADMA/CMMI/Lean) are untouched — they keep
     // reading the persisted completion_percent as-is.
-    const isDrdAssessment = String(assessment.assessment_type || '').toUpperCase() === 'DRD';
+    const isDrdAssessment = isDrdAssessmentRow(assessment);
     const drdAreas = isDrdAssessment
       ? (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
       : undefined;
@@ -743,9 +745,10 @@ router.put(
       current_section_id?: string | null;
       navigation_json?: string | null;
       assessment_type?: string | null;
+      framework_type?: string | null;
       status?: string | null;
     }>(
-      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type, status
+      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type, framework_type, status
        FROM assessments
        WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
@@ -759,6 +762,7 @@ router.put(
       current_section_id?: string | null;
       navigation_json?: string | null;
       assessment_type?: string | null;
+      framework_type?: string | null;
       status?: string | null;
     } | null;
 
@@ -834,7 +838,7 @@ router.put(
     // ignored for DRD once the answers carry a drd.areas map. Non-DRD
     // frameworks (SIRI/ADMA/CMMI/Lean) keep the exact pre-existing
     // "trust the client" behavior — zero change in scope for those.
-    const isDrdAssessment = String(existing.assessment_type || '').toUpperCase() === 'DRD';
+    const isDrdAssessment = isDrdAssessmentRow(existing);
     const drdAreasForCompletion = isDrdAssessment
       ? (nextAnswers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas
       : undefined;
@@ -997,10 +1001,15 @@ router.get(
     const existing = (await queryHelpers.queryOne<{
       answers_json?: string | null;
       assessment_type?: string | null;
+      framework_type?: string | null;
     }>(
-      `SELECT answers_json, assessment_type FROM assessments WHERE id = ? AND organization_id = ?`,
+      `SELECT answers_json, assessment_type, framework_type FROM assessments WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
-    )) as { answers_json?: string | null; assessment_type?: string | null } | null;
+    )) as {
+      answers_json?: string | null;
+      assessment_type?: string | null;
+      framework_type?: string | null;
+    } | null;
     if (!existing) {
       return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
     }
@@ -1018,7 +1027,7 @@ router.get(
     }
 
     const evidence = await listEvidence({ organizationId, assessmentId });
-    const isDrdAssessment = String(existing.assessment_type || '').toUpperCase() === 'DRD';
+    const isDrdAssessment = isDrdAssessmentRow(existing);
     const scoring = isDrdAssessment
       ? computeDrdScoring(drdAreasFromAnswersJson(existing.answers_json), evidence)
       : null;
