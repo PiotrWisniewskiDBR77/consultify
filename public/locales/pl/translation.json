@@ -23772,6 +23772,11 @@
       "refineWithAI": "Doprecyzuj z AI"
     },
     "valuation": {
+      "panelsAria": "Panele analizy wyceny",
+      "loadingPanel": "Ładowanie panelu…",
+      "tool": {
+        "bankingValue": "Wartość bankowa", "cashForecast": "Prognoza gotówki", "driverPlanner": "Planowanie czynników wartości", "driverTree": "Drzewo czynników wartości", "extendedRatios": "Rozszerzone wskaźniki", "headcountPlanner": "Planowanie zatrudnienia", "investmentAppraisal": "Ocena inwestycji", "rollingForecast": "Prognoza krocząca", "valuationVisuals": "Wizualizacje wyceny", "valueAttribution": "Atrybucja wartości", "valueCapture": "Proces przechwytywania wartości", "valueLedger": "Rejestr wartości", "valueOffice": "Biuro wartości", "varianceBridge": "Most odchyleń", "varianceNarration": "Opis odchyleń", "evBasket": "Koszyk EV", "monteCarlo": "Monte Carlo NPV", "realOptions": "Opcje rzeczywiste", "frontier": "Granica efektywna", "sensitivity": "Analiza co-jeśli", "scenarios": "Obliczanie scenariuszy"
+      },
       "createTitle": "Nowa wycena przedsiębiorstwa",
       "name": "Nazwa wyceny",
       "namePlaceholder": "np. Wycena DCF Q1 2026",

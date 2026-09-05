@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { isFinanceValuePanelsEnabled } from '@/utils/financeValuePanelsFlag';
 
@@ -76,31 +77,22 @@ const PANELS = {
 
 type PanelId = keyof typeof PANELS;
 
-const LABELS: Record<PanelId, string> = {
-  bankingValue: 'Banking value',
-  cashForecast: 'Cash forecast',
-  driverPlanner: 'Driver planner',
-  driverTree: 'Driver tree',
-  extendedRatios: 'Extended ratios',
-  headcountPlanner: 'Headcount planner',
-  investmentAppraisal: 'Investment appraisal',
-  rollingForecast: 'Rolling forecast',
-  valuationVisuals: 'Valuation visuals',
-  valueAttribution: 'Value attribution',
-  valueCapture: 'Value capture pipeline',
-  valueLedger: 'Value ledger',
-  valueOffice: 'Value office',
-  varianceBridge: 'Variance bridge',
-  varianceNarration: 'Variance narration',
-  evBasket: 'EV basket',
-  monteCarlo: 'Monte Carlo NPV',
-  realOptions: 'Real options',
-  frontier: 'Efficient frontier',
-  sensitivity: 'What-if sensitivity',
-  scenarios: 'Scenario compute',
+const LABEL_KEYS: Record<PanelId, string> = {
+  bankingValue: 'finance.valuation.tool.bankingValue', cashForecast: 'finance.valuation.tool.cashForecast',
+  driverPlanner: 'finance.valuation.tool.driverPlanner', driverTree: 'finance.valuation.tool.driverTree',
+  extendedRatios: 'finance.valuation.tool.extendedRatios', headcountPlanner: 'finance.valuation.tool.headcountPlanner',
+  investmentAppraisal: 'finance.valuation.tool.investmentAppraisal', rollingForecast: 'finance.valuation.tool.rollingForecast',
+  valuationVisuals: 'finance.valuation.tool.valuationVisuals', valueAttribution: 'finance.valuation.tool.valueAttribution',
+  valueCapture: 'finance.valuation.tool.valueCapture', valueLedger: 'finance.valuation.tool.valueLedger',
+  valueOffice: 'finance.valuation.tool.valueOffice', varianceBridge: 'finance.valuation.tool.varianceBridge',
+  varianceNarration: 'finance.valuation.tool.varianceNarration', evBasket: 'finance.valuation.tool.evBasket',
+  monteCarlo: 'finance.valuation.tool.monteCarlo', realOptions: 'finance.valuation.tool.realOptions',
+  frontier: 'finance.valuation.tool.frontier', sensitivity: 'finance.valuation.tool.sensitivity',
+  scenarios: 'finance.valuation.tool.scenarios',
 };
 
 export function FinanceValuePanelsSurface(): React.ReactElement | null {
+  const { t } = useTranslation();
   const [active, setActive] = useState<PanelId>('monteCarlo');
   if (!isFinanceValuePanelsEnabled()) return null;
   const Panel = PANELS[active];
@@ -113,7 +105,7 @@ export function FinanceValuePanelsSurface(): React.ReactElement | null {
       <div
         className="mb-3 flex flex-wrap gap-2"
         role="tablist"
-        aria-label="Valuation analysis panels"
+        aria-label={t('finance.valuation.panelsAria')}
       >
         {(Object.keys(PANELS) as PanelId[]).map((id) => (
           <button
@@ -124,11 +116,11 @@ export function FinanceValuePanelsSurface(): React.ReactElement | null {
             className="rounded-lg border border-c-border px-3 py-1.5 text-sm text-c-text"
             onClick={() => setActive(id)}
           >
-            {LABELS[id]}
+            {t(LABEL_KEYS[id])}
           </button>
         ))}
       </div>
-      <Suspense fallback={<div className="p-6 text-c-text-muted">Loading panel…</div>}>
+      <Suspense fallback={<div className="p-6 text-c-text-muted">{t('finance.valuation.loadingPanel')}</div>}>
         <Panel />
       </Suspense>
     </section>

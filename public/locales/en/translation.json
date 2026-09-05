@@ -22630,6 +22630,11 @@
       "refineWithAI": "Refine with AI"
     },
     "valuation": {
+      "panelsAria": "Valuation analysis panels",
+      "loadingPanel": "Loading panel…",
+      "tool": {
+        "bankingValue": "Banking value", "cashForecast": "Cash forecast", "driverPlanner": "Driver planner", "driverTree": "Driver tree", "extendedRatios": "Extended ratios", "headcountPlanner": "Headcount planner", "investmentAppraisal": "Investment appraisal", "rollingForecast": "Rolling forecast", "valuationVisuals": "Valuation visuals", "valueAttribution": "Value attribution", "valueCapture": "Value capture pipeline", "valueLedger": "Value ledger", "valueOffice": "Value office", "varianceBridge": "Variance bridge", "varianceNarration": "Variance narration", "evBasket": "EV basket", "monteCarlo": "Monte Carlo NPV", "realOptions": "Real options", "frontier": "Efficient frontier", "sensitivity": "What-if sensitivity", "scenarios": "Scenario compute"
+      },
       "createTitle": "New enterprise valuation",
       "name": "Valuation name",
       "namePlaceholder": "e.g., DCF Valuation Q1 2026",
