@@ -1,0 +1,19 @@
+{
+ "url": "http://localhost:3099/document-studio?entry=ai",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Nowy dokument",
+  "text=Opisz materiał — AI przygotuje"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDokumenty\nNowy dokument\nDane\nModel\n1\nAudyt Nocny\nAN\nWróć do Materiałów\nMateriały\nGeneruj\nPlik\nGeneruj\nZaplanuj szablon\nTryby 1, 2, 3 · Środowisko artefaktów Word/PDF\n\nTwój dokument pojawi się tutaj\n\nOpisz w oknie obok, jakiego dokumentu potrzebujesz — Teresa zaplanuje strukturę i przygotuje pierwszą wersję.\n\nWybór trybu\nKontekst: DBR77\nPrzejdź do pola wiadomości\nTERESA\n\nZapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.",
+ "kiedy": "2026-09-05T23:42:33.532Z"
+}
