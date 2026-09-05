@@ -323,7 +323,14 @@ const toPortfolioInitiative = (initiative: FullInitiative): PortfolioInitiative 
   name: initiative.name,
   summary: initiative.summary,
   description: initiative.description,
-  axis: String(initiative.axis),
+  // [ODMROZENIE 06_EXECUTION DEC-397] `String(initiative.axis)` zamieniało
+  // realny `null`/`undefined` (48/71 inicjatyw na stanowisku lokalnym, DB
+  // sprawdzona wprost — `axis` bez wartości) na LITERALNY tekst "null"/
+  // "undefined", którego `executionTypeLabel` nigdy nie rozpozna — stąd
+  // „Nieznany typ" nawet dla wierszy z prawdziwym BRAKIEM danych. Pusty
+  // string niesie ten sam sygnał „brak" do `executionTypeLabel`, który
+  // renderuje go jako „—" (patrz src/labels/executionTypeLabels.ts).
+  axis: (initiative as { axis?: string | null }).axis ?? '',
   status: initiative.status,
   priority: mapPriorityToPortfolio(initiative.priority),
   progress: Number((initiative as any).progress ?? 0),
