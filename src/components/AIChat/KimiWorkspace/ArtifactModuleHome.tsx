@@ -476,16 +476,32 @@ function TemplatesGrid({
   isPolish,
   lane,
 }: TemplatesGridProps) {
+  const { t } = useTranslation();
   const builtinCards = BUILTIN_TEMPLATES[lane];
 
   const allCards = useMemo(() => {
-    const apiCards = templates.map((t) => ({
-      id: t.id,
-      title: t.title,
-      desc: t.description || '',
-      isBuiltin: false,
-      builtinPrompt: '',
-    }));
+    const systemTemplateKeys: Record<string, string> = {
+      'Team Handbook': 'teamHandbook',
+      'Content Calendar': 'contentCalendar',
+      'Product Roadmap': 'productRoadmap',
+      'Issue Tracker': 'issueTracker',
+      'Project Management': 'projectManagement',
+      'CRM Pipeline': 'crmPipeline',
+    };
+    const apiCards = templates.map((template) => {
+      const systemTemplateKey = systemTemplateKeys[template.title];
+      return {
+        id: template.id,
+        title: systemTemplateKey
+          ? t(`kimi.template.system.${systemTemplateKey}.name`)
+          : template.title,
+        desc: systemTemplateKey
+          ? t(`kimi.template.system.${systemTemplateKey}.description`)
+          : template.description || '',
+        isBuiltin: false,
+        builtinPrompt: '',
+      };
+    });
     const builtin = builtinCards.map((b) => ({
       id: b.id,
       title: isPolish ? b.titlePl : b.title,
@@ -497,7 +513,7 @@ function TemplatesGrid({
     }));
     const apiIds = new Set(apiCards.map((c) => c.id));
     return [...apiCards, ...builtin.filter((b) => !apiIds.has(b.id))];
-  }, [templates, builtinCards, isPolish]);
+  }, [templates, builtinCards, isPolish, t]);
 
   if (loading && allCards.length === 0) {
     return (

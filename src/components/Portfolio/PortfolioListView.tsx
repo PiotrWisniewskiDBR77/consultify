@@ -232,7 +232,10 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
       filterType: 'multiselect',
       filterOptions: Array.from(new Set(initiatives.map((i) => i.status)))
         .sort((a, b) => (STATUS_ORDER[a] || 99) - (STATUS_ORDER[b] || 99))
-        .map((s) => ({ value: s, label: STATUS_METADATA[s as InitiativeStatus]?.label || s })),
+        .map((s) => ({
+          value: s,
+          label: t(STATUS_METADATA[s as InitiativeStatus]?.labelKey ?? 'initiatives.status.unknown'),
+        })),
     }),
     [initiatives, t]
   );
@@ -341,7 +344,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
 
   const getStatusLabel = (status: string) => {
     const meta = STATUS_METADATA[status as InitiativeStatus];
-    return meta?.label || status;
+    return t(meta?.labelKey ?? 'initiatives.status.unknown');
   };
 
   const isTerminal = (status: string) => status === 'CANCELLED' || status === 'ARCHIVED';

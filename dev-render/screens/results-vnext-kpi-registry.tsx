@@ -75,6 +75,22 @@ import { seedRealisticSession } from '../mocks/seedStore';
 
 seedRealisticSession();
 
+const originalFetch = window.fetch.bind(window);
+window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const path = new URL(url, window.location.origin).pathname;
+  if (/^\/api\/organizations\/[^/]+\/members$/.test(path)) {
+    return new Response(
+      JSON.stringify([
+        { userId: 'user-piotr-demo', name: 'Piotr Wiśniewski', email: 'piotr.wisniewski@dbr77.com', role: 'OWNER', status: 'active' },
+        { userId: 'user-anna', name: 'Anna Kowalska', email: 'anna.kowalska@dbr77.com', role: 'MEMBER', status: 'active' },
+      ]),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  return originalFetch(input, init);
+};
+
 const ACTOR_PIOTR = {
   id: 'user-piotr-demo',
   firstName: 'Piotr',

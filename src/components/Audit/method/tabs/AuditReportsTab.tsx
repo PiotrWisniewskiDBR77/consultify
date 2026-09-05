@@ -252,7 +252,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px' },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '150px',
       filterable: true,
       filterOptions: AUDIT_REPORT_STATUSES.map((value) => ({
@@ -381,7 +381,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     ? [
         {
           id: 'program',
-          label: isPolish ? 'Program' : 'Program',
+          label: 'Program',
           value: programNameById.get(selected.programId) || selected.programName || '—',
         },
         {
@@ -493,7 +493,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
             meta={{
               pills: [
                 {
-                  label: isPolish ? 'Status' : 'Status',
+                  label: 'Status',
                   value: reportStatusLabel(selected.status, isPolish),
                   tone: reportStatusTone(selected.status),
                 },

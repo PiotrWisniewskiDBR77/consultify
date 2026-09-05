@@ -134,6 +134,13 @@ function requireApprovedGovernedConnector(connectorId: string): void {
   }
 }
 
+export function isGovernedConnectorApprovalError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.message.startsWith('Governed external auth provider is not approved:')
+  );
+}
+
 function getGoogleClientId(): string {
   if (!config.GOOGLE_CLIENT_ID) {
     throw new Error('Governed Google external auth client id is unavailable');

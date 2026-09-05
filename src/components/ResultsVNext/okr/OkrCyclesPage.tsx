@@ -136,7 +136,7 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
       })),
       render: (r: OkrCycleDto) => <StatusChip label={isPolish ? CYCLE_STATUS_LABEL[r.status].pl : CYCLE_STATUS_LABEL[r.status].en} tone={CYCLE_STATUS_TONE[r.status]} />,
     },
-    { id: 'startDate', label: isPolish ? 'Start' : 'Start', width: '130px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.startDate, isPolish)}</span> },
+    { id: 'startDate', label: isPolish ? 'Początek' : 'Start', width: '130px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.startDate, isPolish)}</span> },
     { id: 'endDate', label: isPolish ? 'Koniec' : 'End', width: '130px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.endDate, isPolish)}</span> },
     { id: 'closeAt', label: isPolish ? 'Zamknięcie' : 'Close at', width: '150px', render: (r: OkrCycleDto) => <span className="text-sm text-c-text-secondary">{formatOkrWorkspaceDate(r.closeAt, isPolish)}</span> },
   ];
@@ -198,8 +198,8 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
                   propertyLabel: isPolish ? 'Właściwość' : 'Property',
                   valueLabel: isPolish ? 'Wartość' : 'Value',
                   properties: [
-                    { id: 'programId', label: isPolish ? 'Program' : 'Program', value: selected.programId, mono: true },
-                    { id: 'startDate', label: isPolish ? 'Start' : 'Start', value: formatOkrWorkspaceDate(selected.startDate, isPolish) },
+                    { id: 'programId', label: 'Program', value: selected.programId, mono: true },
+                    { id: 'startDate', label: isPolish ? 'Początek' : 'Start', value: formatOkrWorkspaceDate(selected.startDate, isPolish) },
                     { id: 'endDate', label: isPolish ? 'Koniec' : 'End', value: formatOkrWorkspaceDate(selected.endDate, isPolish) },
                     { id: 'draftOpenAt', label: isPolish ? 'Otwarcie szkicu' : 'Draft opens', value: formatOkrWorkspaceDate(selected.draftOpenAt, isPolish) },
                     { id: 'submissionDueAt', label: isPolish ? 'Termin złożenia' : 'Submission due', value: formatOkrWorkspaceDate(selected.submissionDueAt, isPolish) },
@@ -252,7 +252,7 @@ const OkrCyclesPageContent: React.FC<{ isPolish: boolean }> = ({ isPolish }) => 
         <div className="space-y-3 max-h-[60vh] overflow-auto pr-1">
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wide text-c-text-muted mb-1.5" htmlFor="okr-cycle-program">
-              {isPolish ? 'Program' : 'Program'}
+              {'Program'}
             </label>
             <select
               id="okr-cycle-program"

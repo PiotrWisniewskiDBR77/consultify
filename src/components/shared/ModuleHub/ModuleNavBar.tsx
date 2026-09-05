@@ -509,16 +509,20 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           {/* Tool control (optional) */}
           {computedToolControl}
 
-          {/* Primary CTA (Add) */}
+          {/* Primary CTA (Add) — P6_CZERWIEN_I_1440.md §5 krok 4 (N8): `shrink-0` na
+           * kontenerze slotu, żeby ŻADEN primaryCta (SSOT MENU_1_PRIMARY_CTA albo
+           * custom node przekazany przez modul, np. Narzedzia) nie zostal scisniety
+           * przez sasiadow przy 1280 px i nie zlamal etykiety do dwoch linii. */}
           {primaryCta ? (
-            primaryCta
+            <div className="shrink-0">{primaryCta}</div>
           ) : onNewItem ? (
             <button
               type="button"
               onClick={onNewItem}
               data-testid={newItemTestId}
               className="
-                inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
+                inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium
+                whitespace-nowrap
                 bg-navy-900 text-white hover:bg-navy-800
                 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]
                 transition-colors duration-150

@@ -7,6 +7,7 @@
  * library, matches TornadoChart / SensitivityHeatmap in this folder).
  */
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface HistogramBin {
   binStart: number;
@@ -52,6 +53,7 @@ export const DistributionHistogram: React.FC<DistributionHistogramProps> = ({
   formatValue = defaultFormat,
   emptyLabel = 'No data',
 }) => {
+  const { t } = useTranslation();
   const [hover, setHover] = useState<number | null>(null);
 
   const plotW = VIEW_W - PAD_LEFT - PAD_RIGHT;
@@ -75,7 +77,10 @@ export const DistributionHistogram: React.FC<DistributionHistogramProps> = ({
         data-testid="distribution-histogram"
         data-empty="true"
         role="img"
-        aria-label="NPV distribution histogram — no data"
+        aria-label={t(
+          'finance.m16.monteCarlo.histogramEmptyAriaLabel',
+          'NPV distribution histogram — no data'
+        )}
         className="flex items-center justify-center rounded-xl border border-c-border bg-c-surface p-6 text-sm text-c-text-muted"
         style={{ minHeight: 120 }}
       >
@@ -90,7 +95,7 @@ export const DistributionHistogram: React.FC<DistributionHistogramProps> = ({
         viewBox={`0 0 ${VIEW_W} ${height}`}
         width="100%"
         role="img"
-        aria-label="NPV distribution histogram"
+        aria-label={t('finance.m16.monteCarlo.histogramAriaLabel', 'NPV distribution histogram')}
         className="select-none"
       >
         {bins.map((bin, i) => {

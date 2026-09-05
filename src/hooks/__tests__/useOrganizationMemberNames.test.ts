@@ -61,6 +61,15 @@ describe('useOrganizationMemberNames — kształt odpowiedzi serwera', () => {
     expect(map.u3).toBe('Anna Kowalska');
   });
 
+  it('obsługuje jednocześnie camelCase i snake_case używane przez KPI Scorecard', () => {
+    const map = buildMemberNameMap([
+      SERWEROWY_WIERSZ,
+      { userId: 'scorecard-owner-2', firstName: 'Anna', lastName: 'Kowalska' },
+    ]);
+    expect(map['d2b6a316-08c5-47cf-9bf7-4ba50311d5a2']).toBe('Piotr Wiśniewski');
+    expect(map['scorecard-owner-2']).toBe('Anna Kowalska');
+  });
+
   it('nie tworzy wpisu bez identyfikatora ani bez etykiety', () => {
     expect(buildMemberNameMap([{ first_name: 'Bez', last_name: 'Id' }])).toEqual({});
     expect(buildMemberNameMap([{ user_id: 'u4' }])).toEqual({});

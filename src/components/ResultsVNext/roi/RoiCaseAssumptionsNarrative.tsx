@@ -255,7 +255,7 @@ export function buildRoiSourceBullets(
         `${isPolish ? 'pewność' : 'confidence'}: ${roiConfidenceLabel(baseline.confidence, isPolish)}`
       );
     }
-    if (bits.length > 0) out.push(`${isPolish ? 'Baseline' : 'Baseline'} — ${bits.join('; ')}`);
+    if (bits.length > 0) out.push(`${isPolish ? 'Poziom bazowy' : 'Baseline'} — ${bits.join('; ')}`);
   }
 
   assumptions.forEach((a) => {

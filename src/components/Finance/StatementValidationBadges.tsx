@@ -38,7 +38,11 @@ export const StatementValidationBadges: React.FC<Props> = ({ validations, emptyL
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5" role="list" aria-label="Validation results">
+    <div
+      className="flex flex-wrap gap-1.5"
+      role="list"
+      aria-label={t('finance.pack.validation.ariaLabel', 'Validation results')}
+    >
       {validations.map((validation) => {
         const cfg = STATUS_CONFIG[validation.status] || STATUS_CONFIG.pass;
         const localizedName = t(

@@ -298,7 +298,7 @@ export const PartnerSettlementsView: React.FC = () => {
     () => [
       {
         id: 'partnerName',
-        label: isPolish ? 'Partner' : 'Partner',
+        label: 'Partner',
         sortable: true,
         render: (row: TableRow) => (
           <div className="flex items-center gap-2">
@@ -452,7 +452,7 @@ export const PartnerSettlementsView: React.FC = () => {
       },
       {
         id: 'status',
-        label: isPolish ? 'Status' : 'Status',
+        label: 'Status',
         width: '110px',
         align: 'center',
         sortable: true,

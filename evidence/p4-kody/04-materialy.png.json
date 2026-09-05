@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=materials-registry&lang=pl&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "Materiały — Wszystkie (rejestr wspólny)\n\n/presentations?tab=all — Document · Presentation · Sheet\n\n\t\nTYTUŁ\n\t\nTYP\n\t\nFORMAT\n\t\nSTATUS\n\t\nWŁAŚCICIEL\n\t\nWIDOCZNOŚĆ\n\t\nŹRÓDŁO\n\t\nPRZEGLĄD\n\t\nEKSPORTY\n\t\nDATA\n\t\n\n\t\nBudżet pilotażu\n\t\nArkusz (Model)\n\t\nXLSX\n\t\nGotowy\n\t\nPiotr Wiśniewski\n\t\nOrganizacja\n\t\n—\n\t\nZatwierdzony\n\t\nXLSX\n\t\n23 sie 2026\n\t\n\n\t\nPlan transformacji — 90 dni\n\t\nPrezentacja\n\t\nPPTX\n\t\nGotowy\n\t\nPiotr Wiśniewski\n\t\nOrganizacja\n\t\nTool\n\t\nZatwierdzony\n\t\nPPTX\n\t\n23 sie 2026\n\t\n\n\t\nPlan transformacji operacyjnej\n\t\nDokument\n\t\n—\n\t\nGotowy\n\t\nPiotr Wiśniewski\n\t\nOrganizacja\n\t\n—\n\t\nZatwierdzony\n\t\nDOCX\n\t\n23 sie 2026\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:07:25.527Z"
+}

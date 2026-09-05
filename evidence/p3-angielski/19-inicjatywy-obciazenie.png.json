@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/initiatives?tab=capacity",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\nPiotr Wiśniewski\nPW\nInicjatywy\nPlan\nObciążenie\nWszystkie ograniczenia\n4\nKrytyczne\n3\nNieznana dostępność\n1\nBrak zapotrzebowania\n3\nLuki kompetencyjne\n0\nObciążenie zarządzania\n0\nLimit budżetowy\n0\nNiepotwierdzone\n0\nRozwiązane w scenariuszu\n1\nObciążenie\n\nZakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.\n\nNowa analiza\nAktywny wariant obciążenia\naco-capacity-scenario-1786420688957 · Opublikowany · v2\nOtwórz narzędzia obciążenia\nOKRES / OGRANICZENIE\n\t\nROLA / ZESPÓŁ\n\t\nRODZAJ\n\t\nPOTRZEBY (ZAKRES)\n\t\nZASOBY (ZAKRES)\n\t\nLUKA\n\t\nPRESJA (ZAKRES)\n\t\nPEWNOŚĆ\n\t\nWAGA\n\t\nOPIEKUN\n\t\n\n\n2026-P10\n\t\nControls Engineer\n\t\nOkres\n\t\n1.5/2/2.5 MONTH\n\t\n2/2/2 MONTH\n\t\n0\n\t\n75–125% (bazowo 100%)\n\t\nŚrednia\n\t\nOceniona\n\t\nResource Manager\n\t\n\n\n2026-P11\n\t\nControls Engineer\n\t\nOkres\n\t\nBrak danych\n\t\n1/1.5/2 MONTH\n\t\nBrak danych\n\t\nBrak danych — brak pełnego zakresu\n\t\nBrak danych\n\t\nDo oceny\n\t\nResource Manager\n\t\n\n\n2026-P12\n\t\nControls Engineer\n\t\nOkres\n\t\nBrak danych\n\t\n1/1.5/2 MONTH\n\t\nBrak danych\n\t\nBrak danych — brak pełnego zakresu\n\t\nBrak danych\n\t\nDo oceny\n\t\nResource Manager\n\t\n\n\naco-controls-availability\n\t\nBrak danych\n\t\nOgraniczenie\n\t\nBrak danych\n\t\nBrak danych\n\t\nBrak danych\n\t\nBrak danych — nie dotyczy ograniczenia\n\t\nBrak danych\n\t\nDo oceny\n\t\nResource Manager\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:45.650Z"
+}

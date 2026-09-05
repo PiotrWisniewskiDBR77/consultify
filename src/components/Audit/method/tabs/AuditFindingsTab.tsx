@@ -370,7 +370,7 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '170px',
       filterable: true,
       filterOptions: AUDIT_FINDING_STATUSES.map((value) => ({
@@ -671,7 +671,7 @@ export const AuditFindingsTab: React.FC<AuditFindingsTabProps> = ({
               meta={{
                 pills: [
                   {
-                    label: isPolish ? 'Status' : 'Status',
+                    label: 'Status',
                     value: findingStatusLabel(selected.status, isPolish),
                     tone: findingStatusTone(selected.status),
                   },

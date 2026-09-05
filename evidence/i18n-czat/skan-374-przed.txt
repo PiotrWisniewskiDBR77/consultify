@@ -1,0 +1,43 @@
+DYZUR 374 — SKAN PRZED
+Data pomiaru: 2026-09-05
+Marker: 8f60ab998734adcdf61a080f4e1270c3dbdffceb
+Stan dokumentu: WYDANY
+
+Brama startowa
+- df -h / przed worktree: 43 GiB wolne; po materializacji: 33 GiB wolne (prog 5 GiB zachowany).
+- merge-base --is-ancestor: MARKER OK.
+- worktree HEAD: 8f60ab998734adcdf61a080f4e1270c3dbdffceb.
+- config.worktree: [core] / bare = false.
+- porty 6438-6448 i 5578-5588: brak listenerow; 6445/5585 wolne.
+- tip github-backup/grafika/m03-20260902 jest przed markerem; zgodnie z DEC-2026-08-26-95 praca startuje z markera, a scalenie nalezy do nadzorcy.
+
+Pomiar 16 tez z par. 0.3
+1. evidence/i18n-czat zawiera 7 odziedziczonych plikow; HEAD zgodny z markerem.
+2. R2: 42 literały produktu bez t() oraz 1 window.confirm = 43; pozycje obecne.
+3. skan-r4.py: 58; skan-r5.py: 136; R3 razem 194.
+4. sentToWorkspaceToast: 2 wywolania (UnifiedChatPanel.tsx:1531,2272); wartosc PL: None.
+5. klasa (c): 25 kandydatow PL=EN, wszystkie uzasadnione; 0 potwierdzonych defektow w rodzinie.
+6. aiChat.homeCards.finance.m16.*.addDriver: 0 konsumentow w src; zywe finance.m16.*.addDriver: 2 konsumentow w Economics/panels (poza zakresem).
+7. canvas.aiMenu.tooLong: None/None; initiatives.suggestedChangesPanel.tooLong istnieje PL/EN; 0 konsumentow blednej sciezki.
+8. TransformationCasesPanel.tsx:114: isPolish ? 'Rebaseline' : 'Rebaseline' — 1 defekt.
+9. check-etykiety domyslny: pliki=166, ternary=353, nieuzasadnione=4, baseline=4; wszystkie cztery w SWOTCorrelationsStep.tsx.
+10. Symulacja polaczonego roots zostanie powtorzona po licencjonowanej naprawie R6, przed zmiana roots.
+11. liscie slownikow: pl=35294, en=33154.
+12. focus=0, list=0, artefakt=0.
+13. reachability: exit=1, New test-only files (49); lista zgodna z instrukcja, w tym 3 cudze pliki AIChat.
+14. ostatnia litera rejestru: AM; sprawdzic ponownie bezposrednio przed wpisem.
+15. porty pakietu: brak listenerow.
+16. oba wzorce istnieja i sa zielone z --retry=0.
+
+Pelne nazwy testow PRZED
+- GovernedChatHandoffCard day179 Polish translations resolves all 19 unique product keys without their English fallbacks — passed
+- GovernedChatHandoffCard day179 Polish translations renders the pending state in Polish without product-label English fallbacks — passed
+- GovernedChatHandoffCard day179 Polish translations renders the approved state in Polish without product-label English fallbacks — passed
+- GovernedChatHandoffCard day179 Polish translations renders the rejected state in Polish without product-label English fallbacks — passed
+- day372 Canvas AI menu Polish translations resolves all 13 labels without the English fallback — passed
+- day372 Canvas AI menu Polish translations renders Polish quick actions and tone labels — passed
+
+Pulapki dowodowe
+- Pakiet jest czysto jednostkowy: RUN_DB_TESTS=0 MOCK_DB=true, bez PostgreSQL i bez tras serwera.
+- Realna instancja i18next z fallbackLng=false oraz render komponentu wykluczaja cichy angielski fallback.
+- Reporter JSON zapisany poza repo: /private/tmp/cx-day374-i18n-czat-domkniecie-artefakty/przed.json.

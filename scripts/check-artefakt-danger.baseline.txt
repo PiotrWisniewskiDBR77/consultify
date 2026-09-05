@@ -1,0 +1,63 @@
+# check-artefakt-danger.baseline.txt — regenerowany --update. Format: <liczba>\t<ścieżka>.
+# PART 3 (P6_CZERWIEN_I_1440.md §5 krok 7): text-danger-*/bg-danger-* BEZ adnotacji
+# danger-ok, w src/components/Discovery + src/components/DiscoveryTools. RAPORT,
+# NIE blokada — patrz CZĘŚĆ 3 w nagłówku check-artefakt.sh.
+# Regeneruj TYLKO po świadomym sprzątnięciu długu, nigdy żeby ukryć nową regresję.
+1	src/components/Discovery/DiscoveryCanvas.tsx
+8	src/components/Discovery/InsightDetailView.tsx
+4	src/components/Discovery/ProjectConversionModal.tsx
+3	src/components/Discovery/RecommendationPanel.tsx
+1	src/components/Discovery/nodes/InitiativeNode.tsx
+10	src/components/Discovery/nodes/PainPointNode.tsx
+1	src/components/Discovery/nodes/RecommendationNode.tsx
+2	src/components/DiscoveryTools/DynamicSwotLibraryGraphic.tsx
+1	src/components/DiscoveryTools/KnownToolDetailView.tsx
+1	src/components/DiscoveryTools/ProcessAutomation/ProcessMapWorkSurface.tsx
+1	src/components/DiscoveryTools/ToolContextPanel.tsx
+5	src/components/DiscoveryTools/ToolDocumentView.tsx
+2	src/components/DiscoveryTools/shared/ProposalCardGovernance.tsx
+1	src/components/DiscoveryTools/shared/StrategicCanvasVisuals.tsx
+1	src/components/DiscoveryTools/steps/ImpactHypothesisStep.tsx
+1	src/components/DiscoveryTools/steps/PrepareStep.tsx
+1	src/components/DiscoveryTools/steps/ReasoningStep.tsx
+1	src/components/DiscoveryTools/steps/ResultsStep.tsx
+5	src/components/DiscoveryTools/steps/SummaryStep.tsx
+1	src/components/DiscoveryTools/tools/AmbitionDecomposer/AmbitionDecomposerPhases.tsx
+2	src/components/DiscoveryTools/tools/AmbitionDecomposer/ThemeCard.tsx
+2	src/components/DiscoveryTools/tools/CapabilityMapper/CapabilityCard.tsx
+1	src/components/DiscoveryTools/tools/CapabilityMapper/CapabilityMapperPhases.tsx
+1	src/components/DiscoveryTools/tools/Digital/GenericDomainStep.tsx
+2	src/components/DiscoveryTools/tools/DynamicSWOT/EvidenceEditor.tsx
+3	src/components/DiscoveryTools/tools/DynamicSWOT/SWOTBuildPhase.tsx
+3	src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInputExplorationPhase.tsx
+13	src/components/DiscoveryTools/tools/DynamicSWOT/SWOTInsightsPhase.tsx
+1	src/components/DiscoveryTools/tools/DynamicSWOT/SWOTQuadrantStep.tsx
+1	src/components/DiscoveryTools/tools/FocusTradeoff/FocusTradeoffPhases.tsx
+2	src/components/DiscoveryTools/tools/FocusTradeoff/PriorityCard.tsx
+1	src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathQuadrantStep.tsx
+1	src/components/DiscoveryTools/tools/GrowthPaths/GrowthPathsPhases.tsx
+2	src/components/DiscoveryTools/tools/MarketForces/ForceStep.tsx
+1	src/components/DiscoveryTools/tools/MarketForces/MarketForcesPhases.tsx
+1	src/components/DiscoveryTools/tools/NarrativeEngine/NarrativeEnginePhases.tsx
+3	src/components/DiscoveryTools/tools/NarrativeEngine/PillarCard.tsx
+1	src/components/DiscoveryTools/tools/Operational/A3CountermeasuresStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/A3RootCauseStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/DMSEscalationStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/DMSKPIsStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/InventoryClassificationStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/InventoryReplenishmentStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/OperationalSectionStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/SMEDImprovementsStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/SMEDStepsStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/SOPChecklistsStep.tsx
+1	src/components/DiscoveryTools/tools/Operational/SOPStandardsStep.tsx
+1	src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioItemsStep.tsx
+2	src/components/DiscoveryTools/tools/PortfolioPriority/PortfolioPriorityPhases.tsx
+1	src/components/DiscoveryTools/tools/RiskUncertainty/AssumptionsStep.tsx
+2	src/components/DiscoveryTools/tools/RiskUncertainty/RiskUncertaintyPhases.tsx
+1	src/components/DiscoveryTools/tools/RiskUncertainty/RisksStep.tsx
+1	src/components/DiscoveryTools/tools/RiskUncertainty/ScenariosStep.tsx
+1	src/components/DiscoveryTools/tools/ValueChain/ActivityCard.tsx
+1	src/components/DiscoveryTools/tools/ValueChain/ValueChainPhases.tsx
+2	src/components/DiscoveryTools/visualizations/PorterRadar.tsx
+3	src/components/DiscoveryTools/visualizations/SWOTMatrix.tsx

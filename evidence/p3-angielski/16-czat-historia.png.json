@@ -1,0 +1,26 @@
+{
+ "url": "http://127.0.0.1:3067/chat",
+ "tytul": "AI Chat — Consultify",
+ "kliki": [
+  "[data-testid=\"chat-history-button\"]"
+ ],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nCzat AI\nDane\nModel\n99+\nPiotr Wiśniewski\nPW\nPrzejdź do pola wiadomości\nMiło, że jesteś, Piotr.\nRozmawiaj głosem\nWYNIK\nAuto\nDokumenty\nTabele\nPrezentacje\nDzienny brief\nSzybkie oszczędności\nPomysł na produkt\nPrzegląd planów\nAnaliza rynku\nAnaliza finansowa\nKlasyczny consulting\nTransformacja cyfrowa\n\nConsultify®\n\nDBR77 INDUSTRIAL INTELLIGENCE\n\nNowa rozmowa\nZaznacz\nMOJE FOLDERY\n4\nQA folder 1778037649725\n2\nTEST_PROJ_P2\n0\nTEST_PROJ_P2\n1\ntest\n1\nFOLDERY ORGANIZACJI\nUtwórz folder organizacji\nPRZYPIĘTE\n1\ntest Tomek\nDZISIAJ\n15\nNowa rozmowa\nCost Reduction Initiative in Packaging Plant\nNowa rozmowa\nDACH Market Entry Strategy\nNowa rozmowa\nPokaż więcej (10)\nTEN MIESIĄC\n9\nDigital Transformation ROI Analysis & Investment\nPresentation: Create a NEW presentation from this prompt only, without usi\nPresentation: Create a NEW presentation from this prompt only, without usi\nSpreadsheet: Teresa, utwórz od zera bez użycia template&#x27;u skoroszyt „Init\nSpreadsheet: Teresa, utwórz od zera bez użycia template&#x27;u skoroszyt „Init\nPokaż więcej (4)\nSTARSZE\n18\nNowa rozmowa\nNowa rozmowa\nNowa rozmowa\nNowa rozmowa\nFinance_module: Finance\nPokaż więcej (13)\nArchiwum\n6",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T18:03:10.601Z"
+}

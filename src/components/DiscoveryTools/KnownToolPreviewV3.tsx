@@ -14,6 +14,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { STATE_TONE_CHIP_CLASS, toneForState } from '@/labels/stateToneMap';
 import { Api } from '@/services/api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { formatListDate } from '@/utils/listDateFormat';
@@ -288,9 +289,13 @@ export const KnownToolPreviewV3Body: React.FC<{
       label: tool.isActive
         ? t('discoveryToolsMain.knownToolPreviewV3.statusActive', 'Active')
         : t('discoveryToolsMain.knownToolPreviewV3.statusInactive', 'Inactive'),
-      className: tool.isActive
-        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-        : 'bg-danger-50 text-danger-700 dark:bg-danger-900/30 dark:text-danger-300',
+      // P6 §3.1: "Inactive" jest spokojnym stanem cyklu życia (narzędzie po prostu nie jest
+      // włączone), nie awarią — wcześniej dostawało pełną czerwoną pigułkę (danger-*).
+      // Ton przez stateToneMap.ts (SSOT), zgodny z wzorcem "cichy chip" z isComingSoon niżej.
+      className:
+        STATE_TONE_CHIP_CLASS[
+          toneForState('discoveryToolActive', tool.isActive ? 'active' : 'inactive')
+        ],
     },
     ...(tool.isComingSoon
       ? [

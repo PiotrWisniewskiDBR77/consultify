@@ -34,6 +34,7 @@ import { Button, ErrorState } from '@/components/ui/primitives';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { fileFormatLabel } from '@/labels/fileFormatLabels';
 import { buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
 import {
   downloadSheetArtifactXlsx,
@@ -498,10 +499,13 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
         sortAccessor: (rawRow: Record<string, unknown>) =>
           MATERIAL_FILE_FORMATS.indexOf((rawRow as unknown as AggregateRow).fileFormat),
         filterable: true,
-        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({ value: format, label: format })),
+        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({
+          value: format,
+          label: fileFormatLabel(format, isPolish),
+        })),
         render: (rawRow: Record<string, unknown>) => (
           <span className="text-xs font-medium text-c-text-secondary">
-            {(rawRow as unknown as AggregateRow).fileFormat}
+            {fileFormatLabel((rawRow as unknown as AggregateRow).fileFormat, isPolish)}
           </span>
         ),
       },

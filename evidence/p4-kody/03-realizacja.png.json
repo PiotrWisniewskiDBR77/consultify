@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:4174/?screen=capacity-advisor-a3&lang=pl&uwagi=0",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "bledyKonsoli": [],
+ "tekst": "Obciążenie\n\nZakresy pokazują stan wiedzy i dowodów, a nie pozorną dokładność wykorzystania zasobów.\n\nNowa analiza\nAktywny wariant obciążenia\nObciążenie programu transformacji · Opublikowany · v3\nOtwórz narzędzia obciążenia\nOKRES / OGRANICZENIE\n\t\nROLA / ZESPÓŁ\n\t\nRODZAJ\n\t\nPOTRZEBY (ZAKRES)\n\t\nZASOBY (ZAKRES)\n\t\nLUKA\n\t\nPRESJA (ZAKRES)\n\t\nPEWNOŚĆ\n\t\nWAGA\n\t\nOPIEKUN\n\t\n\n\n2026-W36\n\t\nengineering team\n\t\nOkres\n\t\n11/12/13 tydzień FTE\n\t\n7/8/9 tydzień FTE\n\t\n-4\n\t\n122–186% (bazowo 150%)\n\t\nŚrednia\n\t\nOceniona\n\t\nResource Manager\n\t\n\n\nengineering-capacity\n\t\nBrak danych\n\t\nOgraniczenie\n\t\nBrak danych\n\t\nPotwierdzone\n\t\nBrak danych\n\t\nBrak danych — nie dotyczy ograniczenia\n\t\nBrak danych\n\t\nOceniona\n\t\nResource Manager\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:08:35.685Z"
+}

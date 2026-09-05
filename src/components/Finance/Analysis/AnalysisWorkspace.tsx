@@ -46,7 +46,7 @@ import { useFinanceFocusMode } from '../../../hooks/useFinanceFocusMode';
 import {
   approveFinanceModel,
   computeAnalysisKpis,
-  createFinanceArtifact,
+  createDerivedFinanceAnalysis,
   getAnalysisKpiCatalog,
   getAnalysisKpiValues,
   getFinanceArtifact,
@@ -105,6 +105,11 @@ export interface AnalysisWorkspaceProps {
   creatorSourceOptions?: AnalysisCreatorSourceOption[];
   creatorPeriodOptions?: AnalysisCreatorPeriodOption[];
   creatorAvailableLineCodes?: string[];
+  /**
+   * F-P5 — otwarcie NOWO utworzonej analizy w jej własnym ekranie. Bez tej wywrotki kreator
+   * tworzyłby analizę „w tle", a użytkownik zostawał na poprzednim rekordzie (tak było do F-P5).
+   */
+  onAnalysisCreated?: (created: { artifactId: string; businessVersionId: string }) => void;
 }
 
 interface LoadState {
@@ -133,6 +138,7 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     creatorSourceOptions = [],
     creatorPeriodOptions = [],
     creatorAvailableLineCodes = [],
+    onAnalysisCreated,
   } = props;
 
   const [load, setLoad] = useState<LoadState>({ loading: true, error: null });
@@ -438,14 +444,42 @@ function AnalysisWorkspaceInner(props: AnalysisWorkspaceProps): React.ReactEleme
     }
   }
 
+  /**
+   * F-P5 §4 — kreator woła `derived-analysis` (artefakt + krawędź rodowodu
+   * `STATEMENT_TO_ANALYSIS` + definicja + selekcja wskaźników w jednej transakcji), a NIE
+   * `POST /artifacts`. Poprzednia wersja tworzyła artefakt bez krawędzi, przez co `compute`
+   * odbijał się o `NO_SOURCE_STATEMENT_PACK_EDGE`, a wybór z kreatora (źródło/okresy/wskaźniki)
+   * szedł do kosza (`void payload`). Teraz cały wybór jedzie do serwera.
+   *
+   * Przelicza NOWO utworzoną wersję (nie tę otwartą na ekranie) i otwiera ją.
+   */
   async function handleWizardComplete(payload: AnalysisCreatorDraftPayload): Promise<void> {
-    void payload; // patrz nagłówek: żaden dzisiejszy endpoint nie przyjmuje source/periods/KPI selection.
     setWizardSubmitting(true);
     setWizardSubmitError(null);
     try {
-      await createFinanceArtifact({ artifactType: 'HISTORICAL_ANALYSIS' });
-      await computeAnalysisKpis({ businessVersionId });
+      const sourceLabel =
+        creatorSourceOptions.find(
+          (option) => option.statementPackVersionId === payload.sourceStatementPackVersionId
+        )?.label ?? null;
+      const created = await createDerivedFinanceAnalysis({
+        sourceBusinessVersionId: payload.sourceStatementPackVersionId,
+        periodIds: payload.selectedPeriodIds,
+        kpiCodes: payload.selectedKpiCodes,
+        industryCode: payload.industryCode,
+        // Nazwa własna: proponowana z etykiety pakietu źródłowego (użytkownik zmienia ją
+        // później akcją „Zmień nazwę" w pasku). Nigdy nie zmyślamy nazwy z niczego.
+        name: sourceLabel ? `Analiza: ${sourceLabel}` : null,
+        idempotencyKey: globalThis.crypto.randomUUID(),
+      });
+      await computeAnalysisKpis({ businessVersionId: created.businessVersionId });
       setWizardOpen(false);
+      if (onAnalysisCreated && created.businessVersionId !== businessVersionId) {
+        onAnalysisCreated({
+          artifactId: created.artifactId,
+          businessVersionId: created.businessVersionId,
+        });
+        return;
+      }
       await reload();
     } catch (err) {
       setWizardSubmitError(describeFinanceV2Error(err).detail);

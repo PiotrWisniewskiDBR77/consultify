@@ -1,0 +1,11 @@
+{
+ "url": "http://localhost:3061/?screen=template-builder-table&theme=light",
+ "selector": "[data-nmode-header]",
+ "szerokosc": 1280,
+ "sidebarSimulated": 288,
+ "found": false,
+ "items": null,
+ "overlaps": [],
+ "bledyKonsoli": [],
+ "kiedy": "2026-09-05T18:20:00.856Z"
+}

@@ -455,7 +455,7 @@ router.post(
           projectId || null,
           chatProjectId || null,
           req.userId!, // created_by
-          title || 'New conversation',
+          title || '',
           title ? 'user' : 'auto',
           pmoContext ? JSON.stringify(pmoContext) : '{}',
           language || 'en',
@@ -1672,7 +1672,7 @@ router.post(
           const cleaned = firstUserMsg.content.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
           return cleaned.length > 50 ? cleaned.slice(0, 47) + '...' : cleaned;
         }
-        return 'New conversation';
+        return '';
       };
 
       let generatedTitle: string;
@@ -1695,7 +1695,7 @@ router.post(
             .slice(0, 50);
 
           // If AI returned empty or default, fall back to heuristic
-          if (!generatedTitle || generatedTitle === 'New conversation') {
+          if (!generatedTitle) {
             generatedTitle = heuristicTitle();
           }
         } catch (aiErr: any) {
@@ -2749,7 +2749,7 @@ router.post(
            AND is_archived = 0
            AND is_starred = 0
            AND updated_at < ?
-           AND title != 'New conversation'`,
+           AND title != ''`,
         [req.userId!, cutoffDate.toISOString()]
       );
 

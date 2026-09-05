@@ -393,6 +393,63 @@ export async function createFinanceArtifact(
   });
 }
 
+/**
+ * F-P5 — utworzenie ANALIZY HISTORYCZNEJ z pakietu sprawozdań: artefakt + krawędź rodowodu
+ * (`STATEMENT_TO_ANALYSIS`) + definicja + wiersze selekcji wskaźników w JEDNEJ transakcji
+ * serwera (`POST /versions/:sourceVersionId/derived-analysis`, F-P4).
+ *
+ * Dlaczego NIE `createFinanceArtifact`: `POST /artifacts` tworzy sam artefakt — BEZ krawędzi,
+ * więc `compute` odbija się o `NO_SOURCE_STATEMENT_PACK_EDGE`, a tabela wskaźników zostaje pusta.
+ * To była przyczyna „pustej analizy" opisana w F-P5 §3.
+ */
+export interface CreateDerivedFinanceAnalysisParams {
+  sourceBusinessVersionId: string;
+  /** Nazwa własna analizy nadana przez użytkownika. */
+  name?: string | null;
+  /** Wybór z kreatora — puste ⇒ wszystkie okresy pakietu. */
+  periodIds?: string[];
+  /** Wybór z kreatora — puste ⇒ cały aktywny katalog wskaźników. */
+  kpiCodes?: string[];
+  industryCode?: string | null;
+  /** Klucz idempotencji; bez niego serwer odpowiada 400 IDEMPOTENCY_KEY_REQUIRED. */
+  idempotencyKey: string;
+}
+
+export interface CreateDerivedFinanceAnalysisResultDto {
+  artifactId: string;
+  businessVersionId: string;
+  workingRevisionId: string;
+  edgeId: string;
+  sourceVersionId: string;
+  artifactType: 'HISTORICAL_ANALYSIS';
+  replayed: boolean;
+  selection: {
+    definitionId: string;
+    analysisName: string | null;
+    presentationCurrency: string;
+    unit: string;
+    periodIds: string[];
+    kpiCodes: string[];
+    selectionRowsInserted: number;
+    selectionRowsTotal: number;
+  } | null;
+}
+
+export async function createDerivedFinanceAnalysis(
+  params: CreateDerivedFinanceAnalysisParams
+): Promise<CreateDerivedFinanceAnalysisResultDto> {
+  return v8Post<CreateDerivedFinanceAnalysisResultDto>(
+    `${BASE}/versions/${encodeURIComponent(params.sourceBusinessVersionId)}/derived-analysis`,
+    {
+      idempotencyKey: params.idempotencyKey,
+      ...(params.name ? { name: params.name } : {}),
+      ...(params.periodIds && params.periodIds.length > 0 ? { periodIds: params.periodIds } : {}),
+      ...(params.kpiCodes && params.kpiCodes.length > 0 ? { kpiCodes: params.kpiCodes } : {}),
+      ...(params.industryCode ? { industryCode: params.industryCode } : {}),
+    }
+  );
+}
+
 export async function listFinanceArtifacts(params?: {
   artifactType?: FinanceArtifactType;
 }): Promise<{ artifacts: FinanceArtifactSummaryDto[]; count: number }> {
@@ -1559,6 +1616,7 @@ export async function generateCanonicalValuationAdvisor(legacyValuationId: strin
 
 export const FinanceV2Api = {
   createFinanceArtifact,
+  createDerivedFinanceAnalysis,
   getFinanceArtifact,
   listFinanceArtifactVersions,
   getFinanceArtifactCapabilities,

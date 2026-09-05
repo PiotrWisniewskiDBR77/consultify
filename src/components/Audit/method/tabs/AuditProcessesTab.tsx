@@ -287,7 +287,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     },
     {
       id: 'plannedStart',
-      label: isPolish ? 'Start' : 'Start',
+      label: isPolish ? 'Początek' : 'Start',
       width: '110px',
       sortable: true,
       render: (row: AuditProgramSummary) => (

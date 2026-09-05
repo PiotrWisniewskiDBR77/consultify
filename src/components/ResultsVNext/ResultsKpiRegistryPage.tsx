@@ -90,6 +90,11 @@ import {
   type TableColumn,
 } from '@/components/standard';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives';
+import {
+  memberNameOrUnknown,
+  useOrganizationMemberNames,
+} from '@/hooks/useOrganizationMemberNames';
+import { useResultsEntityNames } from '@/hooks/useResultsEntityNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -133,7 +138,6 @@ import {
   listKpiScorecards,
   suspendKpiScorecard,
 } from './kpiScorecards/kpiScorecardApi';
-import { kpiScorecardOwnerDisplay } from './kpiScorecards/kpiScorecardMappers';
 import {
   buildKpiCardSetColumns,
   buildKpiScorecardPreview,
@@ -833,6 +837,11 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   const { i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const currentUser = useAppStore((s) => s.currentUser);
+  const currentOrganization = useAppStore((s) => s.currentOrganization);
+  const resolveMemberName = useOrganizationMemberNames();
+  const resolveScopeName = useResultsEntityNames(
+    currentOrganization ? [currentOrganization] : []
+  );
   // FIX-6 (2026-08-25 odbiór dnia 4, nadzorca wariant a): replaces the old
   // dedicated cutover-bypass PROP (retired; see `tests/resultsVnext/
   // flagGateEnumeration.test.ts`, "keeps the historical scorecards bypass
@@ -1555,7 +1564,13 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       name: row.name,
       description: row.description,
       itemCount: scorecardItems ? (scorecardItems[row.scorecardId]?.length ?? 0) : null,
-      owner: row.ownerName ?? kpiScorecardOwnerDisplay(row.ownerUserId, currentUser?.id, isPolish),
+      owner:
+        row.ownerName ??
+        (currentUser?.id && row.ownerUserId === currentUser.id
+          ? isPolish
+            ? 'Ty'
+            : 'You'
+          : memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish)),
       status: row.lifecycleStatus,
       updatedAt: row.updatedAt,
       scorecard: row,
@@ -1683,6 +1698,8 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
               ? buildKpiScorecardPreview(selectedCardSet.scorecard, {
                   isPolish,
                   currentUserId: currentUser?.id,
+                  resolveMemberName,
+                  resolveScopeName,
                   busy: scorecardPending,
                   memberCount: selectedCardSet.itemCount ?? undefined,
                   items: scorecardItems ? (scorecardItems[selectedCardSet.id] ?? []) : 'loading',

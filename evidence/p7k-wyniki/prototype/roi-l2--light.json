@@ -1,0 +1,36 @@
+{
+  "view": "roi-l2",
+  "theme": "light",
+  "url": "http://127.0.0.1:3037/?screen=p7k-wyniki-prototype&view=roi-l2&theme=light&lang=pl&uwagi=0",
+  "httpStatus": 200,
+  "bledyKonsoli": 0,
+  "consoleErrors": [],
+  "networkErrors": [],
+  "nakladania": 0,
+  "nakladaniaSzczegoly": [],
+  "wyciekiTekstu": 0,
+  "wyciekiSzczegoly": [],
+  "uciete": 0,
+  "ucieteSzczegoly": [],
+  "ucieteLacznie": 0,
+  "ucieteLacznieSzczegoly": [],
+  "przezroczysteSticky": 0,
+  "kolumnyRozjazd": {
+    "rozne": false,
+    "kolumny": 5,
+    "rozjechane": 0
+  },
+  "dom": {
+    "aside": {
+      "count": 1
+    },
+    "table": {
+      "count": 1
+    },
+    "truncatedHeaders": [],
+    "numericCellsWithWrap": []
+  },
+  "bodyScrollWidth": 1440,
+  "viewportWidth": 1440,
+  "bodyText": "Wyniki › ROI\nRobotyzacja gniazda spawalniczego\n\nWyniki › ROI › Robotyzacja gniazda spawalniczego · wariant 2 · 5 lat · CONDITIONAL GO\n\nKPI\nOKR\nROI\nZałożenia\nWyliczenia\nRealizacja\nZałożenia\n\nProblem: niestabilna wydajność i brak operatorów · BAU: 10 dodatkowych FTE w 2 lata · CAPEX 1 000 000 zł z contingency 10% · ΔNWC 80 000 zł · korzyści Hard/Avoided oddzielnie · OEE 62→72% → przepustowość → marża → cash flow.\n\nWyliczenia\nROI 5Y\n100%\nPP\n2,5 roku\nNPV\n516 315 zł\nIRR\n28,7%\nPI / BCR\n1,52 / 1,39\n\nScenariusze: Conservative / Base / Upside · wrażliwość ±20% · rekomendacja CONDITIONAL GO.\n\nRealizacja · przegląd po 6 miesiącach\nKPI / KORZYŚĆ\n\t\nEXPECTED\n\t\nACTUAL\n\t\nWARIANCJA\n\t\n\n\nCAPEX\n\t\n1 000 000 zł\n\t\n1 080 000 zł\n\t\n+80 000 zł\n\t\n\n\nOutput\n\t\n+15%\n\t\n+11%\n\t\n−4 pp\n\t\n\n\nFTE saving\n\t\n10 FTE\n\t\n7 FTE\n\t\n−3 FTE\n\t\n\n\nRoczna korzyść\n\t\n400 000 zł\n\t\n312 000 zł\n\t\n−88 000 zł\n\t\n\n\nPayback\n\t\n2,5 roku\n\t\n3,46 roku\n\t\n+0,96 roku\n\t\nPrawdziwość założeń i ROI po realizacji\n\nPopyt: potwierdzone · redukcja FTE: częściowo potwierdzona — przesunięto 7 z 10 etatów · ramp-up: obalone — trwał 14 zamiast 8 tygodni. ROI po realizacji 5Y: 44% · NPV: 118 400 zł · rekomendacja: korekta planu korzyści.\n\nSzczegóły\nTeresa\nAKCJE\nOtwórz kartę działania\nWŁAŚCIWOŚCI\n\nWłaściciel · Tomasz Nowak\nCykl · Miesięczny\n\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA"
+}

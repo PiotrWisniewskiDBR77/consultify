@@ -302,7 +302,7 @@ export const AgentProcessTemplatesPanel: React.FC = () => {
             className="w-full rounded border border-c-border bg-c-bg px-2 py-1"
           />
           <input
-            aria-label={isPolish ? 'Sponsor' : 'Sponsor'}
+            aria-label={'Sponsor'}
             value={intakeValues.sponsor}
             onChange={(e) => setIntakeValues((v) => ({ ...v, sponsor: e.target.value }))}
             className="w-full rounded border border-c-border bg-c-bg px-2 py-1"

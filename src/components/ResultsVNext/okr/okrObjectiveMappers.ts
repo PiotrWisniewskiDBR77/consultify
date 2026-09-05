@@ -16,6 +16,10 @@ import type {
   OkrObjectiveConfidence,
   OkrObjectiveStatus,
 } from './okrObjectiveApi';
+import {
+  mapServerErrorToUserMessage,
+  serverErrorDiagnosticTitle,
+} from '@/services/api/errorMessageMapper';
 
 export { formatOkrDate, shortOkrId };
 
@@ -171,6 +175,7 @@ const OKR_SET_CHILD_EDITABLE_STATUSES = new Set(['draft', 'changes_requested']);
 export interface OkrSetChildLockInfo {
   label: { pl: string; en: string };
   reason: { pl: string; en: string };
+  diagnosticTitle: { pl: string; en: string };
 }
 
 /** `setStatus` is the OWNING Set's status (an `OkrSetStatus`, typed loosely
@@ -182,8 +187,12 @@ export function getOkrSetChildEditLock(setStatus: string): OkrSetChildLockInfo |
   return {
     label: { pl: 'Zablokowane', en: 'Locked' },
     reason: {
-      pl: `Cele i Kluczowe Rezultaty można dodawać i edytować tylko, gdy zestaw OKR jest w statusie "Szkic" lub "Wymaga poprawek" — ten zestaw jest w statusie innym (kod serwera: assertSetEditableForUpdate).`,
-      en: `Objectives and Key Results can only be added or edited while the OKR set is "Draft" or "Changes requested" — this set is in a different status (server rule: assertSetEditableForUpdate).`,
+      pl: mapServerErrorToUserMessage('SET_NOT_EDITABLE', { pl: 'Edycja jest niedostępna.', en: 'Editing is unavailable.' }, true),
+      en: mapServerErrorToUserMessage('SET_NOT_EDITABLE', { pl: 'Edycja jest niedostępna.', en: 'Editing is unavailable.' }, false),
+    },
+    diagnosticTitle: {
+      pl: serverErrorDiagnosticTitle('SET_NOT_EDITABLE', true),
+      en: serverErrorDiagnosticTitle('SET_NOT_EDITABLE', false),
     },
   };
 }
@@ -199,8 +208,12 @@ export function getOkrCheckInSetLock(setStatus: string): OkrSetChildLockInfo | n
   return {
     label: { pl: 'Zablokowane', en: 'Locked' },
     reason: {
-      pl: `Check-iny przyjmowane są tylko, gdy zestaw OKR jest w statusie "Aktywny" — ten zestaw jest w statusie innym (kod serwera: SET_NOT_ACTIVE).`,
-      en: `Check-ins are only accepted while the OKR set is "Active" — this set is in a different status (server rule: SET_NOT_ACTIVE).`,
+      pl: mapServerErrorToUserMessage('SET_NOT_ACTIVE', { pl: 'Check-in jest niedostępny.', en: 'Check-in is unavailable.' }, true),
+      en: mapServerErrorToUserMessage('SET_NOT_ACTIVE', { pl: 'Check-in jest niedostępny.', en: 'Check-in is unavailable.' }, false),
+    },
+    diagnosticTitle: {
+      pl: serverErrorDiagnosticTitle('SET_NOT_ACTIVE', true),
+      en: serverErrorDiagnosticTitle('SET_NOT_ACTIVE', false),
     },
   };
 }

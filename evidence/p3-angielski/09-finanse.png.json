@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/finance?tab=statements",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nSprawozdania\nDane\nModel\nPiotr Wiśniewski\nPW\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\nWszystkie\n14\nOdrzucone importy\n4\nKolejka naprawcza\n3\nGotowe sprawozdania\n7\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\n2025\n\t\n—P&L / BS / —CF\n\t\n2025\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t6 godzin temu\t\n\n\t\nSTM\n\t\n2024\n\t\n—P&L / BS / —CF\n\t\n2024\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t6 godzin temu\t\n\n\t\nSTM\n\t\n2023\n\t\n—P&L / BS / —CF\n\t\n2023\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t6 godzin temu\t\n\n\t\nSTM\n\t\nDBR77 Sp. z o.o.\n\t\nP&L / BS / CF\n\t\n2025\n\t\nPLN\n\t\n5\n\t\nPrzegląd\n\t6 godzin temu\t\n\n\t\nSTM\n\t\nDBR77 Sp. z o.o.\n\t\nP&L / BS / CF\n\t\n2024\n\t\nPLN\n\t\n5\n\t\nPrzegląd\n\t6 godzin temu\t\n\n\t\nSTM\n\t\n2024\n\t\n—P&L / BS / —CF\n\t\n2024\n\t\nPLN\n\t\n1\n\t\nSzkic\n\t6 godzin temu\t\n\n\t\nSTM\n\t\n2024\n\t\nP&L / BS / —CF\n\t\n2024\n\t\nPLN\n\t\n2\n\t\nPrzegląd\n\t6 godzin temu\t\n\n\t\nSTM\n\t\nCD PROJEKT Group\n\t\nP&L / BS / CF\n\t\n2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t9.08.2026\t\n\n\t\nSTM\n\t\nTesla, Inc.\n\t\nP&L / BS / CF\n\t\n2025\n\t\nUSD\n\t\n3\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nSTM\n\t\nTesco PLC\n\t\nP&L / BS / CF\n\t\n2026\n\t\nGBP\n\t\n3\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nSTM\n\t\nGrupa Kapitałowa Apator\n\t\nP&L / BS / CF\n\t\n2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t8.08.2026\t\n\n\t\nSTM\n\t\nGrupa Kapitałowa Apator\n\t\nP&L / BS / CF\n\t\n2024\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t7.08.2026\t\n\n\t\nSTM\n\t\nApator S.A.\n\t\nP&L / BS / CF\n\t\n2024\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t7.08.2026\t\n\n\t\nSTM\n\t\nApator S.A.\n\t\nP&L / BS / CF\n\t\n2025\n\t\nPLN\n\t\n3\n\t\nZatwierdzone\n\t7.08.2026\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:13.845Z"
+}

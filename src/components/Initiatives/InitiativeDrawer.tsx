@@ -387,7 +387,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
             <span
               className={`px-2 py-0.5 text-xs font-medium rounded ${statusMeta?.bgColor} ${statusMeta?.color}`}
             >
-              {statusMeta?.label}
+              {t(statusMeta?.labelKey ?? 'initiatives.status.unknown')}
             </span>
           </div>
 
@@ -580,7 +580,7 @@ export const InitiativeDrawer: React.FC<InitiativeDrawerProps> = ({
                     : 'bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-700 dark:text-slate-300'
                 } disabled:opacity-50`}
               >
-                {action.label}
+                {t(action.labelKey)}
               </button>
             ))}
           </div>

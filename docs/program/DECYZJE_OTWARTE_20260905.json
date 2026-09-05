@@ -163,6 +163,123 @@
         "B": "ROI zostaje wyłączone do fali 2."
       },
       "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-kpi-l1",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-kpi-l1"
+      ],
+      "pytanie": "Czy lista raportow KPI (nazwa, zakres, okres, liczba miernikow, kolumna STAN z 4 liczbami i kolorowymi kropkami, otwarte dzialania, autor, aktualizacja) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-kpi-l2-wrz",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-kpi-l2-wrz"
+      ],
+      "pytanie": "Raport KPI: tabela miernikow pogrupowana po obszarze, CEL nad Rezultatem, miesiace przewijane, YTD i STAN przypiete po prawej — czy tak ma wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-kpi-l2-sty",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-kpi-l2-sty"
+      ],
+      "pytanie": "Ten sam raport przewiniety do stycznia: kazdy miesiac ma teraz wlasne, rosnace dane (sprzedaz i zamowienia rosna miesiac po miesiacu, OEE w widelkach 74-78%), jeden miesiac (maj) z ostrzezeniem — czy trend i dane wygladaja realistycznie?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-kpi-l3",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-kpi-l3"
+      ],
+      "pytanie": "Czy lista otwartych dzialan dla jednego wskaznika (status, glowna przyczyna, wymagane dzialania, komentarz) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-okr-l1",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-okr-l1"
+      ],
+      "pytanie": "Czy lista raportow OKR (nazwa, zakres, cykl, cele, rezultaty, kolumna STAN z 4 liczbami i kropkami, wlasciciele, ostatni check-in) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-okr-l2",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-okr-l2"
+      ],
+      "pytanie": "Czy szczegolowa tabela OKR (cel+ambicja, kluczowy rezultat, wlasciciel, start/cel/biezaca, postep, pewnosc, termin, stan) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-okr-l3",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-okr-l3"
+      ],
+      "pytanie": "Czy karta jednego celu OKR (Cel, Kluczowe rezultaty jako kafle z pasmem koloru, Check-iny, Powiazania, Refleksja) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-roi-l1",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-roi-l1"
+      ],
+      "pytanie": "Czy lista analiz ROI (nazwa, przedmiot, wariant, CAPEX, roczna korzysc, ROI, payback, rekomendacja, faza) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
+    },
+    {
+      "id": "p7k-roi-l2",
+      "modul": "08 Wyniki (P7K prototyp)",
+      "ekrany": [
+        "p7k-roi-l2"
+      ],
+      "pytanie": "Czy jedna analiza ROI jako karta z zakladkami (Zalozenia, Wyliczenia, Realizacja) ma tak wygladac?",
+      "opcje": {
+        "A": "Tak — tak ma wyglądać, budujemy (KROK 2).",
+        "B": "Nie — jedno zdanie, co poprawić."
+      },
+      "rekomendacja": "A"
     }
   ]
 }

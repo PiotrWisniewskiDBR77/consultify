@@ -1,0 +1,24 @@
+{
+ "url": "http://127.0.0.1:3067/execution?tab=list&view=table",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "tekst": "LOCAL @dda794943ee1\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\nPiotr Wiśniewski\nPW\nKokpit\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nAktywne\nWszystkie\n\t\nINICJATYWA\n\t\nTYP\n\t\nSTATUS\n\t\nPRZYPISANY\n\t\nPOSTĘP\n\t\nTERMIN\n\t\nALERTY\n\t\nZADANIA\n\t\n\n\t\nPoprawa realizacji korzyści programu\n\t\nEXE\n\t\nW realizacji\n\t\nNieprzypisany\n\t\n0%\n\t\n—\n\t\nOK\n\t\n-\n\t\n\n\t\nDevOps Transformation\n\t\nEXE\n\t\nW realizacji\n\t\nPW\nPiotr Wiśniewski\n\t\n0%\n\t\n5.05.2026\n\t\nOK\n\t\n-\n\t\n\n\t\nRPA Implementation\n\t\nEXE\n\t\nZaplanowana\n\t\nPW\nPiotr Wiśniewski\n\t\n0%\n\t\n4.06.2026\n\t\nOK\n\t\n-\n\t\n\n\t\nQuality Management System 4.0\n\t\nEXE\n\t\nZablokowana\n\t\nPW\nPiotr Wiśniewski\n\t\n0%\n\t\n5.04.2026\n\t\nZablokowane\n\t\n-\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T17:42:04.774Z"
+}

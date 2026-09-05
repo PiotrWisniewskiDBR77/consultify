@@ -164,7 +164,7 @@ export const buildToolSessionDetails = (
 
   addFact(isPolish ? 'Sesja' : 'Session', details.name);
   addFact(isPolish ? 'Typ narzędzia' : 'Tool type', details.toolType);
-  addFact(isPolish ? 'Status' : 'Status', details.status);
+  addFact('Status', details.status);
   if (details.progress != null) addFact(isPolish ? 'Postęp' : 'Progress', details.progress, '%');
   if (details.confidenceAvg != null) {
     addFact(isPolish ? 'Poziom pewności' : 'Confidence level', details.confidenceAvg);

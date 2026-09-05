@@ -119,7 +119,7 @@ export const AuditDrdReportsTab: React.FC<AuditDrdReportsTabProps> = ({ isPolish
   const columns: TableColumn[] = [
     {
       id: 'program',
-      label: isPolish ? 'Program' : 'Program',
+      label: 'Program',
       render: (row: DrdAssessmentReportSummary) => (
         <span className="text-sm font-semibold text-c-text">{row.name}</span>
       ),
@@ -133,7 +133,7 @@ export const AuditDrdReportsTab: React.FC<AuditDrdReportsTabProps> = ({ isPolish
     },
     {
       id: 'status',
-      label: isPolish ? 'Status' : 'Status',
+      label: 'Status',
       width: '160px',
       filterable: true,
       filterOptions: Object.keys(DRD_STATUS_LABEL).map((value) => ({

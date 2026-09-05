@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview, StandardTable, type TableColumn } from '@/components/standard';
+import { capacityUnitLabel } from '@/labels/capacityUnitLabels';
 import { persistentCommandId } from '@/services/initiatives-execution/persistentCommandId';
 import {
   listExecutionCases,
@@ -315,7 +316,11 @@ export const ExecutionResourcesSurface = ({
         ),
         description: item.taskTitle || `Zadanie ${String(item.taskId || '').slice(-8)}`,
         taskTitle: item.taskTitle || `Zadanie · ${String(item.taskId || '').slice(-8)}`,
-        periodLabel: item.timeBasis?.window || item.timeBasis?.windowUnit || ETYKIETY_PL.UNKNOWN,
+        periodLabel:
+          item.timeBasis?.window ||
+          (item.timeBasis?.windowUnit
+            ? capacityUnitLabel(item.timeBasis.windowUnit, true)
+            : ETYKIETY_PL.UNKNOWN),
         availabilityLabel: knowledgeValue(item.availability ?? item.supply),
         demandLabel: knowledgeValue(item.demand),
         remainingLabel: knowledgeValue(item.remainingDemand ?? item.remainingEstimate),
@@ -546,7 +551,9 @@ export const ExecutionResourcesSurface = ({
                       label: 'Okres',
                       value:
                         item.timeBasis?.window ||
-                        item.timeBasis?.windowUnit ||
+                        (item.timeBasis?.windowUnit
+                          ? capacityUnitLabel(item.timeBasis.windowUnit, true)
+                          : null) ||
                         ETYKIETY_PL.UNKNOWN,
                     },
                     {
@@ -660,7 +667,10 @@ export const ExecutionResourcesSurface = ({
           <p className="mt-3 text-sm">Zadanie {selected.taskTitle || selected.taskId}</p>
           <p className="text-sm">
             Dane {pl(selected.demand?.knowledgeState)} · okres{' '}
-            {selected.timeBasis?.window || selected.timeBasis?.windowUnit || ETYKIETY_PL.UNKNOWN}
+            {selected.timeBasis?.window ||
+              (selected.timeBasis?.windowUnit
+                ? capacityUnitLabel(selected.timeBasis.windowUnit, true)
+                : ETYKIETY_PL.UNKNOWN)}
           </p>
         </section>
       )}

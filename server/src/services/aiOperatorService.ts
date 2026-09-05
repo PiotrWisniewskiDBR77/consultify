@@ -669,42 +669,60 @@ class AIOperatorService {
         : Promise.resolve([]),
     ]);
 
-    const agendaGaps: string[] = [];
-    if (meeting.preRead.length === 0) agendaGaps.push('Add pre-read materials before the meeting.');
-    if (meeting.agenda.length < 3)
-      agendaGaps.push('Expand the agenda to cover decisions, risks, and next steps.');
-    if (meeting.attendees.length < 2)
-      agendaGaps.push('Confirm the right decision-makers are invited.');
+    const agendaGaps: Array<{ key: string }> = [];
+    if (meeting.preRead.length === 0) agendaGaps.push({ key: 'meeting.operator.gaps.preRead' });
+    if (meeting.agenda.length < 3) agendaGaps.push({ key: 'meeting.operator.gaps.agenda' });
+    if (meeting.attendees.length < 2) agendaGaps.push({ key: 'meeting.operator.gaps.attendees' });
 
     const followUpSuggestions = [
       ...projectTasks
         .filter((task: any) => String(task.status || '').toLowerCase() !== 'completed')
         .slice(0, 3)
-        .map((task: any) => `Review task: ${task.title}`),
+        .map((task: any) => ({
+          key: 'meeting.operator.followUp.task',
+          params: { title: task.title },
+        })),
       ...projectDecisions
         .filter((decision: any) =>
           ['pending', 'escalated'].includes(String(decision.status || '').toLowerCase())
         )
         .slice(0, 2)
-        .map((decision: any) => `Force decision closure: ${decision.title}`),
+        .map((decision: any) => ({
+          key: 'meeting.operator.followUp.decision',
+          params: { title: decision.title },
+        })),
     ];
 
     return {
       meetingId: meeting.id,
       title: meeting.title,
-      prepSummary: `Focus the meeting on ${meeting.agenda[0] || 'delivery status'}, close open follow-ups, and convert discussion into owned next steps.`,
+      prepSummary: {
+        key: meeting.agenda[0]
+          ? 'meeting.operator.prepSummary'
+          : 'meeting.operator.prepSummaryNoTopic',
+        params: meeting.agenda[0] ? { topic: meeting.agenda[0] } : undefined,
+      },
       stakeholderNotes: meeting.attendees.slice(0, 5).map((attendee) => ({
         name: attendee,
-        note: 'Tailor the summary and decisions to this stakeholder after the meeting.',
+        note: { key: 'meeting.operator.stakeholderNote' },
       })),
       agendaGaps,
       followUpSuggestions,
       executiveBrief: {
-        headline: `Meeting operator brief for ${meeting.title}`,
+        headline: { key: 'meeting.operator.executive.headline', params: { title: meeting.title } },
         bullets: [
-          `${meeting.followUps.filter((item) => item.status === 'open').length} open follow-up(s)`,
-          `${projectTasks.length} project task(s) to review`,
-          `${projectDecisions.length} project decision(s) to reference`,
+          {
+            key: 'meeting.operator.executive.openFollowUps',
+            params: { count: meeting.followUps.filter((item) => item.status === 'open').length },
+          },
+          {
+            key: 'meeting.operator.executive.projectTasks',
+            params: { count: projectTasks.length },
+          },
+          {
+            key: 'meeting.operator.executive.projectDecisions',
+            params: { count: projectDecisions.length },
+          },
         ],
       },
     };

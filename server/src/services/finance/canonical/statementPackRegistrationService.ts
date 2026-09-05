@@ -14,8 +14,13 @@ import {
   runStatementPackShadowReconcile,
   syncStatementToPack,
 } from '../../financialStatementPackService.js';
+import {
+  ensureStatementPackTemporalContext,
+  readLegacyPackPeriods,
+  type StatementPackTemporalContext,
+} from './financeCalendarService.js';
 import logger from '../../../utils/Logger.js';
-import { withPgTransaction } from '../../../utils/queryHelpers.js';
+import { withPgTransaction, type PgTransactionClient } from '../../../utils/queryHelpers.js';
 
 export interface ConfirmAndRegisterStatementPackParams {
   statementId: string;
@@ -44,6 +49,56 @@ export interface ConfirmAndRegisterStatementPackResult {
   businessVersionId: string;
   workingRevisionId: string;
   replayed: boolean;
+  /**
+   * Ogniwo 1 (paczka F-M5): kalendarz + okresy + jednostka założone dla tej wersji pakietu.
+   * ZAWSZE obecne po udanym potwierdzeniu — pakiet bez okresów jest bezużyteczny
+   * (`statementMappingService` odrzuca każdą linię, której `periodId` nie istnieje), więc brak
+   * okresów kończy się wyjątkiem i wycofaniem CAŁEJ transakcji, a nie cichym `undefined`.
+   */
+  temporalContext: StatementPackTemporalContext;
+}
+
+/**
+ * Ogniwo 1 paczki F-M5 — po potwierdzeniu importu pakiet MUSI mieć kalendarz, okresy i jednostkę.
+ * Wołane w tej samej transakcji, co rejestracja artefaktu, także na ścieżkach powtórki (replay):
+ * pakiety potwierdzone przed scaleniem F-M5 nie mają okresów, więc ponowne potwierdzenie ma je
+ * dołożyć, a nie zwrócić ten sam pusty pakiet.
+ *
+ * Okresy czytamy z toru legacy (`financial_statements` powiązane z pakietem) — to jedyne miejsce,
+ * gdzie zapisany jest rozpoznany okres i okres porównawczy sprawozdania.
+ */
+async function ensureTemporalContextForPack(
+  tx: PgTransactionClient,
+  params: {
+    organizationId: string;
+    statementPackId: string;
+    businessVersionId: string;
+    userId: string;
+  }
+): Promise<StatementPackTemporalContext> {
+  const txLike = {
+    queryAll: async <T>(sql: string, values: unknown[] = []) => (await tx.query<T>(sql, values)).rows,
+    queryOne: async <T>(sql: string, values: unknown[] = []) =>
+      (await tx.query<T>(sql, values)).rows[0] ?? null,
+    queryRun: async (sql: string, values: unknown[] = []) => tx.query(sql, values),
+  };
+  const legacyPeriods = await readLegacyPackPeriods(
+    txLike,
+    params.organizationId,
+    params.statementPackId
+  );
+  return ensureStatementPackTemporalContext({
+    organizationId: params.organizationId,
+    businessVersionId: params.businessVersionId,
+    createdBy: params.userId,
+    periods: legacyPeriods.map((row) => ({
+      periodStart: String(row.period_start),
+      periodEnd: String(row.period_end),
+      label: row.period_label,
+    })),
+    entityName: legacyPeriods.find((row) => row.entity_name)?.entity_name ?? null,
+    currency: legacyPeriods.find((row) => row.currency)?.currency ?? null,
+  });
 }
 
 async function ensureIngestRun(
@@ -118,6 +173,12 @@ export async function confirmAndRegisterStatementPack(
           businessVersionId: alias.business_version_id,
           workingRevisionId: revision.rows[0].working_revision_id,
           replayed: true,
+          temporalContext: await ensureTemporalContextForPack(tx, {
+            organizationId: params.organizationId,
+            statementPackId: existingPackId,
+            businessVersionId: alias.business_version_id,
+            userId: params.userId,
+          }),
         };
       }
     }
@@ -209,6 +270,12 @@ export async function confirmAndRegisterStatementPack(
         businessVersionId: alias.business_version_id,
         workingRevisionId: revision.rows[0].working_revision_id,
         replayed: true,
+        temporalContext: await ensureTemporalContextForPack(tx, {
+          organizationId: params.organizationId,
+          statementPackId,
+          businessVersionId: alias.business_version_id,
+          userId: params.userId,
+        }),
       };
     }
 
@@ -239,6 +306,12 @@ export async function confirmAndRegisterStatementPack(
       businessVersionId: canonical.businessVersion.business_version_id,
       workingRevisionId: canonical.workingRevision.working_revision_id,
       replayed: false,
+      temporalContext: await ensureTemporalContextForPack(tx, {
+        organizationId: params.organizationId,
+        statementPackId,
+        businessVersionId: canonical.businessVersion.business_version_id,
+        userId: params.userId,
+      }),
     };
   });
 

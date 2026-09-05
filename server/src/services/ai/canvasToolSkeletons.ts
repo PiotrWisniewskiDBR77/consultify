@@ -123,7 +123,7 @@ export function buildProcessFlowSkeleton(
   nodes.push({
     id: startId,
     type: 'start',
-    data: { label: isPolish ? 'Start' : 'Start' },
+    data: { label: isPolish ? 'Początek' : 'Start' },
     position: { x: 0, y: 0 },
   });
 

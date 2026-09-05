@@ -62,7 +62,7 @@ export const StatusChangeToast: React.FC<StatusChangeToastProps> = ({
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-c-text">
               {t('statusChangeToast.updatedTo', 'Status updated to {{status}}', {
-                status: statusMeta.label,
+                status: t(statusMeta.labelKey),
               })}
             </p>
             <p className="text-xs text-c-text-secondary truncate mt-0.5">{initiativeName}</p>

@@ -289,6 +289,36 @@
     }
   },
   "layout": {
+    "breadcrumb": {
+      "module": {
+        "audits": "Audyty",
+        "organization": "Organizacja",
+        "intro": "Wprowadzenie",
+        "studio": "Studio",
+        "myWork": "Moja Praca",
+        "aiActions": "Działania AI",
+        "initiatives": "Inicjatywy",
+        "finance": "Finanse",
+        "execution": "Realizacja",
+        "settings": "Ustawienia",
+        "admin": "Administracja"
+      },
+      "page": {
+        "drdReport": "Raport DRD",
+        "reports": "Raporty",
+        "statement": "Sprawozdanie",
+        "model": "Model",
+        "analysis": "Analiza",
+        "prediction": "Predykcja",
+        "valuation": "Wycena"
+      }
+    },
+    "loading": {
+      "audits": "Ładowanie audytów…",
+      "drdReport": "Ładowanie raportu DRD…",
+      "report": "Ładowanie raportu…",
+      "module": "Ładowanie…"
+    },
     "aiPanel": {
       "open": "Otwórz panel AI",
       "close": "Zamknij panel AI"
@@ -298,6 +328,7 @@
   },
   "common": {
     "actions": "Akcje",
+    "reset": "Resetuj",
     "rowActions": "Akcje wiersza",
     "sortByColumn": "Sortuj według: {{column}}",
     "resizeColumn": "Zmień szerokość kolumny: {{column}}",
@@ -427,6 +458,9 @@
     "completed": "Zakończony",
     "name": "Nazwa",
     "backToList": "Wróć do listy",
+    "documentTypes": {
+      "initiative": "inicjatywa"
+    },
     "missing": "brak danych",
     "today": "Dziś",
     "unknown": "nieznana",
@@ -1981,6 +2015,69 @@
     }
   },
   "myWork": {
+    "quickPrompts": {
+      "home": {
+        "attention": "Co wymaga teraz największej uwagi?",
+        "plan": "Przełóż te sygnały na plan",
+        "move": "Jaki jest najmocniejszy ruch transformacyjny w tym tygodniu?",
+        "momentum": "Gdzie tracimy tempo?"
+      },
+      "ideas": {
+        "structure": "Zbuduj początkową strukturę mojego pomysłu",
+        "challenge": "Podważ moje założenia",
+        "missing": "Czego nie zauważam?",
+        "nextSteps": "Zaproponuj kolejne kroki",
+        "matrix": "Przekształć to w macierz decyzyjną",
+        "causes": "Znajdź przyczyny źródłowe"
+      },
+      "notebook": {
+        "summarize": "Podsumuj tę notatkę",
+        "actions": "Wyodrębnij działania",
+        "perspectives": "Jakich perspektyw nie uwzględniam?"
+      },
+      "inbox": {
+        "triage": "Uporządkuj wszystkie nowe elementy",
+        "summarize": "Podsumuj powiadomienia od wczoraj",
+        "urgent": "Co wymaga pilnej uwagi?"
+      },
+      "calendar": {
+        "freeSlot": "Znajdź w tym tygodniu wolny czas na pracę w skupieniu",
+        "conflicts": "Jakie konflikty mam jutro?",
+        "schedule": "Zaproponuj optymalny plan na dziś"
+      },
+      "tasks": {
+        "reprioritize": "Zmień priorytety moich zadań",
+        "summary": "Podsumuj moją pracę w tym tygodniu",
+        "delegate": "Które zadania warto delegować?",
+        "breakDown": "Podziel moje najważniejsze zadanie"
+      },
+      "decisions": {
+        "summary": "Podsumuj oczekujące decyzje",
+        "analyze": "Przeanalizuj najpilniejszą decyzję",
+        "blocking": "Które decyzje blokują postęp?"
+      },
+      "projects": {
+        "overBudget": "Które projekty przekraczają budżet?",
+        "stakeholders": "Pokaż projekty bez wskazanych interesariuszy",
+        "rollups": "Podsumuj zestawienia programów"
+      },
+      "manager": {
+        "briefing": "Przekaż mi podsumowanie w 30 sekund",
+        "attention": "Co najbardziej wymaga mojej uwagi?",
+        "risk": "Podsumuj ryzyka portfela",
+        "capacity": "Przedstaw obciążenie zespołu"
+      },
+      "vault": {
+        "known": "Co już o tym wiemy?",
+        "sources": "Które źródła potwierdzają to twierdzenie?",
+        "missing": "Czego brakuje w naszych dowodach?"
+      },
+      "agent": {
+        "propose": "Zaproponuj proces dla tego celu",
+        "inputs": "Jakich danych wejściowych wymaga ten krok?",
+        "stopped": "Dlaczego ostatnie uruchomienie zatrzymało się tutaj?"
+      }
+    },
     "kanban": {
       "statusMoved": "Przeniesiono do „{{column}}\"",
       "statusFailedNotFound": "Nie zapisano: zadanie „{{title}}\" już nie istnieje (mogło zostać usunięte lub przypisane komuś innemu). Odśwież tablicę.",
@@ -2267,7 +2364,8 @@
         "zoomQuarter": "Kwartał",
         "priorityFilter": "Priorytet",
         "empty": "Brak decyzji w zakresie"
-      }
+      },
+      "createdFromChatToast": "Utworzono decyzję z czatu"
     },
     "errors": {
       "fetchFailed": "Nie udało się załadować",
@@ -2375,7 +2473,9 @@
           "summarizeTable": "Podsumuj tę tabelę dla Teresy",
           "open": "Zapytaj Teresę"
         }
-      }
+      },
+      "savedFromChatToast": "Zapisano z czatu w Moich Pomysłach",
+      "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę"
     },
     "whiteboard": {
       "regionLabel": "Tablica idei z elementami swobodnymi",
@@ -2733,7 +2833,8 @@
       "context": {
         "private": "Prywatny",
         "org": "Kontekst org"
-      }
+      },
+      "savedFromChatToast": "Zapisano z czatu w Notatniku"
     },
     "processFlow": {
       "degraded": "Dane przepływu niedostępne — ponowne łączenie",
@@ -2853,7 +2954,7 @@
       "label36": "Otwarte",
       "label37": "Gotowe",
       "label38": "Zapisane",
-      "aITriage": "Triage AI",
+      "aITriage": "Wstępna klasyfikacja AI",
       "aIDecisions": "AI Decyzje",
       "selected3": "zaznaczonych",
       "selectAll3": "Zaznacz wszystkie",
@@ -2912,6 +3013,15 @@
     },
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
+      "systemTitles": {
+        "defineTargetProcess": "Zdefiniuj proces docelowy i kryteria akceptacji",
+        "submitComplianceDocumentation": "Prześlij dokumentację zgodności",
+        "fixCriticalProductionBug": "Napraw krytyczny błąd produkcyjny",
+        "selectAiModelProvider": "Wybierz dostawcę modelu AI do obciążeń produkcyjnych",
+        "finalizeApiRateLimitingPolicy": "Sfinalizuj zasady ograniczania liczby wywołań API przed publicznym uruchomieniem",
+        "launchPublicBetaDecision": "Uruchom publiczną wersję beta — decyzja uruchamiamy / nie uruchamiamy",
+        "interviewAssignmentOverdue": "Przekroczony termin przydziału wywiadu"
+      },
       "justNow": "Przed chwilą",
       "dToLocaleDateString": "pl-PL",
       "language": "pl",
@@ -4800,15 +4910,7 @@
       "label2": "Przypisane do mnie",
       "label3": "Jestem właścicielem",
       "today": "Dzisiaj",
-      "weekdaysShort": [
-        "Pn",
-        "Wt",
-        "Śr",
-        "Cz",
-        "Pt",
-        "So",
-        "Nd"
-      ],
+      "weekdaysShort": ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
       "mobileFiltersButton": "Źródła i filtry",
       "mobileFiltersTitle": "Źródła i filtry"
     },
@@ -8697,6 +8799,164 @@
     }
   },
   "initiatives": {
+    "fullView": {
+      "loading": "Ładowanie inicjatywy…",
+      "untitled": "Inicjatywa bez tytułu",
+      "fromSource": "ze źródła {{source}}",
+      "axis": {
+        "strategic": "Strategiczna",
+        "operational": "Operacyjna",
+        "tactical": "Taktyczna"
+      },
+      "error": {
+        "title": "Nie udało się wczytać inicjatywy",
+        "notFound": "Nie znaleziono inicjatywy",
+        "backToList": "Wróć do listy"
+      },
+      "lifecycle": {
+        "source": "Źródło",
+        "review": "Przegląd",
+        "planning": "Planowanie",
+        "execution": "Realizacja",
+        "benefits": "Korzyści"
+      },
+      "tabs": {
+        "overview": "Przegląd",
+        "tasks": "Zadania",
+        "definition": "Definicja",
+        "economics": "Ekonomika",
+        "team": "Zespół",
+        "history": "Historia"
+      },
+      "overview": {
+        "summary": "Podsumowanie",
+        "tasksCount": "Zadania ({{count}})",
+        "keyMetrics": "Kluczowe wskaźniki",
+        "expectedRoi": "Oczekiwany ROI",
+        "timeline": "Harmonogram",
+        "ownership": "Odpowiedzialność",
+        "completion": "Ukończenie",
+        "startDate": "Data rozpoczęcia",
+        "endDate": "Data zakończenia"
+      },
+      "tasks": {
+        "empty": "Brak zadań",
+        "emptyDescription": "Zadania zostaną dodane podczas planowania"
+      },
+      "taskStats": {
+        "done": "Ukończone: {{count}}",
+        "inProgress": "W toku: {{count}}",
+        "blocked": "Zablokowane: {{count}}"
+      },
+      "taskStatus": {
+        "todo": "Do zrobienia",
+        "in_progress": "W toku",
+        "blocked": "Zablokowane",
+        "done": "Ukończone"
+      },
+      "definition": {
+        "strategicIntent": "Intencja strategiczna",
+        "businessValue": "Wartość biznesowa",
+        "problemStatement": "Opis problemu",
+        "empty": "Brak szczegółów definicji",
+        "emptyDescription": "Dodaj intencję strategiczną, wartość biznesową i opis problemu",
+        "deliverables": "Rezultaty",
+        "keyRisks": "Kluczowe ryzyka"
+      },
+      "economics": {
+        "capexDescription": "Nakłady inwestycyjne",
+        "opexDescription": "Roczne koszty operacyjne",
+        "roiDescription": "Zwrot z inwestycji"
+      },
+      "team": {
+        "businessOwner": "Właściciel biznesowy",
+        "executionOwner": "Właściciel realizacji",
+        "sponsor": "Sponsor",
+        "notAssigned": "Nie przypisano",
+        "businessOwnerDescription": "Odpowiada za decyzje biznesowe",
+        "executionOwnerDescription": "Odpowiada za realizację",
+        "sponsorDescription": "Sponsor zarządczy"
+      },
+      "history": {
+        "title": "Historia",
+        "created": "Utworzono",
+        "updated": "Zaktualizowano",
+        "empty": "Historia aktywności pojawi się tutaj"
+      }
+    },
+    "menu3": {
+      "plan": {
+        "unscheduled": "Niezaplanowane",
+        "now": "Teraz",
+        "next": "Następne",
+        "later": "Później",
+        "conflicted": "Z konfliktami",
+        "missingDependencies": "Brakujące zależności",
+        "needsCapacity": "Wymaga zasobów",
+        "ready": "Gotowe do zaplanowania",
+        "published": "Opublikowane"
+      },
+      "capacity": {
+        "all": "Wszystkie ograniczenia",
+        "critical": "Krytyczne",
+        "unknownSupply": "Nieznana dostępność",
+        "missingDemand": "Brak zapotrzebowania",
+        "skillGaps": "Luki kompetencyjne",
+        "managementLoad": "Obciążenie zarządzania",
+        "budgetEnvelope": "Limit budżetowy",
+        "unconfirmed": "Niepotwierdzone",
+        "resolved": "Rozwiązane w scenariuszu"
+      }
+    },
+    "status": {
+      "draft": "Szkic",
+      "pendingReview": "Oczekuje na przegląd",
+      "review": "W przeglądzie",
+      "promoted": "Promowana",
+      "planning": "Planowanie",
+      "approved": "Zatwierdzona",
+      "scheduled": "Zaplanowana",
+      "executing": "W realizacji",
+      "blocked": "Zablokowana",
+      "done": "Ukończona",
+      "tracking": "Monitorowanie korzyści",
+      "cancelled": "Anulowana",
+      "archived": "Zarchiwizowana",
+      "unknown": "Nieznany status"
+    },
+    "statusDescription": {
+      "draft": "Początkowy szkic, wymaga przeglądu",
+      "pendingReview": "Oczekuje na przegląd kierownika lub lidera",
+      "review": "Przegląd biznesowy i decyzja o kontynuacji",
+      "promoted": "Przyjęta do planowania",
+      "planning": "Trwa planowanie i określanie zakresu",
+      "approved": "Zatwierdzona i gotowa do zaplanowania",
+      "scheduled": "Umieszczona w harmonogramie",
+      "executing": "Obecnie realizowana",
+      "blocked": "Zablokowana przez problem",
+      "done": "Pomyślnie ukończona",
+      "tracking": "Trwa monitorowanie korzyści",
+      "cancelled": "Inicjatywa została anulowana",
+      "archived": "Zarchiwizowana do wglądu",
+      "unknown": "Status nie jest znany"
+    },
+    "transition": {
+      "submitForReview": "Wyślij do przeglądu",
+      "approveToInitiatives": "Przekaż do inicjatyw",
+      "acceptPromote": "Zaakceptuj i promuj",
+      "startPlanning": "Rozpocznij planowanie",
+      "approve": "Zatwierdź",
+      "schedule": "Zaplanuj w harmonogramie",
+      "startExecution": "Rozpocznij realizację",
+      "markComplete": "Oznacz jako ukończoną",
+      "startTracking": "Rozpocznij monitorowanie korzyści",
+      "archive": "Zarchiwizuj",
+      "sendBack": "Zwróć do edycji",
+      "reject": "Odrzuć",
+      "markBlocked": "Oznacz jako zablokowaną",
+      "unblock": "Odblokuj",
+      "cancel": "Anuluj"
+    },
     "gateAi": {
       "pill": {
         "ariaReady": "Gotowość AI: gotowe, wynik {{score}} na 100",
@@ -11231,9 +11491,17 @@
       "message": "Nadzorowana usługa Planowania V8 jest niedostępna, dlatego inicjatywy są wyświetlane ze starszego źródła danych. Niektóre nadzorowane funkcje (bramki, łańcuchy decyzji, zestawienia portfela) mogą być ograniczone do czasu jej przywrócenia."
     },
     "kanban": {
+      "notApplicable": "Nie dotyczy",
+      "health": {
+        "green": "Na właściwym torze",
+        "amber": "Zagrożona",
+        "red": "Zablokowana",
+        "grey": "Nieaktywna"
+      },
       "noOwner": "Nieprzypisana",
       "nextGate": "Następna bramka",
-      "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia."
+      "dragDisabled": "Użyj zarządzanego obszaru bramek, aby przejść dalej w cyklu życia.",
+      "emptyColumn": "Przeciągnij inicjatywy tutaj"
     },
     "archive": {
       "hint": "Zakończ lub anuluj najpierw"
@@ -11314,8 +11582,7 @@
       "toReview": "{{count}} do rozpatrzenia",
       "empty": "Brak sugerowanych zmian",
       "accept": "Akceptuj",
-      "reject": "Odrzuć",
-      "tooLong": "Zaznaczony tekst jest za długi dla tej akcji AI. Skróć zaznaczenie i spróbuj ponownie."
+      "reject": "Odrzuć"
     },
     "initiativeProposalBoard": {
       "title": "Tablica propozycji",
@@ -11396,16 +11663,20 @@
       "advanceCta": "Prześlij do przeglądu"
     },
     "status": {
+      "draft": "Szkic",
       "pendingReview": "Do przeglądu",
+      "review": "W przeglądzie",
       "promoted": "Promowana",
       "planning": "Planowanie",
+      "approved": "Zatwierdzona",
       "scheduled": "Zaplanowana",
       "executing": "W realizacji",
       "blocked": "Zablokowana",
       "done": "Zakończona",
       "tracking": "Śledzenie",
       "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana"
+      "archived": "Zarchiwizowana",
+      "unknown": "Nieznany status"
     },
     "priorityLevels": {
       "critical": "Krytyczny",
@@ -11525,6 +11796,12 @@
     }
   },
   "execution": {
+    "review": {
+      "roles": {
+        "executionManager": "Menedżer realizacji",
+        "controlsEngineer": "Inżynier sterowania"
+      }
+    },
     "title": "Centrum Realizacji",
     "dashboard": "Panel",
     "calendar": "Kalendarz",
@@ -13120,10 +13397,20 @@
     "actions": {
       "downloadPdf": "Pobierz PDF",
       "share": "Udostępnij link",
-      "chat": "Porozmawiaj o tym raporcie"
+      "chat": "Porozmawiaj o tym raporcie",
+      "generate": "Wygeneruj raport",
+      "newReport": "Nowy raport"
     },
     "empty": {
-      "noResults": "Nie znaleziono raportów."
+      "noResults": "Nie znaleziono raportów.",
+      "noReports": "Brak raportów",
+      "noReportsDesc": "Wygeneruj pierwszy raport zarządczy, aby śledzić stan projektu, postępy zespołu i kondycję portfela."
+    },
+    "tabs": {
+      "reports": "Raporty",
+      "templates": "Szablony",
+      "schedules": "Harmonogramy",
+      "automation": "Automatyzacja"
     },
     "aiThinking": "Przetwarzanie Twojego żądania...",
     "aiError": "Przepraszam, nie udało mi się przetworzyć Twojego żądania.",
@@ -14024,7 +14311,13 @@
         "owner": "Właściciel",
         "admin": "Administrator",
         "member": "Użytkownik",
-        "superadmin": "Superadministrator"
+        "superadmin": "Superadministrator",
+        "product": "Produkt",
+        "sales": "Sprzedaż",
+        "operations": "Operacje",
+        "finance": "Finanse",
+        "partner": "Partner",
+        "consultant": "Konsultant"
       },
       "professional": {
         "saved": "Zapisane",
@@ -16882,31 +17175,17 @@
         {
           "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
-          "bullets": [
-            "Modele finansowe",
-            "Analiza finansowa",
-            "Wycena spółki",
-            "Forecasting"
-          ]
+          "bullets": ["Modele finansowe", "Analiza finansowa", "Wycena spółki", "Forecasting"]
         },
         {
           "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
-          "bullets": [
-            "Raporty",
-            "Prezentacje executive",
-            "Consulting deliverables"
-          ]
+          "bullets": ["Raporty", "Prezentacje executive", "Consulting deliverables"]
         },
         {
           "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
-          "bullets": [
-            "Taski",
-            "Decyzje",
-            "Pomysły",
-            "Notatki"
-          ]
+          "bullets": ["Taski", "Decyzje", "Pomysły", "Notatki"]
         }
       ]
     },
@@ -17065,61 +17344,37 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": [
-            "Ocena diagnostyczna",
-            "Analiza luk",
-            "Benchmark vs. branża"
-          ]
+          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": [
-            "Modelowanie NPV / IRR",
-            "Analiza wrażliwości",
-            "Śledzenie ROI na żywo"
-          ]
+          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": [
-            "Roadmapa inicjatyw",
-            "Ludzkie bramki zatwierdzenia",
-            "Flagowanie ryzyk"
-          ]
+          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
         },
         "deliverables": {
           "badge": "Rezultaty",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": [
-            "Auto-generowane decki",
-            "Silnik narracji",
-            "Śledzenie źródeł"
-          ]
+          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": [
-            "Czat kontekstowy",
-            "Biblioteka frameworków",
-            "Odpowiedzi ze źródłami"
-          ]
+          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": [
-            "Dashboard KPI",
-            "Alerty odchyleń",
-            "Atrybucja wartości"
-          ]
+          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
         }
       }
     },
@@ -17669,42 +17924,27 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": [
-          "Podstawowe narzędzia",
-          "Wpis w katalogu"
-        ]
+        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": [
-          "Priorytetowe wsparcie",
-          "Materiały szkoleniowe"
-        ]
+        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": [
-          "Dedykowany manager",
-          "Dostęp do beta funkcji"
-        ]
+        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": [
-          "Co-marketing",
-          "Wystąpienia na konferencjach"
-        ]
+        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": [
-          "Zwiększony udział w przychodach",
-          "Partnerstwo na poziomie zarządu"
-        ]
+        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
       }
     },
     "onboarding": {
@@ -18794,7 +19034,12 @@
       "submitReviewPrompt": "Prześlij ten insight do recenzji",
       "exportInsight": "Eksportuj insight do inicjatywy",
       "exportInsightPrompt": "Eksportuj ten insight do inicjatywy",
-      "viewEvidence": "Zobacz mapę dowodów"
+      "viewEvidence": "Zobacz mapę dowodów",
+      "generateReport": "Utwórz dokument",
+      "generatePresentation": "Utwórz prezentację",
+      "browseTemplates": "Przeglądaj szablony",
+      "useTemplate": "Użyj tego szablonu",
+      "recordKpi": "Zapisz wartość KPI"
     },
     "feedback": {
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
@@ -18836,10 +19081,17 @@
       "reject": "Odrzuć",
       "createDocument": "Utwórz dokument",
       "created": "Dokument utworzony",
-      "rejected": "Propozycja odrzucona"
+      "rejected": "Propozycja odrzucona",
+      "defaultTitle": "Dokument z czatu",
+      "createFailed": "Nie udało się utworzyć propozycji."
     }
   },
   "aiChat": {
+    "confirmDeleteBulk": "Usunąć {{count}} rozmów?",
+    "confirmDeleteBulk_one": "Usunąć {{count}} rozmowę?",
+    "confirmDeleteBulk_few": "Usunąć {{count}} rozmowy?",
+    "confirmDeleteBulk_many": "Usunąć {{count}} rozmów?",
+    "confirmDeleteBulk_other": "Usunąć {{count}} rozmowy?",
     "archivedBanner": "Ta rozmowa jest zarchiwizowana. Cofnij archiwizację, aby kontynuować.",
     "deletedBanner": "Ta rozmowa została usunięta.",
     "permissionDenied": "Nie masz dostępu do tej rozmowy. Poproś właściciela folderu o dostęp.",
@@ -18953,7 +19205,9 @@
     "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
     "workPanel": {
       "open": "Otwórz panel roboczy",
-      "close": "Zamknij panel roboczy"
+      "close": "Zamknij panel roboczy",
+      "title": "Obszar roboczy Canvas",
+      "resizeDivider": "Zmień szerokość panelu Canvas"
     },
     "openSidebar": "Otwórz panel boczny",
     "newChat": "Nowa rozmowa",
@@ -18979,7 +19233,8 @@
     },
     "quickClicks": {
       "brief": {
-        "label": "Dzienny brief"
+        "label": "Dzienny brief",
+        "prompt": "Przygotuj krótki dzienny brief: priorytety, ryzyka, decyzje i najlepsze kolejne działania."
       },
       "savings": {
         "label": "Szybkie oszczędności",
@@ -19209,7 +19464,9 @@
       "delete": "Usuń",
       "addToProject": "Dodaj do folderu",
       "moveProject": "Zmień folder",
-      "shareLink": "Udostępnij link"
+      "shareLink": "Udostępnij link",
+      "export": "Eksportuj",
+      "purge": "Usuń trwale"
     },
     "feedback": {
       "thankYou": "Dziękujemy za opinię!",
@@ -19675,7 +19932,25 @@
       "3": "Cześć",
       "4": "Miło, że jesteś",
       "5": "Bierzmy się do pracy"
-    }
+    },
+    "business": "Działania biznesowe",
+    "muteNow": "Wycisz teraz",
+    "streamError": "Ostatnie żądanie nie powiodło się. Możesz spróbować ponownie.",
+    "folderColor": "Kolor",
+    "folder": "folder",
+    "confirmDeleteFolderWithConvs": "Usunąć folder „${name}”? ${count} rozmów w środku NIE zostanie usuniętych — zostaną tylko odłączone od folderu.",
+    "confirmDeleteFolder": "Usunąć folder „${name}”?",
+    "deleteFolderFailed": "Nie udało się usunąć folderu. Spróbuj ponownie.",
+    "confirmMovePrivateToOrganization": "Przenieść tę prywatną rozmowę do folderu organizacji? Członkowie organizacji z dostępem do folderu będą mogli ją zobaczyć.",
+    "visibilityConsentRecorded": "Zarejestrowano widoczność w organizacji. Potwierdzenie",
+    "exportTooLarge": "Ta rozmowa jest zbyt duża do pełnego eksportu. Użyj filtrów dat.",
+    "confirmDeleteDestructive": "Usunąć „${title}”?\\n\\nTa operacja jest destrukcyjna. Rozmowa trafi do kosza i zostanie trwale usunięta po 30 dniach. Tej operacji nie można cofnąć.",
+    "confirmPurge": "Trwale usunąć „${conversation.title || 'tę rozmowę'}”?\\n\\nWszystkie wiadomości i załączniki zostaną bezpowrotnie usunięte. Zapis audytowy zostanie zachowany. Tej operacji NIE MOŻNA cofnąć.",
+    "visibilityHistoryUnavailable": "Nie udało się wczytać historii widoczności.",
+    "visibilityHistory": "Historia widoczności",
+    "noVisibilityChanges": "Nie zarejestrowano zmian widoczności w organizacji.",
+    "visibilityChanged": "Zmieniono widoczność",
+    "visibilityChangedBy": "Osoba"
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -19766,7 +20041,10 @@
     "resources": "Twoje zasoby",
     "storage": "Pamięć",
     "apiCalls": "Wywołania API (miesiąc)",
-    "lastUpdate": "Automatyczne odświeżanie co 30s"
+    "lastUpdate": "Automatyczne odświeżanie co 30s",
+    "demoDataTitle": "Sesja danych demonstracyjnych",
+    "demoData": "Dane demonstracyjne",
+    "dataAccess": "Dostęp do danych"
   },
   "llm": {
     "model": "Model",
@@ -23492,7 +23770,7 @@
       "horizon": "Horyzont (miesiące)",
       "granularity": "Granulacja",
       "currency": "Waluta",
-      "valuateModel": "Wycen model",
+      "valuateModel": "Wyceń model",
       "eventTypes": {
         "revenue": "Przychody",
         "cogs": "Koszt sprzedaży",
@@ -23515,7 +23793,10 @@
         "accountsReceivable": "Należności",
         "inventory": "Zapasy",
         "accountsPayable": "Zobowiązania"
-      }
+      },
+      "manualModeNotice": "Brak sprawozdania źródłowego — dane historyczne nie zostaną wczytane. Salda otwarcia zaczynają się od zera. Użyj „Oprzyj na sprawozdaniu”, aby zainicjować model z zatwierdzonego sprawozdania.",
+      "seededFromManualBaseline": "Ręczny / przygotowany punkt odniesienia",
+      "manualBaselineHint": "Ten model korzysta z ręcznie przygotowanego punktu odniesienia. Przejrzyj założenia przed zatwierdzeniem."
     },
     "tabs": {
       "models": "Modele",
@@ -23624,7 +23905,7 @@
       "reanalyzed": "Analiza przeliczona",
       "valuationApproved": "Wycena zatwierdzona",
       "valuationComputed": "Wycena obliczona",
-      "statementConfirmed": "Statement potwierdzony",
+      "statementConfirmed": "Sprawozdanie potwierdzone",
       "valuationCreated": "Wycena utworzona",
       "createFailed": "Nie udało się utworzyć",
       "budgetCreated": "Budżet utworzony",
@@ -23845,7 +24126,12 @@
         "hasRejected": "Co najmniej jedno sprawozdanie zostało odrzucone przy weryfikacji",
         "hasPending": "Co najmniej jedno sprawozdanie czeka na weryfikację",
         "hasRecoverable": "Co najmniej jedno sprawozdanie wymaga poprawek, zanim będzie użyteczne",
-        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć"
+        "unknown": "To sprawozdanie wymaga sprawdzenia, zanim będzie można go użyć",
+        "invalidPeriodCount": "Pakiet musi obejmować dokładnie dwa okresy sprawozdawcze",
+        "invalidMemberCount": "W pakiecie brakuje co najmniej jednego wymaganego sprawozdania",
+        "missingPeriodStatement": "W co najmniej jednym okresie sprawozdawczym brakuje sprawozdania",
+        "inconsistentEntity": "Sprawozdania dotyczą różnych podmiotów prawnych",
+        "inconsistentSource": "Sprawozdania pochodzą z różnych źródeł"
       }
     },
     "counters": {
@@ -24215,7 +24501,8 @@
       "validation": {
         "MAPPING_COVERAGE": "Pokrycie mapowania",
         "DUAL_PERIOD": "Dwa okresy porównawcze",
-        "LOW_MAPPING_COVERAGE": "Niskie pokrycie mapowania"
+        "LOW_MAPPING_COVERAGE": "Niskie pokrycie mapowania",
+        "ariaLabel": "Wyniki walidacji"
       }
     },
     "mappingEditor": {
@@ -24341,7 +24628,9 @@
         "p50": "P50 (mediana)",
         "p90": "P90",
         "probPositive": "P(NPV > 0)",
-        "var5": "VaR (5%)"
+        "var5": "VaR (5%)",
+        "histogramEmptyAriaLabel": "Histogram rozkładu NPV — brak danych",
+        "histogramAriaLabel": "Histogram rozkładu NPV"
       },
       "sensitivity": {
         "title": "Analiza wrażliwości what-if",
@@ -24350,7 +24639,7 @@
         "driverName": "Nazwa",
         "driverValue": "Wartość",
         "weight": "Waga",
-        "addDriver": "+ driver",
+        "addDriver": "+ czynnik",
         "intercept": "Wyraz wolny (intercept)",
         "tornadoTitle": "Tornado — analiza jednokierunkowa",
         "swingPct": "Wychylenie tornado (%)",
@@ -24671,6 +24960,39 @@
       "valuationsRealSourceFailed": "Nie udało się wczytać wycen z aktywnego źródła danych.",
       "budgetsRealSourceFailed": "Nie udało się wczytać budżetów z aktywnego źródła danych.",
       "demoModeRequiresRealSource": "Tryb demo jest włączony, ale ten moduł wymaga realnych danych źródłowych."
+    },
+    "valuePanels": {
+      "bankingValue": "Wartość bankowa",
+      "cashForecast": "Prognoza gotówkowa",
+      "driverPlanner": "Planer czynników",
+      "driverTree": "Drzewo czynników",
+      "extendedRatios": "Wskaźniki rozszerzone",
+      "headcountPlanner": "Planer zatrudnienia",
+      "investmentAppraisal": "Ocena inwestycji",
+      "rollingForecast": "Prognoza krocząca",
+      "valuationVisuals": "Wizualizacje wyceny",
+      "valueAttribution": "Atrybucja wartości",
+      "valueCapture": "Ścieżka przechwytywania wartości",
+      "valueLedger": "Rejestr wartości",
+      "valueOffice": "Biuro wartości",
+      "varianceBridge": "Mostek odchyleń",
+      "varianceNarration": "Komentarz do odchyleń",
+      "evBasket": "Koszyk EV",
+      "monteCarlo": "Symulacja Monte Carlo NPV",
+      "realOptions": "Opcje rzeczywiste",
+      "frontier": "Granica efektywna",
+      "sensitivity": "Analiza wrażliwości (what-if)",
+      "scenarios": "Obliczenia scenariuszy",
+      "ariaLabel": "Panele analizy wyceny",
+      "loading": "Wczytywanie panelu…"
+    },
+    "blocked": "Dostęp do modułu Finanse jest ograniczony przez politykę Twojej organizacji.",
+    "filters": {
+      "status": {
+        "draft": "Szkic",
+        "review": "W przeglądzie",
+        "approved": "Zatwierdzone"
+      }
     }
   },
   "portfolio": {
@@ -24930,12 +25252,7 @@
       },
       "rootcause": {
         "uploaderTitle": "Sygnały przyczyn źródłowych",
-        "suggestions": [
-          "Raporty incydentów",
-          "Dokumenty 5 Why",
-          "PFMEA",
-          "Diagramy Ishikawy"
-        ],
+        "suggestions": ["Raporty incydentów", "Dokumenty 5 Why", "PFMEA", "Diagramy Ishikawy"],
         "diagnosticLabel": "Pytania diagnostyczne:",
         "diagnosticBody": "Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.",
         "questions": [
@@ -27710,6 +28027,13 @@
       "retry": "Spróbuj ponownie"
     },
     "outputs": {
+      "fileFormat": {
+        "docx": "Dokument DOCX",
+        "pdf": "Dokument PDF",
+        "xlsx": "Arkusz XLSX",
+        "pptx": "Prezentacja PPTX",
+        "unknown": "—"
+      },
       "ai": {
         "suggestNext": "Zaproponuj kolejne kroki",
         "summarize": "Podsumuj"
@@ -28247,38 +28571,19 @@
           "registered": {
             "title": "Zarejestrowany",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": [
-              "Rejestracja",
-              "Podstawowe szkolenie"
-            ],
-            "benefits": [
-              "10% rabat",
-              "Dostęp do materiałów",
-              "Wsparcie email"
-            ]
+            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
+            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
           },
           "certified": {
             "title": "Certyfikowany",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": [
-              "Egzamin certyfikacyjny",
-              "Min. 3 projekty"
-            ],
-            "benefits": [
-              "12% rabat",
-              "Logo partnera",
-              "Dedykowane wsparcie",
-              "Listing w katalogu"
-            ]
+            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
+            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": [
-              "10+ projektów",
-              "Case study",
-              "Referencje"
-            ],
+            "requirements": ["10+ projektów", "Case study", "Referencje"],
             "benefits": [
               "14% rabat",
               "Dedykowany opiekun",
@@ -28499,6 +28804,32 @@
       }
     },
     "template": {
+      "system": {
+        "teamHandbook": {
+          "name": "Podręcznik zespołu",
+          "description": "Zasady, procedury i zasoby"
+        },
+        "contentCalendar": {
+          "name": "Kalendarz treści",
+          "description": "Planowanie i harmonogramowanie treści"
+        },
+        "productRoadmap": {
+          "name": "Mapa drogowa produktu",
+          "description": "Planowanie i ustalanie priorytetów funkcji produktu"
+        },
+        "issueTracker": {
+          "name": "Rejestr zgłoszeń",
+          "description": "Śledzenie błędów i próśb o nowe funkcje"
+        },
+        "projectManagement": {
+          "name": "Zarządzanie projektami",
+          "description": "Zadania, kamienie milowe i terminy"
+        },
+        "crmPipeline": {
+          "name": "Lejek CRM",
+          "description": "Śledzenie transakcji i kontaktów"
+        }
+      },
       "grid": {
         "loading": "Wczytywanie…",
         "empty": "Brak szablonów w statusie \"{{status}}\".",
@@ -29813,6 +30144,26 @@
       "save": "Zapisz zmiany",
       "operatorBrief": "Brief operatora"
     },
+    "operator": {
+      "gaps": {
+        "preRead": "Dodaj materiały do przeczytania przed spotkaniem.",
+        "agenda": "Dodaj punkty agendy przed spotkaniem.",
+        "attendees": "Dodaj uczestników przed spotkaniem."
+      },
+      "followUp": {
+        "task": "Zrealizuj dalsze działanie dotyczące: {{title}}",
+        "decision": "Zapisz decyzje ze spotkania."
+      },
+      "prepSummary": "Przygotuj się do spotkania na temat: {{topic}}",
+      "prepSummaryNoTopic": "Przygotuj się do spotkania.",
+      "stakeholderNote": "Potwierdź uczestników i ich role przed spotkaniem.",
+      "executive": {
+        "headline": "Informacje do spotkania: {{title}}",
+        "openFollowUps": "Otwarte dalsze działania: {{count}}",
+        "projectTasks": "Zadania projektu: {{count}}",
+        "projectDecisions": "Decyzje projektu: {{count}}"
+      }
+    },
     "fields": {
       "title": "Tytuł",
       "location": "Lokalizacja / link",
@@ -30906,9 +31257,50 @@
     "memberTypeObserver": "Obserwator"
   },
   "branch": {
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "loadFailed": "Nie udało się wczytać gałęzi.",
+    "switchFailed": "Nie udało się przełączyć na tę gałąź.",
+    "createFailed": "Nie udało się utworzyć gałęzi.",
+    "renameFailed": "Nie udało się zmienić nazwy gałęzi.",
+    "deleteFailed": "Nie udało się usunąć gałęzi.",
+    "backToParent": "Wróć do rozmowy źródłowej"
   },
   "canvas": {
+    "actions": {
+      "copyMarkdown": "Kopiuj Markdown",
+      "shareDocument": "Udostępnij dokument Canvas",
+      "saveDocument": "Zapisz dokument Canvas",
+      "close": "Zamknij Canvas",
+      "documentView": "Widok dokumentu",
+      "markdownView": "Widok Markdown",
+      "createPresentation": "Utwórz prezentację",
+      "createSheet": "Utwórz arkusz",
+      "createReport": "Utwórz raport",
+      "sendToIdea": "Wyślij do Pomysłów",
+      "saveAsNote": "Zapisz jako notatkę",
+      "createInitiative": "Utwórz inicjatywę",
+      "captureDecision": "Zapisz decyzję",
+      "createTask": "Utwórz zadanie"
+    },
+    "artifact": {
+      "filterLabel": "Filtruj: {{title}}",
+      "selectRowLabel": "Wybierz wiersz {{number}}",
+      "findings": "Ustalenia",
+      "sources": "Źródła",
+      "limitationsContradictions": "Ograniczenia i sprzeczności",
+      "gaps": "Luki",
+      "recommendations": "Rekomendacje",
+      "options": "Opcje",
+      "criteria": "Kryteria",
+      "risks": "Ryzyka",
+      "assumptions": "Założenia",
+      "narrativeInsights": "Wnioski opisowe",
+      "recommendedActions": "Rekomendowane działania",
+      "dataLimitations": "Ograniczenia danych",
+      "blockKind": "Blok: {{kind}}",
+      "projection": "projekcja",
+      "copy": "Kopiuj"
+    },
     "viewMode": {
       "ariaLabel": "Widok dokumentu",
       "rich": "Edytor",
@@ -30940,6 +31332,7 @@
       "teresaSuggestion": "Propozycja Teresy",
       "accept": "Akceptuj",
       "reject": "Odrzuć",
+      "tooLong": "Zaznaczony tekst jest za długi dla tej akcji AI. Skróć zaznaczenie i spróbuj ponownie.",
       "quickAction": {
         "expand": "Rozwiń",
         "shorten": "Skróć",
@@ -30991,6 +31384,11 @@
       "title": "Prezentacja"
     },
     "panel": {
+      "pendingOperation": {
+        "removed": "Usunięto",
+        "added": "Dodano",
+        "reviseEdit": "Popraw zmianę"
+      },
       "common": {
         "title": "Najczęstsze działania",
         "expandTitle": "Rozwiń zaznaczoną myśl",
@@ -31255,6 +31653,13 @@
         "diffSummary": "{{added}} dodanych linii, {{removed}} usuniętych linii"
       },
       "dataset": {
+        "table": "Tabela danych",
+        "chart": "Wykres danych",
+        "dashboard": "Panel KPI",
+        "findingsReport": "Raport z ustaleń",
+        "profileSummary": "Podsumowanie profilu",
+        "aggregateChart": "Wykres zbiorczy",
+        "filteredTable": "Tabela filtrowana",
         "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
         "readyPrefix": "Zbiór danych gotowy:",
         "showAnalyses": "Pokaż analizy"
@@ -31448,7 +31853,9 @@
   },
   "trust": {
     "badge": {
-      "more": "więcej"
+      "more": "więcej",
+      "sources": "Źródła: {{count}}",
+      "noSources": "Brak cytowanych źródeł"
     }
   },
   "voice": {
@@ -31457,7 +31864,8 @@
       "copy": {
         "failed": "Błąd"
       }
-    }
+    },
+    "bargeInToast": "Odczytywanie przerwane."
   },
   "integrations": {
     "syncHub": {
@@ -39210,12 +39618,7 @@
           "Prototyp / POC",
           "Wywiad z ekspertem"
         ],
-        "issue": [
-          "Hotfix natychmiast",
-          "Eskalacja do sponsora",
-          "Rollback",
-          "Sztab kryzysowy"
-        ],
+        "issue": ["Hotfix natychmiast", "Eskalacja do sponsora", "Rollback", "Sztab kryzysowy"],
         "dependency": [
           "Spotkanie synchronizacyjne",
           "Mock API / stub",
@@ -39379,12 +39782,7 @@
         "continue": "Kontynuujmy pracę nad tą {{nounPl}} od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać."
       },
       "closeLabel": "Zamknij",
-      "quickPrompts": [
-        "Uzupełnij puste pola",
-        "Zsyntetyzuj całość",
-        "Sprawdź jakość",
-        "Co dalej?"
-      ],
+      "quickPrompts": ["Uzupełnij puste pola", "Zsyntetyzuj całość", "Sprawdź jakość", "Co dalej?"],
       "chatUnavailableMessage": "Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej."
     },
     "nModeCardManager": {
@@ -41277,22 +41675,10 @@
       "missionProcess": "Risk mission, scope, success signal i constraints",
       "missionExample": "Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?",
       "cards": [
-        [
-          "Assumptions",
-          "Co musi być prawdą, żeby strategia działała"
-        ],
-        [
-          "Risks",
-          "Co może uderzyć w wynik, koszt, czas lub reputację"
-        ],
-        [
-          "Scenarios",
-          "Jak różne przyszłości zmieniają decyzję"
-        ],
-        [
-          "Moves",
-          "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"
-        ]
+        ["Assumptions", "Co musi być prawdą, żeby strategia działała"],
+        ["Risks", "Co może uderzyć w wynik, koszt, czas lub reputację"],
+        ["Scenarios", "Jak różne przyszłości zmieniają decyzję"],
+        ["Moves", "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"]
       ]
     },
     "portfolioPriorityLibraryGraphic": {
@@ -41302,22 +41688,10 @@
       "missionProcess": "Portfolio mission, scope, constraints i success signal",
       "missionExample": "Które produkty i inicjatywy finansować w kolejnym kwartale przy ograniczonym budżecie?",
       "quadrants": [
-        [
-          "Stars",
-          "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"
-        ],
-        [
-          "Znaki zapytania",
-          "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"
-        ],
-        [
-          "Dojne krowy",
-          "Stabilna pozycja: utrzymuj i finansuj wzrost"
-        ],
-        [
-          "Dogs",
-          "Słaba pozycja: ogranicz, wygasz lub przebuduj"
-        ]
+        ["Stars", "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"],
+        ["Znaki zapytania", "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"],
+        ["Dojne krowy", "Stabilna pozycja: utrzymuj i finansuj wzrost"],
+        ["Dogs", "Słaba pozycja: ogranicz, wygasz lub przebuduj"]
       ],
       "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
@@ -41329,22 +41703,10 @@
       "missionProcess": "Growth mission, scope, success signal i constraints",
       "missionExample": "Jak zwiększyć przychód w segmencie premium bez rozmycia marży?",
       "quadrants": [
-        [
-          "Penetracja rynku",
-          "Lepsze wykorzystanie obecnego segmentu i kanałów"
-        ],
-        [
-          "Rozwój rynku",
-          "Wejście do nowych segmentów lub geografii"
-        ],
-        [
-          "Rozwój produktu",
-          "Nowe propozycje wartości dla obecnych klientów"
-        ],
-        [
-          "Dywersyfikacja",
-          "Nowy produkt i nowy rynek, najwyższe ryzyko"
-        ]
+        ["Penetracja rynku", "Lepsze wykorzystanie obecnego segmentu i kanałów"],
+        ["Rozwój rynku", "Wejście do nowych segmentów lub geografii"],
+        ["Rozwój produktu", "Nowe propozycje wartości dla obecnych klientów"],
+        ["Dywersyfikacja", "Nowy produkt i nowy rynek, najwyższe ryzyko"]
       ],
       "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
       "output": "Source summary -> inicjatywa -> deck -> raport"
@@ -41373,31 +41735,11 @@
       "implicationsTitle": "Implikacje strategiczne",
       "movesTitle": "Most do inicjatyw",
       "forces": [
-        [
-          "Rywalizacja",
-          "4/5",
-          "Wysoka presja cenowa i szybko kopiowane oferty"
-        ],
-        [
-          "Nowi gracze",
-          "3/5",
-          "Wejście możliwe, ale wymaga kanału i zaufania"
-        ],
-        [
-          "Substytuty",
-          "2/5",
-          "Alternatywy istnieją, lecz nie rozwiązują całego problemu"
-        ],
-        [
-          "Siła kupujących",
-          "5/5",
-          "Duzi klienci wymuszają rabaty i warunki SLA"
-        ],
-        [
-          "Siła dostawców",
-          "3/5",
-          "Koszty komponentów są zmienne, ale dywersyfikowalne"
-        ]
+        ["Rywalizacja", "4/5", "Wysoka presja cenowa i szybko kopiowane oferty"],
+        ["Nowi gracze", "3/5", "Wejście możliwe, ale wymaga kanału i zaufania"],
+        ["Substytuty", "2/5", "Alternatywy istnieją, lecz nie rozwiązują całego problemu"],
+        ["Siła kupujących", "5/5", "Duzi klienci wymuszają rabaty i warunki SLA"],
+        ["Siła dostawców", "3/5", "Koszty komponentów są zmienne, ale dywersyfikowalne"]
       ],
       "implicationItems": [
         "Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.",
@@ -41425,31 +41767,11 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        [
-          "Brief",
-          "Odbiorca, cel, sygnał sukcesu",
-          "bg-sky-500"
-        ],
-        [
-          "Myśl przewodnia",
-          "Jedno zdanie, które ma zostać",
-          "bg-sky-500"
-        ],
-        [
-          "Filary",
-          "Kolumny, które utrzymują dach",
-          "bg-blue-500"
-        ],
-        [
-          "Dowody",
-          "Czym każdy filar jest poparty",
-          "bg-amber-500"
-        ],
-        [
-          "Narracja & outputy",
-          "Wątki, ruchy, raport, deck",
-          "bg-emerald-500"
-        ]
+        ["Brief", "Odbiorca, cel, sygnał sukcesu", "bg-sky-500"],
+        ["Myśl przewodnia", "Jedno zdanie, które ma zostać", "bg-sky-500"],
+        ["Filary", "Kolumny, które utrzymują dach", "bg-blue-500"],
+        ["Dowody", "Czym każdy filar jest poparty", "bg-amber-500"],
+        ["Narracja & outputy", "Wątki, ruchy, raport, deck", "bg-emerald-500"]
       ],
       "houseTitle": "Dom komunikatu",
       "houseHint": "Dach + filary",
@@ -41458,18 +41780,9 @@
       "proofWord": "dowody",
       "legendTitle": "Rezonans u odbiorcy",
       "legend": [
-        [
-          "high",
-          "Wysoki rezonans"
-        ],
-        [
-          "medium",
-          "Średni rezonans"
-        ],
-        [
-          "low",
-          "Niski rezonans"
-        ]
+        ["high", "Wysoki rezonans"],
+        ["medium", "Średni rezonans"],
+        ["low", "Niski rezonans"]
       ],
       "footer": "Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy",
       "pillars": [
@@ -41515,48 +41828,19 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        [
-          "Brief",
-          "Branża, domeny, priorytety, decyzja",
-          "bg-sky-500"
-        ],
-        [
-          "Zdolności",
-          "Mapa zdolności wg domen",
-          "bg-sky-500"
-        ],
-        [
-          "Dojrzałość",
-          "Obecna vs docelowa 1-5 + waga",
-          "bg-blue-500"
-        ],
-        [
-          "Luki",
-          "Gdzie luka × waga jest największa",
-          "bg-amber-500"
-        ],
-        [
-          "Ruchy & outputy",
-          "Build/buy/partner, inicjatywy, raport, deck",
-          "bg-emerald-500"
-        ]
+        ["Brief", "Branża, domeny, priorytety, decyzja", "bg-sky-500"],
+        ["Zdolności", "Mapa zdolności wg domen", "bg-sky-500"],
+        ["Dojrzałość", "Obecna vs docelowa 1-5 + waga", "bg-blue-500"],
+        ["Luki", "Gdzie luka × waga jest największa", "bg-amber-500"],
+        ["Ruchy & outputy", "Build/buy/partner, inicjatywy, raport, deck", "bg-emerald-500"]
       ],
       "ladderTitle": "Drabina dojrzałości",
       "scaleHint": "Skala dojrzałości 1-5",
       "legendTitle": "Rozmiar luki",
       "legend": [
-        [
-          "critical",
-          "Krytyczna luka"
-        ],
-        [
-          "moderate",
-          "Umiarkowana luka"
-        ],
-        [
-          "minor",
-          "Drobna luka"
-        ]
+        ["critical", "Krytyczna luka"],
+        ["moderate", "Umiarkowana luka"],
+        ["minor", "Drobna luka"]
       ],
       "currentLabel": "Obecna",
       "targetLabel": "Docelowa",
@@ -41610,68 +41894,27 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        [
-          "Brief",
-          "Priorytety, kryteria, cel, ograniczenia",
-          "bg-sky-500"
-        ],
-        [
-          "Priorytety",
-          "Lista konkurujących opcji",
-          "bg-sky-500"
-        ],
-        [
-          "Ocena",
-          "Wartość vs wysiłek 1-5 + dopasowanie",
-          "bg-blue-500"
-        ],
-        [
-          "Macierz",
-          "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna",
-          "bg-amber-500"
-        ],
-        [
-          "Ruchy & outputy",
-          "Pursue/defer/drop, inicjatywy, raport, deck",
-          "bg-emerald-500"
-        ]
+        ["Brief", "Priorytety, kryteria, cel, ograniczenia", "bg-sky-500"],
+        ["Priorytety", "Lista konkurujących opcji", "bg-sky-500"],
+        ["Ocena", "Wartość vs wysiłek 1-5 + dopasowanie", "bg-blue-500"],
+        ["Macierz", "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna", "bg-amber-500"],
+        ["Ruchy & outputy", "Pursue/defer/drop, inicjatywy, raport, deck", "bg-emerald-500"]
       ],
       "matrixTitle": "Macierz wartość x wysiłek",
       "scaleHint": "Skala 1-5",
       "axisValue": "Wartość",
       "axisEffort": "Wysiłek",
       "quadrants": [
-        [
-          "Szybkie wygrane",
-          "Wys. wartość, niski wysiłek"
-        ],
-        [
-          "Duże zakłady",
-          "Wys. wartość, wysoki wysiłek"
-        ],
-        [
-          "Fill-ins",
-          "Nis. wartość, niski wysiłek"
-        ],
-        [
-          "Studnia bez dna",
-          "Nis. wartość, wysoki wysiłek"
-        ]
+        ["Szybkie wygrane", "Wys. wartość, niski wysiłek"],
+        ["Duże zakłady", "Wys. wartość, wysoki wysiłek"],
+        ["Fill-ins", "Nis. wartość, niski wysiłek"],
+        ["Studnia bez dna", "Nis. wartość, wysoki wysiłek"]
       ],
       "legendTitle": "Rekomendacja",
       "legend": [
-        [
-          "pursue",
-          "Realizuj (pursue)"
-        ],
-        [
-          "defer",
-          "Odłóż (defer)"
-        ],
-        [
-          "drop",
-          "Odpuść (drop)"
-        ]
+        ["pursue", "Realizuj (pursue)"],
+        ["defer", "Odłóż (defer)"],
+        ["drop", "Odpuść (drop)"]
       ],
       "footer": "Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy",
       "bubbles": [
@@ -41717,48 +41960,19 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        [
-          "Ambicja",
-          "Jedno zdanie + zakres + sygnał sukcesu",
-          "bg-violet-500"
-        ],
-        [
-          "Sygnały",
-          "Co napędza i ogranicza ambicję",
-          "bg-violet-500"
-        ],
-        [
-          "Motywy",
-          "Rozkład na motywy strategiczne",
-          "bg-indigo-500"
-        ],
-        [
-          "Cele & horyzont",
-          "Metryka, cel i okno czasowe",
-          "bg-sky-500"
-        ],
-        [
-          "Ruchy & outputy",
-          "Priorytety, inicjatywy, raport, deck",
-          "bg-emerald-500"
-        ]
+        ["Ambicja", "Jedno zdanie + zakres + sygnał sukcesu", "bg-violet-500"],
+        ["Sygnały", "Co napędza i ogranicza ambicję", "bg-violet-500"],
+        ["Motywy", "Rozkład na motywy strategiczne", "bg-indigo-500"],
+        ["Cele & horyzont", "Metryka, cel i okno czasowe", "bg-sky-500"],
+        ["Ruchy & outputy", "Priorytety, inicjatywy, raport, deck", "bg-emerald-500"]
       ],
       "cascadeTitle": "Kaskada ambicji",
       "cascadeHint": "Motywy wg horyzontu",
       "legendTitle": "Istotność motywu",
       "legend": [
-        [
-          "high",
-          "Wysoka istotność"
-        ],
-        [
-          "medium",
-          "Średnia istotność"
-        ],
-        [
-          "low",
-          "Niska istotność"
-        ]
+        ["high", "Wysoka istotność"],
+        ["medium", "Średnia istotność"],
+        ["low", "Niska istotność"]
       ],
       "horizonLabels": {
         "short": "Krótki",
@@ -41823,41 +42037,16 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        [
-          "Brief",
-          "Branża, zakres łańcucha, pozycja, decyzja",
-          "bg-sky-500"
-        ],
-        [
-          "Aktywności",
-          "Mapa 5 pierwotnych + 4 wspierających",
-          "bg-sky-500"
-        ],
-        [
-          "Wkład",
-          "Koszt, wartość i rola w marży na aktywność",
-          "bg-blue-500"
-        ],
-        [
-          "Dźwignie",
-          "Gdzie redukować koszt, gdzie wzmacniać wartość",
-          "bg-amber-500"
-        ],
-        [
-          "Ruchy & outputy",
-          "Ruchy, inicjatywy, raport, deck lub idea",
-          "bg-emerald-500"
-        ]
+        ["Brief", "Branża, zakres łańcucha, pozycja, decyzja", "bg-sky-500"],
+        ["Aktywności", "Mapa 5 pierwotnych + 4 wspierających", "bg-sky-500"],
+        ["Wkład", "Koszt, wartość i rola w marży na aktywność", "bg-blue-500"],
+        ["Dźwignie", "Gdzie redukować koszt, gdzie wzmacniać wartość", "bg-amber-500"],
+        ["Ruchy & outputy", "Ruchy, inicjatywy, raport, deck lub idea", "bg-emerald-500"]
       ],
       "chainTitle": "Łańcuch wartości",
       "support": "Aktywności wspierające",
       "primary": "Aktywności pierwotne",
-      "supportItems": [
-        "Infrastruktura",
-        "Zasoby ludzkie",
-        "Technologia",
-        "Zaopatrzenie"
-      ],
+      "supportItems": ["Infrastruktura", "Zasoby ludzkie", "Technologia", "Zaopatrzenie"],
       "primaryItems": [
         "Logistyka wejściowa",
         "Operacje",
@@ -41868,18 +42057,9 @@
       "margin": "Marża",
       "legendTitle": "Rola w marży",
       "legend": [
-        [
-          "creator",
-          "Tworzy marżę"
-        ],
-        [
-          "neutral",
-          "Neutralna"
-        ],
-        [
-          "drain",
-          "Drenuje marżę"
-        ]
+        ["creator", "Tworzy marżę"],
+        ["neutral", "Neutralna"],
+        ["drain", "Drenuje marżę"]
       ],
       "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
       "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
@@ -42286,13 +42466,7 @@
       "outputHintReport": "Dla final source summary gotowego do pokazania.",
       "outputHintPresentation": "Dla komunikacji wizualnej bez ponownego składania narracji.",
       "outputHintIdea": "Dla obiecujących hipotez lub kierunków do dalszej pracy.",
-      "groupLabels": [
-        "Sesja",
-        "Analiza",
-        "Rezultaty",
-        "Współpraca",
-        "Zapisy"
-      ],
+      "groupLabels": ["Sesja", "Analiza", "Rezultaty", "Współpraca", "Zapisy"],
       "finish": "Zakończ",
       "nextStep": "Następny",
       "requestReviewTitleReady": "Wyślij sesję do review",
@@ -43997,7 +44171,12 @@
     "completed_with_errors": "Zakończone z błędami",
     "skipped": "Pominięte",
     "deprecated": "Wycofane z użycia",
-    "paid": "Wypłacone"
+    "paid": "Wypłacone",
+    "recoverable": "Do poprawy",
+    "needs_changes": "Wymaga zmian",
+    "ready_for_review": "Gotowe do przeglądu",
+    "superseded": "Zastąpione",
+    "invalidated": "Unieważnione"
   },
   "state": {
     "save": {

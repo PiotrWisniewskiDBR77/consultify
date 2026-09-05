@@ -69,11 +69,11 @@ interface PortfolioKanbanViewProps {
 // COLUMN CONFIG
 // ==========================================
 
-function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; label: string }[] {
+function getColumnsForScope(scope: KanbanScope): { id: InitiativeStatus; labelKey: string }[] {
   const statuses = scope === 'active' ? ACTIVE_STATUSES : ALL_STATUSES;
   return statuses.map((s) => ({
     id: s,
-    label: STATUS_METADATA[s]?.label || s,
+    labelKey: STATUS_METADATA[s]?.labelKey ?? 'initiatives.status.unknown',
   }));
 }
 
@@ -146,11 +146,22 @@ interface KanbanCardProps {
 }
 
 const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || '').startsWith('pl');
   const priorityStyle = getPriorityStyle(initiative.priority);
   const health = getHealthInfo(initiative);
-  const nextStep = getNextStep(initiative.status);
+  const nextStep = getNextStep(initiative.status, isPolish);
   const owner = initiative.ownerBusiness || initiative.ownerExecution;
+  const priorityLabel = initiative.priority
+    ? t(`initiatives.priority.${initiative.priority.toLowerCase()}`)
+    : t('initiatives.kanban.notApplicable');
+  const healthLabel =
+    health.label === '—' ? health.label : t(`initiatives.kanban.health.${health.level}`);
+  const nextStepLabel = nextStep?.gate
+    ? nextStep.label
+    : nextStep
+      ? t(STATUS_METADATA[nextStep.targetStatus as InitiativeStatus]?.labelKey)
+      : '';
 
   return (
     <div
@@ -173,11 +184,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
           className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded-full ${priorityStyle.bg} ${priorityStyle.text}`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${priorityStyle.dot}`} />
-          {initiative.priority || 'N/A'}
+          {priorityLabel}
         </span>
         <div className="flex items-center gap-1">
           <span className={`w-2 h-2 rounded-full ${health.dotClass}`} />
-          <span className="text-[10px] text-c-text-muted">{health.label}</span>
+          <span className="text-[10px] text-c-text-muted">{healthLabel}</span>
         </div>
       </div>
 
@@ -208,7 +219,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ initiative, onClick, isDragging
           <div className="text-[10px] text-c-text-muted mb-1 uppercase tracking-wider font-medium">
             {t('initiatives.kanban.nextGate', 'Next gate')}
           </div>
-          <div className="text-xs text-c-text-secondary font-medium truncate">{nextStep.label}</div>
+          <div className="text-xs text-c-text-secondary font-medium truncate">{nextStepLabel}</div>
           {nextStep.role && (
             <div className="text-[10px] text-c-text-muted mt-0.5">{nextStep.role}</div>
           )}
@@ -289,6 +300,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   canDrag = true,
   dragDisabledReason,
 }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id });
   const statusStyle = getStatusStyle(id);
 
@@ -337,7 +349,9 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </SortableContext>
 
         {initiatives.length === 0 && (
-          <div className="p-3 text-center text-c-text-muted text-xs">Drop initiatives here</div>
+          <div className="p-3 text-center text-c-text-muted text-xs">
+            {t('initiatives.kanban.emptyColumn')}
+          </div>
         )}
       </div>
     </div>
@@ -424,7 +438,7 @@ export const PortfolioKanbanView: React.FC<PortfolioKanbanViewProps> = ({
             <KanbanColumn
               key={column.id}
               id={column.id}
-              label={column.label}
+              label={t(column.labelKey)}
               initiatives={columnData[column.id] || []}
               onInitiativeClick={onInitiativeClick}
               isCompact={isCompact}
