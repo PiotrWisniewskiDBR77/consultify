@@ -9292,6 +9292,30 @@
     }
   },
   "initiatives": {
+    "menu3": {
+      "plan": {
+        "unscheduled": "Unscheduled",
+        "now": "Now",
+        "next": "Next",
+        "later": "Later",
+        "conflicted": "Conflicted",
+        "missingDependencies": "Missing dependencies",
+        "needsCapacity": "Needs capacity",
+        "ready": "Ready for schedule",
+        "published": "Published"
+      },
+      "capacity": {
+        "all": "All constraints",
+        "critical": "Critical",
+        "unknownSupply": "Unknown supply",
+        "missingDemand": "Missing demand",
+        "skillGaps": "Skill gaps",
+        "managementLoad": "Management load",
+        "budgetEnvelope": "Budget envelope",
+        "unconfirmed": "Unconfirmed",
+        "resolved": "Resolved in scenario"
+      }
+    },
     "status": {
       "draft": "Draft",
       "pendingReview": "Pending review",

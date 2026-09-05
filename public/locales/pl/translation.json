@@ -8687,6 +8687,30 @@
     }
   },
   "initiatives": {
+    "menu3": {
+      "plan": {
+        "unscheduled": "Niezaplanowane",
+        "now": "Teraz",
+        "next": "Następne",
+        "later": "Później",
+        "conflicted": "Z konfliktami",
+        "missingDependencies": "Brakujące zależności",
+        "needsCapacity": "Wymaga zasobów",
+        "ready": "Gotowe do zaplanowania",
+        "published": "Opublikowane"
+      },
+      "capacity": {
+        "all": "Wszystkie ograniczenia",
+        "critical": "Krytyczne",
+        "unknownSupply": "Nieznana dostępność",
+        "missingDemand": "Brak zapotrzebowania",
+        "skillGaps": "Luki kompetencyjne",
+        "managementLoad": "Obciążenie zarządzania",
+        "budgetEnvelope": "Limit budżetowy",
+        "unconfirmed": "Niepotwierdzone",
+        "resolved": "Rozwiązane w scenariuszu"
+      }
+    },
     "status": {
       "draft": "Szkic",
       "pendingReview": "Oczekuje na przegląd",
