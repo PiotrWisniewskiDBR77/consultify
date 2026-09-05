@@ -618,6 +618,7 @@ const ResultsVNextKpiScorecardsScreen = React.lazy(
   () => import('./screens/results-vnext-kpi-scorecards')
 );
 const ResultsVNextKpiToolScreen = React.lazy(() => import('./screens/results-vnext-kpi-tool'));
+const P7kWynikiPrototypeScreen = React.lazy(() => import('./screens/p7k-wyniki-prototype'));
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
@@ -874,6 +875,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G3 lane — REALNY <KpiToolPage> + <KpiDeviationCaseSubview> (klasa L, D03/D05), zamontowane pod jednym <MemoryRouter> z prawdziwym useNavigate() między nimi. &view=tool|case &state=ready|loading|error &caseState=open|analysis_required|plan_required|plan_submitted|approved|executing|recovery_observed|verification|closed &severity=warning|critical &escalated=1 &impacts=0 &ff=off',
     render: () => <ResultsVNextKpiToolScreen />,
+  },
+  'p7k-wyniki-prototype': {
+    label: 'P7K — prototyp SSOT KPI/OKR/ROI. &view=kpi-l1|kpi-l2|kpi-l3|okr-l1|okr-l2|okr-l3|roi-l1|roi-l2',
+    render: () => <P7kWynikiPrototypeScreen />,
   },
   'results-vnext-teresa-kpi-deviation': {
     label:

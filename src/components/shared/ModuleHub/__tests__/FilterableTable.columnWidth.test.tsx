@@ -116,6 +116,40 @@ describe('FilterableTable — podłogi szerokości P2', () => {
     expect(queryByRole('tooltip')).toBeNull();
   });
 
+  it('budzet odstepow liter obejmuje znak ostatni', () => {
+    /**
+     * CSS `letter-spacing` (`tracking-wider`) dziala takze PO ostatnim znaku
+     * etykiety. Podloga naglowka musi wiec zmiescic `label.length` odstepow,
+     * nie `length - 1` — inaczej wychodzi o ~0,5 px za malo i naglowek dostaje
+     * wielokropek mimo „zmieszczonej" kolumny (zmierzone na KPI L2:
+     * „BENCHMARK" renderowane jako „BENCHMA...").
+     *
+     * DOWOD MUTACYJNY (sprawdzony, nie zalozony): dane dobrane tak, zeby
+     * roznica jednego odstepu przeskakiwala calkowity piksel —
+     * 100 + 11x0,55 + 32 = 138,05 -> 139, a wersja z bledem
+     * 100 + 10x0,55 + 32 = 137,5 -> 138. Przywrocenie
+     * `Math.max(0, c.label.length - 1)` daje 138 i lamie asercje.
+     * `dataType: 'number'` jest konieczny: podloga typu `text` (140 px)
+     * przykrylaby obie wartosci i test nie mierzylby niczego.
+     */
+    const measuredTextPx = 100;
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      font: '',
+      measureText: () => ({ width: measuredTextPx }),
+    } as unknown as CanvasRenderingContext2D);
+
+    const label = 'PRZYGOTOWAL'; // 11 znakow
+    const { getByRole } = renderTable([
+      { id: 'preparedBy', label, width: '90px', dataType: 'number' },
+    ]);
+
+    const width = Number.parseFloat(getByRole('columnheader').style.width);
+    expect(width).toBe(
+      Math.ceil(measuredTextPx + label.length * 0.55 + HEADER_HORIZONTAL_PADDING_PX)
+    );
+    expect(width).toBe(139);
+  });
+
   it.each([
     ['Skrzynka Moja Praca', { id: 'status', label: 'STATUS', dataType: 'status' }, 130],
     ['Sejf', { id: 'owner', label: 'WŁAŚCICIEL', dataType: 'owner' }, 150],
