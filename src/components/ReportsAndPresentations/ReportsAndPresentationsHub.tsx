@@ -48,6 +48,7 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
+import { resolveTemplatesDeepLink } from './artifactNavigation';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -197,14 +198,21 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     useMemo(() => {
       const params = new URLSearchParams(location.search || '');
       const fromQuery = parseRapTabFromQuery(params.get('tab'));
+      // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały, obserwacja „martwy
+      // przewód"): kebab → „Edytuj" przy wzorcu Arkusza produkuje
+      // `?tab=templates&editWorkbookTemplateId=<kanoniczne id>`
+      // (`artifactNavigation.ts` `resolveTemplateEditPath`), ale w całym `src/`
+      // NIE BYŁO ani jednego czytelnika tego parametru — jedynie producent i
+      // jego test kontraktowy. Użytkownik klikał „Edytuj", adres się zmieniał,
+      // a builder nigdy się nie otwierał: zostawał na liście. Czytelnik
+      // (`resolveTemplatesDeepLink`) leży dziś OBOK producenta, w tym samym
+      // pliku i pod tym samym testem, żeby oba końce przewodu nie mogły znowu
+      // się rozjechać.
+      const deepLink = resolveTemplatesDeepLink(params);
       let tab: RapTab;
-      let templatesView: TemplatesLibraryView = 'library';
-      if (fromQuery === 'template_architect') {
+      const templatesView: TemplatesLibraryView = deepLink.templatesView;
+      if (deepLink.forcesTemplatesTab) {
         tab = 'templates';
-        templatesView = 'deckArchitect';
-      } else if (fromQuery === 'workbook_templates') {
-        tab = 'templates';
-        templatesView = 'workbookTemplates';
       } else if (fromQuery) {
         tab = fromQuery;
       } else if (location.pathname.startsWith('/reports')) {
@@ -219,7 +227,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         // Keep backward compatibility with older deep links using ?deck=<id>.
         initialArtifactId: params.get('artifactId') || params.get('deck') || null,
         initialTemplatesView: templatesView,
-        initialWorkbookTemplateId: params.get('workbookTemplateId') || null,
+        initialWorkbookTemplateId: deepLink.workbookTemplateId,
       };
     }, [location.pathname, location.search]);
 
@@ -273,11 +281,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       ? 'all'
       : activeTab === 'outputs_documents'
         ? 'all'
-      : activeTab === 'outputs_mine'
-        ? 'mine'
-        : activeTab === 'outputs_review'
-          ? 'review'
-          : null;
+        : activeTab === 'outputs_mine'
+          ? 'mine'
+          : activeTab === 'outputs_review'
+            ? 'review'
+            : null;
   const {
     rows: artifactOutputRows,
     loading: artifactOutputsLoading,
@@ -605,7 +613,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     setActiveTab(initialTab);
     setActiveFilters([]);
     setTemplatesView(initialTemplatesView);
-  }, [initialTab, initialTemplatesView]);
+    // Bez tego wiersza „Edytuj" z kebaba działa TYLKO przy zimnym wejściu:
+    // hub jest już zamontowany, adres się zmienia, `useState(initial…)` nie.
+    // `null` nie zeruje wyboru zrobionego wewnątrz buildera (patrz
+    // `setWorkbookTemplateId(id)` po zapisie) — nadpisujemy wyłącznie wtedy,
+    // gdy adres realnie NIESIE identyfikator.
+    if (initialWorkbookTemplateId) setWorkbookTemplateId(initialWorkbookTemplateId);
+  }, [initialTab, initialTemplatesView, initialWorkbookTemplateId]);
 
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   React.useEffect(() => {

@@ -18,6 +18,7 @@ import { describe, expect, it } from 'vitest';
 import {
   resolveTemplateClonePath,
   resolveTemplateEditPath,
+  resolveTemplatesDeepLink,
   resolveTemplateUsePath,
 } from '../artifactNavigation';
 import { mapCanonicalTemplateArtifact, mapTemplateScope, mapTemplateStatus } from '../useRapData';
@@ -279,5 +280,46 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
     expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', null)).toBe(
       '/presentations?tab=templates'
     );
+  });
+
+  /**
+   * ODBIÓR NA ŻYWO 05.09 — „martwy przewód": producent `resolveTemplateEditPath`
+   * istniał od dawna, czytelnika `editWorkbookTemplateId` NIE BYŁO w całym
+   * `src/`. Te przypadki spinają OBA końce w jednym teście: to, co producent
+   * napisze w adresie, czytelnik musi umieć odczytać na powrót.
+   */
+  it('CZYTELNIK odczytuje adres wyprodukowany przez resolveTemplateEditPath (sheet)', () => {
+    const path = resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', CANONICAL_ID);
+    const search = path.slice(path.indexOf('?'));
+    expect(resolveTemplatesDeepLink(search)).toEqual({
+      templatesView: 'workbookTemplates',
+      workbookTemplateId: CANONICAL_ID,
+      forcesTemplatesTab: true,
+    });
+  });
+
+  it('CZYTELNIK: bez kanonicznego id zostaje na liście wzorców', () => {
+    const path = resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', null);
+    const search = path.slice(path.indexOf('?'));
+    expect(resolveTemplatesDeepLink(search)).toEqual({
+      templatesView: 'library',
+      workbookTemplateId: null,
+      forcesTemplatesTab: false,
+    });
+  });
+
+  it('CZYTELNIK: stare deep linki dalej działają (?tab=workbook_templates / template_architect)', () => {
+    expect(resolveTemplatesDeepLink(`?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`)).toEqual(
+      {
+        templatesView: 'workbookTemplates',
+        workbookTemplateId: CANONICAL_ID,
+        forcesTemplatesTab: true,
+      }
+    );
+    expect(resolveTemplatesDeepLink('?tab=template_architect')).toEqual({
+      templatesView: 'deckArchitect',
+      workbookTemplateId: null,
+      forcesTemplatesTab: true,
+    });
   });
 });
