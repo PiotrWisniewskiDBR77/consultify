@@ -6,7 +6,7 @@
  * the tab-render branches deterministically and offline.
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,7 +37,7 @@ const tEn = (key: string, opt?: unknown): string => {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: tEn,
-    i18n: { language: 'en' },
+    i18n: { language: 'en', getFixedT: () => tEn },
   }),
   initReactI18next: { type: '3rdParty', init: vi.fn() },
   I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -230,6 +230,27 @@ describe('InterviewHub smoke — tab rendering', () => {
     expect(apiGet).toHaveBeenCalledWith('/interview/sessions');
     expect(getSessions).not.toHaveBeenCalled();
     expect(apiGet).not.toHaveBeenCalledWith('/interview/insights');
+  });
+
+  it('reaches the interview-creator-shell wizard from the Insights tab "New insight" button (DEC-2026-08-25-67, DEC-350)', async () => {
+    renderTab('my_assignments');
+    const insightsTab = await screen.findByRole('tab', { name: /Insights/i });
+    fireEvent.click(insightsTab);
+    await waitFor(() => expect(insightsTab).toHaveAttribute('aria-selected', 'true'));
+
+    const newInsightButton = await screen.findByRole('button', { name: 'New insight' });
+    expect(newInsightButton).toBeEnabled();
+    fireEvent.click(newInsightButton);
+
+    // Both the stepped shell and the legacy fallback share the WizardStepper
+    // labels, so "Define" alone would pass either way. The "What will be
+    // created" scope band is exclusive to the WizardModal (creatorShellEnabled)
+    // branch — its presence is the actual proof we reached the approved
+    // interview-creator-shell screen, not the pre-03.09 legacy dialog.
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('AI Insight Creator');
+    expect(within(dialog).getByText('Define')).toBeInTheDocument();
+    expect(within(dialog).getByText(/What will be created/i)).toBeInTheDocument();
   });
 
   it('exposes the shared project create control in the new-session modal for a zero-project tenant', async () => {

@@ -1,0 +1,13 @@
+{
+ "url": "http://localhost:3042/interview?tab=insights",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Wnioski",
+  "text=Nowy insight"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "bledy": [],
+ "kiedy": "2026-09-05T06:04:10.454Z"
+}
