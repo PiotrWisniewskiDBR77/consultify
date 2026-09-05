@@ -1,5 +1,6 @@
 import { Copy, Download, Search } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CanvasArtifactBlock } from '@/types/canvasWorkspace';
 
@@ -140,6 +141,7 @@ export function CanvasArtifactBlockRenderer({
   block,
   onFeedback,
 }: CanvasArtifactBlockRendererProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
@@ -237,7 +239,9 @@ export function CanvasArtifactBlockRenderer({
               onChange={(event) => setFilter(event.target.value)}
               placeholder="Filter rows"
               className="min-w-0 flex-1 bg-transparent outline-none"
-              aria-label={`Filter ${block.title}`}
+              aria-label={t('canvas.artifact.filterLabel', 'Filter {{title}}', {
+                title: block.title,
+              })}
             />
           </label>
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -307,7 +311,9 @@ export function CanvasArtifactBlockRenderer({
                   <td className="px-3 py-3">
                     <input
                       type="checkbox"
-                      aria-label={`Select row ${entry.index + 1}`}
+                      aria-label={t('canvas.artifact.selectRowLabel', 'Select row {{number}}', {
+                        number: entry.index + 1,
+                      })}
                       checked={selectedRows.has(entry.key)}
                       onChange={(event) => {
                         setSelectedRows((current) => {
@@ -376,11 +382,21 @@ export function CanvasArtifactBlockRenderer({
           ) : null}
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <EvidenceList title="Findings" items={[...facts, ...findings]} />
-          <EvidenceList title="Sources" items={sources} />
-          <EvidenceList title="Limitations / contradictions" items={contradictions} />
-          <EvidenceList title="Gaps" items={gaps} />
-          <EvidenceList title="Recommendations" items={recommendations} className="md:col-span-2" />
+          <EvidenceList
+            title={t('canvas.artifact.findings', 'Findings')}
+            items={[...facts, ...findings]}
+          />
+          <EvidenceList title={t('canvas.artifact.sources', 'Sources')} items={sources} />
+          <EvidenceList
+            title={t('canvas.artifact.limitationsContradictions', 'Limitations / contradictions')}
+            items={contradictions}
+          />
+          <EvidenceList title={t('canvas.artifact.gaps', 'Gaps')} items={gaps} />
+          <EvidenceList
+            title={t('canvas.artifact.recommendations', 'Recommendations')}
+            items={recommendations}
+            className="md:col-span-2"
+          />
         </div>
       </section>
     );
@@ -410,10 +426,13 @@ export function CanvasArtifactBlockRenderer({
           </div>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <EvidenceList title="Options" items={options} />
-          <EvidenceList title="Criteria" items={criteria} />
-          <EvidenceList title="Risks" items={risks} />
-          <EvidenceList title="Assumptions" items={assumptions} />
+          <EvidenceList title={t('canvas.artifact.options', 'Options')} items={options} />
+          <EvidenceList title={t('canvas.artifact.criteria', 'Criteria')} items={criteria} />
+          <EvidenceList title={t('canvas.artifact.risks', 'Risks')} items={risks} />
+          <EvidenceList
+            title={t('canvas.artifact.assumptions', 'Assumptions')}
+            items={assumptions}
+          />
         </div>
       </section>
     );
@@ -495,9 +514,19 @@ export function CanvasArtifactBlockRenderer({
           </div>
         ) : null}
         <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <EvidenceList title="Narrative insights" items={insights} />
-          <EvidenceList title="Recommended actions" items={actions} />
-          <EvidenceList title="Data limitations" items={limitations} className="md:col-span-2" />
+          <EvidenceList
+            title={t('canvas.artifact.narrativeInsights', 'Narrative insights')}
+            items={insights}
+          />
+          <EvidenceList
+            title={t('canvas.artifact.recommendedActions', 'Recommended actions')}
+            items={actions}
+          />
+          <EvidenceList
+            title={t('canvas.artifact.dataLimitations', 'Data limitations')}
+            items={limitations}
+            className="md:col-span-2"
+          />
         </div>
       </section>
     );
@@ -814,15 +843,17 @@ function BlockHeader({
   onCopy: () => void;
   onExport?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 px-1">
       <div>
         <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
-          {block.kind} block
+          {t('canvas.artifact.blockKind', '{{kind}} block', { kind: block.kind })}
         </div>
         <h3 className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{block.title}</h3>
         <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {block.status} · projection {block.markdownProjectionStatus} · {provenanceLabel(block)}
+          {block.status} · {t('canvas.artifact.projection', 'projection')}{' '}
+          {block.markdownProjectionStatus} · {provenanceLabel(block)}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -832,7 +863,7 @@ function BlockHeader({
           className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-white dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
         >
           <Copy size={13} />
-          Copy
+          {t('canvas.artifact.copy', 'Copy')}
         </button>
         {onExport ? (
           <button

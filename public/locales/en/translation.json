@@ -1868,6 +1868,7 @@
   },
   "common": {
     "actions": "Actions",
+    "reset": "Reset",
     "rowActions": "Row actions",
     "sortByColumn": "Sort by {{column}}",
     "resizeColumn": "Resize {{column}} column",
@@ -17502,6 +17503,10 @@
     "conversationLandmark": "Conversation"
   },
   "aiChat": {
+    "confirmDeleteBulk_one": "Delete {{count}} conversation?",
+    "confirmDeleteBulk_few": "Delete {{count}} conversations?",
+    "confirmDeleteBulk_many": "Delete {{count}} conversations?",
+    "confirmDeleteBulk_other": "Delete {{count}} conversations?",
     "archivedBanner": "This conversation is archived. Unarchive it to continue chatting.",
     "deletedBanner": "This conversation has been deleted.",
     "permissionDenied": "You do not have access to this conversation. Contact the folder owner for access.",
@@ -28472,6 +28477,41 @@
     "delete": "Delete"
   },
   "canvas": {
+    "actions": {
+      "copyMarkdown": "Copy Markdown",
+      "shareDocument": "Share Canvas document",
+      "saveDocument": "Save Canvas document",
+      "close": "Close Canvas",
+      "documentView": "Document view",
+      "markdownView": "Markdown view",
+      "createPresentation": "Create presentation",
+      "createSheet": "Create sheet",
+      "createReport": "Create report",
+      "sendToIdea": "Send to idea",
+      "saveAsNote": "Save as note",
+      "createInitiative": "Create initiative",
+      "captureDecision": "Capture decision",
+      "createTask": "Create task"
+    },
+    "artifact": {
+      "filterLabel": "Filter {{title}}",
+      "selectRowLabel": "Select row {{number}}",
+      "findings": "Findings",
+      "sources": "Sources",
+      "limitationsContradictions": "Limitations / contradictions",
+      "gaps": "Gaps",
+      "recommendations": "Recommendations",
+      "options": "Options",
+      "criteria": "Criteria",
+      "risks": "Risks",
+      "assumptions": "Assumptions",
+      "narrativeInsights": "Narrative insights",
+      "recommendedActions": "Recommended actions",
+      "dataLimitations": "Data limitations",
+      "blockKind": "{{kind}} block",
+      "projection": "projection",
+      "copy": "Copy"
+    },
     "viewMode": {
       "ariaLabel": "Document view",
       "rich": "Editor",
@@ -28554,6 +28594,11 @@
       "title": "Presentation"
     },
     "panel": {
+      "pendingOperation": {
+        "removed": "Removed",
+        "added": "Added",
+        "reviseEdit": "Revise edit"
+      },
       "common": {
         "title": "Most common actions",
         "expandTitle": "Expand selected idea",
@@ -28797,6 +28842,13 @@
         "diffSummary": "{{added}} lines added, {{removed}} lines removed"
       },
       "dataset": {
+        "table": "Dataset table",
+        "chart": "Dataset chart",
+        "dashboard": "KPI dashboard",
+        "findingsReport": "Findings report",
+        "profileSummary": "Profile summary",
+        "aggregateChart": "Aggregate chart",
+        "filteredTable": "Filtered table",
         "analysisNote": "Deterministic Canvas analysis. No code execution.",
         "readyPrefix": "Dataset ready:",
         "showAnalyses": "Show analyses"

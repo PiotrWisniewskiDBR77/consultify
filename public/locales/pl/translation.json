@@ -288,6 +288,7 @@
   },
   "common": {
     "actions": "Akcje",
+    "reset": "Resetuj",
     "rowActions": "Akcje wiersza",
     "sortByColumn": "Sortuj według: {{column}}",
     "resizeColumn": "Zmień szerokość kolumny: {{column}}",
@@ -18749,6 +18750,10 @@
     }
   },
   "aiChat": {
+    "confirmDeleteBulk_one": "Usunąć {{count}} rozmowę?",
+    "confirmDeleteBulk_few": "Usunąć {{count}} rozmowy?",
+    "confirmDeleteBulk_many": "Usunąć {{count}} rozmów?",
+    "confirmDeleteBulk_other": "Usunąć {{count}} rozmowy?",
     "archivedBanner": "Ta rozmowa jest zarchiwizowana. Cofnij archiwizację, aby kontynuować.",
     "deletedBanner": "Ta rozmowa została usunięta.",
     "permissionDenied": "Nie masz dostępu do tej rozmowy. Poproś właściciela folderu o dostęp.",
@@ -30801,6 +30806,41 @@
     "delete": "Usuń"
   },
   "canvas": {
+    "actions": {
+      "copyMarkdown": "Kopiuj Markdown",
+      "shareDocument": "Udostępnij dokument Canvas",
+      "saveDocument": "Zapisz dokument Canvas",
+      "close": "Zamknij Canvas",
+      "documentView": "Widok dokumentu",
+      "markdownView": "Widok Markdown",
+      "createPresentation": "Utwórz prezentację",
+      "createSheet": "Utwórz arkusz",
+      "createReport": "Utwórz raport",
+      "sendToIdea": "Wyślij do Pomysłów",
+      "saveAsNote": "Zapisz jako notatkę",
+      "createInitiative": "Utwórz inicjatywę",
+      "captureDecision": "Zapisz decyzję",
+      "createTask": "Utwórz zadanie"
+    },
+    "artifact": {
+      "filterLabel": "Filtruj: {{title}}",
+      "selectRowLabel": "Wybierz wiersz {{number}}",
+      "findings": "Ustalenia",
+      "sources": "Źródła",
+      "limitationsContradictions": "Ograniczenia i sprzeczności",
+      "gaps": "Luki",
+      "recommendations": "Rekomendacje",
+      "options": "Opcje",
+      "criteria": "Kryteria",
+      "risks": "Ryzyka",
+      "assumptions": "Założenia",
+      "narrativeInsights": "Wnioski opisowe",
+      "recommendedActions": "Rekomendowane działania",
+      "dataLimitations": "Ograniczenia danych",
+      "blockKind": "Blok: {{kind}}",
+      "projection": "projekcja",
+      "copy": "Kopiuj"
+    },
     "viewMode": {
       "ariaLabel": "Widok dokumentu",
       "rich": "Edytor",
@@ -30883,6 +30923,11 @@
       "title": "Prezentacja"
     },
     "panel": {
+      "pendingOperation": {
+        "removed": "Usunięto",
+        "added": "Dodano",
+        "reviseEdit": "Popraw zmianę"
+      },
       "common": {
         "title": "Najczęstsze działania",
         "expandTitle": "Rozwiń zaznaczoną myśl",
@@ -31147,6 +31192,13 @@
         "diffSummary": "{{added}} dodanych linii, {{removed}} usuniętych linii"
       },
       "dataset": {
+        "table": "Tabela danych",
+        "chart": "Wykres danych",
+        "dashboard": "Panel KPI",
+        "findingsReport": "Raport z ustaleń",
+        "profileSummary": "Podsumowanie profilu",
+        "aggregateChart": "Wykres zbiorczy",
+        "filteredTable": "Tabela filtrowana",
         "analysisNote": "Deterministyczna analiza Canvas. Bez wykonywania kodu.",
         "readyPrefix": "Zbiór danych gotowy:",
         "showAnalyses": "Pokaż analizy"

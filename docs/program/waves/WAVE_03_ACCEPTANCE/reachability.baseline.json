@@ -768,6 +768,7 @@
     "src/components/AIChat/__tests__/EnhancedChatInput.teresaVoice.test.tsx",
     "src/components/AIChat/__tests__/GovernedChatHandoffCard.day179.i18n.test.tsx",
     "src/components/AIChat/__tests__/day372-canvasAiMenu.i18n.test.tsx",
+    "src/components/AIChat/__tests__/day374-canvasLiterals.i18n.test.tsx",
     "src/components/AIChat/__tests__/GovernedChatHandoffCard.test.tsx",
     "src/components/AIChat/__tests__/GovernedInitiativeHandoffCard.test.tsx",
     "src/components/AIChat/__tests__/InputCharCounter.test.tsx",
