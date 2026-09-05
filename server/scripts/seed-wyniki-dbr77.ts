@@ -967,7 +967,7 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
         'Potwierdzony wolumen dwóch zmian przez dwa kolejne kwartały przed podpisaniem umowy z integratorem.',
       subjectType: 'Robotyzacja',
       optionVariant: 2,
-      optionVariantLabel: 'Pełna automatyzacja gniazda',
+      optionVariantLabel: 'Pełna automatyzacja',
       problemStatement:
         'Niestabilna wydajność gniazda nr 3 i brak spawaczy na rynku pracy: przy dwóch nieobecnościach gniazdo schodzi z taktu, a przeróbki sięgają 6,1 % detali.',
       scopeSummary:
@@ -1063,7 +1063,7 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
       recommendationCondition: null,
       subjectType: 'IT / jakość',
       optionVariant: 1,
-      optionVariantLabel: 'Modernizacja kontroli końcowej',
+      optionVariantLabel: 'Modernizacja kontroli',
       problemStatement:
         'Wady wykrywane u klienta, nie na linii: 412 tys. zł rocznie na reklamacjach i kontroli końcowej, z czego 150 tys. zł dotyczy wad możliwych do wykrycia optycznie.',
       scopeSummary:
@@ -1128,7 +1128,7 @@ export function planRoi(orgId: string, owners: string[]): PlannedRoi[] {
       recommendationCondition: null,
       subjectType: 'Magazyn',
       optionVariant: 3,
-      optionVariantLabel: 'RaaS (robot jako usługa)',
+      optionVariantLabel: 'RaaS — robot jako usługa',
       problemStatement:
         'WIP leży średnio 18 dni między operacjami; magazyn międzyoperacyjny zajmuje 320 m² hali potrzebnej pod montaż.',
       scopeSummary:
