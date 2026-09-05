@@ -15,6 +15,12 @@
  *   i dopiero wtedy robi zrzut. Potrzebne, gdy odbierany blok leży poniżej pierwszego ekranu, a
  *   `--pelna` daje obraz zbyt wysoki, żeby cokolwiek na nim zobaczyć (np. panel EV football-field
  *   na kroku „Wyniki" wyceny). Bez tego parametru zachowanie skryptu jest bajt w bajt jak dotąd.
+ * --host=<nazwa> (OPT-IN, 2026-09-05): host aplikacji zamiast `localhost` (np. `127.0.0.1`, gdy vite
+ *   agenta jest zbindowany tylko na pętlę IPv4). Origin sesji jest przepisywany tak samo jak przy --port.
+ * --dom=<selektor> (OPT-IN, 2026-09-05): policz elementy pasujące do selektora (składnia Playwright/CSS)
+ *   i zapisz ich liczbę oraz prostokąty do <out>.json (klucz `dom`). Można podać wiele razy. Potrzebne,
+ *   gdy odbiór dotyczy LICZBY paneli/kolumn (np. „ma być dokładnie jeden prawy panel") — samo oko na
+ *   zrzucie nie odróżnia dwóch sąsiadujących kolumn od jednej szerokiej.
  * Zapisuje też <out>.json z adresem końcowym, tytułem i listą błędów konsoli (do werdyktu).
  */
 import { chromium } from 'playwright';
@@ -27,7 +33,9 @@ const przewin = get('przewin', '');
 const url = get('url', '/chat'); const out = get('out'); const czekaj = Number(get('czekaj', '1200'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const port = Number(get('port', '3000'));
-const baza = `http://localhost:${port}`;
+const host = get('host', 'localhost');
+const baza = `http://${host}:${port}`;
+const domSelektory = args.filter((x) => x.startsWith('--dom=')).map((x) => x.slice(6));
 const auth = process.env.ODBIOR_AUTH_STATE;
 if (!out || !auth || !fs.existsSync(auth)) { console.error('Wymagane: --out oraz ODBIOR_AUTH_STATE (istniejący plik)'); process.exit(2); }
 fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -64,7 +72,18 @@ if (przewin) {
 }
 await page.waitForTimeout(600);
 await page.screenshot({ path: out, fullPage: pelna });
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, kiedy: new Date().toISOString() }, null, 1));
+// --dom: pomiar liczebnosci (opt-in). Bez parametru `dom` w JSON nie ma — zero zmiany dla dotychczasowych wywolan.
+const dom = {};
+for (const sel of domSelektory) {
+  try {
+    const loc = page.locator(sel);
+    const n = await loc.count();
+    const boxy = [];
+    for (let i = 0; i < n; i += 1) { const b = await loc.nth(i).boundingBox().catch(() => null); boxy.push(b); }
+    dom[sel] = { liczba: n, boxy };
+  } catch (e) { dom[sel] = { blad: String(e.message).split('\n')[0].slice(0, 160) }; }
+}
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, przewin: przewin || null, pelna, wysokosc, bledy, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie — zapisz zaktualizowany stan z powrotem, zeby kolejne
 // zrzuty (i inni agenci) nie dostali 401 po rotacji. Tylko gdy nadal zalogowani (nie /login).

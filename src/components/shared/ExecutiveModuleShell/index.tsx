@@ -569,7 +569,14 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           </LeftRail>
         ) : null}
 
-        {!artifactStudioMode && inspectorRailSide === 'left' ? (
+        {/* ★ 2026-09-05 (decyzja CTO „jeden prawy panel" na Mapie myśli):
+            `rightRailTools` puste = moduł ŚWIADOMIE nie ma paska sekcji.
+            Dotąd `RightRail` i tak rysował 56-pikselowy słupek ikon (nagłówek
+            RightRail.tsx: „icon strip never collapses"), więc pusta lista dawała
+            pustą, ale widoczną DRUGĄ kolumnę ikon obok palety płótna. Każdy
+            dotychczasowy konsument podaje niepustą listę, więc ta bramka nie
+            zmienia żadnego istniejącego ekranu. */}
+        {!artifactStudioMode && rightRailTools.length > 0 && inspectorRailSide === 'left' ? (
           <RightRail
             side="left"
             tools={rightRailTools}
@@ -662,7 +669,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           </main>
         )}
 
-        {!artifactStudioMode && inspectorRailSide === 'right' ? (
+        {!artifactStudioMode && rightRailTools.length > 0 && inspectorRailSide === 'right' ? (
           <RightRail
             side="right"
             tools={rightRailTools}
@@ -678,7 +685,12 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
         ) : null}
 
         {!artifactStudioMode && elementInspectorRail ? (
-          <aside
+          /* `div`, nie `aside` — ten sam powód co przy panelu Artifact Studio
+             niżej: kanoniczny panel (np. `IdeaElementInspector`) renderuje
+             WŁASNY `<aside aria-label>`, a zagnieżdżone punkty orientacyjne to
+             dla czytnika ekranu dwa panele zamiast jednego (i dwa `aside` w
+             odbiorze „ma być dokładnie jeden"). */
+          <div
             data-testid="mels-element-inspector-rail"
             className="relative hidden shrink-0 border-l border-c-border bg-c-surface sm:flex"
             style={{ width: elementInspectorCollapsed ? 40 : resolvedElementInspectorWidth }}
@@ -727,7 +739,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
                 {elementInspectorCollapsed ? '‹' : '›'}
               </button>
             ) : null}
-          </aside>
+          </div>
         ) : null}
 
         {artifactStudioMode && artifactPanels.left === 'overlay' ? (

@@ -126,6 +126,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (path.startsWith('/prezentacje')) return true;
     if (path.startsWith('/tabele')) return true;
     if (path.startsWith('/presentations/builder/')) return true;
+    /*
+     * ★ 2026-09-05 — DECYZJA CTO „JEDEN PRAWY PANEL" (zgłoszenie właściciela:
+     * „nie jesteś w stanie poradzić sobie z panelami po jednej i po drugiej
+     * stronie"). Warsztat Pomysłów (Mapa myśli / Przepływ / Tablica / Tabela)
+     * miał na prawej krawędzi DWA panele obok siebie: własny panel elementu
+     * ORAZ ten globalny dok Teresy. Od teraz warsztat osadza Teresę u siebie —
+     * jako zakładkę w tym JEDNYM panelu (`IdeaElementInspector`,
+     * `teresaContent`) — więc globalny dok tu nie wchodzi. Ten sam mechanizm,
+     * którym od dawna wyłączają się Wordy/Excele/Prezentacje/Tabele.
+     */
+    if (/^\/my-work\/ideas\/[^/]+\/workspace(\/|$)/.test(path)) return true;
     return false;
   }, [location.pathname]);
 

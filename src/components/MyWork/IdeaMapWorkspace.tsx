@@ -12,6 +12,7 @@ import {
   GitBranch,
   Keyboard,
   LayoutTemplate,
+  PanelRight,
   RefreshCw,
   Search,
   StickyNote,
@@ -75,6 +76,7 @@ import {
   type IdeaInspectorItem,
   type IdeaInspectorTool,
 } from './panel/IdeaElementInspector';
+import { setCanvasAnalysisHost } from './panel/canvasAnalysisSlot';
 import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
 import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
@@ -322,6 +324,37 @@ function buildStartupExtensions(
 // do rejestru akcji jako `RUNTIME_ADD_ELEMENT` (src/actions/ideaActionRegistry.ts).
 // Menu 3 renderuje się teraz z rejestru, więc host nie potrzebuje własnej kopii.
 
+/**
+ * ★ JEDEN PRAWY PANEL — Teresa jako ZAKŁADKA (decyzja CTO 2026-09-05).
+ * Ten sam komponent czatu, którego używa dok globalny i Document Studio
+ * (`mode="split"`), tylko osadzony WEWNĄTRZ panelu warsztatu. Import leniwy —
+ * wzorzec 1:1 z `MainLayout.tsx` (czat to duży moduł, nie ładujemy go, dopóki
+ * użytkownik nie otworzy zakładki). Moduł 13_CHAT jest ZAMROŻONY: importujemy,
+ * nie zmieniamy.
+ */
+const UnifiedChatPanelLazy = React.lazy(() =>
+  import('@/components/AIChat/UnifiedChatPanel').then((mod) => ({
+    default: mod.UnifiedChatPanel,
+  }))
+);
+
+/** Pamięć świadomego zamknięcia panelu (parytet z tabelą Pomysłów). */
+const PANEL_CLOSED_KEY = 'myWork.ideaWorkspace.rightPanelClosed';
+const wczytajPanelZamkniety = (): boolean => {
+  try {
+    return window.localStorage.getItem(PANEL_CLOSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const zapiszPanelZamkniety = (zamkniety: boolean): void => {
+  try {
+    window.localStorage.setItem(PANEL_CLOSED_KEY, zamkniety ? '1' : '0');
+  } catch {
+    /* prywatny tryb przeglądarki — pamięć jest wygodą, nie wymogiem */
+  }
+};
+
 export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   ideaId,
   initialOpenMap,
@@ -351,7 +384,53 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const deepLinkedViewId = searchParams.get('tpView');
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
-  const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const {
+    setChatKickoffMessage,
+    isChatCollapsed,
+    toggleChatCollapse,
+    chatKickoffMessage,
+    clearChatKickoffMessage,
+  } = useAppStore();
+  /**
+   * ★ JEDEN PRAWY PANEL (decyzja CTO 2026-09-05).
+   *
+   * `panelZamkniety` — świadome zamknięcie panelu (X). Zaznaczenie węzła NIE
+   * otwiera panelu z powrotem (uwaga właściciela o tabeli Pomysłów: „panel
+   * powinien być zamykany jak nie jest potrzebny" — tam klik w wiersz
+   * natychmiast go przywracał). Wracasz przyciskiem „Pokaż panel".
+   *
+   * ZAKŁADKA nie ma własnego stanu: wynika WPROST z globalnego
+   * `isChatCollapsed`, tego samego sygnału, którym dotąd otwierał się dok
+   * Teresy. Dzięki temu wszystkie dotychczasowe wołania (`openChat(...)`,
+   * `openChatWithContext(...)`, zdarzenie `idea-workspace-chat-prompt`,
+   * komendy Teresy z panelu) otwierają zakładkę bez żadnej dodatkowej
+   * synchronizacji — i nie da się doprowadzić do stanu „czat otwarty, a
+   * zakładka nie".
+   */
+  const [panelZamkniety, setPanelZamkniety] = useState<boolean>(wczytajPanelZamkniety);
+  const zakladkaPanelu: 'element' | 'teresa' = isChatCollapsed ? 'element' : 'teresa';
+  const ustawZakladkePanelu = useCallback(
+    (tab: 'element' | 'teresa') => {
+      setPanelZamkniety(false);
+      zapiszPanelZamkniety(false);
+      if (tab === 'teresa' && isChatCollapsed) toggleChatCollapse();
+      if (tab === 'element' && !isChatCollapsed) toggleChatCollapse();
+    },
+    [isChatCollapsed, toggleChatCollapse]
+  );
+  // Warsztat jest gospodarzem kart „Analiza płótna" — patrz canvasAnalysisSlot.ts.
+  useEffect(() => {
+    setCanvasAnalysisHost(true);
+    return () => setCanvasAnalysisHost(false);
+  }, []);
+  // Otwarcie Teresy (skądkolwiek) musi też otworzyć panel — inaczej klik
+  // „Omów z Teresą" przy zamkniętym panelu byłby martwy.
+  useEffect(() => {
+    if (!isChatCollapsed) {
+      setPanelZamkniety(false);
+      zapiszPanelZamkniety(false);
+    }
+  }, [isChatCollapsed]);
   const { isEnabled } = useFeatureFlagsContext();
   const mindmapTeresaBridgeEnabled = isEnabled('ENABLE_TERESA_MINDMAP');
   // D2: przelacznik reprezentacji w prawym dolnym rogu (flaga OFF do akceptu).
@@ -2195,8 +2274,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           })
       );
       if (isChatCollapsed) toggleChatCollapse();
+      // ★ JEDEN PRAWY PANEL: sekcja Menu 3 i zakładka Teresa dzielą tę samą,
+      // jedyną kolumnę. Otwarcie Teresy zwalnia kolumnę z panelu Menu 3,
+      // inaczej rozmowa otwierałaby się „pod" innym panelem i użytkownik nie
+      // zobaczyłby jej wcale.
+      setActivePanel(null);
     },
-    [isChatCollapsed, isPolish, seedText, setChatKickoffMessage, title, toggleChatCollapse]
+    [
+      isChatCollapsed,
+      isPolish,
+      seedText,
+      setActivePanel,
+      setChatKickoffMessage,
+      title,
+      toggleChatCollapse,
+    ]
   );
 
   // C5: Ideas → chat — serialize the current map into a markdown outline and
@@ -2227,6 +2319,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     // instead of always creating a new one. OFF preserves today's exact
     // behavior: local kickoff message with no entity-context.
     if (mindmapTeresaBridgeEnabled && realId) {
+      // Ta sama zasada co w `openChat` — zakładka Teresa i panel Menu 3 dzielą
+      // jedyną kolumnę, więc zwalniamy ją przed otwarciem rozmowy.
+      setActivePanel(null);
       openChatWithContext({
         entityType: 'idea',
         entityId: realId,
@@ -2246,6 +2341,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     openChatWithContext,
     realId,
     seedText,
+    setActivePanel,
     title,
   ]);
 
@@ -4385,6 +4481,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // `null` (brak aktywnej sekcji Menu 1) po prostu nie dokładał kolumny —
   // płótno zostaje pełnej szerokości, jak dziś.
   const ideaRightPanelNode = renderIdeaRightPanel();
+  /**
+   * Ciało zakładki „Teresa" — DOKŁADNIE ten sam komponent czatu, który
+   * renderuje dok globalny (`MainLayout`, `mode="split"`). Globalny dok jest
+   * na tej trasie wyłączony (`MainLayout.hasEmbeddedModuleChat`), więc panel
+   * Teresy istnieje na tym ekranie w jednym egzemplarzu i nigdy nie stoi
+   * obok panelu elementu.
+   */
+  const teresaPanelNode = (
+    <React.Suspense fallback={null}>
+      <UnifiedChatPanelLazy
+        mode="split"
+        showModeToggle={false}
+        showHistoryTrigger
+        showFocusMode
+        kickoffMessage={chatKickoffMessage || undefined}
+        onKickoffConsumed={clearChatKickoffMessage}
+      />
+    </React.Suspense>
+  );
 
   if (melsCanvasEnabled) {
     return (
@@ -4419,6 +4534,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               <>
                 <IdeaStageChip stage={stage} isPolish={Boolean(isPolish)} />
                 <IdeaSaveIndicator state={graphRuntime.syncState} label={graphRuntime.syncLabel} />
+                {/* ★ Powrót do zamkniętego panelu — ten sam wzorzec „pigułki",
+                    który ma tabela Pomysłów (`IdeasTableContent.tsx`). Siedzi w
+                    CHROME (górny pasek), nie nad płótnem: decyzja CTO mówi, że
+                    nad płótnem nie pływa nic poza menu kontekstowym węzła. */}
+                {panelZamkniety ? (
+                  <button
+                    type="button"
+                    data-testid="idea-show-panel"
+                    onClick={() => {
+                      setPanelZamkniety(false);
+                      zapiszPanelZamkniety(false);
+                    }}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                    aria-label={t('mindmap.showPanel', 'Pokaż panel')}
+                    title={t('mindmap.showPanel', 'Pokaż panel')}
+                  >
+                    <PanelRight size={14} />
+                    <span>{t('mindmap.showPanel', 'Pokaż panel')}</span>
+                  </button>
+                ) : null}
               </>
             }
             primaryActionSlot={
@@ -4438,7 +4573,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               )
             }
             mergeTopBarSlotId={ideaTopBarOneLine ? IDEA_TOP_BAR_SLOT_ID : undefined}
-            rightRailTools={melsCanvasRightRailTools}
+            /* ★ 2026-09-05 (decyzja CTO „jeden prawy panel"): pasek sekcji
+               powłoki znika z warsztatu Pomysłów. Był DRUGĄ kolumną ikon przy
+               palecie płótna i otwierał TRZECI panel, który dublował ten sam
+               kanon co panel po prawej (zmierzone na żywym ekranie: klik w
+               „Właściwości" na lewym pasku dawał panel „Zaznacz element, żeby
+               zobaczyć jego pola" — to samo, co panel prawy). Treść per
+               narzędzie żyje dalej w JEDNYM panelu (`toolSection`).
+               `melsCanvasRightRailTools`/`renderMelsCanvasRightRailPanel`
+               zostają dla (dziś nieosiągalnej) ścieżki legacy. */
+            rightRailTools={[]}
             // Sterujemy sekcją TYLKO gdy IDE-025 jest włączone — inaczej
             // `undefined` zostawia powłokę w jej dotychczasowym trybie
             // niesterowanym (zero zmiany zachowania przy fladze OFF).
@@ -4446,8 +4590,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             elementInspectorRail={
-              ideaInspectorRightRail ? (
+              /* ★ JEDEN PRAWY PANEL — dokładnie jeden korzeń w tej kolumnie:
+                 (1) zamknięty przez użytkownika → nic (płótno pełnej szerokości),
+                 (2) sekcja Menu 3 (Narzędzia/Kontekst/Sugestie AI) → kanoniczny
+                     `IdeaRightPanel` W TEJ SAMEJ kolumnie (do 05.09 doklejał się
+                     jako DRUGA kolumna obok inspektora),
+                 (3) domyślnie → panel elementu z zakładkami Element | Teresa. */
+              panelZamkniety ? undefined : ideaRightPanelNode ? (
+                ideaRightPanelNode
+              ) : ideaInspectorRightRail ? (
                 <IdeaElementInspector
+                  teresaContent={teresaPanelNode}
+                  activeTab={zakladkaPanelu}
+                  onTabChange={ustawZakladkePanelu}
+                  showCanvasAnalysis
+                  onClosePanel={() => {
+                    setPanelZamkniety(true);
+                    zapiszPanelZamkniety(true);
+                    if (!isChatCollapsed) toggleChatCollapse();
+                  }}
                   element={
                     selection.type === 'none' || !selection.primaryId
                       ? null
@@ -4617,12 +4778,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             }}
           />
         </div>
-        {/* ★ NAPRAWA 2026-09-05 — kanoniczny prawy panel idei (Menu 1:
-            Narzędzia/Kontekst i powiązania/Sugestie AI), jako właściwa
-            kolumna obok płótna (patrz `renderIdeaRightPanel`). `null` gdy
-            żadna sekcja nie jest aktywna — zero zmiany DOM/szerokości
-            płótna wobec stanu sprzed naprawy. */}
-        {ideaRightPanelNode}
+        {/* ★ 2026-09-05 (decyzja CTO): kanoniczny panel idei (Menu 3:
+            Narzędzia/Kontekst i powiązania/Sugestie AI) NIE jest już osobną
+            kolumną obok inspektora — to była druga kolumna panelu ze
+            zgłoszenia właściciela. Renderuje się w TEJ SAMEJ kolumnie co panel
+            elementu (`elementInspectorRail` wyżej), więc na ekranie jest
+            zawsze najwyżej jeden prawy panel. */}
         </div>
 
         {/* E11 (2026-08-10) — same mandatory-preview gate as the legacy shell
@@ -5122,7 +5283,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   function renderFloatingLeftRail(): React.ReactNode {
     return (
       <CanvasLeftToolbar
-        side={melsCanvasEnabled ? 'right' : 'left'}
+        /* ★ 2026-09-05 (decyzja CTO „jeden prawy panel"): paleta płótna wraca
+           na LEWĄ stronę. Przy prawej krawędzi stała tuż obok prawego panelu i
+           razem z nieistniejącym już paskiem sekcji dawała obraz „dwóch
+           kolumn ikon" ze zgłoszenia właściciela. Lewa strona ma teraz
+           dokładnie jedną pionową szynę narzędzi, prawa dokładnie jeden panel. */
+        side="left"
         activeTool={activeTool}
         interactionMode={mindMapInteractionMode}
         selection={selection}

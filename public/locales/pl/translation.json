@@ -5210,7 +5210,14 @@
       "sessionParticipants": "Uczestnicy",
       "sessionTimer": "Stoper",
       "sessionActive": "aktywny",
-      "sessionInactive": "nieaktywny"
+      "sessionInactive": "nieaktywny",
+      "tabs": {
+        "aria": "Zakładki panelu",
+        "element": "Element",
+        "teresa": "Teresa"
+      },
+      "closePanel": "Zamknij panel",
+      "ariaPanel": "Panel pomysłu"
     }
   },
   "step1": {
@@ -33651,7 +33658,8 @@
       "start": "Strzałka: na początku",
       "both": "Strzałka: na obu końcach",
       "noEdges": "Ta gałąź nie ma połączeń"
-    }
+    },
+    "showPanel": "Pokaż panel"
   },
   "ideas": {
     "table": {

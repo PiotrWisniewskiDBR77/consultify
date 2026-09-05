@@ -177,7 +177,13 @@ export const IdeaCanvasMelsView: React.FC<IdeaCanvasMelsViewProps> = ({
       secondBar={secondBar}
       centerMode="canvas"
       inspectorRailSide="left"
-      floatingToolRailSide="right"
+      /* ★ 2026-09-05 (decyzja CTO): paleta płótna (archetyp A) wraca na LEWĄ
+         stronę — po usunięciu pustego paska sekcji (`rightRailTools` = [])
+         lewa strona ma dokładnie JEDNĄ pionową szynę narzędzi, a prawa
+         wyłącznie JEDEN panel. Wcześniej paleta pływała przy prawej krawędzi
+         płótna, tuż obok panelu: to była ta „druga kolumna ikon" ze
+         zgłoszenia właściciela. */
+      floatingToolRailSide="left"
       canvas={canvas}
       floatingLeftRail={floatingLeftRail}
       canvasOverlaySlot={canvasOverlaySlot}
