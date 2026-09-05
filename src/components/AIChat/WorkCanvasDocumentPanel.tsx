@@ -65,7 +65,7 @@ import { isCanvasNewDocOptionsEnabled } from '@/utils/canvasNewDocOptionsFlag';
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
 import { markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
-import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
+import { CanvasRichEditor, requestCanvasQuickAI } from './CanvasEditor/CanvasRichEditor';
 import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
@@ -2394,13 +2394,29 @@ function WorkCanvasMarkdownDocumentPanel({
     }
   };
 
-  const insertQuickAddElement = () => {
-    const snippet = buildQuickAddMarkdown(quickAddElement, quickAddPrompt);
+  const insertQuickAddElement = async () => {
+    const fallbackSnippet = buildQuickAddMarkdown(quickAddElement, quickAddPrompt);
+    const request = await requestCanvasQuickAI({
+      prompt: `Create a ${quickAddElement} for this canvas. ${quickAddPrompt.trim()}`.trim(),
+      selectedText: quickAddPrompt.trim() || quickAddElement,
+      t,
+    });
+    const snippet = request.ok ? request.text : fallbackSnippet;
+    if (!request.ok) {
+      setAlertFeedback(
+        t(
+          'canvas.panel.addElement.aiFallbackNotice',
+          'AI is unavailable. A template was added instead of an AI-generated response.'
+        )
+      );
+    }
     const baseContent = (latestContentRef.current || documentState.contentMd || '').trimEnd();
     const next = `${baseContent}\n\n${snippet}\n`;
     updateMarkdown(next);
     void persistDraft();
-    setStatusFeedback('Element added to Markdown draft.');
+    setStatusFeedback(
+      request.ok ? 'AI-generated element added to Markdown draft.' : 'Template added to Markdown draft.'
+    );
     setQuickAddPrompt('');
   };
 
@@ -2431,8 +2447,7 @@ function WorkCanvasMarkdownDocumentPanel({
       setAlertFeedback('Write AI instruction first.');
       return;
     }
-    setSelectionEditDraft(selectionAiPrompt.trim());
-    await previewSelectionEdit();
+    await previewSelectionEdit({ aiPrompt: selectionAiPrompt.trim() });
   };
 
   const triggerDatasetUpload = () => {
@@ -2528,18 +2543,37 @@ function WorkCanvasMarkdownDocumentPanel({
     setSelectionEditDraft(replacement);
   };
 
-  const previewSelectionEdit = async () => {
+  const previewSelectionEdit = async (options?: { aiPrompt?: string }) => {
     const selectedText = canvasSelection?.selectedText?.trim();
-    const replacementMd = selectionEditDraft.trim();
+    const manualReplacement = selectionEditDraft.trim();
     if (!selectedText) {
       setAlertFeedback('Select Canvas text first, then draft an edit.');
       return;
     }
-    if (!replacementMd) {
+    if (!options?.aiPrompt && !manualReplacement) {
       setAlertFeedback('Write a replacement before previewing the edit.');
       return;
     }
-    setStatusFeedback('Preparing selection edit preview...');
+    let replacementMd = manualReplacement;
+    let usedAiFallback = false;
+    if (options?.aiPrompt) {
+      const request = await requestCanvasQuickAI({
+        prompt: options.aiPrompt,
+        selectedText,
+        t,
+      });
+      replacementMd = request.ok ? request.text : options.aiPrompt;
+      if (!request.ok) {
+        usedAiFallback = true;
+        setAlertFeedback(
+          t(
+            'canvas.panel.selection.aiFallbackNotice',
+            'AI is unavailable. The preview uses a template, not an AI-generated response.'
+          )
+        );
+      }
+    }
+    if (!usedAiFallback) setStatusFeedback('Preparing selection edit preview...');
     try {
       const operation: WorkCanvasOperation = {
         type: 'replace_selection',
@@ -2565,7 +2599,9 @@ function WorkCanvasMarkdownDocumentPanel({
           applyLabel: 'Apply edit suggestion',
           successMessage: 'Selection edit applied.',
         });
-        setStatusFeedback('Selection edit preview ready (local). Save to persist this change.');
+        if (!usedAiFallback) {
+          setStatusFeedback('Selection edit preview ready (local). Save to persist this change.');
+        }
         return;
       }
       const draft = await ensurePersistedDraft();
@@ -2583,7 +2619,7 @@ function WorkCanvasMarkdownDocumentPanel({
         applyLabel: 'Apply edit suggestion',
         successMessage: 'Selection edit applied.',
       });
-      setStatusFeedback('Selection edit preview ready.');
+      if (!usedAiFallback) setStatusFeedback('Selection edit preview ready.');
     } catch (error) {
       setCanvasErrorFeedback(error, 'Failed to preview selection edit.');
     }

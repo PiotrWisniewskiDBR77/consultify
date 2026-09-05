@@ -31,6 +31,7 @@ interface CanvasAIFloatingMenuProps {
    */
   onExplainRequest?: (prompt: string, selectedText: string) => Promise<string | null>;
   isProcessing: boolean;
+  errorLine?: string | null;
 }
 
 interface MenuPosition {
@@ -155,6 +156,7 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
   onAIRequest,
   onExplainRequest,
   isProcessing,
+  errorLine,
 }) => {
   const { t } = useTranslation();
   const [position, setPosition] = useState<MenuPosition | null>(null);
@@ -269,6 +271,11 @@ export const CanvasAIFloatingMenu: React.FC<CanvasAIFloatingMenuProps> = ({
       }}
     >
       {/* Prompt input */}
+      {errorLine && (
+        <p role="alert" className="mb-1 max-w-[460px] rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 shadow-lg dark:bg-red-950/80 dark:text-red-300">
+          {errorLine}
+        </p>
+      )}
       {showPromptInput && (
         <div className="mb-1 flex items-center gap-1 rounded-lg border border-c-border dark:border-c-border bg-white dark:bg-navy-800 px-2 py-1 shadow-lg">
           <Sparkles size={14} className="text-c-text-secondary shrink-0" />
