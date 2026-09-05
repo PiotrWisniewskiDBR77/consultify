@@ -1813,8 +1813,7 @@ router.post(
       );
       return res.status(200).json(result);
     } catch (e) {
-      logger.error('[TablePlatform] schema/execute failed', { error: (e as Error).message });
-      return res.status(500).json({ ...mapAppErrorResponse(e, req, 'error') });
+      return handleRouteError(e, res, 'schema/execute');
     }
   }
 );
