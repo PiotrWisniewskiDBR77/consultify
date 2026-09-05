@@ -48,7 +48,7 @@ import {
   ShieldAlert,
   Target,
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -364,7 +364,8 @@ const AxisSection: React.FC<{
   output: AssessmentReportData['output'];
   aggregatedLevel: number | null | undefined;
   unitNotes?: Readonly<Record<string, string>>;
-}> = ({ axis, unitIds, output, aggregatedLevel, unitNotes }) => {
+  zZapisuSesji?: boolean;
+}> = ({ axis, unitIds, output, aggregatedLevel, unitNotes, zZapisuSesji }) => {
   const findingUnitIds = new Set((output.findings ?? []).map((f) => f.unitId));
   const assessed = axis.areas.filter((a) => unitIds.includes(a.id));
   const notAssessed = axis.areas.filter((a) => !unitIds.includes(a.id));
@@ -383,7 +384,9 @@ const AxisSection: React.FC<{
         Oceniono {assessed.length} z {axis.areas.length} obszarów tej osi.
         {aggregatedLevel !== null && aggregatedLevel !== undefined
           ? ` Wynik osi: ${aggregatedLevel} (skala 1–${axis.levelCount}).`
-          : ' Zamrożony Output nie niesie zagregowanego wyniku tej osi.'}
+          : zZapisuSesji
+            ? ' Wynik osi powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona.'
+            : ' Zamrożony Output nie niesie zagregowanego wyniku tej osi.'}
       </p>
 
       {assessed.length === 0 ? (
@@ -615,6 +618,32 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
     [unitIds, findingByUnit]
   );
 
+  // ★ Liczniki luk liczone z LICZB Outputu (`current`/`target`), nie z listy
+  // wniosków. Poprzednio „Jednostek z luką" brało `gaps.length` (wnioski),
+  // więc Output BEZ wniosków — a taki jest każdy wynik z zapisu sesji —
+  // drukował „0 jednostek z luką" tuż obok 39 obszarów pokazujących +3, +2, +1.
+  // To ta sama liczba w dwóch miejscach dokumentu, sprzeczna ze sobą.
+  const jednostkiZLuka = useMemo(
+    () =>
+      unitIds
+        .map((id) => ({ id, gap: output.gap?.[id] ?? null }))
+        .filter((u): u is { id: string; gap: number } => typeof u.gap === 'number' && u.gap > 0)
+        .sort((a, b) => b.gap - a.gap),
+    [unitIds, output.gap]
+  );
+  const jednostkiBezLuki = useMemo(
+    () => unitIds.filter((id) => typeof output.gap?.[id] === 'number' && (output.gap[id] as number) <= 0),
+    [unitIds, output.gap]
+  );
+  const najwiekszaLuka = jednostkiZLuka[0] ?? null;
+  const nazwaJednostki = useCallback(
+    (unitId: string): string =>
+      resolveDrdUnitLabel(output.methodPackId, output.methodPackVersion, unitId)?.unitName ??
+      findingByUnit.get(unitId)?.unitName ??
+      unitId,
+    [output.methodPackId, output.methodPackVersion, findingByUnit]
+  );
+
   const recommendations = useMemo(
     () => [...(output.findings ?? [])].sort((a, b) => (b.gap ?? -Infinity) - (a.gap ?? -Infinity)),
     [output.findings]
@@ -705,12 +734,15 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   /** Największa luka — `gaps` jest już posortowane malejąco po `gap`. */
   const largestGap = gaps[0] ?? null;
 
-  const surveyModeLabel =
+  // Cała fraza, nie wrzutka do „Sesja była …" — inaczej brak metadanych dawał
+  // zdanie „Sesja była tryb prowadzenia nie został zapisany", które w dokumencie
+  // dla zarządu czyta się jak usterka składu.
+  const surveyModeSentence =
     session?.mode === 'teresa_led'
-      ? 'prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store'
+      ? 'Sesja była prowadzona przez asystenta (Teresa), z zapisem każdego kroku w event-store.'
       : session?.mode === 'guided_manual'
-        ? 'prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji'
-        : 'tryb prowadzenia nie został zapisany w metadanych sesji';
+        ? 'Sesja była prowadzona przez konsultanta — odpowiedzi i dowody wprowadzane ręcznie w sesji.'
+        : 'Trybu prowadzenia sesji nie zapisano w metadanych.';
 
   return (
     <article className="mx-auto flex max-w-[880px] flex-col gap-4 pb-16">
@@ -799,7 +831,10 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               )
             }
           />
-          <Property label={t('assessment.report.module', 'Moduł')} value={output.module} />
+          <Property
+            label={t('assessment.report.module', 'Moduł')}
+            value={output.module === 'assessment' ? 'Ocena' : output.module}
+          />
         </dl>
 
         {superseded ? (
@@ -845,7 +880,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               ) : (
                 '.'
               )}{' '}
-              Sesja była {surveyModeLabel}.
+              {surveyModeSentence}
             </p>
             <p>
               Badanie objęło <strong className="text-c-text">{unitIds.length}</strong>
@@ -863,7 +898,11 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
                 : ''}
             </p>
             <p>
-              Wynik zamrożono {formatDateTime(output.frozenAt)}
+              {zZapisuSesji ? (
+                'Ten wynik nie został jeszcze zamrożony — pochodzi z zapisu sesji oceny'
+              ) : (
+                <>Wynik zamrożono {formatDateTime(output.frozenAt)}</>
+              )}
               {session?.createdAt ? <>, sesję otwarto {formatDate(session.createdAt)}</> : null}.{' '}
               {latestApproval ? (
                 <>
@@ -874,7 +913,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               ) : (
                 <>
                   Dla tej rewizji <strong className="text-c-text">nie zarejestrowano zatwierdzenia</strong> —
-                  dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.
+                  {zZapisuSesji
+                    ? ' dokument jest odczytem zapisu sesji, nie wynikiem zatwierdzonym.'
+                    : ' dokument jest odczytem zamrożonego wyniku, nie wynikiem zatwierdzonym.'}
                 </>
               )}
             </p>
@@ -915,7 +956,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           <SummaryStat label="Ocenionych jednostek" value={unitIds.length} />
           <SummaryStat label="Z potwierdzonym dowodem" value={output.findings?.length ?? 0} />
           <SummaryStat label="Bez przyjętego dowodu" value={unitsWithoutFinding.length} />
-          <SummaryStat label="Jednostek z luką" value={gaps.length} />
+          <SummaryStat label="Jednostek z luką" value={jednostkiZLuka.length} />
         </div>
         {aggregationEntries.length > 0 ? (
           <div className="space-y-2">
@@ -945,9 +986,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
           </div>
         ) : (
           <p className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs italic text-c-text-muted">
-            Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza
-            momentem zamrożenia (patrz „Ograniczenia i założenia" powyżej). Poniżej pełny wynik per
-            jednostka, z których taka agregacja by się składała.
+            {zZapisuSesji
+              ? 'Wynik zagregowany per wymiar (oś) powstaje przy zamrożeniu oceny — ta ocena nie została jeszcze zamrożona, więc go tu nie ma. Nie liczymy go zastępczo, żeby dokument nie podał liczby, której nikt nie zatwierdził. Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.'
+              : 'Ten Output nie zawiera zagregowanego wyniku per wymiar (oś) — kernel liczy tę agregację poza momentem zamrożenia (patrz „Ograniczenia i założenia" powyżej). Poniżej pełny wynik per jednostka, z których taka agregacja by się składała.'}
           </p>
         )}
       </SectionCard>
@@ -969,6 +1010,7 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               output={output}
               aggregatedLevel={output.aggregation?.byGroup?.[axis.axisId]}
               unitNotes={unitNotes}
+              zZapisuSesji={zZapisuSesji}
             />
           ))
         )}
@@ -1154,13 +1196,14 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
               Ocena objęła {unitIds.length}
               {totalMethodAreas > 0 ? <> z {totalMethodAreas}</> : null} obszarów
               {axisNarratives.length > 0 ? <> w {axesCoveredCount} z {axisNarratives.length} osi</> : null}.
-              W {strengths.length} obszarach organizacja jest na poziomie docelowym lub powyżej;
-              w {gaps.length} pozostaje luka
-              {largestGap
+              W {jednostkiBezLuki.length} obszarach organizacja jest na poziomie docelowym lub powyżej;
+              w {jednostkiZLuka.length} pozostaje luka
+              {najwiekszaLuka
                 ? (
                     <>
-                      , największa na obszarze <strong className="text-c-text">{largestGap.unitName}</strong>{' '}
-                      ({largestGap.gap} {largestGap.gap === 1 ? 'poziom' : 'poziomy'})
+                      , największa na obszarze{' '}
+                      <strong className="text-c-text">{nazwaJednostki(najwiekszaLuka.id)}</strong>{' '}
+                      ({najwiekszaLuka.gap} {najwiekszaLuka.gap === 1 ? 'poziom' : 'poziomy'})
                     </>
                   )
                 : null}
@@ -1275,15 +1318,25 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
       {/* ── Stopka ──────────────────────────────────────────────────────── */}
       <footer className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-5 text-[11px] text-c-text-muted">
         <p className="mb-2 font-semibold text-c-text-secondary">
-          Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy
-          wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.
+          {zZapisuSesji
+            ? 'Ten dokument jest odczytem zapisu sesji oceny. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zapisano w warsztacie. Zamrożenie wyniku nadaje mu niezmienność, skrót treści i ślad zatwierdzenia; ta ocena tego jeszcze nie ma.'
+            : 'Ten dokument jest odczytem zamrożonego, niezmiennego Outputu. Treść nie jest przeliczana przy wyświetlaniu — pokazuje dokładnie to, co zostało zatwierdzone w momencie zamrożenia.'}
         </p>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-          <Property label="Identyfikator Outputu" value={output.id} mono />
-          <Property label="Skrót treści (hash)" value={output.contentHash} mono />
-          <Property label="Wersja Outputu" value={`v${output.outputVersion}`} />
-          <Property label="Zamrożono" value={formatDateTime(output.frozenAt)} />
-        </dl>
+        {zZapisuSesji ? (
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+            <Property label="Ocena" value={output.scope} />
+            <Property label="Metodyka" value={`${output.methodPackId.toUpperCase()} ${output.methodPackVersion}`} />
+            <Property label="Data utworzenia oceny" value={formatDate(output.createdAt)} />
+            <Property label="Zamrożono" value="—" />
+          </dl>
+        ) : (
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+            <Property label="Identyfikator Outputu" value={output.id} mono />
+            <Property label="Skrót treści (hash)" value={output.contentHash} mono />
+            <Property label="Wersja Outputu" value={`v${output.outputVersion}`} />
+            <Property label="Zamrożono" value={formatDateTime(output.frozenAt)} />
+          </dl>
+        )}
       </footer>
     </article>
   );
