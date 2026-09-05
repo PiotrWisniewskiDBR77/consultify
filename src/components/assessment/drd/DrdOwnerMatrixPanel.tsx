@@ -132,14 +132,21 @@ export const DrdOwnerMatrixPanel: React.FC<DrdOwnerMatrixPanelProps> = ({
   }
 
   return (
-    <div data-testid="drd-owner-matrix" className={`flex min-h-0 flex-col ${className}`}>
+    <div data-testid="drd-owner-matrix" className={`flex h-full min-h-0 flex-col ${className}`}>
       <DRDMatrixGrid
         areas={axis.areas}
         levelCount={axis.levelCount}
         value={value}
         compact
         columnMinPx={150}
-        rowHint="Kliknij komórkę, by otworzyć szczegóły poziomu"
+        /* Krótko: ta podpowiedź powtarza się w KAŻDYM wierszu, więc każde
+           dodatkowe słowo kosztuje siedem linijek wysokości i wypycha z kadru
+           dolny pasek obszarów z chipami AS/TO — czyli dokładnie to, po czym
+           właściciel poznaje swoją macierz. */
+        rowHint="Kliknij komórkę"
+        /* Siatka wypełnia wysokość zakładki i przewija się w środku, dzięki
+           czemu `sticky bottom-0` paska obszarów faktycznie działa. */
+        fillHeight
         selectedCell={
           selection ? { areaId: selection.unitId, level: selection.level } : null
         }

@@ -87,7 +87,7 @@ export function etykietyPoziomowZMetodyki(
 }
 
 /**
- * NAZWA OBSZARU W MACIERZY — jedno źródło dla wszystkich czterech miejsc,
+ * NAZWA OBSZARU (I OSI) W MACIERZY — jedno źródło dla wszystkich czterech miejsc,
  * w których ta siatka żyje (edytor · sesja · raport z oceny · prezentacja).
  *
  * ★ ZGŁOSZENIE WŁAŚCICIELA 2026-09-05: w raporcie z oceny dolny pasek macierzy
@@ -114,8 +114,15 @@ export function etykietyPoziomowZMetodyki(
  * (`DRDArea.namePL`, 48 wpisów) i cała reszta produktu już się nim posługuje.
  * Macierz była jedynym miejscem, które go ignorowało.
  */
-export function etykietaObszaru(area: Pick<DRDArea, 'name' | 'namePL'>): string {
-  return area.namePL?.trim() || area.name;
+export function etykietaObszaru(
+  /**
+   * Obszar ALBO oś — obie struktury metodyki mają tę samą parę pól
+   * (`name` + opcjonalne `namePL`) i tę samą regułę podpisu, więc podpis osi
+   * w selektorze edytora nie może rozjechać się z podpisem obszaru w siatce.
+   */
+  jednostka: Pick<DRDArea, 'name' | 'namePL'>
+): string {
+  return jednostka.namePL?.trim() || jednostka.name;
 }
 
 export const MIN_CZYTELNA_KOLUMNA_PX = 56;

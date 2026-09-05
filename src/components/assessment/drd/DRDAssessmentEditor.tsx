@@ -299,6 +299,17 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
   const hiddenColumns =
     hiddenPx > 0 ? Math.max(1, Math.ceil(hiddenPx / (effectiveColumnMinPx + gapPx))) : 0;
 
+  /**
+   * Kolumna poniżej 80 px: oddajemy treści padding, którego przy 150 px nikt
+   * nie zauważa, a przy 74 px decyduje o tym, czy „Management" zmieści się
+   * w jednej linii, czy zostanie przełamane na „Managem / ent". Zmierzone
+   * w kadrze raportu: 74 px kolumny minus p-2 (16) minus px-1 (8) = 50 px na
+   * tekst, czyli o kilka pikseli za mało na najdłuższe terminy z nakładek.
+   */
+  const waskieKolumny = effectiveColumnMinPx < 80;
+  const cellPadding = waskieKolumny ? 'p-1' : density.cellPadding;
+  const cellInnerPadding = waskieKolumny ? 'px-0.5' : 'px-1';
+
   const levelLabels = React.useMemo(
     () => etykietyPoziomowZMetodyki(areas, levelCount),
     [areas, levelCount]
@@ -327,7 +338,12 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                 <React.Fragment key={`row-${level}`}>
                   {/* Etykieta wiersza */}
                   <div
-                    className={`sticky left-0 z-10 rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-gradient-to-r dark:from-navy-800/60 dark:to-navy-950 ${density.rowLabelPadding}`}
+                    /* `overflow-hidden` + `break-words`: przy wąskiej kolumnie
+                       etykiet długie słowo („Registration") wystawało poza swój
+                       tor i podbijało `scrollWidth` całej siatki — czyli
+                       włączało pasek przewijania, choć TORY mieściły się co do
+                       piksela. Zmierzone: tory 854 px, scrollWidth 874 px. */
+                    className={`sticky left-0 z-10 overflow-hidden break-words rounded-xl border border-c-border bg-c-surface dark:border-white/10 dark:bg-gradient-to-r dark:from-navy-800/60 dark:to-navy-950 ${density.rowLabelPadding}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-bold text-c-text">
@@ -414,7 +430,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                           szum, nie pomoc.
                         */
                         title={onCellMouseEnter ? undefined : fullContent || undefined}
-                        className={`group relative rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                        className={`group relative overflow-hidden rounded-lg border transition-all duration-200 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                           density.cellPadding
                         } ${
                           isSelected
@@ -431,11 +447,11 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                         aria-label={`${etykietaObszaru(area)}, level ${level}`}
                       >
                         <div
-                          className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center px-1`}
+                          className={`h-full ${density.cellMinHeight} flex items-center justify-center text-center ${cellInnerPadding}`}
                         >
                           <span
                             className={`${
-                              effectiveColumnMinPx < 80 ? 'text-[10px]' : 'text-[11px]'
+                              waskieKolumny ? 'text-[10px]' : 'text-[11px]'
                             } font-medium leading-tight line-clamp-3 break-words ${
                               isAchieved
                                 ? MATRIX_TEXT_ACHIEVED
@@ -470,7 +486,7 @@ export const DRDMatrixGrid: React.FC<DRDMatrixGridProps> = ({
                   type="button"
                   onClick={() => onAreaClick(area.id)}
                   title={etykietaObszaru(area)}
-                  className="sticky bottom-0 z-20 rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className="sticky bottom-0 z-20 overflow-hidden rounded-xl border border-c-border bg-c-surface hover:bg-c-surface-hover dark:border-white/10 dark:bg-gradient-to-b dark:from-white/10 dark:to-white/[0.06] dark:hover:from-white/[0.14] dark:hover:to-white/[0.08] p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <span className="text-[11px] font-bold text-c-text-secondary">{area.id}</span>
@@ -1056,7 +1072,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
             >
               {DRD_STRUCTURE.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.id}. {a.name}
+                  {a.id}. {etykietaObszaru(a)}
                 </option>
               ))}
             </select>
@@ -1106,7 +1122,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                       return null;
                     })()}
                   </div>
-                  <div className="text-sm font-medium truncate">{a.name}</div>
+                  <div className="text-sm font-medium truncate">{etykietaObszaru(a)}</div>
                   {/* Progress bar per area */}
                   {(() => {
                     const areaState = getAreaState(value, a.id, axis?.levelCount || 5);
@@ -1445,7 +1461,7 @@ export const DRDAssessmentEditor: React.FC<Props> = ({
                                 {popupLevelInfo?.title || `Level ${popupCell.level}`}
                               </div>
                               <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {popupArea?.name} · {popupCell.areaId}
+                                {popupArea ? etykietaObszaru(popupArea) : ''} · {popupCell.areaId}
                               </div>
                             </div>
                           </div>
