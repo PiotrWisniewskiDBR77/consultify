@@ -58,7 +58,21 @@ function listSourceFiles() {
     ['-rl', '--include=*.ts', '--include=*.tsx', 'import\\.meta', 'src'],
     { cwd: REPO_ROOT, encoding: 'utf8' }
   );
-  return out.split('\n').filter(Boolean);
+  // `__tests__`/`.test.ts(x)` files are excluded: their whole purpose (see
+  // e.g. `zaiTeresaFlag.envStaticRead.test.ts` and the 5 test files from this
+  // dyzur) is to document and mutation-prove the BROKEN shape in prose/regex
+  // literals, which is exactly what would false-positive here even after
+  // comment-stripping (a regex literal is still executable code, not a
+  // comment). Production flag files are what this guard protects.
+  return out
+    .split('\n')
+    .filter(Boolean)
+    .filter((f) => !/__tests__\//.test(f) && !/\.(test|spec)\.tsx?$/.test(f));
+}
+
+/** Strips block and line comments — same shape vitest's env-static-read tests use, so a docstring describing the old broken pattern (e.g. zaiTeresaFlag.ts's header) never false-positives here. */
+function stripComments(content) {
+  return content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
 // Matches `const <ident> = import.meta as ...;` (any cast shape) capturing
@@ -68,7 +82,7 @@ const DECL_RE = /\bconst\s+(\w+)\s*=\s*import\.meta\s+as\s+[^;\n]*;/g;
 
 function scanFileForSplitPattern(relFile) {
   const abs = path.join(REPO_ROOT, relFile);
-  const content = readFileSync(abs, 'utf8');
+  const content = stripComments(readFileSync(abs, 'utf8'));
   const violations = [];
   let match;
   DECL_RE.lastIndex = 0;
