@@ -20,7 +20,22 @@ const REJESTR = 'docs/program/MVP_FINAL_ZAMROZONE.json';
 const ZAMROZONY = 'src/components/AIChat/UnifiedChatPanel.tsx';
 const WOLNY = 'src/views/SettingsView.tsx';
 
-function git(a, cwd = repoRoot) { return execFileSync('git', a, { cwd, encoding: 'utf8' }).trim(); }
+/**
+ * Piaskownica = KOPIA samego skryptu w pustym katalogu, nie worktree repo.
+ * Powód (zmierzone 2026-09-05): `git worktree add` rozpakowuje 35 tys. plików i ~1,5 GB;
+ * przy pełnym dysku sypie się `No space left on device` i CAŁY zestaw testów robi się
+ * czerwony z powodu środowiska, nie produktu. Bezpiecznik ma być tani jak jego przedmiot.
+ */
+function piaskownica() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mvp-final-guard-'));
+  fs.mkdirSync(path.join(dir, 'scripts/mvp-final'), { recursive: true });
+  fs.copyFileSync(
+    path.join(repoRoot, 'scripts/mvp-final/check-freeze.sh'),
+    path.join(dir, 'scripts/mvp-final/check-freeze.sh')
+  );
+  return dir;
+}
+
 function uruchom(argv, cwd = wt) {
   return spawnSync('bash', ['scripts/mvp-final/check-freeze.sh', ...argv], { cwd, encoding: 'utf8' });
 }
@@ -29,18 +44,11 @@ function ustawRejestr(obj, cwd = wt) {
   fs.writeFileSync(path.join(cwd, REJESTR), JSON.stringify(obj, null, 1));
 }
 
-before(() => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mvp-final-wt-'));
-  fs.rmSync(dir, { recursive: true, force: true });
-  git(['worktree', 'add', '--detach', dir, 'HEAD']);
-  wt = dir;
-});
-after(() => { if (wt) { try { git(['worktree', 'remove', '--force', wt]); } catch {} } });
+before(() => { wt = piaskownica(); });
+after(() => { if (wt) fs.rmSync(wt, { recursive: true, force: true }); });
 
 test('brak rejestru = przepuszcza, ale mówi to wprost (cisza nie udaje zieleni)', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mvp-final-pusty-'));
-  fs.mkdirSync(path.join(dir, 'scripts/mvp-final'), { recursive: true });
-  fs.copyFileSync(path.join(repoRoot, 'scripts/mvp-final/check-freeze.sh'), path.join(dir, 'scripts/mvp-final/check-freeze.sh'));
+  const dir = piaskownica();
   const r = uruchom(['--pliki', ZAMROZONY, '--komunikat=cokolwiek'], dir);
   assert.equal(r.status, 0);
   assert.match(r.stdout, /żaden moduł nie jest jeszcze zamrożony/);
@@ -134,4 +142,41 @@ test('DOWÓD MUTACYJNY: wycięcie porównania staged×rejestr = test przestaje �
   fs.writeFileSync(sciezka, oryginal);
   const poNaprawie = uruchom(['--pliki', ZAMROZONY, '--komunikat=fix: cos']);
   assert.equal(poNaprawie.status, 1, 'po przywróceniu guard MUSI znowu blokować');
+});
+
+test('tryb STAGED (bez --pliki) — realna ścieżka hooka: czyta git diff --cached', () => {
+  // Mały, prawdziwy repozytorium git (kilka plików), żeby przejść dokładnie tą gałęzią kodu,
+  // którą chodzi hook: lista plików z indeksu, nie z argumentów.
+  const dir = piaskownica();
+  const git = (a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  git(['init', '-q', '.']);
+  git(['config', 'user.email', 'test@test']);
+  git(['config', 'user.name', 'test']);
+  ustawRejestr({ moduly: { '13_CHAT': { pliki: [ZAMROZONY] } }, wspolne: null }, dir);
+  fs.mkdirSync(path.join(dir, path.dirname(ZAMROZONY)), { recursive: true });
+  fs.writeFileSync(path.join(dir, ZAMROZONY), 'export const X = 1;\n');
+  git(['add', ZAMROZONY]);
+
+  const bez = uruchom(['--komunikat=fix(czat): drobiazg'], dir);
+  assert.equal(bez.status, 1, 'staged zamrożony plik bez znacznika MUSI blokować');
+  assert.match(bez.stderr, /UnifiedChatPanel/);
+
+  const ze = uruchom(['--komunikat=fix(czat): drobiazg [ODMROZENIE 13_CHAT DEC-318]'], dir);
+  assert.equal(ze.status, 0);
+
+  // Pusty indeks = nie ma czego blokować.
+  git(['reset', '-q']);
+  const pusty = uruchom(['--komunikat=fix: cos'], dir);
+  assert.equal(pusty.status, 0);
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('komunikat czytany Z PLIKU (--commit-msg=) tak samo jak z --komunikat=', () => {
+  ustawRejestr({ moduly: { '13_CHAT': { pliki: [ZAMROZONY] } }, wspolne: null });
+  const msg = path.join(wt, 'MSG.txt');
+  fs.writeFileSync(msg, 'fix(czat): drobiazg\n');
+  assert.equal(uruchom(['--pliki', ZAMROZONY, `--commit-msg=${msg}`]).status, 1);
+  fs.writeFileSync(msg, 'fix(czat): drobiazg\n\n[ODMROZENIE 13_CHAT DEC-318]\n');
+  assert.equal(uruchom(['--pliki', ZAMROZONY, `--commit-msg=${msg}`]).status, 0);
 });

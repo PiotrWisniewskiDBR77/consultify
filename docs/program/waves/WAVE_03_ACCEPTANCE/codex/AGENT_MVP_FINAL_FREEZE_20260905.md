@@ -16,7 +16,7 @@ zgodnie ze zleceniem pokazany jest tylko `--dry-run` dla `13_CHAT`.
 | `scripts/mvp-final/check-freeze.sh` | bezpiecznik: commit w zamrożony plik = odmowa, chyba że `[ODMROZENIE <MODUL> DEC-<nr>]` |
 | `scripts/mvp-final/porownaj.mjs` | świeże zrzuty tych samych ekranów vs wzorce → tabela ZGODNY/RÓŻNI SIĘ + `diff.png` |
 | `scripts/mvp-final/porownaj-obrazy.mjs` | silnik porównania PNG (wydzielony, testowalny bez przeglądarki) |
-| `tests/unit/mvp-final/*.test.mjs` | 35 testów `node:test` (w tym dowód mutacyjny) |
+| `tests/unit/mvp-final/*.test.mjs` | 37 testów `node:test` (w tym dowód mutacyjny) |
 | `docs/program/MVP_FINAL_PROCEDURA.md` | jedna strona po polsku dla właściciela |
 | `.husky/commit-msg`, `.husky/pre-commit` | wpięcie bezpiecznika |
 | `package.json` | `mvp-final:zamroz` · `mvp-final:porownaj` · `mvp-final:sprawdz` · `mvp-final:test`; 4 pliki dopisane do `test:node-native` |
@@ -149,13 +149,14 @@ zapisać:
 Po próbie: `git reset --hard HEAD~1`, rejestr przywrócony, `git status` czysty — w `src/`
 nie zostało nic.
 
-**Testy:** `npm run mvp-final:test` → **35/35 PASS**.
+**Testy:** `npm run mvp-final:test` → **37/37 PASS** (1,3 s).
 Pokrycie: resolver na fixture (alias, index, dynamiczny import, re-export, zakomentowany
 import, pakiet npm), kształt rejestru, zgodność mapy z `bindings.json` i katalogami WAVE_03,
 istnienie każdego korzenia i terytorium, `--dry-run` nie dotyka rejestru, silnik porównania
 PNG (zgodny / 1 piksel / próg / inne wymiary / powstanie `diff.png`), oraz bezpiecznik:
 bez znacznika = 1, ze znacznikiem = 0, znacznik cudzego modułu = 1, znacznik bez `DEC-` = 1,
-dwa moduły = dwa znaczniki, `WSPOLNE` też blokuje.
+dwa moduły = dwa znaczniki, `WSPOLNE` też blokuje, tryb STAGED (realna ścieżka hooka:
+`git diff --cached` w małym prawdziwym repo) oraz komunikat czytany z pliku `--commit-msg=`.
 
 **Dowód mutacyjny** (`checkFreeze.test.mjs`, ostatni test): w kopii skryptu w osobnym worktree
 wycinam (1) porównanie staged×rejestr i (2) warunek znacznika — po każdej mutacji guard
@@ -185,6 +186,20 @@ ODBIOR_AUTH_STATE=<plik> node scripts/mvp-final/porownaj.mjs --modul=13_CHAT
 
 `zamroz.mjs` zakłada tag `mvp-final-<MODUL>-<data>` lokalnie i **nie robi push** — wypycha
 nadzorca sesji głównej.
+
+---
+
+## 7a. Pułapka złapana po drodze: test bezpiecznika brał zakładnika ze środowiska
+
+Pierwsza wersja `checkFreeze.test.mjs` robiła `git worktree add` (35 tys. plików, ~1,5 GB).
+Przy pełnym dysku (`/System/Volumes/Data` 100%) cały zestaw poszedł na czerwono z komunikatem
+`No space left on device` — **czerwień środowiska przypisana produktowi**, dokładnie ta klasa co
+„bezpiecznik, który nigdy nie mógł przejść". Sprawdziłem przyczynę (`git worktree add` ręcznie →
+`No space left on device`) zamiast zgadywać.
+
+Naprawa: piaskownica = pusty katalog tymczasowy z **kopią samego skryptu**, plus jedno małe,
+prawdziwe repo git dla ścieżki `git diff --cached`. Czas zestawu spadł z 23,8 s do 1,3 s,
+a test przestał zależeć od wolnego miejsca.
 
 ---
 
