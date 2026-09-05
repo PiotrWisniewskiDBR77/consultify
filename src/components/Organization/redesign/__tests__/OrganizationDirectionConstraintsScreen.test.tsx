@@ -128,4 +128,28 @@ describe('OrganizationDirectionConstraintsScreen', () => {
     });
     expect(payload).toHaveProperty('profile_completeness');
   });
+
+  it(
+    'DEFEKT odbioru 05.09 (org-technology-culture-constraints): zakładka „Technologia" ma ' +
+      'DOKŁADNIE te same 4 pola co stary ekran (dojrzałość cyfrowa, adopcja chmury, stos ' +
+      'technologiczny, budżet cyfrowy) — audyt porównał ją z INNYM ekranem („Model działania", ' +
+      'gdzie żyje „Obecne systemy"/`core_systems`, patrz OrganizationIdentityOperatingScreen); ' +
+      'ten test broni realnej granicy parytetu, żeby żadne z tych 4 pól nie zniknęło po cichu',
+    async () => {
+      renderScreen();
+
+      await waitFor(() => expect(screen.getByTestId('org-card-technology')).toBeInTheDocument());
+      const technologyCard = screen.getByTestId('org-card-technology');
+
+      expect(screen.getByLabelText('Dojrzałość cyfrowa (1-7)')).toBeInTheDocument();
+      expect(screen.getByLabelText('Poziom adopcji chmury')).toBeInTheDocument();
+      expect(screen.getByLabelText('Stos technologiczny')).toBeInTheDocument();
+      expect(screen.getByLabelText('Budżet cyfrowy (% przychodu)')).toBeInTheDocument();
+
+      // „Obecne systemy" (core_systems/SAP/Oracle/Salesforce) NIE należy do tego
+      // ekranu ani na starym, ani na nowym — żyje w „Tożsamość i model działania"
+      // → „Rynki i systemy rdzeniowe". Nie duplikuj go tutaj.
+      expect(technologyCard).not.toHaveTextContent('Obecne systemy');
+    }
+  );
 });

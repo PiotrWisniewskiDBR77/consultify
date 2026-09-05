@@ -448,6 +448,23 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     [shownFields]
   );
 
+  /**
+   * Widoczność pigułki zakładki NIE MOŻE zależeć od filtra chipów/wyszukiwarki
+   * (inaczej pigułka migałaby przy każdej zmianie filtra) — liczy się tylko,
+   * czy dla bieżącego typu organizacji („Model dostawy" jest warunkowy przez
+   * `showDeliveryModel`/`showRevenueModel`) ISTNIEJE choć jedno pole. Defekt
+   * odbioru na żywo 05.09: „Model dostawy" była martwą pigułką (podświetlała
+   * się, ale treść się nie zmieniała) dla organizacji bez ustawionego typu —
+   * `sectionHasContent('delivery')` było `false`, więc `<div ref=.../>` nigdy
+   * się nie renderował i nie było czego przewinąć. Rozwiązanie: nie pokazuj
+   * pigułki zakładki, która nie ma treści dla tego typu organizacji (tak jak
+   * stary ekran warunkowo chował całą sekcję „Model operacji" z nawigacji).
+   */
+  const sectionApplicable = useCallback(
+    (section: IdentityOperatingSection) => visibleFields.some((field) => field.section === section),
+    [visibleFields]
+  );
+
   const handleSectionChange = useCallback((id: string) => {
     setActiveSection(id as IdentityOperatingSection);
     sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -502,10 +519,23 @@ export const OrganizationIdentityOperatingScreen: React.FC<{
     };
   };
 
-  const sections: StandardModuleTab[] = IDENTITY_OPERATING_SECTIONS.map((section) => ({
+  const sections: StandardModuleTab[] = IDENTITY_OPERATING_SECTIONS.filter((section) =>
+    sectionApplicable(section.id)
+  ).map((section) => ({
     id: section.id,
     label: section.label,
   }));
+
+  // Jeżeli aktywna zakładka zniknęła (np. użytkownik wyczyścił „Typ
+  // organizacji", a był na „Model dostawy"), wróć na pierwszą dostępną —
+  // nigdy nie zostawiaj podświetlonej pigułki bez odpowiadającej treści.
+  useEffect(() => {
+    if (sections.length === 0) return;
+    if (!sections.some((section) => section.id === activeSection)) {
+      setActiveSection(sections[0].id as IdentityOperatingSection);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections.map((section) => section.id).join('|')]);
 
   const chips: StandardCounterChip[] = [
     { id: 'all', label: 'Wszystkie', count: counts.all },

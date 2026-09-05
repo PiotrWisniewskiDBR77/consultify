@@ -13,20 +13,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/primitives';
 import {
+  claimValueKey,
   type GovernedClaim,
   type GovernedSnapshotVersion,
   organizationGovernedContextApi,
+  summarizeClaimValue,
 } from '@/services/organizationGovernedContextApi';
 import type { OrganizationScreen } from './OrganizationSidebar';
-
-function renderValue(value: unknown): string {
-  if (typeof value === 'string') return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-}
 
 export const OrganizationDecisionQualityPanel: React.FC<{
   screen: OrganizationScreen;
@@ -71,12 +64,23 @@ export const OrganizationDecisionQualityPanel: React.FC<{
       byPath.set(claim.claimPath, [...(byPath.get(claim.claimPath) ?? []), claim])
     );
     return [...byPath.entries()]
-      .map(([path, entries]) => ({
-        path,
-        entries,
-        values: [...new Set(entries.map((entry) => renderValue(entry.value)))],
-      }))
-      .filter((item) => item.values.length > 1);
+      .map(([path, entries]) => {
+        const uniqueByKey = new Map<string, unknown>();
+        entries.forEach((entry) => {
+          const key = claimValueKey(entry.value);
+          if (!uniqueByKey.has(key)) uniqueByKey.set(key, entry.value);
+        });
+        // Konflikt jest realny, gdy jest ≥2 STRUKTURALNIE różnych wartości —
+        // ale dwie różne złożone wartości bez pola title/name/label mogą dać
+        // ten sam TEKST po streszczeniu; dedupe DISPLAY osobno od wykrycia.
+        return {
+          path,
+          entries,
+          conflicting: uniqueByKey.size > 1,
+          values: [...new Set([...uniqueByKey.values()].map(summarizeClaimValue))],
+        };
+      })
+      .filter((item) => item.conflicting);
   }, [claims]);
   const pending = claims.filter((claim) => claim.reviewState === 'pending');
   const rejected = claims.filter((claim) => claim.reviewState === 'rejected');

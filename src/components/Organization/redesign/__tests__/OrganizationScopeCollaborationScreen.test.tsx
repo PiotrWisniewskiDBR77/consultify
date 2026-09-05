@@ -129,4 +129,22 @@ describe('OrganizationScopeCollaborationScreen', () => {
       screen.getByText(/Dane zapisywane są lokalnie \(bufor roboczy\)/)
     ).toBeInTheDocument();
   });
+
+  it(
+    'DEFEKT odbioru 05.09: „Tryb współpracy" pokazuje WIDOCZNE podpisy grup pigułek ' +
+      '(Archetyp transformacji/Rola AI/Rytm nadzoru), nie tylko aria-label — treść przeniesiona ' +
+      'ze starego ekranu „Oczekiwania interesariuszy" wyglądała jak zgubiona, bo nie było wiadomo, co pigułki opisują',
+    () => {
+      renderScreen();
+
+      const collaborationCard = screen.getByTestId('org-card-collaboration');
+      expect(screen.getByText('Archetyp transformacji')).toBeInTheDocument();
+      expect(screen.getByText('Rola AI')).toBeInTheDocument();
+      expect(screen.getByText('Rytm nadzoru')).toBeInTheDocument();
+      // Podpisy muszą być rzeczywiście W KARCIE, nie gdzieś obok.
+      expect(collaborationCard).toHaveTextContent('Archetyp transformacji');
+      expect(collaborationCard).toHaveTextContent('Rola AI');
+      expect(collaborationCard).toHaveTextContent('Rytm nadzoru');
+    }
+  );
 });

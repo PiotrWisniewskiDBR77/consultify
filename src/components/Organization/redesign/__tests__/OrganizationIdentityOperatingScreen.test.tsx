@@ -74,6 +74,27 @@ function renderScreen() {
   );
 }
 
+/** Jak `renderScreen`, ale dodatkowo eksponuje pigułki zakładek (`args.sections`) z osobnym testid — potrzebne tylko do weryfikacji, KTÓRE zakładki się renderują (bez kolizji z tytułami kart, które mają ten sam tekst). */
+function renderScreenWithTabs() {
+  return render(
+    <OrganizationIdentityOperatingScreen>
+      {(args) => (
+        <div>
+          <nav data-testid="tabs">
+            {args.sections.map((section) => (
+              <button key={section.id} data-testid={`tab-${section.id}`}>
+                {section.label}
+              </button>
+            ))}
+          </nav>
+          {args.content}
+          <OrganizationStatePanel {...args.statePanel} />
+        </div>
+      )}
+    </OrganizationIdentityOperatingScreen>
+  );
+}
+
 describe('OrganizationIdentityOperatingScreen', () => {
   beforeEach(() => {
     vi.mocked(Api.get).mockResolvedValue({
@@ -140,4 +161,35 @@ describe('OrganizationIdentityOperatingScreen', () => {
     });
     expect(payload).toHaveProperty('profile_completeness');
   });
+
+  it(
+    'DEFEKT odbioru 05.09: nie pokazuje martwej pigułki „Model dostawy" gdy typ organizacji ' +
+      'nie ma tego pola (dawniej: pigułka podświetlała się, ale treść się nie zmieniała)',
+    async () => {
+      vi.mocked(Api.get).mockResolvedValue({
+        exists: true,
+        profile: { ...EMPTY_PROFILE, profile_completeness: 0 },
+      });
+      vi.mocked(Api.organizationContextGet).mockResolvedValue({
+        snapshotUpdatedAt: new Date().toISOString(),
+        schemaVersion: 1,
+        counts: { items: 0, claims: 0, conflicts: 0 },
+        conflicts: [],
+      });
+
+      renderScreenWithTabs();
+
+      await waitFor(() => expect(screen.getByTestId('org-card-identity')).toBeInTheDocument());
+
+      // Pigułka „Model dostawy" nie istnieje wcale — zamiast istnieć,
+      // ale nic nie robić po kliknięciu.
+      expect(screen.queryByTestId('tab-delivery')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('org-card-delivery')).not.toBeInTheDocument();
+
+      // Sekcje, które NIE zależą od typu organizacji, zostają.
+      expect(screen.getByTestId('tab-identity')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-scale')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-markets')).toBeInTheDocument();
+    }
+  );
 });

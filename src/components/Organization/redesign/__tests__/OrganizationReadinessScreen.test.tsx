@@ -41,12 +41,20 @@ vi.mock('../../../../services/api', () => ({
   Api: { get: vi.fn() },
 }));
 
-vi.mock('../../../../services/organizationGovernedContextApi', () => ({
-  organizationGovernedContextApi: {
-    listClaims: vi.fn(),
-    listVersions: vi.fn(),
-  },
-}));
+vi.mock('../../../../services/organizationGovernedContextApi', async (importOriginal) => {
+  // Zachowaj REALNY `summarizeClaimValue` (formatuje wartości twierdzeń do
+  // czytelnego tekstu — defekt odbioru 05.09: org-summary pokazywał surowy
+  // JSON) — mockujemy tylko sieciowego klienta.
+  const actual =
+    await importOriginal<typeof import('../../../../services/organizationGovernedContextApi')>();
+  return {
+    ...actual,
+    organizationGovernedContextApi: {
+      listClaims: vi.fn(),
+      listVersions: vi.fn(),
+    },
+  };
+});
 
 function claim(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -124,6 +132,41 @@ describe('OrganizationReadinessScreen', () => {
       expect(screen.getByTestId('org-readiness-dim-approval')).toHaveTextContent('v3')
     );
   });
+
+  it(
+    'DEFEKT odbioru 05.09: konflikt ze złożoną wartością (obiekt/lista) NIGDY nie pokazuje ' +
+      'surowego JSON-u w „Co blokuje i kogo zatrzymuje" — tylko czytelne podsumowanie',
+    async () => {
+      vi.mocked(organizationGovernedContextApi.listClaims).mockResolvedValue([
+        claim({
+          claimId: 'a',
+          claimPath: 'notes.manualContext',
+          value: { section: 'goals', primaryObjective: '' },
+        }),
+        claim({
+          claimId: 'b',
+          claimPath: 'notes.manualContext',
+          value: { section: 'goals', primaryObjective: 'Redukcja kosztów' },
+        }),
+      ] as never);
+      vi.mocked(organizationGovernedContextApi.listVersions).mockResolvedValue([]);
+
+      render(<OrganizationReadinessScreen title="Gotowość organizacji" />);
+
+      await waitFor(() =>
+        expect(screen.getByText(/Konflikt: notes.manualContext/)).toBeInTheDocument()
+      );
+
+      const blockersSection = screen.getByText(/Konflikt: notes.manualContext/).closest('div');
+      expect(blockersSection).not.toBeNull();
+      // Zero surowego JSON-u widocznego użytkownikowi — ani nawiasów klamrowych,
+      // ani cudzysłowów kluczy obiektu.
+      expect(document.body.textContent).not.toMatch(/\{"/);
+      expect(document.body.textContent).not.toContain('"section":"goals"');
+      // Zamiast tego: czytelne podsumowanie liczby pól.
+      expect(screen.getByText(/Złożona wartość \(\d+ pól?\)/)).toBeInTheDocument();
+    }
+  );
 
   it('brak blokad renderuje komunikat „Gotowe" zamiast pustej listy', async () => {
     vi.mocked(organizationGovernedContextApi.listClaims).mockResolvedValue([claim()] as never);

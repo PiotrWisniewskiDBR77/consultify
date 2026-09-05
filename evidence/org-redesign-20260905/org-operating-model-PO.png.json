@@ -1,0 +1,11 @@
+{
+ "url": "http://localhost:3009/organization/profile/identity-scale",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Model dostawy"
+ ],
+ "bledy": [
+  "klik nieudany: text=Model dostawy: locator.click: Timeout 8000ms exceeded."
+ ],
+ "kiedy": "2026-09-05T05:45:43.279Z"
+}

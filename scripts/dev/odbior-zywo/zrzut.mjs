@@ -26,8 +26,25 @@ if (!out || !auth || !fs.existsSync(auth)) { console.error('Wymagane: --out oraz
 fs.mkdirSync(path.dirname(out), { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ storageState: auth, viewport: { width: 1440, height: wysokosc }, colorScheme: 'light', locale: 'pl-PL' });
+// KOPIA ROBOTNIKA (port zmieniony na 3009, port 3000 zajęty przez inny proces):
+// `storageState.origins[].localStorage` w Playwright wraca TYLKO dla origin,
+// który dokładnie pasuje (http://localhost:3000) — port 3009 nie dostałby
+// tokenu sesji i lądowałby na /login. Wstrzykujemy te same klucze ręcznie
+// pod NOWYM originem; cookies (domain=localhost, bez portu) i tak działają.
+// MUSI iść PRZED nadpisaniem motywu (poniżej) — inaczej skopiowany
+// `consultify-storage` (zapisany w dowolnym motywie) nadpisze wymuszony 'light'.
+{
+  const authJson = JSON.parse(fs.readFileSync(auth, 'utf8'));
+  const originEntry = (authJson.origins || []).find((o) => o.origin === 'http://localhost:3000');
+  const kv = originEntry ? originEntry.localStorage : [];
+  await ctx.addInitScript((entries) => {
+    try {
+      for (const { name, value } of entries) localStorage.setItem(name, value);
+    } catch {}
+  }, kv);
+}
 // JASNY motyw: aplikacja trzyma motyw w zustand persist `consultify-storage` (state.theme: 'light'|'dark'|'system',
-// src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji.
+// src/store/slices/uiSlice.ts) — nadpisujemy PRZED startem aplikacji (i PO kopii sesji powyżej).
 await ctx.addInitScript(() => {
   try {
     const raw = localStorage.getItem('consultify-storage');
@@ -41,7 +58,7 @@ const page = await ctx.newPage();
 const bledy = [];
 page.on('console', (m) => { if (m.type() === 'error') bledy.push(m.text().slice(0, 200)); });
 page.on('pageerror', (e) => bledy.push('pageerror: ' + String(e).slice(0, 200)));
-await page.goto('http://localhost:3000' + url, { waitUntil: 'domcontentloaded' });
+await page.goto('http://localhost:3009' + url, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(czekaj);
 for (const k of kliki) {
   try { await page.locator(k).first().click({ timeout: 8000 }); await page.waitForTimeout(900); }
