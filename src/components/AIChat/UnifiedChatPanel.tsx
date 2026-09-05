@@ -846,7 +846,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     chatModuleIntent,
   } = useAppStore();
   const storedKickoffMessage = useAppStore((state) => state.chatKickoffMessage);
-  const effectiveKickoffMessage = kickoffMessage ?? storedKickoffMessage;
+  const effectiveKickoffMessage =
+    kickoffMessage ?? (typeof storedKickoffMessage === 'string' ? storedKickoffMessage : undefined);
 
   // MOST „Teresa sama poprawia artefakt" (2026-09-01). Props zostaje pierwszy
   // — osadzone czaty, które jeszcze go podają, działają jak dotąd. Gdy propsa
@@ -5025,7 +5026,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     if (onKickoffConsumed) {
       onKickoffConsumed();
     } else if (kickoffMessage === undefined) {
-      useAppStore.getState().clearChatKickoffMessage();
+      useAppStore.getState().clearChatKickoffMessage?.();
     }
   }, [
     effectiveKickoffMessage,
