@@ -204,6 +204,27 @@ const OkrSetToolPage = lazyWithRetry(() =>
   }))
 );
 
+// Odrzucenie właściciela 2026-09-05 („(…) mamy tabelę, pod nią kartę, piętro
+// niżej – zbiór kart, a poniżej kolejna karta") — trzy brakujące piętra
+// rodziny OKR: KARTA CELU (poziom 2), ZBIÓR kart kluczowych rezultatów
+// (poziom 3), KARTA kluczowego rezultatu (poziom 4). Zatwierdzony obraz
+// karty celu: `evidence/grafika/26-wyniki-karty-n/cel-jedna-karta__PO__*`.
+const OkrObjectiveCardPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrObjectiveCardPage').then((m) => ({
+    default: m.OkrObjectiveCardPage,
+  }))
+);
+const OkrKeyResultSetPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrKeyResultSetPage').then((m) => ({
+    default: m.OkrKeyResultSetPage,
+  }))
+);
+const OkrKeyResultCardPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/OkrKeyResultCardPage').then((m) => ({
+    default: m.OkrKeyResultCardPage,
+  }))
+);
+
 const ConclusionsHub = lazyWithRetry(() =>
   import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.default }))
 );
@@ -3241,6 +3262,87 @@ export const AppRoutes: React.FC = () => {
                 >
                   <RouteErrorBoundary>
                     <OkrSetToolPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* POZIOM 2 formuły OKR — karta celu jako karta N. Ekran sam renderuje pełną ścieżkę poziomów (ArtifactBreadcrumb). */}
+        <Route
+          path={ROUTES.RESULTS_OKR.OBJECTIVE}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    'OKR',
+                    t('results.okrObjectiveCard', 'Objective card'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrObjectiveCardPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* POZIOM 3 formuły OKR — zbiór kart kluczowych rezultatów (StandardModuleBar + StandardGridCard). */}
+        <Route
+          path={ROUTES.RESULTS_OKR.OBJECTIVE_KEY_RESULTS}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    'OKR',
+                    t('results.okrKeyResultSet', 'Key result set'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrKeyResultSetPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* POZIOM 4 formuły OKR — kolejna karta, tym razem kluczowego rezultatu. */}
+        <Route
+          path={ROUTES.RESULTS_OKR.OBJECTIVE_KEY_RESULT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={
+                  breadcrumbs || [
+                    t('sidebar.results', 'Results'),
+                    'OKR',
+                    t('results.okrKeyResultCard', 'Key result card'),
+                  ]
+                }
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrKeyResultCardPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>

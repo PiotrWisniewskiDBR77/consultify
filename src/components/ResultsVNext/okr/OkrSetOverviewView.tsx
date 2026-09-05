@@ -79,8 +79,10 @@ export const OkrSetOverviewView: React.FC<OkrSetOverviewViewProps> = ({ set, isP
   // Gdy listy czlonkow nie ma (konto usuniete, brak organizacji w kontekscie),
   // pokazujemy skrocony identyfikator monospace'em — uczciwie, bez zgadywania.
   const resolveMemberName = useOrganizationMemberNames();
-  const osoba = (userId: string) => {
-    const nazwa = resolveMemberName(userId);
+  // `reviewerUserId` bywa `null` (zestaw bez recenzenta) — sygnatura musi to
+  // przyjąć, zamiast wywracać typowanie na wołaczu (TS2345, 2026-09-05).
+  const osoba = (userId: string | null) => {
+    const nazwa = userId ? resolveMemberName(userId) : null;
     return nazwa ? <span>{nazwa}</span> : <span className="font-mono">{shortOkrId(userId)}</span>;
   };
   const [pending, setPending] = useState<PendingAction>(null);

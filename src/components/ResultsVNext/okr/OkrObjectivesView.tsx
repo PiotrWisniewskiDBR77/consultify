@@ -18,6 +18,7 @@
  * untouched — the drill-down is additive state, not a fourth tab.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import type { StandardBreadcrumb } from '@/components/standard';
 import { tokenService } from '@/services/tokenService';
@@ -40,6 +41,7 @@ import { buildOkrObjectiveColumns, buildOkrObjectivePreview, buildOkrObjectiveRo
 import { useOrganizationMemberNames } from '../useOrganizationMemberNames';
 import { OkrCancelDialog } from './OkrCancelDialog';
 import { OkrObjectiveFormModal, type OkrObjectiveFormValues } from './OkrObjectiveFormModal';
+import { okrObjectiveCardPath, withOwnerSampleData } from './okrObjectiveCardPath';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
 
 function resolveCurrentUserIdFromToken(): string | null {
@@ -67,6 +69,18 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
   // Nazwisko zamiast identyfikatora — wspolny hak, ten sam zrodlo danych
   // co rejestr zestawow (realna lista czlonkow organizacji).
   const resolveMemberName = useOrganizationMemberNames();
+  const navigate = useNavigate();
+  /**
+   * Poziom 2 czteropoziomowej formuły OKR (odrzucenie właściciela 2026-09-05).
+   * Tabela celów jest „tabelą", a KARTA CELU jest tym, co pod nią leży —
+   * dwuklik w wiersz (kanon list: klik = podgląd, dwuklik = pełny artefakt),
+   * pozycja kebaba i akcja w podglądzie prowadzą w to samo miejsce.
+   */
+  const openObjectiveCard = useCallback(
+    (row: OkrObjectiveWithKeyResultsDto) =>
+      navigate(withOwnerSampleData(okrObjectiveCardPath(row.objectiveId))),
+    [navigate]
+  );
   const [objectives, setObjectives] = useState<OkrObjectiveWithKeyResultsDto[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -228,10 +242,12 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
               : undefined,
           selectedRowId: selectedObjectiveId,
           onRowClick: (row) => setSelectedObjectiveId(String(row.objectiveId)),
+          onRowDoubleClick: (row) => openObjectiveCard(row as unknown as OkrObjectiveWithKeyResultsDto),
           rowMenu: (row) =>
             buildOkrObjectiveRowMenu(row as unknown as OkrObjectiveWithKeyResultsDto, isPolish, set.status, {
               onPreview: (r) => setSelectedObjectiveId(r.objectiveId),
               onOpenKeyResults: (r) => onOpenKeyResults(r, set),
+              onOpenCard: openObjectiveCard,
               onEdit: openEdit,
               onCancel: setCancelTarget,
             }),
@@ -245,6 +261,7 @@ export const OkrObjectivesView: React.FC<OkrObjectivesViewProps> = ({ set, isPol
                 parentSetStatus: set.status,
                 currentUserId,
                 onClose: () => setSelectedObjectiveId(null),
+                onOpenCard: openObjectiveCard,
                 onOpenKeyResults: (r) => onOpenKeyResults(r, set),
                 onEdit: openEdit,
                 onCancel: setCancelTarget,

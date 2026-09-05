@@ -242,7 +242,6 @@ export const OkrKeyResultsView: React.FC<OkrKeyResultsViewProps> = ({ set, objec
             ? buildOkrKeyResultPreview(selected, {
                 resolveMemberName,
                 isPolish,
-                currentUserId,
                 parentSetStatus: set.status,
                 onClose: () => setSelectedKeyResultId(null),
                 onOpenCheckIns: (r) => objective && onOpenCheckIns(r, objective, set),

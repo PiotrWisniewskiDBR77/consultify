@@ -27415,7 +27415,10 @@
       "belowTarget": "Poniżej celu",
       "noData": "Brak danych",
       "needsEntry": "Wymaga uzupełnienia"
-    }
+    },
+    "okrObjectiveCard": "Karta celu",
+    "okrKeyResultSet": "Zbiór kart kluczowych rezultatów",
+    "okrKeyResultCard": "Karta kluczowego rezultatu"
   },
   "traceability": {
     "source": "Źródło",

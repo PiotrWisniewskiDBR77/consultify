@@ -216,7 +216,11 @@ export interface OkrKeyResultPreviewDeps {
 }
 
 export function buildOkrKeyResultPreview(row: OkrKeyResultDto, deps: OkrKeyResultPreviewDeps): StandardPreviewProps {
-  const { isPolish, currentUserId, parentSetStatus, onClose, onOpenCheckIns, onEdit, onCancel } = deps;
+  // 2026-09-05: `currentUserId` NIE jest polem `OkrKeyResultPreviewDeps` —
+  // destrukturyzacja go stąd była błędem typu (TS2339) i martwą zmienną.
+  // Rodzeństwo (`okrObjectivePresenters.tsx`) faktycznie go przyjmuje; tutaj
+  // builder nigdy z niego nie korzystał.
+  const { isPolish, parentSetStatus, onClose, onOpenCheckIns, onEdit, onCancel } = deps;
   const childLock = getOkrSetChildEditLock(parentSetStatus);
   const progress = parseOkrKeyResultProgress(row.progress, row.progressCalcReason);
   const cancelEligible = canCancelKeyResultStatus(row.status);

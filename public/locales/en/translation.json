@@ -25992,7 +25992,10 @@
       "belowTarget": "Below target",
       "noData": "No data",
       "needsEntry": "Needs entry"
-    }
+    },
+    "okrObjectiveCard": "Objective card",
+    "okrKeyResultSet": "Key result set",
+    "okrKeyResultCard": "Key result card"
   },
   "traceability": {
     "source": "Source",

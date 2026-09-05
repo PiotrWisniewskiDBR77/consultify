@@ -317,3 +317,37 @@ export function formatOkrNumeric(value: number, isPolish: boolean, unit?: string
   const formatted = value.toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 2 });
   return unit ? `${formatted} ${unit}` : formatted;
 }
+
+// ==========================================
+// Ton pigułki NAGŁÓWKA karty N (Menu 1). To INNA, węższa unia niż
+// `OkrStatusTone` (którym barwimy chipy w tabelach): `NModeHeaderConfig`
+// przyjmuje wyłącznie `draft | review | approved | rejected | neutral`.
+// Mapujemy świadomie, zamiast rzutować — kanon UI #3: czerwień (`rejected`)
+// tylko dla semantyki krytycznej, `at_risk` to ostrzeżenie, nie krytyka,
+// więc dostaje ton informacyjny `review`.
+// ==========================================
+
+export type OkrHeaderStatusTone = 'draft' | 'review' | 'approved' | 'rejected' | 'neutral';
+
+export const OKR_OBJECTIVE_HEADER_STATUS_TONE: Record<OkrObjectiveStatus, OkrHeaderStatusTone> = {
+  draft: 'draft',
+  submitted: 'review',
+  approved: 'approved',
+  active: 'neutral',
+  at_risk: 'review',
+  completed: 'approved',
+  cancelled: 'neutral',
+  closed: 'neutral',
+};
+
+export const OKR_KEY_RESULT_HEADER_STATUS_TONE: Record<OkrKeyResultStatus, OkrHeaderStatusTone> = {
+  not_started: 'draft',
+  on_track: 'approved',
+  at_risk: 'review',
+  // `off_track`/`not_achieved` to jedyne stany krytyczne KR-a — tylko one
+  // dostają czerwień, i to wyłącznie jako sygnał stanu, nigdy jako ozdoba.
+  off_track: 'rejected',
+  achieved: 'approved',
+  not_achieved: 'rejected',
+  cancelled: 'neutral',
+};
