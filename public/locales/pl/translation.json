@@ -34298,7 +34298,8 @@
         "manageTemplates": "Zarządzaj szablonami",
         "templateUpdated": "Szablon zaktualizowany",
         "templateCreated": "Szablon utworzony",
-        "failedToSaveTemplate": "Nie udało się zapisać szablonu"
+        "failedToSaveTemplate": "Nie udało się zapisać szablonu",
+        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym."
       },
       "refineDialog": {
         "suggestionAddPriority": "Dodaj pole priorytet",
@@ -34760,7 +34761,8 @@
       "noFilterResultsTitle": "Brak wyników filtra",
       "noFilterResultsBody_one": "Jedyny wiersz nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "noFilterResultsBody_few": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
-      "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy."
+      "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "tableTemplates": "Szablony tabeli"
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} węzeł",

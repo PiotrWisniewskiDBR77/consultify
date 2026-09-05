@@ -31796,7 +31796,8 @@
         "manageTemplates": "Manage templates",
         "templateUpdated": "Template updated",
         "templateCreated": "Template created",
-        "failedToSaveTemplate": "Failed to save template"
+        "failedToSaveTemplate": "Failed to save template",
+        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine."
       },
       "refineDialog": {
         "suggestionAddPriority": "Add a priority field",
@@ -32253,7 +32254,8 @@
       "recordDetails": "Record details",
       "noFilterResultsTitle": "No filter results",
       "noFilterResultsBody_one": "The only row does not match the current filter. Change the conditions or clear the filter to see every record.",
-      "noFilterResultsBody_other": "None of the {{count}} rows match the current filter. Change the conditions or clear the filter to see every record."
+      "noFilterResultsBody_other": "None of the {{count}} rows match the current filter. Change the conditions or clear the filter to see every record.",
+      "tableTemplates": "Table templates"
     },
     "mindmap": {
       "branchNodeCount_one": "{{count}} node",

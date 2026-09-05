@@ -2468,7 +2468,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           },
           {
             id: 'templates',
-            label: t('ideas.table.templates', 'Templates'),
+            // „Szablony" i „Szablony rekordów" stały obok siebie i znaczyły co
+            // innego (galeria szablonów CAŁEJ TABELI vs zapisane wartości pól
+            // jednego rekordu). Doprecyzowana etykieta usuwa kolizję.
+            label: t('ideas.table.tableTemplates', 'Szablony tabeli'),
             icon: LayoutTemplate,
             onClick: () => setShowTemplateGallery(true),
             show: !locked,
@@ -2574,7 +2577,25 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             label: t('ideas.table.recordTemplates.recordTemplatesTitle', 'Record Templates'),
             icon: Copy,
             onClick: () => setShowRecordTemplateManager(true),
-            show: usePlatform,
+            // ★ Pomiar na żywo 05.09 (`idea-table-record-templates`): menedżera
+            // szablonów rekordu „nie udało się otworzyć klikaniem". Przyczyna
+            // NIE była martwym montażem (RISK-06 podłączył go już wcześniej) —
+            // pozycja była UKRYTA (`show: usePlatform`), bo silnik platformowy
+            // tabeli nie był aktywny. Właściciel czyta ukrytą pozycję jako brak
+            // funkcji, a obok stoi „Szablony" (galeria szablonów TABEL), więc
+            // klika ją i dostaje inny komponent.
+            //
+            // Pozycja jest teraz zawsze widoczna. Poza trybem platformowym jest
+            // WYSZARZONA z jawnym powodem, a nie klikalna-i-zepsuta: backend
+            // (`GET /tables/:tableId/record-templates`) wymaga realnego wiersza
+            // `tp_tables`, którego w trybie zastanym nie ma — otwarcie okna
+            // skończyłoby się „Nie udało się wczytać szablonów".
+            show: true,
+            disabled: !usePlatform,
+            disabledReason: t(
+              'ideas.table.recordTemplates.requiresPlatformTable',
+              'Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym.'
+            ),
             testId: 'idea-table-overflow-record-templates',
           },
           {
