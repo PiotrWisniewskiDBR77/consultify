@@ -135,7 +135,7 @@ import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
 import {
   isUnassignedCardSetId,
   KPI_CARD_SET_PARAM,
-  kpiCardSetPath,
+  kpiReportPath,
   withOwnerSampleData,
 } from './kpiCardSetPath';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -1109,7 +1109,7 @@ export const KpiToolPage: React.FC = () => {
                 <div key={scorecard.scorecardId} data-testid={`kpi-tool-scorecard-tile-${scorecard.scorecardId}`}>
                   <StandardGridCard
                     card={card}
-                    onClick={() => navigate(withOwnerSampleData(kpiCardSetPath(scorecard.scorecardId)))}
+                    onClick={() => navigate(withOwnerSampleData(kpiReportPath(scorecard.scorecardId)))}
                   />
                 </div>
               );
@@ -1185,7 +1185,7 @@ export const KpiToolPage: React.FC = () => {
   if (crumbCardSetId) {
     breadcrumbItems.push({
       label: crumbCardSetName ?? t('Zestawienie', 'Card set'),
-      onClick: () => navigate(withOwnerSampleData(kpiCardSetPath(crumbCardSetId))),
+      onClick: () => navigate(withOwnerSampleData(kpiReportPath(crumbCardSetId))),
     });
   }
   breadcrumbItems.push({ label: kpiTitle });

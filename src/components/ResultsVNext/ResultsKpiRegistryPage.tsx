@@ -152,7 +152,6 @@ import {
   type KpiReportRowVm,
 } from './kpiScorecards/kpiReportPresenters';
 import { kpiScorecardScopeLabel } from './kpiScorecards/kpiScorecardMappers';
-import { UNASSIGNED_CARD_SET_ID } from './kpiTool/kpiCardSetPath';
 import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {

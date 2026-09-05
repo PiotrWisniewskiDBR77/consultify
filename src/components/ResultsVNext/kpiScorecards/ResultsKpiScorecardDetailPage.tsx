@@ -475,6 +475,44 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     [items]
   );
 
+  /**
+   * ── POZIOM 2 = TABELA MIERNIKÓW RAPORTU (SSOT §6) ─────────────────────────
+   *
+   * Wiersze składamy z DWÓCH źródeł: kontraktu pozycji raportu (`items` —
+   * obszar, właściciel nadrzędny, typ, benchmark, limit, jednostka, kierunek,
+   * odpowiedzialny) i matrycy okresów (`periodMatrix` — para CEL/Rezultat na
+   * każdy okres, YTD, stan, otwarte karty działania). Dopóki matryca nie
+   * wróci, kolumny okresów pokazują „—" — geometria tabeli jest już wtedy
+   * poprawna, więc nic nie „skacze" po dojściu danych.
+   *
+   * Grupowanie po OBSZARZE robi jądro tabeli (`isGroupRow`/`renderGroupRow`),
+   * a nie ten ekran — wiersz grupy jest jedną komórką na całą szerokość
+   * (werdykt K6), więc nie rysuje „—" w kolumnach, których grupa nie ma.
+   */
+  const reportItemRows: KpiReportItemRowVm[] = useMemo(
+    () =>
+      buildKpiReportItemRows({
+        items: filteredItems,
+        matrixItems: periodMatrix?.items ?? [],
+        isPolish,
+        resolveOwnerName: (userId) =>
+          userId ? memberNameOrUnknown(resolveMemberName, userId, isPolish) : null,
+      }),
+    [filteredItems, periodMatrix, isPolish, resolveMemberName]
+  );
+
+  const reportItemColumns = useMemo(
+    () => buildKpiReportItemColumns({ isPolish, periods: periodMatrix?.periods ?? [] }),
+    [isPolish, periodMatrix]
+  );
+
+  /* HAKI MUSZĄ BYĆ PRZED wcześniejszymi `return` tego komponentu (stany
+     „flaga wyłączona"/„ładowanie"/„błąd" niżej wychodzą z renderu). Gdy te
+     dwa `useMemo` stały pod nimi, React liczył raz mniej haków w renderze
+     ładowania niż w renderze z danymi i wywracał ekran raportu wyjątkiem
+     „Rendered more hooks than during the previous render" — złapane testem
+     poziomu 2, nie oglądaniem. */
+
   const filteredSnapshots = useMemo(() => {
     if (!snapshots) return [];
     if (snapshotStatusChip === 'all') return snapshots;
@@ -725,36 +763,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     );
   }
 
-  /**
-   * ── POZIOM 2 = TABELA MIERNIKÓW RAPORTU (SSOT §6) ─────────────────────────
-   *
-   * Wiersze składamy z DWÓCH źródeł: kontraktu pozycji raportu (`items` —
-   * obszar, właściciel nadrzędny, typ, benchmark, limit, jednostka, kierunek,
-   * odpowiedzialny) i matrycy okresów (`periodMatrix` — para CEL/Rezultat na
-   * każdy okres, YTD, stan, otwarte karty działania). Dopóki matryca nie
-   * wróci, kolumny okresów pokazują „—" — geometria tabeli jest już wtedy
-   * poprawna, więc nic nie „skacze" po dojściu danych.
-   *
-   * Grupowanie po OBSZARZE robi jądro tabeli (`isGroupRow`/`renderGroupRow`),
-   * a nie ten ekran — wiersz grupy jest jedną komórką na całą szerokość
-   * (werdykt K6), więc nie rysuje „—" w kolumnach, których grupa nie ma.
-   */
-  const reportItemRows: KpiReportItemRowVm[] = useMemo(
-    () =>
-      buildKpiReportItemRows({
-        items: filteredItems,
-        matrixItems: periodMatrix?.items ?? [],
-        isPolish,
-        resolveOwnerName: (userId) =>
-          userId ? memberNameOrUnknown(resolveMemberName, userId, isPolish) : null,
-      }),
-    [filteredItems, periodMatrix, isPolish, resolveMemberName]
-  );
 
-  const reportItemColumns = useMemo(
-    () => buildKpiReportItemColumns({ isPolish, periods: periodMatrix?.periods ?? [] }),
-    [isPolish, periodMatrix]
-  );
 
   /**
    * Szerokość tabeli podana DOKŁADNIE, żeby dopasowanie do kontenera
