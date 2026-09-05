@@ -1,0 +1,411 @@
+[2026-09-05T21:37:21.881Z] activity_logs id=59c399e3-5b86-4ed1-9c53-929fef2ab821 DELETE | przed: test-rec-map-direct-output | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=3ddf921c-2d1c-4baf-9e38-69fb5b5dac16 DELETE | przed: qa-test-workflowqa-test-workflow | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=565b98da-de5e-4e76-a715-6c1a6b8ceae3 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=367ecd46-a8c7-4525-9d27-4d81687992fc DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=c29b7090-48b8-46e1-a134-c32aef1ff2ba DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=5990c544-bfbd-45c4-827d-702debe50464 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=d31353c8-cc95-4ba5-b763-78377b283f44 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=1c22aaf9-a7ff-4f29-b8e6-0f572be67a78 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=b5e2555d-bd55-4d77-a584-42a7f27637f6 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=3c1511e0-285c-407e-8522-727035edf4c6 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=f2d3c7cc-53ad-40b7-af16-5a259866cbd6 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=96348bf4-9d34-4a66-b30a-69b4164a7823 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=bbc00216-2a88-4133-af0b-4847ded8a6b3 DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=e9ee6fc4-6005-4acf-ab46-cd3603117eaf DELETE | przed: WAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=9449cab9-7601-455c-aec1-726d3d490da8 DELETE | przed: Regression Test DocumentWAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=96d28d5f-fa97-4614-9620-8f967cd44e73 DELETE | przed: Regression Test DocumentWAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] activity_logs id=3ac4b941-dbc6-4832-a14c-3d3c20c37fac DELETE | przed: Regression Test DocumentWAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=5e9b696f-23fc-4b8d-9960-9be9e67c7fa9 DELETE | przed: Raport statusu inicjatywy DBR77 — TEMPLATE-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=7c76ae51-d2ec-4fb6-bb92-9efc46b9a6c6 DELETE | przed: Executive Progress &amp; Assumptions Brief — TERESA-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=8f1eb930-b965-470d-bdf2-49815fbda262 DELETE | przed: Risk &amp; Actions Brief — TERESA-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=d517df50-3ac8-470f-82eb-3140c44ce7d9 DELETE | przed: Initiative Budget — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=10ce4f99-71dd-4808-a063-c413ac8764d6 DELETE | przed: Milestone Tracker — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=9f01500c-58bd-4bf1-a8d3-7cab3db9f2ba DELETE | przed: Benefits Realization — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=d2b00a63-7241-47d5-918b-abb1dc0d863e DELETE | przed: Initiative Budget — Teresa — E2E-1200000 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=39106478-cb6f-4ebf-91f7-53b30e75e406 DELETE | przed: Initiative Budget — Teresa — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=5ecc76d7-e151-442e-bd34-df893af2ebba DELETE | przed: Board Portfolio Update — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] artifact_lineage_receipts id=b9fbe2ba-2e3b-44fe-87aa-97fe5fd336b6 DELETE | przed: Initiative Budget — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] canonical_inbox_items id=1e00aa56-d0bd-47a0-8efd-28406fa9b2a6 DELETE | przed: M05-E2E-CV-Dec-6zcys5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] canonical_inbox_items id=1c4f1b4c-f4cc-4e53-bde2-62b1289b3c77 DELETE | przed: M05-E2E-CV-Dec-2jydvv | po: (usunięto)
+[2026-09-05T21:37:21.881Z] canonical_inbox_items id=046f2cf1-47a6-4990-9c4c-f88942d32964 DELETE | przed: "Board Portfolio Update — E2E-20260806" has been exported as PPTX. | po: (usunięto)
+[2026-09-05T21:37:21.881Z] canonical_inbox_items id=7bce6350-dfe6-4200-a8dd-ba1600fe7546 DELETE | przed: M05-E2E-CV-Dec-ewf3j8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] conclusion_source_packs id=sp_tools_d670319c-1e46-4a27-99eb-94b7e315cd4e DELETE | przed: {"myWork":true,"origin":"MYWORK","source":{"type":"idea","id":"25775bd3-4e71-458f-87f1-4ef901315f52"},"summary":"probe"} | po: (usunięto)
+[2026-09-05T21:37:21.881Z] conclusions id=14105006-d876-4f03-9322-da8f5b402263 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Tasks-zrhdop | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=4d8b32fd-ffd5-4115-aefe-609f99e164b6 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Init-04axfl | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=45aaa65c-c3e5-4be1-be0c-de56748f2e84 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Dec-ewf3j8 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=ab3fe49c-06ae-4626-ac89-2b9c28e36116 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Tasks-r7gsm9 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=82f5442e-44be-4b32-8aae-55ec6edf3da0 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Init-iog6dk | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=ba035221-7ebf-4be7-ab59-f070e8c45f4a UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Dec-2jydvv | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=c9c11093-a791-46f1-8436-e942012554f3 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Tasks-qgfsoy | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=34319c9c-fdb6-4857-b463-a02882817f82 UPDATE (status = 'archived') | przed: MyWork idea: M05-PROBE-DELETEME | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=a7186846-4bf0-4631-adfe-36a7fa437e7e UPDATE (status = 'archived') | przed: MyWork notebook: M04 Autosave Probe 7731 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=ad76db38-9723-44cc-a873-cdd560fa63ed UPDATE (status = 'archived') | przed: MyWork notebook: M04 Autosave Probe 7731 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=92750c3c-8212-48b5-9ed8-b42c481e161c UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Dec-6zcys5 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] conclusions id=bdfc104e-230b-4bc7-84f6-86f63ce90a84 UPDATE (status = 'archived') | przed: MyWork idea: M05-E2E-CV-Init-y3sbhb | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] decisions id=97fb0453-604e-44b6-853b-e637457e7f8a UPDATE (status = 'cancelled') | przed: M05-E2E-CV-Dec-ewf3j8 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] decisions id=d8dc7d5c-70ba-4ba5-a7fd-0864465a98e5 UPDATE (status = 'cancelled') | przed: M05-E2E-CV-Dec-6zcys5 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] decisions id=ce95d913-e06a-4b06-bc5e-649e283f213c UPDATE (status = 'cancelled') | przed: M05-E2E-CV-Dec-2jydvv | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] document_studio_templates id=doc-template-1786034866998-r8tbuk3o UPDATE (status = 'deprecated') | przed: Board Decision Memo — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] document_studio_templates id=doc-template-1786034868202-uvvy01fy UPDATE (status = 'deprecated') | przed: Budget Narrative Report — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] document_studio_templates id=doc-template-1786034856774-qesz2d8e UPDATE (status = 'deprecated') | przed: Initiative Status Report — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] document_studio_templates id=doc-template-1786043198758-sdluley7 UPDATE (status = 'deprecated') | przed: Board Investment Decision Memorandum — Premium E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=019bd504-3dac-4529-8157-b1d1c99689c2 UPDATE (archived_at = now()) | przed: Initiative Budget — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=eb619e0c-9c20-493a-9262-8883608aab45 UPDATE (archived_at = now()) | przed: Milestone Tracker — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=e8203780-7db7-4175-8ba9-3abd060421d9 UPDATE (archived_at = now()) | przed: Benefits Realization — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=f790f9a3-8896-44d5-b8c9-1d1a88ff5b6c UPDATE (archived_at = now()) | przed: Initiative Budget — Teresa — E2E-1200000 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=b31c6383-83b2-405f-a240-d1f3049bbefa UPDATE (archived_at = now()) | przed: Initiative Budget — Teresa — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] generated_workbooks id=550fe25b-c01f-4d32-ab20-c0324a554e07 UPDATE (archived_at = now()) | przed: Initiative_Budget_E2E-20260806.xlsx | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5ee5348c-6fa2-4bcc-8f89-b6cf925fc890 DELETE | przed: M05-E2E-InFolder-wil3cj | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d0d03d04-2ace-442b-bd98-8e0cf7f877cf DELETE | przed: M05-E2E-Fav-61k9kd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=8f3bbb2d-6b8e-45a0-864d-ca40b082376f DELETE | przed: M05-E2E-Fav-61k9kd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2bdf6873-b768-4835-b5b0-ab5efd4a9568 DELETE | przed: M05-PROBE-DELETEME | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=93422d4d-72ef-4fc7-ab40-51f869c5da4b DELETE | przed: M05-409-PROBE | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9b34259c-c342-4234-86cf-c140e88e0ee3 DELETE | przed: M05-E2E-Fav-rfszdc | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c9899a66-5d42-4eed-bd69-3e9dd50cd7e3 DELETE | przed: M05-E2E-Edit-qdksfh-ZMIANA | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=97b42193-e398-434d-8e11-d975d706d406 DELETE | przed: M05-E2E-Gate-vtc0b8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1770f3d8-0334-413f-94ab-c67fda0f522f DELETE | przed: M05-E2E-Create-ck37ll | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=07264894-da51-487f-a63e-c9f897409607 DELETE | przed: M05-E2E-Edit-gaiuyy | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=dc944193-1b99-44c8-a373-3cefe6bb47b8 DELETE | przed: M05-E2E-Delete-10elk2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=8d234257-7166-49fe-8ac7-a2128800a1cf DELETE | przed: M05-E2E-Views-9cf2yy | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1ac864bb-420c-4b3c-abc5-95deef11f23c DELETE | przed: ZPROBE-TOP-li7boc | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a8117b71-3d74-445a-98b9-9e6b07c73617 DELETE | przed: ZPROBE-TOP-q1xukm | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c772565f-5d5b-433f-a320-7cc014cbcb2c DELETE | przed: M05-PROBE-SPEED-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=fba33927-03cb-4349-8bb2-e3b1d84e5316 DELETE | przed: M05-PROBE-SPEED-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c7a5194f-6127-4ddf-b05c-e6f83b245296 DELETE | przed: M05-PROBE-SPEED-3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=211fba60-88c2-45eb-81b9-80c40fbabb4a DELETE | przed: M05-E2E-Gate-9i73mn | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d575c57f-61bd-4d26-9d31-ed0cd2e55df7 DELETE | przed: M05-E2E-Create-zxi9zz | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3b617b7a-1479-4ebd-ae59-e436aec9fad7 DELETE | przed: M05-E2E-Edit-qdksfh | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ea9d5b71-9f63-4dc3-8322-f7b87ba094e5 DELETE | przed: M05-E2E-Delete-zec8ad | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=eae1bc8c-d8b7-4623-bb90-f0dcbebea7bb DELETE | przed: M05-E2E-Views-yqf2bc | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d36c7d43-69cf-4a93-acb7-5b5ba8930210 DELETE | przed: M05-E2E-Sort-HIT-fuhqd7 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5bb4eda2-04f4-4df6-84e1-abce7ab7a8ca DELETE | przed: M05-E2E-Sort-MISS-t3064n | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=79233ed5-fad8-4da5-8645-c668354cb918 DELETE | przed: M05-E2E-Fav-61k9kd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9d093dda-4d2f-485d-9e40-a2fb7c2ed092 DELETE | przed: M05-E2E-WS-of9d8d | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=615a9c92-02b8-4cd0-a21c-65f91c112154 DELETE | przed: M05-E2E-InFolder-wil3cj | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2ca29714-4894-457a-a020-800d83f17244 DELETE | przed: M05-E2E-WS-zzkm89 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a110233f-d34f-4d61-9778-1bfa8e5d95b2 DELETE | przed: M05-E2E-WS-h76zbo | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=114514a3-5d3a-483c-ac7f-0511a8caf565 DELETE | przed: M05-E2E-WS-obbt7l | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=0fd22bcf-651a-4505-a7e1-1ff6be87a1ee DELETE | przed: M05-E2E-AI-gen-qfkthd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=6f5411d7-df43-49ed-917f-ea77888d6c45 DELETE | przed: M05-E2E-WS-b11tje | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=e13752ba-0425-4b5b-ab1a-e09cffb433c8 DELETE | przed: M05-E2E-AI-sug-chiaiw | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=940c3871-8057-44c1-8fe0-4836c2b13019 DELETE | przed: M05-E2E-WS-ku1v9j | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f8f41ab2-8b34-4b20-a28b-b84b2166d3ab DELETE | przed: M05-E2E-AI-exp-qmvo4h | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d7c83262-47a6-481a-b8ac-fe4545aa58c6 DELETE | przed: M05-E2E-AI-gap-ofrxg7 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=bc2a4a88-e0f8-409f-a91e-f94e8a93a581 DELETE | przed: M05-E2E-snap-5fevh8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a852b51f-46e6-4ab4-8e11-755858d193fe DELETE | przed: M05-E2E-cmt-77ezsd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=051f29b7-4323-4471-b7fe-3d6f0f58dd22 DELETE | przed: M05-E2E-act-9guw28 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=275398b5-c856-470f-9e06-75d1b5f2fb83 DELETE | przed: M05-E2E-act2-edr76g | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=bd9c8d12-1813-407a-b905-f6ca5e7220cc DELETE | przed: M05-E2E-CV-Export-tzdmgr | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=050bd363-1db7-4147-814d-be7e47f8f4c4 DELETE | przed: M05-PROBE-SNAP | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3c4be2a7-52a3-4e1e-97ef-eeeed2efdf80 DELETE | przed: M05-E2E-CV-Csv-26ur5o | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=73f6e879-95af-4979-ab9f-cf1f073b6fc9 DELETE | przed: M05-E2E-CV-Srv-nx8870 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=b357b79b-7881-4300-8254-7539a62df8a5 DELETE | przed: M05-E2E-CV-Init-y3sbhb | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=59d249b8-f52f-4572-b731-c8a438fd76f8 DELETE | przed: M05-E2E-CV-Tasks-qgfsoy | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=73c40dfe-bbfb-444e-898a-fadbd8034df6 DELETE | przed: M05-E2E-CV-Dec-2jydvv | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=e89f2543-c62d-4e6f-bc46-5a3d4a60b482 DELETE | przed: M05-E2E-CV-Neg-lambu2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=7b5846ca-ce35-45cf-b096-f291050da758 DELETE | przed: M05-E2E-Edit-b8jl4c-ZMIANA | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5cb9e725-6874-4a80-8285-7f5f56c8b7ba DELETE | przed: M05-E2E-XM XQ-ug593v alpha | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=24dd74e8-c705-43ca-aacc-0f93a7007fe6 DELETE | przed: M05-E2E-XM unrelated beta | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=453ee2b0-016e-470f-8b90-f18a52f6d036 DELETE | przed: M05-E2E-XM tagged tag-4dlcaq | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=846c18c3-c906-4c07-9c0b-6077a5228bea DELETE | przed: M05-E2E-XM-pres-dm2p6c | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ada57a5b-7cfe-4693-896c-83ae2564356d DELETE | przed: M05-E2E-XM-persist-rb8pfp | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=18fa0e20-771b-4a98-a934-4e454a8d5607 DELETE | przed: M05-E2E-XM-i18n-jx00p3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=56d4e7c5-b29d-4e4e-b4b3-a8193d765860 DELETE | przed: M05-E2E-XM-dark-esyroj | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=fa643c5d-67f2-42ae-8c41-402d2aa0037f DELETE | przed: M05-E2E-XM-console-ibp0kp | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a71fe66d-cc5b-49b4-8976-42c2dcf9c600 DELETE | przed: M05-E2E-snap-0ytrar | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=302b6ff0-55a4-4a2a-83e5-5bc5a2c41c34 DELETE | przed: M05-E2E-cmt-71in90 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=8324e7f6-1bc5-4c4c-b331-37a176229a57 DELETE | przed: M05-E2E-CV-Export-xua2c8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=55a33983-240f-41bb-8b75-b64089fe6ef3 DELETE | przed: M05-E2E-CV-Srv-nkc3ws | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=6b33787f-0a22-4d8a-b92c-d7b685da0755 DELETE | przed: M05-E2E-Gate-7q8wgk | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1e73268a-054d-4123-9b22-29b49e799168 DELETE | przed: M05-E2E-Iso-i1kjah | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d7e28d3c-91fc-404d-9330-d41c21479320 DELETE | przed: M05-E2E-Create-4iexbn | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=de7ac891-c34b-4d8b-a883-865426a1857c DELETE | przed: M05-E2E-InFolder-2yvcao | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2955a360-dba2-43e5-b194-69f83c516743 DELETE | przed: M05-E2E-Edit-b8jl4c | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f82a7f59-55e9-4d63-8d74-3ed809ac9f0a DELETE | przed: M05-E2E-Delete-yl0nec | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=719a6ae4-9a6d-4376-b391-7ecb0d3a219d DELETE | przed: M05-E2E-Views-gkc8nd | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=7dbccb51-26f2-4ae3-9111-b5e8e8d6cc91 DELETE | przed: M05-E2E-Sort-HIT-rqa9b8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=513ab5fd-9ce9-4982-8e29-e978e33bb155 DELETE | przed: M05-E2E-Sort-MISS-y7xhql | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=80ce9346-fc2e-437e-8bd1-c0133a219c84 DELETE | przed: M05-E2E-InFolder-2yvcao | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c4b56aed-262a-4106-9238-d3280c484b48 DELETE | przed: M05-E2E-Fav-rfszdc | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=72122123-b709-45fb-bd5c-7ca695f5dbc8 DELETE | przed: M05-E2E-WS-y11wr3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9a009b0d-f2d4-44a2-9506-834a37b359ad DELETE | przed: M05-E2E-Fav-rfszdc | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=4f723d48-c96b-4dfd-ab20-22a53e39e2ce DELETE | przed: M05-E2E-WS-greln8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=89ff4ffc-3e84-421f-8cd8-6ef51dc4ca9e DELETE | przed: M05-E2E-WS-fi4n8a | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2c3fe4fe-bcff-436f-9e34-d36d1988ed87 DELETE | przed: M05-E2E-WS-u3t0e3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=4ce4eecc-ed0f-405d-a671-133027c784c1 DELETE | przed: M05-E2E-WS-3n83go | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=99b9b709-2ec4-445d-a76d-a0e38fd19da4 DELETE | przed: M05-E2E-WS-o7ize0 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=41fb8e64-7c37-4114-820b-8fe9de865407 DELETE | przed: M05-E2E-AI-sug-d6ccyf | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=6bef5f2a-3142-43ea-b984-fabe8551db1d DELETE | przed: M05-E2E-AI-exp-negsoe | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=e444d021-fde3-40f6-9ee4-87cf9f1b5446 DELETE | przed: M05-E2E-AI-gap-ea52uw | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5ffaa9dc-39df-42be-af10-51725f009ba8 DELETE | przed: M05-E2E-AI-gen-t8s6hp | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=53fcfa9e-c330-4d3e-b02a-ef59185d2e1c DELETE | przed: M05-E2E-snap-bvnrpz | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9379e148-efad-468e-a030-762f6d3ba9b5 DELETE | przed: M05-E2E-cmt-windo2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=bca5c6e4-6749-4bf1-ae91-70c0a3b26bc8 DELETE | przed: M05-E2E-act-5bvgdu | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=caa3ca10-c1f0-4fd7-b283-f720db9857a1 DELETE | przed: M05-E2E-act2-9t3l1h | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=102e0346-dba6-4132-ba8d-1fba09bb7e92 DELETE | przed: M05-E2E-CV-Export-pf9f95 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=578924ad-c1d5-4b7d-a523-8f2b52109b9b DELETE | przed: M05-E2E-CV-Csv-gk8yb5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=21a46c0e-d298-40ff-a1b9-b2af9f9faa70 DELETE | przed: M05-E2E-CV-Srv-r1rra6 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f7d77eeb-d5c8-4e62-90af-231b08750926 DELETE | przed: M05-E2E-CV-Init-iog6dk | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=823715c8-1670-4ccc-9acf-b1efa0ed0da6 DELETE | przed: M05-E2E-CV-Tasks-r7gsm9 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=28148528-51cc-4c70-a3d9-52bfec772585 DELETE | przed: M05-E2E-CV-Dec-ewf3j8 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=0c2229d3-ba03-40a6-8b13-711eec1c850d DELETE | przed: M05-E2E-XM XQ-hu2ud1 alpha | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=44c99072-16c5-408d-b97b-a25bd599f3b2 DELETE | przed: M05-E2E-XM unrelated beta | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1f3c7fa5-e923-49ca-bc60-751fa29a5952 DELETE | przed: M05-E2E-XM-persist-odoatw | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=03eb0e75-76a2-47f1-b5b5-e7965f49e923 DELETE | przed: M05-E2E-XM-i18n-jj0dia | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=25b9045d-776e-4c88-b0c8-15e35f4da308 DELETE | przed: M05-E2E-XM-console-ljpc7g | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=bb128986-aa8c-48ba-8a34-de5e7f165c10 DELETE | przed: M05-E2E-CV-Neg-hx8hxf | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d1367a7b-6546-49f2-9a8e-b8238457045e DELETE | przed: M05-E2E-XM tagged tag-9q3krv | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=aaab76eb-6f27-4c9d-b376-2f3ee0e603d0 DELETE | przed: M05-E2E-XM-pres-cqalku | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=6d9f3802-c4e7-4746-ab48-5e2952f5bce3 DELETE | przed: M05-E2E-XM-dark-mvc3zx | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=24bd4d8f-c4a8-46d7-b9c5-38a458269868 DELETE | przed: M05-E2E-Sort-HIT-4rsosn | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ca52c5cb-d833-4297-bee4-4513bbf98583 DELETE | przed: M05-CSV-PROBE | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3fb86996-bac0-4f52-97da-78edee09ad1b DELETE | przed: M05-E2E-CV-Csv-bh6zke | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=8dc3edb8-0d1f-4cbd-99a9-d285a8f2d705 DELETE | przed: M05-E2E-Gate-20ouif | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ba72d374-bb19-4c68-b304-0192d9b7b751 DELETE | przed: M05-E2E-Iso-ufroc9 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f958bf7a-243c-4114-b320-dd49a8f3000f DELETE | przed: M05-E2E-Create-siqm1b | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1fafb6e6-a2fc-4d3e-beb2-1bd8949f0d86 DELETE | przed: M05-E2E-Edit-himrar | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a66fe14d-cb9a-4ec7-92ee-1cc777d71c23 DELETE | przed: M05-E2E-Edit-himrar-ZMIANA | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=788f69a1-4d3b-4e42-af2f-caf69c9e38d3 DELETE | przed: M05-E2E-Delete-zfpr0c | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=325ddf7c-b121-4173-9b72-12a02c6a1516 DELETE | przed: M05-E2E-InFolder-b0i4dq | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1356bab3-19fe-4588-9234-636c540bee46 DELETE | przed: M05-E2E-Fav-51q0je | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9a98bcec-9eae-4dd6-be20-9e80f571e4f6 DELETE | przed: M05-E2E-WS-pthet2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=8402eabc-1ae6-4f6a-81d3-7df7eb1e3c16 DELETE | przed: M05-E2E-WS-yxzuzk | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=896d8516-abcb-4c46-829b-f930a59371db DELETE | przed: M05-E2E-AI-gap-vqxz7e | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=37e8c97b-a4e8-4251-96bc-5c01bdeb890b DELETE | przed: M05-E2E-Views-7jzrbi | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=833630ce-ac85-4f09-a747-a1f5c42add52 DELETE | przed: M05-E2E-Sort-MISS-ojyd3h | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=cc54b53c-bc25-4dcc-be8e-b62206651f2c DELETE | przed: M05-E2E-InFolder-b0i4dq | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=70aca867-f9f0-45f7-bfd9-af8c4b2a9fec DELETE | przed: M05-E2E-Fav-51q0je | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=cca71aa9-ea05-4bfb-ba81-20535cf9571b DELETE | przed: M05-E2E-Fav-51q0je | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c220f53b-ae31-4320-a5a9-f9575b383d0a DELETE | przed: M05-E2E-WS-803txb | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=94939682-d960-45cb-9dc1-481b486adb13 DELETE | przed: M05-E2E-WS-g2t82a | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d5eda445-5e52-4bba-b2f8-7742bdbe311d DELETE | przed: M05-E2E-WS-9c8d1b | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=e95bca07-5e37-4ec3-8977-7abada048999 DELETE | przed: M05-E2E-WS-94wdra | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5a5c745d-3033-4006-9bc5-b829d09211d5 DELETE | przed: M05-E2E-AI-sug-bv1q3q | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=62c0db60-98c0-48f1-ba7d-1df373c35d65 DELETE | przed: M05-E2E-AI-exp-40bekx | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=a3563962-bebc-448f-aaea-475a735187f1 DELETE | przed: M05-E2E-AI-gen-r12wtt | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=4017d3c0-9f23-4070-8c44-476c1d800d02 DELETE | przed: M05-E2E-snap-9vbvh5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=44067ed2-b341-418b-b185-ea8018d2bbd9 DELETE | przed: M05-E2E-cmt-9r9hlr | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=9cfcd95f-9030-422e-afd4-31dbd2e0df67 DELETE | przed: M05-E2E-act-a7g867 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=0478af37-2436-4164-9d50-a53c8cb31980 DELETE | przed: M05-E2E-act2-ol4tjw | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1b98395c-0444-4431-81be-c69f7606396d DELETE | przed: M05-E2E-CV-Export-a46z9j | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=710d562d-ee31-43ba-b269-0d7bede40624 DELETE | przed: M05-E2E-CV-Csv-wg214r | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=0671aa26-2771-4029-a170-0f700d6cf2f2 DELETE | przed: M05-E2E-CV-Srv-b9jbkm | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=da2e5a82-bea8-4dfb-8b05-920bdbd38920 DELETE | przed: M05-E2E-CV-Init-04axfl | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3d1ebd0f-c719-41da-9d70-088f196936cf DELETE | przed: M05-E2E-CV-Tasks-zrhdop | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=67018f79-ffa4-4d5f-bee3-feae9f7ebe74 DELETE | przed: M05-E2E-CV-Dec-6zcys5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=aee2f8fc-e959-460a-b083-ccb34cb5794d DELETE | przed: M05-E2E-CV-Neg-e0j9tt | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=5bef8761-8986-4067-8466-4cc1a35ebc06 DELETE | przed: M05-E2E-XM XQ-iedbnq alpha | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2f8d62d8-cd9f-432b-b72c-a9ad93cf9f44 DELETE | przed: M05-E2E-XM unrelated beta | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ee8a7d37-c465-4d14-969f-f8f10f221281 DELETE | przed: M05-E2E-XM tagged tag-mru2va | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=93eba5bf-6617-4794-a5db-3a779212b96b DELETE | przed: M05-E2E-XM-pres-gl4ow9 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f093be28-40ec-4f26-a30b-eec71cf1050e DELETE | przed: M05-E2E-XM-persist-i6pd2v | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=1d0a064a-8b42-456b-810f-e43ac5bf0a1e DELETE | przed: M05-E2E-XM-i18n-90hsv3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3bb3a5cb-50da-483a-b271-04647f690176 DELETE | przed: M05-E2E-XM-dark-otrojb | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ffb7a447-f7db-418c-9983-8e7b4a98ebc3 DELETE | przed: M05-E2E-XM-console-ko5u8m | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=abc78f5a-c3c4-487d-a231-1f691f1976e9 DELETE | przed: M08-Manual-Test-Table-2026-06-21 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d1dbeac0-f2e9-474c-99ec-6d4f87b4bf08 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c3f503e2-53cd-451c-a436-d335f1684019 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=3e52126d-257e-4da2-83f7-44b6faa2fc04 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=d4360451-3b19-4ec8-ac87-8da09ca4ef2b DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=f8268a24-094f-48c1-82c3-3bd39ed851bc DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=51dc2666-a285-458d-a0b1-fabf7733e6ff DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=6cdebbab-d63f-457b-afe4-530280fa97d7 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=ac3bbc7d-b4df-462d-abb1-ec616d4e2537 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=2b6fedf5-74a0-4a80-b54e-830cc610ace4 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=aa1cc883-24bc-4866-a6af-e58715952812 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c28f8e32-5645-45e6-bb81-21ce3d95a179 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=fc2baa7c-fa50-49fb-853e-90f8074d0444 DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=e2e646ef-8942-4958-8115-8769c9fcff4a DELETE | przed: __M06_REPRO_TEST__ | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=17192804-36bc-4cea-b131-881f1b3a7813 DELETE | przed: AUDYT-M06 2026-07-05T18-10-16 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=44f22a40-cee5-4b51-b3fc-b2aff8bbafb5 DELETE | przed: AUDYT-M06 2026-07-05T18-15-19 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] organization_context_items id=c6a0b0af-71ed-4e8f-a06e-23bfb756da8e DELETE | przed: AUDYT-M06 2026-07-05T18-18-15 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] presentation_decks id=5178257dc9524d9a9a4da3d87fb950ec DELETE | przed: Board Portfolio Update — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] presentation_templates id=54d6e8fa15364855b3aaeb6272fafada UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Steering Decision Deck — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] presentation_templates id=5a30b9bef6794f9eb852a503bd16946b UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Board Portfolio Update — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] presentation_templates id=d13ce20ad7044f5582396523a1092685 UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Initiative Kickoff Deck — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] presentation_templates id=c036ba797c9f4cb782e044941d6e4e49 UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Board Portfolio Update — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] presentation_templates id=4188d66da3b743ed96b11f63eedf45ae UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Steering Decision Deck — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] presentation_templates id=3ef0da7511a14f00b8f718c7f3859f8a UPDATE (lifecycle_state = 'deprecated', is_active = false, deprecated_at = now(), deprecated_by = 'system:sprzatanie-2026-09-06') | przed: Initiative Kickoff Deck — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=50160f02-8622-4fa9-84d0-7f79ceba35e9 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Init-04axfl | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=0ef884e2-dacd-4837-b6f1-587c69cab16f UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Tasks-zrhdop | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=065892b4-d619-4004-8d3b-c2749bb4b734 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Dec-6zcys5 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=fa93f718-4968-4240-b30e-730907a4174c UPDATE (status = 'ARCHIVED') | przed: MyWork notebook: M04 Autosave Probe 7731 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=cad32cbe-1c7f-4db9-b36b-b4b308162699 UPDATE (status = 'ARCHIVED') | przed: MyWork notebook: M04 Autosave Probe 7731 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=d670319c-1e46-4a27-99eb-94b7e315cd4e UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-PROBE-DELETEME | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=c94ced6e-0172-4c57-aa46-924589599547 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Init-y3sbhb | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=7ed772b6-4865-405d-b487-c13670c4edd7 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Tasks-qgfsoy | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=67c44048-c8cd-4c22-8944-98f0a561bc02 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Dec-2jydvv | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=5da8694b-750c-4a25-87a1-df8f56c1bc80 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Init-iog6dk | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=2b741f50-d507-4918-9937-3aea2fd9e223 UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Tasks-r7gsm9 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tool_sessions id=fb908dd6-1833-4965-a48c-894021607a9d UPDATE (status = 'ARCHIVED') | przed: MyWork idea: M05-E2E-CV-Dec-ewf3j8 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tp_base_templates id=0482c64f-4acb-4cfe-9495-1eba4f67db94 UPDATE (status = 'deprecated') | przed: Initiative Budget — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tp_base_templates id=6456b397-16b4-4827-95b3-f7604f8c4c8f UPDATE (status = 'deprecated') | przed: Milestone Tracker — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] tp_base_templates id=14ddf73e-7647-447d-a3db-3e57b0297eb1 UPDATE (status = 'deprecated') | przed: Benefits Realization — E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=98b16480-08a5-4bd1-82b5-20807d785e3c DELETE | przed: Executive Progress &amp; Assumptions Brief — TERESA-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=7e6a5e8e-35c2-4235-b60b-b4f35c8f8032 DELETE | przed: TEST-RELIABILITY-sheet-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=fdaeb389-8af0-4de0-81a6-a37f693913fe DELETE | przed: Milestone Tracker — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=68eac2ba-4c57-46f4-991c-322d1dfadc7a DELETE | przed: TEST-RELIABILITY-sheet-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=31ccce37-97fa-465d-964a-5719104f73d7 DELETE | przed: TEST-RELIABILITY-sheet-4 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=91b7f63a-ccd6-4520-b88c-639248475692 DELETE | przed: TEST-RELIABILITY-sheet-5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=24cc22c1-42f7-433c-a14a-4f422da8bd13 DELETE | przed: Benefits Realization — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=a8e4bab9-8ada-4385-8cb7-94cde643b43a DELETE | przed: TEST-RELIABILITY-deck-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=b0421338-f05e-44e3-9303-9f0e61892a1c DELETE | przed: TEST-RELIABILITY-deck-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=78b80fe5-e4f3-47af-b629-9e121d5008d4 DELETE | przed: TEST-RELIABILITY-deck-3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=8d12fc23-f8a4-4d7e-952d-a9f960fce6e3 DELETE | przed: TEST-RELIABILITY-deck-4 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=e27795c2-072b-4769-a06a-e18384fde948 DELETE | przed: TEST-RELIABILITY-deck-5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=c28cda87-1a35-4e37-8a4b-e221dfde63d1 DELETE | przed: TEST-RELIABILITY-doc-3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=15941957-0caa-4ab0-9558-07364bcfd714 DELETE | przed: TEST-RELIABILITY-doc-4 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=ffc0f1a4-9cbe-4bc9-8cd9-67fae1ec38e9 DELETE | przed: TEST-RELIABILITY-doc-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=b25b95ff-d5a2-4360-b4bd-44894c071a3d DELETE | przed: Initiative Budget — Teresa — E2E-1200000 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=cf11a32e-052a-4ed2-b796-27f1b00b8be9 DELETE | przed: TEST-RELIABILITY-doc-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=0ba31a83-e1a4-43f6-8f31-f2285d092906 DELETE | przed: TEST-RELIABILITY-doc-5 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=107da3dc-a63d-452b-85cf-2646c90b973b DELETE | przed: TEST-RELIABILITY-insight-4 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=cef77ad0-4b6f-4d57-883b-52ae1efdd6cb DELETE | przed: TEST-RELIABILITY-doc-smoke3 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=d8d85ea3-2b4a-4f53-aeb9-a884b3538796 DELETE | przed: TEST-RELIABILITY-insight-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=df46ab67-9a3d-421b-9af1-a1950e5bf88e DELETE | przed: TEST-RETEST-doc-2 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=e736ea98-ef0c-4a11-8382-8a05f4ff5b75 DELETE | przed: TEST-RETEST-doc-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=c645fde2-ea8f-404b-a80d-3a7a09334ff7 DELETE | przed: TEST-RETEST-insight-1 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=2a5227ef-83cf-453c-979a-d783a685b30a DELETE | przed: Raport statusu inicjatywy DBR77 — TEMPLATE-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=820d2a17-1eda-4017-83f1-c5f4f4ca0f07 DELETE | przed: Initiative Budget — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=2fe37380-9356-4737-a3a7-4131dd5dff2c DELETE | przed: Initiative Budget — Teresa — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=3832c2f6-9d00-43c1-a4ee-ef6700e297b2 DELETE | przed: Initiative Budget — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=638ff987-a9a3-468b-a0db-c879c3df4960 DELETE | przed: Budget Narrative Report — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=d480ac62-3201-480c-addf-c8b359f96e87 DELETE | przed: Board Portfolio Update — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=4c86a144-cce1-48c0-bc9f-9071c9d7fa67 DELETE | przed: Board Investment Decision Memorandum — Premium E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=a7f06112-bb97-470a-8b58-42124f4087f0 DELETE | przed: Board Decision Memo — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=d488e984-81ed-4216-8153-d0a216cfb909 DELETE | przed: Initiative Status Report — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=203797e9-fa85-4c74-8291-cbea1d73f607 DELETE | przed: Milestone Tracker — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=fddc9d0c-2f7d-4885-ab10-ba8e921ad88a DELETE | przed: Benefits Realization — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=8d014e85-8512-4ea0-8970-5c15037d796b DELETE | przed: Initiative Budget — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=53280775-5669-456a-8097-94aa67792257 DELETE | przed: Risk &amp; Actions Brief — TERESA-E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=bc805bff-723e-4b39-80b7-0d9596093b17 DELETE | przed: Steering Decision Deck — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=bda58715-deb5-40aa-adeb-5b6ed1bb136f DELETE | przed: Board Portfolio Update — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=256ec987-901b-49e1-9314-3e098b46505c DELETE | przed: Initiative Kickoff Deck — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=b8223de8-bc1e-49d4-a3ce-54596be407ca DELETE | przed: Steering Decision Deck — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=90d48f2c-73e1-4853-b36f-61e72cf09a98 DELETE | przed: Board Portfolio Update — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] v8_output_artifacts id=afe38495-9996-4ea7-943f-047ccaf21dd4 DELETE | przed: Initiative Kickoff Deck — E2E-20260806 | po: (usunięto)
+[2026-09-05T21:37:21.881Z] wave5_artifacts id=artifact-f2b7f53f-2c32-4266-aa60-bf9a5c8f66ea UPDATE (status = 'archived') | przed: Raport statusu inicjatywy DBR77 — TEMPLATE-E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] wave5_artifacts id=artifact-3bde96db-8b1b-45dc-b2af-42a404a7fb51 UPDATE (status = 'archived') | przed: Risk &amp; Actions Brief — TERESA-E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] wave5_artifacts id=artifact-2a489d59-ecc2-4ab9-872e-b1784aa286a2 UPDATE (status = 'archived') | przed: Executive Progress &amp; Assumptions Brief — TERESA-E2E-20260806 | po: (zarchiwizowano)
+[2026-09-05T21:37:21.881Z] work_canvas_drafts id=dba34533-0295-4466-bd5c-28a34bb25eb4 DELETE | przed: Regression Test DocumentWAVE1-TEST-CANVAS | po: (usunięto)
+[2026-09-05T21:37:21.881Z] meetings id=meeting-cfd9f24a-9d7a-4313-a718-0f0502224841 UPDATE (status='cancelled') | przed: Zaplanuj i wykonaj dla mnie inicatywe której celem jest zrobienie planu… | po: (anulowano — tytuł to ślad promptu, 0 uczestników, brak lokalizacji)
+[2026-09-05T21:37:21.881Z] meetings id=3d930fd0-060e-4ecc-ba46-5d594ada6525 TRANSLATE | przed: Platform Migration — Kick-off | po: Migracja platformy — spotkanie inicjujące
+[2026-09-05T21:37:21.881Z] meetings id=8e63cd31-1fe9-4e33-a744-a0a349955f63 TRANSLATE | przed: AI Strategy Working Group — Weekly Sync | po: Grupa robocza ds. strategii AI — cotygodniowa synchronizacja
+[2026-09-05T21:37:21.881Z] meetings id=836c26f5-5f09-465f-9f2a-b196e129675a TRANSLATE | przed: Steering Committee — Q2 Transformation Program | po: Komitet sterujący — program transformacji Q2
+[2026-09-05T21:37:21.881Z] meetings id=1646e093-a345-4db0-9041-090b2525bc7d TRANSLATE | przed: Public Beta Launch — Go/No-Go Review | po: Start wersji beta — decyzja Go/No-Go
+[2026-09-05T21:37:21.881Z] meetings id=a38e0efd-969a-46de-80d2-043701102857 TRANSLATE | przed: SOC 2 Readiness — External Auditor Briefing | po: Gotowość do SOC 2 — briefing z audytorem zewnętrznym
+[2026-09-05T21:37:21.881Z] meetings id=b95dd662-0033-4d73-b657-8c2bd28a7fb9 TRANSLATE | przed: 1:1 with Anna — Backend Architecture Review | po: 1:1 z Anną — przegląd architektury backendu
+[2026-09-05T21:37:21.881Z] meetings id=b1e6d8d7-8755-4253-a7b2-d90b00227f3d TRANSLATE | przed: Sprint 14 Planning — Product & Engineering | po: Planowanie Sprintu 14 — produkt i inżynieria
+[2026-09-05T21:37:21.881Z] meetings id=53465ca8-1d96-40d2-938e-ee370aa0df86 TRANSLATE | przed: Client Demo — Acme Corp Digital Transformation | po: Demo dla klienta — transformacja cyfrowa Acme Corp
+[2026-09-05T21:37:21.881Z] meetings id=6235e121-ab97-4fec-95f2-77979e2e6962 TRANSLATE | przed: 1:1 with CTO — Weekly Catch-up | po: 1:1 z CTO — cotygodniowe spotkanie
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-015 TRANSLATE | przed: Security Audit Completion | po: Zakończenie audytu bezpieczeństwa
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-012 TRANSLATE | przed: Refactor Authentication Module | po: Refaktoryzacja modułu uwierzytelniania
+[2026-09-05T21:37:21.881Z] tasks id=266e5481-ee93-4be9-97e5-0c57dee4aeb8 TRANSLATE | przed: Refactor Authentication Module | po: Refaktoryzacja modułu uwierzytelniania
+[2026-09-05T21:37:21.881Z] tasks id=492e5aad-557d-4ddc-b6c6-2e011306be8f TRANSLATE | przed: Refactor Authentication Module | po: Refaktoryzacja modułu uwierzytelniania
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-001 TRANSLATE | przed: Review Q4 Budget Report | po: Przegląd raportu budżetowego za Q4
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-014 TRANSLATE | przed: Deploy v2.5 Release | po: Wdrożenie wersji v2.5
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-013 TRANSLATE | przed: Research AI Integration Options | po: Analiza opcji integracji AI
+[2026-09-05T21:37:21.881Z] tasks id=fc71f320-088d-4ad2-a081-f925fec8efef TRANSLATE | przed: Research AI Integration Options | po: Analiza opcji integracji AI
+[2026-09-05T21:37:21.881Z] tasks id=2ee89807-6834-4817-989c-6a88248cf747 TRANSLATE | przed: Research AI Integration Options | po: Analiza opcji integracji AI
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-009 TRANSLATE | przed: Cloud Infrastructure Planning | po: Planowanie infrastruktury chmurowej
+[2026-09-05T21:37:21.881Z] tasks id=85332018-9b7b-4a58-b2a1-969f274ad02e TRANSLATE | przed: Cloud Infrastructure Planning | po: Planowanie infrastruktury chmurowej
+[2026-09-05T21:37:21.881Z] tasks id=ef7c1347-9525-4db4-9d72-f11cff4446d4 TRANSLATE | przed: Cloud Infrastructure Planning | po: Planowanie infrastruktury chmurowej
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-011 TRANSLATE | przed: Technology Stack Evaluation | po: Ocena stosu technologicznego
+[2026-09-05T21:37:21.881Z] tasks id=e74b426b-ff06-481c-a870-e1f2398e78b4 TRANSLATE | przed: Technology Stack Evaluation | po: Ocena stosu technologicznego
+[2026-09-05T21:37:21.881Z] tasks id=3a4d9bb9-c839-43c2-89fd-8e64e8e9b581 TRANSLATE | przed: Technology Stack Evaluation | po: Ocena stosu technologicznego
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-003 TRANSLATE | przed: Fix Critical Production Bug | po: Naprawa krytycznego błędu produkcyjnego
+[2026-09-05T21:37:21.881Z] tasks id=task-rich-005 TRANSLATE | przed: Review Pull Requests | po: Przegląd pull requestów
+[2026-09-05T21:37:21.881Z] tasks id=task-demo-auto-001 TRANSLATE | przed: Kick-off and scope alignment | po: Spotkanie inicjujące i ustalenie zakresu
+[2026-09-05T21:37:21.881Z] tasks id=task-demo-auto-003 TRANSLATE | przed: Prepare pilot environment | po: Przygotowanie środowiska pilotażowego
+[2026-09-05T21:37:21.881Z] tasks id=7cae324b-2579-463b-a8b5-c47cbd7af125 TRANSLATE | przed: Prepare pilot environment | po: Przygotowanie środowiska pilotażowego
+[2026-09-05T21:37:21.881Z] tasks id=2090343c-54ab-4efa-971a-3bebfc02b5a0 TRANSLATE | przed: Prepare pilot environment | po: Przygotowanie środowiska pilotażowego
+[2026-09-05T21:37:21.881Z] tasks id=task-demo-auto-002 TRANSLATE | przed: Define target process and acceptance criteria | po: Zdefiniowanie procesu docelowego i kryteriów akceptacji
+[2026-09-05T21:37:21.881Z] tasks id=8ef8640d-de2d-4935-be13-3d2c90fc13e8 TRANSLATE | przed: Submit Compliance Documentation | po: Złożenie dokumentacji zgodności
+[2026-09-05T21:37:21.881Z] tasks id=29e3150f-f25f-4d71-9c55-de123dfba947 TRANSLATE | przed: Annual Performance Reviews | po: Roczne oceny pracownicze
+[2026-09-05T21:37:21.881Z] tasks id=4b9c9ad3-307a-44e2-9821-ce94dbedcf16 TRANSLATE | przed: Team Standup Presentation | po: Prezentacja na standupie zespołu
+[2026-09-05T21:37:21.881Z] tasks id=bd990ade-4bfc-4867-a49a-b846fb716884 TRANSLATE | przed: Update Project Documentation | po: Aktualizacja dokumentacji projektu
+[2026-09-05T21:37:21.881Z] tasks id=d3a43e93-8885-473f-88fb-96391dab4f91 TRANSLATE | przed: Prepare Demo for Stakeholders | po: Przygotowanie demo dla interesariuszy
+[2026-09-05T21:37:21.881Z] tasks id=fd267f99-4666-42a8-981e-f362223b0cff TRANSLATE | przed: Architecture Review Session | po: Sesja przeglądu architektury
+[2026-09-05T21:37:21.881Z] tasks id=59c5c828-dff2-4af4-99c3-b014f132127f TRANSLATE | przed: Interview: Digital Maturity Discovery | po: Wywiad: odkrywanie dojrzałości cyfrowej
+[2026-09-05T21:37:21.881Z] tasks id=22e6eafb-7d36-40c4-9694-b6cbb591777e TRANSLATE | przed: Establish IoT Network Infrastructure | po: Budowa infrastruktury sieciowej IoT
+[2026-09-05T21:37:21.881Z] tasks id=b98611d4-7d0b-434a-b264-84852f884708 TRANSLATE | przed: Establish IoT Network Infrastructure | po: Budowa infrastruktury sieciowej IoT
+[2026-09-05T21:37:21.881Z] tasks id=7d41be79-443e-490b-a520-127b90085bde TRANSLATE | przed: Establish IoT Network Infrastructure | po: Budowa infrastruktury sieciowej IoT
+[2026-09-05T21:37:21.881Z] tasks id=fc6df174-239a-4011-b91a-ba33d59c7fc7 TRANSLATE | przed: Develop Machine Learning Model | po: Budowa modelu uczenia maszynowego
+[2026-09-05T21:37:21.881Z] tasks id=d5443fe3-f8bc-4f15-8ffe-b95b8a967651 TRANSLATE | przed: Develop Machine Learning Model | po: Budowa modelu uczenia maszynowego
+[2026-09-05T21:37:21.881Z] tasks id=b182d2ad-bd1f-48a6-85cd-d57f3eacffe4 TRANSLATE | przed: Develop Machine Learning Model | po: Budowa modelu uczenia maszynowego
+[2026-09-05T21:37:21.881Z] tasks id=4e06a6af-9908-46b2-8fec-92ddd2b4f9ab TRANSLATE | przed: Conduct User Training Sessions | po: Przeprowadzenie szkoleń użytkowników
+[2026-09-05T21:37:21.881Z] tasks id=c421c001-e953-471d-aceb-994532144280 TRANSLATE | przed: Conduct User Training Sessions | po: Przeprowadzenie szkoleń użytkowników
+[2026-09-05T21:37:21.881Z] tasks id=c1cbe733-c4c8-4b94-b86e-890309c88453 TRANSLATE | przed: Conduct User Training Sessions | po: Przeprowadzenie szkoleń użytkowników
+[2026-09-05T21:37:21.881Z] tasks id=875e07a7-77d6-4829-b613-a437578f9554 TRANSLATE | przed: Monitor Performance and Refine Processes | po: Monitorowanie wydajności i doskonalenie procesów
+[2026-09-05T21:37:21.881Z] tasks id=b46ef557-2a43-4fab-8b7e-2b6e03a5ed54 TRANSLATE | przed: Monitor Performance and Refine Processes | po: Monitorowanie wydajności i doskonalenie procesów
+[2026-09-05T21:37:21.881Z] tasks id=8041285a-49f9-4d4a-9507-af8e5e0d7f20 TRANSLATE | przed: Monitor Performance and Refine Processes | po: Monitorowanie wydajności i doskonalenie procesów
+[2026-09-05T21:37:21.881Z] tasks id=e5121d7e-c0ec-450a-b6df-67feccf65281 TRANSLATE | przed: Document Changeover Optimization Processes | po: Dokumentacja procesów optymalizacji przezbrojeń
+[2026-09-05T21:37:21.881Z] tasks id=ac672eb8-f4f3-4a4f-a51f-590d55d1fbe6 TRANSLATE | przed: Document Changeover Optimization Processes | po: Dokumentacja procesów optymalizacji przezbrojeń
+[2026-09-05T21:37:21.881Z] tasks id=71dd7cb4-0d98-4ad4-a3b9-e1c05e567b8a TRANSLATE | przed: Document Changeover Optimization Processes | po: Dokumentacja procesów optymalizacji przezbrojeń
+[2026-09-05T21:37:21.881Z] tasks id=fd1210ec-6dfa-410f-93fc-9e954af8d50f TRANSLATE | przed: Configure pilot environment and integrations | po: Konfiguracja środowiska pilotażowego i integracji
+[2026-09-05T21:37:21.881Z] tasks id=task-adma-0901 TRANSLATE | przed: Kick-off workshop with key stakeholders | po: Warsztat inicjujący z kluczowymi interesariuszami
+[2026-09-05T21:37:21.881Z] tasks id=f8df57ed-3f2e-421e-89cd-1911d4c39984 TRANSLATE | przed: Prepare data model and ingestion plan | po: Przygotowanie modelu danych i planu wczytywania
+[2026-09-05T21:37:21.881Z] tasks id=e1fa9e27-222f-421f-8774-a6a37b76029a TRANSLATE | przed: DevOps — CI/CD pipeline hardening | po: DevOps — utwardzenie pipeline'u CI/CD
+[2026-09-05T21:37:21.881Z] tasks id=b7342823-6286-48ab-814e-489be96d7c8b TRANSLATE | przed: DevOps — CI/CD pipeline hardening | po: DevOps — utwardzenie pipeline'u CI/CD
+[2026-09-05T21:37:21.881Z] tasks id=549cbab0-5fc6-42b8-9c6f-0bf30b9f8dc3 TRANSLATE | przed: DevOps — CI/CD pipeline hardening | po: DevOps — utwardzenie pipeline'u CI/CD
+[2026-09-05T21:37:21.881Z] tasks id=3280a33c-9c04-471b-b620-658423cbc96b TRANSLATE | przed: Quality Management 4.0 — SPC dashboard MVP | po: Zarządzanie jakością 4.0 — MVP pulpitu SPC
+[2026-09-05T21:37:21.881Z] tasks id=2b5e0e21-119e-46d3-916a-5cdfc8f2f7eb TRANSLATE | przed: RPA pilot — invoice processing automation | po: Pilotaż RPA — automatyzacja przetwarzania faktur
+[2026-09-05T21:37:21.881Z] tasks id=4d63149c-9dcf-4f0b-b2b7-6d450b81f1da TRANSLATE | przed: Team capacity planning — Sprint 15 | po: Planowanie zasobów zespołu — Sprint 15
+[2026-09-05T21:37:21.881Z] tasks id=e48cc142-e09f-46ae-8a57-234aeeb3fa09 TRANSLATE | przed: Vendor shortlist for IoT platform (IRIS) | po: Krótka lista dostawców platformy IoT (IRIS)
+[2026-09-05T21:37:21.881Z] tasks id=8887d84e-5858-40aa-b922-c239d62896b3 TRANSLATE | przed: Cloud migration — cost optimization review | po: Migracja do chmury — przegląd optymalizacji kosztów
+[2026-09-05T21:37:21.881Z] tasks id=f43a5e5b-e912-4207-b106-7ac8dccc6d87 TRANSLATE | przed: Data migration dry-run — ERP staging | po: Próba migracji danych — środowisko testowe ERP
+[2026-09-05T21:37:21.881Z] tasks id=4b08a9bf-8821-46da-b991-ac72c3a96702 TRANSLATE | przed: Security audit — OT/IT convergence review | po: Audyt bezpieczeństwa — przegląd konwergencji OT/IT
+[2026-09-05T21:37:21.881Z] tasks id=1cae44c8-7ea7-4e11-a89d-8c3f5bdb997f TRANSLATE | przed: Prepare board presentation — digital maturity results | po: Przygotowanie prezentacji dla zarządu — wyniki dojrzałości cyfrowej
+[2026-09-05T21:37:21.881Z] tasks id=6dc6f1c3-9128-405e-933d-6b5f84f7eb5e TRANSLATE | przed: Finalize Q2 transformation roadmap | po: Finalizacja mapy drogowej transformacji Q2
+[2026-09-05T21:37:21.881Z] tasks id=bdda17a7-fa6a-428a-9cc8-8d09fbaec1df TRANSLATE | przed: Interview: Quick Assessment | po: Wywiad: szybka ocena
+[2026-09-05T21:37:21.881Z] tasks id=5ee59e9f-2226-4f35-ae48-9b7433809160 TRANSLATE | przed: Interview: DBR77 — Marketing & Promotion (Ideas) | po: Wywiad: DBR77 — marketing i promocja (pomysły)
+[2026-09-05T21:37:21.881Z] tasks id=6cf48e96-8a34-43c4-88f1-76215ad0b927 TRANSLATE | przed: Interview: DBR77 — How to Sell Better (Ideas) | po: Wywiad: DBR77 — jak sprzedawać lepiej (pomysły)
+[2026-09-05T21:37:21.881Z] tasks id=da2be2e0-05b0-4862-b431-88a3c4031cdf TRANSLATE | przed: Q2 Strategy — Market expansion playbook | po: Strategia Q2 — plan ekspansji rynkowej
+[2026-09-05T21:37:21.881Z] tasks id=01fd6613-f2ce-4dda-8b6b-0bc5d82ae185 TRANSLATE | przed: Meeting Notes | po: Notatki ze spotkania
+[2026-09-05T21:37:21.881Z] tasks id=96a4a017-8c0f-48e4-9edc-da26ab70aa07 TRANSLATE | przed: Meeting Notes | po: Notatki ze spotkania
+[2026-09-05T21:37:21.881Z] initiatives id=0ea089d2-d9c8-4fd2-bffe-748c2a3fa0ce TRANSLATE | przed: Digital Performance Management | po: Zarządzanie wydajnością cyfrową
+[2026-09-05T21:37:21.881Z] initiatives id=d1b3751e-d2aa-4957-8967-10254e7628c3 TRANSLATE | przed: Automated Changeover Optimization | po: Automatyzacja optymalizacji przezbrojeń
+[2026-09-05T21:37:21.881Z] initiatives id=6e41f39e-f296-56ae-b454-f183ef65e766 TRANSLATE | przed: Data Analytics Platform | po: Platforma analityki danych
+[2026-09-05T21:37:21.881Z] initiatives id=817e22c0-aa7b-4c80-853a-4ba443cf1202 TRANSLATE | przed: Data Analytics Platform | po: Platforma analityki danych
+[2026-09-05T21:37:21.881Z] initiatives id=b8f28cea-36b4-4f12-802e-634bf10c4d5a TRANSLATE | przed: Data Analytics Platform | po: Platforma analityki danych
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-planning-01 TRANSLATE | przed: Cybersecurity Enhancement Program | po: Program wzmocnienia cyberbezpieczeństwa
+[2026-09-05T21:37:21.881Z] initiatives id=23ba3557-8440-41c7-886f-d67948027463 TRANSLATE | przed: Cybersecurity Enhancement Program | po: Program wzmocnienia cyberbezpieczeństwa
+[2026-09-05T21:37:21.881Z] initiatives id=7eb944f9-c5b9-4162-8bff-23b0d620f9f3 TRANSLATE | przed: Cybersecurity Enhancement Program | po: Program wzmocnienia cyberbezpieczeństwa
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-review-02 TRANSLATE | przed: IoT Sensor Network Deployment | po: Wdrożenie sieci czujników IoT
+[2026-09-05T21:37:21.881Z] initiatives id=5faeae4e-d8a5-4c43-a7a5-2444a124f703 TRANSLATE | przed: IoT Sensor Network Deployment | po: Wdrożenie sieci czujników IoT
+[2026-09-05T21:37:21.881Z] initiatives id=e3b0a66a-dc86-4730-84e0-cdffb66cbed6 TRANSLATE | przed: IoT Sensor Network Deployment | po: Wdrożenie sieci czujników IoT
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-draft-01 TRANSLATE | przed: ERP System Modernization | po: Modernizacja systemu ERP
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-executing-03 TRANSLATE | przed: Quality Management System 4.0 | po: System zarządzania jakością 4.0
+[2026-09-05T21:37:21.881Z] initiatives id=5317c99f-1710-4e92-a65f-c56e5c38b3dd TRANSLATE | przed: Quality Management System 4.0 | po: System zarządzania jakością 4.0
+[2026-09-05T21:37:21.881Z] initiatives id=c92485ea-b906-4586-b209-bc5bcb9bfff0 TRANSLATE | przed: Quality Management System 4.0 | po: System zarządzania jakością 4.0
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-executing-01 TRANSLATE | przed: DevOps Transformation | po: Transformacja DevOps
+[2026-09-05T21:37:21.881Z] initiatives id=d3bc32b2-ca68-456f-8af9-a432d6f10442 TRANSLATE | przed: DevOps Transformation | po: Transformacja DevOps
+[2026-09-05T21:37:21.881Z] initiatives id=5f687458-93ce-4787-93eb-81014852a614 TRANSLATE | przed: DevOps Transformation | po: Transformacja DevOps
+[2026-09-05T21:37:21.881Z] initiatives id=8df2897b-5993-4ee3-82ba-746a0bc6b166 TRANSLATE | przed: RPA Implementation | po: Wdrożenie RPA
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-scheduled-01 TRANSLATE | przed: RPA Implementation | po: Wdrożenie RPA
+[2026-09-05T21:37:21.881Z] initiatives id=1c9bb549-83e7-4017-b996-f1400f724c82 TRANSLATE | przed: RPA Implementation | po: Wdrożenie RPA
+[2026-09-05T21:37:21.881Z] initiatives id=demo-init-approved-01 TRANSLATE | przed: Cloud Migration Phase 2 | po: Migracja do chmury — Faza 2
+[2026-09-05T21:37:21.881Z] initiatives id=5b93a275-0ed8-4f90-902a-4c521ece649e TRANSLATE | przed: Cloud Migration Phase 2 | po: Migracja do chmury — Faza 2
+[2026-09-05T21:37:21.881Z] initiatives id=bb9038c3-d5e0-41e4-8d3d-f695d9c045f9 TRANSLATE | przed: Cloud Migration Phase 2 | po: Migracja do chmury — Faza 2
+[2026-09-05T21:37:21.881Z] initiatives id=fd7f00e4-16ae-43ab-9b7e-662041201bc5 TRANSLATE | przed: AI Audit Deep Research V1 | po: Pogłębiony audyt AI — wersja 1
+[2026-09-05T21:37:21.881Z] initiatives id=f3c7c6d1-cd94-47ef-abd9-92f74f034aa1 TRANSLATE | przed: Approval SLA and escalation governance | po: SLA zatwierdzania i zarządzanie eskalacją
+[2026-09-05T21:37:21.881Z] initiatives id=9c56126d-66df-4fbf-8c77-0930676ae315 TRANSLATE | przed: KPI contract and metric ownership | po: Kontrakt KPI i odpowiedzialność za mierniki
+[2026-09-05T21:37:21.881Z] initiatives id=866b9bc9-239c-46ed-9eec-40d4aa44e456 TRANSLATE | przed: Planning-to-execution handoff automation | po: Automatyzacja przekazania z planowania do realizacji
+[2026-09-05T21:37:21.881Z] initiatives id=575f63f4-0b38-47b6-83bd-75b93adce3a1 TRANSLATE | przed: SMED pilot on Line 3 | po: Pilotaż SMED na Linii 3
+[2026-09-05T21:37:21.881Z] initiatives id=3cf4ef78-fd80-4a43-be80-9889145ca533 TRANSLATE | przed: Decision rights redesign for exceptions | po: Przeprojektowanie uprawnień decyzyjnych dla wyjątków
+[2026-09-05T21:37:21.881Z] initiatives id=c1f42540-c41e-42c8-bc0b-3dbef5935369 TRANSLATE | przed: Weekly priorities — Sprint 14 focus areas | po: Priorytety tygodnia — obszary skupienia Sprintu 14
+[2026-09-05T21:37:21.881Z] initiatives id=f49f41bd-cc88-4f03-8059-c3be7ecd0d2b TRANSLATE | przed: Q2 Strategy — Market expansion playbook | po: Strategia Q2 — plan ekspansji rynkowej
+[2026-09-05T21:37:21.881Z] initiatives id=adec3630-ce63-4370-ae15-5178d690dc46 TRANSLATE | przed: Meeting Notes | po: Notatki ze spotkania
+[2026-09-05T21:37:21.881Z] initiatives id=4dca44dc-97b9-4acc-9573-25da60d00afc TRANSLATE | przed: Meeting Notes | po: Notatki ze spotkania
+[2026-09-05T21:37:21.881Z] initiatives id=5c7d8726-4bcf-4177-ad32-ed63f5927826 TRANSLATE | przed: Cybersecurity Enhancement Program (Fork) | po: Program wzmocnienia cyberbezpieczeństwa (kopia)
+[2026-09-05T21:37:21.881Z] initiatives id=7e888882-d895-4c27-95e9-13c8a890c9ee TRANSLATE | przed: Industrial Intelligence Newsletter Value-First Pipeline | po: Newsletter Industrial Intelligence — lejek zorientowany na wartość
+[2026-09-05T21:37:21.881Z] initiatives id=c227b3c2-9db2-492d-8d55-7bef8809e2b0 TRANSLATE | przed: Offense: leverage strengths to capture opportunities | po: Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse
+[2026-09-05T21:37:21.881Z] initiatives id=741fd062-709e-47e7-a036-567f86524e42 TRANSLATE | przed: Offense: leverage strengths to capture opportunities | po: Ofensywa: wykorzystaj mocne strony, aby uchwycić szanse
+[2026-09-05T21:37:21.881Z] initiatives id=ab7549de-a1da-4999-a533-de310cdc7854 TRANSLATE | przed: Repair: eliminate weaknesses exposed to threats | po: Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia
+[2026-09-05T21:37:21.881Z] initiatives id=98b6b39f-5fd5-4529-88f3-da9a9c8d76b0 TRANSLATE | przed: Repair: eliminate weaknesses exposed to threats | po: Naprawa: wyeliminuj słabości odsłonięte przez zagrożenia
+[2026-09-05T21:37:21.881Z] initiatives id=f94714d9-7d15-4ad5-a1ba-757a11efb96d TRANSLATE | przed: Conversion: fix weaknesses to unlock opportunities | po: Konwersja: usuń słabości, aby odblokować szanse
+[2026-09-05T21:37:21.881Z] initiatives id=bca23c91-d2dc-45b6-be33-96695d1e2e04 TRANSLATE | przed: Conversion: fix weaknesses to unlock opportunities | po: Konwersja: usuń słabości, aby odblokować szanse
+[2026-09-05T21:37:21.881Z] initiatives id=19934e66-6261-401b-ae12-3125d55bcac2 TRANSLATE | przed: Conversion: fix weaknesses to unlock opportunities | po: Konwersja: usuń słabości, aby odblokować szanse
+[2026-09-05T21:37:21.881Z] initiatives id=01198c63-6a28-4c6d-a0b1-2d454d2ade8e TRANSLATE | przed: Defense: use strengths as a shield against threats | po: Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
+[2026-09-05T21:37:21.881Z] initiatives id=27921ac2-1deb-4f3b-9745-81c45baf6cab TRANSLATE | przed: Defense: use strengths as a shield against threats | po: Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
+[2026-09-05T21:37:21.881Z] initiatives id=a1342edb-113f-4abb-9e2e-e902c3b63b37 TRANSLATE | przed: Defense: use strengths as a shield against threats | po: Obrona: wykorzystaj mocne strony jako tarczę przed zagrożeniami
