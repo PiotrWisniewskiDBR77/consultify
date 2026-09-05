@@ -98,3 +98,18 @@ Ekrany Wyników zostały ocenione **wizualnie** i te oceny zostają w mocy — z
 dotyczy **ścieżki**, nie wyglądu. Jeden ekran zmienia treść (`kpi-registry`,
 analogicznie `okr-registry`) i wymaga **ponownego odbioru** po przebudowie.
 Reszta ocen obowiązuje dalej.
+
+---
+
+## Uzupełnienie 2026-09-05 (słowa właściciela, odbiór MVP)
+
+> „Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N.”
+> „KPI, OKR i ROI zaczyna się od tego, że w menu głównym mamy 3 funkcje i każda z nich uruchamia tabelę na ekranie. Tabela jest listą, która oznacza raport.”
+
+Odczyt CTO (do potwierdzenia wyłącznie zrzutem, nie pytaniem):
+- **Poziom 1** = trzy funkcje w Menu 2 Wyników: KPI · OKR · ROI. Każda otwiera **tabelę raportów** (zestawień okresowych): wiersz = raport („KPI procesowe — sierpień 2026”, „OKR działu — Q3”), kolumny: nazwa · okres · opis · liczba pozycji · właściciel · stan (Bezpieczne/Ostrzeżenie/Krytyczne/Brak danych) · aktualizacja.
+- **Poziom 2** = otwarty raport: **tabela pozycji** (dziesięć wskaźników / celów tego okresu) z nagłówkiem opisu i **podsumowaniem stanu**, akcja „Dodaj wskaźnik” — jako artefakt w Menu 3. To istniejący `ResultsKpiScorecardDetailPage` (`/results/kpi/scorecards/:id`), nie siatka kafelków.
+- **Poziom 3** = karta N pojedynczego wskaźnika / celu (`KpiToolPage`, `OkrObjectiveCardPage`) z historią przez wszystkie okresy; przy celu **kluczowe rezultaty są sekcją karty, nie kolejnym poziomem**; właściciel celu jest kolumną tabeli poziomu 2.
+- **ROI** = dwa poziomy (tabela analiz → karta N analizy) — bez zmian.
+
+Co 05.09 zbudowano niezgodnie i podlega korekcie (P7K): poziom 2 jako siatka kafelków (`KpiCardSetPage`, trasa `/results/kpi/zestawienie/:id`) zamiast istniejącej tabeli zestawienia; OKR z czterema poziomami (zestaw → cele → karta celu → zbiór KR → karta KR) zamiast trzech; rejestr KPI bez wymiaru okresu.
