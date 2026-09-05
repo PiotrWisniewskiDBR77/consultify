@@ -394,3 +394,9 @@ Dyżur 360 zaimplementował maszynową ważność DEC-392 (7 dni, data+SHA, pod�
 - K4: „Konwertuj na inicjatywę” zapisywało `ai_decision_outcomes`; gałąź dowodowa rozdziela typy i woła kanoniczny lejek `createInitiative` ze śladem org/source.
 - K8: „Zapisz jako pomysł” używało placeholdera `new-idea-*`; gałąź dowodowa zapisuje przez `createIdeaFromChat` przed nawigacją i przekazuje realne `idea-*`.
 - Stan: `PARTIAL` — RealPG/ApiGateway/JWT i mutacje RED→GREEN przechodzą; pełny test montażu `IdeaMapWorkspace` z licznikiem `createMyIdea=0` oraz wdrożenie/akcept pozostają nieudowodnione. Raport: `docs/program/waves/WAVE_03_ACCEPTANCE/codex/CODEX_DAY370_AKCJE_WIADOMOSCI_REPORT.md`.
+## AI. Dyżur 369 — chmura OAuth: rdzeń spięty, reachable teza obalona
+
+| Nr | Znalezisko | Skutek | Stan | Ślad |
+| --- | --- | --- | --- | --- |
+| AG1 | `POST /api/cloud/sources` tworzył aktywne źródło bez tokenu; dziewięć operacji dostawców czytało token z `cloud_sources`. | Bramka używa teraz aktywnego tokenu per-user z `integration_oauth_tokens`, ignoruje body, a operacje pobierają żywy token z auto-refresh. | ZAMKNIĘTE lokalnie / REALPG | `CODEX_DAY369_CHMURA_OAUTH_REPORT.md`, `evidence/chmura-oauth-20260905/day369/` |
+| AG2 | `/settings/integrations` na markerze prowadzi do `ConnectedAppsSettings.tsx`, nie do `IntegrationSettings.tsx`; governed connect dla Google Drive dał świeżo `500 {}` zamiast oczekiwanego `authUrl`. | Audyt/instrukcja wskazywały nieaktualny reachable komponent; trzeci mechanizm nadal wymaga osobnego dyżuru i decyzji właściciela. | PARTIAL / DO DECYZJI WŁAŚCICIELA | `evidence/chmura-oauth-20260905/day369/R1-rodzina.md`, `R5-governed-oauth-proposal.md` |

@@ -26,6 +26,12 @@ interface CloudSource {
   createdAt: string;
 }
 
+interface OAuthAvailability {
+  configured: boolean;
+  approved: boolean;
+  authType: string;
+}
+
 const PROVIDER_LABELS: Record<string, string> = {
   google_drive: 'Google Drive',
   onedrive: 'OneDrive',
@@ -50,6 +56,9 @@ export const CloudDataSettings: React.FC = () => {
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [oauthAvailability, setOauthAvailability] = useState<Record<string, OAuthAvailability>>({});
+  const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set());
+  const [oauthStatusLoaded, setOauthStatusLoaded] = useState(false);
 
   const normalizeSources = (rows: unknown): CloudSource[] =>
     Array.isArray(rows)
@@ -86,10 +95,49 @@ export const CloudDataSettings: React.FC = () => {
     fetchSources();
   }, [fetchSources]);
 
+  useEffect(() => {
+    let active = true;
+    Api.get('/api/settings/integrations/oauth/status')
+      .then((data) => {
+        if (!active) return;
+        setOauthAvailability(data?.availability || {});
+        setConnectedProviders(
+          new Set(
+            (Array.isArray(data?.connected) ? data.connected : []).map((entry: unknown) =>
+              typeof entry === 'string'
+                ? entry
+                : String((entry as { connectorId?: string })?.connectorId || '')
+            )
+          )
+        );
+      })
+      .catch(() => {
+        if (!active) return;
+        setOauthAvailability({});
+        setConnectedProviders(new Set());
+      })
+      .finally(() => {
+        if (active) setOauthStatusLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleAdd = async () => {
     if (!newName.trim()) return;
     try {
       setActionError(null);
+      const availability = oauthAvailability[newProvider];
+      if (!availability?.configured || !availability.approved) {
+        throw new Error(t('cloud.notConfigured', 'Integracja nieskonfigurowana'));
+      }
+      if (!connectedProviders.has(newProvider)) {
+        const result = await Api.get(`/api/settings/integrations/oauth/start/${newProvider}`);
+        if (!result?.authUrl) throw new Error('OAuth authorization URL unavailable');
+        window.location.assign(result.authUrl);
+        return;
+      }
       const expected = { provider: newProvider, name: newName.trim() };
       await Api.post('/api/cloud/sources', { provider: newProvider, name: newName.trim() });
       const refreshed = await fetchSources();
@@ -211,11 +259,13 @@ export const CloudDataSettings: React.FC = () => {
               onChange={(e) => setNewProvider(e.target.value)}
               className="w-full px-3 py-2 text-sm bg-c-surface border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-600 rounded-lg"
             >
-              {Object.keys(PROVIDER_LABELS).map((key) => (
-                <option key={key} value={key}>
-                  {PROVIDER_ICONS[key]} {getProviderLabel(key)}
-                </option>
-              ))}
+              {Object.keys(PROVIDER_LABELS)
+                .filter((key) => key !== 'sharepoint')
+                .map((key) => (
+                  <option key={key} value={key}>
+                    {PROVIDER_ICONS[key]} {getProviderLabel(key)}
+                  </option>
+                ))}
             </select>
           </div>
           <div>
@@ -239,12 +289,24 @@ export const CloudDataSettings: React.FC = () => {
             </button>
             <button
               onClick={handleAdd}
-              disabled={!newName.trim()}
+              disabled={
+                !newName.trim() ||
+                !oauthStatusLoaded ||
+                !oauthAvailability[newProvider]?.configured ||
+                !oauthAvailability[newProvider]?.approved
+              }
               className="px-3 py-1.5 text-sm font-medium text-white bg-brand hover:bg-brand-dark disabled:bg-c-surface-raised rounded-lg"
             >
               {t('cloud.connect', 'Connect')}
             </button>
           </div>
+          {oauthStatusLoaded &&
+            (!oauthAvailability[newProvider]?.configured ||
+              !oauthAvailability[newProvider]?.approved) && (
+              <p className="text-sm text-c-text-secondary">
+                {t('cloud.notConfigured', 'Integracja nieskonfigurowana')}
+              </p>
+            )}
         </div>
       )}
 
