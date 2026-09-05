@@ -86,7 +86,8 @@ describe.skipIf(!REAL_PG)('F-P4 analysisDefinitionService — realny PostgreSQL'
         [lineCode]
       )
     );
-    if (!line) throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
+    if (!line)
+      throw new Error(`financial_statement_lines seed row not found for line_code=${lineCode}`);
     await withPinnedPostgresTransaction((tx) =>
       tx.queryRun(
         `INSERT INTO finance_stmt_lines (
@@ -113,7 +114,14 @@ describe.skipIf(!REAL_PG)('F-P4 analysisDefinitionService — realny PostgreSQL'
       await writeLine(packBvId, entityId, periodId, 'NET_INCOME', 'P&L', 17_010_000 * scale);
       await writeLine(packBvId, entityId, periodId, 'CFO', 'CF', 15_000_000 * scale);
       await writeLine(packBvId, entityId, periodId, 'CURRENT_ASSETS', 'BS', 56_500_000 * scale);
-      await writeLine(packBvId, entityId, periodId, 'CURRENT_LIABILITIES', 'BS', 17_500_000 * scale);
+      await writeLine(
+        packBvId,
+        entityId,
+        periodId,
+        'CURRENT_LIABILITIES',
+        'BS',
+        17_500_000 * scale
+      );
       await writeLine(packBvId, entityId, periodId, 'LONG_TERM_DEBT', 'BS', 40_500_000 * scale);
       await writeLine(packBvId, entityId, periodId, 'EQUITY', 'BS', 100_000_000 * scale);
       await writeLine(packBvId, entityId, periodId, 'AR', 'BS', 26_000_000 * scale);
@@ -212,8 +220,12 @@ describe.skipIf(!REAL_PG)('F-P4 analysisDefinitionService — realny PostgreSQL'
   afterAll(async () => {
     // Sprzątanie po sobie — dane demo są twarzą produktu (CLAUDE.md, higiena wykonania).
     await withPinnedPostgresTransaction(async (tx) => {
-      await tx.queryRun(`DELETE FROM finance_analysis_kpi_values WHERE organization_id = ?`, [orgId]);
-      await tx.queryRun(`DELETE FROM finance_analysis_definitions WHERE organization_id = ?`, [orgId]);
+      await tx.queryRun(`DELETE FROM finance_analysis_kpi_values WHERE organization_id = ?`, [
+        orgId,
+      ]);
+      await tx.queryRun(`DELETE FROM finance_analysis_definitions WHERE organization_id = ?`, [
+        orgId,
+      ]);
       await tx.queryRun(`DELETE FROM finance_stmt_lines WHERE organization_id = ?`, [orgId]);
       await tx.queryRun(`DELETE FROM finance_stmt_entities WHERE organization_id = ?`, [orgId]);
       await tx.queryRun(`DELETE FROM finance_stmt_periods WHERE organization_id = ?`, [orgId]);
