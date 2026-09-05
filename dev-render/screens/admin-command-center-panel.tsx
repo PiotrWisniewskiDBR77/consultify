@@ -292,6 +292,31 @@ if (!g.__ADMIN_COMMAND_CENTER_FETCH__) {
           },
         });
       }
+      // Plan napraw MVP 05.09.2026, poz. (4) `admin-command-attention-queue`:
+      // "Ryzyka wymagające przeglądu" pokazywało zawsze 0, bo AdminCommandCenterPanel
+      // czytał `risk.highRiskCount` zamiast realnego zagnieżdżonego kształtu
+      // `risk.summary.audit.highRiskCount` (server/src/routes/adminP32.routes.ts
+      // `readRiskSummary`). Ten stub zwraca DOKŁADNIE ten realny kontrakt (2
+      // wpisy wysokiego ryzyka), żeby zrzut ekranu pokazywał naprawiony licznik,
+      // nie pusty/zerowy stan z powodu nieobsłużonego fetcha.
+      if (url.includes('/admin/risk/summary')) {
+        return jsonResponse({
+          organizationId: 'org-atelier-toys-0001',
+          summary: {
+            audit: { totalLogs: 42, unresolvedCount: 5, highRiskCount: 2 },
+            incidents: [],
+          },
+        });
+      }
+      if (url.includes('/admin/audit-logs/stats')) {
+        return jsonResponse({ totalLogs: 42, unresolvedCount: 5, highRiskCount: 2 });
+      }
+      if (url.includes('/admin/billing/alerts')) {
+        return jsonResponse({ alerts: [] });
+      }
+      if (url.includes('/admin/health-panel/summary')) {
+        return jsonResponse({ summary: { failed: 0 } });
+      }
     } catch {
       /* fall through to real fetch (e.g. i18n /locales/**) */
     }

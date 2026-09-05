@@ -99,19 +99,32 @@ const CommandCenterAttentionQueue: React.FC = () => {
         item.status === 'fulfilled' ? item.value : null
       );
       const next: AttentionSignal[] = [];
-      if (risk)
+      if (risk) {
+        // Plan napraw MVP 05.09.2026, poz. (4) admin-command-attention-queue
+        // (znany błąd z fali 174, potwierdzony nadal obecny 05.09): "Ryzyka
+        // wymagające przeglądu" zawsze 0. Przyczyna: GET /api/admin/risk/summary
+        // (server/src/routes/adminP32.routes.ts `readRiskSummary`) zwraca
+        // `{ organizationId, summary: { audit: { highRiskCount }, incidents } }`
+        // — licznik siedzi pod `summary.audit.highRiskCount`, NIE pod
+        // `highRiskCount` na szczycie obiektu. `risk?.highRiskCount` było
+        // zawsze `undefined` -> `?? 0` -> zawsze 0, niezależnie od realnych
+        // danych. Fallback na płaski kształt zostaje (ten sam wzorzec co
+        // `health?.summary?.failed ?? health?.failed` kilka linii niżej) na
+        // wypadek przyszłej zmiany kontraktu API w drugą stronę.
+        const highRiskCount = Number(risk?.summary?.audit?.highRiskCount ?? risk?.highRiskCount ?? 0);
         next.push({
           id: 'risk',
           type: 'risk',
           title: t('admin.command.attention-queue.signals.riskTitle'),
           source: 'GET /api/admin/risk/summary',
           freshness,
-          severity: Number(risk?.highRiskCount ?? 0) > 0 ? 'critical' : 'info',
+          severity: highRiskCount > 0 ? 'critical' : 'info',
           href: '/admin/security/risk-summary',
           detail: t('admin.command.attention-queue.signals.riskDetail', {
-            count: Number(risk?.highRiskCount ?? 0),
+            count: highRiskCount,
           }),
         });
+      }
       if (audit)
         next.push({
           id: 'audit',

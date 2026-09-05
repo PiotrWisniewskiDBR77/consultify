@@ -40,7 +40,19 @@ const renderPanel = () =>
 describe('Command Center attention queue', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    api.getAdminRiskSummary.mockResolvedValue({ highRiskCount: 2 });
+    // Plan napraw MVP 05.09.2026, poz. (4): kształt mocka MUSI odpowiadać
+    // realnej odpowiedzi `GET /api/admin/risk/summary`
+    // (server/src/routes/adminP32.routes.ts `readRiskSummary`):
+    // `{ organizationId, summary: { audit: { highRiskCount }, incidents } }`.
+    // Stary mock `{ highRiskCount: 2 }` (płaski kształt) ukrywał dokładnie
+    // ten błąd — test przechodził na zielono niezależnie od tego, czy
+    // komponent czytał właściwą ścieżkę, bo mock i buggy kod zgadzały się co
+    // do (błędnego) kontraktu. Zobacz też "test scenariusza nie broni
+    // zabezpieczenia" — mutacja musi celować w prawdziwy kontrakt API.
+    api.getAdminRiskSummary.mockResolvedValue({
+      organizationId: 'org-1',
+      summary: { audit: { totalLogs: 10, unresolvedCount: 1, highRiskCount: 2 }, incidents: [] },
+    });
     api.getTenantAdminAuditStats.mockResolvedValue({ unresolvedCount: 3 });
     api.getAdminBillingAlerts.mockResolvedValue({ alerts: [] });
     api.getHealthPanelSummary.mockResolvedValue({ summary: { failed: 0 } });
@@ -82,6 +94,18 @@ describe('Command Center attention queue', () => {
     await userEvent.click(kebaby[0]);
     expect(await screen.findByText('Otwórz ekran kanoniczny')).toBeInTheDocument();
   });
+  it('poz. (4) plan 05.09: czyta highRiskCount z zagnieżdżonej ścieżki summary.audit, nie pokazuje zawsze 0', async () => {
+    // Znany błąd z fali 174, potwierdzony nadal obecny 05.09: "Ryzyka
+    // wymagające przeglądu" zawsze 0, bo komponent czytał `risk.highRiskCount`
+    // (undefined) zamiast `risk.summary.audit.highRiskCount` (realny kontrakt
+    // API). Dowód mutacyjny: cofnięcie fixu na `risk?.highRiskCount` czerwieni
+    // tę asercję, bo mock w `beforeEach` celowo NIE ma płaskiego pola.
+    renderPanel();
+    await screen.findByText('Ryzyka wymagające przeglądu');
+    expect(await screen.findByText('2 wysokiego ryzyka')).toBeInTheDocument();
+    expect(screen.queryByText('0 wysokiego ryzyka')).not.toBeInTheDocument();
+  });
+
   it('shows an honest error when all sources fail', async () => {
     Object.values(api).forEach((fn: any) => fn.mockRejectedValue(new Error('down')));
     renderPanel();
