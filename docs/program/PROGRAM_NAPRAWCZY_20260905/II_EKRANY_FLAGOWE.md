@@ -955,3 +955,41 @@ różni wykonawcy) — sekwencyjna jest tylko zależność Wywiadu od ukończeni
 Inicjatywy, Realizacja, Audyty, Organizacja — **8 z 14 zamrożonych modułów**, wszystkie z numerami
 DEC do zarezerwowania (`DEC-397`…`DEC-404`, patrz nota na początku dokumentu — **propozycja, nie
 zatwierdzona decyzja**).
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (dla KAŻDEGO ekranu flagowego z tej paczki)
+
+Cel ekranu flagowego = **A = 3 i B = 3** w metodzie audytu (`docs/program/AUDYT_AWARD_20260905/README.md`) na **1280 / 1440 / 1920 px, jasny i ciemny**, potwierdzone mechanicznie, a potem jednym „tak” właściciela.
+
+| Komenda | Oczekiwany wynik |
+| --- | --- |
+| `npx esbuild <każdy zmieniony plik> --bundle --platform=browser --outdir=/tmp/esb --log-level=error --loader:.png=file --loader:.svg=file` | exit 0 |
+| `npx vitest run <testy komponentów ekranu>` | PASS; każda zmiana kompozycji ma test z dowodem mutacyjnym |
+| `bash scripts/check-list-canon.sh && bash scripts/check-artefakt.sh` | `OK`, dług nie rośnie |
+| `node scripts/dev/audyt-award-20260905/audyt.mjs --ekran=<url> --port=<p> --host=127.0.0.1 --szerokosc=1280,1440,1920 --motyw=jasny,ciemny --out=ev/<modul>-flagowy/` (rozszerzenie harnessu o `--motyw`/`--szerokosc` = paczka IV; do czasu jej wdrożenia: `zrzut.mjs` × 6 wariantów + ręczne zliczenie z `.json`) | 6 zrzutów + `.json` |
+| `git log --format=%s origin/staging..HEAD` | pliki modułów zamrożonych tylko z `[ODMROZENIE <MODUL> DEC-397]` |
+
+Progi (z `.json` każdego z 6 wariantów):
+- `bledyKonsoli` = 0; żądania `status ≥ 400` = 0 (poza jawnie udokumentowanymi w sekcji modułu);
+- `przepelnieniaPoziome` = 0; `dom.aside.count` ≤ 1; zero par nakładających się prostokątów tekstu;
+- stop-lista EN (P3) = 0 trafień w `tekst`; regex UUID/SCREAMING_CASE (P4) = 0;
+- para jasny/ciemny: `mean_luma` różne o ≥ 40 (bezpiecznik przeciw bliźniaczej parze);
+- porównanie z wzorcem złota wskazanym w sekcji modułu: identyczna powłoka (Menu 1/2/3, panel, typografia) — kontrola wzrokiem PO obok wzorca;
+- wszystkie dedukcje z tabeli „dzisiejsze dedukcje” sekcji modułu zamknięte (każda ma w raporcie: co zmieniono, którym zrzutem to widać).
+
+**STOP:** 6 wariantów spełnia progi → commit `evidence/flagowy-<modul>/` + raport → nadzorca ogląda i dopiero wtedy ekran trafia na 3100/final do jednego „tak” właściciela. Dedukcja wymagająca decyzji produktowej (zmiana treści, nie formy) → STOP i opis, nie zgadywanie. Zakazy: `--no-verify`, `git stash`, flagi, nowy język wizualny (tylko komponenty standardowe).
+
+## 11. Wklejka dla Codexa (szablon — wstaw moduł i sekcję)
+
+```
+ZADANIE II-<nr> — Ekran flagowy modułu <MODUŁ>: <NAZWA EKRANU> do poziomu sceny (A=3, B=3). Praca do celu.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/flagowy-<modul> <dir> origin/staging). Commit per krok, bez push, autor Piotr <piotr.wisniewski@dbr77.com>.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/II_EKRANY_FLAGOWE.md — sekcja „<nr>. <MODUŁ>” (przeczytaj też „Jak czytać tę paczkę” i §10). Zależności P1–P6 z tabeli zbiorczej muszą być scalone przed startem — sprawdź git log origin/staging.
+
+CEL: ten jeden ekran wygląda i działa jak wzorzec złota (ścieżki w sekcji): jeden panel, lekkie centrum, komponenty standardowe, tokeny c-*, polszczyzna bez wyjątku, zero surowych kodów, zero ucięć, zero błędów konsoli i ≥400 — na 1280/1440/1920 w jasnym i ciemnym motywie. Lista dedukcji do zamknięcia: tabela w sekcji modułu.
+
+KROKI: zamknij dedukcje w kolejności z sekcji; każda zmiana kompozycji = test z dowodem mutacyjnym; moduł zamrożony → marker [ODMROZENIE <MODUL> DEC-397].
+CEL OSIĄGNIĘTY = §10: 6 wariantów zrzutów z .json spełnia progi (0 błędów, 0 ≥400, 0 przepełnień, ≤1 aside, 0 EN, 0 UUID, luma jasny/ciemny różna), każda dedukcja zamknięta i pokazana zrzutem, canon i artefakt OK. Raport: tabela dedukcja → zmiana → zrzut, SHA. Decyzja produktowa → STOP i opis. Zakazy: --no-verify, git stash, flagi, własny język wizualny.
+```

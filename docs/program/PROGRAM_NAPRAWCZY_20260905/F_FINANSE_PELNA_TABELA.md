@@ -953,3 +953,54 @@ a krawędzie są append-only — częściowy zapis jest nieodwracalny. Jedna rę
   **A = 1,5 · B = 1,3** na 6 zmierzonych ekranach. Rekomendacja flagowa to *Sprawozdania — lista*,
   a **Wycena jest jawnie zdyskwalifikowana z pokazu do czasu tłumaczenia** 22 angielskich etykiet.
   Stąd krok 5 ogniwa 6 jest **warunkiem odbioru**, nie kosmetyką.
+
+---
+
+## 10. Cel osiągnięty = samokontrola Codexa (praca do celu, ogniwo po ogniwie)
+
+Zasada: **ogniwo n jest skończone dopiero, gdy jego §6 przechodzi na REALNYM Postgresie** (bramka czterech zmiennych z §6 całości), a kontrola negatywna raportuje „skipped”. Bez tego nie zaczynać ogniwa n+1.
+
+| Komenda (po każdym ogniwie) | Oczekiwany wynik |
+| --- | --- |
+| `cd server && NODE_OPTIONS=--max-old-space-size=4096 ../node_modules/.bin/tsc --build tsconfig.build.json` | exit 0 |
+| `DATABASE_URL=$(/Users/piotrwisniewski/fv3-pg/newdb.sh finanse-ogniwo-<n>) && npx tsx server/scripts/migrate.postgres.ts` | migracje przechodzą na pustej bazie (dowód, że nowe migracje są addytywne i czytają tylko kolumny istniejące na tym etapie łańcucha) |
+| `cd server && RUN_DB_TESTS=1 MOCK_DB=false NODE_ENV=test DB_TYPE=postgres DATABASE_URL="$DATABASE_URL" npx vitest run --config vitest.config.ts src/services/finance/canonical src/routes/v8/finance-v2 --no-file-parallelism` | wszystkie PASS, w tym nowe testy ogniwa (nazwy z §6 ogniwa); **dowód mutacyjny** dla bramki ogniwa (np. ogniwo 2: zatwierdzenie pakietu `recoverable` → 409; usunięcie tej bramki → test pada) |
+| `cd server && npx vitest run --config vitest.config.ts src/services/finance/canonical` (BEZ bramki) | raportuje **skipped**, nigdy passed |
+| `bash scripts/check-z31.sh` | OK (wzorzec bramki w każdym `.pg.test.ts`) |
+| `npx esbuild <każdy zmieniony plik klienta> --bundle --platform=browser --outdir=/tmp/esb --log-level=error --loader:.png=file --loader:.svg=file` | exit 0 |
+| `bash scripts/check-list-canon.sh && bash scripts/check-artefakt.sh` | `OK` |
+
+Pomiar na żywo po ogniwach 1–6 (staging musi mieć wdrożony serwer z tego łańcucha — po scaleniu i wdrożeniu przez nadzorcę; do tego czasu ogniwo testuje się na lokalnym serwerze `npm run dev:api` z `DATABASE_URL` bazy jednorazowej + `npm run db:seed:dbr77` jeśli istnieje, inaczej dane z §4 przez UI):
+
+```
+node scripts/dev/odbior-zywo/zrzut.mjs --url="/finance?tab=statements" --port=<p> --host=127.0.0.1 --klik="text=Importuj sprawozdanie" ... --out=ev/f1-pakiet-ready.png   # plakietka „Pakiet gotowy”
+node scripts/dev/odbior-zywo/zrzut.mjs --url=<pakiet> --klik="text=Skieruj do przeglądu" --klik="text=Zatwierdź" --out=ev/f2-pakiet-zatwierdzony.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=<analiza> --klik="text=Zatwierdź" --out=ev/f3-analiza-zatwierdzona.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url="/finance?tab=models" --klik="text=Utwórz model finansowy" --klik="text=Oprzyj na sprawozdaniu" ... --out=ev/f4-model-bez-bledu.png
+node scripts/dev/odbior-zywo/zrzut.mjs --url=<model>/wyniki --pelna --out=ev/f5-pelna-tabela-1440.png ; --motyw=dark → f5-pelna-tabela-1440-dark.png ; --szerokosc=1280/1920
+node scripts/dev/odbior-zywo/zrzut.mjs --url=<wycena>?krok=zrodlo --out=ev/f6-wycena-zrodlo.png
+```
+
+Progi (§6 całości, dosłownie):
+- `f1`: `pack_readiness_status = ready` w odpowiedzi API i plakietka na ekranie; `f2`/`f3`: plakietka „Zatwierdzony”, BV `APPROVED` (GET wersji).
+- `f4`: model otwiera się **bez** karty „Nie można otworzyć kontekstu” (0 wystąpień tekstu w `.json`), `GET .../baseline/:bv/context` = **200**.
+- `f5`: tabela zawiera sekcje RZiS, Bilans, CF; ≥ 3 kolumny lat historii + kolumny horyzontu; „Okres bazowy” = `12/2025` (nie `per-2025-12`); przy 1280 tabela nie chowa kolumn za panelem; para jasny/ciemny ma różne `mean_luma`.
+- `f6`: „Źródło: DBR77 — Model bazowy 2023-2025 · wersja 1”, plakietka `ready`, zero angielskich etykiet paska (stop-lista z P3).
+- Przepływ Playwright `tests/e2e/finance/finance-cfo-pelna-tabela.signed.spec.ts` przechodzi od importu do wyceny bez jednego zapytania SQL; `bledyKonsoli` = 0; `status ≥ 400` = 0 poza udokumentowanymi.
+- Predykcja (§5): 20 wejść, 0 białych ekranów (dziś ~1/16).
+
+**STOP:** ogniwo ma zielony §6 na realnej bazie + kontrolę negatywną „skipped” → commit ogniwa + raport (liczby, ścieżki); dopiero potem następne ogniwo. Jeśli bramka kontraktu (9 bramek `baselineContextService`) wymaga zmiany reguły biznesowej (np. dopuszczenie pakietu nie-APPROVED) → STOP i opis dla nadzorcy — reguły nie zmieniać samowolnie. Zakazy: `--no-verify`, `git stash`, surowy SQL zamiast serwisów/repozytoriów, testy „zielone” na sqlite/atrapie (Z29/Z31), zapisy do bazy stagingu poza UI.
+
+## 11. Wklejka dla Codexa
+
+```
+ZADANIE F — Finanse: pełna tabela RZiS/Bilans/CF na realnych danych DBR77 (łańcuch 6 ogniw + wycena). Praca do celu, ogniwo po ogniwie.
+
+Katalog: świeży worktree z origin/staging (git worktree add -b codex/f-finanse-pelna-tabela <dir> origin/staging). Commit per ogniwo (lub per krok w ogniwie), bez push, autor Piotr <piotr.wisniewski@dbr77.com>. Model: trudny kod serwera — pracuj uważnie, każdą tezę weryfikuj rg-iem.
+Specyfikacja: docs/program/PROGRAM_NAPRAWCZY_20260905/F_FINANSE_PELNA_TABELA.md — przeczytaj CAŁĄ (955 linii) przed pierwszą zmianą; §3A to podróż CFO, którą budujesz; OGNIWO 1–6 to kolejność wymuszona kontraktem baselineContextService (9 bramek — nie zmieniaj reguł, spełnij je).
+
+CEL: CFO importuje sprawozdanie (RZiS+Bilans+CF, rok + porównawczy) → pakiet „gotowy” → zatwierdza → analiza historyczna zatwierdzona → tworzy model „Oprzyj na sprawozdaniu” → model otwiera się BEZ karty błędu → „Wyniki” pokazują JEDNĄ tabelę RZiS·Bilans·CF z 3 latami historii i horyzontem → wycena wskazuje ten model jako źródło. Dziś łańcuch urywa się na ogniwie 1 (brak kanonicznej projekcji) i 4 (brak rejestru modelu, krawędzi, okresów, wołacza PUT).
+
+TESTY = tylko REALNY Postgres: baza jednorazowa (DATABASE_URL=$(/Users/piotrwisniewski/fv3-pg/newdb.sh …) + migrate.postgres.ts), suita z bramką RUN_DB_TESTS=1 MOCK_DB=false DB_TYPE=postgres, kontrola negatywna bez bramki MUSI dać „skipped”. Sqlite/atrapa = nie liczy się.
+CEL OSIĄGNIĘTY = §10: każde ogniwo zielone na realnej bazie z dowodem mutacyjnym bramki, tsc serwera czysty, a na końcu komplet zrzutów §6 (pakiet gotowy → zatwierdzony → analiza → model bez błędu → pełna tabela 1440 jasny/ciemny + 1280/1920 → wycena ze źródłem) i przepływ Playwright od importu do wyceny bez SQL; predykcja 20/20 bez białego ekranu. Raport per ogniwo. Gdy spełnienie bramki wymaga zmiany reguły biznesowej — STOP i opis. Zakazy: --no-verify, git stash, surowy SQL zamiast serwisów, zapisy na stagingu poza UI.
+```
