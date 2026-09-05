@@ -62,11 +62,11 @@ Decyzja właściciela 05.09 rano: „dziś odbieramy MVP; dziś wszystkie backlo
 | A47 | (decyzja poprawka) | `execution-tab-resources` | Zobacz, karta podglądu w tym momencie nie zajmuje całej wysokości, jaką mogłaby mieć. Karta podglądu powinna być tak wysoka, jak tabela. Tabela, prawda, powinna być nieco bliżej tr | OTWARTE | |
 | A48 | (decyzja nie) | `results-three-pairs` | To jest jakis hisotryczny ekran. chyba juz tem dawno nie wyglada. - mam nadzieje | OTWARTE | |
 | A49 | (decyzja poprawka) | `finance-baseline-workspace` | dalej nie mam przycisku dodawania założeń i mozlwosći usuwania lini | OTWARTE | |
-| A50 | Ocena | `assessment-output-report` | Macierz DRD w RAPORCIE nadal odrzucona AreaMatrixTable (AssessmentReportContractView:143) — jedna siatka DRDMatrixGrid we wszystkich miejscach; pytanie: 9×7 z treścią czy poziomy | OTWARTE | |
+| A50 | Ocena | `assessment-output-report` | Macierz DRD w RAPORCIE nadal odrzucona AreaMatrixTable (AssessmentReportContractView:143) — jedna siatka DRDMatrixGrid we wszystkich miejscach. DECYZJA właściciela 05.09: „koniecznie chcę moją macierz — to sedno tej aplikacji” = pełna siatka obszary × poziomy z treścią komórek (kanon MACIERZ_TRESC_KOMOREK.md), ta sama co w edytorze i prezentacji | OTWARTE | |
 | A51 | Czat | `chat-signals-feed` | Strumień sygnałów pusty — producent wyłączony na serwerze (włączony 05.09 04:22, do potwierdzenia po restarcie) | OTWARTE | |
 | A52 | Panel administratora | `—` | 8 tras 500 dla zwykłego użytkownika, 3 z surowym SQL (service-accounts, knowledge-graph duplicates, report-builder upload_bundle, billing webhook ×2, report-builder definitions, table-platform admin ×2) | OTWARTE | |
 | A53 | Czat | `—` | Limiter AI liczy odpytywanie w tle (429 po 30 żądaniach/min) — wyłączony na stagingu; naprawa: polling poza limitem generatywnym | OTWARTE | |
-| A54 | Wspólne | `—` | Język konta właściciela = en; produkt polski — przełączyć konto na pl (decyzja właściciela) | OTWARTE | |
+| A54 | Wspólne | `—` | Język konta właściciela = en; produkt polski — przełączyć konto na pl (decyzja właściciela 05.09: „obojętnie, ale jeden”) | ZROBIONE 05.09 06:58 (Ustawienia → Język → Polski, zapis w koncie) | Fable |
 
 ## B. Po MVP — jawnie odłożone (nie blokują ogłoszenia MVP)
 
