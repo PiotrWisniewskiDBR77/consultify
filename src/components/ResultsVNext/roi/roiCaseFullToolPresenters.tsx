@@ -143,7 +143,8 @@ export function buildRoiScenarioColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '130px',
+      width: '200px',
+      dataType: 'date',
       render: (row: RoiScenario) => (
         <span className="text-sm text-c-text-muted tabular-nums">
           {formatRoiDate(row.updatedAt, isPolish)}
@@ -1439,7 +1440,8 @@ export function buildRoiVarianceColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '130px',
+      width: '200px',
+      dataType: 'date',
       render: (row: RoiVariance) => (
         <span className="text-sm text-c-text-muted tabular-nums">
           {formatRoiDate(row.updatedAt, isPolish)}

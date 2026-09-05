@@ -334,7 +334,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditProgramSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">

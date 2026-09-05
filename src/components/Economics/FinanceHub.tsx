@@ -1684,6 +1684,7 @@ export const FinanceHub: React.FC = () => {
       id: 'type',
       label: t('common.type', 'Type'),
       width: '80px',
+      dataType: 'status',
       render: (row: FinanceRow) => (
         <div className="flex items-center gap-2">
           {KIND_ICONS[row.kind]}
@@ -1712,6 +1713,7 @@ export const FinanceHub: React.FC = () => {
       id: 'status',
       label: t('common.status', 'Status'),
       width: '140px',
+      dataType: 'status',
       filterable: true,
       filterOptions: statusFilterOptions,
     }),
@@ -1722,7 +1724,8 @@ export const FinanceHub: React.FC = () => {
     () => ({
       id: 'updatedAt',
       label: t('common.updated', 'Updated'),
-      width: '120px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
     }),
     [t]
