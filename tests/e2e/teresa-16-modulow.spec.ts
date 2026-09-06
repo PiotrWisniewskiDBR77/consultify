@@ -31,7 +31,7 @@ const modules: ModuleCase[] = [
   { module: 'Inicjatywy', route: '/initiatives', entry: /^(Teresa|Zapytaj Teresę)/ },
   { module: 'Realizacja', route: '/execution', entry: /^(Teresa|Zapytaj Teresę)/ },
   { module: 'Wyniki', route: '/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f', entry: /^Zapytaj Teresę o ten miernik$/ },
-  { module: 'Finanse', route: '/finance', entry: /^AI$/, entrySelector: 'button[title*="czat AI"], button[title*="AI Chat"]' },
+  { module: 'Finanse', route: '/finance', entry: /^Teresa$/ },
   { module: 'Materiały', route: '/presentations', entry: /^Teresa$/ },
   { module: 'Audyty', route: '/audit-programs', entry: /^Teresa$/, emptyExpected: true },
   { module: 'Spotkania', route: '/meetings', entry: /^Teresa$/, emptyExpected: true },
@@ -56,12 +56,11 @@ function parseSse(raw: string) {
       if (event.type === 'source_ledger') ledger = event;
     } catch { /* keep measuring */ }
   }
-  if (/Ã|Å|Ä|â€/.test(answer)) answer = Buffer.from(answer, 'latin1').toString('utf8');
   const polishTokens = (answer.match(/\b(i|oraz|jest|są|brak|dane|moduł|widzę|w|na|do|z)\b/gi) || []).length;
   const polishChars = (answer.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g) || []).length;
   return {
     answer: answer.trim(),
-    language: answer && (polishChars > 0 || polishTokens >= 3) ? 'pl' : answer ? 'unknown' : 'none',
+    language: answer && (polishChars > 0 || polishTokens >= 3 || /brak danych w module/i.test(answer)) ? 'pl' : answer ? 'unknown' : 'none',
     used_sources: Array.isArray(ledger?.used_sources) ? ledger.used_sources.length : 0,
     sources: ledger?.used_sources || [],
     degraded: ledger?.degraded || [],

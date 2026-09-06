@@ -4291,7 +4291,7 @@ router.post(
               ...(moduleGrounding.citations.length === 0
                 ? {
                     prompt:
-                      `Odpowiedz po polsku jednym krótkim komunikatem: „Brak danych w module ${moduleGrounding.moduleKey}.” ` +
+                      'Odpowiedz po polsku jednym krótkim komunikatem: „Brak danych w module.” ' +
                       'Możesz dodać, jakiego rekordu brakuje. Nie omawiaj profilu organizacji, inicjatyw ani zadań z innych modułów.',
                   }
                 : {}),
