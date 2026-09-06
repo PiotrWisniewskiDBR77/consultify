@@ -12,7 +12,6 @@ import {
   ChevronUp,
   FileSpreadsheet,
   FileText,
-  Filter,
   LayoutGrid,
   LayoutTemplate,
   Package2,
@@ -50,6 +49,11 @@ import {
 } from '../shared/ModuleMenu3';
 import { resolveTemplatesDeepLink } from './artifactNavigation';
 import { countRowsByStatus } from './statusCounts';
+// DEC-423 (właściciel, 06.09.2026): dwa kanoniczne dropdowny Menu 2 zamiast
+// bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
+// (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
+// nowego komponentu, per instrukcję dyżuru 1.1-M-1.
+import { Menu2PresetDropdown } from '../Initiatives/Menu2PresetDropdown';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
@@ -59,19 +63,8 @@ import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
-import type {
-  PresentationSourceType,
-  PresentationStatus,
-  RapTab,
-  ReportStatus,
-  TemplateStatus,
-} from './types';
-import {
-  PRESENTATION_STATUS_META,
-  REPORT_STATUS_META,
-  SOURCE_TYPE_META,
-  TEMPLATE_STATUS_META,
-} from './types';
+import type { RapTab } from './types';
+import { PRESENTATION_STATUS_META, REPORT_STATUS_META, TEMPLATE_STATUS_META } from './types';
 import {
   useArtifactOutputsList,
   usePresentations,
@@ -307,7 +300,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     fetchSheets,
   } = useSheetOutputs();
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [bundleHistoryOpen, setBundleHistoryOpen] = useState(false);
   // Licznik zwiększany po udanej generacji Kompletu AI → wymusza refetch historii.
   const [bundleRefresh, setBundleRefresh] = useState(0);
@@ -372,9 +364,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const ctaLabels: Record<RapTab, string> = useMemo(
     () => ({
-      outputs_all: t('rap.outputs.cta.new', 'New output'),
-      outputs_mine: t('rap.outputs.cta.new', 'New output'),
-      outputs_review: t('rap.outputs.cta.new', 'New output'),
+      outputs_all: t('rap.outputs.cta.new', 'New material'),
+      outputs_mine: t('rap.outputs.cta.new', 'New material'),
+      outputs_review: t('rap.outputs.cta.new', 'New material'),
       outputs_documents: t('rap.actions.newDocument', 'New document'),
       presentations: t('rap.actions.newPresentation', 'New presentation'),
       // Odblokowane 2026-07-24 (item 3 briefu Materiały-entry) — Sheets dostaje
@@ -653,17 +645,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     setActiveFilters([]);
   }, []);
 
-  const toggleFilter = useCallback(
-    (column: string, value: string, label: string, color?: string) => {
-      setActiveFilters((prev) => {
-        const exists = prev.some((f) => f.column === column && f.value === value);
-        if (exists) return prev.filter((f) => !(f.column === column && f.value === value));
-        return [...prev, { id: `${column}:${value}`, column, value, label, color }];
-      });
-    },
-    []
-  );
-
   const setSinglePreset = useCallback(
     (column: string, value: string | null, label?: string, color?: string) => {
       setActiveFilters((prev) => {
@@ -685,8 +666,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     const chipBase =
       'h-9 inline-flex items-center gap-2 rounded-full px-3 text-sm font-medium border transition-colors';
-
-    const activeCount = activeFilters.length;
 
     const draftsToggle = (
       <button
@@ -753,106 +732,53 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const isAggregateTab =
       activeTab === 'outputs_all' || activeTab === 'outputs_mine' || activeTab === 'outputs_review';
 
-    const statusOptions =
-      activeTab === 'templates'
-        ? ([
-            {
-              value: 'active',
-              label: t('rap.filters.status.active', 'Active'),
-              dotColor: 'bg-emerald-400',
-            },
-            {
-              value: 'draft',
-              label: t('rap.filters.status.draft', 'Draft'),
-              dotColor: 'bg-slate-400',
-            },
-            {
-              value: 'archived',
-              label: t('rap.filters.status.archived', 'Archived'),
-              dotColor: 'bg-slate-500',
-            },
-          ] as Array<{ value: TemplateStatus; label: string; dotColor: string }>)
-        : activeTab === 'outputs_documents'
-          ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
-              value: value as ReportStatus,
-              label: isPolish ? meta.labelPl || meta.label : meta.label,
-              dotColor: meta.dotColor,
-            })) as Array<{ value: ReportStatus; label: string; dotColor: string }>)
-          : activeTab === 'presentations'
-            ? (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
-                value: value as PresentationStatus,
-                label: isPolish ? meta.labelPl || meta.label : meta.label,
-                dotColor: meta.dotColor,
-              })) as Array<{ value: PresentationStatus; label: string; dotColor: string }>)
-            : isAggregateTab
-              ? ([
-                  {
-                    value: 'draft',
-                    label: t('rap.filters.status.draft', 'Draft'),
-                    dotColor: 'bg-slate-400',
-                  },
-                  {
-                    value: 'generated',
-                    label: t('rap.filters.status.generated', 'Generated'),
-                    dotColor: 'bg-blue-400',
-                  },
-                  {
-                    value: 'editing',
-                    label: t('rap.filters.status.editing', 'Editing'),
-                    dotColor: 'bg-amber-400',
-                  },
-                  {
-                    value: 'ready',
-                    label: isPolish
-                      ? REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label
-                      : REPORT_STATUS_META.ready.label,
-                    dotColor: 'bg-emerald-400',
-                  },
-                  {
-                    value: 'exported',
-                    label: t('rap.filters.status.exported', 'Exported'),
-                    dotColor: 'bg-blue-400',
-                  },
-                  {
-                    value: 'shared',
-                    label: t('rap.filters.status.shared', 'Shared'),
-                    dotColor: 'bg-blue-400',
-                  },
-                  {
-                    value: 'archived',
-                    label: t('rap.filters.status.archived', 'Archived'),
-                    dotColor: 'bg-slate-500',
-                  },
-                ] as Array<{ value: string; label: string; dotColor: string }>)
-              : [];
-
-    const sourceOptions =
-      activeTab === 'presentations'
-        ? (Object.entries(SOURCE_TYPE_META).map(([value, meta]) => ({
-            value: value as PresentationSourceType,
-            label: isPolish ? meta.labelPl || meta.label : meta.label,
-            color: meta.color,
-          })) as Array<{ value: PresentationSourceType; label: string; color: string }>)
-        : [];
-
-    const kindOptions = isAggregateTab
+    // DEC-423: „Typ outputu" (kindOptions) usunięty — zerowa wartość dodana
+    // ponad chipy Menu 3 (Wszystkie/Dokument/Prezentacja/Tabela), obie ścieżki
+    // pisały do tej samej kolumny `outputKind`. Status i Widoczność dla
+    // zakładek Wszystkie/Moje/Do przeglądu były JEDYNYM miejscem filtrowania
+    // (Menu 3 dla tych zakładek pokazuje Kind, nie Status) — stąd survive
+    // jako 2 kanoniczne dropdowny Menu 2. Dla Szablonów/Dokumentów/Prezentacji
+    // status filtruje już Menu 3 (`commandRowLeftSlot` niżej) — bez duplikatu.
+    const statusOptions = isAggregateTab
       ? ([
           {
-            value: 'document',
-            label: t('rap.outputs.kind.document', 'Document'),
-            color: 'text-blue-400',
+            value: 'draft',
+            label: t('rap.filters.status.draft', 'Draft'),
+            dotColor: 'bg-slate-400',
           },
           {
-            value: 'presentation',
-            label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'text-blue-400',
+            value: 'generated',
+            label: t('rap.filters.status.generated', 'Generated'),
+            dotColor: 'bg-blue-400',
           },
           {
-            value: 'sheet',
-            label: t('rap.outputs.kind.sheet', 'Sheet'),
-            color: 'text-emerald-400',
+            value: 'editing',
+            label: t('rap.filters.status.editing', 'Editing'),
+            dotColor: 'bg-amber-400',
           },
-        ] as Array<{ value: string; label: string; color: string }>)
+          {
+            value: 'ready',
+            label: isPolish
+              ? REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label
+              : REPORT_STATUS_META.ready.label,
+            dotColor: 'bg-emerald-400',
+          },
+          {
+            value: 'exported',
+            label: t('rap.filters.status.exported', 'Exported'),
+            dotColor: 'bg-blue-400',
+          },
+          {
+            value: 'shared',
+            label: t('rap.filters.status.shared', 'Shared'),
+            dotColor: 'bg-blue-400',
+          },
+          {
+            value: 'archived',
+            label: t('rap.filters.status.archived', 'Archived'),
+            dotColor: 'bg-slate-500',
+          },
+        ] as Array<{ value: string; label: string; dotColor: string }>)
       : [];
 
     const visibilityOptions = isAggregateTab
@@ -880,38 +806,48 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         ] as Array<{ value: string; label: string }>)
       : [];
 
-    const reviewStateOptions = isAggregateTab
-      ? ([
-          {
-            value: 'private_draft',
-            label: t('rap.outputs.review.privateDraft', 'Private draft'),
-          },
-          {
-            value: 'reviewable_share',
-            label: t('rap.outputs.review.reviewableShare', 'Reviewable share'),
-          },
-          {
-            value: 'in_review',
-            label: t('rap.outputs.review.inReview', 'In review'),
-          },
-          {
-            value: 'approved',
-            label: t('rap.outputs.review.approved', 'Approved'),
-          },
-          {
-            value: 'published',
-            label: t('rap.outputs.review.published', 'Published'),
-          },
-          {
-            value: 'archived',
-            label: t('rap.outputs.review.archived', 'Archived'),
-          },
-        ] as Array<{ value: string; label: string }>)
-      : [];
-
     // Documents are document artifacts. Historical R1-R4 management-report
     // presets belong to reporting, not to the Materials document library.
     const reportCanon = null;
+
+    const activeStatusFilter = activeFilters.find((f) => f.column === 'status');
+    const activeVisibilityFilter = activeFilters.find((f) => f.column === 'visibilityScope');
+
+    // Liczniki per opcja — z tego samego źródła co Menu 3 (kindChips niżej),
+    // czyli `artifactOutputRows` już przefiltrowane pod libraryView (all/mine/review).
+    const statusCountsByKey = artifactOutputRows.reduce(
+      (acc, r) => {
+        const key = r.statusKey;
+        if (key) acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    const visibilityCountsByKey = artifactOutputRows.reduce(
+      (acc, r) => {
+        const key = r.governance?.visibilityScope;
+        if (key) acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const statusDropdownOptions = [
+      { id: '__all__', label: t('common.all', 'All'), count: artifactOutputRows.length },
+      ...statusOptions.map((o) => ({
+        id: o.value,
+        label: o.label,
+        count: statusCountsByKey[o.value] || 0,
+      })),
+    ];
+    const visibilityDropdownOptions = [
+      { id: '__all__', label: t('common.all', 'All'), count: artifactOutputRows.length },
+      ...visibilityOptions.map((o) => ({
+        id: o.value,
+        label: o.label,
+        count: visibilityCountsByKey[o.value] || 0,
+      })),
+    ];
 
     return (
       <div className="relative flex items-center gap-2">
@@ -928,221 +864,55 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         ) : null}
         {draftsToggle}
         {reportCanon}
-        <button
-          type="button"
-          onClick={() => setFiltersOpen((v) => !v)}
-          className={`${chipBase} ${
-            activeCount > 0
-              ? 'bg-c-accent-soft text-c-text border-c-border'
-              : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-          title={t('common.filters', 'Filters')}
-        >
-          <Filter size={16} />
-          <span>{t('common.filters', 'Filters')}</span>
-          {activeCount > 0 ? <span className={MENU_3_BADGE_ACTIVE}>{activeCount}</span> : null}
-        </button>
-
-        {filtersOpen && (
-          <>
-            <button
-              type="button"
-              className="fixed inset-0 z-40 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              onClick={() => setFiltersOpen(false)}
-              aria-label={t('common.close', 'Close')}
-            />
-            <div className="absolute right-0 mt-2 z-50 w-[320px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl overflow-hidden">
-              <div className="p-3 border-b border-c-border-subtle">
-                <div className="text-xs font-semibold text-c-text">
-                  {t('common.filters', 'Filters')}
-                </div>
-                <div className="text-[11px] text-c-text-muted mt-0.5">
-                  {t('rap.filters.hint', 'Pick statuses and (optionally) sources.')}
-                </div>
-              </div>
-
-              <div className="p-3 space-y-4 max-h-[360px] overflow-y-auto">
-                {statusOptions.length > 0 ? (
-                  <div>
-                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.filters.statusLabel', 'Status')}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {statusOptions.map((o) => {
-                        const checked = activeFilters.some(
-                          (f) => f.column === 'status' && f.value === o.value
-                        );
-                        return (
-                          <button
-                            key={o.value}
-                            type="button"
-                            onClick={() => toggleFilter('status', o.value, o.label, o.dotColor)}
-                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                              checked
-                                ? 'bg-c-accent-soft text-c-text border-c-border'
-                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                          >
-                            <span className={`w-2 h-2 rounded-full ${o.dotColor}`} />
-                            <span className="truncate">{o.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-
-                {kindOptions.length > 0 ? (
-                  <div>
-                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.outputs.filters.kind', 'Output type')}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {kindOptions.map((o) => (
-                        <button
-                          key={o.value}
-                          type="button"
-                          onClick={() => toggleFilter('outputKind', o.value, o.label)}
-                          className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                            activeFilters.some(
-                              (f) => f.column === 'outputKind' && f.value === o.value
-                            )
-                              ? 'bg-c-accent-soft text-c-text border-c-border'
-                              : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                        >
-                          <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {visibilityOptions.length > 0 ? (
-                  <div>
-                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.outputs.columns.visibility', 'Visibility')}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {visibilityOptions.map((o) => {
-                        const checked = activeFilters.some(
-                          (f) => f.column === 'visibilityScope' && f.value === o.value
-                        );
-                        return (
-                          <button
-                            key={o.value}
-                            type="button"
-                            onClick={() =>
-                              toggleFilter('visibilityScope', o.value, o.label, 'bg-slate-400')
-                            }
-                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                              checked
-                                ? 'bg-c-accent-soft text-c-text border-c-border'
-                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                          >
-                            <span className="truncate">{o.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-
-                {reviewStateOptions.length > 0 ? (
-                  <div>
-                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.outputs.columns.review', 'Review')}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {reviewStateOptions.map((o) => {
-                        const checked = activeFilters.some(
-                          (f) => f.column === 'publishState' && f.value === o.value
-                        );
-                        return (
-                          <button
-                            key={o.value}
-                            type="button"
-                            onClick={() =>
-                              toggleFilter('publishState', o.value, o.label, 'bg-blue-400')
-                            }
-                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                              checked
-                                ? 'bg-c-accent-soft text-c-text border-c-border'
-                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                          >
-                            <span className="truncate">{o.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-
-                {sourceOptions.length > 0 ? (
-                  <div>
-                    <div className="text-[11px] font-semibold text-c-text-secondary mb-2">
-                      {t('rap.filters.source', 'Source')}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {sourceOptions.map((o) => {
-                        const checked = activeFilters.some(
-                          (f) => f.column === 'sourceType' && f.value === o.value
-                        );
-                        return (
-                          <button
-                            key={o.value}
-                            type="button"
-                            onClick={() => toggleFilter('sourceType', o.value, o.label)}
-                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                              checked
-                                ? 'bg-c-accent-soft text-c-text border-c-border'
-                                : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-                          >
-                            <span className={`text-[11px] font-semibold ${o.color}`}>
-                              {o.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="p-3 border-t border-c-border-subtle flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setActiveFilters([])}
-                  className="text-[11px] text-c-text-muted hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  {t('common.clearAll', 'Clear all')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(false)}
-                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  {t('common.done', 'Done')}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        {/* DEC-423 (właściciel, 06.09.2026): „to filtrowanie w prawym górnym
+            rogu trzeba doprowadzić do standardu, czyli rozwijanej listy.
+            Zostają dwa rozwijane filtry, a to dziwne coś usuń." — bespoke
+            popover „Filters" zastąpiony dwoma kanonicznymi dropdownami
+            (Menu2PresetDropdown, ten sam wzorzec co Inicjatywy/Ocena). */}
+        {statusOptions.length > 0 ? (
+          <Menu2PresetDropdown
+            label={t('rap.filters.statusLabel', 'Status')}
+            options={statusDropdownOptions}
+            value={activeStatusFilter ? String(activeStatusFilter.value) : '__all__'}
+            onChange={(id) => {
+              if (id === '__all__') {
+                setSinglePreset('status', null);
+                return;
+              }
+              const opt = statusOptions.find((o) => o.value === id);
+              setSinglePreset('status', id, opt?.label, opt?.dotColor);
+            }}
+            data-testid="materials-status-dropdown"
+          />
+        ) : null}
+        {visibilityOptions.length > 0 ? (
+          <Menu2PresetDropdown
+            label={t('rap.outputs.columns.visibility', 'Visibility')}
+            options={visibilityDropdownOptions}
+            value={activeVisibilityFilter ? String(activeVisibilityFilter.value) : '__all__'}
+            onChange={(id) => {
+              if (id === '__all__') {
+                setSinglePreset('visibilityScope', null);
+                return;
+              }
+              const opt = visibilityOptions.find((o) => o.value === id);
+              setSinglePreset('visibilityScope', id, opt?.label, 'bg-slate-400');
+            }}
+            data-testid="materials-visibility-dropdown"
+          />
+        ) : null}
       </div>
     );
   }, [
     activeFilters,
     activeTab,
-    filtersOpen,
+    artifactOutputRows,
+    isPolish,
     setSinglePreset,
     sheetsSubView,
     showDrafts,
     t,
     templatesView,
-    toggleFilter,
     setTemplateProvenanceOpen,
   ]);
 
@@ -1551,7 +1321,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           const next = tab as RapTab;
           setActiveTab(next);
           setActiveFilters([]);
-          setFiltersOpen(false);
           const q = RAP_TAB_TO_QUERY[next];
           const params = new URLSearchParams(location.search || '');
           params.set('tab', q);

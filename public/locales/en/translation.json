@@ -2156,7 +2156,6 @@
     "maximize": "Maximize",
     "characters": "characters",
     "unassigned": "Unassigned",
-    "filters": "Filters",
     "overview": "Overview",
     "deleting": "Deleting...",
     "noData": "No data",
@@ -26980,10 +26979,7 @@
       "type": "Type",
       "category": "Category",
       "scope": "Scope",
-      "source": "Source",
-      "hint": "Pick statuses and (optionally) sources.",
       "status": {
-        "active": "Active",
         "draft": "Draft",
         "archived": "Archived",
         "generated": "Generated",
@@ -27219,11 +27215,9 @@
         "approved": "Approved"
       },
       "cta": {
-        "new": "New output"
+        "new": "New material"
       },
-      "filters": {
-        "kind": "Output type"
-      },
+      "filters": {},
       "source": {
         "initiativeLinked": "Initiative linked"
       },
