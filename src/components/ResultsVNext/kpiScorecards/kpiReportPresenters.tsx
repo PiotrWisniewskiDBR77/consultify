@@ -123,20 +123,49 @@ export const KpiStateCounts: React.FC<KpiStateCountsProps> = ({
 // małą ikonę, a nie drugie słowo — pełna treść siedzi w dymku.
 // ==========================================
 
+/** Ikona „jest karta działania" — jeden rysunek, dwa opakowania (przycisk / statyczna). */
+const DZIALANIE_IKONA = (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    className="h-3 w-3 shrink-0"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="8" y="2" width="8" height="4" rx="1" />
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+    <path d="M9 14l2 2 4-4" />
+  </svg>
+);
+
 export interface KpiStatePillProps {
   status: string | null;
   openActions: number;
   isPolish: boolean;
+  /** P7K część B — otwarte karty działania miernika (osobne od spraw). */
+  openActionCards?: number;
+  /** Gdy podane, plakietka z ikoną staje się PRZYCISKIEM prowadzącym do karty. */
+  onOpenActionCards?: () => void;
 }
 
-export const KpiStatePill: React.FC<KpiStatePillProps> = ({ status, openActions, isPolish }) => {
+export const KpiStatePill: React.FC<KpiStatePillProps> = ({
+  status,
+  openActions,
+  isPolish,
+  openActionCards = 0,
+  onOpenActionCards,
+}) => {
   const label = kpiPerformanceStatusLabel(status, isPolish);
   if (!label) return <MutedDash />;
   const tone = kpiPerformanceStatusTone(status);
   const t = (pl: string, en: string) => (isPolish ? pl : en);
+  const kart = openActionCards || openActions;
   const title =
-    openActions > 0
-      ? `${label} · ${t('otwarte karty działania', 'open action cards')}: ${openActions}`
+    kart > 0
+      ? `${label} · ${t('otwarte karty działania', 'open action cards')}: ${kart}`
       : label;
   const toneClass =
     tone === 'bad'
@@ -152,22 +181,28 @@ export const KpiStatePill: React.FC<KpiStatePillProps> = ({ status, openActions,
       className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-medium ${toneClass}`}
     >
       {label}
-      {openActions > 0 ? (
-        <svg
-          aria-label={t('Otwarta karta działania', 'Open action card')}
-          role="img"
-          viewBox="0 0 24 24"
-          className="h-3 w-3 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="8" y="2" width="8" height="4" rx="1" />
-          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-          <path d="M9 14l2 2 4-4" />
-        </svg>
+      {kart > 0 ? (
+        /* Ikona jest KLIKALNA, gdy ekran poda `onOpenActionCards` — wtedy
+           prowadzi do karty działania miernika (P7K część B, §15: „ikona/
+           liczba otwartych przy wierszu"). Bez propa zostaje sama ikona,
+           dokładnie jak w części A. `stopPropagation`, bo wiersz ma własny
+           klik (podgląd) — klik w ikonę nie ma go wyzwalać. */
+        onOpenActionCards ? (
+          <button
+            type="button"
+            data-testid="kpi-report-open-action-card"
+            aria-label={t('Otwórz kartę działania', 'Open action card')}
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenActionCards();
+            }}
+            className="-m-0.5 rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {DZIALANIE_IKONA}
+          </button>
+        ) : (
+          DZIALANIE_IKONA
+        )
       ) : null}
     </span>
   );
@@ -579,12 +614,21 @@ export interface KpiReportItemRowVm {
   ytdStatus: string | null;
   latestStatus: string | null;
   openActions: number;
+  /**
+   * P7K część B — liczba OTWARTYCH KART DZIAŁANIA (`action_cards`) tego
+   * miernika. Osobna liczba od `openActions` (spraw odchylenia): sprawa jest
+   * zapisem faktu, karta jest zobowiązaniem osoby, i tylko karta ma
+   * odpowiedzialnego, termin i status OTWARTY/ZAMKNIĘTY (KRĘGOSŁUP §2.4).
+   */
+  openActionCards: number;
   item: KpiScorecardItemDto | null;
 }
 
 export interface BuildKpiReportItemColumnsParams {
   isPolish: boolean;
   periods: ScorecardPeriodDefinitionDto[];
+  /** P7K część B — klik w ikonę karty przy wierszu; brak = ikona nieklikalna. */
+  onOpenActionCards?: (row: KpiReportItemRowVm) => void;
 }
 
 /** Szerokość kolumny okresu — zmierzona treść pary CEL/Rezultat + `px-4` z obu stron. */
@@ -593,6 +637,7 @@ export const KPI_PERIOD_COLUMN_WIDTH_PX = 140;
 export function buildKpiReportItemColumns({
   isPolish,
   periods,
+  onOpenActionCards,
 }: BuildKpiReportItemColumnsParams): TableColumn[] {
   const t = (pl: string, en: string) => (isPolish ? pl : en);
   const textCell = (value: string | null) =>
@@ -712,10 +757,34 @@ export function buildKpiReportItemColumns({
       dataType: 'status',
       render: (row: KpiReportItemRowVm) =>
         row.group ? null : (
-          <KpiStatePill status={row.latestStatus} openActions={row.openActions} isPolish={isPolish} />
+          <KpiStatePill
+            status={row.latestStatus}
+            openActions={row.openActions}
+            openActionCards={row.openActionCards}
+            onOpenActionCards={
+              onOpenActionCards && row.openActionCards > 0 ? () => onOpenActionCards(row) : undefined
+            }
+            isPolish={isPolish}
+          />
         ),
     },
   ];
+}
+
+/**
+ * KLASA WIERSZA POZIOMU 2 — REZULTAT POZA LIMITEM JEST CZERWONY.
+ *
+ * To JEDYNE miejsce w raporcie, gdzie czerwień wchodzi na cały wiersz, i
+ * wchodzi WYŁĄCZNIE dla stanu `critical` (CLAUDE.md, pułapka nr 1: czerwień
+ * = semantyka krytyczna, nigdy CTA). Tokeny `c-danger`, nie `primary-*`.
+ * Ostrzeżenie (`warning`) NIE dostaje tła — inaczej połowa raportu byłaby
+ * kolorowa i „krytyczne" przestałoby cokolwiek znaczyć.
+ */
+export function kpiReportItemRowClassName(row: KpiReportItemRowVm): string {
+  if (row.group) return '';
+  return row.latestStatus === 'critical'
+    ? 'bg-c-danger/5 border-l-2 border-l-c-danger'
+    : '';
 }
 
 /**
@@ -751,6 +820,8 @@ export interface BuildKpiReportItemRowsParams {
   isPolish: boolean;
   /** Rozwiązywanie nazwiska odpowiedzialnego, gdy serwer nie dołączył joinu. */
   resolveOwnerName: (userId: string | null) => string | null;
+  /** P7K część B — liczba otwartych kart działania per `kpiId`; brak = 0. */
+  openActionCardsByKpiId?: Record<string, number>;
 }
 
 export function buildKpiReportItemRows({
@@ -758,6 +829,7 @@ export function buildKpiReportItemRows({
   matrixItems,
   isPolish,
   resolveOwnerName,
+  openActionCardsByKpiId = {},
 }: BuildKpiReportItemRowsParams): KpiReportItemRowVm[] {
   const t = (pl: string, en: string) => (isPolish ? pl : en);
   const matrixByItemId = new Map(matrixItems.map((entry) => [entry.itemId, entry]));
@@ -802,6 +874,7 @@ export function buildKpiReportItemRows({
       ytdStatus: null,
       latestStatus: null,
       openActions: 0,
+      openActionCards: 0,
       item: null,
     });
 
@@ -832,6 +905,7 @@ export function buildKpiReportItemRows({
         ytdStatus: matrix?.ytdPerformanceStatus ?? null,
         latestStatus: matrix?.latestPerformanceStatus ?? null,
         openActions: matrix?.openDeviationCaseCount ?? 0,
+        openActionCards: openActionCardsByKpiId[item.kpiId] ?? 0,
         item,
       });
     }

@@ -14,7 +14,18 @@
       "comment": "Komentarz",
       "status": "Status"
     },
-    "status": { "open": "OTWARTY", "closed": "ZAMKNIĘTY" }
+    "status": {
+      "open": "OTWARTY",
+      "closed": "ZAMKNIĘTY"
+    },
+    "createTask": "Utwórz zadanie",
+    "close": "Zamknij kartę",
+    "closed": "Karta zamknięta.",
+    "closeFailed": "Nie udało się zamknąć karty.",
+    "taskCreated": "Zadanie utworzone: {{title}}",
+    "taskFailed": "Nie udało się utworzyć zadania.",
+    "inboxSection": "Karty działania ({{count}})",
+    "inboxSectionAria": "Karty działania w Skrzynce"
   },
   "meetingActionItemsP9": {
     "createTask": "Zrób zadanie",

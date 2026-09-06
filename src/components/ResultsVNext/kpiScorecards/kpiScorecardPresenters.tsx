@@ -562,6 +562,12 @@ export function buildKpiScorecardItemColumns(
 export interface KpiScorecardItemRowMenuHandlers {
   onPreview: (row: KpiScorecardItemDto) => void;
   onOpenKpi: (kpiId: string) => void;
+  /**
+   * P7K część B — „Wpisz rezultat" wprost z raportu (poziom 2). OPCJONALNY:
+   * bez niego kebab wygląda dokładnie jak w części A (ekrany, które nie
+   * pozwalają zapisywać pomiaru, nie dostają martwej pozycji).
+   */
+  onRecordMeasurement?: (row: KpiScorecardItemDto) => void;
   onMoveUp: (row: KpiScorecardItemDto) => void;
   onMoveDown: (row: KpiScorecardItemDto) => void;
   onRemove: (row: KpiScorecardItemDto) => void;
@@ -586,6 +592,15 @@ export function buildKpiScorecardItemRowMenu(
         label: isPolish ? 'Otwórz KPI' : 'Open KPI',
         onClick: () => handlers.onOpenKpi(row.kpiId),
       },
+      ...(handlers.onRecordMeasurement
+        ? [
+            {
+              id: 'record-measurement',
+              label: isPolish ? 'Wpisz rezultat' : 'Record result',
+              onClick: () => handlers.onRecordMeasurement!(row),
+            },
+          ]
+        : []),
     ],
     statusTransitions: [
       handlers.isFirst

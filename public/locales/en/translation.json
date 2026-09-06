@@ -14,7 +14,18 @@
       "comment": "Comment",
       "status": "Status"
     },
-    "status": { "open": "OPEN", "closed": "CLOSED" }
+    "status": {
+      "open": "OPEN",
+      "closed": "CLOSED"
+    },
+    "createTask": "Create task",
+    "close": "Close card",
+    "closed": "Action card closed.",
+    "closeFailed": "Could not close the card.",
+    "taskCreated": "Task created: {{title}}",
+    "taskFailed": "Could not create the task.",
+    "inboxSection": "Action cards ({{count}})",
+    "inboxSectionAria": "Action cards in Inbox"
   },
   "meetingActionItemsP9": {
     "createTask": "Create task",

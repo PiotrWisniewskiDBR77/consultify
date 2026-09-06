@@ -7,12 +7,38 @@ import type { ActionCardModel } from './ActionCard.types';
 export interface ActionCardProps {
   card: ActionCardModel;
   onOpen?: (card: ActionCardModel) => void;
+  /**
+   * P7K część B — „UTWÓRZ ZADANIE". Karta mówi CO trzeba zrobić; zadanie jest
+   * tym, co osoba widzi w swoich Zadaniach. Prop OPCJONALNY: bez niego karta
+   * wygląda i zachowuje się dokładnie jak dotąd (P9 nie znał tej akcji).
+   */
+  onCreateTask?: (card: ActionCardModel) => void;
+  /** P7K część B — zamknięcie karty; karta znika ze Skrzynki właściciela. */
+  onCloseCard?: (card: ActionCardModel) => void;
+  /** Etykieta zamiast „Utwórz zadanie", gdy zadanie już powstało. */
+  createTaskLabel?: string;
+  busy?: boolean;
   className?: string;
 }
 
 const shown = (value?: string | null) => (value && value.trim() ? value : '—');
 
-export function ActionCard({ card, onOpen, className = '' }: ActionCardProps) {
+/* Przyciski stopki: NEUTRALNE (CLAUDE.md pułapka nr 1 — czerwień tylko dla
+   stanu krytycznego, nigdy dla CTA). Fokus niebieski `c-focus`. */
+const BUTTON_CLASS =
+  'rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text ' +
+  'hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-60 ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+export function ActionCard({
+  card,
+  onOpen,
+  onCreateTask,
+  onCloseCard,
+  createTaskLabel,
+  busy = false,
+  className = '',
+}: ActionCardProps) {
   const { t } = useTranslation();
   const critical = card.status === 'OPEN' && card.severity === 'RED';
   const statusLabel = card.status === 'OPEN'
@@ -59,11 +85,35 @@ export function ActionCard({ card, onOpen, className = '' }: ActionCardProps) {
           </div>
         ))}
       </dl>
-      {onOpen ? (
-        <footer className="flex justify-end border-t border-c-border-subtle px-5 py-3">
-          <button type="button" onClick={() => onOpen(card)} className="rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">
-            {t('actionCard.open', 'Otwórz kartę')}
-          </button>
+      {onOpen || onCreateTask || onCloseCard ? (
+        <footer className="flex flex-wrap justify-end gap-2 border-t border-c-border-subtle px-5 py-3">
+          {onCreateTask && card.status === 'OPEN' ? (
+            <button
+              type="button"
+              data-testid="action-card-create-task"
+              disabled={busy}
+              onClick={() => onCreateTask(card)}
+              className={BUTTON_CLASS}
+            >
+              {createTaskLabel ?? t('actionCard.createTask', 'Utwórz zadanie')}
+            </button>
+          ) : null}
+          {onCloseCard && card.status === 'OPEN' ? (
+            <button
+              type="button"
+              data-testid="action-card-close"
+              disabled={busy}
+              onClick={() => onCloseCard(card)}
+              className={BUTTON_CLASS}
+            >
+              {t('actionCard.close', 'Zamknij kartę')}
+            </button>
+          ) : null}
+          {onOpen ? (
+            <button type="button" onClick={() => onOpen(card)} className={BUTTON_CLASS}>
+              {t('actionCard.open', 'Otwórz kartę')}
+            </button>
+          ) : null}
         </footer>
       ) : null}
     </article>

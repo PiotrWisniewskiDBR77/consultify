@@ -64,6 +64,7 @@ import {
   AlertTriangle,
   ArchiveIcon,
   Blocks,
+  ClipboardCheck,
   FileText,
   GitBranch,
   History,
@@ -88,6 +89,9 @@ import { StatusChip } from '@/components/ui/primitives';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
+import { ActionCardList } from '@/components/standard/ActionCardList';
+import type { ActionCardModel } from '@/components/standard/ActionCard.types';
+import { closeActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
 import { EmptyState } from '@/components/shared/states';
 
 import { HonestValueCell } from '../HonestValue';
@@ -338,6 +342,14 @@ export const KpiToolPage: React.FC = () => {
    */
   const [ytdWiersz, setYtdWiersz] = useState<ScorecardPeriodMatrixItemDto | null>(null);
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
+  /* P7K część B — KARTY DZIAŁANIA tego miernika (kręgosłup P9, `action_cards`).
+     Osobne od SPRAW ODCHYLENIA (`rvn_kpi_deviation_cases`): sprawa jest
+     zapisem „miernik wyszedł poza limit", karta jest ZOBOWIĄZANIEM osoby.
+     Filtrujemy po kluczu źródła `<kpiId>:<okres>` — serwer nie ma dziś filtra
+     po mierniku, a doklejanie parametru do trasy P9 byłoby zmianą kontraktu
+     dla pozostałych czterech rodzajów źródeł. */
+  const [actionCards, setActionCards] = useState<ActionCardModel[] | 'loading'>('loading');
+  const [actionCardBusyId, setActionCardBusyId] = useState<string | null>(null);
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
   const [scorecards, setScorecards] = useState<KpiScorecardDto[] | 'loading'>('loading');
   const [scorecardsError, setScorecardsError] = useState<string | null>(null);
@@ -354,7 +366,24 @@ export const KpiToolPage: React.FC = () => {
   const [attributionBusy, setAttributionBusy] = useState(false);
   const [attributionError, setAttributionError] = useState<string | null>(null);
 
-  const [activeSection, setActiveSection] = useState('performance');
+  /* `?sekcja=<id>` — wejście z poziomu 2 wprost w KARTY DZIAŁANIA (P7K część B:
+     ikona przy wierszu raportu prowadzi DO KARTY, nie na środek ekranu).
+     Wartość spoza listy sekcji jest ignorowana: ekran startuje wtedy jak dotąd
+     na „Wyniki", zamiast pokazać pustkę pod nieistniejącym identyfikatorem. */
+  const SEKCJE_Z_ADRESU = new Set([
+    'performance',
+    'contract',
+    'measurements',
+    'deviations',
+    'actionCards',
+    'correctiveActions',
+    'scorecards',
+    'history',
+  ]);
+  const sekcjaZAdresu = searchParams.get('sekcja');
+  const [activeSection, setActiveSection] = useState(
+    sekcjaZAdresu && SEKCJE_Z_ADRESU.has(sekcjaZAdresu) ? sekcjaZAdresu : 'performance'
+  );
 
   // Propose-impact form state.
   const [proposeInitiativeId, setProposeInitiativeId] = useState('');
@@ -414,6 +443,52 @@ export const KpiToolPage: React.FC = () => {
     if (!enabled) return;
     loadDeviationCases();
   }, [enabled, loadDeviationCases]);
+
+  const loadActionCards = useCallback(() => {
+    if (!kpiId) return;
+    setActionCards('loading');
+    listActionCards({ sourceKind: 'kpi_deviation' })
+      .then((cards) => setActionCards(cards.filter((c) => c.sourceId.startsWith(`${kpiId}:`))))
+      .catch(() => setActionCards([]));
+  }, [kpiId]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadActionCards();
+  }, [enabled, loadActionCards]);
+
+  const handleActionCardTask = useCallback(
+    async (card: ActionCardModel) => {
+      setActionCardBusyId(card.id);
+      try {
+        const task = await createTaskFromActionCard(card.id);
+        toast.success(
+          isPolish ? `Zadanie utworzone: ${task.title}` : `Task created: ${task.title}`
+        );
+      } catch {
+        toast.error(isPolish ? 'Nie udało się utworzyć zadania.' : 'Could not create the task.');
+      } finally {
+        setActionCardBusyId(null);
+      }
+    },
+    [isPolish]
+  );
+
+  const handleActionCardClose = useCallback(
+    async (card: ActionCardModel) => {
+      setActionCardBusyId(card.id);
+      try {
+        await closeActionCard(card.id);
+        toast.success(isPolish ? 'Karta zamknięta.' : 'Action card closed.');
+        loadActionCards();
+      } catch {
+        toast.error(isPolish ? 'Nie udało się zamknąć karty.' : 'Could not close the card.');
+      } finally {
+        setActionCardBusyId(null);
+      }
+    },
+    [isPolish, loadActionCards]
+  );
 
   const loadInitiativeImpacts = useCallback(() => {
     if (!kpiId) return;
@@ -1261,6 +1336,39 @@ export const KpiToolPage: React.FC = () => {
       </div>
   );
 
+  /* ── Sekcja: KARTY DZIAŁANIA (P7K część B, KRĘGOSŁUP §2.4/§3) ──────────
+     Jedyny komponent karty w całej aplikacji (`src/components/standard/
+     ActionCard.tsx`) — ten ekran go OSADZA, nie buduje własnego. Karta
+     powstaje po stronie serwera, gdy rezultat okresu wypadnie poza limit;
+     tutaj człowiek dopisuje przyczynę i działanie, robi z niej zadanie albo
+     ją zamyka. */
+  const actionCardsSection: NModeSection = {
+    id: 'actionCards',
+    icon: ClipboardCheck,
+    label: { pl: 'Karty działania', en: 'Action cards' },
+    title: { pl: 'Karty działania', en: 'Action cards' },
+    hasData: true,
+    alwaysShow: true,
+    component: (
+      <div className="space-y-3" data-testid="kpi-action-cards-section">
+        {actionCards === 'loading' ? (
+          <p className="text-sm text-c-text-muted">{t('Wczytywanie…', 'Loading…')}</p>
+        ) : (
+          <ActionCardList
+            cards={actionCards}
+            onCreateTask={handleActionCardTask}
+            onCloseCard={handleActionCardClose}
+            busyId={actionCardBusyId}
+            emptyLabel={t(
+              'Brak kart działania — żaden rezultat tego miernika nie wyszedł poza limit.',
+              'No action cards — no result of this indicator fell outside its limits.'
+            )}
+          />
+        )}
+      </div>
+    ),
+  };
+
   const correctiveActionsSection: NModeSection = {
     id: 'correctiveActions',
     icon: Play,
@@ -1407,6 +1515,7 @@ export const KpiToolPage: React.FC = () => {
     contractSection,
     measurementsSection,
     deviationsSection,
+    actionCardsSection,
     correctiveActionsSection,
     scorecardsSection,
     historySection,
