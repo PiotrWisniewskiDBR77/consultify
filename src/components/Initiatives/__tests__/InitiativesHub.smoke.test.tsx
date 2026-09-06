@@ -365,4 +365,79 @@ describe('InitiativesHub smoke', () => {
     );
     expect(runtimeProbes).toEqual([]);
   });
+
+  // [ODMROZENIE 05_INITIATIVES DEC-420] (c, uwaga właściciela 06.09 15:47) — zmierzone
+  // na żywo (evidence/1-1-i4/01-baseline-after-click.png): pojedynczy klik wiersza w
+  // rejestrze Inicjatyw otwiera kanoniczny podgląd DOKŁADNIE tak samo jak w Skrzynce
+  // (P1 `useJedenPanel`/`TableWithPreviewLayout`; `CanonicalInitiativeRegister` wiąże
+  // `StandardTable.onRowClick` wprost do `onSelect`). Mutacja: usuń `onRowClick` z
+  // `CanonicalInitiativeRegister.tsx` → RED (klik nie dubluje tytułu w panelu podglądu).
+  it('opens the canonical preview panel on a single row click (P1 — jak Skrzynka)', async () => {
+    // `useModuleOpenDocuments('initiatives')` persists `activeDocumentId` to
+    // `sessionStorage` (not `localStorage`, which the shared `beforeEach`
+    // above already clears) — an earlier deep-link test in this file can
+    // leave a stale open document there. Clearing it here keeps this test
+    // deterministic without touching the shared fixture other tests in this
+    // file depend on.
+    window.sessionStorage.clear();
+    listRegisteredInitiatives.mockResolvedValue({
+      initiatives: [
+        {
+          version: 1,
+          updatedAt: '2026-08-22T00:00:00.000Z',
+          initiative: {
+            initiativeId: 'init-preview-1',
+            lifecycleState: 'IN_EXECUTION',
+            title: 'Preview Click Target',
+            problem: 'Manual onboarding',
+            projectId: 'proj-1',
+            readiness: 'NOT_EVALUATED',
+            source: {
+              proposalId: 'proposal-1',
+              proposalVersion: 1,
+              sourceType: 'assessment-finding',
+              sourceId: 'finding-1',
+              sourceVersion: 1,
+              freshness: 'CURRENT',
+            },
+          },
+        },
+      ],
+    });
+
+    renderHub();
+    await waitFor(() => {
+      expect(screen.getAllByText('Preview Click Target')).toHaveLength(1);
+    });
+
+    fireEvent.click(screen.getByText('Preview Click Target'));
+
+    // Selecting the row renders the SAME title a second time inside the
+    // right-hand preview panel (`StandardPreview title={initiative.name}`) —
+    // the row itself keeps showing it too, so the count must grow past 1.
+    await waitFor(() => {
+      expect(screen.getAllByText('Preview Click Target').length).toBeGreaterThan(1);
+    });
+  });
+
+  // [ODMROZENIE 05_INITIATIVES DEC-420] (b, uwaga właściciela 06.09 15:45) — wybór w
+  // dropdownie Menu 2 "Wszystkie priorytety" nie renderuje już osobnej pigułki
+  // "Filters: … / Clear all" nachodzącej na Menu 3; wybór widać w SAMYM dropdownie,
+  // tak jak w Ocenie (`AssessmentHub` nigdy nie populuje `activeFilters`). Mutacja:
+  // przywróć przekazywanie `activeFilters`/`onRemoveFilter`/`onClearFilters` do
+  // `StandardModuleBar` (lub populację `setActiveFilters` w
+  // `handlePriorityFilterChange`) → RED (pigułka wraca).
+  it('never renders the "Filters:" chip row after picking a priority in the dropdown', async () => {
+    // See the sessionStorage comment in the previous test — same reason.
+    window.sessionStorage.clear();
+    renderHub();
+    await waitFor(() => expect(screen.getByTestId('initiatives-hub')).toBeInTheDocument());
+
+    const prioritySelect = screen.getByLabelText('Priority') as HTMLSelectElement;
+    fireEvent.change(prioritySelect, { target: { value: 'MEDIUM' } });
+
+    await waitFor(() => expect(prioritySelect.value).toBe('MEDIUM'));
+    expect(screen.queryByText('Filters:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Clear all')).not.toBeInTheDocument();
+  });
 });

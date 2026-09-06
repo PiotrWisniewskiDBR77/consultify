@@ -1,0 +1,896 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11i4
+
+
+ RUN  v4.1.8 /private/tmp/wt-11i4
+
+ × src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—" 65ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji 4ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni 3ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx (3 tests | 3 failed) 72ms
+     × wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—" 65ms
+     × kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji 4ms
+     × niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni 3ms
+ ✓ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > creates a labeled block from empty text 31ms
+ ✓ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > keeps both financial sections side by side without overlap 1ms
+ ✓ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > re-generating one section replaces only its own block (no clobber of the other) 0ms
+ ✓ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > idempotent: regenerating the same section twice does not accumulate blocks 0ms
+ ✓ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > preserves pre-existing free-form text when appending the first block 0ms
+ × src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > language toggle still matches the same block via the stable marker token 4ms
+   → expected '=== [FIN:ANALYSIS] initiatives.financ…' to contain 'Financial analysis (sizing + ROI)'
+ ❯ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts (6 tests | 1 failed) 37ms
+     ✓ creates a labeled block from empty text 31ms
+     ✓ keeps both financial sections side by side without overlap 1ms
+     ✓ re-generating one section replaces only its own block (no clobber of the other) 0ms
+     ✓ idempotent: regenerating the same section twice does not accumulate blocks 0ms
+     ✓ preserves pre-existing free-form text when appending the first block 0ms
+     × language toggle still matches the same block via the stable marker token 4ms
+ ↓ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL > comments: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+ ↓ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL > linked items: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+ ↓ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL > RAID: legacy POST is blocked and leaves real PostgreSQL unchanged
+ ↓ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL > stakeholders: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+ ❯ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts (4 tests | 4 skipped) 5ms
+     ↓ comments: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+     ↓ linked items: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+     ↓ RAID: legacy POST is blocked and leaves real PostgreSQL unchanged
+     ↓ stakeholders: POST -> DB/read HTTP -> DELETE -> DB/read HTTP
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 16:10:46:1046 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:47:1047 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:47:1047 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:47:1047 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:47:1047 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [33mwarn[39m: [33m[2026-09-06T14:10:49.511Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:49:1049 [33mwarn[39m: [33m[2026-09-06T14:10:49.511Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [DEBUG] [AI:CircuitBreaker] Table circuit_breaker_state not ready yet, skipping state restoration[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [DEBUG] [AI:CircuitBreaker] Table circuit_breaker_state not ready yet, skipping state restoration[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[2026-09-06T14:10:50.172Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:50:1050 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:53:1053 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:58:1058 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts
+2026-09-06 16:10:58:1058 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+ ↓ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL > DEFECT DIES: upload followed by an independent reload (F5) still has the file
+ ↓ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL > delete reloads from the server and the row is really gone
+ ↓ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL > PERMISSION PAIR — owner sees it: a teammate in the SAME organization can list the attachment
+ ↓ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL > PERMISSION PAIR — stranger does not see it: a user from a DIFFERENT organization is refused
+ ❯ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts (4 tests | 4 skipped) 7ms
+     ↓ DEFECT DIES: upload followed by an independent reload (F5) still has the file
+     ↓ delete reloads from the server and the row is really gone
+     ↓ PERMISSION PAIR — owner sees it: a teammate in the SAME organization can list the attachment
+     ↓ PERMISSION PAIR — stranger does not see it: a user from a DIFFERENT organization is refused
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible en CTAs to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible en CTAs to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible pl CTAs to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible pl CTAs to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible en CTAs to the canonical wizard 3248ms
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes ?new=1 to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes ?new=1 to the canonical wizard
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to InitiativesHub inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes both visible pl CTAs to the canonical wizard 153ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx > InitiativesHub canonical creation entry points > routes ?new=1 to the canonical wizard 50ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.newModalA11y.test.tsx (3 tests) 3452ms
+     ✓ routes both visible en CTAs to the canonical wizard  3248ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > keeps the accepted-classic bridge absent when its flag is off 55ms
+stderr | src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > fails closed in DEV when the canonical register read fails
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > fails closed in DEV when the canonical register read fails
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > fails closed in DEV when the canonical register read fails
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+
+stderr | src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > fails closed in DEV when the canonical register read fails
+[InitiativesHub] Fetch error: Error: canonical unavailable
+    at /private/tmp/wt-11i4/src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx:229:21
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 500,
+  code: 'API_UNAVAILABLE'
+}
+
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > confirms and calls the accepted-classic bridge when its flag is on 55ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > reads a V8 initiative id from direct and canonical envelopes and fails closed otherwise 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > mounts and renders the hub shell with an empty portfolio 20ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > fails closed in DEV when the canonical register read fails 28ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > renders an initiative card when the portfolio has one initiative 99ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > keeps a historical initiative visible when its source envelope is absent 33ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > exposes the canonical "New Initiative" CTA and opens the wizard in default table view 91ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > opens a wizard-created draft in the persisted initiative document, not unregistered runtime 105ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > opens a 404-unregistered deep link in the persisted initiative document 21ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > opens a runtime-v1 registered deep link in the approved initiative document 21ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx > InitiativesHub smoke > nie pyta runtime-v1 o pojedynczą inicjatywę przy otwieraniu deep-linku 23ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx (12 tests) 553ms
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > renderuje widok zdrowia z mapą pokrycia, lukami i duplikatami
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > renderuje widok zdrowia z mapą pokrycia, lukami i duplikatami
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje honest empty state gdy brak danych
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje honest empty state gdy brak danych
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje brak duplikatów gdy duplicateClusters puste
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje brak duplikatów gdy duplicateClusters puste
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to PortfolioHealthView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > renderuje widok zdrowia z mapą pokrycia, lukami i duplikatami 40ms
+ ✓ src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje honest empty state gdy brak danych 1ms
+ ✓ src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx > PortfolioHealthView > pokazuje brak duplikatów gdy duplicateClusters puste 9ms
+ ✓ src/components/Initiatives/__tests__/PortfolioHealthView.test.tsx (3 tests) 52ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx > InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 2 (DEC-420) > zakładka Inicjatywy: dokładnie 3 chipy cyklu życia w Menu 3 + jeden dropdown "Cykl życia" w Menu 2 53ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx > InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 2 (DEC-420) > zakładka Plan: dokładnie 3 chipy w Menu 3 + jeden dropdown "Stan planu" w Menu 2 83ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx > InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 2 (DEC-420) > zakładka Obciążenie: dokładnie 3 chipy w Menu 3 + jeden dropdown "Ograniczenie" w Menu 2 30ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx (3 tests) 168ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts > legacy initiative register bridge (MVP fix, org DBR77 empty list) > fixture is the real measured payload: 71 rows, all with a known InitiativeStatus 33ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts > legacy initiative register bridge (MVP fix, org DBR77 empty list) > mergeLegacyInitiativesIntoRegister backfills every legacy row when the runtime-v1 projection is empty — the exact org DBR77 measurement (71 legacy vs 0 canonical must yield 71 visible, not 0) 1ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts > legacy initiative register bridge (MVP fix, org DBR77 empty list) > canonical (runtime-v1) rows win on id collision instead of being duplicated 1ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts > legacy initiative register bridge (MVP fix, org DBR77 empty list) > never drops a row for an unrecognized status — buckets it as DRAFT, keeps raw value visible 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts > legacy initiative register bridge (MVP fix, org DBR77 empty list) > returns the canonical rows unchanged (same reference) when there are no legacy rows 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.legacyMerge.test.ts (5 tests) 36ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps task to a human label, never the raw slug 30ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps task_set to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps decision to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps notebook to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps notebook_page to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps initiative to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps report to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps presentation to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps team_chat to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > maps idea to a human label, never the raw slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > falls back to a Title Case label instead of a raw, unmapped slug 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > never returns a lowercase/underscored technical value for a non-empty input 1ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts > getSourceDisplayLabel — known source types used by Idea backlinks > returns an empty string for an empty/missing source type instead of throwing 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativeSourceLink.getSourceDisplayLabel.test.ts (13 tests) 34ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.scope.test.ts > canonical initiative register scope > returns exactly the selected project and priority denominator 31ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.scope.test.ts > canonical initiative register scope > keeps every priority inside the selected project when priority is cleared 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.scope.test.ts > canonical initiative register scope > uses sample rows as an exclusive source only in explicit sample mode 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeRegisterProjection.scope.test.ts (3 tests) 33ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > utrzymuje ustaloną listę identyfikatorów kolumn w ustalonej kolejności (jedenaście od DEC-402 — dołożono "areaOrAxis") 30ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > kolumna kontekstu wchodzi jako opcja TEJ SAMEJ definicji, przed kolumną sortowania 1ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > czyta legacy słownik statusów Oceny tym samym kodem co rejestr kanoniczny 0ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > utrzymuje te same pozycje kebaba niezależnie od powierzchni 0ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > powierzchnie NIE montują własnej tabeli — delegują do jednego komponentu 2ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx > Day 274 + A19/A13 — jeden kontrakt listy inicjatyw > panel Oceny nie opakowuje tabeli w ramkę-kartę raportu w raporcie 1ms
+ ✓ src/components/Initiatives/__tests__/day274-jedna-kolumnistyka.test.tsx (6 tests) 36ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > rejestr Inicjatyw — wylacznie realne rekordy organizacji > nie miesza fikstury pokazowej z wierszami API (zrodlo jest rozlaczne) 36ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > rejestr Inicjatyw — wylacznie realne rekordy organizacji > id `demo-story-*` z bazy NIE jest identyfikatorem pokazowym klienta 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > laduje rekord z rejestru runtime-v1, gdy v8 i legacy zwracaja 404 1ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > uderza dokladnie w trase, z ktorej pochodzi lista (integracja z klientem HTTP) 2ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > bez rejestru runtime-v1 ten sam realny rekord znowu nie laduje sie 1ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > adapter zachowuje tozsamosc i cykl zycia rekordu rejestru 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts (6 tests) 41ms
+ ✓ src/components/Initiatives/__tests__/initiativeUsers.test.ts > dedupeInitiativeUsersById > keeps one stable option per server user id without changing the selected id 31ms
+ ✓ src/components/Initiatives/__tests__/initiativeUsers.test.ts (1 test) 32ms
+ ✓ src/components/Initiatives/__tests__/initiativeOriginSubresources.test.ts > P5 — origin gating fan-out karty inicjatywy > DEMO_STORY z runtime-v1 nie uruchamia zadnego z 11 odczytow planning ani legacy 32ms
+ ✓ src/components/Initiatives/__tests__/initiativeOriginSubresources.test.ts > P5 — origin gating fan-out karty inicjatywy > nieznane pochodzenie zachowuje dotychczasowy odczyt i fallback legacy 1ms
+ ✓ src/components/Initiatives/__tests__/initiativeOriginSubresources.test.ts > P5 — origin gating fan-out karty inicjatywy > v8-planning nadal czyta planning store 0ms
+ ✓ src/components/Initiatives/__tests__/initiativeOriginSubresources.test.ts (3 tests) 35ms
+ ✓ src/components/Initiatives/__tests__/day277-wypelnij-cala-karte.test.tsx > Day 277 whole initiative AI fill contract > wires the existing toolbar button to the whole-card sequential runner 32ms
+ ✓ src/components/Initiatives/__tests__/day277-wypelnij-cala-karte.test.tsx > Day 277 whole initiative AI fill contract > reports section names and reasons instead of silently accepting partial fill 1ms
+ □ src/components/Initiatives/__tests__/day277-wypelnij-cala-karte.test.tsx > Day 277 whole initiative AI fill contract > capacity report: Utwórz raport navigates to a different URL and renders staffing versus plan from server data
+ ✓ src/components/Initiatives/__tests__/day277-wypelnij-cala-karte.test.tsx (3 tests | 1 todo) 35ms
+ ✓ src/components/Initiatives/__tests__/a20-przycisk-ai-gornego-paska.test.ts > A20 — przycisk AI górnego paska karty inicjatywy > bez zdania serwera odblokowuje AI dla rekordu, który nie jest terminalny 31ms
+ ✓ src/components/Initiatives/__tests__/a20-przycisk-ai-gornego-paska.test.ts > A20 — przycisk AI górnego paska karty inicjatywy > zachowuje regułę serwera: rekord terminalny NIE dostaje AI 0ms
+ ✓ src/components/Initiatives/__tests__/a20-przycisk-ai-gornego-paska.test.ts > A20 — przycisk AI górnego paska karty inicjatywy > oznacza się jako wyliczone lokalnie, żeby nie udawać kontraktu serwera 0ms
+ ✓ src/components/Initiatives/__tests__/a20-przycisk-ai-gornego-paska.test.ts > A20 — przycisk AI górnego paska karty inicjatywy > karta wpina fallback w gałąź błędu gate-readiness, a nie zeruje zdolności 1ms
+ ✓ src/components/Initiatives/__tests__/a20-przycisk-ai-gornego-paska.test.ts (4 tests) 34ms
+ ✓ src/components/Initiatives/__tests__/initiativeSections.day136.test.ts > Day 136 initiative persisted section render contract > binds all four persisted sections to reachable InitiativeDocumentView branches 28ms
+ ✓ src/components/Initiatives/__tests__/initiativeSections.day136.test.ts (1 test) 30ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > builds rich factual pl Details within 80–140 words 2ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > builds rich factual en Details within 80–140 words 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > builds sparse non-empty pl Details within 80–140 words 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > builds sparse non-empty en Details within 80–140 words 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > uses only whitelisted persisted facts without recommendations or date fabrication 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > returns empty Details for empty or entirely rejected rows 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > blocks credentials in whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field name 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field title 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field summary 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field description 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field axis 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field status 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field priority 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field progress 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field budget 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field expectedRoi 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedStartDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field plannedEndDate 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field createdAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > rejects raw JSON-like whitelisted field updatedAt 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > handles owners and dependencies explicitly without object coercion or leaks 0ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx > T25 Initiatives Portfolio table preview Details > delegates the table preview contract to the canonical register and preserves adjacent modes 1ms
+ ✓ src/components/Initiatives/__tests__/InitiativesHub.previewDetails.t25.test.tsx (120 tests) 15ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL
+AssertionError: expected 'sqlite' to be 'postgres' // Object.is equality
+
+Expected: "postgres"
+Received: "sqlite"
+
+ ❯ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts:52:33
+     50|
+     51|   beforeAll(async () => {
+     52|     expect(process.env.DB_TYPE).toBe('postgres');
+       |                                 ^
+     53|     await assertRealPostgresTestEnvironment();
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL
+AssertionError: expected undefined to be '1' // Object.is equality
+
+- Expected:
+"1"
+
++ Received:
+undefined
+
+ ❯ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts:26:38
+     24|
+     25|   beforeAll(async () => {
+     26|     expect(process.env.RUN_DB_TESTS).toBe('1');
+       |                                      ^
+     27|     expect(process.env.MOCK_DB).toBe('false');
+     28|     expect(DATABASE_URL).toMatch(/^postgresql:\/\/postgres:cx@127\.0\.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—"
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:84:24
+     82|  */
+     83| export function useJedenPanel(): UseJedenPanelResult {
+     84|   const { pathname } = useLocation();
+       |                        ^
+     85|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+     86|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > language toggle still matches the same block via the stable marker token
+AssertionError: expected '=== [FIN:ANALYSIS] initiatives.financ…' to contain 'Financial analysis (sizing + ROI)'
+
+- Expected
++ Received
+
+- Financial analysis (sizing + ROI)
++ === [FIN:ANALYSIS] initiatives.financialNarrativeBlocks.financialAnalysisSizingRoi ===
++ EN-BODY
+
+ ❯ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts:75:16
+     73|     expect(en.match(new RegExp(`\\[${A}\\]`, 'g'))?.length).toBe(1);
+     74|     // English heading now present.
+     75|     expect(en).toContain('Financial analysis (sizing + ROI)');
+       |                ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  4 failed | 15 passed (19)
+      Tests  4 failed | 190 passed | 8 skipped | 1 todo (203)
+   Start at  16:10:43
+   Duration  31.67s (transform 15.80s, setup 753ms, import 20.32s, tests 4.71s, environment 4.31s)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL
+AssertionError: expected 'sqlite' to be 'postgres' // Object.is equality
+
+Expected: "postgres"
+Received: "sqlite"
+
+ ❯ src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts:52:33
+     50|
+     51|   beforeAll(async () => {
+     52|     expect(process.env.DB_TYPE).toBe('postgres');
+       |                                 ^
+     53|     await assertRealPostgresTestEnvironment();
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL
+AssertionError: expected undefined to be '1' // Object.is equality
+
+- Expected:
+"1"
+
++ Received:
+undefined
+
+ ❯ src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts:26:38
+     24|
+     25|   beforeAll(async () => {
+     26|     expect(process.env.RUN_DB_TESTS).toBe('1');
+       |                                      ^
+     27|     expect(process.env.MOCK_DB).toBe('false');
+     28|     expect(DATABASE_URL).toMatch(/^postgresql:\/\/postgres:cx@127\.0\.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—"
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:84:24
+     82|  */
+     83| export function useJedenPanel(): UseJedenPanelResult {
+     84|   const { pathname } = useLocation();
+       |                        ^
+     85|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+     86|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > language toggle still matches the same block via the stable marker token
+AssertionError: expected '=== [FIN:ANALYSIS] initiatives.financ…' to contain 'Financial analysis (sizing + ROI)'
+
+- Expected
++ Received
+
+- Financial analysis (sizing + ROI)
++ === [FIN:ANALYSIS] initiatives.financialNarrativeBlocks.financialAnalysisSizingRoi ===
++ EN-BODY
+
+ ❯ src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts:75:16
+     73|     expect(en.match(new RegExp(`\\[${A}\\]`, 'g'))?.length).toBe(1);
+     74|     // English heading now present.
+     75|     expect(en).toContain('Financial analysis (sizing + ROI)');
+       |                ^
+     76|   });
+     77| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  4 failed | 15 passed (19)
+      Tests  4 failed | 190 passed | 8 skipped | 1 todo (203)
+   Start at  16:10:43
+   Duration  31.68s (transform 15.80s, setup 753ms, import 20.32s, tests 4.71s, environment 4.31s)
+
+JSON report written to /private/tmp/wt-11i4/junit.xml
+JUNIT report written to /private/tmp/wt-11i4/junit.xml
