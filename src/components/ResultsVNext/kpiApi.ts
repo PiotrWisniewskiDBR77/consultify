@@ -230,6 +230,12 @@ export function newKpiIdempotencyKey(): string {
 
 export interface ListKpisParams {
   status?: KpiStatus;
+  /** Wyszukiwanie po nazwie / kodzie / opisie — serwer wymaga min. 2 znaków
+   * (`ListKpisQuerySchema`: `q: z.string().trim().min(2).max(200)`), więc
+   * krótszy ciąg jest tu POMIJANY zamiast wysyłany (400 byłby kłamstwem
+   * o braku wyników). Filtr robi SQL (`kpiRepository.listKpis` — `dv.name`,
+   * `kd.kpi_code`, `dv.description`), nie klient. */
+  q?: string;
   limit?: number;
   offset?: number;
 }
@@ -238,9 +244,17 @@ export interface ListKpisParams {
 export async function listKpis(params: ListKpisParams = {}): Promise<KpiDefinitionDto[]> {
   const { RESULTS_VNEXT_SAMPLE_KPIS, shouldUseResultsVNextOwnerSampleData } =
     await import('./resultsVNextOwnerSampleData');
-  if (shouldUseResultsVNextOwnerSampleData()) return RESULTS_VNEXT_SAMPLE_KPIS;
+  const zapytanie = params.q?.trim() ?? '';
+  if (shouldUseResultsVNextOwnerSampleData()) {
+    if (zapytanie.length < 2) return RESULTS_VNEXT_SAMPLE_KPIS;
+    const igla = zapytanie.toLowerCase();
+    return RESULTS_VNEXT_SAMPLE_KPIS.filter((kpi) =>
+      `${kpi.name ?? ''} ${kpi.kpiCode}`.toLowerCase().includes(igla)
+    );
+  }
   const qs = new URLSearchParams();
   if (params.status) qs.set('status', params.status);
+  if (zapytanie.length >= 2) qs.set('q', zapytanie);
   qs.set('limit', String(params.limit ?? 200));
   qs.set('offset', String(params.offset ?? 0));
   const resp = await Api.get(`/vnext/results/kpi?${qs.toString()}`);
