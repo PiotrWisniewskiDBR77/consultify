@@ -1102,6 +1102,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     },
   });
 
+  // [ODMROZENIE 13_CHAT DEC-397] Esc stops an in-progress "read aloud" (TTS)
+  // playback — same fix as the per-message speaker button (MessageRenderer):
+  // the user reported no way to silence Teresa once she started speaking.
+  useEffect(() => {
+    if (!voiceState.isSpeaking) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') stopSpeaking();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [voiceState.isSpeaking, stopSpeaking]);
+
   // Teresa real-time voice — global context (persists across navigation)
   const teresaVoice = useTeresaVoiceContext();
 
