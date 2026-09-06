@@ -101,6 +101,17 @@ const ROLE_CAPABILITIES: Record<AuditRole, AuditCapability[]> = {
     'program.close',
     'evidence_request.create',
     'finding.accept_residual_risk',
+    // DEC-428 (1.1-A5): w MVP właściciel programu audytu prowadzi audyt SAM —
+    // segregacja obowiązków (osobny lead_auditor) jest Falą 2 dla audytów
+    // zewnętrznych. Bez tych trzech capability program_owner urywał łańcuch
+    // sesja → wynik → raport → wniosek DOKŁADNIE w tym miejscu: mógł założyć
+    // program i zaakceptować raport (`report.approve` niżej), ale nie mógł go
+    // sam sfinalizować (`output.finalize`), sam wytworzyć (`report.draft` —
+    // ten sam strażnik pilnuje też `POST /reports/:id/conclusion`, patrz
+    // `routes/audits/reports.routes.ts`) ani sam opublikować (`report.publish`).
+    'output.finalize',
+    'report.draft',
+    'report.publish',
     'report.approve',
     'proposal.draft',
     'proposal.register',
