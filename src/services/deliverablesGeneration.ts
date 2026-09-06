@@ -42,7 +42,75 @@ export interface DeliverableGenerationStatus {
   error?: string;
 }
 
+// ── [ODMROZENIE 13_CHAT DEC-397] Uczciwość flagi + polskie powody ────────────
+// Zgłoszenie właściciela 06.09 (1.1-D): czat pokazał kartę „Dokument: …" i padł
+// napisem „❌ Generacja nie powiodła się: Not found". Zmierzona przyczyna: FRONT
+// ma `VITE_ENABLE_DELIVERABLES_LIGHT=true`, a SERWER nie ma `ENABLE_DELIVERABLES_LIGHT`
+// (staging: railway-staging.json ma tylko wariant VITE_*), więc router
+// `deliverablesGenerations.routes.ts:68` odpowiada 404 `{"error":"Not found"}`
+// PRZED uwierzytelnieniem (stąd `userId: null` w logu). Czat pokazywał tę
+// angielską odpowiedź serwera dosłownie.
+//
+// Dwie konsekwencje, obie tu obsłużone:
+//  1. Flaga frontu sama w sobie NIE jest dowodem, że powierzchnia istnieje.
+//     Gdy serwer raz udowodni, że jej nie ma (404 na kontrakcie), zapamiętujemy
+//     to na czas życia karty i czat wraca na ścieżkę „flaga wyłączona".
+//  2. Użytkownik nigdy nie widzi surowego komunikatu serwera — powód jest po polsku.
+
+/**
+ * Ustawiane, gdy serwer odpowie 404 na kontrakcie generacji. Świadomie tylko
+ * w pamięci karty: restart serwera z włączoną flagą wraca do normy po odświeżeniu.
+ */
+let surfaceProvenMissing = false;
+
+/** Serwerowa powierzchnia generacji udowodniła, że jej nie ma. */
+export function markDeliverablesSurfaceUnavailable(): void {
+  surfaceProvenMissing = true;
+}
+
+/** Tylko do testów — zeruje pamięć niedostępności. */
+export function resetDeliverablesSurfaceProbe(): void {
+  surfaceProvenMissing = false;
+}
+
+/**
+ * True, gdy błąd oznacza BRAK powierzchni generacji na serwerze (404 na kontrakcie),
+ * a nie zwykłą awarię generacji. Rozpoznajemy po statusie z `ApiError`; napis
+ * „Not found" jest tylko zapasowym rozpoznaniem, gdy status nie dojechał.
+ */
+export function isDeliverablesSurfaceMissing(err: unknown): boolean {
+  const status = (err as { status?: number } | null)?.status;
+  if (status === 404) return true;
+  const message = err instanceof Error ? err.message : String(err ?? '');
+  return /^\s*not found\s*$/i.test(message);
+}
+
+/**
+ * Powód niepowodzenia generacji PO POLSKU. Nigdy nie przepuszcza surowego
+ * komunikatu serwera (to on dał właścicielowi „Not found").
+ */
+export function opisBleduGeneracji(err: unknown, lang: 'pl' | 'en' = 'pl'): string {
+  const pl = lang === 'pl';
+  if (isDeliverablesSurfaceMissing(err)) {
+    return pl
+      ? 'generator dokumentów jest wyłączony na tym środowisku'
+      : 'the document generator is switched off in this environment';
+  }
+  const status = (err as { status?: number } | null)?.status;
+  if (status === 401 || status === 403) {
+    return pl ? 'brak uprawnień do tworzenia artefaktów' : 'no permission to create artifacts';
+  }
+  if (status === 429) {
+    return pl ? 'limit zapytań do AI został wyczerpany' : 'the AI request limit is exhausted';
+  }
+  if (typeof status === 'number' && status >= 500) {
+    return pl ? 'serwer zgłosił błąd generacji' : 'the server reported a generation error';
+  }
+  return pl ? 'generacja nie doszła do skutku' : 'the generation did not complete';
+}
+
 export function isDeliverablesLightEnabled(): boolean {
+  if (surfaceProvenMissing) return false;
   return import.meta.env.VITE_ENABLE_DELIVERABLES_LIGHT === 'true';
 }
 
