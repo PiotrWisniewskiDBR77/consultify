@@ -148,3 +148,9 @@ uważa za źródło, nie automatycznie to, co było przed awarią.
   środowiskowa (`rg AI_BUDGET server/src` → tylko `AI_BUDGETS_ENABLED` i
   `AI_BUDGET_EXHAUSTED`); żyje w serwisie/tabeli `aiBudgetService`, konfiguracja
   kwoty to osobny krok poza `railway variables`.
+
+
+## Uzupełnienie po diagnozie 06.09 11:10 (TAG-STAGING-DIAGNOZA)
+- Padnięty run 05.09 = błąd typów naprawiony tego samego dnia (`b488d0a523`); wystarczy powtórzyć `gh workflow run railway-deploy.yml -f environment=staging -f confirm_demo=no -f confirm_production=no`, gdy gałąź `staging` jest cicha ≥2 min (auto-deploy z pusha ściga się z `railway up` z workflow).
+- Workflow ustawia `APP_BUILD_SHA` na stagingu → po zielonym runie: `railway variable delete APP_BUILD_SHA --environment staging --service <app>` (inaczej health kłamie po następnym auto-deployu).
+- Dopiero potem `-f environment=demo -f confirm_demo=yes`. Ręczne `git tag -f staging-deployed` = tylko incydentowo (bramka nie weryfikuje pochodzenia tagu, ale to łamie jej cel).
