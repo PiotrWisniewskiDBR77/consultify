@@ -27,10 +27,12 @@
  *     sets one) → always the fixed `NEUTRAL_SHEET_SILHOUETTE` glyph, which
  *     makes no claim about real column/row/tab counts.
  *
- * Filter chips (format + scope) reuse the SAME `activeFilters`/
- * `onFilterChange` contract the table's column-filter dropdowns already
- * write to — switching Galeria ↔ Tabela does not create a second, divergent
- * filter state.
+ * Filtry (format + źródło): od DEC-423d (właściciel, 06.09.2026) chipy fasetowe
+ * NIE stoją już w tym komponencie — mieszkają w Menu 3 huba
+ * (`ReportsAndPresentationsHub`), wspólne dla Galerii i Tabeli. Ten plik
+ * eksportuje wyłącznie ich etykiety/kolejność (`TEMPLATE_TYPE_LABEL_PLURAL`,
+ * `TEMPLATE_TYPE_ORDER`, `TEMPLATE_SCOPE_ORDER`, `templateScopeLabel`), żeby
+ * oba widoki i menu mówiły jednym słownikiem.
  */
 import type { TFunction } from 'i18next';
 import type { LucideIcon } from 'lucide-react';
@@ -41,13 +43,7 @@ import { useTranslation } from 'react-i18next';
 import type { StructurePreviewSection } from '@/components/DocumentStudio/DocumentStructurePreview';
 import { DocumentStructurePreview } from '@/components/DocumentStudio/DocumentStructurePreview';
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
-import type { FilterChip } from '@/components/shared/ModuleHub';
-import {
-  MENU_1_PRIMARY_CTA,
-  MENU_3_ACTION_NEUTRAL,
-  Menu3Badge,
-  Menu3Chip,
-} from '@/components/shared/ModuleMenu3';
+import { MENU_1_PRIMARY_CTA, MENU_3_ACTION_NEUTRAL } from '@/components/shared/ModuleMenu3';
 import { NEUTRAL_SHEET_SILHOUETTE, SheetSilhouette } from '@/components/Sheets/SheetSilhouette';
 import { cn } from '@/utils/cn';
 
@@ -84,14 +80,42 @@ function blockCountLabel(item: TemplateItem): string | null {
   return null;
 }
 
-const TYPE_LABEL_PLURAL: Record<TemplateType, string> = {
+/**
+ * Etykiety i kolejność faset (format · źródło) Biblioteki wzorców.
+ * EKSPORTOWANE, bo od DEC-423d (właściciel, 06.09.2026) pasek tych chipów
+ * mieszka w Menu 3 huba (`ReportsAndPresentationsHub`), a nie we własnym
+ * rzędzie w treści zakładki. Jedno źródło etykiet dla obu widoków
+ * (Galeria/Tabela) — filtr pisze do tego samego `activeFilters`.
+ */
+export const TEMPLATE_TYPE_LABEL_PLURAL: Record<TemplateType, string> = {
   report: 'Raporty',
   sheet: 'Tabele',
   presentation: 'Prezentacje',
 };
 
-const TYPE_ORDER: TemplateType[] = ['report', 'sheet', 'presentation'];
-const SCOPE_ORDER: TemplateScope[] = ['personal', 'system', 'organization', 'unknown'];
+export const TEMPLATE_TYPE_ORDER: TemplateType[] = ['report', 'sheet', 'presentation'];
+export const TEMPLATE_SCOPE_ORDER: TemplateScope[] = [
+  'personal',
+  'system',
+  'organization',
+  'unknown',
+];
+
+/**
+ * Etykieta zakresu wg kanonu materials.ts (system|organization|personal|unknown).
+ * Legacy 'application' zostaje obsłużone dla wpisów sprzed migracji.
+ * Pure — bierze `t` z zewnątrz, żeby dało się jej użyć i w hubie (Menu 3),
+ * i w treści zakładki (kafle, podgląd), bez dwóch rozjeżdżających się kopii.
+ */
+export function templateScopeLabel(
+  t: TFunction,
+  scope: TemplateItem['scope'] | TemplateScope
+): string {
+  if (scope === 'personal') return t('reports.personal');
+  if (scope === 'system' || scope === 'application') return t('reports.application');
+  if (scope === 'organization') return t('reports.organization');
+  return t('rap.templates.scopeUnknown', 'Nieznany');
+}
 
 const TYPE_ICON: Record<TemplateType, LucideIcon> = {
   report: FileText,
@@ -313,11 +337,6 @@ const TemplateTile: React.FC<{
 export interface TemplatesGalleryViewProps {
   /** Fully filtered (search + activeFilters) — rendered as tiles. */
   templates: TemplateItem[];
-  /** Filtered by search only — powers the facet counters below, independent
-   *  of which format/scope chip is currently active. */
-  searchFilteredTemplates: TemplateItem[];
-  activeFilters: FilterChip[];
-  onFilterChange: (filters: FilterChip[]) => void;
   scopeLabel: (scope: TemplateItem['scope']) => string;
   resolveUsePath: (item: TemplateItem) => string | null;
   onUse: (item: TemplateItem) => void;
@@ -326,9 +345,6 @@ export interface TemplatesGalleryViewProps {
 
 export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
   templates,
-  searchFilteredTemplates,
-  activeFilters,
-  onFilterChange,
   scopeLabel,
   resolveUsePath,
   onUse,
@@ -336,86 +352,14 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const currentType = activeFilters.find((f) => f.column === 'type')?.value as
-    | TemplateType
-    | undefined;
-  const currentScope = activeFilters.find((f) => f.column === 'scope')?.value as
-    | TemplateScope
-    | undefined;
-
-  // Liczniki fasetowe (Airtable): ile ZOSTANIE po kliknięciu przy
-  // pozostałych aktywnych filtrach, liczone na secie po samej wyszukiwarce.
-  const typeCount = (type: TemplateType | null): number =>
-    searchFilteredTemplates.filter(
-      (item) =>
-        (type === null || item.type === type) &&
-        (currentScope === undefined || item.scope === currentScope)
-    ).length;
-
-  const scopeCount = (scope: TemplateScope | null): number =>
-    searchFilteredTemplates.filter(
-      (item) =>
-        (scope === null || item.scope === scope) &&
-        (currentType === undefined || item.type === currentType)
-    ).length;
-
-  const setTypeFilter = (type: TemplateType | null) => {
-    const rest = activeFilters.filter((f) => f.column !== 'type');
-    if (type === null) {
-      onFilterChange(rest);
-      return;
-    }
-    onFilterChange([
-      ...rest,
-      { id: `type-${type}`, column: 'type', value: type, label: TEMPLATE_TYPE_META[type].labelPl },
-    ]);
-  };
-
-  const setScopeFilter = (scope: TemplateScope | null) => {
-    const rest = activeFilters.filter((f) => f.column !== 'scope');
-    if (scope === null) {
-      onFilterChange(rest);
-      return;
-    }
-    onFilterChange([
-      ...rest,
-      { id: `scope-${scope}`, column: 'scope', value: scope, label: scopeLabel(scope) },
-    ]);
-  };
-
+  /* DEC-423d (właściciel, 06.09.2026, zrzut Biblioteki wzorców): „ten cały
+     pasek powinien wjechać do menu trzeciego". Rząd chipów format · źródło stał
+     TUTAJ — czyli poza kanonem Menu 1/2/3, w treści zakładki, i tylko w widoku
+     Galerii, mimo że filtrował oba widoki. Teraz rysuje go Menu 3 huba
+     (`ReportsAndPresentationsHub.commandRowLeftSlot`), a filtr pisze do tego
+     samego `activeFilters`, więc Galeria i Tabela widzą ten sam wybór. */
   return (
     <div>
-      <div
-        className="mb-4 flex flex-wrap items-center gap-1.5"
-        data-testid="template-gallery-filters"
-      >
-        <Menu3Chip active={!currentType} onClick={() => setTypeFilter(null)}>
-          {t('rap.templates.allFormats', 'Wszystkie')}
-          <Menu3Badge count={typeCount(null)} active={!currentType} />
-        </Menu3Chip>
-        {TYPE_ORDER.map((type) => (
-          <Menu3Chip key={type} active={currentType === type} onClick={() => setTypeFilter(type)}>
-            {TYPE_LABEL_PLURAL[type]}
-            <Menu3Badge count={typeCount(type)} active={currentType === type} />
-          </Menu3Chip>
-        ))}
-        <span className="mx-1.5 h-4 w-px bg-c-border" aria-hidden="true" />
-        <Menu3Chip active={!currentScope} onClick={() => setScopeFilter(null)}>
-          {t('rap.templates.allScopes', 'Każde źródło')}
-          <Menu3Badge count={scopeCount(null)} active={!currentScope} />
-        </Menu3Chip>
-        {SCOPE_ORDER.map((scope) => (
-          <Menu3Chip
-            key={scope}
-            active={currentScope === scope}
-            onClick={() => setScopeFilter(scope)}
-          >
-            {scopeLabel(scope)}
-            <Menu3Badge count={scopeCount(scope)} active={currentScope === scope} />
-          </Menu3Chip>
-        ))}
-      </div>
-
       {templates.length === 0 ? (
         <div className="rounded-token-lg border border-dashed border-c-border p-10 text-center text-sm text-c-text-muted">
           {t('rap.templates.galleryEmpty', 'Żaden wzorzec nie pasuje do tych filtrów.')}

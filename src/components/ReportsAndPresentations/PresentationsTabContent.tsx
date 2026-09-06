@@ -12,12 +12,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { EmptyState } from '@/components/shared/states';
 import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell } from '@/components/ui/primitives/cells';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
-import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
@@ -55,7 +55,9 @@ function resolvePreviewSourceName(item: PresentationItem | null): string | null 
   const refs = Array.isArray(item.sourceRefs) ? item.sourceRefs : [];
   const match = refs.find(
     (ref): ref is ArtifactSourceRef =>
-      typeof ref === 'object' && ref !== null && (ref as ArtifactSourceRef).artifact_id === item.sourceId
+      typeof ref === 'object' &&
+      ref !== null &&
+      (ref as ArtifactSourceRef).artifact_id === item.sourceId
   );
   const name = match?.artifact_name?.trim();
   if (name && !SOURCE_UUID_LIKE.test(name)) return name;
@@ -104,6 +106,17 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     for (const f of activeFilters) {
       if (f.column === 'sourceType') data = data.filter((item) => item.sourceType === f.value);
       if (f.column === 'status') data = data.filter((item) => item.status === f.value);
+      /* DEC-423b: dropdown „Widoczność" w Menu 2 stoi teraz nad KAŻDĄ zakładką,
+         więc ta też musi go realnie honorować — bez tych dwóch linii wybór z
+         listy nic by nie robił (filtr-widmo). Wiersze prezentacji niosą
+         `governance` z tego samego rejestru, co Wszystkie/Dokumenty/Arkusze
+         (`mapArtifactGovernance` w useRapData.ts). */
+      if (f.column === 'visibilityScope') {
+        data = data.filter((item) => (item.governance?.visibilityScope || '') === f.value);
+      }
+      if (f.column === 'publishState') {
+        data = data.filter((item) => (item.governance?.publishState || '') === f.value);
+      }
       if (f.column === 'presentationMode')
         data = data.filter((item) => (item.presentationMode || 'briefing') === f.value);
     }
@@ -480,80 +493,87 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           />
         </div>
 
-        <JedenPrawyPanel rekord={previewItem ? (
-            <StandardPreview
-              title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
-              onClose={() => setSelectedId(null)}
-              onOpenFull={() => openPresentation(previewItem)}
-              meta={previewMeta ? { pills: previewMeta } : undefined}
-              details={{
-                showWordCount: false,
-                text: [
-                  `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
-                  `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
-                  `${t('common.updated', 'Updated')}: ${
-                    previewItem.updatedAt
-                      ? new Date(previewItem.updatedAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '—'
-                  }`,
-                ].join('\n'),
-                onCopy: () => {
-                  void navigator.clipboard?.writeText(
-                    `${previewItem.title} — ${previewItem.status} (${previewItem.slideCount ?? '—'} slides)`
-                  );
-                },
-                onExport: () => actions.exportDeckPptx(previewItem),
-                exportLabel: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
-              }}
-              ai={{
-                hints: [t('rap.actions.discuss', 'Discuss')],
-                disabled: true,
-                disabledTooltip: t('common.comingSoon', 'Coming soon'),
-              }}
-              relations={
-                previewItem.sourceId
-                  ? [
-                      {
-                        label: `${t('rap.columns.source', 'Źródło')}: ${
-                          resolvePreviewSourceName(previewItem) ?? '—'
-                        }`,
-                      },
-                    ]
-                  : []
-              }
-              actions={{
-                resolutions: previewItem.artifactId
-                  ? [
-                      {
-                        id: 'start-review',
-                        variant: 'positive',
-                        label: t('rap.actions.startReview', 'Start review'),
-                        onClick: async () => {
-                          const aid = previewItem.artifactId as string;
-                          setReviewBusyArtifactId(aid);
-                          const ok = await actions.startArtifactReview(aid);
-                          setReviewBusyArtifactId(null);
-                          if (ok) onRefresh();
-                        },
-                        disabled: reviewDisabled,
-                      },
-                    ]
-                  : undefined,
-                informational: [
-                  {
-                    id: 'share',
-                    variant: 'neutral',
-                    label: t('rap.actions.share', 'Udostępnij'),
-                    onClick: () => openShare(previewItem),
+        <JedenPrawyPanel
+          rekord={
+            previewItem ? (
+              <StandardPreview
+                title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
+                onClose={() => setSelectedId(null)}
+                onOpenFull={() => openPresentation(previewItem)}
+                meta={previewMeta ? { pills: previewMeta } : undefined}
+                details={{
+                  showWordCount: false,
+                  text: [
+                    `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
+                    `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,
+                    `${t('common.updated', 'Updated')}: ${
+                      previewItem.updatedAt
+                        ? new Date(previewItem.updatedAt).toLocaleDateString(
+                            isPolish ? 'pl-PL' : 'en-US',
+                            {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            }
+                          )
+                        : '—'
+                    }`,
+                  ].join('\n'),
+                  onCopy: () => {
+                    void navigator.clipboard?.writeText(
+                      `${previewItem.title} — ${previewItem.status} (${previewItem.slideCount ?? '—'} slides)`
+                    );
                   },
-                ],
-              }}
-            />
-        ) : null} />
+                  onExport: () => actions.exportDeckPptx(previewItem),
+                  exportLabel: t('rap.actions.exportPptx', 'Eksportuj PPTX'),
+                }}
+                ai={{
+                  hints: [t('rap.actions.discuss', 'Discuss')],
+                  disabled: true,
+                  disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                }}
+                relations={
+                  previewItem.sourceId
+                    ? [
+                        {
+                          label: `${t('rap.columns.source', 'Źródło')}: ${
+                            resolvePreviewSourceName(previewItem) ?? '—'
+                          }`,
+                        },
+                      ]
+                    : []
+                }
+                actions={{
+                  resolutions: previewItem.artifactId
+                    ? [
+                        {
+                          id: 'start-review',
+                          variant: 'positive',
+                          label: t('rap.actions.startReview', 'Start review'),
+                          onClick: async () => {
+                            const aid = previewItem.artifactId as string;
+                            setReviewBusyArtifactId(aid);
+                            const ok = await actions.startArtifactReview(aid);
+                            setReviewBusyArtifactId(null);
+                            if (ok) onRefresh();
+                          },
+                          disabled: reviewDisabled,
+                        },
+                      ]
+                    : undefined,
+                  informational: [
+                    {
+                      id: 'share',
+                      variant: 'neutral',
+                      label: t('rap.actions.share', 'Udostępnij'),
+                      onClick: () => openShare(previewItem),
+                    },
+                  ],
+                }}
+              />
+            ) : null
+          }
+        />
       </div>
     </div>
   );

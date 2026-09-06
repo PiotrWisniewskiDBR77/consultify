@@ -28430,7 +28430,7 @@
         "shared": "Udostępniony",
         "deprecated": "Wycofany"
       },
-      "showDrafts": "Pokaż robocze",
+      "drafts": "Robocze",
       "statusLabel": "Status"
     },
     "actions": {
@@ -28812,7 +28812,8 @@
       "viewGallery": "Galeria",
       "viewTable": "Tabela",
       "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
-      "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian."
+      "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.",
+      "ctaFrozen": "Tworzenie wzorców w fali 2"
     }
   },
   "rbHub": {

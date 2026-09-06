@@ -26989,7 +26989,7 @@
         "shared": "Shared",
         "deprecated": "Deprecated"
       },
-      "showDrafts": "Show drafts"
+      "drafts": "Drafts"
     },
     "actions": {
       "newTemplate": "New template",
@@ -27282,7 +27282,8 @@
     },
     "templates": {
       "legacySourceLine": "Older template registry — works unchanged",
-      "legacyHint": "Template from the older registry — generation works unchanged."
+      "legacyHint": "Template from the older registry — generation works unchanged.",
+      "ctaFrozen": "Template creation lands in wave 2"
     }
   },
   "rbHub": {
