@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { ReportEditor } from './ReportEditor';
@@ -78,11 +79,27 @@ const CATEGORY_COLORS: Record<string, string> = {
   general: 'bg-c-surface-raised',
 };
 
+// Znalezisko 1.1-Z2 (dyżur — bliźniak modalu szablonów): etykiety kategorii
+// pochodzą z danych API (`template.category`), ale ich nazwy są ze stałego,
+// znanego zbioru (te same klucze co CATEGORY_COLORS) — tłumaczymy znane,
+// nieznane/nowe kategorie z backendu spadają na kapitalizowaną wartość
+// surową (bez wywalania się), tak jak przed tą zmianą.
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  strategic: 'strategic',
+  portfolio: 'portfolio',
+  finance: 'finance',
+  steering: 'steering',
+  workshop: 'workshop',
+  assessment: 'assessment',
+  general: 'general',
+};
+
 const TemplateCard: FC<{
   template: ReportTemplate;
   isSelected: boolean;
   onClick: () => void;
 }> = ({ template, isSelected, onClick }) => {
+  const { t } = useTranslation();
   const sectionsCount = template.sections?.length || 0;
   const [showOutline, setShowOutline] = useState(false);
 
@@ -96,8 +113,8 @@ const TemplateCard: FC<{
         relative w-full text-left rounded-xl border-2 transition-all overflow-hidden
         ${
           isSelected
-            ? 'border-c-accent bg-c-accent-soft'
-            : 'border-c-border-subtle bg-c-surface hover:border-c-accent'
+            ? 'border-c-focus bg-c-surface-raised'
+            : 'border-c-border-subtle bg-c-surface hover:border-c-focus/50'
         }
       `}
     >
@@ -105,7 +122,7 @@ const TemplateCard: FC<{
         {/* Selected indicator */}
         {isSelected && (
           <div className="absolute top-3 right-3">
-            <CheckCircle2 className="w-5 h-5 text-c-accent" />
+            <CheckCircle2 className="w-5 h-5 text-c-focus-solid" />
           </div>
         )}
 
@@ -124,7 +141,7 @@ const TemplateCard: FC<{
               {template.isDefault && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded">
                   <Sparkles size={10} />
-                  Default
+                  {t('reportBuilder.templatePicker.card.default', 'Default')}
                 </span>
               )}
               {template.audience && (
@@ -157,7 +174,11 @@ const TemplateCard: FC<{
         <div className="flex items-center gap-3 text-[11px] text-c-text-secondary">
           <div className="flex items-center gap-1">
             <FileText size={12} />
-            <span>{sectionsCount} sections</span>
+            <span>
+              {t('reportBuilder.templatePicker.card.sectionsCount', '{{count}} sections', {
+                count: sectionsCount,
+              })}
+            </span>
           </div>
           {template.reportType && (
             <span className="px-1.5 py-0.5 bg-c-surface-raised rounded text-[10px] font-medium">
@@ -165,7 +186,9 @@ const TemplateCard: FC<{
             </span>
           )}
           <span className="text-[10px] text-c-text-secondary">
-            {template.isSystem ? 'System' : 'Organization'}
+            {template.isSystem
+              ? t('reportBuilder.templatePicker.card.system', 'System')
+              : t('reportBuilder.templatePicker.card.organization', 'Organization')}
           </span>
         </div>
       </button>
@@ -178,10 +201,10 @@ const TemplateCard: FC<{
               e.stopPropagation();
               setShowOutline(!showOutline);
             }}
-            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-c-text-secondary hover:text-c-accent transition-colors"
+            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-[10px] text-c-text-secondary hover:text-c-focus-solid transition-colors"
           >
             {showOutline ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-            Preview outline
+            {t('reportBuilder.templatePicker.card.previewOutline', 'Preview outline')}
           </button>
           {showOutline && (
             <div className="px-4 pb-3 space-y-0.5">
@@ -194,7 +217,9 @@ const TemplateCard: FC<{
                     {s.title}
                   </span>
                   {s.required && (
-                    <span className="text-[8px] text-c-accent font-semibold">REQ</span>
+                    <span className="text-[8px] text-c-focus-solid font-semibold">
+                      {t('reportBuilder.templatePicker.card.required', 'REQ')}
+                    </span>
                   )}
                 </div>
               ))}
@@ -218,6 +243,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
   sourceType,
   framework,
 }) => {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -229,6 +255,21 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
   const [newTemplateDescription, setNewTemplateDescription] = useState('');
   const [newTemplateRecipient, setNewTemplateRecipient] = useState<'' | 'board' | 'bank' | 'team'>(
     ''
+  );
+
+  const categoryLabel = useCallback(
+    (cat: string): string => {
+      if (cat === 'all') return t('reportBuilder.templatePicker.categories.all', 'All');
+      const key = CATEGORY_LABEL_KEYS[cat];
+      if (key) {
+        return t(
+          `reportBuilder.templatePicker.categories.${key}`,
+          cat.charAt(0).toUpperCase() + cat.slice(1)
+        );
+      }
+      return cat.charAt(0).toUpperCase() + cat.slice(1);
+    },
+    [t]
   );
 
   // Fetch templates
@@ -329,14 +370,20 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 <FileText size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-c-text">Select Report Template</h2>
+                <h2 className="text-lg font-semibold text-c-text">
+                  {t('reportBuilder.templatePicker.title', 'Select Report Template')}
+                </h2>
                 <p className="text-sm text-c-text-secondary">
-                  Choose a template to create your report
+                  {t(
+                    'reportBuilder.templatePicker.subtitle',
+                    'Choose a template to create your report'
+                  )}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
+              aria-label={t('reportBuilder.templatePicker.close', 'Close')}
               className="p-2 rounded-lg hover:opacity-90 text-c-text-secondary transition-colors"
             >
               <X size={20} />
@@ -347,7 +394,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-c-accent animate-spin" />
+                <Loader2 className="w-8 h-8 text-c-text-secondary animate-spin" />
               </div>
             ) : (
               <>
@@ -360,11 +407,11 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                         onClick={() => setCategoryFilter(cat)}
                         className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
                           categoryFilter === cat
-                            ? 'border-c-accent bg-c-accent-soft text-c-accent'
-                            : 'border-c-border-subtle text-c-text-secondary hover:border-c-accent'
+                            ? 'border-c-focus bg-c-surface-raised text-c-focus-solid'
+                            : 'border-c-border-subtle text-c-text-secondary hover:border-c-focus/50'
                         }`}
                       >
-                        {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        {categoryLabel(cat)}
                       </button>
                     ))}
                   </div>
@@ -375,7 +422,9 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <Package size={16} className="text-blue-500" />
-                      <h3 className="text-sm font-semibold text-c-text">Application Templates</h3>
+                      <h3 className="text-sm font-semibold text-c-text">
+                        {t('reportBuilder.templatePicker.systemTemplates', 'Application Templates')}
+                      </h3>
                       <span className="text-xs text-c-text-secondary">
                         ({systemTemplates.length})
                       </span>
@@ -397,8 +446,10 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 {orgTemplates.length > 0 && (
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Building2 size={16} className="text-c-accent" />
-                      <h3 className="text-sm font-semibold text-c-text">Organization Templates</h3>
+                      <Building2 size={16} className="text-c-text-secondary" />
+                      <h3 className="text-sm font-semibold text-c-text">
+                        {t('reportBuilder.templatePicker.orgTemplates', 'Organization Templates')}
+                      </h3>
                       <span className="text-xs text-c-text-secondary">({orgTemplates.length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -420,9 +471,14 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                     <div className="p-4 rounded-full bg-c-surface-raised inline-block mb-3">
                       <FileText size={32} className="text-c-text-secondary" />
                     </div>
-                    <p className="text-sm font-medium text-c-text">No templates available</p>
+                    <p className="text-sm font-medium text-c-text">
+                      {t('reportBuilder.templatePicker.empty.title', 'No templates available')}
+                    </p>
                     <p className="text-xs text-c-text-secondary mt-1">
-                      Create a custom template using "Add Clean" option
+                      {t(
+                        'reportBuilder.templatePicker.empty.hint',
+                        'Create a custom template using "Add Clean" option'
+                      )}
                     </p>
                   </div>
                 )}
@@ -431,18 +487,21 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 <div className="border-t border-c-border-subtle pt-6">
                   <button
                     onClick={handleCreateClean}
-                    className="w-full p-4 rounded-xl border-2 border-dashed border-c-border-subtle hover:border-c-accent hover:bg-c-accent-soft transition-all group"
+                    className="w-full p-4 rounded-xl border-2 border-dashed border-c-border-subtle hover:border-c-focus/50 hover:bg-c-surface-raised transition-all group"
                   >
                     <div className="flex items-center justify-center gap-3">
-                      <div className="p-2 bg-c-surface-raised rounded-lg group-hover:bg-c-accent-soft dark:group-hover:bg-c-accent-soft transition-colors">
-                        <Plus className="w-5 h-5 text-c-text-secondary group-hover:text-c-accent dark:group-hover:text-c-accent" />
+                      <div className="p-2 bg-c-surface-raised rounded-lg group-hover:bg-c-surface transition-colors">
+                        <Plus className="w-5 h-5 text-c-text-secondary group-hover:text-c-focus-solid" />
                       </div>
                       <div className="text-left">
-                        <span className="block text-sm font-semibold text-c-text group-hover:text-c-accent dark:group-hover:text-c-accent">
-                          Add Clean
+                        <span className="block text-sm font-semibold text-c-text group-hover:text-c-focus-solid">
+                          {t('reportBuilder.templatePicker.addClean.title', 'Add Clean')}
                         </span>
                         <span className="block text-xs text-c-text-secondary">
-                          Create a new custom template for your organization
+                          {t(
+                            'reportBuilder.templatePicker.addClean.hint',
+                            'Create a new custom template for your organization'
+                          )}
                         </span>
                       </div>
                     </div>
@@ -458,7 +517,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-c-text hover:opacity-90 rounded-lg transition-colors"
             >
-              Cancel
+              {t('reportBuilder.templatePicker.cancel', 'Cancel')}
             </button>
             <button
               onClick={handleConfirm}
@@ -467,7 +526,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-colors
                 ${
                   selectedTemplateId && !creating
-                    ? 'bg-c-accent-soft0 hover:bg-c-accent-soft text-c-text'
+                    ? 'bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950'
                     : 'bg-c-border-subtle text-c-text-secondary cursor-not-allowed'
                 }
               `}
@@ -475,12 +534,12 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
               {creating ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  Creating...
+                  {t('reportBuilder.templatePicker.creating', 'Creating...')}
                 </>
               ) : (
                 <>
                   <FileText size={16} />
-                  Create Report
+                  {t('reportBuilder.templatePicker.createReport', 'Create Report')}
                 </>
               )}
             </button>
@@ -506,14 +565,20 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
           >
             <div className="px-6 py-4 border-b border-c-border-subtle flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-c-text">New template</h3>
+                <h3 className="text-lg font-semibold text-c-text">
+                  {t('reportBuilder.templatePicker.metaModal.title', 'New template')}
+                </h3>
                 <p className="text-sm text-c-text-secondary">
-                  Provide basic metadata, then open the generator.
+                  {t(
+                    'reportBuilder.templatePicker.metaModal.subtitle',
+                    'Provide basic metadata, then open the generator.'
+                  )}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewTemplateMetaOpen(false)}
+                aria-label={t('reportBuilder.templatePicker.close', 'Close')}
                 className="p-2 rounded-lg hover:opacity-90 text-c-text-secondary transition-colors"
               >
                 <X size={20} />
@@ -522,31 +587,45 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-c-text mb-1">Name</label>
+                <label className="block text-sm font-medium text-c-text mb-1">
+                  {t('reportBuilder.templatePicker.metaModal.fields.name', 'Name')}
+                </label>
                 <input
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg"
-                  placeholder="e.g. DRD Board Summary"
+                  placeholder={t(
+                    'reportBuilder.templatePicker.metaModal.fields.namePlaceholder',
+                    'e.g. DRD Board Summary'
+                  )}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-c-text mb-1">
-                  Description (optional)
+                  {t(
+                    'reportBuilder.templatePicker.metaModal.fields.descriptionOptional',
+                    'Description (optional)'
+                  )}
                 </label>
                 <textarea
                   value={newTemplateDescription}
                   onChange={(e) => setNewTemplateDescription(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg resize-none"
-                  placeholder="What is this template used for?"
+                  placeholder={t(
+                    'reportBuilder.templatePicker.metaModal.fields.descriptionPlaceholder',
+                    'What is this template used for?'
+                  )}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-c-text mb-1">
-                  Recipient (optional)
+                  {t(
+                    'reportBuilder.templatePicker.metaModal.fields.recipientOptional',
+                    'Recipient (optional)'
+                  )}
                 </label>
                 <select
                   value={newTemplateRecipient}
@@ -556,9 +635,15 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                   className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg"
                 >
                   <option value="">—</option>
-                  <option value="board">Board</option>
-                  <option value="bank">Bank</option>
-                  <option value="team">Team</option>
+                  <option value="board">
+                    {t('reportBuilder.templatePicker.metaModal.fields.recipientBoard', 'Board')}
+                  </option>
+                  <option value="bank">
+                    {t('reportBuilder.templatePicker.metaModal.fields.recipientBank', 'Bank')}
+                  </option>
+                  <option value="team">
+                    {t('reportBuilder.templatePicker.metaModal.fields.recipientTeam', 'Team')}
+                  </option>
                 </select>
               </div>
             </div>
@@ -569,7 +654,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 onClick={() => setIsNewTemplateMetaOpen(false)}
                 className="px-4 py-2 rounded-lg border border-c-border-subtle bg-c-text text-c-bg hover:opacity-90 transition-colors"
               >
-                Cancel
+                {t('reportBuilder.templatePicker.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -579,7 +664,7 @@ export const TemplatePickerModal: FC<TemplatePickerModalProps> = ({
                 }}
                 className="px-4 py-2 rounded-lg bg-c-surface hover:opacity-90 disabled:opacity-50 text-c-text font-medium transition-colors"
               >
-                Open generator
+                {t('reportBuilder.templatePicker.metaModal.openGenerator', 'Open generator')}
               </button>
             </div>
           </motion.div>

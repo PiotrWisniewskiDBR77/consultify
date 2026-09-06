@@ -40673,6 +40673,57 @@
     }
   },
   "reportBuilder": {
+    "templatePicker": {
+      "title": "Wybierz szablon raportu",
+      "subtitle": "Wybierz szablon, aby utworzyć raport",
+      "close": "Zamknij",
+      "cancel": "Anuluj",
+      "creating": "Tworzenie...",
+      "createReport": "Utwórz raport",
+      "systemTemplates": "Szablony aplikacji",
+      "orgTemplates": "Szablony organizacji",
+      "categories": {
+        "all": "Wszystkie",
+        "strategic": "Strategiczne",
+        "portfolio": "Portfolio",
+        "finance": "Finanse",
+        "steering": "Sterowanie",
+        "workshop": "Warsztat",
+        "assessment": "Ocena",
+        "general": "Ogólne"
+      },
+      "empty": {
+        "title": "Brak dostępnych szablonów",
+        "hint": "Utwórz własny szablon, korzystając z opcji \"Dodaj czysty\""
+      },
+      "addClean": {
+        "title": "Dodaj czysty",
+        "hint": "Utwórz nowy, niestandardowy szablon dla swojej organizacji"
+      },
+      "card": {
+        "default": "Domyślny",
+        "sectionsCount": "{{count}} sekcji",
+        "system": "System",
+        "organization": "Organizacja",
+        "previewOutline": "Podgląd struktury",
+        "required": "WYM"
+      },
+      "metaModal": {
+        "title": "Nowy szablon",
+        "subtitle": "Podaj podstawowe metadane, a następnie otwórz generator.",
+        "openGenerator": "Otwórz generator",
+        "fields": {
+          "name": "Nazwa",
+          "namePlaceholder": "np. Podsumowanie DRD dla zarządu",
+          "descriptionOptional": "Opis (opcjonalnie)",
+          "descriptionPlaceholder": "Do czego służy ten szablon?",
+          "recipientOptional": "Odbiorca (opcjonalnie)",
+          "recipientBoard": "Zarząd",
+          "recipientBank": "Bank",
+          "recipientTeam": "Zespół"
+        }
+      }
+    },
     "blockTypesManager": {
       "category": {
         "content": "Treść",

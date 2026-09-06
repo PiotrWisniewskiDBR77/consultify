@@ -1,0 +1,22 @@
+{
+ "url": "http://127.0.0.1:3101/reports/builder?new=true",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Ocena",
+  "text=DRD — Finalny (Enterprise)",
+  "role=button[name=\"Wybierz\"]",
+  "text=Assessment Report (Default)"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": "text=Szablon raportu",
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nKreator raportów\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nNowy raport\n\nWybierz źródło oraz szablon, a potem przejdź do edytora.\n\nTyp Źródła\nOcena\nUtwórz raport z zatwierdzonej oceny (DRD, SIRI)\nWywiad\nUtwórz raport z przeprowadzonych wywiadów\nNarzędzie Strategiczne\nUtwórz raport z analizy narzędzia strategicznego\nInicjatywa\nUtwórz raport postępu inicjatywy\nPaczka Uploadów\nUtwórz draft raportu z wrzuconych dokumentów\nWybierz Źródło\nDRD — Finalny (Enterprise)\nDRD • Zatwierdzono: 2.09.2026\nDRD — Testowy (Manufacturing)\nDRD • Zatwierdzono: 2.09.2026\nSIRI — Industry 4.0 Readiness\nSIRI • Zatwierdzono: 31.08.2026\nSzczegóły Raportu\nTytuł Raportu *\nOpis / Cel Raportu\n\nTen opis zostanie wykorzystany przez AI do lepszego dopasowania treści raportu\n\nSzablon raportu\n\nWybierz szablon dopasowany do kontekstu.\n\nWybierz\nBrak wybranego szablonu.\nWybierz szablon raportu\n\nWybierz szablon, aby utworzyć raport\n\nWszystkie\nOgólne\nOcena\nStrategiczne\nSzablony organizacji\n(7)\nAssessment Report (Default)\n\nDefault template for assessment-based reports\n\n5 sekcji\nOrganizacja\nPodgląd struktury\nAssessment Summary Report\nClient / Sponsor\n\nStructured assessment summary report covering maturity scores, gaps, strengths, and actionable recommendations. Works with DRD, SIRI, and ADMA frameworks.\n\n11 sekcji\nOrganizacja\nPodgląd struktury\nDRD Board Report\n\nConcise, decision-oriented report for board members and C-level executives. Focuses on strategic implications, investment decisions, and key risks — stripped of technical details. Designed to be read in 15 minutes and drive boardroom decisions.\n\n8 sekcji\nOrganizacja\nPodgląd struktury\nDRD Full Diagnostic Report\n\nComprehensive digital maturity diagnostic covering all 7 transformation axes with detailed gap analysis, axis-by-axis deep dives, strategic recommendations, and a prioritized roadmap. Best suited for transformation teams, consultants, and technical stakeholders who need the full picture.\n\n14 sekcji\nOrganizacja\nPodgląd struktury\nDRD Presentation Deck\n\nSlide-style presentation format optimized for workshops, stakeholder meetings, and transformation kickoffs. Each section maps to 1-3 slides with visual-first content — charts, scorecards, bullet points. Designed for PPTX export.\n\n10 sekcji\nOrganizacja\nPodgląd struktury\nFinal Transformation Report\n\nBoard-ready end-of-phase transformation report: impact, ROI, decisions, and next 90-day plan.\n\n9 sekcji\nOrganizacja\nPodgląd struktury\nStrategic Review & Executive Brief\nBoard / C-Suite\n\nHigh-level strategic assessment for board members and executive sponsors. Covers situation analysis, strategic options, recommendations, and implementation roadmap.\n\n8 sekcji\nOrganizacja\nPodgląd struktury\nDodaj czysty\nUtwórz nowy, niestandardowy szablon dla swojej organizacji\nAnuluj\nUtwórz raport\nAnuluj\nOtwórz edytor",
+ "kiedy": "2026-09-06T15:22:50.820Z"
+}

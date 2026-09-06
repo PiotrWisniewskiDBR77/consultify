@@ -38029,6 +38029,57 @@
     }
   },
   "reportBuilder": {
+    "templatePicker": {
+      "title": "Select Report Template",
+      "subtitle": "Choose a template to create your report",
+      "close": "Close",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createReport": "Create Report",
+      "systemTemplates": "Application Templates",
+      "orgTemplates": "Organization Templates",
+      "categories": {
+        "all": "All",
+        "strategic": "Strategic",
+        "portfolio": "Portfolio",
+        "finance": "Finance",
+        "steering": "Steering",
+        "workshop": "Workshop",
+        "assessment": "Assessment",
+        "general": "General"
+      },
+      "empty": {
+        "title": "No templates available",
+        "hint": "Create a custom template using \"Add Clean\" option"
+      },
+      "addClean": {
+        "title": "Add Clean",
+        "hint": "Create a new custom template for your organization"
+      },
+      "card": {
+        "default": "Default",
+        "sectionsCount": "{{count}} sections",
+        "system": "System",
+        "organization": "Organization",
+        "previewOutline": "Preview outline",
+        "required": "REQ"
+      },
+      "metaModal": {
+        "title": "New template",
+        "subtitle": "Provide basic metadata, then open the generator.",
+        "openGenerator": "Open generator",
+        "fields": {
+          "name": "Name",
+          "namePlaceholder": "e.g. DRD Board Summary",
+          "descriptionOptional": "Description (optional)",
+          "descriptionPlaceholder": "What is this template used for?",
+          "recipientOptional": "Recipient (optional)",
+          "recipientBoard": "Board",
+          "recipientBank": "Bank",
+          "recipientTeam": "Team"
+        }
+      }
+    },
     "blockTypesManager": {
       "category": {
         "content": "Content",
