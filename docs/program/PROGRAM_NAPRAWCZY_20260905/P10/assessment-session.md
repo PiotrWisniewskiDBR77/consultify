@@ -149,7 +149,9 @@ nie zna typu `assessment-session` — wiersz do dopisania (patrz §7 L6).
 | K29 zero błędów konsoli | ✓ | 3 zrzuty, `bledyKonsoli = []` |
 | K30 odbiór na zrzucie | ✓ | `04-sesja-drd-ai.png` |
 
-**Wynik: ✓ 10 · ~ 6 · ✗ 14 z 30.**
+**Wynik: ✓ 11 · ~ 6 · ✗ 13 z 30.**
+(✓ K15 K16 K17 K18 K21 K22 K23 K26 K27 K29 K30 · ~ K3 K4 K13 K14 K20 K28 ·
+✗ K1 K2 K5 K6 K7 K8 K9 K10 K11 K12 K19 K24 K25)
 
 ## §7. Luki → naprawa
 

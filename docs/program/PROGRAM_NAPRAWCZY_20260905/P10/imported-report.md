@@ -100,12 +100,13 @@ w tabeli K24 SSOT **nie istnieje** — karty nie ma ani w `REJESTR_KART_N`, ani 
 
 ## §6. Stan zastany vs kontrakt
 
-✓: brak potwierdzonych (K19 pasek modułu jest, ale bez pigułki otwartej karty).
-✗ (z kodu, bez zrzutu): K1, K2, K5, K6, K7, K8, K9, K10, K11, K12, K13, K14, K15, K16,
-**K17**, K21, K22, K23, K24, **K25** (**20**).
-~: K3 (pola mają źródła w modelu importu, writerów nie zweryfikowano), K4 (2 sekcje
-znikają poprawnie), K19 (**3**).
-Niemierzone na żywo: K20, K26, K28, K29, K30 — **brak rekordu, §0.1**.
+✓ (1): K27 — w karcie nie ma ani jednego wejścia do Teresy.
+~ (3): K3 (pola mają źródła w modelu importu, writerów serwerowych nie zweryfikowano) ·
+K4 (2 sekcje znikają poprawnie) · K19 (pasek modułu jest, pigułki otwartej karty nie ma).
+✗ (20, z kodu — bez zrzutu): K1 K2 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 **K17**
+K21 K22 K23 K24 **K25**.
+Niemierzone (6): K18 (w pliku nie ma ANI JEDNEGO `focus-visible:ring-*` — nie ma
+naruszenia, ale nie ma też fokusu) · K20 · K26 · K28 · K29 · K30 — **brak rekordu, §0.1**.
 
 ## §7. Luki → naprawa
 

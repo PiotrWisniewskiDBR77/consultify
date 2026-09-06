@@ -101,8 +101,8 @@ dotyczy `DeckBuilder` z Materiałów, nie tej karty).
 
 ## §6. Stan zastany vs kontrakt
 
-✓: K17, K18, K29 (**3**).
-~: K4 (slajdy bez danych znikają — dobra reguła, ale bez spisu), K30 (zrzut jest, ale
+✓ (3): K17 · K18 · K29.
+~ (2): K4 (slajdy bez danych znikają — dobra reguła, ale bez spisu) · K30 (zrzut jest, ale
 gałęzi zastanej, nie decku) (**2**).
 ✗: K1, K2, K3, K5, K6, K7, K8, K9, K10, K11, K12, K13, K14, K15, K16, K19, K21, K22,
 K23, K24, K26 (**21**).

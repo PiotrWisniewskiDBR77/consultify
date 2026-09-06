@@ -120,11 +120,14 @@ do `REJESTR_KART_N` jest warunkiem, żeby mogła w ogóle wołać silnik.
 
 ## §6. Stan zastany vs kontrakt
 
-✓: K7 (kształt tabeli), K11, K13 (warunkowo), K17, K18, K26 (dla #24), K29, K30 (**8**).
-~: K1 (kontrakt jest po stronie SERWERA, nie w katalogu `KanonicznaKarta`), K3, K5, K6
-(Akcje są, ale 3 z 4 to „Planowane"), K16, K19 (#24 ma Menu 4 bez paska modułu; #25 nie ma nic),
-K20, K25, K28 (**9**).
-✗: K2, K4, K8, K9, K10, K12, K14, K21, K22, K23, K24, K27-nd (**11 realnych**).
+✓ (7): K11 (jeden panel, `--dom` = 1) · K17 · K18 · K26 (dla #24) · K27 (zero Teresy) ·
+K29 (`bledyKonsoli = 0`) · K30 (`05-raport-kontrakt.png`).
+~ (12): K1 (kontrakt jest po stronie SERWERA, nie w katalogu `KanonicznaKarta`) · K3 ·
+K5 · K6 (Akcje są, 3 z 4 pozycji to „Planowane") · K7 (tabela ✓, wiersze techniczne ✗) ·
+K13 (szyna jest, bez ikon i liczników) · K15 (niemierzone przewinięciem) · K16 · K19
+(#24 ma Menu 4 bez paska modułu; #25 nie ma nic) · K20 (1440 ✓, 1280 niemierzone) ·
+K25 · K28.
+✗ (11): K2 · K4 · K8 · K9 · K10 · K12 · K14 · K21 · K22 · K23 · K24.
 
 ### ★ POMIAR, KTÓRY WSZYSTKO TŁUMACZY (przyczyna „39 zdań brak treści", 1.6)
 
