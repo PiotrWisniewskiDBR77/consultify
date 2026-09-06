@@ -219,7 +219,7 @@ function decodeEntitiesOnce(value: string): string {
 }
 export function decodeSnapshotEntities<T>(value: T): T {
   if (typeof value === 'string') {
-    let current = value;
+    let current: string = value;
     for (let i = 0; i < 5; i += 1) {
       const next = decodeEntitiesOnce(current);
       if (next === current) break;
