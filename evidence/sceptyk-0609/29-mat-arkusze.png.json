@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3090/presentations?tab=sheets",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Arkusze"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nArkusze\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nWszystkie\nDokumenty\nPrezentacje\nArkusze\nBiblioteka wzorców\nStatus\nWidoczność\nNowy arkusz\nWszystkie\n0\nSzkic\n0\nGotowy\n0\nArkusze w bibliotece outputów\n\nNadzorowane skoroszyty i eksporty pojawią się tutaj poprzez ten sam kanoniczny rejestr artefaktów co dokumenty i prezentacje. Ta zakładka odzwierciedla teraz aktywne artefakty arkuszy, gdy tylko rejestr je otrzyma.\n\nUTWÓRZ LUB WYEKSPORTUJ NADZOROWANY ARKUSZ, A POJAWI SIĘ TUTAJ AUTOMATYCZNIE.",
+ "kiedy": "2026-09-06T19:49:28.073Z"
+}

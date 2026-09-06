@@ -1,0 +1,23 @@
+{
+ "url": "http://127.0.0.1:3090/presentations",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Dokumenty"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "klik nieudany: text=Dokumenty: locator.click: Timeout 8000ms exceeded."
+ ],
+ "bledyKonsoli": [
+  "klik nieudany: text=Dokumenty: locator.click: Timeout 8000ms exceeded."
+ ],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nWszystkie\nDokumenty\nPrezentacje\nArkusze\nBiblioteka wzorców\nStatus\nWidoczność\nNowa prezentacja\nWszystkie\n1\nSzkic\n1\nGotowa\n0\nTYTUŁ\n\t\nŹRÓDŁO\n\t\nWŁAŚCICIEL\n\t\nSTATUS\n\t\nTRYB\n\t\nDATA\n\t\nSLAJDY\n\t\n\n\nPPT\nNowa prezentacja\n\t\nNarzędzie\n\t\nA\nAudyt Nocny\n\t\nSzkic\n\t\nBriefing\n\t\n6 wrz 2026\n\t\n1\n\t",
+ "kiedy": "2026-09-06T19:49:16.362Z"
+}
