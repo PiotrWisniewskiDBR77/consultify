@@ -236,6 +236,9 @@ const PrawyPasDeckBuilderSystemScreen = React.lazy(
 // awaryjną listę harnessu zamiast realnego ekranu. Dopisuję tylko rejestrację.
 const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
 const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
+const MojaPracaNotatnikToggleEmptyScreen = React.lazy(
+  () => import('./screens/mojapraca-notatnik-toggle-empty')
+);
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -693,6 +696,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '#12a — REALNY <NotebookQuickCapture> (pasek szybkiego wrzucania w Notatniku). Wpisz tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym.',
     render: () => <NotebookQuickCaptureScreen />,
+  },
+  'mojapraca-notatnik-toggle-empty': {
+    label:
+      'H2 (1.1-H) — REALNY edytor Tiptap (extensions.ts + EDITOR_STYLES z NotebookContent.tsx) z pustym blokiem toggle. &case=empty-toggle|text &lang=pl|en',
+    render: () => <MojaPracaNotatnikToggleEmptyScreen />,
   },
   'meetings-module': {
     label:

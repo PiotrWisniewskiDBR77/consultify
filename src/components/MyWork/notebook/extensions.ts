@@ -86,6 +86,20 @@ export const DetailsNode = Node.create({
   content: 'detailsSummary detailsContent',
   defining: true,
 
+  // H2 [ODMROZENIE 07_MY_WORK_AGENT] — the default summary text used to be
+  // the hardcoded English word "Toggle" regardless of the app's active
+  // language, so every newly-inserted toggle block showed an untranslated
+  // summary in a Polish note. This file has no i18n context of its own (it
+  // is imported by tests that stub react-i18next without initReactI18next,
+  // so importing the app's i18n singleton here breaks them) — the caller
+  // (SlashMenu.tsx, which DOES have `t()` via useTranslation) configures the
+  // translated default through this option when it registers the extension.
+  addOptions() {
+    return {
+      defaultSummaryText: 'Toggle',
+    };
+  },
+
   addAttributes() {
     return {
       open: {
@@ -116,7 +130,9 @@ export const DetailsNode = Node.create({
               content: [
                 {
                   type: 'detailsSummary',
-                  content: [{ type: 'text', text: 'Toggle' }],
+                  content: [
+                    { type: 'text', text: String(this.options.defaultSummaryText || 'Toggle') },
+                  ],
                 },
                 {
                   type: 'detailsContent',

@@ -369,7 +369,10 @@ const buildOutlineDraft = (
 /*  Editor styles for custom blocks                                    */
 /* ------------------------------------------------------------------ */
 
-const EDITOR_STYLES = `
+// Exported (in addition to being used inline below) so a dev-render harness
+// can mount the REAL notebook editor CSS — not a hand-copied approximation
+// that could silently drift from what production actually ships.
+export const EDITOR_STYLES = `
 /* Typography — premium feel */
 .ProseMirror {
   line-height: 1.75;
@@ -382,7 +385,8 @@ const EDITOR_STYLES = `
 .ProseMirror h2 { font-size: 1.325rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.4rem; letter-spacing: -0.01em; }
 .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.3rem; }
 .ProseMirror > * + * { margin-top: 0.4rem; }
-.ProseMirror p.is-editor-empty:first-child::before {
+.ProseMirror p.is-editor-empty:first-child::before,
+.ProseMirror .nb-details-content p.is-empty::before {
   color: var(--c-text-muted);
   content: attr(data-placeholder);
   float: left;
@@ -1102,10 +1106,35 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         TaskList,
         TaskItem.configure({ nested: true }),
         Placeholder.configure({
-          placeholder: t(
-            'notebook.notebookContent.label2',
-            'Start writing… Type / to insert a block'
-          ),
+          // H2 [ODMROZENIE 07_MY_WORK_AGENT] — `includeChildren: true` is
+          // required for the placeholder to ever consider a paragraph
+          // nested inside a toggle/details block's content area; without
+          // it, Placeholder only ever decorates `doc.firstChild`, and for a
+          // note whose entire content is a single toggle block (the "doc"
+          // node's first child is the `details` container, not a
+          // paragraph), NOTHING gets decorated — an empty toggle body then
+          // renders as a blank area with no indication it's empty.
+          //
+          // `showOnlyCurrent: false` is also required: Tiptap's default only
+          // decorates the node holding the CURRENT selection, and the editor
+          // does not autofocus on open — so without this, a viewer who opens
+          // a note and never clicks into it would still see a blank area
+          // under the toggle (the placeholder logic never runs for a node
+          // that was never "current"). This makes an empty block honest on
+          // first paint, matching every other empty-block affordance in the
+          // app (e.g. Notion-style editors always show block placeholders,
+          // focused or not).
+          includeChildren: true,
+          showOnlyCurrent: false,
+          placeholder: ({ node, pos, editor: ed }) => {
+            if (node.type.name === 'paragraph' && node.content.size === 0) {
+              const parentType = ed.state.doc.resolve(pos).parent?.type?.name;
+              if (parentType === 'detailsContent') {
+                return t('notebook.notebookContent.emptyToggleContent', 'No content');
+              }
+            }
+            return t('notebook.notebookContent.label2', 'Start writing… Type / to insert a block');
+          },
         }),
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
         UnderlineExt,
@@ -1114,7 +1143,16 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         EmbeddedRefNode,
         NotebookBookmark,
         CalloutNode,
-        DetailsNode,
+        // H2 [ODMROZENIE 07_MY_WORK_AGENT] — the toggle block's default
+        // summary text used to be the hardcoded English word "Toggle"
+        // regardless of the app's active language. Configuring it here
+        // (where `t()` is already available) keeps extensions.ts itself
+        // free of any i18n import — that file is also loaded by tests that
+        // stub react-i18next without initReactI18next, and importing the
+        // app's i18n singleton there broke them.
+        DetailsNode.configure({
+          defaultSummaryText: t('notebook.notebookContent.toggleDefaultLabel', 'Toggle'),
+        }),
         DetailsSummaryNode,
         DetailsContentNode,
         Table.configure({ resizable: false }),

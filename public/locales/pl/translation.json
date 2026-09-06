@@ -36392,6 +36392,8 @@
       "label": "Najpierw dopracuj notatkę: dodaj więcej treści albo czytelny outline, zanim przekonwertujesz ją do deliverable.",
       "toastError": "Nie udało się otworzyć wskazanej notatki",
       "label2": "Zacznij pisać… Wpisz / aby wstawić blok",
+      "toggleDefaultLabel": "Rozwiń",
+      "emptyToggleContent": "Brak treści",
       "toastSuccess": "Powiązano",
       "label3": "Podaj streszczenie notatki w 1-2 zwięzłych zdaniach (max 120 znaków). Odpowiedz TYLKO streszczeniem, bez żadnych komentarzy.",
       "toastError2": "Ta strona została zmieniona w innym miejscu. Odśwież, aby scalić — Twoje zmiany nie zostały nadpisane.",
