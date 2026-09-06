@@ -203,4 +203,12 @@ railway variable delete APP_BUILD_SHA --environment "$ENV" --service "$USLUGA" -
 # (INBOX_WEBHOOK_SECRET i TEST_SUPPORT_KEY wyglądają jak sekrety — NIE kopiować
 # ich wartości do żadnego pliku w repo; jeśli mają trafić na demo, ustawiać
 # ręcznie z wartością pobraną bezpośrednio z Railway, nigdy przez ten plik).
+#
+# NOWA FLAGA (1.1-M-3, DEC-425, 06.09.2026): VITE_MODULE_MEETINGS — domyślnie
+# OFF (brak zmiennej = OFF, `=== 'true'` = jedyny sposób na ON). Spotkania
+# (08_MEETINGS) idą do Fali 2 — NIE ustawiać tej zmiennej na demo/staging
+# teraz; wiersz tu wyłącznie jako rejestr istnienia flagi na wypadek
+# przyszłego audytu parytetu flag (`scripts/demo/porownaj-flagi.mjs` złapie ją
+# automatycznie wzorcem `^VITE_`, gdyby kiedyś pojawiła się na jednym z dwóch
+# środowisk a nie na drugim).
 # =============================================================================
