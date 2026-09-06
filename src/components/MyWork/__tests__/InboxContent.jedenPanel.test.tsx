@@ -194,7 +194,7 @@ describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
     expect(within(panel).queryByLabelText('Teresa composer')).toBeNull();
   });
 
-  it('T2: X jest lepki — klik w inny wiersz po zamknięciu NIE otwiera panelu ponownie', async () => {
+  it('T2 DEC-397b (nadpisuje DEC-397): klik w inny wiersz po zamknięciu PONOWNIE otwiera panel z tym wierszem (MUTACJA: usuń `jedenPanel.otworz()` w `preview()` → RED)', async () => {
     const { container } = renderInbox();
 
     const row1 = await screen.findByText('Pierwsza pozycja skrzynki');
@@ -211,9 +211,16 @@ describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
       expect(container.querySelector('[data-right-panel]')).toBeNull();
     });
 
+    // ★ DEC-397b (właściciel, 06.09.2026 15:47): „preview (…) działa przy
+    // pojedynczym kliknięciu na linię" — klik w drugi wiersz MA otworzyć
+    // podgląd tego wiersza, mimo że panel był wcześniej świadomie zamknięty.
     const row2 = await screen.findByText('Druga pozycja skrzynki');
     fireEvent.click(row2);
-    expect(container.querySelector('[data-right-panel]')).toBeNull();
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
+    const panel = container.querySelector('[data-right-panel]') as HTMLElement;
+    expect(within(panel).getAllByText('Druga pozycja skrzynki').length).toBeGreaterThan(0);
   });
 
   it('T4: markup korzenia panelu nie wprowadza klas spoza tokenów', async () => {

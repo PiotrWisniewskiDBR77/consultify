@@ -188,6 +188,36 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   // `docs/program/PROGRAM_NAPRAWCZY_20260905/P1_JEDEN_PANEL_ZWIJANY.md`).
   // Test: `jedenPanel.contract.test.tsx` T4 (mutacja: przywróć efekt → pada).
 
+  /*
+   * ★ DEC-397b (właściciel, 06.09.2026 15:47) — NADPISUJE DEC-397 z komentarza
+   * wyżej. Uwaga właściciela (lista Inicjatyw, panel wcześniej zamknięty):
+   * „Jest preview, ale nie otwiera mi się z poziomu klikanej linii (…) działa
+   * przy pojedynczym kliknięciu na linię". Efekt USUNIĘTY wyżej (07_MY_WORK_
+   * AGENT) gasił się celowo na KAŻDE `controlledPreviewOpen` false→true —
+   * także bierne re-rendery. Ten efekt jest węższy: patrzy WYŁĄCZNIE na
+   * `selectedId` (identyfikator, nie treść) i odpala się TYLKO gdy ta wartość
+   * naprawdę się zmienia na nową, niepustą — czyli na faktyczny klik innego
+   * wiersza (albo J/K, albo „wstecz/dalej" w historii — to też świadomy wybór
+   * użytkownika). Bierny re-render z tym samym `selectedId` (nowe dane pod
+   * spodem, przełączenie zakładki) nic tu nie zmienia — `poprzedniSelectedId`
+   * startuje z bieżącej wartości, więc PIERWSZE odpalenie po mount też jest
+   * cichym no-op. `otworz()` (w odróżnieniu od `pokazPanel()`) NIE zwija doku
+   * Teresy — gdy dok jest otwarty (DEC-404), klik wiersza nie ma otwierać
+   * drugiego panelu w tej samej kolumnie; widoczność nadal gate'uje
+   * `!jedenPanel.dokOtwarty` niżej.
+   * Test: `jedenPanel.contract.test.tsx` T4 (mutacja: usuń wywołanie
+   * `otworz()` → RED), T2b (dok otwarty + klik → RED, gdyby otwierał drugi
+   * panel).
+   */
+  const poprzedniSelectedIdRef = useRef<string | null>(selectedId);
+  useEffect(() => {
+    const poprzedni = poprzedniSelectedIdRef.current;
+    poprzedniSelectedIdRef.current = selectedId;
+    if (selectedId && selectedId !== poprzedni) {
+      jedenPanel.otworz();
+    }
+  }, [selectedId, jedenPanel]);
+
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');

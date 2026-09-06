@@ -65,6 +65,20 @@ export interface UseJedenPanelResult extends JedenPanelState {
   dokOtwarty: boolean;
   zamknij: () => void;
   pokazPanel: () => void;
+  /**
+   * ★ DEC-397b (właściciel, 06.09.2026 15:47 — „preview jest otwierany tak,
+   * jak wszędzie indziej: działa przy pojedynczym kliknięciu na linię").
+   * Nadpisuje DEC-397 (05.09): X zostaje lepki wobec biernych re-renderów
+   * (nowe dane pod tym samym zaznaczeniem, przełączenie zakładki), ALE
+   * pojedynczy klik wiersza — czyli faktyczna ZMIANA zaznaczenia — ma
+   * PONOWNIE otworzyć podgląd. `otworz()` czyści WYŁĄCZNIE `zamkniety`;
+   * w odróżnieniu od `pokazPanel()` (pigułka Menu 3) NIE zwija doku Teresy —
+   * gdy dok jest otwarty, klik wiersza nie ma otwierać drugiego panelu
+   * (DEC-404), więc wołający musi to wywołać TYLKO z prawdziwego kliknięcia
+   * wiersza (zmiana `selectedId`/wybranego rekordu), nigdy z efektu
+   * obserwującego samą treść rekordu.
+   */
+  otworz: () => void;
 }
 
 /**
@@ -105,7 +119,15 @@ export function useJedenPanel(): UseJedenPanelResult {
     if (!isChatCollapsed) toggleChatCollapse?.();
   }, [isChatCollapsed, modul, toggleChatCollapse]);
 
-  return { modul, ...stan, dokOtwarty: !isChatCollapsed, zamknij, pokazPanel };
+  const otworz = useCallback(() => {
+    // ★ DEC-397b: WYŁĄCZNIE `zamkniety=false` — celowo BEZ `toggleChatCollapse`,
+    // żeby klik wiersza przy otwartym doku Teresy (DEC-404) nie gasił doku i
+    // nie otwierał drugiego panelu w tej samej kolumnie.
+    ustawStan(modul, { zamkniety: false });
+    zapiszZamkniecie(modul, false);
+  }, [modul]);
+
+  return { modul, ...stan, dokOtwarty: !isChatCollapsed, zamknij, pokazPanel, otworz };
 }
 
 /** Wyłącznie do izolowania testów hooka. */
