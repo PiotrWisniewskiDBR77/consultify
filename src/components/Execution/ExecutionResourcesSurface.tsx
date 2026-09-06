@@ -19,7 +19,11 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
-import { fanOutExecutionCases } from './executionCaseFanOut';
+import {
+  fanOutExecutionCases,
+  isExecutionCaseTimeout,
+  loadExecutionCaseWithTimeout,
+} from './executionCaseFanOut';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -144,7 +148,9 @@ export const ExecutionResourcesSurface = ({
     [assessment, setAssessment] = useState<any | null>(null),
     [rationale, setRationale] = useState(''),
     [conditions, setConditions] = useState(''),
-    [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
+    [state, setState] = useState<'LOADING' | 'READY' | 'ERROR' | 'CASE_UNREACHABLE'>(
+      'LOADING'
+    ),
     // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
     [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
   const loadingPhase = useDeferredLoading(state === 'LOADING');
@@ -164,6 +170,11 @@ export const ExecutionResourcesSurface = ({
       // żadnego renderu dla stanu LOADING — więc jedna realizacja, której
       // endpoint /work nie odpowiada (zmierzone na stagingu), dawała pusty biały
       // obszar bez tabeli, bez podglądu i bez komunikatu.
+      // Render PRZYROSTOWY (1.12-R2): nie czekamy na najwolniejsza realizacje.
+      // Zmierzone: przy jednej wiszacej realizacji pierwszy wiersz pojawial sie
+      // po 12 s (limit wachlarza), mimo ze pozostale odpowiadaly od razu.
+      const zebrane: any[] = [];
+      const nieodpowiadajace: string[] = [];
       const fanOut = await fanOutExecutionCases<any>(
         nextCases,
         async (executionCase: any, signal) => {
@@ -184,6 +195,22 @@ export const ExecutionResourcesSurface = ({
             executionCaseId: executionCase.executionCaseId,
             taskTitle: (work.tasks ?? []).find((task: any) => task.taskId === item.taskId)?.title,
           }));
+        },
+        {
+          onCaseSettled: (entry) => {
+            if (entry.ok) {
+              zebrane.push(...entry.items);
+              // Pusta (ale udana) realizacja nie odblokowuje widoku — inaczej
+              // mignelby komunikat „brak przydzialow", zanim odpowie kolejna.
+              if (zebrane.length > 0) {
+                setItems([...zebrane]);
+                setState('READY');
+              }
+            } else {
+              nieodpowiadajace.push(entry.caseId);
+              setUnreachableCaseIds([...nieodpowiadajace]);
+            }
+          },
         }
       );
       setItems(fanOut.items);
@@ -214,6 +241,21 @@ export const ExecutionResourcesSurface = ({
   useEffect(() => {
     void loadCases();
   }, [loadCases]);
+  /**
+   * Wybor JEDNEJ realizacji z listy Menu 2.
+   *
+   * ZMIERZONY DEFEKT (1.12-R2, 2026-09-06, warstwa 3 z 3): tu stal goly
+   * `Promise.all([...])` BEZ `AbortSignal` i BEZ limitu czasu. Wachlarz
+   * `fanOutExecutionCases` chronil wylacznie sciezke „wszystkie realizacje",
+   * wiec klikniecie w realizacje, ktorej `/work` nie odpowiada, przywracalo
+   * defekt w calosci: `useDeferredLoading` po 15 s podmienial szkielet na
+   * `ErrorState variant="timeout"` (po angielsku, bez nazwy realizacji),
+   * a wiszacy fetch zostawal otwarty.
+   *
+   * Teraz: TEN SAM limit co wachlarz (`EXECUTION_CASE_FANOUT_TIMEOUT_MS`),
+   * ten sam abort, i osobny stan `CASE_UNREACHABLE` — po polsku, z nazwa
+   * realizacji i wyjsciem „wroc do wszystkich realizacji".
+   */
   const load = async (id: string, focusAllocationId?: string) => {
     setCaseId(id);
     setUnreachableCaseIds([]);
@@ -222,11 +264,13 @@ export const ExecutionResourcesSurface = ({
       const reviewCase = getExecutionReviewCase(id);
       const [c, a, work] = reviewCase
         ? [reviewCase, getExecutionReviewAllocations(id), getExecutionReviewWork(id)]
-        : ((await Promise.all([
-            readExecutionCase(id),
-            readOperationalAllocations(id),
-            readExecutionWork(id),
-          ])) as any[]);
+        : ((await loadExecutionCaseWithTimeout(id, (signal) =>
+            Promise.all([
+              readExecutionCase(id, signal),
+              readOperationalAllocations(id, signal),
+              readExecutionWork(id, signal),
+            ])
+          )) as any[]);
       setCaseVersion(c.version);
       const nextItems = (a.items ?? []).map((item: any) => ({ ...item, executionCaseId: id }));
       setItems(nextItems);
@@ -242,8 +286,8 @@ export const ExecutionResourcesSurface = ({
         if (task) setTaskVersion(task.version);
       }
       setState('READY');
-    } catch {
-      setState('ERROR');
+    } catch (error) {
+      setState(isExecutionCaseTimeout(error) ? 'CASE_UNREACHABLE' : 'ERROR');
     }
   };
   // i18n-reszta 20260903: nagłówki kolumn przez t() (poprzednio literały PL
@@ -439,9 +483,11 @@ export const ExecutionResourcesSurface = ({
           <option value="">{t('execution.filters.allCases', 'All deliveries')}</option>
           {cases.map((c) => (
             <option key={c.executionCaseId} value={c.executionCaseId}>
-              {c.initiativeTitle ||
-                c.title ||
-                `Realizacja · ${String(c.executionCaseId).slice(-8)}`}
+              {/* Realizacja, ktora nie odpowiedziala, jest OZNACZONA na liscie —
+                  inaczej uzytkownik wybiera ja w kolko i za kazdym razem czeka. */}
+              {`${
+                c.initiativeTitle || c.title || `Realizacja · ${String(c.executionCaseId).slice(-8)}`
+              }${unreachableCaseIds.includes(c.executionCaseId) ? ' — nie odpowiada' : ''}`}
             </option>
           ))}
         </select>
@@ -454,7 +500,42 @@ export const ExecutionResourcesSurface = ({
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, caseId, cases]);
+  }, [onRegisterFilterControl, caseId, cases, unreachableCaseIds]);
+  if (state === 'CASE_UNREACHABLE') {
+    const nazwa =
+      cases.find((item) => item.executionCaseId === caseId)?.initiativeTitle ||
+      `Realizacja · ${String(caseId).slice(-8)}`;
+    return (
+      <div
+        role="alert"
+        data-testid="execution-resources-case-unreachable"
+        className="m-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
+      >
+        <p className="font-medium text-c-text-primary">{`Ta realizacja nie odpowiada: ${nazwa}`}</p>
+        <p className="mt-1 text-c-text-secondary">
+          Przerwaliśmy oczekiwanie po 12 sekundach. Pozostałe realizacje działają — wróć do
+          wszystkich albo spróbuj ponownie.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" className="btn-secondary" onClick={() => void load(caseId)}>
+            Spróbuj ponownie
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setCaseId('');
+              setSelected(null);
+              setShowWorkspace(false);
+              void loadCases();
+            }}
+          >
+            Wszystkie realizacje
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
