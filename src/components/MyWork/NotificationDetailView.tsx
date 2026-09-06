@@ -79,6 +79,7 @@ import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
 import { PracujZAI } from '../standard/PracujZAI';
 import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { sekcjeZKontraktu } from '../standard/contractSections';
 import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
 import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
@@ -89,16 +90,15 @@ import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLay
 // `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
 // z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
 import { PreviewActionBar } from '../shared/PreviewPane/PreviewActionBar';
-import TeresaMark from '../shared/TeresaMark';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '../standard/ArtifactRightPanel';
 // MIGRACJA (D-8): kompozycja kart Notification wyprowadzona z WIĄŻĄCEGO kontraktu
-// karty (cardContract.types.ts) zamiast zahardkodowanego nModeSections — patrz
+// karty (cardContract.types.ts) zamiast zahardkodowanego notificationContractSections — patrz
 // notificationCardContract.ts. Za flagą (default OFF), wzorzec = POC Decision.
-import { NOTIFICATION_CARD_RENDER_IDS, NOTIFICATION_CARD_SPEC } from './notificationCardContract';
+import { NOTIFICATION_CARDS, NOTIFICATION_CARD_SPEC } from './notificationCardContract';
 // ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
 // JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
 // `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
@@ -250,46 +250,6 @@ export function formatConfidencePercent(raw: unknown): string {
 // `ff.cardContract` działają TAKŻE na produkcji (bez DEV guardu) — żeby Piotr mógł
 // włączyć kontrakt tylko sobie jednym linkiem. Kolejność: URL → localStorage → env →
 // OFF. Wzór: isInitiativeCardContractEnabled.
-function parseCardContractFlag(raw: string | null | undefined): boolean | null {
-  if (raw === null || raw === undefined) return null;
-  const v = String(raw).trim().toLowerCase();
-  if (v === '1' || v === 'true' || v === 'on') return true;
-  if (v === '0' || v === 'false' || v === 'off') return false;
-  return null;
-}
-
-function useNotificationCardContractEnabled(): boolean {
-  return useMemo(() => {
-    if (typeof window !== 'undefined' && window.location) {
-      try {
-        const q = parseCardContractFlag(
-          new URLSearchParams(window.location.search).get('cardContract')
-        );
-        if (q !== null) {
-          try {
-            window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
-          } catch {
-            /* ignore */
-          }
-          return q;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const ls = parseCardContractFlag(window.localStorage.getItem('ff.cardContract'));
-        if (ls !== null) return ls;
-      } catch {
-        /* ignore */
-      }
-    }
-    if (import.meta.env.VITE_VF1_NOTIFICATION_CARD_CONTRACT === 'true') return true;
-    return false;
-  }, []);
-}
-
 // ★ 2026-07-23 — rzutowanie `as unknown as NModeArtifactType` USUNIETE.
 // 'notification' jest teraz pelnoprawnym czlonkiem uniona (shared cardSets.ts),
 // wiec typ jest sprawdzany naprawde, a nie obchodzony. Pole `artifactType`
@@ -1396,7 +1356,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // ── N-mode section definitions (MUST be before early returns — Rules of Hooks) ──
 
-  const nModeSections: NModeSection[] = useMemo(() => {
+  const notificationContractSections: NModeSection[] = useMemo(() => {
     const typeUpper = (notification?.type || '').toUpperCase();
     const d = (notification?.data || {}) as Record<string, any>;
     const hasAIContext =
@@ -1408,30 +1368,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       Boolean(d.confidence) ||
       Boolean(d.savings_annual);
 
-    const sections: NModeSection[] = [
-      {
-        id: 'whats-happening',
-        icon: Info,
-        label: { en: "What's Happening", pl: 'Co się dzieje' },
-        component: null,
-      },
-      ...(hasAIContext
-        ? [
-            {
-              id: 'ai-analysis',
-              icon: Bot,
-              label: { en: 'AI Analysis', pl: 'Analiza AI' },
-              component: null,
-            } as NModeSection,
-          ]
-        : []),
-      {
-        id: 'expected-action',
-        icon: CheckSquare,
-        label: { en: 'Expected Action', pl: 'Oczekiwana akcja' },
-        badge: actionChecklist.filter((i) => i.completed).length,
-        component: null,
-      },
+    const sections = sekcjeZKontraktu(
+      NOTIFICATION_CARDS,
+      'notification',
+      (id) => id !== 'ai-analysis' || hasAIContext
+    ).map((section) => section.id === 'expected-action'
+      ? { ...section, badge: actionChecklist.filter((i) => i.completed).length }
+      : section);
       // SPEC-N §2.1 — identyfikatory `comments` / `history` / `activity-log` sa
       // ZAREZERWOWANE dla prawego panelu i NIE MOGA byc sekcja lewej nawigacji.
       // Byly tu obie (comments + activity-log). Rozstrzygniecie wlasciciela (K2
@@ -1439,28 +1382,26 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       // wspolpracy — sekcja Komentarzy znika CALKOWICIE (nie wedruje do panelu),
       // a Historia aktywnosci trafia do prawego panelu (sekcja `history`).
       // Bloki `case 'comments'` / `case 'activity-log'` nizej w
-      // `nModeSectionsWithContent` sa od teraz nieosiagalne — zostaja swiadomie:
+      // `notificationContractSectionsWithContent` sa od teraz nieosiagalne — zostaja swiadomie:
       // usuwanie martwego kodu to osobna fala PO migracjach (SPEC-N §7, P3),
       // zeby diff tej zmiany dalo sie odebrac na zrzutach.
-    ];
-
     return sections;
   }, [notification?.type, notification?.data, actionChecklist]);
 
   // Ensure active section is always valid (e.g. AI section may be hidden)
   useEffect(() => {
-    if (!nModeSections.some((s) => s.id === activeNSection)) {
-      setActiveNSection(nModeSections[0]?.id || 'whats-happening');
+    if (!notificationContractSections.some((s) => s.id === activeNSection)) {
+      setActiveNSection(notificationContractSections[0]?.id || 'whats-happening');
     }
-  }, [nModeSections, activeNSection]);
+  }, [notificationContractSections, activeNSection]);
 
   // ── N-mode sections with content ─────────────────────────────────────────
 
-  const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
+  const notificationContractSectionsWithContent: NModeSection[] = useMemo(() => {
     // Guard: if notification/contract not yet loaded, return sections with null components
-    if (!notification || !contract) return nModeSections;
+    if (!notification || !contract) return notificationContractSections;
 
-    return nModeSections.map((section) => {
+    return notificationContractSections.map((section) => {
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -1693,7 +1634,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {!aiAnalysis && (
                 <div className="py-10 text-center">
-                  <TeresaMark size={28} className="mx-auto mb-2 text-c-text-muted" />
+                  <Bot size={28} className="mx-auto mb-2 text-c-text-muted" aria-hidden="true" />
                   <p className="text-sm text-c-text-muted">
                     {t('myWork.notificationDetail.noDataForAnalysis', 'No data for analysis')}
                   </p>
@@ -2157,7 +2098,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       return { ...section, component };
     });
   }, [
-    nModeSections,
+    notificationContractSections,
     isPolish,
     notification,
     contract,
@@ -2193,12 +2134,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z NOTIFICATION_CARD_SPEC
   // (rdzeń nieusuwalny przez typ, węższy zestaw domyślny, picker „Sekcje"/„+ Nowa
   // karta"). Gdy OFF: applyToSections/manager nie są używane ⇒ zachowanie bez zmian.
-  const notificationCardContractEnabled = useNotificationCardContractEnabled();
   // Osobny namespace klucza (v2-contract) — węższy domyślny nie hydratuje się nad
   // stary układ, a wyłączenie flagi wraca do dawnej ścieżki bez utraty stanu.
   const notificationCardLayoutStorageKey = `notification:nmode:card-layout:v2-contract:${notificationId ?? 'new'}`;
   const initialNotificationCardLayout = useMemo<CardLayout | null>(() => {
-    if (!notificationCardContractEnabled) return null;
     try {
       const raw = localStorage.getItem(notificationCardLayoutStorageKey);
       if (!raw) return null;
@@ -2222,17 +2161,16 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       return null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notificationCardLayoutStorageKey, notificationCardContractEnabled]);
+  }, [notificationCardLayoutStorageKey]);
   const persistNotificationCardLayout = useCallback(
     (next: CardLayout) => {
-      if (!notificationCardContractEnabled) return;
       try {
         localStorage.setItem(notificationCardLayoutStorageKey, JSON.stringify(next));
       } catch {
         /* localStorage niedostępny — layout pozostaje w pamięci sesji */
       }
     },
-    [notificationCardLayoutStorageKey, notificationCardContractEnabled]
+    [notificationCardLayoutStorageKey]
   );
 
   const notificationCardLayout = useCardLayout({
@@ -2247,37 +2185,20 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // layout (węższy domyślny; `ai-analysis` dodawalne z pickera); gdy OFF, surowe.
   const orderedNModeSections = useMemo<NModeSection[]>(
     () =>
-      notificationCardContractEnabled
-        ? notificationCardLayout.applyToSections(nModeSectionsWithContent)
-        : nModeSectionsWithContent,
-    [notificationCardContractEnabled, notificationCardLayout, nModeSectionsWithContent]
+      notificationCardLayout.applyToSections(notificationContractSectionsWithContent),
+    [notificationCardLayout, notificationContractSectionsWithContent]
   );
 
   // Gdy flaga ON i aktywna sekcja została ukryta w pickerze — przeskocz na pierwszą widoczną.
   useEffect(() => {
-    if (!notificationCardContractEnabled) return;
     const visibleIds = notificationCardLayout.visibleOrderedIds;
     if (visibleIds.length > 0 && !visibleIds.includes(activeNSection)) {
       setActiveNSection(visibleIds[0]);
     }
-  }, [notificationCardContractEnabled, notificationCardLayout.visibleOrderedIds, activeNSection]);
+  }, [notificationCardLayout.visibleOrderedIds, activeNSection]);
 
   // R2 (KONTRAKT §9): każda sekcja nav renderowana przez Notification ma wpis w
   // katalogu kanonicznym. Cichy dev-only sygnał rozjazdu id kod↔katalog.
-  useEffect(() => {
-    if (!import.meta.env.DEV || !notificationCardContractEnabled) return;
-    const missing = nModeSections
-      .map((s) => s.id)
-      .filter((id) => !NOTIFICATION_CARD_RENDER_IDS.includes(id));
-    if (missing.length > 0) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        '[notificationCardContract] sekcje lewej nawigacji bez wpisu w katalogu:',
-        missing
-      );
-    }
-  }, [notificationCardContractEnabled, nModeSections]);
-
   // ── ETAP 3 standardu n-Type: „Analizuj z AI" AKTYWNEJ KARTY ────────────────
   // Kontrakt właściciela dla Powiadomienia: „treść aktywnej karty względem jej
   // celu — braki, ryzyka, proponowane poprawki". Cel karty i standard treści
@@ -2476,12 +2397,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const zrodlaPracujZAI = useMemo(
     () =>
       zbudujZrodlaPracujZAI({
-        sekcje: nModeSections.map((s) => ({ id: s.id, label: s.label })),
+        sekcje: notificationContractSections.map((s) => ({ id: s.id, label: s.label })),
         polaSekcji: notificationPolaSekcji,
         applyChange: applyNotificationAnalysisChange,
         isPolish,
       }),
-    [nModeSections, notificationPolaSekcji, applyNotificationAnalysisChange, isPolish]
+    [notificationContractSections, notificationPolaSekcji, applyNotificationAnalysisChange, isPolish]
   );
 
   // ── Loading / 404 guards (AFTER all hooks to respect Rules of Hooks) ────
@@ -3291,9 +3212,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 <NModeMenu2
                   isPolish={isPolish}
                   sectionsMenu={
-                    notificationCardContractEnabled ? (
-                      <SectionsManagerMenu layout={notificationCardLayout} isPolish={isPolish} />
-                    ) : undefined
+                    <SectionsManagerMenu layout={notificationCardLayout} isPolish={isPolish} />
                   }
                   readMode={readMode}
                   /* Zasada 2b: powiadomienie przeczytane i zamknięte przez
@@ -3458,7 +3377,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
-                            <TeresaMark size={18} className="text-c-info" />
+                            <Bot size={18} className="text-c-info" aria-hidden="true" />
                           </div>
                           <span className="text-sm font-semibold text-c-text-secondary">
                             {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
