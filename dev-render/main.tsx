@@ -238,6 +238,14 @@ const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-s
 const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
 // ZLECENIE 1.1-J (06.09) — lewa lista "Moje notatki" w jednej linii (kebab pionowy).
 const NotatnikListaScreen = React.lazy(() => import('./screens/notatnik-lista-11j'));
+// ZLECENIE 1.1-J2 (06.09) — nagłówek listy notatek: filtr rozwijany z licznikami
+// (DEC-405b) + naprawa pustego dymka nad wstecz/+/lupa (DEC-405c).
+const NotatnikHeaderFiltrScreen = React.lazy(
+  () => import('./screens/notatnik-header-filtr-11j2')
+);
+// ZLECENIE 1.1-J2 (06.09, DEC-408) — Menu 2 „Sejf klienta” → „Sejfy”, okruszek
+// „Moja Praca › Sejfy”. REALNY <MyWorkHub> na zakładce vault.
+const MyWorkVaultSejfyScreen = React.lazy(() => import('./screens/mywork-vault-sejfy-11j2'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -703,6 +711,16 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ZLECENIE 1.1-J — REALNY <NotebookPageListRow> (lewa lista „Moje notatki"), 11 wierszy jednoliniowych, kebab pionowy. Kliknij ⋮ na dowolnym wierszu, żeby zobaczyć menu (Konwertuj/Przypnij/Archiwizuj).',
     render: () => <NotatnikListaScreen />,
+  },
+  'notatnik-header-filtr-11j2': {
+    label:
+      'ZLECENIE 1.1-J2 — REALNY <NotebookHeaderActions> + <NotebookViewFilterSelect> + <NotebookPageListRow>. DEC-405b: 6 chipów → 1 filtr rozwijany z licznikami obok „Szukaj w notatkach…”. DEC-405c: najedź na wstecz/+/lupa — dymek z tekstem, nie pusty (side="bottom", nieprzycięty przez overflow-hidden).',
+    render: () => <NotatnikHeaderFiltrScreen />,
+  },
+  'mywork-vault-sejfy-11j2': {
+    label:
+      'ZLECENIE 1.1-J2 (DEC-408) — REALNY <MyWorkHub> zakładka „Sejfy” (było „Sejf klienta”/„Client Vault”). Sprawdź pill Menu 2 + okruszek topbaru „Moja Praca › Sejfy”.',
+    render: () => <MyWorkVaultSejfyScreen />,
   },
   'meetings-module': {
     label:
