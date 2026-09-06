@@ -429,7 +429,7 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
             icon: ClipboardList,
             title: isPolish ? 'Brak programów audytowych' : 'No audit programs yet',
             description: isPolish
-              ? 'Programy powstają z Library — otwórz pakiet i użyj „Rozpocznij audyt".'
+              ? 'Programy powstają z Biblioteki — otwórz pakiet i użyj „Rozpocznij audyt".'
               : 'Programs are created from the Library — open a pack and use "Start audit".',
           }}
         />
