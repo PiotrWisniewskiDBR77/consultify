@@ -74,6 +74,7 @@ import {
 } from '@/components/standard';
 import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
 import {
   Api,
@@ -87,6 +88,10 @@ import {
   shouldFallbackToLegacyExecutionControl,
   V8ExecutionControlApi,
 } from '@/services/api/v8/execution-control';
+import {
+  readExecutionResourcePlan,
+  type ResourcePlanResponse,
+} from '@/services/execution/resourcePlanApi';
 import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
@@ -146,11 +151,18 @@ import {
   initiativeDeviationDays,
   initiativeLevelLabel,
   initiativeRag,
+  isBlockedInitiative,
   isDecisionOverdue,
   isOpenDecision,
   onTimeFromInitiatives,
   openDecisions,
   overdueOpenDecisions,
+  raidLevelScore,
+  raidOwnerDisplayName,
+  raidSeverityLabel,
+  raidTypeLabel,
+  topRaidItemsByLevel,
+  type RealRaidItemLike,
 } from './executionRealData';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
@@ -858,6 +870,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
+  // 1.12-R1b (1): katalog osób dla właściciela pozycji RAID w Kokpicie — ten
+  // sam hak co `ExecutionControlSurface` (`GET /api/organizations/:id/members`).
+  const resolveRaidOwnerName = useOrganizationMemberNames();
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -939,6 +954,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [capacityAlerts, setCapacityAlerts] = useState<GovernedCapacityAlert[]>([]);
   const [capacityTimeline, setCapacityTimeline] = useState<GovernedCapacityWeek[]>([]);
   const [controlTowerFailed, setControlTowerFailed] = useState(false);
+  // 1.12-R1b (1): Kokpit „Ryzyka" — rejestr RAID surowy z `GET /api/raid`.
+  // TEN SAM wołacz co „Decyzje i ryzyka" (`ExecutionControlSurface`), więc
+  // kafel/tabela Kokpitu i rejestr na zakładce `control` liczą z identycznego
+  // zapytania (patrz nagłówek `executionRealData.ts`, sekcja RAID).
+  const [raidItems, setRaidItems] = useState<RealRaidItemLike[]>([]);
+  const [summaryPreviewRiskId, setSummaryPreviewRiskId] = useState<string | null>(null);
+  // 1.12-R1b (2): Kokpit „Obłożenie" — plan zasobów osoba×tydzień
+  // (`GET /api/execution-control/capacity/resource-plan`, R2), NIE
+  // `capacityTimeline` (podaż z `initiative_resources`, 0 wierszy w DBR77 →
+  // kafel „—"/„0 osób"). `summary` ma realną podaż z profilu osoby.
+  const [resourcePlanSummary, setResourcePlanSummary] = useState<
+    ResourcePlanResponse['summary'] | null
+  >(null);
   // L-02: surface degradation instead of silently falling back to []/empty
   const [executiveHealthFailed, setExecutiveHealthFailed] = useState(false);
   const [actionQueueFailed, setActionQueueFailed] = useState(false);
@@ -1682,6 +1710,37 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       cancelled = true;
     };
   }, [currentProjectId, executionTruthRefreshKey]);
+
+  // 1.12-R1b (1+2): Kokpit „Ryzyka" (`GET /api/raid`, ten sam wołacz co
+  // „Decyzje i ryzyka") i „Obłożenie" (`GET
+  // /api/execution-control/capacity/resource-plan`, R2) — NIEZALEŻNIE od
+  // `execSnapshot`, który dla DBR77 zwracał 0 ryzyk (patrz nagłówek sekcji
+  // RAID w `executionRealData.ts`) i od `capacityTimeline`, który liczy
+  // podaż z `initiative_resources` (0 wierszy w DBR77). Jedna padnięta rura
+  // nie może zabrać drugiej — `Promise.allSettled`, bez organizacji ani
+  // po projekcie (żaden z dwóch endpointów tego nie wymaga).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [raid, plan] = await Promise.allSettled([
+        Api.raidList(),
+        readExecutionResourcePlan(),
+      ]);
+      if (cancelled) return;
+      if (raid.status === 'fulfilled') {
+        const value = raid.value as any;
+        setRaidItems(
+          Array.isArray(value) ? value : (value?.items ?? value?.raid ?? [])
+        );
+      } else {
+        setRaidItems([]);
+      }
+      setResourcePlanSummary(plan.status === 'fulfilled' ? plan.value.summary : null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [executionTruthRefreshKey]);
 
   // 1.12-R1 (D): ZDJĘTY FILTR PO PROJEKCIE.
   // POMIAR 06.09 (org DBR77): 43 z 72 inicjatyw i 20 z 35 decyzji NIE MA
@@ -2909,6 +2968,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         );
         return;
       }
+      // 1.12-R1b (1): klik wiersza ryzyka w Kokpicie — do teraz toast „nie
+      // wspierane" (E-1). Otwiera podgląd (`useJedenPanel.otworz()` + wybór),
+      // treść renderuje `JedenPrawyPanel` w zakładce `summary` (patrz niżej).
+      if (normalizedType === 'RISK') {
+        const found = raidItems.find((r) => String(r.id) === entityId);
+        if (found) {
+          jedenPanel.otworz();
+          setSummaryPreviewRiskId(entityId);
+          return;
+        }
+        toast.error(t('execution.entityLookup.riskNotFound', 'Risk not found in this view'));
+        return;
+      }
       toast.error(
         t(
           'execution.entityLookup.unsupportedType',
@@ -2916,7 +2988,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         )
       );
     },
-    [initiatives, dashboardBaseInitiatives, handleOpenSidePanel, t]
+    [initiatives, dashboardBaseInitiatives, handleOpenSidePanel, raidItems, t]
   );
 
   const handleCloseDocument = useCallback(
@@ -3535,7 +3607,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
-    const blocked = dashboardBaseInitiatives.filter((i) => i.status === InitiativeStatus.BLOCKED);
+    // 1.12-R1b (3): `status === 'BLOCKED'` wprost przestaje wystarczać po
+    // migracji P12 (Codex, w toku) — `isBlockedInitiative` rozpoznaje OBA
+    // słowniki (BLOCKED wprost; IN_EXECUTION/EXECUTING + on_hold).
+    const blocked = dashboardBaseInitiatives.filter((i) => isBlockedInitiative(i));
     const missingDates = dashboardBaseInitiatives.filter(
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
@@ -3593,25 +3668,23 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ? Math.round((wsOnTrack / wsTotal) * 100)
       : dateOnTime.onTimePercent;
 
-    // Obłożenie (#77 wiring fix 2026-07-19): realny silnik istnieje
-    // (workloadCapacityService.getCapacityTimeline, DB-backed) i jest już
-    // pobierany do `capacityTimeline` (org-wide, tydzień[0] = bieżący tydzień
-    // ISO). utilizationPercent = realna wartość tego tygodnia; brak danych
-    // (pusta tablica / capacityHours=0, np. brak project_members) → nadal
-    // null/empty-state, zero zmyślonych liczb. Przeciążenia z capacityAlerts,
-    // headcount z unikalnych wykonawców zadań, unassigned z workstreamów.
-    const currentWeekCapacity = capacityTimeline[0] ?? null;
-    const utilizationPercent =
-      currentWeekCapacity && currentWeekCapacity.capacityHours > 0
-        ? (currentWeekCapacity.utilizationPercent ??
-          Math.round(
-            (currentWeekCapacity.allocatedHours / currentWeekCapacity.capacityHours) * 100
-          ))
-        : null;
-    const criticalCapacity = capacityAlerts.filter((a) => a.severity === 'critical').length;
-    const headcount = new Set(
-      tasks.map((tk) => (tk as any).assigneeId || (tk as any).assignee_id).filter(Boolean)
-    ).size;
+    // 1.12-R1b (2): Obłożenie z planu zasobów (`resourcePlanSummary`, R2 —
+    // `GET /api/execution-control/capacity/resource-plan`), NIE
+    // `capacityTimeline` (podaż z `initiative_resources`; 0 wierszy w DBR77
+    // → capacityHours=0 na WSZYSTKICH 12 tygodniach → kafel „—"/„0 osób",
+    // dokładnie zmierzony defekt). `utilizationPercent` bywa `null` (serwer:
+    // brak PODAŻY wcale, nie „nikt nic nie robi") — zostaje `null`, zero
+    // zmyślonych liczb. `defaultCapacityAssumed`: WSZYSCY w planie liczą się
+    // z domyślnych 40 h/tydz. (brak profilu), więc podpis ma to nazwać wprost
+    // zamiast milczeć przy realnie policzonym procencie.
+    const utilizationPercent = resourcePlanSummary?.utilizationPercent ?? null;
+    const overallocatedCount = resourcePlanSummary?.overloadedCount ?? 0;
+    const headcount = resourcePlanSummary?.peopleCount ?? 0;
+    const defaultCapacityAssumed = Boolean(
+      resourcePlanSummary &&
+        resourcePlanSummary.peopleCount > 0 &&
+        resourcePlanSummary.peopleWithoutProfileSupply === resourcePlanSummary.peopleCount
+    );
 
     const roi = execSnapshot?.roi?.summary ?? null;
 
@@ -3621,18 +3694,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // zwraca gotowej nazwy, tylko typ+id powiązanego obiektu.
     const initiativeNameById = new Map(initiatives.map((i) => [i.id, i.name]));
 
-    const risks = (execSnapshot?.risks?.topRisks ?? []).slice(0, 3).map((r) => ({
-      id: r.id,
-      title: r.title,
-      probability: r.probability,
-      impact: r.impact,
-      score: r.score,
-      ownerName: (r as any).ownerName ?? null,
-      initiativeId: (r as any).initiativeId ?? null,
-      initiativeName: (r as any).initiativeName ?? null,
-      status: (r as any).status ?? null,
-      dueDate: r.dueDate,
-      mitigationStatus: r.mitigationStatus,
+    // 1.12-R1b (1): TOP ryzyka z `GET /api/raid` (16 pozycji na DBR77), NIE
+    // `execSnapshot.risks.topRisks` (0 — patrz nagłówek sekcji RAID w
+    // `executionRealData.ts`). `topRaidItemsByLevel` sortuje malejąco po
+    // poziomie (P×I; brak poziomu na końcu) i przycina do 10 — chip liczy
+    // WSZYSTKIE pozycje (`raidItems.length`, efekt niżej), nie tylko te 10
+    // widoczne w tabeli.
+    const risks = topRaidItemsByLevel(raidItems, 10).map((r) => ({
+      id: String(r.id),
+      title: r.title || (isPolish ? 'Pozycja RAID bez tytułu' : 'Untitled RAID item'),
+      type: r.type ?? null,
+      probability: r.probability ?? null,
+      impact: r.impact ?? null,
+      score: raidLevelScore(r),
+      severityLabel: raidSeverityLabel(r, isPolish),
+      ownerName: raidOwnerDisplayName(r, resolveRaidOwnerName),
+      initiativeId: r.initiativeId ?? null,
+      initiativeName: r.initiativeId ? (initiativeNameById.get(r.initiativeId) ?? null) : null,
+      status: r.status ?? null,
+      dueDate: r.dueDate ?? null,
+      mitigationPlan: r.mitigationPlan ?? null,
+      description: r.description ?? null,
     }));
 
     const ageDays = (iso?: string | null): number | null => {
@@ -3723,10 +3805,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         : null,
       people: {
         utilizationPercent,
-        overallocatedCount: criticalCapacity,
+        overallocatedCount,
         underutilizedCount: 0,
         unassignedInitiatives: execSnapshot?.workstreams?.unassignedInitiatives ?? 0,
         headcount,
+        defaultCapacityAssumed,
       },
       topRisks: risks,
       decisions: [...blockerDecisions, ...overdueDecisionItems, ...pendingDecisionItems],
@@ -3737,30 +3820,33 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     execSnapshot,
     portfolioMetrics,
     actionCenter,
-    capacityAlerts,
-    capacityTimeline,
+    resourcePlanSummary,
+    raidItems,
+    resolveRaidOwnerName,
+    isPolish,
     decisions,
-    tasks,
     dashboardBaseInitiatives,
     initiatives,
     t,
   ]);
 
-  // DEC-426 (1.1-E-1): liczniki chipów Menu 3 Kokpitu (Ryzyka/Rozstrzygnięcia)
-  // — ta sama para list co tabela, więc licznik = to, co użytkownik faktycznie
-  // zobaczy po kliknięciu chipa (zero rozjazdu miedzy pigułką a tabelą).
+  // DEC-426 (1.1-E-1): liczniki chipów Menu 3 Kokpitu (Ryzyka/Rozstrzygnięcia).
+  // 1.12-R1b: chip „Ryzyka" liczy WSZYSTKIE pozycje `GET /api/raid`
+  // (`raidItems.length`), nie `summaryOneLookProps.topRisks.length` — tabela
+  // pod chipem przycina do TOP 10, ale chip ma pokazać realną liczbę rejestru
+  // (test a: mock 16 pozycji → chip „Ryzyka 16", tabela 10 wierszy).
   useEffect(() => {
     if (!summaryOneLookEnabled) return;
     setCanonicalMenu3Counts((current) => ({
       ...current,
       summary: {
-        ryzyka: summaryOneLookProps.topRisks.length,
+        ryzyka: raidItems.length,
         rozstrzygniecia: summaryOneLookProps.decisions.length,
       },
     }));
   }, [
     summaryOneLookEnabled,
-    summaryOneLookProps.topRisks.length,
+    raidItems.length,
     summaryOneLookProps.decisions.length,
   ]);
 
@@ -6052,23 +6138,121 @@ Please return:
     }
 
     if (summaryOneLookEnabled && activeTab === ('summary' as ModuleTab)) {
+      // 1.12-R1b (1): klik wiersza ryzyka otwiera podgląd — do teraz toast
+      // „nie wspierane" (E-1). Rekord szuka się w `topRisks` (dokładnie te
+      // wiersze, które są klikalne w tabeli), „Otwórz" prowadzi do karty
+      // inicjatywy, gdy `initiativeId` jest znane i inicjatywa jest w puli.
+      const selectedSummaryRisk = summaryPreviewRiskId
+        ? (summaryOneLookProps.topRisks.find((r) => r.id === summaryPreviewRiskId) ?? null)
+        : null;
+      const selectedSummaryRiskInitiative = selectedSummaryRisk?.initiativeId
+        ? ((initiatives.length > 0 ? initiatives : dashboardBaseInitiatives).find(
+            (i) => i.id === selectedSummaryRisk.initiativeId
+          ) ?? null)
+        : null;
+      const selectedSummaryRiskLevelTone: 'danger' | 'neutral' =
+        selectedSummaryRisk?.score != null
+          ? selectedSummaryRisk.score >= 8
+            ? 'danger'
+            : 'neutral'
+          : selectedSummaryRisk?.severityLabel === (isPolish ? 'Wysokie' : 'High') ||
+              selectedSummaryRisk?.severityLabel === (isPolish ? 'Krytyczne' : 'Critical')
+            ? 'danger'
+            : 'neutral';
+
       return (
-        <ExecutionSummaryOneLook
-          health={summaryOneLookProps.health}
-          onTime={summaryOneLookProps.onTime}
-          value={summaryOneLookProps.value}
-          people={summaryOneLookProps.people}
-          topRisks={summaryOneLookProps.topRisks}
-          decisions={summaryOneLookProps.decisions}
-          milestones={summaryOneLookProps.milestones}
-          currency="PLN"
-          isPolish={isPolish}
-          generatedAt={summaryOneLookProps.generatedAt}
-          activeView={
-            canonicalMenu3Preset.summary === 'rozstrzygniecia' ? 'rozstrzygniecia' : 'ryzyka'
-          }
-          onOpenEntity={openEntityById}
-        />
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 flex overflow-hidden">
+            <div className="flex-1 min-w-0 overflow-auto">
+              <ExecutionSummaryOneLook
+                health={summaryOneLookProps.health}
+                onTime={summaryOneLookProps.onTime}
+                value={summaryOneLookProps.value}
+                people={summaryOneLookProps.people}
+                topRisks={summaryOneLookProps.topRisks}
+                decisions={summaryOneLookProps.decisions}
+                milestones={summaryOneLookProps.milestones}
+                currency="PLN"
+                isPolish={isPolish}
+                generatedAt={summaryOneLookProps.generatedAt}
+                activeView={
+                  canonicalMenu3Preset.summary === 'rozstrzygniecia' ? 'rozstrzygniecia' : 'ryzyka'
+                }
+                onOpenEntity={openEntityById}
+              />
+            </div>
+
+            <JedenPrawyPanel
+              rekord={
+                selectedSummaryRisk ? (
+                  <StandardPreview
+                    title={selectedSummaryRisk.title}
+                    onClose={() => setSummaryPreviewRiskId(null)}
+                    onOpenFull={
+                      selectedSummaryRiskInitiative
+                        ? () => handleOpenSidePanel(selectedSummaryRiskInitiative as FullInitiative)
+                        : undefined
+                    }
+                    openDisabledReason={
+                      selectedSummaryRiskInitiative
+                        ? undefined
+                        : t(
+                            'execution.summary.riskNoInitiative',
+                            'No linked initiative to open'
+                          )
+                    }
+                    meta={{
+                      pills: [
+                        {
+                          label: raidTypeLabel(selectedSummaryRisk.type, isPolish),
+                          tone: 'neutral',
+                        },
+                        {
+                          label:
+                            selectedSummaryRisk.score != null
+                              ? `${t('execution.summary.riskLevel', 'Level')} ${selectedSummaryRisk.score}`
+                              : (selectedSummaryRisk.severityLabel ?? '—'),
+                          tone: selectedSummaryRiskLevelTone,
+                        },
+                      ],
+                    }}
+                    details={{
+                      label: t('execution.governance.columns.type', 'Typ'),
+                      text:
+                        selectedSummaryRisk.description ||
+                        t('execution.summary.riskNoDescription', 'No description.'),
+                      properties: [
+                        {
+                          id: 'owner',
+                          label: t('execution.governance.columns.owner', 'Właściciel'),
+                          value: selectedSummaryRisk.ownerName || '—',
+                        },
+                        {
+                          id: 'initiative',
+                          label: t('execution.table.initiative', 'Initiative'),
+                          value: selectedSummaryRisk.initiativeName || '—',
+                        },
+                        {
+                          id: 'due',
+                          label: t('execution.governance.columns.due', 'Termin'),
+                          value: selectedSummaryRisk.dueDate
+                            ? new Date(selectedSummaryRisk.dueDate).toLocaleDateString()
+                            : '—',
+                        },
+                        {
+                          id: 'mitigation',
+                          label: t('execution.summary.mitigationPlan', 'Plan mitygacji'),
+                          value: selectedSummaryRisk.mitigationPlan || '—',
+                        },
+                      ],
+                    }}
+                    relationsEmptyLabel={t('common.noRelations', 'Brak powiązań')}
+                  />
+                ) : null
+              }
+            />
+          </div>
+        </div>
       );
     }
 

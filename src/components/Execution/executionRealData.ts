@@ -268,3 +268,165 @@ export function initiativeLevelLabel(initiative: RealInitiativeLike): string {
   const value = String(raw).trim();
   return /^l[0-9]$/i.test(value) ? value.toUpperCase() : value;
 }
+
+const truthy = (value: unknown): boolean =>
+  value === true || value === 'true' || value === 1 || value === '1';
+
+/**
+ * Inicjatywa zablokowana — 1.12-R1b, KROK 2. POMIAR: kafel „Blokery" i
+ * `actionCenter.blocked` (Kokpit) porównywały `status === 'BLOCKED'` wprost.
+ * Migracja P12 (Codex, w toku przy pisaniu tego pliku) usuwa status `BLOCKED`
+ * na rzecz `IN_EXECUTION` (→ `EXECUTING` po `normalizeInitiativeStatus`) +
+ * flaga `on_hold`/`onHold` — dzień, w którym migracja wejdzie, licznik
+ * spadłby cicho do zera (bez błędu, bez czerwonego testu — dokładnie kształt
+ * „Zamknięte przez wygaszenie"). Ta funkcja rozpoznaje OBA słowniki: stary
+ * (`BLOCKED` wprost) i nowy (`EXECUTING`/`IN_EXECUTION` + `on_hold` prawda).
+ */
+export function isBlockedInitiative(initiative: RealInitiativeLike): boolean {
+  const status = normalizeInitiativeStatus(initiative?.status);
+  if (status === 'BLOCKED') return true;
+  if (status !== 'EXECUTING') return false;
+  const record = initiative as Record<string, unknown>;
+  return truthy(record?.onHold ?? record?.on_hold);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// RAID (Risks/Actions/Issues/Dependencies) — 1.12-R1b, KROK 1.
+//
+// POMIAR: kafel „Ryzyka" Kokpitu i tabela pod nim czytały
+// `execSnapshot.risks.topRisks`, które dla DBR77 = 0 (silnik wykonawczy —
+// `executiveAggregateService.getProjectRaidRisks` — łączy `raid_items` z
+// `initiatives.project_id`, filtruje `type = 'RISK'` i status
+// OPEN/IN_PROGRESS; portfel bez tej kombinacji pól znika bez śladu). Obok,
+// nieczytane: `GET /api/raid` → 16 pozycji (RISK/ISSUE/DEPENDENCY/ASSUMPTION),
+// dokładnie ten sam rejestr, który zakładka „Decyzje i ryzyka"
+// (`ExecutionControlSurface`) już pokazuje poprawnie od R1 (C). Reguły niżej
+// są WSPÓLNE dla Kokpitu i tej zakładki — jeden dom normalizacji, żeby kafel,
+// tabela Kokpitu i rejestr „Decyzje i ryzyka" nigdy nie pokazały różnej liczby
+// dla tego samego zapytania `GET /api/raid`.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface RealRaidItemLike {
+  id?: string;
+  type?: string | null;
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+  ownerId?: string | null;
+  ownerName?: string | null;
+  initiativeId?: string | null;
+  initiativeName?: string | null;
+  dueDate?: string | null;
+  probability?: string | null;
+  impact?: string | null;
+  severity?: string | null;
+  riskScore?: number | null;
+  mitigationPlan?: string | null;
+  [key: string]: unknown;
+}
+
+const RAID_TYPE_LABELS_PL: Record<string, string> = {
+  RISK: 'Ryzyko',
+  ISSUE: 'Problem',
+  DEPENDENCY: 'Zależność',
+  ASSUMPTION: 'Założenie',
+  ACTION: 'Działanie',
+};
+const RAID_TYPE_LABELS_EN: Record<string, string> = {
+  RISK: 'Risk',
+  ISSUE: 'Issue',
+  DEPENDENCY: 'Dependency',
+  ASSUMPTION: 'Assumption',
+  ACTION: 'Action',
+};
+
+/** Typ pozycji RAID po polsku/angielsku — ten sam słownik co `ExecutionControlSurface`. */
+export function raidTypeLabel(type: unknown, isPolish = true): string {
+  const key = String(type ?? '').toUpperCase();
+  const map = isPolish ? RAID_TYPE_LABELS_PL : RAID_TYPE_LABELS_EN;
+  return map[key] ?? (type == null || String(type).trim() === '' ? '—' : String(type));
+}
+
+const RAID_LEVEL_SCORE: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+
+/**
+ * Poziom ryzyka = P × I (skala 1–4 na oś, ta sama, na której działa istniejący
+ * `riskBand` w `ExecutionSummaryOneLook`). Liczymy WPROST z `probability`/
+ * `impact`, nie z `riskScore` zapisanego w bazie — ten bywa `null` na
+ * pozycjach dodanych poza `POST /api/raid` (np. migracją, seedem). Gdy
+ * `probability`/`impact` nie ma ANI JEDNEGO pola, cofamy się do `riskScore`,
+ * a gdy i tego brak — `null` ([]„—"] w UI, nie zmyślone 0/1).
+ */
+export function raidLevelScore(item: RealRaidItemLike): number | null {
+  const p = RAID_LEVEL_SCORE[String(item?.probability ?? '').toUpperCase()];
+  const i = RAID_LEVEL_SCORE[String((item?.impact ?? item?.severity) ?? '').toUpperCase()];
+  if (p && i) return p * i;
+  if (typeof item?.riskScore === 'number' && Number.isFinite(item.riskScore)) {
+    return item.riskScore;
+  }
+  return null;
+}
+
+const RAID_SEVERITY_LABEL_PL: Record<string, string> = {
+  LOW: 'Niskie',
+  MEDIUM: 'Umiarkowane',
+  HIGH: 'Wysokie',
+  CRITICAL: 'Krytyczne',
+};
+const RAID_SEVERITY_LABEL_EN: Record<string, string> = {
+  LOW: 'Low',
+  MEDIUM: 'Moderate',
+  HIGH: 'High',
+  CRITICAL: 'Critical',
+};
+
+/**
+ * Poziom w słowach, gdy P×I się nie liczy (brakuje `probability` ALBO
+ * `impact`) — fallback na `impact`/`severity` samo w sobie. `null`, gdy i
+ * tego nie ma (UI pokazuje wtedy „—", nie zmyśloną etykietę).
+ */
+export function raidSeverityLabel(item: RealRaidItemLike, isPolish = true): string | null {
+  const key = String((item?.impact ?? item?.severity) ?? '').toUpperCase();
+  const map = isPolish ? RAID_SEVERITY_LABEL_PL : RAID_SEVERITY_LABEL_EN;
+  return map[key] ?? null;
+}
+
+/**
+ * Właściciel pozycji RAID dla Kokpitu: gotowa nazwa z API → katalog
+ * organizacji → `null`. CELOWO różni się od `ExecutionControlSurface`
+ * (rejestr „Decyzje i ryzyka" pokazuje tam „Nieznany użytkownik" dla ID spoza
+ * katalogu — POMIAR 06.09: 16/16 pozycji RAID ma `ownerId` spoza
+ * `organization_members`). Kokpit ma pokazywać PUSTKĘ („—"), nie fałszywy
+ * komunikat o koncie — `null` tutaj, wołający dokłada „—" w UI.
+ */
+export function raidOwnerDisplayName(
+  item: RealRaidItemLike,
+  resolveMemberName?: (userId: string) => string | null
+): string | null {
+  if (item?.ownerName) return String(item.ownerName);
+  const id = String(item?.ownerId ?? '').trim();
+  if (!id) return null;
+  return resolveMemberName?.(id) ?? null;
+}
+
+/**
+ * TOP pozycje RAID posortowane malejąco po poziomie — brak poziomu (`null`)
+ * zawsze na końcu, nigdy nie wypycha policzonych pozycji z TOP N. Sort jest
+ * stabilny (Array#sort w V8 jest stabilny od Node 11) — pozycje o równym
+ * poziomie zostają w kolejności `created_at DESC` zwróconej przez serwer.
+ */
+export function topRaidItemsByLevel<T extends RealRaidItemLike>(
+  items: T[],
+  limit = 10
+): T[] {
+  return [...(items ?? [])]
+    .sort((a, b) => {
+      const sa = raidLevelScore(a);
+      const sb = raidLevelScore(b);
+      if (sa == null && sb == null) return 0;
+      if (sa == null) return 1;
+      if (sb == null) return -1;
+      return sb - sa;
+    })
+    .slice(0, limit);
+}

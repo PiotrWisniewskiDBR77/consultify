@@ -12899,7 +12899,11 @@
     },
     "summary": {
       "summarizePrompt": "Summarize this initiative in 5 bullets and propose 3 next steps.",
-      "blockedInitiative": "Blocked initiative"
+      "blockedInitiative": "Blocked initiative",
+      "riskLevel": "Level",
+      "riskNoDescription": "No description.",
+      "riskNoInitiative": "No linked initiative to open",
+      "mitigationPlan": "Mitigation plan"
     },
     "reports": {
       "preset": {
@@ -13514,6 +13518,7 @@
     },
     "entityLookup": {
       "initiativeNotFound": "Initiative not found in this view",
+      "riskNotFound": "Risk not found in this view",
       "unsupportedType": "Opening this item type is not supported here yet"
     },
     "signalsUnavailable": {
