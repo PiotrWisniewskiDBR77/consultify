@@ -324,3 +324,54 @@ export function projektujRaportZastanyNaTresc(raw: unknown): LegacyReportNarrati
     recommendations: rekomendacje,
   };
 }
+
+/** Wiersz zakładki „Raporty" (`AssessmentHub`, gałąź `case 'reports'`) —
+ * wyłącznie pola, których potrzebuje wybór celu dla „Otwórz". */
+export interface WierszRaportuOceny {
+  readonly id: string;
+  readonly assessmentId?: string | null;
+  readonly _isImported?: boolean | null;
+}
+
+/**
+ * [ODMROZENIE 04_ASSESSMENT DEC-397] Trasa, pod którą „Otwórz" ma pokazać
+ * RAPORT OCENY, albo `null`, gdy dokument nie jest raportem oceny i ma
+ * zostać przy Kreatorze raportów.
+ *
+ * ★ PO CO (zmierzone 06.09 na stanowisku lokalnym, nie założone). Zakładka
+ * Ocena → Raporty → wiersz „DRD Manufacturing … (Zatwierdzone, 100 %)" →
+ * podgląd → „Otwórz" prowadziło do `/reports/builder/report-drd-test-exec`,
+ * czyli do PUSTEGO kreatora („Zacznij budować raport", zero bloków —
+ * `GET /api/report-builder/report-drd-test-exec` nie ma pola `sections`),
+ * podczas gdy ta sama ocena pod `/assessment/outputs/ocena~assess-drd-
+ * manufacturing-01/report` rysuje pełny raport: 4 rozdziały, macierz DRD
+ * dla 7 osi, 39 obszarów i przepisaną treść raportu (17 pozycji).
+ * Właściciel widział „raport zatwierdzony w 100 %", klikał „Otwórz"
+ * i dostawał pustą kartkę.
+ *
+ * ★ REGUŁA. Raport, który MA ocenę źródłową (`assessmentId`), jest raportem
+ * oceny — jego kanoniczny CZYTNIK to `AssessmentReportDocument`. Kreator
+ * raportów zostaje ścieżką EDYCJI (podgląd: „Otwórz w edytorze",
+ * kebab: „Edytuj” → `/reports/builder/:id`), więc żadna praca zrobiona
+ * w kreatorze nie znika — zmienia się tylko to, co robi „Otwórz”.
+ * Raport bez oceny źródłowej i import PDF zostają bez zmian.
+ *
+ * ★ KTÓRY IDENTYFIKATOR. Ten sam wybór, co na liście „Wnioski": ocena
+ * obecna w magazynie ZASTANYM (tabela `assessments`, przekazana tu jako
+ * `idOcenZastanych`) dostaje przestrzeń `ocena~<id>`; każdy inny
+ * identyfikator idzie surowy — `fetchOutputForReport` rozstrzyga wtedy
+ * sam (UUID → jądro, reszta → magazyn zastany, z wzajemnym odwrotem
+ * przy 404). Nie zgadujemy tu niczego, czego nie widać w danych.
+ */
+export function trasaOtwarciaRaportuOceny(
+  row: WierszRaportuOceny,
+  idOcenZastanych: ReadonlySet<string>
+): string | null {
+  if (row._isImported) return null;
+  const assessmentId = tekstAlboNull(row.assessmentId);
+  if (!assessmentId) return null;
+  const outputId = idOcenZastanych.has(assessmentId)
+    ? idWierszaZastanego(assessmentId)
+    : assessmentId;
+  return `/assessment/outputs/${encodeURIComponent(outputId)}/report`;
+}
