@@ -1,0 +1,80 @@
+            [36m>[39m
+              [0mNPV[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m516 315 zł[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-0.5 text-[11px] text-c-text-muted"[39m
+            [36m>[39m
+              [0mstopa 10 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mIRR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m28,7 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1,52[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mBCR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+      ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx:371:19
+    369|     expect(screen.getByText('PI')).toBeInTheDocument();
+    370|     expect(screen.getByText('BCR')).toBeInTheDocument();
+    371|     expect(screen.getByText('Discounted Payback')).toBeInTheDocument();
+       |                   ^
+    372|   });
+    373|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 16 passed (17)
+      Tests  1 failed | 87 passed (88)
+   Start at  16:29:12
+   Duration  5.06s (transform 12.77s, setup 3.43s, import 21.84s, tests 4.84s, environment 18.19s)
+
+JSON report written to /private/tmp/wt-11r4/junit.xml
+JUNIT report written to /private/tmp/wt-11r4/junit.xml

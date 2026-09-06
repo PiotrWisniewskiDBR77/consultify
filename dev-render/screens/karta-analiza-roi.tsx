@@ -115,7 +115,13 @@ const ODPOWIEDZI: Array<[RegExp, unknown]> = [
 const oryginalnyFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-  if (!url.includes('/api/')) return oryginalnyFetch(input as RequestInfo, init);
+  // Wywołania AI (`/api/ai/**`) idą do PRAWDZIWEGO backendu przez proxy vite —
+  // inaczej „Uzupełnij…" nie miałoby czym wygenerować propozycji i zrzut
+  // pokazywałby atrapę zamiast działającej funkcji. Zapis nadal trafia w stub,
+  // więc żaden realny rekord nie jest dotykany.
+  if (!url.includes('/api/') || url.includes('/api/ai/')) {
+    return oryginalnyFetch(input as RequestInfo, init);
+  }
   const sciezka = url.split('?')[0];
   const trafienie = ODPOWIEDZI.find(([wzorzec]) => wzorzec.test(sciezka));
   // Domyślnie oddajemy kartę — `getRoiCaseCard` czyta klucz `card`, a inne
