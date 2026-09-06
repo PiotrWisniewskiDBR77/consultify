@@ -30,3 +30,48 @@ DATABASE_URL="$DATABASE_PUBLIC_URL" NODE_ENV=development CI=true npx tsx server/
 ```
 
 Kolejność: (1) sprawdź grupy C/D i pozycje „DO DECYZJI”, (2) zachowaj wynik dry-run, (3) po odbiorze uruchom tę samą komendę z `--apply`, (4) uruchom drugi `--apply` i wymagaj `ZMIENIONE: 0`, (5) w razie cofnięcia użyj `--rollback=evidence/higiena-danych/niepasujace-...-manifest.json`. Skrypt archiwizuje tam, gdzie istnieje semantyka archiwum; DELETE wykonuje dopiero po pełnej kopii CSV. Dwa BUG-i rundy 1 (`db9c4193…`, `5a8b614b…`) są wyszukiwane po jednoznacznym prefiksie UUID, a ich zależne wiersze również trafiają do CSV i manifestu przed usunięciem.
+
+### Naprawa: ocena SIRI/ADMA/DRD błędnie klasyfikowana jako pusta
+
+Dry-run z 06.09 na stagingu (D=390) zawierał **1 błąd**: `assessments b901d4a3…` „DRD Assessment -
+Jul 12, 2026” — jedyna ocena właściciela wypełniona w 100% (`answers_json.drd.areas` ma 39
+obszarów) — trafiła do planu z powodem „ocena SIRI/ADMA/DRD z zerem obszarów widocznych dla
+ekranu”. Przyczyna: stara reguła sprawdzała WYŁĄCZNIE trzy sztywne ścieżki jsonb
+(`drd.areas`/`siri.dimensions`/`adma.dimensions`) wprost w SQL — jeśli realny wiersz ma inny
+kształt zapisu (np. starszy import, brak owijki `drd`), `coalesce(...)` widzi same NULL-e i
+wychodzi „pusta” mimo `completion_percent=100`. Naprawione w `niepasujace.ts`
+(`isAssessmentEmptyForScreen`): emptiness liczymy w JS, z `completion_percent` jako
+autorytatywnym sygnałem (kolumna niezależna od kształtu JSON-a) + fallback na dowolny klucz
+`method_*` niepusty, obok dotychczasowych trzech ścieżek. Dowód: `server/tests/higiena-wlasciciela/niepasujace.klasyfikacja.test.ts`
+(jednostkowy, fixture 39-obszarowa, bez bazy) i `server/src/services/__tests__/niepasujace.higiena.pg.test.ts`
+(RealPG, z mutacją „powrót do starej reguły → RED”).
+
+### Filtry CLI (addytywne)
+
+Wszystkie działają razem z `--dry-run`/`--apply`, nie zmieniają izolacji po `organization_id`:
+
+- `--tylko-tabele=conversations,tasks` — ogranicza plan do wskazanych tabel (rozdzielone przecinkiem).
+- `--tylko-powod=<fragment>` — zostawia tylko pozycje, których `reason` zawiera fragment (bez uwzględniania wielkości liter).
+- `--bez-tytul=<regex>` — wyklucza z planu rekordy, których tytuł pasuje do regexu (bez uwzględniania wielkości liter). Chroni np. nazwane pliki właściciela przed przypadkowym trafieniem reguły „typ artefaktu nieobsługiwany”.
+- `--z-zaleznosciami` — pozycje „DO DECYZJI” (mają zależne wiersze bez rozstrzygniętej semantyki archiwum) są w trybie `--apply` rozstrzygane automatycznie: zależne wiersze (np. `task_comments`) trafiają do kopii CSV i są usuwane PRZED usunięciem rekordu głównego, zamiast być pomijane. W dry-run nadal widać pełne „DO DECYZJI (n zależności: tabele)” w wypisie.
+- `--plan-csv=<ścieżka>` — zapisuje wiersze planu (tabela, id, tytuł, data, powód, decyzja) do wskazanego pliku CSV — jedna lista do pokazania właścicielowi, niezależnie od trybu (działa też w `--dry-run`).
+
+Dry-run zawsze wypisuje aktywne filtry w linii `FILTRY: ...` tuż pod nagłówkiem `PLAN`.
+
+### Komenda dla nadzorcy — runda 2, usunięcie 233 pustych wątków + ~100 „Structured sheet draft” + 2 BUG-i z zależnościami
+
+Bez tabeli `assessments` w tej rundzie (po naprawie klasyfikatora nie ma tam kandydatów, ale
+zakres i tak trzymamy jawnie wąski) i z wykluczeniem nazwanych plików XLSX właściciela:
+
+```bash
+DATABASE_URL="$DATABASE_PUBLIC_URL" NODE_ENV=development CI=true npx tsx server/scripts/higiena-wlasciciela/niepasujace.ts \
+  --org=<uuid> \
+  --tylko-tabele=conversations,tasks,v8_output_artifacts \
+  --bez-tytul='FINAL|Financial Model|Portfolio|pustego excela' \
+  --z-zaleznosciami \
+  --plan-csv=evidence/higiena-danych/plan-runda2-<data>.csv \
+  --dry-run
+```
+
+Po akcepcie właściciela na `plan-runda2-<data>.csv` — ta sama komenda z `--apply` zamiast
+`--dry-run`, drugi `--apply` musi dać `ZMIENIONE: 0`.
