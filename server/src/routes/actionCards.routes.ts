@@ -30,7 +30,9 @@ function scope(req: AuthRequest) {
 router.get('/', asyncHandler(async (req: AuthRequest, res: Response) => {
   const status = req.query.status === 'OPEN' || req.query.status === 'CLOSED' ? req.query.status as ActionCardStatus : undefined;
   const sourceKind = ACTION_CARD_SOURCE_KINDS.includes(req.query.sourceKind as ActionCardSourceKind) ? req.query.sourceKind as ActionCardSourceKind : undefined;
-  const cards = await listActionCards(scope(req), { ownerUserId: req.query.ownerUserId ? String(req.query.ownerUserId) : undefined, status, sourceKind });
+  const requestedOwner = req.query.ownerUserId ? String(req.query.ownerUserId) : undefined;
+  const ownerUserId = requestedOwner === 'me' ? scope(req).actorUserId : requestedOwner;
+  const cards = await listActionCards(scope(req), { ownerUserId, status, sourceKind });
   res.json({ ok: true, cards });
 }));
 

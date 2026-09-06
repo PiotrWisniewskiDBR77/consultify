@@ -21,6 +21,13 @@
     "taskCreated": "Task created",
     "taskCreateFailed": "Could not create task"
   },
+  "p9Handoff": {
+    "requestAction": "Hand over to execution",
+    "requested": "The handoff is awaiting acceptance in Inbox.",
+    "notReady": "Complete the handoff package and execution manager first.",
+    "failed": "The initiative could not be handed over to execution.",
+    "acceptanceSection": "For acceptance"
+  },
   "notFoundPage": {
     "title": "Page not found",
     "message": "The address you followed doesn't exist or has moved.",

@@ -9,7 +9,7 @@
  * mount) so the mapping can be render-tested directly against a real
  * StandardPreview mount instead of a source-text grep.
  */
-import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
+import { initiativeSourceLabel } from '../Initiatives/InitiativeSourceLink';
 import type { RelationItem } from '../standard/StandardPreview';
 
 export interface ExecutionSourceRelationInput {
@@ -25,7 +25,7 @@ export function buildExecutionSourceRelations(
   input: ExecutionSourceRelationInput,
   sourceLabelPrefix: string
 ): RelationItem[] {
-  const sourceLabel = input.sourceType ? getSourceDisplayLabel(input.sourceType) : '';
+  const sourceLabel = input.sourceType ? initiativeSourceLabel(input.sourceType) : '';
   if (!sourceLabel) return [];
 
   const sourceFrameworkValue = String(input.sourceFramework || '').trim();

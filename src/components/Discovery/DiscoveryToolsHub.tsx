@@ -113,7 +113,7 @@ import {
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from '../Initiatives/InitiativePreviewV3';
-import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
+import { InitiativeSourceLink } from '../Initiatives/InitiativeSourceLink';
 import {
   FilterChip,
   GridItem,
@@ -3615,12 +3615,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <Zap size={12} className="text-amber-400" />
                     <span>
                       Generated from:{' '}
-                      <span className="text-c-text capitalize">
-                        {getSourceDisplayLabel(
-                          selectedInitiative.sourceType,
-                          i18n.language === 'pl'
-                        )}
-                      </span>
+                      <InitiativeSourceLink sourceType={selectedInitiative.sourceType} sourceId={selectedInitiative.sourceId} isPolish={i18n.language === 'pl'} />
                     </span>
                     {selectedInitiative.sourceId && (
                       <span className="text-c-text-muted">

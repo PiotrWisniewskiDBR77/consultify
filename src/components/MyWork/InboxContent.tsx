@@ -63,6 +63,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { usePersistedColumnWidths } from '@/components/MyWork/shared/usePersistedColumnWidths';
+import { HandoffAcceptanceQueue } from '@/components/MyWork/HandoffAcceptanceQueue';
+import { InboxActionCards } from '@/components/MyWork/InboxActionCards';
 import {
   type TableSettingsColumn,
   TableSettingsPopover,
@@ -4219,6 +4221,11 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       <div className="flex-1 flex min-h-0 gap-1.5">
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
+          <section aria-label={t('p9Handoff.acceptanceSection', 'Do akceptacji')}>
+            <h2 className="px-4 pt-3 text-sm font-semibold text-c-text">{t('p9Handoff.acceptanceSection', 'Do akceptacji')}</h2>
+            <HandoffAcceptanceQueue />
+          </section>
+          <InboxActionCards />
           {loading ? (
             <SharedLoadingState template="list" rows={6} />
           ) : loadError ? (

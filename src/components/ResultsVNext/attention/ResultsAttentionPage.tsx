@@ -36,6 +36,7 @@
  */
 import { Blocks } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ResultsActionCards } from '../ResultsActionCards';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -236,6 +237,7 @@ export const ResultsAttentionPage: React.FC = () => {
           setSelectedRowId(null);
         }}
       >
+        <ResultsActionCards />
         <div className="h-full flex overflow-hidden">
           <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
             <StandardTable

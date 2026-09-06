@@ -21,6 +21,13 @@
     "taskCreated": "Zadanie utworzone",
     "taskCreateFailed": "Nie udało się utworzyć zadania"
   },
+  "p9Handoff": {
+    "requestAction": "Przekaż do realizacji",
+    "requested": "Przekazanie czeka na akceptację w Skrzynce.",
+    "notReady": "Najpierw uzupełnij pakiet przekazania i kierownika realizacji.",
+    "failed": "Nie udało się przekazać inicjatywy do realizacji.",
+    "acceptanceSection": "Do akceptacji"
+  },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
     "message": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",

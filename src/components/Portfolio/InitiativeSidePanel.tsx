@@ -36,7 +36,7 @@ import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config
 import { Api } from '../../services/api';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
 import { formatRoiDisplay } from '../../utils/safeFormat';
-import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
+import { InitiativeSourceLink } from '../Initiatives/InitiativeSourceLink';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
 import { TaskDetailModal } from '../TaskDetailModal';
 
@@ -400,9 +400,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
             {(initiative as any).sourceType && (
               <div className="flex items-center justify-between py-2 border-t border-slate-200 dark:border-navy-700">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Source</span>
-                <span className="text-sm font-medium text-navy-900 dark:text-white">
-                  {getSourceDisplayLabel((initiative as any).sourceType)}
-                </span>
+                <InitiativeSourceLink sourceType={(initiative as any).sourceType} sourceId={(initiative as any).sourceId} />
               </div>
             )}
             {(initiative as any).sourceId && (

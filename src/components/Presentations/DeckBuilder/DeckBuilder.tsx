@@ -14,7 +14,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 /* `UnifiedChatPanel` NIE jest tu już importowany (2026-09-01, „jedna Teresa"):
    prezentacja nie renderuje własnego czatu. Komponent żyje dalej — to on JEST
    jednym oknem Teresy, otwieranym przez `openGlobalTeresa()`. */
-import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
+import { InitiativeSourceLink } from '@/components/Initiatives/InitiativeSourceLink';
 import {
   type ArtifactCommandContext,
   ArtifactContextCommandSurface,
@@ -2199,7 +2199,7 @@ export const DeckBuilder: React.FC = () => {
                     }
                     className="rounded-full border border-c-border-subtle/[0.08] bg-c-surface/[0.04] px-3 py-1 text-[11px] font-medium text-c-text hover:border-blue-400 dark:hover:border-blue-500/50"
                   >
-                    {getSourceDisplayLabel(bl.sourceType)}: {bl.sourceId}
+                    <InitiativeSourceLink sourceType={bl.sourceType} sourceId={bl.sourceId} />
                   </button>
                 ))}
               </div>
