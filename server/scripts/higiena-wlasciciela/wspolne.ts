@@ -51,7 +51,7 @@ export function writeBackupCsv(table: string, rows: Record<string, unknown>[]): 
   fs.writeFileSync(p, 'snapshot_json\n' + rows.map((r) => csvCell(JSON.stringify(r))).join('\n') + '\n'); return p;
 }
 export async function columns(c: PoolClient, table: string): Promise<string[]> {
-  return (await c.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 ORDER BY ordinal_position`, [table])).rows.map(x => x.column_name);
+  return (await c.query<{ column_name: string }>(`SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 AND is_generated='NEVER' ORDER BY ordinal_position`, [table])).rows.map(x => x.column_name);
 }
 export async function restore(c: PoolClient, manifest: Manifest): Promise<number> {
   let n = 0;
