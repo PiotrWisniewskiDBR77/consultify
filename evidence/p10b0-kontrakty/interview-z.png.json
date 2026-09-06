@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3111/interview?tab=sessions&cardContract=1",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Sesje",
+  "css=tbody tr:first-child td:nth-child(2)"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSesje\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nNowa sesja\nWszystkie\n10\nW trakcie\n2\nWysłane\n0\nZatwierdzone\n8\nAktywne\nArchiwum\nKosz\n\t\nNAZWA\n\t\nSZABLON\n\t\nPRZYDZIELONY\n\t\nSTATUS\n\t\nPOSTĘP\n\t\nTERMIN\n\t\nWYSŁANO\n\t\n\n\t\nInbox — Quick assessment (my assignment)\n\t\n—\n\t\nNieprzypisane\n\t\nW trakcie\n\t\n40%\n\t\n—\n\t\n—\n\t\n\n\t\nSubmitted — Cost baseline (awaiting approval)\n\t\n—\n\t\nNieprzypisane\n\t\nW trakcie\n\t\n60%\n\t\n—\n\t\n—\n\t\n\n\t\nDiscovery — Data & metrics trust (Ops/Finance)\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n70%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: Governance and escalation map\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: Customer-facing SLA reliability\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: People and adoption readiness\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\n\n\t\nDiscovery — Operations bottlenecks (Plant A)\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n80%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: IT integration constraints\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: Finance metrics and margin leakage\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\n\n\t\nSeed session: Ops flow & approvals\n\t\n—\n\t\nNieprzypisane\n\t\nZakończony\n\t\n100%\n\t\n—\n\t\n—\n\t\nInbox — Quick assessment (my assignment)\nOtwórz\nW trakcie\nSesja\nPostęp: 40%\n02/09/2026\nPRZEBIEG\nWłaściwość\tWartość\nOdpowiedzi\t4/10\nStart\t02/09/2026\nAktywność\t04/09/2026\nWłaściciel\taudyt@dbr77.local\nAI\nPodsumuj\nRyzyka\nNastępne kroki\nPOWIĄZANIA\nOrganizacja: DBR77\nPrzypomnij\n+1 dzień\n+3 dni\n+7 dni\nArchiwizuj",
+ "kiedy": "2026-09-06T19:15:08.257Z"
+}

@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3111/my-work/decisions",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=DBR77: Czy włączamy publiczne linki do raportów?",
+  "text=Otwórz",
+  "text=Sekcje"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nDecyzje\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nDBR77: Czy włączamy publiczne linki do raportów?\nDBR77: Czy włączamy publiczne linki do raportów?\nEskalowana\nZapisano\nAI\nSekcje\nZESTAW DOMYŚLNY\nStandardowy\nMinimalny\nZakres decyzji\nOpcje i trade-offy\nRyzyko i wpływ\nKonsekwencje\nRACI i eskalacja\nKomentarze\nZałączniki i powiązania\nLogi aktywności\nPrzywróć domyślne\nEdycja\nPodgląd\nPracuj z AI\nZakres decyzji\nOpcje i trade-offy\nRyzyko i wpływ\nKonsekwencje\nRACI i eskalacja\nZałączniki i powiązania\nZakres decyzji\nEdytowane\nDOTYCZYBrak podpiętego elementu\nZAKRES DECYZJI\nAI\nKONTEKST UZUPEŁNIAJĄCY\nAI\nRegeneruj\nEdytuj\nZaakceptuj\nPowiązany kontekst\nWykryte powiązania AI\nZgłoś do recenzji\nAKCJE\nZatwierdź decyzję\nOdrzuć\nWięcej akcji\n4\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tEskalowana\nPrzepływ pracy\tPropozycja\nWaga\tŚredni\nTermin\t04 wrz 2026\nDecydent\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n1",
+ "kiedy": "2026-09-06T19:09:23.224Z"
+}

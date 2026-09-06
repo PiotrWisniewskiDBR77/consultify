@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3111/interview?tab=sessions",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Sesje",
+  "text=Discovery — Operations bottlenecks (Plant A)",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSesja: Discovery — Operations bottlenecks (Plant A)\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nDiscovery — Operations bottlenecks (Plant A)\nWróć\n\nDiscovery — Operations bottlenecks (Plant A)\n\nObszar roboczy pytania\n\nZatwierdzony\n7/10\n70%\nZapisz\nLista\n\nPYTANIA\n\n7/10\n\n3 do uzupełnienia\n\nWhat is the main business objective for the next 12 months?\nReduce lead time by 20% and improve OTIF to 95%.\n2\nWho owns the decision-making for exceptions?\nWhere is the biggest bottleneck today?\nApprovals between planning and production plus lon…\n4\nHow do you measure performance today?\nWhich systems support planning and execution?\nERP (SAP), MES (basic), Excel for scheduling adjus…\nWhat integrations are missing?\nNo API layer; manual exports/imports weekly.\nWhere do skills/training gaps show up most?\nShift leads rely on tribal knowledge; limited trai…\n8\nHow do employees react to process changes?\nWhat constraints apply to investments?\nPayback must be under 18 months; 2026 capex is con…\nHow do you measure ROI on improvements?\nAd-hoc; no standard benefits register.\nPrzegląd\nZapisz i wyjdź\n2\nz 10\nTekst\nWho owns the decision-making for exceptions?\n\nDODATKOWY KONTEKST\n\nZapisano\n|\nEsc=zapisz · Enter=dalej\nWstecz\nNastępne",
+ "kiedy": "2026-09-06T19:22:26.783Z"
+}
