@@ -1,0 +1,22 @@
+{
+ "url": "http://127.0.0.1:3102/interview?tab=insights",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Wnioski",
+  "css=tbody tr:first-child td:nth-child(2)",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nWniosek: Example: failed insight (for UI states)\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nExample: failed insight (for UI states)\nExample: failed insight (for UI states)\nBłąd\nZapisano\nKonwertuj na inicjatywę\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nWGLĄD\nPodsumowanie\nOdczyt konsultingowy\nKluczowe wnioski\nRekomendacje\nMIĘDZY WIERSZAMI\nPorównanie cytatów\nDynamika władzy\nNapięcia\nWzorce\nModele myślowe\nDOWODY\nŹródła\n1\nMomenty\nBank cytatów\nMapa interesariuszy\nWiarygodność źródeł\nDOSTARCZANE\nPakiet raportu\n4\nNarracja konsultingowa\nMemo zarządcze\nAUDYT\nJakość i zaufanie\n2\nPokaż wszystkie sekcje (7)\nOznacz gotowe\nPODSUMOWANIE\nTekst redagowany ręcznie. Zapisuje się osobno od treści z AI — regeneracja go nie kasuje.\nAI\nZapisz sekcję\nBłąd\n\nCzytaj jak brief konsultingowy\n\nThis insight is intentionally marked as failed to demonstrate UI states.\nODPOWIEDZI OFICJALNE\n2\nPROBLEMY / RYZYKA\n0\nSYGNAŁY / SZANSE\n0\nZgłoś do recenzji\nAKCJE\nSzkic\nGenerowanie\nUkończone\nW recenzji\nOpublikowano\n\nWybierz stan, aby przenieść wniosek dalej w cyklu życia.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\t\nBłąd\n\nŹródło\t1 sesji\nData\t29 sie 2026\nPewność\t—\nUstalenia\t0\nEtykieta\tRekomendacje\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\nKOMENTARZE\nHISTORIA\nExample: failed insight (for UI states)\nPodsumowanie\n\nThis insight is intentionally marked as failed to demonstrate UI states.\n\nOdczyt konsultingowy\n\nThis insight is intentionally marked as failed to demonstrate UI states.\n\nNarracja konsultingowa\n\nThis insight is intentionally marked as failed to demonstrate UI states.\n\nMemo zarządcze\n\nThis insight is intentionally marked as failed to demonstrate UI states.\n\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument",
+ "kiedy": "2026-09-06T17:39:31.556Z"
+}

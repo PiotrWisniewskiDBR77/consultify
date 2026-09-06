@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3102/my-work/ideas/seed_idea_map_8ae01e47_ai_quality/workspace/whiteboard",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nWhiteboard\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nNowy pomysł\nWhiteboard\nPomysł\nPanel\nAI\nTablica\nWstaw\nAI monitoring jakości\nProblem\nPóźne wykrywanie defektów\nBrak wspólnej definicji jakości\nCel / KPI\nReklamacje: -20%\nMTTR: -30%\nOpcje\nAnomaly detection na sygnałach procesowych\nComputer vision na stanowisku kontroli\nDowody\nBaseline danych i definicje metryk jakości\nRyzyka\nDrift modelu + false positives\nEksperymenty\nPilot: 1 linia / 1 usługa, 2 tygodnie\n54%\nSkładnik\nTeresa\nPrzejdź do pola wiadomości\nTERESA\n\nZapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.\n\nZAZNACZANIE",
+ "kiedy": "2026-09-06T17:34:35.591Z"
+}

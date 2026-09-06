@@ -1,0 +1,26 @@
+{
+ "url": "http://127.0.0.1:3102/audit-programs/reports/arep_d0c9890d-75db-4750-8a16-807c35ffdafd",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Raporty",
+  "text=Raport poaudytowy — Output",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "klik nieudany: text=Pracuj z AI: locator.click: Timeout 8000ms exceeded."
+ ],
+ "bledyKonsoli": [
+  "klik nieudany: text=Pracuj z AI: locator.click: Timeout 8000ms exceeded."
+ ],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nRaporty\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nAudyty\nRaporty\nRaport poaudytowy — Output — Audyt procesu zakupowego Q3 (dane pokazowe)\nRaport poaudytowy — Output — Audyt procesu zakupowego Q3 (dane pokazowe)\nSzkic\nZapisano\nZatwierdź\nStreszczenie zarządcze\nZakres i cele\nMetodyka\nOgraniczenia\nWniosek ogólny\nUstalenia wg istotności\nUstalenia wg obszaru/procesu\nOdniesienia do obiektywnych dowodów\nWnioski systemowe\nPlan działań korygujących\nPlan weryfikacji\nZałączniki\nMacierz traceability\n\nAudyt nie zidentyfikował żadnych niezgodności w zbadanym zakresie — wszystkie zbadane kryteria zostały ocenione jako zgodne lub niedotyczące. Audyt wykonano wg pakiet audytowy (klasyfikacja: materiał demonstracyjny, źródło: Procedura demonstracyjna Consultify — audyt procesu), obejmując 12 kryteriów. Zespół audytowy liczył 2 osoby/osób.\n\nAKCJE\nZatwierdź\nOpublikuj\n\nWymagany status „zatwierdzony” (obecny: Szkic).\n\nPobierz DOCX\nPobierz PDF\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nProgram\tAudyt procesu zakupowego Q3 (dane pokazowe)\nRodzaj\tRaport audytu\nWersja\t1\nStatus\t\nSzkic\n\nJęzyk\t—\nOdbiorca\t—\nPoufność\t—\nData zatwierdzenia\t—\nData publikacji\t—\nZaktualizowano\t06/09/2026",
+ "kiedy": "2026-09-06T17:51:50.380Z"
+}
