@@ -1,0 +1,20 @@
+{
+ "url": "http://localhost:3101/execution?tab=reports&view=table",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Jedna strona dla sponsora · 06.09.2026",
+  "css=button:has-text('Otwórz')"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nWszystkie\n6\nTygodniowe\n0\nMiesięczne\n0\nNa żądanie\n0\nSponsorskie\n2\nWymaga wygenerowania\n0\nWymaga przeglądu\n4\nCzęściowe/nieaktualne\n0\nOpublikowane\n1\nNieudane\n0\nOstatnie uruchomienia\n4\nWróć do rejestru raportów\n\nZARZĄD\n\nJedna strona dla sponsora · 06.09.2026\n\nZamrożona migawka danych realizacji\n\nStan danych na\n06.09.2026\nOkres\n31.08.2026 – 07.09.2026\nStatus\nSzkic\nAutor\nAudyt Nocny\n\nOcena RAG: Czerwony\n10 blokad, 20 sygnałów krytycznych.\n\nPobierz DOCX\nPobierz PDF\nOpublikuj\n\nInicjatywy w realizacji\n\n23\n\nZadania po terminie\n\n20\n\nZadania zablokowane\n\n10\n\nDecyzje do rozstrzygnięcia\n\n25\n\n13 po terminie\n\nNa czas\n\n73%\n\nOtwarte pozycje RAID\n\n16\n\nPostęp\n\nW realizacji 23 inicjatyw. Domknięte w okresie: 6 zadań. Po terminie: 20. Ocena okresu: Czerwony.\n\nTOP 3 ryzyka\nRYZYKO / PROBLEM\tTYP\tWAGA\tWYNIK\nSAP integration middleware timeout errors\tProblem\tKrytyczna\t20\nGDPR non-compliance penalty\tRyzyko\tKrytyczna\t18\nAPI Gateway depends on Auth Service migration\tZależność\tWysoka\t16\nNajbliższe kamienie\nINICJATYWA\tKONIEC WG PLANU\tOSOBA\tODCHYLENIE\nCompliance & GDPR Audit\t20.09.2026\tKatarzyna Wójcik\t8 dni\nSecurity Hardening\t25.09.2026\tEwa Nowicka\t10 dni\nAPI Gateway v2\t05.10.2026\tKatarzyna Wójcik\t15 dni\nVendor Consolidation\t10.10.2026\tPaweł Mazur\t22 dni\nProcess Automation — RPA\t15.10.2026\tJan Zieliński\t25 dni\nDecyzje od sponsora\nDECYZJA\tOSOBA\tTERMIN\tPO TERMINIE\tESKALACJA\nSAP go-live date rebaseline approval\tAnna Kowalska\t24.08.2026\t12 dni\tCzerwona\nDevOps toolchain consolidation\tMarta Kamińska\t04.09.2026\t1 dni\tŻółta\nData platform — Databricks vs Snowflake\tMarek Nowak\t29.08.2026\t7 dni\tŻółta\nTraining budget increase for upskilling\tTomasz Lewandowski\t03.09.2026\t2 dni\tŻółta\nScope reduction for Legacy Decommission\tAnna Kowalska\t28.08.2026\t8 dni\tCzerwona\nRPA vendor change to Automation Anywhere\tJan Zieliński\t02.09.2026\t3 dni\tŻółta\nOsiągnięcia okresu\nDBR77: Zweryfikować uprawnienia i role (RBAC)\nProcess mapping workshop\nTraining curriculum design\nSet up Delta Lake storage\nSet up AKS cluster",
+ "kiedy": "2026-09-06T17:41:44.621Z"
+}

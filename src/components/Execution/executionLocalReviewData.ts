@@ -454,7 +454,7 @@ export const executionReviewReportDefinitions = [
       {
         definitionVersion: 2,
         state: 'PUBLISHED',
-        name: 'Weekly Execution Pack',
+        name: 'Tygodniowy pakiet realizacji',
         purpose: 'Cotygodniowy przegląd postępu, blokad i decyzji',
         audience: ['PMO', 'Sponsorzy'],
         cadence: 'WEEKLY',
@@ -483,7 +483,7 @@ export const executionReviewReportDefinitions = [
       {
         definitionVersion: 1,
         state: 'VALIDATED',
-        name: 'Capacity Utilization Report',
+        name: 'Obłożenie zasobów',
         purpose: 'Ocena obciążenia i konfliktów zasobowych',
         audience: ['PMO', 'Liderzy zespołów'],
         cadence: 'MONTHLY',

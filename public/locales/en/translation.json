@@ -42965,5 +42965,372 @@
       "zgodaTytul": "Run AI?",
       "postep": "Field {{i}} of {{n}}"
     }
+  },
+  "executionReports": {
+    "definitionsHeading": "Report definitions",
+    "definitionsHelp": "Four definitions — one per reporting level — produce a snapshot. The rest stay visible in the catalog and arrive in Wave 2.",
+    "subtitle": "Frozen snapshot of delivery data",
+    "back": "Back to the report register",
+    "level": {
+      "OWNER": "Initiative owner",
+      "PMO": "PMO",
+      "STEERCO": "Steering committee",
+      "BOARD": "Board",
+      "CONTRACT": "Runtime contract"
+    },
+    "ragLabel": {
+      "GREEN": "Green",
+      "AMBER": "Amber",
+      "RED": "Red",
+      "GREY": "Grey (data gap)"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "state": {
+      "active": "Active"
+    },
+    "format": {
+      "SCREEN": "Screen",
+      "DOCX": "DOCX",
+      "PDF": "PDF"
+    },
+    "wave2": {
+      "chip": "Wave 2",
+      "title": "Available in Wave 2",
+      "body": "This definition is visible in the catalog but does not generate a snapshot yet."
+    },
+    "action": {
+      "newReport": "New report",
+      "newContractRun": "Report contract (advanced)",
+      "generate": "Generate report",
+      "openReport": "Open report",
+      "downloadDocx": "Download DOCX",
+      "downloadPdf": "Download PDF",
+      "publish": "Publish"
+    },
+    "field": {
+      "asOf": "Data as of",
+      "period": "Period",
+      "status": "Status",
+      "author": "Author",
+      "rag": "RAG rating"
+    },
+    "col": {
+      "task": "Task",
+      "decision": "Decision",
+      "owner": "Owner",
+      "due": "Due",
+      "slip": "Overdue",
+      "overdue": "Overdue",
+      "status": "Status",
+      "escalation": "Escalation",
+      "initiative": "Initiative",
+      "plannedEnd": "Planned end",
+      "deviation": "Deviation",
+      "progress": "Progress",
+      "rag": "RAG",
+      "risk": "Risk / issue",
+      "type": "Type",
+      "severity": "Severity",
+      "score": "Score",
+      "audience": "Audience",
+      "cadence": "Cadence",
+      "formats": "Formats",
+      "definition": "Definition"
+    },
+    "metric": {
+      "initiatives": "Initiatives in delivery",
+      "overdueTasks": "Overdue tasks",
+      "blocked": "Blocked tasks",
+      "openDecisions": "Decisions to resolve",
+      "overdueDecisions": "{{count}} overdue",
+      "onTime": "On time",
+      "risks": "Open RAID items"
+    },
+    "value": {
+      "days": "{{count}} days",
+      "unassigned": "Unassigned",
+      "noData": "no data",
+      "none": "none",
+      "noReason": "no stated reason"
+    },
+    "rag": {
+      "green": "No blockers and nothing overdue.",
+      "amber": "{{tasks}} tasks and {{decisions}} decisions overdue.",
+      "red": "{{blocked}} blockers, {{signals}} critical signals.",
+      "grey": "Cannot be rated — no source data for this period."
+    },
+    "empty": {
+      "none": "No data for this period.",
+      "unavailable": "No data — the source did not respond.",
+      "milestones": "No data — milestones do not exist as a separate object yet (package R3); initiative end dates are shown instead.",
+      "definitions": {
+        "title": "No report definitions",
+        "body": "The catalog did not respond. Refresh the screen or create a versioned contract definition."
+      },
+      "runs": {
+        "title": "No reports",
+        "body": "Click “New report”, pick a level and a period — the snapshot is built from real delivery data."
+      }
+    },
+    "narrative": {
+      "ownerProgress": "{{initiatives}} initiatives are in delivery. Open tasks: {{open}}, of which {{overdue}} are overdue. On-time indicator: {{onTime}}.",
+      "weeklyProgress": "Period {{start}} – {{end}}. Tasks closed: {{done}}. Open and overdue: {{overdue}}. Blocked: {{blocked}}. Decisions waiting: {{decisions}}.",
+      "confidence": "On time: {{onTime}}. Initiatives with a delay signal: {{withSignals}} of {{total}}. Open RAID items: {{risks}}, of which high-score: {{highRisks}}.",
+      "program": "Period rating: {{rag}} — {{reason}} Largest deviation: {{worst}}. Recommendation: clear blockers on {{blocked}} tasks and close {{overdueDecisions}} overdue decisions before the next review.",
+      "sponsorProgress": "{{initiatives}} initiatives in delivery. Closed in the period: {{done}} tasks. Overdue: {{overdue}}. Period rating: {{rag}}."
+    },
+    "bullet": {
+      "escalated": "Escalation: {{title}} ({{owner}})",
+      "signal": "{{name}} — {{type}}, {{days}} days of deviation ({{reason}})"
+    },
+    "wizard": {
+      "title": "New report",
+      "help": "Pick the reporting level and the period. The snapshot is built from real organization data and freezes the state as of the generation day.",
+      "definition": "Report definition",
+      "periodStart": "Period from",
+      "periodEnd": "Period to",
+      "generate": "Generate snapshot",
+      "generating": "Generating snapshot…"
+    },
+    "preview": {
+      "contract": "Report content",
+      "scope": "Report scope",
+      "noSections": "No sections",
+      "noSources": "No sources"
+    },
+    "recommendation": {
+      "active": "Ready — generates a snapshot from real data.",
+      "wave2": "Visible in the catalog, generation lands in Wave 2.",
+      "snapshot": "Frozen snapshot — open the document, download DOCX or PDF."
+    },
+    "section": {
+      "metrics": "Metrics"
+    },
+    "error": {
+      "download": "Could not download the file.",
+      "publish": "Could not publish the report."
+    },
+    "definitions": {
+      "initiative-card": {
+        "name": "Initiative Delivery Card",
+        "audience": "Initiative owner",
+        "cadence": "Weekly",
+        "scope": "One initiative in delivery — owner view",
+        "sections": {
+          "0": "Progress and schedule",
+          "1": "Milestones",
+          "2": "Overdue tasks",
+          "3": "Blockers",
+          "4": "Decisions I owe"
+        }
+      },
+      "weekly-exec": {
+        "name": "Weekly Execution Pack",
+        "audience": "PMO, team leads",
+        "cadence": "Weekly",
+        "scope": "All active initiatives in the current execution cycle",
+        "sections": {
+          "0": "Progress summary",
+          "1": "Blockers and escalations",
+          "2": "Overdue items",
+          "3": "Next milestones",
+          "4": "Decisions needed"
+        }
+      },
+      "program-health": {
+        "name": "Program Health Summary",
+        "audience": "Steering committee",
+        "cadence": "Bi-weekly",
+        "scope": "Per-initiative RAG and aggregate program health",
+        "sections": {
+          "0": "RAG per initiative",
+          "1": "Priority alerts",
+          "2": "Delivery confidence",
+          "3": "Narrative",
+          "4": "Decisions to take"
+        }
+      },
+      "sponsor-onepager": {
+        "name": "Sponsor One-Pager",
+        "audience": "Executive sponsors",
+        "cadence": "On demand",
+        "scope": "Concise executive summary of portfolio state",
+        "sections": {
+          "0": "Overall progress",
+          "1": "Top 3 risks",
+          "2": "Next milestones",
+          "3": "Decisions required from sponsor",
+          "4": "Key achievements"
+        }
+      },
+      "milestone-slippage": {
+        "name": "Milestone Slippage Report",
+        "audience": "PMO, sponsors",
+        "cadence": "Weekly",
+        "scope": "All milestones with baseline vs forecast drift",
+        "sections": {
+          "0": "Slipped milestones",
+          "1": "Drift by initiative",
+          "2": "Root cause analysis",
+          "3": "Forecast accuracy trend",
+          "4": "Recovery timeline"
+        }
+      },
+      "decision-backlog": {
+        "name": "Decision Backlog",
+        "audience": "PMO, decision owners",
+        "cadence": "Weekly",
+        "scope": "All pending decisions and approval age",
+        "sections": {
+          "0": "Pending decisions list",
+          "1": "Aging histogram",
+          "2": "Decision-latency risk",
+          "3": "Accountability gaps",
+          "4": "Downstream blocked work"
+        }
+      },
+      "capacity-utilization": {
+        "name": "Capacity Utilization Report",
+        "audience": "Resource managers, PMO",
+        "cadence": "Monthly",
+        "scope": "Per-person and per-team workload vs capacity",
+        "sections": {
+          "0": "Utilization by person",
+          "1": "Team averages",
+          "2": "Overload alerts",
+          "3": "Underutilized resources",
+          "4": "Capacity horizon (4 weeks)"
+        }
+      },
+      "blockers-recovery": {
+        "name": "Blockers & Recovery Report",
+        "audience": "PMO, delivery managers",
+        "cadence": "On demand",
+        "scope": "All blocked initiatives and downstream blast radius",
+        "sections": {
+          "0": "Active blockers list",
+          "1": "Blast radius per blocker",
+          "2": "Owner accountability",
+          "3": "Recovery actions proposed",
+          "4": "Dependency chain impact"
+        }
+      },
+      "cross-dependency": {
+        "name": "Cross-Initiative Dependency Report",
+        "audience": "PMO, architects",
+        "cadence": "Bi-weekly",
+        "scope": "Inter-initiative dependency graph and cascade risk",
+        "sections": {
+          "0": "Dependency map",
+          "1": "Critical path",
+          "2": "Cascade impact analysis",
+          "3": "Dependency health",
+          "4": "External dependency risks"
+        }
+      },
+      "delivery-confidence": {
+        "name": "Delivery Confidence Report",
+        "audience": "Steering committee, sponsors",
+        "cadence": "Monthly",
+        "scope": "Risk-adjusted delivery forecast with confidence scoring",
+        "sections": {
+          "0": "Confidence per initiative",
+          "1": "Trend direction",
+          "2": "Risk-adjusted forecast",
+          "3": "Sponsor-ready narrative",
+          "4": "Recommended governance actions"
+        }
+      },
+      "budget-variance": {
+        "name": "Budget Variance Report",
+        "audience": "Finance, sponsors",
+        "cadence": "Monthly",
+        "scope": "Planned vs actual budget per initiative",
+        "sections": {
+          "0": "Aggregate budget status",
+          "1": "Per-initiative variance",
+          "2": "Forecast overshoot alerts",
+          "3": "Burn rate trend",
+          "4": "Cost category breakdown"
+        }
+      },
+      "monthly-pmo": {
+        "name": "Monthly PMO Review",
+        "audience": "PMO director, sponsors",
+        "cadence": "Monthly",
+        "scope": "Full portfolio month-over-month trends",
+        "sections": {
+          "0": "Portfolio trend (MoM)",
+          "1": "Milestone slippage summary",
+          "2": "Budget variance",
+          "3": "Delivery confidence",
+          "4": "Capacity utilization overview"
+        }
+      }
+    },
+    "initiativeStatus": {
+      "IN_EXECUTION": "In delivery",
+      "EXECUTING": "In delivery",
+      "IN_PROGRESS": "In progress",
+      "BLOCKED": "Blocked",
+      "TRACKING": "Tracking",
+      "SCHEDULED": "Scheduled",
+      "APPROVED": "Approved",
+      "DRAFT": "Draft",
+      "CLOSED": "Closed",
+      "REJECTED": "Rejected",
+      "PENDING_APPROVAL": "Pending approval"
+    },
+    "taskStatus": {
+      "TODO": "To do",
+      "IN_PROGRESS": "In progress",
+      "BLOCKED": "Blocked",
+      "REVIEW": "In review",
+      "DONE": "Done",
+      "COMPLETED": "Done",
+      "CANCELLED": "Cancelled"
+    },
+    "escalation": {
+      "NONE": "None",
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical",
+      "PENDING": "Pending",
+      "ESCALATED": "Escalated",
+      "AMBER": "Amber",
+      "RED": "Red"
+    },
+    "deviation": {
+      "LATE_START": "late start",
+      "OVERDUE": "overdue",
+      "SLIP": "slip",
+      "NO_MOVEMENT": "no movement"
+    },
+    "raidType": {
+      "RISK": "Risk",
+      "ISSUE": "Issue",
+      "DEPENDENCY": "Dependency",
+      "ASSUMPTION": "Assumption",
+      "ACTION": "Action"
+    },
+    "severity": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "slipReason": {
+      "RAID_HIGH_RISK": "active high or critical risk",
+      "NO_MOVEMENT": "no movement on tasks",
+      "BLOCKED_TASKS": "blocked tasks",
+      "DEPENDENCY": "external dependency",
+      "CAPACITY": "no available capacity",
+      "MISSING_DATES": "missing plan dates",
+      "OPEN_DECISIONS": "unresolved decisions"
+    }
   }
 }

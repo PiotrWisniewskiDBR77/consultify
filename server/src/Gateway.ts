@@ -265,6 +265,7 @@ import raidGovernanceRoutes from './routes/raidGovernance.routes.js';
 import rapidleanRoutes from './routes/rapidlean.routes.js';
 import realtimePlatformRoutes from './routes/realtime-platform.routes.js';
 import referralsRoutes from './routes/referrals.routes.js';
+import executionReportsRoutes from './routes/executionReports.routes.js';
 import reportBuilderRoutes from './routes/report-builder.routes.js';
 import reportBuilderPublicRoutes from './routes/report-builder-public.routes.js';
 import reportCommentsRoutes from './routes/report-comments.routes.js';
@@ -1198,6 +1199,11 @@ export class ApiGateway {
         highRiskSurfaceGuard({ categories: ['upload', 'export', 'public_share'] }),
         reportBuilderRoutes
       );
+      // 1.12-R4 (DEC-427) — migawki raportów Realizacji na 4 poziomach. Osobny prefiks:
+      // katalog definicji zostaje w `report_definitions` (czyta go ta trasa), a treść
+      // migawki nie mieści się w atestacyjnym `runtime-v1/report-runs` (patrz nagłówek
+      // `executionReports.routes.ts`). Auth (verifyToken/isAuthenticated) jest w routerze.
+      app.use('/api/execution-reports', executionReportsRoutes);
       app.use('/api/reports-v4', reportEnterpriseRoutes);
       app.use(
         '/api/report-import',

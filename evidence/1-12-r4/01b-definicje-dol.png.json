@@ -1,0 +1,19 @@
+{
+ "url": "http://localhost:3101/execution?tab=reports&view=table",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Definicje"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": "text=Zdrowie programu",
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nWszystkie\n14\nTygodniowe\n5\nMiesięczne\n5\nNa żądanie\n2\nSponsorskie\n6\nWymaga wygenerowania\n5\nWymaga przeglądu\n1\nCzęściowe/nieaktualne\n0\nOpublikowane\n1\nNieudane\n0\nOstatnie uruchomienia\n0\nRaporty\n\nZatwierdzone, odtwarzalne migawki danych z realizacji.\n\nNowa definicja\nNowy raport\nKontrakt raportu (zaawansowane)\nRaporty\nDefinicje\nDefinicje raportów\n\nCztery definicje — po jednej na poziom raportowania — generują migawkę. Pozostałe są widoczne w katalogu i wchodzą w Fali 2.\n\nDEFINICJA RAPORTU\n\t\nPOZIOM\n\t\nKADENCJA\n\t\nODBIORCY\n\t\nSTATUS\n\t\n\n\nBlokady i plan odzyskania\n\t\nPMO\n\t\nNa żądanie\n\t\nPMO, kierownicy dostarczania\n\t\nFala 2\n\t\n\n\nWariancja budżetu\n\t\nKomitet sterujący\n\t\nMiesięcznie\n\t\nFinanse, sponsorzy\n\t\nFala 2\n\t\n\n\nObłożenie zasobów\n\t\nPMO\n\t\nMiesięcznie\n\t\nKierownicy zasobów, PMO\n\t\nFala 2\n\t\n\n\nZależności między inicjatywami\n\t\nPMO\n\t\nCo 2 tygodnie\n\t\nPMO, architekci\n\t\nFala 2\n\t\n\n\nZaległe decyzje\n\t\nPMO\n\t\nTygodniowo\n\t\nPMO, właściciele decyzji\n\t\nFala 2\n\t\n\n\nPewność dowiezienia\n\t\nKomitet sterujący\n\t\nMiesięcznie\n\t\nKomitet sterujący, sponsorzy\n\t\nFala 2\n\t\n\n\nKarta realizacji\n\t\nWłaściciel inicjatywy\n\t\nTygodniowo\n\t\nWłaściciel inicjatywy\n\t\nAktywna\n\t\n\n\nPoślizg kamieni milowych\n\t\nPMO\n\t\nTygodniowo\n\t\nPMO, sponsorzy\n\t\nFala 2\n\t\n\n\nMiesięczny przegląd PMO\n\t\nZarząd\n\t\nMiesięcznie\n\t\nDyrektor PMO, sponsorzy\n\t\nFala 2\n\t\n\n\nZdrowie programu\n\t\nKomitet sterujący\n\t\nCo 2 tygodnie\n\t\nKomitet sterujący\n\t\nAktywna\n\t\n\n\nJedna strona dla sponsora\n\t\nZarząd\n\t\nNa żądanie\n\t\nZarząd, sponsorzy\n\t\nAktywna\n\t\n\n\nTygodniowy pakiet realizacji\n\t\nPMO\n\t\nTygodniowo\n\t\nPMO, liderzy zespołów\n\t\nAktywna\n\t\n\n\nTygodniowy pakiet realizacji\n\t\nKontrakt runtime\n\t\n—\n\t\n—\n\t\nOpublikowany\n\t\n\n\nObłożenie zasobów\n\t\nKontrakt runtime\n\t\n—\n\t\n—\n\t\nZweryfikowany\n\t",
+ "kiedy": "2026-09-06T17:42:47.941Z"
+}

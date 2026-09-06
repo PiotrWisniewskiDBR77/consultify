@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
@@ -19,6 +20,20 @@ import {
   transitionReportDefinition,
   transitionReportRun,
 } from '@/services/initiatives-execution/runtimeApi';
+import {
+  createExecutionReportRun,
+  type ExecutionReportDefinitionDto,
+  type ExecutionReportRunDto,
+  listExecutionReportDefinitions,
+  listExecutionReportRuns,
+  readExecutionReportRun,
+} from '@/services/executionReports/executionReportsApi';
+
+import { ExecutionReportDocument } from './ExecutionReportDocument';
+import {
+  buildExecutionReportSnapshot,
+  fetchExecutionReportInputs,
+} from './executionReportModel';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
 import {
@@ -30,6 +45,8 @@ import {
 interface Row extends TableRow {
   id: string;
   title: string;
+  level?: string;
+  author?: string;
   status: string;
   rawStatus: string;
   definition: string;
@@ -37,12 +54,21 @@ interface Row extends TableRow {
   asOf: string;
   version: number;
   source: any;
+  /** Migawka z `/api/execution-reports` — otwiera dokument, nie edytor kontraktu. */
+  snapshot?: ExecutionReportRunDto | null;
 }
 interface DefinitionRow extends TableRow {
   id: string;
   title: string;
+  level?: string;
+  cadence?: string;
+  audience?: string;
   state: string;
   rawState: string;
+  /** CATALOG = definicja z `report_definitions`; CONTRACT = agregat runtime-v1. */
+  kind?: 'CATALOG' | 'CONTRACT';
+  mvp?: boolean;
+  catalog?: ExecutionReportDefinitionDto;
   currentVersion: number;
   aggregateVersion: number;
   owner: string;
@@ -92,19 +118,19 @@ const sourceTypeLabel = (value: string | null | undefined) =>
   })[String(value ?? '').toLowerCase()] || 'Źródło';
 
 const columns: TableColumn[] = [
-  { id: 'title', label: 'Raport', sortable: true, width: '280px' },
-  { id: 'status', label: 'Status', sortable: true, filterable: true, width: '180px' },
-  { id: 'definition', label: 'Definicja', sortable: true, width: '300px' },
-  { id: 'period', label: 'Okres', sortable: true, width: '240px' },
-  { id: 'asOf', label: 'Stan danych na', sortable: true, width: '180px' },
+  { id: 'title', label: 'Raport', sortable: true, width: '300px' },
+  { id: 'level', label: 'Poziom', sortable: true, filterable: true, width: '190px' },
+  { id: 'status', label: 'Status', sortable: true, filterable: true, width: '150px' },
+  { id: 'period', label: 'Okres', sortable: true, width: '220px' },
+  { id: 'asOf', label: 'Stan danych na', sortable: true, width: '160px' },
+  { id: 'author', label: 'Autor', sortable: true, width: '170px' },
 ];
 const definitionColumns: TableColumn[] = [
-  { id: 'title', label: 'Definicja raportu', sortable: true, width: '260px' },
-  { id: 'state', label: 'Status', sortable: true, filterable: true },
-  { id: 'currentVersion', label: 'Wersja', sortable: true },
-  { id: 'owner', label: 'Właściciel', sortable: true },
-  { id: 'approver', label: 'Niezależny zatwierdzający', sortable: true },
-  { id: 'updatedAt', label: 'Aktualizacja', sortable: true },
+  { id: 'title', label: 'Definicja raportu', sortable: true, width: '280px' },
+  { id: 'level', label: 'Poziom', sortable: true, filterable: true, width: '190px' },
+  { id: 'cadence', label: 'Kadencja', sortable: true, filterable: true, width: '150px' },
+  { id: 'audience', label: 'Odbiorcy', sortable: true, width: '230px' },
+  { id: 'state', label: 'Status', sortable: true, filterable: true, width: '150px' },
 ];
 const reportPresets = [
   'all',
@@ -146,9 +172,24 @@ export const ExecutionReportsSurface = ({
   activePreset,
   onCountsChange,
 }: ExecutionMenu3Contract) => {
+  const { t } = useTranslation();
+  // 1.12-R4 — katalog definicji (report_definitions) i rejestr migawek.
+  const [catalog, setCatalog] = useState<ExecutionReportDefinitionDto[]>([]);
+  const [snapshots, setSnapshots] = useState<ExecutionReportRunDto[]>([]);
+  const [openRun, setOpenRun] = useState<ExecutionReportRunDto | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardKey, setWizardKey] = useState('');
+  const [wizardPeriod, setWizardPeriod] = useState(() => {
+    const end = new Date();
+    const start = new Date(end.getTime() - 6 * 86400000);
+    const iso = (value: Date) => value.toISOString().slice(0, 10);
+    return { start: iso(start), end: iso(end) };
+  });
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
-    [rows, setRows] = useState<Row[]>([]),
-    [definitions, setDefinitions] = useState<DefinitionRow[]>([]),
+    [contractRuns, setRows] = useState<Row[]>([]),
+    [contractDefinitions, setDefinitions] = useState<DefinitionRow[]>([]),
     [registerMode, setRegisterMode] = useState<'RUNS' | 'DEFINITIONS'>('RUNS'),
     [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null),
     [showDefinitionEditor, setShowDefinitionEditor] = useState(false),
@@ -321,6 +362,168 @@ export const ExecutionReportsSurface = ({
   useEffect(() => {
     void load();
   }, [load]);
+
+  /* ────────────────────────────────────────────────────────────────────────
+     1.12-R4 — katalog definicji + migawki na realnych danych.
+     Katalog (`report_definitions`, 12 pozycji) i rejestr migawek żyją poza
+     agregatem runtime-v1, więc ładują się osobno: awaria jednego źródła nie
+     kasuje drugiego. Nazwy/kadencje/odbiorcy/sekcje tłumaczymy PO KLUCZU
+     (`executionReports.definitions.<key>.*`), a nie po treści z bazy —
+     w bazie zostaje angielski oryginał (definicje w bazie zostają nietknięte).
+     ──────────────────────────────────────────────────────────────────────── */
+  const loadReportsMvp = useCallback(async () => {
+    const [catalogResult, runsResult] = await Promise.allSettled([
+      listExecutionReportDefinitions(),
+      listExecutionReportRuns(),
+    ]);
+    setCatalog(catalogResult.status === 'fulfilled' ? catalogResult.value.definitions : []);
+    setSnapshots(runsResult.status === 'fulfilled' ? runsResult.value.items : []);
+  }, []);
+  useEffect(() => {
+    void loadReportsMvp();
+  }, [loadReportsMvp]);
+
+  const levelLabel = useCallback(
+    (level: string) => t(`executionReports.level.${level}`, level),
+    [t]
+  );
+  const cadenceLabel = useCallback(
+    (key: string, fallback: string | null) =>
+      t(`executionReports.definitions.${key}.cadence`, fallback || '—'),
+    [t]
+  );
+  const definitionName = useCallback(
+    (key: string, fallback: string) => t(`executionReports.definitions.${key}.name`, fallback),
+    [t]
+  );
+  const openSnapshot = useCallback(async (id: string) => {
+    try {
+      setOpenRun(await readExecutionReportRun(id));
+    } catch {
+      setGenerateError('Nie udało się otworzyć dokumentu raportu.');
+    }
+  }, []);
+
+  /**
+   * Migawka na REALNYCH danych: czytamy te same API co reszta modułu
+   * (/api/tasks, /api/decisions, /api/raid, /api/initiatives, delay-signals),
+   * składamy sekcje wg definicji i zapisujemy zamrożony zrzut ze `stanem na`.
+   */
+  const generateSnapshot = useCallback(
+    async (definitionKey: string) => {
+      const definition = catalog.find((item) => item.key === definitionKey);
+      if (!definition) return;
+      setGenerating(true);
+      setGenerateError(null);
+      try {
+        const inputs = await fetchExecutionReportInputs();
+        const asOf = new Date().toISOString();
+        const snapshot = buildExecutionReportSnapshot({
+          definitionKey,
+          definitionName: definitionName(definition.key, definition.name),
+          period: {
+            start: new Date(`${wizardPeriod.start}T00:00:00.000Z`).toISOString(),
+            end: new Date(`${wizardPeriod.end}T23:59:59.000Z`).toISOString(),
+          },
+          asOf,
+          inputs,
+          t: (key, fallback, options) => t(key, fallback, options as never) as string,
+        });
+        const created = await createExecutionReportRun(snapshot);
+        setWizardOpen(false);
+        await loadReportsMvp();
+        setOpenRun({ ...created, payload: snapshot });
+      } catch (error) {
+        setGenerateError(
+          error instanceof Error ? error.message : 'Nie udało się wygenerować migawki.'
+        );
+      } finally {
+        setGenerating(false);
+      }
+    },
+    [catalog, definitionName, loadReportsMvp, t, wizardPeriod.end, wizardPeriod.start]
+  );
+
+  const catalogRows = useMemo<DefinitionRow[]>(
+    () =>
+      catalog.map((item) => ({
+        id: `catalog:${item.key}`,
+        title: definitionName(item.key, item.name),
+        level: levelLabel(item.level),
+        cadence: cadenceLabel(item.key, item.cadence),
+        audience: t(`executionReports.definitions.${item.key}.audience`, item.audience || '—'),
+        state: item.mvp
+          ? t('executionReports.state.active', 'Aktywna')
+          : t('executionReports.wave2.chip', 'Fala 2'),
+        rawState: item.mvp ? 'ACTIVE' : 'WAVE_2',
+        kind: 'CATALOG' as const,
+        mvp: item.mvp,
+        catalog: item,
+        currentVersion: 1,
+        aggregateVersion: 0,
+        owner: '—',
+        approver: '—',
+        updatedAt: '—',
+        definition: {},
+      })),
+    [cadenceLabel, catalog, definitionName, levelLabel, t]
+  );
+
+  const snapshotRows = useMemo<Row[]>(
+    () =>
+      snapshots.map((item) => ({
+        id: `snapshot:${item.id}`,
+        title: item.title,
+        level: levelLabel(item.level),
+        author: item.createdByName || '—',
+        status:
+          item.status === 'PUBLISHED'
+            ? t('executionReports.status.published', 'Opublikowany')
+            : t('executionReports.status.draft', 'Szkic'),
+        rawStatus: item.status,
+        definition: definitionName(item.definitionKey, item.definitionKey),
+        period: `${formatDate(item.period.start)} – ${formatDate(item.period.end)}`,
+        asOf: formatDate(item.asOf),
+        version: 1,
+        source: {
+          status: item.status,
+          audience: [],
+          scopeRefs: [],
+          sources: [],
+          contentHash: null,
+          updatedAt: item.createdAt,
+        },
+        snapshot: item,
+      })),
+    [definitionName, levelLabel, snapshots, t]
+  );
+
+  const definitions = useMemo<DefinitionRow[]>(
+    () => [
+      ...catalogRows,
+      ...contractDefinitions.map((row) => ({
+        ...row,
+        level: row.level ?? t('executionReports.level.CONTRACT', 'Kontrakt runtime'),
+        cadence: row.cadence ?? '—',
+        audience: row.audience ?? '—',
+        kind: 'CONTRACT' as const,
+        mvp: false,
+      })),
+    ],
+    [catalogRows, contractDefinitions, t]
+  );
+  const rows = useMemo<Row[]>(
+    () => [
+      ...snapshotRows,
+      ...contractRuns.map((row) => ({
+        ...row,
+        level: row.level ?? t('executionReports.level.CONTRACT', 'Kontrakt runtime'),
+        author: row.author ?? '—',
+      })),
+    ],
+    [contractRuns, snapshotRows, t]
+  );
+
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
   const selectedDefinition = useMemo(
     () => definitions.find((row) => row.id === selectedDefinitionId) ?? null,
@@ -328,6 +531,31 @@ export const ExecutionReportsSurface = ({
   );
   const matches = useCallback((item: ReportRegisterItem, preset: string) => {
     const raw = item.row as any;
+    // Wiersze katalogu i migawek MVP mają płaskie pola (kadencja/poziom/status),
+    // nie kontrakt agregatu — bez tego rozgałęzienia liczniki Menu 3 pokazałyby zera.
+    if (raw.kind === 'CATALOG' || raw.snapshot) {
+      const cadenceKey = String(
+        raw.catalog?.cadence ?? raw.snapshot?.definitionKey ?? ''
+      ).toUpperCase();
+      const flatStatus = String(raw.rawState ?? raw.rawStatus ?? '').toUpperCase();
+      if (preset === 'all') return true;
+      if (preset === 'weekly') return cadenceKey === 'WEEKLY';
+      if (preset === 'monthly') return cadenceKey === 'MONTHLY';
+      if (preset === 'on-demand') return cadenceKey === 'ON DEMAND' || cadenceKey === 'ON_DEMAND';
+      if (preset === 'sponsor')
+        return /sponsor|board|zarz/i.test(
+          `${raw.catalog?.audience ?? ''} ${raw.catalog?.level ?? ''} ${raw.snapshot?.level ?? ''}`
+        );
+      if (preset === 'needs-generation') return raw.kind === 'CATALOG' && raw.mvp === true;
+      if (preset === 'needs-review') return flatStatus === 'DRAFT';
+      if (preset === 'published') return flatStatus === 'PUBLISHED';
+      if (preset === 'recent')
+        return (
+          Boolean(raw.snapshot) &&
+          Date.parse(raw.snapshot.createdAt) >= Date.now() - 30 * 86400000
+        );
+      return false;
+    }
     const source = item.kind === 'RUN' ? raw.source : raw.definition;
     const version =
       source?.versions?.find(
@@ -541,6 +769,21 @@ export const ExecutionReportsSurface = ({
       setWrite('FAILED');
     }
   };
+  // Otwarty dokument migawki wygrywa nad rejestrem (archetyp B — pełny widok obiektu).
+  if (openRun)
+    return (
+      <ExecutionReportDocument
+        run={openRun}
+        onBack={() => {
+          setOpenRun(null);
+          void loadReportsMvp();
+        }}
+        onChanged={(updated) => {
+          setOpenRun(updated);
+          void loadReportsMvp();
+        }}
+      />
+    );
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
@@ -573,10 +816,24 @@ export const ExecutionReportsSurface = ({
             className="btn-secondary"
             onClick={() => {
               setRegisterMode('RUNS');
+              setWizardOpen(true);
+              setGenerateError(null);
+              if (!wizardKey) {
+                const first = catalog.find((item) => item.mvp);
+                if (first) setWizardKey(first.key);
+              }
+            }}
+          >
+            {t('executionReports.action.newReport', 'Nowy raport')}
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setRegisterMode('RUNS');
               setShowRunEditor(true);
             }}
           >
-            Nowy raport
+            {t('executionReports.action.newContractRun', 'Kontrakt raportu (zaawansowane)')}
           </button>
         </div>
       </div>
@@ -600,18 +857,108 @@ export const ExecutionReportsSurface = ({
           Definicje
         </button>
       </div>
+      {wizardOpen && (
+        <section
+          aria-label={t('executionReports.wizard.title', 'Nowy raport')}
+          data-testid="execution-report-wizard"
+          className="mt-3 rounded-xl border border-c-border bg-c-surface-raised p-4"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="font-semibold">{t('executionReports.wizard.title', 'Nowy raport')}</h3>
+            <button className="btn-secondary" onClick={() => setWizardOpen(false)}>
+              {t('common.close', 'Zamknij')}
+            </button>
+          </div>
+          <p className="text-sm text-c-text-muted">
+            {t(
+              'executionReports.wizard.help',
+              'Wybierz poziom raportu i okres. Migawka powstaje z realnych danych organizacji i zamraża stan na dzień wygenerowania.'
+            )}
+          </p>
+          <div className="mt-3 grid gap-2 md:grid-cols-3">
+            <label className="text-xs">
+              {t('executionReports.wizard.definition', 'Definicja raportu')}
+              <select
+                aria-label={t('executionReports.wizard.definition', 'Definicja raportu')}
+                className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
+                value={wizardKey}
+                onChange={(event) => setWizardKey(event.target.value)}
+              >
+                <option value="">—</option>
+                {catalog
+                  .filter((item) => item.mvp)
+                  .map((item) => (
+                    <option key={item.key} value={item.key}>
+                      {`${levelLabel(item.level)} · ${definitionName(item.key, item.name)}`}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('executionReports.wizard.periodStart', 'Okres od')}
+              <input
+                type="date"
+                aria-label={t('executionReports.wizard.periodStart', 'Okres od')}
+                className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
+                value={wizardPeriod.start}
+                onChange={(event) =>
+                  setWizardPeriod((current) => ({ ...current, start: event.target.value }))
+                }
+              />
+            </label>
+            <label className="text-xs">
+              {t('executionReports.wizard.periodEnd', 'Okres do')}
+              <input
+                type="date"
+                aria-label={t('executionReports.wizard.periodEnd', 'Okres do')}
+                className="block w-full rounded border border-c-border bg-c-surface p-2 text-sm"
+                value={wizardPeriod.end}
+                onChange={(event) =>
+                  setWizardPeriod((current) => ({ ...current, end: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <button
+              className="btn-secondary"
+              disabled={!wizardKey || generating}
+              onClick={() => void generateSnapshot(wizardKey)}
+            >
+              {generating
+                ? t('executionReports.wizard.generating', 'Generuję migawkę…')
+                : t('executionReports.wizard.generate', 'Generuj migawkę')}
+            </button>
+            {generateError && (
+              <span role="alert" className="text-sm text-c-danger">
+                {generateError}
+              </span>
+            )}
+          </div>
+        </section>
+      )}
       {state === 'LOADING' && <p role="status">Ładowanie raportów…</p>}
       {registerMode === 'DEFINITIONS' && (
         <section aria-label="Report Definitions" className="mt-4 flex min-h-0 flex-1 flex-col">
-          <h3 className="font-semibold">Definicje raportów</h3>
-        /*
-         * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
-         * `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
-         * tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
-         * o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
-         * na wlasnej tresci. Zmierzone narzedziem
-         * `scripts/dev/measure-preview-canon.mjs --wysokosc`.
-         */
+          <h3 className="font-semibold">
+            {t('executionReports.definitionsHeading', 'Definicje raportów')}
+          </h3>
+          <p className="mb-2 text-sm text-c-text-muted">
+            {t(
+              'executionReports.definitionsHelp',
+              'Cztery definicje — po jednej na poziom raportowania — generują migawkę. Pozostałe są widoczne w katalogu i wchodzą w Fali 2.'
+            )}
+          </p>
+          {/*
+            Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx.
+            `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie
+            tylko wzgledem rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4`
+            o wysokosci `auto` przerywaly ten lancuch i panel podgladu konczyl sie
+            na wlasnej tresci. Zmierzone narzedziem
+            `scripts/dev/measure-preview-canon.mjs --wysokosc`.
+            UWAGA 1.12-R4: ten blok byl wstawiony BEZ klamer, wiec React renderowal
+            go jako TEKST na ekranie Definicje (widoczne na zrzucie 01 przed naprawa).
+          */}
           <div className="flex min-h-0 flex-1 flex-col">
           <TableWithPreviewLayout<DefinitionRow>
             selectedId={selectedDefinitionId}
@@ -619,12 +966,94 @@ export const ExecutionReportsSurface = ({
             onSelect={setSelectedDefinitionId}
             onOpenFull={(id) => {
               setSelectedDefinitionId(id);
+              const row = definitions.find((item) => item.id === id);
+              if (row?.kind === 'CATALOG') {
+                if (row.mvp && row.catalog) {
+                  setWizardKey(row.catalog.key);
+                  setRegisterMode('RUNS');
+                  setWizardOpen(true);
+                }
+                return;
+              }
               setShowDefinitionEditor(true);
             }}
             itemIds={definitions.map((row) => row.id)}
             getItemById={(id) => definitions.find((row) => row.id === id) ?? null}
             previewOpen={!showDefinitionEditor && Boolean(selectedDefinitionId)}
             renderPreview={(row) => {
+              if (row.kind === 'CATALOG' && row.catalog) {
+                const item = row.catalog;
+                return (
+                  <StandardPreview
+                    embedded
+                    title={row.title}
+                    onClose={() => setSelectedDefinitionId(null)}
+                    onOpenFull={
+                      item.mvp
+                        ? () => {
+                            setWizardKey(item.key);
+                            setRegisterMode('RUNS');
+                            setWizardOpen(true);
+                          }
+                        : undefined
+                    }
+                    openLabel={t('executionReports.action.generate', 'Wygeneruj raport')}
+                    meta={{
+                      pills: [
+                        {
+                          label: row.state,
+                          tone: item.mvp ? 'success' : 'neutral',
+                        },
+                        { label: row.level ?? '—', tone: 'neutral' },
+                      ],
+                      recommendation: item.mvp
+                        ? t(
+                            'executionReports.recommendation.active',
+                            'Gotowa — generuje migawkę na realnych danych.'
+                          )
+                        : t(
+                            'executionReports.recommendation.wave2',
+                            'Widoczna w katalogu, generowanie w Fali 2.'
+                          ),
+                    }}
+                    details={{
+                      label: t('executionReports.preview.contract', 'Zawartość raportu'),
+                      text: t(
+                        `executionReports.definitions.${item.key}.scope`,
+                        item.scope || '—'
+                      ),
+                      properties: [
+                        {
+                          id: 'audience',
+                          label: t('executionReports.col.audience', 'Odbiorcy'),
+                          value: row.audience ?? '—',
+                        },
+                        {
+                          id: 'cadence',
+                          label: t('executionReports.col.cadence', 'Kadencja'),
+                          value: row.cadence ?? '—',
+                        },
+                        {
+                          id: 'formats',
+                          label: t('executionReports.col.formats', 'Formy'),
+                          value: item.formats
+                            .map((format) =>
+                              t(`executionReports.format.${format}`, format)
+                            )
+                            .join(', '),
+                        },
+                      ],
+                    }}
+                    relations={item.sections.map((section, index) => ({
+                      label: t(
+                        `executionReports.definitions.${item.key}.sections.${index}`,
+                        section
+                      ),
+                    }))}
+                    relationsEmptyLabel={t('executionReports.preview.noSections', 'Brak sekcji')}
+                  />
+                );
+              }
               const version = row.definition.versions?.find(
                 (item: any) => item.definitionVersion === row.currentVersion
               );
@@ -702,25 +1131,51 @@ export const ExecutionReportsSurface = ({
               onRowClick={(row) => setSelectedDefinitionId(row.id)}
               onRowDoubleClick={(row) => {
                 setSelectedDefinitionId(row.id);
+                if (row.kind === 'CATALOG') {
+                  if (row.mvp && row.catalog) {
+                    setWizardKey(row.catalog.key);
+                    setRegisterMode('RUNS');
+                    setWizardOpen(true);
+                  }
+                  return;
+                }
                 setShowDefinitionEditor(true);
               }}
               rowMenu={(row) => ({
-                primary: [
-                  {
-                    id: 'open-definition',
-                    label: 'Otwórz definicję',
-                    onClick: () => {
-                      setSelectedDefinitionId(row.id);
-                      setShowDefinitionEditor(true);
-                    },
-                  },
-                ],
+                primary:
+                  row.kind === 'CATALOG'
+                    ? row.mvp && row.catalog
+                      ? [
+                          {
+                            id: 'generate-report',
+                            label: t('executionReports.action.generate', 'Wygeneruj raport'),
+                            onClick: () => {
+                              setWizardKey(row.catalog!.key);
+                              setRegisterMode('RUNS');
+                              setWizardOpen(true);
+                            },
+                          },
+                        ]
+                      : []
+                    : [
+                        {
+                          id: 'open-definition',
+                          label: 'Otwórz definicję',
+                          onClick: () => {
+                            setSelectedDefinitionId(row.id);
+                            setShowDefinitionEditor(true);
+                          },
+                        },
+                      ],
                 universalHandlers: { preview: () => setSelectedDefinitionId(row.id) },
               })}
-              persistKey="execution.report-definitions.v1"
+              persistKey="execution.report-definitions.v2"
               empty={{
-                title: 'Brak definicji raportów',
-                description: 'Utwórz wersjonowaną definicję z odbiorcami, zakresem i źródłami.',
+                title: t('executionReports.empty.definitions.title', 'Brak definicji raportów'),
+                description: t(
+                  'executionReports.empty.definitions.body',
+                  'Katalog nie odpowiedział. Odśwież ekran albo utwórz wersjonowaną definicję kontraktową.'
+                ),
               }}
             />
           </TableWithPreviewLayout>
@@ -901,12 +1356,65 @@ export const ExecutionReportsSurface = ({
           onSelect={setSelectedId}
           onOpenFull={(id) => {
             setSelectedId(id);
+            const row = rows.find((item) => item.id === id);
+            if (row?.snapshot) {
+              void openSnapshot(row.snapshot.id);
+              return;
+            }
             setShowRunEditor(true);
           }}
           itemIds={rows.map((r) => r.id)}
           getItemById={(id) => rows.find((r) => r.id === id) ?? null}
           previewOpen={!showRunEditor && Boolean(selectedId)}
-          renderPreview={(r) => (
+          renderPreview={(r) =>
+            r.snapshot ? (
+              <StandardPreview
+                embedded
+                title={r.title}
+                onClose={() => setSelectedId(null)}
+                onOpenFull={() => void openSnapshot(r.snapshot!.id)}
+                openLabel={t('executionReports.action.openReport', 'Otwórz raport')}
+                meta={{
+                  pills: [
+                    {
+                      label: r.status,
+                      tone: r.rawStatus === 'PUBLISHED' ? 'success' : 'neutral',
+                    },
+                    { label: r.level ?? '—', tone: 'neutral' },
+                  ],
+                  recommendation: t(
+                    'executionReports.recommendation.snapshot',
+                    'Zamrożona migawka — otwórz dokument, pobierz DOCX lub PDF.'
+                  ),
+                }}
+                details={{
+                  label: t('executionReports.preview.scope', 'Zakres raportu'),
+                  text: `${r.period} · ${r.asOf}`,
+                  properties: [
+                    {
+                      id: 'definition',
+                      label: t('executionReports.col.definition', 'Definicja'),
+                      value: r.definition,
+                    },
+                    {
+                      id: 'rag',
+                      label: t('executionReports.field.rag', 'Ocena RAG'),
+                      value: t(
+                        `executionReports.ragLabel.${r.snapshot.rag}`,
+                        r.snapshot.rag
+                      ),
+                    },
+                    {
+                      id: 'author',
+                      label: t('executionReports.field.author', 'Autor'),
+                      value: r.author ?? '—',
+                    },
+                  ],
+                }}
+                relations={[]}
+                relationsEmptyLabel={t('executionReports.preview.noSources', 'Brak źródeł')}
+              />
+            ) : (
             <StandardPreview
               embedded
               title={r.title}
@@ -970,7 +1478,8 @@ export const ExecutionReportsSurface = ({
               }))}
               relationsEmptyLabel="Brak źródeł"
             />
-          )}
+            )
+          }
         >
           <StandardTable
             columns={columns}
@@ -979,25 +1488,36 @@ export const ExecutionReportsSurface = ({
             onRowClick={(r) => setSelectedId(r.id)}
             onRowDoubleClick={(r) => {
               setSelectedId(r.id);
+              if (r.snapshot) {
+                void openSnapshot(r.snapshot.id);
+                return;
+              }
               setShowRunEditor(true);
             }}
             rowMenu={(r) => ({
               primary: [
                 {
                   id: 'open-report',
-                  label: 'Otwórz raport',
+                  label: t('executionReports.action.openReport', 'Otwórz raport'),
                   onClick: () => {
                     setSelectedId(r.id);
+                    if (r.snapshot) {
+                      void openSnapshot(r.snapshot.id);
+                      return;
+                    }
                     setShowRunEditor(true);
                   },
                 },
               ],
               universalHandlers: { preview: () => setSelectedId(r.id) },
             })}
-            persistKey="execution.report-runs.v1"
+            persistKey="execution.report-runs.v2"
             empty={{
-              title: 'Brak uruchomień raportów',
-              description: 'Utwórz raport z opublikowanej definicji i jawnego okresu danych.',
+              title: t('executionReports.empty.runs.title', 'Brak raportów'),
+              description: t(
+                'executionReports.empty.runs.body',
+                'Kliknij „Nowy raport", wybierz poziom i okres — migawka powstanie z realnych danych realizacji.'
+              ),
             }}
           />
         </TableWithPreviewLayout>
