@@ -7882,7 +7882,15 @@
       "longTerm": "Długoterminowe (18-36 miesięcy)",
       "quickWins": "Szybkie wygrane",
       "strategicInitiatives": "Inicjatywy strategiczne",
-      "longTermTransformation": "Transformacja długoterminowa"
+      "longTermTransformation": "Transformacja długoterminowa",
+      "download": {
+        "heading": "Pliki do wysłania klientowi",
+        "docx": "Pobierz raport (DOCX)",
+        "pptx": "Pobierz prezentację (PPTX)",
+        "pdf": "Pobierz prezentację (PDF)",
+        "inProgress": "Przygotowuję plik…",
+        "error": "Nie udało się pobrać pliku — kod: {{code}}"
+      }
     },
     "lean": {
       "overallDashboard": "Dashboard ogólny oceny",

@@ -55,8 +55,25 @@ export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
 type ContractChapter = AssessmentReportContract['chapters'][number];
 type ContractArea = ContractChapter['matrix']['areas'][number];
 
+/**
+ * FIX (2026-09-06): to zdanie trafia do pliku, który czyta KLIENT. Do dziś
+ * brzmiało „Sekcja do uzupełnienia — limit 120–150 słów." — czyli instrukcja
+ * dla redaktora, w środku dokumentu doradczego. Dokładnie ta forma jest
+ * najstarszą obawą właściciela („nigdy nie powstał ani jeden naprawdę dobry
+ * dokument z szablonu"): plik wygląda na niedokończony szablon, nawet gdy
+ * wszystkie pozostałe sekcje są pełne. Pomiar na realnej ocenie DBR77:
+ * 8 wystąpień w jednym pliku.
+ *
+ * Nowe zdanie mówi DOKŁADNIE to samo — sekcji nie da się napisać, bo nie ma
+ * z czego — ale językiem raportu. Limity redakcyjne zostają w kontrakcie
+ * (`CONTRACT_V1_MISSING_SLOT_LIMITS`) i w narzędziach autorskich, nie w
+ * treści dla klienta; parametry są nadal przyjmowane, żeby wywołania
+ * pozostały jednoznaczne co do slotu.
+ */
 function placeholder(minWords: number, maxWords: number): string {
-  return `Sekcja do uzupełnienia — limit ${minWords}–${maxWords} słów.`;
+  void minWords;
+  void maxWords;
+  return 'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.';
 }
 
 // FIX-3 (nadzorca 2026-08-28): the raw editorial instruction
@@ -77,15 +94,6 @@ function placeholder(minWords: number, maxWords: number): string {
 // Kierunek/Priorytet/Warunek sukcesu) keeps the generic `placeholder()` —
 // they are not touched by this fix.
 const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
-
-// FIX (2026-09-06): komórki linii decyzyjnej drukowały instrukcję redakcyjną
-// „Sekcja do uzupełnienia — limit 10–30 słów." — czyli w dokumencie DLA
-// KLIENTA pojawiał się tekst dla redaktora. To ta sama pułapka, którą FIX-3
-// zamknął dla komentarzy obszarów i dla „Horyzontu", tylko nie objęła
-// pozostałych trzech komórek. Zdanie poniżej mówi to samo, co brak wartości,
-// ale językiem raportu, nie językiem szablonu. Pomiar na realnej ocenie
-// DBR77: 8 wystąpień instrukcji w jednym pliku, wszystkie w tej komórce.
-const DECISION_LINE_MISSING = 'Nie określono — brak źródła w danych.';
 
 // DEDUP (nadzorca 2026-08-28): this used to also handle `not_assessed` with
 // its own copy of "Obszaru X nie oceniono — brak danych źródłowych." — the
@@ -401,8 +409,7 @@ function chapterBlocks(
   // FIX-6: this comment used to say "15–40 words per the wzorzec
   // measurement", contradicting both the constant (10–30) and the header
   // comment (12–21). The single authority is the constant.
-  void decisionLineLimit;
-  const decisionPlaceholder = DECISION_LINE_MISSING;
+  const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
     paragraph(
@@ -538,12 +545,21 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'program-decision',
           ['Pole', 'Treść'],
           [
-            ['Kierunek', contract.programDecisionLine?.direction ?? DECISION_LINE_MISSING],
-            ['Priorytet', contract.programDecisionLine?.priority ?? DECISION_LINE_MISSING],
+            [
+              'Kierunek',
+              contract.programDecisionLine?.direction ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
+            [
+              'Priorytet',
+              contract.programDecisionLine?.priority ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+            ],
             ['Horyzont', contract.programDecisionLine?.horizon ?? HORIZON_PLACEHOLDER],
             [
               'Warunek sukcesu',
-              contract.programDecisionLine?.successCondition ?? DECISION_LINE_MISSING,
+              contract.programDecisionLine?.successCondition ??
+                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
             ],
           ]
         ),

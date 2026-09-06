@@ -42,19 +42,24 @@ import {
   CheckCircle2,
   ClipboardList,
   FileText,
+  Download,
   FileWarning,
   HelpCircle,
   Lightbulb,
   ShieldAlert,
   Target,
 } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
   DRDMatrixReadOnly,
   drdOdpowiedziZOutputu,
 } from '../drd/DRDMatrixReadOnly';
+
+import { getHeaders } from '@/services/api/baseClient';
+
+import { idOcenyZWierszaZastanego } from '../assessmentOutputProjection';
 
 import { StandardTable, type TableColumn, type TableRow } from '../../standard/StandardTable';
 import { StatusChip } from '../../ui/primitives/chips';
@@ -455,6 +460,106 @@ const AxisSection: React.FC<{
   );
 };
 
+
+// ---------------------------------------------------------------------------
+// Pobieranie plików — DOCX · PPTX · PDF
+// ---------------------------------------------------------------------------
+
+/**
+ * Trzy przyciski pobierania dla oceny z magazynu zastanego.
+ *
+ * ★ PO CO. Raport i prezentacja istniały dotąd WYŁĄCZNIE jako ekran. Właściciel
+ * ocenia dokument otwierając PLIK, nie oglądając ekran — a z tego ekranu nie
+ * dało się pobrać niczego. To jest ten ostatni przewód: przycisk → trasa
+ * `/api/assessment-reports/assessment/:id/export/*` → gotowy plik.
+ *
+ * Wynik zamrożony w jądrze ma własny przycisk DOCX w `AssessmentReportContractView`
+ * (trasa `/api/method/...`), dlatego ten pasek pokazuje się tylko dla oceny
+ * zastanej — nie dublujemy jednego działania dwoma przyciskami.
+ */
+const PLIKI_DO_POBRANIA = [
+  { format: 'report.docx', klucz: 'docx', domyslna: 'Pobierz raport (DOCX)' },
+  { format: 'deck.pptx', klucz: 'pptx', domyslna: 'Pobierz prezentację (PPTX)' },
+  { format: 'deck.pdf', klucz: 'pdf', domyslna: 'Pobierz prezentację (PDF)' },
+] as const;
+
+const PasekPobierania: React.FC<{ assessmentId: string }> = ({ assessmentId }) => {
+  const { t } = useTranslation();
+  const [trwa, setTrwa] = useState<string | null>(null);
+  const [blad, setBlad] = useState<string | null>(null);
+
+  const pobierz = useCallback(
+    async (format: string) => {
+      setTrwa(format);
+      setBlad(null);
+      try {
+        const headers = getHeaders();
+        delete headers['Content-Type'];
+        const odpowiedz = await fetch(
+          `/api/assessment-reports/assessment/${encodeURIComponent(assessmentId)}/export/${format}`,
+          { headers }
+        );
+        if (!odpowiedz.ok) {
+          const tresc = (await odpowiedz.json().catch(() => ({}))) as { code?: string };
+          throw new Error(tresc.code ?? `HTTP_${odpowiedz.status}`);
+        }
+        const dyspozycja = odpowiedz.headers.get('Content-Disposition') ?? '';
+        const zUtf8 = /filename\*=UTF-8''([^;]+)/i.exec(dyspozycja);
+        const zAscii = /filename="([^"]+)"/i.exec(dyspozycja);
+        const nazwa = zUtf8
+          ? decodeURIComponent(zUtf8[1])
+          : (zAscii?.[1] ?? `${assessmentId}-${format}`);
+        const blob = await odpowiedz.blob();
+        const url = window.URL.createObjectURL(blob);
+        const kotwica = document.createElement('a');
+        kotwica.href = url;
+        kotwica.download = nazwa;
+        document.body.appendChild(kotwica);
+        kotwica.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(kotwica);
+      } catch (error) {
+        setBlad(error instanceof Error ? error.message : 'UNKNOWN_ERROR');
+      } finally {
+        setTrwa(null);
+      }
+    },
+    [assessmentId]
+  );
+
+  return (
+    <div className="mt-4 border-t border-c-border-subtle pt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted">
+        {t('assessment.report.download.heading', 'Pliki do wysłania klientowi')}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {PLIKI_DO_POBRANIA.map((pozycja) => (
+          <button
+            key={pozycja.format}
+            type="button"
+            onClick={() => void pobierz(pozycja.format)}
+            disabled={trwa !== null}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-60"
+            data-testid={`assessment-report-download-${pozycja.klucz}`}
+          >
+            <Download size={14} aria-hidden="true" />
+            {trwa === pozycja.format
+              ? t('assessment.report.download.inProgress', 'Przygotowuję plik…')
+              : t(`assessment.report.download.${pozycja.klucz}`, pozycja.domyslna)}
+          </button>
+        ))}
+      </div>
+      {blad ? (
+        <p className="mt-2 text-xs text-c-danger" role="alert">
+          {t('assessment.report.download.error', 'Nie udało się pobrać pliku — kod: {{code}}', {
+            code: blad,
+          })}
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -471,6 +576,9 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
   // stary, kanoniczny przypadek (zamrożony Output jądra).
   const zZapisuSesji = data.source === 'legacy';
   const unitNotes = data.unitNotes;
+  // Identyfikator oceny zastanej wyjęty z identyfikatora wiersza (`ocena~<id>`)
+  // — to jest klucz, którym trasy eksportu adresują ocenę.
+  const idOceny = zZapisuSesji ? idOcenyZWierszaZastanego(output.id) : null;
   const narrative = data.narrative ?? null;
 
   const latestApproval = useMemo(() => {
@@ -849,6 +957,8 @@ export const AssessmentReportDocument: React.FC<AssessmentReportDocumentProps> =
             </span>
           </div>
         ) : null}
+
+        {idOceny ? <PasekPobierania assessmentId={idOceny} /> : null}
       </header>
 
       {/* ══ 1. WSTĘP — jak prowadzono badanie ═════════════════════════════

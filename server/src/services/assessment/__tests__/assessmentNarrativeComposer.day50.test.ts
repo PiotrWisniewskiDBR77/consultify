@@ -5,6 +5,7 @@ import {
   composeAreaNarrative,
   composeChapterAggregateNarrative,
   composeProgramAggregateNarrative,
+  countNarrativeWords,
   validateNarrativeNumbers,
 } from '../assessmentNarrativeComposer.js';
 
@@ -146,7 +147,15 @@ describe('Day 50 deterministic area narrative composer', () => {
     expect(chapter.conclusion).toBeNull();
     expect(chapter.decisionLine.horizon).toBeNull();
     expect(program.executiveSummary).toBeTruthy();
-    expect(program.finalConclusions).toBeNull();
+    // 2026-09-06: liczba cytowanych obszarów jest teraz ADAPTACYJNA — silnik
+    // cytuje tyle, ile mieści się w górnej granicy okna, zamiast sztywnych
+    // pięciu. Przy tym zestawie 24 findingów synteza mieści się w oknie i
+    // POWSTAJE. Wcześniejsze `toBeNull()` nie było regułą redakcyjną, tylko
+    // skutkiem ubocznym sztywnej piątki: raport drukował wtedy pusty slot
+    // zamiast wniosków, które dało się napisać z danych.
+    expect(program.finalConclusions).toBeTruthy();
+    expect(countNarrativeWords(program.finalConclusions!)).toBeGreaterThanOrEqual(250);
+    expect(countNarrativeWords(program.finalConclusions!)).toBeLessThanOrEqual(300);
     expect(program.decisionLine.horizon).toBeNull();
   });
 
