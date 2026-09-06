@@ -60,3 +60,6 @@ Pole `werdykt` dla przejścia właściciela (`przejscie_wlasciciela[].werdykt`):
 Pole `stan` dla decyzji (`pojemniki[].decyzje[].stan`): `czeka` (właściciel
 jeszcze nie zdecydował) · `podjeta` (decyzja zapadła, ma numer `dec`, np.
 `DEC-397`).
+
+## Publikacja
+Panel właściciela (artefakt, ten sam URL przy każdej republikacji z pliku `PANEL.html`): https://claude.ai/code/artifact/2a86e4bf-46b5-4056-a472-264dc4a26da6 — po każdym odbiorze: edycja `stan.json` → `node scripts/dev/plan-pojemniki/generuj.mjs` → nadzorca republikuje ten sam artefakt.
