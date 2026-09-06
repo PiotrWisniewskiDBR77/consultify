@@ -2309,7 +2309,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
         toast.success(
           payloadKind === 'task'
-            ? t('myWork.tasks.createdFromChatToast', 'Task created from chat')
+            ? t('myWork.taskCreatedFromChatToast', 'Task created from chat')
             : t('myWork.decisions.createdFromChatToast', 'Decision created from chat')
         );
         return;

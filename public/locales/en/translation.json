@@ -3057,6 +3057,7 @@
       "emptySubtitle": "You're all caught up!",
       "empty": "No presentations yet."
     },
+    "taskCreatedFromChatToast": "Task created from chat",
     "decisions": {
       "addDecision": "Add decision",
       "emptyColumn": "No decisions",
@@ -18814,7 +18815,9 @@
     "citationNoAccess": "Source not accessible to you",
     "deepSearchSources": "Deep search sources",
     "citationExternalBadge": "External",
+    "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "No excerpt available.",
+    "citationFragmentOpenLabel": "Fragment {{index}}",
     "citationOpenSource": "Open source"
   },
   "agentAudit": {
@@ -19168,6 +19171,8 @@
     "generatingQueries": "Generating research queries...",
     "queriesReady": "Research queries ready",
     "searching": "Searching sources...",
+    "searchingRound": "Searching (round {{round}}/{{totalRounds}})...",
+    "round": "Round {{round}}/{{totalRounds}}",
     "aggregating": "Aggregating results...",
     "synthesizing": "Synthesizing findings...",
     "complete": "Research complete",

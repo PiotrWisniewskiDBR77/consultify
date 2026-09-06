@@ -41,13 +41,25 @@ vi.mock('../../../src/components/shared/ModuleHub', () => ({
   GridView: () => <div data-testid="grid-view" />,
 }));
 
-vi.mock('../../../src/components/shared/TableWithPreviewLayout', () => ({
-  TableWithPreviewLayout: ({ children, selectedId }: any) => (
+// TESTY-ZASTANE (06.09.2026): TemplatesTabContent przeszedł na Triada
+// standard (StandardTable + StandardPreview z '../standard'), już NIE
+// importuje TableWithPreviewLayout — mock tego modułu był martwy (komponent
+// go nie wywołuje), więc 'selected-id' nigdy się nie renderował i realny
+// StandardTable renderował się bez mocka. Retarget na StandardTable, ten sam
+// kontrakt selectedRowId co poprzednio selectedId.
+vi.mock('../../../src/components/standard', () => ({
+  StandardTable: ({ data, selectedRowId, onRowClick }: any) => (
     <div data-testid="table-layout">
-      <div data-testid="selected-id">{selectedId || 'none'}</div>
-      {children}
+      <div data-testid="selected-id">{selectedRowId || 'none'}</div>
+      {data.map((row: any) => (
+        <button key={row.id} onClick={() => onRowClick(row)} data-testid={`row-${row.id}`}>
+          {row.title}
+        </button>
+      ))}
     </div>
   ),
+  StandardPreview: ({ title }: any) => <div data-testid="standard-preview">{title}</div>,
+  standardPreviewShortcuts: () => ({}),
 }));
 
 const templates = [

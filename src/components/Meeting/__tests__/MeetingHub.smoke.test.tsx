@@ -131,7 +131,11 @@ describe('MeetingHub (smoke)', () => {
     // Scope to the AI hint strip specifically — the preview pane also has a
     // Details-section kebab (Copy/Export) and the table rows have their own,
     // so an unscoped `.lucide-ellipsis-vertical` query is ambiguous.
-    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('.py-1') as HTMLElement;
+    // TESTY-ZASTANE (06.09.2026): `.py-1` nie istnieje już jako klasa
+    // kontenera AI hint strip (PreviewAIHintStrip.tsx po konsolidacji "shared
+    // preview block" nosi teraz `data-preview-block="ai"`, p-2.5/mb-1.5) —
+    // stary selektor .closest('.py-1') zwracał null. Retarget na atrybut.
+    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('[data-preview-block="ai"]') as HTMLElement;
     const kebab = aiBlock.querySelector('.lucide-ellipsis-vertical')?.closest('button');
     expect(kebab).toBeTruthy();
     fireEvent.click(kebab as HTMLElement);
@@ -164,7 +168,7 @@ describe('MeetingHub (smoke)', () => {
     fireEvent.click(await screen.findByText('Quarterly Review'));
 
     expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
-    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('.py-1') as HTMLElement;
+    const aiBlock = screen.getByText('AI', { selector: 'span' }).closest('[data-preview-block="ai"]') as HTMLElement;
     const kebab = aiBlock.querySelector('.lucide-ellipsis-vertical')?.closest('button');
     expect(kebab).toBeTruthy();
     fireEvent.click(kebab as HTMLElement);

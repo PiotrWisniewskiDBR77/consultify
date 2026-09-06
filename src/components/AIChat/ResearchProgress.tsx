@@ -271,7 +271,11 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
     searching: {
       label:
         round && round > 1
-          ? t('research.searchingRound', `Searching (round ${round}/${totalRounds})...`)
+          ? t('research.searchingRound', {
+              round,
+              totalRounds,
+              defaultValue: 'Searching (round {{round}}/{{totalRounds}})...',
+            })
           : t('research.searching', 'Searching sources...'),
       icon: <Search size={16} className="animate-pulse" />,
     },
@@ -388,7 +392,11 @@ export const ResearchProgress: React.FC<ResearchProgressProps> = ({
             <div className="flex items-center gap-1 px-2 py-1 bg-c-surface-raised dark:bg-c-surface-raised rounded-full">
               <Zap size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
               <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">
-                {t('research.round', `Round ${round}/${totalRounds}`)}
+                {t('research.round', {
+                  round,
+                  totalRounds,
+                  defaultValue: 'Round {{round}}/{{totalRounds}}',
+                })}
               </span>
             </div>
           )}
