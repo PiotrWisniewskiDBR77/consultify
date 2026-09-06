@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 18:32",
+  "zaktualizowano": "2026-09-06 19:39",
   "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
@@ -17,8 +17,8 @@
           "galaz": "",
           "sha": "ad35c3c09e",
           "dowod": "staging health ad35c3c09e: paczki 7–9 na żywo (R1–R4, K4/K5, I4, M-1/M-2, A1/A2, P11 r1); karty 1–3 u właściciela",
-          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3",
-          "data": "06.09 17:27"
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku",
+          "data": "06.09 19:39"
         },
         {
           "nr": "1.2",
@@ -147,10 +147,10 @@
           "zalezy_od": "akcept właściciela na plan",
           "stan": "w_toku",
           "galaz": "mvp/113-realizacja-plan",
-          "sha": "a969644c0a",
-          "dowod": "plan scalony: 1_12_REALIZACJA_PLAN.md (metodyka, inwentarz z liczbami, R1–R5); 5 pytań u właściciela",
+          "sha": "5bb84bccc4",
+          "dowod": "R1+R2 na żywo (staging 5bb84bccc4, migracja podaży przez bramkę), plan 1_12_REALIZACJA_PLAN.md; R4 i R1b w toku",
           "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu).",
-          "data": "06.09 18:26"
+          "data": "06.09 19:39"
         }
       ],
       "kryteria": [
@@ -1054,7 +1054,7 @@
     {
       "modul": "Realizacja",
       "werdykt": "nie",
-      "zdanie": "06.09 18:11 — właściciel: „wszystkie cztery funkcje w zasadzie leżą i nie działają” (Praca: seed ×4, Zasoby: wieczny szkielet, Sterowanie: EN, Raporty: migawki testowe). Kokpit: przełącznik Ryzyka/Rozstrzygnięcia (DEC-426, E-1). Plan narzędzi i raportów wg metodyki PMO = pozycja 1.12 (Opus pisze)."
+      "zdanie": "06.09 19:39: paczka 12 NA ŻYWO (5bb84bccc4): Kokpit z przełącznikiem i realnymi decyzjami (25/12 po terminie), Praca 84 zadania, Decyzje i ryzyka (25+16), Realizacje z RAG, Zasoby z podażą godzin (obłożenie 38 %). W toku: R4 raporty na 4 poziomach, R1b Kokpit ryzyka/obłożenie. Odbiór zbiorczy na końcu."
     },
     {
       "modul": "Wyniki",
@@ -1074,7 +1074,7 @@
     {
       "modul": "Audyty",
       "werdykt": "nie",
-      "zdanie": "06.09 18:32: A1/A2/A3 na żywo; A4 „Wnioski” zamiast „Wyniki” scalone (paczka 12) — karta 6 u właściciela; Spotkania za flagą (M-3, paczka 11)."
+      "zdanie": "06.09 19:39: A4 „Wnioski” NA ŻYWO (paczka 12); A5/A5b (właściciel programu przechodzi cały łańcuch, Biblioteka Zatwierdź/Publikuj) scalone — paczka 13. Karta 6 w odbiorze zbiorczym."
     },
     {
       "modul": "Spotkania",
