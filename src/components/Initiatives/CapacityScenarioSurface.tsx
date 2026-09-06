@@ -29,6 +29,7 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
+import { CapacityAnalysisCard } from './cards/CapacityAnalysisCard';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
 // 2026-09-03 (i18n-r3): te były Record<K,string> ze stałą wartością PL —
@@ -851,6 +852,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         </button>
       </div>
     );
+  if (workspaceOpen && scenario) {
+    return <CapacityAnalysisCard scenario={scenario} noPressure={advisorState === 'NO_PRESSURE'} onBack={() => setWorkspaceOpen(false)} onAnalyze={() => void proposeOptions()} onPublish={() => void write('PUBLISH')} />;
+  }
   if (!workspaceOpen && !showCreate) {
     const visibleAnalyses = rows.filter((row) =>
       activePreset === 'drafts'
@@ -918,7 +922,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       <div className="mb-3 flex justify-end">
         <button
           type="button"
-          className="btn-primary"
+          className="btn-secondary"
           onClick={() => setShowCreate((open) => !open)}
         >
           <Plus size={15} /> {t('initiatives.capacityAdvisor.newAnalysis', 'New analysis')}
@@ -953,7 +957,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           </label>
           <button
             type="button"
-            className="btn-primary"
+            className="btn-secondary"
             disabled={!newAnalysisId.trim() || !newPlanId || writeState === 'SAVING'}
             onClick={() => void createAnalysis()}
           >
@@ -1251,7 +1255,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                 Zapisz szkic
               </button>
               <button
-                className="btn-primary"
+                className="btn-secondary"
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('PUBLISH')}
               >
