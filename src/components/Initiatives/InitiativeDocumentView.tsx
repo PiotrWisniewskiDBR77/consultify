@@ -9997,6 +9997,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       entityType: 'initiative',
       entityId: String(initiative?.id ?? initiativeId),
       entityName: title || undefined,
+      reuseActiveConversation: true,
     });
   }, [
     activeNSection,
