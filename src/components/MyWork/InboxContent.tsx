@@ -82,6 +82,7 @@ import {
 } from '@/components/shared/PreviewPane';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { useDesktopPreviewOverlay } from '@/components/shared/PreviewPane/useDesktopPreviewOverlay';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   type RowAction,
   type RowActionSection,
@@ -2324,6 +2325,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Preview pane (A3)
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
+  // ★ DEC-397b: `JedenPrawyPanel` niżej trzyma WŁASNĄ instancję `useJedenPanel`
+  // (ten sam moduł `my-work` — stan współdzielony przez `stany`/`sluchacze`
+  // w hooku), ale wołanie `otworz()` musi żyć TU, w prawdziwym kliknięciu
+  // wiersza (`preview`), nie jako efekt obserwujący samą treść rekordu —
+  // inaczej bierny re-render (nowe dane pod tym samym zaznaczeniem) też by
+  // otwierał panel wbrew świadomemu X.
+  const jedenPanel = useJedenPanel();
   // P1 DEC-397 §4.3: poniżej 1440 px panel jest nakładką (tabela nie traci
   // szerokości) — patrz komentarz w useDesktopPreviewOverlay.ts.
   const { containerRef: prawyPanelContainerRef, overlayMode: prawyPanelNakladka } =
@@ -3052,9 +3060,19 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   );
 
   // ── Preview item (single click) ──
-  const preview = useCallback((item: InboxItem) => {
-    setPreviewItem((prev) => (prev?.id === item.id ? null : item));
-  }, []);
+  const preview = useCallback(
+    (item: InboxItem) => {
+      setPreviewItem((prev) => {
+        if (prev?.id === item.id) return null;
+        // ★ DEC-397b: pojedynczy klik wiersza otwiera podgląd TEGO wiersza,
+        // nawet jeśli panel był świadomie zamknięty (X) wcześniej. `otworz()`
+        // czyści tylko `zamkniety` — dok Teresy (DEC-404) zostaje nietknięty.
+        jedenPanel.otworz();
+        return item;
+      });
+    },
+    [jedenPanel]
+  );
 
   // ── Open item in full view (double-click or button) ──
   const open = useCallback(
@@ -3079,7 +3097,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         label: t('myWork.inboxContent.label13', 'Open preview'),
         icon: ChevronRight,
         divider: true,
-        onClick: () => setPreviewItem(item),
+        // ★ DEC-397b: właściciel wprost — „działa (…) z menu kebab" — ten sam
+        // `otworz()` co klik wiersza w `preview()` wyżej.
+        onClick: () => {
+          jedenPanel.otworz();
+          setPreviewItem(item);
+        },
       },
       {
         id: 'edit',
@@ -3098,7 +3121,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         onClick: () => triage(item, 'dismiss'),
       },
     ],
-    [isPolish, triage]
+    [isPolish, triage, jedenPanel]
   );
 
   // ── Selection ──
@@ -4187,7 +4210,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         const item = (row as unknown as InboxStandardRow).__item;
         const handlers: InboxRowHandlers = {
           onOpen: open,
-          onOpenPreview: (it) => setPreviewItem(it),
+          // ★ DEC-397b: kebab „Otwórz podgląd" ma to samo prawo do otwarcia
+          // co klik wiersza (`preview()` wyżej).
+          onOpenPreview: (it) => {
+            jedenPanel.otworz();
+            setPreviewItem(it);
+          },
           onTriage: (it, action) => {
             void triage(it, action);
           },

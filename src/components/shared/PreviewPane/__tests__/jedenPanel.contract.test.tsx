@@ -101,6 +101,13 @@ function TableSurface() {
  * z pominięciem `TableWithPreviewLayout`'owego `handleSelect`. Regresja P1
  * (DEC-397, uwaga właściciela „panel wraca po X") żyła dokładnie w tym
  * kontrolowanym przejściu `previewOpen` false→true.
+ *
+ * ★ DEC-397b (06.09.2026 15:47) NADPISUJE DEC-397: właściciel chce dokładnie
+ * to przejście z powrotem — „preview (…) działa przy pojedynczym kliknięciu
+ * na linię" — patrz T4 niżej. Fix: `TableWithPreviewLayout` obserwuje
+ * WYŁĄCZNIE `selectedId` (identyfikator, nie `previewOpen`/treść) i woła
+ * `jedenPanel.otworz()` tylko gdy ten faktycznie się zmienia na nowy —
+ * odróżnia to prawdziwy klik od biernego re-renderu pod tym samym `selectedId`.
  */
 const CONTROLLED_ITEMS: Record<string, { id: string; title: string }> = {
   '1': { id: '1', title: 'Zadanie pierwsze' },
@@ -217,22 +224,37 @@ describe('jeden prawy panel — kontrakt', () => {
     expect(screen.getAllByText('Drugi rekord').length).toBeGreaterThan(0);
   });
 
-  it('T4 regresja Zadania/Realizacja: previewOpen kontrolowany, klik w inny wiersz po X nie otwiera panelu', () => {
+  it('T4 DEC-397b (nadpisuje DEC-397): previewOpen kontrolowany, klik w inny wiersz po X PONOWNIE otwiera panel z tym wierszem (MUTACJA: usuń `otworz()` w efekcie `selectedId` → RED)', () => {
     const view = render(<ControlledRowsSurface />, { wrapper: Wrapper });
     expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
 
     fireEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(view.container.querySelector('[data-right-panel]')).toBeNull();
 
+    // ★ DEC-397b (właściciel, 06.09.2026 15:47): „preview jest otwierany tak,
+    // jak wszędzie indziej: działa przy pojedynczym kliknięciu na linię".
     // Klik w drugi wiersz: konsument ustawia nowe zaznaczenie wprost
-    // (`setPreviewTaskId`), `previewOpen` wraca na `true` — panel MUSI
-    // zostać zamknięty (lepkość), dopóki nikt nie kliknie „Pokaż panel".
+    // (`setPreviewTaskId`), `previewOpen` wraca na `true` — panel MA się
+    // ponownie otworzyć, z NOWYM zaznaczeniem, bez potrzeby „Pokaż panel".
     fireEvent.click(screen.getByTestId('row-2'));
-    expect(view.container.querySelector('[data-right-panel]')).toBeNull();
-
-    fireEvent.click(screen.getByTestId('show-list-panel'));
     expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
     expect(screen.getAllByText('Zadanie drugie').length).toBeGreaterThan(0);
+  });
+
+  it('T4b DEC-397b + DEC-404: dok Teresy otwarty → klik wiersza NIE otwiera drugiego panelu (MUTACJA: użyj `pokazPanel()` zamiast `otworz()` → RED)', () => {
+    appStore.isChatCollapsed = false;
+    const view = render(<ControlledRowsSurface />, { wrapper: Wrapper });
+    // Dok zastępuje kolumnę podglądu — zero paneli, mimo że `selectedId` już
+    // jest ustawiony (`'1'`, patrz `ControlledRowsSurface`).
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(0);
+    expect(appStore.toggleChatCollapse).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('row-2'));
+    // Klik zmienił zaznaczenie (`otworz()` czyści `zamkniety`), ale dok
+    // ZOSTAJE otwarty — `otworz()`, w odróżnieniu od `pokazPanel()`, nie
+    // woła `toggleChatCollapse`, więc nie pojawia się drugi panel obok doku.
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(0);
+    expect(appStore.toggleChatCollapse).not.toHaveBeenCalled();
   });
 
   it('T7 nie wprowadza zakazanych rodzin tokenów', () => {

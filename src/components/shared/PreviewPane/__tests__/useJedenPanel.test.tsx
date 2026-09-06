@@ -101,6 +101,22 @@ describe('useJedenPanel', () => {
     expect(appStore.isChatCollapsed).toBe(true);
   });
 
+  it('DEC-397b: `otworz()` czyści zamkniecie BEZ ruszania doku Teresy (MUTACJA: dołóż `toggleChatCollapse` do `otworz` → RED)', () => {
+    appStore.isChatCollapsed = false; // dok otwarty
+    const panel = renderHook(() => useJedenPanel(), { wrapper: wrapperAt('/initiatives') });
+
+    act(() => panel.result.current.zamknij());
+    expect(panel.result.current.zamkniety).toBe(true);
+
+    act(() => panel.result.current.otworz());
+    expect(panel.result.current.zamkniety).toBe(false);
+    expect(localStorage.getItem('consultify.listPanel.initiatives.closed')).toBe('0');
+    // Klucz różnicy vs `pokazPanel()`: `otworz()` NIE zwija doku — inaczej
+    // klik wiersza przy otwartym doku Teresy (DEC-404) gasiłby dok.
+    expect(appStore.toggleChatCollapse).not.toHaveBeenCalled();
+    expect(appStore.isChatCollapsed).toBe(false);
+  });
+
   it('KONTRAKT DEC-404: hook nie eksponuje już zakładki ani wejścia do Teresy', () => {
     const panel = renderHook(() => useJedenPanel(), { wrapper: wrapperAt('/my-work') });
     const api = panel.result.current as Record<string, unknown>;
