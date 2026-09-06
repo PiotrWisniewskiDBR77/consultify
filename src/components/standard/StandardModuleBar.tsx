@@ -20,7 +20,7 @@
  * Moduły używają WYŁĄCZNIE tej fasady — deklaratywnie, bez własnego chrome.
  */
 
-import { ChevronRight, PanelRightOpen, Sparkles, type LucideIcon } from 'lucide-react';
+import { ChevronRight, PanelRightOpen, type LucideIcon } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -52,10 +52,14 @@ import {
 const noop = () => undefined;
 
 /**
- * useStandardPanelControls — pigułki „Pokaż panel"/„Teresa" prawego skrajа
- * Menu 3 (jeden prawy panel, `useJedenPanel`), WYEKSTRAHOWANE z prywatnego
- * dotąd `panelControls` poniżej (ZERO zmiany zachowania — czysta ekstrakcja,
- * ten sam hook/JSX/data-testid).
+ * useStandardPanelControls — pigułka „Pokaż panel" prawego skraju Menu 3
+ * (jeden prawy panel, `useJedenPanel`), WYEKSTRAHOWANA z prywatnego dotąd
+ * `panelControls` poniżej.
+ *
+ * ★ DEC-404 (właściciel, 06.09.2026): pigułka „Teresa" (`open-list-teresa`)
+ * ZNIKA. Otwierała czat w kolumnie podglądu — kształt odrzucony przez
+ * właściciela („tu nie jest jej miejsce"). Teresa ma jedno wejście na każdym
+ * ekranie: ikona w Menu 1, która montuje standardowy dok `MainLayout`.
  *
  * POWÓD ISTNIENIA (MP-MENU3, 2026-09-06): huby z WŁASNYM bespoke Menu 2
  * (np. `MyWorkHub` — search/tabs/CTA renderowane poza `StandardModuleBar`)
@@ -72,19 +76,11 @@ export function useStandardPanelControls(): React.ReactNode {
   const maJedenPanel = useEmbeddedModuleChatHost();
   const jedenPanel = useJedenPanel();
 
-  return maJedenPanel ? (
-    <>
-      {jedenPanel.zamkniety ? (
-        <Menu3Chip onClick={jedenPanel.pokazPanel} data-testid="show-list-panel">
-          <PanelRightOpen size={12} aria-hidden="true" />
-          <span>{t('list.rightPanel.show', 'Show panel')}</span>
-        </Menu3Chip>
-      ) : null}
-      <Menu3Chip onClick={jedenPanel.otworzTerese} data-testid="open-list-teresa">
-        <Sparkles size={12} aria-hidden="true" />
-        <span>{t('list.rightPanel.openTeresa', 'Teresa')}</span>
-      </Menu3Chip>
-    </>
+  return maJedenPanel && (jedenPanel.zamkniety || jedenPanel.dokOtwarty) ? (
+    <Menu3Chip onClick={jedenPanel.pokazPanel} data-testid="show-list-panel">
+      <PanelRightOpen size={12} aria-hidden="true" />
+      <span>{t('list.rightPanel.show', 'Show panel')}</span>
+    </Menu3Chip>
   ) : null;
 }
 
