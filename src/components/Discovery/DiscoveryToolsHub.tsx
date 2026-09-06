@@ -74,7 +74,6 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 import { formatRoiDisplay } from '@/utils/safeFormat';
-import { isToolsInsightsWiringEnabled } from '@/utils/toolsInsightsWiringFlag';
 
 import {
   type AssessmentFrameworkPreviewModel,
@@ -900,6 +899,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       ),
     [outputs]
   );
+  /**
+   * 1.1-T1 (DEC-412), uwaga właściciela 06.09: „W narzędziach Insighty i
+   * Raporty jest ta sama lista. Co oznacza, że nie tworzy insightów tak
+   * naprawdę."
+   *
+   * Zakładka Insighty pokazuje WYŁĄCZNIE `tool_output` — własne, zatwierdzone
+   * wyniki narzędzi z lineage do sesji (TLS-OUTPUT-OWN-001,
+   * DEC-2026-08-25-32). Raporty zostają podzbiorem dokumentowym
+   * (assessment_report + report_builder) — patrz `reportsOutputs` wyżej.
+   * Dopóki obie zakładki czytały tę samą tablicę `outputs`, a `tool_output`
+   * nie było w niej ANI JEDNEGO wiersza (flaga OFF + producent nie pisał),
+   * listy były identyczne co do wiersza.
+   */
+  const insightsOutputs = useMemo(
+    () => outputs.filter((item) => item.outputKind === 'tool_output'),
+    [outputs]
+  );
   const [initiatives, setInitiatives] = useState<DisplayItem[]>([]);
   const [assessmentSessions, setAssessmentSessions] = useState<
     Array<{
@@ -1124,22 +1140,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             success: true,
             data: [] as any[],
           }),
-          // DEC-118 repair #1 (behind ff_toolsInsightsWiring — default OFF
-          // again under DEC-158 after the live-read database lacked the
-          // table): the canonical tool_outputs snapshot (migration
-          // 946) was never fetched here, so an approved tool result never
-          // appeared in the module's own Outputs/Insights tab. The network
-          // call is still skippable per-session via the localStorage kill
-          // switch (?ff_toolsInsightsWiring=0).
-          isToolsInsightsWiringEnabled()
-            ? resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
-                outputs: [] as any[],
-              }).catch((error) => {
-                console.warn('[DiscoveryToolsHub] tool outputs unavailable:', error);
-                setToolOutputsUnavailable(true);
-                return { outputs: [] as any[] };
-              })
-            : Promise.resolve({ outputs: [] as any[] }),
+          // 1.1-T1 (DEC-412): the canonical `tool_outputs` snapshot
+          // (migration 946) is now fetched UNCONDITIONALLY. It used to sit
+          // behind `ff_toolsInsightsWiring` (default OFF), which is exactly
+          // why the Insights tab could only ever show the same rows as
+          // Reports — with zero `tool_output` rows merged in, the two lists
+          // were byte-identical, which is what the owner saw. The flag is
+          // deleted (kształt 20: "flaga OFF w kodzie ≠ wyłączona" — DEC-227
+          // flipped it ON en masse anyway, so it measured nothing). The
+          // catch below keeps the whole hub alive if `/api/tool-outputs`
+          // is unavailable (5xx) — the tab then shows an honest notice
+          // instead of a full-screen error.
+          resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
+            outputs: [] as any[],
+          }).catch((error) => {
+            console.warn('[DiscoveryToolsHub] tool outputs unavailable:', error);
+            setToolOutputsUnavailable(true);
+            return { outputs: [] as any[] };
+          }),
         ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
@@ -1694,7 +1712,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'outputs' as ModuleTab,
         label: t('tools.hub.tabs.outputs', 'Outputs'),
         icon: <FolderOutput size={16} />,
-        count: outputs.length,
+        // 1.1-T1: licznik zakładki Insighty liczy WYŁĄCZNIE `tool_output`,
+        // nie całą tablicę `outputs` (która niesie też raporty i prezentacje).
+        count: insightsOutputs.length,
       },
       {
         // TLS-01: fifth surface -- was previously collapsed into 'outputs'
@@ -1719,7 +1739,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     initiatives.length,
     isPolish,
     knownTools,
-    outputs.length,
+    insightsOutputs.length,
     reportsOutputs.length,
     t,
     isKnownToolsLoading,
@@ -2308,6 +2328,105 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
     ],
     [isPolish, t]
+  );
+
+  /**
+   * 1.1-T1 (DEC-412) — kolumny zakładki INSIGHTY.
+   *
+   * Insight = zatwierdzony wynik narzędzia (`tool_outputs`), więc kolumny
+   * mówią to, czego właściciel szukał i nie znalazł: z JAKIEGO narzędzia i z
+   * KTÓREJ sesji ten wniosek pochodzi (lineage Session → Insight,
+   * TLS-OUTPUT-OWN-001). Raporty zostają na `outputsColumns` (typ dokumentu),
+   * bo tam kolumna „Typ" rozróżnia raport oceny od raportu z kreatora.
+   */
+  const sessionNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of discoveries) map.set(String(d.id), String(d.name || ''));
+    return map;
+  }, [discoveries]);
+
+  const insightsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'toolType',
+        label: t('tools.hub.insights.columns.toolType', 'Tool'),
+        width: '150px',
+        render: (row: any) => {
+          const raw = String(row?._fullData?.toolType || '');
+          const short = TOOL_TYPE_TO_SHORT[raw]?.short;
+          const label = short ? TOOL_META[short].name : raw || '—';
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-c-text-muted">
+                <Zap size={14} />
+              </span>
+              <span className="text-xs font-medium text-c-text-secondary truncate">{label}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'name',
+        label: t('tools.hub.outputs.columns.name', 'Name'),
+        render: (row: any) => (
+          <div className="min-w-0">
+            <span className="block text-sm font-semibold text-c-text truncate">
+              {String(row?.name || '')}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'sourceSession',
+        label: t('tools.hub.insights.columns.sourceSession', 'Source session'),
+        width: '240px',
+        render: (row: any) => {
+          const sessionId = String(row?.sourceId || row?._fullData?.toolSessionId || '');
+          const name = sessionId ? sessionNameById.get(sessionId) : undefined;
+          if (!sessionId) {
+            return <span className="text-sm text-c-text-muted">—</span>;
+          }
+          return (
+            <span className="text-sm text-c-text-secondary truncate block" title={sessionId}>
+              {name || sessionId}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('tools.hub.outputs.columns.status', 'Status'),
+        width: '120px',
+        render: (row: any) => renderToolStatusCell(row?.statusRaw ?? row?.status, isPolish),
+      },
+      {
+        id: 'updatedAt',
+        label: t('tools.hub.outputs.columns.updated', 'Updated'),
+        width: '200px',
+        sortable: true,
+        dataType: 'date',
+        sortAccessor: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+        },
+        render: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          if (Number.isNaN(d.getTime())) {
+            return <span className="text-sm text-c-text-secondary">—</span>;
+          }
+          return (
+            <span className="text-sm text-c-text-secondary">
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </span>
+          );
+        },
+      },
+    ],
+    [isPolish, sessionNameById, t]
   );
 
   // Handlers
@@ -2964,7 +3083,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         data = discoveries;
         break;
       case 'outputs':
-        data = outputs;
+        // 1.1-T1: Insighty = tylko własne wyniki narzędzi (`tool_output`).
+        data = insightsOutputs;
         break;
       case 'reports':
         // TLS-01: 'reports' is the formal-report subset of the same
@@ -3016,7 +3136,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
 
     return data;
-  }, [activeTab, discoveries, initiatives, outputs, reportsOutputs, searchQuery, statusFilter]);
+  }, [
+    activeTab,
+    discoveries,
+    initiatives,
+    insightsOutputs,
+    reportsOutputs,
+    searchQuery,
+    statusFilter,
+  ]);
 
   type UnifiedSessionRow =
     | (DisplayItem & { kind: 'toolSession'; sessionType: string })
@@ -3279,7 +3407,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         : activeTab === 'reports'
           ? reportsOutputs
           : activeTab === 'outputs'
-            ? outputs
+            ? insightsOutputs
             : activeTab === 'initiatives'
               ? initiatives
               : [];
@@ -3307,7 +3435,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     activeTab,
     currentStatusOptions,
     initiatives,
-    outputs,
+    insightsOutputs,
     reportsOutputs,
     searchQuery,
     unifiedSessionsData,
@@ -4469,23 +4597,36 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     // Table view (default)
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
-    const isReportsAndPresentationsTab = activeTab === 'outputs' || activeTab === 'reports';
+    // 1.1-T1 (DEC-412): Insighty i Raporty to od teraz DWIE różne listy —
+    // Insighty niosą własne wyniki narzędzi (kolumna „Sesja źródłowa"),
+    // Raporty dokumenty (kolumna „Typ" rozróżniająca raport oceny/kreatora).
+    const isInsightsTab = activeTab === 'outputs';
+    const isReportsTab = activeTab === 'reports';
+    // Wspólne dla obu (wiersz typu `output`): akcje wiersza, preview, kebab.
+    const isReportsAndPresentationsTab = isInsightsTab || isReportsTab;
     const columns = isInitiativesTab
       ? initiativeColumns
-      : isReportsAndPresentationsTab
-        ? outputsColumns
-        : discoveryColumns;
+      : isInsightsTab
+        ? insightsColumns
+        : isReportsTab
+          ? outputsColumns
+          : discoveryColumns;
     const emptyMessage = isInitiativesTab
       ? t(
           'tools.hub.empty.initiatives',
           'No initiatives yet. Generate them from validated tool conclusions.'
         )
-      : isReportsAndPresentationsTab
+      : isInsightsTab
         ? t(
-            'tools.hub.empty.outputs',
-            'No reports or presentations yet. Finalize a session and generate them here.'
+            'tools.hub.empty.insights',
+            'No insights yet. Insights are created from approved sessions — approve a session in the Sessions tab.'
           )
-        : t(
+        : isReportsTab
+          ? t(
+              'tools.hub.empty.outputs',
+              'No reports or presentations yet. Finalize a session and generate them here.'
+            )
+          : t(
             'tools.hub.empty.sessions',
             'No active sessions yet. Start from Library and a new session will appear here automatically.'
           );

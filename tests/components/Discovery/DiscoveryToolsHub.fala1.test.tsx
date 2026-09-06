@@ -45,10 +45,9 @@ vi.mock('@/services/api', () => ({
     createToolSession: vi.fn(),
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
-    // ff_toolsInsightsWiring defaulted ON 27.08 then reverted OFF 28.08
-    // (DEC-158, tool_outputs missing on staging) — the bootstrap call is now
-    // gated behind the flag again, so this mock is defensive only, but kept
-    // mocked in case a test in this file flips the flag on via override.
+    // 1.1-T1 (DEC-412): the bootstrap now calls this UNCONDITIONALLY (the
+    // ff_toolsInsightsWiring kill switch is deleted), so this mock is
+    // load-bearing, not defensive.
     listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
   },
 }));
@@ -282,10 +281,14 @@ describe('DiscoveryToolsHub — M8: Outputs "Chat" opens real chat, not a Previe
     ]);
   });
 
+  // 1.1-T1 (DEC-412): `report-1` to wiersz raportu z kreatora — od 06.09
+  // mieszka w zakładce Raporty, nie w Insightach (tam tylko `tool_output`).
+  // Sama akcja „Czat" jest wspólna dla wierszy typu `output` i to ona jest
+  // przedmiotem tego testu.
   it('clicking Chat on an output row calls openChatWithContext with the row as context, not setPreviewItemId', async () => {
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
-        <DiscoveryToolsHub initialTab="outputs" />
+        <DiscoveryToolsHub initialTab="reports" />
       </MemoryRouter>
     );
 

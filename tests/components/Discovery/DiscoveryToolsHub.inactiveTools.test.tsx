@@ -122,10 +122,9 @@ vi.mock('@/services/api', () => ({
     createToolSession: (...args: unknown[]) => createToolSessionMock(...args),
     suggestTools: vi.fn().mockResolvedValue({ suggestions: [] }),
     getInitiativesByStatus: vi.fn().mockResolvedValue([]),
-    // ff_toolsInsightsWiring defaulted ON 27.08 then reverted OFF 28.08
-    // (DEC-158, tool_outputs missing on staging) — the bootstrap call is now
-    // gated behind the flag again, so this mock is defensive only, but kept
-    // mocked in case a test in this file flips the flag on via override.
+    // 1.1-T1 (DEC-412): the bootstrap now calls this UNCONDITIONALLY (the
+    // ff_toolsInsightsWiring kill switch is deleted), so this mock is
+    // load-bearing, not defensive.
     listToolOutputs: vi.fn().mockResolvedValue({ outputs: [] }),
   },
 }));

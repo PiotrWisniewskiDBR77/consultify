@@ -5,12 +5,15 @@
  * tab bootstrap never called `Api.listToolOutputs()` (the canonical
  * `tool_outputs` snapshot, migration 946), so an approved tool result never
  * appeared in the module's own aggregate list — only inside that one
- * session's own workspace. Gated behind `ff_toolsInsightsWiring` — flipped
- * OFF -> ON on 2026-08-27 (owner accept on dev-render screenshots), then
- * reverted ON -> OFF again on 2026-08-28 (DEC-158: a staging DB check found
- * `tool_outputs` does not exist there, and the unconditional call was 500ing
- * the whole hub, not just the Insights tab). Default is OFF again;
- * fail-closed on read errors either way.
+ * session's own workspace.
+ *
+ * 1.1-T1 (DEC-412, 2026-09-06): the `ff_toolsInsightsWiring` kill switch is
+ * DELETED and the fetch is unconditional. The flag is exactly why the owner
+ * saw "Insighty i Raporty to ta sama lista": with zero `tool_output` rows
+ * merged in, the Insights tab fell back to the same report rows Reports
+ * shows. The 500-resilience the flag was reverted for is kept by the
+ * per-request catch (last test below) — the hub stays alive and the tab
+ * shows an honest notice.
  *
  * Reuses the same mount/mocking scaffold as `DiscoveryToolsHub.fala1.test.tsx`
  * (StandardTable stubbed to a thin prop-capturing renderer).
@@ -19,8 +22,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { resetToolsInsightsWiringFlagCache } from '@/utils/toolsInsightsWiringFlag';
 
 const navigateMock = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -157,12 +158,11 @@ const SAMPLE_TOOL_OUTPUT = {
   isCurrent: true,
 };
 
-describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring', () => {
+describe('DiscoveryToolsHub — 1.1-T1: tool_outputs wiring is unconditional (flag deleted)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     standardTableMounts.length = 0;
     window.localStorage.clear();
-    resetToolsInsightsWiringFlagCache();
     getKnownToolsMock.mockResolvedValue({ items: [buildKnownTool()] });
     listToolSessionsMock.mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 });
     getAssessmentReportsMock.mockResolvedValue([]);
@@ -171,31 +171,10 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
 
   afterEach(() => {
     window.localStorage.clear();
-    resetToolsInsightsWiringFlagCache();
   });
 
-  // cofnięte 28.08 (DEC-158): default is OFF again — this is now the
-  // DEFAULT path, no explicit localStorage override needed. This is the
-  // regression guard for the staging incident: with the flag OFF,
-  // Api.listToolOutputs() must never be called, so a missing `tool_outputs`
-  // table on the live DB cannot 500 the whole hub.
-  it('flag OFF (default, no explicit override): never calls Api.listToolOutputs and the row never appears', async () => {
-    render(
-      <MemoryRouter initialEntries={['/discovery-tools']}>
-        <DiscoveryToolsHub initialTab="outputs" />
-      </MemoryRouter>
-    );
-
-    await screen.findByTestId('standard-table-stub-tools.outputs');
-    expect(listToolOutputsMock).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('row-out-1')).not.toBeInTheDocument();
-  });
-
-  // flag ON only via explicit override now (localStorage/query/env) — the
-  // mechanika itself is unchanged by the 28.08 revert, only the default.
-  it('flag ON (explicit localStorage override): calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output"', async () => {
-    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
-    resetToolsInsightsWiringFlagCache();
+  // 1.1-T1 (DEC-412): no override of any kind — the default path must fetch.
+  it('default path (no override at all): calls Api.listToolOutputs and shows the row in the Insights tab as kind "tool_output"', async () => {
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
         <DiscoveryToolsHub initialTab="outputs" />
@@ -212,9 +191,7 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
     expect(screen.getByTestId('row-out-1-kind')).toHaveTextContent('tool_output');
   });
 
-  it('flag ON (explicit override): a superseded revision (isCurrent: false) is excluded from the aggregate list', async () => {
-    window.localStorage.setItem('ff.tools_insights_wiring', '1');
-    resetToolsInsightsWiringFlagCache();
+  it('a superseded revision (isCurrent: false) is excluded from the aggregate list', async () => {
     listToolOutputsMock.mockResolvedValue({
       outputs: [
         SAMPLE_TOOL_OUTPUT,
@@ -235,8 +212,6 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
   });
 
   it('keeps the hub alive and shows an honest message when only tool outputs return 500', async () => {
-    window.localStorage.setItem('ff.tools_insights_wiring', '1');
-    resetToolsInsightsWiringFlagCache();
     listToolOutputsMock.mockRejectedValue({ status: 500, message: 'tool_outputs missing' });
 
     render(
@@ -250,6 +225,49 @@ describe('DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff
       'Tool outputs are temporarily unavailable'
     );
     expect(screen.queryByText('Data Loading Error')).not.toBeInTheDocument();
+  });
+
+  /**
+   * 1.1-T1 (DEC-412) — uwaga właściciela 06.09: „W narzędziach Insighty i
+   * Raporty jest ta sama lista." Mutacja celowana: gdy `insightsOutputs`
+   * przestanie filtrować po `tool_output` (albo zakładka wróci na wspólną
+   * tablicę `outputs`), wiersz raportu pojawi się w Insightach i ten test
+   * pada. Druga strona pary — Raporty NIE pokazują insightu — jest testem
+   * poniżej, żeby żadna z zakładek nie „wygrała" przez wygaszenie drugiej.
+   */
+  it('Insights shows ONLY tool_output rows — a report row never appears there', async () => {
+    getAssessmentReportsMock.mockResolvedValue([
+      { id: 'rep-1', name: 'Raport oceny DRD', status: 'GENERATED', updatedAt: new Date().toISOString() },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="outputs" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('row-out-1')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('row-out-1-kind')).toHaveTextContent('tool_output');
+    expect(screen.queryByTestId('row-rep-1')).not.toBeInTheDocument();
+  });
+
+  it('Reports shows ONLY report rows — the tool_output insight never appears there', async () => {
+    getAssessmentReportsMock.mockResolvedValue([
+      { id: 'rep-1', name: 'Raport oceny DRD', status: 'GENERATED', updatedAt: new Date().toISOString() },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={['/discovery-tools']}>
+        <DiscoveryToolsHub initialTab="reports" />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('row-rep-1')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('row-out-1')).not.toBeInTheDocument();
   });
 
   it('preserves the full-hub error when tool sessions return 500', async () => {
@@ -272,8 +290,6 @@ describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report
     vi.clearAllMocks();
     standardTableMounts.length = 0;
     window.localStorage.clear();
-    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
-    resetToolsInsightsWiringFlagCache();
     getKnownToolsMock.mockResolvedValue({ items: [buildKnownTool()] });
     listToolSessionsMock.mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 });
     getAssessmentReportsMock.mockResolvedValue([]);
@@ -282,7 +298,6 @@ describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report
 
   afterEach(() => {
     window.localStorage.clear();
-    resetToolsInsightsWiringFlagCache();
   });
 
   it('navigates to /reports/builder with sourceType=TOOL and the originating tool session id', async () => {
@@ -328,7 +343,10 @@ describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report
     expect(button).toBeDisabled();
   });
 
-  it('is disabled for a non-tool_output row (e.g. an assessment report)', async () => {
+  // 1.1-T1 (DEC-412): wiersz raportu oceny nie pojawia się już w zakładce
+  // Insighty (tam są tylko `tool_output`) — jego akcje sprawdzamy tam, gdzie
+  // ten wiersz realnie żyje, czyli w zakładce Raporty.
+  it('is disabled for a non-tool_output row (e.g. an assessment report, Reports tab)', async () => {
     listToolOutputsMock.mockResolvedValue({ outputs: [] });
     getAssessmentReportsMock.mockResolvedValue([
       {
@@ -342,7 +360,7 @@ describe('DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report
 
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
-        <DiscoveryToolsHub initialTab="outputs" />
+        <DiscoveryToolsHub initialTab="reports" />
       </MemoryRouter>
     );
 
@@ -356,8 +374,6 @@ describe('DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an app
     vi.clearAllMocks();
     standardTableMounts.length = 0;
     window.localStorage.clear();
-    window.localStorage.setItem('ff.tools_insights_wiring', 'on');
-    resetToolsInsightsWiringFlagCache();
     getKnownToolsMock.mockResolvedValue({ items: [buildKnownTool()] });
     listToolSessionsMock.mockResolvedValue({ items: [], total: 0, limit: 0, offset: 0 });
     getAssessmentReportsMock.mockResolvedValue([]);
@@ -370,7 +386,6 @@ describe('DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an app
 
   afterEach(() => {
     window.localStorage.clear();
-    resetToolsInsightsWiringFlagCache();
   });
 
   it('calls Api.reopenToolOutput(outputId) and refetches on click', async () => {
@@ -411,7 +426,10 @@ describe('DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an app
     expect(button).toBeDisabled();
   });
 
-  it('is disabled for a non-tool_output row (e.g. an assessment report)', async () => {
+  // 1.1-T1 (DEC-412): wiersz raportu oceny nie pojawia się już w zakładce
+  // Insighty (tam są tylko `tool_output`) — jego akcje sprawdzamy tam, gdzie
+  // ten wiersz realnie żyje, czyli w zakładce Raporty.
+  it('is disabled for a non-tool_output row (e.g. an assessment report, Reports tab)', async () => {
     listToolOutputsMock.mockResolvedValue({ outputs: [] });
     getAssessmentReportsMock.mockResolvedValue([
       {
@@ -425,7 +443,7 @@ describe('DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an app
 
     render(
       <MemoryRouter initialEntries={['/discovery-tools']}>
-        <DiscoveryToolsHub initialTab="outputs" />
+        <DiscoveryToolsHub initialTab="reports" />
       </MemoryRouter>
     );
 

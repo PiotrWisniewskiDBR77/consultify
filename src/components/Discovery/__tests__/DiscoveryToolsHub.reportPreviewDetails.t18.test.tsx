@@ -238,18 +238,25 @@ describe('T18 Discovery reports preview Details', () => {
     expect(source).toContain('<TableWithPreviewLayout<ToolsPreviewItem>');
   });
 
-  it('leaves the shared outputs/reports data-source and column merge untouched', () => {
-    // Grid/data-source infra ("isReportsAndPresentationsTab" and every switch
-    // keyed on `activeTab === 'outputs' || activeTab === 'reports'") is out of
-    // scope for this packet — QA required Details selection only, no routing,
-    // tab, data, or handler changes.
+  it('keeps the shared row-level infra for output rows while Insights and Reports read different lists', () => {
+    // 1.1-T1 (DEC-412) — ZMIANA KONTRAKTU tego testu, świadoma. Do 06.09 test
+    // wymagał, żeby Insighty i Raporty czytały TĘ SAMĄ tablicę `outputs`
+    // (>=2 wystąpienia `activeTab === 'outputs' || activeTab === 'reports'`).
+    // Właśnie to zobaczył właściciel: „Insighty i Raporty jest ta sama
+    // lista". Od teraz DANE są rozdzielone (`insightsOutputs` vs
+    // `reportsOutputs`), a wspólna zostaje tylko warstwa WIERSZA (preview,
+    // kebab, otwieranie) — i to nadal sprawdzamy, bo to był realny zakres
+    // pakietu T18.
     const source = readFileSync(
       join(process.cwd(), 'src/components/Discovery/DiscoveryToolsHub.tsx'),
       'utf8'
     );
-    const occurrences = source.match(/activeTab === 'outputs' \|\| activeTab === 'reports'/g) ?? [];
-    expect(occurrences.length).toBeGreaterThanOrEqual(2);
     expect(source).toContain('const isReportsAndPresentationsTab =');
+    // Dane rozdzielone: dwie osobne listy, każda z własnym filtrem.
+    expect(source).toContain(
+      "outputs.filter((item) => item.outputKind === 'tool_output')"
+    );
+    expect(source).toContain("item.outputKind === 'assessment_report' || item.outputKind === 'report_builder'");
   });
 
   /**
