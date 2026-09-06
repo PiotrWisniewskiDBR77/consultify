@@ -25,7 +25,7 @@
           "nazwa": "P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo",
           "wykonawca": "Sonnet",
           "zalezy_od": "—",
-          "stan": "do_odbioru",
+          "stan": "odebrane",
           "galaz": "mvp/p1-skrzynka-wywiad",
           "sha": "c9a7e5bd0b",
           "dowod": "scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440",
@@ -217,8 +217,8 @@
           "tresc": "Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu",
           "kto": "nadzorca",
           "artefakt": "8×3 zrzuty na żywo, aside ≤ 1",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "06.09: Skrzynka i Wywiad na żywo aside 1/1/0/0 (evidence/p1-skrzynka-wywiad/), właściciel „Tak” dla karty 2; Zadania/Realizacja z nocy (P1-LEPKIE); pozostałe 4 listy do pomiaru w 1.9"
         },
         {
           "nr": "S1.6",
