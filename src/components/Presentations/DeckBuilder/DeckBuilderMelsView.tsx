@@ -601,6 +601,10 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     return (
       <ArtifactRightPanel
         sections={sections}
+        teresaEntry={topBarHandlers.onToggleAgent ? {
+          label: L('Zapytaj Teresę o tę prezentację', 'Ask Teresa about this presentation'),
+          onOpen: topBarHandlers.onToggleAgent,
+        } : undefined}
         width="100%"
         ariaLabel={L('Panel prezentacji', 'Presentation panel')}
       />

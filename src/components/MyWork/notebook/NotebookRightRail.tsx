@@ -1225,41 +1225,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
    * Bez `teresaContent` rząd zakładek nie powstaje i zostaje sam X — czyli
    * dotychczasowe zachowanie dla wołaczy, którzy Teresy nie osadzają.
    */
-  const zakladkaAktywna: NotebookPanelTab = teresaContent ? panelTab : 'note';
-  const zakladki = teresaContent ? (
-    <div
-      role="tablist"
-      aria-label={t('notebook.rightRail.tabsAria', 'Zakładki panelu')}
-      className="inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5"
-    >
-      {(
-        [
-          { id: 'note' as const, label: t('notebook.rightRail.tabNote', 'Notatka') },
-          { id: 'teresa' as const, label: t('notebook.rightRail.tabTeresa', 'Teresa') },
-        ] as const
-      ).map((tab) => {
-        const aktywna = zakladkaAktywna === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={aktywna}
-            data-testid={`notebook-panel-tab-${tab.id}`}
-            onClick={() => onPanelTabChange?.(tab.id)}
-            className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
-              aktywna
-                ? 'bg-c-surface text-c-text shadow-sm'
-                : 'text-c-text-secondary hover:text-c-text'
-            }`}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
-  ) : null;
-
+  const zakladki = null;
   const przyciskZamknij = (
     <button
       type="button"
@@ -1343,10 +1309,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
       }}
     >
       {powlokaNaglowka}
-      {zakladkaAktywna === 'teresa' ? (
-        <div className="min-h-0 flex-1 overflow-hidden">{teresaContent}</div>
-      ) : (
-        <>
+      <>
           {blokTozsamosci}
           <ArtifactRightPanel
             // Ten komponent JEST już `<aside aria-label>` — accordion renderuje
@@ -1355,11 +1318,18 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             renderAs="div"
             ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
             sections={specASections}
+            teresaEntry={
+              onOpenAIChat
+                ? {
+                    label: isPolishRail ? 'Zapytaj Teresę o tę notatkę' : 'Ask Teresa about this note',
+                    onOpen: onOpenAIChat,
+                  }
+                : undefined
+            }
             width="100%"
             className="min-h-0 flex-1 border-l-0"
           />
-        </>
-      )}
+      </>
     </aside>
   );
 

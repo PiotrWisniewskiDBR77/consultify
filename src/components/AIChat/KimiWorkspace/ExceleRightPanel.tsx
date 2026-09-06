@@ -77,6 +77,7 @@ export interface ExceleRightPanelProps {
   onRevokeShare?: () => void;
   isShared?: boolean;
   onExportCsv?: () => void;
+  onOpenTeresa?: () => void;
 }
 
 /**
@@ -349,6 +350,7 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = (props) => {
     <ArtifactRightPanel
       ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
       sections={sections}
+      teresaEntry={props.onOpenTeresa ? { label: t('excele.rightPanel.askTeresa', 'Zapytaj Teresę o ten arkusz'), onOpen: props.onOpenTeresa } : undefined}
     />
   );
 };
