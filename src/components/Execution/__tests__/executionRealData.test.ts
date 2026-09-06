@@ -15,6 +15,7 @@ import {
   initiativeDeviationDays,
   initiativeLevelLabel,
   initiativeRag,
+  isBlockedInitiative,
   isDecisionOverdue,
   isOpenDecision,
   isTaskBlocked,
@@ -22,7 +23,12 @@ import {
   onTimeFromInitiatives,
   openDecisions,
   overdueOpenDecisions,
+  raidLevelScore,
+  raidOwnerDisplayName,
+  raidSeverityLabel,
+  raidTypeLabel,
   taskSlipDays,
+  topRaidItemsByLevel,
 } from '../executionRealData';
 
 const NOW = Date.parse('2026-09-06T12:00:00.000Z');
@@ -149,5 +155,91 @@ describe('zadania — poślizg zamiast pustej kolumny SLA', () => {
   it('rozpoznaje zablokowane', () => {
     expect(isTaskBlocked({ status: 'blocked' })).toBe(true);
     expect(isTaskBlocked({ status: 'todo' })).toBe(false);
+  });
+});
+
+describe('1.12-R1b — inicjatywa zablokowana w OBU słownikach', () => {
+  it('stary słownik: status BLOCKED wprost', () => {
+    expect(isBlockedInitiative({ status: 'BLOCKED' })).toBe(true);
+  });
+
+  it('nowy słownik (migracja P12): IN_EXECUTION + on_hold=true', () => {
+    expect(isBlockedInitiative({ status: 'IN_EXECUTION', onHold: true })).toBe(true);
+    // snake_case — wersja, którą realnie zwraca SQL bez aliasu.
+    expect(isBlockedInitiative({ status: 'IN_EXECUTION', on_hold: true })).toBe(true);
+  });
+
+  it('IN_EXECUTION/EXECUTING bez on_hold NIE jest blokerem', () => {
+    expect(isBlockedInitiative({ status: 'IN_EXECUTION' })).toBe(false);
+    expect(isBlockedInitiative({ status: 'EXECUTING', onHold: false })).toBe(false);
+  });
+
+  it('inne statusy (SCHEDULED, DONE) nigdy nie są blokerem, on_hold czy nie', () => {
+    expect(isBlockedInitiative({ status: 'SCHEDULED', onHold: true })).toBe(false);
+    expect(isBlockedInitiative({ status: 'DONE', onHold: true })).toBe(false);
+  });
+});
+
+describe('1.12-R1b — RAID (Kokpit „Ryzyka")', () => {
+  it('poziom = P × I gdy oba pola są (skala 1..4 na oś)', () => {
+    expect(raidLevelScore({ probability: 'HIGH', impact: 'HIGH' })).toBe(9);
+    expect(raidLevelScore({ probability: 'LOW', impact: 'CRITICAL' })).toBe(4);
+  });
+
+  it('brak P lub I cofa się do riskScore zapisanego w bazie, a bez niego → null', () => {
+    expect(raidLevelScore({ probability: 'HIGH', riskScore: 6 })).toBe(6);
+    expect(raidLevelScore({ impact: 'HIGH' })).toBeNull();
+    expect(raidLevelScore({})).toBeNull();
+  });
+
+  it('typ po polsku i angielsku, nieznany typ wraca dosłownie', () => {
+    expect(raidTypeLabel('RISK')).toBe('Ryzyko');
+    expect(raidTypeLabel('DEPENDENCY', false)).toBe('Dependency');
+    expect(raidTypeLabel('WEIRD')).toBe('WEIRD');
+  });
+
+  it('severity fallback, gdy P×I się nie liczy', () => {
+    expect(raidSeverityLabel({ impact: 'HIGH' })).toBe('Wysokie');
+    expect(raidSeverityLabel({})).toBeNull();
+  });
+
+  it('właściciel: nazwa z API → katalog organizacji → null (NIGDY „Nieznany użytkownik")', () => {
+    expect(raidOwnerDisplayName({ ownerName: 'Jan Kowalski', ownerId: 'u1' })).toBe(
+      'Jan Kowalski'
+    );
+    expect(raidOwnerDisplayName({ ownerId: 'u1' }, (id) => (id === 'u1' ? 'Anna Nowak' : null))).toBe(
+      'Anna Nowak'
+    );
+    // POMIAR R1: 16/16 pozycji RAID mają ownerId spoza organization_members —
+    // Kokpit pokazuje pustkę (null → „—" w UI), nie „Nieznany użytkownik".
+    expect(raidOwnerDisplayName({ ownerId: 'u-nieznany' }, () => null)).toBeNull();
+    expect(raidOwnerDisplayName({})).toBeNull();
+  });
+
+  it('TOP 10 posortowane malejąco po poziomie; brak poziomu na końcu, nie wypycha policzonych', () => {
+    // POMIAR: `/api/raid` → 16 pozycji na DBR77 (RISK/ISSUE/DEPENDENCY/ASSUMPTION).
+    const items = [
+      ...Array.from({ length: 10 }, (_, i) => ({
+        id: `r${i}`,
+        type: 'RISK',
+        probability: 'HIGH',
+        impact: 'HIGH', // poziom 9
+      })),
+      ...Array.from({ length: 4 }, (_, i) => ({
+        id: `i${i}`,
+        type: 'ISSUE',
+        probability: 'LOW',
+        impact: 'LOW', // poziom 1
+      })),
+      { id: 'top-1', type: 'RISK', probability: 'HIGH', impact: 'CRITICAL' }, // poziom 12 — najwyższy
+      { id: 'no-level', type: 'DEPENDENCY' }, // brak P/I/riskScore
+    ];
+    expect(items).toHaveLength(16);
+
+    const top = topRaidItemsByLevel(items, 10);
+    expect(top).toHaveLength(10);
+    expect(top[0].id).toBe('top-1'); // poziom 12, zawsze pierwszy
+    expect(top.some((r) => r.id === 'no-level')).toBe(false); // brak poziomu nie wchodzi do TOP 10
+    expect(top.slice(1).every((r) => r.type === 'RISK')).toBe(true); // 9 pozostałych miejsc: poziom 9 przed poziomem 1
   });
 });

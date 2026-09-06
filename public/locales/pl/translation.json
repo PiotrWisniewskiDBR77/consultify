@@ -12356,7 +12356,11 @@
     },
     "summary": {
       "summarizePrompt": "Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.",
-      "blockedInitiative": "Zablokowana inicjatywa"
+      "blockedInitiative": "Zablokowana inicjatywa",
+      "riskLevel": "Poziom",
+      "riskNoDescription": "Brak opisu.",
+      "riskNoInitiative": "Brak powiązanej inicjatywy",
+      "mitigationPlan": "Plan mitygacji"
     },
     "reports": {
       "preset": {
@@ -12974,6 +12978,7 @@
     },
     "entityLookup": {
       "initiativeNotFound": "Nie znaleziono inicjatywy w tym widoku",
+      "riskNotFound": "Nie znaleziono pozycji RAID w tym widoku",
       "unsupportedType": "Otwieranie tego typu elementu nie jest tu jeszcze obsługiwane"
     },
     "signalsUnavailable": {

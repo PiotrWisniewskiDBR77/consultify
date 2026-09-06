@@ -1,0 +1,173 @@
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 24ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 102ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 12028ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 3ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status 15ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 14ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 24ms
+     ✓ pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 102ms
+     ✓ nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE  12028ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+     ✓ pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 3ms
+     ✓ tłumaczy IN_PROGRESS zamiast pokazywać surowy status 15ms
+     ✓ nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 14ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Decyzje" pokazuje 25 OTWARTYCH decyzji (nie 13 PENDING, nie 35) 156ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > 12 decyzji ma czerwoną liczbę „dni po terminie" 57ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > kolumna Eskalacja nazywa poziom po polsku (3 czerwone, 9 bursztynowych) 54ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Ryzyka" pokazuje 16 pozycji RAID, z terminem „—" (0 z 16 ma datę) 42ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Po terminie" łączy oba rejestry i pokazuje 12 pozycji 31ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > liczniki Menu 3 to dokładnie trzy presety z realnymi liczbami 65ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > nie rysuje pustej tabeli interwencji, gdy runtime-v1 ma 0 rekordów 48ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > podgląd otwiera się na klik i pokazuje dni po terminie 109ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx (8 tests) 563ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > tabela ma tyle wierszy, ile zadań zwróciło /api/tasks (24), mimo 0 realizacji runtime 143ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > pokazuje nazwę inicjatywy w osobnej kolumnie 55ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > NIE ma kolumny „Termin / SLA" ani napisu „SLA" w wierszach 54ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > kolumna „Poślizg (dni)" liczy dni po terminie dla zadań przeterminowanych 63ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > preset „Po terminie" zawęża tabelę do 8 zadań, a nie do wszystkich 20ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > preset „Zablokowane" zawęża do zadań ze statusem BLOCKED (6) 23ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > liczniki Menu 3 dostają TRZY presety z realnymi liczbami 67ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > gdy runtime-v1 padnie, realne zadania ZOSTAJĄ na ekranie (nie ekran błędu) 46ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx (8 tests) 473ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > names the transparent status select with the initiative name 240ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > is focusable via the accessible name 14ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > calls onChange with the chosen target status 16ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > does not render a mutation control when disabled 5ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > names the transparent status select in real Polish, not English fallback 37ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > calls onChange with the chosen target status under real Polish 10ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx (6 tests) 324ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > renderuje tabelę obłożenia, NIE czekając na wiszącą realizację 105ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > pokazuje kolumny popytu, podaży, obłożenia i luki z realnymi liczbami 30ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > oznacza wiszącą realizację na liście wyboru, gdy minie limit 26ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > zgłasza realizację bez odpowiedzi NATYCHMIAST, nie po zamknięciu całego wachlarza 19ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > wybór wiszącej realizacji kończy się polskim „nie odpowiada", nie wiecznym szkieletem 33ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx > Zasoby — realizacja, która nie odpowiada > CTA „Dodaj dostępność" zapisuje etat i przelicza plan 46ms
+ ✓ src/components/Execution/__tests__/ExecutionResources.wiszacaRealizacja.test.tsx (6 tests) 259ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > renders the KPI empty state after loading 32ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > DEC-120/A4: never offers the fake "Load Atelier Toys example" seed button on an empty KPI register 7ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > add KPI POSTs to /rollout/kpis and shows the returned row as read-only text 25ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > edit KPI opens the modal and PATCHes the minimal diff to /rollout/kpis/:id 64ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > delete KPI goes kebab → confirm dialog → DELETE /rollout/kpis/:id 123ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > surfaces the load-error retry state when the fetch fails 4ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx (6 tests) 256ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > zwraca wiersze pozostałych realizacji, gdy jedna nie odpowiada NIGDY 74ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > przerywa wiszące żądanie sygnałem abort (nie zostawia wiszącego fetcha) 41ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > niesie identyfikatory realizacji, których nie udało się pobrać 1ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > nie zgłasza nikogo, gdy wszystkie realizacje odpowiadają 0ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts (4 tests) 118ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > approving a decision calls decideDecision and renders the confirmed badge 78ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > DEC-120/A11: a non-decision lane action never round-trips through the retired 409 writer 32ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx (2 tests) 112ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > renders the Save button disabled with a visible reason 94ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > never calls the retired legacy writer since the control cannot be activated 11ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx (2 tests) 107ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx > ExecutionSummaryOneLook — TOP ryzyka RAID (1.12-R1b) > renderuje dokładnie 10 wierszy, w kolejności podanej przez hosta 66ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx > ExecutionSummaryOneLook — TOP ryzyka RAID (1.12-R1b) > brak P×I pokazuje severityLabel („Wysokie"), nie zmyślony numer ani „Umiarkowane" 18ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx > ExecutionSummaryOneLook — TOP ryzyka RAID (1.12-R1b) > brak P×I i brak severity pokazuje „—" w kolumnie Poziom 8ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.raidRisks.test.tsx (3 tests) 94ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="ryzyka": renderuje TYLKO tabelę ryzyk 42ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="rozstrzygniecia": renderuje TYLKO tabelę rozstrzygnięć 26ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > klik wiersza blokera otwiera inicjatywę (nie „decision" z prefiksem blk:) 14ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx (3 tests) 83ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.oblozenie.test.tsx > ExecutionSummaryOneLook — kafel „Obłożenie" z resource-plan (1.12-R1b) > mock summary (utilizationPercent=38, overloadedCount=11) → „38%", „11 przeciąż." 43ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.oblozenie.test.tsx > ExecutionSummaryOneLook — kafel „Obłożenie" z resource-plan (1.12-R1b) > brak podaży wcale (peopleCount=0) → „—", nie „0%" 10ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.oblozenie.test.tsx > ExecutionSummaryOneLook — kafel „Obłożenie" z resource-plan (1.12-R1b) > wszyscy z domyślnej podaży (defaultCapacityAssumed) → podpis „domyślnie 40 h/tydz.", nie milczy 9ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.oblozenie.test.tsx (3 tests) 64ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > inicjatywy w toku > bierze EXECUTING, BLOCKED i TRACKING — a odrzuca DRAFT/SCHEDULED/DONE 32ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > brak plannedEndDate = SZARY, nigdy zielony (luka danych ≠ zdrowie) 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > po terminie = czerwony, ≤7 dni = amber, dalej = zielony 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > odchylenie w dniach jest dodatnie po terminie i ujemne przed 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > poziom L0–L5: `currentStage` jest NULL na wszystkich 72 inicjatywach → „—" 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > kafel „Na czas" z realnych dat > mianownik to inicjatywy Z DATĄ; bez daty liczone osobno, nie jako on-track 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > kafel „Na czas" z realnych dat > portfel bez ani jednej daty daje null, nie 100% 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > ESCALATED liczy się jako otwarta — 25, nie 13 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > po terminie = 12 (stary filtr „PENDING && po terminie" dawał 0) 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > rozstrzygnięta decyzja po terminie nie wchodzi do „do rozstrzygnięcia" 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > ufa liczbie serwera, a przelicza z daty tylko gdy pola brak 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > liczy dni po terminie dla otwartego zadania 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > zamknięte zadanie po terminie NIE jest poślizgiem 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > brak terminu = brak poślizgu, nie zero 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > rozpoznaje zablokowane 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — inicjatywa zablokowana w OBU słownikach > stary słownik: status BLOCKED wprost 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — inicjatywa zablokowana w OBU słownikach > nowy słownik (migracja P12): IN_EXECUTION + on_hold=true 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — inicjatywa zablokowana w OBU słownikach > IN_EXECUTION/EXECUTING bez on_hold NIE jest blokerem 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — inicjatywa zablokowana w OBU słownikach > inne statusy (SCHEDULED, DONE) nigdy nie są blokerem, on_hold czy nie 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > poziom = P × I gdy oba pola są (skala 1..4 na oś) 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > brak P lub I cofa się do riskScore zapisanego w bazie, a bez niego → null 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > typ po polsku i angielsku, nieznany typ wraca dosłownie 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > severity fallback, gdy P×I się nie liczy 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > właściciel: nazwa z API → katalog organizacji → null (NIGDY „Nieznany użytkownik") 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > 1.12-R1b — RAID (Kokpit „Ryzyka") > TOP 10 posortowane malejąco po poziomie; brak poziomu na końcu, nie wypycha policzonych 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts (25 tests) 38ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy włączonej fladze kokpitu ma pozycję „summary" jako pierwszą 31ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy fladze OFF wygląda 1:1 jak przed zmianą (zero zmiany na żywo) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > wpuszcza summary, gdy flaga kokpitu jest włączona 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > NIE wpuszcza summary przy fladze OFF (deep-link degraduje się do listy) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > nigdy nie gubi zakładek, które działały wcześniej 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > lista deep-linku i kolejność Menu 2 to JEDNO źródło (nie da się ich rozjechać) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > woła obie funkcje zamiast trzymać własne listy zakładek 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > nie ma już zaszytej listy dozwolonych wartości ?tab= 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > renderuje kokpit dla activeTab === summary 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts (9 tests) 34ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (a) shows a human source label plus the framework, never the raw sourceType 35ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (b) shows the label alone when there is no source framework 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (c) leaves the relations section empty when there is no sourceType 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx (3 tests) 42ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > bez pomiarów mówi po polsku, że trend pojawi się po dwóch 14ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy JEDNYM pomiarze nie kłamie, że historii nie ma 1ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy dwóch pomiarach rysuje słupki, nie komunikat 5ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx (3 tests) 22ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (1) — TOP ryzyka Kokpitu z /api/raid, nie z execSnapshot > pobiera RAID przez Api.raidList(), niezależnie od execSnapshot 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (1) — TOP ryzyka Kokpitu z /api/raid, nie z execSnapshot > ryzyka źródło z /api/raid (raidItems), NIE execSnapshot.risks.topRisks 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (1) — TOP ryzyka Kokpitu z /api/raid, nie z execSnapshot > chip „Ryzyka" liczy WSZYSTKIE pozycje RAID (raidItems.length), nie tylko TOP 10 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (1) — TOP ryzyka Kokpitu z /api/raid, nie z execSnapshot > klik wiersza ryzyka otwiera podgląd (jedenPanel + wybór), nie fabrykuje panelu 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (2) — Obłożenie Kokpitu z planu zasobów (R2), nie z capacityTimeline > utilizationPercent/overallocatedCount/headcount pochodzą z resourcePlanSummary 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (2) — Obłożenie Kokpitu z planu zasobów (R2), nie z capacityTimeline > brak podaży z profilu (wszyscy DOMYSLNA) ustawia defaultCapacityAssumed, nie milczy 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (2) — Obłożenie Kokpitu z planu zasobów (R2), nie z capacityTimeline > pobiera plan zasobów przez readExecutionResourcePlan(), niezależnie od RAID 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts > 1.12-R1b (3) — kafel „blokery" działa w obu słownikach statusu > actionCenter.blocked liczy przez isBlockedInitiative(i), nie status === BLOCKED wprost 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitRaidOblozenie.source.test.ts (8 tests) 4ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > zadania pobiera dla całej organizacji, bez projectId i bez bramki wyjścia 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > decyzje pobiera dla całej organizacji, bez projectId i bez bramki wyjścia 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > inicjatywy pobiera bez projectId (43 z 72 nie mają projektu) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > „Do rozstrzygnięcia" bierze KAŻDĄ otwartą decyzję po terminie, nie tylko PENDING 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > lista „do rozstrzygnięcia" nie jest obcinana do sześciu pozycji 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > „Na czas" liczy się z plannedEndDate, a nie „wszystko poza zablokowanym" 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > kondycja portfela liczy decyzje tą samą definicją co kafel 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakres „w toku" > TRACKING jest wczytywane i mieści się w zakresie aktywnym 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > kolumny to Inicjatywa · Poziom · Status · Właściciel · Start/koniec · Odchylenie · RAG 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > RAG ma cztery stany, w tym SZARY „brak dat planu" (nie zieleń) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > Menu 3 „Realizacji" ma trzy chipy i FILTRUJE tabelę (dawniej: dekoracja) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts (11 tests) 5ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts the initiative register as the primary Execution list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > uses the same initiative identities and full initiative document in Execution 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > does not mount the rejected Execution Case register in the primary list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts and resolves the canonical execution-case deep link 2ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts (4 tests) 6ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > declares one context Open full and delegates the only preview to the manage block 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > passes that single contract to StandardTable for both row-menu entry points 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx (2 tests) 4ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > no longer fabricates a fake initiative from a raw id 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > defines a real openEntityById lookup that both onOpenEntity call sites use 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > openEntityById looks up the real initiative by id and never opens an unsupported type 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx (3 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > never silently clears the load error when substituting demo data after a failure 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > tags every demo-derived initiative row with isDemoSample 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > resets the stale banner once a real load succeeds 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > renders a visible "Sample" badge on the initiative-name cell for demo rows 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > shows a dedicated banner (not the full-page error blocker) while demo fallback is active 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx (5 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > getExecutionMenu3 deklaruje dokładnie dwa chipy dla zakładki summary 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > domyślnie aktywny chip to "ryzyka" (KROK 3, test a) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > deep-link czyta ?kokpit= i akceptuje TYLKO ryzyka|rozstrzygniecia 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > stan → URL: ?kokpit= odzwierciedla chip TYLKO na zakładce summary 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > ExecutionSummaryOneLook dostaje activeView pochodzący z tego samego stanu (nie osobny) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts (5 tests) 3ms
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator

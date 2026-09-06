@@ -50,9 +50,15 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = req.user?.organizationId;
     const { projectId, initiativeId, type } = req.query;
-    let query = `SELECT id, initiative_id as "initiativeId", type, title, description, 
-               impact as severity, status, owner_id as "ownerId", due_date as "dueDate", 
+    // 1.12-R1b: Kokpit (`ExecutionSummaryOneLook`, przez `ExecutionHub`) otwiera
+    // podgląd pozycji RAID i pokazuje „plan mitygacji" — kolumna istnieje od
+    // migracji 063 (`mitigation_plan`, NIE `mitigation_status` — ta druga to
+    // osobna, niepowiązana kolumna warsztatu V8 execution-control), ale do
+    // teraz nie była wystawiana przez ten endpoint.
+    let query = `SELECT id, initiative_id as "initiativeId", type, title, description,
+               impact as severity, status, owner_id as "ownerId", due_date as "dueDate",
                probability, impact, risk_score as "riskScore", score_category as "scoreCategory",
+               mitigation_plan as "mitigationPlan",
                created_at as "createdAt" FROM raid_items WHERE organization_id = ?`;
     const params: any[] = [orgId];
     if (initiativeId) {

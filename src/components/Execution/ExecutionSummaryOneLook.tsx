@@ -70,15 +70,29 @@ export interface OneLookPeople {
   /** Inicjatywy bez właściciela (workstreams.unassignedInitiatives). */
   unassignedInitiatives: number;
   headcount: number;
+  /**
+   * 1.12-R1b: ŻADNA osoba w planie zasobów nie ma podaży z profilu
+   * (`users.weekly_capacity_hours`/`availability_percent`) — cały procent
+   * liczy się z domyślnych 40 h/tydz. Podpis ma to nazwać wprost, zamiast
+   * milczeć albo pokazywać „—" przy realnie policzonym procencie.
+   */
+  defaultCapacityAssumed?: boolean;
 }
 
 export interface OneLookRisk {
   id: string;
   title: string;
+  type?: string | null;
   probability?: string | null;
   impact?: string | null;
-  /** 0..25 (P × I) lub inna skala silnika. */
-  score: number;
+  /** P × I (skala 1..16). `null` = nie da się policzyć (brak P LUB I). */
+  score: number | null;
+  /**
+   * 1.12-R1b: gdy `score` jest `null`, kolumna „Poziom" pokazuje TO zamiast
+   * numeru — etykieta z samego `impact`/`severity` (np. „Wysokie"), a nie
+   * zmyślony numer. `null` = ani P×I, ani severity — kolumna pokazuje „—".
+   */
+  severityLabel?: string | null;
   ownerName?: string | null;
   /** DEC-426 (1.1-E-1): id/nazwa inicjatywy, gdy silnik je zwraca (raid_items.initiative_id). */
   initiativeId?: string | null;
@@ -87,6 +101,9 @@ export interface OneLookRisk {
   status?: string | null;
   dueDate?: string | null;
   mitigationStatus?: string | null;
+  /** 1.12-R1b: raid_items.mitigation_plan — treść planu, pokazywana w podglądzie. */
+  mitigationPlan?: string | null;
+  description?: string | null;
 }
 
 export type OneLookDecisionKind = 'decision' | 'overdue' | 'blocker';
@@ -159,7 +176,12 @@ const ragUpBar = (pct: number | null): string => {
 // poniżej progu na KAŻDYM stonowanym tle. 'danger-700' (skala Tailwind, bez
 // zmiany globalnego --c-danger) daje >6.9:1 na wszystkich zmierzonych tłach
 // tego pliku; dark: token zostaje (#ed5565 już przechodzi na ciemnym tle).
-const riskBand = (score: number): { dot: string; text: string; pl: string; en: string } => {
+const riskBand = (score: number | null): { dot: string; text: string; pl: string; en: string } => {
+  // 1.12-R1b: `score` bywa `null` (RAID bez P LUB I policzonego — patrz
+  // `raidLevelScore` w `executionRealData.ts`). Brak danych ma szary kropek
+  // i „—", nigdy fałszywą zieleń „Umiarkowane" (metodyka A1 pkt 8).
+  if (score == null)
+    return { dot: 'bg-c-text-muted', text: 'text-c-text-muted', pl: '—', en: '—' };
   if (score >= 15)
     return {
       dot: 'bg-c-danger',
@@ -291,11 +313,22 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
         label: tr('Poziom (P×I)', 'Level (P×I)'),
         width: '160px',
         render: (row: any) => {
-          const band = riskBand(row.score);
+          const score = row.score as number | null;
+          // 1.12-R1b: „Poziom = P×I jeśli pola są; inaczej severity/„—"" —
+          // brak P×I pokazuje etykietę samego impact/severity, a dopiero brak
+          // obu daje „—" (patrz `riskBand`/`raidSeverityLabel`).
+          if (score == null && row.severityLabel) {
+            return (
+              <span className="text-sm font-medium text-c-text-secondary">{row.severityLabel}</span>
+            );
+          }
+          const band = riskBand(score);
           return (
             <span className={`text-sm font-medium ${band.text}`}>
-              {isPolish ? band.pl : band.en}{' '}
-              <span className="tabular-nums text-c-text-muted">({row.score})</span>
+              {isPolish ? band.pl : band.en}
+              {score != null && (
+                <span className="tabular-nums text-c-text-muted"> ({score})</span>
+              )}
             </span>
           );
         },
@@ -549,6 +582,15 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                 {people.headcount} {tr(liczebnik(people.headcount, ['osoba', 'osoby', 'osób']), 'ppl')}
               </span>
             </div>
+            {/* 1.12-R1b: NIKT w planie zasobów nie ma podaży z profilu — procent
+                liczy się z domyślnych 40 h/tydz. Podpis ma to nazwać wprost,
+                zamiast milczeć albo zostawić samo „—" tam, gdzie procent
+                faktycznie jest policzony (tylko na założeniu, nie na profilu). */}
+            {people.defaultCapacityAssumed && (
+              <div className="mt-1 text-[11px] text-c-text-muted">
+                {tr('domyślnie 40 h/tydz.', 'defaults to 40h/week')}
+              </div>
+            )}
           </AnswerCard>
 
           {/* 5. Decyzje do podjęcia */}

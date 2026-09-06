@@ -95,6 +95,7 @@ export type ExecutiveAggregateSnapshot = {
       initiativeName: string | null;
       status: string | null;
       dueDate: string | null;
+      /** raid_items.mitigation_plan (migracja 063) — patrz naprawa w buildTopRisks. */
       mitigationStatus: string | null;
     }>;
     signals: {
@@ -861,11 +862,13 @@ export class ExecutiveAggregateService {
         initiativeName: r.initiative_name ? String(r.initiative_name) : null,
         status: r.status ? String(r.status) : null,
         dueDate: r.due_date ? String(r.due_date) : null,
-        // POMIAR (1.1-E-1): kolumna wcześniej czytała `r.mitigation_status`, ale
-        // migracja 063 nazwała kolumnę `mitigation_plan` — to pole było WIĘC
-        // ZAWSZE `null` (ZNALEZISKO, nie naprawiane tu — poza zakresem tego
-        // zlecenia, „Mitygacja" nie jest już kolumną kokpitu po DEC-426).
-        mitigationStatus: r.mitigation_status ? String(r.mitigation_status) : null,
+        // NAPRAWIONE (1.12-R1b): kolumna czytała `r.mitigation_status`, ale
+        // migracja 063 (CREATE TABLE raid_items) nazwała kolumnę
+        // `mitigation_plan` — to pole było WIĘC ZAWSZE `null`. `mitigation_status`
+        // to osobna, niepowiązana kolumna warsztatu V8 execution-control
+        // (mitygacja jako proces), nie tekst planu mitygacji zapisany na
+        // pozycji RAID.
+        mitigationStatus: r.mitigation_plan ? String(r.mitigation_plan) : null,
       };
     });
     enriched.sort((a, b) => b.score - a.score);

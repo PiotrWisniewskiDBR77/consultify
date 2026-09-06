@@ -1,0 +1,17 @@
+{
+ "url": "http://localhost:3150/execution?tab=summary&view=table&kokpit=ryzyka",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nDecyzje i ryzyka\nRaporty\nRyzyka\n16\nRozstrzygnięcia\n25\nKokpit menedżera\n\nPięć pytań zarządczych, jedna odpowiedź na spojrzenie.\n\nKONDYCJA\n75\n/100\npostęp 49%\nNA CZAS\n100%\n13 na tor\n0 ryzyk\n0 opóźn.\nWARTOŚĆ VS PLAN\nBrak policzonego ROI\nOBŁOŻENIE\n38%\n11 przeciąż.\n9 osób\nDO ROZSTRZYGNIĘCIA\n25\npozycji\n0 blokerów\n12 przetermin.\nCo nam grozi — TOP ryzyka\n\nRyzyka o najwyższym wyniku (P × I).\n\nRYZYKO\n\t\nPOZIOM (P×I)\n\t\nWŁAŚCICIEL\n\t\nINICJATYWA\n\t\nSTATUS\n\n\nSAP integration middleware timeout errors\n\t\nWysokie (12)\n\t\n—\n\t\nERP SAP Integration\n\t\nOtwarte\n\n\nAPI Gateway depends on Auth Service migration\n\t\nWysokie (9)\n\t\n—\n\t\nAPI Gateway v2\n\t\nOtwarte\n\n\nSharePoint migration data loss incident\n\t\nWysokie (9)\n\t\n—\n\t\nDigital Workplace Platform\n\t\nOtwarte\n\n\nUiPath license expired — blocking RPA\n\t\nWysokie (9)\n\t\n—\n\t\nProcess Automation — RPA\n\t\nOtwarte\n\n\nSupply chain data quality risk\n\t\nWysokie (9)\n\t\n—\n\t\nSupply Chain Optimization\n\t\nOtwarte\n\n\nKey person dependency — Marek Nowak\n\t\nWysokie (9)\n\t\n—\n\t\nCloud Migration — Azure\n\t\nOtwarte\n\n\nSAP vendor hotfix delay\n\t\nWysokie (9)\n\t\n—\n\t\nERP SAP Integration\n\t\nOtwarte\n\n\nGDPR non-compliance penalty\n\t\nWysokie (8)\n\t\n—\n\t\nCompliance & GDPR Audit\n\t\nOtwarte\n\n\nSupply Chain depends on Data Platform feeds\n\t\nUmiarkowane (6)\n\t\n—\n\t\nSupply Chain Optimization\n\t\nOtwarte\n\n\nData Platform depends on Cloud network setup\n\t\nUmiarkowane (6)\n\t\n—\n\t\nData Platform — Lakehouse\n\t\nOtwarte\nNajbliższe kamienie milowe\nBrak zaplanowanych kamieni milowych.",
+ "kiedy": "2026-09-06T17:44:02.431Z"
+}
