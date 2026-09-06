@@ -87,6 +87,13 @@ export type ExecutiveAggregateSnapshot = {
       impact: string | null;
       score: number;
       ownerId: string | null;
+      // Kokpit menedżera (1.1-E-1, DEC-426): kolumny Właściciel/Inicjatywa/Status
+      // wymagają realnych pól, nie samych ID — dopisane obok ownerId/dueDate
+      // istniejących wcześniej (bez zmiany kształtu zastanych pól).
+      ownerName: string | null;
+      initiativeId: string | null;
+      initiativeName: string | null;
+      status: string | null;
       dueDate: string | null;
       mitigationStatus: string | null;
     }>;
@@ -849,7 +856,15 @@ export class ExecutiveAggregateService {
         impact: r.impact ? String(r.impact) : null,
         score,
         ownerId: r.owner_id ? String(r.owner_id) : null,
+        ownerName: r.owner_name ? String(r.owner_name) : null,
+        initiativeId: r.initiative_id ? String(r.initiative_id) : null,
+        initiativeName: r.initiative_name ? String(r.initiative_name) : null,
+        status: r.status ? String(r.status) : null,
         dueDate: r.due_date ? String(r.due_date) : null,
+        // POMIAR (1.1-E-1): kolumna wcześniej czytała `r.mitigation_status`, ale
+        // migracja 063 nazwała kolumnę `mitigation_plan` — to pole było WIĘC
+        // ZAWSZE `null` (ZNALEZISKO, nie naprawiane tu — poza zakresem tego
+        // zlecenia, „Mitygacja" nie jest już kolumną kokpitu po DEC-426).
         mitigationStatus: r.mitigation_status ? String(r.mitigation_status) : null,
       };
     });
@@ -862,9 +877,12 @@ export class ExecutiveAggregateService {
       (await DbPromise.all<any>(
         this.db,
         `
-        SELECT r.*
+        SELECT r.*,
+               i.name as initiative_name,
+               u.first_name || ' ' || u.last_name as owner_name
         FROM raid_items r
         JOIN initiatives i ON i.id = r.initiative_id
+        LEFT JOIN users u ON u.id = r.owner_id
         WHERE r.organization_id = ?
           AND i.project_id = ?
           AND r.type = 'RISK'
