@@ -1,0 +1,18 @@
+{
+  "module": "Wyniki",
+  "route": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+  "entry": "Zapytaj Teresę o ten miernik",
+  "status": "FAIL",
+  "stopReason": null,
+  "finalRoute": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "",
+  "language": "none",
+  "used_sources": 0,
+  "sources": [],
+  "degraded": [],
+  "first200": "",
+  "bledyKonsoli": [
+    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
+  ]
+}

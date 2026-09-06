@@ -1,0 +1,59 @@
+{
+  "module": "Czat",
+  "route": "/chat",
+  "entry": "Czat główny",
+  "status": "PASS",
+  "stopReason": null,
+  "finalRoute": "/chat",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i automatyzacja magazynu WIP. IstniejÄ… takÅ¼e blokery, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania, oraz oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77. Dodatkowo, uÅ¼ytkownik ma zadania do wykonania, w tym przygotowanie planu warsztatu i przeglÄ…d wydajnoÅ›ci. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzegawczym, co sugeruje, Å¼e moÅ¼e byÄ‡ potrzebne zarzÄ…dzanie priorytetami lub wsparcie w realizacji zadaÅ„.",
+  "language": "pl",
+  "used_sources": 6,
+  "sources": [
+    {
+      "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+      "type": "module_data",
+      "title": "Inicjatywa: Supply Chain Optimization",
+      "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+      "link": null
+    },
+    {
+      "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "type": "module_data",
+      "title": "Inicjatywa: Digital Workplace Platform",
+      "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "link": null
+    },
+    {
+      "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "type": "module_data",
+      "title": "Inicjatywa: Vendor Consolidation",
+      "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "link": null
+    },
+    {
+      "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "type": "module_data",
+      "title": "Inicjatywa: Talent Upskilling Program",
+      "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "link": null
+    },
+    {
+      "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+      "type": "module_data",
+      "title": "Inicjatywa: Compliance & GDPR Audit",
+      "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+      "link": null
+    },
+    {
+      "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "type": "module_data",
+      "title": "Inicjatywa: AI-Powered Analytics",
+      "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "link": null
+    }
+  ],
+  "degraded": [],
+  "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i",
+  "bledyKonsoli": []
+}

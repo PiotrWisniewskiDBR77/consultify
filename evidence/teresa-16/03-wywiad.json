@@ -1,0 +1,87 @@
+{
+  "module": "Wywiad",
+  "route": "/interview",
+  "entry": "Teresa",
+  "status": "PASS",
+  "stopReason": null,
+  "finalRoute": "/interview",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, o Å›redniej wielkoÅ›ci, z 620 pracownikami i przychodem â‚¬120M. Obecnie firma prowadzi dwa aktywne projekty, ale nie ma jeszcze ukoÅ„czonej Å¼adnej z 28 inicjatyw, co wskazuje na potencjalne problemy z realizacjÄ… projektÃ³w. Poziom dojrzaÅ‚oÅ›ci PMO jest podstawowy, a obecnie obciÄ…Å¼enie pracÄ… jest na poziomie ostrzegawczym, co moÅ¼e wpÅ‚ywaÄ‡ na efektywnoÅ›Ä‡ dziaÅ‚aÅ„. UÅ¼ytkownik ma do wykonania kilka zadaÅ„ i decyzji zwiÄ…zanych z projektem DBR77, a takÅ¼e napotkaÅ‚ na trzy blokery, ktÃ³rym trzeba siÄ™ przyjrzeÄ‡. \n\nWarto zauwaÅ¼yÄ‡, Å¼e w wywiadach i sesjach odkrywczych ujawniono kilka faktÃ³w i luk, takich jak uÅ¼ywanie Excela jako warstwy integracyjnej oraz brak bazowego frameworku ROI dla inicjatyw [M7], [M8], [M9], [M10]. To wskazuje na potrzebÄ™ opracowania lepszych metryk finansowych i systemÃ³w integracyjnych. \n\nIstniejÄ… rÃ³wnieÅ¼ oczekujÄ…ce akcje AI, ktÃ³re wymagajÄ… przeglÄ…du przez uÅ¼ytkownika. W kontekÅ›cie organizacji zauwaÅ¼ono takÅ¼e sceptycyzm wobec AI.",
+  "language": "pl",
+  "used_sources": 10,
+  "sources": [
+    {
+      "id": "module_interviews_1_seed_ri_session_06",
+      "type": "module_data",
+      "title": "Seed session: Governance and escalation map",
+      "reference": "interview/sessions/seed_ri_session_06",
+      "link": null
+    },
+    {
+      "id": "module_interviews_2_seed_ri_session_05",
+      "type": "module_data",
+      "title": "Seed session: Customer-facing SLA reliability",
+      "reference": "interview/sessions/seed_ri_session_05",
+      "link": null
+    },
+    {
+      "id": "module_interviews_3_seed_ri_session_04",
+      "type": "module_data",
+      "title": "Seed session: People and adoption readiness",
+      "reference": "interview/sessions/seed_ri_session_04",
+      "link": null
+    },
+    {
+      "id": "module_interviews_4_seed_ri_session_03",
+      "type": "module_data",
+      "title": "Seed session: IT integration constraints",
+      "reference": "interview/sessions/seed_ri_session_03",
+      "link": null
+    },
+    {
+      "id": "module_interviews_5_seed_ri_session_02",
+      "type": "module_data",
+      "title": "Seed session: Finance metrics and margin leakage",
+      "reference": "interview/sessions/seed_ri_session_02",
+      "link": null
+    },
+    {
+      "id": "module_interviews_6_seed_ri_session_01",
+      "type": "module_data",
+      "title": "Seed session: Ops flow & approvals",
+      "reference": "interview/sessions/seed_ri_session_01",
+      "link": null
+    },
+    {
+      "id": "module_interviews_7_seed_is_cc9db573-260f-4a19-927f-f3cc1fba",
+      "type": "module_data",
+      "title": "Submitted â€” Cost baseline (awaiting approval)",
+      "reference": "interview/sessions/seed_is_cc9db573-260f-4a19-927f-f3cc1fbaea38_submitted",
+      "link": null
+    },
+    {
+      "id": "module_interviews_8_seed_is_cc9db573-260f-4a19-927f-f3cc1fba",
+      "type": "module_data",
+      "title": "Inbox â€” Quick assessment (my assignment)",
+      "reference": "interview/sessions/seed_is_cc9db573-260f-4a19-927f-f3cc1fbaea38_inbox_active",
+      "link": null
+    },
+    {
+      "id": "module_interviews_9_seed_is_cc9db573-260f-4a19-927f-f3cc1fba",
+      "type": "module_data",
+      "title": "Discovery â€” Data & metrics trust (Ops/Finance)",
+      "reference": "interview/sessions/seed_is_cc9db573-260f-4a19-927f-f3cc1fbaea38_accepted_2",
+      "link": null
+    },
+    {
+      "id": "module_interviews_10_seed_is_cc9db573-260f-4a19-927f-f3cc1fba",
+      "type": "module_data",
+      "title": "Discovery â€” Operations bottlenecks (Plant A)",
+      "reference": "interview/sessions/seed_is_cc9db573-260f-4a19-927f-f3cc1fbaea38_accepted_1",
+      "link": null
+    }
+  ],
+  "degraded": [],
+  "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, o Å›redniej wielkoÅ›ci, z 620 pracownikami i przychodem â‚¬120M. Obecnie firma prowadzi dwa aktywne projekty, ale nie ma jeszcze ukoÅ„",
+  "bledyKonsoli": []
+}

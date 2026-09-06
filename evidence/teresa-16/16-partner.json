@@ -1,0 +1,10 @@
+{
+  "module": "Partner",
+  "route": "/partner/dashboard",
+  "entry": "/^(Teresa|Zapytaj Teresę)/",
+  "status": "STOP",
+  "stopReason": "brak ekranu-artefaktu z prawym panelem; portal poza rdzeniem MVP",
+  "finalRoute": "/partner?tab=partner-home",
+  "failure": "brak wejścia, poza MVP",
+  "bledyKonsoli": []
+}
