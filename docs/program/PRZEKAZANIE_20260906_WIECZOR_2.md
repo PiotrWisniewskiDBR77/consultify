@@ -16,9 +16,8 @@ kolejny agent rozlicza się tym samym arkuszem postępu”. Ten plik = jedyny pu
    Stanowisko lokalne: API 4100, vite 3090, PG 54400 (org DBR77 `cc9db573-…`), sesja `/private/tmp/stanowisko-noc/auth.json`.
 4. `date '+%H:%M'` przed KAŻDYM wpisem czasu (dziś 4× wpisałem czas z głowy i prostowałem).
 
-## 1. Stan na 16:47
-- staging = `ff60b6f831` (health ok). m03 HEAD = `d9e93d0bae`, 14 commitów przed stagingiem (R2 raporty zarządcze,
-  M-1 Materiały filtry, docs). Paczka 8 = po scaleniu K5/R4/M-2/A2 (albo wcześniej, gdy właściciel czeka).
+## 1. Stan na 17:07
+- Paczka 8 WYPCHNIĘTA (`HEAD m03 na chwilę pushu`, run dispatch 17:07) — sprawdź health; jeśli gitSha ≠ HEAD sprzed dispatchu, patrz §5. Na stagingu po niej: R2, M-1, K5, R4, przekazanie. Zostają do scalenia: M-2, A2 (+ Codex P10 r2, P11).
 - Właściciel odebrał (TAK): Czat, Moja Praca, Organizacja, Panel administratora, Ustawienia, DRD hotfix.
   Ocenił: Wyniki „narzędzia świetne, sterowanie nie”; Inicjatywy karta „bez większych uwag”; Materiały „zachwycony”;
   ROI/OKR/KPI „naprawdę świetne, brak tylko menu 1–3 i Pracuj z AI”. Właściciel dojeżdża do ~95% zgłoszeń przeglądu.
