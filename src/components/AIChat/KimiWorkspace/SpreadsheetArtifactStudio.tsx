@@ -1358,8 +1358,8 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
         onSelect: () => setLeftMode('sources'),
       },
       {
-        id: 'xlsx.teresa.attachSelection',
-        label: 'Przekaż Teresie',
+        id: 'xlsx.ai.completeSection',
+        label: 'Uzupełnij tę sekcję',
         separatorBefore: true,
         onSelect: () => openTeresa(selected),
       },
@@ -2065,7 +2065,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
              */
             <div className="space-y-2">
               {panelAction('copy', 'Kopiuj link wewnętrzny', Copy, onCopyLink)}
-              {panelAction('teresa', 'Zapytaj Teresę', Sparkles, () => openTeresa())}
+              {panelAction('ai-complete-section', 'Uzupełnij tę sekcję', Sparkles, () => openTeresa())}
             </div>
           ),
         },
@@ -2239,7 +2239,7 @@ export const SpreadsheetArtifactStudio: React.FC<SpreadsheetArtifactStudioProps>
                   className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                 >
                   <Sparkles size={14} aria-hidden="true" />
-                  <span>Teresa</span>
+                  <span>Uzupełnij tę sekcję</span>
                 </button>
               </>
             }

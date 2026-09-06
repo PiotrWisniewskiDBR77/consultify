@@ -26,7 +26,7 @@
  * (celowo — check-list-canon R1 skanuje pod kątem tych tokenów).
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   financeUnitLabel,
@@ -87,6 +87,8 @@ export interface CanonicalStatementTableV2Props {
   selectedCellKey: string | null;
   onSelectCell: (selection: CanonicalStatementCellSelection) => void;
   emptyLabel: string;
+  /** Wewnętrzny wariant jednej części sprawozdania; publiczny render pokazuje zawsze RZiS, Bilans i CF. */
+  statementType?: StatementLineDto['statementType'];
 }
 
 function cellKey(rowKey: string, periodId: string): string {
@@ -95,10 +97,33 @@ function cellKey(rowKey: string, periodId: string): string {
 
 
 export function CanonicalStatementTableV2(props: CanonicalStatementTableV2Props): React.ReactElement {
-  const { lines, resolveLineLabel, selectedCellKey, onSelectCell, emptyLabel } = props;
+  const { lines, resolveLineLabel, selectedCellKey, onSelectCell, emptyLabel, statementType } = props;
 
-  const table = useMemo(() => deriveStatementTable(lines), [lines]);
-  const headerScale = useMemo(() => pickHeaderCurrencyAndScale(table), [table]);
+  if (!statementType) {
+    const groups: Array<{ type: StatementLineDto['statementType']; label: string }> = [
+      { type: 'P&L', label: 'Rachunek zysków i strat' },
+      { type: 'BS', label: 'Bilans' },
+      { type: 'CF', label: 'Rachunek przepływów pieniężnych' },
+    ];
+    return (
+      <div className="flex h-full flex-col gap-4 overflow-y-auto" data-testid="canonical-statement-tables-v2">
+        {groups.map((group) => (
+          <section key={group.type} data-statement-type={group.type}>
+            <h2 className="mb-2 text-sm font-semibold text-c-text">{group.label}</h2>
+            <CanonicalStatementTableV2
+              {...props}
+              statementType={group.type}
+              lines={lines.filter((line) => line.statementType === group.type)}
+              emptyLabel={`${emptyLabel} (${group.label})`}
+            />
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  const table = deriveStatementTable(lines);
+  const headerScale = pickHeaderCurrencyAndScale(table);
 
   if (table.rows.length === 0) {
     return (
