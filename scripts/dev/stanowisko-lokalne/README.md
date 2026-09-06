@@ -118,6 +118,32 @@ env: `DB_TYPE=postgres NODE_ENV=development CI=true DOTENV_DISABLED=1 DATABASE_U
 | `server/scripts/seed-full-assessment-module.ts` | oceny DRD/SIRI/ADMA + raporty (`TARGET_ORG_ID`) |
 | `server/scripts/seed-execution-reports-data.ts` | Realizacja: RAID, kamienie milowe, budżety — **stała `const ORG = 'dbr77'` w pliku**; uruchamiać na kopii z podmienionym uuid |
 
+### Realizacja › Zasoby — podaż godzin (1.12-R2, 06.09)
+
+Migracja `20262103_users_weekly_capacity_hours.sql` dodała do `users` dwie
+kolumny: `weekly_capacity_hours` i `availability_percent` (obie NULLable;
+NULL = „nikt nie ustawił" i serwis podstawia 40 h × 100 %). Endpoint
+`GET /api/execution-control/capacity/resource-plan?weeks=8` liczy z nich
+podaż, a popyt bierze z `tasks.estimated_hours`.
+
+**Dane pokazowe stanowiska (ustawione ręcznie, nie seedem):**
+
+| Osoba | Ustawienie | Po co |
+|------|------------|-------|
+| Marta Kamińska (`5009e749-…`) | `weekly_capacity_hours = 40`, `availability_percent = 50` | pół etatu — żeby kolumna „Podaż (h)" nie była jednakowa we wszystkich wierszach i żeby widać było różnicę „z profilu" vs „domyślna" |
+
+Ustawienie z powrotem na domyślne:
+`PATCH /api/users/<id>/capacity` z `{"weeklyCapacityHours":null,"availabilityPercent":null}`.
+
+**Czego NIE DA SIĘ dziś utworzyć (zmierzone 06.09):** realizacji
+(`ie_aggregate_state.aggregate_type='execution_case'`) — w DBR77 jest ich 0.
+Łańcuch kanoniczny to inicjatywa → decyzja harmonogramu (żądanie + zgoda)
+→ pakiet handoffu → żądanie handoffu → akcept handoffu → realizacja, a
+`scheduleDecision.ts:194` i `:308` wymagają, żeby **zatwierdzający był INNĄ
+osobą niż wnioskujący** (`policy.config.selfApproval = false`), i to przy
+obu bramkach. Jednym kontem nie da się przejść tej ścieżki — potrzebne są dwa
+zalogowane konta w tej organizacji.
+
 ### Jak dodać seed
 
 1. Sprawdź, czy skrypt bierze org z env (`SEED_ORG_ID`/`TARGET_ORG_ID`) — jeśli ma
