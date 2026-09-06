@@ -118,6 +118,24 @@ env: `DB_TYPE=postgres NODE_ENV=development CI=true DOTENV_DISABLED=1 DATABASE_U
 | `server/scripts/seed-full-assessment-module.ts` | oceny DRD/SIRI/ADMA + raporty (`TARGET_ORG_ID`) |
 | `server/scripts/seed-execution-reports-data.ts` | Realizacja: RAID, kamienie milowe, budżety — **stała `const ORG = 'dbr77'` w pliku**; uruchamiać na kopii z podmienionym uuid |
 
+### Dane pokazowe Audytów (06.09, zlecenie 1.1-A4 — DEC-417e)
+
+Modul Audytow nie ma seeda per-org, wiec komplet danych powstal PRZEZ KONTRAKT
+PRODUKTU (trasy `POST /api/audits/*`, konto `audyt@dbr77.local`, org DBR77) i
+ZOSTAJE na stanowisku jako dane pokazowe — bez nich zakladki Sesje/Raporty/
+Wnioski Audytow sa puste i nie da sie ich odebrac wzrokiem.
+
+| Obiekt | ID | Jak powstal |
+|--------|----|-------------|
+| Pakiet audytowy (demo) | `apk_0c690250-8b83-4e95-aebb-a2b0e0ff862d` | `POST /audits/packs/seed-demo` → `approve-expert` → `publish` |
+| Sesja audytowa | `aprog_153f7dbf-a042-436f-8e7d-070f95923766` | `POST /audits/programs` (nazwa: „Audyt procesu zakupowego Q3 (dane pokazowe)") |
+| Wynik (Output) | `aout_2fb2356a-8c7c-4d47-ab25-6f3c30761ccd` | `POST /audits/outputs/finalize` (wymaga roli `lead_auditor` w programie — `POST /programs/:id/members`) |
+| Raport audytu | `arep_d0c9890d-75db-4750-8a16-807c35ffdafd` | `POST /audits/reports` (`reportKind=audit_report`) |
+| Wniosek (warstwa Wnioskow) | `fd00dd4c-d5ef-4d36-beec-71e66bc01eb9` | `POST /audits/reports/:id/conclusion` (DEC-417e) |
+
+Usuniecie (gdyby dane mialy zniknac): `DELETE /api/audits/programs/<id>` plus
+`DELETE FROM conclusions WHERE id='fd00dd4c-…'`.
+
 ### Jak dodać seed
 
 1. Sprawdź, czy skrypt bierze org z env (`SEED_ORG_ID`/`TARGET_ORG_ID`) — jeśli ma

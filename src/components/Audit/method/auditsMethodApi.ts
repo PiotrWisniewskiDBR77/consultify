@@ -146,7 +146,13 @@ export const AUDIT_FINDING_STATUSES = [
 export type AuditFindingStatus = (typeof AUDIT_FINDING_STATUSES)[number];
 
 /** Mirror `server/src/services/audits/types.ts` — istotność ustalenia. */
-export const AUDIT_FINDING_SEVERITIES = ['informational', 'low', 'medium', 'high', 'critical'] as const;
+export const AUDIT_FINDING_SEVERITIES = [
+  'informational',
+  'low',
+  'medium',
+  'high',
+  'critical',
+] as const;
 export type AuditFindingSeverity = (typeof AUDIT_FINDING_SEVERITIES)[number];
 
 /** Mirror `server/src/services/audits/types.ts` — status działania korygującego. */
@@ -163,7 +169,12 @@ export const AUDIT_ACTION_STATUSES = [
 export type AuditActionStatus = (typeof AUDIT_ACTION_STATUSES)[number];
 
 /** Mirror `server/src/services/audits/types.ts` — rodzaj działania (korekcja usuwa skutek, działanie korygujące usuwa przyczynę). */
-export const AUDIT_ACTION_KINDS = ['correction', 'containment', 'corrective_action', 'preventive_action'] as const;
+export const AUDIT_ACTION_KINDS = [
+  'correction',
+  'containment',
+  'corrective_action',
+  'preventive_action',
+] as const;
 export type AuditActionKind = (typeof AUDIT_ACTION_KINDS)[number];
 
 // ---------------------------------------------------------------------------
@@ -349,6 +360,14 @@ export interface AuditReportSummary {
    * budują `AuditReportSummary` ręcznie bez tego pola — w realnej odpowiedzi API jest zawsze.
    */
   payload?: Record<string, unknown>;
+}
+
+/** Wynik `POST /audits/reports/:id/conclusion` — wniosek zapisany w warstwie Wniosków. */
+export interface AuditConclusionResult {
+  conclusionId: string;
+  title: string;
+  status: string;
+  sourceRefs: Array<{ type: string; id: string; title?: string | null; url?: string | null }>;
 }
 
 export interface AuditProposalSummary {
@@ -639,6 +658,21 @@ export async function getReport(id: string): Promise<AuditReportSummary | null> 
   return payload && payload.id ? payload : null;
 }
 
+/**
+ * `POST /audits/reports/:id/conclusion` — WNIOSEK z raportu audytu (DEC-417e).
+ * Przewód do istniejącej warstwy Wniosków (`conclusions`), nie nowy silnik:
+ * serwer czyta zapisany dokument raportu (`auditReportConclusionBridge`) i
+ * zapisuje z niego wniosek po rodowodzie `audit_report`.
+ */
+export async function generateReportConclusion(reportId: string): Promise<AuditConclusionResult> {
+  const res = await Api.post(`/audits/reports/${encodeURIComponent(reportId)}/conclusion`, {});
+  const payload = unwrapEnvelope(res) as AuditConclusionResult | undefined;
+  if (!payload?.conclusionId) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: conclusion response is missing conclusionId');
+  }
+  return payload;
+}
+
 /** `POST /audits/reports/:id/approve` — draft/in_review → approved (real backend gate, `reportService.approveReport`). */
 export async function approveReport(id: string): Promise<AuditReportSummary | null> {
   const res = await Api.post(`/audits/reports/${encodeURIComponent(id)}/approve`, {});
@@ -669,14 +703,20 @@ export async function registerProposal(id: string): Promise<AuditProposalSummary
 }
 
 /** `POST /audits/proposals/:id/dismiss` — any non-registered status → dismissed (`proposalService.dismissProposal`). */
-export async function dismissProposal(id: string, reason?: string): Promise<AuditProposalSummary | null> {
+export async function dismissProposal(
+  id: string,
+  reason?: string
+): Promise<AuditProposalSummary | null> {
   const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/dismiss`, { reason });
   const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
   return payload && payload.id ? payload : null;
 }
 
 /** `POST /audits/proposals/:id/defer` — any non-registered status → deferred (`proposalService.deferProposal`). */
-export async function deferProposal(id: string, reason?: string): Promise<AuditProposalSummary | null> {
+export async function deferProposal(
+  id: string,
+  reason?: string
+): Promise<AuditProposalSummary | null> {
   const res = await Api.post(`/audits/proposals/${encodeURIComponent(id)}/defer`, { reason });
   const payload = unwrapEnvelope(res) as AuditProposalSummary | undefined;
   return payload && payload.id ? payload : null;
@@ -739,7 +779,9 @@ export interface ListFindingsParams {
 }
 
 /** `GET /audits/findings` — WYMAGA `programId` (backend `requireProgramId`, brak globalnego rejestru). */
-export async function listFindings(params: ListFindingsParams): Promise<ListResult<AuditFindingSummary>> {
+export async function listFindings(
+  params: ListFindingsParams
+): Promise<ListResult<AuditFindingSummary>> {
   const qs = buildQuery({
     programId: params.programId,
     status: params.status,
@@ -773,13 +815,19 @@ export async function reviewFinding(
   decision: 'confirm' | 'send_back' | 'reject',
   note?: string
 ): Promise<AuditFindingSummary | null> {
-  const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/review`, { decision, note });
+  const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/review`, {
+    decision,
+    note,
+  });
   const payload = unwrapEnvelope(res) as AuditFindingSummary | undefined;
   return payload && payload.id ? payload : null;
 }
 
 /** `POST /audits/findings/:id/accept-risk` — wymaga notatki uzasadniającej (`findingService.acceptResidualRisk`). */
-export async function acceptResidualRisk(id: string, note: string): Promise<AuditFindingSummary | null> {
+export async function acceptResidualRisk(
+  id: string,
+  note: string
+): Promise<AuditFindingSummary | null> {
   const res = await Api.post(`/audits/findings/${encodeURIComponent(id)}/accept-risk`, { note });
   const payload = unwrapEnvelope(res) as AuditFindingSummary | undefined;
   return payload && payload.id ? payload : null;

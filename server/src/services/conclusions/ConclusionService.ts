@@ -2,6 +2,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import {
+  safePersistAuditReportConclusion,
+  type AuditReportDocumentLike,
+} from './auditReportConclusionBridge.js';
 
 export type ConclusionStatus =
   | 'candidate'
@@ -742,16 +746,95 @@ export class ConclusionService {
     return rows.length;
   }
 
+  /**
+   * WNIOSKI Z AUDYTU (DEC-417e, 1.1-A4). Do 06.09 `syncAllSources()` znało trzy
+   * źródła — wywiad, ocenę i narzędzia. Moduł Audyty produkował raporty
+   * (`audit_reports`) i nikt ich w warstwie Wniosków nie widział, więc zakładka
+   * „Wnioski" Audytów byłaby pusta z definicji.
+   *
+   * Reguła mapowania jest JEDNA i mieszka w moście (`auditReportConclusionBridge`)
+   * — ta sama, której używa jawny `POST /api/audits/reports/:id/conclusion`,
+   * żeby sync i przycisk nigdy nie produkowały dwóch różnych wniosków z tego
+   * samego raportu (upsert po rodowodzie dokłada resztę).
+   *
+   * Fail-safe: `audit_reports` nie istnieje w każdej instalacji (moduł Audytów
+   * ma własną migrację), a brak tabeli nie może wywrócić synchronizacji
+   * pozostałych źródeł.
+   */
+  async syncAuditReports(organizationId: string, actorUserId: string): Promise<number> {
+    await ensureTables();
+    const rows = await queryHelpers
+      .queryAll<any>(
+        `SELECT r.id, r.program_id, r.title, r.status, r.version, r.report_kind, r.payload,
+                r.created_by, p.name AS program_name
+           FROM audit_reports r
+           LEFT JOIN audit_programs p ON p.id = r.program_id
+          WHERE r.organization_id = ?
+          ORDER BY r.updated_at DESC
+          LIMIT 100`,
+        [organizationId]
+      )
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.warn(`[ConclusionService] Audit report sync query failed: ${message}`);
+        return [];
+      });
+
+    let written = 0;
+    for (const row of rows) {
+      // `payload` bywa obiektem (JSONB w Postgresie) albo tekstem (SQLite).
+      let document: AuditReportDocumentLike | null = null;
+      if (row.payload && typeof row.payload === 'object') {
+        document = row.payload as AuditReportDocumentLike;
+      } else if (typeof row.payload === 'string') {
+        try {
+          document = JSON.parse(row.payload) as AuditReportDocumentLike;
+        } catch {
+          document = null;
+        }
+      }
+      if (!document) continue;
+
+      const persisted = await safePersistAuditReportConclusion(
+        {
+          organizationId,
+          actorUserId: row.created_by || actorUserId,
+          document,
+          source: {
+            reportId: String(row.id),
+            reportTitle: row.title || null,
+            reportStatus: row.status || null,
+            reportVersion: row.version ?? null,
+            programId: row.program_id ? String(row.program_id) : null,
+            programName: row.program_name || null,
+            projectId: null,
+          },
+        },
+        {
+          // Piszemy przez TĘ instancję, nie przez singleton z modułu — most i
+          // ten serwis importują się nawzajem, a sięganie po `conclusionService`
+          // w cyklu ESM to proszenie się o TDZ przy pierwszym wywołaniu.
+          writer: this,
+          logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) },
+        }
+      );
+      if (persisted) written += 1;
+    }
+
+    return written;
+  }
+
   async syncAllSources(
     organizationId: string,
     actorUserId: string
   ): Promise<Record<string, number>> {
-    const [interview, assessment, tools] = await Promise.all([
+    const [interview, assessment, tools, audit] = await Promise.all([
       this.syncInterviewFindings(organizationId, actorUserId),
       this.syncAssessmentReports(organizationId, actorUserId),
       this.syncToolOutputs(organizationId, actorUserId),
+      this.syncAuditReports(organizationId, actorUserId),
     ]);
-    return { interview, assessment, tools };
+    return { interview, assessment, tools, audit };
   }
 
   async listConclusions(params: {

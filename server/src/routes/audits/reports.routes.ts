@@ -12,7 +12,14 @@ import { buildAuditReportDocumentSchema } from '../../services/audits/auditRepor
 import { auditGet, AuditDomainError } from '../../services/audits/auditsDb.js';
 import type { AuditReportDocument } from '../../services/audits/reportRenderer.js';
 import * as reportService from '../../services/audits/reportService.js';
+import {
+  buildAuditReportConclusion,
+  safePersistAuditReportConclusion,
+  type AuditReportDocumentLike,
+} from '../../services/conclusions/auditReportConclusionBridge.js';
 import type { ReportKind } from '../../services/audits/types.js';
+import { requireCapability } from '../../services/audits/permissions.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import { renderDocumentSchemaToDocxBuffer } from '../../services/documentStudio/documentDocxRenderer.js';
 import { renderDocumentSchemaToPdfBuffer } from '../../services/documentStudio/documentPdfRenderer.js';
 
@@ -207,6 +214,105 @@ router.post(
       asOfDate: body.asOfDate ?? null,
     });
     res.status(201).json({ success: true, data: report });
+  }),
+);
+
+// =============================================================================
+// WNIOSEK Z AUDYTU (DEC-417e, 1.1-A4) — przewód do ISTNIEJĄCEJ warstwy Wniosków.
+//
+// POMIAR 06.09: raport audytu miał już wszystko, z czego robi się wniosek
+// (sekcje „Wniosek ogólny"/„Streszczenie zarządcze"/„Ograniczenia"/„Wnioski
+// systemowe" — `reportRenderer.renderAuditReport`), ale warstwa Wniosków nie
+// znała źródła audytu: `ConclusionService.syncAllSources()` obsługiwało tylko
+// wywiad, ocenę i narzędzia. Ta trasa to CIENKI PRZEWÓD (analog
+// `POST /assessment-reports/:reportId/conclusion` z DEC-416): żadnego nowego
+// promptu, modelu ani tabeli — czyta zapisany dokument raportu i zapisuje z
+// niego wniosek przez `conclusionService.createConclusion`.
+//
+// Strażnik ten sam, co przy powstaniu raportu: `report.draft` na programie
+// raportu (`reportService.generateReport`). Brak rodowodu po zapisie = 500 z
+// jawnym kodem, nigdy udawany sukces.
+// =============================================================================
+router.post(
+  '/:id/conclusion',
+  route('POST /reports/:id/conclusion', async (req, res) => {
+    const actor = auditActor(req);
+    assertActor(actor);
+    const report = await reportService.getReport(actor.organizationId, req.params.id);
+    if (!report) {
+      res
+        .status(404)
+        .json({ success: false, error: 'Raport nie został znaleziony', code: 'AUDIT_NOT_FOUND' });
+      return;
+    }
+    await requireCapability(actor, report.programId, 'report.draft');
+
+    const document = requireReportPayloadShape(report.payload) as unknown as AuditReportDocumentLike;
+    const context = await resolveReportContext(actor.organizationId, report.programId);
+    const source = {
+      reportId: String(report.id),
+      reportTitle: report.title || null,
+      reportStatus: report.status || null,
+      reportVersion: report.version ?? null,
+      programId: report.programId,
+      programName: context.programName,
+      projectId: null,
+    };
+
+    const candidate = buildAuditReportConclusion(document, source);
+    if (!candidate) {
+      res.status(422).json({
+        success: false,
+        error:
+          'Ten raport nie ma wniosku ogólnego ani streszczenia zarządczego — nie ma z czego zbudować wniosku.',
+        code: 'AUDIT_CONCLUSION_NO_SUMMARY',
+      });
+      return;
+    }
+
+    const persisted = await safePersistAuditReportConclusion({
+      organizationId: actor.organizationId,
+      actorUserId: actor.userId,
+      document,
+      source,
+    });
+    if (!persisted) {
+      res.status(500).json({
+        success: false,
+        error: 'Nie udało się zapisać wniosku',
+        code: 'AUDIT_CONCLUSION_PERSIST_FAILED',
+      });
+      return;
+    }
+
+    // Odczyt po RODOWODZIE (nie po tytule): `upsertExternalConclusion`
+    // deduplikuje po (organization_id, source_module, source_artifact_refs_json),
+    // więc ten sam raport nigdy nie mnoży wniosków, a brak rodowodu = brak
+    // trafienia.
+    const row = await queryHelpers.queryOne<{ id: string; status: string }>(
+      `SELECT id, status FROM conclusions
+       WHERE organization_id = ? AND source_module = ? AND source_artifact_refs_json = ?
+       LIMIT 1`,
+      [actor.organizationId, candidate.sourceModule, JSON.stringify(candidate.sourceRefs)]
+    );
+    if (!row?.id) {
+      res.status(500).json({
+        success: false,
+        error: 'Wniosek zapisany bez rodowodu do raportu audytu — przerwane',
+        code: 'AUDIT_CONCLUSION_LINEAGE_MISSING',
+      });
+      return;
+    }
+
+    res.status(201).json({
+      success: true,
+      data: {
+        conclusionId: String(row.id),
+        title: candidate.title,
+        status: String(row.status || candidate.status),
+        sourceRefs: candidate.sourceRefs,
+      },
+    });
   }),
 );
 
