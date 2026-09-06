@@ -28370,6 +28370,10 @@
   },
   "meeting": {
     "empty": "No meetings yet",
+    "wave2Placeholder": {
+      "title": "Meetings — planned for Wave 2",
+      "message": "This module isn't part of the MVP yet. We'll come back to it in the next wave."
+    },
     "tabs": {
       "all": "Meetings"
     },

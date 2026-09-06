@@ -17,10 +17,18 @@
  *    still present (decorated, not removed) but locked (aria-disabled=true).
  *  - "wlasciciel widzi": owner-ish role (`ADMIN`) -> the "Meeting" item is
  *    present and NOT locked (aria-disabled absent).
+ *
+ * DEC-425 (1.1-M-3, 2026-09-06): the Meeting item is now ALSO gated by
+ * `isMeetingsModuleEnabled()` (`meetingsModuleFlag.ts`, default OFF) —
+ * `menuConfig.ts` omits it from the menu entirely when the flag is off,
+ * independent of role/pilot status. This file tests the PILOT lock, a
+ * different/older mechanism, which only fires while the item exists in the
+ * menu — so every test here stubs `VITE_MODULE_MEETINGS=true` to restore
+ * the item's presence and isolate the pilot-lock assertion from DEC-425.
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentRole = 'USER';
 
@@ -114,8 +122,16 @@ vi.mock('@/store/useAppStore', () => ({
 
 import { Sidebar } from '../Sidebar';
 
+beforeEach(() => {
+  // DEC-425: restore pre-DEC-425 visibility (item present) so this file's
+  // own pilot-lock scenario is exercised, unaffected by the newer
+  // "no menu entry at all" default.
+  vi.stubEnv('VITE_MODULE_MEETINGS', 'true');
+});
+
 afterEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe('Sidebar pilot meeting lock (regression, bramka 2)', () => {

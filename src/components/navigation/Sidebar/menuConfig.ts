@@ -38,13 +38,15 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { isMeetingsModuleEnabled } from '@/utils/meetingsModuleFlag';
+
 import { AppView, UserRole } from '../../../types';
 import { MenuItem } from './types';
 
 type TranslationFn = (key: string, options?: any) => any;
 
 export function getMenuStructure(t: TranslationFn, _journeyState?: string): MenuItem[] {
-  return [
+  const items: Array<MenuItem | false> = [
     // 1. Czat - podstawowa rozmowa z AI
     {
       id: 'AI_CHAT',
@@ -174,7 +176,11 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // Trasa /excele (AppView.EXCELE) zostaje w routingu (AppRoutes.tsx) dla
     // zgodności wstecznej z deep linkami — usunięty jest TYLKO klikalny wpis
     // menu, nie sama trasa/funkcja.
-    {
+    // DEC-425 (właściciel, 2026-09-06): Spotkania NIEWIDOCZNE w MVP — brak
+    // pozycji w menu do Fali 2 (`meetingsModuleFlag.ts`, domyślnie OFF).
+    // Zdjęcie ukrycia = `VITE_MODULE_MEETINGS=true` w buildzie; zero innych
+    // zmian tutaj potrzebnych.
+    isMeetingsModuleEnabled() && {
       id: 'MODULE_MEETING',
       label: t('sidebar.meeting', 'Meeting'),
       icon: React.createElement(Users, { size: 20 }),
@@ -187,6 +193,7 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // was UI-complete but backend-stubbed (always 503/zeros). Route redirects to /chat;
     // DB + backend kept as dormant foundations. Re-add this item when it ships real.
   ];
+  return items.filter((item): item is MenuItem => item !== false);
 }
 
 export function getAdminMenuItem(t: TranslationFn): MenuItem {

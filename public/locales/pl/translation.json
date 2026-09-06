@@ -30683,6 +30683,10 @@
   },
   "meeting": {
     "empty": "Brak spotkań",
+    "wave2Placeholder": {
+      "title": "Spotkania — planowane w Fali 2",
+      "message": "Ten moduł nie wchodzi jeszcze do MVP. Wracamy do niego w kolejnej fali rozwoju."
+    },
     "tabs": {
       "all": "Spotkania"
     },
