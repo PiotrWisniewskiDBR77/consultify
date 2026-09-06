@@ -137,12 +137,12 @@ a{color:var(--accent);}
       <div class="kafel-nazwa">Pojemnik 1 <span class="kafel-nazwa-pelna">— MVP rękami właściciela</span></div>
       <div class="kafel-termin">10 dni, do ~16.09</div>
       <div class="kafel-progress">
-        <div class="progress-track"><div class="progress-fill" style="width:50%"></div></div>
-        <span class="mono progress-label">5/10 pozycji</span>
+        <div class="progress-track"><div class="progress-fill" style="width:60%"></div></div>
+        <span class="mono progress-label">6/10 pozycji</span>
       </div>
       <div class="kafel-liczniki">
         <span class="mono">0/8 kryteriów</span>
-        <span class="mono">2 decyzji czeka</span>
+        <span class="mono">0 decyzji czeka</span>
       </div>
     </button>
 <button class="kafel" data-tab-target="2" id="tabbtn-2" role="tab" aria-selected="false" aria-controls="panel-2">
@@ -241,10 +241,10 @@ a{color:var(--accent);}
       <td class="mono nowrap">1.7</td>
       <td>Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</td>
       <td class="nowrap">Sonnet</td>
-      <td><span class="chip chip-amber">DO ODBIORU</span></td>
-      <td class="mono nowrap">codex/higiena-danych <span class="muted">·</span> debf6e8725</td>
-      <td>4 skrypty (dry-run/apply/rollback, CSV, test izolacji org z mutantem) scalone; dry-run na stagingu wykonany: archiwizacja 9 pustych ocen, 18 rekordów testowych do usunięcia, finanse 0, Silesia tylko w logach<div class="uwagi">Czeka na słowo właściciela (karta 5: jedna lista Tak/Nie). Po „Tak”: apply na stagingu z kopią CSV i manifestem rollback.</div></td>
-      <td class="mono nowrap">06.09 12:45</td>
+      <td><span class="chip chip-green">ODEBRANE</span></td>
+      <td class="mono nowrap">codex/higiena-danych <span class="muted">·</span> a3c74fd297</td>
+      <td>APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach<div class="uwagi">Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.</div></td>
+      <td class="mono nowrap">06.09 13:05</td>
     </tr>
 <tr class="">
       <td class="mono nowrap">1.8</td>
@@ -368,17 +368,17 @@ a{color:var(--accent);}
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
         <span class="mono">1.7</span>
-        <span class="chip chip-amber">DO ODBIORU</span>
+        <span class="chip chip-green">ODEBRANE</span>
       </div>
       <div class="pozycja-card-nazwa">Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</div>
       <div class="pozycja-card-meta">
         <span>Sonnet</span>
         <span class="muted">zależy: decyzje właściciela</span>
-        <span class="mono muted">06.09 12:45</span>
+        <span class="mono muted">06.09 13:05</span>
       </div>
-      <div class="mono pozycja-card-galaz">codex/higiena-danych · debf6e8725</div>
-      <div class="pozycja-card-dowod">4 skrypty (dry-run/apply/rollback, CSV, test izolacji org z mutantem) scalone; dry-run na stagingu wykonany: archiwizacja 9 pustych ocen, 18 rekordów testowych do usunięcia, finanse 0, Silesia tylko w logach</div>
-      <div class="uwagi">Czeka na słowo właściciela (karta 5: jedna lista Tak/Nie). Po „Tak”: apply na stagingu z kopią CSV i manifestem rollback.</div>
+      <div class="mono pozycja-card-galaz">codex/higiena-danych · a3c74fd297</div>
+      <div class="pozycja-card-dowod">APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach</div>
+      <div class="uwagi">Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.</div>
     </div>
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
@@ -558,7 +558,7 @@ a{color:var(--accent);}
     <td>Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</td>
     <td class="nowrap">właściciel</td>
     <td>ledger decyzji (DEC-…)</td>
-    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
+    <td><span class="chip chip-green">TAK</span></td>
   </tr>
 <tr>
     <td class="mono nowrap">S1.11</td>
@@ -631,7 +631,7 @@ a{color:var(--accent);}
     <div class="pozycja-card-dowod">health demo = SHA, tag demo-safe-&lt;data&gt;, zrzuty z demo</div>
   </div>
 <div class="pozycja-card">
-    <div class="pozycja-card-top"><span class="mono">S1.10</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
+    <div class="pozycja-card-top"><span class="mono">S1.10</span><span class="chip chip-green">TAK</span></div>
     <div class="pozycja-card-nazwa">Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</div>
     <div class="pozycja-card-meta"><span>właściciel</span></div>
     <div class="pozycja-card-dowod">ledger decyzji (DEC-…)</div>
@@ -662,18 +662,18 @@ a{color:var(--accent);}
 <li class="decyzja-item">
       <div class="decyzja-top">
         <span class="decyzja-tresc">Grupowanie inicjatyw po zdjęciu Projektów</span>
-        <span class="chip chip-amber">CZEKA</span>
-        
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-402</span>
       </div>
-      <div class="decyzja-rekomendacja">Rekomendacja CTO: Płaska lista + kolumna obszar/oś; program/portfel po MVP</div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: Płaska lista + kolumna obszar/oś; program/portfel po MVP. Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)</div>
     </li>
 <li class="decyzja-item">
       <div class="decyzja-top">
         <span class="decyzja-tresc">Kropka „Model” w crimson</span>
-        <span class="chip chip-amber">CZEKA</span>
-        
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-402</span>
       </div>
-      <div class="decyzja-rekomendacja">Rekomendacja CTO: Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)</div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: CTO: neutralna (czerwień tylko dla stanu krytycznego). Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)</div>
     </li>
 <li class="decyzja-item">
       <div class="decyzja-top">

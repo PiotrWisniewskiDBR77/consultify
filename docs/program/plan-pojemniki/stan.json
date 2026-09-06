@@ -85,12 +85,12 @@
           "nazwa": "Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)",
           "wykonawca": "Sonnet",
           "zalezy_od": "decyzje właściciela",
-          "stan": "do_odbioru",
+          "stan": "odebrane",
           "galaz": "codex/higiena-danych",
-          "sha": "debf6e8725",
-          "dowod": "4 skrypty (dry-run/apply/rollback, CSV, test izolacji org z mutantem) scalone; dry-run na stagingu wykonany: archiwizacja 9 pustych ocen, 18 rekordów testowych do usunięcia, finanse 0, Silesia tylko w logach",
-          "uwagi": "Czeka na słowo właściciela (karta 5: jedna lista Tak/Nie). Po „Tak”: apply na stagingu z kopią CSV i manifestem rollback.",
-          "data": "06.09 12:45"
+          "sha": "a3c74fd297",
+          "dowod": "APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach",
+          "uwagi": "Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.",
+          "data": "06.09 13:05"
         },
         {
           "nr": "1.8",
@@ -257,8 +257,8 @@
           "tresc": "Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)",
           "kto": "właściciel",
           "artefakt": "ledger decyzji (DEC-…)",
-          "stan": "czesciowo",
-          "dowod": "1/3: Finanse MINIMUM → pojemnik 2 (DEC-399, 06.09); czekają: grupowanie inicjatyw, kropka „Model”"
+          "stan": "tak",
+          "dowod": "3/3: Finanse MINIMUM → pojemnik 2 (DEC-399), płaska lista + obszar/oś i kropka „Model” neutralna (DEC-402, 06.09) — plus 7 dalszych decyzji (bazy demo/staging, higiena, pilotaż, budżet AI)"
         },
         {
           "nr": "S1.11",
@@ -286,15 +286,15 @@
         },
         {
           "tresc": "Grupowanie inicjatyw po zdjęciu Projektów",
-          "rekomendacja": "Płaska lista + kolumna obszar/oś; program/portfel po MVP",
-          "stan": "czeka",
-          "dec": ""
+          "rekomendacja": "Płaska lista + kolumna obszar/oś; program/portfel po MVP. Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)",
+          "stan": "podjeta",
+          "dec": "DEC-402"
         },
         {
           "tresc": "Kropka „Model” w crimson",
-          "rekomendacja": "Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)",
-          "stan": "czeka",
-          "dec": ""
+          "rekomendacja": "CTO: neutralna (czerwień tylko dla stanu krytycznego). Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)",
+          "stan": "podjeta",
+          "dec": "DEC-402"
         },
         {
           "tresc": "Program naprawczy Award/CES 2027 może odmrażać moduły zamrożone 05.09 wyłącznie w zakresie paczek P1–P6, II, III; każdy commit niesie znacznik odmrożenia; po zakończeniu paczki moduł jest ponownie zamrażany tego samego dnia",
