@@ -1230,6 +1230,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
   const [selectedAlternativeId, setSelectedAlternativeId] = useState('');
   const [editingAlternativeId, setEditingAlternativeId] = useState<string | null>(null);
+  // K3 (DEC-407, dyżur 1.1-Z1): „Generate options" nie zapisuje wprost do
+  // `alternatives` — wynik czeka tu na „Zatwierdź"/„Odrzuć".
+  const [alternativesProposal, setAlternativesProposal] = useState<Alternative[] | null>(null);
 
   // Decider name (for display)
   const [deciderName, setDeciderName] = useState('');
@@ -3368,6 +3371,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       return;
     }
 
+    // Stan sprzed wygenerowania — do przywrócenia, jeśli propozycja zostanie
+    // odrzucona albo AI nie zwróci nic (lista `alternatives` w ogóle się nie
+    // zmienia dopóki człowiek nie kliknie „Zatwierdź").
+    const cardStateBeforeGeneration = cardStates.alternatives;
     setIsGeneratingAlternatives(true);
     setCardState('alternatives', 'generating');
     try {
@@ -3390,15 +3397,28 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
         isRecommended: false,
       }));
 
-      setAlternatives([...alternatives, ...generatedAlternatives]);
-      setCardState('alternatives', 'ai-draft');
-      toast.success(t('decisions.detail.toast.alternativesGenerated', 'Alternatives generated'));
+      // K3: propozycja, nie nadpisanie — `alternatives` zmienia się dopiero
+      // po kliknięciu „Zatwierdź" w karcie propozycji (Options & Trade-offs).
+      setAlternativesProposal(generatedAlternatives);
+      setCardState('alternatives', cardStateBeforeGeneration);
     } catch (error) {
       setCardState('alternatives', 'error');
       toast.error(t('decisions.detail.toast.generationFailed', 'Generation failed'));
     } finally {
       setIsGeneratingAlternatives(false);
     }
+  };
+
+  const acceptAlternativesProposal = () => {
+    if (alternativesProposal === null) return;
+    setAlternatives([...alternatives, ...alternativesProposal]);
+    setAlternativesProposal(null);
+    setCardState('alternatives', 'ai-draft');
+    toast.success(t('decisions.detail.toast.alternativesGenerated', 'Alternatives generated'));
+  };
+
+  const discardAlternativesProposal = () => {
+    setAlternativesProposal(null);
   };
 
   const generateDescriptionAI = async () => {
@@ -6603,6 +6623,53 @@ Use userId only from this list:
                             onRetry={generateAlternativesAI}
                           >
                             <div className="space-y-5">
+                              {/* K3: propozycja AI czeka na Zatwierdź/Odrzuć — `alternatives`
+                                  nie zmienia się dopóki użytkownik nie kliknie. */}
+                              {alternativesProposal !== null && (
+                                <div
+                                  data-testid="decision-alternatives-ai-proposal"
+                                  className="rounded-lg border border-c-ai/40 bg-c-surface/95 p-3"
+                                >
+                                  <div className="mb-2 flex items-center gap-1.5">
+                                    <Sparkles size={13} className="text-c-ai" />
+                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-c-ai">
+                                      {t('sharedComponents.aiFieldEnhancer.proposalTitle', 'AI proposal')}
+                                    </span>
+                                  </div>
+                                  <ul className="space-y-2">
+                                    {alternativesProposal.map((alt, idx) => (
+                                      <li
+                                        key={alt.id || idx}
+                                        className="rounded-md border border-c-border-subtle bg-c-surface-raised p-2"
+                                      >
+                                        <p className="text-xs font-semibold text-c-text">{alt.title}</p>
+                                        {alt.description ? (
+                                          <p className="mt-0.5 text-xs text-c-text-secondary">
+                                            {alt.description}
+                                          </p>
+                                        ) : null}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <div className="mt-3 flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={discardAlternativesProposal}
+                                      className="inline-flex h-7 items-center rounded-md border border-c-border-subtle px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                                    >
+                                      {t('sharedComponents.aiFieldEnhancer.discard', 'Discard')}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      data-testid="decision-alternatives-ai-approve"
+                                      onClick={acceptAlternativesProposal}
+                                      className="inline-flex h-7 items-center rounded-md border border-c-ai/50 bg-c-ai/10 px-2.5 text-xs font-medium text-c-ai transition-colors hover:bg-c-ai/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                                    >
+                                      {t('sharedComponents.aiFieldEnhancer.apply', 'Apply')}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                               {alternatives.length === 0 ? (
                                 /* EmptyStateInline */
                                 <div className="py-10 text-center">

@@ -682,6 +682,13 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isGeneratingOutcome, setIsGeneratingOutcome] = useState(false);
   const [isGeneratingChecklist, setIsGeneratingChecklist] = useState(false);
+  // K3 (DEC-407, dyżur 1.1-Z1): AI NIE zapisuje wprost do rekordu. Wynik
+  // generateAIDescription/generateAIOutcome czeka tu na „Zatwierdź" — dopiero
+  // wtedy trafia do `description`/`expectedOutcome`. Wzór: AIFieldEnhancer /
+  // NotificationDetailView „Pracuj z AI" (ta sama zasada, ten sam efekt —
+  // mniejszy zakres zmiany niż podpięcie pełnego PracujZAI w tym miejscu).
+  const [descriptionProposal, setDescriptionProposal] = useState<string | null>(null);
+  const [outcomeProposal, setOutcomeProposal] = useState<string | null>(null);
 
   // ── RACI / Governance inline editing (mirrors Decision) ──────────────────
   type IntegrationChannel = 'slack' | 'teams' | 'webhook' | 'jira';
@@ -2497,17 +2504,29 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         roleName: 'Task Description Writer',
       });
 
-      setDescription(generated);
-      addActivityLogEntry(
-        'edit',
-        t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description')
-      );
-      toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
+      // K3: propozycja, nie nadpisanie — `description` zmienia się dopiero po
+      // kliknięciu „Zatwierdź" w karcie propozycji niżej.
+      setDescriptionProposal(generated);
     } catch (error) {
       notifyAiUnavailable(error);
     } finally {
       setIsGeneratingDescription(false);
     }
+  };
+
+  const acceptDescriptionProposal = () => {
+    if (descriptionProposal === null) return;
+    setDescription(descriptionProposal);
+    setDescriptionProposal(null);
+    addActivityLogEntry(
+      'edit',
+      t('myWork.taskDetail.aIGeneratedDescription', 'AI generated description')
+    );
+    toast.success(t('myWork.taskDetail.toastSuccess6', 'AI generated description'));
+  };
+
+  const discardDescriptionProposal = () => {
+    setDescriptionProposal(null);
   };
 
   // Było: `setTimeout(1200)` + losowanie z dwóch zaszytych list kryteriów
@@ -2530,19 +2549,31 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         roleName: 'Task Outcome Writer',
       });
 
-      setExpectedOutcome(generated);
-      addActivityLogEntry(
-        'edit',
-        t('myWork.taskDetail.aIGeneratedOutcome', 'AI generated outcome')
-      );
-      toast.success(
-        t('myWork.taskDetail.aIGeneratedExpectedOutcome', 'AI generated expected outcome')
-      );
+      // K3: propozycja, nie nadpisanie — `expectedOutcome` zmienia się dopiero
+      // po kliknięciu „Zatwierdź" w karcie propozycji niżej.
+      setOutcomeProposal(generated);
     } catch (error) {
       notifyAiUnavailable(error);
     } finally {
       setIsGeneratingOutcome(false);
     }
+  };
+
+  const acceptOutcomeProposal = () => {
+    if (outcomeProposal === null) return;
+    setExpectedOutcome(outcomeProposal);
+    setOutcomeProposal(null);
+    addActivityLogEntry(
+      'edit',
+      t('myWork.taskDetail.aIGeneratedOutcome', 'AI generated outcome')
+    );
+    toast.success(
+      t('myWork.taskDetail.aIGeneratedExpectedOutcome', 'AI generated expected outcome')
+    );
+  };
+
+  const discardOutcomeProposal = () => {
+    setOutcomeProposal(null);
   };
 
   // Było: `setTimeout(1500)` + siedem zaszytych pozycji („Przeanalizować
@@ -7143,6 +7174,41 @@ Return ONLY the final comment text.`;
                           'Describe task details...'
                         )}
                       />
+                      {/* K3: propozycja AI czeka na Zatwierdź/Odrzuć — `description`
+                          nie zmienia się dopóki użytkownik nie kliknie. */}
+                      {descriptionProposal !== null && (
+                        <div
+                          data-testid="task-description-ai-proposal"
+                          className="mt-2 rounded-lg border border-c-ai/40 bg-c-surface/95 p-2.5"
+                        >
+                          <div className="mb-1.5 flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-c-ai" />
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-ai">
+                              {t('sharedComponents.aiFieldEnhancer.proposalTitle', 'AI proposal')}
+                            </span>
+                          </div>
+                          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-c-text">
+                            {descriptionProposal}
+                          </p>
+                          <div className="mt-2 flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={discardDescriptionProposal}
+                              className="inline-flex h-7 items-center rounded-md border border-c-border-subtle px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                            >
+                              {t('sharedComponents.aiFieldEnhancer.discard', 'Discard')}
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="task-description-ai-approve"
+                              onClick={() => acceptDescriptionProposal()}
+                              className="inline-flex h-7 items-center rounded-md border border-c-ai/50 bg-c-ai/10 px-2.5 text-xs font-medium text-c-ai transition-colors hover:bg-c-ai/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                            >
+                              {t('sharedComponents.aiFieldEnhancer.apply', 'Apply')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -7231,6 +7297,41 @@ Return ONLY the final comment text.`;
                           'What should be the outcome of this task?'
                         )}
                       />
+                      {/* K3: propozycja AI czeka na Zatwierdź/Odrzuć — `expectedOutcome`
+                          nie zmienia się dopóki użytkownik nie kliknie. */}
+                      {outcomeProposal !== null && (
+                        <div
+                          data-testid="task-outcome-ai-proposal"
+                          className="mt-2 rounded-lg border border-c-ai/40 bg-c-surface/95 p-2.5"
+                        >
+                          <div className="mb-1.5 flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-c-ai" />
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-c-ai">
+                              {t('sharedComponents.aiFieldEnhancer.proposalTitle', 'AI proposal')}
+                            </span>
+                          </div>
+                          <p className="max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-c-text">
+                            {outcomeProposal}
+                          </p>
+                          <div className="mt-2 flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={discardOutcomeProposal}
+                              className="inline-flex h-7 items-center rounded-md border border-c-border-subtle px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                            >
+                              {t('sharedComponents.aiFieldEnhancer.discard', 'Discard')}
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="task-outcome-ai-approve"
+                              onClick={() => acceptOutcomeProposal()}
+                              className="inline-flex h-7 items-center rounded-md border border-c-ai/50 bg-c-ai/10 px-2.5 text-xs font-medium text-c-ai transition-colors hover:bg-c-ai/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
+                            >
+                              {t('sharedComponents.aiFieldEnhancer.apply', 'Apply')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}

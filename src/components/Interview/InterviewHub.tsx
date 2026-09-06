@@ -5014,6 +5014,49 @@ export const InterviewHub: React.FC = () => {
         textColor: neutralTextClass,
         accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
       },
+      // Znalezisko 1.1-Z1 (dyżur, DEC — chipy TYP po angielsku w Wywiadzie):
+      // te promptType pochodzą z `InsightAnalysisMode` (InsightCreatorModal.tsx),
+      // ale nigdy nie miały wpisu w tej mapie configs. Brak wpisu powodował
+      // `configs[type] || configs.summary` — cichy fallback na "Executive
+      // Summary"/"Podsumowanie Wykonawcze", niezależnie od realnego typu.
+      // Etykiety 1:1 z InsightCreatorModal.tsx (labelPl/labelEn), żeby nazwa
+      // trybu przy tworzeniu insightu i chip na liście się zgadzały.
+      general_consulting_synthesis: {
+        label: { en: 'General consulting synthesis', pl: 'Ogólna synteza konsultingowa' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
+      focused_topic_synthesis: {
+        label: { en: 'Focused topic synthesis', pl: 'Synteza ukierunkowana' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
+      contradiction_scan: {
+        label: { en: 'Contradiction scan', pl: 'Skan sprzeczności' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
+      initiative_opportunity_scan: {
+        label: { en: 'Initiative opportunity scan', pl: 'Skan inicjatyw i szans' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
+      material_quality_scan: {
+        label: { en: 'Material quality scan', pl: 'Ocena jakości materiału' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
+      hypothesis_validation: {
+        label: { en: 'Hypothesis validation', pl: 'Walidacja hipotezy' },
+        bgColor: neutralBadgeClass,
+        textColor: neutralTextClass,
+        accentColor: 'shadow-[inset_4px_0_0_theme(colors.slate.400)]',
+      },
     };
     return configs[type || 'summary'] || configs.summary;
   };
@@ -5215,7 +5258,10 @@ export const InterviewHub: React.FC = () => {
                   style={{ backgroundColor: categoryTone(promptType)! }}
                 />
               ) : null}
-              {t(`interview.hub.insightTypeLabel.${promptType}`, typeConfig.label.en)}
+              {t(
+                `interview.hub.insightTypeLabel.${promptType}`,
+                isPolish ? typeConfig.label.pl : typeConfig.label.en
+              )}
             </span>
           );
         },
