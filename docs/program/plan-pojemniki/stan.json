@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06T06:40:00+02:00",
+  "zaktualizowano": "2026-09-06 14:10",
   "sha_rejestru": "74d48a0c41",
   "pojemniki": [
     {
@@ -13,12 +13,12 @@
           "nazwa": "Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)",
           "wykonawca": "Sonnet/Opus",
           "zalezy_od": "przejście właściciela",
-          "stan": "czeka",
+          "stan": "w_toku",
           "galaz": "",
-          "sha": "",
-          "dowod": "",
-          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.",
-          "data": ""
+          "sha": "7dac4d5440",
+          "dowod": "staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”",
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte",
+          "data": "06.09 14:06"
         },
         {
           "nr": "1.2",
@@ -217,8 +217,8 @@
           "tresc": "Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu",
           "kto": "nadzorca",
           "artefakt": "8×3 zrzuty na żywo, aside ≤ 1",
-          "stan": "czesciowo",
-          "dowod": "06.09: Skrzynka i Wywiad na żywo aside 1/1/0/0 (evidence/p1-skrzynka-wywiad/), właściciel „Tak” dla karty 2; Zadania/Realizacja z nocy (P1-LEPKIE); pozostałe 4 listy do pomiaru w 1.9"
+          "stan": "tak",
+          "dowod": "1.1-G2 (DEC-404): dok Teresy zastępuje podgląd, po zamknięciu podgląd wraca w stanie sprzed; 5 list + Notatnik, 24 zrzuty, 0 błędów konsoli; na stagingu 7dac4d5440"
         },
         {
           "nr": "S1.6",

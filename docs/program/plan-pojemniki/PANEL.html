@@ -183,14 +183,14 @@ a{color:var(--accent);}
       <thead><tr>
         <th>NR</th><th>POZYCJA</th><th>WYKONAWCA</th><th>STAN</th><th>GAŁĄŹ / SHA</th><th>DOWÓD</th><th>DATA</th>
       </tr></thead>
-      <tbody><tr class="">
+      <tbody><tr class="row-w-toku">
       <td class="mono nowrap">1.1</td>
       <td>Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)</td>
       <td class="nowrap">Sonnet/Opus</td>
-      <td><span class="chip chip-neutral">CZEKA</span></td>
-      <td class="mono nowrap"></td>
-      <td><div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.</div></td>
-      <td class="mono nowrap"></td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap"> <span class="muted">·</span> 7dac4d5440</td>
+      <td>staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”<div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte</div></td>
+      <td class="mono nowrap">06.09 14:06</td>
     </tr>
 <tr class="">
       <td class="mono nowrap">1.2</td>
@@ -275,20 +275,20 @@ a{color:var(--accent);}
     </tr></tbody>
     </table>
   </div>
-  <div class="card-list"><div class="pozycja-card ">
+  <div class="card-list"><div class="pozycja-card card-w-toku">
       <div class="pozycja-card-top">
         <span class="mono">1.1</span>
-        <span class="chip chip-neutral">CZEKA</span>
+        <span class="chip chip-amber">W TOKU</span>
       </div>
       <div class="pozycja-card-nazwa">Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)</div>
       <div class="pozycja-card-meta">
         <span>Sonnet/Opus</span>
         <span class="muted">zależy: przejście właściciela</span>
-        
+        <span class="mono muted">06.09 14:06</span>
       </div>
-      
-      
-      <div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.</div>
+      <div class="mono pozycja-card-galaz"> · 7dac4d5440</div>
+      <div class="pozycja-card-dowod">staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”</div>
+      <div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte</div>
     </div>
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
@@ -523,7 +523,7 @@ a{color:var(--accent);}
     <td>Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</td>
     <td class="nowrap">nadzorca</td>
     <td>8×3 zrzuty na żywo, aside ≤ 1</td>
-    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
+    <td><span class="chip chip-green">TAK</span></td>
   </tr>
 <tr>
     <td class="mono nowrap">S1.6</td>
@@ -608,7 +608,7 @@ a{color:var(--accent);}
     <div class="pozycja-card-dowod">pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”</div>
   </div>
 <div class="pozycja-card">
-    <div class="pozycja-card-top"><span class="mono">S1.5</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
+    <div class="pozycja-card-top"><span class="mono">S1.5</span><span class="chip chip-green">TAK</span></div>
     <div class="pozycja-card-nazwa">Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</div>
     <div class="pozycja-card-meta"><span>nadzorca</span></div>
     <div class="pozycja-card-dowod">8×3 zrzuty na żywo, aside ≤ 1</div>
@@ -1821,7 +1821,7 @@ a{color:var(--accent);}
     
   </section>
 
-  <div class="footer">Stan z: <span class="mono">2026-09-06T06:40:00+02:00</span> · rejestr <span class="mono">74d48a0c41</span> · źródło: <span class="mono">docs/program/plan-pojemniki/stan.json</span></div>
+  <div class="footer">Stan z: <span class="mono">2026-09-06 14:10</span> · rejestr <span class="mono">74d48a0c41</span> · źródło: <span class="mono">docs/program/plan-pojemniki/stan.json</span></div>
 </div>
 <script>
 (function(){
