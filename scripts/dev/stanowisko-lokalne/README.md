@@ -140,3 +140,9 @@ env: `DB_TYPE=postgres NODE_ENV=development CI=true DOTENV_DISABLED=1 DATABASE_U
 
 ## Typ organizacji (06.09)
 Organizacja DBR77 na lokalnej bazie ma `organization_type=PAID` (jak org właściciela na stagingu `a3e05d4a…`). Z `TRIAL` strażnik `highRiskSurfaceGuard` blokuje eksporty (403 `TRIAL_EXPORT_DISABLED`) i audyty meldują fałszywy bloker (host harnessu ≠ produkt). Po odtworzeniu bazy od zera: `UPDATE organizations SET organization_type='PAID' WHERE name='DBR77';`
+
+## Odtworzenie po skasowaniu katalogu (incydent 06.09)
+1. `mkdir -p /private/tmp/stanowisko-noc && chmod 700 …`; `railway variables --json --environment staging > …/railway-staging.json`; `node scripts/dev/stanowisko-lokalne/flagi-ze-stagingu.mjs` → `server.env`.
+2. Nowe hasło konta audytowego (hash bcryptjs, kolumna `users.password`): `HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.argv[1],10))" "$PW")` → `UPDATE users SET password=$HASH WHERE email='audyt@dbr77.local'`; `konto.json` = `{email, haslo, orgId, orgNazwa}` (chmod 600).
+3. `node scripts/dev/stanowisko-lokalne/zaloguj-api.mjs` → `auth.json`. Pliki `server.pid`/`vite.pid` odtworzyć z `lsof -nP -iTCP:4100 -iTCP:3090 -sTCP:LISTEN`.
+4. W każdym zleceniu: `rm -rf` wolno TYLKO we własnym worktree; `/private/tmp/stanowisko-noc` jest współdzielony (plik `NIE_USUWAC.txt`).
