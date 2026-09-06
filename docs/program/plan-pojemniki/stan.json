@@ -73,12 +73,12 @@
           "nazwa": "Dokument i prezentacja z szablonu jako plik (prototyp → akcept właściciela → generator)",
           "wykonawca": "Opus",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "do_odbioru",
           "galaz": "mvp/dokument-prezentacja-plik",
-          "sha": "",
-          "dowod": "worktree /private/tmp/wt-dokument-plik; DOCX raportu z Oceny (7 rozdziałów DEC-46) + PPTX/PDF prezentacji z tej samej oceny DBR77, przez silnik i trasę produktu",
-          "uwagi": "Wymogi: polskie znaki, zero placeholderów, geometria PPTX = 0 nachodzeń, 10 liczb z SQL, rubryka 8 kryteriów, podglądy PNG każdej strony — do akceptu właściciela JAKO PLIK.",
-          "data": "06.09 06:35"
+          "sha": "9fb2858bca",
+          "dowod": "scalone na staging; pliki: evidence/dokument-plik-20260906/ (DOCX 26 stron, PPTX 14 slajdów, PDF); 3 przyciski „Pobierz” na ekranie raportu oceny; CTO obejrzał strony i slajdy",
+          "uwagi": "Czeka na słowo właściciela na PLIKU (S1.4). Samoocena Opusa 7,5/10: 39 powtarzalnych zdań „brak treści” (magazyn zastany nie ma rekomendacji), 4 angielskie etykiety poziomów DRD w raporcie, spis treści buduje się dopiero w Wordzie. Dane: ocena testowa z lokalnych seedów, nie z stagingu właściciela.",
+          "data": "06.09 09:40"
         },
         {
           "nr": "1.7",
