@@ -2,17 +2,23 @@
   "module": "Finanse",
   "route": "/finance",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/finance?tab=statements",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci rynku, z rocznym przychodem 120 milionÃ³w euro. W organizacji pracuje 620 osÃ³b. Obecnie prowadzone sÄ… dwa aktywne projekty, a poziom dojrzaÅ‚oÅ›ci zarzÄ…dzania projektami okreÅ›lono jako podstawowy.\n\nUÅ¼ytkownik ma przypisane piÄ™Ä‡ zadaÅ„, z czego dwa sÄ… w toku, a trzy sÄ… do wykonania w najbliÅ¼szych dniach. UÅ¼ytkownik ma rÃ³wnieÅ¼ trzy inicjatywy w toku, ktÃ³re dotyczÄ… automatyzacji procesÃ³w produkcyjnych. IstniejÄ… trzy blokery z przypisanymi zadaniami, ktÃ³re nie majÄ… podanego powodu. Ponadto, sÄ… trzy oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77.\n\nUÅ¼ytkownik ma rÃ³wnieÅ¼ dwa oczekujÄ…ce dziaÅ‚ania AI do zatwierdzenia. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzeÅ¼enia.\n\nJeÅ¼eli chodzi o finanse, dostÄ™pny jest jeden pakiet sprawozdaÅ„ finansowych dla Grupy KapitaÅ‚owej CD PROJEKT za rok 2024, oznaczony jako potwierdzony i gotowy w 100%.\n\nW firmie pojawia siÄ™ wiele wzmiankowanych technologii, takich jak AI i SAP. Inicjatywy organizacji nie odnotowaÅ‚y jeszcze zakoÅ„czonych sukcesem projektÃ³w.",
+  "language": "pl",
+  "used_sources": 1,
+  "sources": [
+    {
+      "id": "module_financial_statements_1_cdp2025-pack-33d3c3b64a",
+      "type": "module_data",
+      "title": "Grupa KapitaÅ‚owa CD PROJEKT",
+      "reference": "finance/statements/cdp2025-pack-33d3c3b64a",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci rynku, z rocznym przychodem 120 milionÃ³w euro. W organizacji pracuje 620 osÃ³b. Obecnie prowadzone sÄ… ",
+  "bledyKonsoli": []
 }

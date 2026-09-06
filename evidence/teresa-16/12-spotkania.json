@@ -2,17 +2,18 @@
   "module": "Spotkania",
   "route": "/meetings",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/meetings",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
+  "answer": "Brak danych w module Spotkania.",
+  "language": "pl",
   "used_sources": 0,
   "sources": [],
-  "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "degraded": {
+    "mode": "no_sources",
+    "reason": "no_citations_collected"
+  },
+  "first200": "Brak danych w module Spotkania.",
+  "bledyKonsoli": []
 }

@@ -2,17 +2,51 @@
   "module": "Materiały",
   "route": "/presentations",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/presentations",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "WidzÄ™, Å¼e mamy do czynienia z organizacjÄ… Novatek Manufacturing Sp. z o.o., dziaÅ‚ajÄ…cÄ… w branÅ¼y produkcyjnej. Firma zatrudnia 620 pracownikÃ³w i generuje przychÃ³d w wysokoÅ›ci 120 milionÃ³w euro. Obecnie prowadzone sÄ… dwie aktywne inicjatywy zwiÄ…zane z robotyzacjÄ… i automatyzacjÄ… procesÃ³w produkcyjnych. UÅ¼ytkownik ma kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatÃ³w i przeglÄ…d wydajnoÅ›ci. IstniejÄ… rÃ³wnieÅ¼ pewne blokery dotyczÄ…ce zadaÅ„, ktÃ³re wymagajÄ… rozwiÄ…zania. UÅ¼ytkownik ma takÅ¼e trzy oczekujÄ…ce decyzje do podjÄ™cia w ramach projektu DBR77. Poziom obciÄ…Å¼enia uÅ¼ytkownika jest oznaczony jako wysoki. W kontekÅ›cie finansowym, nie ma aktywnych portfeli inicjatyw, a wskaÅºnik sukcesu projektÃ³w w organizacji wynosi 0%.",
+  "language": "pl",
+  "used_sources": 5,
+  "sources": [
+    {
+      "id": "module_presentations_1_62cc49a56d7f4af895ed43d9b4caf428",
+      "type": "module_data",
+      "title": "Nowa prezentacja",
+      "reference": "presentations/62cc49a56d7f4af895ed43d9b4caf428",
+      "link": null
+    },
+    {
+      "id": "module_presentations_2_9b78cde244ea44ce867adf4e7fb04416",
+      "type": "module_data",
+      "title": "Nowa prezentacja",
+      "reference": "presentations/9b78cde244ea44ce867adf4e7fb04416",
+      "link": null
+    },
+    {
+      "id": "module_presentations_3_05189ab2766442c9b2c9116352a8fb5a",
+      "type": "module_data",
+      "title": "Nowa prezentacja",
+      "reference": "presentations/05189ab2766442c9b2c9116352a8fb5a",
+      "link": null
+    },
+    {
+      "id": "module_presentations_4_553442e78e0647c8bdd15afd2006c129",
+      "type": "module_data",
+      "title": "Nowa prezentacja",
+      "reference": "presentations/553442e78e0647c8bdd15afd2006c129",
+      "link": null
+    },
+    {
+      "id": "module_presentations_5_b8fbaa1c05d44964aae35a85ecea53a2",
+      "type": "module_data",
+      "title": "Nowa prezentacja",
+      "reference": "presentations/b8fbaa1c05d44964aae35a85ecea53a2",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "WidzÄ™, Å¼e mamy do czynienia z organizacjÄ… Novatek Manufacturing Sp. z o.o., dziaÅ‚ajÄ…cÄ… w branÅ¼y produkcyjnej. Firma zatrudnia 620 pracownikÃ³w i generuje przychÃ³d w wysokoÅ›ci 120 milionÃ³w eu",
+  "bledyKonsoli": []
 }

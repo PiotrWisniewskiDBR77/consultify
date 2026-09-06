@@ -2,17 +2,100 @@
   "module": "Inicjatywy",
   "route": "/initiatives",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/initiatives",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "Jestem Teresa, partnerem konsultingowym w Consultify, i widzÄ™ nastÄ™pujÄ…ce informacje:\n\n1. **Organizacja**: Novatek Manufacturing Sp. z o.o., dziaÅ‚a w branÅ¼y produkcyjnej z przychodem â‚¬120M i zatrudnia 620 pracownikÃ³w.\n\n2. **Projekty i Inicjatywy**: \n   - Aktywne projekty: 2\n   - Inicjatywy w realizacji: m.in. \"Robotyzacja gniazda spawalniczego\", \"System wizyjny kontroli jakoÅ›ci\", \"Automatyzacja magazynu WIP\".\n   - Inicjatywy zablokowane: m.in. \"Talent Upskilling Program\", \"ERP SAP Integration\", \"Process Automation â€” RPA\".\n\n3. **Zadania uÅ¼ytkownika**: \n   - W trakcie przeglÄ…du i realizacji zadaÅ„ zwiÄ…zanych z projektem DBR77, w tym przygotowanie planu warsztatu i zmapowanie ryzyk wdroÅ¼enia.\n   - ObciÄ…Å¼enie uÅ¼ytkownika jest oznaczone jako wysokie.\n\n4. **Blokery**: Trzy zadania sÄ… zablokowane, ale brak szczegÃ³Å‚owych informacji o przyczynach.\n\n5. **OczekujÄ…ce decyzje**: DotyczÄ… m.in. polityki retencji logÃ³w i rollout do domeny publicznej.\n\n6. **Ocena finansowa**: Brak ukoÅ„czonych inicjatyw w portfelu, co wskazuje na potrzebÄ™ optymalizacji procesu realizacji.\n\n7. **Preferencje uÅ¼ytkownika**: Styl komunikacji formalny, preferuje szczegÃ³Å‚owe i profesjonalne odpowiedzi.\n\nTo sÄ… kluczowe elementy kontekstu, ktÃ³re pozwolÄ… na dalsze planowanie i zarzÄ…dzanie projektami oraz inicjatywami w organizacji. Czy potrzebujesz szczegÃ³Å‚owych informacji na temat ktÃ³rejÅ› z inicjatyw lub zadaÅ„?",
+  "language": "pl",
+  "used_sources": 12,
+  "sources": [
+    {
+      "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+      "type": "module_data",
+      "title": "Inicjatywa: Supply Chain Optimization",
+      "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+      "link": null
+    },
+    {
+      "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "type": "module_data",
+      "title": "Inicjatywa: Digital Workplace Platform",
+      "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "link": null
+    },
+    {
+      "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "type": "module_data",
+      "title": "Inicjatywa: Vendor Consolidation",
+      "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "link": null
+    },
+    {
+      "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "type": "module_data",
+      "title": "Inicjatywa: Talent Upskilling Program",
+      "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "link": null
+    },
+    {
+      "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+      "type": "module_data",
+      "title": "Inicjatywa: Compliance & GDPR Audit",
+      "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+      "link": null
+    },
+    {
+      "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "type": "module_data",
+      "title": "Inicjatywa: AI-Powered Analytics",
+      "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "link": null
+    },
+    {
+      "id": "module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5",
+      "type": "module_data",
+      "title": "Inicjatywa: DevOps Maturity Program",
+      "reference": "initiatives/68f1c0dc-ed77-41a3-afd6-08a0513dfdd5",
+      "link": null
+    },
+    {
+      "id": "module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649",
+      "type": "module_data",
+      "title": "Inicjatywa: Legacy Decommission",
+      "reference": "initiatives/3258858d-8ec5-4bea-bc39-31617a63a649",
+      "link": null
+    },
+    {
+      "id": "module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0",
+      "type": "module_data",
+      "title": "Inicjatywa: ERP SAP Integration",
+      "reference": "initiatives/4d991c47-07cb-4b09-a108-8a61d85718a0",
+      "link": null
+    },
+    {
+      "id": "module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09",
+      "type": "module_data",
+      "title": "Inicjatywa: Customer Portal Redesign",
+      "reference": "initiatives/2e578e14-a13d-4932-a62b-046be51e8f09",
+      "link": null
+    },
+    {
+      "id": "module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a",
+      "type": "module_data",
+      "title": "Inicjatywa: Security Hardening",
+      "reference": "initiatives/ee42d899-1aa7-4a8e-bc13-d98c6119ac1a",
+      "link": null
+    },
+    {
+      "id": "module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747",
+      "type": "module_data",
+      "title": "Inicjatywa: Process Automation â€” RPA",
+      "reference": "initiatives/fdcd78d0-677d-4a6e-96c4-1815e0055747",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "Jestem Teresa, partnerem konsultingowym w Consultify, i widzÄ™ nastÄ™pujÄ…ce informacje: 1. **Organizacja**: Novatek Manufacturing Sp. z o.o., dziaÅ‚a w branÅ¼y produkcyjnej z przychodem â‚¬120M i za",
+  "bledyKonsoli": []
 }

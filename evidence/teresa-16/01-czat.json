@@ -6,7 +6,7 @@
   "stopReason": null,
   "finalRoute": "/chat",
   "unifiedChatPanelDomCount": 1,
-  "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i automatyzacja magazynu WIP. IstniejÄ… takÅ¼e blokery, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania, oraz oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77. Dodatkowo, uÅ¼ytkownik ma zadania do wykonania, w tym przygotowanie planu warsztatu i przeglÄ…d wydajnoÅ›ci. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzegawczym, co sugeruje, Å¼e moÅ¼e byÄ‡ potrzebne zarzÄ…dzanie priorytetami lub wsparcie w realizacji zadaÅ„.",
+  "answer": "Novatek Manufacturing Sp. z o.o. jest firmÄ… z branÅ¼y przemysÅ‚owej, zajmujÄ…cÄ… siÄ™ produkcjÄ… dyskretnÄ…. Firma ma 620 pracownikÃ³w i generuje przychody w wysokoÅ›ci 120 milionÃ³w euro. Obecnie realizowane sÄ… dwie aktywne projekty, a poziom dojrzaÅ‚oÅ›ci PMO jest okreÅ›lony jako podstawowy. UÅ¼ytkownik ma zadania o terminach zbliÅ¼ajÄ…cych siÄ™ do wykonania, w tym przygotowanie planu warsztatu i zadbanie o backup i rollback plan. WÅ›rÃ³d inicjatyw uÅ¼ytkownika sÄ… m.in. projekty zwiÄ…zane z robotyzacjÄ…, systemem wizyjnym i automatyzacjÄ… magazynu, wszystkie w fazie realizacji. Obecnie istniejÄ… trzy blokery bez okreÅ›lonego powodu oraz oczekujÄ…ce decyzje dotyczÄ…ce rolloutÃ³w i polityki retencji danych. UÅ¼ytkownik doÅ›wiadcza rÃ³wnieÅ¼ przeciÄ…Å¼enia. Inicjatywy organizacji, takie jak optymalizacja Å‚aÅ„cucha dostaw i platforma cyfrowa, sÄ… realizowane, podczas gdy program podnoszenia kwalifikacji jest zablokowany.",
   "language": "pl",
   "used_sources": 6,
   "sources": [
@@ -54,6 +54,6 @@
     }
   ],
   "degraded": [],
-  "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i",
+  "first200": "Novatek Manufacturing Sp. z o.o. jest firmÄ… z branÅ¼y przemysÅ‚owej, zajmujÄ…cÄ… siÄ™ produkcjÄ… dyskretnÄ…. Firma ma 620 pracownikÃ³w i generuje przychody w wysokoÅ›ci 120 milionÃ³w euro. Obecnie re",
   "bledyKonsoli": []
 }

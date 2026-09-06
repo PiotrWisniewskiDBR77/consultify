@@ -2,17 +2,184 @@
   "module": "Realizacja",
   "route": "/execution",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/execution?tab=list&view=table",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "Oto podsumowanie dostÄ™pnych informacji:\n\n1. **Organizacja:** Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y manufacturing (discrete), zatrudnia 620 pracownikÃ³w i generuje przychody na poziomie â‚¬120M. Aktualnie realizowane sÄ… dwa projekty, a poziom dojrzaÅ‚oÅ›ci PMO jest podstawowy.\n\n2. **Zadania uÅ¼ytkownika (5):** \n   - ZweryfikowaÄ‡ eksport raportÃ³w publicznych [termin: 2.09.2026]\n   - PrzygotowaÄ‡ plan warsztatu z interesariuszami [termin: 3.09.2026]\n   - ZadbaÄ‡ o backup i rollback plan [termin: 3.09.2026]\n   - PrzeglÄ…d wydajnoÅ›ci: indeksy i cache [termin: 4.09.2026]\n   - ZmapowaÄ‡ zaleÅ¼noÅ›ci i ryzyka wdroÅ¼enia [termin: 5.09.2026]\n\n3. **Inicjatywy uÅ¼ytkownika (3):** \n   - Robotyzacja gniazda spawalniczego\n   - System wizyjny kontroli jakoÅ›ci\n   - Automatyzacja magazynu WIP\n\n4. **Blokery:** UÅ¼ytkownik doÅ›wiadcza trzech blokad bez podanego powodu.\n\n5. **OczekujÄ…ce decyzje (3):**\n   - Rollout do domeny publicznej\n   - Polityka retencji logÃ³w i danych\n   - Czy wÅ‚Ä…czamy signals feed w beta?\n\n6. **ObciÄ…Å¼enie:** UÅ¼ytkownik jest w stanie ostrzeÅ¼enia z powodu obciÄ…Å¼enia pracÄ….\n\n7. **Aktualne inicjatywy organizacji (6 najÅ›wieÅ¼szych):**\n   - Supply Chain Optimization [EXECUTING]\n   - Digital Workplace Platform [EXECUTING]\n   - Vendor Consolidation [EXECUTING]\n   - Talent Upskilling Program [BLOCKED]\n   - Compliance & GDPR Audit [EXECUTING]\n   - AI-Powered Analytics [SCHEDULED]\n\n8. **OczekujÄ…ce decyzje organizacji (6):** Wszystkie sÄ… w statusie oczekujÄ…cym.\n\nDane te pokazujÄ…, Å¼e uÅ¼ytkownik ma doÅ›Ä‡ intensywny harmonogram z wieloma zadaniami o rÃ³Å¼nym priorytecie oraz kilka blokad, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania. Inicjatywy organizacji sÄ… rÃ³Å¼norodne, ale nie wszystkie postÄ™pujÄ… zgodnie z planem.",
+  "language": "pl",
+  "used_sources": 24,
+  "sources": [
+    {
+      "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+      "type": "module_data",
+      "title": "Inicjatywa: Supply Chain Optimization",
+      "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+      "link": null
+    },
+    {
+      "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "type": "module_data",
+      "title": "Inicjatywa: Digital Workplace Platform",
+      "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "link": null
+    },
+    {
+      "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "type": "module_data",
+      "title": "Inicjatywa: Vendor Consolidation",
+      "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "link": null
+    },
+    {
+      "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "type": "module_data",
+      "title": "Inicjatywa: Talent Upskilling Program",
+      "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "link": null
+    },
+    {
+      "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+      "type": "module_data",
+      "title": "Inicjatywa: Compliance & GDPR Audit",
+      "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+      "link": null
+    },
+    {
+      "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "type": "module_data",
+      "title": "Inicjatywa: AI-Powered Analytics",
+      "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "link": null
+    },
+    {
+      "id": "module_task_1_seed_task_1788642392883_14_b9730303-41ca",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZweryfikowaÄ‡ eksport raportÃ³w publicznych",
+      "reference": "tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005",
+      "link": null
+    },
+    {
+      "id": "module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzygotowaÄ‡ plan warsztatu z interesariuszami",
+      "reference": "tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2",
+      "link": null
+    },
+    {
+      "id": "module_task_3_seed_task_1788642392883_15_6397cd82-2a7b",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZadbaÄ‡ o backup i rollback plan",
+      "reference": "tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1",
+      "link": null
+    },
+    {
+      "id": "module_task_4_seed_task_1788642392883_16_a4a57d28-8a71",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzeglÄ…d wydajnoÅ›ci: indeksy i cache",
+      "reference": "tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e",
+      "link": null
+    },
+    {
+      "id": "module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZmapowaÄ‡ zaleÅ¼noÅ›ci i ryzyka wdroÅ¼enia",
+      "reference": "tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9",
+      "link": null
+    },
+    {
+      "id": "module_task_6_seed_task_1788642392883_17_c4d7364a-4748",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PorzÄ…dek w notyfikacjach (grupowanie)",
+      "reference": "tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c",
+      "link": null
+    },
+    {
+      "id": "module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZamknÄ…Ä‡ krytyczne bugi przed cutover",
+      "reference": "tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494",
+      "link": null
+    },
+    {
+      "id": "module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstaliÄ‡ SLA dla kluczowych procesÃ³w",
+      "reference": "tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78",
+      "link": null
+    },
+    {
+      "id": "module_task_9_seed_task_1788642392883_19_32bc2c23-bb61",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: Weryfikacja E2E smoke po deploy",
+      "reference": "tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b",
+      "link": null
+    },
+    {
+      "id": "module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstawiÄ‡ monitoring i alerting dla backendu",
+      "reference": "tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053",
+      "link": null
+    },
+    {
+      "id": "module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzeglÄ…d jakoÅ›ci danych po migracji",
+      "reference": "tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a",
+      "link": null
+    },
+    {
+      "id": "module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzygotowaÄ‡ checklistÄ™ go-live",
+      "reference": "tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852",
+      "link": null
+    },
+    {
+      "id": "module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: SkonfigurowaÄ‡ integracje (webhooks)",
+      "reference": "tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e",
+      "link": null
+    },
+    {
+      "id": "module_task_14_seed_task_1788642392883_10_81fb0b43-89c8",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstawiÄ‡ polityki bezpieczeÅ„stwa (CSRF/CORS)",
+      "reference": "tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c",
+      "link": null
+    },
+    {
+      "id": "module_task_15_seed_task_1788642392883_11_601ab222-a8a4",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: Audyt kosztÃ³w i budÅ¼etu AI",
+      "reference": "tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd",
+      "link": null
+    },
+    {
+      "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+      "type": "module_data",
+      "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+      "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+      "link": null
+    },
+    {
+      "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+      "type": "module_data",
+      "title": "Decyzja: SAP go-live date rebaseline approval",
+      "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+      "link": null
+    },
+    {
+      "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+      "type": "module_data",
+      "title": "Decyzja: Supply chain AI vendor shortlist",
+      "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "Oto podsumowanie dostÄ™pnych informacji: 1. **Organizacja:** Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y manufacturing (discrete), zatrudnia 620 pracownikÃ³w i generuje przychody na poziomie â",
+  "bledyKonsoli": []
 }
