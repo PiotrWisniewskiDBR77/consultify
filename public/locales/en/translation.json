@@ -33830,6 +33830,8 @@
       "label": "Refine the note first: add more content or a clearer outline before converting it into a deliverable.",
       "toastError": "Failed to open the requested note",
       "label2": "Start writing… Type / to insert a block",
+      "toggleDefaultLabel": "Toggle",
+      "emptyToggleContent": "No content",
       "toastSuccess": "Linked",
       "label3": "Provide a summary in 1-2 concise sentences (max 120 chars). Respond ONLY with the summary, no commentary.",
       "toastError2": "This page was changed elsewhere. Reload to merge — your edits were not overwritten.",

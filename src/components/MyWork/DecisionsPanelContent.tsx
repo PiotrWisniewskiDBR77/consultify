@@ -375,7 +375,15 @@ const getInitials = (name?: string) => {
 const buildDecisionColumns = (
   t: TFunction,
   isPolish: boolean,
-  viewMode: ViewMode
+  viewMode: ViewMode,
+  // H3 [ODMROZENIE 07_MY_WORK_AGENT] — CTO decision: when the PROJECT/OWNER
+  // column has zero non-empty values across the whole current list, hide it
+  // by default in the column toggler (`defaultVisible: false` — still
+  // reachable there, never removed; a user's own saved column layout still
+  // wins per FilterableTable's `defaultVisible` contract). Computed by the
+  // caller from the actual row data, since this function has no access to
+  // it.
+  projectColumnHasAnyValue: boolean
 ): TableColumn[] => [
   {
     id: 'title',
@@ -391,7 +399,13 @@ const buildDecisionColumns = (
     // column wide enough for full type labels (APPROVAL, STRATEGIC, …).
     id: 'type',
     label: t('myWork.decisionsPanel.columns.type', 'Type'),
-    width: '130px',
+    // H3 [ODMROZENIE 07_MY_WORK_AGENT] — 130px fit the ENGLISH labels this
+    // comment already names ("APPROVAL, STRATEGIC, …") but not their Polish
+    // translations: "Zatwierdzenie" (13 chars) alone already clipped to
+    // "Zatwierdze…" at 1440px, and two-word types ("Zatwierdzenie
+    // inicjatywy", "Zobowiązanie zasobów") are longer still. Widened to fit
+    // the longest real label plus icon + chip padding.
+    width: '210px',
     render: (row: TableRow) => {
       const d = row as unknown as Decision;
       const typeText = decisionTypeLabel(
@@ -466,6 +480,7 @@ const buildDecisionColumns = (
         ? t('myWork.decisionsPanel.owner', 'Owner')
         : t('myWork.decisionsPanel.project', 'Project'),
     width: '160px',
+    defaultVisible: projectColumnHasAnyValue,
     render: (row: TableRow) => {
       const d = row as unknown as Decision;
       if (viewMode === 'awaiting') {
@@ -1465,9 +1480,23 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     [displayedDecisions]
   );
 
+  // H3 [ODMROZENIE 07_MY_WORK_AGENT] — "w całej liście" per the CTO decision
+  // means the current list the user is looking at (this tab/view), not a
+  // one-time snapshot: recomputed whenever the underlying rows change, so a
+  // newly-created decision with a project brings the column back
+  // automatically. `awaiting` view shows Owner (ownerName) in this same
+  // column id, not Project — check whichever field is actually displayed.
+  const projectColumnHasAnyValue = useMemo(
+    () =>
+      filteredDecisions.some((d) =>
+        viewMode === 'awaiting' ? Boolean(d.ownerName) : Boolean(d.projectName)
+      ),
+    [filteredDecisions, viewMode]
+  );
+
   const decisionColumns = useMemo(
-    () => buildDecisionColumns(t, !!isPolish, viewMode),
-    [t, isPolish, viewMode]
+    () => buildDecisionColumns(t, !!isPolish, viewMode, projectColumnHasAnyValue),
+    [t, isPolish, viewMode, projectColumnHasAnyValue]
   );
 
   const orderedDecisionIds = useMemo(
