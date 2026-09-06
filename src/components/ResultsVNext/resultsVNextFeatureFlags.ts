@@ -54,44 +54,14 @@ const FLAGS = {
     env: 'VITE_RESULTS_VNEXT_SEARCH_ENABLED',
   },
   /**
-   * E.1 (day46-finish) — the ONE new flag this package is licensed to add
-   * (see the duty instruction's Z10). Gates a single navigational entry
-   * point FROM the Results module TO the existing Management Reports
-   * screen (`ROUTES.REPORTS.MANAGEMENT`). Does NOT touch
-   * `src/components/Reports/Management/**`,
-   * `ManagementReportRepository.ts` or `managementReportsService.ts` —
-   * those stay untouched (out of this duty's scope); this flag only
-   * decides whether Results renders a link to that pre-existing screen.
-   * Default OFF everywhere, same conservative shape as `resultsSearch`
-   * above — no D-D default-on set (no dev-render odbiór yet).
+   * DEC-422 (06.09) — both `managementReportEntry` ("Raport zarządczy" link
+   * to `ROUTES.REPORTS.MANAGEMENT`) and `attentionEntry` ("Uwaga" link to
+   * the now-deleted `/results/attention` view) were REMOVED from the flag
+   * table, not just turned off — the owner asked for the buttons gone
+   * entirely (see `ResultsVNextRegistryShell.tsx` for the removal note).
+   * `ROUTES.REPORTS.MANAGEMENT` itself and its screen are untouched; only
+   * this one entry point from Results is gone.
    */
-  managementReportEntry: {
-    query: 'ff_resultsVNextManagementReportEntry',
-    localStorage: 'ff.results_vnext_management_report_entry',
-    env: 'VITE_RESULTS_VNEXT_MANAGEMENT_REPORT_ENTRY_ENABLED',
-  },
-  /**
-   * 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §3) — wejście do ekranu
-   * „Uwaga" (`ROUTES.RESULTS_ATTENTION`). POWÓD: ta trasa była SIEROTĄ —
-   * zmierzone grepem po `RESULTS_ATTENTION` i po literalnym
-   * `/results/attention`: poza definicją trasy (`routeConfig.ts:192`),
-   * jej montażem (`AppRoutes.tsx:3188`) i harnessem dev-render NIE BYŁO
-   * ANI JEDNEGO odwołania w całej aplikacji. Trafiało się tam wyłącznie
-   * ręcznym wpisaniem adresu, mimo że za ekranem stoją trzy prawdziwe
-   * punkty serwera i trzynaście wypełnionych kubełków. Menu 2 Wyników
-   * (`resultsDomainNavigation.ts`) to przełącznik DOMENY (KPI/OKR/ROI) i
-   * „Uwaga" nie jest czwartą domeną (D10) — dlatego wejście jest linkiem
-   * w powłoce rejestrów, dokładnie tym samym kształtem co
-   * `managementReportEntry` powyżej (jedna zmiana, wszystkie cztery
-   * powierzchnie Wyników dostają to samo wejście).
-   * Default OFF (kanon #7 — najpierw zrzut z dev-render i odbiór Piotra,
-   * dopiero potem domyślne włączenie).
-   */
-  attentionEntry: {
-    query: 'ff_resultsVNextAttentionEntry',
-    localStorage: 'ff.results_vnext_attention_entry',
-    env: 'VITE_RESULTS_VNEXT_ATTENTION_ENTRY_ENABLED',
-  },
   /**
    * 2026-09-02 (wołacze duty) — gates a new "Archiwum"/"Archive" Menu 2 tab
    * that wires the already-built, already read-only-verified
@@ -182,16 +152,16 @@ function writeLocalStorage(key: string, value: boolean): void {
  * (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A1;
  * "14 ekranów Wyników — KPI, OKR, ROI, wyszukiwarka, uwaga" — zatwierdzone
  * 02.09, potwierdzone 03.09 wieczór): kpiRegistry/roiRegistry/okrRegistry/
- * resultsSearch/attentionEntry są teraz WSZYSTKIE w D-D default-on — ta sama
- * konwencja co `threePairs`/`deviationDiagnostics` w `resultsFeatureFlags.ts`:
- * ON na demo/stage/dev, OFF na publicznej produkcji (`resultsVNextHostAllowsDefaultOn`
+ * resultsSearch są teraz WSZYSTKIE w D-D default-on — ta sama konwencja co
+ * `threePairs`/`deviationDiagnostics` w `resultsFeatureFlags.ts`: ON na
+ * demo/stage/dev, OFF na publicznej produkcji (`resultsVNextHostAllowsDefaultOn`
  * / `isPublicProductionHost`). Uwaga: moduł Wyników i tak nie jest w rdzeniu
  * VTS pilota na consultify.ai (`publicProduction.ts` PUBLIC_PRODUCTION_CORE_MENU_IDS
  * — Wyniki tam nie występują, więc menu jest zablokowane niezależnie od tej flagi).
- * `managementReportEntry` i `resultsLegacyArchive` NIE są objęte tą decyzją —
- * nie były wymienione w wierszu A1 (5 nazwanych domen, nie "wszystkie flagi
- * pliku") i `resultsLegacyArchive` ma jawny, osobny wyjątek (linie niżej —
- * czeka na odrębny odbiór właściciela na zrzutach). Zostają default OFF.
+ * (Piąta nazwana domena, „uwaga"/`attentionEntry`, została usunięta w całości
+ * DEC-422 06.09 — patrz `ResultsVNextRegistryShell.tsx`.) `resultsLegacyArchive`
+ * NIE jest objęty tą decyzją — ma jawny, osobny wyjątek (linie niżej — czeka
+ * na odrębny odbiór właściciela na zrzutach). Zostaje default OFF.
  */
 export function isResultsVNextFlagEnabled(
   flag: ResultsVNextFlag,
@@ -221,25 +191,23 @@ export function isResultsVNextFlagEnabled(
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // DEC 03.09 wieczór (A1): kpiRegistry/roiRegistry/okrRegistry/resultsSearch/
-  // attentionEntry — wszystkie pięć nazwanych domen "14 ekranów Wyników" —
-  // dołączone do D-D default-on (demo/stage/dev ON, public production OFF).
-  // Opt-out per flaga: ?ff_resultsVNext<Flag>=0.
+  // DEC 03.09 wieczór (A1): kpiRegistry/roiRegistry/okrRegistry/resultsSearch
+  // — cztery z pięciu nazwanych domen "14 ekranów Wyników" (piąta, "uwaga",
+  // usunięta DEC-422 06.09) — dołączone do D-D default-on (demo/stage/dev ON,
+  // public production OFF). Opt-out per flaga: ?ff_resultsVNext<Flag>=0.
   if (
     flag === 'kpiRegistry' ||
     flag === 'roiRegistry' ||
     flag === 'okrRegistry' ||
-    flag === 'resultsSearch' ||
-    flag === 'attentionEntry'
+    flag === 'resultsSearch'
   ) {
     return resultsVNextHostAllowsDefaultOn(
       typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
     );
   }
   // Poza zakresem DEC 03.09 wieczór A1 — nie były nazwane w decyzji, zostają
-  // OFF. managementReportEntry: brak jeszcze dev-render odbioru. resultsLegacyArchive:
-  // jawnie wyjęty spod profilu demo wyżej, czeka na odrębny odbiór.
-  if (flag === 'managementReportEntry') return false;
+  // OFF. resultsLegacyArchive: jawnie wyjęty spod profilu demo wyżej, czeka
+  // na odrębny odbiór.
   if (flag === 'resultsLegacyArchive') return false;
   return false;
 }
