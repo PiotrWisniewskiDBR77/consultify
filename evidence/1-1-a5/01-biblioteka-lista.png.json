@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3101/audit-programs?tab=library",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=ZRZUT 1.1-A5"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nDane\nModel\n1\n12\nAudyt Nocny\nAN\nBiblioteka\nSesje\nWnioski\nRaporty\nInicjatywy\nWeryfikacja: Wszystkie\n2\nNowy audyt\nZamrożone do fali 2: wgrywanie założeń audytu i generator pytań.\nWszystkie\n2\nZweryfikowane\n0\nW przeglądzie\n0\nTYTUŁ\n\t\nŹRÓDŁO\n\t\nWERSJA\n\t\nTYP ŹRÓDŁA\n\t\nWERYFIKACJA\n\t\nSTATUS PUBLIKACJI\n\t\nKRYTERIA\n\t\nZAKTUALIZOWANO\n\t\n\n\nZRZUT 1.1-A5 — pakiet testowy (do usunięcia)\n\t\n—\n\t\nv1\n\t\nProcedura wewnętrzna\n\t\nNiezweryfikowane\n\t\nSzkic\n\t\n\t\n06/09/2026\n\t\n\n\nAudyt procesu — pakiet demonstracyjny Consultify\n\t\n—\n\t\nv1\n\t\nProcedura wewnętrzna\n\t\nNiezweryfikowane\n\t\nOpublikowany\n\t\n\t\n06/09/2026\n\t\nZRZUT 1.1-A5 — pakiet testowy (do usunięcia)\nTyp źródła: Procedura wewnętrzna\nWeryfikacja: Niezweryfikowane\nPublikacja: Szkic\nPodstawa audytu zgodności: Nie\nPakiet nie ma przypisanego źródła — nie może mieć statusu „opublikowany\" do audytu.\nSZCZEGÓŁY\nWłaściwość\tWartość\nCel\t— nie podano —\nZakres\t— nie podano —\nŹródło\t—\nPrawa\tNie zweryfikowano\nWymagane role\t—\nTaksonomia ustaleń\tBrak zdefiniowanej taksonomii\nLiczba kryteriów\tundefined\nPOWIĄZANIA\nBrak powiązań\nRozpocznij audyt",
+ "kiedy": "2026-09-06T17:13:17.618Z"
+}

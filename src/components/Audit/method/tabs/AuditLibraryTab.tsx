@@ -14,7 +14,7 @@
  * zmienia etykiety typu. Ton `success` przysługuje wyłącznie
  * `verificationStatus === 'VERIFIED'` — oś typu źródła go nie zna.
  */
-import { Library as LibraryIcon, PlayCircle } from 'lucide-react';
+import { CheckCircle2, Library as LibraryIcon, PlayCircle, Send } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -58,6 +58,19 @@ export interface AuditLibraryTabProps {
   isPolish: boolean;
   onStartAudit: (pack: AuditPackSummary) => void;
   startingPackId: string | null;
+  /**
+   * 1.1-A5 (DEC-428): `POST /packs/:id/approve-expert` i `POST /packs/:id/publish`
+   * są bramkowane na backendzie `isPlatformAdmin(actor)` (`packs.routes.ts` —
+   * pakiety nie mają programu audytowego, po którym dałoby się sprawdzić
+   * rolę audytową audytu, więc bramka jest platformowa, nie per-program).
+   * Hub liczy to z `currentUser.role` (`isAdminOwnerOrSuperAdminRole`) i
+   * przekazuje w dół — komponent zostaje czysto prezentacyjny.
+   */
+  canManagePackLibrary: boolean;
+  onApprovePackExpert: (pack: AuditPackSummary) => void;
+  onPublishPack: (pack: AuditPackSummary) => void;
+  /** `${packId}:approve-expert` albo `${packId}:publish` w trakcie wywołania — wyłącza przycisk, żeby nie zdublować kliku. */
+  pendingPackActionKey: string | null;
 }
 
 /**
@@ -90,6 +103,76 @@ export function evaluateStartGate(
   return { allowed: true };
 }
 
+const ADMIN_REQUIRED_REASON = {
+  pl: 'Wymaga uprawnień administratora organizacji — pakiety biblioteki zarządza platforma, nie rola audytowa w programie.',
+  en: 'Requires organization admin permissions — the pack library is managed by the platform, not a per-program audit role.',
+};
+
+/**
+ * Bramka „Zatwierdź (ekspert)" (`POST /packs/:id/approve-expert`,
+ * `packService.approveByExpert`). Realne stany backendu, w tej kolejności:
+ * uprawnienie platformowe → pakiet już poza etapem przedpublikacyjnym →
+ * już zatwierdzony (nie dubluj klik).
+ */
+export function evaluateApproveExpertGate(
+  row: AuditPackSummary,
+  isPolish: boolean,
+  canManagePackLibrary: boolean
+): { allowed: boolean; reason?: string } {
+  if (!canManagePackLibrary) {
+    return { allowed: false, reason: isPolish ? ADMIN_REQUIRED_REASON.pl : ADMIN_REQUIRED_REASON.en };
+  }
+  if (row.publicationStatus === 'published' || row.publicationStatus === 'deprecated') {
+    return {
+      allowed: false,
+      reason: isPolish
+        ? `Zatwierdzenie eksperckie dotyczy pakietu przed publikacją (obecny status: ${packPublicationLabel(row.publicationStatus, true)}).`
+        : `Expert approval applies before publication (current status: ${packPublicationLabel(row.publicationStatus, false)}).`,
+    };
+  }
+  if (row.expertApprovedBy) {
+    return {
+      allowed: false,
+      reason: isPolish ? 'Pakiet jest już zatwierdzony przez eksperta.' : 'Pack is already expert-approved.',
+    };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Bramka „Publikuj" (`POST /packs/:id/publish`, `packService.publishPack`).
+ * `packValidator.assertPublishable` wymaga zatwierdzenia eksperckiego —
+ * bez niego backend odpowiada 422 `AUDIT_PACK_NOT_PUBLISHABLE` — więc UI
+ * pokazuje TEN SAM warunek disabled+powód zamiast dawać kliknąć w ślepy zaułek.
+ */
+export function evaluatePublishPackGate(
+  row: AuditPackSummary,
+  isPolish: boolean,
+  canManagePackLibrary: boolean
+): { allowed: boolean; reason?: string } {
+  if (!canManagePackLibrary) {
+    return { allowed: false, reason: isPolish ? ADMIN_REQUIRED_REASON.pl : ADMIN_REQUIRED_REASON.en };
+  }
+  if (row.publicationStatus === 'published') {
+    return { allowed: false, reason: isPolish ? 'Pakiet jest już opublikowany.' : 'Pack is already published.' };
+  }
+  if (row.publicationStatus === 'deprecated') {
+    return {
+      allowed: false,
+      reason: isPolish ? 'Nie można opublikować wycofanego pakietu.' : 'A deprecated pack cannot be published.',
+    };
+  }
+  if (!row.expertApprovedBy) {
+    return {
+      allowed: false,
+      reason: isPolish
+        ? 'Wymaga wcześniejszego zatwierdzenia eksperckiego („Zatwierdź (ekspert)").'
+        : 'Requires expert approval first ("Approve (expert)").',
+    };
+  }
+  return { allowed: true };
+}
+
 export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   packs,
   loading,
@@ -98,6 +181,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   isPolish,
   onStartAudit,
   startingPackId,
+  canManagePackLibrary,
+  onApprovePackExpert,
+  onPublishPack,
+  pendingPackActionKey,
 }) => {
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
@@ -241,6 +328,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   const rowMenu = (rawRow: TableRow): StandardRowMenu => {
     const row = rawRow as unknown as AuditPackSummary;
     const gate = evaluateStartGate(row, isPolish);
+    const approveGate = evaluateApproveExpertGate(row, isPolish, canManagePackLibrary);
+    const publishGate = evaluatePublishPackGate(row, isPolish, canManagePackLibrary);
+    const approveKey = `${row.id}:approve-expert`;
+    const publishKey = `${row.id}:publish`;
     return {
       primary: [
         {
@@ -250,6 +341,29 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
           onClick: gate.allowed ? () => onStartAudit(row) : undefined,
           disabled: !gate.allowed || startingPackId === row.id,
           note: gate.reason,
+        },
+      ],
+      // 1.1-A5 (DEC-428): przejścia stanu pakietu przed publikacją. Wzór
+      // identyczny jak `AuditReportsTab.rowMenu` (approve/publish raportu) —
+      // POZA zakresem gate'u pokazujemy disabled z prawdziwym powodem, NIGDY
+      // nie ukrywamy: kto nie jest administratorem organizacji, widzi TĘ SAMĄ
+      // parę przycisków, wyłączoną, z uczciwym wyjaśnieniem dlaczego.
+      statusTransitions: [
+        {
+          id: 'approve-expert',
+          label: isPolish ? 'Zatwierdź (ekspert)' : 'Approve (expert)',
+          icon: CheckCircle2,
+          onClick: approveGate.allowed ? () => onApprovePackExpert(row) : undefined,
+          disabled: !approveGate.allowed || pendingPackActionKey === approveKey,
+          note: approveGate.reason,
+        },
+        {
+          id: 'publish',
+          label: isPolish ? 'Publikuj' : 'Publish',
+          icon: Send,
+          onClick: publishGate.allowed ? () => onPublishPack(row) : undefined,
+          disabled: !publishGate.allowed || pendingPackActionKey === publishKey,
+          note: publishGate.reason,
         },
       ],
       universalHandlers: {

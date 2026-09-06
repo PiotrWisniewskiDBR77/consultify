@@ -9,9 +9,18 @@
  * `sourceType` (CZYM jest źródło) i `verificationStatus` (CZY sprawdzono)
  * nigdy się nie mieszają w renderowanym UI — patrz komentarze przy każdym
  * teście dla dokładnego wymogu z briefu.
+ *
+ * 1.1-A5: dopisano `MemoryRouter` wokół każdego renderu (POMIAR — cały plik
+ * był czerwony PRZED tą zmianą: `AuditLibraryTab` osadza `JedenPrawyPanel`,
+ * który woła `useJedenPanel()`/`useLocation()` bezwarunkowo, patrz identyczny
+ * ZNALEZISKO/naprawa w `AuditProcessesTab.finalizeOutput.test.tsx` —
+ * "useLocation() may be used only in the context of a <Router>"). Dług
+ * zastany niezwiązany z A5, naprawiony przy okazji bo blokował weryfikację
+ * nowych testów w TYM SAMYM pliku.
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -34,7 +43,11 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
-import { AuditLibraryTab } from '../tabs/AuditLibraryTab';
+import {
+  AuditLibraryTab,
+  evaluateApproveExpertGate,
+  evaluatePublishPackGate,
+} from '../tabs/AuditLibraryTab';
 import {
   AUDIT_VERIFICATION_STATES,
   getPack,
@@ -61,6 +74,7 @@ function makePack(overrides: Partial<AuditPackSummary> = {}): AuditPackSummary {
     requiredRoles: [],
     criteriaCount: 1,
     updatedAt: '2026-08-01',
+    expertApprovedBy: null,
     ...overrides,
   };
 }
@@ -124,19 +138,43 @@ const packDetailFixture = (pack: AuditPackSummary): AuditPackDetail => ({
 function renderTab(overrides: Partial<React.ComponentProps<typeof AuditLibraryTab>> = {}) {
   const onRetry = vi.fn();
   const onStartAudit = vi.fn();
+  const onApprovePackExpert = vi.fn();
+  const onPublishPack = vi.fn();
   const utils = render(
-    <AuditLibraryTab
-      packs={[verifiedInternalProcedure, demoPack, legacyPack]}
-      loading={false}
-      error={null}
-      onRetry={onRetry}
-      isPolish={false}
-      onStartAudit={onStartAudit}
-      startingPackId={null}
-      {...overrides}
-    />
+    <MemoryRouter>
+      <AuditLibraryTab
+        packs={[verifiedInternalProcedure, demoPack, legacyPack]}
+        loading={false}
+        error={null}
+        onRetry={onRetry}
+        isPolish={false}
+        onStartAudit={onStartAudit}
+        startingPackId={null}
+        canManagePackLibrary
+        onApprovePackExpert={onApprovePackExpert}
+        onPublishPack={onPublishPack}
+        pendingPackActionKey={null}
+        {...overrides}
+      />
+    </MemoryRouter>
   );
-  return { ...utils, onRetry, onStartAudit };
+  return { ...utils, onRetry, onStartAudit, onApprovePackExpert, onPublishPack };
+}
+
+/** Otwiera kebab jedynego wiersza wyrenderowanej tabeli (jeden `packs`). */
+function openRowKebab() {
+  fireEvent.click(screen.getByLabelText('Row actions'));
+}
+
+function menuItemButtons(): HTMLButtonElement[] {
+  const menu = document.querySelector('[role="menu"]') as HTMLElement;
+  return [...menu.querySelectorAll('button[role="menuitem"]')] as HTMLButtonElement[];
+}
+
+function menuItemByLabel(label: string): HTMLButtonElement {
+  const found = menuItemButtons().find((b) => b.textContent?.trim().startsWith(label));
+  if (!found) throw new Error(`kebab item "${label}" not found`);
+  return found;
 }
 
 describe('AuditLibraryTab', () => {
@@ -194,15 +232,21 @@ describe('AuditLibraryTab', () => {
         verificationStatus,
       });
       const { unmount } = render(
-        <AuditLibraryTab
-          packs={[pack]}
-          loading={false}
-          error={null}
-          onRetry={vi.fn()}
-          isPolish={false}
-          onStartAudit={vi.fn()}
-          startingPackId={null}
-        />
+        <MemoryRouter>
+          <AuditLibraryTab
+            packs={[pack]}
+            loading={false}
+            error={null}
+            onRetry={vi.fn()}
+            isPolish={false}
+            onStartAudit={vi.fn()}
+            startingPackId={null}
+            canManagePackLibrary
+            onApprovePackExpert={vi.fn()}
+            onPublishPack={vi.fn()}
+            pendingPackActionKey={null}
+          />
+        </MemoryRouter>
       );
       expect(screen.getByText('Regulation')).toBeInTheDocument();
       unmount();
@@ -295,5 +339,89 @@ describe('AuditLibraryTab', () => {
       screen.getByText('Audyt gotowości do robotyzacji — linia spawalnicza')
     ).toBeInTheDocument();
     expect(screen.queryByText('dbr77-robotyzacja-linia-spawalnicza')).not.toBeInTheDocument();
+  });
+
+  // 1.1-A5 (DEC-428): pakiet audytowy wymaga `approve-expert` + `publish`
+  // zanim `createProgramFromPack` przepuści go do audytu (409
+  // `AUDIT_INVALID_STATE` — `programService.ts:388`); Biblioteka nie miała
+  // dotąd ŻADNEGO przycisku do tych dwóch tras (`packs.routes.ts:192/210`).
+  describe('1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie', () => {
+    it('kebab pakietu w statusie szkicu pokazuje OBIE pozycje, włączone, gdy actor może zarządzać biblioteką', () => {
+      renderTab({ packs: [makePack({ id: 'draft-1', publicationStatus: 'draft', expertApprovedBy: null })] });
+      openRowKebab();
+      const approve = menuItemByLabel('Approve (expert)');
+      const publish = menuItemByLabel('Publish');
+      expect(approve).not.toBeDisabled();
+      // Publish requires expert approval FIRST — even for an admin, a
+      // not-yet-approved draft must stay disabled with a genuine reason.
+      expect(publish).toBeDisabled();
+    });
+
+    it('klik „Zatwierdź (ekspert)" woła onApprovePackExpert z tym pakietem', () => {
+      const pack = makePack({ id: 'draft-2', publicationStatus: 'draft', expertApprovedBy: null });
+      const { onApprovePackExpert } = renderTab({ packs: [pack] });
+      openRowKebab();
+      fireEvent.click(menuItemByLabel('Approve (expert)'));
+      expect(onApprovePackExpert).toHaveBeenCalledWith(pack);
+    });
+
+    it('po zatwierdzeniu eksperckim „Publikuj" jest włączony i woła onPublishPack', () => {
+      const pack = makePack({ id: 'draft-3', publicationStatus: 'draft', expertApprovedBy: 'expert-1' });
+      const { onPublishPack } = renderTab({ packs: [pack] });
+      openRowKebab();
+      const approve = menuItemByLabel('Approve (expert)');
+      const publish = menuItemByLabel('Publish');
+      // Już zatwierdzony — "Zatwierdź" nie dubluje kliku.
+      expect(approve).toBeDisabled();
+      expect(publish).not.toBeDisabled();
+      fireEvent.click(publish);
+      expect(onPublishPack).toHaveBeenCalledWith(pack);
+    });
+
+    it('bez uprawnień administratora organizacji OBIE pozycje są widoczne, ale wyłączone z uczciwym powodem — nigdy ukryte', () => {
+      renderTab({
+        packs: [makePack({ id: 'draft-4', publicationStatus: 'draft', expertApprovedBy: 'expert-1' })],
+        canManagePackLibrary: false,
+      });
+      openRowKebab();
+      const approve = menuItemByLabel('Approve (expert)');
+      const publish = menuItemByLabel('Publish');
+      expect(approve).toBeDisabled();
+      expect(publish).toBeDisabled();
+      // Both items carry the SAME honest reason (one per menu item).
+      expect(screen.getAllByText(/organization admin permissions/i).length).toBe(2);
+    });
+
+    it('dla pakietu już opublikowanego obie pozycje kebaba są wyłączone', () => {
+      renderTab({
+        packs: [makePack({ id: 'published-1', publicationStatus: 'published', expertApprovedBy: 'expert-1' })],
+      });
+      openRowKebab();
+      expect(menuItemByLabel('Approve (expert)')).toBeDisabled();
+      expect(menuItemByLabel('Publish')).toBeDisabled();
+    });
+
+    it('evaluateApproveExpertGate: odmawia bez uprawnień, potem bez statusu przedpublikacyjnego, potem gdy już zatwierdzony, przepuszcza w przeciwnym razie', () => {
+      const draft = makePack({ publicationStatus: 'draft', expertApprovedBy: null });
+      expect(evaluateApproveExpertGate(draft, false, false).allowed).toBe(false);
+      expect(evaluateApproveExpertGate({ ...draft, publicationStatus: 'published' }, false, true).allowed).toBe(
+        false
+      );
+      expect(evaluateApproveExpertGate({ ...draft, expertApprovedBy: 'x' }, false, true).allowed).toBe(false);
+      expect(evaluateApproveExpertGate(draft, false, true).allowed).toBe(true);
+    });
+
+    it('evaluatePublishPackGate: odmawia bez uprawnień, gdy już opublikowany/wycofany, i gdy brak zatwierdzenia eksperckiego', () => {
+      const approvedDraft = makePack({ publicationStatus: 'draft', expertApprovedBy: 'expert-1' });
+      expect(evaluatePublishPackGate(approvedDraft, false, false).allowed).toBe(false);
+      expect(evaluatePublishPackGate({ ...approvedDraft, publicationStatus: 'published' }, false, true).allowed).toBe(
+        false
+      );
+      expect(evaluatePublishPackGate({ ...approvedDraft, publicationStatus: 'deprecated' }, false, true).allowed).toBe(
+        false
+      );
+      expect(evaluatePublishPackGate({ ...approvedDraft, expertApprovedBy: null }, false, true).allowed).toBe(false);
+      expect(evaluatePublishPackGate(approvedDraft, false, true).allowed).toBe(true);
+    });
   });
 });
