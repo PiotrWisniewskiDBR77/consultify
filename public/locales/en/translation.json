@@ -18800,7 +18800,17 @@
       "approve": "Approve",
       "execute": "Execute",
       "undo": "Undo change",
-      "navigate": "Open target"
+      "navigate": "Open target",
+      "heading": "Teresa proposal",
+      "state": {
+        "proposal": "Awaiting approval",
+        "pending_approval": "Awaiting approval",
+        "approved": "Approved",
+        "executing": "Executing",
+        "completed": "Completed",
+        "undone": "Undone",
+        "rejected": "Rejected"
+      }
     },
     "attachments": {
       "allFailed": "❌ Could not process the attached source(s): {{names}}. The AI will respond without them. Please re-upload in a supported format (PDF, TXT, MD, CSV, JSON) or check that the link is publicly accessible.",
@@ -18893,7 +18903,20 @@
     "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "No excerpt available.",
     "citationFragmentOpenLabel": "Fragment {{index}}",
-    "citationOpenSource": "Open source"
+    "citationOpenSource": "Open source",
+    "documentProposal": {
+      "heading": "Teresa proposal",
+      "target": "Document next to you: {{title}}",
+      "insert": "Insert into document",
+      "replace": "Replace section",
+      "reject": "Reject",
+      "appliedNote": "The content is in the document next to you.",
+      "state": {
+        "pending": "Awaiting approval",
+        "applied": "Inserted into the document",
+        "rejected": "Rejected"
+      }
+    }
   },
   "agentAudit": {
     "title": "Agent Audit Layer",

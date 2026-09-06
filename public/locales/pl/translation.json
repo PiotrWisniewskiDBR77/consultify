@@ -20142,7 +20142,17 @@
       "approve": "Zatwierdź",
       "execute": "Wykonaj",
       "undo": "Cofnij zmianę",
-      "navigate": "Otwórz cel"
+      "navigate": "Otwórz cel",
+      "heading": "Propozycja Teresy",
+      "state": {
+        "proposal": "Do zatwierdzenia",
+        "pending_approval": "Do zatwierdzenia",
+        "approved": "Zatwierdzone",
+        "executing": "W trakcie",
+        "completed": "Wykonane",
+        "undone": "Cofnięte",
+        "rejected": "Odrzucone"
+      }
     },
     "attachments": {
       "allFailed": "❌ Nie udało się przetworzyć załączonych źródeł: {{names}}. AI odpowie bez nich. Prześlij ponownie w obsługiwanym formacie (PDF, TXT, MD, CSV, JSON) lub sprawdź, czy link jest publicznie dostępny.",
@@ -20235,7 +20245,20 @@
     "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "Brak dostępnego fragmentu.",
     "citationFragmentOpenLabel": "Fragment {{index}}",
-    "citationOpenSource": "Otwórz źródło"
+    "citationOpenSource": "Otwórz źródło",
+    "documentProposal": {
+      "heading": "Propozycja Teresy",
+      "target": "Dokument obok: {{title}}",
+      "insert": "Wstaw do dokumentu",
+      "replace": "Zastąp sekcję",
+      "reject": "Odrzuć",
+      "appliedNote": "Treść jest w dokumencie obok.",
+      "state": {
+        "pending": "Do zatwierdzenia",
+        "applied": "Wstawione do dokumentu",
+        "rejected": "Odrzucone"
+      }
+    }
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",

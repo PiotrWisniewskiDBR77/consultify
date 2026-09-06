@@ -4090,6 +4090,89 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Bridged via a CustomEvent the WorkCanvasDocumentPanel listens for — no
       // direct coupling to the editor instance.
       const canvasStreamMode = activeCanvasDocument ? detectCanvasWriteIntent(text) : null;
+
+      // ── 1.1-A (06.09) — PROPOZYCJA zamiast cichego zapisu ──────────────
+      // `append`/`generate` (czyli „napisz mi to w oknie obok") NIE wjeżdżają
+      // już prosto do edytora. Teresa wytwarza treść, karta w czacie pokazuje
+      // podgląd, a do dokumentu wstawia dopiero kliknięcie „Wstaw do
+      // dokumentu" (ZASADY_AI_TERESA_SSOT §3 „Zakaz auto-apply").
+      // `patch` i `replace` zostają na swoich ścieżkach — one mają WŁASNĄ
+      // bramkę człowieka (znaczniki aiAdded/aiRemoved + Akceptuj/Odrzuć w
+      // CanvasRichEditor), więc nie było tam cichego zapisu do naprawy.
+      if (
+        activeCanvasDocument &&
+        (canvasStreamMode === 'append' || canvasStreamMode === 'generate')
+      ) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        const pendingId = `canvas-doc-proposal-${Date.now()}`;
+        addChatMessage({
+          id: pendingId,
+          role: 'ai',
+          content:
+            uiLang === 'pl'
+              ? 'Przygotowuję propozycję treści do dokumentu obok…'
+              : 'Preparing a content proposal for the document next to you…',
+          timestamp: new Date(),
+        });
+
+        void (async () => {
+          try {
+            const { requestDocumentProposal } = await import('./canvasDocumentProposal');
+            const proposal = await requestDocumentProposal({
+              request: content,
+              documentMarkdown: String(activeCanvasDocument.contentMd || ''),
+              documentTitle: String(activeCanvasDocument.title || ''),
+              selectedText: activeCanvasSelection?.selectedText || undefined,
+              language: effectiveChatLanguage,
+            });
+            if (!proposal) {
+              addChatMessage({
+                id: `canvas-doc-proposal-empty-${Date.now()}`,
+                role: 'ai',
+                content:
+                  uiLang === 'pl'
+                    ? 'Nie udało mi się przygotować treści. Doprecyzuj, co ma znaleźć się w dokumencie.'
+                    : 'I could not prepare the content. Tell me what should go into the document.',
+                timestamp: new Date(),
+              });
+              return;
+            }
+            addChatMessage({
+              id: `canvas-doc-proposal-card-${proposal.proposalId}`,
+              role: 'ai',
+              content:
+                uiLang === 'pl'
+                  ? 'Przygotowałam propozycję do dokumentu obok. Obejrzyj ją i kliknij „Wstaw do dokumentu", jeśli ma tam trafić.'
+                  : 'Here is a proposal for the document next to you. Review it and click "Insert into document" if it should go in.',
+              timestamp: new Date(),
+              metadata: { documentProposal: proposal },
+            } as ChatMessage);
+          } catch (err) {
+            addChatMessage({
+              id: `canvas-doc-proposal-error-${Date.now()}`,
+              role: 'ai',
+              content:
+                (uiLang === 'pl'
+                  ? 'Nie udało się przygotować propozycji do dokumentu: '
+                  : 'Could not prepare the document proposal: ') +
+                (err instanceof Error ? err.message : String(err)),
+              timestamp: new Date(),
+            });
+          }
+        })();
+
+        onMessageSent?.(content);
+        return;
+      }
+
       if (canvasStreamMode) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
