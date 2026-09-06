@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowRight, Eye } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { CanonicalWorkHardeningPanel } from '@/components/shared/CanonicalWorkHardeningPanel';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
@@ -35,8 +36,12 @@ import { useAppStore } from '@/store/useAppStore';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { liczebnik } from '@/utils/liczebnik';
 
+import { Api } from '@/services/api';
+import { getArtifactPath } from '@/utils/artifactLinks';
+
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
 import { fanOutExecutionCases } from './executionCaseFanOut';
+import { isTaskBlocked, isTaskOverdue, taskSlipDays } from './executionRealData';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -58,6 +63,18 @@ interface Row extends TableRow {
   version: number;
   executionCaseId: string;
   initiativeId: string;
+  /**
+   * 1.12-R1 (B): skąd wiersz pochodzi.
+   *   · `runtime` — kanoniczny rejestr `runtime-v1` (0 rekordów na DBR77),
+   *   · `tasks`   — tabela zastana `/api/tasks` (84 realne zadania).
+   * Rozróżnienie jest potrzebne, bo tylko wiersz `runtime` ma warsztat
+   * (kontrola wersji, dowody), a wiersz `tasks` otwiera się jako karta
+   * zadania w Mojej Pracy.
+   */
+  origin: 'runtime' | 'tasks';
+  initiativeName: string;
+  /** Dni po terminie (dodatnie) albo `null` — patrz executionRealData.taskSlipDays. */
+  slipDays: number | null;
   source: any;
 }
 export interface ExecutionWorkDocumentRef {
@@ -169,6 +186,15 @@ const actorLabel = (
 // wewnątrz komponentu (patrz `useMemo` w ciele `ExecutionWorkSurface`) —
 // poprzednio literały PL na module-scope nie reagowały na `?lang=` (pomiar
 // nadzorcy 03.09, execution-tab-work).
+/**
+ * 1.12-R1 (B): kolumny wg planu C2 (wiersz 3) —
+ * Zadanie · Inicjatywa · Osoba · Termin · Status · Poślizg (dni).
+ *
+ * USUNIĘTA kolumna „Termin / SLA". POMIAR (plan B2/B5): tabela `tasks` nie ma
+ * pola `slaAt`, więc kolumna pisała „· SLA brak" w KAŻDYM wierszu — pusta
+ * kolumna zajmowała szerokość i udawała informację. W jej miejsce wchodzi
+ * „Poślizg (dni)", który dla tych samych danych ma realną wartość.
+ */
 const buildCols = (
   t: (key: string, fallback: string) => string,
   resolveMemberName?: MemberNameResolver,
@@ -176,44 +202,61 @@ const buildCols = (
 ): TableColumn[] => [
   {
     id: 'title',
-    label: t('execution.work.columns.title', 'Work item'),
+    label: t('execution.work.columns.title', 'Zadanie'),
     sortable: true,
-    width: '240px',
+    width: '260px',
   },
   {
-    id: 'kind',
-    label: t('execution.work.columns.kind', 'Type'),
+    id: 'initiativeName',
+    label: t('execution.work.columns.initiative', 'Inicjatywa'),
     sortable: true,
-    filterable: true,
-    render: (row) => workKindLabel[row.kind as WorkKind] ?? row.kind,
+    width: '200px',
+    render: (row) => (row.initiativeName as string) || '—',
+  },
+  {
+    id: 'owner',
+    label: t('execution.work.columns.person', 'Osoba'),
+    sortable: true,
+    width: '160px',
+    render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
+  },
+  {
+    id: 'dueAt',
+    label: t('execution.work.columns.due', 'Termin'),
+    sortable: true,
+    width: '150px',
   },
   {
     id: 'status',
     label: t('execution.work.columns.status', 'Status'),
     sortable: true,
-    render: (row) => <span role="status">{workStatusLabel[row.status] ?? row.status}</span>,
+    width: '130px',
+    render: (row) => (
+      <span role="status">{workStatusLabel[row.status as string] ?? (row.status as string)}</span>
+    ),
   },
   {
-    id: 'owner',
-    label: t('execution.work.columns.owner', 'Owner / decision maker'),
+    id: 'slipDays',
+    label: t('execution.work.columns.slip', 'Poślizg (dni)'),
     sortable: true,
-    render: (row) => actorLabel(row.owner, t, resolveMemberName, isPolish),
+    width: '110px',
+    render: (row) => {
+      const slip = row.slipDays as number | null;
+      if (slip == null) return <span className="text-c-text-muted">—</span>;
+      return <span className="font-semibold tabular-nums text-c-danger">+{slip}</span>;
+    },
   },
-  { id: 'dueAt', label: t('execution.work.columns.dueAt', 'Due / SLA'), sortable: true },
 ];
-const workPresets = [
-  'all',
-  'tasks',
-  'decisions',
-  'blocked',
-  'overdue',
-  'due-soon',
-  'missing-owner',
-  'missing-evidence',
-  'waiting',
-  'mine',
-  'team',
-] as const;
+/**
+ * 1.12-R1 (B): TRZY chipy zamiast jedenastu.
+ *
+ * Kanon list (`docs/ui-standards/TRIADA_KANON.md`) dopuszcza w Menu 3 do
+ * trzech pozycji; ta powierzchnia miała ich 11 („Tasks", „Decisions",
+ * „Due soon", „Missing owner", „Missing DoD/evidence", „Waiting dependency",
+ * „Mine", „By team" — osiem skasowanych). Zostaje to, co menedżer realizacji
+ * naprawdę filtruje na stand-upie: wszystko · po terminie · zablokowane.
+ */
+const workPresets = ['all', 'overdue', 'blocked'] as const;
 const formatDateTime = (value: string | null | undefined) => {
   // „UNKNOWN" po angielsku na polskim ekranie — widoczne w KAŻDYM wierszu
   // kolumny „Termin / SLA" (zrzut PO 05.09), bo realne zadania stagingu nie
@@ -229,6 +272,90 @@ const formatDateTime = (value: string | null | undefined) => {
     minute: '2-digit',
   }).format(parsed);
 };
+/** Sam termin, bez godziny — kolumna „Termin" ma być czytelna, nie precyzyjna do minuty. */
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsed);
+};
+
+/**
+ * 1.12-R1 (B): wiersze z KANONICZNEGO rejestru `runtime-v1`.
+ * Wydzielone z czterech identycznych kopii w `loadCases`/`load(id)` — cztery
+ * kopie znaczyły cztery miejsca, w których trzeba pamiętać o nowym polu.
+ */
+const mapRuntimeWorkRows = (
+  work: { tasks?: any[]; decisions?: any[] } | null | undefined,
+  executionCaseId: string,
+  initiativeId: string,
+  initiativeName: string
+): Row[] => [
+  ...((work?.tasks ?? []) as any[]).map((item) => ({
+    id: item.taskId,
+    title: item.title,
+    kind: 'TASK' as const,
+    status: item.status,
+    owner: item.assigneeId,
+    dueAt: formatDate(item.dueAt),
+    rawDueAt: item.dueAt ?? null,
+    version: item.version,
+    executionCaseId,
+    initiativeId,
+    origin: 'runtime' as const,
+    initiativeName,
+    slipDays: taskSlipDays({ status: item.status, dueDate: item.dueAt }),
+    source: item,
+  })),
+  ...((work?.decisions ?? []) as any[]).map((item) => ({
+    id: item.decisionId,
+    title: item.title,
+    kind: 'DECISION' as const,
+    status: item.status,
+    owner: item.authorityId,
+    dueAt: formatDate(item.dueAt),
+    rawDueAt: item.dueAt ?? null,
+    version: item.version,
+    executionCaseId,
+    initiativeId,
+    origin: 'runtime' as const,
+    initiativeName,
+    slipDays: taskSlipDays({ status: item.status, dueDate: item.dueAt }),
+    source: item,
+  })),
+];
+
+/**
+ * 1.12-R1 (B): wiersze z TABELI ZASTANEJ `/api/tasks`.
+ *
+ * POMIAR 06.09 (DBR77): `runtime-v1/.../work` zwraca 0 zadań, a `/api/tasks`
+ * — 84 (82 z terminem, 81 z osobą, 64 z inicjatywą, 20 po terminie). Zakładka
+ * „Praca" czytała wyłącznie tę pierwszą listę i dlatego była pusta. Oba
+ * źródła są rozłączne (osobne tabele), więc łączymy je, a nie zastępujemy:
+ * gdy handoff zacznie tworzyć realizacje, ich zadania po prostu dojdą.
+ */
+export const mapRealTaskRows = (tasks: any[]): Row[] =>
+  (tasks ?? []).map((task) => ({
+    id: String(task.id),
+    title: task.title ?? '—',
+    kind: 'TASK' as const,
+    status: String(task.status ?? '').toUpperCase(),
+    owner: String(task.assigneeId ?? task.ownerId ?? ''),
+    dueAt: formatDate(task.dueDate),
+    rawDueAt: task.dueDate ?? null,
+    version: 0,
+    executionCaseId: '',
+    initiativeId: String(task.initiativeId ?? task.roadmapInitiativeId ?? ''),
+    origin: 'tasks' as const,
+    initiativeName: String(task.initiativeName ?? task.projectName ?? ''),
+    slipDays: taskSlipDays(task),
+    source: task,
+  }));
+
 const businessLabel = (
   value: string | null | undefined,
   fallback: string,
@@ -278,6 +405,7 @@ export const ExecutionWorkSurface = ({
     () => buildCols(t, resolveMemberName, isPolish),
     [t, resolveMemberName, isPolish]
   );
+  const navigate = useNavigate();
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
     [caseId, setCaseId] = useState(''),
@@ -356,6 +484,17 @@ export const ExecutionWorkSurface = ({
   }, [state, unreachableCaseIds, t, isPolish]);
   const loadCases = useCallback(async () => {
     setState('LOADING');
+    // 1.12-R1 (B): REALNE ZADANIA ORGANIZACJI, niezależnie od realizacji.
+    // Pobrane osobno i przed wachlarzem, żeby jedna wisząca realizacja
+    // `runtime-v1` (defekt zmierzony 05.09) nie zabrała ze sobą 84 zadań,
+    // które z nią nic wspólnego nie mają. Błąd tego wołania NIE wywraca
+    // zakładki — po prostu nie ma tych wierszy (uczciwie, bez wyjątku).
+    let realTaskRows: Row[] = [];
+    try {
+      realTaskRows = mapRealTaskRows(await Api.getTasks());
+    } catch (error) {
+      console.error('[ExecutionWorkSurface] /api/tasks nieosiągalne:', error);
+    }
     try {
       const body = (await listExecutionCases()) as any;
       const nextCases =
@@ -378,79 +517,46 @@ export const ExecutionWorkSurface = ({
           )
             ? reviewWork
             : ((await readExecutionWork(executionCase.executionCaseId, signal)) as any);
-          return [
-            ...(work.tasks ?? []).map((item: any) => ({
-              id: item.taskId,
-              title: item.title,
-              kind: 'TASK' as const,
-              status: item.status,
-              owner: item.assigneeId,
-              dueAt: `${formatDateTime(item.dueAt)} · SLA ${formatDateTime(item.slaAt)}`,
-              rawDueAt: item.dueAt ?? null,
-              version: item.version,
-              executionCaseId: executionCase.executionCaseId,
-              initiativeId: executionCase.initiativeId,
-              source: item,
-            })),
-            ...(work.decisions ?? []).map((item: any) => ({
-              id: item.decisionId,
-              title: item.title,
-              kind: 'DECISION' as const,
-              status: item.status,
-              owner: item.authorityId,
-              dueAt: formatDateTime(item.dueAt),
-              rawDueAt: item.dueAt ?? null,
-              version: item.version,
-              executionCaseId: executionCase.executionCaseId,
-              initiativeId: executionCase.initiativeId,
-              source: item,
-            })),
-          ];
+          return mapRuntimeWorkRows(
+            work,
+            executionCase.executionCaseId,
+            executionCase.initiativeId,
+            executionCase.initiativeTitle || executionCase.title || ''
+          );
         }
       );
-      setRows(fanOut.items);
+      // Kolejność: realne zadania organizacji NAJPIERW (to jest treść, którą
+      // menedżer przyszedł zobaczyć), kanoniczny rejestr realizacji po nich.
+      setRows([...realTaskRows, ...fanOut.items]);
       setUnreachableCaseIds(fanOut.failedCaseIds);
       setState('READY');
     } catch {
       if (!executionLocalReviewEnabled) {
+        // 1.12-R1 (B): padnięty `runtime-v1` NIE kasuje realnych zadań.
+        // Do 06.09 każdy błąd tej gałęzi kończył się ekranem błędu, także
+        // wtedy, gdy `/api/tasks` odpowiedziało poprawnie 84 wierszami.
+        if (realTaskRows.length > 0) {
+          setRows(realTaskRows);
+          setUnreachableCaseIds([]);
+          setState('READY');
+          return;
+        }
         setState('ERROR');
         return;
       }
       setCases(executionReviewCases);
       setUnreachableCaseIds([]);
-      setRows(
-        executionReviewCases.flatMap((executionCase) => {
-          const work = getExecutionReviewWork(executionCase.executionCaseId);
-          return [
-            ...(work.tasks ?? []).map((item: any) => ({
-              id: item.taskId,
-              title: item.title,
-              kind: 'TASK' as const,
-              status: item.status,
-              owner: item.assigneeId,
-              dueAt: `${formatDateTime(item.dueAt)} · SLA ${formatDateTime(item.slaAt)}`,
-              rawDueAt: item.dueAt ?? null,
-              version: item.version,
-              executionCaseId: executionCase.executionCaseId,
-              initiativeId: executionCase.initiativeId,
-              source: item,
-            })),
-            ...(work.decisions ?? []).map((item: any) => ({
-              id: item.decisionId,
-              title: item.title,
-              kind: 'DECISION' as const,
-              status: item.status,
-              owner: item.authorityId,
-              dueAt: formatDateTime(item.dueAt),
-              rawDueAt: item.dueAt ?? null,
-              version: item.version,
-              executionCaseId: executionCase.executionCaseId,
-              initiativeId: executionCase.initiativeId,
-              source: item,
-            })),
-          ];
-        })
-      );
+      setRows([
+        ...realTaskRows,
+        ...executionReviewCases.flatMap((executionCase) =>
+          mapRuntimeWorkRows(
+            getExecutionReviewWork(executionCase.executionCaseId),
+            executionCase.executionCaseId,
+            executionCase.initiativeId,
+            (executionCase as any).initiativeTitle || (executionCase as any).title || ''
+          )
+        ),
+      ]);
       setState('READY');
     }
   }, []);
@@ -477,34 +583,14 @@ export const ExecutionWorkSurface = ({
         version: Number(c.detail.handoffPackageVersion ?? 0),
       });
       setMilestones(m.items ?? []);
-      setRows([
-        ...(w.tasks ?? []).map((x: any) => ({
-          id: x.taskId,
-          title: x.title,
-          kind: 'TASK',
-          status: x.status,
-          owner: x.assigneeId,
-          dueAt: `${formatDateTime(x.dueAt)} · SLA ${formatDateTime(x.slaAt)}`,
-          rawDueAt: x.dueAt ?? null,
-          version: x.version,
-          executionCaseId: id,
-          initiativeId: c.detail.initiativeId,
-          source: x,
-        })),
-        ...(w.decisions ?? []).map((x: any) => ({
-          id: x.decisionId,
-          title: x.title,
-          kind: 'DECISION',
-          status: x.status,
-          owner: x.authorityId,
-          dueAt: formatDateTime(x.dueAt),
-          rawDueAt: x.dueAt ?? null,
-          version: x.version,
-          executionCaseId: id,
-          initiativeId: c.detail.initiativeId,
-          source: x,
-        })),
-      ]);
+      setRows(
+        mapRuntimeWorkRows(
+          w,
+          id,
+          c.detail.initiativeId,
+          cases.find((candidate) => candidate.executionCaseId === id)?.initiativeTitle ?? ''
+        )
+      );
       setState('READY');
     } catch {
       setState('ERROR');
@@ -538,6 +624,14 @@ export const ExecutionWorkSurface = ({
     };
   };
   const openWorkspace = async (row: Row) => {
+    // 1.12-R1 (B): wiersz z tabeli zastanej NIE MA warsztatu `runtime-v1`
+    // (ani wersji, ani realizacji), więc „Otwórz" prowadzi do karty zadania
+    // w Mojej Pracy — trasa zmierzona: `getArtifactPath('task', id)` →
+    // `/my-work?artifact=task:<id>&code=TASK-…` (src/utils/artifactLinks.ts).
+    if (row.origin === 'tasks') {
+      navigate(getArtifactPath('task', row.id));
+      return;
+    }
     if (onOpenDocument && !documentId) {
       onOpenDocument(row);
       return;
@@ -558,33 +652,17 @@ export const ExecutionWorkSurface = ({
     setToolMode(selected.kind);
     setForm(formFromRow(selected));
   }, [selected?.id, selected?.version, showWorkspace]);
-  const matches = useCallback(
-    (row: Row, preset: string) => {
-      const due = row.rawDueAt ? Date.parse(row.rawDueAt) : NaN;
-      const now = Date.now();
-      if (preset === 'all') return true;
-      if (preset === 'tasks') return row.kind === 'TASK';
-      if (preset === 'decisions') return row.kind === 'DECISION';
-      if (preset === 'blocked')
-        return row.status === 'BLOCKED' || (row.source.blockers?.length ?? 0) > 0;
-      if (preset === 'overdue')
-        return (
-          Number.isFinite(due) &&
-          due < now &&
-          !['COMPLETED', 'DECIDED', 'CANCELLED'].includes(row.status)
-        );
-      if (preset === 'due-soon')
-        return Number.isFinite(due) && due >= now && due <= now + 7 * 86400000;
-      if (preset === 'missing-owner') return !row.owner;
-      if (preset === 'missing-evidence')
-        return !(row.source.evidenceRefs?.length || row.source.definitionOfDone);
-      if (preset === 'waiting') return (row.source.dependencies?.length ?? 0) > 0;
-      if (preset === 'mine') return Boolean(actorId) && row.owner === actorId;
-      if (preset === 'team') return Boolean(row.source.teamId);
-      return false;
-    },
-    [actorId]
-  );
+  // 1.12-R1 (B): trzy presety, liczone tą samą regułą co kolumna „Poślizg"
+  // (executionRealData) — chip „Po terminie" i czerwona liczba w wierszu nie
+  // mogą się rozjechać, bo pochodzą z jednej funkcji.
+  const matches = useCallback((row: Row, preset: string) => {
+    if (preset === 'all') return true;
+    if (preset === 'blocked')
+      return isTaskBlocked({ status: row.status }) || (row.source?.blockers?.length ?? 0) > 0;
+    if (preset === 'overdue')
+      return isTaskOverdue({ status: row.status, dueDate: row.rawDueAt ?? undefined });
+    return false;
+  }, []);
   const visibleRows = useMemo(
     () => rows.filter((row) => matches(row, activePreset ?? 'all')),
     [activePreset, matches, rows]
@@ -919,8 +997,26 @@ export const ExecutionWorkSurface = ({
                         isPolish
                       ),
                     },
-                    { id: 'due', label: 'Termin / SLA', value: r.dueAt || 'Brak danych' },
-                    { id: 'case', label: 'Realizacja', value: caseLabel(r.executionCaseId) },
+                    // 1.12-R1 (B): „Termin / SLA" rozdzielone — SLA było puste
+                    // w każdym wierszu realnych danych (tabela `tasks` nie ma
+                    // `slaAt`), więc podgląd pisał „· SLA brak" jako fakt.
+                    { id: 'due', label: 'Termin', value: r.dueAt || 'Brak terminu' },
+                    {
+                      id: 'slip',
+                      label: 'Poślizg',
+                      value:
+                        r.slipDays == null
+                          ? 'Bez poślizgu'
+                          : `${r.slipDays} ${liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])} po terminie`,
+                    },
+                    {
+                      id: 'case',
+                      label: r.origin === 'tasks' ? 'Inicjatywa' : 'Realizacja',
+                      value:
+                        r.origin === 'tasks'
+                          ? r.initiativeName || 'Bez inicjatywy'
+                          : caseLabel(r.executionCaseId),
+                    },
                     {
                       id: 'evidence',
                       label: 'Dowody',
@@ -934,16 +1030,22 @@ export const ExecutionWorkSurface = ({
                   ],
                   onCopy: () => void navigator.clipboard?.writeText(r.title),
                 }}
-                relations={[
-                  { label: caseLabel(r.executionCaseId), onClick: () => undefined },
-                  { label: 'Powiązana inicjatywa', onClick: () => undefined },
-                ]}
+                relations={
+                  r.origin === 'tasks'
+                    ? r.initiativeName
+                      ? [{ label: r.initiativeName, onClick: () => undefined }]
+                      : []
+                    : [
+                        { label: caseLabel(r.executionCaseId), onClick: () => undefined },
+                        { label: 'Powiązana inicjatywa', onClick: () => undefined },
+                      ]
+                }
                 relationsEmptyLabel="Brak powiązań"
                 actions={{
                   informational: [
                     {
                       id: 'open',
-                      label: 'Otwórz element pracy',
+                      label: r.origin === 'tasks' ? 'Otwórz zadanie' : 'Otwórz element pracy',
                       variant: 'positive',
                       icon: Eye,
                       shortcut: 'O',

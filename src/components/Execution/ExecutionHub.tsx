@@ -717,18 +717,16 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['delivered', t('execution.menu3.list.delivered', 'Recently delivered')],
       ['unknown', t('execution.menu3.list.unknown', 'Unknown data')],
     ].map(([id, label]) => ({ id, label })),
+    // 1.12-R1 (B): 11 chipów → 3. Kanon list dopuszcza ≤3, a osiem usuniętych
+    // („Tasks", „Decisions", „Due soon", „Missing owner", „Missing DoD/evidence",
+    // „Waiting dependency", „Mine", „By team") liczyło się z pól, których realne
+    // zadania w ogóle nie niosą. Presety muszą zostać zgodne z `workPresets`
+    // w ExecutionWorkSurface.tsx — inaczej chip pokazuje licznik do widoku,
+    // którego tabela nie umie zbudować.
     work: [
       ['all', t('common.all', 'All')],
-      ['tasks', t('execution.menu3.work.tasks', 'Tasks')],
-      ['decisions', t('execution.menu3.work.decisions', 'Decisions')],
-      ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
       ['overdue', t('execution.menu3.work.overdue', 'Overdue')],
-      ['due-soon', t('execution.menu3.work.dueSoon', 'Due soon')],
-      ['missing-owner', t('execution.menu3.work.missingOwner', 'Missing owner')],
-      ['missing-evidence', t('execution.menu3.work.missingEvidence', 'Missing DoD/evidence')],
-      ['waiting', t('execution.menu3.work.waiting', 'Waiting dependency')],
-      ['mine', t('execution.menu3.work.mine', 'Mine')],
-      ['team', t('execution.menu3.work.team', 'By team')],
+      ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
     ].map(([id, label]) => ({ id, label })),
     resources: [
       ['all', t('common.all', 'All')],
