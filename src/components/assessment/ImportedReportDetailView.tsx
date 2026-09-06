@@ -344,7 +344,7 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
             {/* Framework */}
             <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Framework</p>
-              <span className="text-lg font-bold text-primary-400">{data.detectedFramework}</span>
+              <span className="text-lg font-bold text-c-text">{data.detectedFramework}</span>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Confidence: {Math.round(data.detectionConfidence || 0)}%
               </p>
@@ -398,8 +398,8 @@ export const ImportedReportDetailView: React.FC<ImportedReportDetailViewProps> =
                 <button
                   onClick={handleOpenAssessment}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium
-                    bg-primary-500/15 text-primary-400 border border-primary-500/20
-                    hover:bg-primary-500/25 rounded-xl transition-colors"
+                    bg-c-surface-raised text-c-text border border-c-border
+                    hover:bg-c-surface rounded-xl transition-colors"
                 >
                   <ExternalLink size={16} />
                   Open Assessment

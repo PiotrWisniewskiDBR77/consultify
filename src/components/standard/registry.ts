@@ -31,6 +31,7 @@
  */
 export type KartaNKey =
   | 'tool'
+  | 'tool-document'
   | 'initiative'
   | 'insight'
   | 'interview'
@@ -68,6 +69,7 @@ export type KartaNStatusMigracji = 'przed' | 'zmigrowana';
 /** Identyfikator ekranu w harnessie `dev-render/main.tsx` (klucz obiektu SCREENS). */
 export type KartaNEkranHarnessu =
   | 'karta-tool'
+  | 'karta-tool-document'
   | 'karta-initiative'
   | 'karta-insight'
   | 'karta-interview'
@@ -133,6 +135,14 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
     klasa: 'S',
     paragraf: 'SPEC-N §0A, §2.1 · plan §3 M1',
     ekranHarnessu: 'karta-tool',
+    statusMigracji: 'przed',
+  },
+  'tool-document': {
+    nazwa: 'Tool document',
+    komponent: 'src/components/DiscoveryTools/ToolDocumentView.tsx',
+    klasa: 'L',
+    paragraf: 'KARTA_N_KONTRAKT K21-K24 · DEC-439',
+    ekranHarnessu: 'karta-tool-document',
     statusMigracji: 'przed',
   },
   notification: {

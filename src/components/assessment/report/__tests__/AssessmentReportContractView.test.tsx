@@ -122,6 +122,28 @@ describe('AssessmentReportContractView', () => {
     expect(screen.queryByText(/^0$/)).not.toBeInTheDocument();
   });
 
+  it('renderuje prozę otrzymaną z serwera zamiast bezwarunkowego pustego gniazda', async () => {
+    const withNarrative: api.AssessmentReportContract = {
+      ...contract,
+      chapters: [{
+        ...chapter(1),
+        introduction: { content: 'Serwerowa proza wprowadzenia.', minWords: 120, maxWords: 180 },
+        matrix: { ...chapter(1).matrix, caption: { content: 'Serwerowy podpis macierzy.', minWords: 30, maxWords: 60 } },
+        areaComments: [{ ...chapter(1).areaComments[0], content: 'Serwerowy komentarz obszaru.' }],
+        conclusion: {
+          ...chapter(1).conclusion,
+          content: 'Serwerowy wniosek rozdziału.',
+          decisionLine: { direction: 'Automatyzacja', priority: 'Wysoki', horizon: '90 dni', successCondition: 'Mniej braków' },
+        },
+      }],
+    };
+    vi.spyOn(api, 'getAssessmentReportContract').mockResolvedValue(withNarrative);
+    render(<AssessmentReportContractView sessionId="session-1" />);
+    for (const text of ['Serwerowa proza wprowadzenia.', 'Serwerowy podpis macierzy.', 'Serwerowy komentarz obszaru.', 'Serwerowy wniosek rozdziału.', 'Automatyzacja']) {
+      expect(await screen.findByText(text)).toBeInTheDocument();
+    }
+  });
+
   // ★ PIĄTE ZGŁOSZENIE TEJ SAMEJ SPRAWY (2026-09-05). Ekran raportu rysował
   // WŁASNĄ tabelę „Obszar / Poziom obecny / Poziom docelowy / Luka / Stan
   // dowodów" (aria-label „Axis matrix table") — kształt odrzucony przez

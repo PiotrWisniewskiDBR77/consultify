@@ -1399,6 +1399,34 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
         />
       ),
     },
+    {
+      id: 'relations',
+      label: isPolish ? 'Powiązania' : 'Relations',
+      isEmpty: true,
+      emptyLabel: isPolish ? 'Brak powiązanych obiektów.' : 'No related objects.',
+      children: null,
+    },
+    {
+      id: 'sources',
+      label: isPolish ? 'Źródła i założenia' : 'Sources and assumptions',
+      isEmpty: true,
+      emptyLabel: isPolish ? 'Brak zapisanych źródeł i założeń.' : 'No recorded sources or assumptions.',
+      children: null,
+    },
+    {
+      id: 'comments',
+      label: isPolish ? 'Komentarze' : 'Comments',
+      isEmpty: true,
+      emptyLabel: isPolish ? 'Brak komentarzy.' : 'No comments.',
+      children: null,
+    },
+    {
+      id: 'history',
+      label: isPolish ? 'Historia' : 'History',
+      isEmpty: true,
+      emptyLabel: isPolish ? 'Brak zdarzeń historii.' : 'No history events.',
+      children: null,
+    },
   ];
 
   return (

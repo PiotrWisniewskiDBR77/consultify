@@ -85,7 +85,7 @@ import {
   AssessmentSessionPreviewV3Body,
   AssessmentSessionPreviewV3Footer,
 } from '../assessment/AssessmentSessionPreviewV3';
-import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
+import { ToolDocumentView } from '../DiscoveryTools';
 import { hasDedicatedToolDocumentView } from '../DiscoveryTools/dedicatedToolTypes';
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
 import { adapterTool } from '@/components/Initiatives/Generator/adapters/tool';

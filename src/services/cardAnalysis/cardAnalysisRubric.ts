@@ -536,6 +536,21 @@ export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriteri
       },
     },
   ],
+  'tool-document': [
+    {
+      id: 'method-step-completeness',
+      pl: 'kompletność bieżącego kroku metody',
+      en: 'current method step completeness',
+      definition: {
+        pl: 'Bieżący krok zawiera wymagane wejścia, wynik i dowody wskazane przez metodę.',
+        en: 'The current step contains the inputs, outcome and evidence required by the method.',
+      },
+      failsWhen: {
+        pl: 'Brakuje wymaganego wejścia, wyniku albo dowodu, a brak nie jest jawnie opisany.',
+        en: 'A required input, outcome or item of evidence is missing without an explicit explanation.',
+      },
+    },
+  ],
 
   // ── POWIADOMIENIE ──────────────────────────────────────────────────────────
   // Kontrakt właściciela dla Powiadomienia nie wylicza osi tak jak dla pozostałych
@@ -1011,6 +1026,7 @@ const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKart
   insight: INSIGHT_CARDS,
   initiative: INITIATIVE_CANONICAL_CARDS,
   tool: TOOL_CARDS,
+  'tool-document': [],
   interview: [],
   // Trzy karty Wyników NIE mają deskryptorów w kanonie kart
   // (`_KONTRAKT_KARTY_SSOT`) — kanon opisuje karty Zadania/Decyzji/Wniosku/

@@ -137,7 +137,7 @@ const TOOL_META: Partial<
     namePl: 'Ścieżki Wzrostu',
     badge: 'ANS',
     category: 'strategic',
-    statusDot: 'bg-primary-400',
+    statusDot: 'bg-c-info',
   },
   'portfolio-priority': {
     name: 'Portfolio Priority',
@@ -1279,7 +1279,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   onClick={() => setCurrentStep(stepNum)}
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs transition-colors ${
                     isActive
-                      ? 'bg-primary-500/15 text-primary-700 dark:text-primary-300'
+                      ? 'bg-c-surface-raised text-c-text'
                       : isCompleted
                         ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                         : 'bg-slate-100 dark:bg-navy-900/70 text-slate-500 dark:text-slate-400'
@@ -1980,7 +1980,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               {
                 id: 'ai-collaboration',
                 icon: Sparkles,
-                label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+                label: { en: 'AI Collaboration Panel', pl: 'Współpraca z AI' },
                 group: groupLabels[3],
                 cSpan: 2 as const,
                 component: aiCollaborationSection,
@@ -1999,7 +1999,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       {
         id: 'session-review',
         icon: CheckCircle2,
-        label: { en: 'Review', pl: 'Review' },
+        label: { en: 'Review', pl: 'Przegląd' },
         badge: reviewGaps.length,
         component: reviewSection,
       },
@@ -2021,7 +2021,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             {
               id: 'ai-collaboration',
               icon: Sparkles,
-              label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+              label: { en: 'AI Collaboration Panel', pl: 'Współpraca z AI' },
               component: aiCollaborationSection,
             },
           ]),
@@ -2073,7 +2073,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       {
         id: 'used-in',
         icon: ExternalLink,
-        label: { en: 'Used in', pl: 'Used in' },
+        label: { en: 'Used in', pl: 'Użyte w' },
         badge: toolBacklinks.length,
         component: (
           <EmbeddedView
@@ -2407,7 +2407,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   // podłączam istniejący generator, nie buduję nowego.
   const buildToolAnalysisInput = useCallback(
     () => ({
-      artifactType: 'tool' as const,
+      artifactType: 'tool-document' as const,
       cardId: activeSection,
       artifactTitle: sessionName || defaultSessionName(toolMeta.name, isPolish),
       artifactContext: [
@@ -2495,7 +2495,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           onTitleChange: setSessionName,
           titleReadOnly: true,
           artifactId: toolSessionId || toolType,
-          artifactType: 'tool',
+          artifactType: 'tool-document',
           onSave: handleSave,
           saving,
           saveState,

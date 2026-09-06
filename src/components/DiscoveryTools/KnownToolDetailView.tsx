@@ -544,6 +544,13 @@ export function KnownToolDetailView(props: {
         </ul>
       );
     };
+    const renderCatalogCardContent = (value: unknown) => {
+      if (Array.isArray(value)) return bullets(value.map(String));
+      if (typeof value === 'string' && value.trim()) {
+        return <p className="text-sm leading-relaxed text-c-text-secondary">{value}</p>;
+      }
+      return <p className="text-sm text-c-text-muted">{t('common.noData', 'No data')}</p>;
+    };
 
     // ── NAPRAWA 2026-07-23: chipy były zaszyte PO ANGIELSKU w polskiej karcie ─
     // Wzorzec 1:1 z `NModeMenu2.tsx` (tabela `L` + `pick`): pary { en, pl }
@@ -1896,6 +1903,15 @@ export function KnownToolDetailView(props: {
           label: { en: 'Example', pl: 'Przykład' },
           component: riskExampleSection,
         },
+      ]);
+    }
+
+    if (tool?.card) {
+      return withGroup([
+        { id: 'goal', icon: Target, label: { en: 'Goal', pl: 'Cel' }, component: renderCatalogCardContent(tool.card.goal) },
+        { id: 'process', icon: CheckCircle2, label: { en: 'Process', pl: 'Proces' }, component: renderCatalogCardContent(tool.card.process) },
+        { id: 'outcomes', icon: Lightbulb, label: { en: 'Outcome', pl: 'Rezultat' }, component: renderCatalogCardContent(tool.card.outcome) },
+        { id: 'example', icon: FileText, label: { en: 'Example', pl: 'Przykład' }, component: renderCatalogCardContent(tool.card.example) },
       ]);
     }
 

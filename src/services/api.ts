@@ -7332,6 +7332,12 @@ export const Api = {
       commonMistakes: string[];
       example: string;
       nextSteps: string[];
+      card: {
+        goal: unknown;
+        process: unknown;
+        outcome: unknown;
+        example: unknown;
+      } | null;
       kbArticleSlug: string;
     };
   }> => {

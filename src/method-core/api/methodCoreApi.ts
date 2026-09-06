@@ -172,7 +172,7 @@ export interface AssessmentReportArea {
 
 export interface AssessmentReportAreaComment {
   readonly unitId: string;
-  readonly content: null;
+  readonly content: string | null;
   readonly minWords: number;
   readonly maxWords: number;
   readonly microstructure: readonly string[];
@@ -191,13 +191,13 @@ export interface AssessmentReportChapter {
   readonly axisNamePL?: string;
   readonly maxLevel: number;
   readonly introduction: {
-    readonly content: null;
+    readonly content: string | null;
     readonly minWords: number;
     readonly maxWords: number;
   };
   readonly matrix: {
     readonly caption: {
-      readonly content: null;
+      readonly content: string | null;
       readonly minWords: number;
       readonly maxWords: number;
     };
@@ -205,14 +205,14 @@ export interface AssessmentReportChapter {
   };
   readonly areaComments: readonly AssessmentReportAreaComment[];
   readonly conclusion: {
-    readonly content: null;
+    readonly content: string | null;
     readonly minWords: number;
     readonly maxWords: number;
     readonly decisionLine: {
-      readonly direction: null;
-      readonly priority: null;
-      readonly horizon: null;
-      readonly successCondition: null;
+      readonly direction: string | null;
+      readonly priority: string | null;
+      readonly horizon: string | null;
+      readonly successCondition: string | null;
     };
   };
 }

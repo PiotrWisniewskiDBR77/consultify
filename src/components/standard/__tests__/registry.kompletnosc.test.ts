@@ -9,6 +9,7 @@ import { REJESTR_KART_N } from '../registry';
 const OCZEKIWANE_W_REJESTRZE = [
   'action',
   'tool',
+  'tool-document',
   'notification',
   'interview',
   'decision',
@@ -33,19 +34,18 @@ const JAWNE_WYJATKI = {
   'audit-criterion': 'CriterionWorkspaceV2 jest rekordem audytu poza rejestrem',
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
-  'tool-document': 'ToolDocumentView jest dokumentem wyniku narzędzia',
   presentation: 'DeckBuilder jest dokumentem prezentacji poza rejestrem',
   meeting: 'MeetingObjectPage jest rekordem spotkania poza rejestrem',
   'vault-document': 'VaultDocumentPanel jest dokumentem sejfu poza rejestrem',
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
-  it('zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia)', () => {
+  it('zawiera wszystkie 14 kart wskazanych przez KartaNKey (w tym osobny tool-document DEC-439)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 9 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(9);
+  it('ma jawny, niepusty powód dla każdej z 8 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(8);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 

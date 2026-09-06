@@ -12,7 +12,6 @@ export { ToolContextPanel } from './ToolContextPanel';
 export { ToolDocumentView } from './ToolDocumentView';
 export { ToolHeader } from './ToolHeader';
 export { ToolReviewPanel } from './ToolReviewPanel';
-export { ToolWorkspace } from './ToolWorkspace';
 
 // Steps
 export { ContextStep, SummaryStep } from './steps';

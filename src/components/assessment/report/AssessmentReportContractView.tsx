@@ -85,6 +85,14 @@ function EmptySlot({ min, max }: { readonly min: number; readonly max: number })
   );
 }
 
+function NarrativeSlot({ content, min, max }: { readonly content: string | null; readonly min: number; readonly max: number }) {
+  return content?.trim() ? (
+    <p className="whitespace-pre-wrap text-sm leading-7 text-c-text-secondary">{content}</p>
+  ) : (
+    <EmptySlot min={min} max={max} />
+  );
+}
+
 function SkipSummary({
   skips,
   skipped,
@@ -206,15 +214,8 @@ function AreaComment({
       <p className="mt-1 text-xs text-c-text-secondary">
         {t(`assessment.reportView.evidence.${evidenceKey[comment.uncertainty]}`)}
       </p>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {comment.microstructure.map((item) => (
-          <div key={item}>
-            <h5 className="mb-1 text-xs font-semibold text-c-text">
-              {t(`assessment.reportView.microstructure.${item}`)}
-            </h5>
-            <EmptySlot min={comment.minWords} max={comment.maxWords} />
-          </div>
-        ))}
+      <div className="mt-4">
+        <NarrativeSlot content={comment.content} min={comment.minWords} max={comment.maxWords} />
       </div>
       <SkipSummary skips={comment.skips} skipped={comment.skipped} maxLevel={chapter.maxLevel} />
       {comment.answerRefs.length + comment.evidenceRefs.length + comment.sourceLocators.length >
@@ -244,7 +245,7 @@ function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
         <h3 className="mb-3 text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.introduction')}
         </h3>
-        <EmptySlot min={chapter.introduction.minWords} max={chapter.introduction.maxWords} />
+        <NarrativeSlot content={chapter.introduction.content} min={chapter.introduction.minWords} max={chapter.introduction.maxWords} />
       </section>
       {/* ★ MACIERZ DOSTAJE CAŁĄ DOSTĘPNĄ SZEROKOŚĆ (poprawka 2026-09-05).
           Rozdział jest kolumną czytelniczą 760 px, bo tam szerokość szkodzi
@@ -262,7 +263,7 @@ function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
           {t('assessment.reportView.sections.matrix')}
         </h3>
         <Matrix chapter={chapter} />
-        <EmptySlot min={chapter.matrix.caption.minWords} max={chapter.matrix.caption.maxWords} />
+        <NarrativeSlot content={chapter.matrix.caption.content} min={chapter.matrix.caption.minWords} max={chapter.matrix.caption.maxWords} />
       </section>
       <section className="mx-auto w-full max-w-[760px] space-y-4">
         <h3 className="text-lg font-semibold text-c-text">
@@ -276,14 +277,16 @@ function Chapter({ chapter }: { readonly chapter: AssessmentReportChapter }) {
         <h3 className="text-lg font-semibold text-c-text">
           {t('assessment.reportView.sections.conclusion')}
         </h3>
-        <EmptySlot min={chapter.conclusion.minWords} max={chapter.conclusion.maxWords} />
+        <NarrativeSlot content={chapter.conclusion.content} min={chapter.conclusion.minWords} max={chapter.conclusion.maxWords} />
         <dl className="grid gap-3 sm:grid-cols-2">
           {(['direction', 'priority', 'horizon', 'successCondition'] as const).map((field) => (
             <div key={field} className="rounded-lg border border-c-border-subtle p-3">
               <dt className="text-xs font-semibold text-c-text-muted">
                 {t(`assessment.reportView.decision.${field}`)}
               </dt>
-              <dd className="mt-1 text-sm text-c-text">{t('assessment.reportView.toComplete')}</dd>
+              <dd className="mt-1 text-sm text-c-text">
+                {chapter.conclusion.decisionLine[field] || t('assessment.reportView.toComplete')}
+              </dd>
             </div>
           ))}
         </dl>

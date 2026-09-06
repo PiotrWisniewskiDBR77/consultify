@@ -40,6 +40,12 @@ export type KnownToolListItem = {
 };
 
 export type KnownToolDetail = KnownToolListItem & {
+  card: {
+    goal: unknown;
+    process: unknown;
+    outcome: unknown;
+    example: unknown;
+  } | null;
   whenToUse: string;
   inputs: string[];
   steps: string[];
@@ -912,7 +918,7 @@ class KnownToolsService {
     const isActive = this.isKnownToolActive(resolvedToolType, row.is_active);
     if (!isActive) return null;
     const description = pickTranslation(row.description_translations, lang, row.description || '');
-    const content = {
+    const content: Record<string, unknown> = {
       ...getFallbackLibraryContent(resolvedToolType, lang),
       ...pickLibraryContent(row.library_content_translations, lang),
     };
@@ -938,6 +944,15 @@ class KnownToolsService {
       commonMistakes: Array.isArray(content.commonMistakes) ? content.commonMistakes : [],
       example: typeof content.example === 'string' ? content.example : '',
       nextSteps: Array.isArray(content.nextSteps) ? content.nextSteps : [],
+      card:
+        content.card && typeof content.card === 'object' && !Array.isArray(content.card)
+          ? {
+              goal: (content.card as Record<string, unknown>).goal ?? null,
+              process: (content.card as Record<string, unknown>).process ?? null,
+              outcome: (content.card as Record<string, unknown>).outcome ?? null,
+              example: (content.card as Record<string, unknown>).example ?? null,
+            }
+          : null,
       kbArticleSlug: `tools-${resolvedToolType}-how-to`,
     };
 
