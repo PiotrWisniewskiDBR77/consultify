@@ -94,3 +94,26 @@ export function scalWnioskiZWierszami<T extends { id: string }>(
   const idWnioskow = new Set(wnioski.map((r) => r.id));
   return [...wnioski, ...pozostale.filter((r) => !idWnioskow.has(r.id))];
 }
+
+/**
+ * Etykieta stanu wniosku po polsku/angielsku. Warstwa Wniosków trzyma stan jako
+ * kod techniczny (`candidate`, `needs_evidence`…). Wyświetlenie go wprost to ten
+ * sam błąd, co „Priorytet: medium" w Wywiadzie — kod techniczny w UI
+ * (PROGRAM_NAPRAWCZY P4). Nieznany kod pokazujemy bez zmian, zamiast zgadywać.
+ */
+const STANY_WNIOSKU: Record<string, { pl: string; en: string }> = {
+  candidate: { pl: 'Kandydat', en: 'Candidate' },
+  needs_evidence: { pl: 'Wymaga dowodów', en: 'Needs evidence' },
+  needs_review: { pl: 'Do przeglądu', en: 'Needs review' },
+  ready_for_readout: { pl: 'Gotowy do omówienia', en: 'Ready for readout' },
+  published: { pl: 'Opublikowany', en: 'Published' },
+  converted: { pl: 'Przekształcony', en: 'Converted' },
+  rejected: { pl: 'Odrzucony', en: 'Rejected' },
+};
+
+export function etykietaStanuWniosku(status: string | null | undefined, pl: boolean): string {
+  const kod = String(status || '').trim();
+  if (!kod) return pl ? 'Stan nieznany' : 'Status unknown';
+  const wpis = STANY_WNIOSKU[kod.toLowerCase()];
+  return wpis ? (pl ? wpis.pl : wpis.en) : kod;
+}

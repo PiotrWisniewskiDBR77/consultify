@@ -63,6 +63,7 @@ import {
 import { GeneratorWnioskuModal } from './wnioski/GeneratorWnioskuModal';
 import {
   czyWniosekZOceny,
+  etykietaStanuWniosku,
   idWnioskuZWiersza,
   projektujWniosekNaWierszListy,
   scalWnioskiZWierszami,
@@ -393,12 +394,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
           // Wniosek nie ma wersji rewizji jądra — pokazujemy jego WŁASNY stan
           // z warstwy Wniosków zamiast udawać „Aktualny"/„Zastąpiony".
           if (typ === 'wniosek') {
-            const stan = (row.statusWniosku as string | null) || null;
             return (
               <div className="flex items-center gap-1.5">
                 <span className="font-mono text-[11px]">—</span>
                 <StatusChip
-                  label={stan || (isPolish ? 'Stan nieznany' : 'Status unknown')}
+                  label={etykietaStanuWniosku(row.statusWniosku as string | null, isPolish)}
                   tone="neutral"
                   size="sm"
                 />
@@ -445,9 +445,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         ? [
             { label: isPolish ? 'Wniosek' : 'Conclusion', tone: 'info' },
             {
-              label:
-                (selectedRow.statusWniosku as string | null) ||
-                (isPolish ? 'Stan nieznany' : 'Status unknown'),
+              label: etykietaStanuWniosku(selectedRow.statusWniosku as string | null, isPolish),
               tone: 'neutral',
             },
           ]

@@ -45,9 +45,15 @@ export async function listaRaportowOceny(): Promise<RaportOceny[]> {
 }
 
 export async function generujWniosekZRaportu(reportId: string): Promise<WynikGeneracjiWniosku> {
+  // ZMIERZONE 06.09 na stanowisku lokalnym: domyślny limit 20 s w
+  // `fetchWithRetry` przerywał to wywołanie i UI pokazywało „Request timed
+  // out", chociaż serwer kończył pracę i wniosek POWSTAWAŁ w bazie — najgorszy
+  // możliwy komunikat: kłamie o porażce. Generacja przechodzi przez model
+  // raportu DRD (narrator LLM + ugruntowanie), więc ma własny, długi limit.
+  // Powtórzenie jest bezpieczne: warstwa Wniosków deduplikuje po rodowodzie.
   const res = await fetchWithRetry(
     `/api/assessment-reports/${encodeURIComponent(reportId)}/conclusion`,
-    { method: 'POST', headers: getHeaders(), body: JSON.stringify({}) }
+    { method: 'POST', headers: getHeaders(), body: JSON.stringify({}), timeoutMs: 180000 }
   );
   return handleResponse<WynikGeneracjiWniosku>(res, 'POST /assessment-reports/:id/conclusion');
 }

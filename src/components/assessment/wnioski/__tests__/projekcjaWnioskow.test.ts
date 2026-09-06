@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   czyWniosekZOceny,
+  etykietaStanuWniosku,
   idWnioskuZWiersza,
   idWierszaWniosku,
   projektujWniosekNaWierszListy,
@@ -60,6 +61,15 @@ describe('projekcja wniosków Oceny', () => {
     expect(wiersz.outputVersion).toBeNull();
     expect(wiersz.contentHash).toBeNull();
     expect(wiersz.sessionId).toBeNull();
+  });
+
+  it('tłumaczy stan wniosku, a nieznanego kodu nie zgaduje', () => {
+    expect(etykietaStanuWniosku('candidate', true)).toBe('Kandydat');
+    expect(etykietaStanuWniosku('needs_evidence', true)).toBe('Wymaga dowodów');
+    expect(etykietaStanuWniosku('candidate', false)).toBe('Candidate');
+    // Kod techniczny w UI to defekt — ale zmyślona etykieta jest gorsza.
+    expect(etykietaStanuWniosku('cos_nowego', true)).toBe('cos_nowego');
+    expect(etykietaStanuWniosku(null, true)).toBe('Stan nieznany');
   });
 
   it('scala wnioski przed zapisami sesji i nie gubi żadnego wiersza', () => {

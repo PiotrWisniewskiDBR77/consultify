@@ -1,0 +1,25 @@
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:84:24
+     82|  */
+     83| export function useJedenPanel(): UseJedenPanelResult {
+     84|   const { pathname } = useLocation();
+       |                        ^
+     85|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+     86|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ JedenPrawyPanel src/components/shared/PreviewPane/JedenPrawyPanel.tsx:42:17
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  11 failed | 22 passed (33)
+   Start at  15:39:24
+   Duration  3.29s (transform 2.54s, setup 1.26s, import 3.27s, tests 793ms, environment 3.77s)
+
+JSON report written to /private/tmp/wt-11o3/junit.xml
+JUNIT report written to /private/tmp/wt-11o3/junit.xml
