@@ -58,6 +58,7 @@ import {
   PARTNER_CERTIFICATION_DOC_BY_TYPE,
   PARTNER_DOC_HREF_BY_SLUG,
 } from '../../config/partnerKnowledge';
+import { useOrgContextOptional } from '../../contexts/OrgContext';
 import { ROUTES } from '../../routes/routeConfig';
 import { Api } from '../../services/api';
 import {
@@ -3119,7 +3120,15 @@ type PartnerConnectionState = 'loading' | 'connected' | 'unconnected' | 'error';
 const PartnerOrientationPanel: React.FC<{
   variant: 'unconnected' | 'error';
   onRetry?: () => void;
-}> = ({ variant, onRetry }) => {
+  /** P-1 / DEC-418: the org admin can connect the organization from here.
+   *  The button is a UI affordance only — authority is enforced server-side
+   *  (`POST /api/v8/partner/connect` requires an ACTIVE ADMIN/OWNER membership
+   *  of the selected tenant). A member without that role gets the honest
+   *  "ask your administrator" copy instead of a dead button. */
+  canConnect?: boolean;
+  onConnect?: () => void;
+  connecting?: boolean;
+}> = ({ variant, onRetry, canConnect = false, onConnect, connecting = false }) => {
   const { t } = useTranslation();
   const isError = variant === 'error';
 
@@ -3144,10 +3153,15 @@ const PartnerOrientationPanel: React.FC<{
               'partner.day12.connectionErrorDescription',
               'Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.'
             )
-          : t(
-              'partner.day12.unconnectedDescription',
-              'Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.'
-            )}
+          : canConnect
+            ? t(
+                'partner.day12.unconnectedAdminDescription',
+                'Twoja organizacja nie jest jeszcze podłączona do programu partnerskiego. Jako administrator możesz ją podłączyć teraz — portal otworzy się z danymi Twojej organizacji.'
+              )
+            : t(
+                'partner.day12.unconnectedDescription',
+                'Ten ekran służy wyłącznie do sprawdzenia połączenia z przestrzenią partnera. Administrator organizacji może potwierdzić dalszy krok poza tym pulpitem.'
+              )}
       </p>
       {isError && onRetry ? (
         <button
@@ -3156,6 +3170,19 @@ const PartnerOrientationPanel: React.FC<{
           className="mt-6 rounded-lg border border-c-border px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
         >
           {t('partner.day12.retryConnection', 'Sprawdź ponownie')}
+        </button>
+      ) : null}
+      {!isError && canConnect && onConnect ? (
+        <button
+          type="button"
+          onClick={onConnect}
+          disabled={connecting}
+          data-testid="partner-connect-button"
+          className="mt-6 rounded-lg border border-c-border bg-c-surface-hover px-4 py-2 text-sm font-medium text-c-text hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] disabled:opacity-60"
+        >
+          {connecting
+            ? t('partner.day12.connecting', 'Podłączanie…')
+            : t('partner.day12.connectOrganization', 'Podłącz organizację jako partnera')}
         </button>
       ) : null}
     </section>
@@ -3167,8 +3194,14 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const currentOrg = useOrgContextOptional()?.currentOrg ?? null;
   const [connectionState, setConnectionState] = useState<PartnerConnectionState>('loading');
+  const [connecting, setConnecting] = useState(false);
   const isConnected = connectionState === 'connected';
+  // UI affordance only; the server re-checks the ACTIVE ADMIN/OWNER membership.
+  const canConnect = ['ADMIN', 'OWNER', 'SUPERADMIN', 'SUPER_ADMIN'].includes(
+    String(currentOrg?.role || '').toUpperCase()
+  );
   const fetchConnection = useCallback(async () => {
     try {
       setConnectionState('loading');
@@ -3186,6 +3219,31 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
   useEffect(() => {
     fetchConnection();
   }, [fetchConnection]);
+
+  /** P-1 / DEC-418: `V8PartnerApi.connect` had NO caller anywhere in `src/`
+   *  (measured 2026-09-06) — the portal could only ever report "not connected".
+   *  This is that caller. */
+  const handleConnect = useCallback(async () => {
+    setConnecting(true);
+    try {
+      const idempotencyKey =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `partner-connect-${Date.now()}`;
+      await V8PartnerApi.connect(
+        currentOrg?.name ? { name: currentOrg.name } : {},
+        idempotencyKey
+      );
+      await fetchConnection();
+      toast.success(t('partner.day12.connectSuccess', 'Organizacja podłączona do programu partnerskiego'));
+    } catch {
+      toast.error(
+        t('partner.day12.connectFailed', 'Nie udało się podłączyć organizacji. Spróbuj ponownie.')
+      );
+    } finally {
+      setConnecting(false);
+    }
+  }, [currentOrg?.name, fetchConnection, t]);
 
   const activeSection = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -3433,7 +3491,12 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = () => {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-c-border border-t-c-text-secondary" />
         </div>
       ) : connectionState === 'unconnected' ? (
-        <PartnerOrientationPanel variant="unconnected" />
+        <PartnerOrientationPanel
+          variant="unconnected"
+          canConnect={canConnect}
+          onConnect={handleConnect}
+          connecting={connecting}
+        />
       ) : connectionState === 'error' ? (
         <PartnerOrientationPanel variant="error" onRetry={() => void fetchConnection()} />
       ) : (

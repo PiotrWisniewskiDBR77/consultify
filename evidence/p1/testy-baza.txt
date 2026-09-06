@@ -1,0 +1,55 @@
+                          [33mwidth[39m=[32m"7"[39m
+                          [33mx[39m=[32m"14"[39m
+                          [33my[39m=[32m"3...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/components/partner/PartnerPortalView.v8-specializations.test.tsx:117:28
+    115|
+    116|     fireEvent.click(await screen.findByRole('button', { name: 'SIRI' }…
+    117|     fireEvent.click(screen.getByRole('button', { name: 'Save Specializ…
+       |                            ^
+    118|
+    119|     await waitFor(() => expect(toastError).toHaveBeenCalledWith('Faile…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+
+ Test Files  12 failed | 26 passed (38)
+      Tests  8 failed | 139 passed (147)
+   Start at  15:43:05
+   Duration  13.52s (transform 17.49s, setup 9.68s, import 39.26s, tests 44.49s, environment 57.20s)
+
+JSON report written to /private/tmp/wt-p1/junit.xml
+JUNIT report written to /private/tmp/wt-p1/junit.xml
+ ❯ tests/components/partner/PartnerDashboardView.runtime-summary.test.tsx (2 tests | 1 failed) 89ms
+ ✓ tests/components/partner/PartnerProgramConfig.operator-review.test.tsx > PartnerProgramConfig operator review cutover > keeps a V8 failure visible and never falls back to legacy 187ms
+ ❯ tests/components/partner/PartnerPortalView.test.tsx (27 tests | 1 failed) 3920ms
+ ✓ tests/components/partner/day188.PartnerPortalView.projects-honesty.test.tsx > Day 188 Partner projects honest empty/error states > renders an error instead of the empty state when the governed read fails 391ms
+     ✓ renders an error instead of the empty state when the governed read fails  391ms
+ ✓ tests/components/partner/PartnerCanonicalRuntimePanel.test.tsx > PartnerCanonicalRuntimePanel > fails closed per surface and exposes no forbidden payout control 953ms
+     ✓ fails closed per surface and exposes no forbidden payout control  953ms
+ ✓ tests/components/partner/EarningsSection.day189-i18n.test.ts > day189 EarningsSection payout status i18n contract > ships failed/cancelled/unknown keys in both locales 1ms
+ ✓ tests/components/partner/EarningsSection.day189-i18n.test.ts > day189 EarningsSection payout status i18n contract > runtime label resolution (real i18next resource resolution) > renders "Nieudana" for FAILED status in Polish 8ms
+ ✓ tests/components/partner/EarningsSection.day189-i18n.test.ts > day189 EarningsSection payout status i18n contract > runtime label resolution (real i18next resource resolution) > renders "Failed" for FAILED status in English 0ms
+ ✓ tests/components/partner/PartnerStartRouter.routing.test.tsx > Start surface by persisted status > NEGATIVE CONTROL — the old routing (always acquisition) fails the earn case 5ms
+ ✓ tests/components/partner/PartnerPortalView.v8-public-listing.test.tsx > PartnerPortalView public listing V8 seam > fails closed without a legacy mutation when the governed writer fails 2205ms
+     ✓ fails closed without a legacy mutation when the governed writer fails  2205ms
+ × tests/components/partner/PartnerPortalView.v8-company-info.test.tsx > PartnerPortalView company info V8 seam > fails closed without a legacy mutation when the governed writer fails 1368ms
+ ❯ tests/components/partner/PartnerPortalView.v8-company-info.test.tsx (2 tests | 2 failed) 7225ms
+     × fails closed without a legacy mutation when the governed writer fails 1368ms
+ × tests/components/partner/PartnerPortalView.v8-regions.test.tsx > PartnerPortalView regions V8 seam > fails closed without a legacy mutation when the governed writer fails 1257ms
+ ❯ tests/components/partner/PartnerPortalView.v8-regions.test.tsx (2 tests | 2 failed) 7335ms
+     × fails closed without a legacy mutation when the governed writer fails 1257ms
+ × tests/components/partner/PartnerPortalView.v8-specializations.test.tsx > PartnerPortalView specializations V8 seam > fails closed without a legacy mutation when the governed writer fails 1352ms
+ ❯ tests/components/partner/PartnerPortalView.v8-specializations.test.tsx (2 tests | 2 failed) 8129ms
+     × fails closed without a legacy mutation when the governed writer fails 1352ms
+ FAIL  tests/components/partner/ClientAccessView.v8-clients.test.tsx [ tests/components/partner/ClientAccessView.v8-clients.test.tsx ]
+ FAIL  tests/components/partner/CommissionView.statement-continuity.test.tsx [ tests/components/partner/CommissionView.statement-continuity.test.tsx ]
+ FAIL  tests/components/partner/EarningsSection.policy-gated.test.tsx [ tests/components/partner/EarningsSection.policy-gated.test.tsx ]
+ FAIL  tests/components/partner/EarningsSection.v8-payout-request.test.tsx [ tests/components/partner/EarningsSection.v8-payout-request.test.tsx ]
+ FAIL  tests/components/partner/EarningsSection.v8-payout-settings.test.tsx [ tests/components/partner/EarningsSection.v8-payout-settings.test.tsx ]
+ FAIL  tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx [ tests/components/partner/PartnerEconomicsApprovedOut.ui.test.tsx ]
+ FAIL  tests/components/partner/ReferralToolsSection.v8-campaign-create.test.tsx [ tests/components/partner/ReferralToolsSection.v8-campaign-create.test.tsx ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯

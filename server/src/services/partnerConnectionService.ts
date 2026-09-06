@@ -3,8 +3,6 @@ import crypto from 'node:crypto';
 import { withPgTransaction } from '../database/PostgresDatabase.js';
 import { getActivePartnerOrgIdForTenantUser } from './partnerOrgResolution.js';
 
-export const PARTNER_SELF_CONNECT_ENV = 'PARTNER_SELF_CONNECT_ENABLED';
-
 export class PartnerConnectionError extends Error {
   constructor(
     message: string,
@@ -102,10 +100,7 @@ export async function connectPartnerOrganization(params: {
   contactEmail?: string;
   actorName?: string;
   actorEmail?: string;
-  env?: NodeJS.ProcessEnv;
 }): Promise<{ status: 200 | 201; data: PartnerConnectionResponse }> {
-  const env = params.env || process.env;
-
   return withPgTransaction(async (query) => {
     const authority = await query<any>(
       `SELECT role,status FROM organization_members
@@ -157,23 +152,15 @@ export async function connectPartnerOrganization(params: {
       ).rows.map((row) => row.region);
       const currentData = responseFromOrg(org, specializations, regions);
       const suppliedKey = String(params.idempotencyKey || '').trim();
-      // Flag-off is strict rollback parity: an already connected tenant is a
-      // read, even when an older/newer client happens to send a key. With the
-      // flag on, however, a supplied key is a write intent and MUST join the
-      // durable receipt path below. Returning here used to lose receipts for
+      // An already connected tenant is a READ when the caller sends no
+      // Idempotency-Key. A supplied key is a write intent and MUST join the
+      // durable receipt path below — returning here used to lose receipts for
       // existing and concurrently-created connections.
-      if (env[PARTNER_SELF_CONNECT_ENV] !== 'true' || !suppliedKey) {
+      if (!suppliedKey) {
         return { status: 200, data: currentData };
       }
     }
 
-    if (env[PARTNER_SELF_CONNECT_ENV] !== 'true') {
-      throw new PartnerConnectionError(
-        'Self-service partner registration is currently disabled.',
-        403,
-        'PARTNER_SELF_CONNECT_DISABLED'
-      );
-    }
     const idempotencyKey = String(params.idempotencyKey || '').trim();
     if (!idempotencyKey) {
       throw new PartnerConnectionError(
