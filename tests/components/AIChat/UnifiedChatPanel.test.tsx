@@ -463,6 +463,18 @@ vi.mock('../../../src/components/AIChat/V8ContextIndicator', () => ({
   V8ContextIndicator: () => <div data-testid="v8-context-indicator" />,
 }));
 
+// DEC-403 (06.09, słowo właściciela): BranchSelector/ChatSignalsPanel/
+// V8ArtifactRunControl są teraz ukryte za UKRYTE_DEC403 (src/components/
+// AIChat/czatWidocznosc.ts) do czasu Fali 2. Ten plik testuje realne
+// OKABLOWANIE tych komponentów (że nie są osierocone, finding M01-P03A) —
+// wartość tej ochrony nie zależy od tego, czy dziś są pokazane w UI, więc
+// wymuszamy stan "false" (jak przed DEC-403 / jak po odkryciu w Fali 2).
+// Osobny test kontraktu DEC-403 (czatWidocznoscDec403.contract.test.ts)
+// pilnuje, że UKRYTE_DEC403 w repo faktycznie ma wartości `true`.
+vi.mock('../../../src/components/AIChat/czatWidocznosc', () => ({
+  UKRYTE_DEC403: { galezie: false, sygnaly: false, generatorMaterialow: false },
+}));
+
 let UnifiedChatPanel: any;
 let buildCanvasContextPacket: any;
 let unifiedChatPrivate: any;
