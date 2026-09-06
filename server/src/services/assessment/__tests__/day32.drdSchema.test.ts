@@ -115,7 +115,10 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     const first = buildAssessmentDrdReportSchema(input);
     const second = buildAssessmentDrdReportSchema(input);
     expect(second).toEqual(first);
-    expect(first.sections).toHaveLength(10);
+    // 11 = streszczenie + 7 osi + wnioski końcowe + Załącznik A (rejestr luk)
+    // + Załącznik B (nota metodyczna, dodany 2026-09-06 — siódmy rozdział
+    // kontraktu DEC-46, którego dokument dotąd nie miał).
+    expect(first.sections).toHaveLength(11);
     expect(first.sections.map((section) => section.sectionId)).toEqual([
       'executive-summary',
       'axis-1',
@@ -127,6 +130,7 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
       'axis-7',
       'final-conclusions',
       'gap-register',
+      'methodology-appendix',
     ]);
     for (const section of first.sections.slice(1, 8)) {
       const headings = section.blocks
@@ -204,12 +208,21 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     (input.chapters[0].introduction as { content: string | null }).content =
       'Treść zatwierdzona w kontrakcie i zachowana bez zmian.';
     const schema = buildAssessmentDrdReportSchema(input);
-    const axisOne = JSON.stringify(
-      schema.sections.find((section) => section.sectionId === 'axis-1')
+    const axisOne = schema.sections.find((section) => section.sectionId === 'axis-1')!;
+    // 2026-09-06: pusty slot mówi to samo, ale językiem raportu, nie
+    // instrukcją redakcyjną („Sekcja do uzupełnienia — limit … słów") —
+    // patrz `placeholder()` w schema service. Wszystkie puste sloty mają
+    // dziś JEDNO zdanie, więc asercja „ten slot nie jest placeholderem" musi
+    // patrzeć na KONKRETNY blok, a nie szukać napisu w całym dokumencie.
+    const wstep = axisOne.blocks.find((block) => block.blockId === `axis-${1}-intro`);
+    const tekstWstepu = JSON.stringify(wstep ?? axisOne.blocks[0]);
+    expect(JSON.stringify(axisOne)).toContain(
+      'Treść zatwierdzona w kontrakcie i zachowana bez zmian.'
     );
-    expect(axisOne).toContain('Treść zatwierdzona w kontrakcie i zachowana bez zmian.');
-    expect(axisOne).not.toContain('Sekcja do uzupełnienia — limit 120–180 słów.');
-    expect(allText(schema)).toContain('Sekcja do uzupełnienia — limit 120–180 słów.');
+    expect(tekstWstepu).not.toContain('Brak treści w tej sekcji');
+    expect(allText(schema)).toContain(
+      'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.'
+    );
   });
 
   it('does not smuggle Metalpol, lorem ipsum, or model-generated prose into the output', () => {
@@ -223,7 +236,9 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     // assessmentDrdReportSchemaService.ts. The fixture area here is
     // `evidenceState: 'evidenced'` (assessed, just no composed narrative),
     // so the honest sentence does NOT claim "not assessed".
-    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
+    // (asercja o placeholderze sekcji usunięta 2026-09-06: puste sloty mają
+    // dziś jedno wspólne zdanie, więc obecność tego napisu w CAŁYM dokumencie
+    // nic nie mówi o komentarzu obszaru; kontrola komentarza jest w linii niżej)
     expect(text).toContain('Komentarz obszaru 1A nie został przygotowany.');
   });
 
@@ -234,7 +249,6 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     input.chapters[0].matrix.areas[0].targetLevel = null;
     input.chapters[0].matrix.areas[0].gap = null;
     const text = allText(buildAssessmentDrdReportSchema(input));
-    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
     expect(text).toContain('Obszaru 1A nie oceniono — brak danych źródłowych.');
     // DEDUP (nadzorca 2026-08-28): this sentence used to print twice for
     // every not-assessed area with no skip notice — once as the dedicated
@@ -257,7 +271,6 @@ describe('Day 32 — assessment contract to DRD document schema', () => {
     // placeholder underneath it.
     expect(text).not.toContain('nie oceniono — brak danych źródłowych');
     expect(text).not.toContain('Komentarz obszaru 1A nie został przygotowany.');
-    expect(text).not.toContain('Sekcja do uzupełnienia — limit 110–170 słów');
   });
 });
 
@@ -314,8 +327,12 @@ describe('DRD cover — regression guards for the W1–W4 fixes', () => {
 
   it('W4 — every non-Horyzont decision-line cell carries the short field limit (24 of them); Horyzont is always the honest FIX-3 sentence (8 of them)', () => {
     const schema = buildAssessmentDrdReportSchema(contract());
-    const limit = CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
-    const expected = `Sekcja do uzupełnienia — limit ${limit.minWords}–${limit.maxWords} słów.`;
+    // 2026-09-06: limit słów przestał być drukowany w treści dla klienta —
+    // slot pusty mówi to wprost zdaniem raportu. Limity nadal żyją w
+    // kontrakcie (`CONTRACT_V1_MISSING_SLOT_LIMITS`), tylko nie w pliku.
+    void CONTRACT_V1_MISSING_SLOT_LIMITS.decisionLineField;
+    const expected =
+      'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.';
     // FIX-3 (nadzorca 2026-08-28): "Horyzont" is never populated by the
     // composer (assessmentNarrativeComposer.ts always sets `horizon: null`)
     // — printing the raw editorial placeholder there is therefore not a
@@ -325,9 +342,19 @@ describe('DRD cover — regression guards for the W1–W4 fixes', () => {
     // and keep the generic placeholder when genuinely empty.
     // 7 per-axis decision tables + 1 programme-level table, 4 cells each:
     // 3 generic-placeholder cells + 1 Horyzont cell per table.
-    const genericOccurrences = allText(schema).split(expected).length - 1;
+    // 2026-09-06: zliczanie po napisie przestało rozróżniać sloty (wszystkie
+    // puste sloty mają jedno zdanie), więc liczymy STRUKTURALNIE — komórki
+    // tabel linii decyzyjnej, a nie wystąpienia napisu w całym dokumencie.
+    const komorkiLiniiDecyzyjnej = schema.sections
+      .flatMap((section) => section.blocks)
+      .filter((block) => /decision/.test(block.blockId) && block.type === 'table')
+      .flatMap((block) => (block.content as { rows: unknown[][] }).rows)
+      .map((row) => String(row[1]));
+    const genericOccurrences = komorkiLiniiDecyzyjnej.filter((cell) => cell === expected).length;
     expect(genericOccurrences).toBe(24);
-    const horizonOccurrences = allText(schema).split('Nie określono — brak źródła w danych.').length - 1;
+    const horizonOccurrences = komorkiLiniiDecyzyjnej.filter(
+      (cell) => cell === 'Nie określono — brak źródła w danych.'
+    ).length;
     expect(horizonOccurrences).toBe(8);
     for (const section of schema.sections) {
       const decision = section.blocks.find((block) => block.blockId.endsWith('-decision'));

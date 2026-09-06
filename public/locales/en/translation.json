@@ -8463,7 +8463,15 @@
       "longTerm": "Long-term (18-36 months)",
       "quickWins": "Quick Wins",
       "strategicInitiatives": "Strategic Initiatives",
-      "longTermTransformation": "Long-term Transformation"
+      "longTermTransformation": "Long-term Transformation",
+      "download": {
+        "heading": "Files to send to the client",
+        "docx": "Download report (DOCX)",
+        "pptx": "Download deck (PPTX)",
+        "pdf": "Download deck (PDF)",
+        "inProgress": "Preparing the file…",
+        "error": "Could not download the file — code: {{code}}"
+      }
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",
