@@ -20,6 +20,7 @@ vi.mock('react-i18next', async () => {
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
 }));
 
 vi.mock('../../../src/hooks/useOpenChatWithContext', () => ({
