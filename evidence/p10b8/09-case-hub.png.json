@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3103/zlecenia?ff_zlecenia=1",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nZlecenia\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nWszystkie zlecenia\nWymagają uwagi\nZakończone\nWszystkie\n0\nW toku\n0\nZablokowane\n0\nSzkic\n0\nZakończone\n0\nNie masz jeszcze żadnych zleceń\n\nZlecenie powstaje z projektu — gdy pierwsze ruszy, pojawi się tutaj razem z planem, realizacją i rezultatami.",
+ "kiedy": "2026-09-06T18:47:05.148Z"
+}

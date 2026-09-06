@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3103/ai",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAI OS\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nConsultify AI OS\nAI OS control plane\n\nOne entrypoint for manual acceptance tests of AI Actions, memory scopes, connectors, agents, artifacts and KPI/ROI governance. These modules are runtime panels, not coming-soon placeholders.\n\nManual gate checklist\n\nTest each card below and classify findings as PASS, PASS_WITH_LIMITATIONS or BLOCKED.\n\nOPEN\nAI Actions\n\nApproval, AIRun ledger, audit and rollback controls.\n\nCreate a governed AI action\nApprove or reject before execution\nVerify ledger and rollback status\nOPEN\nMemory & Scope\n\nAnna/Teresa memory, assistantScope, private mode and retention.\n\nSwitch assistant scope\nVerify org/project separation\nConfirm private mode blocks learning\nOPEN\nConnectors\n\nConnector catalog, OAuth/session lifecycle and governed connector runs.\n\nRegister or link a connector\nCheck token expiry/reconnect state\nConfirm mutating tools require AIRun\nOPEN\nAgents\n\nSpecialized agents, tool scope, schedules, notifications and eval hooks.\n\nLaunch a specialist agent\nValidate tool scope and budget gate\nProcess due schedules manually\nOPEN\nKPI/ROI & AI Ops\n\nOutcome contracts, evidence, provider health and final acceptance.\n\nCreate KPI/ROI outcome\nRegister acceptance runs/evidence\nRun final AI OS acceptance gate\nOPEN\nResearch & Artifacts\n\nDeep research sessions, evidence reports and first-class artifacts.\n\nStart a research session\nVerify citations and evidence\nMaterialize artifact output\nAI OS Build Milestones\nBuild milestones (static reference)\n\nDocumentation of the AI OS build waves and their acceptance owners — not a live health check. Each row records what was delivered and how it was accepted; the gate values are fixed reference, not a real-time runtime probe.\n\nstatic\nWAVE\n\t\nSCOPE\n\t\nGATE\n\t\nEVIDENCE\n\n\nWave 0\n\t\nRuntime truth, owners, flags, test data\n\t\nPASS\n\t\nAI OS gate report in hub\n\n\nWave 1\n\t\nUnified chat, citations, TrustBundleV1\n\t\nPASS\n\t\nchat/trust tests\n\n\nWave 2\n\t\nAnna/Teresa and voice boundaries\n\t\nPASS\n\t\nserver config and no-dead-button tests\n\n\nWave 3\n\t\nAI Actions, AIRun and audit\n\t\nPASS\n\t\nrun ledger tests and endpoint smoke\n\n\nWave 4\n\t\nResearchSession runtime\n\t\nPASS\n\t\nresearch lifecycle tests\n\n\nWave 5\n\t\nArtifact runtime\n\t\nPASS\n\t\nmutation/version/provenance tests\n\n\nWave 6\n\t\nContext and controlled learning\n\t\nPASS\n\t\nformal migration and stewardship tests\n\n\nWave 7\n\t\nConnectors and governed tools\n\t\nPASS\n\t\nACL/freshness/health/runtime binding tests\n\n\nWave 8\n\t\nAgent catalog and schedules\n\t\nPASS\n\t\nDB-backed definitions and scoped tools\n\n\nWave 9\n\t\nOutcomes, KPI/ROI and AI Ops\n\t\nPASS\n\t\nacceptance runtime tests\nV10 Frontend Runtime\nTeresa voice workspace\n\nFrontend V10 surface backed by `/api/v10/teresa/voice-config`. It exposes the runtime state instead of leaving V10 as a server-only slice.\n\nready\nVoice enabled\nyes\nvoice: Kore\nModel\ngemini-2.5-flash-native-audio-preview-09-2025\nUnavailable reason\nnone",
+ "kiedy": "2026-09-06T18:49:33.719Z"
+}

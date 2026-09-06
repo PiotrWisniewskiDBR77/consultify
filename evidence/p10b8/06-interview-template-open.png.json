@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3103/interview?tab=templates",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Customer Experience & Service",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSzablon: Customer Experience & Service\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nCustomer Experience & Service\nOpublikowany\nTemat *\nOpis\nBiblioteka\nOsobista\nOrganizacja\nDostępne formy odpowiedzi\nWszystkie formy odpowiedzi\nObszary\nWybierz obszary\nLiczba pytań\nDokładność +/-\nCzas (min)\nTryb runtime\nJedno pytanie na ekran\nStwórz ankietę z AI\n(3 pytań)\nPodgląd\nPrześlij\nDodaj pytanie\nPopraw z AI\n1.\n\nWhich customer segments matter most and what differentiates your offer for them?\n\nWymagane\nOtwarte\n2.\n\nWhere do customers experience the biggest delays or friction (order, delivery, claims, support)?\n\nWymagane\nOtwarte\n3.\n\nHow do you capture and close the loop on customer feedback (tickets, NPS, root causes)?\n\nOtwarte\n3 pytań łącznie\nAnuluj\nSprawdź jakość\nZapisz wersję roboczą\nOpublikuj",
+ "kiedy": "2026-09-06T18:45:26.234Z"
+}
