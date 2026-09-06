@@ -41,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingState } from '@/components/shared/states';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   StandardModuleBar,
   StandardPreview,
@@ -208,6 +209,9 @@ export const PartnerSettlementsView: React.FC = () => {
     { id: string; column: string; value: string; label: string }[]
   >([]);
 
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   // Preview panel — jeden aktywny podglad na zakladke (rozne encje per tab).
   const [previewCommissionId, setPreviewCommissionId] = useState<string | null>(null);
   const [previewAttributionId, setPreviewAttributionId] = useState<string | null>(null);
@@ -376,7 +380,10 @@ export const PartnerSettlementsView: React.FC = () => {
     const commission = row as unknown as PendingCommission;
     return {
       universalHandlers: {
-        preview: () => setPreviewCommissionId(commission.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setPreviewCommissionId(commission.id);
+        },
       },
       destructive: { note: 'Historical read-only under AMD-PRT-ECONOMICS-002' },
     };
@@ -493,7 +500,10 @@ export const PartnerSettlementsView: React.FC = () => {
     const attribution = row as unknown as Attribution;
     return {
       universalHandlers: {
-        preview: () => setPreviewAttributionId(attribution.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setPreviewAttributionId(attribution.id);
+        },
       },
       destructive: { note: 'Historical read-only under AMD-PRT-ECONOMICS-002' },
     };
@@ -609,7 +619,10 @@ export const PartnerSettlementsView: React.FC = () => {
     const attr = row as unknown as ExpiringAttribution;
     return {
       universalHandlers: {
-        preview: () => setPreviewExpiringId(attr.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setPreviewExpiringId(attr.id);
+        },
       },
     };
   }, []);
@@ -730,7 +743,10 @@ export const PartnerSettlementsView: React.FC = () => {
     const code = row as unknown as CodeAnalytics;
     return {
       universalHandlers: {
-        preview: () => setPreviewAnalyticsCode(code.referralCode),
+        preview: () => {
+          jedenPanel.otworz();
+          setPreviewAnalyticsCode(code.referralCode);
+        },
       },
     };
   }, []);
@@ -934,7 +950,10 @@ export const PartnerSettlementsView: React.FC = () => {
                   : 'No pending commissions to approve',
               }}
               selectedRowId={previewCommissionId}
-              onRowClick={(row) => setPreviewCommissionId(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setPreviewCommissionId(String(row.id));
+              }}
               rowMenu={commissionRowMenu}
               activeFilters={commissionFilters}
               onFilterChange={setCommissionFilters}
@@ -1066,7 +1085,10 @@ export const PartnerSettlementsView: React.FC = () => {
                   : 'Create a new attribution to link an organization with a partner',
               }}
               selectedRowId={previewAttributionId}
-              onRowClick={(row) => setPreviewAttributionId(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setPreviewAttributionId(String(row.id));
+              }}
               rowMenu={attributionRowMenu}
               activeFilters={attributionFilters}
               onFilterChange={setAttributionFilters}
@@ -1141,7 +1163,10 @@ export const PartnerSettlementsView: React.FC = () => {
                   : 'No expiring discounts in the selected timeframe',
               }}
               selectedRowId={previewExpiringId}
-              onRowClick={(row) => setPreviewExpiringId(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setPreviewExpiringId(String(row.id));
+              }}
               rowMenu={expiringRowMenu}
               persistKey="superadmin.settlements.expiring"
             />
@@ -1211,7 +1236,10 @@ export const PartnerSettlementsView: React.FC = () => {
                   : 'No code analytics data available',
               }}
               selectedRowId={previewAnalyticsCode}
-              onRowClick={(row) => setPreviewAnalyticsCode(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setPreviewAnalyticsCode(String(row.id));
+              }}
               rowMenu={analyticsRowMenu}
               persistKey="superadmin.settlements.analytics"
             />

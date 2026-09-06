@@ -23,6 +23,7 @@ import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   autonomyPolicyLabel,
   caseProfileLabel,
@@ -267,6 +268,9 @@ export const CasesListScreen: React.FC = () => {
   const [items, setItems] = useState<CaseCoreView[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failure, setFailure] = useState<CaseApiFailure | null>(null);
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const focusRestoredRef = useRef(false);
 
@@ -889,7 +893,10 @@ export const CasesListScreen: React.FC = () => {
         ],
         statusTransitions,
         universalHandlers: {
-          preview: () => setSelectedId(String(row.id)),
+          preview: () => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          },
         },
         destructive: terminal
           ? undefined
@@ -1023,7 +1030,10 @@ export const CasesListScreen: React.FC = () => {
                   columns={columns}
                   data={rows}
                   selectedRowId={selectedId}
-                  onRowClick={(row) => setSelectedId(String(row.id))}
+                  onRowClick={(row) => {
+                    jedenPanel.otworz();
+                    setSelectedId(String(row.id));
+                  }}
                   onRowDoubleClick={(row) => openCase(String(row.id))}
                   rowDescription={() => null}
                   defaultSort={{ columnId: 'aktywnosc', direction: 'desc' }}

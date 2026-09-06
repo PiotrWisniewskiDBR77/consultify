@@ -37,6 +37,7 @@ import {
 } from '@/components/standard';
 import { categoryTone } from '@/components/ui/primitives/chips';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -142,6 +143,9 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
   const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
     { id: string; column: string; value: string; label: string }[]
@@ -455,7 +459,10 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
             : []),
         ],
         universalHandlers: {
-          preview: () => setPreviewId(block.id),
+          preview: () => {
+            jedenPanel.otworz();
+            setPreviewId(block.id);
+          },
           edit: () => openEdit(block),
         },
         destructive: block.isSystem
@@ -467,7 +474,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
             },
       };
     },
-    [openEdit, deactivate, t]
+    [openEdit, deactivate, t, jedenPanel]
   );
 
   // ── Preview actions (StandardPreview) ────────────────────────────────────
@@ -551,7 +558,10 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
               onAction: searchQuery ? undefined : openCreate,
             }}
             selectedRowId={previewId}
-            onRowClick={(row) => setPreviewId(String(row.id))}
+            onRowClick={(row) => {
+              jedenPanel.otworz();
+              setPreviewId(String(row.id));
+            }}
             onRowDoubleClick={(row) => openEdit(row as unknown as BlockType)}
             rowMenu={rowMenu}
             activeFilters={activeFilters}

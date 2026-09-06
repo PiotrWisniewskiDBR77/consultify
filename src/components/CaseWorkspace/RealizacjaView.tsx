@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { StandardPreview, type StandardPreviewAction } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   caseStatusLabel,
   caseWaitStatusLabel,
@@ -457,7 +458,17 @@ export const RealizacjaView: React.FC<RealizacjaViewProps> = ({
   expert,
   onReload,
 }) => {
-  const [selection, setSelection] = useState<Selection>(null);
+  const [selection, setSelectionState] = useState<Selection>(null);
+  // DEC-397b (1.1-K6): klik wiersza po zamknięciu panelu (X) ma go ponownie
+  // otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
+  const setSelection = useCallback(
+    (next: Selection) => {
+      if (next) jedenPanel.otworz();
+      setSelectionState(next);
+    },
+    [jedenPanel]
+  );
   const wynikiKrokow = useWynikiKrokowLiczby(caseItem.caseId);
 
   // Karty trzech tabel mierzą się SAME — patrz `useAvailableWidth`. Osobne
