@@ -25,12 +25,12 @@
           "nazwa": "P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo",
           "wykonawca": "Sonnet",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "do_odbioru",
           "galaz": "mvp/p1-skrzynka-wywiad",
-          "sha": "",
-          "dowod": "worktree /private/tmp/wt-p1-skrzynka-wywiad; zlecenie z hipotezą nadzorcy do zmierzenia PRZED kodem (aside=2 przy Teresie, tabela Skrzynki <1000 px przy 1280, klik po X otwiera panel)",
-          "uwagi": "Progi: aside 1/1/0, tabela ≥1000 px, 2 ekrany × 3 szerokości + ciemny, T1–T4 z mutacją; markery 07_MY_WORK_AGENT / 02_INTERVIEW.",
-          "data": "06.09 06:25"
+          "sha": "c9a7e5bd0b",
+          "dowod": "scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440",
+          "uwagi": "Czeka na słowo właściciela na żywym ekranie stagingu (karta 2). Po drodze 3 błędy naprawione u źródła: próg nakładki, reset zakładki Teresa, Menu 3 gubiło pigułki „Teresa/Pokaż panel”. STOP zastany: Moja Praca ma własne Menu 3 poza kanonem, więc pigułka „Pokaż panel” w Skrzynce nie działa (osobne zadanie).",
+          "data": "06.09 10:05"
         },
         {
           "nr": "1.3",
