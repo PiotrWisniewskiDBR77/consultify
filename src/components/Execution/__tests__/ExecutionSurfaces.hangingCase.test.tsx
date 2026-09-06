@@ -16,8 +16,9 @@
  * ładowania, Zasoby renderują pustkę). Mutacja celuje w SAM MECHANIZM
  * ODPORNOŚCI wachlarza, nie w mapowanie danych.
  */
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render as rtlRender, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -44,6 +45,20 @@ vi.mock('@/store/useAppStore', () => ({
   useAppStore: (selector: (store: unknown) => unknown) =>
     selector({ currentUser: { id: 'user-anna' } }),
 }));
+
+/**
+ * WRAPPER TRASY (1.12-R2, 2026-09-06) — dlaczego ten plik byl CZERWONY.
+ *
+ * Powierzchnie Pracy i Zasobow renderuja `TableWithPreviewLayout`, ktore od
+ * czasu kanonu „jeden panel" wola `useJedenPanel()` -> `useLocation()`.
+ * Bez `<MemoryRouter>` React Router rzuca „useLocation() may be used only in
+ * the context of a <Router> component" i KAZDY test tego pliku pada zanim
+ * cokolwiek zmierzy. Zmierzone przed naprawa: 13 czerwonych z 19 w tej parze
+ * plikow — czyli caly bezpiecznik „wiszaca realizacja" z 05.09 byl rozbrojony,
+ * a nikt tego nie widzial, bo czerwien wygladala jak stary dlug.
+ */
+const render = (ui: React.ReactElement) =>
+  rtlRender(<MemoryRouter initialEntries={['/execution']}>{ui}</MemoryRouter>);
 
 const HANGING_CASE = 'a3e05d4a-5397-419d-b486-8e44366c0063--acceptance--execution-case';
 

@@ -8,6 +8,7 @@ import logger from '../utils/Logger.js';
 import {
   CAPACITY_POLICY,
   capacityHoursForAllocation,
+  clampAllocationPercent,
   utilizationPercent,
 } from './capacityPolicy.js';
 
@@ -594,6 +595,190 @@ export interface CapacityTimelineWeek {
   utilizationPercent: number;
 }
 
+/**
+ * PLAN ZASOBOW: osoba x tydzien -> popyt / podaz / obłozenie / luka.
+ *
+ * DLACZEGO ISTNIEJE (1.12-R2, pomiar 2026-09-06 na bazie stanowiska, org DBR77):
+ * `getCapacityTimeline()` NIZEJ liczy podaz jako
+ * `COUNT(DISTINCT user_id) FROM initiative_resources * 40 h`. W DBR77
+ * `initiative_resources` ma 0 wierszy i `project_members` ma 0 wierszy, wiec
+ * `capacityHours = 0` w kazdym z 12 tygodni, oblozenie 0 %, a kafel „Obłozenie"
+ * w Kokpicie pokazuje „—". Popyt JEST (84 zadania, 84 z `estimated_hours`,
+ * 81 z osoba) — brakowalo wylacznie strony podazy.
+ *
+ * ZRODLO PODAZY (decyzja wlasciciela, plan 1.12 C5 pyt. 2): etat z PROFILU
+ * OSOBY — `users.weekly_capacity_hours` x `users.availability_percent`
+ * (migracja 20262103). NULL = nikt nie ustawil -> polityka 40 h x 100 %.
+ * Rejestr `initiative_resources` zostaje przydzialem do inicjatywy, nie etatem.
+ *
+ * OKNO: `weeks` tygodni od poniedzialku biezacego tygodnia. Zadania z terminem
+ * PRZED oknem (zalegle) wchodza do PIERWSZEGO tygodnia — bo one nadal zjadaja
+ * czyjs czas; ukrycie ich zanizaloby oblozenie dokladnie tam, gdzie boli.
+ * Zadania BEZ terminu nie sa przypisywane do zadnego tygodnia (raportowane
+ * osobno jako `backlogHours`), bo zgadywanie tygodnia bylo fabrykowaniem danych.
+ */
+export interface ResourcePlanRow {
+  userId: string;
+  name: string;
+  role: string;
+  weekStart: string;
+  demandHours: number;
+  supplyHours: number;
+  utilizationPercent: number;
+  gapHours: number;
+  overdueHours: number;
+  taskCount: number;
+  supplySource: 'PROFIL' | 'DOMYSLNA';
+}
+
+export interface ResourcePlan {
+  asOf: string;
+  weeks: string[];
+  rows: ResourcePlanRow[];
+  people: Array<{
+    userId: string;
+    name: string;
+    role: string;
+    weeklyCapacityHours: number;
+    availabilityPercent: number;
+    supplySource: 'PROFIL' | 'DOMYSLNA';
+    backlogHours: number;
+  }>;
+}
+
+interface ResourcePlanPersonRow {
+  user_id: string;
+  name: string;
+  role: string | null;
+  weekly_capacity_hours: number | string | null;
+  availability_percent: number | null;
+}
+
+const CLOSED_TASK_STATUSES = "('done','completed','validated','cancelled')";
+
+export async function getExecutionResourcePlan(
+  orgId: string,
+  options?: { weeks?: number }
+): Promise<ResourcePlan> {
+  const weekCount = Math.min(26, Math.max(1, Number(options?.weeks) || 8));
+  const firstMonday = getMonday(new Date());
+  const weeks: string[] = [];
+  for (let w = 0; w < weekCount; w += 1)
+    weeks.push(formatDate(getMonday(new Date(firstMonday.getTime() + w * 7 * 24 * 60 * 60 * 1000))));
+  const windowEnd = new Date(firstMonday.getTime() + weekCount * 7 * 24 * 60 * 60 * 1000);
+
+  const taskRows = await DbPromise.all<{
+    user_id: string;
+    due_date: string | Date | null;
+    hours: number | string | null;
+  }>(
+    `SELECT assignee_id AS user_id, due_date, COALESCE(estimated_hours, 0) AS hours
+       FROM tasks
+      WHERE organization_id = ? AND assignee_id IS NOT NULL
+        AND LOWER(COALESCE(status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
+    [orgId]
+  );
+  const userIds = [...new Set(taskRows.map((row) => String(row.user_id)))];
+  if (userIds.length === 0)
+    return { asOf: new Date().toISOString(), weeks, rows: [], people: [] };
+
+  const placeholders = userIds.map(() => '?').join(',');
+  // Kolumny etatu przyszly migracja 20262103. Na bazie, ktora jej jeszcze nie
+  // ma (starszy zrzut, atrapa testowa), NIE udajemy ze podaz jest zerowa —
+  // czytamy sama tozsamosc i podstawiamy polityke 40 h x 100 %.
+  let personRows: ResourcePlanPersonRow[] = [];
+  const identitySql = `SELECT u.id AS user_id, ${displayNameSql('u', 'u.id')} AS name,`;
+  try {
+    personRows = await DbPromise.all<ResourcePlanPersonRow>(
+      `${identitySql}
+              COALESCE(u.job_title, u.title) AS role,
+              u.weekly_capacity_hours, u.availability_percent
+         FROM users u
+        WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
+      [orgId, ...userIds]
+    );
+  } catch (err) {
+    logIfNotSilenceableMissingRelation('getExecutionResourcePlan: profile columns', err, { orgId });
+    personRows = (
+      await DbPromise.all<{ user_id: string; name: string }>(
+        `${identitySql} '' AS role FROM users u
+          WHERE u.organization_id = ? AND u.id IN (${placeholders})`,
+        [orgId, ...userIds]
+      )
+    ).map((row) => ({ ...row, role: null, weekly_capacity_hours: null, availability_percent: null }));
+  }
+  const byId = new Map(personRows.map((row) => [String(row.user_id), row]));
+
+  const demand = new Map<string, number>();
+  const counts = new Map<string, number>();
+  const overdue = new Map<string, number>();
+  const backlog = new Map<string, number>();
+  for (const row of taskRows) {
+    const userId = String(row.user_id);
+    if (!byId.has(userId)) continue;
+    const hours = Number(row.hours) || 0;
+    if (!row.due_date) {
+      backlog.set(userId, (backlog.get(userId) || 0) + hours);
+      continue;
+    }
+    const due = row.due_date instanceof Date ? row.due_date : new Date(String(row.due_date));
+    if (Number.isNaN(due.getTime())) {
+      backlog.set(userId, (backlog.get(userId) || 0) + hours);
+      continue;
+    }
+    if (due.getTime() >= windowEnd.getTime()) continue;
+    const isOverdue = due.getTime() < firstMonday.getTime();
+    const bucket = isOverdue ? weeks[0] : formatDate(getMonday(due));
+    if (!weeks.includes(bucket)) continue;
+    const key = `${userId}|${bucket}`;
+    demand.set(key, (demand.get(key) || 0) + hours);
+    counts.set(key, (counts.get(key) || 0) + 1);
+    if (isOverdue) overdue.set(key, (overdue.get(key) || 0) + hours);
+  }
+
+  const people: ResourcePlan['people'] = [];
+  const rows: ResourcePlanRow[] = [];
+  for (const userId of userIds) {
+    const person = byId.get(userId);
+    if (!person) continue;
+    const rawHours = person.weekly_capacity_hours;
+    const rawPercent = person.availability_percent;
+    const supplySource: 'PROFIL' | 'DOMYSLNA' =
+      rawHours === null || rawHours === undefined ? 'DOMYSLNA' : 'PROFIL';
+    const weeklyCapacityHours =
+      supplySource === 'PROFIL' ? Number(rawHours) : CAPACITY_POLICY.weeklyHoursPerFte;
+    const availability = clampAllocationPercent(rawPercent ?? 100);
+    const supply = round1((weeklyCapacityHours * availability) / 100);
+    people.push({
+      userId,
+      name: String(person.name || userId),
+      role: String(person.role || ''),
+      weeklyCapacityHours: round1(weeklyCapacityHours),
+      availabilityPercent: availability,
+      supplySource,
+      backlogHours: round1(backlog.get(userId) || 0),
+    });
+    for (const weekStart of weeks) {
+      const key = `${userId}|${weekStart}`;
+      const demandHours = round1(demand.get(key) || 0);
+      rows.push({
+        userId,
+        name: String(person.name || userId),
+        role: String(person.role || ''),
+        weekStart,
+        demandHours,
+        supplyHours: supply,
+        utilizationPercent: utilizationPercent(demandHours, supply),
+        gapHours: round1(supply - demandHours),
+        overdueHours: round1(overdue.get(key) || 0),
+        taskCount: counts.get(key) || 0,
+        supplySource,
+      });
+    }
+  }
+  return { asOf: new Date().toISOString(), weeks, rows, people };
+}
+
 export async function getCapacityTimeline(
   orgId: string,
   initiativeId?: string,
@@ -685,6 +870,7 @@ export async function getCapacityTimeline(
 
 export default {
   getCapacityOverview,
+  getExecutionResourcePlan,
   getUserForecast,
   getOverloadAlerts,
   getInitiativeCapacity,

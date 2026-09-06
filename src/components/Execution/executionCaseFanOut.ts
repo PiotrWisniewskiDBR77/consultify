@@ -40,10 +40,62 @@ class ExecutionCaseTimeoutError extends Error {
   }
 }
 
+/**
+ * TEN SAM limit i TEN SAM abort dla POJEDYNCZEJ realizacji.
+ *
+ * POWOD (pomiar 1.12-R2, 2026-09-06): `ExecutionResourcesSurface.load(id)`
+ * — wybor jednej realizacji z listy Menu 2 — robil goly
+ * `Promise.all([readExecutionCase, readOperationalAllocations, readExecutionWork])`
+ * BEZ signalu i BEZ limitu. Wachlarz powyzej chronil tylko sciezke „wszystkie
+ * realizacje"; klikniecie w wiszaca realizacje przywracalo defekt w calosci
+ * (`useDeferredLoading` po 15 s pokazywal `ErrorState variant="timeout"`,
+ * a wiszacy fetch zostawal otwarty).
+ *
+ * KONTRAKT: zwraca wynik albo rzuca po `timeoutMs`, przerywajac realne
+ * zadania sygnalem — wolajacy odroznia „nie odpowiada" od „blad".
+ */
+export async function loadExecutionCaseWithTimeout<T>(
+  caseId: string,
+  loadOne: (signal: AbortSignal) => Promise<T>,
+  options?: { timeoutMs?: number }
+): Promise<T> {
+  const timeoutMs = options?.timeoutMs ?? EXECUTION_CASE_FANOUT_TIMEOUT_MS;
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const guard = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new ExecutionCaseTimeoutError(caseId, timeoutMs));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([loadOne(controller.signal), guard]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export const isExecutionCaseTimeout = (error: unknown) =>
+  error instanceof Error && error.name === 'ExecutionCaseTimeoutError';
+
+/**
+ * `onCaseSettled` — RENDER PRZYROSTOWY (1.12-R2, 2026-09-06).
+ *
+ * Sam wachlarz konczy sie dopiero, gdy zamknie sie NAJWOLNIEJSZA realizacja
+ * (`Promise.all`), czyli przy wiszacej realizacji po pelnych 12 sekundach.
+ * Zmierzony skutek: pierwszy wiersz tabeli pojawial sie po 12 s, mimo ze
+ * dane pozostalych realizacji lezaly gotowe po ~200 ms. Ten callback wola sie
+ * PO KAZDEJ realizacji z osobna, wiec wolajacy moze pokazac to, co juz ma.
+ */
+export interface ExecutionCaseFanOutOptions<T> {
+  timeoutMs?: number;
+  onCaseSettled?: (entry: { caseId: string; ok: boolean; items: T[] }) => void;
+}
+
 export async function fanOutExecutionCases<T>(
   cases: ReadonlyArray<{ executionCaseId: string }>,
   loadOne: (executionCase: any, signal: AbortSignal) => Promise<T[]>,
-  options?: { timeoutMs?: number }
+  options?: ExecutionCaseFanOutOptions<T>
 ): Promise<ExecutionCaseFanOutResult<T>> {
   const timeoutMs = options?.timeoutMs ?? EXECUTION_CASE_FANOUT_TIMEOUT_MS;
   const settled = await Promise.all(
@@ -59,9 +111,13 @@ export async function fanOutExecutionCases<T>(
       });
       try {
         const items = await Promise.race([loadOne(executionCase, controller.signal), guard]);
-        return { ok: true as const, caseId, items: items ?? [] };
+        const settledEntry = { ok: true as const, caseId, items: items ?? [] };
+        options?.onCaseSettled?.(settledEntry);
+        return settledEntry;
       } catch {
-        return { ok: false as const, caseId, items: [] as T[] };
+        const settledEntry = { ok: false as const, caseId, items: [] as T[] };
+        options?.onCaseSettled?.(settledEntry);
+        return settledEntry;
       } finally {
         if (timer !== undefined) clearTimeout(timer);
       }

@@ -1,0 +1,37 @@
+      Tests  13 failed | 6 passed (19)
+     × creates a canonical Milestone with exact Case and Handoff baseline versions 
+     × keeps Resources fail-closed and retries the canonical case register 
+     × keeps Work fail-closed and retries the canonical case register 
+     × keeps allocation simulation pure and exposes literal EVIDENCE_MISSING 
+     × liczniki Menu 3 dostają realne liczby, a nie zera 
+     × loads Task projection by stable executionCaseId and opens preview with keyboard 
+     × nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 
+     × nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 
+     × nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 
+     × opens Allocation preview on single click and workspace on double click 
+     × pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 
+     × pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 
+     × tłumaczy IN_PROGRESS zamiast pokazywać surowy status 
+     ✓ przed 300  milczy, a od 300 ms renderuje ruchomy szkielet tabeli 23ms
+     ✓ przed 300  milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 6ms
+ Test Files  2 failed | 1 passed (3)
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status 
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > creates a canonical Milestone with exact Case and Handoff baseline versions 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps Resources fail-closed and retries the canonical case register 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps Work fail-closed and retries the canonical case register 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps allocation simulation pure and exposes literal EVIDENCE_MISSING 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > loads Task projection by stable executionCaseId and opens preview with keyboard 
+ × tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > opens Allocation preview on single click and workspace on double click 
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > przed 300  milczy, a od 300 ms renderuje ruchomy szkielet tabeli 23ms
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > przed 300  milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 6ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts (4 tests) 
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > nie zgłasza nikogo, gdy wszystkie realizacje odpowiadają 
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > niesie identyfikatory realizacji, których nie udało się pobrać 
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > przerywa wiszące żądanie sygnałem abort (nie zostawia wiszącego fetcha) 
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > zwraca wiersze pozostałych realizacji, gdy jedna nie odpowiada NIGDY 

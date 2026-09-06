@@ -13700,10 +13700,14 @@
     },
     "resources": {
       "columns": {
-        "person": "Person / team / role",
+        "person": "Person / role",
+        "week": "Week",
+        "supply": "Supply (h)",
+        "utilization": "Utilisation %",
+        "gap": "Gap (h)",
         "period": "Period",
         "availability": "Availability",
-        "demand": "Allocated",
+        "demand": "Demand (h)",
         "remaining": "Remaining",
         "load": "Load range",
         "skillMatch": "Skill match",
@@ -13714,7 +13718,8 @@
         "nextAction": "Next action"
       },
       "actions": {
-        "proposeAllocation": "Propose allocation"
+        "proposeAllocation": "Propose allocation",
+        "addAvailability": "Add availability"
       }
     }
   },

@@ -1,4 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExecutionWorkSurface } from '../../../src/components/Execution/ExecutionWorkSurface';
 import { ExecutionResourcesSurface } from '../../../src/components/Execution/ExecutionResourcesSurface';
@@ -11,6 +13,20 @@ import {
   readOperationalAllocations,
   simulateOperationalAllocation,
 } from '../../../src/services/initiatives-execution/runtimeApi';
+/**
+ * WRAPPER TRASY (1.12-R2, 2026-09-06) — dlaczego ten plik byl CZERWONY.
+ *
+ * Powierzchnie Pracy i Zasobow renderuja `TableWithPreviewLayout`, ktore od
+ * czasu kanonu „jeden panel" wola `useJedenPanel()` -> `useLocation()`.
+ * Bez `<MemoryRouter>` React Router rzuca „useLocation() may be used only in
+ * the context of a <Router> component" i KAZDY test tego pliku pada zanim
+ * cokolwiek zmierzy. Zmierzone przed naprawa: 13 czerwonych z 19 w tej parze
+ * plikow — czyli caly bezpiecznik „wiszaca realizacja" z 05.09 byl rozbrojony,
+ * a nikt tego nie widzial, bo czerwien wygladala jak stary dlug.
+ */
+const render = (ui: React.ReactElement) =>
+  rtlRender(<MemoryRouter initialEntries={['/execution']}>{ui}</MemoryRouter>);
+
 vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
   listExecutionCases: vi.fn(),
   createExecutionMilestone: vi.fn(),

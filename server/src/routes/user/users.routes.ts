@@ -225,4 +225,99 @@ router.delete(
   })
 );
 
+/**
+ * ETAT OSOBY — jedna liczba, ktora czyni oblozenie policzalnym (1.12-R2).
+ *
+ * DLACZEGO TUTAJ, A NIE W /api/execution-control:
+ * `/api/execution-control` jest zamontowane za `requireCanonicalExecutionWriter`
+ * (decyzja 26A) — kazdy zapis inny niz GET dostaje 409, bo pisarzem pracy
+ * realizacyjnej ma byc Runtime-v1. Etat NIE JEST praca realizacyjna, tylko
+ * atrybutem PROFILU OSOBY (plan 1.12 C5 pyt. 2: „etat z profilu, jedna
+ * edytowalna liczba na osobe”), wiec pisze sie go tam, gdzie mieszka profil.
+ *
+ * Kontrakt: 0–80 h/tydz. i 0–100 % dostepnosci; `null` kasuje ustawienie
+ * i przywraca polityke domyslna (40 h x 100 %) — dzieki temu „ustawione recznie
+ * 40" nadal rozni sie od „nikt nie pytal".
+ */
+router.patch(
+  '/:id/capacity',
+  verifyToken,
+  requireMembershipForDelegatedUserUpdate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { id } = req.params;
+    const actorRole = String(req.user?.role || '').toUpperCase();
+    if (
+      String(req.user?.id || '') !== String(id) &&
+      !['ADMIN', 'SUPERADMIN', 'OWNER'].includes(actorRole)
+    )
+      return res.status(403).json({ error: 'Not authorized to change capacity for this user' });
+
+    const rawHours = (req.body ?? {}).weeklyCapacityHours;
+    const rawPercent = (req.body ?? {}).availabilityPercent;
+    const parseOptional = (value: unknown, max: number) => {
+      if (value === null) return { ok: true as const, value: null };
+      if (value === undefined) return { ok: true as const, value: undefined };
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0 || parsed > max)
+        return { ok: false as const, value: undefined };
+      return { ok: true as const, value: parsed };
+    };
+    const hours = parseOptional(rawHours, 80);
+    const percent = parseOptional(rawPercent, 100);
+    if (!hours.ok || !percent.ok)
+      return res.status(400).json({
+        error: 'weeklyCapacityHours must be 0–80, availabilityPercent must be 0–100',
+        code: 'USER_CAPACITY_OUT_OF_RANGE',
+      });
+    if (hours.value === undefined && percent.value === undefined)
+      return res.status(400).json({ error: 'Nothing to update', code: 'USER_CAPACITY_EMPTY' });
+
+    const owner = await dbGet<{ id: string; organization_id: string }>(
+      'SELECT id, organization_id FROM users WHERE id = ?',
+      [id]
+    );
+    if (!owner) return res.status(404).json({ error: 'User not found' });
+    // Granica najemcy: nie wolno ustawiac etatu osobie z innej organizacji.
+    if (
+      actorRole !== 'SUPERADMIN' &&
+      String(owner.organization_id || '') !== String(req.user?.organizationId || '')
+    )
+      return res.status(403).json({ error: 'Not authorized to change capacity for this user' });
+
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    if (hours.value !== undefined) {
+      sets.push('weekly_capacity_hours = ?');
+      params.push(hours.value);
+    }
+    if (percent.value !== undefined) {
+      sets.push('availability_percent = ?');
+      params.push(percent.value);
+    }
+    const result = await dbRun(
+      `UPDATE users SET ${sets.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [...params, id],
+      { fallback: false }
+    );
+    if (!result.success)
+      return res
+        .status(500)
+        .json({ error: result.error || 'Failed to update capacity', code: 'USER_CAPACITY_FAILED' });
+
+    // Odczyt zwrotny z bazy — nie odsylamy tego, co przyszlo w zadaniu.
+    const saved = await dbGet<{
+      weekly_capacity_hours: number | string | null;
+      availability_percent: number | null;
+    }>('SELECT weekly_capacity_hours, availability_percent FROM users WHERE id = ?', [id]);
+    return res.json({
+      userId: id,
+      weeklyCapacityHours:
+        saved?.weekly_capacity_hours === null || saved?.weekly_capacity_hours === undefined
+          ? null
+          : Number(saved.weekly_capacity_hours),
+      availabilityPercent: saved?.availability_percent ?? null,
+    });
+  })
+);
+
 export default router;

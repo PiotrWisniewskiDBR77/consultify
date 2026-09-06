@@ -13186,10 +13186,14 @@
     },
     "resources": {
       "columns": {
-        "person": "Osoba / zespół / rola",
+        "person": "Osoba / rola",
+        "week": "Tydzień",
+        "supply": "Podaż (h)",
+        "utilization": "Obłożenie %",
+        "gap": "Luka (h)",
         "period": "Okres",
         "availability": "Dostępność",
-        "demand": "Przydzielone",
+        "demand": "Popyt (h)",
         "remaining": "Pozostałe",
         "load": "Zakres obciążenia",
         "skillMatch": "Dopasowanie",
@@ -13200,7 +13204,8 @@
         "nextAction": "Następne działanie"
       },
       "actions": {
-        "proposeAllocation": "Zaproponuj przydział"
+        "proposeAllocation": "Zaproponuj przydział",
+        "addAvailability": "Dodaj dostępność"
       }
     }
   },

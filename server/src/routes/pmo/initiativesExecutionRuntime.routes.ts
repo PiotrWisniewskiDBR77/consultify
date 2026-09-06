@@ -4078,20 +4078,34 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
         return;
       }
+      // 1.12-R2 (2026-09-06): TA LISTA BYLA N+1. Stala tu sekwencyjna petla
+      // `for (const item of cases) { await findById(); await authorize(); }`,
+      // czyli 1 + N zapytan odpalanych jedno po drugim. Zakladka Zasoby liczy
+      // swoj limit 12 s na realizacje DOPIERO po tej liscie, wiec kazda
+      // sekunda tutaj przesuwa caly ekran w strone szkieletu na zawsze.
+      // Teraz: 1 zapytanie o realizacje + 1 zbiorcze o inicjatywy
+      // (`listInitiativesByIds`) + autoryzacja per UNIKALNY projekt, rownolegle.
       const cases = await deps.reader.listExecutionCases(actor.organizationId);
-      const visible = [];
-      for (const item of cases) {
-        const initiative = await deps.reader.findById(actor.organizationId, item.initiativeId);
-        if (
-          initiative &&
-          (await deps.authorize(actor, initiative.initiative.projectId, 'initiative.view'))
+      const initiatives = await deps.reader.listInitiativesByIds(
+        actor.organizationId,
+        cases.map((item) => item.initiativeId)
+      );
+      const decisions = await authorizeProjectsMap(
+        actor,
+        [...initiatives.values()].map((entry) => entry.initiative.projectId),
+        'initiative.view'
+      );
+      const visible = cases
+        .map((item) => ({ item, initiative: initiatives.get(item.initiativeId) }))
+        .filter(
+          (entry) =>
+            entry.initiative && decisions.get(entry.initiative.initiative.projectId) === true
         )
-          // EXE-1 (G14 05-08, 2026-09-03): the "Wybierz realizację" dropdown
-          // (ExecutionReportsSurface.tsx) used to render the raw
-          // executionCaseId — the initiative name was already loaded here
-          // for the authorize() check above, just never sent to the client.
-          visible.push({ ...item, initiativeTitle: initiative.initiative.title });
-      }
+        // EXE-1 (G14 05-08, 2026-09-03): the "Wybierz realizację" dropdown
+        // (ExecutionReportsSurface.tsx) used to render the raw
+        // executionCaseId — the initiative name was already loaded here
+        // for the authorize() check above, just never sent to the client.
+        .map((entry) => ({ ...entry.item, initiativeTitle: entry.initiative!.initiative.title }));
       res.json({ cases: visible });
     })
   );

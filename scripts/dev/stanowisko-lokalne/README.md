@@ -135,6 +135,31 @@ Wnioski Audytow sa puste i nie da sie ich odebrac wzrokiem.
 
 Usuniecie (gdyby dane mialy zniknac): `DELETE /api/audits/programs/<id>` plus
 `DELETE FROM conclusions WHERE id='fd00dd4c-…'`.
+### Realizacja › Zasoby — podaż godzin (1.12-R2, 06.09)
+
+Migracja `20262103_users_weekly_capacity_hours.sql` dodała do `users` dwie
+kolumny: `weekly_capacity_hours` i `availability_percent` (obie NULLable;
+NULL = „nikt nie ustawił" i serwis podstawia 40 h × 100 %). Endpoint
+`GET /api/execution-control/capacity/resource-plan?weeks=8` liczy z nich
+podaż, a popyt bierze z `tasks.estimated_hours`.
+
+**Dane pokazowe stanowiska (ustawione ręcznie, nie seedem):**
+
+| Osoba | Ustawienie | Po co |
+|------|------------|-------|
+| Marta Kamińska (`5009e749-…`) | `weekly_capacity_hours = 40`, `availability_percent = 50` | pół etatu — żeby kolumna „Podaż (h)" nie była jednakowa we wszystkich wierszach i żeby widać było różnicę „z profilu" vs „domyślna" |
+
+Ustawienie z powrotem na domyślne:
+`PATCH /api/users/<id>/capacity` z `{"weeklyCapacityHours":null,"availabilityPercent":null}`.
+
+**Czego NIE DA SIĘ dziś utworzyć (zmierzone 06.09):** realizacji
+(`ie_aggregate_state.aggregate_type='execution_case'`) — w DBR77 jest ich 0.
+Łańcuch kanoniczny to inicjatywa → decyzja harmonogramu (żądanie + zgoda)
+→ pakiet handoffu → żądanie handoffu → akcept handoffu → realizacja, a
+`scheduleDecision.ts:194` i `:308` wymagają, żeby **zatwierdzający był INNĄ
+osobą niż wnioskujący** (`policy.config.selfApproval = false`), i to przy
+obu bramkach. Jednym kontem nie da się przejść tej ścieżki — potrzebne są dwa
+zalogowane konta w tej organizacji.
 
 ### Jak dodać seed
 
