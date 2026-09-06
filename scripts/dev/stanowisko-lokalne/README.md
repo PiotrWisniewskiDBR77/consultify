@@ -137,3 +137,6 @@ env: `DB_TYPE=postgres NODE_ENV=development CI=true DOTENV_DISABLED=1 DATABASE_U
 - `seed-dbr77-fill-all-tables.ts` — wyłącznie SQLite, nie działa tu.
 - `seed-apator-organization.ts` i `build-demo-dataset.ts` zakładają **osobne**
   organizacje (Apator / Atelier Toys) — audytor zalogowany jako DBR77 ich nie zobaczy.
+
+## Typ organizacji (06.09)
+Organizacja DBR77 na lokalnej bazie ma `organization_type=PAID` (jak org właściciela na stagingu `a3e05d4a…`). Z `TRIAL` strażnik `highRiskSurfaceGuard` blokuje eksporty (403 `TRIAL_EXPORT_DISABLED`) i audyty meldują fałszywy bloker (host harnessu ≠ produkt). Po odtworzeniu bazy od zera: `UPDATE organizations SET organization_type='PAID' WHERE name='DBR77';`
