@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3143/assessment?tab=processes",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Procesy"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nOcena\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nBiblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nWszystkie\n2\nNowa ocena\nWszystkie\n2\nSzkic\n1\nW przeglądzie\n0\nOczekuje na zatwierdzenie\n0\nZatwierdzony\n1\nOdrzucony\n0\nZarchiwizowany\n0\nAI Triaż\n\t\nNAZWA OCENY\n\t\nJEDNOSTKA\n\t\nSTATUS\n\t\nWYNIK\n\t\nPEWNOŚĆ\n\t\nWŁAŚCICIEL\n\t\nAKTUALIZACJA\n\t\n\n\t\nADMA — Digital Maturity Assessment\n\t\n—\n\t\nSzkic\n\t\n—\n\t\n3%\n\t\nAudyt Nocny\n\tPrzed chwilą\t\n\n\t\nSIRI — Industry 4.0 Readiness\n\t\n—\n\t\nZatwierdzone\n\t\n—\n\t\n3%\n\t\nAudyt Nocny\n\tPrzed chwilą\t",
+ "kiedy": "2026-09-06T12:45:36.629Z"
+}
