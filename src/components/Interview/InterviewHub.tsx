@@ -121,7 +121,6 @@ import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
-import { isInterviewPipelineStepperEnabled } from '@/utils/interviewPipelineStepperFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 import {
   formatPresentationCount,
@@ -160,7 +159,6 @@ import {
   InterviewInsightPreviewBody,
   InterviewInsightPreviewFooter,
 } from './InterviewInsightPreview';
-import { type InterviewPipelineStep, InterviewPipelineStepper } from './InterviewPipelineStepper';
 import {
   InterviewSessionPreviewBody,
   InterviewSessionPreviewFooter,
@@ -219,43 +217,6 @@ const ASSIGNMENT_STATUS_OPTION_ORDER = [
   'rejected',
   'accepted',
 ];
-
-// L-07 / D-03 — canonical pipeline stage numerals ①–⑥ over the flat tabs.
-// Sessions has no numeral (side view). Numerals themselves are computed
-// dynamically per visible-stage-set by `buildInterviewPipelineNumerals`
-// below (RV-011) rather than a static id→numeral map, so hiding a stage
-// never produces a gap in the sequence.
-// Pipeline stage order (left→right) for the D-03 stepper.
-const INTERVIEW_PIPELINE_STAGE_ORDER = [
-  'templates',
-  'managed',
-  'my_assignments',
-  'pending_review',
-  'insights',
-  'initiatives',
-] as const;
-
-// RV-011 — the static INTERVIEW_PIPELINE_NUMERAL map above assigns each
-// stage a FIXED numeral by id. When a stage is hidden (pending_review is
-// flag-gated OFF by default), the visible tab row skipped straight from ③ to
-// ⑤ — a numbered sequence that looks broken rather than intentional. Assign
-// numerals densely, in canonical order, over only the stages that are
-// actually visible right now, so the numbering the user sees is always a
-// continuous run starting at ①.
-const CIRCLED_PIPELINE_NUMERALS = ['①', '②', '③', '④', '⑤', '⑥'];
-
-function buildInterviewPipelineNumerals(
-  visibleStageIds: readonly string[]
-): Record<string, string> {
-  const numerals: Record<string, string> = {};
-  const visibleInCanonicalOrder = INTERVIEW_PIPELINE_STAGE_ORDER.filter((id) =>
-    visibleStageIds.includes(id)
-  );
-  visibleInCanonicalOrder.forEach((id, idx) => {
-    numerals[id] = CIRCLED_PIPELINE_NUMERALS[idx] ?? String(idx + 1);
-  });
-  return numerals;
-}
 
 // (Sessions/Templates/Assignments/Initiatives column-visibility + width
 // defaults + persistence keys + hidden-columns/boolean-setting/column-width
@@ -2274,28 +2235,6 @@ export const InterviewHub: React.FC = () => {
   // break the role-scoped chip rows + bulk actions below. Keep them distinct.
   // Manager (PM/ADMIN): wszystkie zakładki
   const tabs = useMemo(() => {
-    // L-07 / SPEC_13 §5.4 — surface the module as a numbered pipeline ①–⑥ by
-    // prefixing each tab with its canonical stage number. The pipeline sequence
-    // is: ① Szablony → ② Przydzielone → ③ Inbox (wypełnienie) → ④ Dopuszczenie
-    // (review happens inside Przydzielone/Inbox) → ⑤ Wnioski → ⑥ Inicjatywy.
-    // PREVIEW: the numbering is an advisory ordering over the existing flat tabs;
-    // a dedicated ④ "Dopuszczenie" inbox is not yet a standalone backed view, so
-    // the review stage is reached via the Przydzielone tab's approve/send-back.
-    // RV-011 — numerals are dense over the stages actually visible right now
-    // (permissions + the pending_review flag), never a fixed id→numeral map,
-    // so the tab row never skips a number.
-    const visiblePipelineStageIds = INTERVIEW_PIPELINE_STAGE_ORDER.filter((id) => {
-      if (id === 'templates') return canViewTemplates;
-      if (id === 'managed') return canViewManaged;
-      if (id === 'my_assignments') return true;
-      if (id === 'pending_review') return canViewInsights && isInterviewPendingReviewTabEnabled();
-      if (id === 'insights' || id === 'initiatives') return canViewInsights;
-      return false;
-    });
-    const pipelineNumerals = buildInterviewPipelineNumerals(visiblePipelineStageIds);
-    const withStep = (id: string, label: string): string =>
-      pipelineNumerals[id] ? `${pipelineNumerals[id]} ${label}` : label;
-
     const baseTabs: Array<{
       id: ModuleTab;
       label: string;
@@ -2304,7 +2243,7 @@ export const InterviewHub: React.FC = () => {
     }> = [
       {
         id: 'my_assignments' as ModuleTab,
-        label: withStep('my_assignments', t('interview.hub.inbox', 'Inbox')),
+        label: t('interview.hub.inbox', 'Inbox'),
         icon: <Inbox size={16} />,
         count: myAssignments.filter((a) => a.status !== 'approved' && a.status !== 'completed')
           .length,
@@ -2321,7 +2260,7 @@ export const InterviewHub: React.FC = () => {
 
       baseTabs.push({
         id: 'managed' as ModuleTab,
-        label: withStep('managed', t('interview.hub.assigned')),
+        label: t('interview.hub.assigned'),
         icon: <ClipboardList size={16} />,
         count: managedAssignments.length,
       });
@@ -2330,7 +2269,7 @@ export const InterviewHub: React.FC = () => {
     if (canViewTemplates) {
       baseTabs.push({
         id: 'templates' as ModuleTab,
-        label: withStep('templates', t('interview.hub.templates')),
+        label: t('interview.hub.templates'),
         icon: <FileText size={16} />,
         count: templates.length,
       });
@@ -2346,7 +2285,7 @@ export const InterviewHub: React.FC = () => {
       if (isInterviewPendingReviewTabEnabled()) {
         baseTabs.push({
           id: 'pending_review' as ModuleTab,
-          label: withStep('pending_review', t('interview.hub.pendingReview2')),
+          label: t('interview.hub.pendingReview2'),
           icon: <CheckCircle2 size={16} />,
           count: pendingReviewInsights.length,
         });
@@ -2354,14 +2293,14 @@ export const InterviewHub: React.FC = () => {
 
       baseTabs.push({
         id: 'insights' as ModuleTab,
-        label: withStep('insights', t('interview.hub.insights')),
+        label: t('interview.hub.insights'),
         icon: <Lightbulb size={16} />,
         count: insights.length,
       });
 
       baseTabs.push({
         id: 'initiatives' as ModuleTab,
-        label: withStep('initiatives', t('interview.hub.initiatives')),
+        label: t('interview.hub.initiatives'),
         icon: <Rocket size={16} />,
         count: interviewInitiativeStats.total,
       });
@@ -2385,23 +2324,6 @@ export const InterviewHub: React.FC = () => {
     canViewTemplates,
     canReviewInsights,
   ]);
-
-  // D-03 — pipeline stepper steps, DERIVED from the visible `tabs` so permission
-  // gating + the ④ pending-review flag stay in one source of truth. Only the
-  // numbered pipeline stages appear (Sessions is a side view, excluded); labels
-  // are stripped of the numeral prefix the tab bar adds (the pill shows it).
-  const pipelineSteps = useMemo<InterviewPipelineStep[]>(() => {
-    return INTERVIEW_PIPELINE_STAGE_ORDER.map((id): InterviewPipelineStep | null => {
-      const tab = tabs.find((t) => t.id === id);
-      if (!tab) return null;
-      return {
-        id: tab.id,
-        numeral: tab.label.match(/^[①②③④⑤⑥]/)?.[0] ?? '',
-        label: tab.label.replace(/^[①②③④⑤⑥]\s*/, ''),
-        count: tab.count,
-      };
-    }).filter((s): s is InterviewPipelineStep => s !== null);
-  }, [tabs]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
     if (currentProjectId) return currentProjectId;
@@ -9716,16 +9638,6 @@ Return ONLY the answer text (no markdown fences).`;
         viewModes={['table']}
         showTabCounts={false}
       >
-        {/* D-03 — top-level numbered pipeline stepper (flag-gated, default OFF).
-            Hidden while a document/detail is open (activeDocumentId) so it doesn't
-            compete with the in-document chrome. */}
-        {isInterviewPipelineStepperEnabled() && !activeDocumentId && pipelineSteps.length > 0 ? (
-          <InterviewPipelineStepper
-            steps={pipelineSteps}
-            activeTab={activeTab as ModuleTab}
-            onStepChange={handleMainTabChange}
-          />
-        ) : null}
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </StandardModuleBar>
 
@@ -10438,7 +10350,6 @@ Return ONLY the answer text (no markdown fences).`;
 export const __private__ = {
   isInterviewTab,
   resolveInterviewTabFromSearchParams,
-  buildInterviewPipelineNumerals,
 };
 
 export default InterviewHub;

@@ -26,7 +26,6 @@ const REVIEW_FLAG_KEYS = [
   'ff.tabele_form_intake',
   'ff.tabele_source_pack',
   'ff.interview_pending_review_tab',
-  'ff.interview_pipeline_stepper',
   'ff.audit_program_edit',
   'ff.template_lifecycle',
   'ff.record_provenance',

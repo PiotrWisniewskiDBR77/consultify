@@ -5519,9 +5519,6 @@
     "title": "Wywiad Discovery",
     "newSession": "Nowa Sesja",
     "history": "Historia",
-    "pipelineStepper": {
-      "ariaLabel": "Proces wywiadu"
-    },
     "categories": {
       "strategy": "Strategia",
       "operations": "Operacje",
