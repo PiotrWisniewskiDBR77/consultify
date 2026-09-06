@@ -25,7 +25,6 @@
  */
 import {
   ClipboardList,
-  FileBarChart2,
   FileText,
   Library,
   Lightbulb,
@@ -52,7 +51,6 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
-import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { NewAuditModal } from './NewAuditModal';
@@ -74,7 +72,6 @@ import {
   type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
-import { AuditDrdReportsTab } from './tabs/AuditDrdReportsTab';
 import { AuditFindingsTab } from './tabs/AuditFindingsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';
@@ -88,8 +85,7 @@ export type AuditsMethodTabId =
   | 'outputs'
   | 'reports'
   | 'findings'
-  | 'initiatives'
-  | 'drdReports';
+  | 'initiatives';
 
 export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
   if (inFlight.has(packId)) return false;
@@ -121,15 +117,9 @@ const BASE_TAB_IDS: AuditsMethodTabId[] = [
   'reports',
   'initiatives',
 ];
-const TAB_IDS: AuditsMethodTabId[] = [
-  ...(isAuditsFindingsAndReportViewEnabled()
-    ? (['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives'] as AuditsMethodTabId[])
-    : BASE_TAB_IDS),
-  // 7th tab, off by default (`isDrdReportEnabled()`, `src/utils/drdReportFlag.ts`)
-  // — DRDAuditReportView + its route already exist and work; this is only
-  // the missing entry point (runda 3 odbioru, id `audyty-drd-report`).
-  ...(isDrdReportEnabled() ? (['drdReports'] as AuditsMethodTabId[]) : []),
-];
+const TAB_IDS: AuditsMethodTabId[] = isAuditsFindingsAndReportViewEnabled()
+  ? (['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives'] as AuditsMethodTabId[])
+  : BASE_TAB_IDS;
 const TAB_ID_SET = new Set<string>(TAB_IDS);
 
 /** Nieznana/legacy wartość `?tab=` → `processes` (nigdy `library`, żeby nie
@@ -416,13 +406,6 @@ export const AuditsMethodHub: React.FC = () => {
       label: t('audits.method.tabs.initiatives', 'Initiatives'),
       icon: <Lightbulb size={16} />,
     });
-    if (isDrdReportEnabled()) {
-      base.push({
-        id: 'drdReports',
-        label: t('audits.method.tabs.drdReports', isPolish ? 'Raporty DRD' : 'DRD reports'),
-        icon: <FileBarChart2 size={16} />,
-      });
-    }
     return base;
   }, [t, isPolish]);
 
@@ -508,7 +491,20 @@ export const AuditsMethodHub: React.FC = () => {
           ? {
               label: t('audits.method.newAudit.cta', isPolish ? 'Nowy audyt' : 'New audit'),
               icon: Plus,
+              // DEC-417 (06.09, uwaga właściciela 15:29): "Nowy audyt" zamrożony
+              // do fali 2 — procedura wgrywania założeń (norma/formatka) i
+              // generator pytań audytowych jeszcze nie istnieją. Przycisk
+              // zostaje w Menu 2, ale natywnie `disabled` (bez toastu, bez
+              // modalu) — `onClick` jest tu tylko dla zgodności typu, nigdy
+              // się nie wywoła (patrz `disabled` w StandardModuleBar).
               onClick: () => setNewAuditModalOpen(true),
+              disabled: true,
+              disabledReason: t(
+                'audits.method.newAudit.frozenReason',
+                isPolish
+                  ? 'Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.'
+                  : 'Frozen until wave 2: uploading audit assumptions and the question generator.'
+              ),
               testId: 'audits-method-new-audit-cta',
             }
           : undefined
@@ -556,8 +552,6 @@ export const AuditsMethodHub: React.FC = () => {
             programs={programsAll}
             userNameById={userNameById}
           />
-        ) : activeTab === 'drdReports' ? (
-          <AuditDrdReportsTab isPolish={isPolish} />
         ) : (
           <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
         )}

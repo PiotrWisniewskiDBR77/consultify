@@ -5,15 +5,19 @@
  * `src/utils/auditsScaleAndPolishFlag.ts`. Default flipped OFF -> ON on
  * 2026-08-27 (owner accept on dev-render screenshots).
  *
+ * DEC-417 (06.09, uwaga właściciela 15:29): the CTA is now FROZEN until
+ * wave 2 (upload-assumptions procedure + audit question generator do not
+ * exist yet) — it stays visible in Menu 2 but is natively `disabled`, with
+ * a tooltip explaining why, and never opens `NewAuditModal`.
+ *
  * Coverage:
- *   * Flag ON (default, flip po akcepcie właściciela 27.08) → CTA renders;
- *     opening it lists only packs that pass the same `evaluateStartGate`
- *     rule as the Library tab's per-row "Start audit" (published + has a
- *     source) — the draft "Demonstration Pack" fixture must NOT appear.
+ *   * Flag ON (default, flip po akcepcie właściciela 27.08) → CTA renders,
+ *     is `disabled`, carries a tooltip/aria-describedby reason, and a click
+ *     never opens the modal.
  *   * Flag OFF (localStorage override) → no CTA, byte-identical to before
  *     this pack — the kill switch still works despite the ON default.
  */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -130,18 +134,26 @@ describe('AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish)', () =>
     expect(screen.queryByTestId('audits-method-new-audit-cta')).toBeNull();
   });
 
-  it('renders the CTA and lists only eligible packs when the flag is ON (default)', async () => {
+  it('renders the CTA frozen (DEC-417) when the flag is ON (default): disabled, tooltip, no modal on click', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method']);
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
     const cta = await screen.findByTestId('audits-method-new-audit-cta');
-    fireEvent.click(cta);
+    expect(cta).toBeDisabled();
 
-    const select = await screen.findByTestId('new-audit-modal-pack-select');
-    expect(select).toBeInTheDocument();
-    expect(within(select).getByText('ISO 19011 Audit Pack v2')).toBeInTheDocument();
-    expect(within(select).queryByText('Demonstration Pack')).toBeNull();
-    expect(within(select).getAllByRole('option')).toHaveLength(1);
+    const describedBy = cta.getAttribute('aria-describedby');
+    const title = cta.getAttribute('title');
+    // At least one of the two a11y explanations must be present (test
+    // contract from DEC-417's instruction: "disabled i aria-describedby/title").
+    expect(Boolean(describedBy) || Boolean(title)).toBe(true);
+    if (describedBy) {
+      const reasonNode = document.getElementById(describedBy);
+      expect(reasonNode).not.toBeNull();
+      expect(reasonNode?.textContent || '').not.toHaveLength(0);
+    }
+
+    fireEvent.click(cta);
+    expect(screen.queryByTestId('new-audit-modal-pack-select')).toBeNull();
   });
 });

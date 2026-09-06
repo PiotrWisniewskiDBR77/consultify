@@ -350,7 +350,6 @@
         "admin": "Administracja"
       },
       "page": {
-        "drdReport": "Raport DRD",
         "reports": "Raporty",
         "statement": "Sprawozdanie",
         "model": "Model",
@@ -361,7 +360,6 @@
     },
     "loading": {
       "audits": "Ładowanie audytów…",
-      "drdReport": "Ładowanie raportu DRD…",
       "report": "Ładowanie raportu…",
       "module": "Ładowanie…"
     },
@@ -31045,9 +31043,7 @@
     "confirmDeleteBulk_other": "Usunąć {{count}} programów audytowych?",
     "aiHintSummarize": "Podsumuj audyt",
     "aiHintNextSteps": "Następne kroki",
-    "noSuggestedPlan": "Brak sugerowanego planu",
-    "drdReportsLoadFailed": "Nie udało się wczytać raportów DRD",
-    "drdSourceAssessment": "Ocena"
+    "noSuggestedPlan": "Brak sugerowanego planu"
   },
   "audits": {
     "method": {
@@ -31057,8 +31053,7 @@
         "outputs": "Wyniki",
         "reports": "Raporty",
         "findings": "Ustalenia",
-        "initiatives": "Inicjatywy",
-        "drdReports": "Raporty DRD"
+        "initiatives": "Inicjatywy"
       }
     }
   },
