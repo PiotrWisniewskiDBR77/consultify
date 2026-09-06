@@ -516,7 +516,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
                     onMouseDown={startResizing}
                   />
-                  <div
+                  {/* ★ DEC-404: dok jest tym samym BYTEM co kolumna podglądu
+                      na liście — na ekranie listowym ZASTĘPUJE ją w tej samej
+                      kolumnie. Dlatego ten sam znacznik semantyczny `<aside>`
+                      co `JedenPrawyPanel`/`TableWithPreviewLayout`: bramka
+                      „dokładnie jeden <aside>" ma mierzyć to samo w obu
+                      stanach (podgląd otwarty ↔ dok otwarty). Sam znacznik —
+                      zero zmiany klas, stylu i zachowania. */}
+                  <aside
+                    aria-label={t('layout.teresa.label', 'Teresa')}
                     style={{ width: chatPanelWidth }}
                     className="shrink-0 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full relative"
                   >
@@ -557,7 +565,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         contextActions={chatContextActions || undefined}
                       />
                     </React.Suspense>
-                  </div>
+                  </aside>
                 </>
               )}
             </div>
