@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
+import { Menu2PresetDropdown } from '@/components/standard/Menu2PresetDropdown';
 import {
   StandardTable,
   type TableColumn,
@@ -132,19 +133,16 @@ const definitionColumns: TableColumn[] = [
   { id: 'audience', label: 'Odbiorcy', sortable: true, width: '230px' },
   { id: 'state', label: 'Status', sortable: true, filterable: true, width: '150px' },
 ];
-const reportPresets = [
-  'all',
-  'weekly',
-  'monthly',
-  'on-demand',
-  'sponsor',
-  'needs-generation',
-  'needs-review',
-  'partial-stale',
-  'published',
-  'failed',
-  'recent',
-] as const;
+// 1.12-R4b: 11 presetów → 3 (kanon Menu 3 ≤3 chipy — zrzut R4
+// `evidence/1-12-r4/03-zdrowie-programu.png` pokazał rząd wychodzący poza
+// ekran przy 1440). Kadencja/poziom/audytorium i „nieudane" nie znikają —
+// filtr poziomu (`ExecutionReportLevel`) żyje teraz w Menu 2 jako dropdown
+// „Poziom" (`levelFilter`/`matchesLevel` niżej), bo to on realnie odpowiada
+// czterem poziomom raportowania katalogu (`EXECUTION_REPORT_CATALOG` po
+// stronie serwera), nie kadencja z martwego kontraktu runtime-v1.
+const reportPresets = ['all', 'needs-review', 'published'] as const;
+
+const REPORT_LEVELS = ['OWNER', 'PMO', 'STEERCO', 'BOARD'] as const;
 const distributionLabels: Record<string, string> = {
   receiptId: 'Identyfikator dystrybucji',
   audience: 'Odbiorcy',
@@ -171,7 +169,19 @@ const definitionBusinessLabels: Record<string, string> = {
 export const ExecutionReportsSurface = ({
   activePreset,
   onCountsChange,
-}: ExecutionMenu3Contract) => {
+  onRegisterFilterControl,
+}: ExecutionMenu3Contract & {
+  /**
+   * Rejestruje węzeł kontrolki (dropdown „Poziom" + przełącznik
+   * Raporty|Definicje + akcje zaawansowane) do prawej strony Menu 2
+   * gospodarza (`ExecutionHub`). Ten sam wzorzec co
+   * `ExecutionWorkSurface.onRegisterFilterControl` (odbiór grafiki
+   * 165-menu3-pasek) — 1.12-R4b usuwa własny nagłówek tej powierzchni
+   * (h2 + przyciski), który wcześniej rozpychał pion między Menu 3 a
+   * tabelą, i CTA „Nowy raport" wraz z filtrami przenoszą się tutaj.
+   */
+  onRegisterFilterControl?: (node: React.ReactNode) => void;
+}) => {
   const { t } = useTranslation();
   // 1.12-R4 — katalog definicji (report_definitions) i rejestr migawek.
   const [catalog, setCatalog] = useState<ExecutionReportDefinitionDto[]>([]);
@@ -191,6 +201,10 @@ export const ExecutionReportsSurface = ({
     [contractRuns, setRows] = useState<Row[]>([]),
     [contractDefinitions, setDefinitions] = useState<DefinitionRow[]>([]),
     [registerMode, setRegisterMode] = useState<'RUNS' | 'DEFINITIONS'>('RUNS'),
+    // 1.12-R4b — filtr „Poziom" (Menu 2 dropdown), zastępuje osiem chipów
+    // kadencji/poziomu/audytorium/„nieudane" usuniętych z Menu 3.
+    // 'ALL' = brak filtra (domyślnie).
+    [levelFilter, setLevelFilter] = useState<'ALL' | (typeof REPORT_LEVELS)[number]>('ALL'),
     [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null),
     [showDefinitionEditor, setShowDefinitionEditor] = useState(false),
     [showRunEditor, setShowRunEditor] = useState(false),
@@ -404,6 +418,26 @@ export const ExecutionReportsSurface = ({
     }
   }, []);
 
+  // 1.12-R4b: CTA „Nowy raport" przeniosło się do Menu 2 gospodarza
+  // (`ExecutionHub`'s `menuCta`, prawa strona paska) — własny nagłówek tej
+  // powierzchni (h2 + 3 przyciski) jest usunięty. Kreator otwiera się tym
+  // samym zdarzeniem, którym Rollout otwiera swoje formularze
+  // (`execution:add-kpi` itd.) — ten sam wzorzec, ten sam kanał.
+  useEffect(() => {
+    const openWizard = () => {
+      setRegisterMode('RUNS');
+      setWizardOpen(true);
+      setGenerateError(null);
+      setWizardKey((current) => {
+        if (current) return current;
+        const first = catalog.find((item) => item.mvp);
+        return first ? first.key : current;
+      });
+    };
+    window.addEventListener('execution:reports-new-report', openWizard);
+    return () => window.removeEventListener('execution:reports-new-report', openWizard);
+  }, [catalog]);
+
   /**
    * Migawka na REALNYCH danych: czytamy te same API co reszta modułu
    * (/api/tasks, /api/decisions, /api/raid, /api/initiatives, delay-signals),
@@ -529,66 +563,49 @@ export const ExecutionReportsSurface = ({
     () => definitions.find((row) => row.id === selectedDefinitionId) ?? null,
     [definitions, selectedDefinitionId]
   );
+  // 1.12-R4b: 3 presety (all/needs-review/published) zamiast 11 — patrz
+  // komentarz przy `reportPresets`. „Do przeglądu" łączy dawne
+  // needs-review + needs-generation (katalog/CONTRACT) — dla właściciela to
+  // jedna kolejka „wymaga mojej akcji", nie dwie osobne.
   const matches = useCallback((item: ReportRegisterItem, preset: string) => {
     const raw = item.row as any;
-    // Wiersze katalogu i migawek MVP mają płaskie pola (kadencja/poziom/status),
+    // Wiersze katalogu i migawek MVP mają płaskie pola (poziom/status),
     // nie kontrakt agregatu — bez tego rozgałęzienia liczniki Menu 3 pokazałyby zera.
     if (raw.kind === 'CATALOG' || raw.snapshot) {
-      const cadenceKey = String(
-        raw.catalog?.cadence ?? raw.snapshot?.definitionKey ?? ''
-      ).toUpperCase();
       const flatStatus = String(raw.rawState ?? raw.rawStatus ?? '').toUpperCase();
       if (preset === 'all') return true;
-      if (preset === 'weekly') return cadenceKey === 'WEEKLY';
-      if (preset === 'monthly') return cadenceKey === 'MONTHLY';
-      if (preset === 'on-demand') return cadenceKey === 'ON DEMAND' || cadenceKey === 'ON_DEMAND';
-      if (preset === 'sponsor')
-        return /sponsor|board|zarz/i.test(
-          `${raw.catalog?.audience ?? ''} ${raw.catalog?.level ?? ''} ${raw.snapshot?.level ?? ''}`
-        );
-      if (preset === 'needs-generation') return raw.kind === 'CATALOG' && raw.mvp === true;
-      if (preset === 'needs-review') return flatStatus === 'DRAFT';
+      if (preset === 'needs-review')
+        return flatStatus === 'DRAFT' || (raw.kind === 'CATALOG' && raw.mvp === true);
       if (preset === 'published') return flatStatus === 'PUBLISHED';
-      if (preset === 'recent')
-        return (
-          Boolean(raw.snapshot) &&
-          Date.parse(raw.snapshot.createdAt) >= Date.now() - 30 * 86400000
-        );
       return false;
     }
-    const source = item.kind === 'RUN' ? raw.source : raw.definition;
-    const version =
-      source?.versions?.find(
-        (entry: any) => (entry.definitionVersion ?? entry.version) === source.currentVersion
-      ) ?? source;
-    const cadence = String(version?.cadence ?? source?.cadence ?? '').toUpperCase();
     const status = String(
       item.kind === 'RUN' ? (raw.rawStatus ?? raw.status) : (raw.rawState ?? raw.state)
     ).toUpperCase();
     if (preset === 'all') return true;
-    if (preset === 'weekly') return cadence === 'WEEKLY';
-    if (preset === 'monthly') return cadence === 'MONTHLY';
-    if (preset === 'on-demand') return cadence === 'ON_DEMAND';
-    if (preset === 'sponsor')
-      return (version?.audience ?? []).some((value: string) => /sponsor/i.test(value));
-    if (preset === 'needs-generation') return item.kind === 'DEFINITION' && status === 'PUBLISHED';
-    if (preset === 'needs-review') return ['FROZEN', 'VALIDATED'].includes(status);
-    if (preset === 'partial-stale')
-      return source?.knowledgeState === 'PARTIAL' || source?.freshness === 'STALE';
+    if (preset === 'needs-review') return ['DRAFT', 'FROZEN', 'VALIDATED', 'FAILED'].includes(status);
     if (preset === 'published') return status === 'PUBLISHED';
-    if (preset === 'failed') return status === 'FAILED';
-    if (preset === 'recent')
-      return (
-        item.kind === 'RUN' &&
-        Number.isFinite(Date.parse(raw.source?.updatedAt ?? raw.asOf)) &&
-        Date.parse(raw.source?.updatedAt ?? raw.asOf) >= Date.now() - 30 * 86400000
-      );
     return false;
   }, []);
-  const visibleDefinitions = definitions.filter((row) =>
-    matches({ kind: 'DEFINITION', row }, activePreset ?? 'all')
+  // 1.12-R4b: filtr „Poziom" (Menu 2 dropdown) — zastępuje kadencję/poziom/
+  // audytorium usunięte z Menu 3. Wiersze CONTRACT (rejestr atestacji
+  // runtime-v1) nie niosą kodu poziomu (OWNER/PMO/STEERCO/BOARD) — zostają
+  // widoczne niezależnie od wyboru, żeby wybór poziomu nie chował rejestru,
+  // którego w ogóle nie dotyczy.
+  const matchesLevel = useCallback((row: DefinitionRow | Row, level: string) => {
+    if (level === 'ALL') return true;
+    const raw = row as any;
+    const code = String(raw.catalog?.level ?? raw.snapshot?.level ?? '').toUpperCase();
+    if (!code) return true;
+    return code === level;
+  }, []);
+  const visibleDefinitions = definitions.filter(
+    (row) =>
+      matches({ kind: 'DEFINITION', row }, activePreset ?? 'all') && matchesLevel(row, levelFilter)
   );
-  const visibleRuns = rows.filter((row) => matches({ kind: 'RUN', row }, activePreset ?? 'all'));
+  const visibleRuns = rows.filter(
+    (row) => matches({ kind: 'RUN', row }, activePreset ?? 'all') && matchesLevel(row, levelFilter)
+  );
   useEffect(() => {
     const lensItems: ReportRegisterItem[] =
       registerMode === 'DEFINITIONS'
@@ -769,6 +786,85 @@ export const ExecutionReportsSurface = ({
       setWrite('FAILED');
     }
   };
+  // 1.12-R4b — Menu 2 (prawa strona gospodarza): dropdown „Poziom" + przełącznik
+  // Raporty|Definicje + akcje zaawansowane. Ten sam wzorzec co
+  // `ExecutionWorkSurface.onRegisterFilterControl` (odbiór grafiki
+  // 165-menu3-pasek): blok NIE rozpycha pionu między Menu 3 a tabelą —
+  // wcześniej żył tu, we własnym nagłówku (h2 + przyciski), teraz go nie ma.
+  // „Nowa definicja"/„Kontrakt raportu (zaawansowane)" zostają przyciskami
+  // DRUGORZĘDNYMI obok dropdownu (nie CTA głównym — ten jest „Nowy raport"
+  // w Menu 2 gospodarza) — zmierzone: dziś ŻADEN endpoint report_definitions
+  // nie ma ograniczenia roli (grep `role` w tym pliku i w
+  // `server/src/routes/executionReports.routes.ts` — zero trafień), więc nie
+  // wprowadzamy tu nowej bramki admina, której nie ma po stronie serwera.
+  useEffect(() => {
+    if (!onRegisterFilterControl) return;
+    onRegisterFilterControl(
+      <div className="flex flex-wrap items-center gap-2">
+        <Menu2PresetDropdown
+          compact
+          label={t('common.level', 'Poziom')}
+          options={[
+            { id: 'ALL', label: t('common.all', 'Wszystkie') },
+            ...REPORT_LEVELS.map((level) => ({
+              id: level,
+              label: levelLabel(level),
+            })),
+          ]}
+          value={levelFilter}
+          onChange={(id) => setLevelFilter(id as typeof levelFilter)}
+          data-testid="execution-reports-level-dropdown"
+        />
+        <div
+          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
+          role="tablist"
+          aria-label={t('executionReports.registerToggle', 'Widok rejestru raportów')}
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={registerMode === 'RUNS'}
+            className={`rounded-full px-3 py-1 text-xs ${registerMode === 'RUNS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
+            onClick={() => setRegisterMode('RUNS')}
+          >
+            {t('executionReports.tab.runs', 'Raporty')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={registerMode === 'DEFINITIONS'}
+            className={`rounded-full px-3 py-1 text-xs ${registerMode === 'DEFINITIONS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
+            onClick={() => setRegisterMode('DEFINITIONS')}
+          >
+            {t('executionReports.tab.definitions', 'Definicje')}
+          </button>
+        </div>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            setRegisterMode('DEFINITIONS');
+            setShowDefinitionEditor(true);
+          }}
+        >
+          {t('executionReports.action.newDefinition', 'Nowa definicja')}
+        </button>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            setRegisterMode('RUNS');
+            setShowRunEditor(true);
+          }}
+        >
+          {t('executionReports.action.newContractRun', 'Kontrakt raportu (zaawansowane)')}
+        </button>
+      </div>
+    );
+    return () => onRegisterFilterControl(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterFilterControl, registerMode, levelFilter, levelLabel, t]);
+
   // Otwarty dokument migawki wygrywa nad rejestrem (archetyp B — pełny widok obiektu).
   if (openRun)
     return (
@@ -795,68 +891,6 @@ export const ExecutionReportsSurface = ({
     );
   return (
     <section aria-label="Execution Reports" className="flex h-full min-h-0 flex-col p-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-semibold">Raporty</h2>
-          <p className="text-sm text-c-text-muted">
-            Zatwierdzone, odtwarzalne migawki danych z realizacji.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              setRegisterMode('DEFINITIONS');
-              setShowDefinitionEditor(true);
-            }}
-          >
-            Nowa definicja
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              setRegisterMode('RUNS');
-              setWizardOpen(true);
-              setGenerateError(null);
-              if (!wizardKey) {
-                const first = catalog.find((item) => item.mvp);
-                if (first) setWizardKey(first.key);
-              }
-            }}
-          >
-            {t('executionReports.action.newReport', 'Nowy raport')}
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => {
-              setRegisterMode('RUNS');
-              setShowRunEditor(true);
-            }}
-          >
-            {t('executionReports.action.newContractRun', 'Kontrakt raportu (zaawansowane)')}
-          </button>
-        </div>
-      </div>
-      <div className="mt-3 inline-flex rounded-full border border-c-border p-1" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={registerMode === 'RUNS'}
-          className={`rounded-full px-4 py-2 text-sm ${registerMode === 'RUNS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
-          onClick={() => setRegisterMode('RUNS')}
-        >
-          Raporty
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={registerMode === 'DEFINITIONS'}
-          className={`rounded-full px-4 py-2 text-sm ${registerMode === 'DEFINITIONS' ? 'bg-c-surface-raised font-semibold text-c-text' : 'text-c-text-muted'}`}
-          onClick={() => setRegisterMode('DEFINITIONS')}
-        >
-          Definicje
-        </button>
-      </div>
       {wizardOpen && (
         <section
           aria-label={t('executionReports.wizard.title', 'Nowy raport')}
