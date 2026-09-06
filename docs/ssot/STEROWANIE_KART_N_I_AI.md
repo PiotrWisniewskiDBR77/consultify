@@ -24,6 +24,13 @@ Podgląd, przycisk AI) pozostają PRZYKLEJONE u góry (sticky), żeby użytkowni
 dokumencie jest, i miał nawigację pod ręką. Przewija się tylko treść sekcji (i prawy panel niezależnie).
 Dotyczy każdej karty N w każdym narzędziu; jedno miejsce: powłoka `StandardArtifactShell`.
 
+## Zasada 2b — Przełącznik „Edycja / Podgląd” tylko z uprawnieniem
+Gdy użytkownik nie ma prawa edycji karty (rola, status zatwierdzony/zamrożony, cudzy rekord), przełącznik
+„Edycja / Podgląd” w Menu 5 NIE jest renderowany — karta jest w podglądzie, a powód widać w prawym panelu
+(„Tylko do odczytu: …”). Pozycje „Uzupełnij…” z „Pracuj z AI” też znikają (zostaje „Analizuj”); przyciski AI
+per obszar nie renderują się. Słowo właściciela: „jeżeli ktoś nie ma uprawnień do edycji, to ten przycisk
+pośrodku nie ma sensu”.
+
 ## Zasada 3 — Jedna struktura sterowania AI w karcie (trzy poziomy)
 1. **Poziom karty (Menu 5, przycisk „Pracuj z AI” — rozwija listę na miejscu)** — nazwa ze słów właściciela („zamiast analizy z AI: pracuj z AI”); trzy pozycje, zawsze te same:
    - **Analizuj** — ocenia dokument: co jest wypełnione, czego brakuje, co jest słabe; pokazuje wynik jako
