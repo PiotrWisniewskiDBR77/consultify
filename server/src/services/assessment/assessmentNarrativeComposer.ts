@@ -259,7 +259,7 @@ export function composeChapterAggregateNarrative(input: {
     return `Na osi ${input.axisId} oceniono ${input.findings.length} z ${input.totalAreas} obszarów. Największa luka wynosi ${maxGap}, a liczba pominięć wynosi ${input.skippedCount}. ${cited
       .map(
         (finding) =>
-          `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, poziom docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}, pewność ${CONFIDENCE_PL[finding.confidence]}, liczba dowodów ${finding.evidenceCount}. ${finding.recommendation.trim() ? `Rekomendacja ${finding.unitId}: „${finding.recommendation.trim()}”` : `Obszar ${finding.unitId} nie ma zapisanej rekomendacji`}${finding.expectedOutcome ? ` Oczekiwany rezultat ${finding.unitId}: „${finding.expectedOutcome}”` : ''}`
+          `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, poziom docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}, pewność ${CONFIDENCE_PL[finding.confidence]}, liczba dowodów ${finding.evidenceCount}. ${finding.recommendation.trim() ? `Rekomendacja ${finding.unitId}: „${finding.recommendation.trim()}”` : `Obszar ${finding.unitId} nie ma zapisanej rekomendacji`}.${finding.expectedOutcome ? ` Oczekiwany rezultat ${finding.unitId}: „${finding.expectedOutcome}”.` : ''}`
       )
       .join(
         ' '
@@ -353,7 +353,7 @@ export function composeProgramAggregateNarrative(input: {
     return `Liczba obszarów z luką co najmniej 3 wynosi ${critical.length}. Największa luka wynosi ${maxGap}. ${wybrane
       .map(
         (finding) =>
-          `${finding.unitId} ${finding.unitNamePL}, luka ${finding.gap}, ${cytatRekomendacji(finding.recommendation)}`
+          `${finding.unitId} ${finding.unitNamePL}, luka ${finding.gap}, ${cytatRekomendacji(finding.recommendation)}.`
       )
       .join(' ')} Dla tych obszarów zapisano poziomy obecne ${wybrane
       .map((finding) => `${finding.unitId}: ${finding.currentLevel}`)
@@ -391,7 +391,8 @@ export function composeProgramAggregateNarrative(input: {
       .map(
         (finding) =>
           `${finding.unitId} ${finding.unitNamePL}: poziom obecny ${finding.currentLevel ?? 'nieustalony'}, docelowy ${finding.targetLevel ?? 'nieustalony'}, luka ${finding.gap ?? 'nieustalona'}; ${cytatRekomendacji(finding.recommendation)}` +
-          (finding.expectedOutcome ? `; oczekiwany rezultat: „${finding.expectedOutcome}”` : '')
+          (finding.expectedOutcome ? `; oczekiwany rezultat: „${finding.expectedOutcome}”` : '') +
+          '.'
       )
       .join(
         ' '

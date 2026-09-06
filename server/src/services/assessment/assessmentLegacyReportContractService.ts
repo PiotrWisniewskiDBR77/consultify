@@ -214,10 +214,19 @@ export class AssessmentLegacyReportContractService {
     // `updated_at` wcześniejsze niż `created_at`, a wtedy okładka drukowała
     // „wydano 2 września" nad „okres oceny 5 września" — sprzeczność widoczna
     // dla czytelnika na pierwszej stronie.
-    const znaczniki = [assessment.updated_at, assessment.created_at]
-      .filter((value): value is string => Boolean(value))
-      .sort();
-    const generatedAt = znaczniki.at(-1) ?? new Date().toISOString();
+    // UWAGA: sterownik Postgresa zwraca `timestamptz` jako obiekt `Date`, nie
+    // jako napis ISO. Pierwsza wersja tej poprawki sortowała tablicę wprost
+    // (`[...].sort()`), czyli PO NAPISIE `Date.toString()` — „Sat Sep 05" <
+    // „Wed Sep 02" alfabetycznie, więc wybierała datę WCZEŚNIEJSZĄ i okładka
+    // dalej pokazywała sprzeczność. Porównujemy znacznik czasu, nie napis.
+    const generatedAt =
+      [assessment.updated_at, assessment.created_at]
+        .filter((value): value is string => Boolean(value))
+        .map((value) => new Date(value))
+        .filter((value) => !Number.isNaN(value.getTime()))
+        .sort((left, right) => left.getTime() - right.getTime())
+        .at(-1)
+        ?.toISOString() ?? new Date().toISOString();
     const findings = zbudujFindingiZastane(
       assessment.id,
       poziomy,

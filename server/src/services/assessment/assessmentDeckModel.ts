@@ -24,7 +24,6 @@ import DRD_STRUCTURE from '../../data/drdStructure.js';
 import {
   areaAverage,
   priorityForGap,
-  resolveDrdLevelLabelPL,
   type AssessmentReportContract,
 } from './assessmentDrdReportSchemaService.js';
 
@@ -151,6 +150,26 @@ function halfRect(side: 'left' | 'right', withTakeaway = false): DeckRect {
   };
 }
 
+/**
+ * Ile wierszy zmieści się w prostokącie tabeli.
+ *
+ * ★ POMIAR, NIE ZAŁOŻENIE. pptxgenjs NIE przycina tabeli do zadeklarowanej
+ * wysokości — rysuje tyle wierszy, ile dostanie, i wychodzi poza ramkę. Skrypt
+ * `sprawdz-geometrie.mjs` tego nie złapie, bo w OOXML ramka ma nadal
+ * zadeklarowaną wysokość; zobaczyłem to dopiero na renderze slajdu 12
+ * (10 wierszy nachodziło na zdanie podsumowania). Dlatego liczba wierszy jest
+ * ograniczana TU, w modelu — a nie „na oko" w rendererze.
+ *
+ * WYSOKOSC_WIERSZA = 0,34" to zmierzona wysokość wiersza tabeli przy 12 pt i
+ * marginesie 0,06" (nagłówek liczony jak wiersz).
+ */
+const WYSOKOSC_WIERSZA = 0.34;
+
+export function mieszczaceSieWiersze<T>(wiersze: readonly T[], rect: DeckRect): T[] {
+  const pojemnosc = Math.max(1, Math.floor(rect.h / WYSOKOSC_WIERSZA) - 1);
+  return wiersze.slice(0, pojemnosc);
+}
+
 function skrot(text: string, maxWords: number): string {
   const words = text.trim().split(/\s+/u);
   return words.length <= maxWords ? text.trim() : `${words.slice(0, maxWords).join(' ')}…`;
@@ -273,7 +292,7 @@ export function buildAssessmentDeckModel(
         rect: fullRect(),
         head: ['Pole', 'Wartość'],
         widths: [0.32, 0.68],
-        rows: [
+        rows: mieszczaceSieWiersze([
           ['Organizacja', org],
           ['Przedmiot oceny', clientName],
           ['Profil działalności', contract.businessProfile ?? 'Brak danych w ocenie'],
@@ -287,7 +306,7 @@ export function buildAssessmentDeckModel(
               : 'Zamrożony Output jądra metodycznego',
           ],
           ['Pokrycie', `${ocenione} z ${wszystkie} obszarów ma zapisany poziom`],
-        ],
+        ], fullRect()),
       },
     ],
     takeaway: null,
@@ -328,7 +347,7 @@ export function buildAssessmentDeckModel(
     // dokleiło do cytatu następny fakt silnika i urwało go w połowie.
     const notatka = chapter.areaComments.find((comment) => comment.assessorNote);
     const notatkaTekst = notatka?.assessorNote
-      ? `${notatka.unitId}: ${skrot(notatka.assessorNote, 22)}`
+      ? `${notatka.unitId}: ${skrot(notatka.assessorNote, 12)}`
       : null;
     slides.push({
       id: `os-${chapter.axisId}`,
@@ -362,7 +381,7 @@ export function buildAssessmentDeckModel(
           rect: halfRect('right', true),
           head: ['Obszar', 'Ob.', 'Doc.', 'Luka'],
           widths: [0.58, 0.14, 0.14, 0.14],
-          rows: najwieresztaWiersze(najwieksze),
+          rows: mieszczaceSieWiersze(najwieresztaWiersze(najwieksze), halfRect('right', true)),
         },
       ],
       takeaway:
@@ -373,6 +392,21 @@ export function buildAssessmentDeckModel(
   }
 
   // 12 — rejestr luk
+  const rejestrRect = fullRect(true);
+  // Kolumna „Poziom docelowy" celowo pokazuje SAMĄ LICZBĘ, bez etykiety
+  // poziomu: etykiety osi 3–7 są w korpusie metodyki po angielsku
+  // („Expert", „Data from Physical…"), a angielskie słowo w polskiej
+  // prezentacji dla klienta to defekt, nie detal. W raporcie DOCX etykieta
+  // zostaje — tam jest miejsce, żeby ją opisać wraz z osią.
+  const rejestrWiersze = mieszczaceSieWiersze(
+    lukiMalejaco.map(({ chapter, area, gap }) => [
+      `${area.unitId} ${skrot(area.unitNamePL ?? area.unitName, 6)}`,
+      skrot(chapter.axisNamePL ?? chapter.axisName, 4),
+      String(gap),
+      area.targetLevel === null ? '—' : `poziom ${area.targetLevel}`,
+    ]),
+    rejestrRect
+  );
   slides.push({
     id: 'rejestr-luk',
     kicker: 'Macierz DRD',
@@ -380,23 +414,13 @@ export function buildAssessmentDeckModel(
     bodies: [
       {
         kind: 'table',
-        rect: fullRect(true),
+        rect: rejestrRect,
         head: ['Obszar', 'Oś', 'Luka', 'Poziom docelowy'],
-        widths: [0.4, 0.28, 0.1, 0.22],
-        rows: lukiMalejaco.slice(0, 10).map(({ chapter, area, gap }) => [
-          `${area.unitId} ${skrot(area.unitNamePL ?? area.unitName, 6)}`,
-          skrot(chapter.axisNamePL ?? chapter.axisName, 4),
-          String(gap),
-          area.targetLevel === null
-            ? '—'
-            : skrot(
-                `${area.targetLevel} — ${resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel)}`,
-                5
-              ),
-        ]),
+        widths: [0.42, 0.3, 0.1, 0.18],
+        rows: rejestrWiersze,
       },
     ],
-    takeaway: `Rejestr obejmuje ${luki.length} obszarów ze zmierzoną luką; pokazano 10 największych.`,
+    takeaway: `Rejestr obejmuje ${luki.length} obszarów ze zmierzoną luką; pokazano ${rejestrWiersze.length} największych.`,
   });
 
   // 13 — priorytety
@@ -441,9 +465,16 @@ export function buildAssessmentDeckModel(
       {
         kind: 'bullets',
         rect: fullRect(),
+        // Punkt o obszarach bez poziomu pojawia się TYLKO wtedy, gdy takie
+        // obszary są. „Uzupełnić 0 obszarów…" to zdanie, które nic nie znaczy,
+        // a na slajdzie dla zarządu wygląda jak niedopilnowany generator.
         items: [
           `Potwierdzić poziomy w ${krytyczne.length} obszarach z luką co najmniej 3 i uzupełnić dowody.`,
-          `Uzupełnić ${wszystkie - ocenione} obszarów bez zapisanego poziomu albo świadomie je pominąć z uzasadnieniem.`,
+          ...(wszystkie - ocenione > 0
+            ? [
+                `Uzupełnić ${wszystkie - ocenione} obszarów bez zapisanego poziomu albo świadomie je pominąć z uzasadnieniem.`,
+              ]
+            : ['Wszystkie obszary metodyki mają zapisany poziom — zakres oceny jest zamknięty.']),
           'Przypisać właściciela do każdego obszaru o priorytecie krytycznym.',
           'Ustalić horyzont czasowy — ocena go nie zawiera i nie jest tu dopisywany.',
           'Zatwierdzić raport i przenieść luki do rejestru inicjatyw.',
