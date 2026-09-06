@@ -210,7 +210,14 @@ export class AssessmentLegacyReportContractService {
       .trim();
 
     const { poziomy, notatki } = odczytajObszaryZastane(assessment.answers_json);
-    const generatedAt = assessment.updated_at ?? assessment.created_at ?? new Date().toISOString();
+    // Data wydania = PÓŹNIEJSZA z dwóch dat wiersza. Seed potrafi mieć
+    // `updated_at` wcześniejsze niż `created_at`, a wtedy okładka drukowała
+    // „wydano 2 września" nad „okres oceny 5 września" — sprzeczność widoczna
+    // dla czytelnika na pierwszej stronie.
+    const znaczniki = [assessment.updated_at, assessment.created_at]
+      .filter((value): value is string => Boolean(value))
+      .sort();
+    const generatedAt = znaczniki.at(-1) ?? new Date().toISOString();
     const findings = zbudujFindingiZastane(
       assessment.id,
       poziomy,

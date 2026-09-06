@@ -17,6 +17,7 @@ import { PDF_FONT, registerPdfFonts } from '../../utils/pdfFonts.js';
 import {
   DECK_GEOMETRY as G,
   DECK_PALETTE as P,
+  takeawayRect,
   type DeckBody,
   type DeckModel,
   type DeckSlide,
@@ -224,8 +225,8 @@ function renderSlide(doc: Doc, model: DeckModel, slide: DeckSlide, index: number
       .fillColor(hex(P.supporting))
       .font(PDF_FONT.italic)
       .fontSize(10)
-      .text(slide.takeaway, G.margin * PT, (G.contentY + G.contentH - 0.3) * PT, {
-        width: (G.slideW - 2 * G.margin) * PT,
+      .text(slide.takeaway, takeawayRect().x * PT, (takeawayRect().y + 0.03) * PT, {
+        width: takeawayRect().w * PT,
         lineBreak: false,
         ellipsis: true,
       });

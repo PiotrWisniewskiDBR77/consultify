@@ -38,6 +38,10 @@ export const DECK_GEOMETRY = Object.freeze({
   kickerH: 0.2,
   contentY: 1.18,
   contentH: 3.72,
+  /** Pas na jedno zdanie „co z tego wynika". Slajd, który je ma, ODDAJE tę
+   * wysokość ze strefy treści — inaczej ostatni punkt listy wchodziłby pod
+   * zdanie podsumowania (zmierzone na pierwszym renderze). */
+  takeawayH: 0.42,
   footerY: 5.05,
   footerH: 0.28,
 });
@@ -114,20 +118,36 @@ const PL_DATE = new Intl.DateTimeFormat('pl-PL', {
 const G = DECK_GEOMETRY;
 const CONTENT_W = G.slideW - 2 * G.margin;
 
+/** Prostokąt zdania podsumowującego — JEDNO miejsce dla obu rendererów i dla
+ * skryptu sprawdzającego geometrię. */
+export function takeawayRect(): DeckRect {
+  return {
+    x: G.margin,
+    y: G.contentY + G.contentH - G.takeawayH + 0.08,
+    w: CONTENT_W,
+    h: 0.3,
+  };
+}
+
+/** Wysokość strefy treści po ewentualnym oddaniu pasa na podsumowanie. */
+function contentH(withTakeaway: boolean): number {
+  return withTakeaway ? G.contentH - G.takeawayH : G.contentH;
+}
+
 /** Pełna strefa treści. */
-function fullRect(): DeckRect {
-  return { x: G.margin, y: G.contentY, w: CONTENT_W, h: G.contentH };
+function fullRect(withTakeaway = false): DeckRect {
+  return { x: G.margin, y: G.contentY, w: CONTENT_W, h: contentH(withTakeaway) };
 }
 
 /** Lewa/prawa połowa strefy treści z przerwą 0.3" — nigdy się nie przecinają. */
-function halfRect(side: 'left' | 'right', heightRatio = 1): DeckRect {
+function halfRect(side: 'left' | 'right', withTakeaway = false): DeckRect {
   const gap = 0.3;
   const w = (CONTENT_W - gap) / 2;
   return {
     x: side === 'left' ? G.margin : G.margin + w + gap,
     y: G.contentY,
     w,
-    h: G.contentH * heightRatio,
+    h: contentH(withTakeaway),
   };
 }
 
@@ -281,7 +301,7 @@ export function buildAssessmentDeckModel(
     bodies: [
       {
         kind: 'chart',
-        rect: { x: G.margin, y: G.contentY, w: CONTENT_W, h: G.contentH - 0.42 },
+        rect: fullRect(true),
         categories: osie.map((axis) => `${axis.axisId}. ${skrot(axis.namePL, 3)}`),
         series: [
           { label: 'Poziom obecny', values: osie.map((axis) => axis.current ?? 0) },
@@ -303,11 +323,12 @@ export function buildAssessmentDeckModel(
           (right.gap ?? 0) - (left.gap ?? 0) || left.unitId.localeCompare(right.unitId)
       )
       .slice(0, 4);
-    const notatka = chapter.areaComments.find(
-      (comment) => comment.content && comment.content.includes('Notatka oceniającego:')
-    );
-    const notatkaTekst = notatka?.content
-      ? skrot(notatka.content.slice(notatka.content.indexOf('Notatka oceniającego:')), 26)
+    // Notatka bierze się z WŁASNEGO pola kontraktu, nie z wycinania napisu ze
+    // złożonego zdania — pierwsze podejście (slice po „Notatka oceniającego:")
+    // dokleiło do cytatu następny fakt silnika i urwało go w połowie.
+    const notatka = chapter.areaComments.find((comment) => comment.assessorNote);
+    const notatkaTekst = notatka?.assessorNote
+      ? `${notatka.unitId}: ${skrot(notatka.assessorNote, 22)}`
       : null;
     slides.push({
       id: `os-${chapter.axisId}`,
@@ -316,16 +337,19 @@ export function buildAssessmentDeckModel(
       bodies: [
         {
           kind: 'stat',
-          rect: halfRect('left', 0.42),
+          rect: {
+            ...halfRect('left', true),
+            h: contentH(true) * 0.42,
+          },
           value: `${procent(stat.current)} → ${procent(stat.target)}`,
           caption: `Poziom obecny wobec docelowego; oceniono ${stat.assessed} z ${stat.total} obszarów.`,
         },
         {
           kind: 'bullets',
           rect: {
-            ...halfRect('left'),
-            y: G.contentY + G.contentH * 0.46,
-            h: G.contentH * 0.54,
+            ...halfRect('left', true),
+            y: G.contentY + contentH(true) * 0.46,
+            h: contentH(true) * 0.54,
           },
           items: [
             `Największa luka na osi: ${stat.maxGap ?? '—'}`,
@@ -335,7 +359,7 @@ export function buildAssessmentDeckModel(
         },
         {
           kind: 'table',
-          rect: halfRect('right'),
+          rect: halfRect('right', true),
           head: ['Obszar', 'Ob.', 'Doc.', 'Luka'],
           widths: [0.58, 0.14, 0.14, 0.14],
           rows: najwieresztaWiersze(najwieksze),
@@ -356,7 +380,7 @@ export function buildAssessmentDeckModel(
     bodies: [
       {
         kind: 'table',
-        rect: fullRect(),
+        rect: fullRect(true),
         head: ['Obszar', 'Oś', 'Luka', 'Poziom docelowy'],
         widths: [0.4, 0.28, 0.1, 0.22],
         rows: lukiMalejaco.slice(0, 10).map(({ chapter, area, gap }) => [

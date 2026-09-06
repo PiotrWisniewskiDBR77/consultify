@@ -30,6 +30,7 @@ export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   criticalGaps: 'Luki krytyczne i rekomendacja główna',
   finalConclusions: 'Wnioski końcowe',
   appendix: 'Załącznik A. Rejestr luk',
+  methodologyAppendix: 'Załącznik B. Nota metodyczna',
   confidentiality: 'Dokument poufny. Przeznaczony wyłącznie dla wskazanego odbiorcy.',
   notAssessed: 'Oś nie została oceniona.',
   decisionLine: 'LINIA DECYZYJNA',
@@ -76,6 +77,15 @@ function placeholder(minWords: number, maxWords: number): string {
 // Kierunek/Priorytet/Warunek sukcesu) keeps the generic `placeholder()` —
 // they are not touched by this fix.
 const HORIZON_PLACEHOLDER = 'Nie określono — brak źródła w danych.';
+
+// FIX (2026-09-06): komórki linii decyzyjnej drukowały instrukcję redakcyjną
+// „Sekcja do uzupełnienia — limit 10–30 słów." — czyli w dokumencie DLA
+// KLIENTA pojawiał się tekst dla redaktora. To ta sama pułapka, którą FIX-3
+// zamknął dla komentarzy obszarów i dla „Horyzontu", tylko nie objęła
+// pozostałych trzech komórek. Zdanie poniżej mówi to samo, co brak wartości,
+// ale językiem raportu, nie językiem szablonu. Pomiar na realnej ocenie
+// DBR77: 8 wystąpień instrukcji w jednym pliku, wszystkie w tej komórce.
+const DECISION_LINE_MISSING = 'Nie określono — brak źródła w danych.';
 
 // DEDUP (nadzorca 2026-08-28): this used to also handle `not_assessed` with
 // its own copy of "Obszaru X nie oceniono — brak danych źródłowych." — the
@@ -391,7 +401,8 @@ function chapterBlocks(
   // FIX-6: this comment used to say "15–40 words per the wzorzec
   // measurement", contradicting both the constant (10–30) and the header
   // comment (12–21). The single authority is the constant.
-  const decisionPlaceholder = placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords);
+  void decisionLineLimit;
+  const decisionPlaceholder = DECISION_LINE_MISSING;
   blocks.push(
     heading(`${chapter.axisId}-conclusion-heading`, 'Wnioski rozdziału', 2),
     paragraph(
@@ -527,21 +538,12 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
           'program-decision',
           ['Pole', 'Treść'],
           [
-            [
-              'Kierunek',
-              contract.programDecisionLine?.direction ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
-            ],
-            [
-              'Priorytet',
-              contract.programDecisionLine?.priority ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
-            ],
+            ['Kierunek', contract.programDecisionLine?.direction ?? DECISION_LINE_MISSING],
+            ['Priorytet', contract.programDecisionLine?.priority ?? DECISION_LINE_MISSING],
             ['Horyzont', contract.programDecisionLine?.horizon ?? HORIZON_PLACEHOLDER],
             [
               'Warunek sukcesu',
-              contract.programDecisionLine?.successCondition ??
-                placeholder(decisionLineLimit.minWords, decisionLineLimit.maxWords),
+              contract.programDecisionLine?.successCondition ?? DECISION_LINE_MISSING,
             ],
           ]
         ),
@@ -584,6 +586,46 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
                 : `${area.targetLevel} — ${resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel)}`,
             ]),
           'Rejestr luk posortowany malejąco według wielkości luki.'
+        ),
+      ],
+    },
+    {
+      // Załącznik metodyczny — siódmy rozdział kontraktu DEC-46. Wszystko tu
+      // jest wyprowadzone z `DRD_STRUCTURE` i z pól kontraktu; ani jedno
+      // zdanie nie opisuje metody „z pamięci".
+      sectionId: 'methodology-appendix',
+      orderIndex: 10,
+      level: 1,
+      title: DRD_REPORT_FIXED_TEXT.methodologyAppendix,
+      purpose: 'ZAŁĄCZNIK',
+      kind: 'appendix',
+      sourceRefs: [],
+      blocks: [
+        paragraph(
+          'methodology-scope',
+          `Ocena została przeprowadzona według struktury DRD: ${DRD_STRUCTURE.length} osi i ${DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0)} obszarów. Każdy obszar ma zapisany poziom obecny i poziom docelowy na skali własnej dla swojej osi. Luka jest różnicą poziomu docelowego i obecnego; priorytet wynika wyłącznie z wielkości luki i nie jest oceną ekspercką. Kolumna „Obecny" i „Docelowy" w zestawieniu osi to średnia poziomów obszarów tej osi wyrażona jako procent maksymalnego poziomu osi.`
+        ),
+        table(
+          'methodology-axes',
+          ['Oś', 'Nazwa', 'Liczba obszarów', 'Skala poziomów'],
+          DRD_STRUCTURE.map((axis) => [
+            axis.id,
+            axis.namePL ?? axis.name,
+            axis.areas.length,
+            `1–${axis.levelCount}`,
+          ]),
+          'Struktura metodyki DRD użyta w tej ocenie.'
+        ),
+        heading('methodology-source-heading', 'Źródło danych i ograniczenia', 2),
+        paragraph(
+          'methodology-source',
+          contract.sourceKind === 'legacy'
+            ? `Źródłem wyniku jest ocena prowadzona w warsztacie DRD (magazyn zastany), nie zamrożony Output jądra metodycznego. Oznacza to, że poziomy zostały zadeklarowane przez oceniającego i nie mają załączonych dowodów; kolumna stanu dowodowego w całym raporcie przyjmuje wartość „zadeklarowane". Wersja metodyki zapisana przy tej ocenie: ${contract.methodVersion}. Sygnatura oceny: ${contract.sessionId}.`
+            : `Źródłem wyniku jest zamrożony Output jądra metodycznego, rewizja ${contract.revision}. Stan dowodowy każdego obszaru wynika z liczby dowodów zapisanych przy findingu. Wersja paczki metodycznej: ${contract.methodVersion}. Sygnatura sesji: ${contract.sessionId}.`
+        ),
+        paragraph(
+          'methodology-honesty',
+          'Raport nie zawiera porównania z rynkiem, prognozy ani horyzontu czasowego — te dane nie istnieją w ocenie i nie zostały dopisane. Obszar bez zapisanego poziomu jest oznaczony jako nieoceniony, a nie jako poziom zerowy.'
         ),
       ],
     },

@@ -11,15 +11,25 @@
  * modelu. To jest warunek tego, żeby test geometrii miał sens: gdyby renderer
  * przesuwał pola „na oko", sprawdzanie modelu nic by nie dowodziło.
  */
-import PptxGenJS, { type Slide, type TextProps } from 'pptxgenjs';
+import PptxGenJSImport, { type Slide, type TextProps } from 'pptxgenjs';
 
 import {
   DECK_FONTS,
   DECK_GEOMETRY as G,
   DECK_PALETTE as P,
+  takeawayRect,
   type DeckModel,
   type DeckSlide,
 } from './assessmentDeckModel.js';
+
+/**
+ * pptxgenjs 4.0.1 jest paczką CJS. Pod `tsx`/ESM domyślny import bywa
+ * namespace'em modułu, nie klasą — wtedy `new PptxGenJS()` rzuca
+ * „PptxGenJS is not a constructor" (zmierzone na trasie 4101, nie
+ * przewidziane). Rozpakowanie `.default` obsługuje oba kształty.
+ */
+const PptxGenJS = ((PptxGenJSImport as unknown as { default?: typeof PptxGenJSImport })?.default ??
+  PptxGenJSImport) as typeof PptxGenJSImport;
 
 const FOOTER_RULE_Y = G.footerY - 0.08;
 
@@ -56,7 +66,7 @@ function stopka(slide: Slide, model: DeckModel, numer: number, total: number): v
 }
 
 function renderSlide(
-  pptx: PptxGenJS,
+  pptx: InstanceType<typeof PptxGenJSImport>,
   model: DeckModel,
   slide: DeckSlide,
   index: number,
@@ -148,11 +158,18 @@ function renderSlide(
       );
     } else if (body.kind === 'stat') {
       s.addShape('rect', { x: r.x, y: r.y, w: r.w, h: r.h, fill: { color: P.surface } });
+      // Dwa pola tekstowe w jednym kaflu MUSZĄ się rozłączać co do jednej
+      // dziesiątej cala — inaczej `sprawdz-geometrie.mjs` (słusznie) uzna je
+      // za nachodzące. Liczone z jednej wartości, nie dwoma niezależnymi
+      // ułamkami, które przy zmianie wysokości kafla zaczynały na siebie
+      // wchodzić (zmierzone: 0,06" nachodzenia na 7 slajdach).
+      const wysokoscLiczby = r.h * 0.46;
+      const yPodpisu = r.y + 0.1 + wysokoscLiczby + 0.06;
       s.addText(body.value, {
         x: r.x + 0.16,
         y: r.y + 0.1,
         w: r.w - 0.32,
-        h: r.h * 0.55,
+        h: wysokoscLiczby,
         fontFace: DECK_FONTS.heading,
         fontSize: 30,
         bold: true,
@@ -161,9 +178,9 @@ function renderSlide(
       });
       s.addText(body.caption, {
         x: r.x + 0.16,
-        y: r.y + r.h * 0.58,
+        y: yPodpisu,
         w: r.w - 0.32,
-        h: r.h * 0.36,
+        h: Math.max(0.2, r.y + r.h - 0.1 - yPodpisu),
         fontFace: DECK_FONTS.body,
         fontSize: 12,
         color: P.muted,
@@ -235,11 +252,12 @@ function renderSlide(
   }
 
   if (slide.takeaway) {
+    const tr = takeawayRect();
     s.addText(slide.takeaway, {
-      x: G.margin,
-      y: G.contentY + G.contentH - 0.34,
-      w: G.slideW - 2 * G.margin,
-      h: 0.3,
+      x: tr.x,
+      y: tr.y,
+      w: tr.w,
+      h: tr.h,
       fontFace: DECK_FONTS.body,
       fontSize: 12,
       italic: true,
@@ -252,7 +270,7 @@ function renderSlide(
 }
 
 export async function renderAssessmentDeckPptx(model: DeckModel): Promise<Buffer> {
-  const pptx = new PptxGenJS();
+  const pptx: InstanceType<typeof PptxGenJSImport> = new PptxGenJS();
   pptx.layout = 'LAYOUT_16x9';
   // BRAND_EXPORT_CANON §4 „Metadane pliku": creator = Consultify (nie nazwisko
   // konsultanta — decyzja D5), title = nazwa deliverable, company = klient.

@@ -231,6 +231,11 @@ export function composeReportContract(input: ReportContractInput) {
             sourceFields: narrative?.provenance.sourceFields ?? [],
             narrativeKind: narrative?.kind ?? null,
             uncertainty: evidenceState,
+            // Notatka oceniającego wchodzi do kontraktu jako WŁASNE pole, a
+            // nie tylko wtopiona w `content`. Bez tego konsument (np. model
+            // prezentacji) musiałby ją wycinać z gotowego zdania po napisie —
+            // co realnie dało urwany cytat sklejony z następnym faktem.
+            assessorNote: input.assessorNotes?.[area.id] ?? null,
           };
         }),
         conclusion: {
