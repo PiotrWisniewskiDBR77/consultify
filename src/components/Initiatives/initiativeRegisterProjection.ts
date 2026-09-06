@@ -3,6 +3,7 @@ import type {
   RegisteredInitiativeReadModel,
 } from '@/services/initiatives-execution/runtimeApi';
 import { InitiativeStatus, type PortfolioInitiative } from '@/types';
+import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
 export type InitiativeLifecyclePreset =
   | 'PREPARATION'
@@ -21,7 +22,7 @@ export const INITIATIVE_LIFECYCLE_PRESETS: Array<{
   {
     id: 'PREPARATION',
     label: 'W przygotowaniu',
-    states: ['REGISTERED_DRAFT', 'DEFINING', 'DEFINED', 'ANALYZING'],
+    states: ['REGISTERED_DRAFT', 'DEFINED', 'ANALYZING'],
   },
   { id: 'DECISION', label: 'Do decyzji', states: ['READY_FOR_DECISION'] },
   { id: 'APPROVED_BACKLOG', label: 'Zatwierdzony backlog', states: ['APPROVED_BACKLOG'] },
@@ -32,12 +33,11 @@ export const INITIATIVE_LIFECYCLE_PRESETS: Array<{
     label: 'Rezultaty',
     states: ['DELIVERED', 'BENEFITS_TRACKING', 'EFFECTIVENESS_REVIEWED'],
   },
-  { id: 'HISTORICAL', label: 'Zamknięte', states: ['CLOSED', 'ARCHIVED', 'CANCELLED'] },
+  { id: 'HISTORICAL', label: 'Zamknięte', states: ['CLOSED', 'ARCHIVED'] },
 ];
 
 export const INITIATIVE_LIFECYCLE_LABELS: Record<string, string> = {
   REGISTERED_DRAFT: 'Szkic zarejestrowany',
-  DEFINING: 'Definiowanie',
   DEFINED: 'Zdefiniowana',
   ANALYZING: 'Analiza',
   READY_FOR_DECISION: 'Gotowa do decyzji',
@@ -48,7 +48,6 @@ export const INITIATIVE_LIFECYCLE_LABELS: Record<string, string> = {
   BENEFITS_TRACKING: 'Pomiar efektów',
   EFFECTIVENESS_REVIEWED: 'Efektywność oceniona',
   CLOSED: 'Zamknięta',
-  CANCELLED: 'Anulowana',
   ARCHIVED: 'Zarchiwizowana',
 
   // PRZEWODY ODBIORU 2026-09-03 — dopisek ADDYTYWNY (żaden klucz powyżej się
@@ -250,20 +249,6 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
   } as const;
 };
 
-export const lifecycleToInitiativeStatus = (lifecycle: string): InitiativeStatus => {
-  const state = lifecycle.toUpperCase();
-  if (state === 'REGISTERED_DRAFT') return InitiativeStatus.DRAFT;
-  if (state === 'DEFINED' || state === 'ANALYZING' || state === 'READY_FOR_DECISION')
-    return InitiativeStatus.REVIEW;
-  if (state === 'APPROVED_BACKLOG') return InitiativeStatus.APPROVED;
-  if (state === 'SCHEDULED') return InitiativeStatus.SCHEDULED;
-  if (state === 'IN_EXECUTION') return InitiativeStatus.EXECUTING;
-  if (state === 'DELIVERED' || state === 'BENEFITS_TRACKING') return InitiativeStatus.TRACKING;
-  if (state === 'CLOSED') return InitiativeStatus.DONE;
-  if (state === 'ARCHIVED') return InitiativeStatus.ARCHIVED;
-  return InitiativeStatus.DRAFT;
-};
-
 /** One canonical adapter used by both the Initiatives and Execution registers. */
 export const toCanonicalInitiativeRegisterItem = (
   record: RegisteredInitiativeReadModel,
@@ -291,7 +276,10 @@ export const toCanonicalInitiativeRegisterItem = (
     // `RegisteredInitiativeReadModel` in runtimeApi.ts) — leaving
     // `registerArea`/`registerAxisRaw`/`registerCategory` unset here is an
     // honest "brak danych", not a bug. Never invent a value for this source.
-    status: lifecycleToInitiativeStatus(projection.lifecycle),
+    status: mapInitiativeStatus({
+      direction: 'runtime-to-status',
+      lifecycle: projection.lifecycle as import('@/contracts/initiatives-execution/foundation').InitiativeLifecycleStatus,
+    }).status as InitiativeStatus,
     displayStatus: projection.lifecycle,
     priority: initiative.priority as PortfolioInitiative['priority'],
     progress: undefined as unknown as number,

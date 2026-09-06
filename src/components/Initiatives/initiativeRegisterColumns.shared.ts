@@ -7,6 +7,7 @@ import type { StandardRowMenu, TableColumn } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import type { PortfolioInitiative } from '@/types';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
+import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
 import {
   INITIATIVE_GATE_NAME_LABELS,
@@ -56,27 +57,11 @@ export const INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS = ['source'] as const;
  * slownika statusow. Alias zalatwia to w JEDNYM miejscu — obie powierzchnie
  * Oceny naprawiaja sie bez wlasnego kodu.
  */
-export const INITIATIVE_REGISTER_LEGACY_LIFECYCLE_ALIASES: Record<string, string> = {
-  DRAFT: 'REGISTERED_DRAFT',
-  PLANNING: 'DEFINING',
-  PENDING_REVIEW: 'DEFINED',
-  REVIEW: 'ANALYZING',
-  PROMOTED: 'READY_FOR_DECISION',
-  APPROVED: 'APPROVED_BACKLOG',
-  SCHEDULED: 'SCHEDULED',
-  EXECUTING: 'IN_EXECUTION',
-  BLOCKED: 'IN_EXECUTION',
-  TRACKING: 'BENEFITS_TRACKING',
-  DONE: 'CLOSED',
-  ARCHIVED: 'ARCHIVED',
-  CANCELLED: 'CANCELLED',
-};
-
 /** Kanoniczny stan cyklu zycia wiersza — niezaleznie od tego, ktory slownik go przyniosl. */
 export const resolveInitiativeRegisterLifecycle = (row: InitiativeRegisterRow): string => {
   const raw = String(row.displayStatus || row.status || '').toUpperCase();
   if (!raw) return '';
-  return INITIATIVE_REGISTER_LEGACY_LIFECYCLE_ALIASES[raw] || raw;
+  return mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ?? '';
 };
 
 export interface InitiativeRegisterColumnOptions {
