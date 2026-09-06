@@ -6786,9 +6786,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             {/* DEC-403 (06.09): wybór gałęzi ("Main (2)") uznany za
                 pozostałość po nieukończonej funkcji — ukryty do Fali 2, patrz
                 czatWidocznosc.ts. Rozmowa zostaje na gałęzi domyślnej. */}
-            {!UKRYTE_DEC403.galezie &&
-              activeConversationId &&
-              !String(activeConversationId).startsWith('local-') && (
+            {!UKRYTE_DEC403.galezie && activeConversationId && !String(activeConversationId).startsWith('local-') && (
               <>
                 {branchParentConversationId && (
                   <button
