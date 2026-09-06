@@ -1,0 +1,33 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ ✓ src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx > P11 — lista planów > pierwszą kolumną jest nazwa planu, a inicjatywy nie stają się wierszami listy 225ms
+ ✓ src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx (1 test) 227ms
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia) 60ms
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > ma jawny, niepusty powód dla każdej z 9 kart poza rejestrem 2ms
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > pokrywa cały inwentarz P10 bez anonimowych pozycji 0ms
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts (3 tests) 64ms
+ ✓ src/components/Initiatives/__tests__/nazwyBezKodow.test.ts > P11 — nazwy bez kodów technicznych > agregat bez nazwy dostaje etykietę biznesową zamiast aco/scenario/UUID 72ms
+ ✓ src/components/Initiatives/__tests__/nazwyBezKodow.test.ts (1 test) 76ms
+ ✓ src/components/Initiatives/__tests__/PlanCard.zatwierdz.test.ts > P11 — zatwierdzenie propozycji planu > nie zmienia planu przed statusem ACCEPTED 133ms
+ ✓ src/components/Initiatives/__tests__/PlanCard.zatwierdz.test.ts > P11 — zatwierdzenie propozycji planu > stosuje propozycję dopiero po statusie ACCEPTED 1ms
+ ✓ src/components/Initiatives/__tests__/PlanCard.zatwierdz.test.ts (2 tests) 141ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P11 — brak presji > pokazuje polski komunikat zamiast pustego ekranu lub błędu 35ms
+ ✓ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx (1 test) 37ms
+
+ Test Files  5 passed (5)
+      Tests  8 passed (8)
+   Start at  17:49:22
+   Duration  6.03s (transform 1.04s, setup 496ms, import 1.66s, tests 546ms, environment 2.45s)
+
+
+ Test Files  5 passed (5)
+      Tests  8 passed (8)
+   Start at  17:49:22
+   Duration  6.03s (transform 1.04s, setup 496ms, import 1.66s, tests 546ms, environment 2.45s)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml

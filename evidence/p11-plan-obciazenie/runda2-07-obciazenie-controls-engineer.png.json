@@ -1,0 +1,35 @@
+{
+ "url": "http://localhost:3191/initiatives?tab=plan",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Szkice",
+  "text=Plan klikany P11 — Controls Engineer",
+  "text=Otwórz",
+  "text=Obciążenie ról"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Szkice\n2\nNowy plan\nSzkice\n2\nOpublikowane\n0\nZ konfliktami\n0\nPlan klikany P11 — Controls Engineer\nSzkic\nZapisano\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument\nHoryzont\nZakres inicjatyw\nKolejność i okna\nZależności i konflikty\nObciążenie ról\nDecyzje\nControls Engineer: popyt 2 FTE, podaż 1 FTE — przeciążenie 100%.\nAKCJE\nWróć do listy\nWŁAŚCIWOŚCI\nPortfel źródłowy · v4\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T15:44:40.978Z"
+}

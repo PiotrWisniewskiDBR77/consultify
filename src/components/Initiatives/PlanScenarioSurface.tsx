@@ -423,7 +423,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           author?: string;
         }>;
       };
-      const nextRows = (result.scenarios ?? []).map((item) => ({
+      const enrichedScenarios = await Promise.all(
+        (result.scenarios ?? []).map(async (item) => {
+          if (item.initiativeCount !== undefined && item.author !== undefined) return item;
+          const detail = (await readPlanScenario(item.id)) as { scenario: PlanScenario };
+          return {
+            ...item,
+            initiativeCount: detail.scenario.windows.length,
+            author: detail.scenario.updatedBy,
+          };
+        })
+      );
+      const nextRows = enrichedScenarios.map((item) => ({
         id: item.id,
         title: resolveBusinessDisplayLabel({
           displayName: item.name,

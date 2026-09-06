@@ -1,0 +1,32 @@
+{
+ "url": "http://localhost:3191/initiatives?tab=plan",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Szkice"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Szkice\n1\nNowy plan\nSzkice\n1\nOpublikowane\n0\nZ konfliktami\n0\nNAZWA\n\t\nPORTFEL / WERSJA\n\t\nHORYZONT\n\t\nSTATUS\n\t\nINICJATYW W PLANIE\n\t\nKONFLIKTY\n\t\nZAKTUALIZOWANO\n\t\nAUTOR\n\n\nPlan transformacji DBR77 — Controls Engineering\n\t\nPortfel źródłowy · v2\n\t\n07 wrz 2026 – 09 lis 2026\n\t\nSzkic\n\t\n5\n\t\nbrak\n\t\n06 wrz 2026\n\t\nnieznana\nPlan transformacji DBR77 — Controls Engineering\nOtwórz\nSzkic\nSZCZEGÓŁY\nWłaściwość\tWartość\nPortfel / wersja\tPortfel źródłowy · v2\nHoryzont\t07 wrz 2026 – 09 lis 2026\nInicjatyw w planie\t5\nKonflikty\tbrak\nPOWIĄZANIA\nBrak powiązań",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T15:39:59.210Z"
+}

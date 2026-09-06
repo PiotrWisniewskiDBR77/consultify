@@ -1,78 +1,65 @@
-# P11 — raport Plan i Obciążenie (DEC-421)
+# P11 — raport Plan i Obciążenie (DEC-421), runda 2
 
 ## Werdykt
 
-**PARTIAL / NOT PROVEN.** Warstwa produktu, karty N, listy, generator, nazwy biznesowe i i18n zostały wdrożone. Nie ma jednak podstaw do ogłoszenia pełnego odbioru: lokalna baza nie zawiera opublikowanego scenariusza portfela, więc nie dało się utworzyć pierwszego realnego planu ani przejść całego przepływu klikowego. Brakuje też serwerowej bramki publikacji planu z konfliktami wraz ze śladem potwierdzenia oraz dwóch wymaganych dowodów RealPG. Każdy niespełniony próg ma wiersz w `99_DECYZJE_WLASCICIELA.md`.
+**GOTOWE DO ODBIORU — 7/7 mutacji RED, bez deklarowania odbioru właścicielskiego.** Obowiązkowy merge `codex/m03-admin-20260824` wykonano przed zmianami. Rejestr ma 13 kart i pokrywa inwentarz 22 pozycji. Na realnym PG powstał opublikowany plan 5 inicjatyw / 12 tygodni i opublikowana analiza z przeciążeniem roli Controls Engineer.
 
 ## Przed → po
 
-| miara | przed | po | wynik |
+| miara | runda 1 | runda 2 | wynik |
 |---|---:|---:|---|
-| wpisy `REJESTR_KART_N` | 8 | 10 | PASS |
-| karty P11 w standardowej powłoce | 0 | 2 | PASS |
-| sekcje karty planu | brak karty | 6 | PASS |
-| sekcje karty analizy | brak karty | 5 | PASS |
-| chipy Menu 3 Plan / Obciążenie | niezgodne | 3 / 3 | PASS |
-| CTA Menu 2 Plan / Obciążenie | brak | 1 / 1 | PASS |
-| `btn-primary` w treści obu powierzchni | zastane | 0 | PASS |
-| `primary-[0-9]` w dotkniętych plikach P11 | niezmierzone | 0 | PASS |
-| celowane testy P11 | brak | 13/13 zielone, 0 failed, 0 skipped | PASS |
-| pełny przepływ na realnym rekordzie | brak | brak rekordu źródłowego | NOT PROVEN |
-| wymagane mutacje | 0/7 udokumentowanych | 0/7 udokumentowanych | NOT PROVEN |
+| wpisy `REJESTR_KART_N` | 10 | 13 | PASS |
+| pozycje inwentarza / poza rejestrem | 22 / 12 | 22 / 9 z jawnym powodem | PASS |
+| realny plan | 0 | 2 rekordy, w tym 1 opublikowany | PASS |
+| plan wymagany przez DEC-421 | brak | 5 inicjatyw / 12 tygodni | PASS |
+| realna analiza obciążenia | brak | 12 okresów z luką / 1 rola | PASS |
+| trwałość `name` i agregat legacy bez `name` | NOT PROVEN | RealPG GREEN | PASS |
+| publikacja konfliktowa bez jawnego potwierdzenia | możliwa | serwer odrzuca; ślad zapisuje kto/kiedy/N/treść | PASS |
+| mutacje zabezpieczeń | 0/7 | 7/7 RED, następnie GREEN | PASS |
+| runtime karty/generatora/analizy | dev-render z 7 błędami | realna trasa, 1440×900 light, 0 błędów konsoli | PASS |
 
-Baseline przed zmianami: `/private/tmp/p11/baza.json` — 19/19 testów zielonych, 0 failed, 0 skipped. Końcowy pakiet celowany: `/private/tmp/p11/final-tests.json` — 13/13 zielonych, 0 failed, 0 skipped. Nowe czerwone w uruchomionych testach: 0.
+## Rekordy i ślad produktu
 
-## Zaimplementowany zakres
+- Główny plan klikany: `plan-f807b6fd-357e-40ba-860c-cc7de75afedc`, `PUBLISHED`, wersja 3, 5 okien inicjatyw, 12 tygodni.
+- Plan przygotowujący scenariusz: `p11-dec421-plan-20260906`, `DRAFT`, 5 okien, 12 tygodni.
+- Analiza: `p11-dec421-capacity-20260906`, `PUBLISHED`, wersja 2, 12 okresów, 12 luk, rola Controls Engineer.
+- Scenariusz portfela: `p11-dec421-portfolio-20260906`; rekordy utworzono przez istniejące serwisy komend produktu i UOW. Nie wykonywano ręcznej korekty `ie_aggregate_state` dla danych DBR77.
+- Klikany przepływ: `Nowy plan` → karta → generator pięciu kroków → generowanie propozycji → zatwierdzenie → powrót do listy. Propozycja została zapisana ze statusem `ACCEPTED`.
 
-- opcjonalne `name` dla planu i analizy obciążenia, zgodne wstecznie na poziomie schematu;
-- osobne listy planów i analiz w `StandardTable` z `StandardPreview`;
-- `PlanCard` w `StandardArtifactShell`: Horyzont, Zakres inicjatyw, Kolejność i okna, Zależności i konflikty, Obciążenie ról, Decyzje;
-- pięciokrokowy generator korzystający z istniejącej propozycji planu; propozycja nie zmienia planu przed statusem `ACCEPTED`;
-- `CapacityAnalysisCard`: Plan źródłowy, Arkusz obciążenia, Luki i presja, Propozycje zmian, Decyzje;
-- wspólne liczenie luk oraz polski stan `NoCapacityPressureError`;
-- nazwy przez `resolveBusinessDisplayLabel`, bez technicznego identyfikatora jako awaryjnej etykiety;
-- wpisy `plan` i `capacity_analysis` w rejestrze kart N oraz klucze PL/EN.
+## Dowody runtime i DOM
 
-## Progi liczbowe i dowody
+Zrzuty `runda2-00`–`runda2-09` wykonano na własnym Vite `3191` z `VITE_DOTENV_DISABLED=1` i `VITE_API_TARGET=http://127.0.0.1:4100`. Każdy PNG ma 1440×900, motyw light, a odpowiadający JSON ma `bledyKonsoli: []` i `odpowiedziHttp: []`.
 
-- Health stanowiska: `GET http://127.0.0.1:4100/api/health` → HTTP 200, `database=connected`.
-- PG `127.0.0.1:54400`: odczyt wykonany przed wdrożeniem wykazał 0 agregatów w `ie_aggregate_state`; identyfikator utworzonego planu: **brak / NOT PROVEN**.
-- Na tekstach DOM zapisanych przy zrzutach: 0 wystąpień `aco-`, `ie-`, `scenario-<cyfry>` i UUID; 0 angielskich statusów ze stop-listy. Obie realne listy były puste, więc nie jest to dowód etykiety wiersza z danymi.
-- Tabela Plan ma pierwszą kolumnę `NAZWA`, lecz przy 0 rekordów nie udowodniono na żywo, że żaden wiersz nie jest inicjatywą.
-- Menu 2: dokładnie `Nowy plan` i `Nowa analiza`; Menu 3: po 3 chipy.
-- 5 par PNG, wszystkie 1440×900, każda para ma różne SHA-256. Średnia luminancja light/dark:
-  - `01-lista-planow`: 249,05 / 20,08;
-  - `02-karta-planu`: 247,48 / 23,85;
-  - `03-generator-planu`: 246,87 / 26,04;
-  - `04-lista-analiz`: 249,07 / 20,02;
-  - `05-karta-analizy`: 247,67 / 23,34.
-- Zrzuty list pochodzą z realnej aplikacji i nie mają błędów konsoli. Zrzuty kart/generatora pochodzą z dev-render fixture; każdy ma 7 błędów związanych z 404 i pobraniem organizacji, dlatego są dowodem wyglądu zamontowanego komponentu, nie pełnego runtime.
-- `check-list-canon.sh` i `check-artefakt.sh`: exit 0, ratchet bez wzrostu długu.
-- `esbuild` dla dotkniętych komponentów i testu nazw: exit 0.
-- Serwerowy `tsc --build tsconfig.build.json`: exit 0. Końcowy pełny root `tsc --noEmit` z limitem 8 GB: exit 2, 124 zastane błędy TS; filtrowanie wyniku po dotkniętych ścieżkach P11 dało 0 trafień. Nie uznaję pełnego typechecku za zielony.
+- Lista planów: pierwsza kolumna `NAZWA`; dwa wiersze są planami, oba mają liczbę inicjatyw `5`.
+- Skan tekstu DOM listy: 0 wystąpień `aco-`, `ie-`, `scenario-<cyfry>` i UUID.
+- Karta planu pokazuje: `Controls Engineer: popyt 2 FTE, podaż 1 FTE — przeciążenie 100%.`
+- Karta analizy pokazuje: `Okresy z luką: 12 · Role: 1`.
+- Pliki: `evidence/p11-plan-obciazenie/runda2-*.png` oraz sąsiednie `*.png.json`.
 
-## Mutacje §6
+## Bramka publikacji i RealPG
 
-Powstały testy zabezpieczeń dla zatwierdzania propozycji, źródła listy planów, nazw bez kodów, rejestru i komunikatu braku presji. Nie wykonano jednak siedmiu kontrolowanych zmian RED i nie zapisano siedmiu artefaktów wynikowych. Dwa wymagane testy RealPG (`planPublish.konflikt.realdb.test.ts`, `planScenario.name.realdb.test.ts`) nie powstały. Próg mutacyjny pozostaje **NOT PROVEN**, a brak jest jawnie skierowany do decyzji właściciela.
+Serwer wylicza konflikty przy `PUBLISH`. Przy `N > 0` akceptuje wyłącznie dokładne potwierdzenie `Publikuję mimo N konfliktów` z zgodnym `conflictCount`; w przeciwnym razie odrzuca komendę. Po akceptacji zapisuje w scenariuszu i audycie `confirmedBy`, `confirmedAt`, `conflictCount` oraz `statement`. `window.confirm()` zastąpiono jawnym dialogiem aplikacji i payloadem serwerowym.
 
-## Commity
+Na `127.0.0.1:54400/consultify_noc`:
 
-- `0d7417fe0c` — krok 1, nazwy scenariuszy;
-- `f490ea40c3` — krok 2, rejestr kart i harness;
-- `c0007c62be` — kroki 3–4, menu i chipy;
-- `8242889923` — krok 5, lista planów;
-- `6254958f48` — krok 8, lista analiz;
-- `35b404927c` — kroki 6–7, karta i generator planu;
-- `b322329a85` — krok 9, karta analizy;
-- `b2adfce247` — kroki 10–11, etykiety i i18n;
-- `c1b9b94437` — krok 12, test nazw i dowody wizualne.
+- `planScenario.name.realdb.test.ts`: GREEN — zapis/odczyt `name` i zgodność agregatu legacy bez `name`;
+- `planPublish.konflikt.realdb.test.ts`: GREEN — odrzucenie bez potwierdzenia oraz zapis śladu po dokładnym potwierdzeniu;
+- fixture używają osobnych `organization_id`; po testach pozostało 0 organizacji fixture P11.
 
-## Niezmierzone albo niespełnione
+## Mutacje i test końcowy
 
-- realne utworzenie planu i jego identyfikator;
-- klikany przepływ od `Nowy plan` do zatwierdzenia propozycji i powrotu do listy;
-- persistencja `name` oraz zgodność wsteczna na realnym PG;
-- blokada publikacji z konfliktami bez potwierdzenia i zapis potwierdzenia w śladzie;
-- siedem mutacji zakończonych RED;
-- karta z realnym planem 5 inicjatyw / 12 tygodni i przeciążeniem Controls Engineer;
-- zrzuty kart bez błędów konsoli na pełnym runtime.
+Siedem osobnych wyników RED i opis zmian znajduje się w `evidence/p11-plan-obciazenie/mutacje/README.md`. Po przywróceniu kodu:
+
+- UI/rejestr: 5 plików, 8/8 testów GREEN, w tym rejestr 3/3;
+- RealPG: 2 pliki, 2/2 testy GREEN;
+- razem końcowo: 10/10 testów GREEN, 0 failed, 0 skipped.
+
+## Znaleziska poza zakresem
+
+- Pusta tabela `StandardTable` pokazuje angielskie `No items found`. Zgłoszone jako zastane znalezisko StandardTable; nie jest zmianą P11.
+- API uruchomione na porcie 4100 pochodziło ze starszej tożsamości kodu i podczas pierwszego kliknięcia nie przeniosło `name`. Ten sam rekord został uzupełniony przez aktualny serwis produktu z worktree; trwałość aktualnego kontraktu jest osobno dowiedziona testem RealPG. Nie przedstawiam starszego procesu 4100 jako dowodu aktualnej implementacji serwera.
+
+## Commity rundy 2
+
+- `750c98a3c3` — trwała bramka publikacji i `name` RealPG;
+- commit dowodów runtime, scenariusza i raportu — patrz historia gałęzi po zamknięciu rundy.

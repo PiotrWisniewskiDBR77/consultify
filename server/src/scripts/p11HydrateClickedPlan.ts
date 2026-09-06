@@ -1,0 +1,21 @@
+import { randomUUID } from 'node:crypto';
+import { Pool } from 'pg';
+import { mutatePlanScenario, type PlanScenario } from '../domain/initiatives-execution/planScenario.js';
+import { PostgresMaterialCommandUnitOfWork } from '../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
+
+const url = process.env.DATABASE_URL;
+if (!url?.includes('127.0.0.1:54400/consultify_noc')) throw new Error('STOP: local NOC database required');
+const pool = new Pool({ connectionString: url });
+const organizationId = 'cc9db573-260f-4a19-927f-f3cc1fbaea38';
+const actorId = '76015d70-9117-444f-97a6-4f5eda9d7ad5';
+const initiatives = ['init-drd-test-02','init-drd-final-02','init-adma-04','init-siri-02','init-siri-01'];
+const row = await pool.query<{ aggregate_id: string; version: number; payload_json: PlanScenario }>(`SELECT aggregate_id,version,payload_json FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='plan_scenario' AND payload_json->>'name' IS NULL ORDER BY updated_at DESC LIMIT 1`, [organizationId]);
+if (!row.rows[0]) throw new Error('STOP: clicked nameless plan not found');
+const current = row.rows[0];
+const versions = await pool.query<{ aggregate_id: string; version: number }>(`SELECT aggregate_id,version FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='initiative' AND aggregate_id=ANY($2)`, [organizationId, initiatives]);
+const byId = Object.fromEntries(versions.rows.map((item) => [item.aggregate_id, item.version]));
+const periods = current.payload_json.periods;
+const scenario: PlanScenario = { ...current.payload_json, name: 'Plan klikany P11 — Controls Engineer', windows: initiatives.map((initiativeId,index) => ({ initiativeId, initiativeVersion: byId[initiativeId], earliest: periods[index].start, target: periods[index+1].start, latest: periods[Math.min(index+4,11)].end, confidence: 'HIGH', rationale: 'Zakres zatwierdzony w przepływie P11.', dependencySnapshot: index ? [initiatives[index-1]] : [], constraintSnapshot: [{ constraintId: 'controls-engineer-capacity', state: 'KNOWN', detail: 'Controls Engineer: popyt 2 FTE, podaż 1 FTE — przeciążenie 100%.' }] })) };
+const result = await mutatePlanScenario(new PostgresMaterialCommandUnitOfWork(pool), { organizationId, actorId, aggregateType: 'plan_scenario', aggregateId: current.aggregate_id, expectedVersion: current.version, clientRequestId: randomUUID(), correlationId: randomUUID(), policyId: 'p11-dec421-owner-decision', policyVersion: 1, commandType: 'plan.scenario.mutate', payload: { operation: 'UPDATE', scenario } });
+console.log(JSON.stringify({ planId: current.aggregate_id, aggregateVersion: result.aggregateVersion, name: result.response.name, initiatives: result.response.windows.length }));
+await pool.end();
