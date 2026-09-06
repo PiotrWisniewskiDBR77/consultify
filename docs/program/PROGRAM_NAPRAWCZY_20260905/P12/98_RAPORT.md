@@ -95,7 +95,8 @@ Każda mutacja została wykonana pojedynczo, dała RED i została przywrócona p
 9. `8d77200fb3` — migracja danych i CHECK.
 10. `7d9900ef76` — R3: tylko zatwierdzony KPI.
 11. `adc8f2c016` — kanoniczne statusy na powierzchniach UI.
-12. Commit domykający — zgodność runtime, dowody, RealPG i raport (SHA po utworzeniu commitu).
+12. `cc96a10fca` — zgodność runtime, dowody, RealPG i raport.
+13. Commit raportowy — zapis SHA kroku 12 (SHA bieżącego commitu nie może być samoreferencyjny).
 
 ## 8. Granice i znaleziska
 
