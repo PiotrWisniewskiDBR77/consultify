@@ -73,6 +73,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
+import { ALL_STATUSES as ALL_INITIATIVE_STATUSES } from '@/utils/initiativeHelpers';
 import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import {
@@ -1324,19 +1325,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         // Initiatives: Fetch initiatives derived from tools/assessments (traceability).
         try {
           const initiativesList = await Api.getInitiativesByStatus(
-            [
-              'DRAFT',
-              'PENDING_REVIEW',
-              'REVIEW',
-              'PLANNING',
-              'APPROVED',
-              'SCHEDULED',
-              'EXECUTING',
-              'BLOCKED',
-              'DONE',
-              'TRACKING',
-              'CANCELLED',
-            ].join(','),
+            // DEC-424: to był stary (przed-P12) słownik statusów — 11 martwych
+            // kodów, z których żaden dziś nie istnieje w initiatives.status
+            // (CHECK dopuszcza wyłącznie 7 kanonicznych, initiativeStatuses.ts).
+            // Backend dziś normalizuje wejście, więc awarii nie było, ale lista
+            // myliła co do realnego słownika i przy zaostrzeniu normalizacji
+            // stałaby się cichym błędem. ALL_STATUSES = kanoniczne 7 (SSOT).
+            ALL_INITIATIVE_STATUSES.join(','),
             currentProjectId || undefined
           );
 

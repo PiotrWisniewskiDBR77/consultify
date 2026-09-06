@@ -93,21 +93,21 @@ async function ensureProject() {
 /* ────── Initiatives ────── */
 
 const initiatives = [
-  { id: uuid(), name: 'Cloud Migration — Azure',        status: 'EXECUTING', owner: 0, priority: 'HIGH',     startOff: -30, endOff: 45,  progress: 42 },
-  { id: uuid(), name: 'Data Platform — Lakehouse',      status: 'EXECUTING', owner: 1, priority: 'HIGH',     startOff: -20, endOff: 60,  progress: 28 },
-  { id: uuid(), name: 'API Gateway v2',                 status: 'EXECUTING', owner: 2, priority: 'MEDIUM',   startOff: -15, endOff: 30,  progress: 65 },
-  { id: uuid(), name: 'Process Automation — RPA',       status: 'BLOCKED',   owner: 3, priority: 'HIGH',     startOff: -25, endOff: 40,  progress: 15 },
-  { id: uuid(), name: 'Security Hardening',             status: 'EXECUTING', owner: 4, priority: 'CRITICAL', startOff: -10, endOff: 20,  progress: 55 },
-  { id: uuid(), name: 'Customer Portal Redesign',       status: 'SCHEDULED', owner: 5, priority: 'MEDIUM',   startOff: 5,   endOff: 75,  progress: 0 },
-  { id: uuid(), name: 'ERP SAP Integration',            status: 'BLOCKED',   owner: 1, priority: 'HIGH',     startOff: -35, endOff: 50,  progress: 18 },
-  { id: uuid(), name: 'Legacy Decommission',            status: 'EXECUTING', owner: 3, priority: 'LOW',      startOff: -40, endOff: 90,  progress: 35 },
-  { id: uuid(), name: 'DevOps Maturity Program',        status: 'EXECUTING', owner: 6, priority: 'MEDIUM',   startOff: -12, endOff: 55,  progress: 40 },
-  { id: uuid(), name: 'AI-Powered Analytics',           status: 'SCHEDULED', owner: 4, priority: 'HIGH',     startOff: 10,  endOff: 80,  progress: 0 },
-  { id: uuid(), name: 'Compliance & GDPR Audit',        status: 'EXECUTING', owner: 2, priority: 'CRITICAL', startOff: -8,  endOff: 15,  progress: 72 },
-  { id: uuid(), name: 'Talent Upskilling Program',      status: 'BLOCKED',   owner: 5, priority: 'MEDIUM',   startOff: -18, endOff: 65,  progress: 10 },
-  { id: uuid(), name: 'Vendor Consolidation',           status: 'EXECUTING', owner: 7, priority: 'LOW',      startOff: -22, endOff: 35,  progress: 50 },
-  { id: uuid(), name: 'Digital Workplace Platform',     status: 'EXECUTING', owner: 6, priority: 'MEDIUM',   startOff: -14, endOff: 48,  progress: 30 },
-  { id: uuid(), name: 'Supply Chain Optimization',      status: 'EXECUTING', owner: 7, priority: 'HIGH',     startOff: -10, endOff: 55,  progress: 22 },
+  { id: uuid(), name: 'Cloud Migration — Azure',        status: 'IN_EXECUTION', owner: 0, priority: 'HIGH',     startOff: -30, endOff: 45,  progress: 42 },
+  { id: uuid(), name: 'Data Platform — Lakehouse',      status: 'IN_EXECUTION', owner: 1, priority: 'HIGH',     startOff: -20, endOff: 60,  progress: 28 },
+  { id: uuid(), name: 'API Gateway v2',                 status: 'IN_EXECUTION', owner: 2, priority: 'MEDIUM',   startOff: -15, endOff: 30,  progress: 65 },
+  { id: uuid(), name: 'Process Automation — RPA',       status: 'IN_EXECUTION', owner: 3, priority: 'HIGH',     startOff: -25, endOff: 40,  progress: 15 },
+  { id: uuid(), name: 'Security Hardening',             status: 'IN_EXECUTION', owner: 4, priority: 'CRITICAL', startOff: -10, endOff: 20,  progress: 55 },
+  { id: uuid(), name: 'Customer Portal Redesign',       status: 'APPROVED', owner: 5, priority: 'MEDIUM',   startOff: 5,   endOff: 75,  progress: 0 },
+  { id: uuid(), name: 'ERP SAP Integration',            status: 'IN_EXECUTION', owner: 1, priority: 'HIGH',     startOff: -35, endOff: 50,  progress: 18 },
+  { id: uuid(), name: 'Legacy Decommission',            status: 'IN_EXECUTION', owner: 3, priority: 'LOW',      startOff: -40, endOff: 90,  progress: 35 },
+  { id: uuid(), name: 'DevOps Maturity Program',        status: 'IN_EXECUTION', owner: 6, priority: 'MEDIUM',   startOff: -12, endOff: 55,  progress: 40 },
+  { id: uuid(), name: 'AI-Powered Analytics',           status: 'APPROVED', owner: 4, priority: 'HIGH',     startOff: 10,  endOff: 80,  progress: 0 },
+  { id: uuid(), name: 'Compliance & GDPR Audit',        status: 'IN_EXECUTION', owner: 2, priority: 'CRITICAL', startOff: -8,  endOff: 15,  progress: 72 },
+  { id: uuid(), name: 'Talent Upskilling Program',      status: 'IN_EXECUTION', owner: 5, priority: 'MEDIUM',   startOff: -18, endOff: 65,  progress: 10 },
+  { id: uuid(), name: 'Vendor Consolidation',           status: 'IN_EXECUTION', owner: 7, priority: 'LOW',      startOff: -22, endOff: 35,  progress: 50 },
+  { id: uuid(), name: 'Digital Workplace Platform',     status: 'IN_EXECUTION', owner: 6, priority: 'MEDIUM',   startOff: -14, endOff: 48,  progress: 30 },
+  { id: uuid(), name: 'Supply Chain Optimization',      status: 'IN_EXECUTION', owner: 7, priority: 'HIGH',     startOff: -10, endOff: 55,  progress: 22 },
 ];
 
 async function seedInitiatives() {
@@ -431,7 +431,7 @@ async function main() {
 
   console.log('');
   console.log('  Summary:');
-  console.log(`    ${initiatives.length} initiatives (3 BLOCKED, 2 SCHEDULED, 10 EXECUTING)`);
+  console.log(`    ${initiatives.length} initiatives (3 IN_EXECUTION[was BLOCKED], 2 APPROVED[was SCHEDULED], 10 IN_EXECUTION[was EXECUTING])`);
   console.log(`    ${taskTemplates.length} tasks (incl. overdue, blocked, unassigned, no-due-date)`);
   console.log(`    ${decisionTemplates.length} decisions (incl. 11 PENDING with aging)`);
   console.log(`    ${raidItems.length} RAID items (risks, issues, dependencies)`);

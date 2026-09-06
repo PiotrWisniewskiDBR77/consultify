@@ -904,7 +904,7 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     area: 'Product',
     summary:
       'Align product roadmap, customer requests, and partner demand signals into one quarterly plan.',
-    status: 'planned',
+    status: 'PLANNING',
     priority: 'medium',
     plannedStart: '-40d',
     plannedEnd: '+70d',
@@ -2022,7 +2022,7 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     area: 'Innovation',
     summary:
       'Install a stage-gate funnel with explicit kill criteria so concept bets reach evidence gates before consuming design and partner bandwidth.',
-    status: 'planned',
+    status: 'PLANNING',
     priority: 'medium',
     plannedStart: '+5d',
     plannedEnd: '+100d',

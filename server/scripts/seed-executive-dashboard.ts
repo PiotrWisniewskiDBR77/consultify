@@ -105,13 +105,16 @@ async function ensureProject() {
   `, [PROJECT_ID, ORG, USER_ID]);
 }
 
+// DEC-424: IN_PROGRESS/ACTIVE/BLOCKED/PLANNING były poprawne przed migracją P12
+// (20262103_p12_initiative_status_slownik.sql); initiatives_status_check_p12 dopuszcza
+// dziś wyłącznie 7 kodów z server/src/constants/initiativeStatuses.ts.
 const initiatives = [
-  { id: uuid(), name: 'Cloud Migration — Azure', status: 'IN_PROGRESS', priority: 'HIGH', owner: 0, startOff: -30, endOff: 45 },
-  { id: uuid(), name: 'Data Platform — Lakehouse', status: 'IN_PROGRESS', priority: 'HIGH', owner: 1, startOff: -20, endOff: 60 },
-  { id: uuid(), name: 'API Gateway v2', status: 'ACTIVE', priority: 'MEDIUM', owner: 2, startOff: -15, endOff: 30 },
-  { id: uuid(), name: 'Process Automation — RPA', status: 'BLOCKED', priority: 'HIGH', owner: 3, startOff: -25, endOff: 40 },
-  { id: uuid(), name: 'Security Hardening', status: 'ACTIVE', priority: 'CRITICAL', owner: 4, startOff: -10, endOff: 20 },
-  { id: uuid(), name: 'Customer Portal Redesign', status: 'PLANNING', priority: 'MEDIUM', owner: 5, startOff: 5, endOff: 75 },
+  { id: uuid(), name: 'Cloud Migration — Azure', status: 'IN_EXECUTION', priority: 'HIGH', owner: 0, startOff: -30, endOff: 45 },
+  { id: uuid(), name: 'Data Platform — Lakehouse', status: 'IN_EXECUTION', priority: 'HIGH', owner: 1, startOff: -20, endOff: 60 },
+  { id: uuid(), name: 'API Gateway v2', status: 'IN_EXECUTION', priority: 'MEDIUM', owner: 2, startOff: -15, endOff: 30 },
+  { id: uuid(), name: 'Process Automation — RPA', status: 'IN_EXECUTION', priority: 'HIGH', owner: 3, startOff: -25, endOff: 40 },
+  { id: uuid(), name: 'Security Hardening', status: 'IN_EXECUTION', priority: 'CRITICAL', owner: 4, startOff: -10, endOff: 20 },
+  { id: uuid(), name: 'Customer Portal Redesign', status: 'PENDING_APPROVAL', priority: 'MEDIUM', owner: 5, startOff: 5, endOff: 75 },
 ];
 
 async function seedInitiatives() {

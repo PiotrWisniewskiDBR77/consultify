@@ -4,7 +4,7 @@
  *
  * Wstawia do org 'elkomtech' / projektu 'elkomtech-polityka-procesowa':
  *  - 10 insightów I1..I10 (status 'completed' = „Gotowe"; cross-role/rozjazdy w issues_json)
- *  - 10 inicjatyw N1..N10 (status 'PLANNING'; link source_type='interview_insight' + source_id)
+ *  - 10 inicjatyw N1..N10 (status 'PENDING_APPROVAL'; link source_type='interview_insight' + source_id)
  *    + pod-tabele: initiative_kpis, initiative_milestones, initiative_stakeholders (RACI)
  *
  * Dynamiczne filtrowanie kolumn — odporne na drift (centerbeam ma węższy schemat).
@@ -286,7 +286,9 @@ async function main() {
       ['id', id], ['organization_id', ORG_ID], ['project_id', PROJECT_ID],
       ['name', ini.title], ['title', ini.title], ['axis', ini.axis], ['area', ini.area], ['category', ini.area],
       ['summary', ini.summary], ['description', ini.summary], ['hypothesis', ini.hypothesis], ['problem_statement', ini.problem],
-      ['status', 'PLANNING'], ['priority', ini.priority], ['impact', ini.impact], ['effort', ini.effort],
+      // DEC-424: 'PLANNING' był poprawny przed migracją P12; initiatives_status_check_p12
+      // dopuszcza dziś wyłącznie 7 kodów z server/src/constants/initiativeStatuses.ts.
+      ['status', 'PENDING_APPROVAL'], ['priority', ini.priority], ['impact', ini.impact], ['effort', ini.effort],
       ['confidence_level', ini.confidence], ['value_timing', ini.valueTiming], ['business_value', ini.businessValue],
       ['estimated_budget', ini.budget], ['cost_capex', Math.round(ini.budget * 0.4)], ['cost_opex', Math.round(ini.budget * 0.6)],
       ['planned_start_date', nowIso()], ['planned_end_date', plusMonths(ini.horizonMonths)],

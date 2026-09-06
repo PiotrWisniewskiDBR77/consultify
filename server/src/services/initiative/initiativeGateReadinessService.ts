@@ -2,7 +2,7 @@
  * V4-INIT-01: Gate readiness service
  * Shared logic for blocking items used by gate-readiness-check and updateInitiativeStatus.
  */
-import { isScheduledOnward } from '../../constants/initiativeStatuses.js';
+import { InitiativeStatus, isScheduledOnward } from '../../constants/initiativeStatuses.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface BlockingItem {
@@ -119,7 +119,7 @@ export async function getBlockingReadinessItems(
     );
   }
 
-  if (currentStatus === 'DONE') {
+  if (currentStatus === InitiativeStatus.CLOSED) {
     add(
       'benefits_owner',
       'Business Owner assigned (benefits owner)',

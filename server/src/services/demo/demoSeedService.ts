@@ -5,6 +5,11 @@ import {
   ensureReceiptForMaterializedDone,
   triggerImmediateDeliveryBestEffort,
 } from '../closureDeliveryReceiptService.js';
+import {
+  InitiativeStatus,
+  normalizeInitiativeStatus,
+  type InitiativeStatusType,
+} from '../../constants/initiativeStatuses.js';
 import { organizationContextService } from '../organizationContext/OrganizationContextService.js';
 import { seedAtelierPresentationDecks } from './atelierPresentationDeckSeed.js';
 import {
@@ -95,43 +100,23 @@ function makeId(orgId: string, entity: string, slug: string): string {
 }
 
 /**
- * Canonical initiative statuses accepted by the DB `initiatives_status_check`
- * constraint (uppercase). The template mixes a couple of legacy lowercase
- * values (`in_progress`, `planned`) with the canonical set; normalize them here
- * so the seed converges any tenant — including prod demo — without tripping the
- * check constraint. Unknown values fall back to a safe canonical status.
+ * DEC-424 (ODMROZENIE 05_INITIATIVES): the seed used to carry its own private
+ * copy of the initiative-status dictionary — a set of pre-P12 legacy codes
+ * (PLANNING/EXECUTING/BLOCKED/SCHEDULED/TRACKING/…) that the DB no longer
+ * accepts. `initiatives_status_check_p12` (server/migrations/20262103_p12_
+ * initiative_status_slownik.sql) now allows ONLY the 7 canonical values from
+ * the single source of truth below, so seeding with the old dictionary would
+ * either throw a check-constraint violation or (worse) partially insert and
+ * leave demo in a half-seeded state right before the pilot. Resolve through
+ * the SAME map every other reader/writer uses — never re-declare it here.
  */
-const CANONICAL_INITIATIVE_STATUSES = new Set([
-  'DRAFT',
-  'PENDING_REVIEW',
-  'REVIEW',
-  'PROMOTED',
-  'PLANNING',
-  'APPROVED',
-  'SCHEDULED',
-  'EXECUTING',
-  'BLOCKED',
-  'DONE',
-  'TRACKING',
-  'CANCELLED',
-  'ARCHIVED',
-]);
-
-const LEGACY_INITIATIVE_STATUS_MAP: Record<string, string> = {
-  IN_PROGRESS: 'EXECUTING',
-  PLANNED: 'PLANNING',
-  ACTIVE: 'EXECUTING',
-  COMPLETED: 'DONE',
-  ON_HOLD: 'BLOCKED',
-};
-
-function normalizeInitiativeStatus(status: string | null | undefined): string {
-  const upper = String(status || '')
-    .trim()
-    .toUpperCase();
-  if (CANONICAL_INITIATIVE_STATUSES.has(upper)) return upper;
-  if (LEGACY_INITIATIVE_STATUS_MAP[upper]) return LEGACY_INITIATIVE_STATUS_MAP[upper];
-  return 'EXECUTING';
+function resolveSeedInitiativeStatus(status: string | null | undefined): InitiativeStatusType {
+  const normalized = normalizeInitiativeStatus(String(status ?? ''));
+  if (normalized) return normalized;
+  logger.warn(
+    `[demoSeedService] Unmapped initiative status "${String(status)}" in seed template — falling back to ${InitiativeStatus.DRAFT}. Add it to LEGACY_INITIATIVE_STATUS_MAP (server/src/constants/initiativeStatuses.ts) instead of re-adding a local copy.`
+  );
+  return InitiativeStatus.DRAFT;
 }
 
 function markdownBlocksToDocJson(markdown: string) {
@@ -2223,7 +2208,7 @@ async function upsertInitiatives(
       organizationId,
       projectMap[initiative.projectSlug],
       initiative.name,
-      normalizeInitiativeStatus(initiative.status),
+      resolveSeedInitiativeStatus(initiative.status),
     ];
 
     if (hasArea) {
@@ -2327,7 +2312,7 @@ async function upsertInitiatives(
     // benefit row too. Persist a deterministic durable receipt before the
     // best-effort delivery, so a crash cannot turn this path into a silent
     // fire-and-forget bypass. Re-seeding reuses the same receipt.
-    if (normalizeInitiativeStatus(initiative.status) === 'DONE') {
+    if (resolveSeedInitiativeStatus(initiative.status) === InitiativeStatus.CLOSED) {
       const receiptId = await ensureReceiptForMaterializedDone(organizationId, initiativeId, null);
       triggerImmediateDeliveryBestEffort(receiptId);
     }
