@@ -139,9 +139,10 @@ i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.
 | 3.15 | **Audyty: wgrywanie założeń pod „Nowy audyt” + generator pytań audytowych** | „normę/formatkę się wgrywa i generator pytań; na razie przycisk zamrozić” (właściciel 06.09) | SSOT Audytów + prototyp | 3–4 |
 | 3.16 | **Automatyzacja tworzenia raportów zarządczych** | zbieranie informacji z organizacji, harmonogramy i wyzwalacze (właściciel 06.09: „duże zadanie”); dziś pusty szkielet Raporty › Harmonogramy/Automatyzacja | R2 + szablony 1.6 | 3–4 |
 | 3.17 | **Arkusze: źródła danych** | podpięcie i rozwinięcie tabeli „Źródła danych” do arkuszy (właściciel 06.09: „ukryj na razie, zapisz do drugiej fali”) | SSOT Materiałów | 1–2 |
+| 3.18 | **Biblioteka wzorców: tworzenie nowych wzorców** | generator „Nowy wzorzec” (właściciel 06.09: „na razie nie zachęca; w MVP wyłączyć przycisk”) | szablony 1.6 + SSOT Materiałów | 2 |
 
 Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomendacja CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent).
-### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.17)
+### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.18)
 | # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
 |---|---|---|---|
 | S3.1 | Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową | właściciel | SSOT w `docs/ssot/`, karta prototypu z „Tak” |

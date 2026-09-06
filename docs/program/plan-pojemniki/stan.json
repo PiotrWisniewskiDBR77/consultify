@@ -904,6 +904,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 16:27: „w arkuszach ukryj na razie tabelę źródeł danych i zapisz do drugiej fali rozwinięcie źródeł danych do arkuszy”. W MVP segment „Arkusze | Źródła danych” ukryty (M-2).",
           "data": "06.09"
+        },
+        {
+          "nr": "3.18",
+          "nazwa": "Biblioteka wzorców: tworzenie nowych wzorców (generator „Nowy wzorzec”)",
+          "wykonawca": "",
+          "zalezy_od": "szablony 1.6 + SSOT Materiałów",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 16:41: „na razie nie zachęca; na etapie MVP wyłączyłbym w ogóle przycisk Nowy wzorzec” — w MVP przycisk zamrożony (M-2).",
+          "data": "06.09"
         }
       ],
       "kryteria": [
