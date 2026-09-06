@@ -6834,7 +6834,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )}
 
             {/* T012: Important signals (chat-active) */}
-            {signalsEnabled && (
+            {/* DEC-403 (06.09): przycisk ważnych sygnałów uznany za pozostałość
+                po nieukończonej funkcji — do Fali 2, patrz czatWidocznosc.ts. */}
+            {signalsEnabled && !UKRYTE_DEC403.sygnaly && (
               <button
                 onClick={() => setSignalsOpen(true)}
                 data-testid="chat-signals-button"
@@ -7556,7 +7558,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       )}
 
       {/* Important signals panel (T012) */}
-      {signalsEnabled && (
+      {/* DEC-403 (06.09): panel ważnych sygnałów ukryty razem z wejściem —
+          do Fali 2, patrz czatWidocznosc.ts. */}
+      {signalsEnabled && !UKRYTE_DEC403.sygnaly && (
         <ChatSignalsPanel
           open={signalsOpen}
           onClose={() => setSignalsOpen(false)}
