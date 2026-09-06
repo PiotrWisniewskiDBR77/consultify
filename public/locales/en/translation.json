@@ -6136,9 +6136,6 @@
     "title": "Discovery Interview",
     "newSession": "New Session",
     "history": "History",
-    "pipelineStepper": {
-      "ariaLabel": "Interview process"
-    },
     "categories": {
       "strategy": "Strategy",
       "operations": "Operations",
