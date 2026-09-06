@@ -99,10 +99,28 @@ async function apiGet<T>(path: string): Promise<T> {
   return handleResponse<T>(res, `GET ${path}`);
 }
 
+async function apiPost<T>(path: string): Promise<T> {
+  const res = await fetchWithRetry(`/api${path}`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse<T>(res, `POST ${path}`);
+}
+
 export const ConclusionsApi = {
   /**
-   * Org-wide list of governed conclusions. The server lazily syncs interview /
-   * assessment / tool sources on every call, so the list is always current.
+   * 1.1-Z3 #1 (DECYZJA CTO): odczyt nie może pisać — `GET /conclusions` już
+   * nie synchronizuje źródeł (interview/assessment/tools) po cichu. Wołaj
+   * `sync()` jawnie przed `list()` (raz na wejście na ekran, plus przycisk
+   * „Odśwież"); brak uprawnienia (403) NIE ma blokować listy — pomiń błąd i
+   * pokaż to, co już jest w bazie.
+   */
+  sync: () => apiPost<{ synced: Record<string, number> }>('/conclusions/sync'),
+
+  /**
+   * Org-wide list of governed conclusions. Pure read — no side effects; call
+   * `sync()` first if the caller wants a fresh sync from interview/assessment/
+   * tool sources.
    */
   list: (params?: { status?: string; sourceModule?: string; projectId?: string }) => {
     const search = new URLSearchParams();

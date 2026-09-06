@@ -5,9 +5,15 @@
  * source + confidence), the empty state offers a run-a-tool CTA, the error
  * state offers retry, and opening a conclusion (?id=) renders the readout
  * detail (evidence, limits, sources) from the detail endpoint.
+ *
+ * 1.1-Z3 #1 (DECYZJA CTO: odczyt nie może pisać) — `GET /api/conclusions` no
+ * longer syncs sources as a side effect; this hub must call
+ * `ConclusionsApi.sync()` explicitly on entry (once) before `list()`, must
+ * still load the list when sync fails (e.g. 403 — no write permission), and
+ * must offer a "Refresh" control that re-runs sync + list.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -26,6 +32,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/services/api/conclusions.api', () => ({
   ConclusionsApi: {
+    sync: vi.fn(),
     list: vi.fn(),
     get: vi.fn(),
   },
@@ -64,6 +71,55 @@ const renderAt = (path: string) =>
 describe('ConclusionsHub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (ConclusionsApi.sync as any).mockResolvedValue({ synced: { interview: 0, assessment: 0, tools: 0 } });
+  });
+
+  it('syncs exactly once on entry, then loads the list', async () => {
+    (ConclusionsApi.list as any).mockResolvedValue({ conclusions: [mockConclusion] });
+
+    renderAt('/conclusions');
+
+    await waitFor(() =>
+      expect(screen.getByText('Automate order intake first')).toBeInTheDocument()
+    );
+    expect(ConclusionsApi.sync).toHaveBeenCalledTimes(1);
+    expect(ConclusionsApi.list).toHaveBeenCalledTimes(1);
+    // sync must resolve (and be observed) before the list is fetched.
+    const syncOrder = (ConclusionsApi.sync as any).mock.invocationCallOrder[0];
+    const listOrder = (ConclusionsApi.list as any).mock.invocationCallOrder[0];
+    expect(syncOrder).toBeLessThan(listOrder);
+  });
+
+  it('loads the list even when sync is refused (403 — no write permission)', async () => {
+    const forbidden: any = new Error('Forbidden');
+    forbidden.status = 403;
+    (ConclusionsApi.sync as any).mockRejectedValue(forbidden);
+    (ConclusionsApi.list as any).mockResolvedValue({ conclusions: [mockConclusion] });
+
+    renderAt('/conclusions');
+
+    await waitFor(() =>
+      expect(screen.getByText('Automate order intake first')).toBeInTheDocument()
+    );
+    expect(ConclusionsApi.sync).toHaveBeenCalledTimes(1);
+    expect(ConclusionsApi.list).toHaveBeenCalledTimes(1);
+  });
+
+  it('the Refresh control re-runs sync then list', async () => {
+    (ConclusionsApi.list as any).mockResolvedValue({ conclusions: [mockConclusion] });
+
+    renderAt('/conclusions');
+
+    await waitFor(() =>
+      expect(screen.getByText('Automate order intake first')).toBeInTheDocument()
+    );
+    expect(ConclusionsApi.sync).toHaveBeenCalledTimes(1);
+    expect(ConclusionsApi.list).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('conclusions-refresh'));
+
+    await waitFor(() => expect(ConclusionsApi.sync).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(ConclusionsApi.list).toHaveBeenCalledTimes(2));
   });
 
   it('renders governed conclusion cards from the list endpoint', async () => {

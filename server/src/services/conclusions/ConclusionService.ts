@@ -574,9 +574,19 @@ export class ConclusionService {
 
   async syncAssessmentReports(organizationId: string, actorUserId: string): Promise<number> {
     await ensureTables();
+    // 1.1-Z3 #2: this query used to select `title`/`report_type`, neither of
+    // which exist on `assessment_reports` (real columns: `name`, no
+    // report-type column at all — verified against the live Postgres schema).
+    // On Postgres that made the whole SELECT throw, and the `.catch(() => [])`
+    // below swallowed it in total silence: syncAssessmentReports() always
+    // returned 0, so approved/finalized assessment reports never produced a
+    // Conclusion. Fixed to the real schema (`name`); the "report type" the
+    // caller cares about is carried as the constant `sourceRefs[].type =
+    // 'assessment_report'` below (there is no per-row report-type column to
+    // read it from). Failures are now logged instead of swallowed.
     const rows = await queryHelpers
       .queryAll<any>(
-        `SELECT id, organization_id, project_id, title, report_type, executive_summary,
+        `SELECT id, organization_id, project_id, name, executive_summary,
               recommendations, detailed_analysis, status, created_by, created_at, updated_at
        FROM assessment_reports
        WHERE organization_id = ?
@@ -584,7 +594,11 @@ export class ConclusionService {
        LIMIT 100`,
         [organizationId]
       )
-      .catch(() => []);
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        logger.warn(`[ConclusionService] Assessment report sync query failed: ${message}`);
+        return [];
+      });
 
     for (const row of rows) {
       const recommendations = safeJsonArray<any>(row.recommendations);
@@ -597,19 +611,19 @@ export class ConclusionService {
           : firstRecommendation?.text ||
             firstRecommendation?.title ||
             row.executive_summary ||
-            row.title ||
+            row.name ||
             'Assessment recommendation';
       await upsertExternalConclusion({
         organizationId,
         projectId: row.project_id ?? null,
-        title: String(row.title || 'Assessment recommendation').slice(0, 180),
+        title: String(row.name || 'Assessment recommendation').slice(0, 180),
         statement: String(statement).slice(0, 2000),
         sourceModule: 'assessment',
         sourceRefs: [
           {
             type: 'assessment_report',
             id: String(row.id),
-            title: row.title || null,
+            title: row.name || null,
             url: `/assessment?reportId=${encodeURIComponent(String(row.id))}`,
           },
         ],
@@ -629,7 +643,7 @@ export class ConclusionService {
             : firstRecommendation?.nextAction || firstRecommendation?.text || null,
         status: row.status === 'approved' ? 'published' : 'needs_review',
         createdBy: row.created_by || actorUserId,
-        contextSummary: row.executive_summary || row.detailed_analysis || row.title || '',
+        contextSummary: row.executive_summary || row.detailed_analysis || row.name || '',
       });
     }
 

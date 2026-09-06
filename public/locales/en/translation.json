@@ -31818,6 +31818,8 @@
     "context": "Captured context",
     "conversions": "Generated from this conclusion",
     "backToList": "All conclusions",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
     "source": {
       "tool": "Discovery tool",
       "assessment": "Assessment",
