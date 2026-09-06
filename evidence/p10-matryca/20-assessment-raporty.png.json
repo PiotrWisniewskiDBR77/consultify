@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3102/assessment?tab=reports",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Raporty"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nOcena\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nBiblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nWgraj PDF\nWszystkie\n4\nNowy raport\nTYP\n\t\nNAZWA\n\t\nKONTEKST\n\t\nSTATUS\n\t\nPOSTĘP\n\t\nAUTOR\n\t\nZAKTUALIZOWANO\n\t\n\n\nSIRI\n\t\nSIRI — Full Industry 4.0 Readiness Report & Benchmark\n\t\nSIRI — Industry 4.0 Readiness\nOcena\n\t\nCzeka na zgodę\n\t\n40%\n\t\nAudyt Nocny\n\t4 dni temu\t\n\n\nADMA\n\t\nADMA — Transformation Roadmap (Review)\n\t\nADMA — Digital Maturity Assessment\nOcena\n\t\nCzeka na zgodę\n\t\n40%\n\t\nAudyt Nocny\n\t2 dni temu\t\n\n\nDRD\n\t\nDRD Manufacturing — Executive Summary & Deep Analysis (C-suite)\n\t\nDRD — Testowy (Manufacturing)\nOcena\n\t\nZatwierdzone\n\t\n100%\n\t\nAudyt Nocny\n\t2 dni temu\t\n\n\nDRD\n\t\nDRD Enterprise — Board Presentation & Strategic Investment Case\n\t\nDRD — Finalny (Enterprise)\nOcena\n\t\nWykorzystane\n\t\n100%\n\t\nAudyt Nocny\n\t29.08.2026\t",
+ "kiedy": "2026-09-06T17:52:31.636Z"
+}

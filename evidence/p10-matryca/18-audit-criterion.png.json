@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3102/audit-programs/aprog_153f7dbf-a042-436f-8e7d-070f95923766/criteria/apcrit_154e3455-efaa-4a38-a577-919a89ef2ed0",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Sesje",
+  "text=Audyt procesu zakupowego Q3 (dane pokazowe)",
+  "text=D1.1 · Cel i zakres procesu są udokumentowane"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nAudyty\n›\nAudyt procesu zakupowego Q3 (dane pokazowe)\n›\nKryteria\n›\nD1.1\nD1.1\nCel i zakres procesu są udokumentowane\nNie przetestowane\nTeresa\nSprawdź dowód\nFAZA AUDYTU\n1 · Planowanie\n3/3\n2 · Badanie\n0/5\n3 · Ustalenia\n0/4\n4 · Naprawa i zamknięcie\n0/6\nMapa 18 ogniw\nPokaż wszystkie fazy\nWarsztat kryterium — tu wykonujesz audyt jednego wymagania\n\nProwadzisz to jedno wymaganie przez cały łańcuch metodyki audytu: dowód → test → wniosek → ustalenie → naprawa. To arkusz roboczy audytora, nie ankieta ani podgląd.\n\nTwoja rola: właścicielem programu\nProcedura demonstracyjna Consultify, pkt 2.1\nDBR77\nŁAŃCUCH AUDYTU · 18 OGNIW W 4 FAZACH\nFAZA 1\nPlanowanie\nogniwa 1–3 · 3 z 3\n1\nKryterium/źródło\n2\nPytanie audytowe\n3\nOczekiwany dowód\nFAZA 2 · TERAZ\nBadanie\nogniwa 4–8 · 0 z 5\n4\nDostarczony dowód\n5\nProcedura audytora\n6\nPróba\n7\nWykonany test\n8\nWynik testu\nFAZA 3 · TERAZ\nUstalenia\nogniwa 9–12 · 0 z 4\n9\nWniosek audytora\n10\nStatus zgodności\n11\nUstalenie\n12\nOdpowiedź właściciela\nFAZA 4\nNaprawa i zamknięcie\nogniwa 13–18 · 0 z 6\n13\nKorekcja\n14\nPrzyczyna źródłowa\n15\nDziałanie korygujące\n16\nWłaściciel / termin\n17\nWeryfikacja skuteczności\n18\nZamknięcie\nFaza 1 · Planowanie\nco badam i czego oczekuję\n3 / 3\nFaza 2 · Badanie\ndowód, procedura, próba, test, wynik\n0 / 5\nDOSTARCZONY DOWÓD\nTYTUŁ\n\t\nRODZAJ\n\t\nWSPIERA ZGODNOŚĆ?\n\t\nZAAKCEPTOWANY\n\n\nBrak dowodów\n\nAudytowany jeszcze nie złożył dowodu.\n\nPROCEDURA AUDYTORA\nPRÓBA\nWYKONANY TEST\nWYNIK TESTU\n—\nZaliczony\nNiezaliczony\nCzęściowy\nNierozstrzygający\nZapisz procedurę i wynik testu\nFaza 3 · Ustalenia\nwniosek, status, ustalenie, odpowiedź\n0 / 4\nFaza 4 · Naprawa i zamknięcie\nkorekcja, przyczyna, działanie, właściciel/termin, weryfikacja, zamknięcie\n0 / 6\nAKCJE\nKopiuj link\nPrzekaż innemu audytorowi\nOznacz „nie dotyczy\"\n\nKarta kryterium (PDF) — planowane, brak API eksportu pojedynczego kryterium.\n\nWŁAŚCIWOŚCI\n\nROLA I UPRAWNIENIA\n\nJesteś właścicielem programu i audytorem wiodącym tego programu.\n\nmożesz oceniać dowody, wykonać test, wyciągnąć wniosek\n\nmożesz tworzyć ustalenia\n\nmożesz potwierdzać i zamykać ustalenia\n\nnie możesz odpowiadać w imieniu strony audytowanej\n\nnie możesz zweryfikować skuteczności własnego działania korygującego\n\nProgram\nAudyt procesu zakupowego Q3 (dane pokazowe)\n12 kryteriów · 0 zamkniętych\nOrganizacja\nDBR77\nŹródło wymagania\nProcedura demonstracyjna Consultify, pkt 2.1\nKryterium dotyczy\nTak\nAudytor wiodący\nTy\nAudytor\nNieprzypisany\nStrona audytowana\nNieprzypisana\nStatus zgodności\nNie przetestowane\nWynik testu\nBrak\nOstatnia zmiana\n06.09.2026, 18:23\nPOWIĄZANIA\n2\nŹRÓDŁA I ZAŁOŻENIA\n3\nKOMENTARZE\nHISTORIA",
+ "kiedy": "2026-09-06T17:50:51.861Z"
+}

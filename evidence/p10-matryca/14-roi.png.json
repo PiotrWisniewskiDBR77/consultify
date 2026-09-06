@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3102/results/roi/6e003785-1673-56b6-a387-27c5d969beca",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nLista\nROI\nAutomatyzacja magazynu WIP\nWyniki\nROI\nAutomatyzacja magazynu WIP\n5 lat\nCAPEX —\nROI 5Y —\nPayback —\nAutomatyzacja magazynu WIP\nZałożenia\nZapisano\nSekcje\nPracuj z AI\nZałożenia\nWyliczenia\nRealizacja\nPrzedmiot, cel i wariant bazowy\n\nInwestycji nie porównuje się do abstrakcyjnego zera — punktem odniesienia jest wariant bazowy (BAU).\n\nElement\tWartość\nPrzedmiot inwestycji\t—\nWariant\t—\nHoryzont analizy\t5 lat (1 sty 2027 – 31 gru 2031)\nProblem biznesowy\t—\nZakres\t—\nWariant bazowy (BAU)\t—\nPunkt odniesienia\t18 dni · 31 sie 2026\nOpis punktu odniesienia\tŚrednia rotacja WIP w dniach — punkt odniesienia przed automatyzacją.\nNakłady inwestycyjne (CAPEX z rezerwą)\n\nSuma pozycji jednorazowych; rezerwa jest osobną pozycją, nie doliczana w tle.\n\nBrak pozycji nakładu — model kosztowy tej analizy nie został jeszcze wprowadzony.\n\nNAKŁAD POCZĄTKOWY RAZEM\n—\nPrzyrostowe koszty operacyjne (incremental OPEX)\n\nTylko różnica: koszt z inwestycją minus koszt bez inwestycji.\n\nBrak zaksięgowanych kosztów cyklicznych. Wartości z listy założeń (np. serwis, media) nie są tu doliczane automatycznie — dopóki nie staną się pozycją kosztu, nie wchodzą do przepływów.\n\nKorzyści ekonomiczne\n\nKażda korzyść ma własną klasę i własne wyprowadzenie z KPI — zakaz podwójnego liczenia.\n\nBrak korzyści monetyzowanych — model korzyści nie został jeszcze wprowadzony.\n\nROCZNA KORZYŚĆ NETTO\n—\nZałożenia i ich wychylenia\n\nWartość bazowa z wariantem pesymistycznym i optymistycznym oraz pewnością i źródłem.\n\nZAŁOŻENIE\tJEDN.\tBAZOWA\tPESYM.\tOPTYM.\tPEWNOŚĆ\tŹRÓDŁO\nRotacja WIP po automatyzacji\tdni\t11\t14\t9\tniska\tSzacunek własny — brak danych z rynku\nMiesięczna opłata w modelu RaaS\tPLN/mies.\t42 000\t52 000\t36 000\tniska\tWstępna rozmowa z dwoma dostawcami\nOdzyskana powierzchnia magazynowa\tm2\t320\t240\t400\tniska\tRzut hali — wariant wstępny\nRyzyka i mitygacje\n\nBrak zarejestrowanych ryzyk dla tej analizy.\n\nAKCJE\nOtwórz pełne narzędzie ROI\n\nTa karta jest do czytania analizy. Wprowadzanie pozycji, przebiegi kalkulacji, wykonania i przegląd PIR robi się w pełnym narzędziu.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tAudyt Nocny\nPrzedmiot\t—\nWariant\t—\nHoryzont\t5 lat\nWaluta\tPLN\nStopa dyskontowa\t8 %\nFaza\tZałożenia\nAktualizacja\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\n\nTylko do odczytu: brak przeglądu po wdrożeniu w statusie szkicu — pozostałe treści analizy edytuje się w pełnym narzędziu ROI",
+ "kiedy": "2026-09-06T17:44:55.852Z"
+}
