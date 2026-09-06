@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3142/execution?tab=summary&view=table&kokpit=ryzyka",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nDecyzje i ryzyka\nRaporty\nRyzyka\n16\nRozstrzygnięcia\n25\nKokpit menedżera\n\nPięć pytań zarządczych, jedna odpowiedź na spojrzenie.\n\nKONDYCJA\n67\n/100\npostęp 19%\nNA CZAS\n100%\n2 na tor\n0 ryzyk\n0 opóźn.\nWARTOŚĆ VS PLAN\nBrak policzonego ROI\nOBŁOŻENIE\n38%\n11 przeciąż.\n9 osób\nDO ROZSTRZYGNIĘCIA\n25\npozycji\n0 blokerów\n13 przetermin.\nCo nam grozi — TOP ryzyka\n\nRyzyka o najwyższym wyniku (P × I).\n\nRYZYKO\n\t\nPOZIOM (P×I)\n\t\nWŁAŚCICIEL\n\t\nINICJATYWA\n\t\nSTATUS\n\n\nSAP integration middleware timeout errors\n\t\nWysokie (12)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nAPI Gateway depends on Auth Service migration\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nSharePoint migration data loss incident\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nUiPath license expired — blocking RPA\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nSupply chain data quality risk\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nKey person dependency — Marek Nowak\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nSAP vendor hotfix delay\n\t\nWysokie (9)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nGDPR non-compliance penalty\n\t\nWysokie (8)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nSupply Chain depends on Data Platform feeds\n\t\nUmiarkowane (6)\n\t\n—\n\t\n—\n\t\nOtwarte\n\n\nData Platform depends on Cloud network setup\n\t\nUmiarkowane (6)\n\t\n—\n\t\n—\n\t\nOtwarte\nNajbliższe kamienie milowe\nBrak zaplanowanych kamieni milowych.",
+ "kiedy": "2026-09-06T19:29:43.212Z"
+}
