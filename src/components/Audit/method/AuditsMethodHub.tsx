@@ -34,13 +34,28 @@
  *     która ISTNIAŁA na serwerze przed tym zadaniem:
  *       Biblioteka/Sesje → „Nowy audyt" (ZAMROŻONY, DEC-417 — bez zmian)
  *       Wyniki           → „Nowy wynik"      → POST /audits/outputs/finalize
+ *                          (od DEC-417e osiągalne z pustego stanu „Nowy raport")
  *       Raporty          → „Nowy raport"     → POST /audits/reports
  *       Inicjatywy       → „Nowa inicjatywa" → GeneratorInicjatywModal
  *                                              (adapter `audit`, DEC-413)
- *     WNIOSKI (insighty): pojęcia „wniosek audytu" NIE MA w kodzie — brak
- *     endpointu, brak producenta, żaden kod nie pisze do CONCLUSION_LAYER z
- *     `sourceModule='audit'`. Zakładki „Wnioski" świadomie NIE budujemy
- *     (zakaz atrap) — to zadanie na osobny dyżur, gdy silnik powstanie.
+ *     WNIOSKI (insighty): w chwili DEC-417d pojęcia „wniosek audytu" nie było
+ *     w kodzie, więc zakładki świadomie nie budowano (zakaz atrap).
+ *
+ * ★ DEC-417e (właściciel, 06.09, karta 3 Audytów — 1.1-A4): „zamiast Wyniki to
+ *   Wnioski — to ma działać tak jak pozostałe moduły, które się kończą
+ *   wnioskami, raportami i inicjatywami". Menu 2 to dziś Biblioteka · Sesje ·
+ *   WNIOSKI · Raporty · Inicjatywy. Silnik powstał w tym samym kroku
+ *   (`services/conclusions/auditReportConclusionBridge.ts` +
+ *   `POST /api/audits/reports/:id/conclusion` + `syncAuditReports`), więc
+ *   zakładka stoi na realnym producencie, nie na atrapie.
+ *
+ *   WYNIKI (Outputy jądra) przestały być ZAKŁADKĄ, ale ZOSTAJĄ ŹRÓDŁEM i nic
+ *   z ich silnika nie zostało skasowane: `POST /audits/outputs/finalize` woła
+ *   „Sfinalizuj Output" w podglądzie sesji (`AuditProcessesTab`) oraz modal
+ *   „Nowy wynik", do którego prowadzi pusty stan generatora raportu
+ *   (raport bez Outputu powstać nie może). Stary link `?tab=outputs` jest
+ *   przekierowywany na `conclusions` — żaden nie kończy się pustką.
+ *   CTA zakładki Wnioski → „Nowy wniosek" → POST /audits/reports/:id/conclusion.
  */
 import {
   ClipboardList,
@@ -53,7 +68,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   type StandardCounterChip,
@@ -100,16 +115,18 @@ import {
   type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
+import { GeneratorWnioskuAudytuModal } from './GeneratorWnioskuAudytuModal';
+import { etykietaStanuWniosku } from './wnioski/projekcjaWnioskowAudytu';
+import { AuditConclusionsTab } from './tabs/AuditConclusionsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';
-import { AuditOutputsTab } from './tabs/AuditOutputsTab';
 import { AuditProcessesTab } from './tabs/AuditProcessesTab';
 import { AuditReportsTab } from './tabs/AuditReportsTab';
 
 export type AuditsMethodTabId =
   | 'library'
   | 'processes'
-  | 'outputs'
+  | 'conclusions'
   | 'reports'
   | 'initiatives';
 
@@ -132,11 +149,19 @@ export function auditStartFingerprint(
 const TAB_IDS: AuditsMethodTabId[] = [
   'library',
   'processes',
-  'outputs',
+  'conclusions',
   'reports',
   'initiatives',
 ];
 const TAB_ID_SET = new Set<string>(TAB_IDS);
+
+/**
+ * Stare adresy sprzed DEC-417e. `?tab=outputs` żył w linkach, zakładkach i
+ * testach — po zamianie zakładki na „Wnioski" musi TRAFIAĆ na Wnioski, a nie
+ * spadać na `processes` jak nieznana wartość (deep link nie może kończyć się
+ * cudzym ekranem).
+ */
+const TAB_ALIASY: Record<string, AuditsMethodTabId> = { outputs: 'conclusions' };
 
 /**
  * Menu 3 niesie ≤3 chipy NA KAŻDEJ zakładce (DEC-417b). To są te trzy — jeden
@@ -146,7 +171,22 @@ const TAB_ID_SET = new Set<string>(TAB_IDS);
  */
 const MENU3_LIBRARY: AuditVerificationState[] = ['VERIFIED', 'PENDING_REVIEW'];
 const MENU3_PROCESSES: AuditLifecycleState[] = ['planning', 'fieldwork'];
-const MENU3_OUTPUTS = ['current', 'superseded'] as const;
+/** Menu 3 to ≤3 chipy RAZEM z „Wszystkie” (bramka DEC-417b), więc dwa stany
+ * o największej wartości decyzyjnej; pełna lista stanów wniosku żyje w
+ * dropdownie Menu 2 obok. */
+const MENU3_CONCLUSIONS = ['candidate', 'published'] as const;
+
+/** PEŁNA lista stanów wniosku — dropdown Menu 2 (nic nie znika z produktu,
+ * zmienia się tylko miejsce, w którym się je wybiera). */
+const STANY_WNIOSKU_MENU2 = [
+  'candidate',
+  'needs_evidence',
+  'needs_review',
+  'ready_for_readout',
+  'published',
+  'converted',
+  'rejected',
+] as const;
 const MENU3_REPORTS = ['draft', 'published'] as const;
 const MENU3_INITIATIVES = ['draft', 'registered'] as const;
 
@@ -155,7 +195,8 @@ const MENU3_INITIATIVES = ['draft', 'registered'] as const;
  * domyślnym stanem). Brak parametru → `library`. */
 function resolveTabFromUrl(raw: string | null): AuditsMethodTabId {
   if (!raw) return 'library';
-  return TAB_ID_SET.has(raw) ? (raw as AuditsMethodTabId) : 'processes';
+  if (TAB_ID_SET.has(raw)) return raw as AuditsMethodTabId;
+  return TAB_ALIASY[raw] ?? 'processes';
 }
 
 const TONE_DOT_CLASS: Record<StatusTone, string> = {
@@ -178,6 +219,7 @@ function permissionAwareMessage(e: any, isPolish: boolean, fallback: string): st
 export const AuditsMethodHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
   const currentOrganizationId = useAppStore((state) => state.currentOrganization?.id ?? null);
@@ -188,7 +230,9 @@ export const AuditsMethodHub: React.FC = () => {
 
   const setActiveTab = useCallback(
     (tab: string) => {
-      const next = TAB_ID_SET.has(tab) ? (tab as AuditsMethodTabId) : 'processes';
+      const next = TAB_ID_SET.has(tab)
+        ? (tab as AuditsMethodTabId)
+        : (TAB_ALIASY[tab] ?? 'processes');
       setActiveTabState(next);
       const params = new URLSearchParams(searchParams);
       params.set('tab', next);
@@ -221,18 +265,18 @@ export const AuditsMethodHub: React.FC = () => {
     'all'
   );
   const [processesLifecycle, setProcessesLifecycle] = useState<'all' | AuditLifecycleState>('all');
-  const [outputsStatus, setOutputsStatus] = useState<'all' | 'current' | 'superseded'>('all');
+  const [conclusionsStatus, setConclusionsStatus] = useState<string>('all');
   const [reportsStatus, setReportsStatus] = useState<string>('all');
   const [initiativesStatus, setInitiativesStatus] = useState<string>('all');
 
   const [reportsReloadToken, setReportsReloadToken] = useState(0);
-  const [outputsReloadToken, setOutputsReloadToken] = useState(0);
+  const [conclusionsReloadToken, setConclusionsReloadToken] = useState(0);
   const [initiativesReloadToken, setInitiativesReloadToken] = useState(0);
 
   // Liczniki dla zakładek, których dane wczytuje sam tab (Wyniki/Raporty/
   // Inicjatywy). Tab raportuje rozkład statusów, Hub rysuje z tego chipy i
   // dropdown — bez drugiego pobrania tej samej listy.
-  const [outputsCounts, setOutputsCounts] = useState<Record<string, number>>({});
+  const [conclusionsCounts, setConclusionsCounts] = useState<Record<string, number>>({});
   const [reportsCounts, setReportsCounts] = useState<Record<string, number>>({});
   const [initiativesCounts, setInitiativesCounts] = useState<Record<string, number>>({});
 
@@ -357,41 +401,37 @@ export const AuditsMethodHub: React.FC = () => {
     [programsAll, isPolish, allLabel]
   );
 
-  const outputStatusLabel = useCallback(
-    (id: string) =>
-      id === 'current'
-        ? isPolish
-          ? 'Aktualne'
-          : 'Current'
-        : isPolish
-          ? 'Zastąpione'
-          : 'Superseded',
+  // Etykieta stanu wniosku — TA SAMA reguła, co na zakładce Wnioski Oceny
+  // (`assessment/wnioski/projekcjaWnioskow.ts`); kod techniczny (`candidate`,
+  // `needs_review`…) nigdy nie trafia na twarz produktu.
+  const conclusionStatusLabel = useCallback(
+    (id: string) => etykietaStanuWniosku(id, isPolish),
     [isPolish]
   );
 
-  const outputsChips: StandardCounterChip[] = useMemo(
+  const conclusionsChips: StandardCounterChip[] = useMemo(
     () => [
-      { id: 'all', label: allLabel, count: outputsCounts.all ?? 0 },
-      ...MENU3_OUTPUTS.map((value) => ({
+      { id: 'all', label: allLabel, count: conclusionsCounts.all ?? 0 },
+      ...MENU3_CONCLUSIONS.map((value) => ({
         id: value,
-        label: outputStatusLabel(value),
-        count: outputsCounts[value] ?? 0,
-        dot: TONE_DOT_CLASS[value === 'current' ? 'success' : 'neutral'],
+        label: conclusionStatusLabel(value),
+        count: conclusionsCounts[value] ?? 0,
+        dot: TONE_DOT_CLASS[value === 'published' ? 'success' : 'neutral'],
       })),
     ],
-    [outputsCounts, outputStatusLabel, allLabel]
+    [conclusionsCounts, conclusionStatusLabel, allLabel]
   );
 
-  const outputsOptions: Menu2PresetOption[] = useMemo(
+  const conclusionsOptions: Menu2PresetOption[] = useMemo(
     () => [
-      { id: 'all', label: allLabel, count: outputsCounts.all ?? 0 },
-      ...MENU3_OUTPUTS.map((value) => ({
+      { id: 'all', label: allLabel, count: conclusionsCounts.all ?? 0 },
+      ...STANY_WNIOSKU_MENU2.map((value) => ({
         id: value,
-        label: outputStatusLabel(value),
-        count: outputsCounts[value] ?? 0,
+        label: conclusionStatusLabel(value),
+        count: conclusionsCounts[value] ?? 0,
       })),
     ],
-    [outputsCounts, outputStatusLabel, allLabel]
+    [conclusionsCounts, conclusionStatusLabel, allLabel]
   );
 
   const reportsChips: StandardCounterChip[] = useMemo(
@@ -448,6 +488,7 @@ export const AuditsMethodHub: React.FC = () => {
   const [newOutputModalOpen, setNewOutputModalOpen] = useState(false);
   const [newReportModalOpen, setNewReportModalOpen] = useState(false);
   const [generatorInicjatywOpen, setGeneratorInicjatywOpen] = useState(false);
+  const [generatorWnioskuOpen, setGeneratorWnioskuOpen] = useState(false);
   const scaleAndPolishEnabled = useMemo(() => isAuditsScaleAndPolishEnabled(), []);
 
   const [startingPackId, setStartingPackId] = useState<string | null>(null);
@@ -537,8 +578,10 @@ export const AuditsMethodHub: React.FC = () => {
         icon: <ClipboardList size={16} />,
       },
       {
-        id: 'outputs',
-        label: t('audits.method.tabs.outputs', isPolish ? 'Wyniki' : 'Outputs'),
+        // DEC-417e: „zamiast Wyniki to Wnioski". Ikona i miejsce w Menu 2 jak
+        // na zakładce Wniosków Oceny (`AssessmentHub`, `Package`).
+        id: 'conclusions',
+        label: t('audits.method.tabs.conclusions', isPolish ? 'Wnioski' : 'Conclusions'),
         icon: <Package size={16} />,
       },
       {
@@ -583,13 +626,13 @@ export const AuditsMethodHub: React.FC = () => {
       dropdownLabel: t('audits.method.filters.stage', isPolish ? 'Etap' : 'Stage'),
       testId: 'audits-processes-stage-dropdown',
     },
-    outputs: {
-      chips: outputsChips,
-      options: outputsOptions,
-      value: outputsStatus,
-      onChange: (id) => setOutputsStatus(id as 'all' | 'current' | 'superseded'),
+    conclusions: {
+      chips: conclusionsChips,
+      options: conclusionsOptions,
+      value: conclusionsStatus,
+      onChange: setConclusionsStatus,
       dropdownLabel: t('audits.method.filters.status', 'Status'),
-      testId: 'audits-outputs-status-dropdown',
+      testId: 'audits-conclusions-status-dropdown',
     },
     reports: {
       chips: reportsChips,
@@ -693,12 +736,15 @@ export const AuditsMethodHub: React.FC = () => {
       ? scaleAndPolishEnabled
         ? frozenNewAuditCta
         : undefined
-      : activeTab === 'outputs'
+      : activeTab === 'conclusions'
         ? {
-            label: t('audits.method.newOutput.cta', isPolish ? 'Nowy wynik' : 'New output'),
+            label: t(
+              'audits.method.newConclusion.cta',
+              isPolish ? 'Nowy wniosek' : 'New conclusion'
+            ),
             icon: Plus,
-            onClick: () => setNewOutputModalOpen(true),
-            testId: 'audits-method-new-output-cta',
+            onClick: () => setGeneratorWnioskuOpen(true),
+            testId: 'audits-method-new-conclusion-cta',
           }
         : activeTab === 'reports'
           ? {
@@ -753,15 +799,12 @@ export const AuditsMethodHub: React.FC = () => {
             packTitleById={packTitleById}
             userNameById={userNameById}
           />
-        ) : activeTab === 'outputs' ? (
-          <AuditOutputsTab
+        ) : activeTab === 'conclusions' ? (
+          <AuditConclusionsTab
             isPolish={isPolish}
-            programNameById={programNameById}
-            userNameById={userNameById}
-            statusFilter={outputsStatus}
-            onCountsChange={setOutputsCounts}
-            reloadToken={outputsReloadToken}
-            onReportCreated={() => setReportsReloadToken((value) => value + 1)}
+            statusFilter={conclusionsStatus}
+            onCountsChange={setConclusionsCounts}
+            reloadToken={conclusionsReloadToken}
           />
         ) : activeTab === 'reports' ? (
           <AuditReportsTab
@@ -798,7 +841,9 @@ export const AuditsMethodHub: React.FC = () => {
         isPolish={isPolish}
         onGoToSessions={() => setActiveTab('processes')}
         onFinalized={() => {
-          setOutputsReloadToken((value) => value + 1);
+          // Output jest źródłem raportu, nie zakładką (DEC-417e) — po
+          // finalizacji odświeżamy sesje i wracamy do generatora raportu
+          // przez zwykłe „Nowy raport" w Menu 2 zakładki Raporty.
           void loadPrograms();
         }}
       />
@@ -807,8 +852,22 @@ export const AuditsMethodHub: React.FC = () => {
         onClose={() => setNewReportModalOpen(false)}
         isPolish={isPolish}
         programNameById={programNameById}
-        onGoToOutputs={() => setActiveTab('outputs')}
+        onFinalizeSession={() => {
+          // Wyniki nie są już zakładką (DEC-417e), więc pusty stan generatora
+          // raportu prowadzi do JEDYNEGO producenta Outputu, jaki istnieje:
+          // jawnej finalizacji sesji audytowej.
+          setNewReportModalOpen(false);
+          setNewOutputModalOpen(true);
+        }}
         onGenerated={() => setReportsReloadToken((value) => value + 1)}
+      />
+      <GeneratorWnioskuAudytuModal
+        otwarty={generatorWnioskuOpen}
+        onClose={() => setGeneratorWnioskuOpen(false)}
+        isPolish={isPolish}
+        programNameById={programNameById}
+        onWygenerowano={() => setConclusionsReloadToken((value) => value + 1)}
+        onOtworzWniosek={(id) => navigate(`/conclusions?id=${encodeURIComponent(id)}`)}
       />
       {/* JEDEN generator inicjatyw (DEC-413) — adapter `audit` woła istniejący
           POST /audits/proposals { programId, findingIds[] }

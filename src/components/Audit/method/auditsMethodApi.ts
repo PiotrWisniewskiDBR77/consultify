@@ -351,6 +351,14 @@ export interface AuditReportSummary {
   payload?: Record<string, unknown>;
 }
 
+/** Wynik `POST /audits/reports/:id/conclusion` — wniosek zapisany w warstwie Wniosków. */
+export interface AuditConclusionResult {
+  conclusionId: string;
+  title: string;
+  status: string;
+  sourceRefs: Array<{ type: string; id: string; title?: string | null; url?: string | null }>;
+}
+
 export interface AuditProposalSummary {
   id: string;
   programId: string;
@@ -637,6 +645,26 @@ export async function getReport(id: string): Promise<AuditReportSummary | null> 
   const res = await Api.get(`/audits/reports/${encodeURIComponent(id)}`);
   const payload = unwrapEnvelope(res) as AuditReportSummary | undefined;
   return payload && payload.id ? payload : null;
+}
+
+/**
+ * `POST /audits/reports/:id/conclusion` — WNIOSEK z raportu audytu (DEC-417e).
+ * Przewód do istniejącej warstwy Wniosków (`conclusions`), nie nowy silnik:
+ * serwer czyta zapisany dokument raportu (`auditReportConclusionBridge`) i
+ * zapisuje z niego wniosek po rodowodzie `audit_report`.
+ */
+export async function generateReportConclusion(
+  reportId: string
+): Promise<AuditConclusionResult> {
+  const res = await Api.post(
+    `/audits/reports/${encodeURIComponent(reportId)}/conclusion`,
+    {}
+  );
+  const payload = unwrapEnvelope(res) as AuditConclusionResult | undefined;
+  if (!payload?.conclusionId) {
+    throw new Error('AUDITS_API_CONTRACT_ERROR: conclusion response is missing conclusionId');
+  }
+  return payload;
 }
 
 /** `POST /audits/reports/:id/approve` — draft/in_review → approved (real backend gate, `reportService.approveReport`). */

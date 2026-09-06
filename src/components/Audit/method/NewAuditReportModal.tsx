@@ -12,6 +12,11 @@
  * Anatomia 1:1 z „Nowy raport" w Narzędziach i Wynikach: ŹRÓDŁO → TYP →
  * GENERUJ. Źródłem jest AKTUALNY wynik audytu (serwer odmawia raportu z
  * wyniku zastąpionego), typ to `audit_report` albo `remediation_progress`.
+ *
+ * DEC-417e (1.1-A4): zakładka „Wyniki" zniknęła z Menu 2 na rzecz „Wniosków",
+ * więc pusty stan nie odsyła już do nieistniejącej zakładki — prowadzi wprost
+ * do finalizacji sesji („Nowy wynik", `POST /audits/outputs/finalize`), czyli
+ * jedynego producenta Outputu.
  */
 import { Package } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -33,8 +38,12 @@ export interface NewAuditReportModalProps {
   isPolish: boolean;
   /** `programId` → nazwa sesji (Hub już ma `listPrograms`). */
   programNameById?: Map<string, string>;
-  /** Nawigacja do zakładki Wyniki ze stanu pustego. */
-  onGoToOutputs: () => void;
+  /**
+   * Pusty stan (żadnego aktualnego wyniku): DEC-417e zdjęło zakładkę „Wyniki"
+   * z Menu 2, więc kieruje TU — do jawnej finalizacji sesji audytowej, czyli
+   * jedynego producenta Outputu (`POST /audits/outputs/finalize`).
+   */
+  onFinalizeSession: () => void;
   onGenerated: (report: AuditReportSummary) => void;
 }
 
@@ -47,7 +56,7 @@ export const NewAuditReportModal: React.FC<NewAuditReportModalProps> = ({
   onClose,
   isPolish,
   programNameById = EMPTY_MAP,
-  onGoToOutputs,
+  onFinalizeSession,
   onGenerated,
 }) => {
   const [outputs, setOutputs] = useState<AuditOutputSummary[]>([]);
@@ -130,12 +139,11 @@ export const NewAuditReportModal: React.FC<NewAuditReportModalProps> = ({
             <Button
               variant="primary"
               onClick={() => {
-                onClose();
-                onGoToOutputs();
+                onFinalizeSession();
               }}
-              data-testid="audits-new-report-go-outputs"
+              data-testid="audits-new-report-finalize-session"
             >
-              {isPolish ? 'Przejdź do Wyników' : 'Go to Outputs'}
+              {isPolish ? 'Sfinalizuj sesję' : 'Finalize a session'}
             </Button>
           </div>
         ) : (
@@ -169,8 +177,8 @@ export const NewAuditReportModal: React.FC<NewAuditReportModalProps> = ({
           <Package size={18} className="text-c-text-muted" aria-hidden="true" />
           <p className="text-sm text-c-text-secondary">
             {isPolish
-              ? 'Nie ma jeszcze żadnego aktualnego wyniku audytu. Wynik powstaje przez finalizację sesji — zacznij od zakładki Wyniki i przycisku „Nowy wynik”.'
-              : 'There is no current audit output yet. An output is created by finalizing a session — start on the Outputs tab with “New output”.'}
+              ? 'Nie ma jeszcze żadnego aktualnego wyniku audytu. Wynik powstaje przez jawną finalizację sesji audytowej — przycisk „Sfinalizuj sesję” niżej.'
+              : 'There is no current audit output yet. An output is created by an explicit audit-session finalization — use “Finalize a session” below.'}
           </p>
         </div>
       ) : (

@@ -49,6 +49,15 @@ vi.mock('react-hot-toast', () => {
   };
 });
 
+vi.mock('@/services/api/conclusions.api', () => ({
+  ConclusionsApi: {
+    sync: vi.fn().mockResolvedValue({ synced: {} }),
+    list: vi.fn().mockResolvedValue({ conclusions: [] }),
+    get: vi.fn(),
+    listConversions: vi.fn(),
+  },
+}));
+
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
   return {
@@ -176,10 +185,11 @@ const TAB_CONTRACT: Array<{
     cta: 'audits-method-new-audit-cta',
   },
   {
-    tab: 'outputs',
-    label: 'Wyniki',
-    dropdown: 'audits-outputs-status-dropdown',
-    cta: 'audits-method-new-output-cta',
+    // DEC-417e: „zamiast Wyniki to Wnioski" — zakładka, dropdown i CTA.
+    tab: 'conclusions',
+    label: 'Wnioski',
+    dropdown: 'audits-conclusions-status-dropdown',
+    cta: 'audits-method-new-conclusion-cta',
   },
   {
     tab: 'reports',
@@ -204,7 +214,7 @@ describe('Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka', () =
     expect(screen.getAllByRole('tab').map((b) => b.textContent)).toEqual([
       'Biblioteka',
       'Sesje',
-      'Wyniki',
+      'Wnioski',
       'Raporty',
       'Inicjatywy',
     ]);
@@ -275,15 +285,28 @@ describe('Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka', () =
     expect(await screen.findByTestId('generator-inicjatyw-modal')).toBeInTheDocument();
   });
 
-  it('DEC-417d: CTA „Nowy wynik” i „Nowy raport” otwierają realne generatory', async () => {
+  it('DEC-417e: CTA „Nowy wniosek” otwiera generator wniosku z raportu audytu', async () => {
+    setupApiMocks();
+    renderHub(['/audit-programs?tab=conclusions']);
+    await waitFor(() => expect(vi.mocked(listPacks)).toHaveBeenCalled());
+
+    expect(screen.queryByTestId('generator-wniosku-audytu-modal')).toBeNull();
+    fireEvent.click(screen.getByTestId('audits-method-new-conclusion-cta'));
+
+    // MUTACJA, którą ten test ma złapać: odpięcie CTA od generatora wniosku.
+    expect(await screen.findByTestId('generator-wniosku-audytu-modal')).toBeInTheDocument();
+    // Generator czyta REALNE raporty audytu (jedyne źródło, jakie serwer zna).
+    await waitFor(() => expect(vi.mocked(listReports)).toHaveBeenCalled());
+  });
+
+  // DEC-417e: Wyniki przestały być zakładką, ale ich silnik ZOSTAJE — stary
+  // link musi trafić na Wnioski, a nie na Sesje jak nieznana wartość.
+  it('DEC-417e: stary deep link ?tab=outputs prowadzi na Wnioski', async () => {
     setupApiMocks();
     renderHub(['/audit-programs?tab=outputs']);
-    await waitFor(() => expect(vi.mocked(listOutputs)).toHaveBeenCalled());
-
-    fireEvent.click(screen.getByTestId('audits-method-new-output-cta'));
-    // Jest sesja audytowa → generator pokazuje wybór źródła i „Generuj".
-    expect(await screen.findByTestId('audits-new-output-generate')).toBeInTheDocument();
-    expect(screen.getByText('Audyt zgodności Q3')).toBeInTheDocument();
+    await waitFor(() => expect(vi.mocked(listPacks)).toHaveBeenCalled());
+    expect(screen.getByRole('tab', { name: 'Wnioski' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('tab', { name: 'Wyniki' })).toBeNull();
   });
 
   it('DEC-417b: zakładka Inicjatywy nie renderuje już linijki disclaimera nad tabelą', async () => {

@@ -1,5 +1,5 @@
 /**
- * AuditsMethodHub — pięć powierzchni (Library/Processes/Outputs/Reports/
+ * AuditsMethodHub — pięć powierzchni (Library/Processes/Conclusions/Reports/
  * Initiatives), `?tab=` jako źródło prawdy.
  *
  * Mockuje `../auditsMethodApi` NA POZIOMIE MODUŁU (kształt serwera:
@@ -35,6 +35,17 @@ vi.mock('react-hot-toast', () => {
     }),
   };
 });
+
+// DEC-417e: zakładka „Wnioski" czyta warstwę Wniosków (org-wide), nie Outputy
+// jądra — mock trzyma test przy kontrakcie, a nie przy sieci.
+vi.mock('@/services/api/conclusions.api', () => ({
+  ConclusionsApi: {
+    sync: vi.fn().mockResolvedValue({ synced: {} }),
+    list: vi.fn().mockResolvedValue({ conclusions: [] }),
+    get: vi.fn(),
+    listConversions: vi.fn(),
+  },
+}));
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
@@ -240,13 +251,16 @@ describe('AuditsMethodHub', () => {
     renderHub();
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
-    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives'].map((label) =>
-      screen.getByRole('tab', { name: label })
+    // DEC-417e (właściciel, 06.09): „zamiast Wyniki to Wnioski".
+    const tabButtons = ['Library', 'Sessions', 'Conclusions', 'Reports', 'Initiatives'].map(
+      (label) => screen.getByRole('tab', { name: label })
     );
     expect(tabButtons).toHaveLength(5);
-    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Initiatives order.
+    // Order in the DOM must match Library·Sessions·Conclusions·Reports·Initiatives.
     const allTabs = screen.getAllByRole('tab').map((b) => b.textContent);
-    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives']);
+    expect(allTabs).toEqual(['Library', 'Sessions', 'Conclusions', 'Reports', 'Initiatives']);
+    // „Wyniki"/Outputs nie może wrócić jako zakładka.
+    expect(screen.queryByRole('tab', { name: 'Outputs' })).toBeNull();
     // "Processes" must not leak anywhere as a tab label.
     expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();
     // "Findings"/„Ustalenia" must not come back as a tab.
@@ -263,11 +277,22 @@ describe('AuditsMethodHub', () => {
     );
   });
 
-  it('opens Outputs when ?tab=outputs is in the URL', async () => {
+  it('opens Conclusions when ?tab=conclusions is in the URL', async () => {
+    setupApiMocks();
+    renderHub(['/audit-programs/method?tab=conclusions']);
+    expect(await screen.findByText('No conclusions yet')).toBeInTheDocument();
+  });
+
+  // DEC-417e: stary link `?tab=outputs` żyje w zakładkach i historii — musi
+  // trafiać na Wnioski i kanonizować URL, a nie spadać na Sesje jak nieznana
+  // wartość (deep link nie może kończyć się cudzym ekranem).
+  it('redirects the legacy ?tab=outputs link to Conclusions', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
-    await waitFor(() => expect(mockedListOutputs).toHaveBeenCalled());
-    expect(screen.getByText('No outputs yet')).toBeInTheDocument();
+    expect(await screen.findByText('No conclusions yet')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('location-probe').textContent).toContain('tab=conclusions')
+    );
   });
 
   it('falls back to Processes for an unknown ?tab= value', async () => {
@@ -354,13 +379,13 @@ describe('AuditsMethodHub', () => {
     expect(screen.getByRole('button', { name: /try again|retry/i })).toBeInTheDocument();
   });
 
-  it('shows the honest Outputs EmptyState explaining why the list is empty', async () => {
+  it('shows the honest Conclusions EmptyState explaining where a conclusion comes from', async () => {
     setupApiMocks();
-    renderHub(['/audit-programs/method?tab=outputs']);
-    await waitFor(() => expect(screen.getByText('No outputs yet')).toBeInTheDocument());
-    expect(screen.getByText(/separate, explicit audit-session finalization/i)).toBeInTheDocument();
-    // DEC-417d: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2).
-    expect(screen.getByText(/“New output” in the module bar/i)).toBeInTheDocument();
+    renderHub(['/audit-programs/method?tab=conclusions']);
+    await waitFor(() => expect(screen.getByText('No conclusions yet')).toBeInTheDocument());
+    expect(screen.getByText(/built from an audit report/i)).toBeInTheDocument();
+    // DEC-417e: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2).
+    expect(screen.getByText(/“New conclusion” in the module bar/i)).toBeInTheDocument();
   });
 
   describe('Library — single-axis Menu 3 (DEC-2026-08-25-66)', () => {
