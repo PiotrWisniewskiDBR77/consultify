@@ -1,0 +1,39 @@
+{
+ "url": "http://127.0.0.1:3141/my-work/ideas/seed_idea_map_8ae01e47_ai_quality/workspace/table",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 409,
+   "url": "http://127.0.0.1:3141/api/my-work/my-ideas/seed_idea_map_8ae01e47_ai_quality/map/sync"
+  }
+ ],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nTabela\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nNowy pomysł\nTabela\nPomysł\nPanel\nAI\nTabela\nDomyślny\nTriażowanie\nPunktacja\nLog decyzji\nTimeline\nGrupuj\nUzupełnij AI (23)\nMetodyka\nWiersz\n\t#\t\nTYP\n\t\nETYKIETA\n\t\nSTATUS\n\t\nPRIORYTET\n\n\t1\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t2\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t3\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t4\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t5\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t6\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t7\t\nElement\n\t\n\t\nDo zrobienia\n\t\n—\n\n\t8\t\nElement\n\t\n\t\nDo zrobienia\n\t\n70\n\n\t9\t\nElement\n\t\n\t\nDo zrobienia\n\t\n60\n\n\t10\t\nElement\n\t\n\t\nDo zrobienia\n\t\n70\n\n\t11\t\nElement\n\t\n\t\nDo zrobienia\n\t\n65\n\n\t12\t\nElement\n\t\n\t\nDo zrobienia\n\t\n60\n\n\t13\t\nElement\n\t\n\t\nDo zrobienia\n\t\n60\n\n\t14\t\nElement\n\t\n\t\nDo zrobienia\n\t\n55\n\n\t15\t\nElement\n\t\n\t\nDo zrobienia\n\t\n65\n\n\t16\t\nElement\n\t\n\t\nDo zrobienia\n\t\n60\nPOŁĄCZENIA (15)\nŹRÓDŁO\tCEL\tRODZAJ\nAI monitoring jakości\tProblem\tPołączenie\nProblem\tPóźne wykrywanie defektów\tPołączenie\nProblem\tBrak wspólnej definicji jakości\tPołączenie\nAI monitoring jakości\tCel / KPI\tPołączenie\nCel / KPI\tReklamacje: -20%\tPołączenie\nCel / KPI\tMTTR: -30%\tPołączenie\nAI monitoring jakości\tOpcje\tPołączenie\nOpcje\tAnomaly detection na sygnałach procesowych\tPołączenie\nOpcje\tComputer vision na stanowisku kontroli\tPołączenie\nAI monitoring jakości\tDowody\tPołączenie\nDowody\tBaseline danych i definicje metryk jakości\tPołączenie\nAI monitoring jakości\tRyzyka\tPołączenie\nRyzyka\tDrift modelu + false positives\tPołączenie\nAI monitoring jakości\tEksperymenty\tPołączenie\nEksperymenty\tPilot: 1 linia / 1 usługa, 2 tygodnie\tPołączenie\nSkładnik\nTeresa\nAI monitoring jakości\nIskra\nTabela\n\nKliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola\n\nZaznacz element, aby zobaczyć właściwości\n\nAKCJE\nPrzejrzyj kandydaturę\nANALIZA PŁÓTNA\nTabela wygląda kompletnie — gotowa do konwersji na inicjatywę?\nZastosuj\nWŁAŚCIWOŚCI\nEtykieta\nAI monitoring jakości\nEtap\nIskra\nWłaściciel\nAudyt Nocny\nUtworzono\n31.08.2026 21:06\nZaktualizowano\n5.09.2026 21:06\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\n0\nKOMENTARZE\n0\nHISTORIA\n0",
+ "dom": {
+  "[data-testid='idea-element-inspector'], aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1089,
+     "y": 166,
+     "width": 319,
+     "height": 734
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T18:13:31.876Z"
+}

@@ -1,0 +1,30 @@
+{
+ "url": "http://127.0.0.1:3141/my-work/ideas/seed_idea_map_8ae01e47_ai_quality/workspace/process-flow",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nProcess Flow\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nNowy pomysł\nProcess Flow\nPomysł\nPanel\nAI\nKlasyczny przepływ\nAutomatyzacja\nStrumień wartości\nKroki 16\nŚcieżki 1\nBrak ostrzeżeń\n\nMapuj bieżący proces, decyzje i odpowiedzialność zanim zaczniesz optymalizację.\n\nKoniec\nWstaw\nRozdziel\nWięcej\nMain Process\nAI monitoring jakości\nProblem\nPóźne wykrywanie defektów\nBrak wspólnej definicji jakości\nCel / KPI\nReklamacje: -20%\nMTTR: -30%\nOpcje\nAnomaly detection na sygnałach procesowych\nComputer vision na stanowisku kontroli\nDowody\nBaseline danych i definicje metryk jakości\nRyzyka\nDrift modelu + false positives\nEksperymenty\nPilot: 1 linia / 1 usługa, 2 tygodnie\n49%\nSkładnik\nTeresa\nAI monitoring jakości\nIskra\nProcess Flow\n\nKliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola\n\nZaznacz element, aby zobaczyć właściwości\n\nAKCJE\nANALIZA PŁÓTNA\nDiagram wygląda kompletnie — gotowy do konwersji na inicjatywę?\nZastosuj\nPrzejrzyj kandydaturę\nWŁAŚCIWOŚCI\nEtykieta\nAI monitoring jakości\nEtap\nIskra\nWłaściciel\nAudyt Nocny\nUtworzono\n31.08.2026 21:06\nZaktualizowano\n5.09.2026 21:06\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\n0\nKOMENTARZE\n0\nHISTORIA\n0\nZAZNACZANIE",
+ "dom": {
+  "[data-testid='idea-element-inspector'], aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1089,
+     "y": 166,
+     "width": 319,
+     "height": 734
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T18:13:22.319Z"
+}
