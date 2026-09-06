@@ -1,0 +1,22 @@
+# DOWÓD API — Document Studio 404 (06/07.09, stanowisko lokalne)
+
+ID: 99849d62-cdef-4507-bacd-85081b6c430a  (wiersz work_canvas_drafts, Materiały -> Dokumenty, wiersz 1)
+
+## PRZED (kod bez naprawy, API stanowiska :4100 na bazie 54400)
+$ curl -H "Authorization: Bearer <token>" http://127.0.0.1:4100/api/document-studio/99849d62-cdef-4507-bacd-85081b6c430a
+{"error":"not_found"}HTTP 404
+
+$ curl ... /api/artifacts?outputType=report  (pole openPath dla tego wiersza)
+  99849d62-cdef-4507-bacd-85081b6c430a | authority= document_studio | openPath= /document-studio/99849d62-cdef-4507-bacd-85081b6c430a
+  artifact-ab8dbf5c-d7f1-4e4c-bb27-8ad2cb4672a8 | authority= document_studio | openPath= /document-studio/artifact-ab8dbf5c-d7f1-4e4c-bb27-8ad2cb4672a8
+
+## PO (kod z naprawą, własne API :4111 na własnej kopii bazy :54411)
+$ curl ... :4111/api/artifacts?outputType=report  (pole openPath)
+  99849d62-cdef-4507-bacd-85081b6c430a | authority= chat_canvas | openPath= /chat?workPanel=1&canvasDraftId=99849d62-cdef-4507-bacd-85081b6c430a
+  artifact-ab8dbf5c-d7f1-4e4c-bb27-8ad2cb4672a8 | authority= document_studio | openPath= /document-studio/artifact-ab8dbf5c-d7f1-4e4c-bb27-8ad2cb4672a8
+
+$ curl ... :4111/api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a   (obiekt ISTNIEJE, tylko w innej tabeli)
+{"success":true,"data":{"draft":{"id":"99849d62-cdef-4507-bacd-85081b6c430a","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","createdBy":"76015d70-9117-444f-97a6-4f5eda9d7ad5","conversationId":"c820831d-9d87-430b-988b-03ee00aa7afe","kind":"document","title":"Plan strategiczny w kontekście cyfrowej transformacji organizacji, takiej jak…","content":"Plan strategiczny w kontekście cyfrowe
+
+$ curl ... :4111/api/document-studio/artifact-ab8dbf5c-...  (BEZ REGRESJI — realny dokument Studia)
+HTTP 200
