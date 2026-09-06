@@ -426,6 +426,11 @@ KROKI (kolejność wymuszona; 8-9 równolegle do 5-7 po kroku 1):
 KANON: StandardTable/StandardModuleBar/StandardPreview dla list; StandardArtifactShell/ArtifactRightPanel/
 PracujZAI dla kart; tokeny c-*; ZERO primary-* (każdy numer = crimson); fokus c-focus; i18n pl+en; zero flag.
 
+DECYZJE WŁAŚCICIELA JUŻ PODJĘTE (nie pytaj, wykonuj): „Nowy plan” tworzy kartę ze szkicem zapisanym od razu,
+generator w karcie; podaż ludzi w MVP ręcznie + jawne „Nieznane”; „Nowa analiza” tylko na opublikowanym
+planie (komunikat po polsku); plan z konfliktami wolno opublikować z jawnym potwierdzeniem w śladzie;
+9 chipów Planu przechodzi do sekcji „Zakres inicjatyw” w karcie.
+
 PROGI (STOP dopiero gdy wszystkie spełnione):
 - 0 kodów technicznych w UI (aco-, ie-, scenario-<cyfry>, UUID) na 5 zrzutach i w --dom;
 - 10 wpisów w REJESTR_KART_N; 1 CTA w Menu 2 na każdej zakładce i 0 btn-primary w treści obu zakładek;
@@ -455,7 +460,7 @@ Pracuj, aż progi spełnione albo każdy niespełniony ma wiersz w 99_DECYZJE.
 
 ---
 
-## 12. Niejasności do słowa właściciela (do `P11/99_DECYZJE_WLASCICIELA.md`)
+## 12. Niejasności — ROZSTRZYGNIĘTE przez CTO 06.09 16:10 wg rekomendacji (właściciel może zmienić jednym zdaniem)
 
 | # | Pytanie | Rekomendacja CTO |
 |---|---|---|
