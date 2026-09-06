@@ -1,0 +1,34 @@
+{
+ "url": "http://127.0.0.1:3131/discovery-tools/strategic/megatrends",
+ "tytul": "Discovery Tools — Consultify",
+ "kliki": [
+  "text=Szczegóły trendu"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+  "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+  "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 503,
+   "url": "http://127.0.0.1:3131/api/megatrends/baseline?industry=automotive"
+  },
+  {
+   "status": 503,
+   "url": "http://127.0.0.1:3131/api/megatrends/baseline?industry=automotive"
+  }
+ ],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nNarzędzia\nAnaliza strategiczna\nMegatrendy\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nAnaliza megatrendów\n\nEksploruj megatrendy branżowe, buduj radar i odkrywaj wnioski strategiczne\n\nBaseline branżowy\nMapa radaru trendów\nSzczegóły trendu\nWłasne trendy\nWnioski AI\n\nWybierz trend z Baseline lub Mapy radaru, aby zobaczyć szczegóły.\n\nPrzejdź do Baseline",
+ "kiedy": "2026-09-06T18:46:31.970Z"
+}
