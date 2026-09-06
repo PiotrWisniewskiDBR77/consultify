@@ -511,10 +511,12 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
                   {recentDocs.map((doc) => {
                     const nazwa = czytelnaNazwaPliku(doc.filename);
                     const Ikona = ikonaTypuPliku(nazwa.rozszerzenie);
+                    // Status NIE wchodzi do tej linii — niesie go chip po prawej.
+                    // Zrzut 01 pokazał go dwa razy w jednym wierszu, a data przez
+                    // to nie mieściła się w 376 px panelu („6…").
                     const meta = [
                       nazwa.rozszerzenie || null,
                       formatBytes(doc.file_size_bytes),
-                      indexStatusLabel(doc.status, isPolish),
                       formatDate(doc.created_at, isPolish),
                     ]
                       .filter((part) => part && part !== '—')

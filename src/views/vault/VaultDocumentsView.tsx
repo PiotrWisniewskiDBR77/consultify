@@ -855,7 +855,11 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         ],
         [
           t('vault.docs.detailFileName', isPolish ? 'Nazwa pliku' : 'File name'),
-          czytelnaNazwaPliku(selectedDocument.filename).oryginal,
+          // Zrzut 02: pełna nazwa pliku to jedno słowo bez spacji — wychodziła
+          // poza prawą krawędź panelu (376 px). Zero-width space po `-`/`_`
+          // daje przeglądarce miejsce na złamanie; kopiowanie i tak idzie z
+          // `previewDetailsRows`, więc wartość pozostaje pełna.
+          czytelnaNazwaPliku(selectedDocument.filename).oryginal.replace(/([-_.])/g, '$1\u200B'),
         ],
         [
           t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
