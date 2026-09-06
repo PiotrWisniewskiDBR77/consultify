@@ -74,7 +74,6 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 import { formatRoiDisplay } from '@/utils/safeFormat';
-import { isToolsInsightsWiringEnabled } from '@/utils/toolsInsightsWiringFlag';
 
 import {
   type AssessmentFrameworkPreviewModel,
@@ -851,6 +850,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [addMenuQuery, setAddMenuQuery] = useState('');
   const addMenuRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * 1.1-T1 (DEC-412), uwaga właściciela 06.09: „We wszystkich funkcjach tego
+   * modułu jest ten sam call to action [Dodaj narzędzie]. Więc nie mogę
+   * wygenerować ani insightu, ani raportu, ani inicjatywy."
+   *
+   * Menu 3 ma JEDEN przycisk główny (`StandardModuleBar.primaryCtaContent`),
+   * ale jego treść i działanie należą do aktywnej zakładki. Insighty/Raporty/
+   * Inicjatywy dostają wybór ZATWIERDZONEJ sesji jako źródła i wołają to, co
+   * na serwerze już istnieje — bez nowych generatorów AI.
+   */
+  const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+  const [sourcePickerBusyId, setSourcePickerBusyId] = useState<string | null>(null);
+  const sourcePickerRef = useRef<HTMLDivElement>(null);
+
   // #64: AI picker — "Nie wiesz, które wybrać?" (which tool do I pick?)
   const [suggestProblemText, setSuggestProblemText] = useState('');
   const [isSuggestingTool, setIsSuggestingTool] = useState(false);
@@ -898,6 +911,23 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       outputs.filter(
         (item) => item.outputKind === 'assessment_report' || item.outputKind === 'report_builder'
       ),
+    [outputs]
+  );
+  /**
+   * 1.1-T1 (DEC-412), uwaga właściciela 06.09: „W narzędziach Insighty i
+   * Raporty jest ta sama lista. Co oznacza, że nie tworzy insightów tak
+   * naprawdę."
+   *
+   * Zakładka Insighty pokazuje WYŁĄCZNIE `tool_output` — własne, zatwierdzone
+   * wyniki narzędzi z lineage do sesji (TLS-OUTPUT-OWN-001,
+   * DEC-2026-08-25-32). Raporty zostają podzbiorem dokumentowym
+   * (assessment_report + report_builder) — patrz `reportsOutputs` wyżej.
+   * Dopóki obie zakładki czytały tę samą tablicę `outputs`, a `tool_output`
+   * nie było w niej ANI JEDNEGO wiersza (flaga OFF + producent nie pisał),
+   * listy były identyczne co do wiersza.
+   */
+  const insightsOutputs = useMemo(
+    () => outputs.filter((item) => item.outputKind === 'tool_output'),
     [outputs]
   );
   const [initiatives, setInitiatives] = useState<DisplayItem[]>([]);
@@ -1124,22 +1154,24 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             success: true,
             data: [] as any[],
           }),
-          // DEC-118 repair #1 (behind ff_toolsInsightsWiring — default OFF
-          // again under DEC-158 after the live-read database lacked the
-          // table): the canonical tool_outputs snapshot (migration
-          // 946) was never fetched here, so an approved tool result never
-          // appeared in the module's own Outputs/Insights tab. The network
-          // call is still skippable per-session via the localStorage kill
-          // switch (?ff_toolsInsightsWiring=0).
-          isToolsInsightsWiringEnabled()
-            ? resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
-                outputs: [] as any[],
-              }).catch((error) => {
-                console.warn('[DiscoveryToolsHub] tool outputs unavailable:', error);
-                setToolOutputsUnavailable(true);
-                return { outputs: [] as any[] };
-              })
-            : Promise.resolve({ outputs: [] as any[] }),
+          // 1.1-T1 (DEC-412): the canonical `tool_outputs` snapshot
+          // (migration 946) is now fetched UNCONDITIONALLY. It used to sit
+          // behind `ff_toolsInsightsWiring` (default OFF), which is exactly
+          // why the Insights tab could only ever show the same rows as
+          // Reports — with zero `tool_output` rows merged in, the two lists
+          // were byte-identical, which is what the owner saw. The flag is
+          // deleted (kształt 20: "flaga OFF w kodzie ≠ wyłączona" — DEC-227
+          // flipped it ON en masse anyway, so it measured nothing). The
+          // catch below keeps the whole hub alive if `/api/tool-outputs`
+          // is unavailable (5xx) — the tab then shows an honest notice
+          // instead of a full-screen error.
+          resolveBootstrapRequest('tool outputs', Api.listToolOutputs(undefined), {
+            outputs: [] as any[],
+          }).catch((error) => {
+            console.warn('[DiscoveryToolsHub] tool outputs unavailable:', error);
+            setToolOutputsUnavailable(true);
+            return { outputs: [] as any[] };
+          }),
         ]);
 
         const allSessions = (toolSessionsRes.items || []).map(transformToolSession);
@@ -1694,7 +1726,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'outputs' as ModuleTab,
         label: t('tools.hub.tabs.outputs', 'Outputs'),
         icon: <FolderOutput size={16} />,
-        count: outputs.length,
+        // 1.1-T1: licznik zakładki Insighty liczy WYŁĄCZNIE `tool_output`,
+        // nie całą tablicę `outputs` (która niesie też raporty i prezentacje).
+        count: insightsOutputs.length,
       },
       {
         // TLS-01: fifth surface -- was previously collapsed into 'outputs'
@@ -1719,7 +1753,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     initiatives.length,
     isPolish,
     knownTools,
-    outputs.length,
+    insightsOutputs.length,
     reportsOutputs.length,
     t,
     isKnownToolsLoading,
@@ -2120,28 +2154,22 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'category',
-        label: t('tools.hub.initiatives.columns.axis', 'Oś'),
+        label: t('tools.hub.initiatives.columns.axis', 'Axis'),
         width: '120px',
         filterable: true,
         filterOptions: [
-          { value: 'strategic', label: t('tools.axis.strategic', 'Strategiczna') },
-          { value: 'operational', label: t('tools.axis.operational', 'Operacyjna') },
-          { value: 'digital', label: t('tools.axis.digital', 'Cyfrowa') },
+          { value: 'strategic', label: t('tools.axis.strategic', 'Strategic') },
+          { value: 'operational', label: t('tools.axis.operational', 'Operational') },
+          { value: 'digital', label: t('tools.axis.digital', 'Digital') },
         ],
-        render: (row) => {
-          const axisColors: Record<string, string> = {
-            strategic: 'text-c-text-secondary',
-            operational: 'text-c-text-secondary',
-            digital: 'text-c-text-secondary',
-          };
-          return (
-            <span
-              className={`text-xs font-medium capitalize ${axisColors[row.category] || 'text-c-text-secondary'}`}
-            >
-              {row.category}
-            </span>
-          );
-        },
+        render: (row) => (
+          // 1.1-T1 (DEC-412), zrzut właściciela 06.09: wartość szła na ekran
+          // surowa z API (`strategic` + `capitalize` = „Strategic"). Etykieta
+          // idzie przez i18n, nie przez `isPolish ? :` (ratchet i18n).
+          <span className="text-xs font-medium text-c-text-secondary">
+            {t(`tools.axis.${row.category}`, String(row.category || ''))}
+          </span>
+        ),
       },
       {
         id: 'priority',
@@ -2155,7 +2183,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             MEDIUM: 'medium',
             LOW: 'low',
           };
-          return <PriorityChip level={levels[priority] || 'medium'} label={priority} />;
+          const level = levels[priority] || 'medium';
+          // 1.1-T1: etykieta priorytetu też szła surowa z API („Medium").
+          return (
+            <PriorityChip level={level} label={t(`tools.priority.${level}`, priority)} />
+          );
         },
       },
       {
@@ -2308,6 +2340,105 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
     ],
     [isPolish, t]
+  );
+
+  /**
+   * 1.1-T1 (DEC-412) — kolumny zakładki INSIGHTY.
+   *
+   * Insight = zatwierdzony wynik narzędzia (`tool_outputs`), więc kolumny
+   * mówią to, czego właściciel szukał i nie znalazł: z JAKIEGO narzędzia i z
+   * KTÓREJ sesji ten wniosek pochodzi (lineage Session → Insight,
+   * TLS-OUTPUT-OWN-001). Raporty zostają na `outputsColumns` (typ dokumentu),
+   * bo tam kolumna „Typ" rozróżnia raport oceny od raportu z kreatora.
+   */
+  const sessionNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of discoveries) map.set(String(d.id), String(d.name || ''));
+    return map;
+  }, [discoveries]);
+
+  const insightsColumns: TableColumn[] = useMemo(
+    () => [
+      {
+        id: 'toolType',
+        label: t('tools.hub.insights.columns.toolType', 'Tool'),
+        width: '150px',
+        render: (row: any) => {
+          const raw = String(row?._fullData?.toolType || '');
+          const short = TOOL_TYPE_TO_SHORT[raw]?.short;
+          const label = short ? TOOL_META[short].name : raw || '—';
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-c-text-muted">
+                <Zap size={14} />
+              </span>
+              <span className="text-xs font-medium text-c-text-secondary truncate">{label}</span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'name',
+        label: t('tools.hub.outputs.columns.name', 'Name'),
+        render: (row: any) => (
+          <div className="min-w-0">
+            <span className="block text-sm font-semibold text-c-text truncate">
+              {String(row?.name || '')}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'sourceSession',
+        label: t('tools.hub.insights.columns.sourceSession', 'Source session'),
+        width: '240px',
+        render: (row: any) => {
+          const sessionId = String(row?.sourceId || row?._fullData?.toolSessionId || '');
+          const name = sessionId ? sessionNameById.get(sessionId) : undefined;
+          if (!sessionId) {
+            return <span className="text-sm text-c-text-muted">—</span>;
+          }
+          return (
+            <span className="text-sm text-c-text-secondary truncate block" title={sessionId}>
+              {name || sessionId}
+            </span>
+          );
+        },
+      },
+      {
+        id: 'status',
+        label: t('tools.hub.outputs.columns.status', 'Status'),
+        width: '120px',
+        render: (row: any) => renderToolStatusCell(row?.statusRaw ?? row?.status, isPolish),
+      },
+      {
+        id: 'updatedAt',
+        label: t('tools.hub.outputs.columns.updated', 'Updated'),
+        width: '200px',
+        sortable: true,
+        dataType: 'date',
+        sortAccessor: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+        },
+        render: (row: any) => {
+          const d = new Date(row?.updatedAt);
+          if (Number.isNaN(d.getTime())) {
+            return <span className="text-sm text-c-text-secondary">—</span>;
+          }
+          return (
+            <span className="text-sm text-c-text-secondary">
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </span>
+          );
+        },
+      },
+    ],
+    [isPolish, sessionNameById, t]
   );
 
   // Handlers
@@ -2601,6 +2732,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const handleTabChange = useCallback(
     (tab: string) => {
       setActiveTab(tab as ModuleTab);
+      // 1.1-T1: CTA jest per zakładka — otwarty panel wyboru źródła nie może
+      // zostać na ekranie po przełączeniu na zakładkę o innym CTA.
+      setIsSourcePickerOpen(false);
+      setIsAddMenuOpen(false);
       handleShowList();
     },
     [handleShowList]
@@ -2964,7 +3099,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         data = discoveries;
         break;
       case 'outputs':
-        data = outputs;
+        // 1.1-T1: Insighty = tylko własne wyniki narzędzi (`tool_output`).
+        data = insightsOutputs;
         break;
       case 'reports':
         // TLS-01: 'reports' is the formal-report subset of the same
@@ -3016,7 +3152,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
 
     return data;
-  }, [activeTab, discoveries, initiatives, outputs, reportsOutputs, searchQuery, statusFilter]);
+  }, [
+    activeTab,
+    discoveries,
+    initiatives,
+    insightsOutputs,
+    reportsOutputs,
+    searchQuery,
+    statusFilter,
+  ]);
 
   type UnifiedSessionRow =
     | (DisplayItem & { kind: 'toolSession'; sessionType: string })
@@ -3279,7 +3423,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         : activeTab === 'reports'
           ? reportsOutputs
           : activeTab === 'outputs'
-            ? outputs
+            ? insightsOutputs
             : activeTab === 'initiatives'
               ? initiatives
               : [];
@@ -3307,7 +3451,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     activeTab,
     currentStatusOptions,
     initiatives,
-    outputs,
+    insightsOutputs,
     reportsOutputs,
     searchQuery,
     unifiedSessionsData,
@@ -4469,23 +4613,36 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     // Table view (default)
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
-    const isReportsAndPresentationsTab = activeTab === 'outputs' || activeTab === 'reports';
+    // 1.1-T1 (DEC-412): Insighty i Raporty to od teraz DWIE różne listy —
+    // Insighty niosą własne wyniki narzędzi (kolumna „Sesja źródłowa"),
+    // Raporty dokumenty (kolumna „Typ" rozróżniająca raport oceny/kreatora).
+    const isInsightsTab = activeTab === 'outputs';
+    const isReportsTab = activeTab === 'reports';
+    // Wspólne dla obu (wiersz typu `output`): akcje wiersza, preview, kebab.
+    const isReportsAndPresentationsTab = isInsightsTab || isReportsTab;
     const columns = isInitiativesTab
       ? initiativeColumns
-      : isReportsAndPresentationsTab
-        ? outputsColumns
-        : discoveryColumns;
+      : isInsightsTab
+        ? insightsColumns
+        : isReportsTab
+          ? outputsColumns
+          : discoveryColumns;
     const emptyMessage = isInitiativesTab
       ? t(
           'tools.hub.empty.initiatives',
           'No initiatives yet. Generate them from validated tool conclusions.'
         )
-      : isReportsAndPresentationsTab
+      : isInsightsTab
         ? t(
-            'tools.hub.empty.outputs',
-            'No reports or presentations yet. Finalize a session and generate them here.'
+            'tools.hub.empty.insights',
+            'No insights yet. Insights are created from approved sessions — approve a session in the Sessions tab.'
           )
-        : t(
+        : isReportsTab
+          ? t(
+              'tools.hub.empty.outputs',
+              'No reports or presentations yet. Finalize a session and generate them here.'
+            )
+          : t(
             'tools.hub.empty.sessions',
             'No active sessions yet. Start from Library and a new session will appear here automatically.'
           );
@@ -5266,9 +5423,200 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [addMenuCategory, addMenuQuery, isPolish, knownTools, strategyCatalogSlugs, titleFromSlug]);
 
+  /**
+   * 1.1-T1 (DEC-412) — ŹRÓDŁA dla CTA zakładek Insighty/Raporty/Inicjatywy.
+   * Wszystkie trzy powstają z ZATWIERDZONEJ sesji narzędzia (kontrakt
+   * TLS-OUTPUT-OWN-001 / TLS-REPORT-OWN-001 / TLS-INIT-OWN-001), więc wybór
+   * źródła jest ten sam; różni się tylko to, co CTA z nim robi.
+   */
+  const approvedSessionRows = useMemo(
+    () =>
+      discoveries.filter((d) =>
+        ['APPROVED', 'GENERATED', 'FINALIZED'].includes(String(d.statusRaw || '').toUpperCase())
+      ),
+    [discoveries]
+  );
+
+  const sessionIdsWithInsight = useMemo(
+    () => new Set(insightsOutputs.map((o) => String(o.sourceId || ''))),
+    [insightsOutputs]
+  );
+
+  const approvedSessionsWithoutInsight = useMemo(
+    () => approvedSessionRows.filter((d) => !sessionIdsWithInsight.has(String(d.id))),
+    [approvedSessionRows, sessionIdsWithInsight]
+  );
+
+  const handleCreateInsightFromSession = useCallback(
+    async (sessionId: string) => {
+      setSourcePickerBusyId(sessionId);
+      try {
+        await Api.createToolInsight(sessionId);
+        toast.success(isPolish ? 'Insight utworzony' : 'Insight created');
+        setIsSourcePickerOpen(false);
+        await fetchData(true);
+      } catch (e: any) {
+        toast.error(
+          e?.message || (isPolish ? 'Nie udało się utworzyć insightu' : 'Failed to create insight')
+        );
+      } finally {
+        setSourcePickerBusyId(null);
+      }
+    },
+    [fetchData, isPolish]
+  );
+
+  /**
+   * Konfiguracja CTA dla zakładek, w których „Dodaj narzędzie" było kłamstwem.
+   * Każda pozycja woła powierzchnię, która ISTNIAŁA na serwerze przed tym
+   * zadaniem — nie budujemy nowych generatorów:
+   *   Insighty    -> POST /api/tools/:id/insight (ensureToolOutputSnapshot)
+   *   Raporty     -> /reports/builder?sourceType=TOOL (ReportBuilderView)
+   *   Inicjatywy  -> GenerateInitiativesModal -> POST /tools/:id/generate-initiatives
+   */
+  const sourcePickerConfig = useMemo(() => {
+    if (activeTab === 'outputs') {
+      return {
+        label: t('tools.hub.cta.newInsight', 'New insight'),
+        title: t('tools.hub.cta.pickSessionInsight', 'Pick an approved session without an insight'),
+        rows: approvedSessionsWithoutInsight,
+        emptyText:
+          approvedSessionRows.length === 0
+            ? t(
+                'tools.hub.cta.emptyNoApproved',
+                'Insights are created from approved sessions — approve a session in the Sessions tab.'
+              )
+            : t(
+                'tools.hub.cta.emptyAllHaveInsight',
+                'Every approved session already has an insight. New ones appear when you approve another session.'
+              ),
+        emptyActionLabel: t('tools.hub.cta.goToSessions', 'Go to Sessions'),
+        onPick: (row: DisplayItem) => void handleCreateInsightFromSession(String(row.id)),
+      };
+    }
+    if (activeTab === 'reports') {
+      return {
+        label: t('tools.hub.cta.newReport', 'New report'),
+        title: t('tools.hub.cta.pickSessionReport', 'Pick an approved session as the report source'),
+        rows: approvedSessionRows,
+        emptyText: t(
+          'tools.hub.cta.emptyNoApprovedReport',
+          'A report is generated from an approved session — approve a session in the Sessions tab.'
+        ),
+        emptyActionLabel: t('tools.hub.cta.goToSessions', 'Go to Sessions'),
+        onPick: (row: DisplayItem) => {
+          setIsSourcePickerOpen(false);
+          const qs = new URLSearchParams({
+            new: 'true',
+            sourceType: 'TOOL',
+            sourceId: String(row.id),
+            sourceName: String(row.name || ''),
+          });
+          navigate(`${ROUTES.REPORTS.BUILDER}?${qs.toString()}`);
+        },
+      };
+    }
+    return {
+      label: t('tools.hub.cta.newInitiative', 'New initiative'),
+      title: t('tools.hub.cta.pickSessionInitiative', 'Pick an approved session as the source'),
+      rows: approvedSessionRows,
+      emptyText: t(
+        'tools.hub.cta.emptyNoApprovedInitiative',
+        'Initiatives are generated from an approved session — approve a session in the Sessions tab.'
+      ),
+      emptyActionLabel: t('tools.hub.cta.goToSessions', 'Go to Sessions'),
+      onPick: (row: DisplayItem) => {
+        setIsSourcePickerOpen(false);
+        setGenerateInitiativesForId(String(row.id));
+      },
+    };
+  }, [
+    activeTab,
+    approvedSessionRows,
+    approvedSessionsWithoutInsight,
+    handleCreateInsightFromSession,
+    navigate,
+    t,
+  ]);
+
+  const SourcePickerCta = (
+    <div ref={sourcePickerRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setIsSourcePickerOpen((v) => !v)}
+        className="inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-full text-sm font-medium whitespace-nowrap bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus transition-colors duration-150"
+        aria-expanded={isSourcePickerOpen}
+        data-testid="tools-primary-cta"
+      >
+        <span className="whitespace-nowrap">{sourcePickerConfig.label}</span>
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-white/80 dark:text-navy-950/70 transition-transform duration-200 ${
+            isSourcePickerOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {isSourcePickerOpen ? (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsSourcePickerOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 z-50 w-[460px] max-w-[calc(100vw-24px)] rounded-2xl border border-c-border-subtle bg-c-surface shadow-xl shadow-black/20 overflow-hidden">
+            <div className="px-4 py-3 border-b border-c-border-subtle text-xs font-medium text-c-text-secondary">
+              {sourcePickerConfig.title}
+            </div>
+            {sourcePickerConfig.rows.length === 0 ? (
+              <div className="p-4">
+                <div className="text-sm text-c-text-secondary">{sourcePickerConfig.emptyText}</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSourcePickerOpen(false);
+                    handleTabChange('sessions');
+                  }}
+                  className="mt-3 inline-flex items-center gap-2 h-8 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface-raised text-c-text-secondary hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus transition-colors"
+                >
+                  <span>{sourcePickerConfig.emptyActionLabel}</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            ) : (
+              <div className="max-h-[60vh] overflow-auto p-2 space-y-1">
+                {sourcePickerConfig.rows.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    disabled={sourcePickerBusyId === row.id}
+                    onClick={() => sourcePickerConfig.onPick(row)}
+                    className="w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left transition-colors hover:bg-c-surface-raised focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="mt-0.5 font-mono text-xs font-bold text-c-text-muted w-12 truncate">
+                      {row.toolType}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-c-text truncate">{row.name}</div>
+                      <div className="text-xs text-c-text-muted truncate">
+                        {(() => {
+                          const info = resolveToolStatus(String(row.statusRaw ?? row.status ?? ''));
+                          return isPolish ? info.labelPl : info.labelEn;
+                        })()}
+                      </div>
+                    </div>
+                    <span className="mt-0.5 text-c-text-secondary">
+                      <ArrowRight size={16} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+
   // PrimaryCta: no leading `+` icon per §2.2 / §2.1 canon.
   // Chevron is allowed because the button opens a tool-picker menu (variants).
-  const PrimaryCta = (
+  const AddToolCta = (
     <div ref={addMenuRef} className="relative shrink-0">
       <button
         type="button"
@@ -5277,9 +5625,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         // łamał etykietę do 2 linii i przepełniał pasek Menu 2 o 27 px (audyt A §N8).
         className="inline-flex shrink-0 items-center gap-2 h-9 px-4 rounded-full text-sm font-medium whitespace-nowrap bg-navy-900 text-white hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] transition-colors duration-150"
         aria-expanded={isAddMenuOpen}
+        data-testid="tools-primary-cta"
       >
         <span className="whitespace-nowrap">
-          {isPolish ? 'Dodaj narzędzie' : t('tools.hub.addTool', 'Add tool')}
+          {/* 1.1-T1 (DEC-412): ten sam panel wyboru narzędzia, ale etykieta
+              mówi prawdę o zakładce — w Sesjach użytkownik zakłada SESJĘ, nie
+              „dodaje narzędzie" do biblioteki. */}
+          {activeTab === 'sessions'
+            ? t('tools.hub.cta.newSession', 'New session')
+            : t('tools.hub.addTool', 'Add tool')}
         </span>
         <ChevronDown
           size={16}
@@ -5485,6 +5839,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       ) : null}
     </div>
   );
+
+  /**
+   * 1.1-T1 (DEC-412) — JEDEN przycisk główny Menu 3, ale treść należy do
+   * zakładki. Biblioteka/Sesje = wybór narzędzia (ten sam panel, uczciwa
+   * etykieta). Insighty/Raporty/Inicjatywy = wybór zatwierdzonej sesji jako
+   * źródła i realne wywołanie istniejącej powierzchni serwera.
+   */
+  const PrimaryCta =
+    activeTab === 'library' || activeTab === 'sessions' || activeTab === 'list'
+      ? AddToolCta
+      : SourcePickerCta;
 
   // Status Filter Dropdown Component (Filters — last in right cluster)
   // Domain-specific trigger label: "Status: All", "Status: Draft", etc. per §2.1

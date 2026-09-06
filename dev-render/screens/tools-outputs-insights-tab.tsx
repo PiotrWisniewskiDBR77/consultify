@@ -1,9 +1,9 @@
 /**
  * Dev-render host dla REALNEGO `<DiscoveryToolsHub />` — zakładka
  * Outputs/Insights PO naprawie DEC-118 #1 (2026-08-26): bootstrap woła
- * `Api.listToolOutputs()` i miesza wynik do `mergedOutputs`, za flagą
- * `ff_toolsInsightsWiring` (default OFF — ten harness ją włącza przez
- * localStorage, dokładnie jak realny użytkownik z override'em).
+ * `Api.listToolOutputs()` i miesza wynik do `mergedOutputs`
+ * (1.1-T1/DEC-412: flaga `ff_toolsInsightsWiring` usunięta — pobranie
+ * `tool_outputs` jest bezwarunkowe).
  *
  * Bez re-implementacji: montujemy produkcyjny hub, podmieniając wyłącznie
  * METODY `Api.*` (ta sama zasada co tools-sesja-wyjscie.tsx — CLAUDE.md #7:
@@ -111,19 +111,11 @@ const patchApi = () => {
   });
 };
 
-/** ff_toolsInsightsWiring is OFF by default (fail-closed) — this harness
- * exercises the ON state via the same localStorage override a real session
- * would use, per src/utils/toolsInsightsWiringFlag.ts. */
-const seedFlag = () => {
-  window.localStorage.setItem('ff.tools_insights_wiring', 'on');
-};
-
 const ToolsOutputsInsightsTabScreen: React.FC = () => {
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
     patchApi();
-    seedFlag();
     // ThemeSync (AppProviders.tsx) drives the `dark` class off
     // useAppStore().theme (default 'dark'), overriding a manual DOM class
     // toggle set before mount — set the store directly instead.

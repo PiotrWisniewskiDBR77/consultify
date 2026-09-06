@@ -7574,6 +7574,22 @@ export const Api = {
     return handleResponse(res, 'Failed to promote tool output');
   },
 
+  /**
+   * 1.1-T1 (DEC-412) — insight (snapshot `tool_outputs`) dla sesji JUŻ
+   * zatwierdzonej. Nowe zatwierdzenia tworzą insight same (`approveTool`);
+   * ten endpoint domyka sesje zatwierdzone wcześniej, których `approveTool`
+   * odrzuciłby z 409 („not in review").
+   */
+  createToolInsight: async (
+    toolId: string
+  ): Promise<{ output: { id: string; toolSessionId: string; status: string } }> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/insight`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to create insight');
+  },
+
   retryToolFromFailure: async (toolId: string): Promise<any> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/retry`, {
       method: 'POST',
