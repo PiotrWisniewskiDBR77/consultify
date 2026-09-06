@@ -61,6 +61,16 @@ const {
   readExecutionCase: vi.fn(),
 }));
 
+const { readExecutionResourcePlan, saveUserCapacity } = vi.hoisted(() => ({
+  readExecutionResourcePlan: vi.fn(),
+  saveUserCapacity: vi.fn(),
+}));
+
+vi.mock('@/services/execution/resourcePlanApi', () => ({
+  readExecutionResourcePlan,
+  saveUserCapacity,
+}));
+
 vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   listExecutionCases,
   readExecutionWork,
@@ -86,6 +96,68 @@ const OK_WORK = {
   decisions: [],
 };
 
+const PLAN = {
+  asOf: '2026-09-06T10:00:00.000Z',
+  weeks: ['2026-08-31', '2026-09-07'],
+  rows: [
+    {
+      userId: 'u-anna',
+      name: 'Anna Kowalska',
+      role: 'Konsultant',
+      weekStart: '2026-08-31',
+      demandHours: 64,
+      supplyHours: 40,
+      utilizationPercent: 160,
+      gapHours: -24,
+      overdueHours: 12,
+      taskCount: 5,
+      supplySource: 'DOMYSLNA' as const,
+    },
+    {
+      userId: 'u-marek',
+      name: 'Marek Nowak',
+      role: '',
+      weekStart: '2026-08-31',
+      demandHours: 10,
+      supplyHours: 20,
+      utilizationPercent: 50,
+      gapHours: 10,
+      overdueHours: 0,
+      taskCount: 2,
+      supplySource: 'PROFIL' as const,
+    },
+  ],
+  people: [
+    {
+      userId: 'u-anna',
+      name: 'Anna Kowalska',
+      role: 'Konsultant',
+      weeklyCapacityHours: 40,
+      availabilityPercent: 100,
+      supplySource: 'DOMYSLNA' as const,
+      backlogHours: 0,
+    },
+    {
+      userId: 'u-marek',
+      name: 'Marek Nowak',
+      role: '',
+      weeklyCapacityHours: 40,
+      availabilityPercent: 50,
+      supplySource: 'PROFIL' as const,
+      backlogHours: 6,
+    },
+  ],
+  summary: {
+    peopleCount: 2,
+    demandHours: 74,
+    supplyHours: 60,
+    gapHours: -14,
+    utilizationPercent: 123,
+    overloadedCount: 1,
+    peopleWithoutProfileSupply: 1,
+  },
+};
+
 const OK_ALLOCATIONS = {
   items: [
     {
@@ -109,6 +181,7 @@ const renderSurface = (props: Record<string, unknown> = {}) =>
 beforeEach(() => {
   vi.clearAllMocks();
   listExecutionCases.mockResolvedValue(CASES);
+  readExecutionResourcePlan.mockResolvedValue(PLAN);
 });
 
 afterEach(() => {
@@ -117,7 +190,7 @@ afterEach(() => {
 });
 
 describe('Zasoby — realizacja, która nie odpowiada', () => {
-  it('renderuje wiersze pozostałych realizacji, NIE czekając na wiszącą', async () => {
+  const wiszaceRealizacje = () => {
     readOperationalAllocations.mockImplementation(async (caseId: string) => {
       if (caseId === HANGING_CASE) return new Promise(() => {});
       return OK_ALLOCATIONS;
@@ -126,15 +199,40 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
       if (caseId === HANGING_CASE) return new Promise(() => {});
       return OK_WORK;
     });
+  };
+
+  it('renderuje tabelę obłożenia, NIE czekając na wiszącą realizację', async () => {
+    wiszaceRealizacje();
 
     renderSurface();
 
-    // Limit jednej realizacji to 12 s. Wiersz ma byc DUZO wczesniej — realny
-    // czas tego oczekiwania to setki milisekund, nie 12 000 ms.
-    await waitFor(() => expect(screen.getByText('Anna Kowalska')).toBeInTheDocument(), {
+    // Limit jednej realizacji to 12 s. Wiersze maja byc DUZO wczesniej —
+    // plan zasobow nie zalezy od realizacji i nie moze na nia czekac.
+    await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
       timeout: 3000,
     });
     expect(screen.queryByTestId('execution-resources-loading')).not.toBeInTheDocument();
+  });
+
+  it('pokazuje kolumny popytu, podaży, obłożenia i luki z realnymi liczbami', async () => {
+    wiszaceRealizacje();
+
+    renderSurface();
+
+    await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    expect(screen.getByText('Popyt (h)')).toBeInTheDocument();
+    expect(screen.getByText('Podaż (h)')).toBeInTheDocument();
+    expect(screen.getByText('Obłożenie %')).toBeInTheDocument();
+    expect(screen.getByText('Luka (h)')).toBeInTheDocument();
+    expect(screen.getByText('64 h')).toBeInTheDocument();
+    expect(screen.getByText('160 %')).toBeInTheDocument();
+    expect(screen.getByText('-24 h')).toBeInTheDocument();
+    // Nie ma szkieletu i nie ma pustego ekranu — sa wiersze.
+    expect(
+      screen.queryByText(/Brak osób z pracą w najbliższych 8 tygodniach/)
+    ).not.toBeInTheDocument();
   });
 
   it('oznacza wiszącą realizację na liście wyboru, gdy minie limit', async () => {
@@ -158,15 +256,29 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     expect(registered.getByText('Akceptacja ACO — nie odpowiada')).toBeInTheDocument();
   });
 
-  it('wybór wiszącej realizacji kończy się polskim „nie odpowiada", nie wiecznym szkieletem', async () => {
+  it('zgłasza realizację bez odpowiedzi NATYCHMIAST, nie po zamknięciu całego wachlarza', async () => {
+    // „case-ok" wisi (nigdy nie odpowie), „HANGING_CASE" pada od razu.
+    // Bez renderu przyrostowego komunikat czekalby na koniec Promise.all,
+    // czyli pelne 12 s.
     readOperationalAllocations.mockImplementation(async (caseId: string) => {
-      if (caseId === HANGING_CASE) return new Promise(() => {});
-      return OK_ALLOCATIONS;
+      if (caseId === HANGING_CASE) throw new Error('backend nie odpowiada');
+      return new Promise(() => {});
     });
     readExecutionWork.mockImplementation(async (caseId: string) => {
-      if (caseId === HANGING_CASE) return new Promise(() => {});
-      return OK_WORK;
+      if (caseId === HANGING_CASE) throw new Error('backend nie odpowiada');
+      return new Promise(() => {});
     });
+
+    renderSurface();
+
+    await waitFor(
+      () => expect(screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)).toBeInTheDocument(),
+      { timeout: 3000 }
+    );
+  });
+
+  it('wybór wiszącej realizacji kończy się polskim „nie odpowiada", nie wiecznym szkieletem', async () => {
+    wiszaceRealizacje();
     readExecutionCase.mockImplementation(async (caseId: string) => {
       if (caseId === HANGING_CASE) return new Promise(() => {});
       return { version: 1 };
@@ -174,7 +286,7 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
     const registerFilterControl = vi.fn();
 
     renderSurface({ onRegisterFilterControl: registerFilterControl });
-    await waitFor(() => expect(screen.getByText('Anna Kowalska')).toBeInTheDocument(), {
+    await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
       timeout: 3000,
     });
 
@@ -192,6 +304,43 @@ describe('Zasoby — realizacja, która nie odpowiada', () => {
       expect(screen.getByTestId('execution-resources-case-unreachable')).toBeInTheDocument()
     );
     expect(screen.getByText(/Ta realizacja nie odpowiada: Akceptacja ACO/)).toBeInTheDocument();
-    expect(screen.queryByTestId('execution-resources-loading')).not.toBeInTheDocument();
+  });
+
+  it('CTA „Dodaj dostępność" zapisuje etat i przelicza plan', async () => {
+    wiszaceRealizacje();
+    saveUserCapacity.mockResolvedValue({
+      userId: 'u-anna',
+      weeklyCapacityHours: 32,
+      availabilityPercent: 80,
+    });
+    const registerFilterControl = vi.fn();
+
+    renderSurface({ onRegisterFilterControl: registerFilterControl });
+    await waitFor(() => expect(screen.getByText(/Anna Kowalska/)).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+
+    const lastNode = registerFilterControl.mock.calls.at(-1)?.[0] as React.ReactNode;
+    const registered = render(<MemoryRouter>{lastNode}</MemoryRouter>);
+    await act(async () => {
+      registered.getByTestId('execution-resources-add-availability').click();
+    });
+
+    const dialog = await screen.findByTestId('execution-resources-capacity-dialog');
+    expect(dialog).toHaveTextContent('Anna Kowalska');
+    const zapisz = [...dialog.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Zapisz'
+    ) as HTMLButtonElement;
+    await act(async () => {
+      zapisz.click();
+    });
+
+    expect(saveUserCapacity).toHaveBeenCalledWith('u-anna', {
+      weeklyCapacityHours: 40,
+      availabilityPercent: 100,
+    });
+    // Po zapisie plan jest czytany PONOWNIE — inaczej tabela pokazywalaby
+    // stara podaz mimo zmienionego etatu.
+    expect(readExecutionResourcePlan).toHaveBeenCalledTimes(2);
   });
 });
