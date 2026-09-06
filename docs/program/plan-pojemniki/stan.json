@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 18:11",
+  "zaktualizowano": "2026-09-06 18:26",
   "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
@@ -147,10 +147,10 @@
           "zalezy_od": "akcept właściciela na plan",
           "stan": "w_toku",
           "galaz": "mvp/113-realizacja-plan",
-          "sha": "",
-          "dowod": "",
-          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe).",
-          "data": "06.09 18:11"
+          "sha": "a969644c0a",
+          "dowod": "plan scalony: 1_12_REALIZACJA_PLAN.md (metodyka, inwentarz z liczbami, R1–R5); 5 pytań u właściciela",
+          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu).",
+          "data": "06.09 18:26"
         }
       ],
       "kryteria": [
