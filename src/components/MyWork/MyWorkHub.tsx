@@ -1473,7 +1473,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name:
           o.name ||
           (o.type === 'notification'
-            ? 'Notification'
+            ? t('myWork.notificationDetail.notification', 'Notification')
             : o.type === 'decision'
               ? 'Decision'
               : o.type === 'idea'
@@ -1497,7 +1497,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       }
     }
     clearMyWorkIntent();
-  }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+  }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument, t]);
 
   // M03 L-02 (D-01): the server session-context was write-only — this POST fired
   // every 5s but nothing ever read it back (no GET consumer anywhere in the FE),
@@ -2081,12 +2081,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: notificationId,
         type: 'notification',
-        name: notificationData?.title || 'Notification',
+        name:
+          notificationData?.title ||
+          t('myWork.notificationDetail.notification', 'Notification'),
         status: notificationData?.isRead ? 'read' : 'unread',
         data: notificationData,
       });
     },
-    [handleOpenDocument]
+    [handleOpenDocument, t]
   );
 
   // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] [05_INITIATIVES]
