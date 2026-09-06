@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:4178/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 0
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T11:57:58.231Z"
+}

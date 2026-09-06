@@ -1,0 +1,40 @@
+{
+ "url": "http://127.0.0.1:3101/results/kpi",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=KPI jakości — sierpień 2026"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3101/api/vnext/results/kpi/scorecards/0a9a0f97-c029-5687-98a3-b94c7a8c6ec7/review-snapshots/published"
+  },
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3101/api/vnext/results/kpi/scorecards/f590a9ef-46a5-5287-bcc9-4188eb665d0d/review-snapshots/published"
+  },
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3101/api/vnext/results/kpi/scorecards/45ca89b1-9ecb-5f4c-ba7a-4b4244cbf0bf/review-snapshots/published"
+  }
+ ],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nKPI\nDane\nModel\n1\n12\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nNowy raport\nNAZWA RAPORTU\n\t\nZAKRES\n\t\nOKRES\n\t\nMIERNIKI\n\t\nSTAN\n\t\nOTWARTE DZIAŁANIA\n\t\nPRZYGOTOWAŁ\n\t\nAKTUALIZACJA\n\t\n\n\nKPI jakości — sierpień 2026\n\t\nJednostka biznesowa\n\t\nIX 2026\n\t\n18\n\t\n13\n·\n3\n·\n1\n·\n1\n\t\n0\n\t\nAudyt Nocny\n\t\n6 wrz 2026\n\t\n\n\nPlant Balanced Scorecard — Zakład DBR77\n\t\nDBR77\n\t\nIX 2026\n\t\n138\n\t\n93\n·\n21\n·\n8\n·\n16\n\t\n0\n\t\nAudyt Nocny\n\t\n5 wrz 2026\n\t\n\n\nKPI produkcji — Q3 2026\n\t\nJednostka biznesowa\n\t\nQ3 2026\n\t\n24\n\t\n17\n·\n4\n·\n2\n·\n1\n\t\n0\n\t\nAudyt Nocny\n\t\n5 wrz 2026\n\t\nKPI jakości — sierpień 2026\nOtwórz raport\nJednostka biznesowa\nIX 2026\n6 wrz 2026\nSZCZEGÓŁY\nWłaściwość\tWartość\nOpis\tMiesięczny przegląd mierników jakości, reklamacji i odpadu produkcyjnego.\nEdycja\t—\nData rewizji\t—\nPrzygotował\tAudyt Nocny\nMierniki\t18\nOtwarte karty działania\t0\nStan per obszar\t\nDPW\n3\n·\n1\n·\n0\n·\n1\nEHS\n1\n·\n0\n·\n0\n·\n0\nPLANT DIRECTOR\n1\n·\n0\n·\n0\n·\n0\nRSM/KAM\n2\n·\n0\n·\n0\n·\n0\nSALES DIRECTOR\n5\n·\n2\n·\n1\n·\n0\nTECHNICAL & INVESTMENT\n1\n·\n0\n·\n0\n·\n0\nPOWIĄZANIA\nBrak powiązań",
+ "kiedy": "2026-09-06T16:25:09.459Z"
+}

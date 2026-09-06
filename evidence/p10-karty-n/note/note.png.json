@@ -1,0 +1,31 @@
+{
+ "url": "http://127.0.0.1:4178/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=Notatnik"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nNotatnik\nDane\nModel\n1\n14\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nNowy notatnik\nWszystkie\n1\nOsobiste\n1\nCała organizacja\n0\nNOTATNIK\n\t\nTYP\n\t\nKONTEKST\n\t\nNOTATKI\n\t\nZMIENIONO\n\t\n\n\nMoje notatki\n1 notatek · 4 godz. temu\n\t\nOsobisty\n\t\n—\n\t\n1\n\t\n4 godz. temu\n\t",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 1000
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T12:01:07.998Z"
+}

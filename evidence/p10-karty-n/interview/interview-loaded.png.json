@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:4178/interview",
+ "tytul": "Interview — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSkrzynka\nDane\nModel\nAudyt Nocny\nAN\n③ Skrzynka\nSesje\n② Przydzielone\n① Szablony\n④ Wnioski\n⑤ Inicjatywy\nPrzydziel\nWszystkie\n0\nOdpowiedziane\n0\nZatwierdzone\n0\nDo poprawy\n0\nŁadowanie",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 1000
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T12:02:52.866Z"
+}
