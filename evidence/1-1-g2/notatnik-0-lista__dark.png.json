@@ -1,0 +1,41 @@
+{
+ "url": "http://127.0.0.1:3128/my-work?tab=notebook",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nNotatnik\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nNowy notatnik\nWszystkie\n1\nOsobiste\n1\nCała organizacja\n0\nNOTATNIK\n\t\nTYP\n\t\nKONTEKST\n\t\nNOTATKI\n\t\nZMIENIONO\n\t\n\n\nMoje notatki\n1 notatek · 3 godz. temu\n\t\nOsobisty\n\t\n—\n\t\n1\n\t\n3 godz. temu\n\t",
+ "dom": {
+  "aside": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=menu1-teresa]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1203.171875,
+     "y": 5.5,
+     "width": 36,
+     "height": 36
+    }
+   ]
+  },
+  "[data-testid=open-list-teresa]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=show-list-panel]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-06T11:10:58.431Z"
+}

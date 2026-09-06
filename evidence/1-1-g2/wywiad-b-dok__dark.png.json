@@ -1,0 +1,51 @@
+{
+ "url": "http://127.0.0.1:3128/interview",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Wywiad · 07/09/2026",
+  "css=[data-testid=menu1-teresa]"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSkrzynka\nDane\nModel\n1\n15\nAudyt Nocny\nAN\n③ Skrzynka\nSesje\n② Przydzielone\n① Szablony\n④ Wnioski\n⑤ Inicjatywy\nPrzydziel\nWszystkie\n3\nOdpowiedziane\n0\nZatwierdzone\n0\nDo poprawy\n0\nPokaż panel\n\t\nTYP\n\t\nNAZWA\n\t\nSTATUS\n\t\nPOSTĘP\n\t\nDNI DO TERMINU\n\t\nPRZYPISANY\n\t\n\n\t\nWywiad\n\t\nWywiad · 07/09/2026\n\t\nW trakcie\n\t\n40%\n\t\n1 dzień do terminu\n\t\nA\nAudyt Nocny\n\t\n\n\t\nWywiad\n\t\nWywiad · 10/09/2026\n\t\nW trakcie\n\t\n0%\n\t\n4 dni do terminu\n\t\nA\nAudyt Nocny\n\t\n\n\t\nWywiad\n\t\nWywiad · 12/09/2026\n\t\nPrzydzielony\n\t\n0%\n\t\n6 dni do terminu\n\t\nA\nAudyt Nocny\n\t\nPrzejdź do pola wiadomości\nTERESA\n\nZapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1028,
+     "y": 48,
+     "width": 380,
+     "height": 852
+    }
+   ]
+  },
+  "[data-right-panel]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=chat-header-left-controls]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1041,
+     "y": 52.5,
+     "width": 323,
+     "height": 32
+    }
+   ]
+  },
+  "[data-testid=open-list-teresa]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-06T11:14:18.507Z"
+}
