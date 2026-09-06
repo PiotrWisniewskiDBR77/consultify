@@ -28,6 +28,7 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 5. Teresa w każdym module MVP zgodnie z `docs/ssot/KONTRAKTY_NARZEDZI_AI.md` (wejście widoczne, odpowiedź po polsku, źródła z modułu, zero „no_sources” tam, gdzie moduł ma dane).
 6. Dane właściciela czyste: jedna ocena wypełniona w 100 %, oceny/inicjatywy/spotkania bez śmieci testowych, `PL · Silesia` = 0, legacy finanse DBR77 albo naprawione (bilans 2024), albo zarchiwizowane z decyzją.
 7. Strażniki zielone i dług nie rośnie: `check-list-canon`, `check-artefakt`, `i18nTrescPolska` (ratchet ≤ 484, cel ≤ 300), 0 zmodyfikowanych migracji, tsc serwera.
+8. **Środowisko demo dla pojemnika 2 gotowe** (dopisane 06.09 słowem właściciela): `demo.consultify.ai` ma WŁASNĄ bazę (dziś demo i staging dzielą bazę `trolley` — `topologia-srodowisk-staging-demo`, plan rozdziału w 5 fazach), własne zmienne (te same flagi ON co staging, `CSRF_MODE=report`, limiter AI z budżetem), dane pokazowe = DBR77 (Wyniki) + CD PROJEKT (Finanse) + czysta organizacja pilotażowa z jednym nazwanym użytkownikiem; promocja staging → demo opisana i przećwiczona (kopia zapasowa, migracje, health = SHA, cofnięcie); demo zamrożone tagiem `demo-safe-<data>`. Robotnicy nie dotykają demo bez procedury `consultify-promocja-demo`.
 
 **Pozycje (kolejność):**
 | # | Pozycja | Wykonawca | Sesje | Zależy od |
@@ -41,8 +42,26 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 | 1.7 | Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024) | Sonnet | 1 | decyzje właściciela |
 | 1.8 | Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤ 300, 16 testów z mockiem react-router | Sonnet | 1–2 | — |
 | 1.9 | Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie `zamroz.mjs` per moduł | Sonnet ×2 | 1 | 1.1–1.8 |
+| 1.10 | **Środowisko demo dla pojemnika 2**: rozdział bazy demo od stagingu (5 faz z `topologia-srodowisk-staging-demo`), zmienne, seedy pokazowe (DBR77 Wyniki, CD PROJEKT Finanse, organizacja pilotażowa), promocja staging → demo przećwiczona z cofnięciem, tag `demo-safe` | Opus + nadzorca | 2–3 | 1.9 |
 
 **Decyzje właściciela w tym pojemniku (jedna dziennie):** Finanse MINIMUM do MVP (F1 §0) czy poza; grupowanie inicjatyw po zdjęciu Projektów (rekomendacja: płaska lista + obszar/oś); kropka „Model” w crimson.
+### 🍾 Lista kontrolna szampana — koniec pojemnika 1 (co właściciel dowozi, kto potwierdza, jaki artefakt)
+| # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
+|---|---|---|---|
+| S1.1 | Przeszedłem 16 modułów na stagingu na swoich danych po ścieżce pokazu; każdy ma moje „Tak” | właściciel | karta per moduł na 3100 (jeden obraz, Tak) |
+| S1.2 | Zero otwartych BLOKER/WAŻNY z mojego przejścia | nadzorca | rejestr odbioru: wiersze z SHA i zrzutem PO |
+| S1.3 | Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby | właściciel + Playwright | nagranie/zrzuty przepływu + `bledyKonsoli=0` |
+| S1.4 | Trzymam w ręku jeden dokument i jedną prezentację z szablonu na danych DBR77 i nie wstydzę się ich | właściciel | pliki DOCX/PDF/PPTX w `evidence/` z moim „Tak” |
+| S1.5 | Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu | nadzorca | 8×3 zrzuty na żywo, `aside ≤ 1` |
+| S1.6 | Teresa odpowiada po polsku ze źródłami w każdym module MVP | nadzorca | 16 odpowiedzi z `used_sources > 0` w `evidence/` |
+| S1.7 | Moje dane są czyste (jedna ocena 100 %, zero śmieci, zero „Silesia”, legacy 2024 rozstrzygnięte) | nadzorca + właściciel | skrypty dry-run/apply z logiem, moje słowo |
+| S1.8 | Strażniki zielone, dług nie rośnie, tsc serwera OK, 0 zmodyfikowanych migracji | nadzorca | wynik komend w rejestrze |
+| S1.9 | Demo ma własną bazę, dane pokazowe i przećwiczoną promocję z cofnięciem | nadzorca + właściciel (klik na demo) | health demo = SHA, tag `demo-safe-<data>`, zrzuty z demo |
+| S1.10 | Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”) | właściciel | ledger decyzji (DEC-…) |
+| S1.11 | Wszystkie 16 modułów + Wyniki + Finanse zamrożone tagiem | nadzorca | `zamroz.mjs`, tagi `mvp-wlasciciel-<data>` |
+| S1.12 | Przekazanie dla pojemnika 2 napisane (stan, kolejka, decyzje) | nadzorca | `PRZEKAZANIE_<data>.md` + pamięć |
+**Komunikat po S1.1–S1.12:** „MVP działa w moich rękach na moich danych, na demo z własną bazą.” Szampan nr 1.
+
 
 ---
 
@@ -69,6 +88,25 @@ zakłada organizację, wchodzi bez asysty i dochodzi od wywiadu do wyniku bez py
 14. **Definicja pilotażu:** jeden NAZWANY użytkownik, który nie jest właścicielem, jego dane, dziennik zgłoszeń (Feedback w aplikacji) przeglądany codziennie, próg wyjścia: 0 BLOKER, ≤ 3 WAŻNE otwarte.
 
 **Pozycje (kolejność):** 2.0 produkcja i cofnięcie przećwiczone (Opus + nadzorca, 2 sesje) → 2.1 przepływ „pusty stan → pierwsza wartość” per moduł (Sonnet ×2, 2 sesje) → 2.2 macierz cross-org + CSRF enforce + poczta (Sonnet/Opus, 3) → 2.3 dwa magazyny → jedna projekcja (Opus, 3) → 2.4 onboarding i TRIAL (Sonnet, 1) → 2.5 wydajność ekranów flagowych (Sonnet, 1) → 2.6 Finanse wg decyzji (Codex, 5–8) → 2.7 przewodnik w aplikacji (Sonnet, 1) → 2.8 obserwowalność + limiter AI + eksport/usunięcie danych (Sonnet, 3) → 2.9 playbook wdrożenia klienta (właściciel + nadzorca, 1) → 2.10 pilotaż z nazwanym użytkownikiem i dziennikiem (2 tygodnie) → 2.11 zamrożenie „MVP klienta” tagiem.
+### 🍾 Lista kontrolna szampana — koniec pojemnika 2
+| # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
+|---|---|---|---|
+| S2.1 | Nazwany użytkownik (nie ja) założył organizację na produkcji i doszedł od wywiadu do wyniku bez pytania „gdzie to jest” | użytkownik pilotażu + nadzorca | dziennik pilotażu (Feedback) + nagranie sesji |
+| S2.2 | Przepływ „pusty stan → pierwsza wartość” zielony w każdym module na świeżej organizacji | nadzorca | Playwright w CI, raport |
+| S2.3 | Bezpieczeństwo: macierz cross-org 2725 tras = 0 wycieków, CSRF enforce, MFA z karencją, 0×500 przez 7 dni | nadzorca | raport pomiaru + logi 7 dni |
+| S2.4 | Produkcja: promocja staging → demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA | nadzorca + właściciel | runbook z datami ćwiczeń, tag `prod-safe-<data>` |
+| S2.5 | Alert na 5xx/health dociera do nazwanej osoby; był sprawdzony sztucznym błędem | nadzorca | zrzut alertu |
+| S2.6 | Limiter AI z budżetem per organizacja działa i mówi po polsku, co się stało | nadzorca | test na wyczerpanie budżetu |
+| S2.7 | Eksport i usunięcie danych organizacji działają z UI; umowa powierzenia jako szablon | nadzorca + właściciel | plik eksportu, zrzut usunięcia, szablon umowy |
+| S2.8 | Poczta żywa (zaproszenie, reset hasła) na produkcji | nadzorca | dwa e-maile dostarczone |
+| S2.9 | Dwa magazyny danych spięte projekcją z testem „nowy rekord z UI widać wszędzie” | nadzorca | testy + mutacja |
+| S2.10 | Finanse wg decyzji: MINIMUM działa na CD PROJEKT albo moduł jawnie „wkrótce” | właściciel | jeden obraz, Tak |
+| S2.11 | Przewodnik „jak zacząć” w aplikacji po polsku | właściciel | jeden obraz, Tak |
+| S2.12 | Playbook wdrożenia klienta sprawdzony na pilotażu (godziny ludzi DBR77 policzone) | właściciel | jedna strona z liczbami |
+| S2.13 | 2 tygodnie pilotażu: 0 BLOKER, ≤ 3 WAŻNE otwarte | nadzorca + właściciel | dziennik z werdyktem |
+| S2.14 | Zamrożenie „MVP klienta” + przekazanie dla fali 2 | nadzorca | tag `mvp-klient-<data>`, `PRZEKAZANIE_<data>.md` |
+**Komunikat po S2.1–S2.14:** „Klient pracuje sam na produkcji, a my wiemy, kiedy coś pęka.” Szampan nr 2.
+
 
 ---
 
@@ -88,6 +126,16 @@ i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.
 | 3.8 | **Tryb ciemny i dostępność jako bramka** | IV dokończone (E_TRYB_CIEMNY, klawiatura), bramka w CI | przyrząd gotowy | 1–2 |
 
 Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomendacja CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent).
+### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.8)
+| # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
+|---|---|---|---|
+| S3.1 | Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową | właściciel | SSOT w `docs/ssot/`, karta prototypu z „Tak” |
+| S3.2 | Zbudowany na kanonie (StandardTable/SPEC-A/ArtifactRightPanel), zero flag chowających, po polsku | nadzorca | strażniki + zrzuty |
+| S3.3 | Mechanika działa end-to-end na produkcji na danych pilotażu, z testem mutacyjnym w zabezpieczenie | nadzorca | Playwright + testy |
+| S3.4 | Użytkownik pilotażu użył funkcji sam i dziennik nie ma BLOKER | użytkownik + nadzorca | dziennik |
+| S3.5 | Program zamrożony tagiem, rejestr i przekazanie zaktualizowane | nadzorca | tag `fala2-<program>-<data>` |
+**Komunikat po każdym programie:** „<Program> działa u klienta.” Szampan nr 3+, po jednym na program — nigdy hurtem.
+
 
 ---
 
