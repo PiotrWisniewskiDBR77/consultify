@@ -1,0 +1,107 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11k6-podglad-klik-23-ekrany
+
+
+ RUN  v4.1.8 /private/tmp/wt-11k6-podglad-klik-23-ekrany
+
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > synchronously rejects a duplicate Start dispatch for the same pack 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > retains the Start key across remount/reload and rotates only after confirmed success 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes" 222ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > defaults to Library when ?tab= is absent 50ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens Outputs when ?tab=outputs is in the URL 26ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > falls back to Processes for an unknown ?tab= value 42ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > writes the active tab into the URL when a tab is clicked 95ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the default Library tab 27ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the Sessions tab — `?tab=processes` still works, only the label changed 33ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens a canonical criterion workspace from the selected program 80ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > keeps the program preview mounted when canonical detail omits optional members 37ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > cold-opens the program preview from the canonical programId query deep link 23ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows an ErrorState with retry when the Library API call fails 46ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows the honest Outputs EmptyState explaining why the list is empty 20ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > renders exactly one chip row (verification), with visible zero counts, and no source-type chips 23ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > selecting a verification chip narrows the list to that single axis 30ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > the Library verification chip row does not appear on the Sessions (processes) tab 20ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx (17 tests) 778ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > the preview Details kebab offers "Download DOCX" and requests the real export route 212ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187) 115ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > a backend error surfaces inline in the preview panel, not as alert() (DOCX) 121ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187) 115ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx (4 tests) 564ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows both real generation actions 156ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > generates an audit report, reports success, and notifies the Hub 81ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > opens remediation date modal and omits an empty asOfDate 103ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > passes the selected remediation as-of date 101ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > disables both actions for a superseded Output and explains why 52ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows the literal backend error in the selected Output preview 71ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx (6 tests) 566ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows both DOCX and PDF export buttons 169ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (DOCX) 72ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (PDF, FIX-187) 59ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the DOCX control while the response is pending 52ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the PDF control while the response is pending (FIX-187) 51ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (DOCX) 62ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (PDF, FIX-187) 59ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx (7 tests) 526ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > calls finalizeOutput with the selected program 214ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > success shows version and shortened hash and refreshes once 110ms
+stderr | src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > shows the literal backend conflict message 100ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call 78ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx (4 tests) 504ms
+
+ Test Files  5 passed (5)
+      Tests  38 passed (38)
+   Start at  17:20:29
+   Duration  6.86s (transform 773ms, setup 251ms, import 2.11s, tests 2.94s, environment 1.17s)
+
+
+ Test Files  5 passed (5)
+      Tests  38 passed (38)
+   Start at  17:20:29
+   Duration  6.86s (transform 773ms, setup 251ms, import 2.11s, tests 2.94s, environment 1.17s)
+
+JSON report written to /private/tmp/wt-11k6-podglad-klik-23-ekrany/junit.xml
+JUNIT report written to /private/tmp/wt-11k6-podglad-klik-23-ekrany/junit.xml
