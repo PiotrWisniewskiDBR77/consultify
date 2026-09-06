@@ -4692,9 +4692,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 ideaRightPanelNode
               ) : ideaInspectorRightRail ? (
                 <IdeaElementInspector
-                  teresaContent={teresaPanelNode}
-                  activeTab={zakladkaPanelu}
-                  onTabChange={ustawZakladkePanelu}
+                  activeTab="element"
                   showCanvasAnalysis
                   // ★ NAPRAWA (odbiór CTO 05.09): tożsamość IDEI dla stanu panelu
                   // bez zaznaczenia (patrz komentarz w IdeaElementInspector.tsx
@@ -5479,7 +5477,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <IdeaRightPanel
         isPolish={isPolish}
         title={title}
-        activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'teresa'}
+        activeSection={toolsPanelOpen ? 'properties' : contextPanelOpen ? 'relations' : 'properties'}
         onExport={() => setExportMenuOpen(true)}
         onConvert={() => handlePanelChange('tools')}
         // HP-17: `EvidencePanelSection` („Źródła i założenia") tylko za flagą
@@ -5503,15 +5501,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             onClose={() => handlePanelChange(null)}
           />
         }
-        teresaContent={
-          <IdeaTeresaSection
-            isPolish={isPolish}
-            aiSuggestionsProps={ideaAISuggestionsPanelSharedProps}
-            onDiscuss={handleTeresaDiscuss}
-          />
-        }
-        onDiscussWithTeresa={handleTeresaDiscuss}
-        teresaCommands={teresaCommands}
         aiSuggestionsContent={
           <IdeaAISuggestionsPanel
             {...ideaAISuggestionsPanelSharedProps}
