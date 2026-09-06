@@ -3014,7 +3014,6 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: parsed.data.operation === 'CREATE',
         payload: {
           operation: parsed.data.operation,
-          publishConfirmation: parsed.data.publishConfirmation,
           scenario: {
             ...parsed.data.scenario,
             memberships: parsed.data.scenario.memberships.map((membership) => ({
@@ -3343,6 +3342,11 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: parsed.data.operation === 'CREATE',
         payload: {
           operation: parsed.data.operation,
+          // Bramka P11: „Publikuję mimo N konfliktów" — silnik planu odrzuca
+          // publikację z konfliktami bez tego potwierdzenia (planScenario.ts).
+          ...(parsed.data.publishConfirmation
+            ? { publishConfirmation: parsed.data.publishConfirmation }
+            : {}),
           scenario: {
             ...parsed.data.scenario,
             windows: parsed.data.scenario.windows.map((window) => ({

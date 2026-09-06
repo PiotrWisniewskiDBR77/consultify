@@ -1,14 +1,18 @@
 // PMO Status State Machine - Validates status transitions
 // Step 3: PMO Objects, Statuses & Stage Gates
-// Updated 2024-12-26: New Initiative Lifecycle with module transitions
-// Updated 2026-01-20: Imports from central constants file
+// Updated 2026-09-06 (DEC-424 / P12): słownik inicjatywy = 7 statusów kanonicznych.
+// Graf przejść i reguły merytoryczne inicjatywy mieszkają WYŁĄCZNIE w
+// ../constants/initiativeStatuses.ts. Ten moduł jest cienkim adapterem dla
+// zastanych wołaczy (walidatory, middleware PMO) — nie jest drugim silnikiem.
+// Wejścia w starym słowniku 13 (EXECUTING/BLOCKED/DONE/…) są normalizowane
+// przez `normalizeInitiativeStatus` (granica zgodności danych zastanych).
 
 import {
   getModuleForStatus as getModule,
-  getStatusLabel as getLabel,
   InitiativeStatus,
+  normalizeInitiativeStatus,
   VALID_TRANSITIONS,
-  validateTransition as validateTx,
+  type InitiativeStatusType,
 } from '../constants/initiativeStatuses.js';
 
 // Re-export for backward compatibility
@@ -34,20 +38,18 @@ export const EXECUTION_STAGES = {
   DELIVERY: 'DELIVERY',
 } as const;
 
-type InitiativeStatus = (typeof INITIATIVE_STATUSES)[keyof typeof INITIATIVE_STATUSES];
 type TaskStatus = (typeof TASK_STATUSES)[keyof typeof TASK_STATUSES];
 type ExecutionStage = (typeof EXECUTION_STAGES)[keyof typeof EXECUTION_STAGES];
 
 type InitiativeContext = {
+  /** Powód wymagany przy przejściu do REJECTED (warunek REASON_REQUIRED). */
+  reason?: string;
   blockedReason?: string;
   pendingTasks?: number;
   hasBlockingDecisions?: boolean;
-  charterCompleteness?: number;
   requiresApproval?: boolean;
   isApproved?: boolean;
   pendingReviews?: number;
-  requiresScheduling?: boolean;
-  isScheduled?: boolean;
 };
 
 type TaskContext = {
@@ -66,16 +68,25 @@ const EXECUTION_STAGE_TRANSITIONS: Record<ExecutionStage, ExecutionStage[]> = {
   [EXECUTION_STAGES.DELIVERY]: [EXECUTION_STAGES.REVIEW],
 };
 
-// Use canonical transitions from constants (single source of truth).
-const INITIATIVE_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> =
-  VALID_TRANSITIONS as any;
-
 const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TASK_STATUSES.TODO]: [TASK_STATUSES.IN_PROGRESS, TASK_STATUSES.BLOCKED],
   [TASK_STATUSES.IN_PROGRESS]: [TASK_STATUSES.BLOCKED, TASK_STATUSES.DONE, TASK_STATUSES.TODO],
   [TASK_STATUSES.BLOCKED]: [TASK_STATUSES.TODO, TASK_STATUSES.IN_PROGRESS],
   [TASK_STATUSES.DONE]: [TASK_STATUSES.IN_PROGRESS],
 };
+
+/** Etykiety wyświetlane dla 7 statusów kanonicznych (i18n key: STATUS_METADATA). */
+const INITIATIVE_STATUS_LABELS: Record<InitiativeStatusType, string> = {
+  [InitiativeStatus.PROPOSED]: 'Proposed',
+  [InitiativeStatus.DRAFT]: 'Draft',
+  [InitiativeStatus.PENDING_APPROVAL]: 'Pending Approval',
+  [InitiativeStatus.APPROVED]: 'Approved',
+  [InitiativeStatus.IN_EXECUTION]: 'In Execution',
+  [InitiativeStatus.CLOSED]: 'Closed',
+  [InitiativeStatus.REJECTED]: 'Rejected',
+};
+
+const nonEmpty = (value: unknown): boolean => String(value ?? '').trim().length > 0;
 
 const StatusMachine = {
   INITIATIVE_STATUSES,
@@ -84,8 +95,10 @@ const StatusMachine = {
   EXECUTION_STAGES,
 
   canTransitionInitiative: (from: string, to: string): boolean => {
-    const allowed = INITIATIVE_TRANSITIONS[from as InitiativeStatus] || [];
-    return allowed.includes(to as InitiativeStatus);
+    const fromStatus = normalizeInitiativeStatus(from);
+    const toStatus = normalizeInitiativeStatus(to);
+    if (!fromStatus || !toStatus) return false;
+    return VALID_TRANSITIONS[fromStatus].includes(toStatus);
   },
 
   canTransitionTask: (from: string, to: string): boolean => {
@@ -102,11 +115,16 @@ const StatusMachine = {
       return { valid: false, reason: `Cannot transition from ${from} to ${to}` };
     }
 
-    if (to === INITIATIVE_STATUSES.BLOCKED && !context.blockedReason) {
-      return { valid: false, reason: 'Blocked status requires a reason' };
+    const fromStatus = normalizeInitiativeStatus(from) as InitiativeStatusType;
+    const toStatus = normalizeInitiativeStatus(to) as InitiativeStatusType;
+
+    // REASON_REQUIRED — każde wejście w REJECTED wymaga uzasadnienia.
+    if (toStatus === InitiativeStatus.REJECTED && !nonEmpty(context.reason ?? context.blockedReason)) {
+      return { valid: false, reason: 'Rejection requires a reason' };
     }
 
-    if (to === INITIATIVE_STATUSES.DONE) {
+    // NO_OPEN_WORK — zamknięcie inicjatywy.
+    if (toStatus === InitiativeStatus.CLOSED) {
       if (context.pendingTasks && context.pendingTasks > 0) {
         return {
           valid: false,
@@ -118,16 +136,11 @@ const StatusMachine = {
       }
     }
 
-    if (from === INITIATIVE_STATUSES.REVIEW && to === INITIATIVE_STATUSES.PROMOTED) {
-      if (context.charterCompleteness !== undefined && context.charterCompleteness < 60) {
-        return {
-          valid: false,
-          reason: `Charter completeness too low (${context.charterCompleteness}%). Minimum 60% required.`,
-        };
-      }
-    }
-
-    if (from === INITIATIVE_STATUSES.PLANNING && to === INITIATIVE_STATUSES.APPROVED) {
+    // Bramka zatwierdzenia (CURRENT_GO_DECISION po stronie silnika kanonicznego).
+    if (
+      fromStatus === InitiativeStatus.PENDING_APPROVAL &&
+      toStatus === InitiativeStatus.APPROVED
+    ) {
       if (context.requiresApproval && !context.isApproved) {
         return { valid: false, reason: 'Governance approval required for this transition' };
       }
@@ -135,15 +148,6 @@ const StatusMachine = {
         return {
           valid: false,
           reason: `Cannot approve: ${context.pendingReviews} reviews still pending`,
-        };
-      }
-    }
-
-    if (from === INITIATIVE_STATUSES.APPROVED && to === INITIATIVE_STATUSES.SCHEDULED) {
-      if (context.requiresScheduling && !context.isScheduled) {
-        return {
-          valid: false,
-          reason: 'Initiative must be scheduled in roadmap before scheduling',
         };
       }
     }
@@ -172,8 +176,9 @@ const StatusMachine = {
     return { valid: true };
   },
 
-  getAllowedInitiativeTransitions: (currentStatus: string): InitiativeStatus[] => {
-    return INITIATIVE_TRANSITIONS[currentStatus as InitiativeStatus] || [];
+  getAllowedInitiativeTransitions: (currentStatus: string): InitiativeStatusType[] => {
+    const status = normalizeInitiativeStatus(currentStatus);
+    return status ? [...VALID_TRANSITIONS[status]] : [];
   },
 
   getAllowedTaskTransitions: (currentStatus: string): TaskStatus[] => {
@@ -223,9 +228,10 @@ const StatusMachine = {
   getInitiativeModule: (
     status: string
   ): 'ASSESSMENT' | 'INITIATIVE_MANAGEMENT' | 'EXECUTION' | 'BENEFITS' | 'UNKNOWN' => {
+    const normalized = normalizeInitiativeStatus(status);
+    if (!normalized) return 'UNKNOWN';
     // Map canonical module ids to legacy labels used by this service.
-    const moduleId = getModule(status as any);
-    switch (moduleId) {
+    switch (getModule(normalized)) {
       case 'tools':
       case 'assessment':
         return 'ASSESSMENT';
@@ -255,22 +261,8 @@ const StatusMachine = {
   },
 
   getStatusLabel: (status: string): string => {
-    const labels: Record<InitiativeStatus, string> = {
-      [INITIATIVE_STATUSES.DRAFT]: 'Draft',
-      [INITIATIVE_STATUSES.PENDING_REVIEW]: 'Pending Review',
-      [INITIATIVE_STATUSES.PLANNING]: 'Planning',
-      [INITIATIVE_STATUSES.REVIEW]: 'In Review',
-      [INITIATIVE_STATUSES.PROMOTED]: 'Promoted',
-      [INITIATIVE_STATUSES.APPROVED]: 'Approved',
-      [INITIATIVE_STATUSES.SCHEDULED]: 'Scheduled',
-      [INITIATIVE_STATUSES.EXECUTING]: 'Executing',
-      [INITIATIVE_STATUSES.BLOCKED]: 'Blocked',
-      [INITIATIVE_STATUSES.DONE]: 'Done',
-      [INITIATIVE_STATUSES.TRACKING]: 'Tracking',
-      [INITIATIVE_STATUSES.CANCELLED]: 'Cancelled',
-      [INITIATIVE_STATUSES.ARCHIVED]: 'Archived',
-    };
-    return labels[status as InitiativeStatus] || status;
+    const normalized = normalizeInitiativeStatus(status);
+    return normalized ? INITIATIVE_STATUS_LABELS[normalized] : status;
   },
 };
 

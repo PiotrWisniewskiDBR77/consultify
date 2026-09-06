@@ -504,7 +504,7 @@ class ReportInitiativeService {
       descriptionPL: template.descriptionPL,
       type: template.type,
       priority,
-      status: 'draft',
+      status: 'DRAFT',
       sourceDimensions: [dimension.dimensionId],
       framework,
       expectedMaturityImpact: expectedImpact,
