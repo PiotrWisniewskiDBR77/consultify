@@ -41,7 +41,9 @@ vi.mock('@/services/api/organizations.api', () => ({
 }));
 
 const { getTasks } = vi.hoisted(() => ({ getTasks: vi.fn() }));
-vi.mock('@/services/api', () => ({ Api: { getTasks } }));
+vi.mock('@/services/api', () => ({
+  Api: { getTasks, getInitiatives: vi.fn().mockResolvedValue([]) },
+}));
 
 const { listExecutionCases, readExecutionWork } = vi.hoisted(() => ({
   listExecutionCases: vi.fn(),

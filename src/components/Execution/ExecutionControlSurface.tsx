@@ -9,6 +9,11 @@ import {
   type TableRow,
 } from '@/components/standard/StandardTable';
 import { Api } from '@/services/api';
+import {
+  memberNameOrUnknown,
+  useOrganizationMemberNames,
+  type MemberNameResolver,
+} from '@/hooks/useOrganizationMemberNames';
 
 import {
   createMaterialChange,
@@ -335,6 +340,22 @@ const escalationLabel = (decision: any): string => {
   return level >= 2 ? 'Czerwona' : level === 1 ? 'Bursztynowa' : 'Brak';
 };
 
+/**
+ * Właściciel pozycji RAID — nazwisko z katalogu organizacji, nigdy UUID.
+ * Kolejność: gotowa nazwa z API → katalog organizacji → „Nieznany
+ * użytkownik" dla identyfikatora → „Nieprzypisana" dla pustki.
+ */
+const raidOwnerLabel = (
+  item: any,
+  resolveMemberName?: MemberNameResolver,
+  isPolish = true
+): string => {
+  if (item?.ownerName) return String(item.ownerName);
+  const id = String(item?.ownerId ?? '').trim();
+  if (!id) return isPolish ? 'Nieprzypisana' : 'Unassigned';
+  return resolveMemberName?.(id) ?? memberNameOrUnknown(resolveMemberName, id, isPolish);
+};
+
 const severityToEscalation = (value: unknown): string =>
   ({ CRITICAL: 'Czerwona', HIGH: 'Czerwona', MEDIUM: 'Bursztynowa', LOW: 'Brak' })[
     String(value ?? '').toUpperCase()
@@ -421,10 +442,20 @@ export const ExecutionControlSurface = ({
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = !!i18n.language?.startsWith('pl');
   const columns = useMemo(() => buildColumns(t), [t]);
   const signalColumns = useMemo(() => buildSignalColumns(t), [t]);
   const governanceColumns = useMemo(() => buildGovernanceColumns(t), [t]);
+  /**
+   * 1.12-R1 (C): KATALOG OSÓB dla rejestru RAID.
+   * ZMIERZONE NA ZRZUCIE (06.09, ?tab=control, chip „Ryzyka"): kolumna
+   * WŁAŚCICIEL pisała `5009e749-75e5-4816-91c9-494f95bdf5d4` — `GET /api/raid`
+   * zwraca `ownerId` bez nazwiska. Ten sam kształt naprawiono 05.09
+   * w `ExecutionWorkSurface`; źródło jest to samo:
+   * `GET /api/organizations/:id/members`.
+   */
+  const resolveMemberName = useOrganizationMemberNames();
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     // 1.12-R1 (C): realne rejestry — decyzje (/api/decisions) i RAID (/api/raid).
     [governanceRows, setGovernanceRows] = useState<GovernanceRow[]>([]),
@@ -548,7 +579,7 @@ export const ExecutionControlSurface = ({
       title: item.title ?? 'Pozycja RAID bez tytułu',
       kind: 'RAID' as const,
       kindLabel: raidTypeLabel(item.type),
-      owner: item.ownerName || item.ownerId || 'Nieprzypisana',
+      owner: raidOwnerLabel(item, resolveMemberName, isPolish),
       // POMIAR: 0 z 16 pozycji RAID ma termin — kolumna pokaże „—",
       // a nie zmyśloną datę (dobudowa terminów to R3, plan C2 wiersz 5).
       dueAt: formatDay(item.dueDate),
@@ -562,7 +593,7 @@ export const ExecutionControlSurface = ({
     }));
 
     setGovernanceRows([...decisionRows, ...raidRows]);
-  }, []);
+  }, [resolveMemberName, isPolish]);
 
   const load = useCallback(async () => {
     setState('LOADING');
@@ -1311,9 +1342,18 @@ export const ExecutionControlSurface = ({
           </div>
         </section>
       )}
-      {/* 1.12-R1 (C): warsztat `runtime-v1` tylko gdy ma rekordy — inaczej pod
-          realnym rejestrem decyzji rysowała się druga, pusta tabela. */}
-      {hasRuntimeControlData && (
+      {/*
+        1.12-R1 (C): warsztat `runtime-v1` (interwencje) tylko wtedy, gdy MA
+        rekordy I gdy użytkownik świadomie go otworzył („Dodaj sygnał" /
+        „Przygotuj interwencję" w Menu 2).
+        ZMIERZONE NA ZRZUCIE (06.09, /execution?tab=control): dwie siostrzane
+        tabele z `flex-1` w tym samym kontenerze kolumnowym zjadły się
+        nawzajem — rejestr decyzji zwijał się do zera, a na ekranie została
+        SAMA tabela interwencji (w dev: dwa wiersze atrapy). Rejestr decyzji
+        jest treścią zakładki; warsztat jest narzędziem, więc schodzi pod
+        świadome otwarcie.
+      */}
+      {hasRuntimeControlData && showInterventionForm && (
       <TableWithPreviewLayout<Row>
         selectedId={selectedId}
         selectedItem={selected}

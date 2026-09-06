@@ -69,9 +69,49 @@ const parseDate = (value: unknown): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+/**
+ * DWA SŁOWNIKI STATUSU INICJATYWY — zmierzone na żywo 06.09.
+ *
+ * `GET /api/initiatives` na tym samym koncie i tej samej trasie zwróciło
+ * o 18:35 statusy z enumu frontu (`EXECUTING` 17 · `BLOCKED` 6 · `SCHEDULED` 7
+ * · `TRACKING` 3 · `DONE` 5 · `CANCELLED` 3 · `ARCHIVED` 1 …), a o 19:15 —
+ * WSZYSTKIE 72 te same rekordy pod innymi nazwami (`IN_EXECUTION` 23 ·
+ * `PENDING_APPROVAL` 16 · `APPROVED` 12 · `DRAFT` 9 · `CLOSED` 9 ·
+ * `REJECTED` 3). Bez restartu serwera (PID 44370 od 17:56), bez zmiany
+ * tokenu, przy niezmienionych `/api/decisions` (35) i `/api/tasks` (84).
+ * Liczby się sumują parami (23 = 17 EXECUTING + 6 BLOCKED; 9 CLOSED =
+ * 5 DONE + 3 CANCELLED + 1 ARCHIVED), więc to nie są inne rekordy — to ten
+ * sam portfel opisany drugim słownikiem.
+ *
+ * Żadnej z nowych nazw NIE MA w `InitiativeStatus` (src/types/core.ts:732),
+ * więc `EXECUTION_STATUSES.includes(status)` odrzucał KAŻDY wiersz i zakładka
+ * „Realizacje" pokazywała pustą tabelę przy 72 inicjatywach w API.
+ *
+ * Ta mapa jest OSŁONĄ, nie rozstrzygnięciem: przywraca widoczność danych bez
+ * względu na to, który słownik siedzi w bazie. Skąd wzięła się druga postać
+ * i który słownik jest kanoniczny — zgłoszone jako STOP (poza zakresem R1,
+ * dotyka Inicjatyw i wspólnego `initiativeLifecycle`).
+ */
+const STATUS_ALIASES: Record<string, string> = {
+  IN_EXECUTION: 'EXECUTING',
+  IN_PROGRESS: 'EXECUTING',
+  PENDING_APPROVAL: 'REVIEW',
+  CLOSED: 'DONE',
+  COMPLETED: 'DONE',
+  REJECTED: 'CANCELLED',
+};
+
+/** Status inicjatywy sprowadzony do enumu frontu (patrz STATUS_ALIASES). */
+export function normalizeInitiativeStatus(status: unknown): string {
+  const raw = upper(status);
+  return STATUS_ALIASES[raw] ?? raw;
+}
+
 /** Inicjatywa jest „w toku” (EXECUTING/BLOCKED/TRACKING). */
 export function isInFlightInitiative(initiative: RealInitiativeLike): boolean {
-  return (EXECUTION_IN_FLIGHT_STATUSES as readonly string[]).includes(upper(initiative?.status));
+  return (EXECUTION_IN_FLIGHT_STATUSES as readonly string[]).includes(
+    normalizeInitiativeStatus(initiative?.status)
+  );
 }
 
 export function filterInFlightInitiatives<T extends RealInitiativeLike>(initiatives: T[]): T[] {
@@ -101,7 +141,7 @@ export function decisionDaysOverdue(
   if (typeof decision?.daysOverdue === 'number') return Math.max(0, decision.daysOverdue);
   const due = parseDate(decision?.dueDate);
   if (due == null || due >= now) return null;
-  return Math.max(0, Math.floor((now - due) / DAY_MS));
+  return Math.max(1, Math.floor((now - due) / DAY_MS));
 }
 
 /** Otwarte decyzje po terminie — jedna definicja dla kafla i dla tabeli. */
@@ -202,7 +242,10 @@ export function taskSlipDays(task: RealTaskLike, now = Date.now()): number | nul
   if (isClosedTask(task)) return null;
   const due = parseDate(task?.dueDate);
   if (due == null || due >= now) return null;
-  return Math.max(0, Math.floor((now - due) / DAY_MS));
+  // Minimum 1: termin, który minął dziś rano, to poślizg jednego dnia, a nie
+  // „+0". „+0" pojawiło się na zrzucie zakładki Praca (06.09) w wierszach
+  // z terminem wczorajszym wieczorem — liczba, która nic nie znaczy.
+  return Math.max(1, Math.floor((now - due) / DAY_MS));
 }
 
 export function isTaskOverdue(task: RealTaskLike, now = Date.now()): boolean {

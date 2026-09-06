@@ -142,6 +142,7 @@ import { buildExecutionSourceRelations } from './executionSourceRelations';
 // 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
 // dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
 import {
+  normalizeInitiativeStatus,
   initiativeDeviationDays,
   initiativeLevelLabel,
   initiativeRag,
@@ -1356,7 +1357,20 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           Api.getInitiatives(),
           listExecutionCases(),
         ]);
-        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
+        // 1.12-R1 (A): sprowadź status do enumu frontu, ZANIM cokolwiek go
+        // porówna. `GET /api/initiatives` potrafi oddać ten sam portfel
+        // w drugim słowniku (`IN_EXECUTION`/`PENDING_APPROVAL`/`CLOSED`…),
+        // którego `InitiativeStatus` nie zna — i wtedy KAŻDY wiersz wypadał
+        // z filtra, a zakładka „Realizacje" była pusta przy 72 inicjatywach
+        // w odpowiedzi. Pomiar i mapa: executionRealData.STATUS_ALIASES.
+        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, [
+          'initiatives',
+        ]).map((initiative) => {
+          const znormalizowany = normalizeInitiativeStatus(initiative.status);
+          return znormalizowany === String(initiative.status)
+            ? initiative
+            : { ...initiative, status: znormalizowany as InitiativeStatus };
+        });
         const activeExecutionInitiativeIds = new Set(
           normalizeExecutionArrayEnvelope<{ initiativeId?: string; state?: string }>(
             executionCasesResponse,
@@ -6178,9 +6192,15 @@ Please return:
         commandRowContent={undefined}
         commandRowRightContent={undefined}
         chips={
-          activeTab === 'list'
-            ? []
-            : [
+          /*
+           * 1.12-R1 (A): PRZYCZYNA martwego Menu 3 „Realizacji" — chipy były
+           * tu WYŁĄCZONE NA TWARDO (`activeTab === 'list' ? [] : …`), mimo że
+           * `getExecutionMenu3().list` deklarował dziewięć pozycji, a
+           * `canonicalMenu3Preset.list` miał wartość domyślną. Zakładka jako
+           * jedyna nie miała żadnego filtra Menu 3. Trzy chipy (Wszystkie ·
+           * Zagrożone · Po terminie) realnie zawężają teraz `summaryInitiatives`.
+           */
+          [
                 ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
                   ...preset,
                   count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
@@ -6222,7 +6242,7 @@ Please return:
                   : []),
               ]
         }
-        activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
+        activeChip={canonicalMenu3Preset[activeTab] ?? null}
         onChipChange={(id) => {
           if (id === 'work-intelligence-report') {
             openWorkIntelligenceReport();

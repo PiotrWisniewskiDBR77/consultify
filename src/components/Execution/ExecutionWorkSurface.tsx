@@ -121,6 +121,15 @@ const workStatusLabel: Record<string, string> = {
   // kolumna Status mieszała polskie „Otwarte"/„Oczekuje na decyzję" z surowym
   // IN_PROGRESS w sąsiednich wierszach tej samej tabeli.
   IN_PROGRESS: 'W toku',
+  // 1.12-R1 (B), zmierzone na zrzucie /execution?tab=work: realne zadania
+  // z `/api/tasks` niosą słownik `TaskStatus` (TODO/IN_PROGRESS/BLOCKED/DONE)
+  // plus `REVIEW` — kolumna Status pisała surowe „TODO", „REVIEW", „DONE"
+  // obok polskich „W toku"/„Zablokowane" w sąsiednich wierszach.
+  TODO: 'Do zrobienia',
+  REVIEW: 'W przeglądzie',
+  IN_REVIEW: 'W przeglądzie',
+  DONE: 'Wykonane',
+  CANCELLED: 'Anulowane',
 };
 /**
  * Nazwisko osoby — z KATALOGU OSÓB, nie z zamiany myślnika na spację.
@@ -338,7 +347,17 @@ const mapRuntimeWorkRows = (
  * źródła są rozłączne (osobne tabele), więc łączymy je, a nie zastępujemy:
  * gdy handoff zacznie tworzyć realizacje, ich zadania po prostu dojdą.
  */
-export const mapRealTaskRows = (tasks: any[]): Row[] =>
+export const mapRealTaskRows = (
+  tasks: any[],
+  /**
+   * 1.12-R1 (B): KATALOG INICJATYW. Zmierzone na zrzucie 06.09 — kolumna
+   * INICJATYWA pokazywała „—" w KAŻDYM z 84 wierszy, mimo że 64 zadania mają
+   * `initiativeId`: `GET /api/tasks` zwraca sam identyfikator, bez nazwy.
+   * Nazwa przychodzi z `GET /api/initiatives`, tej samej listy, którą czyta
+   * zakładka „Realizacje".
+   */
+  initiativeNameById: Map<string, string> = new Map()
+): Row[] =>
   (tasks ?? []).map((task) => ({
     id: String(task.id),
     title: task.title ?? '—',
@@ -351,7 +370,11 @@ export const mapRealTaskRows = (tasks: any[]): Row[] =>
     executionCaseId: '',
     initiativeId: String(task.initiativeId ?? task.roadmapInitiativeId ?? ''),
     origin: 'tasks' as const,
-    initiativeName: String(task.initiativeName ?? task.projectName ?? ''),
+    initiativeName: String(
+      task.initiativeName ??
+        initiativeNameById.get(String(task.initiativeId ?? task.roadmapInitiativeId ?? '')) ??
+        ''
+    ),
     slipDays: taskSlipDays(task),
     source: task,
   }));
@@ -491,7 +514,18 @@ export const ExecutionWorkSurface = ({
     // zakładki — po prostu nie ma tych wierszy (uczciwie, bez wyjątku).
     let realTaskRows: Row[] = [];
     try {
-      realTaskRows = mapRealTaskRows(await Api.getTasks());
+      const [zadania, inicjatywy] = await Promise.all([
+        Api.getTasks(),
+        // Nazwa inicjatywy do kolumny „Inicjatywa" — brak tej listy zamieniał
+        // 64 z 84 wierszy w „—" (zmierzone na zrzucie 06.09).
+        Api.getInitiatives().catch(() => [] as any[]),
+      ]);
+      const nazwyInicjatyw = new Map<string, string>(
+        (inicjatywy ?? [])
+          .filter((i: any) => i?.id && i?.name)
+          .map((i: any) => [String(i.id), String(i.name)])
+      );
+      realTaskRows = mapRealTaskRows(zadania, nazwyInicjatyw);
     } catch (error) {
       console.error('[ExecutionWorkSurface] /api/tasks nieosiągalne:', error);
     }

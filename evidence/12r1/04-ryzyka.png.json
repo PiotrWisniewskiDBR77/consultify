@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3141/execution?tab=control&view=table",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=[data-testid='standard-chip-ryzyka']"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n12\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nDecyzje i ryzyka\nRaporty\nNowa decyzja\nDodaj sygnał\nPrzygotuj interwencję\nDecyzje\n25\nRyzyka\n16\nPo terminie\n12\nTYTUŁ\n\t\nTYP\n\t\nWŁAŚCICIEL\n\t\nTERMIN\n\t\nDNI PO TERMINIE\n\t\nESKALACJA\n\n\nSupply Chain depends on Data Platform feeds\n\t\nZależność\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nData Platform depends on Cloud network setup\n\t\nZależność\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nAPI Gateway depends on Auth Service migration\n\t\nZależność\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nSharePoint migration data loss incident\n\t\nProblem\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nCI/CD flaky tests blocking deploys\n\t\nProblem\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nBursztynowa\n\n\nSAP integration middleware timeout errors\n\t\nProblem\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nUiPath license expired — blocking RPA\n\t\nProblem\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nDevOps pipeline single point of failure\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nBursztynowa\n\n\nSupply chain data quality risk\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nLegacy data corruption during decommission\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nBudget overrun on contractor hiring\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nBursztynowa\n\n\nKey person dependency — Marek Nowak\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nGDPR non-compliance penalty\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nSAP vendor hotfix delay\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nData loss during Lakehouse migration\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona\n\n\nAzure region outage risk\n\t\nRyzyko\n\t\nNieznany użytkownik\n\t\n—\n\t\n—\n\t\nCzerwona",
+ "kiedy": "2026-09-06T17:05:01.696Z"
+}
