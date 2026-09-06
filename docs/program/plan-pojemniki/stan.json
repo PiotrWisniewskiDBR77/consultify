@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 14:10",
+  "zaktualizowano": "2026-09-06 15:38",
   "sha_rejestru": "74d48a0c41",
   "pojemniki": [
     {
@@ -127,6 +127,18 @@
           "dowod": "przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie",
           "uwagi": "ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.",
           "data": "06.09 12:40"
+        },
+        {
+          "nr": "1.11",
+          "nazwa": "Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie (kompletny system zarządzania inicjatywami w statusach)",
+          "wykonawca": "Fable: SSOT statusów + prototyp tablicy przejść → akcept właściciela → Codex (wklejka)",
+          "zalezy_od": "słowo właściciela na tablicę statusów i przejść",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje.",
+          "data": "06.09"
         }
       ],
       "kryteria": [
@@ -939,28 +951,28 @@
   "przejscie_wlasciciela": [
     {
       "modul": "Czat",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE. Ścieżka pokazu: „Podsumuj co tu widzisz” → odpowiedź po polsku ze „Źródła: 12”. Przejście właściciela na stagingu jeszcze się nie odbyło."
+      "werdykt": "tak",
+      "zdanie": "06.09 12:20 — 8 kart odebranych, paczka na stagingu be5dfe691d."
     },
     {
       "modul": "Moja Praca",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Ścieżka: Skrzynka → Zadania → wiersz → podgląd → Otwórz kartę zadania. Skrzynka nadal ma własny panel bez wzorca P1 (InboxContent.tsx:4324)."
+      "werdykt": "tak",
+      "zdanie": "06.09 13:19 — „tym zamykamy przegląd mywork, uznamy za wystarczające jako MVP właściciela”; na stagingu 7dac4d5440."
     },
     {
       "modul": "Wywiad",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE. Ścieżka: lista sesji (nazwy z datą) → sesja → Przydzielone. Panel Wywiadu nadal bez wzorca P1 (InterviewHub.tsx:8620)."
+      "werdykt": "w_toku",
+      "zdanie": "06.09: stepper i Dopuszczenie usunięte (na stagingu), generator inicjatyw z Oceny (na stagingu); Fala 2 3.12 zatwierdzanie odpowiedzi."
     },
     {
       "modul": "Narzędzia",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Dynamiczny SWOT to jedyne pełne narzędzie; 35/36 pozostałych to „już wkrótce” (dane biblioteki, nie kod) — decyzja właściciela w kolejce."
+      "werdykt": "w_toku",
+      "zdanie": "06.09: Insighty≠Raporty, producent insightów, CTA per zakładka (staging c2430433b0); odbiór właściciela jeszcze nie."
     },
     {
       "modul": "Ocena",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Lista Outputów → raport oceny (sekcje + macierz DRD). Oceny właściciela wypełnione tylko 0–8%, raport będzie chudy przez dane."
+      "werdykt": "w_toku",
+      "zdanie": "06.09: DRD hotfix ✔ („tak działa”), chipy Menu 3 usunięte (staging), kolory stanów + Zapytaj Teresę + Podyktuj (D1 scalone), w toku: nagłówek+czcionki (D2), generator wniosków (O3), modal szablonów (O4)."
     },
     {
       "modul": "Inicjatywy",
@@ -989,8 +1001,8 @@
     },
     {
       "modul": "Audyty",
-      "werdykt": "brak",
-      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Nagłówek ZAKTUALIZOWANO naprawiony (MVP-NAPRAWY-3), rodzina uciętych nagłówków dat naprawiona na 7 ekranach 1440 (MVP-NAPRAWY-4)."
+      "werdykt": "w_toku",
+      "zdanie": "06.09: uwagi 15:27–15:38 — sidebar pod Oceną, bez Raportów DRD i Ustaleń, Nowy audyt zamrożony (A1 w toku), Menu 3 jeden wzór + generatory (A2 w kolejce)."
     },
     {
       "modul": "Spotkania",
@@ -1004,18 +1016,28 @@
     },
     {
       "modul": "Ustawienia",
-      "werdykt": "brak",
-      "zdanie": "Wg §3 skrótu: listy i karty gotowe, Szablony ustawień po polsku (4 klucze naprawione w MVP-NAPRAWY-6, wcześniej po angielsku wg B3)."
+      "werdykt": "tak",
+      "zdanie": "06.09 15:40 — zaakceptowane bez uwag."
     },
     {
       "modul": "Organizacja",
-      "werdykt": "brak",
-      "zdanie": "Wg §3 skrótu: listy i karty gotowe. „PL · Silesia” częściowo naprawione (napraw-region-silesia.ts), ale higiena całości danych (pozycja 1.7) jeszcze niewykonana."
+      "werdykt": "tak",
+      "zdanie": "06.09 15:40 — „zaakceptuj przejście przez organizację” (bez uwag)."
     },
     {
       "modul": "Partner",
       "werdykt": "brak",
       "zdanie": "Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji."
+    },
+    {
+      "modul": "Panel administratora",
+      "werdykt": "tak",
+      "zdanie": "06.09 15:40 — zaakceptowany; etykieta en „Admin”, pl „Panel administratora” (P-1)."
+    },
+    {
+      "modul": "Partnerzy",
+      "werdykt": "w_toku",
+      "zdanie": "06.09 15:40: „w całości nie jest podłączony… daj mi partnerów” → P-1 (Opus) w toku."
     }
   ]
 }

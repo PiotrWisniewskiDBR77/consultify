@@ -43,6 +43,7 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 | 1.8 | Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤ 300, 16 testów z mockiem react-router | Sonnet | 1–2 | — |
 | 1.9 | Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie `zamroz.mjs` per moduł | Sonnet ×2 | 1 | 1.1–1.8 |
 | 1.10 | **Środowisko demo dla pojemnika 2**: rozdział bazy demo od stagingu (5 faz z `topologia-srodowisk-staging-demo`), zmienne, seedy pokazowe (DBR77 Wyniki, CD PROJEKT Finanse, organizacja pilotażowa), promocja staging → demo przećwiczona z cofnięciem, tag `demo-safe` | Opus + nadzorca | 2–3 | 1.9 |
+| 1.11 | **Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie** | jedna tablica statusów i przejść (status · kto · z→na · gdzie widać · co blokuje) obowiązująca w Inicjatywach, Wywiadzie, Ocenie, Narzędziach, Audytach i Realizacji; SSOT + prototyp → akcept właściciela → Codex | Fable (SSOT+prototyp) → Codex | słowo właściciela na tablicę |
 
 **Stan (dopisywany, nie zmienia kryteriów):**
 - 06.09 ~08:00: **DEC-399 (właściciel):** Finanse MINIMUM → pojemnik 2, pozycja 2.6; w pojemniku 1 Finanse = pokaz CD PROJEKT. Właściciel: „zgoda, zróbmy to i wypijmy szampana”; panel opublikowany (https://claude.ai/code/artifact/2a86e4bf-46b5-4056-a472-264dc4a26da6).
