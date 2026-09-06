@@ -140,7 +140,11 @@ describe('AssessmentLibraryTab canonical method-core flow', () => {
     mocks.language = 'pl';
     render(<AssessmentLibraryTab />);
     expect(screen.queryByText('Twoje kanoniczne sesje DRD')).not.toBeInTheDocument();
-    expect(screen.getAllByText('Szkic')).toHaveLength(4);
+    // TESTY-ZASTANE (06.09.2026): odbiór 05.09 zmienił etykietę statusu
+    // "draft" z „Szkic" na „Planowane" — obraz nazywa stan po jego znaczeniu
+    // dla użytkownika (wiedza jest, uruchomienia jeszcze nie ma), nie po
+    // stanie wpisu w katalogu (AssessmentLibraryTab.tsx, kolumna 'status').
+    expect(screen.getAllByText('Planowane')).toHaveLength(4);
     expect(screen.queryByRole('button', { name: 'Rozpocznij ocenę' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Digital Readiness Diagnosis'));
     expect(screen.getByRole('button', { name: 'Rozpocznij ocenę' })).toBeInTheDocument();

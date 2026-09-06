@@ -37,9 +37,11 @@ vi.mock('@/components/standard', () => ({
     );
   },
 }));
-vi.mock('@/components/shared/PreviewPane', () => ({
-  PreviewPaneAside: ({ children }: any) => <aside data-preview-pane>{children}</aside>,
-}));
+// TESTY-ZASTANE (06.09.2026): AssessmentLibraryTab przeszedł na JedenPrawyPanel
+// (@/components/shared/PreviewPane/JedenPrawyPanel) — import PreviewPaneAside
+// zostaje w pliku źródłowym, ale jest martwy (nigdzie nie wywołany), więc
+// mockowanie go tu nie miało żadnego efektu na renderowane DOM. Realny prawy
+// panel renderuje JedenPrawyPanel bez mocka (jego <aside data-right-panel>).
 vi.mock('@/method-core/api/methodCoreApi', () => ({
   createSession: vi.fn(),
   getSession: vi.fn(),
@@ -91,7 +93,7 @@ describe('AssessmentLibraryTab B2 canonical contract', () => {
   it('opens StandardPreview with axes and the existing start action', () => {
     render(<AssessmentLibraryTab />);
     fireEvent.click(screen.getByRole('button', { name: 'wybierz DRD' }));
-    expect(screen.getByRole('complementary')).toHaveAttribute('data-preview-pane');
+    expect(screen.getByRole('complementary')).toHaveAttribute('data-right-panel');
     expect(captured.preview.details.text).toContain('Osie i obszary');
     expect(captured.preview.details.text).toContain('•');
     expect(screen.getByRole('button', { name: 'Rozpocznij ocenę' })).toBeInTheDocument();
