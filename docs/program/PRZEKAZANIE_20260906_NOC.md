@@ -47,6 +47,10 @@ Poza zakresem nocy: 1.9 re-audyt, 1.10 demo (po 1.9), S1.11 zamrożenie tagami, 
 3. Drzewo: BASE = merge-base sha-m03-sprzed-gałęzi i tipu; `git diff HEAD <tip> -- <pliki gałęzi bez translation.json/dev-render>` = 0; pliki usuwane: `git ls-files` = 0.
 4. `git -C <bare> worktree remove --force <worktree>`; wiersz w rejestrze; stan.json gdy zmienia stan pozycji.
 5. Przed KAŻDYM pushem: `git ls-remote origin staging` + `gh run list --workflow=railway-deploy.yml --limit 1` (nic nie buduje?), `cd server && NODE_OPTIONS=--max-old-space-size=3072 ../node_modules/.bin/tsc -p tsconfig.build.json --noEmit` = 0 (Docker robi to samo; esbuild robotników nie sprawdza typów — dziś 2 wywrotki), łańcuch migracji na 54400 (`DB_TYPE=postgres NODE_ENV=test RUN_DB_TESTS=1 DOTENV_DISABLED=1 DATABASE_URL=postgres://postgres:noc@127.0.0.1:54400/consultify_noc npx tsx server/scripts/migrate.postgres.ts`), nazwy migracji datowane ≥ `20262105` (`migrationOrdering.ts` sortuje po YYYYMMDD).
+   **DZIURA W BRAMCE ZAMKNIETA 06.09 21:5x (paczka 14 FAILED):** pelny `tsc` serwera NIE kompiluje `packages/shared` ani frontu, a Docker buduje OBA — paczka 14 padla na `packages/shared/src/index.ts(2,1): error TS2308` (kolizja `export *`: `InitiativeStatus` w `constants/initiativeStatuses.generated.ts` i w `types/domain/project.ts:218`). Do bramki DOCHODZA dwa kroki, oba obowiazkowe:
+   - `npm run build -w packages/shared` = PASS,
+   - `npx vite build` = PASS (albo pelny `npm run build`, ktory robi jedno i drugie — dokladnie to, co odpala Railway w `frontend-builder 9/9`).
+   Zasada ogolna: bramka przed pushem ma uruchamiac TO SAMO, co Dockerfile, nie jego podzbior — kazdy krok builda nieobjety bramka to przyszla wywrotka na stagingu.
 6. Push: `git push origin HEAD:staging` + `gh workflow run railway-deploy.yml --ref staging -f environment=staging`; dowód = health gitSha; sonda w tle (pętla curl co 15 s, przerwanie gdy run = failure). Po scaleniu Codexa: `git push github-backup codex/m03-admin-20260824:codex/m03-admin-20260824` (Codex sprawdza znacznik na github-backup).
 
 ## 5. Zlecanie robotników (skrót briefu wspólnego)
