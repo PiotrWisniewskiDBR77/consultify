@@ -432,6 +432,27 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
   const isReceiptCapable = (actionId: string) =>
     receiptCapableActionIds === undefined || receiptCapableActionIds.includes(actionId);
 
+  /**
+   * ★ [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — właściciel: „panel z prawej
+   * strony ma być zawsze zamknięty; gdy się go uruchamia, wszystkie
+   * poszczególne okna (sekcje) muszą być zamknięte”. Do tej pory Akcje i
+   * Właściwości startowały ROZWINIĘTE w `section()` niżej
+   * (`defaultOpen: id === 'actions' || id === 'properties'`) na ścieżce,
+   * którą realnie widzi użytkownik (`declareSections` — SPEC-A shell
+   * domyślnie ON) — czyli otwarcie panelu ("Otwórz panel boczny") od razu
+   * pokazywało dwie rozwinięte sekcje zamiast akordeonu w całości
+   * zwiniętego. Parametr ADDYTYWNY i lokalny dla notatnika — nie zmienia
+   * domyślnego zachowania `ArtifactRightPanel` u innych konsumentów, bo
+   * `defaultOpen` ustala WYŁĄCZNIE wołający, per sekcja.
+   *
+   * Celowo NIE dotyka `openIds` niżej — to stan STAREGO akordeonu
+   * (`legacyRail`), osiągalnego wyłącznie awaryjnym wyłącznikiem
+   * `ff.ENABLE_NOTEBOOK_SPEC_A_SHELL=false` (CLAUDE.md §8). Ta ścieżka nie
+   * jest tym, co dziś widzi właściciel — zostaje bajt-w-bajt jak dotąd, żeby
+   * nie zmieniać zachowania killswitcha przy okazji.
+   */
+  const domyslnieZwiniete = true;
+
   const [openIds, setOpenIds] = useState<Set<RailSectionId>>(
     () => new Set<RailSectionId>(['actions', 'properties', 'relations'])
   );
@@ -481,7 +502,7 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
         id,
         label,
         children: body,
-        defaultOpen: id === 'actions' || id === 'properties',
+        defaultOpen: domyslnieZwiniete ? false : id === 'actions' || id === 'properties',
         badge: count,
         showZeroBadge: count === 0,
       });
