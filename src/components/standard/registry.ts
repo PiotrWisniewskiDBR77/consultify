@@ -37,7 +37,17 @@ export type KartaNKey =
   | 'decision'
   | 'notification'
   | 'task'
-  | 'action';
+  | 'action'
+  // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] Trzy karty modułu Wyniki. Do
+  // 06.09.2026 stały POZA rejestrem (test `registry.kompletnosc.test.ts`
+  // wymieniał `metric`/`objective` jako „jawne wyjątki", a analizy ROI nie
+  // wymieniał wcale) — a mimo to właściciel ocenia je jako pełne karty N
+  // („To normalne N-type narzędzie, muszą tu być wszystkie narzędzia z nim
+  // związane"). Wpis w rejestrze jest warunkiem, żeby te karty mogły w ogóle
+  // wołać silnik „Analizuj z AI": `CardAnalysisArtifactType = KartaNKey`.
+  | 'metric'
+  | 'objective'
+  | 'roi_case';
 
 /**
  * Klasa wielkości wg SPEC-A §12.2 (drabina otwierania) i SPEC-N §2.1:
@@ -62,7 +72,10 @@ export type KartaNEkranHarnessu =
   | 'karta-decision'
   | 'karta-notification'
   | 'karta-task'
-  | 'karta-dzialania';
+  | 'karta-dzialania'
+  | 'karta-miernik'
+  | 'karta-cel-okr'
+  | 'karta-analiza-roi';
 
 export interface KartaNWpis {
   /** Nazwa typu karty widoczna w raportach i tabeli smoke'a. */
@@ -158,6 +171,41 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
     klasa: 'L',
     paragraf: 'SPEC-N §2.2, §4A (P2) · plan §3 M7',
     ekranHarnessu: 'karta-initiative',
+    statusMigracji: 'przed',
+  },
+  metric: {
+    nazwa: 'Metric (KPI)',
+    komponent: 'src/components/ResultsVNext/kpiTool/KpiToolPage.tsx',
+    // Klasa L: OSIEM sekcji lewej nawigacji (Wyniki · Kontrakt · Pomiary ·
+    // Odchylenia · Karty działania · Działania · Raporty · Historia) — dwa razy
+    // ponad limit 4 dla klasy S (SPEC-N §2.1).
+    klasa: 'L',
+    paragraf: 'SPEC-N §2.1 · SSOT STEROWANIE_KART_N_I_AI.md · DEC-422',
+    ekranHarnessu: 'karta-miernik',
+    // Karta stoi na surowym `NModeShell` (jak sześć pozostałych) — kontrakt
+    // `StandardArtifactShell` jej nie obowiązuje do fali migracji.
+    statusMigracji: 'przed',
+  },
+  objective: {
+    nazwa: 'OKR Objective',
+    komponent: 'src/components/ResultsVNext/okr/OkrObjectiveCardPage.tsx',
+    // Klasa L: pięć sekcji (Cel · Kluczowe rezultaty · Check-iny · Powiązania ·
+    // Refleksja) — ponad limit 4 klasy S.
+    klasa: 'L',
+    paragraf: 'SPEC-N §2.1 · SSOT_WYNIKI_KPI_OKR_ROI.md §3 · DEC-422',
+    ekranHarnessu: 'karta-cel-okr',
+    statusMigracji: 'przed',
+  },
+  roi_case: {
+    nazwa: 'ROI Case',
+    komponent: 'src/components/ResultsVNext/roi/card/RoiCaseCardPage.tsx',
+    // Klasa L mimo TRZECH sekcji: karta jest pełnostronicowa (nie drawer),
+    // a sekcja „Wyliczenia" niesie tabele przepływów, których szuflada nie
+    // mieści — SPEC-N §2.1 wiąże klasę ze SPOSOBEM OTWIERANIA, nie tylko
+    // z liczbą sekcji.
+    klasa: 'L',
+    paragraf: 'SPEC-N §2.1 · SSOT_WYNIKI_KPI_OKR_ROI.md §4 · DEC-422',
+    ekranHarnessu: 'karta-analiza-roi',
     statusMigracji: 'przed',
   },
 };
