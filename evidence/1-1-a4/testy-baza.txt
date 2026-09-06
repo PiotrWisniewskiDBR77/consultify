@@ -1,0 +1,846 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11a4-audyty-wnioski
+
+
+ RUN  v4.1.8 /private/tmp/wt-11a4-audyty-wnioski
+
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r2.test.tsx > Day220 R2 — karta Sesji nie ujawnia surowego ID audytora > rozwiązuje ID przez mapę użytkowników i nie renderuje identyfikatora fixture 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r2.test.tsx (1 test | 1 failed) 15ms
+     × rozwiązuje ID przez mapę użytkowników i nie renderuje identyfikatora fixture 13ms
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełny tytuł pakietu i nazwę audytora w Sesjach 20ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełnego odbiorcę i poufność w Raportach 3ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx (2 tests | 2 failed) 25ms
+     × udostępnia pełny tytuł pakietu i nazwę audytora w Sesjach 20ms
+     × udostępnia pełnego odbiorcę i poufność w Raportach 3ms
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 18:07:58:758 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:59:759 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:59:759 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:59:759 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:07:59:759 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [33mwarn[39m: [33m[2026-09-06T16:08:01.428Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [33mwarn[39m: [33m[2026-09-06T16:08:01.428Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] DB_TYPE: sqlite[39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.971Z] [DEBUG] [AI:CircuitBreaker] Table circuit_breaker_state not ready yet, skipping state restoration[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.971Z] [DEBUG] [AI:CircuitBreaker] Table circuit_breaker_state not ready yet, skipping state restoration[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 18:08:01:81 [32minfo[39m: [32m[2026-09-06T16:08:01.972Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:02:82 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:02:82 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:05:85 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:11:811 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx
+2026-09-06 18:08:11:811 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11a4-audyty-wnioski/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+stdout | src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11a4-audyty-wnioski/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 18:08:15:815 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > używa realnego Postgresa wskazanego przez komplet env 4ms
+   → expected 'sqlite' to be 'postgres' // Object.is equality
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > nie zawiera wskazanych angielskich literalów ani w seederze, ani w zapisanych wierszach fixture 28ms
+   → relation "audit_packs" does not exist
+ × src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > osiąga polskie dane przez realny ApiGateway, podpisany JWT i trasy HTTP 22ms
+   → {"error":"You no longer have access to this organization","code":"ORG_MEMBERSHIP_REVOKED"}: expected 403 to be 200 // Object.is equality
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx (3 tests | 3 failed) 121ms
+     × używa realnego Postgresa wskazanego przez komplet env 4ms
+     × nie zawiera wskazanych angielskich literalów ani w seederze, ani w zapisanych wierszach fixture 28ms
+     × osiąga polskie dane przez realny ApiGateway, podpisany JWT i trasy HTTP 22ms
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns) 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell) 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load 0ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8) 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx (14 tests | 14 failed) 25ms
+     × renders a real StandardTable element, not a bespoke grid 13ms
+     × shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns) 1ms
+     × never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes 1ms
+     × never gives the DEMONSTRATION source-type chip a success (emerald) shell 1ms
+     × LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell) 1ms
+     × VERIFIED gets the success (emerald) shell on the verification axis 1ms
+     × changing verificationStatus never changes the rendered source-type label — same pack, four verification states 1ms
+     × a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason 1ms
+     × shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit 1ms
+     × opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason 1ms
+     × enables "Start audit" for a published pack that HAS a source, and calls onStartAudit 1ms
+     × shows ErrorState with a working retry when the pack list failed to load 0ms
+     × shows an explanatory EmptyState when there are no packs at all 1ms
+     × never renders the raw technical packKey under the title (RAPORT_B #8) 1ms
+ × src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag OFF (localStorage override): renders the plain date, no "Po terminie" chip 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue, non-closed program shows the "Po terminie" chip 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue but CLOSED program does not show the chip (finished, not a risk) 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): a future due date shows the plain date, not the chip 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx (4 tests | 4 failed) 18ms
+     × flag OFF (localStorage override): renders the plain date, no "Po terminie" chip 13ms
+     × flag ON (default): an overdue, non-closed program shows the "Po terminie" chip 1ms
+     × flag ON (default): an overdue but CLOSED program does not show the chip (finished, not a risk) 1ms
+     × flag ON (default): a future due date shows the plain date, not the chip 1ms
+ × src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > renders a working row kebab with Approve enabled for a draft report 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > calls the real approveReport endpoint and reflects the returned status 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > opens the row preview with audience/confidentiality — real data the table never showed before 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditReportsTab.test.tsx (4 tests | 4 failed) 18ms
+     × renders a working row kebab with Approve enabled for a draft report 13ms
+     × calls the real approveReport endpoint and reflects the returned status 1ms
+     × opens the row preview with audience/confidentiality — real data the table never showed before 1ms
+     × shows Delete disabled with a real reason — never a silent no-op 1ms
+ × src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > renders a working kebab with Register enabled for a draft proposal 12ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > disables Register/Defer/Dismiss for an already-registered proposal, with a real reason 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > calls the real registerProposal endpoint and reflects the returned status 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx (4 tests | 4 failed) 17ms
+     × renders a working kebab with Register enabled for a draft proposal 12ms
+     × disables Register/Defer/Dismiss for an already-registered proposal, with a real reason 1ms
+     × calls the real registerProposal endpoint and reflects the returned status 1ms
+     × shows Delete disabled with a real reason — never a silent no-op 1ms
+ × src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > keeps contentHash out of the main table, and shows it only in the row preview 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > adds a real Pack version column and a Current/Superseded status column 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > marks a superseded Output distinctly instead of leaving it looking current 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > resolves programName/finalizedByName from the Hub-provided maps when the API field is null 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx (4 tests | 4 failed) 18ms
+     × keeps contentHash out of the main table, and shows it only in the row preview 13ms
+     × adds a real Pack version column and a Current/Superseded status column 1ms
+     × marks a superseded Output distinctly instead of leaving it looking current 1ms
+     × resolves programName/finalizedByName from the Hub-provided maps when the API field is null 1ms
+ × src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields 16ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > falls back to "—" (never crashes) when neither the map nor the API field has a value 1ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx (2 tests | 2 failed) 20ms
+     × resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields 16ms
+     × falls back to "—" (never crashes) when neither the map nor the API field has a value 1ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > renders report.payload by default — title, executive summary text — and does NOT call /presentation 73ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > renders a `group`-kind section (findings_by_severity) resolving the criterion id to a real title 282ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > renders a `keyValue`-kind section (scope) — the previous view had no branch for this kind at all 267ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > the "Rodzaj" property reads "Raport audytu" by default, then "Widok prezentacyjny" after switching — never the other under the wrong label 156ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > Approve is available and works from the default (full) view — same gated endpoint as before 150ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx > AuditReportDocumentView — R1: full report is the default document > shows an error state with retry when the report or its payload cannot be loaded (e.g. 404 / missing payload) 4ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.test.tsx (6 tests) 933ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx > AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish) > flag OFF (localStorage override): no "View all" entry point, mini-list unchanged 97ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx > AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish) > flag ON: "View all" opens a full-screen StandardTable with search + status filter, and rows navigate to the workspace 91ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx > AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish) > R2(b): the workStatus column filter matches rows on later pages, not just the current page 423ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx > AuditProcessesTab — criteria browser drill-down (ff_auditsScaleAndPolish) > flag ON: back button returns to the sessions table 68ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.criteriaBrowser.test.tsx (4 tests) 680ms
+     ✓ R2(b): the workStatus column filter matches rows on later pages, not just the current page  423ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417c: Menu 2 ma dokładnie pięć zakładek, bez „Ustalenia” 184ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417c: stary deep link ?tab=findings nie wskrzesza zakładki — spada na Sesje 98ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Biblioteka' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 32ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Sesje' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 33ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Wyniki' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 29ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Raporty' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 29ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Inicjatywy' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 23ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b: pełna lista etapów Sesji żyje w dropdownie Menu 2, nie w Menu 3 69ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417d: CTA „Nowa inicjatywa” otwiera generator inicjatyw (adapter audit) 42ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417d: CTA „Nowy wynik” i „Nowy raport” otwierają realne generatory 37ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b: zakładka Inicjatywy nie renderuje już linijki disclaimera nad tabelą 17ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx (11 tests) 596ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > synchronously rejects a duplicate Start dispatch for the same pack 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > retains the Start key across remount/reload and rotates only after confirmed success 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes" 268ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > defaults to Library when ?tab= is absent 58ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens Outputs when ?tab=outputs is in the URL 29ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > falls back to Processes for an unknown ?tab= value 44ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > writes the active tab into the URL when a tab is clicked 97ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the default Library tab 31ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the Sessions tab — `?tab=processes` still works, only the label changed 39ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens a canonical criterion workspace from the selected program 89ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > keeps the program preview mounted when canonical detail omits optional members 39ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > cold-opens the program preview from the canonical programId query deep link 25ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows an ErrorState with retry when the Library API call fails 46ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows the honest Outputs EmptyState explaining why the list is empty 21ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > renders exactly one chip row (verification), with visible zero counts, and no source-type chips 38ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > selecting a verification chip narrows the list to that single axis 36ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > the Library verification chip row does not appear on the Sessions (processes) tab 22ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx (17 tests) 885ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows both real generation actions 169ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > generates an audit report, reports success, and notifies the Hub 93ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > opens remediation date modal and omits an empty asOfDate 104ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > passes the selected remediation as-of date 103ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > disables both actions for a superseded Output and explains why 53ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows the literal backend error in the selected Output preview 71ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab — jeden prawy panel (DEC-397b, 1.1-K6) > zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED) 49ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx (7 tests) 644ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > the preview Details kebab offers "Download DOCX" and requests the real export route 216ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187) 122ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > a backend error surfaces inline in the preview panel, not as alert() (DOCX) 117ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187) 109ms
+ ✓ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx (4 tests) 566ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows both DOCX and PDF export buttons 167ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (DOCX) 71ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (PDF, FIX-187) 54ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the DOCX control while the response is pending 51ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the PDF control while the response is pending (FIX-187) 49ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (DOCX) 65ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (PDF, FIX-187) 59ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx (7 tests) 518ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > calls finalizeOutput with the selected program 227ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > success shows version and shortened hash and refreshes once 113ms
+stderr | src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to AuditProcessesTab inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > shows the literal backend conflict message 112ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call 82ms
+ ✓ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx (4 tests) 537ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.processesLabel.test.tsx > AuditsMethodHub — Sesje/Sessions label follows account language > shows "Sesje" for a Polish account, and `?tab=processes` still resolves to that tab 178ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.processesLabel.test.tsx (1 test) 180ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx > AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish) > does not render the CTA when the flag is OFF (localStorage override) 75ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx > AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish) > renders the CTA frozen (DEC-417) when the flag is ON (default): disabled, tooltip, no modal on click 45ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx (2 tests) 122ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.reportChainSourceGuard.test.ts > auditsMethodApi report-chain source guard > keeps both commands that make the server chain reachable from the client 35ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.reportChainSourceGuard.test.ts (1 test) 37ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > reads an array and sibling total from the canonical packs envelope 34ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > reads the canonical programs list result and maps the service counters onto the UI-facing field names 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects a programs list row missing the service counters instead of rendering "/" and blank cells 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > maps the criterion-service coverage totals without silently rendering 0/0 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects coverage contract drift instead of substituting zeroes 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: missing success 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: unsuccessful envelope 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: missing data 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: wrong list shape 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > finalizes an Output through the canonical endpoint and returns its id 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a malformed finalize envelope 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a finalize response without an id 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > generates an audit report without silently adding product fields 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > passes the explicit remediation snapshot date 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a generated report response without an id 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts (15 tests) 40ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > never lets a non-normative source type render a label containing "norm" — checked on rendered TEXT, not the key 32ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > reserves the word "norma"/"normative" for LICENSED_STANDARD only (REGULATION may also use it, but does not have to) 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > gives every source type a non-empty, differing PL/EN label 1ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > NEVER gives the source-type axis a success tone — type is neither good nor bad (verification carries the judgement) 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > DEMONSTRATION gets a distinct, cautionary tone (never looks like a compliance audit) 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > LEGACY never reads as current — neutral tone (no vivid fill) and a label that says so 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packSourceTypeLabel — oś 1 (CZYM jest źródło) > changing verificationStatus never changes the source-type label — same pack, four verification states, identical type label 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packVerificationLabel — oś 2 (CZY sprawdzono) > gives success ONLY to VERIFIED — the only success-toned value across BOTH axes 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packVerificationLabel — oś 2 (CZY sprawdzono) > resolves every verification state to a tone and a bilingual label without throwing 1ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > isNormativeSourceType / isComplianceGrade > only LICENSED_STANDARD and REGULATION are normative 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > isNormativeSourceType / isComplianceGrade > requires BOTH a normative source type AND VERIFIED — a verified internal procedure is still not compliance-grade 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > isNormativeSourceType / isComplianceGrade > DEMONSTRATION is never compliance-grade, even if (hypothetically) marked VERIFIED 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packPublicationTone > published is success, draft/deprecated are not 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > packPublicationTone > resolves every publication status to a tone and a label without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > programLifecycleTone / programLifecycleLabel > covers all 11 lifecycle states with a tone and a bilingual label 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > programLifecycleTone / programLifecycleLabel > closed is the only success-toned stage; planning is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > reportStatusTone / reportStatusLabel > published is success, draft is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > reportStatusTone / reportStatusLabel > resolves every report status without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > proposalStatusTone / proposalStatusLabel > registered is success, draft is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > proposalStatusTone / proposalStatusLabel > resolves every proposal status without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingStatusTone / findingStatusLabel > closed is success, draft is neutral, in_review is warning 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingStatusTone / findingStatusLabel > resolves every finding status to a non-empty, PL/EN-differing label without throwing 1ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingSeverityTone / findingSeverityLabel > critical is danger, informational is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingSeverityTone / findingSeverityLabel > null severity renders as an honest "unspecified" label, never throws or shows "null" 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingSeverityTone / findingSeverityLabel > resolves every severity without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingClassificationTone / findingClassificationLabel > nonconforming is danger, conforming is success, observation is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > findingClassificationTone / findingClassificationLabel > a classification key outside the kernel map (pack-specific taxonomy) renders the key itself — never "unknown" 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > actionStatusTone / actionStatusLabel > verified is success, overdue is danger, proposed is neutral 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > actionStatusTone / actionStatusLabel > resolves every action status to a non-empty, PL/EN-differing label without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > actionKindLabel > distinguishes correction (removes the effect) from corrective_action (removes the cause) in the rendered label 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts > actionKindLabel > resolves every action kind to a non-empty label without throwing 0ms
+ ✓ src/components/Audit/method/__tests__/auditStatusTones.test.ts (31 tests) 41ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > renders a working kebab with Register enabled for a draft proposal
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > disables Register/Defer/Dismiss for an already-registered proposal, with a real reason
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > calls the real registerProposal endpoint and reflects the returned status
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditInitiativesTab src/components/Audit/method/tabs/AuditInitiativesTab.tsx:76:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns)
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell)
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8)
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditLibraryTab src/components/Audit/method/tabs/AuditLibraryTab.tsx:104:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > keeps contentHash out of the main table, and shows it only in the row preview
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > adds a real Pack version column and a Current/Superseded status column
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > marks a superseded Output distinctly instead of leaving it looking current
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > resolves programName/finalizedByName from the Hub-provided maps when the API field is null
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditOutputsTab src/components/Audit/method/tabs/AuditOutputsTab.tsx:77:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag OFF (localStorage override): renders the plain date, no "Po terminie" chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue, non-closed program shows the "Po terminie" chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue but CLOSED program does not show the chip (finished, not a risk)
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): a future due date shows the plain date, not the chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > falls back to "—" (never crashes) when neither the map nor the API field has a value
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r2.test.tsx > Day220 R2 — karta Sesji nie ujawnia surowego ID audytora > rozwiązuje ID przez mapę użytkowników i nie renderuje identyfikatora fixture
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełny tytuł pakietu i nazwę audytora w Sesjach
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditProcessesTab src/components/Audit/method/tabs/AuditProcessesTab.tsx:90:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > renders a working row kebab with Approve enabled for a draft report
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > calls the real approveReport endpoint and reflects the returned status
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > opens the row preview with audience/confidentiality — real data the table never showed before
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełnego odbiorcę i poufność w Raportach
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditReportsTab src/components/Audit/method/tabs/AuditReportsTab.tsx:82:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > używa realnego Postgresa wskazanego przez komplet env
+AssertionError: expected 'sqlite' to be 'postgres' // Object.is equality
+
+Expected: "postgres"
+Received: "sqlite"
+
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:53:33
+     51|
+     52|   it('używa realnego Postgresa wskazanego przez komplet env', () => {
+     53|     expect(process.env.DB_TYPE).toBe('postgres');
+       |                                 ^
+     54|     expect(process.env.DATABASE_URL).toContain('consultify_w3_audits_o…
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > nie zawiera wskazanych angielskich literalów ani w seederze, ani w zapisanych wierszach fixture
+error: relation "audit_packs" does not exist
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/pg/lib/client.js:545:17
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:61:20
+     59|     for (const literal of ENGLISH_LITERALS) expect(source).not.toConta…
+     60|
+     61|     const result = await client.query(`
+       |                    ^
+     62|         SELECT json_build_object(
+     63|           'organizations', (SELECT json_agg(name ORDER BY id) FROM org…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > osiąga polskie dane przez realny ApiGateway, podpisany JWT i trasy HTTP
+AssertionError: {"error":"You no longer have access to this organization","code":"ORG_MEMBERSHIP_REVOKED"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:81:60
+     79|     const reports = await request(app).get('/api/audits/reports').set(…
+     80|
+     81|     expect(programs.status, JSON.stringify(programs.body)).toBe(200);
+       |                                                            ^
+     82|     expect(reports.status, JSON.stringify(reports.body)).toBe(200);
+     83|     const payload = JSON.stringify({ programs: programs.body, reports:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/38]⎯
+
+
+ Test Files  9 failed | 13 passed (22)
+      Tests  38 failed | 110 passed (148)
+   Start at  18:07:55
+   Duration  41.49s (transform 15.11s, setup 969ms, import 25.83s, tests 6.06s, environment 5.88s)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > renders a working kebab with Register enabled for a draft proposal
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > disables Register/Defer/Dismiss for an already-registered proposal, with a real reason
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > calls the real registerProposal endpoint and reflects the returned status
+ FAIL  src/components/Audit/method/__tests__/AuditInitiativesTab.test.tsx > AuditInitiativesTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditInitiativesTab src/components/Audit/method/tabs/AuditInitiativesTab.tsx:76:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns)
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell)
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all
+ FAIL  src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8)
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditLibraryTab src/components/Audit/method/tabs/AuditLibraryTab.tsx:104:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > keeps contentHash out of the main table, and shows it only in the row preview
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > adds a real Pack version column and a Current/Superseded status column
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > marks a superseded Output distinctly instead of leaving it looking current
+ FAIL  src/components/Audit/method/__tests__/AuditOutputsTab.test.tsx > AuditOutputsTab > resolves programName/finalizedByName from the Hub-provided maps when the API field is null
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditOutputsTab src/components/Audit/method/tabs/AuditOutputsTab.tsx:77:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag OFF (localStorage override): renders the plain date, no "Po terminie" chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue, non-closed program shows the "Po terminie" chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): an overdue but CLOSED program does not show the chip (finished, not a risk)
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.overdue.test.tsx > AuditProcessesTab — overdue "Termin" signal (ff_auditsScaleAndPolish) > flag ON (default): a future due date shows the plain date, not the chip
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > resolves the Pack and Lead auditor columns from the Hub-provided maps, not the always-null API fields
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.test.tsx > AuditProcessesTab — pack/lead-auditor name resolution > falls back to "—" (never crashes) when neither the map nor the API field has a value
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r2.test.tsx > Day220 R2 — karta Sesji nie ujawnia surowego ID audytora > rozwiązuje ID przez mapę użytkowników i nie renderuje identyfikatora fixture
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełny tytuł pakietu i nazwę audytora w Sesjach
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditProcessesTab src/components/Audit/method/tabs/AuditProcessesTab.tsx:90:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > renders a working row kebab with Approve enabled for a draft report
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > calls the real approveReport endpoint and reflects the returned status
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > opens the row preview with audience/confidentiality — real data the table never showed before
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.test.tsx > AuditReportsTab — row kebab (DEC-2026-08-25-66) > shows Delete disabled with a real reason — never a silent no-op
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r3.test.tsx > Day220 R3 — pełna wartość jest dostępna mimo zwartego układu tabel > udostępnia pełnego odbiorcę i poufność w Raportach
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ AuditReportsTab src/components/Audit/method/tabs/AuditReportsTab.tsx:82:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > używa realnego Postgresa wskazanego przez komplet env
+AssertionError: expected 'sqlite' to be 'postgres' // Object.is equality
+
+Expected: "postgres"
+Received: "sqlite"
+
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:53:33
+     51|
+     52|   it('używa realnego Postgresa wskazanego przez komplet env', () => {
+     53|     expect(process.env.DB_TYPE).toBe('postgres');
+       |                                 ^
+     54|     expect(process.env.DATABASE_URL).toContain('consultify_w3_audits_o…
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > nie zawiera wskazanych angielskich literalów ani w seederze, ani w zapisanych wierszach fixture
+error: relation "audit_packs" does not exist
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/pg/lib/client.js:545:17
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:61:20
+     59|     for (const literal of ENGLISH_LITERALS) expect(source).not.toConta…
+     60|
+     61|     const result = await client.query(`
+       |                    ^
+     62|         SELECT json_build_object(
+     63|           'organizations', (SELECT json_agg(name ORDER BY id) FROM org…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 111, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '216', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/38]⎯
+
+ FAIL  src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx > Day220 R1 — polski fixture odbiorowy Audytów > osiąga polskie dane przez realny ApiGateway, podpisany JWT i trasy HTTP
+AssertionError: {"error":"You no longer have access to this organization","code":"ORG_MEMBERSHIP_REVOKED"}: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ src/components/Audit/method/__tests__/day220-audyty-rejestr.r1.test.tsx:81:60
+     79|     const reports = await request(app).get('/api/audits/reports').set(…
+     80|
+     81|     expect(programs.status, JSON.stringify(programs.body)).toBe(200);
+       |                                                            ^
+     82|     expect(reports.status, JSON.stringify(reports.body)).toBe(200);
+     83|     const payload = JSON.stringify({ programs: programs.body, reports:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/38]⎯
+
+
+ Test Files  9 failed | 13 passed (22)
+      Tests  38 failed | 110 passed (148)
+   Start at  18:07:55
+   Duration  41.50s (transform 15.11s, setup 969ms, import 25.83s, tests 6.06s, environment 5.88s)
+
+JSON report written to /private/tmp/wt-11a4-audyty-wnioski/junit.xml
+JUNIT report written to /private/tmp/wt-11a4-audyty-wnioski/junit.xml
+EXIT=1
