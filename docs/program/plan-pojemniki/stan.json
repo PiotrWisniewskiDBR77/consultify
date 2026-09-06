@@ -225,8 +225,8 @@
           "tresc": "Teresa odpowiada po polsku ze źródłami w każdym module MVP",
           "kto": "nadzorca",
           "artefakt": "16 odpowiedzi z used_sources > 0 w evidence/",
-          "stan": "czesciowo",
-          "dowod": "06.09: wejście do Teresy w prawym panelu 13 ekranów (P8, 72def3b049), e2e inicjatywa → odpowiedź PL ze Źródła>0; Czat „Źródła: 12” (A3); pomiar 16 odpowiedzi per moduł na stagingu w 1.9"
+          "stan": "tak",
+          "dowod": "06.09 (f29e535a3e): 13/13 modułów z wejściem — odpowiedź po polsku, źródła > 0 gdzie moduł ma dane, „Brak danych w module.” gdzie nie ma (Narzędzia, Audyty, Spotkania); 3 bez wejścia = Administracja, Ustawienia, Partner (poza MVP, decyzja CTO); evidence/teresa-16/ 16 zrzutów + RAPORT.md; pomiar na lokalnym stanowisku, potwierdzenie na stagingu w 1.9"
         },
         {
           "nr": "S1.7",
