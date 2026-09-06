@@ -194,7 +194,11 @@ describe('canonical cold reopen identity and read-only contract', () => {
     expect(within(settings).getByText(/ID sesji:\s*sess-http-1/)).toBeInTheDocument();
     expect(within(settings).getByText(new RegExp(DRD_METHOD_PACK_VERSION.replaceAll('.', '\\.')))).toBeInTheDocument();
     expect(within(settings).getByText('Wersja sesji v7')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Zapisz teraz' })).toBeDisabled();
+    // DEC-415b (06.09): „Zapisz teraz" zniknął z nagłówka razem z pigułką
+    // statusu i „Zapisano" — zapis jest automatyczny, więc nie ma czym
+    // potwierdzać braku prawa zapisu w nagłówku. Kontrakt tylko-do-odczytu
+    // czytamy tam, gdzie realnie mieszka: w panelu Ustawień tej samej sesji.
+    expect(within(settings).getByText('Tylko odczyt')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pracuję samodzielnie' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Prowadzi Teresa' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
