@@ -513,6 +513,15 @@ interface ExecutionDecision {
   dueDate?: string;
   ownerName?: string;
   relatedObjectName?: string;
+  // POMIAR (1.1-E-1, DEC-426): `relatedObjectName` (wyżej) NIE jest zwracane
+  // przez GET /api/decisions (DecisionController.getDecisions) — kontroler
+  // daje `relatedObjectType`/`relatedObjectId` (patrz `resolveRelatedObject`),
+  // więc pole wyżej jest martwe (zawsze `undefined`, ZNALEZISKO — pre-existing,
+  // patrz `renderDecisionsBuckets`/`DecisionRow` niżej w tym pliku, które i tak
+  // rozwiązują nazwę inicjatywy przez `relatedObjectId` + `initiatives.find`).
+  // Te dwa pola odzwierciedlają REALNY kształt odpowiedzi.
+  relatedObjectType?: string;
+  relatedObjectId?: string;
 }
 
 type PMOHealthSnapshot = {
@@ -619,6 +628,11 @@ type ExecutiveAggregateSnapshot = {
       impact: string | null;
       score: number;
       ownerId: string | null;
+      // DEC-426 (1.1-E-1): dopisane obok istniejących pól (executiveAggregateService.ts).
+      ownerName: string | null;
+      initiativeId: string | null;
+      initiativeName: string | null;
+      status: string | null;
       dueDate: string | null;
       mitigationStatus: string | null;
     }>;
@@ -736,6 +750,13 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['failed', t('execution.menu3.reports.failed', 'Failed')],
       ['recent', t('execution.menu3.reports.recent', 'Recent runs')],
     ].map(([id, label]) => ({ id, label })),
+    // DEC-426 (1.1-E-1, właściciel 06.09): Kokpit menedżera nie miał Menu 3 —
+    // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są
+    // teraz JEDNA tabela pełnej szerokości, przełączana tym przyciskiem-chipem.
+    summary: [
+      ['ryzyka', t('execution.menu3.summary.risks', 'Ryzyka')],
+      ['rozstrzygniecia', t('execution.menu3.summary.decisions', 'Rozstrzygnięcia')],
+    ].map(([id, label]) => ({ id, label })),
   };
 }
 
@@ -778,6 +799,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     resources: 'all',
     control: 'needs-action',
     reports: 'all',
+    // DEC-426 (1.1-E-1): domyślnie aktywne „Ryzyka" (KROK 3, test a).
+    summary: 'ryzyka',
   });
   const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<
     Record<string, Record<string, number>>
@@ -984,6 +1007,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const targetView = String(searchParams.get('view') || '')
       .trim()
       .toLowerCase();
+    // DEC-426 (1.1-E-1): deep-link `?kokpit=ryzyka|rozstrzygniecia` na Kokpicie
+    // menedżera (Menu 3 — patrz `getExecutionMenu3().summary`). Czytane raz,
+    // niezależnie od tego, którą gałęzią niżej trafi `tab` — dalej tylko czeka
+    // aż użytkownik faktycznie jest na zakładce `summary`.
+    const targetKokpit = String(searchParams.get('kokpit') || '')
+      .trim()
+      .toLowerCase();
+    if (targetKokpit === 'ryzyka' || targetKokpit === 'rozstrzygniecia') {
+      setCanonicalMenu3Preset((current) => ({ ...current, summary: targetKokpit }));
+    }
 
     // A canonical Initiative deep link wins over the list-tab default. The
     // executionCaseId may remain in the URL as correlation metadata, but the
@@ -1076,9 +1109,30 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       next.delete('initiativeId');
       changed = true;
     }
+    // DEC-426 (1.1-E-1): `?kokpit=ryzyka|rozstrzygniecia` odzwierciedla chip
+    // Menu 3 Kokpitu menedżera; poza zakładką `summary` param znika (nie
+    // zaśmieca URL innych zakładek Realizacji).
+    const currentKokpit = String(next.get('kokpit') || '').trim();
+    const desiredKokpit = activeTab === 'summary' ? canonicalMenu3Preset.summary || 'ryzyka' : '';
+    if (desiredKokpit) {
+      if (currentKokpit !== desiredKokpit) {
+        next.set('kokpit', desiredKokpit);
+        changed = true;
+      }
+    } else if (currentKokpit) {
+      next.delete('kokpit');
+      changed = true;
+    }
     if (!changed) return;
     setSearchParams(next, { replace: true });
-  }, [activeDocumentId, activeTab, searchParams, setSearchParams, viewMode]);
+  }, [
+    activeDocumentId,
+    activeTab,
+    canonicalMenu3Preset.summary,
+    searchParams,
+    setSearchParams,
+    viewMode,
+  ]);
 
   const buildLocalExecutiveSnapshot = useCallback((): ExecutiveAggregateSnapshot => {
     const now = new Date();
@@ -3531,13 +3585,22 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     const roi = execSnapshot?.roi?.summary ?? null;
 
+    // DEC-426 (1.1-E-1): rozwiązanie nazwy inicjatywy dla decyzji korzysta z
+    // TEGO SAMEGO wzorca co `renderDecisionsBuckets`/`DecisionRow` niżej w tym
+    // pliku (relatedObjectId + initiatives.find) — GET /api/decisions nie
+    // zwraca gotowej nazwy, tylko typ+id powiązanego obiektu.
+    const initiativeNameById = new Map(initiatives.map((i) => [i.id, i.name]));
+
     const risks = (execSnapshot?.risks?.topRisks ?? []).slice(0, 3).map((r) => ({
       id: r.id,
       title: r.title,
       probability: r.probability,
       impact: r.impact,
       score: r.score,
-      ownerName: null,
+      ownerName: (r as any).ownerName ?? null,
+      initiativeId: (r as any).initiativeId ?? null,
+      initiativeName: (r as any).initiativeName ?? null,
+      status: (r as any).status ?? null,
       dueDate: r.dueDate,
       mitigationStatus: r.mitigationStatus,
     }));
@@ -3555,27 +3618,44 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       kind: 'blocker' as const,
       ownerName: (i as any).ownerName ?? null,
       ageDays: null,
+      dueDate: (i as any).plannedEndDate ?? null,
+      initiativeId: i.id,
+      initiativeName: i.name ?? null,
       context: t('execution.summary.blockedInitiative', 'Zablokowana inicjatywa'),
     }));
-    const overdueDecisionItems = actionCenter.overdueDecisions.map((d) => ({
-      id: `dec:${d.id}`,
-      title: (d as any).title || (d as any).name || 'Decision',
-      kind: 'overdue' as const,
-      ownerName: (d as any).ownerName ?? null,
-      ageDays: ageDays((d as any).dueDate),
-      context: null,
-    }));
+    const overdueDecisionItems = actionCenter.overdueDecisions.map((d) => {
+      const relId =
+        (d as any).relatedObjectType === 'initiative' ? (d as any).relatedObjectId : null;
+      return {
+        id: `dec:${d.id}`,
+        title: (d as any).title || (d as any).name || 'Decision',
+        kind: 'overdue' as const,
+        ownerName: (d as any).ownerName ?? null,
+        ageDays: ageDays((d as any).dueDate),
+        dueDate: (d as any).dueDate ?? null,
+        initiativeId: relId,
+        initiativeName: relId ? (initiativeNameById.get(relId) ?? null) : null,
+        context: null,
+      };
+    });
     const pendingDecisionItems = decisions
       .filter((d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate))
       .slice(0, 6)
-      .map((d) => ({
-        id: `pend:${d.id}`,
-        title: (d as any).title || (d as any).name || 'Decision',
-        kind: 'decision' as const,
-        ownerName: (d as any).ownerName ?? null,
-        ageDays: ageDays((d as any).createdAt),
-        context: null,
-      }));
+      .map((d) => {
+        const relId =
+          (d as any).relatedObjectType === 'initiative' ? (d as any).relatedObjectId : null;
+        return {
+          id: `pend:${d.id}`,
+          title: (d as any).title || (d as any).name || 'Decision',
+          kind: 'decision' as const,
+          ownerName: (d as any).ownerName ?? null,
+          ageDays: ageDays((d as any).createdAt),
+          dueDate: (d as any).dueDate ?? null,
+          initiativeId: relId,
+          initiativeName: relId ? (initiativeNameById.get(relId) ?? null) : null,
+          context: null,
+        };
+      });
 
     const milestones = (execSnapshot?.overview?.nextMilestones ?? []).map((m) => ({
       id: m.id,
@@ -3629,7 +3709,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     decisions,
     tasks,
     dashboardBaseInitiatives,
+    initiatives,
     t,
+  ]);
+
+  // DEC-426 (1.1-E-1): liczniki chipów Menu 3 Kokpitu (Ryzyka/Rozstrzygnięcia)
+  // — ta sama para list co tabela, więc licznik = to, co użytkownik faktycznie
+  // zobaczy po kliknięciu chipa (zero rozjazdu miedzy pigułką a tabelą).
+  useEffect(() => {
+    if (!summaryOneLookEnabled) return;
+    setCanonicalMenu3Counts((current) => ({
+      ...current,
+      summary: {
+        ryzyka: summaryOneLookProps.topRisks.length,
+        rozstrzygniecia: summaryOneLookProps.decisions.length,
+      },
+    }));
+  }, [
+    summaryOneLookEnabled,
+    summaryOneLookProps.topRisks.length,
+    summaryOneLookProps.decisions.length,
   ]);
 
   const activeExecutionInitiativeIds = useMemo(() => {
@@ -5932,6 +6031,9 @@ Please return:
           currency="PLN"
           isPolish={isPolish}
           generatedAt={summaryOneLookProps.generatedAt}
+          activeView={
+            canonicalMenu3Preset.summary === 'rozstrzygniecia' ? 'rozstrzygniecia' : 'ryzyka'
+          }
           onOpenEntity={openEntityById}
         />
       );
