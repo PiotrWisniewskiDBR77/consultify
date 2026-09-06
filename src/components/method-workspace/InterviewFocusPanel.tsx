@@ -9,11 +9,12 @@
  * path per channel (A5 spec, cross-cutting requirement).
  */
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Paperclip, SkipForward, Sparkles } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { MethodEvidenceState, ResolutionAction, ResolutionCardData } from './types';
 import type { InterviewFocusQuestion } from './types';
 import { AnswerStateControl } from './AnswerStateControl';
+import { answerStateCardClass, answerStateDotClass } from './answerStateColors';
 import { QuestionHelpDisclosure } from './QuestionHelpDisclosure';
 import { VoiceAnswerChannel } from './VoiceAnswerChannel';
 import { SKIP_REASON_OPTIONS, type DrdSkipReasonCode } from './skipReasonCodes';
@@ -78,6 +79,28 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
   const [activeSequenceIndex, setActiveSequenceIndex] = useState(0);
   const primary = questions[0];
 
+  // Dyktowanie dopisuje do NAJŚWIEŻSZEJ treści pola, nie do tej, którą
+  // rozpoznawanie mowy zapamiętało przy pierwszym uruchomieniu. Instancja
+  // `SpeechRecognition` w `useUniversalVoice` jest cache'owana w refie, więc
+  // jej handler `onresult` trzyma domknięcie z pierwszego renderu — bez tego
+  // refu drugi i każdy kolejny fragment nadpisywałby poprzedni.
+  const answerTextRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    questions.forEach((q) => {
+      answerTextRef.current[q.question.questionId] = q.answerText;
+    });
+  }, [questions]);
+
+  const appendTranscript = useCallback(
+    (questionId: string, text: string) => {
+      const current = answerTextRef.current[questionId] ?? '';
+      const next = `${current} ${text}`.trim();
+      answerTextRef.current[questionId] = next;
+      onAnswerChange(questionId, next);
+    },
+    [onAnswerChange]
+  );
+
   useEffect(() => {
     setActiveSequenceIndex(0);
   }, [primary?.question.questionId]);
@@ -123,6 +146,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
       {questions.map((q, sequenceIndex) => {
         const expanded = sequenceIndex === activeSequenceIndex;
         const answered = q.answerState !== null || q.answerText.trim().length > 0;
+        const stateDot = answerStateDotClass(q.answerState);
 
         if (!expanded) {
           return (
@@ -133,9 +157,18 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               className="flex w-full items-center gap-3 rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3 text-left hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               aria-label={`Otwórz krok ${sequenceIndex + 1}: ${q.question.canonicalWording}`}
             >
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-success/10 text-c-success' : 'bg-c-surface-raised text-c-text-muted'}`}>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${answered ? 'bg-c-surface-raised text-c-text' : 'bg-c-surface-raised text-c-text-muted'}`}>
                 {answered ? <Check size={14} /> : sequenceIndex + 1}
               </span>
+              {stateDot && (
+                <span
+                  data-testid={`step-state-dot-${q.question.questionId}`}
+                  data-answer-state={q.answerState}
+                  aria-hidden="true"
+                  title={`Stan odpowiedzi: ${q.answerState}`}
+                  className={`shrink-0 h-2 w-2 rounded-full ${stateDot}`}
+                />
+              )}
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary">
                 {q.question.canonicalWording}
               </span>
@@ -145,7 +178,12 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
         }
 
         return (
-        <div key={q.question.questionId} className="rounded-xl border border-c-border bg-c-surface p-4 space-y-4">
+        <div
+          key={q.question.questionId}
+          data-testid={`question-card-${q.question.questionId}`}
+          data-answer-state={q.answerState ?? 'unanswered'}
+          className={`rounded-xl border p-4 space-y-4 transition-colors ${answerStateCardClass(q.answerState)}`}
+        >
           <div>
             <h2 className="text-base font-semibold text-c-text">{q.question.canonicalWording}</h2>
             {q.question.intent && (
@@ -176,7 +214,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
               <VoiceAnswerChannel
                 disabled={readOnly}
                 onTranscript={(text, isFinal) => {
-                  if (isFinal) onAnswerChange(q.question.questionId, `${q.answerText} ${text}`.trim());
+                  if (isFinal && text.trim()) appendTranscript(q.question.questionId, text.trim());
                 }}
               />
             </div>
@@ -321,7 +359,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
         <button
           type="button"
           onClick={() => onAskTeresa(primary.question.questionId, 'explain')}
-          disabled={readOnly}
+          data-testid="ask-teresa-command"
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Sparkles size={13} />
