@@ -52,6 +52,10 @@ import { buildToolSessionOverflowItems } from './toolSessionOverflowItems';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { EmbeddedView } from '../shared/NModeBlocks';
 import { type NModePropertyField, type NModeSection, NModeShell } from '../shared/NModeLayout';
+import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import {
   ActivityLogCanvas,
   type ActivityLogEntry,
@@ -2393,6 +2397,67 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     ]
   );
 
+  // ── [ODMROZENIE 03_TOOLS DEC-407] „Pracuj z AI" w sesji narzędzia ────────
+  // Słowa właściciela 06.09 przy karcie sesji Dynamic SWOT: „tutaj też powinniśmy
+  // mieć WorkWithAI, który będzie rozwijał listę (…) teraz jest jakaś archaiczna
+  // formuła". Archaiczną formułą był przycisk „Zapytaj Teresę" w Menu 1 plus
+  // wyskakujące okno „Propozycje Teresy" — dwie nazwy własne, których nie ma
+  // żadna inna karta.
+  //
+  // Analizuj: silnik `cardAnalysis` MA rubrykę dla typu `tool`
+  // (`ARTIFACT_CRITERIA.tool`, 4 kryteria) i do dziś NIKT jej nie wołał —
+  // podłączam istniejący generator, nie buduję nowego.
+  const buildToolAnalysisInput = useCallback(
+    () => ({
+      artifactType: 'tool' as const,
+      cardId: activeSection,
+      artifactTitle: sessionName || defaultSessionName(toolMeta.name, isPolish),
+      artifactContext: [
+        `${isPolish ? 'Narzędzie' : 'Tool'}: ${toolMeta.name} (${toolType})`,
+        `Status: ${statusLabel(toolStatus)}`,
+        `${isPolish ? 'Postęp' : 'Progress'}: ${progress}%`,
+        `${isPolish ? 'Bieżący krok' : 'Current step'}: ${currentStepDef?.name || '—'}`,
+      ].join('\n'),
+      fields: [
+        {
+          id: 'tool-session-content',
+          label: isPolish ? 'Treść sesji narzędzia' : 'Tool session content',
+          // Sesja narzędzia trzyma treść w strukturach per narzędzie (SWOT,
+          // macierze, kroki) — karta NIE potrafi zapisać do nich tekstem, więc
+          // pole jest jawnie `writable: false`. Analiza czyta; „Zastosuj" ma
+          // wtedy uczciwy powód, zamiast udawać zapis.
+          value:
+            swotData?.summary?.executiveSummary ||
+            (isPolish ? '(brak podsumowania sesji)' : '(no session summary)'),
+          kind: 'text' as const,
+          writable: false,
+        },
+      ],
+      isPolish,
+    }),
+    [
+      activeSection,
+      sessionName,
+      toolMeta.name,
+      toolType,
+      toolStatus,
+      progress,
+      currentStepDef?.name,
+      swotData?.summary?.executiveSummary,
+      isPolish,
+    ]
+  );
+
+  const toolCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: buildToolAnalysisInput,
+    // Brak pola zapisywalnego ⇒ zapis zawsze nieudany, jawnie. Panel pokaże to
+    // jako „nie udało się zastosować", zamiast skasować pracę w ciszy.
+    applyChange: () => false,
+  });
+
+  const swotProposalsDostepne = toolType === 'dynamic-swot' && Boolean(toolSessionId);
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -2450,18 +2515,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           statusLabel: statusLabel(toolStatus),
           statusTone:
             toolStatus === 'DRAFT' ? 'draft' : toolStatus === 'REVIEW' ? 'review' : 'approved',
-          inlineActions:
-            toolType === 'dynamic-swot' ? (
-              <button
-                type="button"
-                onClick={() => setShowTeresaProposals((visible) => !visible)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 text-xs font-semibold text-c-text-secondary transition hover:bg-c-surface"
-                data-testid="ask-teresa-header"
-              >
-                <Sparkles size={13} />
-                {isPolish ? 'Zapytaj Teresę' : 'Ask Teresa'}
-              </button>
-            ) : undefined,
+          // DEC-407: przycisk „Zapytaj Teresę" ZDJĘTY z Menu 1. Wejście do
+          // uzupełniania jest teraz tam, gdzie w każdej innej karcie: w liście
+          // „Pracuj z AI" w Menu 5. Wejście do ROZMOWY z Teresą zostaje
+          // w prawym panelu (`teresaEntry` niżej) — zgodnie z DEC-404.
         }}
         rightPanel={
           <div data-testid="tool-session-properties" className="h-full">
@@ -2485,10 +2542,77 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         sections={sections}
         actions={[]}
         actionsVisible={false}
+        /* Menu 5 sesji narzędzia — do 2026-09-06 ta karta NIE MIAŁA go wcale
+           (`actions=[]`, brak `renderActionBar`), więc nie miała gdzie postawić
+           standardowego wejścia AI. Przełącznika „Edycja | Podgląd" świadomie
+           tu nie ma: sesja narzędzia nie zna trybu podglądu (brak stanu
+           `readMode` w tym pliku) — dokładanie atrapy przełącznika byłoby
+           obietnicą bez pokrycia. Zgłoszone w meldunku. */
+        renderActionBar={() => (
+          <NModeMenu2
+            isPolish={isPolish}
+            aiButton={
+              <PracujZAI
+                isPolish={isPolish}
+                onAnalizuj={toolCardAnalysis.run}
+                analizaWToku={toolCardAnalysis.loading}
+                analizaOtwarta={toolCardAnalysis.open}
+                aktywnaSekcja={activeSection}
+                kontekstArtefaktu={{
+                  title: sessionName || defaultSessionName(toolMeta.name, isPolish),
+                  status: toolStatus,
+                  type: 'tool',
+                }}
+                moznaEdytowac={toolStatus !== 'APPROVED'}
+                powodTylkoOdczyt={
+                  isPolish ? 'sesja zatwierdzona' : 'session is approved'
+                }
+                /* Oba uzupełnienia prowadzą do ISTNIEJĄCEGO mechanizmu
+                   propozycji tej karty: `TeresaSwotProposals` (tabela
+                   `swot_proposals`, akcept/odrzucenie po stronie serwera).
+                   Poza Dynamic SWOT żadne narzędzie nie ma dziś generatora
+                   propozycji — pozycje renderują się wtedy wyszarzone. */
+                uzupelnijSekcje={
+                  swotProposalsDostepne
+                    ? {
+                        rodzaj: 'wlasnaPropozycja',
+                        uruchom: () => setShowTeresaProposals(true),
+                        opis: isPolish
+                          ? 'Teresa zaproponuje pozycje do ćwiartki, na którą patrzysz. Każda propozycja ma „Zaakceptuj" i „Odrzuć" — do macierzy trafia tylko to, co zaakceptujesz.'
+                          : 'Teresa proposes items for the quadrant you are looking at. Every proposal has Accept and Reject — only what you accept reaches the matrix.',
+                      }
+                    : undefined
+                }
+                uzupelnijDokument={
+                  swotProposalsDostepne
+                    ? {
+                        rodzaj: 'wlasnaPropozycja',
+                        uruchom: () => setShowTeresaProposals(true),
+                        opis: isPolish
+                          ? 'Teresa zaproponuje pozycje we wszystkich czterech ćwiartkach naraz. Nic nie wchodzi do macierzy bez Twojej akceptacji propozycja po propozycji.'
+                          : 'Teresa proposes items across all four quadrants at once. Nothing enters the matrix without your acceptance, proposal by proposal.',
+                      }
+                    : undefined
+                }
+              />
+            }
+          />
+        )}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
       >
-        {null}
+        <NCardAIAnalysisPanel
+          open={toolCardAnalysis.open}
+          loading={toolCardAnalysis.loading}
+          result={toolCardAnalysis.result}
+          errorCode={toolCardAnalysis.errorCode}
+          serverErrorCode={toolCardAnalysis.serverErrorCode}
+          onClose={toolCardAnalysis.close}
+          onRerun={toolCardAnalysis.rerun}
+          onApplyChange={toolCardAnalysis.applyChange}
+          writableFieldIds={[]}
+          isPolish={isPolish}
+        />
       </NModeShell>
 
       {showTeresaProposals && toolType === 'dynamic-swot' && toolSessionId ? (
