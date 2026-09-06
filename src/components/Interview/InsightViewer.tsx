@@ -9283,6 +9283,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           // jasna zaokraglona karta odsunieta od brzegu (wariant _DOCKED).
           <ArtifactRightPanel
             sections={rightPanelSections}
+            teresaEntry={{
+              label: isPolish ? 'Zapytaj Teresę o ten wniosek' : 'Ask Teresa about this insight',
+              onOpen: openInsightConsultant,
+              disabled: !insight,
+            }}
             className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('interview.insightViewer.insightDetails')}
             statusBar={

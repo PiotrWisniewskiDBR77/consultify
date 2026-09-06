@@ -34,6 +34,7 @@ import {
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { resolveToolStatus } from '@/domain/toolStatus';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisField } from '@/services/cardAnalysis';
@@ -162,6 +163,7 @@ export function KnownToolDetailView(props: {
   const lang = i18n.language === 'pl' ? 'pl' : 'en';
   const isPolish = lang === 'pl';
   const { currentProjectId } = useAppStore();
+  const openChatWithContext = useOpenChatWithContext();
   const {
     setOpen: setHelpOpen,
     setActiveTab: setHelpTab,
@@ -2620,6 +2622,16 @@ export function KnownToolDetailView(props: {
           // `rightPanel` w NModeShell jest pelnowysokosciowy).
           <ArtifactRightPanel
             sections={rightPanelSections}
+            teresaEntry={{
+              label: isPolish ? 'Zapytaj Teresę o to narzędzie' : 'Ask Teresa about this tool',
+              onOpen: () => void openChatWithContext({
+                entityType: 'tool',
+                entityId: toolType,
+                entityName: toolType,
+                contextData: { toolType, projectId: currentProjectId },
+                reuseActiveConversation: true,
+              }),
+            }}
             className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
           />

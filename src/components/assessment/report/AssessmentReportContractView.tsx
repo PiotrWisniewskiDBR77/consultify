@@ -15,6 +15,7 @@ import {
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   getAssessmentReportContract,
   isOfflineError,
@@ -297,6 +298,7 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
   className,
 }) => {
   const { t, i18n } = useTranslation();
+  const openChatWithContext = useOpenChatWithContext();
   const enabled = isAssessmentReportViewEnabled();
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [reload, setReload] = useState(0);
@@ -535,6 +537,10 @@ export const AssessmentReportContractView: React.FC<AssessmentReportContractView
           rightPanel={
             <ArtifactRightPanel
               sections={panelSections}
+              teresaEntry={{
+                label: i18n.language?.startsWith('pl') ? 'Zapytaj Teresę o ten raport oceny' : 'Ask Teresa about this assessment report',
+                onOpen: () => void openChatWithContext({ entityType: 'assessment-report', entityId: sessionId, entityName: contract?.sessionId || sessionId, pmoContext: { assessmentId: sessionId }, reuseActiveConversation: true }),
+              }}
               ariaLabel={t('assessment.reportView.panelLabel')}
               className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             />
