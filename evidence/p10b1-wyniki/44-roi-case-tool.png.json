@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3110/results/roi/cases/6e003785-1673-56b6-a387-27c5d969beca",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nRejestr ROI\nAutomatyzacja magazynu WIP\nAutomatyzacja magazynu WIP\nSzkic\nZałożenia\nModel\nWynik\nWyniki po wdrożeniu\nWnioski i rekomendacja\nParametry przypadku biznesowego\nKoszty łącznie\n—\nHoryzont analizy\n59 miesięcy (styczeń 2027 – grudzień 2031)\nStopa dyskontowa\n8% rocznie\nData startu analizy\n1 sty 2027\nMetoda liczenia\nprzepływy roczne, roi/npv/payback, przed opodatkowaniem\nWaluta\nPLN, inflacja 3%\nSkład inwestycji\n\nTa sprawa nie ma jeszcze ani jednej pozycji kosztowej — dopóki ich nie ma, nie da się uczciwie napisać, na co idą pieniądze.\n\nDodaj pozycje kosztowe\nŹródła liczb\nPoziom bazowy — 18 dni; stan na 31 sie 2026; seed:wyniki-dbr77-20260905; pewność: Średnia\nOdzyskana powierzchnia magazynowa — Rzut hali — wariant wstępny\nRotacja WIP po automatyzacji — Szacunek własny — brak danych z rynku\nMiesięczna opłata w modelu RaaS — Wstępna rozmowa z dwoma dostawcami\nPolityka kalkulacji — Analiza w fazie założeń — model wariantu RaaS nie jest jeszcze policzony, dlatego CAPEX, korzyść, ROI, Payback, NPV i IRR pozostają puste („—\"), a nie zerowe.\n\nWłaściciel liczb: Audyt Nocny\n\nAKCJE\nZaplanuj przegląd PIR\n\nDziałania na danych sprawy znajdziesz w pasku zakładek bieżącej sekcji.\n\nPrzejścia cyklu życia (zgłoszenie, akceptacja, odrzucenie) wykonuje się z menu wiersza w rejestrze ROI — jest tam jedna implementacja, bez kopii w karcie.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nNumer sprawy\t6e003785-1673-56b6-a387-27c5d969beca\nStatus\tSzkic\nFaza cyklu\tW toku\nWłaściciel\tAudyt Nocny\nWaluta\tPLN\nZiarno analizy\tRoczna\nOkres analizy\t1 sty 2027 – 31 gru 2031\nNastępny krok\tBrak\nNastępny przegląd\t—\nOstatnia aktualizacja\t5 wrz 2026\nPOWIĄZANIA\n1\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "kiedy": "2026-09-06T18:13:48.928Z"
+}
