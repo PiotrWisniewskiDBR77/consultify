@@ -78,6 +78,14 @@ import {
 } from 'lucide-react';
 
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { SectionsManagerMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
+import { useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import type { ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import type { NModeHeaderConfig, NModeHeaderPrimaryAction, NModeSection } from '@/components/shared/NModeLayout/types';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
@@ -93,17 +101,26 @@ import { closeActionCard, createTaskFromActionCard, listActionCards } from '@/se
 import { EmptyState } from '@/components/shared/states';
 
 import { HonestValueCell } from '../HonestValue';
+import {
+  KartaWynikowChrome,
+  PasekZapisuAI,
+  useZapisPolAI,
+  zbudujSpecSekcji,
+} from '../shared/kartaWynikow';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
 import {
   activateKpi,
   archiveKpi,
+  editKpiDraft,
   getKpi,
   getKpiCurrentDefinitionVersion,
   getKpiHistory,
   listKpiMeasurements,
+  newKpiIdempotencyKey,
   suspendKpi,
+  type EditKpiDraftInput,
   type KpiDefinitionDto,
   type KpiDefinitionVersionDto,
   type KpiHistoryEntryDto,
@@ -601,6 +618,277 @@ export const KpiToolPage: React.FC = () => {
     () => (Array.isArray(deviationCases) ? deviationCases.filter((c) => c.status !== 'closed').length : 0),
     [deviationCases]
   );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] KARTA N MIERNIKA — Menu 5,
+  // „Pracuj z AI", przyklejone nagłówki.
+  //
+  // SŁOWA WŁAŚCICIELA (06.09.2026, otwarta karta miernika): „Znowu nie ma
+  // drugiego, trzeciego menu; nie otwiera się ta karta w trzecim menu, nie da
+  // się tym zarządzać. Nie ma przycisku Work with AI. To normalne N-type
+  // narzędzie, muszą tu być wszystkie narzędzia z nim związane."
+  //
+  // SSOT: docs/ssot/STEROWANIE_KART_N_I_AI.md (zasady 2, 2b, 3).
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * ZASADA 2b — JEDYNE sprawdzenie prawa edycji, jakie ta karta MA.
+   *
+   * Zmierzone, nie założone: w całym `KpiToolPage.tsx` nie było ANI JEDNEGO
+   * `canEdit`/`readOnly`/sprawdzenia roli (grep 06.09.2026 = 0 trafień). Ale
+   * serwer ma twardą bramkę: `PUT /vnext/results/kpi/:kpiId/draft` odrzuca
+   * zapis kodem `NOT_A_DRAFT`, gdy bieżąca wersja definicji nie jest szkicem
+   * (`kpiDefinitionCommands.ts` L575-578). To jest realne prawo edycji tej
+   * karty i to ono steruje przełącznikiem „Edycja | Podgląd" oraz pozycjami
+   * „Uzupełnij…". Nie wymyślamy roli, której backend nie zna.
+   *
+   * Miernik ARCHIWALNY jest zamknięty niezależnie od stanu wersji.
+   */
+  const wersjaDefinicji = definitionVersion !== 'loading' ? definitionVersion : null;
+  const mozeEdytowac =
+    !!kpi &&
+    kpi.status !== 'archived' &&
+    !!wersjaDefinicji &&
+    wersjaDefinicji.approvalStatus === 'draft';
+
+  /**
+   * Domyślnie karta startuje w tym trybie, na jaki użytkownik ma prawo:
+   * z prawem edycji — „Edycja", bez prawa — „Podgląd" (a przełącznika po
+   * prostu nie ma, Zasada 2b). Start w „Podgląd" mimo prawa ukrywałby
+   * „Uzupełnij…" za dodatkowym kliknięciem, którego nikt nie zamawiał.
+   */
+  const [readMode, setReadMode] = useState(!mozeEdytowac);
+  useEffect(() => {
+    setReadMode(!mozeEdytowac);
+  }, [mozeEdytowac]);
+
+  /**
+   * Bieżąca wersja definicji trzymana w ref — każdy zapis szkicu PODNOSI
+   * `rowVersion` (CAS), więc drugie pole z tej samej propozycji musi wysłać
+   * wersję zwróconą przez pierwszy zapis, nie tę z pierwszego renderu.
+   */
+  const wersjaRef = React.useRef<KpiDefinitionVersionDto | null>(null);
+  useEffect(() => {
+    wersjaRef.current = wersjaDefinicji;
+  }, [wersjaDefinicji]);
+
+  /** Pola kontraktu miernika, do których backend REALNIE potrafi zapisać. */
+  const POLA_KONTRAKTU: Record<string, 'name' | 'description' | 'formulaText'> = useMemo(
+    () => ({
+      name: 'name',
+      description: 'description',
+      formulaText: 'formulaText',
+    }),
+    []
+  );
+
+  const zapiszPoleKontraktu = useCallback(
+    async (poleId: string, wartosc: string) => {
+      const klucz = POLA_KONTRAKTU[poleId];
+      const wersja = wersjaRef.current;
+      if (!klucz) throw Object.assign(new Error('FIELD_NOT_WRITABLE'), { code: 'FIELD_NOT_WRITABLE' });
+      if (!kpiId || !wersja) throw Object.assign(new Error('NO_CURRENT_VERSION'), { code: 'NO_CURRENT_VERSION' });
+      // Klucz WPROST, nie `[klucz]: wartosc` — pole wyliczane rozszerzyłoby typ
+      // obiektu o indeks `[x: string]`, przez co kompilator przestałby pilnować
+      // zgodności z `EditKpiDraftInput` (czyli dokładnie tego, po co ten typ jest).
+      const patch: EditKpiDraftInput = {
+        expectedVersion: wersja.rowVersion,
+        idempotencyKey: newKpiIdempotencyKey(),
+      };
+      if (klucz === 'name') patch.name = wartosc;
+      else if (klucz === 'description') patch.description = wartosc;
+      else patch.formulaText = wartosc;
+      const nowa = await editKpiDraft(kpiId, patch);
+      wersjaRef.current = nowa;
+      setDefinitionVersion(nowa);
+    },
+    [POLA_KONTRAKTU, kpiId]
+  );
+
+  const zapisAI = useZapisPolAI(zapiszPoleKontraktu);
+
+  /**
+   * Deklaracja pól per sekcja — JEDNO źródło dla „Analizuj" i „Uzupełnij…".
+   * Zapisywalne są WYŁĄCZNIE trzy pola tekstowe kontraktu. Świadomie NIE ma
+   * tu ani właściciela, ani progów celu:
+   *   · `ownerUserId` — `POST /vnext/results/kpi` w ogóle go nie przyjmuje,
+   *     a `PUT .../draft` nie ma go w schemacie (kpiApi.ts, komentarz
+   *     „ownerUserId is deliberately NOT accepted here"); nie ma dokąd zapisać,
+   *   · progi/geometria celu — to LICZBY; generowanie liczby przez model
+   *     byłoby zmyśleniem pomiaru, nie uzupełnieniem prozy.
+   * Oba braki są zgłoszone w meldunku, nie ukryte.
+   */
+  const kpiPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+      const w = wersjaDefinicji;
+      if (sekcjaId === 'contract') {
+        if (!w) return [];
+        return [
+          {
+            id: 'name',
+            label: isPolish ? 'Nazwa miernika' : 'Metric name',
+            value: w.name ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: isPolish
+              ? 'Krótka, jednoznaczna nazwa mierzonego zjawiska.'
+              : 'A short, unambiguous name of the measured phenomenon.',
+          },
+          {
+            id: 'description',
+            label: isPolish ? 'Definicja miernika' : 'Metric definition',
+            value: w.description ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: isPolish
+              ? 'Co dokładnie mierzymy, na jakiej populacji i w jakim okresie.'
+              : 'What exactly is measured, on which population and over which period.',
+          },
+          {
+            id: 'formulaText',
+            label: isPolish ? 'Formuła obliczania' : 'Calculation formula',
+            value: w.formulaText ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: isPolish
+              ? 'Licznik, mianownik, źródło danych i moment odczytu.'
+              : 'Numerator, denominator, data source and read moment.',
+          },
+          {
+            id: 'unit',
+            label: isPolish ? 'Jednostka' : 'Unit',
+            value: w.unit ?? '',
+            kind: 'text',
+            writable: false,
+          },
+        ];
+      }
+      if (sekcjaId === 'performance') {
+        const pomiar = measurement !== 'loading' ? measurement : null;
+        return [
+          {
+            id: 'lastMeasurement',
+            label: isPolish ? 'Ostatni pomiar' : 'Latest measurement',
+            value:
+              pomiar && pomiar.actualValue !== null
+                ? `${pomiar.actualValue} (${pomiar.periodStart} – ${pomiar.periodEnd})`
+                : '',
+            kind: 'text',
+            writable: false,
+          },
+        ];
+      }
+      return [];
+    },
+    [wersjaDefinicji, mozeEdytowac, isPolish, measurement]
+  );
+
+  /** Sekcje, w których „Uzupełnij tę sekcję" ma co robić (Zasada 3). */
+  const SEKCJE_Z_POLAMI_TEKSTOWYMI = useMemo(() => new Set(['contract']), []);
+
+  const kpiWritableFieldIds = useMemo(
+    () => (mozeEdytowac ? Object.keys(POLA_KONTRAKTU) : []),
+    [mozeEdytowac, POLA_KONTRAKTU]
+  );
+
+  /**
+   * ZAPIS z panelu „Analizuj" — ta sama, jedyna droga co „Uzupełnij…".
+   * Dwie ścieżki AI nie mogą mieć dwóch dróg zapisu do tego samego pola.
+   */
+  const kpiApplyChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (!mozeEdytowac || readMode) return false;
+      if (!POLA_KONTRAKTU[change.fieldId]) return false;
+      return zapisAI.zastosuj(change.fieldId, change.proposedValue);
+    },
+    [mozeEdytowac, readMode, POLA_KONTRAKTU, zapisAI]
+  );
+
+  const kpiCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: () => ({
+      artifactType: 'metric',
+      cardId: activeSection,
+      artifactTitle:
+        (definitionVersion !== 'loading' && definitionVersion?.name) || kpi?.name || kpi?.kpiCode || '',
+      artifactContext: [
+        kpi ? `Kod KPI: ${kpi.kpiCode}` : '',
+        kpi ? `Cykl życia: ${kpi.status}` : '',
+        wersjaDefinicji ? `Status zatwierdzenia wersji: ${wersjaDefinicji.approvalStatus}` : '',
+        wersjaDefinicji ? `Geometria celu: ${wersjaDefinicji.targetGeometry}` : '',
+        `Otwarte sprawy odchylenia: ${openCasesCount}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      fields: kpiPolaSekcji(activeSection),
+      isPolish,
+    }),
+    applyChange: kpiApplyChange,
+  });
+
+  /**
+   * Źródła „Uzupełnij…" — komponent `PracujZAI` generuje treść istniejącym
+   * generatorem i woła `zastosuj` DOPIERO po kliknięciu „Zatwierdź".
+   */
+  const zrodloSekcji = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: ({ sekcjaId }) =>
+        (sekcjaId ? kpiPolaSekcji(sekcjaId) : [])
+          .filter((f) => f.writable)
+          .map((f) => ({
+            id: f.id,
+            etykieta: f.label,
+            wartosc: String(f.value ?? ''),
+            format: 'paragraph' as const,
+            sekcjaId: sekcjaId ?? undefined,
+            sekcjaEtykieta: isPolish ? 'Kontrakt' : 'Contract',
+          })),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [kpiPolaSekcji, isPolish, zapisAI.zastosuj]
+  );
+
+  const zrodloDokumentu = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: () =>
+        [...SEKCJE_Z_POLAMI_TEKSTOWYMI].flatMap((id) =>
+          kpiPolaSekcji(id)
+            .filter((f) => f.writable)
+            .map((f) => ({
+              id: f.id,
+              etykieta: f.label,
+              wartosc: String(f.value ?? ''),
+              format: 'paragraph' as const,
+              sekcjaId: id,
+              sekcjaEtykieta: isPolish ? 'Kontrakt' : 'Contract',
+            }))
+        ),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [SEKCJE_Z_POLAMI_TEKSTOWYMI, kpiPolaSekcji, isPolish, zapisAI.zastosuj]
+  );
+
+  /** Menu 5 → „Sekcje": kanoniczny `SectionsManagerMenu` na spec-u karty. */
+  const specSekcji = useMemo(
+    () =>
+      zbudujSpecSekcji(
+        [
+          { id: 'performance', label: { pl: 'Wyniki', en: 'Performance' }, ikona: 'BarChart3' },
+          { id: 'contract', label: { pl: 'Kontrakt', en: 'Contract' }, ikona: 'FileText' },
+          { id: 'measurements', label: { pl: 'Pomiary', en: 'Measurements' }, ikona: 'CheckSquare' },
+          { id: 'deviations', label: { pl: 'Odchylenia', en: 'Deviations' }, ikona: 'ShieldAlert' },
+          { id: 'actionCards', label: { pl: 'Karty działania', en: 'Action cards' }, ikona: 'Rocket' },
+          { id: 'correctiveActions', label: { pl: 'Działania', en: 'Corrective actions' }, ikona: 'CheckSquare' },
+          { id: 'scorecards', label: { pl: 'Raporty', en: 'Reports' }, ikona: 'Layers' },
+          { id: 'history', label: { pl: 'Historia', en: 'History' }, ikona: 'History' },
+        ],
+        { pl: 'Karta miernika', en: 'Metric card' }
+      ),
+    []
+  );
+  const ukladSekcji = useCardLayout({ artifactType: 'tool', spec: specSekcji });
 
   if (!enabled) {
     return (
@@ -1492,7 +1780,7 @@ export const KpiToolPage: React.FC = () => {
    * na miernik są drugim BLOKIEM sekcji „Działania" — patrz komentarz przy
    * `initiativeImpactsBlock`.
    */
-  const sections: NModeSection[] = [
+  const wszystkieSekcje: NModeSection[] = [
     performanceSection,
     contractSection,
     measurementsSection,
@@ -1502,6 +1790,9 @@ export const KpiToolPage: React.FC = () => {
     scorecardsSection,
     historySection,
   ];
+  // Kolejność i widoczność sekcji pochodzi z Menu 5 → „Sekcje" (kanoniczny
+  // `useCardLayout.applyToSections`), a nie z kolejności zapisanej w tym pliku.
+  const sections: NModeSection[] = ukladSekcji.applyToSections(wszystkieSekcje);
 
   // ── ŚCIEŻKA POZIOMÓW (element ㉛ Menu 1, SPEC-A §9.2/§11.2) ──────────────
   // Trzy stopnie, dokładnie te, o które upomniał się właściciel 05.09:
@@ -1529,9 +1820,29 @@ export const KpiToolPage: React.FC = () => {
   }
   breadcrumbItems.push({ label: kpiTitle });
 
+  /** Kropka statusu pigułki Menu 3 — mapa z cyklu życia miernika. */
+  const statusPigulki =
+    kpi.status === 'archived'
+      ? 'ARCHIVED'
+      : kpi.status === 'active'
+        ? 'TRACKING'
+        : kpi.status === 'suspended'
+          ? 'BLOCKED'
+          : 'DRAFT';
+
   return (
+    <KartaWynikowChrome
+      domena="kpi"
+      kartaId={kpi.kpiId}
+      kartaNazwa={kpiTitle}
+      kartaOdznaka="KPI"
+      kartaStatus={statusPigulki}
+      onPokazListe={() => navigate(withOwnerSampleData(ROUTES.RESULTS_KPI.ROOT))}
+      testId="results-vnext-kpi-tool-chrome"
+    >
     <div className="flex h-full min-h-0 flex-col" data-testid="results-vnext-kpi-tool-page">
       <ArtifactBreadcrumb items={breadcrumbItems} />
+      <PasekZapisuAI stan={zapisAI.stan} isPolish={isPolish} onZamknij={zapisAI.wyczysc} />
       <div className="min-h-0 flex-1">
       <NModeShell
         header={header}
@@ -1541,9 +1852,71 @@ export const KpiToolPage: React.FC = () => {
         presentationMode="n"
         onPresentationModeChange={() => {}}
         showModeSwitcher={false}
+        readMode={readMode}
+        /* DEC-407 zasada 2 — Menu 4 (nagłówek) i Menu 5 jako JEDEN przyklejony
+           stos; przewija się tylko treść sekcji. */
+        stickyStosMenu45
+        renderActionBar={() => (
+          <NModeMenu2
+            isPolish={isPolish}
+            sectionsMenu={<SectionsManagerMenu layout={ukladSekcji} isPolish={isPolish} />}
+            readMode={readMode}
+            /* Zasada 2b: bez prawa edycji przełącznik NIE renderuje się
+               (`NModeMenu2` pokazuje go tylko, gdy dostanie `onReadModeChange`). */
+            onReadModeChange={mozeEdytowac ? setReadMode : undefined}
+            aiButton={
+              <PracujZAI
+                isPolish={isPolish}
+                onAnalizuj={kpiCardAnalysis.run}
+                analizaWToku={kpiCardAnalysis.loading}
+                analizaOtwarta={kpiCardAnalysis.open}
+                aktywnaSekcja={activeSection}
+                kontekstArtefaktu={{
+                  title: kpiTitle,
+                  status: kpi.status,
+                  type: 'metric',
+                }}
+                moznaEdytowac={mozeEdytowac && !readMode}
+                powodTylkoOdczyt={
+                  kpi.status === 'archived'
+                    ? isPolish
+                      ? 'miernik zarchiwizowany'
+                      : 'metric is archived'
+                    : !wersjaDefinicji || wersjaDefinicji.approvalStatus !== 'draft'
+                      ? isPolish
+                        ? 'wersja definicji nie jest szkicem (serwer: NOT_A_DRAFT)'
+                        : 'the definition version is not a draft (server: NOT_A_DRAFT)'
+                      : isPolish
+                        ? 'karta otwarta w trybie Podgląd'
+                        : 'card opened in Preview mode'
+                }
+                /* Sekcje bez pól tekstowych (Pomiary, Odchylenia, Historia…)
+                   dostają pozycję WYSZARZONĄ, zamiast obiecywać uzupełnienie,
+                   którego nie ma gdzie zapisać. */
+                uzupelnijSekcje={
+                  SEKCJE_Z_POLAMI_TEKSTOWYMI.has(activeSection) ? zrodloSekcji : undefined
+                }
+                uzupelnijDokument={zrodloDokumentu}
+              />
+            }
+          />
+        )}
         rightPanel={<ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel KPI', 'KPI panel')} />}
       />
       </div>
+      <NCardAIAnalysisPanel
+        open={kpiCardAnalysis.open}
+        onClose={kpiCardAnalysis.close}
+        loading={kpiCardAnalysis.loading}
+        result={kpiCardAnalysis.result}
+        errorCode={kpiCardAnalysis.errorCode}
+        serverErrorCode={kpiCardAnalysis.serverErrorCode}
+        onRerun={kpiCardAnalysis.rerun}
+        onApplyChange={kpiCardAnalysis.applyChange}
+        writableFieldIds={kpiWritableFieldIds}
+        readMode={readMode}
+        isPolish={isPolish}
+      />
       <KpiReviewedAttributionDialog
         open={!!attributionTarget}
         isPolish={isPolish}
@@ -1553,6 +1926,7 @@ export const KpiToolPage: React.FC = () => {
         errorMessage={attributionError}
       />
     </div>
+    </KartaWynikowChrome>
   );
 };
 
