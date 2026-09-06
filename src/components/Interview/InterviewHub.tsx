@@ -120,7 +120,6 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
-import { isInterviewPendingReviewTabEnabled } from '@/utils/interviewPendingReviewTabFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 import {
   formatPresentationCount,
@@ -351,8 +350,7 @@ type InterviewTab =
   | 'templates'
   | 'insights'
   | 'initiatives'
-  | 'managed'
-  | 'pending_review';
+  | 'managed';
 
 /**
  * Pure tab-resolution contract for the Interview hub. Encodes which `?tab=`
@@ -368,8 +366,7 @@ function isInterviewTab(value: string): value is InterviewTab {
     value === 'templates' ||
     value === 'insights' ||
     value === 'initiatives' ||
-    value === 'managed' ||
-    value === 'pending_review'
+    value === 'managed'
   );
 }
 
@@ -388,7 +385,7 @@ function resolveInterviewTabFromSearchParams(
   if (rawTab === 'templates') {
     return permissions.canViewTemplates ? 'templates' : 'my_assignments';
   }
-  if (rawTab === 'insights' || rawTab === 'pending_review' || rawTab === 'initiatives') {
+  if (rawTab === 'insights' || rawTab === 'initiatives') {
     return permissions.canViewInsights ? rawTab : 'my_assignments';
   }
   return rawTab;
@@ -1073,7 +1070,6 @@ export const InterviewHub: React.FC = () => {
         insights: t('interview.hub.insights'),
         initiatives: t('interview.hub.initiatives'),
         managed: t('interview.hub.assigned'),
-        pending_review: t('interview.hub.pendingReview'),
       };
       const tabLabel = TAB_LABELS[activeTab];
       setInterviewBreadcrumbs(tabLabel ? [base, tabLabel] : [base]);
@@ -2196,11 +2192,6 @@ export const InterviewHub: React.FC = () => {
 
   // Tab configuration - role-based visibility
   // Pracownik (TEAM_MEMBER/VIEWER): tylko Inbox
-  // Pending review insights (for triage tab)
-  const pendingReviewInsights = useMemo(
-    () => insights.filter((i) => i.reviewStatus === 'in_review' || i.status === 'in_review'),
-    [insights]
-  );
 
   // #6 — Inbox (my_assignments) own-work counts. Scoped strictly to the
   // logged-in user's own assignments and framed around their workflow, NOT the
@@ -2276,21 +2267,6 @@ export const InterviewHub: React.FC = () => {
     }
 
     if (canViewInsights) {
-      // ④ Dopuszczenie (pending review) — D-04 (DP-5): the stage is fully built
-      // (selector `pendingReviewInsights` + the `activeTab === 'pending_review'`
-      // render branch). The dedicated tab is hidden by default before client
-      // delivery and surfaced only when `isInterviewPendingReviewTabEnabled()`
-      // (flag default OFF). When OFF, ④ is still reached via Przydzielone's
-      // approve/send-back — identical to current prod behaviour.
-      if (isInterviewPendingReviewTabEnabled()) {
-        baseTabs.push({
-          id: 'pending_review' as ModuleTab,
-          label: t('interview.hub.pendingReview2'),
-          icon: <CheckCircle2 size={16} />,
-          count: pendingReviewInsights.length,
-        });
-      }
-
       baseTabs.push({
         id: 'insights' as ModuleTab,
         label: t('interview.hub.insights'),
@@ -2306,9 +2282,6 @@ export const InterviewHub: React.FC = () => {
       });
     }
 
-    // ④ "Pending review" tab is gated above by isInterviewPendingReviewTabEnabled()
-    // (D-04 / DP-5) — default OFF, formalizing the previously bare "hidden" comment.
-
     return baseTabs;
   }, [
     isPolish,
@@ -2318,11 +2291,9 @@ export const InterviewHub: React.FC = () => {
     templates.length,
     myAssignments,
     managedAssignments,
-    pendingReviewInsights.length,
     canViewInsights,
     canViewManaged,
     canViewTemplates,
-    canReviewInsights,
   ]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
@@ -6915,12 +6886,7 @@ Return ONLY the answer text (no markdown fences).`;
           unknown: t('presentationState.unknown', 'unknown'),
         });
       }
-      if (
-        activeTab === 'my_assignments' ||
-        activeTab === 'managed' ||
-        activeTab === 'pending_review'
-      )
-        return assignmentsLoadError;
+      if (activeTab === 'my_assignments' || activeTab === 'managed') return assignmentsLoadError;
       return null;
     })();
 
@@ -9071,96 +9037,6 @@ Return ONLY the answer text (no markdown fences).`;
               )}
             </TableWithPreviewLayout>
           </div>
-        </div>
-      );
-    }
-
-    if (activeTab === 'pending_review') {
-      const reviewInsights = pendingReviewInsights;
-
-      if (reviewInsights.length === 0) {
-        return (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            {renderDegradedBanner()}
-            <AlertTriangle size={40} className="text-slate-600 dark:text-navy-600 mb-3" />
-            <p className="text-lg font-medium text-c-text">
-              {t('interview.hub.noInsightsPendingReview')}
-            </p>
-            <p className="text-sm text-c-text-muted mt-1">
-              {t('interview.hub.allInsightsHaveBeenReviewed')}
-            </p>
-          </div>
-        );
-      }
-
-      return (
-        <div className="p-4 space-y-2">
-          {renderDegradedBanner()}
-          {reviewInsights.map((insight) => {
-            const findingsCount =
-              (insight as any).findings?.length || (insight as any).findingsCount || 0;
-            const topicCollections = [
-              ...(((insight as any).themes as Array<any>) || []),
-              ...(((insight as any).issues as Array<any>) || []),
-              ...(((insight as any).opportunities as Array<any>) || []),
-            ];
-            const crossPerspectiveCount = topicCollections.filter(
-              (item) => item?.crossSessionPattern
-            ).length;
-            const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
-
-            return (
-              <button
-                key={insight.id}
-                type="button"
-                onClick={() => handleViewInsight(insight)}
-                className="w-full text-left p-4 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-navy-900/70 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Lightbulb size={14} className="text-amber-500 shrink-0" />
-                      <span className="text-sm font-medium text-c-text truncate">
-                        {insight.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-c-text-muted">
-                      {insight.createdAt && (
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} />
-                          {new Date(insight.createdAt).toLocaleDateString(
-                            t('interview.hub.enUs', 'en-US')
-                          )}
-                        </span>
-                      )}
-                      {findingsCount > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Target size={12} />
-                          {findingsCount} {t('interview.hub.findings')}
-                        </span>
-                      )}
-                      {crossPerspectiveCount > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Users size={12} />
-                          {crossPerspectiveCount} {t('interview.hub.crossRole')}
-                        </span>
-                      )}
-                      {divergenceCount > 0 && (
-                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-300">
-                          <AlertTriangle size={12} />
-                          {divergenceCount} {t('interview.hub.divergences')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    {t('interview.hub.inReview2')}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
         </div>
       );
     }
