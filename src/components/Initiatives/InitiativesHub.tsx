@@ -92,13 +92,7 @@ import { PortfolioGridView } from '../Portfolio/PortfolioGridView';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
 // ModuleHub components
-import {
-  FilterChip,
-  HubWorkAreaLoadError,
-  ModuleTab,
-  OpenDocument,
-  ViewMode,
-} from '../shared/ModuleHub';
+import { HubWorkAreaLoadError, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_DANGER,
@@ -297,7 +291,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // (pigułka "Więcej") — rząd Menu 3 ograniczony do ≤3 chipów.
   const [isMenu3KebabOpen, setIsMenu3KebabOpen] = useState(false);
   const menu3KebabRef = useRef<HTMLDivElement>(null);
-  const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('initiatives');
@@ -1263,40 +1256,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     [isPilotParticipant, setOpenDocuments, t]
   );
 
-  const handleRemoveFilter = useCallback((id: string) => {
-    setActiveFilters((prev) => prev.filter((f) => f.id !== id));
-    if (id.startsWith('priority:')) {
-      const value = id.split(':')[1] as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-      setFilters((prev) => {
-        const next = (prev.priority || []).filter((p) => p !== value);
-        return { ...prev, priority: next.length ? next : undefined };
-      });
-    }
-  }, []);
-
+  // [ODMROZENIE 05_INITIATIVES DEC-420] Uwaga właściciela (b, 06.09 15:45):
+  // wybór w dropdownie Menu 2 „Wszystkie priorytety" dorzucał osobną pigułkę
+  // „FILTERS: priority: MEDIUM × Clear all" nachodzącą na rząd Menu 3 —
+  // „To też trzeba usunąć zupełnie." Wybór jest już widoczny w SAMYM
+  // dropdownie (`Menu2PresetDropdown`/`handlePriorityFilterChange` niżej
+  // ustawia `filters.priority`, który realnie filtruje dane) — dokładnie
+  // jak w Ocenie (`AssessmentHub` nigdy nie populuje `activeFilters`, więc
+  // `ActiveFilters` w `StandardModuleBar` renderuje `null` przy pustej
+  // tablicy). `activeFilters`/`onRemoveFilter`/`onClearFilters` przestały
+  // być przekazywane do `StandardModuleBar` niżej — `filters.priority`
+  // zostaje jedynym źródłem prawdy dla filtra.
   const handleClearFilters = useCallback(() => {
-    setActiveFilters([]);
     setFilters({});
   }, []);
 
   const handlePriorityFilterChange = useCallback(
     (value: '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW') => {
       setFilters((prev) => ({ ...prev, priority: value ? [value] : undefined }));
-      setActiveFilters((prev) => [
-        ...prev.filter((filter) => !filter.id.startsWith('priority:')),
-        ...(value
-          ? [
-              {
-                id: `priority:${value}`,
-                label: `${t('initiatives.filters.priority', 'Priority')}: ${value}`,
-                column: 'priority',
-                value,
-              },
-            ]
-          : []),
-      ]);
     },
-    [t]
+    []
   );
 
   const handleResetInitiativeRegisterFilters = useCallback(() => {
@@ -2559,9 +2538,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onSelectItem={setActiveDocumentId}
         onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
-        activeFilters={activeFilters}
-        onRemoveFilter={handleRemoveFilter}
-        onClearFilters={handleClearFilters}
         primaryCta={
           activeTab !== 'list'
             ? undefined
