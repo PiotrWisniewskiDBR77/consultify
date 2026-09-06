@@ -617,6 +617,14 @@ export class ConclusionService {
             row.executive_summary ||
             row.name ||
             'Assessment recommendation';
+      // 1.1-Z4 #1: `assessment_reports.status` na żywej bazie jest UPPERCASE
+      // (`DRAFT`/`PENDING_APPROVAL`/`APPROVED`/`UTILIZED` — zweryfikowane
+      // `SELECT DISTINCT status FROM assessment_reports`). Porównanie
+      // `row.status === 'approved'` (lowercase) nigdy nie było prawdziwe, więc
+      // zatwierdzone raporty zawsze produkowały wniosek `low`/`needs_review`
+      // zamiast `medium`/`published`. Normalizacja w jednym miejscu — ten sam
+      // wzorzec co `syncToolOutputs` niżej (linia ~740).
+      const isApproved = String(row.status || '').toUpperCase() === 'APPROVED';
       await upsertExternalConclusion({
         organizationId,
         projectId: row.project_id ?? null,
@@ -631,7 +639,7 @@ export class ConclusionService {
             url: `/assessment?reportId=${encodeURIComponent(String(row.id))}`,
           },
         ],
-        confidenceLevel: row.status === 'approved' ? 'medium' : 'low',
+        confidenceLevel: isApproved ? 'medium' : 'low',
         limits:
           'Assessment conclusion derived from report-level recommendations; validate source evidence before execution.',
         evidenceRefs: [
@@ -645,7 +653,7 @@ export class ConclusionService {
           typeof firstRecommendation === 'string'
             ? firstRecommendation
             : firstRecommendation?.nextAction || firstRecommendation?.text || null,
-        status: row.status === 'approved' ? 'published' : 'needs_review',
+        status: isApproved ? 'published' : 'needs_review',
         createdBy: row.created_by || actorUserId,
         contextSummary: row.executive_summary || row.detailed_analysis || row.name || '',
       });
