@@ -32,7 +32,7 @@ Otwarte realnie: `notification`, `task`, `decision`, `note`, `idea`, `interview`
 ## Mutacje i testy
 
 - notification: GREEN 2/2 → mutacja dodająca `properties` do widocznego zbioru → RED → final GREEN 5/5 razem z testem zakazu autosave.
-- task: GREEN 7/7 → mutacja bezwarunkowo pokazująca `implementation` → RED → final GREEN razem z testem zapisu ryzyk.
+- task: test zabezpieczenia GREEN 7/7 → mutacja bezwarunkowo pokazująca `implementation` → RED → po przywróceniu GREEN 7/7. Łączny run z zastanym testem zapisu ryzyk: 8/9, 1 failed; nie jest przedstawiany jako PASS.
 - esbuild obu dotkniętych komponentów/helpera: exit 0.
 - `check-list-canon`, `check-artefakt`, `check-teresa-kontrakty`: exit 0; ratchet długu bez wzrostu.
 - pełny baseline 1/16 nadal OOM przy limicie 2 GB; wynik nie jest PASS. Ponowiony podział 1/64 z jednym workerem i limitem 1,5 GB nie został jeszcze domknięty; stan: `EVIDENCE_MISSING`.
