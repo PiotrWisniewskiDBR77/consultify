@@ -37,7 +37,11 @@ describe('AdminDependenciesPanel', () => {
 
   it('renders cached dependency status without claiming health', async () => {
     render(<AdminDependenciesPanel />);
-    expect(await screen.findByText('Baza danych')).toBeInTheDocument();
+    // `screen.findByText('Baza danych')` łapie DWA elementy: nagłówek
+    // (dependency.label z fixture) ORAZ tłumaczenie `kind.database` (też
+    // "Baza danych" w public/locales/pl/translation.json) — kolizja fixture
+    // vs realny słownik, nie defekt produktu. Selektor po roli nagłówka.
+    expect(await screen.findByRole('heading', { name: 'Baza danych' })).toBeInTheDocument();
     expect(screen.getByText('Brak wyniku')).toBeInTheDocument();
     expect(screen.queryByText('Działa')).not.toBeInTheDocument();
   });

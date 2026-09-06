@@ -32,7 +32,11 @@ describe('AdminSecurityAlertsPanel', () => {
     ]);
     vi.mocked(resolveSecurityAlert).mockResolvedValue([]);
     render(<AdminSecurityAlertsPanel />);
-    expect(await screen.findByText('login_failed')).toBeInTheDocument();
+    // Brak klucza `...security-alerts.eventTypes.login_failed` w słowniku PL
+    // -> spadek na `defaultValue: humanizeEnum('login_failed')` =
+    // "Login Failed", nie surowy fixture literal. Test asercji stary
+    // (sprzed konwencji humanizeEnum).
+    expect(await screen.findByText('Login Failed')).toBeInTheDocument();
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[buttons.length - 1]);
     fireEvent.click(await screen.findByText('Oznacz jako rozwiązane'));
