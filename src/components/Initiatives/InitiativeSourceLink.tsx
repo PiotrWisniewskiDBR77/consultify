@@ -42,6 +42,7 @@ export function getSourceDisplayLabel(sourceType: string, _isPolish = false): st
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+export const initiativeSourceLabel = getSourceDisplayLabel;
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -92,46 +93,49 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
     }
   };
 
-  const handleNavigate = () => {
+  const sourceHref = (() => {
     switch (sourceType.toLowerCase()) {
       case 'tool':
       case 'tool_session':
       case 'idea':
-        navigate(`/my-work?tab=ideas&sessionId=${sourceId}`);
-        break;
+        return `/my-work?tab=ideas&sessionId=${sourceId}`;
       case 'assessment':
-        navigate(`/interview?assessmentId=${sourceId}`);
-        break;
+        return `/interview?assessmentId=${sourceId}`;
       case 'interview':
       case 'interview_insight':
       case 'insight':
       case 'conclusion':
-        navigate(`/interview?insightId=${sourceId}`);
-        break;
+        return `/interview?insightId=${sourceId}`;
       case 'conclusion_readout':
-        navigate('/presentations?tab=documents');
-        break;
+        return '/presentations?tab=documents';
+      case 'task':
+      case 'task_set':
+        return `/my-work?tab=tasks&open=${sourceId}`;
+      case 'decision':
+        return `/my-work?tab=decisions&open=${sourceId}`;
+      case 'initiative':
+        return `/initiatives?open=${sourceId}&mode=doc`;
+      case 'report':
+      case 'presentation':
+        return '/presentations?tab=documents';
       default:
-        break;
+        return `/my-work/inbox?sourceType=${encodeURIComponent(sourceType)}&sourceId=${encodeURIComponent(sourceId)}`;
     }
-  };
+  })();
 
   return (
-    <div className="bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5">
+    <a href={sourceHref} onClick={(event) => { event.preventDefault(); navigate(sourceHref); }} className="block bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-5 hover:border-c-focus">
       <div className="flex items-center gap-2 mb-2">
         {getSourceIcon()}
         <span className="text-xs font-semibold text-c-text-muted uppercase">
           {t('initiatives.initiativeSourceLink.source')} {getSourceLabel()}
         </span>
       </div>
-      <button
-        onClick={handleNavigate}
-        className="flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-text transition-colors group"
-      >
-        <span className="font-mono text-xs">{sourceId}</span>
+      <span className="flex items-center gap-2 text-sm text-c-text-secondary hover:text-c-text transition-colors group">
+        <span>{getSourceLabel()}</span>
         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-      </button>
-    </div>
+      </span>
+    </a>
   );
 };
 

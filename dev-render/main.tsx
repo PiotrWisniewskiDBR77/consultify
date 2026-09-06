@@ -414,6 +414,7 @@ const InterviewSessionsStatusScreen = React.lazy(
 const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'));
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
+const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'));
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
@@ -1230,6 +1231,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-task': {
     label: 'KARTY N — Task (harness odbioru 2026-07-21)',
     render: () => <KartaTaskScreen />,
+  },
+  'karta-dzialania': {
+    label: 'P9 — wspólna karta działania (DEC-397)',
+    render: () => <KartaDzialaniaScreen />,
   },
   'karta-task-pelna': {
     label:

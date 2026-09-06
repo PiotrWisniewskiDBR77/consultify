@@ -22,7 +22,7 @@ import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusi
 import { InitiativeApi, type InitiativeEconomicsLink } from '@/services/api/initiatives.api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { InitiativeSourceLink, initiativeSourceLabel } from './InitiativeSourceLink';
 
 export type InitiativePreviewV3Model = {
   id: string;
@@ -517,7 +517,7 @@ export const InitiativePreviewV3Footer: React.FC<{
 
   const sourceType = String(initiative.sourceType || '').trim();
   const sourceId = String(initiative.sourceId || '').trim();
-  const sourceDisplayType = sourceType ? getSourceDisplayLabel(sourceType) : '';
+  const sourceDisplayType = sourceType ? initiativeSourceLabel(sourceType) : '';
   const sourceLabel = sourceDisplayType
     ? sourceId
       ? `${sourceDisplayType} · ${sourceId.slice(0, 8)}…`
@@ -646,6 +646,8 @@ export const InitiativePreviewV3Footer: React.FC<{
       />
 
       <div className="border-t border-c-border-subtle my-3" />
+
+      {sourceType && sourceId ? <InitiativeSourceLink sourceType={sourceType} sourceId={sourceId} isPolish={isPolish} /> : null}
 
       <PreviewRelations items={relationItems} />
 

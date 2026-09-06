@@ -33,6 +33,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FinanceErrorBoundary } from '@/components/Finance/shared/FinanceErrorBoundary';
+import { FinanceActionCards } from '@/components/Finance/FinanceActionCards';
 import { FinanceWorkspaceBar } from '@/components/Finance/shared/FinanceWorkspaceBar';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
 import { LoadingState } from '@/components/shared/states';
@@ -540,6 +541,8 @@ function BaselineWorkspaceInner(props: BaselineWorkspaceResolvedProps): React.Re
         onEnterFocusMode={() => focusMode.enter('finance-workspace-bar-fullscreen')}
         onCommitRename={handleCommitRename}
       />
+
+      <FinanceActionCards />
 
       {lifecycleError && (
         <p

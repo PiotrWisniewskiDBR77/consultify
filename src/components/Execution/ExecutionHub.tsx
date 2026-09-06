@@ -47,6 +47,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { ExecutionActionCards } from './ExecutionActionCards';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -6007,6 +6008,7 @@ Please return:
 
   return (
     <>
+      <ExecutionActionCards />
       <StandardModuleBar
         tabs={tabs}
         activeTab={activeTab}

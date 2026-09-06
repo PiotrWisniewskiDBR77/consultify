@@ -1,4 +1,33 @@
 {
+  "actionCard": {
+    "title": "Action card",
+    "open": "Open card",
+    "fields": {
+      "period": "Period",
+      "goalMet": "Goal met?",
+      "actionRequired": "Action required?",
+      "problem": "Problem description",
+      "rootCause": "Root cause",
+      "action": "Action description",
+      "owner": "Owner",
+      "dueDate": "Due date",
+      "comment": "Comment",
+      "status": "Status"
+    },
+    "status": { "open": "OPEN", "closed": "CLOSED" }
+  },
+  "meetingActionItemsP9": {
+    "createTask": "Create task",
+    "taskCreated": "Task created",
+    "taskCreateFailed": "Could not create task"
+  },
+  "p9Handoff": {
+    "requestAction": "Hand over to execution",
+    "requested": "The handoff is awaiting acceptance in Inbox.",
+    "notReady": "Complete the handoff package and execution manager first.",
+    "failed": "The initiative could not be handed over to execution.",
+    "acceptanceSection": "For acceptance"
+  },
   "notFoundPage": {
     "title": "Page not found",
     "message": "The address you followed doesn't exist or has moved.",

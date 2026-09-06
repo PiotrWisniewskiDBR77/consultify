@@ -36,7 +36,8 @@ export type KartaNKey =
   | 'interview'
   | 'decision'
   | 'notification'
-  | 'task';
+  | 'task'
+  | 'action';
 
 /**
  * Klasa wielkości wg SPEC-A §12.2 (drabina otwierania) i SPEC-N §2.1:
@@ -60,7 +61,8 @@ export type KartaNEkranHarnessu =
   | 'karta-interview'
   | 'karta-decision'
   | 'karta-notification'
-  | 'karta-task';
+  | 'karta-task'
+  | 'karta-dzialania';
 
 export interface KartaNWpis {
   /** Nazwa typu karty widoczna w raportach i tabeli smoke'a. */
@@ -82,6 +84,14 @@ export interface KartaNWpis {
  * Kolejność wpisów = kolejność migracji wg ciężaru (SPEC-N §6, plan §3: M1…M7).
  */
 export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
+  action: {
+    nazwa: 'Action',
+    komponent: 'src/components/standard/ActionCard.tsx',
+    klasa: 'S',
+    paragraf: 'KREGOSLUP_WARTOSCI §2.4, §3 · DEC-397',
+    ekranHarnessu: 'karta-dzialania',
+    statusMigracji: 'zmigrowana',
+  },
   tool: {
     nazwa: 'Tool',
     komponent: 'src/components/DiscoveryTools/KnownToolDetailView.tsx',

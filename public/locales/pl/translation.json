@@ -1,4 +1,33 @@
 {
+  "actionCard": {
+    "title": "Karta działania",
+    "open": "Otwórz kartę",
+    "fields": {
+      "period": "Okres",
+      "goalMet": "Cel osiągnięty?",
+      "actionRequired": "Działania wymagane?",
+      "problem": "Opis problemu",
+      "rootCause": "Główna przyczyna",
+      "action": "Opis działania",
+      "owner": "Odpowiedzialność",
+      "dueDate": "Termin",
+      "comment": "Komentarz",
+      "status": "Status"
+    },
+    "status": { "open": "OTWARTY", "closed": "ZAMKNIĘTY" }
+  },
+  "meetingActionItemsP9": {
+    "createTask": "Zrób zadanie",
+    "taskCreated": "Zadanie utworzone",
+    "taskCreateFailed": "Nie udało się utworzyć zadania"
+  },
+  "p9Handoff": {
+    "requestAction": "Przekaż do realizacji",
+    "requested": "Przekazanie czeka na akceptację w Skrzynce.",
+    "notReady": "Najpierw uzupełnij pakiet przekazania i kierownika realizacji.",
+    "failed": "Nie udało się przekazać inicjatywy do realizacji.",
+    "acceptanceSection": "Do akceptacji"
+  },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
     "message": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",

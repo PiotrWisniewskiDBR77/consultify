@@ -28,7 +28,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
+import { InitiativeSourceLink } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
@@ -855,9 +855,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                      {getSourceDisplayLabel(bl.sourceType, isPl)}
-                    </div>
+                    <InitiativeSourceLink sourceType={bl.sourceType} sourceId={bl.sourceId} isPolish={isPl} />
                     {/* MYW-IDEAS-CORE-001: never print the raw source UUID to the
                         owner — show when the link was created instead. */}
                     {bl.createdAt && (

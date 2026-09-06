@@ -100,6 +100,7 @@ describe('MeetingObjectPage', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('fetches through the dedicated single-meeting endpoint, not the list', async () => {
@@ -214,6 +215,23 @@ describe('MeetingObjectPage', () => {
     expect(await screen.findByText('Draft minutes')).toBeTruthy();
     const dashes = await screen.findAllByText('—');
     expect(dashes.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('renders Zrób zadanie for every action item and prevents a duplicate request', async () => {
+    routerState.pathname = '/meetings/meeting-1/minutes';
+    getMeetingMock.mockResolvedValue({ meeting });
+    listNotesMock.mockResolvedValue({ notes: [{ id: 'note-1', source: 'heuristic', summary: 'Draft minutes', keyPoints: [], decisions: [], actionItems: [{ task: 'Write recap', owner: 'Bob' }], status: 'proposed', proposalId: 'proposal-1' }] });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<MeetingObjectPage />);
+
+    await screen.findByText('Write recap');
+    const button = screen.getByRole('button', { name: 'Zrób zadanie' });
+    button.click();
+    button.click();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith('/api/meeting/meeting-1/notes/note-1/action-items/0/task', { method: 'POST', credentials: 'include' });
+    expect(await screen.findByRole('button', { name: 'Zadanie utworzone' })).toBeDisabled();
   });
 
   it('Decyzje i działania section shows meeting decisions and follow-ups', async () => {

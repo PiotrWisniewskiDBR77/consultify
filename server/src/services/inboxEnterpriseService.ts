@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+import notificationService from './notificationService.js';
 
 /**
  * Realne liczniki stanów Skrzynki (MVP 2026-07-28).
@@ -99,13 +100,17 @@ class InboxEnterpriseService {
       if (this.matchesConditions(item, conditions)) {
         const targetUser = rule.target_user_id || item.target_user_id;
         if (targetUser) {
-          const inboxItemId = uuidv4();
-          await queryHelpers.queryRun(
-            `INSERT INTO canonical_inbox_items (id, user_id, organization_id, item_type, source_entity_type, source_entity_id, title, priority, section, status)
-             VALUES ($1,$2,$3,'signal','connector',$4,$5,'normal','inbox','pending')
-             ON CONFLICT (user_id, source_entity_type, source_entity_id) DO NOTHING`,
-            [inboxItemId, targetUser, orgId, itemId, (item as any).subject || 'Connector item']
-          );
+          const inboxItemId = await notificationService.send({
+            userId: targetUser,
+            organizationId: orgId,
+            type: 'CONNECTOR_ITEM_ROUTED',
+            title: (item as any).subject || 'Connector item',
+            body: 'Connector item routed to your inbox.',
+            entityType: 'connector',
+            entityId: itemId,
+            isActionable: true,
+            dedupeKey: `connector:${itemId}`,
+          });
           await queryHelpers.queryRun(
             `UPDATE inbox_connector_items SET status='routed', routed_by_rule_id=$1, canonical_inbox_item_id=$2 WHERE id=$3`,
             [rule.id, inboxItemId, itemId]

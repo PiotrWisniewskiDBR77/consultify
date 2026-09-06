@@ -5,7 +5,5 @@
 
 export type { ChatActionButtonProps } from './ChatActionButton';
 export { ChatActionButton } from './ChatActionButton';
-export type { ChatActionCardProps } from './ChatActionCard';
-export { ChatActionCard } from './ChatActionCard';
 export type { ChatSmartSuggestionsProps, ChatSuggestion } from './ChatSmartSuggestions';
 export { ChatSmartSuggestions } from './ChatSmartSuggestions';

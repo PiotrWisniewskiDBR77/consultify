@@ -17,6 +17,7 @@ import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js'
 import effectiveAccessRoutes from './routes/access.routes.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
+import actionCardsRoutes from './routes/actionCards.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
 import auditExportHistoryAdminRoutes from './routes/admin/audit-export-history.routes.js';
@@ -922,6 +923,7 @@ export class ApiGateway {
       );
       app.use('/api/llm', llmRoutes);
       app.use('/api/tasks', taskRoutes);
+      app.use('/api/action-cards', actionCardsRoutes);
       app.use('/api/public/v1', publicApiV1Routes);
       app.use('/api/notifications', notificationRoutes);
       app.use('/api/analytics', analyticsRoutes);

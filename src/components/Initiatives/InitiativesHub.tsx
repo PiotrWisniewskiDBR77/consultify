@@ -141,7 +141,7 @@ import {
   toCanonicalInitiativeRegisterItemFromLegacyRow,
 } from './initiativeRegisterProjection';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { initiativeSourceLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
@@ -1950,7 +1950,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               row.sourceType && row.sourceId
                 ? [
                     {
-                      label: getSourceDisplayLabel(row.sourceType),
+                      label: initiativeSourceLabel(row.sourceType),
                       onClick: () => navigate(buildInitiativeDeepLink(row.id, { mode: 'doc' })),
                     },
                   ]

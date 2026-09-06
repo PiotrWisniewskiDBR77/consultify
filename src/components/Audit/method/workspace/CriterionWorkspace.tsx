@@ -29,6 +29,7 @@ import { StatusChip } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
 
 import { CriterionChain } from './CriterionChain';
+import { AuditActionCards } from './AuditActionCards';
 import { EvidencePanel } from './EvidencePanel';
 import { FindingPanel } from './FindingPanel';
 import { RemediationPanel } from './RemediationPanel';
@@ -489,6 +490,7 @@ export const CriterionWorkspace: React.FC = () => {
       <section data-testid="chain-link-odpowiedz-wlasciciela" className="sr-only" />
 
       {/* Ogniwa 13-18: naprawa */}
+      <AuditActionCards />
       {selectedFindingDetail ? (
         <RemediationPanel
           programId={programId}
