@@ -424,12 +424,14 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // Save as note
   const [savingAsNote, setSavingAsNote] = useState(false);
 
-  // Worksheet analysis (AI fills the notification "sheet" fields)
-  const [isAnalyzingWorksheet, setIsAnalyzingWorksheet] = useState(false);
-  // ★ 2026-07-23 — nieudana analiza AI musi byc WIDOCZNA rowniez w trybie
-  // auto (silent). Wczesniej auto-wywolanie po wejsciu w kartę gaslo w catch
-  // i konsultant nie wiedzial, ze pola po prostu nie zostaly wypelnione.
-  const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
+  // ★ DEC-407 uzupełnienie (2026-09-06) — USUNIĘTO `handleAnalyzeWithAI` +
+  // stan `isAnalyzingWorksheet`/`aiAnalysisError`/`worksheetDraftRef`. Ta
+  // ścieżka pisała 5 pól arkusza (`setDescriptionDraft` itd.) PROSTO w stan
+  // karty, bez żadnego kroku zatwierdzenia — złamanie
+  // `docs/ssot/ZASADY_AI_TERESA_SSOT.md` §3 („AI proposes. User reviews.").
+  // Ta sama robota (uzupełnienie pustych pól arkusza) jest dziś dostępna przez
+  // „Pracuj z AI → Uzupełnij tę sekcję/cały dokument" (`zrodlaPracujZAI`
+  // niżej), które idzie przez podgląd propozycji z „Zatwierdź"/„Odrzuć".
 
   const worksheetDraft = useMemo(
     () => ({
@@ -447,15 +449,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     } catch {
       return '';
     }
-  }, [worksheetDraft]);
-
-  // Lustro biezacych szkicow w ref — potrzebne, zeby asynchroniczna odpowiedz AI
-  // mogla porownac stan pola SPRZED zapytania z tym, co jest w polu TERAZ.
-  // Bez tego closure AI widzi wartosci z chwili startu zapytania (stale) i nadpisuje
-  // to, co konsultant wpisal w miedzyczasie.
-  const worksheetDraftRef = useRef(worksheetDraft);
-  useEffect(() => {
-    worksheetDraftRef.current = worksheetDraft;
   }, [worksheetDraft]);
 
   // Snapshot tresci, ktora ostatnio NIE zapisala sie — blokada petli autozapisu.
@@ -922,218 +915,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     handleOpenChat();
   };
 
-  /**
-   * AI-powered contextual worksheet generator.
-   * Fills ALL fields: description, whyImportant, blocked, expectedAction, checklist.
-   * Content is contextual — not a copy of other screens, but specific to what
-   * the user needs to know and do about THIS notification.
-   *
-   * @param silent If true, no toast on success (used for auto-trigger on load)
-   */
-  const handleAnalyzeWithAI = useCallback(
-    async (silent = false) => {
-      if (!notification || isAnalyzingWorksheet) return;
-      setIsAnalyzingWorksheet(true);
-      setAiAnalysisError(null);
-
-      // Stan pol w chwili WYSLANIA zapytania. Odpowiedz AI wraca po kilku-kilkunastu
-      // sekundach; w tym czasie konsultant moze juz pisac. Pole, ktore zmienilo sie
-      // od startu zapytania, jest jego praca — AI go NIE nadpisuje.
-      const draftAtRequestStart = worksheetDraftRef.current;
-      const skippedFields: string[] = [];
-      const applyIfUntouched = (
-        field: keyof typeof draftAtRequestStart,
-        value: string,
-        setDraft: (v: string) => void
-      ) => {
-        if (worksheetDraftRef.current[field] !== draftAtRequestStart[field]) {
-          skippedFields.push(field);
-          return;
-        }
-        setDraft(value);
-      };
-
-      try {
-        const checklistSnapshot = actionChecklist
-          .map((i) => `${i.completed ? '[x]' : '[ ]'} ${String(i.text || '').trim()}`)
-          .filter((l) => l.replace(/\[.\]\s*/g, '').trim().length > 0)
-          .join('\n');
-
-        const sourceSummary =
-          sourceEntity && sourceEntity.title
-            ? `${String(sourceEntity.type || '')} — ${String(sourceEntity.title || '')}${sourceEntity.status ? ` (status: ${sourceEntity.status})` : ''}${sourceEntity.priority ? ` (priority: ${sourceEntity.priority})` : ''}`
-            : notification.relatedObjectType && notification.relatedObjectId
-              ? `${notification.relatedObjectType}:${notification.relatedObjectId}`
-              : '';
-
-        // Gather all available data context
-        const dataFields = Object.entries(notification.data || {})
-          .filter(([, v]) => v !== null && v !== undefined && v !== '')
-          .map(([k, v]) => `  ${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`)
-          .join('\n');
-
-        const prompt = isPolish
-          ? [
-              'Jesteś asystentem PMO. Analizujesz powiadomienie i tworzysz KONTEKSTOWY briefing dla użytkownika.',
-              '',
-              'CEL: Każde pole musi odpowiadać na konkretne pytanie użytkownika:',
-              '- description: CO się wydarzyło? (nie kopiuj tytułu — wyjaśnij SYTUACJĘ: co, gdzie, kiedy, kto jest zaangażowany)',
-              '- whyImportant: DLACZEGO to ważne? (konkretny wpływ: na co to wpływa, jakie są konsekwencje ignorowania, kto ucierpi)',
-              '- blocked: CO jest zablokowane/zagrożone? (co nie może się wydarzyć dopóki problem nie zostanie rozwiązany)',
-              '- expectedAction: CO użytkownik powinien ZROBIĆ? (precyzyjna instrukcja działania, nie "otwórz dokument")',
-              '- checklist: KROKI do wykonania (3-6, operacyjne, z uwzględnieniem pilności)',
-              '',
-              'ZASADY:',
-              '- Pisz konkretnie — używaj nazw, dat, osób z danych powiadomienia',
-              '- NIE kopiuj tytułu do opisu — opis ma ROZWIJAĆ i WYJAŚNIAĆ sytuację',
-              '- Każde pole ma inną funkcję — nie powtarzaj treści między polami',
-              '- Jeśli brakuje danych, napisz co wiadomo i co trzeba sprawdzić',
-              '- Użyj języka polskiego',
-              '',
-              'Zwróć WYŁĄCZNIE poprawny JSON:',
-              '{"description":"...","whyImportant":"...","blocked":"...","expectedAction":"...","checklist":["...","..."]}',
-              '',
-              '=== DANE POWIADOMIENIA ===',
-              `title: ${notification.title}`,
-              `type: ${notification.type}`,
-              `severity: ${notification.severity}`,
-              `category: ${notification.category}`,
-              `message: ${notification.message}`,
-              sourceSummary ? `source: ${sourceSummary}` : '',
-              notification.projectName ? `project: ${notification.projectName}` : '',
-              dataFields ? `data:\n${dataFields}` : '',
-            ]
-              .filter(Boolean)
-              .join('\n')
-          : [
-              'You are a PMO assistant. Analyze this notification and create a CONTEXTUAL briefing for the user.',
-              '',
-              'GOAL: Each field answers a specific user question:',
-              "- description: WHAT happened? (don't copy the title — explain the SITUATION: what, where, when, who is involved)",
-              '- whyImportant: WHY does it matter? (specific impact: what it affects, consequences of ignoring, who suffers)',
-              "- blocked: WHAT is blocked/at risk? (what can't happen until this is resolved)",
-              '- expectedAction: WHAT should the user DO? (precise action instruction, not "open document")',
-              '- checklist: STEPS to execute (3-6, operational, urgency-aware)',
-              '',
-              'RULES:',
-              '- Be specific — use names, dates, people from notification data',
-              '- Do NOT copy the title into description — description should EXPAND and EXPLAIN the situation',
-              '- Each field has a different function — do not repeat content across fields',
-              '- If data is missing, state what is known and what needs to be checked',
-              '- Use English language',
-              '',
-              'Return ONLY valid JSON:',
-              '{"description":"...","whyImportant":"...","blocked":"...","expectedAction":"...","checklist":["...","..."]}',
-              '',
-              '=== NOTIFICATION DATA ===',
-              `title: ${notification.title}`,
-              `type: ${notification.type}`,
-              `severity: ${notification.severity}`,
-              `category: ${notification.category}`,
-              `message: ${notification.message}`,
-              sourceSummary ? `source: ${sourceSummary}` : '',
-              notification.projectName ? `project: ${notification.projectName}` : '',
-              dataFields ? `data:\n${dataFields}` : '',
-            ]
-              .filter(Boolean)
-              .join('\n');
-
-        // ★ 2026-07-23 — NAPRAWA MARTWEGO WYWOLANIA AI.
-        // Bylo: POST /ai/chat — orkiestrator zwraca {role,intent,prompt,...},
-        // nigdy `text`/`content`. `raw` bylo zawsze puste => rzucalo
-        // 'AI returned no JSON' i (w trybie silent) gaslo bez sladu.
-        // Jest: POST /ai/generate — jedyny endpoint zwracajacy {text}.
-        const aiRes = await Api.post('/ai/generate', {
-          message: prompt,
-          systemInstruction: t(
-            'myWork.notificationDetail.systemInstruction',
-            'You are a PMO assistant. Return only valid JSON. No commentary, no markdown. Write contextually — not generically.'
-          ),
-          roleName: 'Notification Context Builder',
-        });
-
-        const raw = String(aiRes?.text ?? '').trim();
-        if (!raw) throw new Error('EMPTY_LLM_RESPONSE');
-        const jsonMatch = raw.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('AI returned no JSON');
-
-        const parsed = JSON.parse(jsonMatch[0]) as any;
-
-        // Apply all fields — z pominieciem tych, ktore uzytkownik edytowal w trakcie.
-        if (typeof parsed.description === 'string' && parsed.description.trim()) {
-          applyIfUntouched('description', parsed.description.trim(), setDescriptionDraft);
-        }
-        if (typeof parsed.whyImportant === 'string' && parsed.whyImportant.trim()) {
-          applyIfUntouched('whyImportant', parsed.whyImportant.trim(), setWhyImportantDraft);
-        }
-        if (typeof parsed.blocked === 'string' && parsed.blocked.trim()) {
-          applyIfUntouched('blocked', parsed.blocked.trim(), setBlockedDraft);
-        }
-        if (typeof parsed.expectedAction === 'string' && parsed.expectedAction.trim()) {
-          applyIfUntouched('expectedAction', parsed.expectedAction.trim(), setExpectedActionDraft);
-        }
-
-        if (skippedFields.length > 0) {
-          // Uczciwy komunikat zamiast cichego nadpisania: mowimy, ze AI odpuscilo pola.
-          toast(
-            t(
-              'myWork.notificationDetail.aiSkippedEditedFields',
-              'AI did not overwrite fields you were editing'
-            ),
-            { icon: 'ℹ️' }
-          );
-        }
-
-        const nextChecklist = Array.isArray(parsed.checklist)
-          ? parsed.checklist
-              .filter((x: any) => typeof x === 'string')
-              .map((x: string) => x.trim())
-              .filter(Boolean)
-          : [];
-        if (nextChecklist.length > 0) {
-          applyChecklistFromAIText(nextChecklist.map((x: string) => `- ${x}`).join('\n'));
-        }
-
-        if (!silent) {
-          setActiveNSection('whats-happening');
-          toast.success(
-            t(
-              'myWork.notificationDetail.aIFilledNotificationContext',
-              'AI filled notification context'
-            )
-          );
-        }
-      } catch (err) {
-        console.error('[NotificationDetailView] Analyze with AI failed:', err);
-        // ★ Uczciwy stan: „AI niedostepne" JEST poprawnym wynikiem, cisza nie
-        // jest. Toast tylko przy kliknieciu (silent=false, zeby auto-wejscie w
-        // karte nie sypalo toastami), ale INLINE komunikat pokazujemy zawsze.
-        const serverCode =
-          (err as { code?: string })?.code ??
-          (err as { response?: { data?: { code?: string } } })?.response?.data?.code ??
-          (err as Error)?.message;
-        const base = t(
-          'myWork.notificationDetail.failedToFillContext',
-          'Failed to fill context with AI'
-        );
-        setAiAnalysisError(serverCode ? `${base} (${serverCode})` : base);
-        if (!silent) {
-          toast.error(base);
-        }
-      } finally {
-        setIsAnalyzingWorksheet(false);
-      }
-    },
-    [
-      notification,
-      isAnalyzingWorksheet,
-      isPolish,
-      actionChecklist,
-      sourceEntity,
-      applyChecklistFromAIText,
-      setActiveNSection,
-    ]
-  );
+  // `handleAnalyzeWithAI` (generator arkusza z 5 pól, zapis bez zatwierdzenia)
+  // USUNIĘTY DEC-407 uzupełnienie 2026-09-06 — patrz komentarz przy stanie wyżej.
 
   // ── Comment handlers ────────────────────────────────────────────────────
 
@@ -1511,10 +1294,11 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
   // ── AI context enrichment is USER-INITIATED ONLY ──────────────────────────
   // ★ 2026-07-24 — REGRESJA R2: usunieto auto-wywolanie AI przy montowaniu
-  // ekranu. Wczesniej useEffect odpalal handleAnalyzeWithAI(true) po 600ms od
+  // ekranu (bylo: useEffect odpalajacy generator arkusza po 600ms od
   // zaladowania powiadomienia => KAZDE wejscie w karte generowalo wywolanie AI
-  // (i EMPTY_LLM_RESPONSE w konsoli) bez akcji uzytkownika. Analiza startuje
-  // teraz WYLACZNIE z klikniecia „Analizuj z AI" (handleAnalyzeWithAI(false)).
+  // bez akcji uzytkownika). ★ DEC-407 uzupełnienie (2026-09-06) — sam generator
+  // (`handleAnalyzeWithAI`) USUNIĘTY: pisał 5 pól bez zatwierdzenia. Wejście
+  // AI dla tej karty to dziś WYŁĄCZNIE „Pracuj z AI" (`zrodlaPracujZAI` niżej).
 
   const expectedActionValue = (
     expectedActionDraft ||
@@ -1714,38 +1498,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <h2 className="text-lg font-semibold text-c-text">
                     {t('myWork.notificationDetail.whatSHappening', "What's Happening")}
                   </h2>
-                  {isAnalyzingWorksheet && (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-c-info animate-pulse">
-                      <Loader2 size={12} className="animate-spin" />
-                      {t('myWork.notificationDetail.aIAnalyzing', 'AI analyzing...')}
-                    </span>
-                  )}
                 </div>
-                {/* Uczciwy stan „AI niedostepne" — WLASNY wiersz pod naglowkiem,
-                    zeby dlugi komunikat z kodem serwera nie lamal tytulu sekcji. */}
-                {!isAnalyzingWorksheet && aiAnalysisError && (
-                  <div
-                    role="status"
-                    className="flex items-start gap-2 rounded-md border border-c-danger/40 bg-c-danger/10 px-2.5 py-1.5 text-[11px] text-c-danger"
-                  >
-                    <AlertTriangle size={12} className="mt-px shrink-0" />
-                    <span className="flex-1">{aiAnalysisError}</span>
-                    {/* PODGLĄD = TYLKO CZYTANIE (2026-07-24): „Ponów" wywołuje
-                        `handleAnalyzeWithAI(false)`, które NADPISUJE pięć pól
-                        karty. Sam komunikat o błędzie zostaje (to uczciwa
-                        informacja, czyste czytanie) — znika tylko przycisk,
-                        który by zapisał. */}
-                    {!readMode && (
-                      <button
-                        type="button"
-                        onClick={() => handleAnalyzeWithAI(false)}
-                        className="shrink-0 underline underline-offset-2 hover:opacity-80"
-                      >
-                        {t('myWork.notificationDetail.retry', 'Retry')}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {/* Banner „AI analizuje…"/„AI niedostępne" + „Ponów" USUNIĘTE
+                    DEC-407 uzupełnienie (2026-09-06) razem z `handleAnalyzeWithAI`
+                    — ten „Ponów" pisał 5 pól karty bez zatwierdzenia. */}
               </div>
 
               {/* 1) Opis — pole tekstowe standardu n-Type (§6.2/§6.3):
@@ -2432,10 +2188,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     descriptionDraft,
     whyImportantDraft,
     blockedDraft,
-    isAnalyzingWorksheet,
-    /* + widoczny stan bledu AI (2026-07-23) — bez tego banner „AI niedostepne" nigdy sie nie pokaze */
-    aiAnalysisError,
-    handleAnalyzeWithAI,
     /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
   ]);
 
@@ -2537,8 +2289,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // ★ ZMIANA ZACHOWANIA PRZYCISKU (świadoma): dotąd „Analizuj z AI" wołało
   //   `handleAnalyzeWithAI(false)`, które NADPISYWAŁO pięć pól bez pytania —
   //   dokładnie to, czego kontrakt zabrania („AI NIE nadpisuje treści bez
-  //   potwierdzenia"). Generator zostaje żywy jako auto-uzupełnienie pustego
-  //   arkusza przy wczytaniu (efekt wyżej), przycisk przechodzi na ANALIZĘ.
+  //   potwierdzenia"). ★ DEC-407 uzupełnienie (2026-09-06): generator USUNIĘTY
+  //   w całości (nie tylko odpięty od przycisku) — jedyna droga uzupełnienia
+  //   pustych pól arkusza jest dziś „Pracuj z AI → Uzupełnij…" (propozycja +
+  //   Zatwierdź/Odrzuć). Ten przycisk („Analizuj") tylko ANALIZUJE.
   // DEC-407: jedna deklaracja pól obsługuje „Analizuj" i „Uzupełnij…".
   const notificationPolaSekcji = useCallback(
     (sekcjaId: string): CardAnalysisField[] => {
@@ -3547,7 +3301,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     <PracujZAI
                       isPolish={isPolish}
                       onAnalizuj={notificationCardAnalysis.run}
-                      analizaWToku={notificationCardAnalysis.loading || isAnalyzingWorksheet}
+                      analizaWToku={notificationCardAnalysis.loading}
                       analizaOtwarta={notificationCardAnalysis.open}
                       aktywnaSekcja={activeNSection}
                       kontekstArtefaktu={{

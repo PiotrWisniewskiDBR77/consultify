@@ -22,6 +22,7 @@
  * @see src/components/standard/PracujZAI.tsx     — poziom 1 (karta)
  */
 
+import i18n, { normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 import { Api } from '@/services/api';
 
 /** Kontekst artefaktu wysyłany do promptu (1:1 z `AIFieldEnhancer`). */
@@ -43,10 +44,34 @@ export function pustaOdpowiedzAI(): Error & { code?: string } {
   return err;
 }
 
-// Język wyjścia AI jest ustandaryzowany na angielski (zespoły międzynarodowe) —
-// dokładnie ta sama decyzja co w `AIFieldEnhancer`; UI pozostaje lokalizowane.
-const JEZYK_AI = 'en';
-const NAZWA_JEZYKA_AI = 'English';
+// ── Język wyjścia AI = język UI (DEC-407 uzupełnienie, 2026-09-06) ──────────
+// Do 2026-09-06 ten moduł wymuszał angielski niezależnie od `i18n.language`
+// (`docs/ssot/ZASADY_AI_TERESA_SSOT.md` §8 J1: „Polski jest domyślny dla
+// całego UI Teresy i dla treści generowanych"). Propozycja w polskim UI
+// wracała po angielsku — zmierzone w K2 (zrzut `09-propozycja-do-zatwierdzenia.png`).
+// `jezykAIzUI` czyta AKTUALNY `i18n.language` (nie stały), więc wynik podąża
+// za przełącznikiem języka w UI; wołający może nadpisać jawnym `opts.language`
+// (np. gdy karta zna język precyzyjniej niż globalny i18n).
+//
+// Etykiety 1:1 z `server/src/services/ai/languagePolicy.ts` (`AI_LANGUAGE_LABELS`)
+// — pełna angielska nazwa + endonim, żeby model (prompt jest po angielsku) nie
+// pomylił kodu z czymś innym. Zakres = `SUPPORTED_LANGUAGES` z `@/i18n`.
+const NAZWY_JEZYKOW_AI: Record<SupportedLanguage, string> = {
+  pl: 'Polish (Polski)',
+  en: 'English',
+  de: 'German (Deutsch)',
+  es: 'Spanish (Español)',
+  ja: 'Japanese (日本語)',
+  ar: 'Arabic (العربية)',
+};
+
+export function jezykAIzUI(kodJawny?: string | null): {
+  kod: SupportedLanguage;
+  nazwa: string;
+} {
+  const kod = normalizeLanguageCode(kodJawny ?? i18n.language) ?? 'pl';
+  return { kod, nazwa: NAZWY_JEZYKOW_AI[kod] };
+}
 
 function instrukcjaFormatu(format: FormatWyjsciaAI): string {
   if (format === 'list') {
@@ -78,8 +103,14 @@ export async function generujTrescPola(opts: {
   etykietaPola: string;
   kontekstArtefaktu: KontekstArtefaktuAI;
   format?: FormatWyjsciaAI;
+  /**
+   * Kod języka wyjścia AI (np. `'pl'`, `'en'`). Domyślnie język UI
+   * (`i18n.language` w chwili wywołania) — patrz `jezykAIzUI` wyżej.
+   */
+  language?: string | null;
 }): Promise<string> {
-  const { etykietaPola, kontekstArtefaktu, format = 'paragraph' } = opts;
+  const { etykietaPola, kontekstArtefaktu, format = 'paragraph', language } = opts;
+  const { kod: kodJezyka, nazwa: nazwaJezyka } = jezykAIzUI(language);
 
   const systemInstruction = [
     `You are a senior PMO consultant and an expert business writer.`,
@@ -87,7 +118,7 @@ export async function generujTrescPola(opts: {
       ? `Generate professional content for the field "${etykietaPola}" in the context of the artifact "${kontekstArtefaktu.title}".`
       : `Generate professional content for the field "${etykietaPola}" of a "${kontekstArtefaktu.type}" artifact.`,
     `Rules:`,
-    `- Output language MUST be ${NAZWA_JEZYKA_AI}. If the input/context is in another language, translate as needed.`,
+    `- Output language MUST be ${nazwaJezyka}. If the input/context is in another language, translate as needed.`,
     `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context. If information is missing, keep it generic and/or explicitly mark what needs confirmation in a single short sentence.`,
     `- Return ONLY the final field text. No commentary, no quotes, no prefixes, no markdown.`,
     instrukcjaFormatu(format),
@@ -111,7 +142,7 @@ export async function generujTrescPola(opts: {
     systemInstruction,
     fieldLabel: etykietaPola,
     artifactContext: kontekstArtefaktu,
-    language: JEZYK_AI,
+    language: kodJezyka,
   });
 
   const tekst = String((res as { text?: unknown })?.text ?? '').trim();
