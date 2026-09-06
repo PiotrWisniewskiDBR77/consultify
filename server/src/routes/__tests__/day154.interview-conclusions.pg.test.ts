@@ -131,7 +131,12 @@ describe('Day 154 — interview findings reach conclusions on real PostgreSQL', 
     await pool.query(`ALTER TABLE interview_insights RENAME COLUMN title TO day154_broken_title`);
     let response: request.Response;
     try {
-      response = await request(app).get('/api/conclusions').set(auth);
+      // 1.1-Z2 #3 (DECYZJA CTO: odczyt nie może pisać) — synchronizacja
+      // (i błąd SQL, który ją wywala) żyje teraz WYŁĄCZNIE pod
+      // POST /api/conclusions/sync, nie pod GET /api/conclusions.
+      // GET jest od 06.09 czysto odczytowy i nigdy nie dotyka tej ścieżki
+      // SQL, więc nie może już jej ujawnić.
+      response = await request(app).post('/api/conclusions/sync').set(auth);
     } finally {
       await pool.query(`ALTER TABLE interview_insights RENAME COLUMN day154_broken_title TO title`);
     }

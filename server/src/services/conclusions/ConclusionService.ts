@@ -747,7 +747,18 @@ export class ConclusionService {
     sourceModule?: string;
     projectId?: string;
   }): Promise<Conclusion[]> {
-    await this.syncAllSources(params.organizationId, params.actorUserId);
+    // 1.1-Z2 #3 (DECYZJA CTO): odczyt nie może pisać. Do 06.09 ten GET wołał
+    // syncAllSources() na KAŻDYM odczycie, co dopisywało konkluzje `tools`
+    // (i innych modułów) do bazy przy zwykłym otwarciu zakładki Conclusions —
+    // zmierzone na żywo (4 nowe wiersze `source_module='tools'` po samym GET
+    // /api/conclusions). Synchronizacja przeniesiona do jawnego wywołania:
+    // `POST /api/conclusions/sync` (ten sam strażnik uprawnień co
+    // dotychczasowy `POST /api/conclusions` — `conclusions.routes.ts`) i do
+    // `ensureReady()`-podobnego wejścia w miejscach, które dawniej polegały
+    // na tym efekcie ubocznym. `ensureTables()` — jedyny efekt uboczny, jaki
+    // odczyt może mieć — zostaje (idempotentny DDL/no-op po pierwszym razie,
+    // nie zapis danych organizacji).
+    await ensureTables();
 
     const clauses = ['organization_id = ?'];
     const values: unknown[] = [params.organizationId];
@@ -776,7 +787,12 @@ export class ConclusionService {
     conclusionId: string,
     actorUserId: string
   ): Promise<Conclusion | null> {
-    await this.syncAllSources(organizationId, actorUserId);
+    // 1.1-Z2 #3 — patrz komentarz w listConclusions() powyżej: GET nie
+    // synchronizuje już przy odczycie. `actorUserId` zostaje w sygnaturze
+    // (wołający w conclusions.routes.ts go przekazuje) żeby nie zmieniać
+    // kształtu wywołania — obecnie nieużywany w tej metodzie.
+    void actorUserId;
+    await ensureTables();
     const row = await queryHelpers.queryOne<ConclusionRow>(
       `SELECT * FROM conclusions WHERE id = ? AND organization_id = ?`,
       [conclusionId, organizationId]

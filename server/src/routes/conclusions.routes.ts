@@ -111,6 +111,25 @@ router.post(
   })
 );
 
+/**
+ * POST /api/conclusions/sync — 1.1-Z2 #3 (DECYZJA CTO: odczyt nie może
+ * pisać). Do 06.09 `GET /api/conclusions` synchronizował CAŁĄ organizację
+ * (interview findings + assessment reports + tool outputs) na KAŻDY odczyt —
+ * zmierzone na żywo: samo otwarcie zakładki Conclusions dopisało 4 wnioski
+ * `tools` do bazy. Synchronizacja żyje teraz TYLKO tutaj, za tym samym
+ * strażnikiem uprawnień co dotychczasowy zapis (`POST /` powyżej —
+ * `getAuthContext`, żadnej dodatkowej roli). Front, który chce świeżą listę,
+ * woła `/sync`, potem `GET /`.
+ */
+router.post(
+  '/sync',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const synced = await conclusionService.syncAllSources(organizationId, userId);
+    res.json({ synced });
+  })
+);
+
 router.get(
   '/readouts',
   asyncHandler(async (req: AuthRequest, res) => {
