@@ -50,6 +50,7 @@ import {
   type MethodOutputSummary,
 } from '@/method-core/api/methodCoreApi';
 import { fetchWithRetry, getHeaders } from '@/services/api/baseClient';
+import { ConclusionsApi } from '@/services/api/conclusions.api';
 import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
@@ -59,6 +60,14 @@ import {
   projektujOceneZastanaNaWierszListy,
   scalOcenyZastaneZOutputami,
 } from './assessmentOutputProjection';
+import { GeneratorWnioskuModal } from './wnioski/GeneratorWnioskuModal';
+import {
+  czyWniosekZOceny,
+  idWnioskuZWiersza,
+  projektujWniosekNaWierszListy,
+  scalWnioskiZWierszami,
+  typWierszaWnioskow,
+} from './wnioski/projekcjaWnioskow';
 
 import { PreviewPaneAside } from '../shared/PreviewPane';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
@@ -109,14 +118,44 @@ async function pobierzOcenyZastane(): Promise<MethodOutputListItem[]> {
   }
 }
 
+/** WNIOSKI z ocen — warstwa Wniosków (`GET /api/conclusions`). Org-wide, więc
+ * filtrujemy do źródeł Oceny; awaria NIE może wywrócić listy zapisów sesji. */
+async function pobierzWnioskiOceny(): Promise<OutputRow[]> {
+  try {
+    const res = await ConclusionsApi.list();
+    return (res.conclusions ?? [])
+      .filter((c) => typeof c?.id === 'string' && c.id.length > 0 && czyWniosekZOceny(c))
+      .map((c) =>
+        projektujWniosekNaWierszListy({
+          id: c.id,
+          title: c.title,
+          sourceModule: c.sourceModule,
+          status: c.status,
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+          sourceArtifactRefs: c.sourceArtifactRefs,
+        })
+      ) as unknown as OutputRow[];
+  } catch {
+    return [];
+  }
+}
+
 interface AssessmentOutputsTabProps {
   onCountChange?: (count: number | null) => void;
   onNavigate?: (target: 'reports' | 'initiatives') => void;
+  /**
+   * Licznik żądań „Nowy wniosek” z CTA Menu 2 (AssessmentHub). Każdy wzrost
+   * otwiera generator. Menu 3 Oceny nie ma rzędu chipów (DEC-414) — CTA żyje
+   * wyłącznie w Menu 2, dlatego zakładka nie rysuje własnego przycisku.
+   */
+  sygnalNowyWniosek?: number;
 }
 
 export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   onCountChange,
   onNavigate,
+  sygnalNowyWniosek = 0,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -141,6 +180,7 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [lineageSessionId, setLineageSessionId] = useState<string | null>(null);
+  const [generatorOtwarty, setGeneratorOtwarty] = useState(false);
 
   // Deliberately no dependency on `t` (react-i18next's `t` isn't guaranteed
   // referentially stable, and isn't in this suite's mock) — closes only over
@@ -150,8 +190,8 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
     setLoading(true);
     setHasLoadError(false);
     setForbidden(false);
-    Promise.all([listOutputs(), pobierzOcenyZastane()])
-      .then(([res, zastane]) => {
+    Promise.all([listOutputs(), pobierzOcenyZastane(), pobierzWnioskiOceny()])
+      .then(([res, zastane, wnioski]) => {
         if (cancelled) return;
         // `/api/method/outputs` is org-wide across Assessment, Tools and
         // Audits. This module must not present another module's immutable
@@ -165,7 +205,11 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         // zastanych wobec 1 Outputu jądra; stanowisko lokalne — 4 wobec 0).
         // Czytanie samego jądra pokazywało mu pustą listę. Reguła scalania
         // 1:1 jak w Inicjatywach — patrz `assessmentOutputProjection.ts`.
-        const scalone = scalOcenyZastaneZOutputami(assessmentOutputs, zastane) as OutputRow[];
+        const zapisySesji = scalOcenyZastaneZOutputami(assessmentOutputs, zastane) as OutputRow[];
+        // ★ TRZY MAGAZYNY. Wnioski (warstwa `conclusions`) to inny byt niż
+        // zapisy sesji — kolumna TYP trzyma ten rozdział widocznym, żeby
+        // „Zapis sesji" nigdy nie udawał wniosku (DEC-416).
+        const scalone = scalWnioskiZWierszami(wnioski, zapisySesji);
         setItems(scalone);
         onCountChangeRef.current?.(scalone.length);
       })
@@ -209,7 +253,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
     // Wiersz zastany (`ocena~<id>`) nie istnieje w jądrze — pytanie o niego
     // dałoby pewne 404 i wpis w konsoli. Podgląd korzysta wtedy z danych
     // wiersza listy, a pełną treść pokazuje dopiero raport.
-    if (idOcenyZWierszaZastanego(selectedOutputId)) {
+    // To samo dotyczy WNIOSKU (`wniosek~<id>`) — żyje w warstwie Wniosków,
+    // nie w jądrze metodycznym; pytanie jądra dałoby pewne 404.
+    if (idOcenyZWierszaZastanego(selectedOutputId) || idWnioskuZWiersza(selectedOutputId)) {
       setSelectedDetail(null);
       setDetailLoading(false);
       return;
@@ -230,6 +276,12 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
       cancelled = true;
     };
   }, [selectedOutputId]);
+
+  // CTA „Nowy wniosek" z Menu 2 (AssessmentHub). Pierwsze renderowanie ma
+  // licznik 0 i nie otwiera niczego samo z siebie.
+  useEffect(() => {
+    if (sygnalNowyWniosek > 0) setGeneratorOtwarty(true);
+  }, [sygnalNowyWniosek]);
 
   // Derives current/superseded from the fetched page itself when the list
   // endpoint doesn't carry `isSuperseded` per row: an Output is superseded
@@ -264,6 +316,41 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
 
   const columns: TableColumn[] = useMemo(
     () => [
+      {
+        // ★ ROZDZIAŁ WNIOSEK / ZAPIS SESJI (DEC-416). Do 06.09 ta lista
+        // pokazywała wyłącznie zamrożone zapisy sesji i oceny zastane —
+        // wszystkie pod nagłówkiem „Wnioski". Właściciel czytał to jako brak
+        // narzędzia do wniosków. Kolumna nazywa rzecz po imieniu w każdym
+        // wierszu, jedną regułą (`typWierszaWnioskow`), nie po tytule.
+        id: 'typWiersza',
+        label: isPolish ? 'Typ' : 'Type',
+        width: '132px',
+        sortable: true,
+        render: (row) => {
+          const typ = typWierszaWnioskow(String(row.id));
+          if (typ === 'wniosek') {
+            return (
+              <StatusChip label={isPolish ? 'Wniosek' : 'Conclusion'} tone="info" size="sm" />
+            );
+          }
+          if (typ === 'zapis-sesji') {
+            return (
+              <StatusChip
+                label={isPolish ? 'Zapis sesji' : 'Session record'}
+                tone="warning"
+                size="sm"
+              />
+            );
+          }
+          return (
+            <StatusChip
+              label={isPolish ? 'Wynik zamrożony' : 'Frozen output'}
+              tone="neutral"
+              size="sm"
+            />
+          );
+        },
+      },
       {
         // Nagłówki kolumn tej tabeli wołały `t()` z kluczami, których nie ma
         // w public/locales/pl (plik wspólny, nie do naprawy stąd) — spadały
@@ -302,7 +389,23 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
         sortable: true,
         render: (row) => {
           const version = row.outputVersion as number | null;
-          const zastany = !!idOcenyZWierszaZastanego(String(row.id));
+          const typ = typWierszaWnioskow(String(row.id));
+          // Wniosek nie ma wersji rewizji jądra — pokazujemy jego WŁASNY stan
+          // z warstwy Wniosków zamiast udawać „Aktualny"/„Zastąpiony".
+          if (typ === 'wniosek') {
+            const stan = (row.statusWniosku as string | null) || null;
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-[11px]">—</span>
+                <StatusChip
+                  label={stan || (isPolish ? 'Stan nieznany' : 'Status unknown')}
+                  tone="neutral"
+                  size="sm"
+                />
+              </div>
+            );
+          }
+          const zastany = typ === 'zapis-sesji';
           const superseded = isRowSuperseded(row as OutputRow);
           return (
             <div className="flex items-center gap-1.5">
@@ -336,25 +439,79 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   const metaPills: MetaPill[] = useMemo(() => {
     if (!selectedRow) return [];
     const superseded = selectedDetail ? selectedDetail.superseded : isRowSuperseded(selectedRow);
-    const pills: MetaPill[] = [
-      { label: statusLabel(isPolish, superseded), tone: statusTone(superseded) },
-    ];
-    if (selectedRow.module) pills.push({ label: selectedRow.module, tone: 'neutral' });
+    const typ = typWierszaWnioskow(String(selectedRow.id));
+    const pills: MetaPill[] =
+      typ === 'wniosek'
+        ? [
+            { label: isPolish ? 'Wniosek' : 'Conclusion', tone: 'info' },
+            {
+              label:
+                (selectedRow.statusWniosku as string | null) ||
+                (isPolish ? 'Stan nieznany' : 'Status unknown'),
+              tone: 'neutral',
+            },
+          ]
+        : [
+            {
+              label:
+                typ === 'zapis-sesji'
+                  ? isPolish
+                    ? 'Zapis sesji'
+                    : 'Session record'
+                  : statusLabel(isPolish, superseded),
+              tone: typ === 'zapis-sesji' ? 'warning' : statusTone(superseded),
+            },
+          ];
+    if (typ !== 'wniosek' && selectedRow.module) {
+      pills.push({ label: selectedRow.module, tone: 'neutral' });
+    }
     if (selectedRow.demoBypassActive) {
       pills.push({ label: isPolish ? 'Tryb demo' : 'Demo bypass', tone: 'warning' });
     }
     return pills;
   }, [selectedRow, selectedDetail, isRowSuperseded, isPolish]);
 
-  const previewDetailsText = isPolish
-    ? 'To jest zamrożony, niezmienny snapshot zatwierdzony podczas sesji assessmentu. Pobrany bezpośrednio z serwera.'
-    : 'This is the frozen, immutable snapshot approved during the assessment session. Fetched directly from the server.';
+  // Podgląd musi mówić prawdę o TYM wierszu: wniosek, zapis sesji z magazynu
+  // zastanego i zamrożony wynik jądra to trzy różne rzeczy (DEC-416; wcześniej
+  // wiersz zastany dostawał zdanie o „zamrożonym snapshocie", którym nie był).
+  const typWybranego = selectedOutputId ? typWierszaWnioskow(selectedOutputId) : 'wynik-jadra';
+  const previewDetailsText =
+    typWybranego === 'wniosek'
+      ? isPolish
+        ? 'To jest WNIOSEK z oceny — werdykt zbudowany ze streszczenia wykonawczego raportu, z dowodami i ograniczeniami. Pełna karta wniosku otwiera się przyciskiem „Otwórz wniosek”.'
+        : 'This is a CONCLUSION from an assessment — a verdict built from the report executive summary, with its evidence and limits. The full card opens with “Open conclusion”.'
+      : typWybranego === 'zapis-sesji'
+        ? isPolish
+          ? 'To jest ZAPIS SESJI oceny z magazynu zastanego — nie został zamrożony, więc liczby mogą się jeszcze zmienić. To nie jest wniosek.'
+          : 'This is an assessment SESSION RECORD from the legacy store — not frozen, so the numbers can still change. It is not a conclusion.'
+        : isPolish
+          ? 'To jest zamrożony, niezmienny snapshot zatwierdzony podczas sesji assessmentu. Pobrany bezpośrednio z serwera.'
+          : 'This is the frozen, immutable snapshot approved during the assessment session. Fetched directly from the server.';
 
   const rowMenu = useCallback(
     (row: TableRow): StandardRowMenu => {
       const sessionId = typeof row.sessionId === 'string' ? row.sessionId : null;
       const rowId = String(row.id);
       const primary: StandardRowMenuAction[] = [];
+      // WNIOSEK ma własną kartę w warstwie Wniosków. Podanie mu pozycji
+      // „Pokaż raport"/„Pokaż jako prezentację" prowadziłoby pod adres jądra,
+      // którego dla wniosku nie ma — kebab pokazuje TYLKO to, co istnieje.
+      const conclusionId = idWnioskuZWiersza(rowId);
+      if (conclusionId) {
+        return {
+          primary: [
+            {
+              id: 'open-conclusion',
+              label: isPolish ? 'Otwórz wniosek' : 'Open conclusion',
+              icon: Lightbulb,
+              onClick: () => navigate(`/conclusions?id=${encodeURIComponent(conclusionId)}`),
+            },
+          ],
+          universalHandlers: {
+            preview: () => setSelectedOutputId(rowId),
+          },
+        };
+      }
       if (sessionId) {
         primary.push({
           id: 'view-lineage',
@@ -561,6 +718,19 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
               actions={{
                 informational: (() => {
                   const informational: StandardPreviewAction[] = [];
+                  const idWniosku = idWnioskuZWiersza(String(selectedRow.id));
+                  if (idWniosku) {
+                    return [
+                      {
+                        id: 'open-conclusion',
+                        variant: 'neutral' as const,
+                        label: isPolish ? 'Otwórz wniosek' : 'Open conclusion',
+                        icon: Lightbulb,
+                        onClick: () =>
+                          navigate(`/conclusions?id=${encodeURIComponent(idWniosku)}`),
+                      },
+                    ];
+                  }
                   if (selectedRow.sessionId) {
                     informational.push({
                       id: 'view-lineage',
@@ -604,6 +774,20 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
           ) : null} />
         )}
       </div>
+
+      <GeneratorWnioskuModal
+        otwarty={generatorOtwarty}
+        onClose={() => setGeneratorOtwarty(false)}
+        onWygenerowano={() => {
+          // Nowy wniosek musi być widoczny na liście od razu — inaczej
+          // użytkownik nie ma dowodu, że cokolwiek powstało.
+          load();
+        }}
+        onOtworzWniosek={(id) => {
+          setGeneratorOtwarty(false);
+          navigate(`/conclusions?id=${encodeURIComponent(id)}`);
+        }}
+      />
     </div>
   );
 };
