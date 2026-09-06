@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3090/results/okr/3f2ecdde-03f9-5d47-860c-980c3e85d81c/objectives/f1c74e36-bf6c-59de-aa59-4e224e30b32d?sekcja=kluczowe-rezultaty&rezultat=78869a7f-a8af-572d-8fdc-cacf4f6cd533",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Uruchomić zrobotyzowane gniazdo",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nLista\nOKR\nUruchomić zrobotyzowane gniazdo spawalnicze\nRaporty OKR\nOKR automatyzacji — Q4 2026\nUruchomić zrobotyzowane gniazdo spawalnicze\nCel — Uruchomić zrobotyzowane gniazdo spawalnicze\nAktywny\nZapisano\nSekcje\nPracuj z AI\nCel\nKluczowe rezultaty\nCheck-iny\nPowiązania\nRefleksja\nJak liczony jest postęp\n\nPostęp kluczowego rezultatu = (bieżąca − startowa) ÷ (docelowa − startowa), liczony przez silnik postępu po stronie serwera i ograniczony do przedziału 0–100%. Kierunek pomiaru („rośnie\" / „maleje\" / „utrzymanie zakresu\") jest kolumną kontraktu każdego rezultatu. Gdy wartości kontraktu nie da się policzyć, karta pisze to wprost zamiast pokazywać zero.\n\nKażdy kluczowy rezultat jest blokiem poniżej — z własnym check-inem. Osobnej strony rezultatu nie ma.\n\nKR1 — Wydajność gniazda 120 detali na zmianę\n\nWłaściciel: Audyt Nocny · Zespół: Automatyzacja · Termin: 30 lis 2026\n\nSTART\n0 szt.\nWzrost\nCEL\n120 szt.\nBIEŻĄCA\n84 szt.\n5 wrz 2026\nPostęp\n70% · Zgodnie z planem\nCheck-in\nKR2 — Uruchomienie produkcyjne do 30.11.2026\n\nWłaściciel: Audyt Nocny · Zespół: Automatyzacja · Termin: 30 lis 2026\n\nSTART\n0 %\nWzrost\nCEL\n100 %\nBIEŻĄCA\n65 %\n5 wrz 2026\nPostęp\n65% · Zagrożony\nCheck-in\nKR3 — Czas cyklu detalu z 210 do 150 s\n\nWłaściciel: Audyt Nocny · Zespół: Automatyzacja · Termin: 30 lis 2026\n\nSTART\n210 szt.\nSpadek\nCEL\n150 szt.\nBIEŻĄCA\n168 szt.\n5 wrz 2026\nPostęp\n70% · Zgodnie z planem\nCheck-in\nAKCJE\nKluczowe rezultaty i check-in\nOtwórz raport OKR\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tAudyt Nocny\nStatus\tAktywny\nAmbicja\tZobowiązanie\nZestaw OKR\tOKR automatyzacji — Q4 2026\nOkres\tQ4 2026 (1 paź 2026 – 31 gru 2026)\nPostęp\t68%\nPewność\tŚrednia\nKluczowe rezultaty\t3\nUtworzono\t5 wrz 2026\nZaktualizowano\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\n\nTylko do odczytu: Cele i Kluczowe Rezultaty można dodawać i edytować tylko, gdy zestaw OKR ma status „Szkic” lub „Wymaga poprawek”.",
+ "kiedy": "2026-09-06T21:37:54.597Z"
+}

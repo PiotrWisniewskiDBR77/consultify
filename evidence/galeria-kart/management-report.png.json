@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3090/reports/management/cd0333c9-ec72-47fc-a24e-b7c957f49571",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=td:has-text('Steering Committee Portfolio Report')",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRaporty\nRaporty zarządcze\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nRaporty\nSzablony\nHarmonogramy\nAutomatyzacja\nNowy raport\nLista\nSC\nSteering Committee Portfolio Report\nSteering Committee Portfolio Report\n🏛️ Steering Committee Report\nPortfolio\nOn Track\n2026-08-06T22:00:00.000Z – 2026-09-05T22:00:00.000Z\n6.09.2026\nAudyt Nocny\nExecutive Summary\n\nPortfolio overview for 3 active initiatives.\n\n🚦 Overall Status\nSCHEDULE\nOn Track\nBUDGET\nOn Track\nSCOPE\nOn Track\nRISK\nOn Track\nSchedule: Delivery timeline status\nBudget: Budget variance within tolerance\nScope: Scope stable\nRisk: Open critical risks tracked\nForecast & Next Milestones\n\nProjected completion aligns with current delivery trajectory.\n\nPMO Standards Compliance\nISO 21500:2021\nProject Performance Measurement (Clause 4.4.22)\nPMBOK 7th Edition\nMeasurement Performance Domain\nPRINCE2\nHighlight Report / Progress Theme\nData analyzed: 3 projects, 0 tasks, 0 initiatives, 0 decisions, 0 risks\nReport ID: cd0333c9-ec72-47fc-a24e-b7c957f49571\nVersion: 1.0\nDomain: PERFORMANCE_MONITORING\nGenerated: 6.09.2026, 14:38:09",
+ "kiedy": "2026-09-06T21:47:38.437Z"
+}

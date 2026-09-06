@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3090/presentations/builder/62cc49a56d7f4af895ed43d9b4caf428",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=td:has-text('Nowa prezentacja')",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nKreator prezentacji\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nWstecz\nPrezentacje\nNowa prezentacja\nZapisano\nSzkic\nWewnętrzne\nUdostępnij\nPrezentuj\nNowy slajd\nPole tekstowe\nObraz\nMotyw\nDuplikuj slajd\nZablokuj / odblokuj\nSTRUKTURA PREZENTACJI\nSlajdy\nQA i przegląd\nSORTOWANIE SLAJDÓW\nNowa prezentacja\nNowa prezentacja\n1\nPusty slajd\nNowa prezentacja\nWygeneruj slajd ponownie\nWyślij\nAKCJE\nMotyw i kolorystyka\nHistoria wersji\nUdostępnij\nWŁAŚCIWOŚCI\nSlajdy\n1\nKlasyfikacja\nWewnętrzna\nStatus\nSzkic\nMotyw\nmidnight navy\nWersja\n4\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nSlajd 1 z 1\nNowa prezentacja\nZapytaj Teresę\nNotatki",
+ "kiedy": "2026-09-06T21:44:00.595Z"
+}

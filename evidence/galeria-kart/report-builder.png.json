@@ -1,0 +1,25 @@
+{
+ "url": "http://127.0.0.1:3090/reports/builder/report-adma-generated",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=ADMA — Deep Pillar Analysis & Technology Roadmap",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "klik nieudany: text=Pracuj z AI: locator.click: Timeout 8000ms exceeded."
+ ],
+ "bledyKonsoli": [
+  "klik nieudany: text=Pracuj z AI: locator.click: Timeout 8000ms exceeded."
+ ],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nKreator raportów\nEdytuj\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nZgłoś do recenzji\nZapisz\nAgent\nPodgląd\nSPIS TREŚCI\nŹródło: ADMA — Digital Maturity Assessment\nDodaj blok\nZacznij budować raport\n\nDodaj bloki, aby zdefiniować strukturę raportu. Każdy blok może zawierać tekst, dane, wykresy lub wizualizacje.\n\nDodaj pierwszy blok\nUstawienia\nWersje\n👔 Executive\n📄 Portrait\n🇵🇱 PL\nTREŚĆ\nWYGLĄD\nRECENZJA\nCEL I ODBIORCY\nOdbiorca\nZarząd\nRada\nTechniczny\nOperacyjny\nMieszany\nCel\nDiagnoza\nMapa drogowa\nDecyzja inwest.\nAktualizuj\nPodsumowanie\nTon\nKonsultingowy\nNeutralny\nDecyzyjny\nZAKRES\nSPÓJNOŚĆ TREŚCI\nJĘZYK RAPORTU\nWIZUALIZACJE",
+ "kiedy": "2026-09-06T21:41:08.186Z"
+}

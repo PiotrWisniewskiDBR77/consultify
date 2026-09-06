@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3090/results/roi/cases/b4001151-ae5c-5259-81b2-6674c22e3732",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\nAudyt Nocny\nAN\nRejestr ROI\nRobotyzacja gniazda spawalniczego\nRobotyzacja gniazda spawalniczego\nModelowanie\nZałożenia\nModel\nWynik\nWyniki po wdrożeniu\nWnioski i rekomendacja\nParametry przypadku biznesowego\nInwestycja początkowa\n1 000 000 zł\nHoryzont analizy\n59 miesięcy (styczeń 2026 – grudzień 2030)\nStopa dyskontowa\n8% rocznie\nData startu analizy\n1 sty 2026\nMetoda liczenia\nprzepływy roczne, roi/npv/irr/payback, przed opodatkowaniem\nWaluta\nPLN, inflacja 3%\nNa co idzie 1 000 000 zł\nPozycja\tKwota\n\nRobot spawalniczy z osprzętem i integracją\nRobot, pozycjoner, ogrodzenie, integracja i uruchomienie\nJednorazowa · 1 sty 2026\n\t909 000 zł\n\nRezerwa 10% na integrację\nRezerwa ujęta w CAPEX 1 000 000 zł\nJednorazowa · 1 sty 2026\n\t91 000 zł\nŹródła liczb\nPoziom bazowy — 1 240 000 PLN; stan na 31 gru 2025; seed:wyniki-dbr77-20260905; pewność: Średnia\nRezerwa na integrację (zawarta w CAPEX) — Doświadczenie z wdrożenia linii montażu\nPrzyrostowy OPEX (serwis, media, osprzęt) — Oferta serwisowa integratora\nCzas dojścia do pełnej wydajności — Założenie integratora — nie potwierdzone u nas\nStawka godzinowa spawacza z narzutami — Dział kadr, tabela stawek 2026\nΔNWC — wzrost zapasu części zamiennych — Lista części krytycznych robota\nWolumen detali spawanych rocznie — Plan sprzedaży 2027 + historia 2024-2025\nPolityka kalkulacji — Rekomendacja: CONDITIONAL GO — warunek: potwierdzony wolumen 2 zmian przez 2 kolejne kwartały. (Rekomendacja nie ma dziś własnego pola w schemacie — patrz KROK_0 mapowania P7K.)\n\nWłaściciel liczb: Audyt Nocny\n\nAKCJE\nZaplanuj przegląd PIR\n\nDziałania na danych sprawy znajdziesz w pasku zakładek bieżącej sekcji.\n\nPrzejścia cyklu życia (zgłoszenie, akceptacja, odrzucenie) wykonuje się z menu wiersza w rejestrze ROI — jest tam jedna implementacja, bez kopii w karcie.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nNazwa sprawy\tRobotyzacja gniazda spawalniczego\nStatus\tModelowanie\nFaza cyklu\tW toku\nWłaściciel\tAudyt Nocny\nWaluta\tPLN\nZiarno analizy\tRoczna\nOkres analizy\t1 sty 2026 – 31 gru 2030\nNastępny krok\tBrak\nNastępny przegląd\t—\nOstatnia aktualizacja\t5 wrz 2026\nPOWIĄZANIA\n1\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "kiedy": "2026-09-06T21:38:49.749Z"
+}
