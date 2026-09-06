@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 17:58",
+  "zaktualizowano": "2026-09-06 18:11",
   "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
@@ -139,6 +139,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9. | 17:27: pomiar scalony (3fd393031d, 19 słowników, 2 automaty, 4 trasy omijają silnik); karta 4 (tablica 7 statusów) u właściciela. | 17:54: właściciel „Tak” na tablicę 7 statusów (DEC-424), pełny model ~12 w Fali 2 (3.19); paczka P12 dla Codexa pisze Opus.",
           "data": "06.09 17:54"
+        },
+        {
+          "nr": "1.12",
+          "nazwa": "Realizacja — metodyka PMO (badanie), inwentarz 6 zakładek, plan narzędzi i raportów na 4 poziomach → akcept właściciela → pakiety wdrożenia",
+          "wykonawca": "Opus (plan) → Codex/Sonnet (pakiety)",
+          "zalezy_od": "akcept właściciela na plan",
+          "stan": "w_toku",
+          "galaz": "mvp/113-realizacja-plan",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe).",
+          "data": "06.09 18:11"
         }
       ],
       "kryteria": [
@@ -1041,8 +1053,8 @@
     },
     {
       "modul": "Realizacja",
-      "werdykt": "brak",
-      "zdanie": "06.09 17:58: JEDYNY moduł, który został właścicielowi do przejścia („została nam już tylko realizacja”). Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Realizacje → wiersz → panel Rekord|Teresa; regresja „lepkiego zamknięcia” naprawiona (P1-LEPKIE)."
+      "werdykt": "nie",
+      "zdanie": "06.09 18:11 — właściciel: „wszystkie cztery funkcje w zasadzie leżą i nie działają” (Praca: seed ×4, Zasoby: wieczny szkielet, Sterowanie: EN, Raporty: migawki testowe). Kokpit: przełącznik Ryzyka/Rozstrzygnięcia (DEC-426, E-1). Plan narzędzi i raportów wg metodyki PMO = pozycja 1.12 (Opus pisze)."
     },
     {
       "modul": "Wyniki",
