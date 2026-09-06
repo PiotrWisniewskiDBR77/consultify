@@ -107,6 +107,14 @@ vi.mock('react-i18next', () => {
       t: translate,
       i18n: {
         language: 'en',
+        // DEC-422: `getFixedT` BRAKOWAŁO w tej atrapie, a jest realnym API
+        // i18next — używa go m.in. kanoniczny `SectionsManagerMenu`
+        // (`NModeCardManager.tsx:250`) zawsze, gdy konsument poda jawny
+        // `isPolish`. Każdy test renderujący Menu 5 karty N wywracał się na
+        // „i18n.getFixedT is not a function" — czyli przyrząd nie pozwalał
+        // przetestować produktu, który działa. Zwracamy ten sam `translate`,
+        // bo atrapa i tak jest niezależna od języka.
+        getFixedT: () => translate,
         changeLanguage: vi.fn(),
         getResourceBundle: vi.fn(() => ({})),
         hasResourceBundle: vi.fn(() => false),
