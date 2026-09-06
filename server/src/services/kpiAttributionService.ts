@@ -124,7 +124,7 @@ export async function computeAttribution(
   }
 
   const mappings = await dbAll(
-    `SELECT m.*, i.name as initiative_name, i.status, i.progress
+    `SELECT m.*, i.name as initiative_name, i.status, i.progress, i.on_hold
      FROM initiative_kpi_mappings m
      JOIN initiatives i ON i.id = m.initiative_id
      WHERE m.kpi_id = ? AND m.organization_id = ?`,
@@ -152,7 +152,7 @@ export async function computeAttribution(
   let totalWeight = 0;
   const weightedMaps = maps.map((m: any) => {
     const progress = (m.progress || 0) / 100;
-    const statusMultiplier = getStatusMultiplier(m.status);
+    const statusMultiplier = getStatusMultiplier(m.status, Boolean(m.on_hold));
     const effectiveWeight = (m.impact_weight || 1) * progress * statusMultiplier;
     totalWeight += effectiveWeight;
     return { ...m, effectiveWeight, progress, statusMultiplier };
@@ -225,15 +225,20 @@ export async function computeAttribution(
   };
 }
 
-function getStatusMultiplier(status: string): number {
+// DEC-424 (P12-int-c): remapped from the legacy 13-value dictionary to słownik
+// 7. Old DONE/TRACKING -> CLOSED (1.0, the strongest — realized, not just
+// planned); EXECUTING -> IN_EXECUTION (0.7), further reduced by the on_hold
+// flag (old BLOCKED sub-case, 0.1) since a held initiative isn't delivering;
+// PROMOTED (approved-but-not-yet-started work) -> APPROVED (0.5);
+// PENDING_REVIEW (early triage) -> PENDING_APPROVAL (0.2); CANCELLED -> REJECTED (0).
+function getStatusMultiplier(status: string, onHold = false): number {
+  if (status === 'IN_EXECUTION' && onHold) return 0.1;
   const map: Record<string, number> = {
-    DONE: 1.0,
-    TRACKING: 0.9,
-    EXECUTING: 0.7,
-    PROMOTED: 0.5,
-    PENDING_REVIEW: 0.2,
-    BLOCKED: 0.1,
-    CANCELLED: 0,
+    CLOSED: 1.0,
+    IN_EXECUTION: 0.7,
+    APPROVED: 0.5,
+    PENDING_APPROVAL: 0.2,
+    REJECTED: 0,
   };
   return map[status] || 0.3;
 }
@@ -247,7 +252,7 @@ function computeContributionConfidence(
   if (mapping.expected_delta) score += 1;
   if (mapping.progress > 0.5) score += 1;
   if (dataPoints >= 6) score += 1;
-  if (['DONE', 'TRACKING'].includes(mapping.status)) score += 1;
+  if (mapping.status === 'CLOSED') score += 1; // DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED
   if (score >= 4) return 'high';
   if (score >= 2) return 'medium';
   return 'low';

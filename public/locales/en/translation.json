@@ -9708,6 +9708,13 @@
       "unknown": "Unknown status"
     },
     "statusDescription": {
+      "PROPOSED": "A submitted proposal, waiting to become a draft",
+      "DRAFT": "Initial draft, needs completing before submission for approval",
+      "PENDING_APPROVAL": "Awaiting a decision from the sponsor or steering committee",
+      "APPROVED": "Approved and ready to be handed off to execution",
+      "IN_EXECUTION": "Currently being executed; the on-hold flag marks a temporary block",
+      "CLOSED": "Closed — delivery finished, or the initiative was archived",
+      "REJECTED": "Rejected and will not proceed",
       "draft": "Initial draft, needs review",
       "pendingReview": "Awaiting manager or lead review",
       "review": "Business review and go/no-go decision",

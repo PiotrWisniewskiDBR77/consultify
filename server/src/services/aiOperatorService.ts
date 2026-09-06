@@ -259,9 +259,10 @@ class AIOperatorService {
           { total: 0, last_touch: null }
         ),
         this.safeFirst<any>(
+          // DEC-424 (P12-int-c): słownik 7 zna wyłącznie IN_EXECUTION jako status realizacji.
           `SELECT
              COUNT(*) as total,
-             SUM(CASE WHEN status IN ('ACTIVE', 'IN_PROGRESS', 'AT_RISK', 'BLOCKED', 'PLANNING') THEN 1 ELSE 0 END) as active_count
+             SUM(CASE WHEN status = 'IN_EXECUTION' THEN 1 ELSE 0 END) as active_count
            FROM initiatives
            WHERE organization_id = ?`,
           [organizationId],
@@ -1007,9 +1008,10 @@ class AIOperatorService {
   async getValueOverview(organizationId: string) {
     const [initiativeStats, taskStats, decisionStats, kpiStats, reportStats] = await Promise.all([
       this.safeFirst<any>(
+        // DEC-424 (P12-int-c): "at risk" = on_hold flag on an executing initiative.
         `SELECT
            COUNT(*) as total,
-           SUM(CASE WHEN status IN ('AT_RISK', 'BLOCKED') THEN 1 ELSE 0 END) as at_risk_count
+           SUM(CASE WHEN status = 'IN_EXECUTION' AND on_hold THEN 1 ELSE 0 END) as at_risk_count
          FROM initiatives
          WHERE organization_id = ?`,
         [organizationId],

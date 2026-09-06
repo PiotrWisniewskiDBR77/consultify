@@ -71,6 +71,7 @@ interface InitiativeRow {
   sla_deadline: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  on_hold: boolean | null;
   progress: number | null;
   owner_business_id: string | null;
   owner_execution_id: string | null;
@@ -107,7 +108,8 @@ async function analyzeWhySlip(
 ): Promise<WhySlipContext[]> {
   const reasons: WhySlipContext[] = [];
 
-  if (init.status === 'BLOCKED') {
+  // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
+  if (init.on_hold) {
     const blockedDays = init.blocked_at
       ? Math.floor((Date.now() - new Date(init.blocked_at).getTime()) / 86400000)
       : 0;
@@ -123,7 +125,9 @@ async function analyzeWhySlip(
        FROM initiative_dependencies id
        JOIN initiatives i ON i.id = id.from_initiative_id
        WHERE id.to_initiative_id = ? AND id.organization_id = ?
-         AND i.status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')`,
+         -- DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED; ARCHIVED is
+         -- now a flag that only ever applies on top of CLOSED/REJECTED anyway.
+         AND i.status NOT IN ('CLOSED', 'REJECTED')`,
       [init.id, organizationId]
     )) as DependencyRow[] | null;
 
@@ -185,14 +189,19 @@ export async function detectDelaySignals(
     const initiativeSelect = (column: string) =>
       initiativeColumns.has(column) ? column : `NULL as ${column}`;
 
+    // DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED, CANCELLED -> REJECTED, ARCHIVED is now a flag.
+    const archivedFilter = initiativeColumns.has('archived')
+      ? `AND NOT COALESCE(archived, FALSE)`
+      : '';
     let initQuery = `
       SELECT id, name, status, ${initiativeSelect('priority')}, ${initiativeSelect('planned_start_date')}, ${initiativeSelect('planned_end_date')},
              ${initiativeSelect('start_date')}, ${initiativeSelect('actual_end_date')}, ${initiativeSelect('execution_started_at')}, ${initiativeSelect('sla_deadline')},
-             ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('progress')},
+             ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('on_hold')}, ${initiativeSelect('progress')},
              ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}, ${initiativeSelect('project_id')}
       FROM initiatives
       WHERE organization_id = ?
-        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+        AND status NOT IN ('CLOSED', 'REJECTED', 'DRAFT')
+        ${archivedFilter}
     `;
     const params: unknown[] = [organizationId];
     if (projectId) {
@@ -236,7 +245,8 @@ export async function detectDelaySignals(
 
       // Overdue: planned end passed, not done
       const endDate = init.planned_end_date || init.sla_deadline;
-      if (endDate && new Date(endDate) < now && init.status !== 'DONE') {
+      if (endDate && new Date(endDate) < now && init.status !== 'CLOSED') {
+        // DEC-424 (P12-int-c): DONE -> CLOSED.
         const daysOverdue = Math.floor((now.getTime() - new Date(endDate).getTime()) / 86400000);
         const severity: DelaySeverity =
           daysOverdue >= thresholds.criticalDays ? 'CRITICAL' : 'WARNING';
@@ -260,7 +270,7 @@ export async function detectDelaySignals(
       }
 
       // Late Finish Risk: approaching deadline with low progress
-      if (init.planned_end_date && init.status !== 'DONE') {
+      if (init.planned_end_date && init.status !== 'CLOSED' /* DEC-424 (P12-int-c): DONE -> CLOSED */) {
         const daysUntilEnd = Math.floor(
           (new Date(init.planned_end_date).getTime() - now.getTime()) / 86400000
         );
@@ -303,7 +313,7 @@ export async function detectDelaySignals(
       }
 
       // Deadline Risk: SLA approaching
-      if (init.sla_deadline && init.status !== 'DONE') {
+      if (init.sla_deadline && init.status !== 'CLOSED' /* DEC-424 (P12-int-c): DONE -> CLOSED */) {
         const daysUntilSla = Math.floor(
           (new Date(init.sla_deadline).getTime() - now.getTime()) / 86400000
         );

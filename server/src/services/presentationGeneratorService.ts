@@ -1319,8 +1319,9 @@ async function loadArtifactData(
     try {
       switch (source.type) {
         case 'initiative_portfolio': {
+          // DEC-424 (P12-int-c): CANCELLED -> REJECTED; ARCHIVED is now a flag.
           const initiatives = await dbAll(
-            `SELECT id, name, status, priority, axis, progress, expected_roi FROM initiatives WHERE organization_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED') ORDER BY priority DESC LIMIT 20`,
+            `SELECT id, name, status, priority, axis, progress, expected_roi FROM initiatives WHERE organization_id = ? AND status <> 'REJECTED' AND NOT COALESCE(archived, FALSE) ORDER BY priority DESC LIMIT 20`,
             [orgId]
           );
           data._initiatives = ((initiatives || []) as any[]).map((i: any) => ({

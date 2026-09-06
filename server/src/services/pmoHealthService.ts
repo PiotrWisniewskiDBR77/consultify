@@ -266,9 +266,10 @@ async function getInitiativeCounts(projectId: string): Promise<InitiativeCounts>
   try {
     const row = await DbPromise.get<InitiativeCountRow>(
       db,
+      // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
       `SELECT
                 SUM(CASE WHEN risk_level = 'HIGH' OR status = 'AT_RISK' THEN 1 ELSE 0 END) as "atRiskCount",
-                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as "blockedCount"
+                SUM(CASE WHEN status = 'IN_EXECUTION' AND on_hold THEN 1 ELSE 0 END) as "blockedCount"
             FROM initiatives
             WHERE project_id = ?`,
       [projectId]

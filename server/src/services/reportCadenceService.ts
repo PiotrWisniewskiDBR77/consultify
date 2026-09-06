@@ -145,7 +145,8 @@ export async function findDueReports(orgId: string, now: number): Promise<DueRep
      AND r.organization_id = i.organization_id
      AND r.period_type = p.period_type
     WHERE i.organization_id = ?
-      AND UPPER(i.status) = 'EXECUTING'
+      -- DEC-424 (P12-int-c): EXECUTING -> IN_EXECUTION.
+      AND UPPER(i.status) = 'IN_EXECUTION'
     GROUP BY i.id, p.period_type
   `;
 

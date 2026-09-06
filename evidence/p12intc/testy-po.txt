@@ -1,0 +1,45 @@
+P12-int-c — dowody testowe (2026-09-06)
+
+1. server/src/services/initiative/__tests__/initiativeLifecycleCanon.test.ts (DB_TYPE=sqlite)
+   PRZED (HEAD, plik initiativeLifecycleCanon.ts nietknięty): 3 failed | 8 passed (11)
+     - coerceInitiativeStatusForWrite accepts canonical PMO statuses (zastane, niezwiązane z tą naprawą)
+     - buildInitiativeOutboundHandoffPayload includes bounded common fields (zastane)
+     - InitiativeController records audited status transitions (zastane, string-match asercja niezwiązana)
+   PO naprawie normalizeInitiativeDbStatusForRead/mapDbStatusToP11Lifecycle + aktualizacji testu
+   "normalizes legacy step labels...": 3 failed | 8 passed (11) — te same 3 nazwy zastałe, +1 test
+   (zaktualizowany) zielony zamiast czerwonego.
+   MUTACJA: przywrócenie `s === 'COMPLETED' || s === 'DONE') return 'DONE'` (zamiast CLOSED) →
+   4 failed | 7 passed — nowy test poprawnie łapie regresję. Przywrócono naprawę → z powrotem 3/8.
+
+2. server/src/services/initiative/__tests__/p12IntC.statusWritePaths.pg.test.ts (realdb 54400,
+   consultify_noc, fixture org_id `p12intc-<uuid>`, sprzątanie do 0 w afterAll — zweryfikowane
+   zapytaniem `SELECT count(*) FROM initiatives WHERE organization_id LIKE 'p12intc-%'` = 0 po biegu):
+   4/4 PASSED:
+     - decyzja blokuje IN_EXECUTION -> on_hold=true, RESUME czyści on_hold
+     - decyzja na DRAFT jest odrzucona (INITIATIVE_FLAG_INVALID_STATE), on_hold zostaje false
+     - IN_EXECUTION -> CLOSED (executeInitiativeTransition)
+     - IN_EXECUTION -> REJECTED z powodem (i odmowa bez powodu, REASON_REQUIRED)
+   MUTACJA: `if (false && currentStatus !== InitiativeStatus.IN_EXECUTION)` (wyłączenie strażnika
+   INITIATIVE_FLAG_INVALID_STATE) → test #2 RED (1 failed | 3 passed). Przywrócono → 4/4 znów.
+
+3. Regresja na plikach dotkniętych (sqlite, chyba że zaznaczono postgres):
+   - v8ExecutionControlTowerService.test.ts: 2/2 PASS (bez zmian vs. baza)
+   - initiatives-gate-readiness-parity.test.ts: 2/2 PASS
+   - initiatives-additive.routes.test.ts: 11/11 PASS
+   - day132.aiContextBuilderFailClosed.test.ts: 1/1 PASS
+   - presentationGeneratorService.createNativeDeck.pg.test.ts (postgres): 2/2 PASS
+   - kpiAttributionService.res011.pg.test.ts (postgres): 2/2 PASS
+   - executiveAggregateRolloutKpis.test.ts, executionBudgetDelete.test.ts,
+     executionResultsBridge.test.ts, programRollupService.test.ts: wszystkie PASS (36/41 w wspólnym
+     biegu; 5 nieudanych testów w tej samej paczce NIEZWIĄZANE z P12 — patrz niżej)
+   - PRZEDinstniejące/niezwiązane RED (nie moja przyczyna, zweryfikowane treścią błędu):
+     execution-control.routes.test.ts, p03-interventions.test.ts, p03-manager-routes.test.ts —
+     całe pliki padają na `vi.mock` bez eksportu `validateOrgMembership` w
+     `middleware/auth.middleware.js` (chat.routes.ts -> v8/index.ts), zero związku z initiatives.status.
+     resultsWriterInventory.denominator.test.ts, roiReadSurfaceInventory.test.ts — bramki
+     "inventory ratchet" dla ROI/Results, listują NIEZWIĄZANE pliki (flowTransformLineageService.ts,
+     resultsSearchRepository.ts, roiCaseCardRepository.ts) jako "unlisted" — zero związku z initiatives.status.
+
+4. esbuild per plik (wszystkie 24 zmienione pliki .ts serwera, poza testami): 0 błędów.
+
+5. Pełny `tsc -p server/tsconfig.build.json --noEmit`: exit 0 (dwukrotnie, po ostatniej rundzie poprawek).

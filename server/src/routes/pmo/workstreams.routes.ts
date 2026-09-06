@@ -119,7 +119,9 @@ router.get(
           COALESCE(u.first_name || ' ' || u.last_name, NULL) as owner_name,
           COUNT(i.id) as initiative_count,
           COALESCE(AVG(COALESCE(i.progress, 0)), 0) as avg_progress,
-          SUM(CASE WHEN i.status IN ('DONE','COMPLETED') THEN 1 ELSE 0 END) as completed_count
+          -- DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED; 'COMPLETED' never
+          -- existed for initiatives (it was a legacy TASK status synonym).
+          SUM(CASE WHEN i.status = 'CLOSED' THEN 1 ELSE 0 END) as completed_count
         FROM workstreams w
         LEFT JOIN users u ON u.id = w.owner_id
         LEFT JOIN initiatives i ON i.workstream_id = w.id
@@ -375,9 +377,8 @@ router.get(
               initiatives.length
           )
         : 0;
-    const completed = initiatives.filter((i: any) =>
-      ['DONE', 'COMPLETED'].includes(String(i.status))
-    ).length;
+    // DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED (słownik 7).
+    const completed = initiatives.filter((i: any) => String(i.status) === 'CLOSED').length;
 
     return res.json({
       workstream: {

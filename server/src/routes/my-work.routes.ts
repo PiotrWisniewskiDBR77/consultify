@@ -8997,10 +8997,14 @@ router.get(
           getCapacityOverview(orgId),
           getOverloadAlerts(orgId),
           queryHelpers.queryOne<{ total: number; executing: number; blocked: number }>(
+            // DEC-424 (P12-int-c): słownik 7 zna wyłącznie IN_EXECUTION jako status
+            // realizacji; „zablokowana" to flaga `on_hold` na tym statusie, nie
+            // osobny status 'BLOCKED'. Stare literały nigdy nie trafiały w
+            // zmigrowane wiersze.
             `SELECT
              COUNT(*) as total,
-             SUM(CASE WHEN UPPER(status) IN ('EXECUTING','ACTIVE','IN_PROGRESS') THEN 1 ELSE 0 END) as executing,
-             SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
+             SUM(CASE WHEN UPPER(status) = 'IN_EXECUTION' THEN 1 ELSE 0 END) as executing,
+             SUM(CASE WHEN UPPER(status) = 'IN_EXECUTION' AND on_hold THEN 1 ELSE 0 END) as blocked
            FROM initiatives
            WHERE organization_id = ?`,
             [orgId]
@@ -9084,9 +9088,10 @@ router.get(
         [DEFAULT_WEEKLY_HOURS, projectId]
       ),
       queryHelpers.queryOne<{ executing: number; blocked: number; total: number }>(
+        // DEC-424 (P12-int-c): jak wyżej — IN_EXECUTION + flaga on_hold.
         `SELECT
-           SUM(CASE WHEN UPPER(status) = 'EXECUTING' THEN 1 ELSE 0 END) as executing,
-           SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
+           SUM(CASE WHEN UPPER(status) = 'IN_EXECUTION' THEN 1 ELSE 0 END) as executing,
+           SUM(CASE WHEN UPPER(status) = 'IN_EXECUTION' AND on_hold THEN 1 ELSE 0 END) as blocked,
            COUNT(*) as total
          FROM initiatives WHERE project_id = ? AND organization_id = ?`,
         [projectId, orgId]

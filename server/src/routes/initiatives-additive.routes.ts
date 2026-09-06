@@ -406,7 +406,11 @@ router.post(
                 COALESCE(goal_key, '')    AS goal_key
            FROM initiatives
           WHERE organization_id = ?
-            AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+            -- DEC-424 (P12-int-c): 'CANCELLED' i 'ARCHIVED' nie istnieją już w
+            -- initiatives.status (słownik 7); zamknięty status to REJECTED,
+            -- a zarchiwizowanie to osobna flaga archived.
+            AND UPPER(COALESCE(status, '')) <> 'REJECTED'
+            AND NOT COALESCE(archived, FALSE)
           LIMIT 500`,
         [orgId]
       );
@@ -426,7 +430,8 @@ router.post(
                   COALESCE(summary, '')     AS summary
              FROM initiatives
             WHERE organization_id = ?
-              AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+              AND UPPER(COALESCE(status, '')) <> 'REJECTED'
+              AND NOT COALESCE(archived, FALSE)
             LIMIT 500`,
           [orgId]
         );

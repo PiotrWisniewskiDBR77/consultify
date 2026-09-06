@@ -23,6 +23,7 @@ interface InitiativeWarningRow {
   sla_deadline: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  on_hold: boolean | null;
   progress: number | null;
   owner_business_id: string | null;
 }
@@ -37,10 +38,11 @@ export async function getTimelineWarningsSnapshot(
 ): Promise<{ warnings: TimelineWarning[]; total: number }> {
   let query = `
       SELECT id, name, status, priority, planned_end_date, sla_deadline,
-             blocked_reason, blocked_at, progress, owner_business_id
+             blocked_reason, blocked_at, on_hold, progress, owner_business_id
       FROM initiatives
+      -- DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED; ARCHIVED is a flag.
       WHERE organization_id = ?
-        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+        AND status NOT IN ('CLOSED', 'REJECTED', 'DRAFT')
     `;
   const params: unknown[] = [organizationId];
   if (projectId) {
@@ -53,7 +55,11 @@ export async function getTimelineWarningsSnapshot(
   const warnings: TimelineWarning[] = [];
 
   for (const row of rows) {
-    if (row.planned_end_date && new Date(row.planned_end_date) < now && row.status !== 'DONE') {
+    if (
+      row.planned_end_date &&
+      new Date(row.planned_end_date) < now &&
+      row.status !== 'CLOSED' // DEC-424 (P12-int-c): DONE -> CLOSED
+    ) {
       const days = Math.floor(
         (now.getTime() - new Date(row.planned_end_date).getTime()) / 86400000
       );
@@ -67,7 +73,8 @@ export async function getTimelineWarningsSnapshot(
       });
     }
 
-    if (row.status === 'BLOCKED') {
+    if (row.on_hold) {
+      // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
       const blockedDays = row.blocked_at
         ? Math.floor((now.getTime() - new Date(row.blocked_at).getTime()) / 86400000)
         : 0;

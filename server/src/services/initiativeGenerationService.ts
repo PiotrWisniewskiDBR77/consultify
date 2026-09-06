@@ -1118,8 +1118,10 @@ Return valid JSON array only.`;
           if (orgId) {
             const others = await DbPromise.all<any>(
               this.db,
+              // DEC-424 (P12-int-c): CANCELLED -> REJECTED; ARCHIVED is now a flag.
               `SELECT name, status FROM initiatives
-               WHERE organization_id = ? AND id != ? AND status NOT IN ('ARCHIVED','CANCELLED')
+               WHERE organization_id = ? AND id != ? AND status <> 'REJECTED'
+                 AND NOT COALESCE(archived, FALSE)
                ORDER BY updated_at DESC LIMIT 15`,
               [orgId, context.initiativeId]
             );

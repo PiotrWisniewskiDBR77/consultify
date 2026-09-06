@@ -393,7 +393,8 @@ export async function getPortfolioBudgetSummary(
     FROM initiatives i
     LEFT JOIN initiative_budget_items bi ON bi.initiative_id = i.id AND bi.organization_id = i.organization_id
     WHERE i.organization_id = ?
-      AND i.status NOT IN ('DRAFT', 'CANCELLED', 'ARCHIVED')
+      -- DEC-424 (P12-int-c): CANCELLED -> REJECTED; ARCHIVED is now a flag, not a status.
+      AND i.status NOT IN ('DRAFT', 'REJECTED')
   `;
   const params: unknown[] = [organizationId];
   if (projectId) {

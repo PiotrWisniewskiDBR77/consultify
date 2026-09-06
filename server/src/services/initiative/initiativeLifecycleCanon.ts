@@ -36,15 +36,29 @@ const KNOWN_DB_STATUSES = new Set<string>(Object.values(InitiativeStatus));
 /**
  * Normalize legacy / drifted status strings for read surfaces (portfolio, detail header).
  * Aligns with previous `normalizePortfolioStatus` behavior in planningPortfolioReadService.
+ *
+ * DEC-424 (P12-int-c): the STEP3/STEP4/STEP5/COMPLETED/DONE legacy branches
+ * used to return OLD-dictionary literals ('REVIEW', 'EXECUTING', 'DONE') that
+ * no longer exist in `InitiativeStatus` (słownik 7) — a caller comparing this
+ * function's return value against `InitiativeStatus.*`/`VALID_TRANSITIONS`
+ * (as `executeInitiativeTransition` does for `currentStatus`) would silently
+ * never match. The DB CHECK (`initiatives_status_check_p12`) means no CURRENT
+ * row can trigger these branches, but the fallback exists precisely for
+ * schema drift / pre-migration strings, so it must still return a value from
+ * the target dictionary.
  */
 export function normalizeInitiativeDbStatusForRead(status: string | unknown): string {
   const s = String(status || 'DRAFT').toUpperCase();
-  if (s.includes('STEP3') || s.includes('STEP_3')) return 'REVIEW';
-  if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT')) return 'APPROVED';
-  if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL')) return 'EXECUTING';
-  if (s === 'COMPLETED' || s === 'DONE') return 'DONE';
+  if (s.includes('STEP3') || s.includes('STEP_3')) return InitiativeStatus.PENDING_APPROVAL;
+  if (s.includes('STEP4') || s.includes('STEP_4') || s.includes('PILOT'))
+    return InitiativeStatus.APPROVED;
+  if (s.includes('STEP5') || s.includes('STEP_5') || s.includes('FULL'))
+    return InitiativeStatus.IN_EXECUTION;
+  if (s === 'COMPLETED' || s === 'DONE' || s === 'TRACKING') return InitiativeStatus.CLOSED;
+  if (s === 'ARCHIVED') return InitiativeStatus.CLOSED;
+  if (s === 'CANCELLED') return InitiativeStatus.REJECTED;
   if (KNOWN_DB_STATUSES.has(s)) return s;
-  return 'DRAFT';
+  return InitiativeStatus.DRAFT;
 }
 
 /**
@@ -62,33 +76,35 @@ export function hasInitiativeStatusSchemaDrift(rawStatus: string | unknown): boo
 
 /**
  * Contract §2.3.1 mapping: one canon bucket per DB lifecycle value.
+ *
+ * DEC-424 (P12-int-c): `normalizeInitiativeDbStatusForRead` now only ever
+ * returns one of the 7 słownik-7 codes (`InitiativeStatus.*`) — this switch
+ * used to key on the OLD 13-value dictionary (PENDING_REVIEW/REVIEW/
+ * PROMOTED/PLANNING/SCHEDULED/EXECUTING/BLOCKED/DONE/TRACKING/CANCELLED/
+ * ARCHIVED), none of which `s` can equal anymore, so every real initiative
+ * except DRAFT/APPROVED silently fell through to the `default: 'intake'`
+ * bucket. Several old codes collapsed into one target code (e.g. REVIEW +
+ * PROMOTED + PLANNING → PENDING_APPROVAL); this picks ONE bucket per target
+ * code — the "blocked"/"archived" sub-buckets are no longer derivable from
+ * status alone (they are the `on_hold`/`archived` flags now), so callers
+ * that need that distinction must check those flags on the row directly.
  */
 export function mapDbStatusToP11Lifecycle(dbStatus: string | unknown): P11LifecycleCanonState {
   const s = normalizeInitiativeDbStatusForRead(dbStatus);
   switch (s) {
-    case 'DRAFT':
+    case InitiativeStatus.PROPOSED:
+    case InitiativeStatus.DRAFT:
       return 'intake';
-    case 'PENDING_REVIEW':
+    case InitiativeStatus.PENDING_APPROVAL:
       return 'triage';
-    case 'REVIEW':
-    case 'PROMOTED':
-      return 'triage';
-    case 'PLANNING':
-      return 'planned';
-    case 'APPROVED':
-    case 'SCHEDULED':
+    case InitiativeStatus.APPROVED:
       return 'approved';
-    case 'EXECUTING':
+    case InitiativeStatus.IN_EXECUTION:
       return 'executing';
-    case 'BLOCKED':
-      return 'blocked';
-    case 'DONE':
-      return 'delivered';
-    case 'TRACKING':
-    case 'CANCELLED':
+    case InitiativeStatus.CLOSED:
       return 'closed';
-    case 'ARCHIVED':
-      return 'archived';
+    case InitiativeStatus.REJECTED:
+      return 'closed';
     default:
       return 'intake';
   }
