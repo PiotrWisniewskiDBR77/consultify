@@ -27,7 +27,6 @@
  * per-field (`HonestValueCell`) — also no shell-level special case needed.
  */
 
-import { Bell, FileBarChart } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,9 +39,7 @@ import {
   StandardTable,
   type StandardTableProps,
 } from '@/components/standard';
-import { ROUTES } from '@/routes/routeConfig';
 
-import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
 import type { ResultsVNextDomain, ResultsVNextForbiddenDetail } from './types';
 import { ResultsVNextForbiddenState } from './ResultsVNextForbiddenState';
 
@@ -99,53 +96,24 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
   onForbiddenBack,
   className,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   /**
-   * E.1 (day46-finish) — a single, flag-gated navigational entry point FROM
-   * Results TO the pre-existing Management Reports screen
-   * (`ROUTES.REPORTS.MANAGEMENT`). Deliberately does NOT touch
-   * `src/components/Reports/Management/**`,
-   * `ManagementReportRepository.ts` or `managementReportsService.ts` — all
-   * three are out of this duty's scope; this is only a link. Centralized
-   * here (not per-domain) so all four Results surfaces (KPI/ROI/OKR/Search)
-   * get the same entry point from one change. Default OFF
-   * (`managementReportEntry` flag) — renders nothing at all when off, same
-   * "true no-op" shape as `sampleData` above. Uses a plain `<a href>` (real
-   * anchor navigation), not `useNavigate()` — this shell is mounted by
-   * every existing test WITHOUT a Router ancestor
-   * (registryShell.sampleBanner.test.tsx,
-   * ResultsVNextRegistryShell.focusEscape.test.tsx both `render()` it
-   * bare), and Management Reports is a different top-level app section
-   * anyway, not a same-SPA-subtree hop.
+   * DEC-422 (06.09, odbiór Piotra na 4 zrzutach KPI/OKR/ROI): oba wejścia,
+   * które tu kiedyś stały — link „Uwaga" (`ROUTES.RESULTS_ATTENTION`,
+   * `attentionEntry`) i link „Raport zarządczy" (`ROUTES.REPORTS.MANAGEMENT`,
+   * `managementReportEntry`) — zostały USUNIĘTE w całości (nie tylko
+   * wyłączone flagą). Słowa właściciela: „W KPI nie mamy nic trzeciego. Jest
+   * za to jakiś przycisk »Uwaga« i »Raport zarządczy« — wyrzuć w ogóle
+   * przycisk Uwaga i to, co jest pod nim. Raport zarządczy — ten przycisk
+   * możesz w całości usunąć. Wybudujemy formułę tworzenia raportu w innym
+   * miejscu." Menu 2/3 nad tabelą nie ma mieć żadnych przycisków akcji poza
+   * `primaryCta` (kanon TRIADA §B). „Uwaga" nie miała żadnego innego
+   * konsumenta niż ten link — `ResultsAttentionPage`/`attentionApi`/
+   * `attentionPresenters`/trasa/flaga usunięte razem z nim (zmierzone grepem
+   * przed kasacją). „Raport zarządczy" pod `ROUTES.REPORTS.MANAGEMENT` ma
+   * inne, żywe konsumenty (`src/components/Reports/Management/**`) — ten
+   * ekran i jego trasa ZOSTAJĄ, kasujemy tylko to jedno wejście z Wyników.
    */
-  const managementReportEntryEnabled = isResultsVNextFlagEnabled('managementReportEntry');
-  /**
-   * 2026-09-01 (ANALIZA_ODRZUCONE_20260901.md §3) — wejście do ekranu
-   * „Uwaga" (`ROUTES.RESULTS_ATTENTION`). Ta trasa była SIEROTĄ: poza własną
-   * definicją, montażem i harnessem dev-render nic w aplikacji do niej nie
-   * prowadziło, więc trzynaście wypełnionych kubełków („czym trzeba się dziś
-   * zająć") było osiągalne wyłącznie ręcznym wpisaniem adresu.
-   *
-   * DLACZEGO TUTAJ, A NIE W MENU 2: Menu 2 Wyników
-   * (`resultsDomainNavigation.ts`) przełącza DOMENĘ (KPI/OKR/ROI) i steruje
-   * `getResultsDomainPath`; „Uwaga" świadomie NIE jest czwartą domeną
-   * (D10 — patrz nagłówek `attention/ResultsAttentionPage.tsx`), więc
-   * dopisanie jej tam skłamałoby o kształcie modułu. Powłoka rejestrów jest
-   * jedynym miejscem, z którego jedna zmiana daje to samo wejście wszystkim
-   * czterem powierzchniom Wyników — dokładnie ten sam wzorzec, którym już
-   * tu wchodzi `managementReportEntry`.
-   *
-   * PODWÓJNA BRAMKA (uczciwość): własna flaga `attentionEntry` (default OFF,
-   * kanon #7 — czeka na zrzut + odbiór Piotra) ORAZ bramka SAMEGO CELU —
-   * `ResultsAttentionPage` wymaga `kpiRegistry` I `okrRegistry`, więc bez
-   * nich link prowadziłby do stanu „funkcja wyłączona". Nie linkujemy do
-   * ekranu, którego użytkownik nie otworzy.
-   */
-  const attentionEntryEnabled =
-    isResultsVNextFlagEnabled('attentionEntry') &&
-    isResultsVNextFlagEnabled('kpiRegistry') &&
-    isResultsVNextFlagEnabled('okrRegistry');
-  const isPolish = !!i18n.language?.startsWith('pl');
   /**
    * Punkt zakresu 5 (tor PLATFORMY, 2026-08-11) — „Esc zamyka, focus wraca do
    * rekordu" (TRIADA §B pkt 24/42, `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md`
@@ -200,30 +168,6 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
             role="status"
           >
             {t('results.sampleData.banner', 'Sample data — not from the database')}
-          </div>
-        ) : null}
-        {managementReportEntryEnabled || attentionEntryEnabled ? (
-          <div className="mx-4 mt-3 flex justify-end gap-2">
-            {attentionEntryEnabled ? (
-              <a
-                href={ROUTES.RESULTS_ATTENTION}
-                className="inline-flex items-center gap-1.5 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
-                data-testid="results-vnext-attention-entry"
-              >
-                <Bell className="h-3.5 w-3.5" aria-hidden="true" />
-                {isPolish ? 'Uwaga' : 'Attention'}
-              </a>
-            ) : null}
-            {managementReportEntryEnabled ? (
-              <a
-                href={ROUTES.REPORTS.MANAGEMENT}
-                className="inline-flex items-center gap-1.5 rounded-token-md border border-[color:var(--c-border-subtle)] bg-[color:var(--c-surface-raised)] px-3 py-1.5 text-sm text-c-text-secondary hover:text-c-text focus-visible:ring-2 focus-visible:ring-c-focus"
-                data-testid="results-vnext-management-report-entry"
-              >
-                <FileBarChart className="h-3.5 w-3.5" aria-hidden="true" />
-                {isPolish ? 'Raport zarządczy' : 'Management report'}
-              </a>
-            ) : null}
           </div>
         ) : null}
         {header && !forbidden ? (

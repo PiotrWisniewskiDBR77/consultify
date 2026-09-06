@@ -57,6 +57,7 @@ import { Blocks, Plus } from 'lucide-react';
 
 import { EmptyState } from '@/components/shared/states';
 import type { StandardCounterChip, StandardModuleTab } from '@/components/standard';
+import { SelectField } from '@/components/ui/primitives';
 import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { useResultsEntityNames } from '@/hooks/useResultsEntityNames';
 import { useAppStore } from '@/store/useAppStore';
@@ -677,7 +678,15 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
 
   if (tab === 'snapshots') {
     const rows = filteredSnapshots.map((s) => withId(s, 'snapshotId'));
-    const chips: StandardCounterChip[] = [
+    /**
+     * DEC-422 (06.09, odbiór Piotra) — `[...levelChips, ...chips]` łączyło 2
+     * pigułki poziomu (Mierniki/Migawki) z 4 pigułkami statusu migawki w
+     * JEDEN rząd 6 chipów, dokładnie ten kształt właściciel odrzucił dla
+     * ROI ("osobny rząd + dodatkowe przyciski"). Naprawa ta sama: pigułki
+     * poziomu ZOSTAJĄ w Menu 3 (2 pozycje, ≤3 z kanonu), filtr statusu
+     * migawki schodzi do dropdownu w Menu 2 (`snapshotStatusFilterControl`).
+     */
+    const snapshotStatusOptions: StandardCounterChip[] = [
       { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: snapshots?.length ?? 0 },
       {
         id: 'draft',
@@ -695,6 +704,22 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         count: (snapshots ?? []).filter((s) => s.status === 'superseded').length,
       },
     ];
+    const snapshotStatusFilterControl = (
+      <div data-testid="kpi-scorecard-snapshot-status-filter">
+        <SelectField
+          value={snapshotStatusChip}
+          onChange={(id) => setSnapshotStatusChip(id as 'all' | KpiScorecardSnapshotStatus)}
+          options={snapshotStatusOptions.map((opt) => ({
+            value: opt.id,
+            label: `${opt.label} (${opt.count ?? 0})`,
+          }))}
+          fullWidth={false}
+          wrapperClassName="w-auto"
+          className="min-w-[13rem]"
+          aria-label={isPolish ? 'Filtruj migawki wg statusu' : 'Filter snapshots by status'}
+        />
+      </div>
+    );
 
     const isArchived = scorecard?.lifecycleStatus === 'archived';
     return (
@@ -707,20 +732,13 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             onTabChange: onDomainTabChange,
             showTabCounts: false,
             breadcrumbs,
-            /* Pigułka poziomu na pierwszym miejscu, filtry statusu migawek za
-               nią — z tego ekranu musi dać się wrócić do tabeli mierników. */
-            chips: [...levelChips, ...chips],
-            activeChip: snapshotStatusChip === 'all' ? 'snapshots' : snapshotStatusChip,
+            filterControls: snapshotStatusFilterControl,
+            chips: levelChips,
+            activeChip: 'snapshots',
             onChipChange: (id) => {
               if (id === 'items') {
                 setTab('items');
-                return;
               }
-              if (id === 'snapshots') {
-                setSnapshotStatusChip('all');
-                return;
-              }
-              setSnapshotStatusChip(id as 'all' | KpiScorecardSnapshotStatus);
             },
             primaryCta: {
               label: isPolish ? 'Nowa migawka' : 'New snapshot',

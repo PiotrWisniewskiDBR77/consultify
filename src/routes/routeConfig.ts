@@ -227,11 +227,9 @@ export const ROUTES = {
     /** Przekierowanie: dawna „karta KR" → karta celu. */
     OBJECTIVE_KEY_RESULT: '/results/okr/:setId/objectives/:objectiveId/rezultaty/:keyResultId',
   },
-  // RN-G5 scopegap task 1 (§G #30) — cross-cutting "Attention" view over the
-  // KPI + OKR manager attention read-models. D10: ONE view, not a fourth
-  // registry namespace — a bare top-level route, not `RESULTS_ATTENTION.ROOT`
-  // nested-object shape the three real registries use.
-  RESULTS_ATTENTION: '/results/attention',
+  // DEC-422 (06.09) — `RESULTS_ATTENTION` ("Uwaga") removed: it was reachable
+  // only through the link in `ResultsVNextRegistryShell.tsx`, removed at the
+  // owner's explicit instruction. See that file for the removal note.
   CONCLUSIONS: '/conclusions',
   MCP_IRIS: '/mcp/iris',
   MCP_MARKETPLACE: '/mcp/marketplace',

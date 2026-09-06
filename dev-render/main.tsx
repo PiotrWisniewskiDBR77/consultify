@@ -646,7 +646,6 @@ const P7kWynikiKpiScreen = React.lazy(() => import('./screens/p7k-wyniki-kpi'));
 const ResultsVNextLegacyArchiveScreen = React.lazy(
   () => import('./screens/results-vnext-legacy-archive')
 );
-const ResultsVNextAttentionScreen = React.lazy(() => import('./screens/results-vnext-attention'));
 const ResultsVNextRoiPirOutcomesScreen = React.lazy(
   () => import('./screens/results-vnext-roi-pir-outcomes')
 );
@@ -948,11 +947,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'RN-G2 R09-3 — REALNY <ResultsVNextLegacyArchivePanel> (kpi/roi/okr .../legacy index, tylko do odczytu, prep pod kolejną falę — NIEPODPIĘty do żadnego huba). &domain=kpi|roi|okr &state=ready|loading|empty|error',
     render: () => <ResultsVNextLegacyArchiveScreen />,
-  },
-  'results-vnext-attention': {
-    label:
-      'RN-G5 §G #30 — REALNY <ResultsAttentionPage> (przekrojowy widok KPI+OKR attention/team-health, Api.get stubbed). Menu2 KPI/OKR, Menu3 = bucket (real counts). &kpiState=ready|loading|empty|error &okrState=ready|loading|empty|error &ff=off',
-    render: () => <ResultsVNextAttentionScreen />,
   },
   'results-vnext-roi-pir-outcomes': {
     label:

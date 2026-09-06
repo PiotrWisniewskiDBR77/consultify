@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  *
  * Unit tests for `isResultsVNextFlagEnabled` (RN-G2 registry flags:
- * kpiRegistry / roiRegistry / okrRegistry / resultsSearch / attentionEntry).
+ * kpiRegistry / roiRegistry / okrRegistry / resultsSearch).
  *
  * kpiRegistry flipped OFF -> ON (demo/stage/dev; public production stays
  * OFF) on 2026-08-27 — Piotr accepted the KPI registry on dev-render
@@ -11,10 +11,14 @@
  *
  * DEC 03.09 wieczór (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
  * wiersz A1 — "14 ekranów Wyników: KPI, OKR, ROI, wyszukiwarka, uwaga"):
- * roiRegistry/okrRegistry/resultsSearch/attentionEntry join kpiRegistry in the
- * same D-D default-on shape (ON off public production, OFF on it).
- * managementReportEntry/resultsLegacyArchive are NOT part of this decision —
- * they stay default OFF everywhere.
+ * roiRegistry/okrRegistry/resultsSearch join kpiRegistry in the same D-D
+ * default-on shape (ON off public production, OFF on it).
+ * resultsLegacyArchive is NOT part of this decision — stays default OFF
+ * everywhere. `attentionEntry` (the fifth named domain, "uwaga") and
+ * `managementReportEntry` were REMOVED entirely DEC-422 (06.09) — the owner
+ * asked for both entry-point buttons gone, not just gated off; see
+ * `ResultsVNextRegistryShell.tsx` for the removal note. Their flags no
+ * longer exist in `FLAGS`/`ResultsVNextFlag`.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -95,7 +99,7 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
-  describe('roiRegistry / okrRegistry / resultsSearch / attentionEntry — DEC 03.09 wieczór A1 default-on', () => {
+  describe('roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on', () => {
     it('roiRegistry defaults ON off public production, OFF on it', () => {
       expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(true);
       setLocation({ hostname: 'consultify.ai' });
@@ -114,12 +118,6 @@ describe('isResultsVNextFlagEnabled', () => {
       expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(false);
     });
 
-    it('attentionEntry defaults ON off public production, OFF on it', () => {
-      expect(isResultsVNextFlagEnabled('attentionEntry')).toBe(true);
-      setLocation({ hostname: 'consultify.ai' });
-      expect(isResultsVNextFlagEnabled('attentionEntry')).toBe(false);
-    });
-
     it('roiRegistry/okrRegistry still honour explicit query/localStorage "0" overrides despite the ON default', () => {
       window.localStorage.setItem(RESULTS_VNEXT_FLAG_KEYS.roiRegistry.localStorage, '0');
       expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(false);
@@ -128,11 +126,11 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
-  describe('managementReportEntry — E.1 entry point to the existing Management Reports screen (NOT part of DEC 03.09 A1)', () => {
-    it('stays OFF by default and turns ON only with an explicit carrier', () => {
-      expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(false);
-      setLocation({ search: `?${RESULTS_VNEXT_FLAG_KEYS.managementReportEntry.query}=1` });
-      expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(true);
+  describe('DEC-422 (06.09) — removed flags stay gone', () => {
+    it('attentionEntry / managementReportEntry no longer exist in the flag table', () => {
+      // MUTACJA: przywrócenie którejkolwiek flagi do FLAGS wywraca ten test.
+      expect(Object.keys(RESULTS_VNEXT_FLAG_KEYS)).not.toContain('attentionEntry');
+      expect(Object.keys(RESULTS_VNEXT_FLAG_KEYS)).not.toContain('managementReportEntry');
     });
   });
 

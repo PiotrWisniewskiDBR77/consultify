@@ -81,12 +81,13 @@ export {
 // `KpiDeviationCaseSubview.tsx` (screens).
 export { KpiToolPage } from './kpiTool/KpiToolPage';
 export { KpiDeviationCaseSubview } from './kpiTool/KpiDeviationCaseSubview';
-// RN-G5 scopegap task 1 (§G #30) — cross-cutting Attention view
-// (`/results/attention`). See `attention/` subfolder: `attentionApi.ts`
-// (fetch client for the 3 previously-unconsumed attention/team-health
-// endpoints), `attentionPresenters.tsx` (bucket registry + generic row
-// preview), `ResultsAttentionPage.tsx` (screen).
-export { ResultsAttentionPage } from './attention/ResultsAttentionPage';
+// DEC-422 (06.09) — the cross-cutting "Attention" view (`/results/attention`,
+// `attention/` subfolder: attentionApi.ts/attentionPresenters.tsx/
+// ResultsAttentionPage.tsx) was removed in its entirety together with its
+// sole entry point (the "Uwaga" link in `ResultsVNextRegistryShell.tsx`) —
+// owner's explicit instruction was to remove the button "and what's under
+// it", not just gate it off. See ResultsVNextRegistryShell.tsx for the
+// removal note.
 // RN-G5 scopegap task 3 (§G #11) — ROI org PIR-outcomes perspective, a
 // standalone route + self-contained tab component ready to fold into
 // `ResultsRoiHub.tsx` as a third Menu 2 tab (see `RoiPirOutcomesTab.tsx`
