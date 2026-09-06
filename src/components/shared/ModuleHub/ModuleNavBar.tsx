@@ -245,8 +245,17 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   // Modes swap in place: search ↔ dynamic tabs ↔ counters/bulk ↔ other contextual chips.
   // MUST: the command row must not disappear when it's used for counters/status chips.
   const commandRow = (() => {
-    // 0) Bulk / forced row — overrides search and tabs
-    if (forceCommandRow && commandRowContent) {
+    // 0) Bulk / forced row — overrides search and tabs.
+    // P1 DEC-397 BUGFIX (znalezione na żywo 06.09, zlecenie 1.2): ten skrót
+    // renderował WYŁĄCZNIE `commandRowContent`, gubiąc `commandRowRightContent`
+    // całkowicie — więc pigułki „Teresa"/„Pokaż panel" (`StandardModuleBar`'s
+    // `panelControls`, wjeżdżające tu jako `commandRowRightContent`) nigdy się
+    // nie renderowały na ŻADNYM ekranie, który force'uje wiersz komend z lewą
+    // treścią (np. Wywiad → Skrzynka, własne chipy statusu). `!commandRowRightContent`
+    // ogranicza ten skrót z powrotem do jego pierwotnego celu (tryb bulk bez
+    // prawej treści); gdy prawa treść istnieje, spada do bogatszej gałęzi
+    // niżej, która renderuje obie strony.
+    if (forceCommandRow && commandRowContent && !commandRowRightContent) {
       return <div className="shrink-0">{commandRowContent}</div>;
     }
 

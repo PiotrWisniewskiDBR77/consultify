@@ -137,6 +137,8 @@ import {
   type ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
+import { useDesktopPreviewOverlay } from '../shared/PreviewPane/useDesktopPreviewOverlay';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
@@ -842,6 +844,11 @@ export const InterviewHub: React.FC = () => {
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
   const [previewAssignmentOpen, setPreviewAssignmentOpen] = useState(false);
   const [previewDetailsMenuOpen, setPreviewDetailsMenuOpen] = useState(false);
+  // P1 DEC-397 §4.3: poniżej 1440 px panel `my_assignments` (list mode) jest
+  // nakładką — wołane bezwarunkowo na poziomie komponentu (reguła hooków),
+  // nawet gdy ta konkretna zakładka nie jest aktywna teraz.
+  const { containerRef: assignmentsPanelContainerRef, overlayMode: assignmentsPanelNakladka } =
+    useDesktopPreviewOverlay();
   const [previewDetailsOverride, setPreviewDetailsOverride] = useState<string | null>(null);
   const [previewAiMenuOpen, setPreviewAiMenuOpen] = useState(false);
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
@@ -8526,7 +8533,12 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="h-full flex flex-col">
           {renderDegradedBanner()}
-          <div className="flex-1 min-h-0 flex overflow-hidden">
+          {/* `relative` + `ref`: patrz useDesktopPreviewOverlay.ts — poniżej
+              1440 px kontenera panel staje się nakładką (P1 DEC-397 §4.3). */}
+          <div
+            className="relative flex-1 min-h-0 flex overflow-hidden"
+            ref={assignmentsPanelContainerRef}
+          >
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={inboxColumns}
@@ -8616,73 +8628,96 @@ Return ONLY the answer text (no markdown fences).`;
               />
             </div>
 
-            {selectedRow ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-                <StandardPreview
-                  title={getAssignmentTitle(selectedRow)}
-                  onClose={() => {
-                    setPreviewAssignmentId(null);
-                    setPreviewAssignmentOpen(false);
-                  }}
-                  onOpenFull={() => void openInterviewAssignmentFull(selectedRow, false)}
-                  meta={{
-                    pills: [
-                      {
-                        label: getAssignmentStatusLabel(selectedRow.status),
-                        tone: statusChipTone(selectedRow.status),
+            {/* P1 DEC-397 (rodzina B): jeden prawy panel z zakładkami
+                „Rekord | Teresa" zamiast bespoke <aside> obok StandardPreview
+                — wzorzec 1:1 z ExecutionHub.tsx (JedenPrawyPanel). Poniżej
+                1440 px kontenera panel jest nakładką (§4.3). */}
+            <div
+              className={
+                assignmentsPanelNakladka
+                  ? 'pointer-events-none absolute inset-y-0 right-0 z-40 flex items-stretch justify-end gap-1.5 pl-3'
+                  : 'contents'
+              }
+            >
+            <JedenPrawyPanel
+              className={
+                assignmentsPanelNakladka ? 'pointer-events-auto rounded-2xl shadow-2xl' : undefined
+              }
+              rekord={
+                selectedRow ? (
+                  <StandardPreview
+                    title={getAssignmentTitle(selectedRow)}
+                    // P1 DEC-397 BUGFIX (znalezione na żywo 06.09): NIE czyścić
+                    // `previewAssignmentId` tutaj — widocznością panelu steruje
+                    // WYŁĄCZNIE `JedenPrawyPanel`'s `panel.zamkniety` (lepkie
+                    // zamknięcie). Czyszczenie zaznaczenia tutaj psuło pigułkę
+                    // "Pokaż panel" z Menu 3: po X → zaznaczenie znika →
+                    // `rekord=null` → "Pokaż panel" nie ma czego pokazać.
+                    // Wzorzec 1:1 z rodziną A (`MyTasksListContent.tsx`:
+                    // `TableWithPreviewLayout selectedId={previewTaskId}` nigdy
+                    // nie jest czyszczone przez zamknięcie panelu).
+                    onClose={() => setPreviewAssignmentOpen(false)}
+                    onOpenFull={() => void openInterviewAssignmentFull(selectedRow, false)}
+                    meta={{
+                      pills: [
+                        {
+                          label: getAssignmentStatusLabel(selectedRow.status),
+                          tone: statusChipTone(selectedRow.status),
+                        },
+                        {
+                          label: `${t('interview.hub.progress')}: ${selectedRow.session?.completenessPercent ?? 0}%`,
+                          tone: 'neutral',
+                        },
+                      ],
+                      trailing: (() => {
+                        const dtd = getAssignmentDaysToDue(selectedRow.dueAt);
+                        return dtd ? (
+                          <span className="text-[11px] font-semibold text-c-text-secondary">
+                            {dtd.label}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-c-text-muted">—</span>
+                        );
+                      })(),
+                    }}
+                    details={{
+                      text:
+                        String(
+                          previewDetailsOverride ?? selectedRow.template?.description ?? ''
+                        ).trim() || t('interview.hub.noDescription'),
+                      onCopy: () => {
+                        const text = String(
+                          previewDetailsOverride ?? selectedRow.template?.description ?? ''
+                        ).trim();
+                        copyToClipboard(text || getAssignmentTitle(selectedRow));
                       },
-                      {
-                        label: `${t('interview.hub.progress')}: ${selectedRow.session?.completenessPercent ?? 0}%`,
-                        tone: 'neutral',
-                      },
-                    ],
-                    trailing: (() => {
-                      const dtd = getAssignmentDaysToDue(selectedRow.dueAt);
-                      return dtd ? (
-                        <span className="text-[11px] font-semibold text-c-text-secondary">
-                          {dtd.label}
-                        </span>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-c-text-muted">—</span>
-                      );
-                    })(),
-                  }}
-                  details={{
-                    text:
-                      String(
-                        previewDetailsOverride ?? selectedRow.template?.description ?? ''
-                      ).trim() || t('interview.hub.noDescription'),
-                    onCopy: () => {
-                      const text = String(
-                        previewDetailsOverride ?? selectedRow.template?.description ?? ''
-                      ).trim();
-                      copyToClipboard(text || getAssignmentTitle(selectedRow));
-                    },
-                  }}
-                  ai={{
-                    hints: isPolish
-                      ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
-                      : ['Summarize', 'Risks', 'Next steps'],
-                    disabled: true,
-                    disabledTooltip: t('interview.hub.comingSoon'),
-                  }}
-                  relations={
-                    selectedRow.sessionId || selectedRow.session?.id
-                      ? [
-                          {
-                            // FALA 1 (2026-07-27): było `Session: f7847468…`
-                            // — obcięty UUID. Czytelna etykieta, ID w tooltipie.
-                            label: t('interview.hub.linkedSession', 'Linked session'),
-                            title: selectedRow.sessionId || selectedRow.session?.id || undefined,
-                            onClick: () => void openInterviewAssignmentFull(selectedRow, false),
-                          },
-                        ]
-                      : []
-                  }
-                  actions={inboxPreviewActions}
-                />
-              </aside>
-            ) : null}
+                    }}
+                    ai={{
+                      hints: isPolish
+                        ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
+                        : ['Summarize', 'Risks', 'Next steps'],
+                      disabled: true,
+                      disabledTooltip: t('interview.hub.comingSoon'),
+                    }}
+                    relations={
+                      selectedRow.sessionId || selectedRow.session?.id
+                        ? [
+                            {
+                              // FALA 1 (2026-07-27): było `Session: f7847468…`
+                              // — obcięty UUID. Czytelna etykieta, ID w tooltipie.
+                              label: t('interview.hub.linkedSession', 'Linked session'),
+                              title: selectedRow.sessionId || selectedRow.session?.id || undefined,
+                              onClick: () => void openInterviewAssignmentFull(selectedRow, false),
+                            },
+                          ]
+                        : []
+                    }
+                    actions={inboxPreviewActions}
+                  />
+                ) : null
+              }
+            />
+            </div>
           </div>
         </div>
       );
