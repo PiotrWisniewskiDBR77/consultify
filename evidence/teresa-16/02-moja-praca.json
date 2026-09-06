@@ -6,7 +6,7 @@
   "stopReason": null,
   "finalRoute": "/my-work",
   "unifiedChatPanelDomCount": 1,
-  "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. UÅ¼ytkownik ma piÄ™tnaÅ›cie przypisanych zadaÅ„, z czego kilka jest w toku, a trzy sÄ… zablokowane bez podanej przyczyny. Na uwagÄ™ zasÅ‚uguje fakt, Å¼e organizacja ma zerowy wskaÅºnik sukcesu ukoÅ„czonych inicjatyw, co sugeruje koniecznoÅ›Ä‡ analizy i optymalizacji procesÃ³w projektowych. UÅ¼ytkownik ma takÅ¼e do podjÄ™cia trzy decyzje zwiÄ…zane z projektem DBR77. ObciÄ…Å¼enie uÅ¼ytkownika jest oznaczone jako â€žwarningâ€, co moÅ¼e wskazywaÄ‡ na ryzyko przeciÄ…Å¼enia pracÄ….",
+  "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody na poziomie 120 milionÃ³w euro. W organizacji obecnie dziaÅ‚ajÄ… dwie aktywne inicjatywy: robotyzacja gniazda spawalniczego i system wizyjny kontroli jakoÅ›ci. W kontekÅ›cie uÅ¼ytkownika widzÄ™ zadania zwiÄ…zane z projektem DBR77, z rÃ³Å¼nymi statusami i priorytetami, a takÅ¼e blokery, ktÃ³re wpÅ‚ywajÄ… na realizacjÄ™ zadaÅ„. UÅ¼ytkownik ma takÅ¼e oczekujÄ…ce decyzje dotyczÄ…ce rolloutu do domeny publicznej i polityki retencji logÃ³w, oraz obciÄ…Å¼enie pracy oznaczone jako â€žWARNINGâ€. Inicjatywy organizacji nie odnotowaÅ‚y jeszcze Å¼adnego ukoÅ„czenia, co Å›wiadczy o niskim wskaÅºniku sukcesu. Organizacja znajduje siÄ™ na etapie dojrzaÅ‚oÅ›ci AI okreÅ›lonym jako â€žsceptykâ€.",
   "language": "pl",
   "used_sources": 15,
   "sources": [
@@ -117,6 +117,6 @@
     }
   ],
   "degraded": [],
-  "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy in",
+  "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody na poziomie 120 milionÃ³w euro. W organizacji obecnie dziaÅ‚ajÄ… dwie ",
   "bledyKonsoli": []
 }

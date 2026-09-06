@@ -2,17 +2,121 @@
   "module": "Wyniki",
   "route": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
   "entry": "Zapytaj Teresę o ten miernik",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej i posiada Å›redniÄ… wielkoÅ›Ä‡ z przychodem â‚¬120M oraz 620 pracownikÃ³w. Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. IstniejÄ… rÃ³wnieÅ¼ trzy blokery z oznaczeniem â€žNo reason providedâ€, co moÅ¼e wskazywaÄ‡ na potrzebÄ™ ich dogÅ‚Ä™bniejszej analizy. UÅ¼ytkownik ma takÅ¼e kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatu z interesariuszami i zadbanie o backup i rollback plan. \n\nW kontekÅ›cie finansowym i realizacji korzyÅ›ci, istnieje kilka aktywnych KPI, takich jak wielkoÅ›Ä‡ sprzedaÅ¼y netto czy poziom satysfakcji klientÃ³w. WaÅ¼nym aspektem jest to, Å¼e organizacja nie ukoÅ„czyÅ‚a jeszcze Å¼adnej inicjatywy z 28 rozpoczÄ™tych, co wskazuje na problem z sukcesem projektÃ³w. Obecnie uÅ¼ytkownik ma przeciÄ…Å¼enie pracy (stan ostrzeÅ¼enia) i oczekujÄ…ce decyzje dotyczÄ…ce polityki retencji logÃ³w i rollout'u.",
+  "language": "pl",
+  "used_sources": 15,
+  "sources": [
+    {
+      "id": "module_kpis_1_88cd4176-57ed-59ba-b232-8e66d861f2b9",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (eksport)",
+      "reference": "results/kpi/88cd4176-57ed-59ba-b232-8e66d861f2b9",
+      "link": null
+    },
+    {
+      "id": "module_kpis_2_b8efbce0-f2fe-54d5-bca3-878c38ff2eee",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (kraj)",
+      "reference": "results/kpi/b8efbce0-f2fe-54d5-bca3-878c38ff2eee",
+      "link": null
+    },
+    {
+      "id": "module_kpis_3_6f163df7-173f-552b-9fab-3e0f6fade93e",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (narastajÄ…co)",
+      "reference": "results/kpi/6f163df7-173f-552b-9fab-3e0f6fade93e",
+      "link": null
+    },
+    {
+      "id": "module_kpis_4_533fe370-28ec-56b6-9ac3-e01440c05a71",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (w odniesieniu do budÅ¼etu)",
+      "reference": "results/kpi/533fe370-28ec-56b6-9ac3-e01440c05a71",
+      "link": null
+    },
+    {
+      "id": "module_kpis_5_76f88be9-283c-5f69-acfb-b564d285f018",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (w odniesieniu do prognozy)",
+      "reference": "results/kpi/76f88be9-283c-5f69-acfb-b564d285f018",
+      "link": null
+    },
+    {
+      "id": "module_kpis_6_1b8e8ffc-6e20-58e3-99f5-f4ade529a43a",
+      "type": "module_data",
+      "title": "LICZBA NOWYCH WOLUMENÃ“W (BEZ MODYFIKACJI OBECNYCH)",
+      "reference": "results/kpi/1b8e8ffc-6e20-58e3-99f5-f4ade529a43a",
+      "link": null
+    },
+    {
+      "id": "module_kpis_7_a4f397a5-6d70-5ea5-b4a3-fed0ec2436df",
+      "type": "module_data",
+      "title": "LICZBA NOWYCH KLIENTÃ“W",
+      "reference": "results/kpi/a4f397a5-6d70-5ea5-b4a3-fed0ec2436df",
+      "link": null
+    },
+    {
+      "id": "module_kpis_8_faa258d9-2241-59b0-9fe8-39837d9c218b",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y (indywidualna)",
+      "reference": "results/kpi/faa258d9-2241-59b0-9fe8-39837d9c218b",
+      "link": null
+    },
+    {
+      "id": "module_kpis_9_586ec71a-c959-5c5c-8d33-c1b86e619178",
+      "type": "module_data",
+      "title": "ÅšREDNIA MARÅ»A",
+      "reference": "results/kpi/586ec71a-c959-5c5c-8d33-c1b86e619178",
+      "link": null
+    },
+    {
+      "id": "module_kpis_10_dc17afd5-d1e2-501e-a218-69e68bec74ef",
+      "type": "module_data",
+      "title": "LICZBA NOWYCH WOLUMENÃ“W (BEZ MODYFIKACJI OBECNYCH)",
+      "reference": "results/kpi/dc17afd5-d1e2-501e-a218-69e68bec74ef",
+      "link": null
+    },
+    {
+      "id": "module_kpis_11_8f33c980-da73-57b0-b2ee-0069412c8b42",
+      "type": "module_data",
+      "title": "POZIOM OTWARTYCH ZAMÃ“WIEÅƒ",
+      "reference": "results/kpi/8f33c980-da73-57b0-b2ee-0069412c8b42",
+      "link": null
+    },
+    {
+      "id": "module_kpis_12_a625cce7-6ea0-534d-937d-8d78a32a2e6f",
+      "type": "module_data",
+      "title": "PROCENT REFAKTUROWANIA NARZÄ˜DZI",
+      "reference": "results/kpi/a625cce7-6ea0-534d-937d-8d78a32a2e6f",
+      "link": null
+    },
+    {
+      "id": "module_kpis_13_2364fbd5-b43a-5140-a5e6-1fb6f05f5915",
+      "type": "module_data",
+      "title": "LICZBA NOWYCH KLIENTÃ“W",
+      "reference": "results/kpi/2364fbd5-b43a-5140-a5e6-1fb6f05f5915",
+      "link": null
+    },
+    {
+      "id": "module_kpis_14_a0c61f02-fe87-5836-993f-085fbf0f4955",
+      "type": "module_data",
+      "title": "POZIOM SATYSFAKCJI KLIENTÃ“W",
+      "reference": "results/kpi/a0c61f02-fe87-5836-993f-085fbf0f4955",
+      "link": null
+    },
+    {
+      "id": "module_kpis_15_ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+      "type": "module_data",
+      "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO",
+      "reference": "results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej i posiada Å›redniÄ… wielkoÅ›Ä‡ z przychodem â‚¬120M oraz 620 pracownikÃ³w. Obecnie realizowane sÄ… trzy ",
+  "bledyKonsoli": []
 }

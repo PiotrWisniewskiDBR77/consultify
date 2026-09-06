@@ -2,17 +2,44 @@
   "module": "Ocena",
   "route": "/assessment",
   "entry": "Teresa",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/assessment?tab=library",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "W kontekÅ›cie Novatek Manufacturing Sp. z o.o.:\n\n1. **Organizacja**: Firma dziaÅ‚a w branÅ¼y produkcyjnej (Manufacturing - Discrete) na poziomie Mid-Market, z przychodem â‚¬120M i zatrudnia 620 pracownikÃ³w.\n\n2. **Projekty i Inicjatywy**: \n   - Aktywne sÄ… 2 projekty.\n   - Trzy inicjatywy znajdujÄ… siÄ™ w fazie realizacji: Robotyzacja gniazda spawalniczego, System wizyjny kontroli jakoÅ›ci, Automatyzacja magazynu WIP.\n\n3. **Zadania uÅ¼ytkownika**: \n   - Zadania do wykonania dotyczÄ… m.in. przygotowania planu warsztatu z interesariuszami i zarzÄ…dzania zaleÅ¼noÅ›ciami oraz ryzykami wdroÅ¼enia projektu DBR77.\n   - Stan obciÄ…Å¼enia jest na poziomie \"WARNING\", co sugeruje wysokie obciÄ…Å¼enie pracÄ….\n\n4. **Blokery i Decyzje**: \n   - IstniejÄ… trzy blokery bez podanego powodu, co wymaga uwagi.\n   - Oczekiwane sÄ… decyzje dotyczÄ…ce rolloutâ€™u do domeny publicznej oraz polityki retencji logÃ³w i danych.\n\n5. **Oceny dojrzaÅ‚oÅ›ci**: \n   - Przeprowadzono kilka ocen dojrzaÅ‚oÅ›ci, w tym ADMA (Digital Maturity Assessment), DRD (Finalny i Testowy) oraz SIRI (Industry 4.0 Readiness), z rÃ³Å¼nym stopniem ukoÅ„czenia i zatwierdzenia.\n\n6. **Preferencje uÅ¼ytkownika**: \n   - UÅ¼ytkownik preferuje szczegÃ³Å‚owy, formalny styl komunikacji.\n\n7. **AI Actions**: \n   - Dwie akcje AI oczekujÄ… na zatwierdzenie przez uÅ¼ytkownika.\n\n8. **Problemy historyczne**: \n   - Z 28 inicjatyw Å¼adna nie zostaÅ‚a ukoÅ„czona, co sugeruje potrzebÄ™ poprawy w zakresie realizacji projektÃ³w.\n\nTo podsumowanie koncentruje siÄ™ na kluczowych obszarach dziaÅ‚alnoÅ›ci i bieÅ¼Ä…cych wyzwaniach organizacji.",
+  "language": "pl",
+  "used_sources": 4,
+  "sources": [
+    {
+      "id": "module_assessments_1_assess-adma-maturity-01",
+      "type": "module_data",
+      "title": "ADMA â€” Digital Maturity Assessment",
+      "reference": "assessment/assess-adma-maturity-01",
+      "link": null
+    },
+    {
+      "id": "module_assessments_2_assess-drd-enterprise-01",
+      "type": "module_data",
+      "title": "DRD â€” Finalny (Enterprise)",
+      "reference": "assessment/assess-drd-enterprise-01",
+      "link": null
+    },
+    {
+      "id": "module_assessments_3_assess-drd-manufacturing-01",
+      "type": "module_data",
+      "title": "DRD â€” Testowy (Manufacturing)",
+      "reference": "assessment/assess-drd-manufacturing-01",
+      "link": null
+    },
+    {
+      "id": "module_assessments_4_assess-siri-readiness-01",
+      "type": "module_data",
+      "title": "SIRI â€” Industry 4.0 Readiness",
+      "reference": "assessment/assess-siri-readiness-01",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "W kontekÅ›cie Novatek Manufacturing Sp. z o.o.: 1. **Organizacja**: Firma dziaÅ‚a w branÅ¼y produkcyjnej (Manufacturing - Discrete) na poziomie Mid-Market, z przychodem â‚¬120M i zatrudnia 620 pracow",
+  "bledyKonsoli": []
 }

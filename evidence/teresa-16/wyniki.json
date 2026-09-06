@@ -7,7 +7,7 @@
     "stopReason": null,
     "finalRoute": "/chat",
     "unifiedChatPanelDomCount": 1,
-    "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i automatyzacja magazynu WIP. IstniejÄ… takÅ¼e blokery, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania, oraz oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77. Dodatkowo, uÅ¼ytkownik ma zadania do wykonania, w tym przygotowanie planu warsztatu i przeglÄ…d wydajnoÅ›ci. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzegawczym, co sugeruje, Å¼e moÅ¼e byÄ‡ potrzebne zarzÄ…dzanie priorytetami lub wsparcie w realizacji zadaÅ„.",
+    "answer": "Novatek Manufacturing Sp. z o.o. jest firmÄ… z branÅ¼y przemysÅ‚owej, zajmujÄ…cÄ… siÄ™ produkcjÄ… dyskretnÄ…. Firma ma 620 pracownikÃ³w i generuje przychody w wysokoÅ›ci 120 milionÃ³w euro. Obecnie realizowane sÄ… dwie aktywne projekty, a poziom dojrzaÅ‚oÅ›ci PMO jest okreÅ›lony jako podstawowy. UÅ¼ytkownik ma zadania o terminach zbliÅ¼ajÄ…cych siÄ™ do wykonania, w tym przygotowanie planu warsztatu i zadbanie o backup i rollback plan. WÅ›rÃ³d inicjatyw uÅ¼ytkownika sÄ… m.in. projekty zwiÄ…zane z robotyzacjÄ…, systemem wizyjnym i automatyzacjÄ… magazynu, wszystkie w fazie realizacji. Obecnie istniejÄ… trzy blokery bez okreÅ›lonego powodu oraz oczekujÄ…ce decyzje dotyczÄ…ce rolloutÃ³w i polityki retencji danych. UÅ¼ytkownik doÅ›wiadcza rÃ³wnieÅ¼ przeciÄ…Å¼enia. Inicjatywy organizacji, takie jak optymalizacja Å‚aÅ„cucha dostaw i platforma cyfrowa, sÄ… realizowane, podczas gdy program podnoszenia kwalifikacji jest zablokowany.",
     "language": "pl",
     "used_sources": 6,
     "sources": [
@@ -55,7 +55,7 @@
       }
     ],
     "degraded": [],
-    "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. prowadzi kilka inicjatyw, z ktÃ³rych trzy sÄ… obecnie w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i",
+    "first200": "Novatek Manufacturing Sp. z o.o. jest firmÄ… z branÅ¼y przemysÅ‚owej, zajmujÄ…cÄ… siÄ™ produkcjÄ… dyskretnÄ…. Firma ma 620 pracownikÃ³w i generuje przychody w wysokoÅ›ci 120 milionÃ³w euro. Obecnie re",
     "bledyKonsoli": []
   },
   {
@@ -66,7 +66,7 @@
     "stopReason": null,
     "finalRoute": "/my-work",
     "unifiedChatPanelDomCount": 1,
-    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. UÅ¼ytkownik ma piÄ™tnaÅ›cie przypisanych zadaÅ„, z czego kilka jest w toku, a trzy sÄ… zablokowane bez podanej przyczyny. Na uwagÄ™ zasÅ‚uguje fakt, Å¼e organizacja ma zerowy wskaÅºnik sukcesu ukoÅ„czonych inicjatyw, co sugeruje koniecznoÅ›Ä‡ analizy i optymalizacji procesÃ³w projektowych. UÅ¼ytkownik ma takÅ¼e do podjÄ™cia trzy decyzje zwiÄ…zane z projektem DBR77. ObciÄ…Å¼enie uÅ¼ytkownika jest oznaczone jako â€žwarningâ€, co moÅ¼e wskazywaÄ‡ na ryzyko przeciÄ…Å¼enia pracÄ….",
+    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody na poziomie 120 milionÃ³w euro. W organizacji obecnie dziaÅ‚ajÄ… dwie aktywne inicjatywy: robotyzacja gniazda spawalniczego i system wizyjny kontroli jakoÅ›ci. W kontekÅ›cie uÅ¼ytkownika widzÄ™ zadania zwiÄ…zane z projektem DBR77, z rÃ³Å¼nymi statusami i priorytetami, a takÅ¼e blokery, ktÃ³re wpÅ‚ywajÄ… na realizacjÄ™ zadaÅ„. UÅ¼ytkownik ma takÅ¼e oczekujÄ…ce decyzje dotyczÄ…ce rolloutu do domeny publicznej i polityki retencji logÃ³w, oraz obciÄ…Å¼enie pracy oznaczone jako â€žWARNINGâ€. Inicjatywy organizacji nie odnotowaÅ‚y jeszcze Å¼adnego ukoÅ„czenia, co Å›wiadczy o niskim wskaÅºniku sukcesu. Organizacja znajduje siÄ™ na etapie dojrzaÅ‚oÅ›ci AI okreÅ›lonym jako â€žsceptykâ€.",
     "language": "pl",
     "used_sources": 15,
     "sources": [
@@ -177,7 +177,7 @@
       }
     ],
     "degraded": [],
-    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy in",
+    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody na poziomie 120 milionÃ³w euro. W organizacji obecnie dziaÅ‚ajÄ… dwie ",
     "bledyKonsoli": []
   },
   {
@@ -188,7 +188,7 @@
     "stopReason": null,
     "finalRoute": "/interview",
     "unifiedChatPanelDomCount": 1,
-    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, o Å›redniej wielkoÅ›ci, z 620 pracownikami i przychodem â‚¬120M. Obecnie firma prowadzi dwa aktywne projekty, ale nie ma jeszcze ukoÅ„czonej Å¼adnej z 28 inicjatyw, co wskazuje na potencjalne problemy z realizacjÄ… projektÃ³w. Poziom dojrzaÅ‚oÅ›ci PMO jest podstawowy, a obecnie obciÄ…Å¼enie pracÄ… jest na poziomie ostrzegawczym, co moÅ¼e wpÅ‚ywaÄ‡ na efektywnoÅ›Ä‡ dziaÅ‚aÅ„. UÅ¼ytkownik ma do wykonania kilka zadaÅ„ i decyzji zwiÄ…zanych z projektem DBR77, a takÅ¼e napotkaÅ‚ na trzy blokery, ktÃ³rym trzeba siÄ™ przyjrzeÄ‡. \n\nWarto zauwaÅ¼yÄ‡, Å¼e w wywiadach i sesjach odkrywczych ujawniono kilka faktÃ³w i luk, takich jak uÅ¼ywanie Excela jako warstwy integracyjnej oraz brak bazowego frameworku ROI dla inicjatyw [M7], [M8], [M9], [M10]. To wskazuje na potrzebÄ™ opracowania lepszych metryk finansowych i systemÃ³w integracyjnych. \n\nIstniejÄ… rÃ³wnieÅ¼ oczekujÄ…ce akcje AI, ktÃ³re wymagajÄ… przeglÄ…du przez uÅ¼ytkownika. W kontekÅ›cie organizacji zauwaÅ¼ono takÅ¼e sceptycyzm wobec AI.",
+    "answer": "Oto podsumowanie dostÄ™pnych informacji:\n\n1. **Organizacja**: Novatek Manufacturing Sp. z o.o. jest Å›redniej wielkoÅ›ci firmÄ… produkcyjnÄ… z branÅ¼y przemysÅ‚owej, zatrudniajÄ…cÄ… 620 pracownikÃ³w i generujÄ…cÄ… przychody w wysokoÅ›ci â‚¬120M. Firma znajduje siÄ™ na podstawowym poziomie dojrzaÅ‚oÅ›ci PMO.\n\n2. **Projekty i Inicjatywy**: Organizacja realizuje obecnie trzy inicjatywy zwiÄ…zane z automatyzacjÄ… i robotyzacjÄ…: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP.\n\n3. **Zadania UÅ¼ytkownika**: UÅ¼ytkownik ma piÄ™Ä‡ zadaÅ„, z czego dwa sÄ… w toku, a trzy majÄ… terminy w nadchodzÄ…cych dniach. Zadania dotyczÄ… przeglÄ…du wydajnoÅ›ci, planowania warsztatu z interesariuszami i przygotowania planu backupu i rollback.\n\n4. **Blokery i Decyzje**: SÄ… trzy blokery bez podanych powodÃ³w oraz trzy oczekujÄ…ce decyzje dotyczÄ…ce polityki retencji logÃ³w, rollout do domeny publicznej oraz wÅ‚Ä…czenia signals feed w beta.\n\n5. **Wywiady**: Przeprowadzono kilka sesji wywiadÃ³w, z ktÃ³rych wynika m.in., Å¼e uÅ¼ycie Excela jako warstwy integracyjnej oraz kroki zatwierdzania tworzÄ… nieprzewidywalne czasy realizacji. Wskazano teÅ¼ na brak ram ROI dla inicjatyw.\n\n6. **Kwestie Finansowe**: Nie ma aktywnych portfeli inicjatyw do analizy finansowej. \n\n7. **Preferencje UÅ¼ytkownika**: UÅ¼ytkownik preferuje komunikacjÄ™ formalnÄ…, szczegÃ³Å‚owÄ… i profesjonalnÄ….\n\n8. **Blokery i Akcje AI**: IstniejÄ… trzy blokery do rozwiÄ…zania oraz dwie oczekujÄ…ce akcje AI, ktÃ³re wymagajÄ… zatwierdzenia.\n\nJeÅ›li potrzebujesz bardziej szczegÃ³Å‚owej analizy lub pomocy w konkretnym obszarze, daj mi znaÄ‡.",
     "language": "pl",
     "used_sources": 10,
     "sources": [
@@ -264,7 +264,7 @@
       }
     ],
     "degraded": [],
-    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, o Å›redniej wielkoÅ›ci, z 620 pracownikami i przychodem â‚¬120M. Obecnie firma prowadzi dwa aktywne projekty, ale nie ma jeszcze ukoÅ„",
+    "first200": "Oto podsumowanie dostÄ™pnych informacji: 1. **Organizacja**: Novatek Manufacturing Sp. z o.o. jest Å›redniej wielkoÅ›ci firmÄ… produkcyjnÄ… z branÅ¼y przemysÅ‚owej, zatrudniajÄ…cÄ… 620 pracownikÃ³w i",
     "bledyKonsoli": []
   },
   {
@@ -290,145 +290,568 @@
     "module": "Ocena",
     "route": "/assessment",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/assessment?tab=library",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "W kontekÅ›cie Novatek Manufacturing Sp. z o.o.:\n\n1. **Organizacja**: Firma dziaÅ‚a w branÅ¼y produkcyjnej (Manufacturing - Discrete) na poziomie Mid-Market, z przychodem â‚¬120M i zatrudnia 620 pracownikÃ³w.\n\n2. **Projekty i Inicjatywy**: \n   - Aktywne sÄ… 2 projekty.\n   - Trzy inicjatywy znajdujÄ… siÄ™ w fazie realizacji: Robotyzacja gniazda spawalniczego, System wizyjny kontroli jakoÅ›ci, Automatyzacja magazynu WIP.\n\n3. **Zadania uÅ¼ytkownika**: \n   - Zadania do wykonania dotyczÄ… m.in. przygotowania planu warsztatu z interesariuszami i zarzÄ…dzania zaleÅ¼noÅ›ciami oraz ryzykami wdroÅ¼enia projektu DBR77.\n   - Stan obciÄ…Å¼enia jest na poziomie \"WARNING\", co sugeruje wysokie obciÄ…Å¼enie pracÄ….\n\n4. **Blokery i Decyzje**: \n   - IstniejÄ… trzy blokery bez podanego powodu, co wymaga uwagi.\n   - Oczekiwane sÄ… decyzje dotyczÄ…ce rolloutâ€™u do domeny publicznej oraz polityki retencji logÃ³w i danych.\n\n5. **Oceny dojrzaÅ‚oÅ›ci**: \n   - Przeprowadzono kilka ocen dojrzaÅ‚oÅ›ci, w tym ADMA (Digital Maturity Assessment), DRD (Finalny i Testowy) oraz SIRI (Industry 4.0 Readiness), z rÃ³Å¼nym stopniem ukoÅ„czenia i zatwierdzenia.\n\n6. **Preferencje uÅ¼ytkownika**: \n   - UÅ¼ytkownik preferuje szczegÃ³Å‚owy, formalny styl komunikacji.\n\n7. **AI Actions**: \n   - Dwie akcje AI oczekujÄ… na zatwierdzenie przez uÅ¼ytkownika.\n\n8. **Problemy historyczne**: \n   - Z 28 inicjatyw Å¼adna nie zostaÅ‚a ukoÅ„czona, co sugeruje potrzebÄ™ poprawy w zakresie realizacji projektÃ³w.\n\nTo podsumowanie koncentruje siÄ™ na kluczowych obszarach dziaÅ‚alnoÅ›ci i bieÅ¼Ä…cych wyzwaniach organizacji.",
+    "language": "pl",
+    "used_sources": 4,
+    "sources": [
+      {
+        "id": "module_assessments_1_assess-adma-maturity-01",
+        "type": "module_data",
+        "title": "ADMA â€” Digital Maturity Assessment",
+        "reference": "assessment/assess-adma-maturity-01",
+        "link": null
+      },
+      {
+        "id": "module_assessments_2_assess-drd-enterprise-01",
+        "type": "module_data",
+        "title": "DRD â€” Finalny (Enterprise)",
+        "reference": "assessment/assess-drd-enterprise-01",
+        "link": null
+      },
+      {
+        "id": "module_assessments_3_assess-drd-manufacturing-01",
+        "type": "module_data",
+        "title": "DRD â€” Testowy (Manufacturing)",
+        "reference": "assessment/assess-drd-manufacturing-01",
+        "link": null
+      },
+      {
+        "id": "module_assessments_4_assess-siri-readiness-01",
+        "type": "module_data",
+        "title": "SIRI â€” Industry 4.0 Readiness",
+        "reference": "assessment/assess-siri-readiness-01",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "W kontekÅ›cie Novatek Manufacturing Sp. z o.o.: 1. **Organizacja**: Firma dziaÅ‚a w branÅ¼y produkcyjnej (Manufacturing - Discrete) na poziomie Mid-Market, z przychodem â‚¬120M i zatrudnia 620 pracow",
+    "bledyKonsoli": []
   },
   {
     "module": "Inicjatywy",
     "route": "/initiatives",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/initiatives",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "Jestem Teresa, partnerem konsultingowym w Consultify, i widzÄ™ nastÄ™pujÄ…ce informacje:\n\n1. **Organizacja**: Novatek Manufacturing Sp. z o.o., dziaÅ‚a w branÅ¼y produkcyjnej z przychodem â‚¬120M i zatrudnia 620 pracownikÃ³w.\n\n2. **Projekty i Inicjatywy**: \n   - Aktywne projekty: 2\n   - Inicjatywy w realizacji: m.in. \"Robotyzacja gniazda spawalniczego\", \"System wizyjny kontroli jakoÅ›ci\", \"Automatyzacja magazynu WIP\".\n   - Inicjatywy zablokowane: m.in. \"Talent Upskilling Program\", \"ERP SAP Integration\", \"Process Automation â€” RPA\".\n\n3. **Zadania uÅ¼ytkownika**: \n   - W trakcie przeglÄ…du i realizacji zadaÅ„ zwiÄ…zanych z projektem DBR77, w tym przygotowanie planu warsztatu i zmapowanie ryzyk wdroÅ¼enia.\n   - ObciÄ…Å¼enie uÅ¼ytkownika jest oznaczone jako wysokie.\n\n4. **Blokery**: Trzy zadania sÄ… zablokowane, ale brak szczegÃ³Å‚owych informacji o przyczynach.\n\n5. **OczekujÄ…ce decyzje**: DotyczÄ… m.in. polityki retencji logÃ³w i rollout do domeny publicznej.\n\n6. **Ocena finansowa**: Brak ukoÅ„czonych inicjatyw w portfelu, co wskazuje na potrzebÄ™ optymalizacji procesu realizacji.\n\n7. **Preferencje uÅ¼ytkownika**: Styl komunikacji formalny, preferuje szczegÃ³Å‚owe i profesjonalne odpowiedzi.\n\nTo sÄ… kluczowe elementy kontekstu, ktÃ³re pozwolÄ… na dalsze planowanie i zarzÄ…dzanie projektami oraz inicjatywami w organizacji. Czy potrzebujesz szczegÃ³Å‚owych informacji na temat ktÃ³rejÅ› z inicjatyw lub zadaÅ„?",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5",
+        "type": "module_data",
+        "title": "Inicjatywa: DevOps Maturity Program",
+        "reference": "initiatives/68f1c0dc-ed77-41a3-afd6-08a0513dfdd5",
+        "link": null
+      },
+      {
+        "id": "module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649",
+        "type": "module_data",
+        "title": "Inicjatywa: Legacy Decommission",
+        "reference": "initiatives/3258858d-8ec5-4bea-bc39-31617a63a649",
+        "link": null
+      },
+      {
+        "id": "module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0",
+        "type": "module_data",
+        "title": "Inicjatywa: ERP SAP Integration",
+        "reference": "initiatives/4d991c47-07cb-4b09-a108-8a61d85718a0",
+        "link": null
+      },
+      {
+        "id": "module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09",
+        "type": "module_data",
+        "title": "Inicjatywa: Customer Portal Redesign",
+        "reference": "initiatives/2e578e14-a13d-4932-a62b-046be51e8f09",
+        "link": null
+      },
+      {
+        "id": "module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a",
+        "type": "module_data",
+        "title": "Inicjatywa: Security Hardening",
+        "reference": "initiatives/ee42d899-1aa7-4a8e-bc13-d98c6119ac1a",
+        "link": null
+      },
+      {
+        "id": "module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747",
+        "type": "module_data",
+        "title": "Inicjatywa: Process Automation â€” RPA",
+        "reference": "initiatives/fdcd78d0-677d-4a6e-96c4-1815e0055747",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "Jestem Teresa, partnerem konsultingowym w Consultify, i widzÄ™ nastÄ™pujÄ…ce informacje: 1. **Organizacja**: Novatek Manufacturing Sp. z o.o., dziaÅ‚a w branÅ¼y produkcyjnej z przychodem â‚¬120M i za",
+    "bledyKonsoli": []
   },
   {
     "module": "Realizacja",
     "route": "/execution",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/execution?tab=list&view=table",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "Oto podsumowanie dostÄ™pnych informacji:\n\n1. **Organizacja:** Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y manufacturing (discrete), zatrudnia 620 pracownikÃ³w i generuje przychody na poziomie â‚¬120M. Aktualnie realizowane sÄ… dwa projekty, a poziom dojrzaÅ‚oÅ›ci PMO jest podstawowy.\n\n2. **Zadania uÅ¼ytkownika (5):** \n   - ZweryfikowaÄ‡ eksport raportÃ³w publicznych [termin: 2.09.2026]\n   - PrzygotowaÄ‡ plan warsztatu z interesariuszami [termin: 3.09.2026]\n   - ZadbaÄ‡ o backup i rollback plan [termin: 3.09.2026]\n   - PrzeglÄ…d wydajnoÅ›ci: indeksy i cache [termin: 4.09.2026]\n   - ZmapowaÄ‡ zaleÅ¼noÅ›ci i ryzyka wdroÅ¼enia [termin: 5.09.2026]\n\n3. **Inicjatywy uÅ¼ytkownika (3):** \n   - Robotyzacja gniazda spawalniczego\n   - System wizyjny kontroli jakoÅ›ci\n   - Automatyzacja magazynu WIP\n\n4. **Blokery:** UÅ¼ytkownik doÅ›wiadcza trzech blokad bez podanego powodu.\n\n5. **OczekujÄ…ce decyzje (3):**\n   - Rollout do domeny publicznej\n   - Polityka retencji logÃ³w i danych\n   - Czy wÅ‚Ä…czamy signals feed w beta?\n\n6. **ObciÄ…Å¼enie:** UÅ¼ytkownik jest w stanie ostrzeÅ¼enia z powodu obciÄ…Å¼enia pracÄ….\n\n7. **Aktualne inicjatywy organizacji (6 najÅ›wieÅ¼szych):**\n   - Supply Chain Optimization [EXECUTING]\n   - Digital Workplace Platform [EXECUTING]\n   - Vendor Consolidation [EXECUTING]\n   - Talent Upskilling Program [BLOCKED]\n   - Compliance & GDPR Audit [EXECUTING]\n   - AI-Powered Analytics [SCHEDULED]\n\n8. **OczekujÄ…ce decyzje organizacji (6):** Wszystkie sÄ… w statusie oczekujÄ…cym.\n\nDane te pokazujÄ…, Å¼e uÅ¼ytkownik ma doÅ›Ä‡ intensywny harmonogram z wieloma zadaniami o rÃ³Å¼nym priorytecie oraz kilka blokad, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania. Inicjatywy organizacji sÄ… rÃ³Å¼norodne, ale nie wszystkie postÄ™pujÄ… zgodnie z planem.",
+    "language": "pl",
+    "used_sources": 24,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_task_1_seed_task_1788642392883_14_b9730303-41ca",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: ZweryfikowaÄ‡ eksport raportÃ³w publicznych",
+        "reference": "tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005",
+        "link": null
+      },
+      {
+        "id": "module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: PrzygotowaÄ‡ plan warsztatu z interesariuszami",
+        "reference": "tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2",
+        "link": null
+      },
+      {
+        "id": "module_task_3_seed_task_1788642392883_15_6397cd82-2a7b",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: ZadbaÄ‡ o backup i rollback plan",
+        "reference": "tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1",
+        "link": null
+      },
+      {
+        "id": "module_task_4_seed_task_1788642392883_16_a4a57d28-8a71",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: PrzeglÄ…d wydajnoÅ›ci: indeksy i cache",
+        "reference": "tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e",
+        "link": null
+      },
+      {
+        "id": "module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: ZmapowaÄ‡ zaleÅ¼noÅ›ci i ryzyka wdroÅ¼enia",
+        "reference": "tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9",
+        "link": null
+      },
+      {
+        "id": "module_task_6_seed_task_1788642392883_17_c4d7364a-4748",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: PorzÄ…dek w notyfikacjach (grupowanie)",
+        "reference": "tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c",
+        "link": null
+      },
+      {
+        "id": "module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: ZamknÄ…Ä‡ krytyczne bugi przed cutover",
+        "reference": "tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494",
+        "link": null
+      },
+      {
+        "id": "module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: UstaliÄ‡ SLA dla kluczowych procesÃ³w",
+        "reference": "tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78",
+        "link": null
+      },
+      {
+        "id": "module_task_9_seed_task_1788642392883_19_32bc2c23-bb61",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: Weryfikacja E2E smoke po deploy",
+        "reference": "tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b",
+        "link": null
+      },
+      {
+        "id": "module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: UstawiÄ‡ monitoring i alerting dla backendu",
+        "reference": "tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053",
+        "link": null
+      },
+      {
+        "id": "module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: PrzeglÄ…d jakoÅ›ci danych po migracji",
+        "reference": "tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a",
+        "link": null
+      },
+      {
+        "id": "module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: PrzygotowaÄ‡ checklistÄ™ go-live",
+        "reference": "tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852",
+        "link": null
+      },
+      {
+        "id": "module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: SkonfigurowaÄ‡ integracje (webhooks)",
+        "reference": "tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e",
+        "link": null
+      },
+      {
+        "id": "module_task_14_seed_task_1788642392883_10_81fb0b43-89c8",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: UstawiÄ‡ polityki bezpieczeÅ„stwa (CSRF/CORS)",
+        "reference": "tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c",
+        "link": null
+      },
+      {
+        "id": "module_task_15_seed_task_1788642392883_11_601ab222-a8a4",
+        "type": "module_data",
+        "title": "Zadanie: DBR77: Audyt kosztÃ³w i budÅ¼etu AI",
+        "reference": "tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "Oto podsumowanie dostÄ™pnych informacji: 1. **Organizacja:** Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y manufacturing (discrete), zatrudnia 620 pracownikÃ³w i generuje przychody na poziomie â",
+    "bledyKonsoli": []
   },
   {
     "module": "Wyniki",
     "route": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
     "entry": "Zapytaj Teresę o ten miernik",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej i posiada Å›redniÄ… wielkoÅ›Ä‡ z przychodem â‚¬120M oraz 620 pracownikÃ³w. Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. IstniejÄ… rÃ³wnieÅ¼ trzy blokery z oznaczeniem â€žNo reason providedâ€, co moÅ¼e wskazywaÄ‡ na potrzebÄ™ ich dogÅ‚Ä™bniejszej analizy. UÅ¼ytkownik ma takÅ¼e kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatu z interesariuszami i zadbanie o backup i rollback plan. \n\nW kontekÅ›cie finansowym i realizacji korzyÅ›ci, istnieje kilka aktywnych KPI, takich jak wielkoÅ›Ä‡ sprzedaÅ¼y netto czy poziom satysfakcji klientÃ³w. WaÅ¼nym aspektem jest to, Å¼e organizacja nie ukoÅ„czyÅ‚a jeszcze Å¼adnej inicjatywy z 28 rozpoczÄ™tych, co wskazuje na problem z sukcesem projektÃ³w. Obecnie uÅ¼ytkownik ma przeciÄ…Å¼enie pracy (stan ostrzeÅ¼enia) i oczekujÄ…ce decyzje dotyczÄ…ce polityki retencji logÃ³w i rollout'u.",
+    "language": "pl",
+    "used_sources": 15,
+    "sources": [
+      {
+        "id": "module_kpis_1_88cd4176-57ed-59ba-b232-8e66d861f2b9",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (eksport)",
+        "reference": "results/kpi/88cd4176-57ed-59ba-b232-8e66d861f2b9",
+        "link": null
+      },
+      {
+        "id": "module_kpis_2_b8efbce0-f2fe-54d5-bca3-878c38ff2eee",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (kraj)",
+        "reference": "results/kpi/b8efbce0-f2fe-54d5-bca3-878c38ff2eee",
+        "link": null
+      },
+      {
+        "id": "module_kpis_3_6f163df7-173f-552b-9fab-3e0f6fade93e",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (narastajÄ…co)",
+        "reference": "results/kpi/6f163df7-173f-552b-9fab-3e0f6fade93e",
+        "link": null
+      },
+      {
+        "id": "module_kpis_4_533fe370-28ec-56b6-9ac3-e01440c05a71",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (w odniesieniu do budÅ¼etu)",
+        "reference": "results/kpi/533fe370-28ec-56b6-9ac3-e01440c05a71",
+        "link": null
+      },
+      {
+        "id": "module_kpis_5_76f88be9-283c-5f69-acfb-b564d285f018",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO (w odniesieniu do prognozy)",
+        "reference": "results/kpi/76f88be9-283c-5f69-acfb-b564d285f018",
+        "link": null
+      },
+      {
+        "id": "module_kpis_6_1b8e8ffc-6e20-58e3-99f5-f4ade529a43a",
+        "type": "module_data",
+        "title": "LICZBA NOWYCH WOLUMENÃ“W (BEZ MODYFIKACJI OBECNYCH)",
+        "reference": "results/kpi/1b8e8ffc-6e20-58e3-99f5-f4ade529a43a",
+        "link": null
+      },
+      {
+        "id": "module_kpis_7_a4f397a5-6d70-5ea5-b4a3-fed0ec2436df",
+        "type": "module_data",
+        "title": "LICZBA NOWYCH KLIENTÃ“W",
+        "reference": "results/kpi/a4f397a5-6d70-5ea5-b4a3-fed0ec2436df",
+        "link": null
+      },
+      {
+        "id": "module_kpis_8_faa258d9-2241-59b0-9fe8-39837d9c218b",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y (indywidualna)",
+        "reference": "results/kpi/faa258d9-2241-59b0-9fe8-39837d9c218b",
+        "link": null
+      },
+      {
+        "id": "module_kpis_9_586ec71a-c959-5c5c-8d33-c1b86e619178",
+        "type": "module_data",
+        "title": "ÅšREDNIA MARÅ»A",
+        "reference": "results/kpi/586ec71a-c959-5c5c-8d33-c1b86e619178",
+        "link": null
+      },
+      {
+        "id": "module_kpis_10_dc17afd5-d1e2-501e-a218-69e68bec74ef",
+        "type": "module_data",
+        "title": "LICZBA NOWYCH WOLUMENÃ“W (BEZ MODYFIKACJI OBECNYCH)",
+        "reference": "results/kpi/dc17afd5-d1e2-501e-a218-69e68bec74ef",
+        "link": null
+      },
+      {
+        "id": "module_kpis_11_8f33c980-da73-57b0-b2ee-0069412c8b42",
+        "type": "module_data",
+        "title": "POZIOM OTWARTYCH ZAMÃ“WIEÅƒ",
+        "reference": "results/kpi/8f33c980-da73-57b0-b2ee-0069412c8b42",
+        "link": null
+      },
+      {
+        "id": "module_kpis_12_a625cce7-6ea0-534d-937d-8d78a32a2e6f",
+        "type": "module_data",
+        "title": "PROCENT REFAKTUROWANIA NARZÄ˜DZI",
+        "reference": "results/kpi/a625cce7-6ea0-534d-937d-8d78a32a2e6f",
+        "link": null
+      },
+      {
+        "id": "module_kpis_13_2364fbd5-b43a-5140-a5e6-1fb6f05f5915",
+        "type": "module_data",
+        "title": "LICZBA NOWYCH KLIENTÃ“W",
+        "reference": "results/kpi/2364fbd5-b43a-5140-a5e6-1fb6f05f5915",
+        "link": null
+      },
+      {
+        "id": "module_kpis_14_a0c61f02-fe87-5836-993f-085fbf0f4955",
+        "type": "module_data",
+        "title": "POZIOM SATYSFAKCJI KLIENTÃ“W",
+        "reference": "results/kpi/a0c61f02-fe87-5836-993f-085fbf0f4955",
+        "link": null
+      },
+      {
+        "id": "module_kpis_15_ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+        "type": "module_data",
+        "title": "WIELKOÅšÄ† SPRZEDAÅ»Y NETTO",
+        "reference": "results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej i posiada Å›redniÄ… wielkoÅ›Ä‡ z przychodem â‚¬120M oraz 620 pracownikÃ³w. Obecnie realizowane sÄ… trzy ",
+    "bledyKonsoli": []
   },
   {
     "module": "Finanse",
     "route": "/finance",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/finance?tab=statements",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci rynku, z rocznym przychodem 120 milionÃ³w euro. W organizacji pracuje 620 osÃ³b. Obecnie prowadzone sÄ… dwa aktywne projekty, a poziom dojrzaÅ‚oÅ›ci zarzÄ…dzania projektami okreÅ›lono jako podstawowy.\n\nUÅ¼ytkownik ma przypisane piÄ™Ä‡ zadaÅ„, z czego dwa sÄ… w toku, a trzy sÄ… do wykonania w najbliÅ¼szych dniach. UÅ¼ytkownik ma rÃ³wnieÅ¼ trzy inicjatywy w toku, ktÃ³re dotyczÄ… automatyzacji procesÃ³w produkcyjnych. IstniejÄ… trzy blokery z przypisanymi zadaniami, ktÃ³re nie majÄ… podanego powodu. Ponadto, sÄ… trzy oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77.\n\nUÅ¼ytkownik ma rÃ³wnieÅ¼ dwa oczekujÄ…ce dziaÅ‚ania AI do zatwierdzenia. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzeÅ¼enia.\n\nJeÅ¼eli chodzi o finanse, dostÄ™pny jest jeden pakiet sprawozdaÅ„ finansowych dla Grupy KapitaÅ‚owej CD PROJEKT za rok 2024, oznaczony jako potwierdzony i gotowy w 100%.\n\nW firmie pojawia siÄ™ wiele wzmiankowanych technologii, takich jak AI i SAP. Inicjatywy organizacji nie odnotowaÅ‚y jeszcze zakoÅ„czonych sukcesem projektÃ³w.",
+    "language": "pl",
+    "used_sources": 1,
+    "sources": [
+      {
+        "id": "module_financial_statements_1_cdp2025-pack-33d3c3b64a",
+        "type": "module_data",
+        "title": "Grupa KapitaÅ‚owa CD PROJEKT",
+        "reference": "finance/statements/cdp2025-pack-33d3c3b64a",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci rynku, z rocznym przychodem 120 milionÃ³w euro. W organizacji pracuje 620 osÃ³b. Obecnie prowadzone sÄ… ",
+    "bledyKonsoli": []
   },
   {
     "module": "Materiały",
     "route": "/presentations",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/presentations",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "WidzÄ™, Å¼e mamy do czynienia z organizacjÄ… Novatek Manufacturing Sp. z o.o., dziaÅ‚ajÄ…cÄ… w branÅ¼y produkcyjnej. Firma zatrudnia 620 pracownikÃ³w i generuje przychÃ³d w wysokoÅ›ci 120 milionÃ³w euro. Obecnie prowadzone sÄ… dwie aktywne inicjatywy zwiÄ…zane z robotyzacjÄ… i automatyzacjÄ… procesÃ³w produkcyjnych. UÅ¼ytkownik ma kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatÃ³w i przeglÄ…d wydajnoÅ›ci. IstniejÄ… rÃ³wnieÅ¼ pewne blokery dotyczÄ…ce zadaÅ„, ktÃ³re wymagajÄ… rozwiÄ…zania. UÅ¼ytkownik ma takÅ¼e trzy oczekujÄ…ce decyzje do podjÄ™cia w ramach projektu DBR77. Poziom obciÄ…Å¼enia uÅ¼ytkownika jest oznaczony jako wysoki. W kontekÅ›cie finansowym, nie ma aktywnych portfeli inicjatyw, a wskaÅºnik sukcesu projektÃ³w w organizacji wynosi 0%.",
+    "language": "pl",
+    "used_sources": 5,
+    "sources": [
+      {
+        "id": "module_presentations_1_62cc49a56d7f4af895ed43d9b4caf428",
+        "type": "module_data",
+        "title": "Nowa prezentacja",
+        "reference": "presentations/62cc49a56d7f4af895ed43d9b4caf428",
+        "link": null
+      },
+      {
+        "id": "module_presentations_2_9b78cde244ea44ce867adf4e7fb04416",
+        "type": "module_data",
+        "title": "Nowa prezentacja",
+        "reference": "presentations/9b78cde244ea44ce867adf4e7fb04416",
+        "link": null
+      },
+      {
+        "id": "module_presentations_3_05189ab2766442c9b2c9116352a8fb5a",
+        "type": "module_data",
+        "title": "Nowa prezentacja",
+        "reference": "presentations/05189ab2766442c9b2c9116352a8fb5a",
+        "link": null
+      },
+      {
+        "id": "module_presentations_4_553442e78e0647c8bdd15afd2006c129",
+        "type": "module_data",
+        "title": "Nowa prezentacja",
+        "reference": "presentations/553442e78e0647c8bdd15afd2006c129",
+        "link": null
+      },
+      {
+        "id": "module_presentations_5_b8fbaa1c05d44964aae35a85ecea53a2",
+        "type": "module_data",
+        "title": "Nowa prezentacja",
+        "reference": "presentations/b8fbaa1c05d44964aae35a85ecea53a2",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "WidzÄ™, Å¼e mamy do czynienia z organizacjÄ… Novatek Manufacturing Sp. z o.o., dziaÅ‚ajÄ…cÄ… w branÅ¼y produkcyjnej. Firma zatrudnia 620 pracownikÃ³w i generuje przychÃ³d w wysokoÅ›ci 120 milionÃ³w eu",
+    "bledyKonsoli": []
   },
   {
     "module": "Audyty",
     "route": "/audit-programs",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/audit-programs?tab=library",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
+    "answer": "Brak danych w module audytÃ³w.",
+    "language": "pl",
     "used_sources": 0,
     "sources": [],
-    "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "degraded": {
+      "mode": "no_sources",
+      "reason": "no_citations_collected"
+    },
+    "first200": "Brak danych w module audytÃ³w.",
+    "bledyKonsoli": []
   },
   {
     "module": "Spotkania",
     "route": "/meetings",
     "entry": "Teresa",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/meetings",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
+    "answer": "Brak danych w module Spotkania.",
+    "language": "pl",
     "used_sources": 0,
     "sources": [],
-    "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "degraded": {
+      "mode": "no_sources",
+      "reason": "no_citations_collected"
+    },
+    "first200": "Brak danych w module Spotkania.",
+    "bledyKonsoli": []
   },
   {
     "module": "Administracja",
@@ -454,19 +877,25 @@
     "module": "Organizacja",
     "route": "/organization",
     "entry": "Zapytaj Teresę o kontekst organizacji",
-    "status": "FAIL",
+    "status": "PASS",
     "stopReason": null,
     "finalRoute": "/organization/profile/identity-scale",
     "unifiedChatPanelDomCount": 1,
-    "answer": "",
-    "language": "none",
-    "used_sources": 0,
-    "sources": [],
+    "answer": "Novatek Manufacturing Sp. z o.o. to firma produkcyjna Å›redniej wielkoÅ›ci z 620 pracownikami i przychodami na poziomie 120 milionÃ³w euro [M1]. Organizacja ma obecnie dwa aktywne projekty i charakteryzuje siÄ™ podstawowym poziomem dojrzaÅ‚oÅ›ci PMO. UÅ¼ytkownik jest obciÄ…Å¼ony zadaniami, ktÃ³re obejmujÄ… przeglÄ…d wydajnoÅ›ci i przygotowanie planu warsztatu. Realizowane inicjatywy dotyczÄ… robotyzacji, systemu wizyjnego i automatyzacji magazynu, wszystkie w fazie realizacji. IstniejÄ… blokery, ktÃ³re wymagajÄ… rozwiÄ…zania, oraz oczekujÄ…ce decyzje dotyczÄ…ce strategicznych kwestii, takich jak polityka retencji danych.",
+    "language": "pl",
+    "used_sources": 1,
+    "sources": [
+      {
+        "id": "module_organization_claims_1_seed_org_ctx_cc9db573-260f-4a19-927f-f3c",
+        "type": "module_data",
+        "title": "Novatek Manufacturing Sp. z o.o.",
+        "reference": "organization/claims/seed_org_ctx_cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "link": null
+      }
+    ],
     "degraded": [],
-    "first200": "",
-    "bledyKonsoli": [
-      "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-    ]
+    "first200": "Novatek Manufacturing Sp. z o.o. to firma produkcyjna Å›redniej wielkoÅ›ci z 620 pracownikami i przychodami na poziomie 120 milionÃ³w euro [M1]. Organizacja ma obecnie dwa aktywne projekty i charakter",
+    "bledyKonsoli": []
   },
   {
     "module": "Partner",

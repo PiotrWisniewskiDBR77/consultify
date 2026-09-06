@@ -2,17 +2,23 @@
   "module": "Organizacja",
   "route": "/organization",
   "entry": "Zapytaj Teresę o kontekst organizacji",
-  "status": "FAIL",
+  "status": "PASS",
   "stopReason": null,
   "finalRoute": "/organization/profile/identity-scale",
   "unifiedChatPanelDomCount": 1,
-  "answer": "",
-  "language": "none",
-  "used_sources": 0,
-  "sources": [],
+  "answer": "Novatek Manufacturing Sp. z o.o. to firma produkcyjna Å›redniej wielkoÅ›ci z 620 pracownikami i przychodami na poziomie 120 milionÃ³w euro [M1]. Organizacja ma obecnie dwa aktywne projekty i charakteryzuje siÄ™ podstawowym poziomem dojrzaÅ‚oÅ›ci PMO. UÅ¼ytkownik jest obciÄ…Å¼ony zadaniami, ktÃ³re obejmujÄ… przeglÄ…d wydajnoÅ›ci i przygotowanie planu warsztatu. Realizowane inicjatywy dotyczÄ… robotyzacji, systemu wizyjnego i automatyzacji magazynu, wszystkie w fazie realizacji. IstniejÄ… blokery, ktÃ³re wymagajÄ… rozwiÄ…zania, oraz oczekujÄ…ce decyzje dotyczÄ…ce strategicznych kwestii, takich jak polityka retencji danych.",
+  "language": "pl",
+  "used_sources": 1,
+  "sources": [
+    {
+      "id": "module_organization_claims_1_seed_org_ctx_cc9db573-260f-4a19-927f-f3c",
+      "type": "module_data",
+      "title": "Novatek Manufacturing Sp. z o.o.",
+      "reference": "organization/claims/seed_org_ctx_cc9db573-260f-4a19-927f-f3cc1fbaea38",
+      "link": null
+    }
+  ],
   "degraded": [],
-  "first200": "",
-  "bledyKonsoli": [
-    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
-  ]
+  "first200": "Novatek Manufacturing Sp. z o.o. to firma produkcyjna Å›redniej wielkoÅ›ci z 620 pracownikami i przychodami na poziomie 120 milionÃ³w euro [M1]. Organizacja ma obecnie dwa aktywne projekty i charakter",
+  "bledyKonsoli": []
 }
