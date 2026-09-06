@@ -267,7 +267,7 @@ describe('AuditsMethodHub', () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
     await waitFor(() => expect(mockedListOutputs).toHaveBeenCalled());
-    expect(screen.getByText('No Outputs yet')).toBeInTheDocument();
+    expect(screen.getByText('No outputs yet')).toBeInTheDocument();
   });
 
   it('falls back to Processes for an unknown ?tab= value', async () => {
@@ -357,9 +357,11 @@ describe('AuditsMethodHub', () => {
   it('shows the honest Outputs EmptyState explaining why the list is empty', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
-    await waitFor(() => expect(screen.getByText('No Outputs yet')).toBeInTheDocument());
-    expect(screen.getByText(/separate, explicit audit-program finalization/i)).toBeInTheDocument();
-    expect(screen.queryByText(/use “Finalize Output”/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('No outputs yet')).toBeInTheDocument());
+    expect(screen.getByText(/separate, explicit audit-session finalization/i)).toBeInTheDocument();
+    // DEC-417d: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2), a nie do
+    // kontrolki, która przy `ff_auditsReportChain` OFF w ogóle się nie renderuje.
+    expect(screen.getByText(/“New output” in the module bar/i)).toBeInTheDocument();
   });
 
   describe('Library — single-axis Menu 3 (DEC-2026-08-25-66)', () => {

@@ -486,19 +486,16 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           onRowClick={(row) => setSelectedId(String(row.id))}
           selectedRowId={selectedId}
           persistKey="audits.method.reports"
+          // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
+          // raport" w Menu 2 (wynik → typ → Generuj) istnieje niezależnie od
+          // `ff_auditsReportChain`, więc wariant „ścieżka nie jest dostępna z
+          // ekranu" stał się nieprawdą w momencie podpięcia generatora.
           empty={{
             icon: FileText,
             title: isPolish ? 'Brak raportów' : 'No reports yet',
             description: isPolish
-              ? reportChainEnabled
-                ? // FIX-4 (dyżur 41, odbiór): pusty stan wskazywał nieistniejącą
-                  // etykietę „Wystaw raport” — realny kebab Outputów (AuditOutputsTab.tsx)
-                  // ma dwie osobne pozycje: „Generuj raport audytu” / „Generuj raport naprawczy”.
-                  'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Generuj raport audytu” lub „Generuj raport naprawczy”.'
-                : 'Raport powstaje z Outputu programu audytowego. W tej wersji interfejsu ścieżka wystawienia raportu nie jest dostępna z ekranu.'
-              : reportChainEnabled
-                ? 'A report is issued from a program Output. Open Outputs and use “Generate audit report” or “Generate remediation report”.'
-                : 'A report is issued from a program Output. The report-issuance path is not available from the screen in this interface version.',
+              ? 'Raport poaudytowy powstaje z zatwierdzonego wyniku audytu. Zacznij od przycisku „Nowy raport” w pasku modułu.'
+              : 'A post-audit report is generated from an approved audit output. Start with “New report” in the module bar.',
           }}
         />
       </div>

@@ -351,16 +351,17 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
           onRowClick={(row) => setSelectedId(String(row.id))}
           selectedRowId={selectedId}
           persistKey="audits.method.outputs"
+          // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
+          // wynik" w Menu 2 istnieje niezależnie od `ff_auditsReportChain`
+          // (ta flaga bramkuje kebab raportów, nie finalizację), więc stary
+          // wariant „ta czynność nie jest dostępna z ekranu" stał się
+          // nieprawdą w momencie podpięcia generatora.
           empty={{
             icon: Package,
-            title: isPolish ? 'Brak Outputów' : 'No Outputs yet',
+            title: isPolish ? 'Brak wyników' : 'No outputs yet',
             description: isPolish
-              ? reportChainEnabled
-                ? 'Output powstaje przez osobną, jawną finalizację programu audytowego. Otwórz sesję na zakładce Sesje i użyj „Sfinalizuj Output”.'
-                : 'Output powstaje przez osobną, jawną finalizację programu audytowego. W tej wersji interfejsu ta czynność nie jest dostępna z ekranu.'
-              : reportChainEnabled
-                ? 'An Output is created by a separate, explicit audit-program finalization. Open the session on Sessions and use “Finalize Output”.'
-                : 'An Output is created by a separate, explicit audit-program finalization. This action is not available from the screen in this interface version.',
+              ? 'Wynik audytu powstaje przez osobną, jawną finalizację sesji audytowej. Zacznij od przycisku „Nowy wynik” w pasku modułu.'
+              : 'An audit output is created by a separate, explicit audit-session finalization. Start with “New output” in the module bar.',
           }}
         />
       </div>
