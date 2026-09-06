@@ -113,11 +113,7 @@ import {
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
-import {
-  AssessmentLibraryTab,
-  METHODOLOGY_CATALOG,
-  type MethodologyId,
-} from './library/AssessmentLibraryTab';
+import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
@@ -482,8 +478,6 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [showNewAssessmentModal, setShowNewAssessmentModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [libraryAreaFilter, setLibraryAreaFilter] = useState<MethodologyId | 'all'>('all');
-  const [libraryStatusFilter, setLibraryStatusFilter] = useState<'active' | 'draft' | 'all'>('all');
   const [showInitiativesWizard, setShowInitiativesWizard] = useState(false);
   const [showNewReportModal, setShowNewReportModal] = useState(false);
 
@@ -1896,56 +1890,15 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     [activeTab, currentData.length, openDocuments.length, statusFilter, t]
   );
 
-  // PRZEWODY ODBIORU 2026-09-03: na zakladce „Biblioteka" `statusCounts` nie
-  // ma gałęzi (liczy tylko processes/reports/initiatives), wiec caly rzad
-  // chipow statusu renderowal sie z licznikiem 0 przy kazdej pozycji — licznik,
-  // ktory ZAWSZE pokazuje zero, klamie o zawartosci ekranu. Wzorzec, ktory ten
-  // rzad kopiuje (DiscoveryToolsHub), wlacza go tylko na zakladkach NIE-Library
-  // — ten warunek byl pominiety przy przenoszeniu. Biblioteka wraca na chipy
-  // informacyjne (nazwa zakladki + liczba pozycji), ktore mowia prawde.
-  const libraryFilterChips = useMemo(
-    () => [
-      {
-        id: 'library-all',
-        label: isPolish ? 'Wszystkie metodyki' : 'All methodologies',
-        badge: METHODOLOGY_CATALOG.length,
-        active: libraryAreaFilter === 'all' && libraryStatusFilter === 'all',
-        onClick: () => {
-          setLibraryAreaFilter('all');
-          setLibraryStatusFilter('all');
-        },
-      },
-      ...METHODOLOGY_CATALOG.map((method) => ({
-        id: `library-area-${method.id}`,
-        label: isPolish ? method.area.pl : method.area.en,
-        badge: 1,
-        active: libraryAreaFilter === method.id,
-        onClick: () => setLibraryAreaFilter(libraryAreaFilter === method.id ? 'all' : method.id),
-      })),
-      ...(['active', 'draft'] as const).map((status) => ({
-        id: `library-status-${status}`,
-        label:
-          status === 'active'
-            ? isPolish
-              ? 'Aktywne'
-              : 'Active'
-            : isPolish
-              ? 'Szkice'
-              : 'Drafts',
-        badge: METHODOLOGY_CATALOG.filter((method) => method.status === status).length,
-        active: libraryStatusFilter === status,
-        onClick: () => setLibraryStatusFilter(libraryStatusFilter === status ? 'all' : status),
-      })),
-    ],
-    [isPolish, libraryAreaFilter, libraryStatusFilter]
-  );
-
-  const hubMenu3Chips =
-    activeTab === 'library'
-      ? libraryFilterChips
-      : menu3StatusChipsEnabled
-        ? statusFilterChips
-        : hubMenu3InfoChips;
+  // DEC-414 (właściciel, 06.09.2026): zakładka „Biblioteka" nie ma już
+  // WŁASNEGO rzędu chipów Menu 3 (patrz `hubCommandRowContent` niżej — dla
+  // `activeTab === 'library'` cały command row znika). Poprzedni
+  // `libraryFilterChips` (chipy „Wszystkie metodyki/obszary/Aktywne/Szkice")
+  // był jedynym miejscem, które czytało/ustawiało `libraryAreaFilter` i
+  // `libraryStatusFilter` — usunięty stąd; filtrowanie katalogu metodyk
+  // zostaje wyłącznie w kolumnach OBSZAR/STATUS nagłówka tabeli
+  // (`AssessmentLibraryTab`, `filterable: true`), zgodnie z kanonem.
+  const hubMenu3Chips = menu3StatusChipsEnabled ? statusFilterChips : hubMenu3InfoChips;
 
   /**
    * P-20 (Piotr, OBR-84…86, 2026-07-27): „Nie wiem, po co powstały te trzy
@@ -2027,12 +1980,23 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       />
     ) : null;
 
+  // DEC-414 (właściciel, 06.09.2026, zakładka Biblioteka): „W menu trzecim
+  // jest niezrozumiała, wielka ilość tych okien, w ogóle wywal. To jest tylko
+  // biblioteka, więc nic się nie może wydarzyć." Biblioteka nie ma trybu bulk
+  // (bulkCommandRowContent działa tylko dla list/processes), więc wystarczy
+  // `null` zamiast `AssessmentMenu3ActionBar` — `ModuleNavBar` chowa CAŁY
+  // wiersz Menu 3, gdy `commandRowContent`/`commandRowRightContent` są puste
+  // (zero wysokości, nie pusty pasek). Filtry OBSZAR/STATUS zostają w
+  // nagłówku tabeli (`AssessmentLibraryTab`, kolumny `filterable`) — to
+  // osobny, kanoniczny mechanizm, nietknięty tą zmianą.
   const hubCommandRowContent = useMemo(
     () =>
-      bulkCommandRowContent ?? (
-        <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
-      ),
-    [bulkCommandRowContent, hubMenu3Actions, hubMenu3Chips]
+      activeTab === 'library'
+        ? null
+        : (bulkCommandRowContent ?? (
+            <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
+          )),
+    [activeTab, bulkCommandRowContent, hubMenu3Actions, hubMenu3Chips]
   );
 
   // NOTE: right-side actions are rendered by AssessmentMenu3ActionBar (inside hubCommandRowContent)
@@ -2388,10 +2352,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     if (activeTab === 'library') {
       return (
         <div className="h-full overflow-hidden">
-          <AssessmentLibraryTab
-            areaFilter={libraryAreaFilter}
-            statusFilter={libraryStatusFilter}
-          />
+          {/* DEC-414: brak Menu 3 chipów Biblioteki => brak zewnętrznego
+              areaFilter/statusFilter — komponent zostaje na własnych
+              domyślnych 'all', filtrowanie żyje w kolumnach OBSZAR/STATUS
+              nagłówka tabeli (`filterable: true`). */}
+          <AssessmentLibraryTab />
         </div>
       );
     }
