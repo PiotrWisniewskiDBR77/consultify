@@ -361,7 +361,7 @@ function buildRoiCardRightPanel(
           propertyLabel={isPolish ? 'Właściwość' : 'Property'}
           valueLabel={isPolish ? 'Wartość' : 'Value'}
           rows={[
-            { id: 'caseId', label: isPolish ? 'Numer sprawy' : 'Case id', value: roiCase.caseId, mono: true },
+            { id: 'caseName', label: isPolish ? 'Nazwa sprawy' : 'Case name', value: roiCase.title },
             { id: 'status', label: 'Status', value: roiStatusLabel(roiCase.status, isPolish) },
             {
               id: 'lifecyclePhase',

@@ -322,6 +322,22 @@ export const RoiCaseCardPage: React.FC = () => {
           </div>
         ),
       },
+      {
+        id: 'comments',
+        label: t('Komentarze', 'Comments'),
+        defaultOpen: false,
+        isEmpty: true,
+        emptyLabel: t('Komentarze do analizy ROI nie są jeszcze podpięte do modelu.', 'Comments are not connected to the ROI analysis model yet.'),
+        children: null,
+      },
+      {
+        id: 'history',
+        label: t('Historia', 'History'),
+        defaultOpen: false,
+        isEmpty: true,
+        emptyLabel: t('Historia analizy ROI nie jest jeszcze dostępna w tym API.', 'ROI analysis history is not available in this API yet.'),
+        children: null,
+      },
     ];
   }, [card, propertyRows, t, navigate]);
 

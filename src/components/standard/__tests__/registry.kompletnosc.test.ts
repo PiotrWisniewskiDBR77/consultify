@@ -25,6 +25,27 @@ const OCZEKIWANE_W_REJESTRZE = [
   'roi_case',
   'plan',
   'capacity_analysis',
+  'kpi-scorecard',
+  'kpi-deviation',
+  'okr-report',
+  'okr-set-tool',
+  'roi-case-tool',
+  'document',
+  'sheet',
+  'presentation',
+  'template',
+  'template-architect-doc',
+  'template-architect-deck',
+  'vault-document',
+  'report-builder',
+  'management-report',
+  'reporting-automation',
+  'governed-context',
+  'chat-artifact',
+  'finance-statement-pack',
+  'finance-analysis',
+  'execution-report',
+  'execution-work-doc',
 ] as const;
 
 const JAWNE_WYJATKI = {
@@ -34,18 +55,16 @@ const JAWNE_WYJATKI = {
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
   'tool-document': 'ToolDocumentView jest dokumentem wyniku narzędzia',
-  presentation: 'DeckBuilder jest dokumentem prezentacji poza rejestrem',
   meeting: 'MeetingObjectPage jest rekordem spotkania poza rejestrem',
-  'vault-document': 'VaultDocumentPanel jest dokumentem sejfu poza rejestrem',
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
-  it('zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia)', () => {
+  it('zawiera wszystkie 34 karty wskazane przez KartaNKey po DEC-432–441', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 9 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(9);
+  it('ma jawny, niepusty powód dla każdej z 7 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(7);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 
@@ -55,6 +74,6 @@ describe('P10 — kompletność rejestru kart N', () => {
     // rejestru (bilans zerowy), a karta analizy ROI (`roi_case`) doszła jako
     // dwudziesta pozycja inwentarza — wcześniej nie było jej nigdzie;
     // 20 → 22 (DEC-421, P11): karty `plan` i `capacity_analysis`.
-    expect(pokryte.size).toBe(22);
+    expect(pokryte.size).toBe(41);
   });
 });

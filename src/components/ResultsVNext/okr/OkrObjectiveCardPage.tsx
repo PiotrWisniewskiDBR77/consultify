@@ -1391,6 +1391,30 @@ export const OkrObjectiveCardPage: React.FC = () => {
         </button>
       ),
     },
+    {
+      id: 'evidence',
+      label: t('Źródła i założenia', 'Sources and assumptions'),
+      defaultOpen: false,
+      isEmpty: true,
+      emptyLabel: t('Źródła celu OKR nie są jeszcze podpięte do modelu.', 'Objective sources are not connected to the OKR model yet.'),
+      children: null,
+    },
+    {
+      id: 'comments',
+      label: t('Komentarze', 'Comments'),
+      defaultOpen: false,
+      isEmpty: true,
+      emptyLabel: t('Komentarze do celu OKR nie są jeszcze podpięte do modelu.', 'Objective comments are not connected to the OKR model yet.'),
+      children: null,
+    },
+    {
+      id: 'history',
+      label: t('Historia', 'History'),
+      defaultOpen: false,
+      isEmpty: true,
+      emptyLabel: t('Historia celu pojawi się po zapisaniu pierwszej zmiany lub check-inu.', 'Objective history will appear after the first saved change or check-in.'),
+      children: null,
+    },
   ];
 
   // Trzy stopnie, dokładnie tyle, ile jest poziomów (P7K): raporty → raport

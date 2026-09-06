@@ -2798,11 +2798,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         dotTone: qaBlock ? 'danger' : null,
       },
       {
-        id: 'teresa',
-        label: 'Teresa',
-        icon: Bot,
-      },
-      {
         id: 'comments',
         label: t('documentStudio.panel.toolComments', 'Comments'),
         icon: MessageSquare,
@@ -3020,15 +3015,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     }
     if (activeToolId === 'comments') {
       return <DocumentCommentsPanel artifactId={artifactId} sections={schema.sections} />;
-    }
-    if (activeToolId === 'teresa') {
-      return (
-        <TeresaDrawerPanel
-          artifactId={artifactId}
-          schema={schema}
-          onSchemaUpdated={onSchemaUpdated}
-        />
-      );
     }
     if (activeToolId === 'qa') {
       return <DocumentReviewPanel artifactId={artifactId} />;
@@ -3575,16 +3561,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               count: schema.sections.length,
             })}
             center={autosaveStatus === 'conflict' ? t('common.conflict', 'Konflikt') : undefined}
-            trailing={
-              <button
-                type="button"
-                onClick={openGlobalTeresa}
-                className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
-              >
-                <Sparkles size={14} aria-hidden="true" />
-                <span>Teresa</span>
-              </button>
-            }
           />
         ) : undefined
       }

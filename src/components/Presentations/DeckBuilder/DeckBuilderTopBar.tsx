@@ -334,25 +334,6 @@ export const DeckBuilderTopBar: React.FC<DeckBuilderTopBarProps> = ({
       </button>
 
       <button
-        onClick={onToggleAgent}
-        aria-pressed={agentOpen}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-          // VF1-7: was crimson `bg-c-accent-soft` — active/toggle state is neutral
-          // chrome (canonical c-focus tint, matches RightRail.tsx's active tool style).
-          // axe color-contrast: text-c-focus-solid on bg-c-focus/10 measures
-          // 4.31:1 (< 4.5) — text-c-focus-solid-on-tint is the scoped fix.
-          agentOpen
-            ? 'bg-c-focus/10 text-c-focus-solid-on-tint'
-            : 'text-c-text-secondary hover:bg-c-surface-raised'
-        }`}
-      >
-        <MessageSquare size={14} />
-        <span className="hidden md:inline">
-          {t('presentations.builder.topBar.teresa', 'Teresa')}
-        </span>
-      </button>
-
-      <button
         onClick={onPresent}
         data-testid="deck-present-btn"
         className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-c-surface text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"

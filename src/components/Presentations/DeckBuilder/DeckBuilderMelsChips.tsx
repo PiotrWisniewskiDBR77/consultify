@@ -266,15 +266,6 @@ export function buildDeckBuilderTopBarChips(args: {
         typeof state.openCommentCount === 'number' && state.openCommentCount > 0 ? 'info' : null,
     },
     {
-      id: 'agent',
-      label: L.agent,
-      icon: Bot,
-      onClick: handlers.onToggleAgent,
-      disabled: !handlers.onToggleAgent,
-      kind: 'toggle',
-      active: Boolean(state.agentOpen),
-    },
-    {
       id: 'run',
       label: L.run,
       icon: state.agentOpen ? Eye : Play,
