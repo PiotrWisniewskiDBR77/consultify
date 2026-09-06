@@ -1,0 +1,22 @@
+{
+ "url": "http://127.0.0.1:3101/my-work?tab=decisions",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=DBR77: Reset embeddings po cutover?",
+  "text=Otwórz",
+  "text=Opcje i trade-offy",
+  "text=Wygeneruj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nDecyzje\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nDBR77: Reset embeddings po cutover?\nDBR77: Reset embeddings po cutover?\nOczekująca\nZapisano\nAI\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nGeneruj opcje\nZakres decyzji\nOpcje i trade-offy\nRyzyko i wpływ\nKonsekwencje\nRACI i eskalacja\nZałączniki i powiązania\nOpcje i trade-offy\nGenerowanie\nTeresa pisze…\nPowiązany kontekst\nWykryte powiązania AI\nZgłoś do recenzji\nAKCJE\nZatwierdź decyzję\nOdrzuć\nWięcej akcji\n4\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tOczekująca\nPrzepływ pracy\tPropozycja\nWaga\tŚredni\nTermin\t08 wrz 2026\nDecydent\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n1",
+ "kiedy": "2026-09-06T15:51:36.883Z"
+}
