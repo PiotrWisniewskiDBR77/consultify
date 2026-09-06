@@ -84,14 +84,20 @@ if [ "$ROB_BAZE" -eq 1 ]; then
     bramka_celu "$TOZ" "$ODCISK"
     ok "baza: cel $TOZ"
 
+    # ★ „konta_pilotazu" liczy przez organization_members (nie users.organization_id):
+    # administrator pilotażu bywa CUDZYM, wcześniej istniejącym kontem (właściciel
+    # albo audyt@dbr77.local), którego organizacja domowa NIE jest „DBR77 Pilotaż"
+    # — dostaje tylko członkostwo OWNER. Licząc po users.organization_id zgubilibyśmy
+    # to konto i pokazali 7 zamiast 8 mimo poprawnego stanu (seed-organizacja-pilotaz.ts).
     ZAP="select
       (select count(*) from information_schema.tables where table_schema='public' and table_type='BASE TABLE') as tabele,
       (select count(*) from organizations) as organizacje,
       (select count(*) from organizations where name='DBR77 Pilotaż') as org_pilotaz,
       (select count(*) from organization_members m join organizations o on o.id=m.organization_id
         where o.name='DBR77 Pilotaż' and m.status='ACTIVE') as czlonkowie_pilotazu,
-      (select count(*) from users u join organizations o on o.id=u.organization_id
-        where o.name='DBR77 Pilotaż' and u.status='active') as konta_pilotazu,
+      (select count(*) from organization_members m join organizations o on o.id=m.organization_id
+        join users u on u.id=m.user_id
+        where o.name='DBR77 Pilotaż' and m.status='ACTIVE' and u.status='active') as konta_pilotazu,
       (select count(*) from users where role='SUPERADMIN') as superadmini,
       (select count(*) from pg_constraint where contype='f') as klucze_obce;"
 
@@ -103,8 +109,8 @@ if [ "$ROB_BAZE" -eq 1 ]; then
       ok "baza: tabel=$T organizacji=$O"
       [ "${T:-0}" -gt 500 ] && ok "baza: schemat załadowany ($T tabel > 500)" || zle "baza: tylko $T tabel — schemat NIE jest kompletny"
       [ "${OP:-0}" -eq 1 ] && ok "baza: organizacja DBR77 Pilotaz istnieje" || zle "baza: organizacji DBR77 Pilotaz jest $OP (ma byc 1)"
-      [ "${KP:-0}" -ge 5 ] && ok "baza: kont pilotażu aktywnych = $KP (≥5)" || zle "baza: kont pilotażu = $KP (ma być ≥5: 4 osoby + administrator)"
-      [ "${CP:-0}" -ge 5 ] && ok "baza: członkostw ACTIVE = $CP (≥5)" || zle "baza: członkostw ACTIVE = $CP (ma być ≥5)"
+      [ "${KP:-0}" -ge 8 ] && ok "baza: kont pilotażu aktywnych = $KP (≥8)" || zle "baza: kont pilotażu = $KP (ma być ≥8: 7 osób + administrator, DEC-402)"
+      [ "${CP:-0}" -ge 8 ] && ok "baza: członkostw ACTIVE = $CP (≥8)" || zle "baza: członkostw ACTIVE = $CP (ma być ≥8)"
       printf 'INFO      baza: kont z rolą SUPERADMIN w całej bazie = %s (seed pilotażu żadnego nie nadaje)\n' "${SA:-?}"
       # ★ Klucze obce liczymy, bo pg_restore MILCZĄCO ich nie zakłada, gdy dane
       # źródłowe je łamią. Zmierzone 06.09 na próbie: 1681 w źródle -> 1670 po

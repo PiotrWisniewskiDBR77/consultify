@@ -1,0 +1,55 @@
+{
+  "_komentarz": [
+    "SSOT listy pilotażu — DEC-402 (właściciel, 2026-09-06), docs/program/demo-pilotaz/PLAN_DEMO_KLIENCI_I_POKAZY.md §5.",
+    "Czytane przez scripts/demo/seed-organizacja-pilotaz.ts (--konta domyślnie wskazuje na ten plik).",
+    "Administrator organizacji NIE jest tu wymieniony — jego adres skrypt ustala sam w",
+    "czasie działania (istniejące konto właściciela w bazie docelowej, albo audyt@dbr77.local lokalnie).",
+    "rola = organization_members.role (CHECK: OWNER/ADMIN/MEMBER/CONSULTANT/USER/GUEST) — tu zawsze CONSULTANT.",
+    "users.role dla każdego wiersza tego pliku to zawsze USER (nigdy SUPERADMIN — skrypt tego pilnuje).",
+    "UWAGA: wiersz Bartłomieja ma domenę db77.pl (podaną przez właściciela), różną od dbr77.com pozostałych — do potwierdzenia."
+  ],
+  "uzytkownicy": [
+    {
+      "imie": "Tomasz",
+      "nazwisko": "Jankowski",
+      "email": "tomasz.jankowski+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Katarzyna",
+      "nazwisko": "Marszałkiewicz",
+      "email": "katarzyna.marszalkiewicz+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Justyna",
+      "nazwisko": "Laskowska",
+      "email": "justyna.laskowska+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Irina",
+      "nazwisko": "Lebedjuk",
+      "email": "irina.lebedjuk+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Torian",
+      "nazwisko": "Richardson",
+      "email": "torian.richardson+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Bartłomiej",
+      "nazwisko": "Straszak",
+      "email": "bartlomiej.straszak+pilotaz@db77.pl",
+      "rola": "CONSULTANT"
+    },
+    {
+      "imie": "Paweł",
+      "nazwisko": "Mroczkowski",
+      "email": "pawel.mroczkowski+pilotaz@dbr77.com",
+      "rola": "CONSULTANT"
+    }
+  ]
+}
