@@ -53,6 +53,7 @@
 import type { PoolClient } from 'pg';
 
 import logger from '../../../utils/Logger.js';
+import { buildKpiDeviationSourceId, KPI_DEVIATION_SOURCE_KIND } from '../../actionCard/kpiDeviationActionCard.js';
 
 import type { RvnOutboxRow } from './outboxDrain.js';
 import type { RvnPlatformEventRow } from './consumerRegistry.js';
@@ -228,6 +229,65 @@ async function advanceCheckpoint(
 // thin, so each type re-queries its own domain table for assignee/owner).
 // ==========================================
 
+/**
+ * [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — SKRZYNKA-DUPLIKATY.
+ *
+ * Znalezisko (pomiar na lokalnej bazie 54400, 2026-09-06): ten handler i
+ * `ensureActionCardForKpiDeviation` (`../actionCard/kpiDeviationActionCard.js`,
+ * P7K część B) reagują na TO SAMO zdarzenie — krytyczny wynik miernika dla
+ * danego `kpiId`+okresu — z dwóch niezależnych kanałów. Ten (stary) kanał
+ * tworzy ogólny wpis `notifications` z NIEPARAMETRYZOWANYM tytułem
+ * „Odchylenie KPI wymaga wyjaśnienia" (identyczny dla każdego miernika), a
+ * nowy kanał (P7K-B) tworzy `action_cards` z pełnym opisem problemu
+ * (miernik, okres, wartość). Oba trafiają do tej samej Skrzynki
+ * (`inboxService.materializeInboxItems` → sekcja „Powiadomienia systemowe"
+ * dla notifications, „Do zrobienia" dla action_cards) i dzielą identyczny
+ * tytuł/sekcję/źródło, więc heurystyka „możliwy duplikat" frontu
+ * (`InboxContent.tsx` `buildDuplicateIdentityKey`) je grupuje — realny
+ * hałas, nie fałszywy alarm heurystyki.
+ *
+ * DECYZJA CTO (bez pytania właściciela, mandat CTO 31.08): jedna karta,
+ * jedna Skrzynka (KRĘGOSŁUP §3). Gdy P7K-B action card dla TEGO SAMEGO
+ * miernika+okresu już istnieje, stary kanał NIE tworzy drugiego wpisu —
+ * karta działania niesie więcej treści i jest jedyną drogą do zamknięcia
+ * (KRĘGOSŁUP §3.3). Gdy karty jeszcze nie ma (typowe dla `warning` — P7K-B
+ * otwiera kartę WYŁĄCZNIE dla `critical`), stary kanał zostaje jedynym
+ * sygnałem i notification powstaje jak dotychczas — zero regresji dla
+ * ostrzeżeń.
+ */
+async function findMatchingActionCardSourceId(
+  client: PoolClient,
+  params: { organizationId: string; caseId: string }
+): Promise<string | null> {
+  const row = await client.query<{ kpi_id: string; period_start: string; period_end: string }>(
+    `SELECT dc.kpi_id::text AS kpi_id,
+            m.period_start::date::text AS period_start,
+            m.period_end::date::text AS period_end
+       FROM rvn_kpi_deviation_cases dc
+       JOIN rvn_kpi_measurements m ON m.measurement_id = dc.trigger_measurement_id
+      WHERE dc.case_id = $1::uuid AND dc.organization_id = $2`,
+    [params.caseId, params.organizationId]
+  );
+  const r = row.rows[0];
+  if (!r) return null;
+  return buildKpiDeviationSourceId(r.kpi_id, r.period_start, r.period_end);
+}
+
+async function actionCardAlreadyCoversCase(
+  client: PoolClient,
+  params: { organizationId: string; caseId: string }
+): Promise<boolean> {
+  const sourceId = await findMatchingActionCardSourceId(client, params);
+  if (!sourceId) return false;
+  const exists = await client.query(
+    `SELECT 1 FROM action_cards
+      WHERE organization_id = $1 AND source_kind = $2 AND source_id = $3
+      LIMIT 1`,
+    [params.organizationId, KPI_DEVIATION_SOURCE_KIND, sourceId]
+  );
+  return (exists.rowCount ?? 0) > 0;
+}
+
 async function handleKpiDeviationOpened(client: PoolClient, event: RvnPlatformEventRow): Promise<void> {
   const oblig = await client.query<{ assignee_user_id: string }>(
     `SELECT assignee_user_id FROM rvn_platform_obligations
@@ -245,22 +305,36 @@ async function handleKpiDeviationOpened(client: PoolClient, event: RvnPlatformEv
     canonicalState: RVN_CANONICAL_STATES.NEEDS_ATTENTION,
   });
 
-  if (assigneeUserId) {
-    await insertNotification(client, {
-      userId: assigneeUserId,
-      organizationId: event.organization_id,
-      type: 'DEVIATION_CASE_OPENED',
-      title: 'Odchylenie KPI wymaga wyjaśnienia',
-      message: `Sprawa odchylenia ${event.aggregate_id} wymaga Twojego wyjaśnienia.`,
-      entityType: 'deviation_case',
-      entityId: event.aggregate_id,
-    });
-  } else {
+  if (!assigneeUserId) {
     logger.warn(
       '[resultsVnext/platform/myworkProjectionConsumer] kpi.deviation_opened: no open obligation found — canonical state written, notification skipped',
       { eventId: event.event_id, aggregateId: event.aggregate_id, organizationId: event.organization_id }
     );
+    return;
   }
+
+  // DEC-397 guard — see doc comment above.
+  const coveredByActionCard = await actionCardAlreadyCoversCase(client, {
+    organizationId: event.organization_id,
+    caseId: event.aggregate_id,
+  });
+  if (coveredByActionCard) {
+    logger.info(
+      '[resultsVnext/platform/myworkProjectionConsumer] kpi.deviation_opened: P7K-B action card already covers this kpi+period — skipping old-channel notification (DEC-397)',
+      { eventId: event.event_id, aggregateId: event.aggregate_id, organizationId: event.organization_id }
+    );
+    return;
+  }
+
+  await insertNotification(client, {
+    userId: assigneeUserId,
+    organizationId: event.organization_id,
+    type: 'DEVIATION_CASE_OPENED',
+    title: 'Odchylenie KPI wymaga wyjaśnienia',
+    message: `Sprawa odchylenia ${event.aggregate_id} wymaga Twojego wyjaśnienia.`,
+    entityType: 'deviation_case',
+    entityId: event.aggregate_id,
+  });
 }
 
 async function handleKpiDeviationClosed(client: PoolClient, event: RvnPlatformEventRow): Promise<void> {
