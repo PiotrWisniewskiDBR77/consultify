@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const AUTH = '/private/tmp/stanowisko-noc/auth-11b.json';
+const BASE = 'http://127.0.0.1:3117';
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ storageState: AUTH, viewport: { width: 1440, height: 900 } });
+const page = await ctx.newPage();
+await page.goto(`${BASE}/chat?workPanel=1`, { waitUntil: 'networkidle', timeout: 30000 });
+await page.waitForTimeout(2500);
+const aside = await page.locator('[data-testid="chat-work-panel"]').boundingBox();
+const shareBtn = await page.locator('[aria-label="Udostępnij dokument Canvas"]').boundingBox();
+console.log('aside', aside);
+console.log('share button', shareBtn);
+console.log('share bottom relative to aside top:', shareBtn.y + shareBtn.height - aside.y);
+await browser.close();
