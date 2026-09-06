@@ -38,6 +38,23 @@
  * `--rollback` przywraca read/is_read/read_at sprzed zmiany z manifestu).
  * Filtr WEJŚCIOWY zawsze `COALESCE(read,0)=0`, więc drugi `--apply` na tym
  * samym stanie bazy nie znajduje nic do zrobienia (ZMIENIONE: 0).
+ *
+ * ROZSZERZENIE H1 [ODMROZENIE 07_MY_WORK_AGENT DEC-397] (2026-09-06) — druga
+ * rodzina tego samego wzorca: stary kanał eskalacji wywiadów
+ * (`InterviewAssignmentService.checkAndEscalate`, `type='interview_escalation'`,
+ * `entity_type='interview_assignment'`, tytuł „Interview Assignment Overdue" /
+ * PL „Przekroczony termin przydziału wywiadu"). Producent naprawiony u ŹRÓDŁA
+ * (idempotency guard w `checkAndEscalate()` — jedno otwarte powiadomienie na
+ * przydział, UPDATE zamiast INSERT); ten skrypt sprząta wiersze zapisane
+ * PRZED tą naprawą. Dwie przyczyny, bez odpowiednika „pokryte kartą" (nie ma
+ * tu drugiego kanału jak P7K-B):
+ *
+ *  A) DOKŁADNY DUPLIKAT — kilka OTWARTYCH wpisów tego samego odbiorcy na TEN
+ *     SAM przydział (`entity_id` + `user_id`) — zwinięcie do JEDNEGO
+ *     (najstarszy zostaje, reszta → resolved), dokładnie to, czego teraz
+ *     pilnuje strażnik producenta idąc naprzód.
+ *  D) PRZYDZIAŁ OSIEROCONY — `entity_id` nie wskazuje już na żaden wiersz w
+ *     `interview_assignments` (usunięty) → resolved, nie ma czego pokazywać.
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -56,9 +73,19 @@ import {
 const ENTITY_TYPE = 'deviation_case';
 const NOTIFICATION_TYPE = 'DEVIATION_CASE_OPENED';
 
+// H1 — interview escalation family (see doc comment above).
+const INTERVIEW_ENTITY_TYPE = 'interview_assignment';
+const INTERVIEW_NOTIFICATION_TYPE = 'interview_escalation';
+
+export type PlanReason =
+  | 'exact_duplicate'
+  | 'covered_by_action_card'
+  | 'orphaned_case'
+  | 'orphaned_assignment';
+
 export type PlanRow = {
   row: Record<string, unknown>;
-  reason: 'exact_duplicate' | 'covered_by_action_card' | 'orphaned_case';
+  reason: PlanReason;
 };
 
 /**
@@ -127,6 +154,68 @@ export async function planDuplikaty(c: PoolClient, organizationId: string): Prom
   return out;
 }
 
+/**
+ * PLAN dla rodziny H1 (eskalacja wywiadów) — analogiczny odczyt, bez zapisu.
+ * Grupowanie A jest per (entity_id, user_id): ten sam przydział może mieć
+ * różnych odbiorców (np. eskalacja zmieniła cel po drodze), więc dwóch
+ * różnych odbiorców z otwartym powiadomieniem na TEN SAM przydział NIE jest
+ * duplikatem — duplikatem jest ten sam odbiorca widzący ten sam przydział
+ * więcej niż raz.
+ */
+export async function planInterviewEscalationDuplikaty(
+  c: PoolClient,
+  organizationId: string
+): Promise<PlanRow[]> {
+  const candidates = (
+    await c.query<
+      Record<string, unknown> & { id: string; entity_id: string; user_id: string; created_at: string }
+    >(
+      `SELECT n.* FROM notifications n
+        WHERE n.organization_id = $1
+          AND n.entity_type = $2
+          AND n.type = $3
+          AND COALESCE(n.read, 0) = 0
+        ORDER BY n.entity_id, n.user_id, n.created_at ASC`,
+      [organizationId, INTERVIEW_ENTITY_TYPE, INTERVIEW_NOTIFICATION_TYPE]
+    )
+  ).rows;
+  if (candidates.length === 0) return [];
+
+  // A) dokładny duplikat — ten sam odbiorca, kilka wpisów na TEN SAM przydział.
+  const seenPair = new Set<string>();
+  const exactDuplicateIds = new Set<string>();
+  for (const row of candidates) {
+    const key = `${row.entity_id}::${row.user_id}`;
+    if (seenPair.has(key)) exactDuplicateIds.add(String(row.id));
+    else seenPair.add(key);
+  }
+
+  // D) przydział osierocony — assignment już nie istnieje.
+  const entityIds = [...new Set(candidates.map((r) => String(r.entity_id)))];
+  const existing = (
+    await c.query<{ id: string }>(
+      `SELECT id FROM interview_assignments WHERE id = ANY($1::text[])`,
+      [entityIds]
+    )
+  ).rows;
+  const existingIds = new Set(existing.map((r) => r.id));
+
+  const out: PlanRow[] = [];
+  for (const row of candidates) {
+    const id = String(row.id);
+    if (exactDuplicateIds.has(id)) {
+      out.push({ row, reason: 'exact_duplicate' });
+      continue;
+    }
+    if (!existingIds.has(String(row.entity_id))) {
+      out.push({ row, reason: 'orphaned_assignment' });
+    }
+    // przydział istnieje, jedyne otwarte powiadomienie dla tego odbiorcy —
+    // to poprawny, aktualny sygnał w Skrzynce, NIETKNIĘTY.
+  }
+  return out;
+}
+
 export async function mainDuplikatyPowiadomien(
   c: PoolClient,
   org: { id: string; name: string },
@@ -147,17 +236,25 @@ export async function mainDuplikatyPowiadomien(
     return;
   }
 
-  const plan = await planDuplikaty(c, org.id);
-  const counts = { exact_duplicate: 0, covered_by_action_card: 0, orphaned_case: 0 };
+  const kpiPlan = await planDuplikaty(c, org.id);
+  const interviewPlan = await planInterviewEscalationDuplikaty(c, org.id);
+  const plan = [...kpiPlan, ...interviewPlan];
+  const counts: Record<PlanReason, number> = {
+    exact_duplicate: 0,
+    covered_by_action_card: 0,
+    orphaned_case: 0,
+    orphaned_assignment: 0,
+  };
   for (const x of plan) {
     counts[x.reason]++;
     console.log(
-      `notifications · ${x.row.id} · entity_id=${x.row.entity_id} · ${x.row.created_at} · ${x.reason}`
+      `notifications · ${x.row.id} · type=${x.row.type} · entity_id=${x.row.entity_id} · ${x.row.created_at} · ${x.reason}`
     );
   }
   console.log(
-    `PLAN: ${plan.length} do zwinięcia (dokładny duplikat=${counts.exact_duplicate}, ` +
-      `pokryte kartą P7K-B=${counts.covered_by_action_card}, sprawa osierocona=${counts.orphaned_case})`
+    `PLAN: ${plan.length} do zwinięcia (obie rodziny: DEVIATION_CASE_OPENED + interview_escalation) — ` +
+      `dokładny duplikat=${counts.exact_duplicate}, pokryte kartą P7K-B=${counts.covered_by_action_card}, ` +
+      `sprawa osierocona=${counts.orphaned_case}, przydział osierocony=${counts.orphaned_assignment}`
   );
   if (mode.kind === 'dry-run') return;
 

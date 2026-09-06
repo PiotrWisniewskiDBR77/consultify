@@ -1100,18 +1100,49 @@ class InterviewAssignmentService {
         if (row.escalation_user_id && row.escalation_email) {
           const dueAt = new Date(row.due_at);
           const overdueDays = Math.floor((now.getTime() - dueAt.getTime()) / (1000 * 60 * 60 * 24));
+          const body = `The interview "${row.template_name}" assigned to ${row.assignee_name} is overdue by ${overdueDays} day(s).`;
 
-          await notificationService.send({
-            userId: row.escalation_user_id,
-            organizationId: row.organization_id,
-            type: 'interview_escalation',
-            title: 'Interview Assignment Overdue',
-            body: `The interview "${row.template_name}" assigned to ${row.assignee_name} is overdue by ${overdueDays} day(s).`,
-            entityType: 'interview_assignment',
-            entityId: row.id,
-            actionUrl: `/interview?assignmentId=${row.id}`,
-            priority: 'high',
-          });
+          // H1 [ODMROZENIE 07_MY_WORK_AGENT DEC-397/SKRZYNKA-DUPLIKATY] —
+          // idempotency key = (organization, escalation target, type,
+          // entity). checkAndEscalate() re-fires once every 24h for as
+          // long as an assignment stays overdue (the WHERE clause above
+          // only re-admits a row once `escalated_at` is >24h old) — a
+          // single assignment left unresolved for weeks used to grow one
+          // *new* "Interview Assignment Overdue" notifications row per
+          // cycle, all sharing the same unparametrized title, which the
+          // inbox's duplicate heuristic (InboxContent.tsx
+          // buildDuplicateIdentityKey) then surfaced as a large "possible
+          // duplicate" badge. Same task/assignment → one OPEN notification:
+          // update the existing unread row in place instead of inserting
+          // a new one every cycle.
+          const existingOpen = await db.get<{ id: string }>(
+            `SELECT id FROM notifications
+              WHERE organization_id = ? AND user_id = ? AND type = 'interview_escalation'
+                AND entity_type = 'interview_assignment' AND entity_id = ?
+                AND COALESCE(read, 0) = 0
+              ORDER BY created_at DESC LIMIT 1`,
+            [row.organization_id, row.escalation_user_id, row.id]
+          );
+
+          if (existingOpen?.id) {
+            await db.run(`UPDATE notifications SET body = ?, created_at = ? WHERE id = ?`, [
+              body,
+              now.toISOString(),
+              existingOpen.id,
+            ]);
+          } else {
+            await notificationService.send({
+              userId: row.escalation_user_id,
+              organizationId: row.organization_id,
+              type: 'interview_escalation',
+              title: 'Interview Assignment Overdue',
+              body,
+              entityType: 'interview_assignment',
+              entityId: row.id,
+              actionUrl: `/interview?assignmentId=${row.id}`,
+              priority: 'high',
+            });
+          }
 
           // N2 (DEC-2026-08-25-21): the manual sendEscalationEmail() call
           // and its interview_notifications 'email' log row that used to
