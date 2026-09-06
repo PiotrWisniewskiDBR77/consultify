@@ -79,7 +79,10 @@ import {
   NModeSectionWrapper,
 } from '@/components/shared/NModeLayout';
 import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
-import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import { StickyStosKartyN } from '@/components/standard/StickyStosKartyN';
+import { zbudujZrodlaPracujZAI } from '@/components/standard/pracujZAIzKartAnalizy';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
 // nic nie jest solid; AI Consultant zjechał na wariant outline/split).
@@ -8596,7 +8599,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   //   zmianach robi coś realnego: wkłada propozycję AI do pola redakcyjnego
   //   sekcji i zapisuje ją — zamiast być trwale wyszarzone. AI nadal NIE
   //   nadpisuje niczego bez kliknięcia człowieka (kontrakt cardAnalysis).
-  const insightAnalysisFields = useMemo<CardAnalysisField[]>(() => {
+  // DEC-407: jedna deklaracja pól obsługuje „Analizuj" i „Uzupełnij…".
+  const insightPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
     const asLines = (items: unknown[], toText: (x: any) => string) =>
       (items || []).map((x) => `- ${toText(x)}`).join('\n');
 
@@ -8609,7 +8614,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
 
     const generated: CardAnalysisField[] = ((): CardAnalysisField[] => {
-      switch (activeNSection) {
+      switch (sekcjaId) {
         case 'executive-summary':
           return [
             field(
@@ -8687,7 +8692,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         label: isPolish
           ? 'Treść ręczna tej sekcji (redakcja konsultanta)'
           : 'Manual text of this section (consultant edit)',
-        value: sectionDrafts[activeNSection] ?? sectionOverrides[activeNSection]?.content ?? '',
+        value: sectionDrafts[sekcjaId] ?? sectionOverrides[sekcjaId]?.content ?? '',
         kind: 'text',
         writable: true,
         hint: isPolish
@@ -8695,8 +8700,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           : 'The section editing field. Put ready-to-use text here — it lives next to the AI content and is persisted on the insight.',
       },
     ];
-  }, [
-    activeNSection,
+    },
+    [
     isPolish,
     insight,
     executiveSummary,
@@ -8706,7 +8711,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     v6Signals,
     sectionDrafts,
     sectionOverrides,
-  ]);
+    ]
+  );
+
+  const insightAnalysisFields = useMemo<CardAnalysisField[]>(
+    () => insightPolaSekcji(activeNSection),
+    [insightPolaSekcji, activeNSection]
+  );
 
   const buildInsightAnalysisInput = useCallback(() => {
     const ctx = [
@@ -8780,6 +8791,25 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     buildInput: buildInsightAnalysisInput,
     applyChange: applyInsightAnalysisChange,
   });
+
+  // ── [ODMROZENIE 02_INTERVIEW DEC-407] „Pracuj z AI" ───────────────────────
+  // TYLKO „Uzupełnij tę sekcję". „Uzupełnij cały dokument" NIE jest podpięte
+  // świadomie i renderuje się wyszarzone: `applyInsightAnalysisChange` zapisuje
+  // ZAWSZE do sekcji AKTYWNEJ (`const sectionId = activeNSection`), więc
+  // przebieg po wszystkich sekcjach wsypałby całą treść do jednej. Karta nie ma
+  // dziś generatora „cały dokument" i nie buduję go tutaj — zgłoszone w meldunku.
+  const zrodlaPracujZAI = useMemo(
+    () =>
+      zbudujZrodlaPracujZAI({
+        sekcje: INSIGHT_SECTIONS.map((sec) => ({ id: sec.id, label: sec.label })),
+        polaSekcji: insightPolaSekcji,
+        applyChange: applyInsightAnalysisChange,
+        isPolish,
+      }),
+    [insightPolaSekcji, applyInsightAnalysisChange, isPolish]
+  );
+  const wniosekZatwierdzony =
+    insight?.reviewStatus === 'published' || insight?.status === 'published';
 
   // ── Render ─────────────────────────────────────────────────────────────────
   // VF1-2 (SPEC-A): swap ad-hoc spinner/error markup for the shared
@@ -9221,6 +9251,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   return (
     <>
       <NModeShell
+        /* [ODMROZENIE 02_INTERVIEW DEC-407] Zasada 2 — Menu 4 i Menu 5
+           jako JEDEN przyklejony stos (powłoka, nie hack w karcie). */
+        stickyStosMenu45
         header={{
           title,
           onTitleChange: setTitle,
@@ -9339,35 +9372,43 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <NModeMenu2
               isPolish={isPolish}
               readMode={readMode}
-              onReadModeChange={setReadMode}
+              /* Zasada 2b (DEC-407): wniosek opublikowany = rekord zatwierdzony,
+                 przełącznik „Edycja | Podgląd" nie ma wtedy sensu. Innego
+                 sprawdzenia prawa edycji ta karta nie ma (grep `canEdit|readOnly|
+                 isReadOnly`: tylko lokalny `readMode`) — zgłoszone w meldunku. */
+              onReadModeChange={wniosekZatwierdzony ? undefined : setReadMode}
               aiButton={
-                // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                // wyników. Było: `openInsightConsultant()` — czat konsultanta
-                // na poziomie CAŁEGO artefaktu, bez oceny konkretnej karty.
-                // Konsultant nie zniknął: żyje w toolbarze (slot 9) i w panelu
-                // Akcje, więc żadna zdolność nie została zabrana.
-                // Nadpisanie etykiety zdjęte — przycisk niesie teraz nazwę ze
-                // standardu („Analizuj z AI"), zgodną z tym, co robi.
-                //
-                // ⚠ 2026-07-23 (sędzia grafiki, pkt 3): było `readMode ?
-                // undefined : (...)`, a karta OTWIERA SIĘ w Podglądzie
-                // (`insightOpensInPreview` → readMode=true). Efekt: prawa
-                // strefa Menu 2 była PUSTA przy wejściu, a najważniejsza
-                // zdolność karty (analiza AI) nie istniała, dopóki użytkownik
-                // sam nie przełączył się na Edycję — czego nie miał powodu
-                // zrobić. Analiza jest operacją CZYTAJĄCĄ (nie modyfikuje
-                // treści), więc w Podglądzie jest równie legalna jak w Edycji.
-                // Wzór: KnownToolDetailView.tsx (aiButton bezwarunkowo).
-                <Menu2AIButton
+                // DEC-407: „Analizuj z AI" ZASTĄPIONE przez „Pracuj z AI".
+                // Analiza jest operacją CZYTAJĄCĄ, więc wejście istnieje także
+                // w Podglądzie (karta otwiera się w Podglądzie dla gotowych
+                // wniosków) — znikają wtedy tylko pozycje „Uzupełnij…".
+                <PracujZAI
                   isPolish={isPolish}
-                  busy={insightCardAnalysis.loading}
-                  aria-expanded={insightCardAnalysis.open}
-                  onClick={() => {
+                  onAnalizuj={() => {
                     setExportMenuOpen(false);
                     setSectionsMenuOpen(false);
                     setAiMenuOpen(false);
                     insightCardAnalysis.run();
                   }}
+                  analizaWToku={insightCardAnalysis.loading}
+                  analizaOtwarta={insightCardAnalysis.open}
+                  aktywnaSekcja={activeNSection}
+                  kontekstArtefaktu={{
+                    title: insight?.title,
+                    status: insight?.status,
+                    type: 'insight',
+                  }}
+                  moznaEdytowac={!readMode && !wniosekZatwierdzony}
+                  powodTylkoOdczyt={
+                    wniosekZatwierdzony
+                      ? isPolish
+                        ? 'wniosek opublikowany'
+                        : 'insight is published'
+                      : isPolish
+                        ? 'karta otwarta w trybie Podgląd'
+                        : 'card opened in Preview mode'
+                  }
+                  uzupelnijSekcje={zrodlaPracujZAI.sekcja}
                 />
               }
               overflowKebab={

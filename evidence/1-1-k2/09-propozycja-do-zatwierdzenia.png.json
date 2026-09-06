@@ -1,0 +1,22 @@
+{
+ "url": "http://127.0.0.1:3139/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]",
+  "text=Uzupełnij tę sekcję"
+ ],
+ "wpisy": [],
+ "zdarzenia": [
+  "mywork-open-item::{\"type\":\"task\",\"id\":\"seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2\",\"name\":\"plan warsztatu\"}"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nZadania\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nplan warsztatu\nDBR77: Przygotować plan warsztatu z interesariuszami\nDo zrobienia\nZapisano\nAI\nRozpocznij\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nUwaga: zbliża się lub minął termin!\nOpis i zakres\nPomysły realizacji\nRyzyko i alternatywy\nLista kontrolna\nZależności\nDowody\nRACI i eskalacja\nZałączniki i powiązania\nStrategia\nEdytowane\nOpis i zakres\nWYNIKA ZBrak powiązania — zadanie samodzielne\nOPIS ZADANIA\nAI\nPOWIĄZANE POMYSŁY\n\nBrak sugestii\n\nZapisuj pomysły z czatu, aby zbudować prywatną bibliotekę.\nPOWIĄZANE NOTATKI\n\nBrak sugestii\n\nZapisuj notatki, aby zbudować prywatną bazę wiedzy.\nOCZEKIWANY REZULTAT\nAI\n\nReview this draft, then save the task to persist it.\n\nRegeneruj\nEdytuj\nAKCJE\nZapytaj Teresę o to zadanie\nZablokuj\nPrzydziel\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tDo zrobienia\nPriorytet\tŚredni\nTermin\t03 wrz 2026\nWłaściciel\t—\nŹródło\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n1\nPropozycja AI\nOPIS I ZAKRES · OCZEKIWANY REZULTAT\nThe expected result of task DBR77 is a comprehensive workshop plan that effectively outlines the objectives, agenda, and stakeholder roles. This plan should facilitate meaningful engagement with stakeholders, ensuring their feedback and insights are integrated into the project’s direction. Additionally, confirmation of stakeholder availability and alignment on workshop objectives is essential for successful execution.\n\nPominięto (wypełnione przez człowieka): Opis i zakres\n\nOdrzuć\nZatwierdź",
+ "kiedy": "2026-09-06T12:46:07.117Z"
+}

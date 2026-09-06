@@ -133,6 +133,10 @@ vi.mock('@/components/shared/NModeLayout', () => ({
     return (
       <div data-testid="nmode-shell">
         {props.header?.inlineActions}
+        {/* DEC-407: Menu 5 (z „Pracuj z AI") wchodzi przez `renderActionBar` —
+            stub musi je renderować, inaczej test mierzy powłokę, której produkt
+            nie ma (lekcja „przyrząd nie jest produktem"). */}
+        {props.renderActionBar ? props.renderActionBar() : null}
         <div data-testid="nmode-shell-nav">
           {sections.map((s: any) => (
             <button
@@ -260,7 +264,13 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(within(properties).getByText('Current step')).toBeInTheDocument();
     expect(within(properties).getByText('Progress')).toBeInTheDocument();
 
-    fireEvent.click(await screen.findByTestId('ask-teresa-header'));
+    // DEC-407: „Zapytaj Teresę" w Menu 1 ZNIKNĘŁO. Wejście do propozycji Teresy
+    // prowadzi teraz przez wspólną listę „Pracuj z AI" w Menu 5 → „Uzupełnij
+    // cały dokument" → „Zatwierdź" (nic nie startuje bez kliknięcia człowieka).
+    expect(screen.queryByTestId('ask-teresa-header')).toBeNull();
+    fireEvent.click(await screen.findByTestId('pracuj-z-ai'));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Fill in the whole document' }));
+    fireEvent.click(await screen.findByTestId('pracuj-z-ai-zatwierdz'));
     expect(screen.getByRole('dialog', { name: 'Teresa proposals' })).toBeInTheDocument();
     expect(screen.getByTestId('governed-teresa-proposals')).toBeInTheDocument();
 

@@ -105,7 +105,10 @@ import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { PracujZAI } from '../standard/PracujZAI';
+import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
+import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // SPEC-N §2.4: jedyna dozwolona droga budowy toolbara karty.
 import { NModeToolbar, type NModeToolbarAction } from '../shared/NModeLayout/NModeToolbar';
 import type { NModeSection } from '../shared/NModeLayout/types';
@@ -5798,8 +5801,11 @@ Use userId only from this list:
   // Kryteria oceny Decyzji (kontrakt właściciela 2026-07-23) żyją w rubryce
   // silnika (`ARTIFACT_CRITERIA.decision`): jakość opcji i trade-offów · ryzyko ·
   // konsekwencje · gotowość do zatwierdzenia.
-  const decisionAnalysisFields = useMemo<CardAnalysisField[]>(() => {
-    switch (activeNotionSection) {
+  // DEC-407: jedna deklaracja pól obsługuje „Analizuj" i „Uzupełnij…" (patrz
+  // TaskDetailView — ten sam zabieg, ta sama przyczyna).
+  const decisionPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+    switch (sekcjaId) {
       case 'context-problem':
         return [
           {
@@ -5894,8 +5900,8 @@ Use userId only from this list:
         // resources-links (pliki i powiązania = fakty) — bez pól do zapisu.
         return [];
     }
-  }, [
-    activeNotionSection,
+    },
+    [
     isPolish,
     description,
     contextDetails,
@@ -5905,7 +5911,13 @@ Use userId only from this list:
     risks,
     impact.description,
     consequenceScenarios,
-  ]);
+    ]
+  );
+
+  const decisionAnalysisFields = useMemo<CardAnalysisField[]>(
+    () => decisionPolaSekcji(activeNotionSection),
+    [decisionPolaSekcji, activeNotionSection]
+  );
 
   const decisionWritableFieldIds = useMemo(
     () => decisionAnalysisFields.filter((f) => f.writable).map((f) => f.id),
@@ -6054,6 +6066,18 @@ Use userId only from this list:
     applyChange: applyDecisionAnalysisChange,
   });
 
+  // ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] „Pracuj z AI" ───────────────────
+  const zrodlaPracujZAI = useMemo(
+    () =>
+      zbudujZrodlaPracujZAI({
+        sekcje: notionSections,
+        polaSekcji: decisionPolaSekcji,
+        applyChange: applyDecisionAnalysisChange,
+        isPolish,
+      }),
+    [notionSections, decisionPolaSekcji, applyDecisionAnalysisChange, isPolish]
+  );
+
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
   // VF1-4 (SPEC-A): swap ad-hoc spinner for the shared shared/states library
   // (record archetype) — gated (visible change, needs Piotr's screenshot
@@ -6193,6 +6217,10 @@ Use userId only from this list:
         >
           <div className="xl:flex-1 xl:min-w-0 space-y-0">
             {/* Main */}
+            {/* ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] Zasada 2 ────────────
+                Menu 4 + Menu 5 jako JEDEN przyklejony stos (`StickyStosKartyN`).
+                Do 2026-09-06 nagłówek tej karty nie kleił się w ogóle. ── */}
+            <StickyStosKartyN>
             {/* Title Header — uses shared NModeHeader component */}
             <NModeHeader
               title={title}
@@ -6225,16 +6253,6 @@ Use userId only from this list:
                  (`rightPanelSections[0]`), pionowo i bez duplikatów. */
             />
 
-            {!decisionId && (
-              <div className="mb-3 rounded-md border border-c-border bg-c-surface px-3 py-3">
-                <RequiredProjectPicker
-                  value={decisionProjectId}
-                  onChange={setDecisionProjectId}
-                  disabled={saving}
-                  language={isPolish ? 'pl' : 'en'}
-                />
-              </div>
-            )}
 
             {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
@@ -6243,7 +6261,7 @@ Use userId only from this list:
                Left nav click → shows ONE section at a time (no scroll-all).
                ═══════════════════════════════════════════════════════════════════ */}
             {presentationMode === 'n' && (
-              <div className="col-span-full space-y-4 pt-4">
+              <div className="pt-4 pb-2">
                 {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
                     tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
                     Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
@@ -6264,19 +6282,60 @@ Use userId only from this list:
                     <SectionsManagerMenu layout={decisionCardLayout} isPolish={isPolish} />
                   }
                   readMode={readMode}
-                  onReadModeChange={setReadMode}
+                  /* Zasada 2b: przełącznik trybu znika, gdy etap decyzji jest
+                     zamknięty. UWAGA (pomiar 2026-09-06): `WORKFLOW_LOCKS_ENABLED`
+                     jest w tym pliku zapisane na sztywno `false` („temporary:
+                     full edit mode during model/design phase"), więc DZIŚ ten
+                     warunek nie zapada nigdy. Karta Decyzji nie ma żadnego
+                     innego sprawdzenia prawa edycji (rola / cudzy rekord) —
+                     zgłoszone w meldunku, nie udawane tutaj. */
+                  onReadModeChange={
+                    WORKFLOW_LOCKS_ENABLED && isPending ? undefined : setReadMode
+                  }
                   aiButton={
-                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                    // wyników. Było: `handleOpenChat` — ogólny czat, bez oceny
-                    // karty i bez propozycji zmian do zatwierdzenia.
-                    <Menu2AIButton
+                    // DEC-407: „Analizuj z AI" ZASTĄPIONE przez „Pracuj z AI".
+                    <PracujZAI
                       isPolish={isPolish}
-                      busy={decisionCardAnalysis.loading}
-                      aria-expanded={decisionCardAnalysis.open}
-                      onClick={decisionCardAnalysis.run}
+                      onAnalizuj={decisionCardAnalysis.run}
+                      analizaWToku={decisionCardAnalysis.loading}
+                      analizaOtwarta={decisionCardAnalysis.open}
+                      aktywnaSekcja={activeNotionSection}
+                      kontekstArtefaktu={{ title, status, priority, type: 'decision' }}
+                      moznaEdytowac={!isDecisionStageLocked}
+                      powodTylkoOdczyt={
+                        readMode
+                          ? isPolish
+                            ? 'karta otwarta w trybie Podgląd'
+                            : 'card opened in Preview mode'
+                          : isPolish
+                            ? 'etap decyzji zamknięty'
+                            : 'decision stage is locked'
+                      }
+                      uzupelnijSekcje={zrodlaPracujZAI.sekcja}
+                      uzupelnijDokument={zrodlaPracujZAI.dokument}
                     />
                   }
                 />
+              </div>
+            )}
+            </StickyStosKartyN>
+
+            {/* Wybór projektu dla NOWEJ decyzji stoi POD przyklejonym stosem:
+                to pole formularza (treść), a nie nawigacja — w stosie rosłoby
+                przyklejone pudło na każdej nowej karcie. */}
+            {!decisionId && (
+              <div className="mb-3 mt-3 rounded-md border border-c-border bg-c-surface px-3 py-3">
+                <RequiredProjectPicker
+                  value={decisionProjectId}
+                  onChange={setDecisionProjectId}
+                  disabled={saving}
+                  language={isPolish ? 'pl' : 'en'}
+                />
+              </div>
+            )}
+
+            {presentationMode === 'n' && (
+              <div className="col-span-full space-y-4 pt-4">
                 {/* ── Origin Badge ──────────────────────────────────── */}
                 {sourceType && sourceId && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
