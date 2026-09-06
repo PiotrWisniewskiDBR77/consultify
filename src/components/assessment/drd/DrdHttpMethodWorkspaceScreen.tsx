@@ -441,6 +441,23 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     null
   );
   const [draftAnswerText, setDraftAnswerText] = useState<Record<string, string>>({});
+  /**
+   * ★ BRAK AUTO-PRZESKOKU PO WYBORZE STANU (DEC-415c, znalezisko 1.1-D1).
+   *
+   * ZMIERZONA PRZYCZYNA: poziom pytania na ekranie był POCHODNĄ zdarzeń —
+   * `drdAdapter.resolveOpenLevels(...).blockedAtLevel` (niżej w tym pliku).
+   * Kliknięcie „Potwierdzone" dopisuje `ANSWER_CONFIRMED` z `answerState:
+   * 'confirmed'`, `confirmedLevelsFor` widzi nowy poziom, blokada przesuwa się
+   * o jeden — i karta w tej samej klatce podmieniała pytanie na następny
+   * poziom. Zielonej (potwierdzonej) karty nie dało się zobaczyć ANI RAZU.
+   *
+   * LEKARSTWO: po zapisie stanu PRZYPINAMY poziom bieżącej jednostki. Ekran
+   * zostaje na tym samym pytaniu (w kolorze wybranego stanu), a dalej prowadzi
+   * WYŁĄCZNIE „Dalej" (`handleNext`). Logika blokad poziomów nie zmienia się
+   * ani o linijkę — `resolveOpenLevels` liczy dokładnie to samo, co dotąd;
+   * zmienia się tylko to, KTÓRY poziom pokazujemy człowiekowi.
+   */
+  const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(null);
   // True for the duration of an explicit reconciliation call (refresh() from
   // the offline banner / ErrorRetryView, or the Conflict/Recovery views'
   // "load server" / "apply pending" / "discard pending" actions) — feeds
@@ -565,8 +582,12 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       }),
     [events, activeArea.id]
   );
-  const focusLevelFallback =
+  const derivedFocusLevel =
     activeProgression.blockedAtLevel ?? Math.min(...activeArea.levels.map((l) => l.level));
+  // Przypięcie działa tylko dla jednostki, w której padło; zmiana jednostki
+  // (drzewo, macierz, „Dalej") automatycznie wraca do poziomu wyliczonego.
+  const focusLevelFallback =
+    pinnedFocus && pinnedFocus.unitId === activeArea.id ? pinnedFocus.level : derivedFocusLevel;
   const focusQuestions = pack.questions.filter(
     (q) => q.unitId === activeArea.id && q.level === focusLevelFallback
   );
@@ -653,6 +674,9 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       justification?: string
     ) => {
       if (!answerState || !runtime || !canWrite) return;
+      // Przypnij poziom ZANIM zdarzenie wróci — inaczej przeliczony
+      // `blockedAtLevel` zdążyłby podmienić pytanie pod palcem.
+      setPinnedFocus({ unitId: activeArea.id, level: focusLevelFallback });
       await runtime.recordAnswer({
         unitId: activeArea.id,
         level: focusLevelFallback,
@@ -761,12 +785,36 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     (direction: 1 | -1) => {
       const idx = activeAxis.areas.findIndex((a) => a.id === activeArea.id);
       const target = activeAxis.areas[idx + direction];
-      if (target) setActiveUnitId(target.id);
+      // Zmiana jednostki zawsze zdejmuje przypięcie poziomu — inaczej powrót
+      // do tej jednostki otworzyłby stary, już odpowiedziany poziom.
+      if (target) {
+        setPinnedFocus(null);
+        setActiveUnitId(target.id);
+      }
     },
     [activeAxis.areas, activeArea.id]
   );
 
   const handleBack = useCallback(() => handleUnitNav(-1), [handleUnitNav]);
+
+  /**
+   * „Dalej" — JEDYNE wyjście z przypiętego pytania (DEC-415c).
+   *
+   * Gdy odpowiedź otworzyła w TEJ SAMEJ jednostce kolejny poziom (przypięty
+   * poziom ≠ wyliczony), pierwsze „Dalej" odpina i pokazuje ten nowy poziom —
+   * czyli robi to, co wcześniej działo się samo, tyle że na żądanie człowieka.
+   * Gdy nic się nie otworzyło (odpowiedź „Nie", „Nie wiem", pusty stan),
+   * „Dalej" idzie do następnej jednostki dokładnie jak dotąd.
+   */
+  const handleNext = useCallback(() => {
+    const pinnedHere = pinnedFocus && pinnedFocus.unitId === activeArea.id;
+    if (pinnedHere && derivedFocusLevel !== pinnedFocus.level) {
+      setPinnedFocus(null);
+      return;
+    }
+    setPinnedFocus(null);
+    handleUnitNav(1);
+  }, [pinnedFocus, activeArea.id, derivedFocusLevel, handleUnitNav]);
 
   // DEC-2026-08-25-55: skip requires one of the 4 dictionary codes (enforced
   // by InterviewFocusPanel's select) — recorded as a real `recordAnswer` call
@@ -1128,6 +1176,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onSelect: (unitId) => {
               const axis = DRD_STRUCTURE.find((a) => a.areas.some((ar) => ar.id === unitId));
               if (axis) setActiveAxisId(axis.id);
+              setPinnedFocus(null);
               setActiveUnitId(unitId);
             },
           }}
@@ -1154,7 +1203,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onEvidenceDrop: (qid, files) => void handleEvidenceDrop(qid, files),
             onBack: handleBack,
             onSave: () => void saveNow(),
-            onNext: () => handleUnitNav(1),
+            onNext: handleNext,
             onSkip: (reasonCode) => void handleSkip(reasonCode),
             onAskTeresa: (questionId, topic) => void handleAskTeresa(questionId, topic),
             canGoBack: true,
@@ -1178,6 +1227,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
               selection={matrixSelection}
               onSelect={(sel) => {
                 setMatrixSelection(sel);
+                setPinnedFocus(null);
                 setActiveUnitId(sel.unitId);
               }}
               onCloseSideSheet={() => setMatrixSelection(null)}
@@ -1203,6 +1253,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             selection: matrixSelection,
             onSelect: (sel) => {
               setMatrixSelection(sel);
+              setPinnedFocus(null);
               setActiveUnitId(sel.unitId);
             },
             onCloseSideSheet: () => setMatrixSelection(null),
@@ -1257,6 +1308,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
                       selection: matrixSelection,
                       onSelect: (selection) => {
                         setMatrixSelection(selection);
+                        setPinnedFocus(null);
                         setActiveUnitId(selection.unitId);
                       },
                       onCloseSideSheet: () => setMatrixSelection(null),
