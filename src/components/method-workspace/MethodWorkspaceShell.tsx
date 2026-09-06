@@ -7,7 +7,9 @@
  * rule lives in this file — the caller supplies the Method Pack-derived data.
  *
  * Layout (WORKBENCH §2):
- *   Header — method · name · status · pack version · mode · Wyjdź/Zapisz/Menu3
+ *   Header — Wyjdź · method · name · pack version · Pracuj z AI · Ustawienia · Menu3
+ *     (bez pigułki statusu, bez „Zapisano" i bez „Zapisz teraz" — DEC-415b:
+ *      zapis jest automatyczny, więc odzywa się wyłącznie przy błędzie)
  *   Context strip + one Command Row (view mode switch)
  *   ┌──────────────┬───────────────────────────┬──────────────┐
  *   │ Navigator    │ Interview / Matrix Canvas │ Teresa       │
@@ -42,7 +44,6 @@ import type { LiveMatrixProps } from './LiveMatrix';
 import { LiveMatrix } from './LiveMatrix';
 import type { MethodNavigatorProps } from './MethodNavigator';
 import { MethodNavigator } from './MethodNavigator';
-import { SaveStateIndicator } from './SaveStateIndicator';
 import type { TeresaPreviewPanelProps } from './TeresaPreviewPanel';
 import type { MethodWorkspaceViewMode } from './types';
 
@@ -81,6 +82,12 @@ export interface MethodWorkspaceShellProps {
    * macierzy. Powłoka nie wie nic o DRD — dostaje gotowy węzeł od ekranu metody.
    */
   matrixContent?: React.ReactNode;
+  /**
+   * Slot „Pracuj z AI" w nagłówku (DEC-415c). Powłoka rysuje go między
+   * tytułem a „Ustawienia"; treść (współdzielony `PracujZAI` z jego trzema
+   * pozycjami) należy do ekranu metody.
+   */
+  aiButton?: React.ReactNode;
   /** Method-specific report workspace; it reads the same session state. */
   reportContent: React.ReactNode;
   /** Runtime provenance shown in Settings instead of occupying a permanent technical stripe. */
@@ -143,9 +150,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   mode,
   onExit,
   saveState,
-  saveLastSavedAt,
   saveErrorMessage,
-  onSaveNow,
   onSaveRetry,
   onSaveStay,
   navigatorProps,
@@ -153,6 +158,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   teresaProps,
   matrixProps,
   matrixContent,
+  aiButton,
   reportContent,
   documentSourceLabel,
   documentSourceIndicator,
@@ -212,19 +218,6 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
 
   const transitionClass = prefersReducedMotion ? '' : 'transition-all duration-200';
 
-  const statusLabel = useMemo(() => {
-    const map: Record<MethodSession['state'], string> = {
-      draft: t('methodWorkspace.status.draft', 'Szkic'),
-      prepared: t('methodWorkspace.status.prepared', 'Przygotowana'),
-      active: t('methodWorkspace.status.active', 'W trakcie wywiadu'),
-      in_review: t('methodWorkspace.status.inReview', 'Do przeglądu'),
-      frozen: t('methodWorkspace.status.frozen', 'Zamrożona'),
-      closed: t('methodWorkspace.status.closed', 'Zamknięta'),
-      archived: t('methodWorkspace.status.archived', 'Zarchiwizowana'),
-    };
-    return map[session.state];
-  }, [session.state, t]);
-
   if (loading) {
     return (
       <div
@@ -274,28 +267,11 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           </p>
         </div>
 
-        <span className="shrink-0 rounded-full border border-c-border bg-c-surface-raised px-2.5 py-1 text-[11px] font-medium text-c-text-secondary">
-          {statusLabel}
-        </span>
-
-        <SaveStateIndicator
-          compact
-          state={saveState}
-          lastSavedAt={saveLastSavedAt}
-          errorMessage={saveErrorMessage}
-          onSaveNow={onSaveNow}
-          onRetry={onSaveRetry}
-          onStay={onSaveStay}
-        />
-
-        <button
-          type="button"
-          onClick={onSaveNow}
-          disabled={readOnly}
-          className="shrink-0 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        >
-          {t('methodWorkspace.saveNow', 'Zapisz teraz')}
-        </button>
+        {/* ★ SLOT „Pracuj z AI" (DEC-415c, 06.09). Powłoka nie wie, CO stoi
+            pod trzema pozycjami — dostaje gotowy węzeł od ekranu metody
+            (dokładnie tak, jak `matrixContent`). Dzięki temu DRD wstawia
+            współdzielony `PracujZAI` bez wnoszenia niczego DRD-owego tutaj. */}
+        {aiButton ? <div className="shrink-0">{aiButton}</div> : null}
 
         <button
           type="button"
@@ -369,10 +345,10 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
             <p>Wersja sesji v{session.version}</p>
             {documentSourceLabel && <p>Źródło: {documentSourceLabel}</p>}
             {documentSourceIndicator && <div className="mt-2">{documentSourceIndicator}</div>}
-            {/* Zapis (save state) already has its own header pill
-                (SaveStateIndicator) — a second line repeating the same fact
-                here is noise, not information (same reasoning already
-                applied to `degradedMessage` below in this file). */}
+            {/* Zapis nie ma już stałej reprezentacji w nagłówku (DEC-415b) —
+                i nie dostaje jej też tutaj: powtarzanie „zapisano" w miejscu,
+                w którym zapis jest automatyczny, to szum, nie informacja
+                (ta sama logika, co przy `degradedMessage` niżej). */}
             <p className="mt-2">
               Dowody: {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}
             </p>
@@ -422,6 +398,49 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
           </div>
           {settingsContent && <div className="md:col-span-4">{settingsContent}</div>}
         </section>
+      )}
+
+      {/* ★ STAN ZAPISU TYLKO PRZY BŁĘDZIE (DEC-415b, słowa właściciela 06.09:
+          „nie potrzebujemy tyle elementów, bo to się zapisuje automatycznie").
+          Autozapis nie zmienił się ani o linijkę (`useMethodWorkspaceSave`) —
+          zniknęła wyłącznie jego STAŁA reprezentacja w nagłówku (pigułka
+          statusu, „✓ Zapisano", „Zapisz teraz"). Cisza jest informacją: zapis
+          działa. Odzywamy się dopiero, gdy zapis się NIE UDAŁ — wtedy toast z
+          ponowieniem, bo milcząca utrata pracy jest najgorszym z możliwych
+          zachowań. Konflikt (409) pokazuje osobny ekran ekranu metody — bez
+          zmian. */}
+      {saveState === 'SAVE_FAILED' && (
+        <div
+          role="alert"
+          data-testid="method-workspace-save-error-toast"
+          className="fixed bottom-5 left-5 z-40 flex max-w-sm items-start gap-3 rounded-xl border border-c-danger/40 bg-c-surface p-3 shadow-2xl"
+        >
+          <AlertTriangle size={15} className="mt-0.5 shrink-0 text-c-danger" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-c-text">
+              {t('methodWorkspace.saveFailedToast', 'Nie udało się zapisać — spróbuj ponownie')}
+            </p>
+            {saveErrorMessage && (
+              <p className="mt-0.5 text-xs text-c-text-muted">{saveErrorMessage}</p>
+            )}
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onSaveRetry}
+                className="rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1 text-xs font-semibold text-c-text hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {t('methodWorkspace.saveRetry', 'Ponów zapis')}
+              </button>
+              <button
+                type="button"
+                onClick={onSaveStay}
+                className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {t('methodWorkspace.saveDismiss', 'Zamknij')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {degradedMessage && (
