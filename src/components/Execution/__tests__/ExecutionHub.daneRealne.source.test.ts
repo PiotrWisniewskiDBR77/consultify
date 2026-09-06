@@ -84,17 +84,35 @@ describe('1.12-R1 (D) — kafle liczą z realnych danych', () => {
 });
 
 describe('1.12-R1 (A) — zakres „w toku"', () => {
-  it('TRACKING jest wczytywane i mieści się w zakresie aktywnym', () => {
-    const zakres = blok(
-      'const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [',
-      '];'
-    );
-    expect(zakres).toContain('InitiativeStatus.EXECUTING');
-    expect(zakres).toContain('InitiativeStatus.BLOCKED');
-    expect(zakres).toContain('InitiativeStatus.TRACKING');
-    expect(blok('const EXECUTION_STATUSES: InitiativeStatus[] =', ');')).toContain(
-      'InitiativeStatus.TRACKING'
-    );
+  // NAPRAWA odbioru 06.09 (audytor, DEC-441): ten test asercjonował stary,
+  // 18-statusowy słownik (`EXECUTING`/`BLOCKED`/`TRACKING`) — nazwy, których
+  // `InitiativeStatus` (packages/shared, generated, słownik 7) NIGDY nie
+  // miał. Test był już RED przed tą naprawą (string, którego szukał, nie
+  // istnieje w pliku źródłowym) — zastąpiony poprawną, aktualną definicją
+  // zakresu „w toku" po migracji P12.
+  it('zakres aktywny to WYŁĄCZNIE IN_EXECUTION (APPROVED to jeszcze nie realizacja)', () => {
+    const zakres = blok('const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [', ';');
+    expect(zakres).toContain('InitiativeStatus.IN_EXECUTION');
+    // MUTACJA (dowód): przywrócenie `InitiativeStatus.APPROVED` do tej tablicy
+    // (regresja zmierzona 06.09 — zakładka „Realizacje" łapała zatwierdzone,
+    // niezrealizowane jeszcze inicjatywy) musi zawalić ten test.
+    expect(zakres).not.toContain('InitiativeStatus.APPROVED');
+  });
+
+  it('loadInitiatives NIE nadpisuje status inicjatywy legacy-normalizacją (rodzeństwo defektu)', () => {
+    // ZNALEZISKO 06.09: `normalizeInitiativeStatus` (executionRealData.ts)
+    // mapuje słownik 7 → STARY słownik frontu (`STATUS_ALIASES`). Do tej
+    // naprawy `loadInitiatives` nadpisywał tym wynikiem `initiative.status`
+    // dla WSZYSTKICH inicjatyw — więc `IN_EXECUTION` stawało się `EXECUTING`,
+    // które nie pasuje do ŻADNEGO porównania w tym pliku opartego na
+    // `InitiativeStatus`/`EXECUTION_STATUSES` (m.in. ACTIVE_EXECUTION_STATUSES
+    // wyżej), i portfel „w toku" cichło spadał do zera mimo poprawnego filtra.
+    const fn = blok('const loadInitiatives = async () => {', 'const activeExecutionInitiativeIds = new Set(');
+    // Uwaga: ten blok zawiera komentarz WYJAŚNIAJĄCY naprawę (wspomina nazwę
+    // funkcji prozą), więc asercja celuje w KONKRETNE wywołanie/nadpisanie
+    // kodu, nie w samą nazwę funkcji gdziekolwiek w tekście.
+    expect(fn).not.toContain('normalizeInitiativeStatus(initiative.status)');
+    expect(fn).not.toMatch(/status:\s*znormalizowany/);
   });
 });
 

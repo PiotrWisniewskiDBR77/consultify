@@ -37,18 +37,7 @@ import {
   getExecutionReviewCase,
   getExecutionReviewWork,
 } from './executionLocalReviewData';
-const resourcePresets = [
-  'all',
-  'overallocated',
-  'unassigned',
-  'skill-gaps',
-  'unconfirmed',
-  'unknown',
-  'cost-risk',
-  'needs-decision',
-  'team',
-  'initiative',
-] as const;
+const resourcePresets = ['osoby', 'role', 'konflikty'] as const;
 const allocationStatusLabel = (value?: string) =>
   ({
     PROPOSED: 'Propozycja',
@@ -392,21 +381,39 @@ export const ExecutionResourcesSurface = ({
     [planRows]
   );
   /*
-   * Menu 3 (chipy) należy do `ExecutionHub.tsx` — pliku, którego to zlecenie
-   * NIE dotyka (przebudowuje go inny wykonawca). Kanon dopuszcza ≤3 chipy
-   * (Osoby · Role · Konflikty), a Hub deklaruje ich dziesięć, opisanych pod
-   * kanoniczny przydział. Odwzorowuję UCZCIWIE te, które mają sens dla wiersza
-   * osoba×tydzień; reszta zwraca 0 i jest wypisana w meldunku jako STOP.
+   * NAPRAWA odbioru 06.09 (audytor, DEC-441): Hub deklarował dziesięć chipów
+   * (patrz historia w ExecutionHub.tsx), sześć z nich ('unassigned',
+   * 'skill-gaps', 'unconfirmed', 'cost-risk', 'team', 'initiative') nigdy
+   * nie miało tu gałęzi — spadały do `return false`, czyli ZAWSZE 0,
+   * niezależnie od danych. Kanon (plan 1.12, dopuszcza ≤3 chipy) i Hub są
+   * teraz zgodne na trzech: Osoby · Role · Konflikty.
+   * - `osoby`: był `all` — każdy wiersz osoba×tydzień (bez zmiany logiki).
+   * - `konflikty`: scala dwa JUŻ zaimplementowane, realne sygnały problemu
+   *   (`overallocated` i `needs-decision`) pod jedną nazwą — na DBR77
+   *   (pomiar 06.09) to dokładnie te same 11 wierszy (ujemna luka ⟺
+   *   obłożenie >105%), więc scalenie nic nie ukrywa ani nie zawyża.
+   * - `role`: NOWA gałąź, real (nie fałszywa) — filtruje po `row.role`
+   *   niepustym. Pomiar 06.09: pole `role` w odpowiedzi API resource-plan
+   *   jest PUSTE dla wszystkich 72 wierszy na DBR77 → chip pokaże 0. To
+   *   ZNALEZISKO DANYCH (brak roli w źródle), nie defekt tego filtra —
+   *   gdy dane dostaną rolę, chip zacznie liczyć bez zmiany kodu.
+   * Porzucone bez zamiennika: `unknown` („Dostępność nieznana", było 64/72
+   * na DBR77) — realny i honest sygnał, ale nie mieści się w limicie ≤3 i
+   * nie pasuje semantycznie do „Konflikty" (brak danych o dostępności to
+   * nie to samo co przeciążenie/luka). Zostaje widoczny w danych wiersza
+   * (`supplySource`), przestaje być osobnym chipem — do rozstrzygnięcia
+   * właściciela, jeśli ma wrócić.
    */
   const matches = useCallback((row: any, preset: string) => {
-    if (preset === 'all') return true;
-    if (preset === 'overallocated') return Number(row.utilizationPercent) > 105;
-    if (preset === 'needs-decision') return Number(row.gapHours) < 0;
-    if (preset === 'unknown') return row.supplySource === 'DOMYSLNA';
+    if (preset === 'osoby') return true;
+    if (preset === 'konflikty') {
+      return Number(row.utilizationPercent) > 105 || Number(row.gapHours) < 0;
+    }
+    if (preset === 'role') return Boolean(String(row.role ?? '').trim());
     return false;
   }, []);
   const visibleItems = useMemo(
-    () => tableItems.filter((row) => matches(row, activePreset ?? 'all')),
+    () => tableItems.filter((row) => matches(row, activePreset ?? 'osoby')),
     [activePreset, matches, tableItems]
   );
   useEffect(

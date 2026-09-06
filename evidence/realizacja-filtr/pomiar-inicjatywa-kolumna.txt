@@ -1,0 +1,44 @@
+POMIAR — pozycja 3 zlecenia (kolumna INICJATYWA, zakładka Praca), 2026-09-06
+============================================================================
+
+Zarzut zlecenia: "audytor zmierzył 91 wierszy z '—' w kolumnie INICJATYWA".
+
+POMIAR NA ŻYWO (org DBR77, API 127.0.0.1:4100, sesja audyt@dbr77.local):
+
+1. Naiwny pomiar (błędna metoda — .innerText() całej strony, zliczenie
+   wszystkich znaków „—" niezależnie od kolumny): 116 wystąpień "—" w
+   całym tekście strony. To NIE jest liczba wierszy z pustą kolumną
+   INICJATYWA — to suma dashy z WSZYSTKICH kolumn (INICJATYWA, ale też
+   POŚLIZG (DNI), gdzie "—" oznacza "brak poślizgu" — poprawny, pozytywny
+   stan, nie defekt).
+
+2. Poprawny pomiar (per-wiersz, per-kolumna, DOM: `table tbody tr` →
+   `td` index 1 = INICJATYWA, zgodnie z buildCols w ExecutionWorkSurface.tsx):
+     - Liczba wierszy w tabeli: 91 (84 z /api/tasks + 7 z fanOut realizacji)
+     - Wierszy z realną nazwą inicjatywy w kolumnie INICJATYWA: 71
+     - Wierszy z "—" w kolumnie INICJATYWA: 20
+     - Próbki z nazwą: "Process mapping workshop" → "Process Automation —
+       RPA"; "Training curriculum design" → "Talent Upskilling Program";
+       "Set up Delta Lake storage" → "Data Platform — Lakehouse"; itd.
+
+3. PRZYCZYNA tych 20 (nie 91): DANE, nie kod. Bezpośrednie zapytanie do
+   `/api/tasks` pokazuje: 84 zadania, z czego 64 mają `initiativeId`
+   (i `initiativeName` już wypełnione przez serwer), a 20 mają
+   `initiativeId: null` (zadania faktycznie niepowiązane z żadną
+   inicjatywą — np. pierwsze zadanie "DBR77: Ustalić ownerów inicjatyw
+   i zadań" ma initiativeId=null w surowej odpowiedzi API). 84-64=20 —
+   liczba zgadza się dokładnie z pomiarem DOM.
+
+WNIOSEK: mechanizm z paczki R1 (`mapRealTaskRows` w
+ExecutionWorkSurface.tsx, katalog nazw budowany z `/api/initiatives`)
+DZIAŁA POPRAWNIE na dzisiejszych danych. "91 wierszy z —" nie
+reprodukuje się na obecnym kodzie + żywych danych — najpewniej wynikało
+z tej samej naiwnej metody pomiaru (zliczenie WSZYSTKICH dashy na
+stronie), którą początkowo sam popełniłem, zanim zawęziłem pomiar do
+konkretnej kolumny w DOM.
+
+DECYZJA: brak zmiany kodu w tej pozycji (zgodnie z zasadą "fałszywa
+naprawa maskująca brak danych jest gorsza niż otwarty defekt" — tu
+zresztą nie ma nawet danych do zamaskowania, bo defekt się nie
+reprodukuje). 20/91 "—" to PRAWDZIWY, poprawny stan (zadania bez
+powiązanej inicjatywy), nie regresja.
