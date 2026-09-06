@@ -17,6 +17,13 @@
  * `drdHttpSessionRuntime.test.ts`, which this suite deliberately does not
  * re-derive — mocking a full offline/reconnect HTTP sequence through the
  * UI would mostly re-test the same mock.)
+ *
+ * 1.1-Z2 #4 — 06.09 hotfix (MethodWorkspaceShell.tsx:130 comment) translated
+ * the header's Settings button label: `t('methodWorkspace.settings',
+ * 'Ustawienia')`, English "Settings" was "the only English oversight" in an
+ * otherwise-Polish shell. This suite (2026-08-13) predates that fix and
+ * still queried `{ name: 'Settings' }`, which no longer exists in the DOM —
+ * updated to the current, correct label.
  */
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
@@ -113,7 +120,7 @@ describe('requirement 1 — flag OFF: legacy runtime, zero HTTP calls', () => {
 
     // The legacy path's own indicator — proves which store actually backed
     // this paint (DEMO_LOCAL), not merely "no HTTP mock was hit by luck".
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
     const indicator = screen.getAllByTestId('drd-source-indicator')[0];
     expect(indicator).toHaveAttribute('data-source', 'DEMO_LOCAL');
   });
@@ -129,7 +136,7 @@ describe('requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERV
     expect(await screen.findByTestId('method-workspace-shell')).toBeInTheDocument();
     expect(hoisted.createSession).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
     const indicator = await screen.findByTestId('drd-source-indicator');
     expect(indicator).toHaveAttribute('data-source', 'SERVER');
   });
@@ -183,7 +190,7 @@ describe('canonical cold reopen identity and read-only contract', () => {
     render(<DrdHttpMethodWorkspaceScreen storage={makeMemoryStorage()} demoSessionId="sess-http-1" />);
 
     expect(await screen.findByText(/DRD/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' }));
     const settings = screen.getByTestId('method-workspace-settings');
     // 2026-08-26 assessment cleanup: the raw session id moved off the
     // card's default view into the collapsed "Szczegóły techniczne"
@@ -201,7 +208,7 @@ describe('canonical cold reopen identity and read-only contract', () => {
     expect(within(settings).getByText('Tylko odczyt')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Pracuję samodzielnie' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Prowadzi Teresa' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Ustawienia' })).toBeEnabled();
   });
 });
 
@@ -216,7 +223,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ustawienia' }));
     expect(await screen.findByTestId('freeze-button')).toBeDisabled();
     expect(hoisted.freeze).not.toHaveBeenCalled();
   });
@@ -230,7 +237,7 @@ describe('requirement 3 — a 409 on write shows an explicit conflict screen, ne
     );
 
     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSessionId="sess-http-1" />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ustawienia' }));
     fireEvent.click(await screen.findByRole('button', { name: /Wyślij do przeglądu/i }));
 
     expect(await screen.findByTestId('drd-http-conflict-view')).toBeInTheDocument();

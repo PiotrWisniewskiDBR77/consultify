@@ -1,0 +1,23 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx > DEC-148 — Report tab present and Matrix tab still reachable (default ON, no override) > renders both the Matrix and Report tabs, and each mode paints its own content 499ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx (1 test) 501ms
+     ✓ renders both the Matrix and Report tabs, and each mode paints its own content  499ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:36:58
+   Duration  2.17s (transform 1.04s, setup 100ms, import 1.25s, tests 501ms, environment 238ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:36:58
+   Duration  2.17s (transform 1.04s, setup 100ms, import 1.25s, tests 501ms, environment 238ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

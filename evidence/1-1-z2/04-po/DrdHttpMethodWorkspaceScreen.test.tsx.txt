@@ -1,0 +1,35 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 1 — flag OFF: legacy runtime, zero HTTP calls > mounts without forceHttpSourceOfTruth and never touches methodCoreApi 157ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready 66ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank bootstrap loading state before create() resolves 15ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank error+retry state when session creation fails 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 401 fail-closed with retry and no workspace 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 403 fail-closed with retry and no workspace 5ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 404 fail-closed with retry and no workspace 5ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > canonical cold reopen identity and read-only contract > renders exact session/method versions and disables writes without a write role 107ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > keeps Freeze disabled for an in-review owner without the approver process role 50ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > turns a real stale transition 409 into ConflictView without painting false success 86ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > forceState="conflict" renders the conflict view with the server version and an explicit reload action 23ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 5 — recovery queue requires an explicit choice, never auto-resolves > forceState="recovery" shows apply/discard actions and does nothing until one is clicked 22ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > Interview Focus advances with real progress — regression for the focus-level bug > after confirming levels 1 and 2, the focus level follows the real blocker (3), not always level 1 19ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx (14 tests) 572ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  17:36:44
+   Duration  2.25s (transform 998ms, setup 94ms, import 1.28s, tests 572ms, environment 230ms)
+
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  17:36:44
+   Duration  2.25s (transform 998ms, setup 94ms, import 1.28s, tests 572ms, environment 230ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

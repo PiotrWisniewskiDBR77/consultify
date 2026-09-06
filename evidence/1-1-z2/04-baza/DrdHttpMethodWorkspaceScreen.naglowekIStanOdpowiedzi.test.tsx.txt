@@ -1,0 +1,28 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > renderuje Wyjdź · tytuł · Pracuj z AI · Ustawienia · kebab 173ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > nie ma już „Zapisz teraz", „Zapisano" ani pigułki statusu — zapis jest automatyczny 48ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola bez zapisu widzi jedną pozycję i powód, a nie wyszarzone „Uzupełnij…" 23ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola z prawem zapisu ma wszystkie trzy pozycje 21ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > „Analizuj" otwiera ocenę gotowości sesji i niczego nie zapisuje 30ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > po „Potwierdzone" na ekranie zostaje TO SAMO pytanie, w kolorze stanu 56ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > dopiero „Dalej" odsłania kolejny, otwarty poziom tej jednostki 89ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx (7 tests) 441ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:28:37
+   Duration  1.87s (transform 799ms, setup 95ms, import 1.03s, tests 441ms, environment 232ms)
+
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  17:28:37
+   Duration  1.88s (transform 799ms, setup 95ms, import 1.03s, tests 441ms, environment 232ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

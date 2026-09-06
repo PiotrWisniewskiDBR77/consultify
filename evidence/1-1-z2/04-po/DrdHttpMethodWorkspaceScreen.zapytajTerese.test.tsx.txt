@@ -1,0 +1,26 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik w rzędzie komend woła openChatWithContext z metodą, jednostką, poziomem i treścią pytania 52ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Zapytaj Teresę" pod pomocą do pytania woła ten sam dok (jedna Teresa, nie drugi czat) 113ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Pokaż różnicę L-1/L/L+1" pyta o porównanie poziomów, nie o wyjaśnienie 59ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > sesja tylko do odczytu NIE odbiera prawa do zapytania Teresy (to akcja czytająca) 19ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik NIE tworzy już propozycji Teresy w panelu, którego powłoka nie renderuje 17ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx (5 tests) 262ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:36:56
+   Duration  1.73s (transform 841ms, setup 95ms, import 1.07s, tests 262ms, environment 228ms)
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:36:56
+   Duration  1.74s (transform 841ms, setup 95ms, import 1.07s, tests 262ms, environment 228ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

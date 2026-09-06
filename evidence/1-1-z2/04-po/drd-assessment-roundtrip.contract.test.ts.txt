@@ -1,0 +1,27 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > creates a DRD assessment (DRAFT) 43ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > rejects an unknown framework type 2ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > saves axis answers + navigation and resumes them via GET 4ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > a partial update (name only) must NOT clobber saved answers 3ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > resume is fail-soft on a corrupt answers blob (no 500) 1ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > P28 no-silent-scoring: direct scoreSummary writes are refused once a workbench exists 2ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts (6 tests) 383ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:37:11
+   Duration  854ms (transform 320ms, setup 101ms, import 62ms, tests 383ms, environment 230ms)
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:37:11
+   Duration  855ms (transform 320ms, setup 101ms, import 62ms, tests 383ms, environment 230ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

@@ -1,0 +1,25 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ tests/unit/assessment/drdVizAdapter.day20.test.ts > Assessment day 20 — canonical per-axis DRD scales > publishes 7,5,5,7,6,6,5 as the seven server-side max levels 31ms
+ ✓ tests/unit/assessment/drdVizAdapter.day20.test.ts > Assessment day 20 — canonical per-axis DRD scales > keeps a culture level 6 readable instead of clipping it to the old scale 1ms
+ ✓ tests/unit/assessment/drdVizAdapter.day20.test.ts > Assessment day 20 — canonical per-axis DRD scales > keeps a cybersecurity level 6 readable instead of clipping it to the old scale 0ms
+ ✓ tests/unit/assessment/drdVizAdapter.day20.test.ts > Assessment day 20 — canonical per-axis DRD scales > represents the honest empty state with canonical scales and zero completion 1ms
+ ✓ tests/unit/assessment/drdVizAdapter.day20.test.ts (4 tests) 34ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:37:09
+   Duration  480ms (transform 93ms, setup 98ms, import 38ms, tests 34ms, environment 230ms)
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:37:09
+   Duration  481ms (transform 93ms, setup 98ms, import 38ms, tests 34ms, environment 230ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

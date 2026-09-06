@@ -1,0 +1,544 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Kompletność kluczy > Oś 5 — wszystkie 30 kluczy obecne (5 obszarów × 6 poziomów) 32ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Kompletność kluczy > Oś 6 — wszystkie 30 kluczy obecne (5 obszarów × 6 poziomów) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Kompletność kluczy > Oś 7 — wszystkie 25 kluczy obecne (5 obszarów × 5 poziomów) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Kompletność kluczy > Łączna liczba kluczy = 85 (30 + 30 + 25) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5A#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5B#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5C#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5D#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > pytania nie są generycznym domyślnym szablonem 2ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 5E#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6A#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6B#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6C#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6D#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 6E#6 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7A#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7B#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7C#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7D#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#1 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#2 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#3 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#4 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > posiada 3 pytania (tablica string[3]) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > pytania są niepuste 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > pytania nie są generycznym domyślnym szablonem 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > posiada niepusty example 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > posiada co najmniej 1 suggestedTechnology 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Format per klucz > Klucz: 7E#5 > pytania zawierają artefakt/dowód lub konkretne zachowanie 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Klucze poza oczekiwanym zakresem (brak "fantomowych") > Brak kluczy spoza osi 5, 6, 7 2ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 5 — specyfika behawioralna > 5A: pytania odnoszą się do obserwowanych zachowań liderów (nie przymiotników) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 5 — specyfika behawioralna > 5E: pytania odnoszą się do konkretnych zasobów (kapitał/szkolenia/eksperci/dane/technologia/partnerzy) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 6 — realne artefakty cyberbezpieczeństwa > 6E: każdy poziom pyta o konkretny artefakt planu awaryjnego (raport, protokół, test, procedura) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 6 — realne artefakty cyberbezpieczeństwa > 6D#6: przykład zawiera odniesienie do ISO 27001 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 6 — realne artefakty cyberbezpieczeństwa > 6C#4: przykład zawiera odniesienie do RTO lub RPO (backup/DR test) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 7 — wdrożone przypadki użycia AI i governance > 7B: pytania zawierają odniesienie do konkretnych procesów lub metryk efektywności AI 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 7 — wdrożone przypadki użycia AI i governance > 7D: pytania zawierają odniesienie do governance AI (polityka, rejestr, monitoring) 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts > DRD_KNOWLEDGE_OVERRIDES_AXIS_5_TO_7 > Oś 7 — wdrożone przypadki użycia AI i governance > 7E#5: example zawiera odniesienie do agentów AI lub AI ROI 0ms
+ ✓ tests/unit/assessment/drdKnowledgeAxis5To7.test.ts (523 tests) 69ms
+
+ Test Files  1 passed (1)
+      Tests  523 passed (523)
+   Start at  17:28:44
+   Duration  527ms (transform 83ms, setup 98ms, import 31ms, tests 69ms, environment 233ms)
+
+
+ Test Files  1 passed (1)
+      Tests  523 passed (523)
+   Start at  17:28:44
+   Duration  530ms (transform 83ms, setup 98ms, import 31ms, tests 69ms, environment 233ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

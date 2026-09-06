@@ -1,0 +1,32 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > SSOT ma polską nazwę dla każdego obszaru osi 1 (przesłanka testu, nie założenie) 2ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes" 36ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > etykietaObszaru bierze namePL — tak samo, jak robi to drzewo sesji 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > etykietyPoziomowZMetodyki(oś 1) zwraca dokładnie siedem nazw z książki 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > siatka rysuje te nazwy w wierszach, od 7 u góry do 1 na dole 21ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PRZED naprawą (503 px): 9 kolumn schodzi do progu czytelności, nie niżej 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PO naprawie (drzewo sesji schowane, macierz bez sufitu ≈ 780 px): 9 kolumn mieści się bez przewijania 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > szeroki kadr edytora (1400 px) NIE chudnie — minimum zostaje bazowe 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr niezmierzony (jsdom, pierwsza klatka) zachowuje się jak przed zmianą 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów 26ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > przelicza stan warsztatu na stan siatki bez wymyślania zer 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx (11 tests) 87ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  17:36:37
+   Duration  1.35s (transform 585ms, setup 95ms, import 836ms, tests 87ms, environment 244ms)
+
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  17:36:37
+   Duration  1.35s (transform 585ms, setup 95ms, import 836ms, tests 87ms, environment 244ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
