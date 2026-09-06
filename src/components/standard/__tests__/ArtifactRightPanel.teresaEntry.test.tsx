@@ -35,8 +35,11 @@ describe('ArtifactRightPanel Teresa entry (DEC-419: usunięty)', () => {
     expect(screen.queryByRole('button', { name: 'Zapytaj Teresę o obiekt' })).not.toBeInTheDocument();
     const section = document.querySelector('[data-artifact-section="actions"]');
     expect(section).not.toBeNull();
-    expect(within(section as HTMLElement).getAllByRole('button')).toHaveLength(1);
-    expect(within(section as HTMLElement).getByRole('button')).toHaveTextContent('Zwykła akcja');
+    // 2 przyciski: nagłówek-akordeon sekcji (toggle) + „Zwykła akcja" —
+    // zero miejsca na trzeci (teresa-entry).
+    const buttons = within(section as HTMLElement).getAllByRole('button');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[1]).toHaveTextContent('Zwykła akcja');
   });
 
   it('leaves Actions unchanged without the prop', () => {
