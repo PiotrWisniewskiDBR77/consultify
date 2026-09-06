@@ -4,54 +4,74 @@ import StatusMachine, {
   INITIATIVE_STATUSES,
 } from '../../../../server/src/services/statusMachine.ts';
 
+// DEC-424 (P12): BLOCKED przestał być statusem (jest flagą `on_hold`), DONE/
+// TRACKING/ARCHIVED zwinęły się w CLOSED, CANCELLED w REJECTED. Reguły
+// kontekstowe zmapowane odpowiednio.
 describe('StatusMachine: initiative validation rules', () => {
-  it('requires blockedReason when transitioning to BLOCKED', () => {
+  it('requires a reason when transitioning to REJECTED', () => {
     const res = StatusMachine.validateInitiativeTransition(
-      INITIATIVE_STATUSES.EXECUTING,
-      INITIATIVE_STATUSES.BLOCKED,
+      INITIATIVE_STATUSES.IN_EXECUTION,
+      INITIATIVE_STATUSES.REJECTED,
       {}
     );
     expect(res.valid).toBe(false);
-    expect(res.reason).toBe('Blocked status requires a reason');
+    expect(res.reason).toBe('Rejection requires a reason');
   });
 
-  it('rejects DONE when pendingTasks > 0', () => {
+  it('accepts REJECTED when a reason is provided', () => {
     const res = StatusMachine.validateInitiativeTransition(
-      INITIATIVE_STATUSES.EXECUTING,
-      INITIATIVE_STATUSES.DONE,
+      INITIATIVE_STATUSES.IN_EXECUTION,
+      INITIATIVE_STATUSES.REJECTED,
+      { reason: 'Sponsor wycofał finansowanie' }
+    );
+    expect(res).toEqual({ valid: true });
+  });
+
+  it('rejects CLOSED when pendingTasks > 0', () => {
+    const res = StatusMachine.validateInitiativeTransition(
+      INITIATIVE_STATUSES.IN_EXECUTION,
+      INITIATIVE_STATUSES.CLOSED,
       { pendingTasks: 2 }
     );
     expect(res.valid).toBe(false);
     expect(res.reason).toBe('Cannot complete: 2 tasks still pending');
   });
 
-  it('rejects DONE when there are blocking decisions', () => {
+  it('rejects CLOSED when there are blocking decisions', () => {
     const res = StatusMachine.validateInitiativeTransition(
-      INITIATIVE_STATUSES.EXECUTING,
-      INITIATIVE_STATUSES.DONE,
+      INITIATIVE_STATUSES.IN_EXECUTION,
+      INITIATIVE_STATUSES.CLOSED,
       { hasBlockingDecisions: true }
     );
     expect(res.valid).toBe(false);
     expect(res.reason).toBe('Cannot complete: Open blocking decisions exist');
   });
 
-  it('rejects REVIEW -> PROMOTED when charterCompleteness is below 60', () => {
+  it('rejects PENDING_APPROVAL -> APPROVED when governance approval is missing', () => {
     const res = StatusMachine.validateInitiativeTransition(
-      INITIATIVE_STATUSES.REVIEW,
-      INITIATIVE_STATUSES.PROMOTED,
-      { charterCompleteness: 59 }
+      INITIATIVE_STATUSES.PENDING_APPROVAL,
+      INITIATIVE_STATUSES.APPROVED,
+      { requiresApproval: true, isApproved: false }
     );
     expect(res.valid).toBe(false);
-    expect(res.reason).toBe('Charter completeness too low (59%). Minimum 60% required.');
+    expect(res.reason).toBe('Governance approval required for this transition');
   });
 
-  it('rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false', () => {
+  it('rejects PENDING_APPROVAL -> APPROVED when reviews are still pending', () => {
     const res = StatusMachine.validateInitiativeTransition(
+      INITIATIVE_STATUSES.PENDING_APPROVAL,
       INITIATIVE_STATUSES.APPROVED,
-      INITIATIVE_STATUSES.SCHEDULED,
-      { requiresScheduling: true, isScheduled: false }
+      { pendingReviews: 3 }
     );
     expect(res.valid).toBe(false);
-    expect(res.reason).toBe('Initiative must be scheduled in roadmap before scheduling');
+    expect(res.reason).toBe('Cannot approve: 3 reviews still pending');
+  });
+
+  // Wstrzymanie inicjatywy to operacja na fladze `on_hold` (INITIATIVE_FLAG_RULES.HOLD),
+  // a nie przejście statusu — legacy 'BLOCKED' zwija się do IN_EXECUTION.
+  it('does not treat legacy BLOCKED as a status transition', () => {
+    const res = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', {});
+    expect(res.valid).toBe(false);
+    expect(res.reason).toBe('Cannot transition from EXECUTING to BLOCKED');
   });
 });

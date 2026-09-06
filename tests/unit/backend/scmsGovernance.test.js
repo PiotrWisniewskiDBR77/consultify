@@ -26,61 +26,54 @@ describe('StatusMachine', () => {
     global.IS = InitiativeStatus;
   });
 
+  // DEC-424 (P12): cykl życia to 7 statusów — PROPOSED · DRAFT ·
+  // PENDING_APPROVAL · APPROVED · IN_EXECUTION · CLOSED · REJECTED.
   describe('Initiative Status Transitions', () => {
-    it('should allow DRAFT to PENDING_REVIEW transition', () => {
-      expect(StatusMachine.canTransitionInitiative(global.IS.DRAFT, global.IS.PENDING_REVIEW)).toBe(
-        true
-      );
+    it('should allow PROPOSED to DRAFT transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.PROPOSED, global.IS.DRAFT)).toBe(true);
     });
 
-    it('should allow PENDING_REVIEW to REVIEW transition', () => {
+    it('should allow DRAFT to PENDING_APPROVAL transition', () => {
       expect(
-        StatusMachine.canTransitionInitiative(global.IS.PENDING_REVIEW, global.IS.REVIEW)
+        StatusMachine.canTransitionInitiative(global.IS.DRAFT, global.IS.PENDING_APPROVAL)
       ).toBe(true);
     });
 
-    it('should allow REVIEW to PROMOTED transition', () => {
-      expect(StatusMachine.canTransitionInitiative(global.IS.REVIEW, global.IS.PROMOTED)).toBe(
+    it('should allow PENDING_APPROVAL to APPROVED transition', () => {
+      expect(
+        StatusMachine.canTransitionInitiative(global.IS.PENDING_APPROVAL, global.IS.APPROVED)
+      ).toBe(true);
+    });
+
+    it('should allow PENDING_APPROVAL back to DRAFT (send back)', () => {
+      expect(
+        StatusMachine.canTransitionInitiative(global.IS.PENDING_APPROVAL, global.IS.DRAFT)
+      ).toBe(true);
+    });
+
+    it('should allow APPROVED to IN_EXECUTION transition', () => {
+      expect(
+        StatusMachine.canTransitionInitiative(global.IS.APPROVED, global.IS.IN_EXECUTION)
+      ).toBe(true);
+    });
+
+    it('should allow IN_EXECUTION to CLOSED transition', () => {
+      expect(StatusMachine.canTransitionInitiative(global.IS.IN_EXECUTION, global.IS.CLOSED)).toBe(
         true
       );
     });
 
-    it('should allow PROMOTED to PLANNING transition', () => {
-      expect(StatusMachine.canTransitionInitiative(global.IS.PROMOTED, global.IS.PLANNING)).toBe(
-        true
-      );
-    });
-
-    it('should allow PLANNING to APPROVED transition', () => {
-      expect(StatusMachine.canTransitionInitiative(global.IS.PLANNING, global.IS.APPROVED)).toBe(
-        true
-      );
-    });
-
-    it('should allow APPROVED to SCHEDULED transition', () => {
-      expect(StatusMachine.canTransitionInitiative(global.IS.APPROVED, global.IS.SCHEDULED)).toBe(
-        true
-      );
-    });
-
-    it('should allow EXECUTING to BLOCKED transition', () => {
-      // Updated from IN_EXECUTION to EXECUTING
-      expect(StatusMachine.canTransitionInitiative('EXECUTING', 'BLOCKED')).toBe(true);
-    });
-
-    it('should allow EXECUTING to DONE transition', () => {
-      // Updated from COMPLETED to DONE
+    it('should normalize legacy EXECUTING to DONE onto IN_EXECUTION -> CLOSED', () => {
       expect(StatusMachine.canTransitionInitiative('EXECUTING', 'DONE')).toBe(true);
     });
 
-    it('should disallow DONE to DRAFT transition', () => {
-      // Updated from COMPLETED to DONE
-      expect(StatusMachine.canTransitionInitiative('DONE', 'DRAFT')).toBe(false);
+    it('should disallow CLOSED to DRAFT transition', () => {
+      expect(StatusMachine.canTransitionInitiative('CLOSED', 'DRAFT')).toBe(false);
     });
 
     it('should disallow invalid status transition', () => {
-      // DRAFT -> DONE is not a valid direct transition
-      expect(StatusMachine.canTransitionInitiative('DRAFT', 'DONE')).toBe(false);
+      // DRAFT -> CLOSED nie jest przejściem bezpośrednim
+      expect(StatusMachine.canTransitionInitiative('DRAFT', 'CLOSED')).toBe(false);
     });
   });
 
@@ -106,18 +99,21 @@ describe('StatusMachine', () => {
     });
   });
 
-  describe('Blocked Status Validation', () => {
-    it('should require blocked reason for BLOCKED initiative status', () => {
-      // Updated from IN_EXECUTION to EXECUTING
-      const validation = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', {});
+  // DEC-424: wstrzymanie to flaga `on_hold`, nie status. Powodu wymaga REJECTED.
+  describe('Rejection Reason Validation', () => {
+    it('should require a reason for REJECTED initiative status', () => {
+      const validation = StatusMachine.validateInitiativeTransition(
+        'IN_EXECUTION',
+        'REJECTED',
+        {}
+      );
       expect(validation.valid).toBe(false);
       expect(validation.reason).toContain('reason');
     });
 
-    it('should accept blocked reason for BLOCKED status', () => {
-      // Updated from IN_EXECUTION to EXECUTING
-      const validation = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', {
-        blockedReason: 'Waiting for approval',
+    it('should accept REJECTED when a reason is provided', () => {
+      const validation = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'REJECTED', {
+        reason: 'Waiting for approval',
       });
       expect(validation.valid).toBe(true);
     });
