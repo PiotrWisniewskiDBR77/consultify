@@ -18045,7 +18045,12 @@
       "onboardingDescription": "Połączenie jest aktywne. Dokończ wymagane kroki operacyjne w przestrzeni partnera; ten pulpit nie wyświetla treści rejestracyjnych ani marketingowych.",
       "connectionErrorTitle": "Nie udało się ustalić statusu połączenia",
       "connectionErrorDescription": "Nie pokazujemy rejestracji ani treści programu, dopóki nie potwierdzimy statusu z serwera. Spróbuj ponownie.",
-      "retryConnection": "Sprawdź ponownie"
+      "retryConnection": "Sprawdź ponownie",
+      "connectOrganization": "Podłącz organizację jako partnera",
+      "connecting": "Podłączanie…",
+      "connectSuccess": "Organizacja podłączona do programu partnerskiego",
+      "connectFailed": "Nie udało się podłączyć organizacji. Spróbuj ponownie.",
+      "unconnectedAdminDescription": "Twoja organizacja nie jest jeszcze podłączona do programu partnerskiego. Jako administrator możesz ją podłączyć teraz — portal otworzy się z danymi Twojej organizacji."
     },
     "becomePartner": "Zostań partnerem",
     "footerCta": {

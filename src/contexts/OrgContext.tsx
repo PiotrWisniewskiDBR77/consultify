@@ -258,6 +258,15 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
   return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
 };
 
+/**
+ * P-1 / DEC-418: wariant, który NIE rzuca poza providerem. Portal Partnera
+ * pyta o rolę w organizacji tylko po to, żeby zdecydować, czy pokazać przycisk
+ * podłączenia — poza `OrgProvider` (np. w testach jednostkowych widoku) brak
+ * kontekstu ma znaczyć „nie wiem”, a nie wywrócić cały ekran.
+ */
+export const useOrgContextOptional = (): OrgContextValue | null =>
+  useContext(OrgContext) ?? null;
+
 export const useOrgContext = (): OrgContextValue => {
   const context = useContext(OrgContext);
   if (!context) {
