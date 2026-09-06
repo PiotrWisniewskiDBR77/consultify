@@ -9689,7 +9689,8 @@
         "budgetEnvelope": "Budget envelope",
         "unconfirmed": "Unconfirmed",
         "resolved": "Resolved in scenario"
-      }
+      },
+      "more": "More"
     },
     "status": {
       "draft": "Draft",
@@ -9895,7 +9896,20 @@
     },
     "filters": {
       "priority": "Priority",
-      "allPriorities": "All priorities"
+      "allPriorities": "All priorities",
+      "lifecycle": "Lifecycle",
+      "planState": "Plan state",
+      "capacityConstraint": "Constraint"
+    },
+    "bridge": {
+      "contextMissing": "Project and initiative owner are required.",
+      "initiativeId": "Classic initiative ID to adopt",
+      "candidateId": "Accepted candidate ID linked to this initiative",
+      "confirm": "Adopt classic initiative \"{{initiativeId}}\" into the canonical register?",
+      "adopting": "Adopting…",
+      "action": "Adopt classic initiative",
+      "adopted": "Initiative added to the canonical register.",
+      "failed": "Could not adopt the classic initiative."
     },
     "materialize": {
       "working": "Generating material from the portfolio…",

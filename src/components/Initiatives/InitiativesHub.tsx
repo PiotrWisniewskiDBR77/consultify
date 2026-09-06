@@ -20,6 +20,7 @@ import {
   GitBranch,
   Lightbulb,
   List,
+  MoreVertical,
   Plus,
   Shield,
   Tag,
@@ -121,6 +122,7 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { initiativeLoadErrorCode, isInitiativesNetworkError } from './initiativeLoadError';
+import { Menu2PresetDropdown } from './Menu2PresetDropdown';
 import { PortfolioHealthView } from './PortfolioHealthView';
 import {
   InitiativePreviewV3Body,
@@ -291,6 +293,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdoptingClassic, setIsAdoptingClassic] = useState(false);
+  // DEC-420: "Adopt classic initiative" przeniesiony z rzędu Menu 3 do kebaba
+  // (pigułka "Więcej") — rząd Menu 3 ograniczony do ≤3 chipów.
+  const [isMenu3KebabOpen, setIsMenu3KebabOpen] = useState(false);
+  const menu3KebabRef = useRef<HTMLDivElement>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
@@ -1440,6 +1446,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     }
   }, [currentProjectId, currentUser, fetchData, t]);
 
+  // Close the Menu 3 kebab ("Więcej") on outside click / Escape — same pattern
+  // as `Menu2PresetDropdown`.
+  useEffect(() => {
+    if (!isMenu3KebabOpen) return;
+    const onClickOutside = (event: MouseEvent) => {
+      if (menu3KebabRef.current && !menu3KebabRef.current.contains(event.target as Node)) {
+        setIsMenu3KebabOpen(false);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenu3KebabOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [isMenu3KebabOpen]);
+
   // Canon §9: Archive initiative (only DONE/CANCELLED → ARCHIVED per backend rule)
   const handleArchiveInitiative = useCallback(
     async (initiative: PortfolioInitiative) => {
@@ -2118,42 +2144,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {t('initiatives.filters.priority', 'Priority')}
     </label>
   );
-  const rightControls = (
-    <div className="flex items-center gap-2">
-      {allowDemoData && (
-        <span
-          data-testid="initiatives-sample-data-marker"
-          className="inline-flex h-8 items-center rounded-full border border-amber-300 bg-amber-50 px-3 text-[11px] font-semibold text-amber-800"
-        >
-          {t('common.sampleData', 'SAMPLE DATA')}
-        </span>
-      )}
-      {activeTab === 'list' && (
-        <>
-          {priorityFilter}
-          <select
-            id="initiative-priority-filter"
-            aria-label={t('initiatives.filters.priority', 'Priority')}
-            value={filters.priority?.[0] || ''}
-            onChange={(event) =>
-              handlePriorityFilterChange(
-                event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-              )
-            }
-            className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          >
-            <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
-            <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
-            <option value="HIGH">{t('initiatives.priority.high', 'High')}</option>
-            <option value="MEDIUM">{t('initiatives.priority.medium', 'Medium')}</option>
-            <option value="LOW">{t('initiatives.priority.low', 'Low')}</option>
-          </select>
-          {scopeToggle}
-        </>
-      )}
-    </div>
-  );
-
   const totalPendingDecisionEntries = v8PendingDecisionChains.reduce(
     (sum, chain) =>
       sum + chain.decisions.filter((decision) => decision.status === 'pending').length,
@@ -2313,6 +2303,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
+  // DEC-420 (właściciel, 06.09.2026, 3 zrzuty Inicjatyw): „Trzecie menu ma za
+  // dużo przycisków — ogranicz je do dwóch lub trzech." Menu 3 (poniżej)
+  // pokazuje WYŁĄCZNIE te dwa stany cyklu życia — resztę (7 pozostałych
+  // presetów) przejmuje `Menu2PresetDropdown` "Cykl życia" w Menu 2
+  // (`rightControls`). Wybór: „Do decyzji" (kolejka wymagająca akcji
+  // właściciela) i „W realizacji" (aktywna praca) — to dwa stany o
+  // największej wartości decyzyjnej po samym „Wszystkie".
+  const KEPT_LIFECYCLE_MENU3_IDS: InitiativeLifecyclePreset[] = ['DECISION', 'IN_EXECUTION'];
+  const menu3LifecyclePresets = INITIATIVE_LIFECYCLE_PRESETS.filter((preset) =>
+    KEPT_LIFECYCLE_MENU3_IDS.includes(preset.id)
+  );
+
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
       <div className={MENU_3_LEFT_CLASS}>
@@ -2323,6 +2325,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setActiveStatusFilter(null);
           }}
           className={!activeLifecyclePreset ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+          data-testid="initiatives-menu3-chip-all"
         >
           <span className={MENU_3_ALL_DOT_CLASS} />
           <span>Wszystkie</span>
@@ -2330,7 +2333,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             {lifecyclePresetCounts.all ?? 0}
           </span>
         </button>
-        {INITIATIVE_LIFECYCLE_PRESETS.map((preset) => {
+        {menu3LifecyclePresets.map((preset) => {
           const isActive = activeLifecyclePreset === preset.id;
           const count = lifecyclePresetCounts[preset.id] ?? 0;
           return (
@@ -2343,6 +2346,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 if (preset.id === 'HISTORICAL' && !isActive) setScope('all');
               }}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+              data-testid={`initiatives-menu3-chip-${preset.id}`}
             >
               <span className="h-2 w-2 rounded-full bg-c-text-muted" />
               <span>{preset.label}</span>
@@ -2354,17 +2358,49 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         })}
       </div>
       {isInitiativeBridgeEnabled() && !isPilotParticipant && (
-        <div className={MENU_3_RIGHT_CLASS}>
-          <button
-            type="button"
-            onClick={() => void handleAdoptClassicInitiative()}
-            disabled={isAdoptingClassic}
-            className={`${MENU_3_ACTION_NEUTRAL} disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {isAdoptingClassic
-              ? t('initiatives.bridge.adopting', 'Adopting…')
-              : t('initiatives.bridge.action', 'Adopt classic initiative')}
-          </button>
+        <div className={MENU_3_RIGHT_CLASS} ref={menu3KebabRef}>
+          {/* DEC-420: "Adopt classic initiative" — migracja klasycznego
+              rejestru do runtime-v1 (prawdziwa funkcja, `window.prompt` x2 +
+              wywołanie `/api/initiatives/runtime-v1/adoptions/accepted-classic`,
+              patrz `handleAdoptClassicInitiative`), domyślnie ukryta za flagą
+              `VITE_INITIATIVE_BRIDGE` (OFF). Zbyt rzadka, by zajmować stały
+              chip Menu 3 — przeniesiona do kebaba "Więcej", etykieta po
+              polsku (była twardo po angielsku). */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsMenu3KebabOpen((prev) => !prev)}
+              aria-haspopup="menu"
+              aria-expanded={isMenu3KebabOpen}
+              aria-label={t('initiatives.menu3.more', 'Więcej')}
+              className={MENU_3_ACTION_NEUTRAL}
+              data-testid="initiatives-menu3-kebab"
+            >
+              <MoreVertical className="h-3.5 w-3.5" />
+            </button>
+            {isMenu3KebabOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-overlay mt-1 min-w-[240px] overflow-hidden rounded-xl border border-c-border-subtle bg-c-surface py-1 shadow-hig-xl dark:shadow-hig-dark-xl"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={isAdoptingClassic}
+                  onClick={() => {
+                    setIsMenu3KebabOpen(false);
+                    void handleAdoptClassicInitiative();
+                  }}
+                  className="flex w-full items-center px-3 py-2 text-left text-xs text-c-text-secondary transition-colors duration-150 hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="initiatives-menu3-adopt-classic"
+                >
+                  {isAdoptingClassic
+                    ? t('initiatives.bridge.adopting', 'Przejmowanie…')
+                    : t('initiatives.bridge.action', 'Przejmij klasyczną inicjatywę')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
       {/* P-22 (Piotr, OBR-102 2026-07-27): „Te dwa przyciski nie są potrzebne
@@ -2382,7 +2418,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
+  // DEC-420: pełne listy (9 pozycji) zasilają WYŁĄCZNIE dropdown Menu 2
+  // (`Menu2PresetDropdown` w `rightControls`) — 1:1 wzorzec z Oceną
+  // (`getStatusesForModule` karmi zarówno `StatusDropdown`, jak i,
+  // opcjonalnie, chipy Menu 3).
+  const canonicalMenu3FullOptions: Record<string, Array<{ id: string; label: string }>> = {
     plan: [
       ['unscheduled', t('initiatives.menu3.plan.unscheduled')],
       ['now', t('initiatives.menu3.plan.now')],
@@ -2406,7 +2446,104 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       ['resolved', t('initiatives.menu3.capacity.resolved')],
     ].map(([id, label]) => ({ id, label })),
   };
+  // Menu 3 (chipy) — ≤3 pozycje o największej wartości decyzyjnej; reszta
+  // wyłącznie w dropdownie Menu 2 (`rightControls`, `Menu2PresetDropdown`).
+  const CANONICAL_MENU3_KEPT_IDS: Record<string, string[]> = {
+    plan: ['unscheduled', 'conflicted', 'published'],
+    capacity: ['all', 'critical', 'unconfirmed'],
+  };
+  const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> =
+    Object.fromEntries(
+      Object.entries(canonicalMenu3FullOptions).map(([tabId, options]) => [
+        tabId,
+        options.filter((option) => (CANONICAL_MENU3_KEPT_IDS[tabId] ?? []).includes(option.id)),
+      ])
+    );
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
+
+  const lifecycleDropdownOptions = [
+    { id: 'all', label: 'Wszystkie', count: lifecyclePresetCounts.all ?? 0 },
+    ...INITIATIVE_LIFECYCLE_PRESETS.map((preset) => ({
+      id: preset.id,
+      label: preset.label,
+      count: lifecyclePresetCounts[preset.id] ?? 0,
+    })),
+  ];
+
+  const rightControls = (
+    <div className="flex items-center gap-2">
+      {allowDemoData && (
+        <span
+          data-testid="initiatives-sample-data-marker"
+          className="inline-flex h-8 items-center rounded-full border border-amber-300 bg-amber-50 px-3 text-[11px] font-semibold text-amber-800"
+        >
+          {t('common.sampleData', 'SAMPLE DATA')}
+        </span>
+      )}
+      {activeTab === 'list' && (
+        <>
+          {priorityFilter}
+          <select
+            id="initiative-priority-filter"
+            aria-label={t('initiatives.filters.priority', 'Priority')}
+            value={filters.priority?.[0] || ''}
+            onChange={(event) =>
+              handlePriorityFilterChange(
+                event.target.value as '' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+              )
+            }
+            className="h-9 rounded-lg border border-c-border-subtle bg-c-surface px-3 text-xs font-medium text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            <option value="">{t('initiatives.filters.allPriorities', 'All priorities')}</option>
+            <option value="CRITICAL">{t('initiatives.priority.critical', 'Critical')}</option>
+            <option value="HIGH">{t('initiatives.priority.high', 'High')}</option>
+            <option value="MEDIUM">{t('initiatives.priority.medium', 'Medium')}</option>
+            <option value="LOW">{t('initiatives.priority.low', 'Low')}</option>
+          </select>
+          {/* DEC-420: dropdown "Cykl życia" — pełna lista (Wszystkie + 7
+              presetów), Menu 3 obok trzyma tylko "Wszystkie · Do decyzji ·
+              W realizacji". */}
+          <Menu2PresetDropdown
+            label={t('initiatives.filters.lifecycle', 'Cykl życia')}
+            options={lifecycleDropdownOptions}
+            value={activeLifecyclePreset ?? 'all'}
+            onChange={(id) => {
+              const nextPreset = id === 'all' ? null : (id as InitiativeLifecyclePreset);
+              setActiveLifecyclePreset(nextPreset);
+              setActiveStatusFilter(null);
+              if (nextPreset === 'HISTORICAL') setScope('all');
+            }}
+            data-testid="initiatives-lifecycle-dropdown"
+          />
+          {scopeToggle}
+        </>
+      )}
+      {activeTab === 'plan' && (
+        <Menu2PresetDropdown
+          label={t('initiatives.filters.planState', 'Stan planu')}
+          options={canonicalMenu3FullOptions.plan.map((option) => ({
+            ...option,
+            count: canonicalMenu3Counts.plan?.[option.id] ?? 0,
+          }))}
+          value={canonicalMenu3Preset.plan}
+          onChange={(id) => setCanonicalMenu3Preset((current) => ({ ...current, plan: id }))}
+          data-testid="initiatives-plan-state-dropdown"
+        />
+      )}
+      {activeTab === 'capacity' && (
+        <Menu2PresetDropdown
+          label={t('initiatives.filters.capacityConstraint', 'Ograniczenie')}
+          options={canonicalMenu3FullOptions.capacity.map((option) => ({
+            ...option,
+            count: canonicalMenu3Counts.capacity?.[option.id] ?? 0,
+          }))}
+          value={canonicalMenu3Preset.capacity}
+          onChange={(id) => setCanonicalMenu3Preset((current) => ({ ...current, capacity: id }))}
+          data-testid="initiatives-capacity-constraint-dropdown"
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className="h-full" data-testid="initiatives-hub">
