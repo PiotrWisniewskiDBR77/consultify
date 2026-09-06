@@ -1,0 +1,18 @@
+PLAN · usun-rekordy-aco · DBR77 (cc9db573-260f-4a19-927f-f3cc1fbaea38) · dry-run
+
+Sygnatury ACO w DBR77 (cc9db573-260f-4a19-927f-f3cc1fbaea38): 0
+Nic do usunięcia — zero trafień w sygnatury ACO.
+USUNIĘTE: 0
+
+--- KONTEKST POMIARU (06.09, lokalne stanowisko, baza consultify_noc) ---
+`ie_aggregate_state` dla DBR77 = 42 wiersze:
+  decision 15 · source_proposal 5 · initiative 5 · plan_scenario_version 4 ·
+  portfolio_scenario_version 4 · plan_analysis_proposal 3 ·
+  capacity_scenario_version 2 · plan_scenario 2 · capacity_scenario 1 ·
+  portfolio_scenario 1
+ZERO wierszy typu `intervention_case` / `management_signal` / `execution_case`
+— czyli 0 trafień to prawda o TEJ bazie, a nie dowód, że reguła działa.
+Dowodem reguły jest `tests/unit/scripts/usun-rekordy-aco.test.ts` (8/8),
+z mutacją: „liczy samą datę XII 2026 jako powód usunięcia" → 3 testy RED
+(w tym „NIE rusza legalnego rekordu, nawet gdy ma termin w grudniu 2026").
+Rekordy ACO leżą w bazie WŁAŚCICIELA (staging) — skrypt uruchamia tam nadzorca.
