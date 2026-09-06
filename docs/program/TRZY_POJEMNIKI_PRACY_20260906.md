@@ -137,9 +137,10 @@ i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.
 | 3.13 | **Warsztat sesji DRD — nowy układ graficzny** | „bardzo nawala tego tekstu; poprawimy cały układ graficzny na etapie fali drugiej” (właściciel 06.09, sesja DRD); w MVP tylko kolor stanu odpowiedzi, działające „Zapytaj Teresę” i „Podyktuj” (DEC-415) | prototyp + akcept właściciela | 2–3 |
 | 3.14 | **Raporty: eksport PDF i PowerPoint + generator raportów** | „teraz robi tylko w Wordzie; generalnie do fali drugiej” (właściciel 06.09) | szablony (1.6), sufit pptxgenjs | 2–3 |
 | 3.15 | **Audyty: wgrywanie założeń pod „Nowy audyt” + generator pytań audytowych** | „normę/formatkę się wgrywa i generator pytań; na razie przycisk zamrozić” (właściciel 06.09) | SSOT Audytów + prototyp | 3–4 |
+| 3.16 | **Automatyzacja tworzenia raportów zarządczych** | zbieranie informacji z organizacji, harmonogramy i wyzwalacze (właściciel 06.09: „duże zadanie”); dziś pusty szkielet Raporty › Harmonogramy/Automatyzacja | R2 + szablony 1.6 | 3–4 |
 
 Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomendacja CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent).
-### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.15)
+### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.16)
 | # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
 |---|---|---|---|
 | S3.1 | Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową | właściciel | SSOT w `docs/ssot/`, karta prototypu z „Tak” |

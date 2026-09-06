@@ -880,6 +880,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 15:28: „pod Nowy audyt procedura wgrywania założeń — normę/formatkę się wgrywa — i generator pytań audytowych; na razie przycisk zamrozić”. 3–4 sesje.",
           "data": "06.09"
+        },
+        {
+          "nr": "3.16",
+          "nazwa": "Automatyzacja tworzenia raportów zarządczych (zbieranie informacji z organizacji, harmonogramy, wyzwalacze)",
+          "wykonawca": "",
+          "zalezy_od": "R2 (zakładka Raporty zarządcze w Wynikach) + szablony 1.6",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 16:10: „wrzuć do fali drugiej całą formułę budowania automatyzacji tworzenia tych raportów — to duże zadanie, żeby z organizacji zbierać te informacje”. Dziś istnieje szkielet Raporty › Harmonogramy/Automatyzacja (pusty).",
+          "data": "06.09"
         }
       ],
       "kryteria": [
