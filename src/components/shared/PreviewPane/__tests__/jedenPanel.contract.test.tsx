@@ -36,6 +36,18 @@ vi.mock('framer-motion', () => ({
       transition: _t,
       ...props
     }: Record<string, unknown> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+    // DEC-404: `TableWithPreviewLayout` renderuje swój JEDEN prawy panel jako
+    // `motion.aside` (ten sam znacznik co `JedenPrawyPanel`), więc atrapa
+    // framer-motion musi mieć `aside` — inaczej zwraca `undefined` i test
+    // pada na „Element type is invalid", zamiast mierzyć produkt.
+    aside: ({
+      children,
+      initial: _i2,
+      animate: _a2,
+      exit: _e2,
+      transition: _t2,
+      ...props
+    }: Record<string, unknown> & { children?: React.ReactNode }) => <aside {...props}>{children}</aside>,
   },
 }));
 

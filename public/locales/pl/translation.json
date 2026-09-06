@@ -370,7 +370,10 @@
       "close": "Zamknij panel AI"
     },
     "openMenu": "Otwórz menu",
-    "skipToContent": "Przejdź do głównej treści"
+    "skipToContent": "Przejdź do głównej treści",
+    "teresa": {
+      "label": "Teresa"
+    }
   },
   "common": {
     "actions": "Akcje",

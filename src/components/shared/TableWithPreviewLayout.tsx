@@ -755,7 +755,14 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               </PreviewPaneShell>
             </motion.div>
           ) : panelWidoczny ? (
-            <motion.div
+            /* DEC-404: ten JEDEN prawy panel jest tym samym bytem co
+               `<aside data-right-panel>` w `JedenPrawyPanel` — element
+               semantyczny musi być ten sam, żeby bramka „dokładnie jeden
+               <aside>" mierzyła to samo w obu rodzinach ekranów listowych
+               (zmierzone 06.09: Pomysły/Zadania/Inicjatywy dawały aside=0
+               przy widocznym panelu, bo tu stał `div`). Sam znacznik — zero
+               zmiany klas, stylu i zachowania. */
+            <motion.aside
               key={`${zakladka}-${selectedItem?.id ?? 'teresa'}`}
               initial={reduceMotion ? false : { opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
@@ -780,7 +787,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               >
                 {trescPanelu}
               </PreviewPaneShell>
-            </motion.div>
+            </motion.aside>
           ) : null}
         </AnimatePresence>
       </div>

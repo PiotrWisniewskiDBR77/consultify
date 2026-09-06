@@ -370,7 +370,10 @@
       "close": "Close AI panel"
     },
     "openMenu": "Open menu",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "teresa": {
+      "label": "Teresa"
+    }
   },
   "landing": {
     "hero": {

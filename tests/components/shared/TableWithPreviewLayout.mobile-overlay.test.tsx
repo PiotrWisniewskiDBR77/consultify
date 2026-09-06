@@ -22,6 +22,10 @@ vi.mock('framer-motion', () => ({
     div: ({ children, initial: _initial, animate: _animate, exit: _exit, transition: _transition, ...props }: any) => (
       <div {...props}>{children}</div>
     ),
+    // DEC-404: panel `data-right-panel` to `motion.aside` (parytet z JedenPrawyPanel).
+    aside: ({ children, initial: _initial, animate: _animate, exit: _exit, transition: _transition, ...props }: any) => (
+      <aside {...props}>{children}</aside>
+    ),
   },
 }));
 
