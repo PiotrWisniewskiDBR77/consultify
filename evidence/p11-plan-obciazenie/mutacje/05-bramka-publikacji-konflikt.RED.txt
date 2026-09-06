@@ -1,0 +1,170 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ × server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts > plan publication conflict confirmation — real PostgreSQL > rejects without explicit confirmation and persists who, when and N after exact confirmation 28ms
+   → promise resolved "{ status: 'APPLIED', …(6) }" instead of rejecting
+ ❯ server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts (1 test | 1 failed) 145ms
+     × rejects without explicit confirmation and persists who, when and N after exact confirmation 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts > plan publication conflict confirmation — real PostgreSQL > rejects without explicit confirmation and persists who, when and N after exact confirmation
+AssertionError: promise resolved "{ status: 'APPLIED', …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "aggregateVersion": 2,
++   "correlationId": "cb7f21ce-a28b-4b76-80fe-b81761b6fff2",
++   "readBackState": "PENDING",
++   "readBackUrl": "/runtime-v1/command-receipts/3971361c-b1fc-44b8-9317-d6bca82b2b3f/read-back",
++   "receiptId": "3971361c-b1fc-44b8-9317-d6bca82b2b3f",
++   "response": {
++     "assumptions": [],
++     "conflictPublicationConfirmation": {
++       "confirmedAt": "2026-09-06T15:47:05.891Z",
++       "confirmedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++       "conflictCount": 1,
++       "statement": "Publikuję mimo 1 konfliktów",
++     },
++     "createdBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "name": "Plan z konfliktem",
++     "periods": [
++       {
++         "end": "2026-09-14T00:00:00.000Z",
++         "periodId": "T1",
++         "start": "2026-09-07T00:00:00.000Z",
++       },
++     ],
++     "portfolioScenarioId": "portfolio-fbfff47b-347d-4241-9c65-8dc5557e0ea0",
++     "portfolioScenarioVersion": 1,
++     "publishedAt": "2026-09-06T15:47:05.890Z",
++     "publishedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "scenarioId": "plan-cdda4dfe-b3e1-4904-a2c3-d0a7d4492d96",
++     "scenarioVersion": 2,
++     "status": "PUBLISHED",
++     "timezone": "Europe/Warsaw",
++     "updatedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "windowUnit": "WEEK",
++     "windows": [
++       {
++         "confidence": "LOW",
++         "constraintSnapshot": [],
++         "dependencySnapshot": [
++           "missing-dependency",
++         ],
++         "earliest": null,
++         "initiativeId": "initiative-5e8d7dee-103a-4fc8-a9db-e73720a194e5",
++         "initiativeVersion": 1,
++         "latest": null,
++         "rationale": "Fixture conflict",
++         "target": null,
++       },
++     ],
++   },
++   "status": "APPLIED",
+  }
+
+ ❯ server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts:141:64
+    139|   it('rejects without explicit confirmation and persists who, when and…
+    140|     const uow = new PostgresMaterialCommandUnitOfWork(pool);
+    141|     await expect(mutatePlanScenario(uow, command(1, 'PUBLISH'))).rejec…
+       |                                                                ^
+    142|       MaterialCommandValidationError
+    143|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:47:05
+   Duration  379ms (transform 91ms, setup 97ms, import 50ms, tests 145ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts > plan publication conflict confirmation — real PostgreSQL > rejects without explicit confirmation and persists who, when and N after exact confirmation
+AssertionError: promise resolved "{ status: 'APPLIED', …(6) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "aggregateVersion": 2,
++   "correlationId": "cb7f21ce-a28b-4b76-80fe-b81761b6fff2",
++   "readBackState": "PENDING",
++   "readBackUrl": "/runtime-v1/command-receipts/3971361c-b1fc-44b8-9317-d6bca82b2b3f/read-back",
++   "receiptId": "3971361c-b1fc-44b8-9317-d6bca82b2b3f",
++   "response": {
++     "assumptions": [],
++     "conflictPublicationConfirmation": {
++       "confirmedAt": "2026-09-06T15:47:05.891Z",
++       "confirmedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++       "conflictCount": 1,
++       "statement": "Publikuję mimo 1 konfliktów",
++     },
++     "createdBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "name": "Plan z konfliktem",
++     "periods": [
++       {
++         "end": "2026-09-14T00:00:00.000Z",
++         "periodId": "T1",
++         "start": "2026-09-07T00:00:00.000Z",
++       },
++     ],
++     "portfolioScenarioId": "portfolio-fbfff47b-347d-4241-9c65-8dc5557e0ea0",
++     "portfolioScenarioVersion": 1,
++     "publishedAt": "2026-09-06T15:47:05.890Z",
++     "publishedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "scenarioId": "plan-cdda4dfe-b3e1-4904-a2c3-d0a7d4492d96",
++     "scenarioVersion": 2,
++     "status": "PUBLISHED",
++     "timezone": "Europe/Warsaw",
++     "updatedBy": "7ac75d75-b9e0-4dc7-a6bc-46c3054616fa",
++     "windowUnit": "WEEK",
++     "windows": [
++       {
++         "confidence": "LOW",
++         "constraintSnapshot": [],
++         "dependencySnapshot": [
++           "missing-dependency",
++         ],
++         "earliest": null,
++         "initiativeId": "initiative-5e8d7dee-103a-4fc8-a9db-e73720a194e5",
++         "initiativeVersion": 1,
++         "latest": null,
++         "rationale": "Fixture conflict",
++         "target": null,
++       },
++     ],
++   },
++   "status": "APPLIED",
+  }
+
+ ❯ server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts:141:64
+    139|   it('rejects without explicit confirmation and persists who, when and…
+    140|     const uow = new PostgresMaterialCommandUnitOfWork(pool);
+    141|     await expect(mutatePlanScenario(uow, command(1, 'PUBLISH'))).rejec…
+       |                                                                ^
+    142|       MaterialCommandValidationError
+    143|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:47:05
+   Duration  385ms (transform 91ms, setup 97ms, import 50ms, tests 145ms, environment 0ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml

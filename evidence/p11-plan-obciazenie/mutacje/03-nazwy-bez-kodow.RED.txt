@@ -1,0 +1,62 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ × src/components/Initiatives/__tests__/nazwyBezKodow.test.ts > P11 — nazwy bez kodów technicznych > agregat bez nazwy dostaje etykietę biznesową zamiast aco/scenario/UUID 35ms
+   → expected 'aco-plan-scenario-123456789' to be 'Plan bez nazwy · utworzony 06.09.2026' // Object.is equality
+ ❯ src/components/Initiatives/__tests__/nazwyBezKodow.test.ts (1 test | 1 failed) 37ms
+     × agregat bez nazwy dostaje etykietę biznesową zamiast aco/scenario/UUID 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/nazwyBezKodow.test.ts > P11 — nazwy bez kodów technicznych > agregat bez nazwy dostaje etykietę biznesową zamiast aco/scenario/UUID
+AssertionError: expected 'aco-plan-scenario-123456789' to be 'Plan bez nazwy · utworzony 06.09.2026' // Object.is equality
+
+Expected: "Plan bez nazwy · utworzony 06.09.2026"
+Received: "aco-plan-scenario-123456789"
+
+ ❯ src/components/Initiatives/__tests__/nazwyBezKodow.test.ts:11:19
+      9|       fallback: 'Plan bez nazwy · utworzony 06.09.2026',
+     10|     });
+     11|     expect(label).toBe('Plan bez nazwy · utworzony 06.09.2026');
+       |                   ^
+     12|     expect(label).not.toMatch(/aco-|scenario-\d|[0-9a-f]{8}-[0-9a-f-]{…
+     13|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:46:32
+   Duration  470ms (transform 68ms, setup 100ms, import 8ms, tests 37ms, environment 240ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/nazwyBezKodow.test.ts > P11 — nazwy bez kodów technicznych > agregat bez nazwy dostaje etykietę biznesową zamiast aco/scenario/UUID
+AssertionError: expected 'aco-plan-scenario-123456789' to be 'Plan bez nazwy · utworzony 06.09.2026' // Object.is equality
+
+Expected: "Plan bez nazwy · utworzony 06.09.2026"
+Received: "aco-plan-scenario-123456789"
+
+ ❯ src/components/Initiatives/__tests__/nazwyBezKodow.test.ts:11:19
+      9|       fallback: 'Plan bez nazwy · utworzony 06.09.2026',
+     10|     });
+     11|     expect(label).toBe('Plan bez nazwy · utworzony 06.09.2026');
+       |                   ^
+     12|     expect(label).not.toMatch(/aco-|scenario-\d|[0-9a-f]{8}-[0-9a-f-]{…
+     13|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:46:32
+   Duration  475ms (transform 68ms, setup 100ms, import 8ms, tests 37ms, environment 240ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml

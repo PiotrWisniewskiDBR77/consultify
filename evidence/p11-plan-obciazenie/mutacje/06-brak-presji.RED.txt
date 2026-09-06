@@ -1,0 +1,64 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ × src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P11 — brak presji > pokazuje polski komunikat zamiast pustego ekranu lub błędu 11ms
+   → P11 mutation: no-pressure guard removed
+ ❯ src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx (1 test | 1 failed) 13ms
+     × pokazuje polski komunikat zamiast pustego ekranu lub błędu 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P11 — brak presji > pokazuje polski komunikat zamiast pustego ekranu lub błędu
+Error: P11 mutation: no-pressure guard removed
+ ❯ CapacityAnalysisCard src/components/Initiatives/cards/CapacityAnalysisCard.tsx:12:25
+
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:48:41
+   Duration  543ms (transform 78ms, setup 95ms, import 90ms, tests 13ms, environment 234ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/capacityAnalysis.brakPresji.test.tsx > P11 — brak presji > pokazuje polski komunikat zamiast pustego ekranu lub błędu
+Error: P11 mutation: no-pressure guard removed
+ ❯ CapacityAnalysisCard src/components/Initiatives/cards/CapacityAnalysisCard.tsx:12:25
+
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:48:41
+   Duration  547ms (transform 78ms, setup 95ms, import 90ms, tests 13ms, environment 234ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+
+EXIT_CODE=1

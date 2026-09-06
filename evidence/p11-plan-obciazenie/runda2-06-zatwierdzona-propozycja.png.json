@@ -1,0 +1,37 @@
+{
+ "url": "http://localhost:3191/initiatives?tab=plan",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Szkice",
+  "text=Plan klikany P11 — Controls Engineer",
+  "text=Otwórz",
+  "text=Uzupełnij cały dokument",
+  "text=Generuj propozycję",
+  "css=button:has-text(\"Zatwierdź\")"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Szkice\n2\nNowy plan\nSzkice\n2\nOpublikowane\n0\nZ konfliktami\n0\nPlan klikany P11 — Controls Engineer\nSzkic\nZapisano\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument\nHoryzont\nZakres inicjatyw\nKolejność i okna\nZależności i konflikty\nObciążenie ról\nDecyzje\n\nWEEK · Europe/Warsaw\n\nTydzień 1: 2026-09-06 – 2026-09-13\nTydzień 2: 2026-09-13 – 2026-09-20\nTydzień 3: 2026-09-20 – 2026-09-27\nTydzień 4: 2026-09-27 – 2026-10-04\nTydzień 5: 2026-10-04 – 2026-10-11\nTydzień 6: 2026-10-11 – 2026-10-18\nTydzień 7: 2026-10-18 – 2026-10-25\nTydzień 8: 2026-10-25 – 2026-11-01\nTydzień 9: 2026-11-01 – 2026-11-08\nTydzień 10: 2026-11-08 – 2026-11-15\nTydzień 11: 2026-11-15 – 2026-11-22\nTydzień 12: 2026-11-22 – 2026-11-29\nGenerator planu\n1. Źródło\n\nBieżący portfel i jego opublikowana wersja.\n\n2. Wybór inicjatyw\nOPC-UA Migration & Industrial Connectivity Standard\nPredictive Maintenance — CNC Machines\nChange Management & Digital Culture Program\nAI Governance & Ethics Framework\nAI Predictive Quality System\nZrob inicjatywe z tego planu\nSupply Chain Optimization\nDigital Workplace Platform\nVendor Consolidation\nTalent Upskilling Program\nCompliance & GDPR Audit\nAI-Powered Analytics\nDevOps Maturity Program\nLegacy Decommission\nERP SAP Integration\nCustomer Portal Redesign\nSecurity Hardening\nProcess Automation — RPA\nAPI Gateway v2\nData Platform — Lakehouse\nCloud Migration — Azure\nRobotyzacja gniazda spawalniczego\nSystem wizyjny kontroli jakości\nAutomatyzacja magazynu WIP\nLegacy reporting cleanup initiative\nContradiction clarification interviews\nBenefits tracking model\nException management board\nChange adoption champions network\nIT capacity buffer and sequencing\nData lineage for critical KPI set\nWeekly transformation portfolio board\nDecision rights redesign for exceptions\nSMED pilot on Line 3\nSupply Chain Visibility — Phase 1\nOperator Upskilling Program — 50 Pilot\nPlanning-to-execution handoff automation\nEnterprise Data Platform Modernization\nKPI contract and metric ownership\nIoT Product Enhancement — Remote Monitoring\nSupplier Portal & EDI Integration\nApproval SLA and escalation governance\nProcess Mining — Finance & Procurement\nB2B Marketplace International Expansion\nOPC-UA Migration & Edge Gateway\nMLOps Pipeline Setup\nMES Full Rollout — Line 3 Deployment & Integration\nAutomated Changeover Optimization\nDigital Academy — Enterprise-wide Program\nEdge Computing Deployment — Plant A\nIoT Sensor Expansion — Remaining Assets\nEnergy Management & Carbon Tracking\nData Governance Framework\nDynamic Production Scheduling Pilot\nSupply Chain Visibility Dashboard\nIndustrial WiFi 6 Network Upgrade\nReal-time Analytics Platform (BI Upgrade)\nRobotic Process Automation — HR & Finance\nMaster Data Management — Product Data\nDemand Forecasting ML Enhancement\nERP-MES Real-time Integration\nDigital Leadership KPI Dashboard\nProduct Data Platform (PDP) — Greenfield\nAGV Fleet Expansion & Traffic Management\nCustomer 360 & CRM Enhancement\nDigital Skills Academy — Phase 1\nShop Floor Analytics Dashboard\nDigital Twin — Pilot for Line 1\nSOC Enhancement — SIEM Full Deployment\nDigital Strategy Cascading Workshops\nPLM-MES Integration for Recipe Management\nOT/IT Network Segmentation & Hardening\n3. Parametry\nTydzień\nMiesiąc\nWedług zależności\nWedług obciążenia ról\nMieszany\n4. Generuj\nGeneruj propozycję\n5. Zatwierdź\n\nPropozycja nie zmienia planu bez decyzji człowieka.\n\nZatwierdź\nOdrzuć\nAKCJE\nWróć do listy\nWŁAŚCIWOŚCI\nPortfel źródłowy · v4\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T15:44:16.412Z"
+}

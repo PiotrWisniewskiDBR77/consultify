@@ -1,0 +1,75 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ × src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx > P11 — lista planów > pierwszą kolumną jest nazwa planu, a inicjatywy nie stają się wierszami listy 158ms
+   → expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <span
+  class="text-sm text-slate-700 dark:text-slate-200 block truncate"
+  data-overflow-tooltip-text="true"
+>
+  Inicjatywa nie jest wierszem
+</span> instead
+ ❯ src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx (1 test | 1 failed) 160ms
+     × pierwszą kolumną jest nazwa planu, a inicjatywy nie stają się wierszami listy 158ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx > P11 — lista planów > pierwszą kolumną jest nazwa planu, a inicjatywy nie stają się wierszami listy
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <span
+  class="text-sm text-slate-700 dark:text-slate-200 block truncate"
+  data-overflow-tooltip-text="true"
+>
+  Inicjatywa nie jest wierszem
+</span> instead
+ ❯ src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx:53:68
+     51|     expect(await screen.findAllByText('Plan modernizacji zakładu')).no…
+     52|     expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('…
+     53|     expect(screen.queryByText('Inicjatywa nie jest wierszem')).not.toB…
+       |                                                                    ^
+     54|   });
+     55| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:46:13
+   Duration  1.23s (transform 425ms, setup 98ms, import 632ms, tests 160ms, environment 257ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx > P11 — lista planów > pierwszą kolumną jest nazwa planu, a inicjatywy nie stają się wierszami listy
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <span
+  class="text-sm text-slate-700 dark:text-slate-200 block truncate"
+  data-overflow-tooltip-text="true"
+>
+  Inicjatywa nie jest wierszem
+</span> instead
+ ❯ src/components/Initiatives/__tests__/PlanScenarioSurface.listaPlanow.test.tsx:53:68
+     51|     expect(await screen.findAllByText('Plan modernizacji zakładu')).no…
+     52|     expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('…
+     53|     expect(screen.queryByText('Inicjatywa nie jest wierszem')).not.toB…
+       |                                                                    ^
+     54|   });
+     55| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  17:46:13
+   Duration  1.23s (transform 425ms, setup 98ms, import 632ms, tests 160ms, environment 257ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml

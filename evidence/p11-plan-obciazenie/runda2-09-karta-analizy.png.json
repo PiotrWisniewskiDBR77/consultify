@@ -1,0 +1,35 @@
+{
+ "url": "http://localhost:3191/initiatives?tab=capacity",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Obciążenie",
+  "text=Analiza obciążenia — Controls Engineer",
+  "text=Otwórz",
+  "text=Luki i presja"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Wszystkie\n0\nNowa analiza\nSzkice\n0\nOpublikowane\n1\nZ lukami\n0\nAnaliza obciążenia — Controls Engineer\nOpublikowany\nZapisano\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument\nPlan źródłowy\nArkusz obciążenia\nLuki i presja\nPropozycje zmian\nDecyzje\nOkresy z luką: 12 · Role: 1\nAKCJE\nWróć do listy\nWŁAŚCIWOŚCI\nOkresy: 12 · Role: 1 · Luki: 12\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 900
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T15:45:46.861Z"
+}

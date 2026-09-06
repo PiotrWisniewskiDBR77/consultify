@@ -1,0 +1,24 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ ✓ server/src/domain/initiatives-execution/__tests__/planScenario.name.realdb.test.ts > planScenario name — real PostgreSQL > persists and reads name while an aggregate without name remains compatible 15ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planScenario.name.realdb.test.ts (1 test) 91ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts > plan publication conflict confirmation — real PostgreSQL > rejects without explicit confirmation and persists who, when and N after exact confirmation 20ms
+ ✓ server/src/domain/initiatives-execution/__tests__/planPublish.konflikt.realdb.test.ts (1 test) 126ms
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  17:49:36
+   Duration  605ms (transform 95ms, setup 133ms, import 77ms, tests 217ms, environment 0ms)
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  17:49:36
+   Duration  607ms (transform 95ms, setup 133ms, import 77ms, tests 217ms, environment 0ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml

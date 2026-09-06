@@ -1,0 +1,86 @@
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+
+ RUN  v4.1.8 /private/tmp/codex-p11-plan-obciazenie
+
+ × src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia) 41ms
+   → expected [ 'action', 'decision', …(10) ] to deeply equal [ Array(13) ]
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > ma jawny, niepusty powód dla każdej z 9 kart poza rejestrem 1ms
+ ✓ src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > pokrywa cały inwentarz P10 bez anonimowych pozycji 0ms
+ ❯ src/components/standard/__tests__/registry.kompletnosc.test.ts (3 tests | 1 failed) 44ms
+     × zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia) 41ms
+     ✓ ma jawny, niepusty powód dla każdej z 9 kart poza rejestrem 1ms
+     ✓ pokrywa cały inwentarz P10 bez anonimowych pozycji 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia)
+AssertionError: expected [ 'action', 'decision', …(10) ] to deeply equal [ Array(13) ]
+
+- Expected
++ Received
+
+@@ -1,8 +1,7 @@
+  [
+    "action",
+-   "capacity_analysis",
+    "decision",
+    "initiative",
+    "insight",
+    "interview",
+    "metric",
+
+ ❯ src/components/standard/__tests__/registry.kompletnosc.test.ts:44:48
+     42| describe('P10 — kompletność rejestru kart N', () => {
+     43|   it('zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wy…
+     44|     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_…
+       |                                                ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:46:54
+   Duration  506ms (transform 79ms, setup 122ms, import 13ms, tests 44ms, environment 240ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/standard/__tests__/registry.kompletnosc.test.ts > P10 — kompletność rejestru kart N > zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia)
+AssertionError: expected [ 'action', 'decision', …(10) ] to deeply equal [ Array(13) ]
+
+- Expected
++ Received
+
+@@ -1,8 +1,7 @@
+  [
+    "action",
+-   "capacity_analysis",
+    "decision",
+    "initiative",
+    "insight",
+    "interview",
+    "metric",
+
+ ❯ src/components/standard/__tests__/registry.kompletnosc.test.ts:44:48
+     42| describe('P10 — kompletność rejestru kart N', () => {
+     43|   it('zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wy…
+     44|     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_…
+       |                                                ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:46:54
+   Duration  511ms (transform 79ms, setup 122ms, import 13ms, tests 44ms, environment 240ms)
+
+JSON report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
+JUNIT report written to /private/tmp/codex-p11-plan-obciazenie/junit.xml
