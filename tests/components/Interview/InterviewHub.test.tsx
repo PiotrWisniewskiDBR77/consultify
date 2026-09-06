@@ -36,7 +36,7 @@ describe('InterviewHub runtime helpers', () => {
   });
 
   it('gates insight-family tabs behind canViewInsights', () => {
-    for (const tab of ['insights', 'pending_review', 'initiatives']) {
+    for (const tab of ['insights', 'initiatives']) {
       const params = new URLSearchParams(`tab=${tab}`);
       expect(resolveInterviewTabFromSearchParams(params, NO_PERMISSIONS)).toBe('my_assignments');
       expect(resolveInterviewTabFromSearchParams(params, ALL_PERMISSIONS)).toBe(tab);
@@ -56,11 +56,18 @@ describe('InterviewHub runtime helpers', () => {
       'insights',
       'initiatives',
       'managed',
-      'pending_review',
     ]) {
       expect(isInterviewTab(tab)).toBe(true);
     }
     expect(isInterviewTab('bogus')).toBe(false);
     expect(isInterviewTab('')).toBe(false);
+  });
+
+  it('no longer recognises the removed pending_review (Dopuszczenie) tab', () => {
+    // DEC-410b: the Menu 2 "Dopuszczenie" tab was removed as unjustified
+    // (its stage was already reachable via Przydzielone's approve/send-back).
+    expect(isInterviewTab('pending_review')).toBe(false);
+    const params = new URLSearchParams('tab=pending_review');
+    expect(resolveInterviewTabFromSearchParams(params, ALL_PERMISSIONS)).toBeNull();
   });
 });

@@ -209,14 +209,6 @@ describe('InterviewHub smoke — tab rendering', () => {
     });
   }
 
-  it('renders the pending_review branch via the my-assignments view filter', async () => {
-    // pending_review shares the assignments render path; reaching the Inbox tab
-    // without crashing confirms the shared branch mounts.
-    const { container } = renderTab('my_assignments');
-    await waitFor(() => expect(container.firstChild).toBeTruthy());
-    expect(container.querySelector('[role="tablist"]')).toBeTruthy();
-  });
-
   it('shows the initiatives honest empty state with an Insights handoff CTA', async () => {
     renderTab('my_assignments');
     const initiativesTab = await screen.findByRole('tab', { name: /Initiatives/i });
