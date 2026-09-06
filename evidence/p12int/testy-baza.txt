@@ -1,0 +1,1938 @@
+
+ RUN  v4.1.8 /private/tmp/wt-p12int-typy-serwera
+
+
+ RUN  v4.1.8 /private/tmp/wt-p12int-typy-serwera
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 20:36:54:3654 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly
+2026-09-06 20:36:54:3654 [31merror[39m: [31m[PMO Validation] Failed to log status change:[39m {"error":"stringify boom","stack":"Error: stringify boom\n    at JSON.<anonymous> (/private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:241:13)\n    at JSON.stringify (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/spy/dist/index.js:332:34)\n    at Object.res.json (/private/tmp/wt-p12int-typy-serwera/server/src/middleware/pmoValidation.middleware.ts:341:33)\n    at /private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:248:23\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20","sql":"INSERT INTO activity_logs \n                    (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)\n                    VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)","organizationId":"org-1","userId":"user-1","entityType":"task","entityId":"task-1"}
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly
+2026-09-06 20:36:54:3654 [31merror[39m: [31m[PMO Validation] Failed to log status change:[39m {"error":"stringify boom","stack":"Error: stringify boom\n    at JSON.<anonymous> (/private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:241:13)\n    at JSON.stringify (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/spy/dist/index.js:332:34)\n    at Object.res.json (/private/tmp/wt-p12int-typy-serwera/server/src/middleware/pmoValidation.middleware.ts:341:33)\n    at /private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:248:23\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20","sql":"INSERT INTO activity_logs \n                    (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)\n                    VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)","organizationId":"org-1","userId":"user-1","entityType":"task","entityId":"task-1"}
+
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when body accessor throws 31ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when owner id is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when body is null 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when owner id exceeds max allowed length 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when body accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when initiative id is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when body is null 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when initiative id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns generic 500 error when DB lookup rejects 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange continues when response json binder throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange continues when response statusCode accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when previousStatus accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly 3ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when entity id exceeds max allowed length 0ms
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when params accessor throws 1ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus skips DB lookup when status is whitespace-only 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats null body as empty payload and skips DB lookup 0ms
+   → validateInitiativeStatus is not a function
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when params accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus skips DB lookup when status is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats null body as empty payload and skips DB lookup 0ms
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status exceeds max allowed length 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status is non-string type 0ms
+   → validateInitiativeStatus is not a function
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when status exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when status is non-string type 0ms
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when initiative id exceeds max allowed length 0ms
+   → validateInitiativeStatus is not a function
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when task id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus normalizes blockedReason from legacy blocked_reason key 0ms
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when StatusMachine throws 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when db row has invalid current status 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns fallback error when transition reason is missing 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats non-boolean valid flag as invalid transition 0ms
+   → validateInitiativeStatus is not a function
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats undefined status machine response as invalid transition 0ms
+   → validateInitiativeStatus is not a function
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 500 when StatusMachine throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 500 when db row has invalid current status 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns fallback error when transition reason is non-string 0ms
+ × tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats non-boolean valid flag as invalid transition 2ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "currentStatus": "TODO",
++   {
++     "currentStatus": "NEW",
++     "error": "Invalid status transition",
+      "requestedStatus": "IN_PROGRESS",
+      "rule": "INVALID_STATUS_TRANSITION",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats undefined status machine response as invalid transition 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus clamps oversized blockedReason before StatusMachine validation 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when organization id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when user id exceeds max allowed length 0ms
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts (40 tests | 12 failed) 49ms
+     ✓ validateInitiative returns 400 when body accessor throws 31ms
+     ✓ validateInitiative returns 400 when owner id is whitespace-only 0ms
+     ✓ validateInitiative returns 400 when body is null 1ms
+     ✓ validateInitiative returns 400 when owner id exceeds max allowed length 1ms
+     ✓ validateTask returns 400 when body accessor throws 0ms
+     ✓ validateTask returns 400 when initiative id is whitespace-only 0ms
+     ✓ validateTask returns 400 when body is null 1ms
+     ✓ validateTask returns 400 when initiative id exceeds max allowed length 0ms
+     ✓ validateTask returns generic 500 error when DB lookup rejects 1ms
+     ✓ logStatusChange continues when response json binder throws 0ms
+     ✓ logStatusChange continues when response statusCode accessor throws 0ms
+     ✓ logStatusChange still sends response when previousStatus accessor throws 0ms
+     ✓ logStatusChange still sends response when stringify throws during audit payload assembly 3ms
+     ✓ logStatusChange skips audit insert when entity id exceeds max allowed length 0ms
+     × validateInitiativeStatus returns 400 when params accessor throws 1ms
+     × validateInitiativeStatus skips DB lookup when status is whitespace-only 0ms
+     × validateInitiativeStatus treats null body as empty payload and skips DB lookup 0ms
+     ✓ validateTaskStatus returns 400 when params accessor throws 0ms
+     ✓ validateTaskStatus skips DB lookup when status is whitespace-only 0ms
+     ✓ validateTaskStatus treats null body as empty payload and skips DB lookup 0ms
+     × validateInitiativeStatus returns 400 when status exceeds max allowed length 0ms
+     × validateInitiativeStatus returns 400 when status is non-string type 0ms
+     ✓ validateTaskStatus returns 400 when status exceeds max allowed length 0ms
+     ✓ validateTaskStatus returns 400 when status is non-string type 0ms
+     × validateInitiativeStatus returns 400 when initiative id exceeds max allowed length 0ms
+     ✓ validateTaskStatus returns 400 when task id exceeds max allowed length 0ms
+     ✓ validateTaskStatus normalizes blockedReason from legacy blocked_reason key 0ms
+     × validateInitiativeStatus returns 500 when StatusMachine throws 0ms
+     × validateInitiativeStatus returns 500 when db row has invalid current status 0ms
+     × validateInitiativeStatus returns fallback error when transition reason is missing 0ms
+     × validateInitiativeStatus treats non-boolean valid flag as invalid transition 0ms
+     × validateInitiativeStatus treats undefined status machine response as invalid transition 0ms
+     ✓ validateTaskStatus returns 500 when StatusMachine throws 0ms
+     ✓ validateTaskStatus returns 500 when db row has invalid current status 0ms
+     ✓ validateTaskStatus returns fallback error when transition reason is non-string 0ms
+     × validateTaskStatus treats non-boolean valid flag as invalid transition 2ms
+     ✓ validateTaskStatus treats undefined status machine response as invalid transition 0ms
+     ✓ validateTaskStatus clamps oversized blockedReason before StatusMachine validation 0ms
+     ✓ logStatusChange skips audit insert when organization id exceeds max allowed length 0ms
+     ✓ logStatusChange skips audit insert when user id exceeds max allowed length 0ms
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow DRAFT to PENDING_REVIEW transition 35ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_REVIEW to REVIEW transition 1ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow REVIEW to PROMOTED transition 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PROMOTED to PLANNING transition 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PLANNING to APPROVED transition 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow APPROVED to SCHEDULED transition 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to BLOCKED transition 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to DONE transition 0ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should disallow DONE to DRAFT transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should disallow invalid status transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow TODO to IN_PROGRESS transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow IN_PROGRESS to DONE transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow IN_PROGRESS to BLOCKED transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow BLOCKED to IN_PROGRESS transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should disallow direct DONE to TODO transition 0ms
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should require blocked reason for BLOCKED initiative status 1ms
+   → expected 'Cannot transition from EXECUTING to B…' to contain 'reason'
+ × tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should accept blocked reason for BLOCKED status 0ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export INITIATIVE_STATUSES 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export TASK_STATUSES 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export DECISION_STATUSES 0ms
+ ❯ tests/unit/backend/scmsGovernance.test.js (20 tests | 10 failed) 42ms
+       × should allow DRAFT to PENDING_REVIEW transition 35ms
+       × should allow PENDING_REVIEW to REVIEW transition 1ms
+       × should allow REVIEW to PROMOTED transition 0ms
+       × should allow PROMOTED to PLANNING transition 0ms
+       × should allow PLANNING to APPROVED transition 0ms
+       × should allow APPROVED to SCHEDULED transition 0ms
+       × should allow EXECUTING to BLOCKED transition 0ms
+       × should allow EXECUTING to DONE transition 0ms
+       ✓ should disallow DONE to DRAFT transition 0ms
+       ✓ should disallow invalid status transition 0ms
+       ✓ should allow TODO to IN_PROGRESS transition 0ms
+       ✓ should allow IN_PROGRESS to DONE transition 0ms
+       ✓ should allow IN_PROGRESS to BLOCKED transition 0ms
+       ✓ should allow BLOCKED to IN_PROGRESS transition 0ms
+       ✓ should disallow direct DONE to TODO transition 0ms
+       × should require blocked reason for BLOCKED initiative status 1ms
+       × should accept blocked reason for BLOCKED status 0ms
+       ✓ should export INITIATIVE_STATUSES 0ms
+       ✓ should export TASK_STATUSES 0ms
+       ✓ should export DECISION_STATUSES 0ms
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > allows DRAFT → PENDING_REVIEW 33ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > denies invalid transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > returns false for unknown from status 0ms
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns valid for allowed transition 1ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns invalid for disallowed transition 0ms
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > requires blockedReason when transitioning to BLOCKED 1ms
+   → expected 'Cannot transition from undefined to u…' to contain 'Blocked status requires a reason'
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > allows BLOCKED when blockedReason provided 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > rejects DONE when pendingTasks > 0 0ms
+   → expected 'Cannot transition from undefined to u…' to contain 'tasks still pending'
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getAllowedInitiativeTransitions > returns array for DRAFT 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getAllowedInitiativeTransitions > returns empty for unknown status 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionTask > allows TODO → IN_PROGRESS 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionTask > denies invalid task transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > requires blockedReason when transitioning to BLOCKED 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > requires blockerType when transitioning to BLOCKED 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > allows BLOCKED when both required 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionExecutionStage > allows KICKOFF → IN_PROGRESS 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionExecutionStage > denies invalid stage transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getStatusLabel > returns label for DRAFT 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getStatusLabel > returns status for unknown 0ms
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns ASSESSMENT for DRAFT 0ms
+   → expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+ × tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns EXECUTION for EXECUTING 0ms
+   → expected 'INITIATIVE_MANAGEMENT' to be 'EXECUTION' // Object.is equality
+ ❯ tests/unit/execution/status-machine.test.ts (21 tests | 7 failed) 41ms
+       × allows DRAFT → PENDING_REVIEW 33ms
+       ✓ denies invalid transition 0ms
+       ✓ returns false for unknown from status 0ms
+       × returns valid for allowed transition 1ms
+       ✓ returns invalid for disallowed transition 0ms
+       × requires blockedReason when transitioning to BLOCKED 1ms
+       × allows BLOCKED when blockedReason provided 0ms
+       × rejects DONE when pendingTasks > 0 0ms
+       ✓ returns array for DRAFT 0ms
+       ✓ returns empty for unknown status 0ms
+       ✓ allows TODO → IN_PROGRESS 0ms
+       ✓ denies invalid task transition 0ms
+       ✓ requires blockedReason when transitioning to BLOCKED 0ms
+       ✓ requires blockerType when transitioning to BLOCKED 0ms
+       ✓ allows BLOCKED when both required 0ms
+       ✓ allows KICKOFF → IN_PROGRESS 0ms
+       ✓ denies invalid stage transition 0ms
+       ✓ returns label for DRAFT 0ms
+       ✓ returns status for unknown 0ms
+       × returns ASSESSMENT for DRAFT 0ms
+       × returns EXECUTION for EXECUTING 0ms
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should allow valid transition 34ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should block invalid transition 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionTask > should allow valid transition 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionTask > should allow flow back 0ms
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should return valid for simple allowed transition 1ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should require reason for blocking 1ms
+   → expected 'Cannot transition from EXECUTING to B…' to contain 'requires a reason'
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should allow blocking with reason 0ms
+   → expected false to be true // Object.is equality
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent completion if pending tasks exist 0ms
+   → expected 'Cannot transition from EXECUTING to D…' to contain 'tasks still pending'
+ × tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent approved state if governance failed 0ms
+   → expected 'Cannot transition from PLANNING to AP…' to contain 'Governance approval required'
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateTaskTransition > should validate blocker type 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateTaskTransition > should pass with full blocking info 0ms
+ ❯ tests/unit/backend/statusMachine.test.js (11 tests | 6 failed) 40ms
+       × should allow valid transition 34ms
+       ✓ should block invalid transition 0ms
+       ✓ should allow valid transition 0ms
+       ✓ should allow flow back 0ms
+       × should return valid for simple allowed transition 1ms
+       × should require reason for blocking 1ms
+       × should allow blocking with reason 0ms
+       × should prevent completion if pending tasks exist 0ms
+       × should prevent approved state if governance failed 0ms
+       ✓ should validate blocker type 0ms
+       ✓ should pass with full blocking info 0ms
+ × tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > allows DRAFT -> PENDING_REVIEW (canonical transitions) 33ms
+   → expected false to be true // Object.is equality
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > disallows DRAFT -> APPROVED 0ms
+ × tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > exposes allowed transitions list for a status 2ms
+   → expected [ 'PENDING_APPROVAL' ] to deeply equal ArrayContaining [undefined, undefined]
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns a clear reason for an impossible transition 0ms
+ × tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns valid=true for allowed transition when no extra rules apply 1ms
+   → expected { valid: false, …(1) } to deeply equal { valid: true }
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts (5 tests | 3 failed) 38ms
+     × allows DRAFT -> PENDING_REVIEW (canonical transitions) 33ms
+     ✓ disallows DRAFT -> APPROVED 0ms
+     × exposes allowed transitions list for a status 2ms
+     ✓ returns a clear reason for an impossible transition 0ms
+     × returns valid=true for allowed transition when no extra rules apply 1ms
+ × tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > requires blockedReason when transitioning to BLOCKED 35ms
+   → expected 'Cannot transition from undefined to u…' to be 'Blocked status requires a reason' // Object.is equality
+ × tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when pendingTasks > 0 1ms
+   → expected 'Cannot transition from undefined to u…' to be 'Cannot complete: 2 tasks still pending' // Object.is equality
+ × tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when there are blocking decisions 1ms
+   → expected 'Cannot transition from undefined to u…' to be 'Cannot complete: Open blocking decisi…' // Object.is equality
+ × tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects REVIEW -> PROMOTED when charterCompleteness is below 60 0ms
+   → expected 'Cannot transition from undefined to u…' to be 'Charter completeness too low (59%). M…' // Object.is equality
+ × tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false 1ms
+   → expected 'Cannot transition from APPROVED to un…' to be 'Initiative must be scheduled in roadm…' // Object.is equality
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts (5 tests | 5 failed) 39ms
+     × requires blockedReason when transitioning to BLOCKED 35ms
+     × rejects DONE when pendingTasks > 0 1ms
+     × rejects DONE when there are blocking decisions 1ms
+     × rejects REVIEW -> PROMOTED when charterCompleteness is below 60 0ms
+     × rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false 1ms
+ × tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps DRAFT to ASSESSMENT module label 35ms
+   → expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps REVIEW to INITIATIVE_MANAGEMENT module label 0ms
+ × tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > detects module transition across module boundaries 2ms
+   → expected { crossesModule: false, …(2) } to deeply equal { crossesModule: true, …(2) }
+ × tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns stable status labels for known statuses 0ms
+   → expected 'Archived' to be 'Done' // Object.is equality
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > blocks DELIVERY stage when pendingReviews > 0 0ms
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts (5 tests | 3 failed) 40ms
+     × maps DRAFT to ASSESSMENT module label 35ms
+     ✓ maps REVIEW to INITIATIVE_MANAGEMENT module label 0ms
+     × detects module transition across module boundaries 2ms
+     × returns stable status labels for known statuses 0ms
+     ✓ blocks DELIVERY stage when pendingReviews > 0 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > ma dokładnie siedem statusów i dziesięć jawnych krawędzi 32ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > odrzuca każdą parę spoza macierzy, w tym przejścia ze statusów terminalnych 1ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PROPOSED' -> 'DRAFT' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PROPOSED' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'DRAFT' -> 'PENDING_APPROVAL' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'APPROVED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'DRAFT' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'APPROVED' -> 'IN_EXECUTION' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'APPROVED' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'IN_EXECUTION' -> 'CLOSED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'IN_EXECUTION' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > ADMIN nie omija warunku merytorycznego 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts (13 tests) 36ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts > DEC-424 — migracja statusów inicjatywy > jest ostatnia w deterministycznej kolejności migracji 32ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts > DEC-424 — migracja statusów inicjatywy > ma warunkowy backfill i nowy ścisły CHECK siedmiu wartości 0ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts (2 tests) 34ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > contains exactly seven statuses and two independent flags 32ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > keeps server metadata language-neutral 1ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > accepts exactly the matrix edges and rejects every other pair 1ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > maps every matrix edge to its declared gate 1ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > requires substantive conditions even for ADMIN 0ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > accepts a complete APPROVED -> IN_EXECUTION handoff 0ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts (6 tests) 36ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > allows TODO -> IN_PROGRESS 31ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > requires blockedReason when transitioning to BLOCKED 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > requires blockerType when transitioning to BLOCKED 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > accepts IN_PROGRESS -> BLOCKED when blockedReason + blockerType exist 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > exposes allowed transitions for DONE 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts (5 tests) 33ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > returns the generated translation key from metadata 31ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > returns the exact seven-status lifecycle order 1ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > checks transitions through the canonical matrix 0ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > requires a reason on canonical rejection 0ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts (4 tests) 34ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > maps the canonical execution and benefits boundaries 33ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > detects module changes across canonical transitions 0ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > exposes statuses per module and membership checks 1ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > builds the SQL filter from canonical visibility 0ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts (4 tests) 36ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > allows ADMIN to bypass roles, not content conditions 32ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > restricts draft submission to its configured role and author 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > maps the pivotal transitions to their gates 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > requires a reason for rejection 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > requires no open work before closure 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts (5 tests) 34ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > returns stable progress for the canonical lifecycle 29ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > treats CLOSED and REJECTED as terminal 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > marks only non-terminal statuses as active 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > flags PENDING_APPROVAL as attention-needed 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts (4 tests) 31ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts > DEC-424 — generowany kontrakt frontu > ma dokładnie te same kody i flagi co serwerowy SSOT 31ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts > DEC-424 — generowany kontrakt frontu > każdy kod wskazuje kanoniczny klucz i18n 0ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts (2 tests) 33ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 46 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow DRAFT to PENDING_REVIEW transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:31:96
+     29|   describe('Initiative Status Transitions', () => {
+     30|     it('should allow DRAFT to PENDING_REVIEW transition', () => {
+     31|       expect(StatusMachine.canTransitionInitiative(global.IS.DRAFT, gl…
+       |                                                                                                ^
+     32|         true
+     33|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_REVIEW to REVIEW transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:39:9
+     37|       expect(
+     38|         StatusMachine.canTransitionInitiative(global.IS.PENDING_REVIEW…
+     39|       ).toBe(true);
+       |         ^
+     40|     });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow REVIEW to PROMOTED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:43:91
+     41|
+     42|     it('should allow REVIEW to PROMOTED transition', () => {
+     43|       expect(StatusMachine.canTransitionInitiative(global.IS.REVIEW, g…
+       |                                                                                           ^
+     44|         true
+     45|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PROMOTED to PLANNING transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:49:93
+     47|
+     48|     it('should allow PROMOTED to PLANNING transition', () => {
+     49|       expect(StatusMachine.canTransitionInitiative(global.IS.PROMOTED,…
+       |                                                                                             ^
+     50|         true
+     51|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PLANNING to APPROVED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:55:93
+     53|
+     54|     it('should allow PLANNING to APPROVED transition', () => {
+     55|       expect(StatusMachine.canTransitionInitiative(global.IS.PLANNING,…
+       |                                                                                             ^
+     56|         true
+     57|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow APPROVED to SCHEDULED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:61:94
+     59|
+     60|     it('should allow APPROVED to SCHEDULED transition', () => {
+     61|       expect(StatusMachine.canTransitionInitiative(global.IS.APPROVED,…
+       |                                                                                              ^
+     62|         true
+     63|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to BLOCKED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:68:77
+     66|     it('should allow EXECUTING to BLOCKED transition', () => {
+     67|       // Updated from IN_EXECUTION to EXECUTING
+     68|       expect(StatusMachine.canTransitionInitiative('EXECUTING', 'BLOCK…
+       |                                                                             ^
+     69|     });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to DONE transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:73:74
+     71|     it('should allow EXECUTING to DONE transition', () => {
+     72|       // Updated from COMPLETED to DONE
+     73|       expect(StatusMachine.canTransitionInitiative('EXECUTING', 'DONE'…
+       |                                                                          ^
+     74|     });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should require blocked reason for BLOCKED initiative status
+AssertionError: expected 'Cannot transition from EXECUTING to B…' to contain 'reason'
+
+Expected: "reason"
+Received: "Cannot transition from EXECUTING to BLOCKED"
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:114:33
+    112|       const validation = StatusMachine.validateInitiativeTransition('E…
+    113|       expect(validation.valid).toBe(false);
+    114|       expect(validation.reason).toContain('reason');
+       |                                 ^
+    115|     });
+    116|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should accept blocked reason for BLOCKED status
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:122:32
+    120|         blockedReason: 'Waiting for approval',
+    121|       });
+    122|       expect(validation.valid).toBe(true);
+       |                                ^
+    123|     });
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should allow valid transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:12:22
+     10|         StatusMachine.INITIATIVE_STATUSES.PENDING_REVIEW
+     11|       );
+     12|       expect(result).toBe(true);
+       |                      ^
+     13|     });
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should return valid for simple allowed transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:41:28
+     39|       // Updated to valid canonical transition
+     40|       const result = StatusMachine.validateInitiativeTransition('DRAFT…
+     41|       expect(result.valid).toBe(true);
+       |                            ^
+     42|     });
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should require reason for blocking
+AssertionError: expected 'Cannot transition from EXECUTING to B…' to contain 'requires a reason'
+
+Expected: "requires a reason"
+Received: "Cannot transition from EXECUTING to BLOCKED"
+
+ ❯ tests/unit/backend/statusMachine.test.js:48:29
+     46|       const result = StatusMachine.validateInitiativeTransition('EXECU…
+     47|       expect(result.valid).toBe(false);
+     48|       expect(result.reason).toContain('requires a reason');
+       |                             ^
+     49|     });
+     50|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should allow blocking with reason
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:55:28
+     53|         blockedReason: 'Wait for resources',
+     54|       });
+     55|       expect(result.valid).toBe(true);
+       |                            ^
+     56|     });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent completion if pending tasks exist
+AssertionError: expected 'Cannot transition from EXECUTING to D…' to contain 'tasks still pending'
+
+Expected: "tasks still pending"
+Received: "Cannot transition from EXECUTING to DONE"
+
+ ❯ tests/unit/backend/statusMachine.test.js:64:29
+     62|       });
+     63|       expect(result.valid).toBe(false);
+     64|       expect(result.reason).toContain('tasks still pending');
+       |                             ^
+     65|     });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent approved state if governance failed
+AssertionError: expected 'Cannot transition from PLANNING to AP…' to contain 'Governance approval required'
+
+Expected: "Governance approval required"
+Received: "Cannot transition from PLANNING to APPROVED"
+
+ ❯ tests/unit/backend/statusMachine.test.js:74:29
+     72|       });
+     73|       expect(result.valid).toBe(false);
+     74|       expect(result.reason).toContain('Governance approval required');
+       |                             ^
+     75|     });
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > allows DRAFT → PENDING_REVIEW
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:16:9
+     14|       expect(
+     15|         StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.DRAF…
+     16|       ).toBe(true);
+       |         ^
+     17|     });
+     18|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns valid for allowed transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:36:23
+     34|         INITIATIVE_STATUSES.PENDING_REVIEW,
+     35|       );
+     36|       expect(r.valid).toBe(true);
+       |                       ^
+     37|     });
+     38|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > requires blockedReason when transitioning to BLOCKED
+AssertionError: expected 'Cannot transition from undefined to u…' to contain 'Blocked status requires a reason'
+
+Expected: "Blocked status requires a reason"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/execution/status-machine.test.ts:55:24
+     53|       );
+     54|       expect(r.valid).toBe(false);
+     55|       expect(r.reason).toContain('Blocked status requires a reason');
+       |                        ^
+     56|     });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > allows BLOCKED when blockedReason provided
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:64:23
+     62|         { blockedReason: 'Waiting for approval' },
+     63|       );
+     64|       expect(r.valid).toBe(true);
+       |                       ^
+     65|     });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > rejects DONE when pendingTasks > 0
+AssertionError: expected 'Cannot transition from undefined to u…' to contain 'tasks still pending'
+
+Expected: "tasks still pending"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/execution/status-machine.test.ts:74:24
+     72|       );
+     73|       expect(r.valid).toBe(false);
+     74|       expect(r.reason).toContain('tasks still pending');
+       |                        ^
+     75|     });
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns ASSESSMENT for DRAFT
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+
+Expected: "ASSESSMENT"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/execution/status-machine.test.ts:148:76
+    146|   describe('getInitiativeModule', () => {
+    147|     it('returns ASSESSMENT for DRAFT', () => {
+    148|       expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRA…
+       |                                                                            ^
+    149|     });
+    150|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns EXECUTION for EXECUTING
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'EXECUTION' // Object.is equality
+
+Expected: "EXECUTION"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/execution/status-machine.test.ts:152:80
+    150|
+    151|     it('returns EXECUTION for EXECUTING', () => {
+    152|       expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.EXE…
+       |                                                                                ^
+    153|     });
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when params accessor throws
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:283:11
+    281|     const next = vi.fn();
+    282|
+    283|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    284|
+    285|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus skips DB lookup when status is whitespace-only
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:295:11
+    293|     const next = vi.fn();
+    294|
+    295|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    296|
+    297|     expect(next).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats null body as empty payload and skips DB lookup
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:306:11
+    304|     const next = vi.fn();
+    305|
+    306|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    307|
+    308|     expect(next).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status exceeds max allowed length
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:357:11
+    355|     const next = vi.fn();
+    356|
+    357|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    358|
+    359|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status is non-string type
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:372:11
+    370|     const next = vi.fn();
+    371|
+    372|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    373|
+    374|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when initiative id exceeds max allowed length
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:413:11
+    411|     const next = vi.fn();
+    412|
+    413|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    414|
+    415|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when StatusMachine throws
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:468:11
+    466|     const next = vi.fn();
+    467|
+    468|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    469|
+    470|     expect(res.status).toHaveBeenCalledWith(500);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when db row has invalid current status
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:480:11
+    478|     const next = vi.fn();
+    479|
+    480|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    481|
+    482|     expect(res.status).toHaveBeenCalledWith(500);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns fallback error when transition reason is missing
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:494:11
+    492|     const next = vi.fn();
+    493|
+    494|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    495|
+    496|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats non-boolean valid flag as invalid transition
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:513:11
+    511|     const next = vi.fn();
+    512|
+    513|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    514|
+    515|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats undefined status machine response as invalid transition
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:533:18
+    531|     const next = vi.fn();
+    532|
+    533|     await expect(validateInitiativeStatus(req, res, next as unknown as…
+       |                  ^
+    534|
+    535|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats non-boolean valid flag as invalid transition
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "currentStatus": "TODO",
++   {
++     "currentStatus": "NEW",
++     "error": "Invalid status transition",
+      "requestedStatus": "IN_PROGRESS",
+      "rule": "INVALID_STATUS_TRANSITION",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:602:22
+    600|
+    601|     expect(res.status).toHaveBeenCalledWith(400);
+    602|     expect(res.json).toHaveBeenCalledWith(
+       |                      ^
+    603|       expect.objectContaining({
+    604|         rule: 'INVALID_STATUS_TRANSITION',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > allows DRAFT -> PENDING_REVIEW (canonical transitions)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:14:7
+     12|         INITIATIVE_STATUSES.PENDING_REVIEW
+     13|       )
+     14|     ).toBe(true);
+       |       ^
+     15|   });
+     16|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > exposes allowed transitions list for a status
+AssertionError: expected [ 'PENDING_APPROVAL' ] to deeply equal ArrayContaining [undefined, undefined]
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   undefined,
+-   undefined,
++ [
++   "PENDING_APPROVAL",
+  ]
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:25:21
+     23|   it('exposes allowed transitions list for a status', () => {
+     24|     const allowed = StatusMachine.getAllowedInitiativeTransitions(INIT…
+     25|     expect(allowed).toEqual(
+       |                     ^
+     26|       expect.arrayContaining([INITIATIVE_STATUSES.PENDING_REVIEW, INIT…
+     27|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns valid=true for allowed transition when no extra rules apply
+AssertionError: expected { valid: false, …(1) } to deeply equal { valid: true }
+
+- Expected
++ Received
+
+  {
+-   "valid": true,
++   "reason": "Cannot transition from undefined to undefined",
++   "valid": false,
+  }
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:46:17
+     44|       INITIATIVE_STATUSES.REVIEW
+     45|     );
+     46|     expect(res).toEqual({ valid: true });
+       |                 ^
+     47|   });
+     48| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > requires blockedReason when transitioning to BLOCKED
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Blocked status requires a reason' // Object.is equality
+
+Expected: "Blocked status requires a reason"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:15:24
+     13|     );
+     14|     expect(res.valid).toBe(false);
+     15|     expect(res.reason).toBe('Blocked status requires a reason');
+       |                        ^
+     16|   });
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when pendingTasks > 0
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Cannot complete: 2 tasks still pending' // Object.is equality
+
+Expected: "Cannot complete: 2 tasks still pending"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:25:24
+     23|     );
+     24|     expect(res.valid).toBe(false);
+     25|     expect(res.reason).toBe('Cannot complete: 2 tasks still pending');
+       |                        ^
+     26|   });
+     27|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when there are blocking decisions
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Cannot complete: Open blocking decisi…' // Object.is equality
+
+Expected: "Cannot complete: Open blocking decisions exist"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:35:24
+     33|     );
+     34|     expect(res.valid).toBe(false);
+     35|     expect(res.reason).toBe('Cannot complete: Open blocking decisions …
+       |                        ^
+     36|   });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects REVIEW -> PROMOTED when charterCompleteness is below 60
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Charter completeness too low (59%). M…' // Object.is equality
+
+Expected: "Charter completeness too low (59%). Minimum 60% required."
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:45:24
+     43|     );
+     44|     expect(res.valid).toBe(false);
+     45|     expect(res.reason).toBe('Charter completeness too low (59%). Minim…
+       |                        ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false
+AssertionError: expected 'Cannot transition from APPROVED to un…' to be 'Initiative must be scheduled in roadm…' // Object.is equality
+
+Expected: "Initiative must be scheduled in roadmap before scheduling"
+Received: "Cannot transition from APPROVED to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:55:24
+     53|     );
+     54|     expect(res.valid).toBe(false);
+     55|     expect(res.reason).toBe('Initiative must be scheduled in roadmap b…
+       |                        ^
+     56|   });
+     57| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps DRAFT to ASSESSMENT module label
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+
+Expected: "ASSESSMENT"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:10:74
+      8| describe('StatusMachine: modules, labels, stages', () => {
+      9|   it('maps DRAFT to ASSESSMENT module label', () => {
+     10|     expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT…
+       |                                                                          ^
+     11|   });
+     12|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > detects module transition across module boundaries
+AssertionError: expected { crossesModule: false, …(2) } to deeply equal { crossesModule: true, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "crossesModule": true,
+-   "fromModule": "ASSESSMENT",
++   "crossesModule": false,
++   "fromModule": "INITIATIVE_MANAGEMENT",
+    "toModule": "INITIATIVE_MANAGEMENT",
+  }
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:24:17
+     22|       INITIATIVE_STATUSES.REVIEW
+     23|     );
+     24|     expect(res).toEqual({
+       |                 ^
+     25|       crossesModule: true,
+     26|       fromModule: 'ASSESSMENT',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns stable status labels for known statuses
+AssertionError: expected 'Archived' to be 'Done' // Object.is equality
+
+Expected: "Done"
+Received: "Archived"
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:32:68
+     30|
+     31|   it('returns stable status labels for known statuses', () => {
+     32|     expect(StatusMachine.getStatusLabel(INITIATIVE_STATUSES.DONE)).toB…
+       |                                                                    ^
+     33|   });
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/46]⎯
+
+
+ Test Files  7 failed | 9 passed (16)
+      Tests  46 failed | 106 passed (152)
+   Start at  20:36:54
+   Duration  6.62s (transform 243ms, setup 617ms, import 303ms, tests 596ms, environment 3.79s)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 46 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow DRAFT to PENDING_REVIEW transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:31:96
+     29|   describe('Initiative Status Transitions', () => {
+     30|     it('should allow DRAFT to PENDING_REVIEW transition', () => {
+     31|       expect(StatusMachine.canTransitionInitiative(global.IS.DRAFT, gl…
+       |                                                                                                ^
+     32|         true
+     33|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_REVIEW to REVIEW transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:39:9
+     37|       expect(
+     38|         StatusMachine.canTransitionInitiative(global.IS.PENDING_REVIEW…
+     39|       ).toBe(true);
+       |         ^
+     40|     });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow REVIEW to PROMOTED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:43:91
+     41|
+     42|     it('should allow REVIEW to PROMOTED transition', () => {
+     43|       expect(StatusMachine.canTransitionInitiative(global.IS.REVIEW, g…
+       |                                                                                           ^
+     44|         true
+     45|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PROMOTED to PLANNING transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:49:93
+     47|
+     48|     it('should allow PROMOTED to PLANNING transition', () => {
+     49|       expect(StatusMachine.canTransitionInitiative(global.IS.PROMOTED,…
+       |                                                                                             ^
+     50|         true
+     51|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PLANNING to APPROVED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:55:93
+     53|
+     54|     it('should allow PLANNING to APPROVED transition', () => {
+     55|       expect(StatusMachine.canTransitionInitiative(global.IS.PLANNING,…
+       |                                                                                             ^
+     56|         true
+     57|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow APPROVED to SCHEDULED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:61:94
+     59|
+     60|     it('should allow APPROVED to SCHEDULED transition', () => {
+     61|       expect(StatusMachine.canTransitionInitiative(global.IS.APPROVED,…
+       |                                                                                              ^
+     62|         true
+     63|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to BLOCKED transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:68:77
+     66|     it('should allow EXECUTING to BLOCKED transition', () => {
+     67|       // Updated from IN_EXECUTION to EXECUTING
+     68|       expect(StatusMachine.canTransitionInitiative('EXECUTING', 'BLOCK…
+       |                                                                             ^
+     69|     });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to DONE transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:73:74
+     71|     it('should allow EXECUTING to DONE transition', () => {
+     72|       // Updated from COMPLETED to DONE
+     73|       expect(StatusMachine.canTransitionInitiative('EXECUTING', 'DONE'…
+       |                                                                          ^
+     74|     });
+     75|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should require blocked reason for BLOCKED initiative status
+AssertionError: expected 'Cannot transition from EXECUTING to B…' to contain 'reason'
+
+Expected: "reason"
+Received: "Cannot transition from EXECUTING to BLOCKED"
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:114:33
+    112|       const validation = StatusMachine.validateInitiativeTransition('E…
+    113|       expect(validation.valid).toBe(false);
+    114|       expect(validation.reason).toContain('reason');
+       |                                 ^
+    115|     });
+    116|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/46]⎯
+
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should accept blocked reason for BLOCKED status
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/scmsGovernance.test.js:122:32
+    120|         blockedReason: 'Waiting for approval',
+    121|       });
+    122|       expect(validation.valid).toBe(true);
+       |                                ^
+    123|     });
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should allow valid transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:12:22
+     10|         StatusMachine.INITIATIVE_STATUSES.PENDING_REVIEW
+     11|       );
+     12|       expect(result).toBe(true);
+       |                      ^
+     13|     });
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should return valid for simple allowed transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:41:28
+     39|       // Updated to valid canonical transition
+     40|       const result = StatusMachine.validateInitiativeTransition('DRAFT…
+     41|       expect(result.valid).toBe(true);
+       |                            ^
+     42|     });
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should require reason for blocking
+AssertionError: expected 'Cannot transition from EXECUTING to B…' to contain 'requires a reason'
+
+Expected: "requires a reason"
+Received: "Cannot transition from EXECUTING to BLOCKED"
+
+ ❯ tests/unit/backend/statusMachine.test.js:48:29
+     46|       const result = StatusMachine.validateInitiativeTransition('EXECU…
+     47|       expect(result.valid).toBe(false);
+     48|       expect(result.reason).toContain('requires a reason');
+       |                             ^
+     49|     });
+     50|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should allow blocking with reason
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine.test.js:55:28
+     53|         blockedReason: 'Wait for resources',
+     54|       });
+     55|       expect(result.valid).toBe(true);
+       |                            ^
+     56|     });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent completion if pending tasks exist
+AssertionError: expected 'Cannot transition from EXECUTING to D…' to contain 'tasks still pending'
+
+Expected: "tasks still pending"
+Received: "Cannot transition from EXECUTING to DONE"
+
+ ❯ tests/unit/backend/statusMachine.test.js:64:29
+     62|       });
+     63|       expect(result.valid).toBe(false);
+     64|       expect(result.reason).toContain('tasks still pending');
+       |                             ^
+     65|     });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent approved state if governance failed
+AssertionError: expected 'Cannot transition from PLANNING to AP…' to contain 'Governance approval required'
+
+Expected: "Governance approval required"
+Received: "Cannot transition from PLANNING to APPROVED"
+
+ ❯ tests/unit/backend/statusMachine.test.js:74:29
+     72|       });
+     73|       expect(result.valid).toBe(false);
+     74|       expect(result.reason).toContain('Governance approval required');
+       |                             ^
+     75|     });
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > allows DRAFT → PENDING_REVIEW
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:16:9
+     14|       expect(
+     15|         StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.DRAF…
+     16|       ).toBe(true);
+       |         ^
+     17|     });
+     18|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns valid for allowed transition
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:36:23
+     34|         INITIATIVE_STATUSES.PENDING_REVIEW,
+     35|       );
+     36|       expect(r.valid).toBe(true);
+       |                       ^
+     37|     });
+     38|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > requires blockedReason when transitioning to BLOCKED
+AssertionError: expected 'Cannot transition from undefined to u…' to contain 'Blocked status requires a reason'
+
+Expected: "Blocked status requires a reason"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/execution/status-machine.test.ts:55:24
+     53|       );
+     54|       expect(r.valid).toBe(false);
+     55|       expect(r.reason).toContain('Blocked status requires a reason');
+       |                        ^
+     56|     });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > allows BLOCKED when blockedReason provided
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/execution/status-machine.test.ts:64:23
+     62|         { blockedReason: 'Waiting for approval' },
+     63|       );
+     64|       expect(r.valid).toBe(true);
+       |                       ^
+     65|     });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > rejects DONE when pendingTasks > 0
+AssertionError: expected 'Cannot transition from undefined to u…' to contain 'tasks still pending'
+
+Expected: "tasks still pending"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/execution/status-machine.test.ts:74:24
+     72|       );
+     73|       expect(r.valid).toBe(false);
+     74|       expect(r.reason).toContain('tasks still pending');
+       |                        ^
+     75|     });
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns ASSESSMENT for DRAFT
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+
+Expected: "ASSESSMENT"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/execution/status-machine.test.ts:148:76
+    146|   describe('getInitiativeModule', () => {
+    147|     it('returns ASSESSMENT for DRAFT', () => {
+    148|       expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRA…
+       |                                                                            ^
+    149|     });
+    150|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/46]⎯
+
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns EXECUTION for EXECUTING
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'EXECUTION' // Object.is equality
+
+Expected: "EXECUTION"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/execution/status-machine.test.ts:152:80
+    150|
+    151|     it('returns EXECUTION for EXECUTING', () => {
+    152|       expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.EXE…
+       |                                                                                ^
+    153|     });
+    154|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when params accessor throws
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:283:11
+    281|     const next = vi.fn();
+    282|
+    283|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    284|
+    285|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus skips DB lookup when status is whitespace-only
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:295:11
+    293|     const next = vi.fn();
+    294|
+    295|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    296|
+    297|     expect(next).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats null body as empty payload and skips DB lookup
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:306:11
+    304|     const next = vi.fn();
+    305|
+    306|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    307|
+    308|     expect(next).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status exceeds max allowed length
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:357:11
+    355|     const next = vi.fn();
+    356|
+    357|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    358|
+    359|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status is non-string type
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:372:11
+    370|     const next = vi.fn();
+    371|
+    372|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    373|
+    374|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when initiative id exceeds max allowed length
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:413:11
+    411|     const next = vi.fn();
+    412|
+    413|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    414|
+    415|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when StatusMachine throws
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:468:11
+    466|     const next = vi.fn();
+    467|
+    468|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    469|
+    470|     expect(res.status).toHaveBeenCalledWith(500);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when db row has invalid current status
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:480:11
+    478|     const next = vi.fn();
+    479|
+    480|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    481|
+    482|     expect(res.status).toHaveBeenCalledWith(500);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns fallback error when transition reason is missing
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:494:11
+    492|     const next = vi.fn();
+    493|
+    494|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    495|
+    496|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats non-boolean valid flag as invalid transition
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:513:11
+    511|     const next = vi.fn();
+    512|
+    513|     await validateInitiativeStatus(req, res, next as unknown as NextFu…
+       |           ^
+    514|
+    515|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats undefined status machine response as invalid transition
+TypeError: validateInitiativeStatus is not a function
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:533:18
+    531|     const next = vi.fn();
+    532|
+    533|     await expect(validateInitiativeStatus(req, res, next as unknown as…
+       |                  ^
+    534|
+    535|     expect(res.status).toHaveBeenCalledWith(400);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/46]⎯
+
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats non-boolean valid flag as invalid transition
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   ObjectContaining {
+-     "currentStatus": "TODO",
++   {
++     "currentStatus": "NEW",
++     "error": "Invalid status transition",
+      "requestedStatus": "IN_PROGRESS",
+      "rule": "INVALID_STATUS_TRANSITION",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/unit/backend/middleware/pmoValidation.middleware.test.ts:602:22
+    600|
+    601|     expect(res.status).toHaveBeenCalledWith(400);
+    602|     expect(res.json).toHaveBeenCalledWith(
+       |                      ^
+    603|       expect.objectContaining({
+    604|         rule: 'INVALID_STATUS_TRANSITION',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > allows DRAFT -> PENDING_REVIEW (canonical transitions)
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:14:7
+     12|         INITIATIVE_STATUSES.PENDING_REVIEW
+     13|       )
+     14|     ).toBe(true);
+       |       ^
+     15|   });
+     16|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > exposes allowed transitions list for a status
+AssertionError: expected [ 'PENDING_APPROVAL' ] to deeply equal ArrayContaining [undefined, undefined]
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   undefined,
+-   undefined,
++ [
++   "PENDING_APPROVAL",
+  ]
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:25:21
+     23|   it('exposes allowed transitions list for a status', () => {
+     24|     const allowed = StatusMachine.getAllowedInitiativeTransitions(INIT…
+     25|     expect(allowed).toEqual(
+       |                     ^
+     26|       expect.arrayContaining([INITIATIVE_STATUSES.PENDING_REVIEW, INIT…
+     27|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns valid=true for allowed transition when no extra rules apply
+AssertionError: expected { valid: false, …(1) } to deeply equal { valid: true }
+
+- Expected
++ Received
+
+  {
+-   "valid": true,
++   "reason": "Cannot transition from undefined to undefined",
++   "valid": false,
+  }
+
+ ❯ tests/unit/backend/statusMachine/initiativeTransitions.test.ts:46:17
+     44|       INITIATIVE_STATUSES.REVIEW
+     45|     );
+     46|     expect(res).toEqual({ valid: true });
+       |                 ^
+     47|   });
+     48| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > requires blockedReason when transitioning to BLOCKED
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Blocked status requires a reason' // Object.is equality
+
+Expected: "Blocked status requires a reason"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:15:24
+     13|     );
+     14|     expect(res.valid).toBe(false);
+     15|     expect(res.reason).toBe('Blocked status requires a reason');
+       |                        ^
+     16|   });
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when pendingTasks > 0
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Cannot complete: 2 tasks still pending' // Object.is equality
+
+Expected: "Cannot complete: 2 tasks still pending"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:25:24
+     23|     );
+     24|     expect(res.valid).toBe(false);
+     25|     expect(res.reason).toBe('Cannot complete: 2 tasks still pending');
+       |                        ^
+     26|   });
+     27|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when there are blocking decisions
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Cannot complete: Open blocking decisi…' // Object.is equality
+
+Expected: "Cannot complete: Open blocking decisions exist"
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:35:24
+     33|     );
+     34|     expect(res.valid).toBe(false);
+     35|     expect(res.reason).toBe('Cannot complete: Open blocking decisions …
+       |                        ^
+     36|   });
+     37|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects REVIEW -> PROMOTED when charterCompleteness is below 60
+AssertionError: expected 'Cannot transition from undefined to u…' to be 'Charter completeness too low (59%). M…' // Object.is equality
+
+Expected: "Charter completeness too low (59%). Minimum 60% required."
+Received: "Cannot transition from undefined to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:45:24
+     43|     );
+     44|     expect(res.valid).toBe(false);
+     45|     expect(res.reason).toBe('Charter completeness too low (59%). Minim…
+       |                        ^
+     46|   });
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false
+AssertionError: expected 'Cannot transition from APPROVED to un…' to be 'Initiative must be scheduled in roadm…' // Object.is equality
+
+Expected: "Initiative must be scheduled in roadmap before scheduling"
+Received: "Cannot transition from APPROVED to undefined"
+
+ ❯ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts:55:24
+     53|     );
+     54|     expect(res.valid).toBe(false);
+     55|     expect(res.reason).toBe('Initiative must be scheduled in roadmap b…
+       |                        ^
+     56|   });
+     57| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps DRAFT to ASSESSMENT module label
+AssertionError: expected 'INITIATIVE_MANAGEMENT' to be 'ASSESSMENT' // Object.is equality
+
+Expected: "ASSESSMENT"
+Received: "INITIATIVE_MANAGEMENT"
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:10:74
+      8| describe('StatusMachine: modules, labels, stages', () => {
+      9|   it('maps DRAFT to ASSESSMENT module label', () => {
+     10|     expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT…
+       |                                                                          ^
+     11|   });
+     12|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > detects module transition across module boundaries
+AssertionError: expected { crossesModule: false, …(2) } to deeply equal { crossesModule: true, …(2) }
+
+- Expected
++ Received
+
+  {
+-   "crossesModule": true,
+-   "fromModule": "ASSESSMENT",
++   "crossesModule": false,
++   "fromModule": "INITIATIVE_MANAGEMENT",
+    "toModule": "INITIATIVE_MANAGEMENT",
+  }
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:24:17
+     22|       INITIATIVE_STATUSES.REVIEW
+     23|     );
+     24|     expect(res).toEqual({
+       |                 ^
+     25|       crossesModule: true,
+     26|       fromModule: 'ASSESSMENT',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/46]⎯
+
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns stable status labels for known statuses
+AssertionError: expected 'Archived' to be 'Done' // Object.is equality
+
+Expected: "Done"
+Received: "Archived"
+
+ ❯ tests/unit/backend/statusMachine/moduleAndLabels.test.ts:32:68
+     30|
+     31|   it('returns stable status labels for known statuses', () => {
+     32|     expect(StatusMachine.getStatusLabel(INITIATIVE_STATUSES.DONE)).toB…
+       |                                                                    ^
+     33|   });
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/46]⎯
+
+
+ Test Files  7 failed | 9 passed (16)
+      Tests  46 failed | 106 passed (152)
+   Start at  20:36:54
+   Duration  6.64s (transform 243ms, setup 617ms, import 303ms, tests 596ms, environment 3.79s)
+
+JSON report written to /private/tmp/wt-p12int-typy-serwera/junit.xml
+JUNIT report written to /private/tmp/wt-p12int-typy-serwera/junit.xml

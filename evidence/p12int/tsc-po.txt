@@ -1,0 +1,4 @@
+tsc -p server/tsconfig.build.json --noEmit
+EXIT=0 (zero linii wyjscia)
+data: 2026-09-06T18:56:28Z
+commit: 62f2c880d91877ad9b6153c26369bece0a053a8d

@@ -1,0 +1,203 @@
+
+ RUN  v4.1.8 /private/tmp/wt-p12int-typy-serwera
+
+
+ RUN  v4.1.8 /private/tmp/wt-p12int-typy-serwera
+
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > allows DRAFT → PENDING_APPROVAL 33ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > denies invalid transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > returns false for unknown from status 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns valid for allowed transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns invalid for disallowed transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > requires a reason when transitioning to REJECTED 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > allows REJECTED when a reason is provided 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > rejects CLOSED when pendingTasks > 0 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getAllowedInitiativeTransitions > returns array for DRAFT 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getAllowedInitiativeTransitions > returns empty for unknown status 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionTask > allows TODO → IN_PROGRESS 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionTask > denies invalid task transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > requires blockedReason when transitioning to BLOCKED 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > requires blockerType when transitioning to BLOCKED 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateTaskTransition > allows BLOCKED when both required 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionExecutionStage > allows KICKOFF → IN_PROGRESS 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionExecutionStage > denies invalid stage transition 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getStatusLabel > returns label for DRAFT 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getStatusLabel > returns status for unknown 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns INITIATIVE_MANAGEMENT for DRAFT 0ms
+ ✓ tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns EXECUTION for IN_EXECUTION 0ms
+ ✓ tests/unit/execution/status-machine.test.ts (21 tests) 37ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > allows TODO -> IN_PROGRESS 32ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > requires blockedReason when transitioning to BLOCKED 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > requires blockerType when transitioning to BLOCKED 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > accepts IN_PROGRESS -> BLOCKED when blockedReason + blockerType exist 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts > StatusMachine: task transitions > exposes allowed transitions for DONE 0ms
+ ✓ tests/unit/backend/statusMachine/taskTransitions.test.ts (5 tests) 34ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps DRAFT to INITIATIVE_MANAGEMENT module label 31ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps IN_EXECUTION to EXECUTION and CLOSED to BENEFITS 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns UNKNOWN for a status outside both dictionaries 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > detects module transition across module boundaries 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > does not report a module transition inside one module 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns stable status labels for the 7 canonical statuses 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > blocks DELIVERY stage when pendingReviews > 0 0ms
+ ✓ tests/unit/backend/statusMachine/moduleAndLabels.test.ts (7 tests) 34ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PROPOSED to DRAFT transition 33ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow DRAFT to PENDING_APPROVAL transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_APPROVAL to APPROVED transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_APPROVAL back to DRAFT (send back) 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow APPROVED to IN_EXECUTION transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow IN_EXECUTION to CLOSED transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should normalize legacy EXECUTING to DONE onto IN_EXECUTION -> CLOSED 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should disallow CLOSED to DRAFT transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should disallow invalid status transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow TODO to IN_PROGRESS transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow IN_PROGRESS to DONE transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow IN_PROGRESS to BLOCKED transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should allow BLOCKED to IN_PROGRESS transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Task Status Transitions > should disallow direct DONE to TODO transition 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Rejection Reason Validation > should require a reason for REJECTED initiative status 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Rejection Reason Validation > should accept REJECTED when a reason is provided 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export INITIATIVE_STATUSES 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export TASK_STATUSES 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js > StatusMachine > Status Constants > should export DECISION_STATUSES 0ms
+ ✓ tests/unit/backend/scmsGovernance.test.js (19 tests) 38ms
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 20:44:51:4451 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly
+2026-09-06 20:44:52:4452 [31merror[39m: [31m[PMO Validation] Failed to log status change:[39m {"error":"stringify boom","stack":"Error: stringify boom\n    at JSON.<anonymous> (/private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:244:13)\n    at JSON.stringify (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/spy/dist/index.js:332:34)\n    at Object.res.json (/private/tmp/wt-p12int-typy-serwera/server/src/middleware/pmoValidation.middleware.ts:341:33)\n    at /private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:251:23\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20","sql":"INSERT INTO activity_logs \n                    (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)\n                    VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)","organizationId":"org-1","userId":"user-1","entityType":"task","entityId":"task-1"}
+
+stdout | tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly
+2026-09-06 20:44:52:4452 [31merror[39m: [31m[PMO Validation] Failed to log status change:[39m {"error":"stringify boom","stack":"Error: stringify boom\n    at JSON.<anonymous> (/private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:244:13)\n    at JSON.stringify (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/spy/dist/index.js:332:34)\n    at Object.res.json (/private/tmp/wt-p12int-typy-serwera/server/src/middleware/pmoValidation.middleware.ts:341:33)\n    at /private/tmp/wt-p12int-typy-serwera/tests/unit/backend/middleware/pmoValidation.middleware.test.ts:251:23\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///Users/piotrwisniewski/Developer/Consultify/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20","sql":"INSERT INTO activity_logs \n                    (id, organization_id, user_id, action, entity_type, entity_id, old_value, new_value, created_at)\n                    VALUES (?, ?, ?, 'status_changed', ?, ?, ?, ?, CURRENT_TIMESTAMP)","organizationId":"org-1","userId":"user-1","entityType":"task","entityId":"task-1"}
+
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when body accessor throws 37ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when owner id is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when body is null 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiative returns 400 when owner id exceeds max allowed length 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when body accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when initiative id is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when body is null 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns 400 when initiative id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTask returns generic 500 error when DB lookup rejects 1ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange continues when response json binder throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange continues when response statusCode accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when previousStatus accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange still sends response when stringify throws during audit payload assembly 3ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when entity id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when params accessor throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus skips DB lookup when status is whitespace-only 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats null body as empty payload and skips DB lookup 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when status exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when status is non-string type 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 400 when task id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus normalizes blockedReason from legacy blocked_reason key 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 500 when StatusMachine throws 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns 500 when db row has invalid current status 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus returns fallback error when transition reason is non-string 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats non-boolean valid flag as invalid transition 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats undefined status machine response as invalid transition 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus clamps oversized blockedReason before StatusMachine validation 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when organization id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > logStatusChange skips audit insert when user id exceeds max allowed length 0ms
+ ✓ tests/unit/backend/middleware/pmoValidation.middleware.test.ts (29 tests) 50ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > allows DRAFT -> PENDING_APPROVAL (canonical transitions) 32ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > disallows DRAFT -> APPROVED 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > exposes allowed transitions list for a status 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns an empty list for terminal statuses 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns a clear reason for an impossible transition 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns valid=true for allowed transition when no extra rules apply 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > normalizes legacy status names before checking the graph 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > rejects statuses outside both the canonical and the legacy dictionary 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeTransitions.test.ts (8 tests) 35ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > requires a reason when transitioning to REJECTED 35ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > accepts REJECTED when a reason is provided 1ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects CLOSED when pendingTasks > 0 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects CLOSED when there are blocking decisions 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects PENDING_APPROVAL -> APPROVED when governance approval is missing 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects PENDING_APPROVAL -> APPROVED when reviews are still pending 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > does not treat legacy BLOCKED as a status transition 0ms
+ ✓ tests/unit/backend/statusMachine/initiativeValidationRules.test.ts (7 tests) 38ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should allow valid transition 37ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should block invalid transition 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionTask > should allow valid transition 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionTask > should allow flow back 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should return valid for simple allowed transition 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should require reason for rejection 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should allow rejection with reason 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent completion if pending tasks exist 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent approved state if governance failed 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateTaskTransition > should validate blocker type 0ms
+ ✓ tests/unit/backend/statusMachine.test.js > StatusMachine > validateTaskTransition > should pass with full blocking info 0ms
+ ✓ tests/unit/backend/statusMachine.test.js (11 tests) 40ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > contains exactly seven statuses and two independent flags 35ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > keeps server metadata language-neutral 1ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > accepts exactly the matrix edges and rejects every other pair 4ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > maps every matrix edge to its declared gate 1ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > requires substantive conditions even for ADMIN 0ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts > DEC-424 complete state machine > accepts a complete APPROVED -> IN_EXECUTION handoff 0ms
+ ✓ tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts (6 tests) 42ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > ma dokładnie siedem statusów i dziesięć jawnych krawędzi 37ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > odrzuca każdą parę spoza macierzy, w tym przejścia ze statusów terminalnych 1ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PROPOSED' -> 'DRAFT' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PROPOSED' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'DRAFT' -> 'PENDING_APPROVAL' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'APPROVED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'DRAFT' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'PENDING_APPROVAL' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'APPROVED' -> 'IN_EXECUTION' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'APPROVED' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'IN_EXECUTION' -> 'CLOSED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > 'IN_EXECUTION' -> 'REJECTED' wymaga jednej z przypisanych ról 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts > DEC-424 — kanoniczna macierz siedmiu statusów > ADMIN nie omija warunku merytorycznego 0ms
+ ✓ tests/unit/backend/initiativeStatuses/dec424TransitionMatrix.test.ts (13 tests) 42ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > returns the generated translation key from metadata 36ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > returns the exact seven-status lifecycle order 1ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > checks transitions through the canonical matrix 0ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts > initiativeStatuses: DEC-424 labels + transition helpers > requires a reason on canonical rejection 0ms
+ ✓ tests/unit/backend/initiativeStatuses/statusLabelsAndTransitions.test.ts (4 tests) 39ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > allows ADMIN to bypass roles, not content conditions 35ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > restricts draft submission to its configured role and author 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > maps the pivotal transitions to their gates 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > requires a reason for rejection 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts > DEC-424 gates and conditions > requires no open work before closure 0ms
+ ✓ tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts (5 tests) 37ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts > DEC-424 — migracja statusów inicjatywy > jest ostatnia w deterministycznej kolejności migracji 36ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts > DEC-424 — migracja statusów inicjatywy > ma warunkowy backfill i nowy ścisły CHECK siedmiu wartości 1ms
+ ✓ tests/unit/backend/migrations/p12InitiativeStatusMigration.test.ts (2 tests) 39ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > returns stable progress for the canonical lifecycle 36ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > treats CLOSED and REJECTED as terminal 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > marks only non-terminal statuses as active 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts > initiativeStatuses: DEC-424 lifecycle + flags > flags PENDING_APPROVAL as attention-needed 0ms
+ ✓ tests/unit/backend/initiativeStatuses/lifecycleAndFlags.test.ts (4 tests) 38ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > maps the canonical execution and benefits boundaries 35ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > detects module changes across canonical transitions 0ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > exposes statuses per module and membership checks 1ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts > initiativeStatuses: DEC-424 modules + visibility > builds the SQL filter from canonical visibility 0ms
+ ✓ tests/unit/backend/initiativeStatuses/modulesAndVisibility.test.ts (4 tests) 37ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts > DEC-424 — generowany kontrakt frontu > ma dokładnie te same kody i flagi co serwerowy SSOT 33ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts > DEC-424 — generowany kontrakt frontu > każdy kod wskazuje kanoniczny klucz i18n 0ms
+ ✓ tests/unit/backend/initiativeStatuses/generatedContract.test.ts (2 tests) 35ms
+
+ Test Files  16 passed (16)
+      Tests  147 passed (147)
+   Start at  20:44:49
+   Duration  7.52s (transform 244ms, setup 717ms, import 310ms, tests 615ms, environment 4.44s)
+
+
+ Test Files  16 passed (16)
+      Tests  147 passed (147)
+   Start at  20:44:49
+   Duration  7.52s (transform 244ms, setup 717ms, import 310ms, tests 615ms, environment 4.44s)
+
+JSON report written to /private/tmp/wt-p12int-typy-serwera/junit.xml
+JUNIT report written to /private/tmp/wt-p12int-typy-serwera/junit.xml
