@@ -24,6 +24,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
@@ -333,7 +334,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditProgramSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">
@@ -432,8 +434,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
           }}
         />
       </div>
-      {selectedProgram ? (
-        <div className="w-[380px] shrink-0 border-l border-c-border-subtle">
+      <JedenPrawyPanel
+        className="border-l border-c-border-subtle"
+        rekord={selectedProgram ? (
           <StandardPreview
             title={selectedProgram.name}
             onClose={() => setSelectedId(null)}
@@ -587,8 +590,8 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
               )}
             </div>
           </StandardPreview>
-        </div>
-      ) : null}
+        ) : null}
+      />
     </div>
   );
 };

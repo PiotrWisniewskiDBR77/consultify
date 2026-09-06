@@ -280,12 +280,33 @@ const BasicBlocksPanel: React.FC<{
 const LayoutsPanel: React.FC<{
   onInsertBlock?: (type: string, content?: Record<string, unknown>) => void;
 }> = ({ onInsertBlock }) => {
+  const { t } = useTranslation();
   const layouts = [
-    { label: '2 Columns', type: 'smart_layout', content: { layoutType: '2col' } },
-    { label: '3 Columns', type: 'smart_layout', content: { layoutType: '3col' } },
-    { label: '4 Columns', type: 'smart_layout', content: { layoutType: '4col' } },
-    { label: 'Boxes', type: 'smart_layout', content: { layoutType: 'boxes' } },
-    { label: 'Cards', type: 'smart_layout', content: { layoutType: 'cards' } },
+    {
+      label: t('presentations.builder.toolbar.layoutItems.twoColumns', '2 kolumny'),
+      type: 'smart_layout',
+      content: { layoutType: '2col' },
+    },
+    {
+      label: t('presentations.builder.toolbar.layoutItems.threeColumns', '3 kolumny'),
+      type: 'smart_layout',
+      content: { layoutType: '3col' },
+    },
+    {
+      label: t('presentations.builder.toolbar.layoutItems.fourColumns', '4 kolumny'),
+      type: 'smart_layout',
+      content: { layoutType: '4col' },
+    },
+    {
+      label: t('presentations.builder.toolbar.layoutItems.boxes', 'Bloki'),
+      type: 'smart_layout',
+      content: { layoutType: 'boxes' },
+    },
+    {
+      label: t('presentations.builder.toolbar.layoutItems.cards', 'Karty'),
+      type: 'smart_layout',
+      content: { layoutType: 'cards' },
+    },
   ];
 
   return (
@@ -300,19 +321,26 @@ const LayoutsPanel: React.FC<{
 const DiagramsPanel: React.FC<{
   onInsertBlock?: (type: string, content?: Record<string, unknown>) => void;
 }> = ({ onInsertBlock }) => {
+  const { t } = useTranslation();
   const diagrams = [
-    { label: 'Process Steps', kind: 'process_steps' },
-    { label: 'Funnel', kind: 'funnel' },
-    { label: 'Timeline', kind: 'timeline_horizontal' },
-    { label: 'Matrix 2x2', kind: 'matrix_2x2' },
-    { label: 'SWOT', kind: 'swot' },
-    { label: 'Pyramid', kind: 'pyramid' },
-    { label: 'Venn (2)', kind: 'venn_2' },
-    { label: 'Venn (3)', kind: 'venn_3' },
-    { label: 'Cycle', kind: 'cycle' },
-    { label: 'Now/Next/Later', kind: 'roadmap_now_next_later' },
-    { label: 'Hierarchy', kind: 'org_hierarchy' },
-    { label: 'Decision Tree', kind: 'decision_tree_light' },
+    { label: t('presentations.builder.toolbar.diagramItems.processSteps', 'Kroki procesu'), kind: 'process_steps' },
+    { label: t('presentations.builder.toolbar.diagramItems.funnel', 'Lejek'), kind: 'funnel' },
+    { label: t('presentations.builder.toolbar.diagramItems.timeline', 'Oś czasu'), kind: 'timeline_horizontal' },
+    { label: t('presentations.builder.toolbar.diagramItems.matrix2x2', 'Macierz 2x2'), kind: 'matrix_2x2' },
+    { label: t('presentations.builder.toolbar.diagramItems.swot', 'SWOT'), kind: 'swot' },
+    { label: t('presentations.builder.toolbar.diagramItems.pyramid', 'Piramida'), kind: 'pyramid' },
+    { label: t('presentations.builder.toolbar.diagramItems.venn2', 'Venn (2)'), kind: 'venn_2' },
+    { label: t('presentations.builder.toolbar.diagramItems.venn3', 'Venn (3)'), kind: 'venn_3' },
+    { label: t('presentations.builder.toolbar.diagramItems.cycle', 'Cykl'), kind: 'cycle' },
+    {
+      label: t('presentations.builder.toolbar.diagramItems.roadmap', 'Teraz/Dalej/Później'),
+      kind: 'roadmap_now_next_later',
+    },
+    { label: t('presentations.builder.toolbar.diagramItems.hierarchy', 'Hierarchia'), kind: 'org_hierarchy' },
+    {
+      label: t('presentations.builder.toolbar.diagramItems.decisionTree', 'Drzewo decyzyjne'),
+      kind: 'decision_tree_light',
+    },
   ];
 
   return (
@@ -331,12 +359,13 @@ const DiagramsPanel: React.FC<{
 const ChartsPanel: React.FC<{
   onInsertBlock?: (type: string, content?: Record<string, unknown>) => void;
 }> = ({ onInsertBlock }) => {
+  const { t } = useTranslation();
   const charts = [
-    { label: 'Bar Chart', chartType: 'bar' },
-    { label: 'Line Chart', chartType: 'line' },
-    { label: 'Pie Chart', chartType: 'pie' },
-    { label: 'KPI Widget', type: 'kpi_widget' },
-    { label: 'Metric Strip', type: 'metric_strip' },
+    { label: t('presentations.builder.toolbar.chartItems.bar', 'Wykres słupkowy'), chartType: 'bar' },
+    { label: t('presentations.builder.toolbar.chartItems.line', 'Wykres liniowy'), chartType: 'line' },
+    { label: t('presentations.builder.toolbar.chartItems.pie', 'Wykres kołowy'), chartType: 'pie' },
+    { label: t('presentations.builder.blocks.kpiWidget', 'Widget KPI'), type: 'kpi_widget' },
+    { label: t('presentations.builder.blocks.metricStrip', 'Pasek metryk'), type: 'metric_strip' },
   ];
 
   return (

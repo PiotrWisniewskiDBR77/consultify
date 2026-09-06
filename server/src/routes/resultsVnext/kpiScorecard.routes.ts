@@ -83,11 +83,13 @@ import {
 } from '../../services/resultsVnext/kpi/kpiScorecardCommands.js';
 import {
   getPublishedSnapshot,
+  getScorecardPeriodMatrix,
   getScorecardStatusDistribution,
   listReviewSnapshots,
   listScorecardItems,
   listScorecards,
 } from '../../services/resultsVnext/kpi/kpiScorecardRepository.js';
+import { evaluateAgainstPeriodTarget } from '../../services/resultsVnext/kpi/kpiPeriodEvaluation.js';
 import {
   type KpiScorecard,
   type KpiScorecardRow,
@@ -121,6 +123,7 @@ import {
   ScorecardItemIdParamsSchema,
   ScorecardLifecycleActionSchema,
   ScorecardSnapshotIdParamsSchema,
+  ScorecardPeriodsQuerySchema,
   ScorecardStatusQuerySchema,
 } from '../../validators/resultsVnextKpiScorecard.validators.js';
 import { mapAppErrorResponse } from '../../middleware/appErrorMapper.js';
@@ -252,8 +255,18 @@ async function loadVisibleScorecard(
   organizationId: string,
   scorecardId: string
 ): Promise<KpiScorecard | null> {
+  /* P7K — `SELECT sc.*` gubiło `owner_name`, które `listScorecards` w
+     repozytorium już liczy joinem: poziom 1 pokazywał nazwisko, a poziom 2
+     tego samego raportu „Nieznany użytkownik". Dokładamy ten sam join (i drugi
+     dla osoby przygotowującej raport, SSOT §2 „przygotował"), zamiast zostawiać
+     dwie różne prawdy o jednym rekordzie. */
   const baseQuerySql = `
-    SELECT sc.* FROM rvn_kpi_scorecards sc
+    SELECT sc.*,
+           NULLIF(TRIM(CONCAT_WS(' ', owner.first_name, owner.last_name)), '') AS owner_name,
+           NULLIF(TRIM(CONCAT_WS(' ', prepared.first_name, prepared.last_name)), '') AS prepared_by_name
+      FROM rvn_kpi_scorecards sc
+      LEFT JOIN users owner ON owner.id = sc.owner_user_id AND owner.organization_id = sc.organization_id
+      LEFT JOIN users prepared ON prepared.id = sc.prepared_by_user_id AND prepared.organization_id = sc.organization_id
       INNER JOIN rvn_visible_resources vr
               ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE sc.organization_id = $1 AND sc.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}`;
@@ -619,6 +632,88 @@ router.get(
       res.status(200).json({ distribution });
     } catch (err) {
       handleScorecardRouteError(res, err, 'getScorecardStatusDistribution');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/kpi/scorecards/:scorecardId/periods — P7K
+//
+// Matryca CEL / Rezultat per okres + YTD dla WSZYSTKICH mierników raportu
+// (SSOT §6, poziom 2). Jedna trasa zamiast `GET /kpi/:kpiId/measurements`
+// razy liczba mierników — raport właściciela ma ich 138.
+//
+// Ziarno okresu: z `review_frequency` raportu, chyba że wołający poda jawnie.
+// `weekly` i `custom` schodzą do miesiąca — dwanaście kolumn miesięcznych jest
+// tym, co opisuje SSOT; 52 kolumny tygodniowe nie są dziś ani zaprojektowane,
+// ani zaakceptowane, więc ich nie wymyślamy.
+//
+// Stan YTD liczony TUTAJ, nie w repozytorium: potrzebuje kierunku miernika
+// (wersja definicji) i dopuszczalnego limitu [%] (kontrakt pozycji raportu),
+// a repozytorium czyta te dwie rzeczy dwiema różnymi ścieżkami. Stan
+// pojedynczego okresu pozostaje tym, co zapisał ewaluator przy pomiarze —
+// nie przeliczamy go tu po raz drugi.
+// ==========================================
+
+const REVIEW_FREQUENCY_GRANULARITY: Record<string, 'month' | 'quarter' | 'year'> = {
+  weekly: 'month',
+  monthly: 'month',
+  quarterly: 'quarter',
+  annual: 'year',
+  custom: 'month',
+};
+
+router.get(
+  '/:scorecardId/periods',
+  validateParams(ScorecardIdParamsSchema),
+  validateQuery(ScorecardPeriodsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { scorecardId } = req.params as { scorecardId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ScorecardPeriodsQuerySchema>;
+      const scorecard = await loadVisibleScorecard(auth.userId, auth.organizationId, scorecardId);
+      if (!scorecard) {
+        res.status(404).json({ error: 'Scorecard not found', code: 'NOT_FOUND' });
+        return;
+      }
+      const granularity =
+        query.granularity ?? REVIEW_FREQUENCY_GRANULARITY[scorecard.reviewFrequency] ?? 'month';
+      const year = query.year ?? new Date().getUTCFullYear();
+
+      const [matrix, items] = await Promise.all([
+        getScorecardPeriodMatrix({
+          userId: auth.userId,
+          organizationId: auth.organizationId,
+          scorecardId,
+          year,
+          granularity,
+        }),
+        listScorecardItems({
+          userId: auth.userId,
+          organizationId: auth.organizationId,
+          scorecardId,
+        }),
+      ]);
+
+      const contractByItemId = new Map(items.map((item) => [item.itemId, item]));
+      const withYtdStatus = matrix.items.map((item) => {
+        const contract = contractByItemId.get(item.itemId);
+        return {
+          ...item,
+          ytdPerformanceStatus: evaluateAgainstPeriodTarget({
+            actualValue: item.ytdActualValue,
+            targetValue: item.ytdTargetValue,
+            targetGeometry: contract?.targetGeometry ?? null,
+            limitPercent: contract?.limitPercent ?? null,
+          }),
+        };
+      });
+
+      res.status(200).json({ matrix: { ...matrix, items: withYtdStatus } });
+    } catch (err) {
+      handleScorecardRouteError(res, err, 'getScorecardPeriodMatrix');
     }
   }
 );

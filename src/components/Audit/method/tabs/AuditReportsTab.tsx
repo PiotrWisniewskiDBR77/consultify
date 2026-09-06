@@ -26,6 +26,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -238,7 +239,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     {
       id: 'reportKind',
       label: isPolish ? 'Rodzaj' : 'Kind',
-      width: '170px',
+      width: '140px',
+      dataType: 'status',
       render: (row: AuditReportSummary) => {
         const entry = REPORT_KIND_LABEL[row.reportKind];
         return (
@@ -248,11 +250,12 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         );
       },
     },
-    { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px' },
+    { id: 'version', label: isPolish ? 'Wersja' : 'Version', width: '90px', dataType: 'status' },
     {
       id: 'status',
       label: 'Status',
-      width: '150px',
+      width: '130px',
+      dataType: 'status',
       filterable: true,
       filterOptions: AUDIT_REPORT_STATUSES.map((value) => ({
         value,
@@ -269,6 +272,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
       id: 'language',
       label: isPolish ? 'Język' : 'Language',
       width: '90px',
+      dataType: 'status',
       render: (row: AuditReportSummary) => (
         <span className="text-xs text-c-text-secondary">{row.language?.toUpperCase() || '—'}</span>
       ),
@@ -276,7 +280,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     {
       id: 'audience',
       label: isPolish ? 'Odbiorca' : 'Audience',
-      width: '140px',
+      width: '130px',
+      dataType: 'status',
       render: (row: AuditReportSummary) => (
         <span
           className="text-xs text-c-text-secondary truncate block max-w-[130px]"
@@ -289,7 +294,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     {
       id: 'confidentiality',
       label: isPolish ? 'Poufność' : 'Confidentiality',
-      width: '130px',
+      width: '120px',
+      dataType: 'status',
       render: (row: AuditReportSummary) => (
         <span
           className="text-xs text-c-text-secondary truncate block max-w-[120px]"
@@ -302,7 +308,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     {
       id: 'publishedAt',
       label: isPolish ? 'Data publikacji' : 'Published at',
-      width: '150px',
+      width: '180px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditReportSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">
@@ -313,7 +320,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditReportSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">
@@ -471,16 +479,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           }}
         />
       </div>
-      {selected ? (
-        <div
-          className="w-[380px] shrink-0 border-l border-c-border-subtle"
-          data-testid="audit-report-preview"
-        >
-          {exportError ? (
-            <div className="m-2 rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
-              {exportError}
-            </div>
-          ) : null}
+      <JedenPrawyPanel
+        className="border-l border-c-border-subtle"
+        rekord={selected ? (
           <StandardPreview
             title={selected.title}
             onClose={() => setSelectedId(null)}
@@ -544,9 +545,15 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
                   ]
                 : undefined,
             }}
-          />
-        </div>
-      ) : null}
+          >
+            {exportError ? (
+              <div className="rounded-lg border border-c-danger/30 bg-c-danger/5 px-3 py-2 text-xs text-c-danger" role="alert">
+                {exportError}
+              </div>
+            ) : null}
+          </StandardPreview>
+        ) : null}
+      />
     </div>
   );
 };

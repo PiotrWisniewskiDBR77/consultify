@@ -55,7 +55,7 @@ import {
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
-import { MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { MetaChip, statusChipLabel, statusChipTone } from '@/components/ui/primitives/chips';
 import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 // AP_MOUNT §B — the four "finished, tested, unreachable" Finance v3 (AP-09/10/11)
 // detail workspaces (Prediction/Baseline/Analysis/Valuation, Pakiety G/F/E/H) each
@@ -72,6 +72,9 @@ import { useFinanceStatementPackWorkspaceV2Flag } from '@/hooks/useFinanceStatem
 import { useFinanceValuationWorkspaceFlag } from '@/hooks/useFinanceValuationWorkspaceFlag';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
+import { statementPackStateSentence } from '@/components/Finance/statementReadinessCopy';
+import { financeArtifactDisplayTitle } from '@/labels/financeArtifactTitle';
+import { financeLineLabel } from '@/labels/financeLineLabels';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { getFinanceArtifact } from '@/services/api/financeV2.api';
@@ -316,11 +319,14 @@ function CanonicalFinanceDirectWorkspace({
       {resolution.workspace === 'statementPackV2' ? (
         <FinanceV3StatementPackWorkspace
           businessVersionId={businessVersionId}
-          displayName={
-            artifact.naturalKey || t('finance.statementPack.title', 'Financial statement')
-          }
-          resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
-            lineCode ?? canonicalLineId ?? rowKey
+          displayName={financeArtifactDisplayTitle({
+            displayName: artifact.displayName,
+            naturalKey: artifact.naturalKey,
+            artifactType: 'STATEMENT_PACK',
+            genericFallback: t('finance.statementPack.title', 'Sprawozdanie finansowe'),
+          })}
+          resolveLineLabel={(rowKey, canonicalLineId, lineCode, taxonomyNames) =>
+            financeLineLabel(lineCode ?? canonicalLineId ?? rowKey, { fallback: taxonomyNames })
           }
           onOpenArtifact={() => undefined}
           onCreateNew={() => undefined}
@@ -1684,6 +1690,7 @@ export const FinanceHub: React.FC = () => {
       id: 'type',
       label: t('common.type', 'Type'),
       width: '80px',
+      dataType: 'status',
       render: (row: FinanceRow) => (
         <div className="flex items-center gap-2">
           {KIND_ICONS[row.kind]}
@@ -1712,6 +1719,7 @@ export const FinanceHub: React.FC = () => {
       id: 'status',
       label: t('common.status', 'Status'),
       width: '140px',
+      dataType: 'status',
       filterable: true,
       filterOptions: statusFilterOptions,
     }),
@@ -1722,7 +1730,8 @@ export const FinanceHub: React.FC = () => {
     () => ({
       id: 'updatedAt',
       label: t('common.updated', 'Updated'),
-      width: '120px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
     }),
     [t]
@@ -1761,6 +1770,14 @@ export const FinanceHub: React.FC = () => {
           id: 'currency',
           label: t('common.currency', 'Currency'),
           width: '90px',
+          // Kod waluty ("PLN") jest krótką, zwartą wartością — podłoga
+          // domyślna dla `dataType` nieustawionego ('text' → 140px) jest
+          // znacznie szersza niż faktycznie potrzebna. Przy 8 kolumnach
+          // zakładki Sprawozdania (natural width > dostępny obszar 1440px)
+          // `columnFit` schodzi WSZYSTKIE kolumny do podłóg — bez tego
+          // 'currency' zabierała 140px z budżetu, który powinien trafić
+          // do kolumny "Aktualizacja" (patrz komentarz przy `baseUpdatedCol`).
+          dataType: 'number',
           filterable: true,
           filterOptions: currencyFilterOptions,
           render: (row: FinanceRow) =>
@@ -1774,6 +1791,10 @@ export const FinanceHub: React.FC = () => {
           id: 'sourceStatementCount',
           label: t('finance.columns.mappedLines', 'Docs'),
           width: '90px',
+          // Liczba dokumentów źródłowych — tak jak 'currency' wyżej, wartość
+          // jest krótka (1-2 cyfry); bez `dataType` dostawała podłogę 'text'
+          // (140px), kradnąc budżet kolumnie "Aktualizacja".
+          dataType: 'number',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
               <span className="text-sm text-c-text-secondary">
@@ -1863,7 +1884,11 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.periods', 'Periods'),
           width: '100px',
           render: (row: FinanceRow) =>
-            row.kind === 'analysis' || row.kind === 'investment' ? (
+            // Rzut z rejestru kanonicznego świadomie NIE niesie pól domenowych
+            // (`canonicalRegistryProjection`) — „0 okresów" byłoby wtedy
+            // FAŁSZEM (analiza CD PROJEKT ma dwa), a nie brakiem danych.
+            // Uczciwy brak to kreska, nie zero.
+            (row.kind === 'analysis' || row.kind === 'investment') && row.periodCount > 0 ? (
               <span className="text-sm text-c-text-secondary">{row.periodCount}</span>
             ) : (
               <span className="text-sm text-c-text-muted">—</span>
@@ -2892,7 +2917,11 @@ export const FinanceHub: React.FC = () => {
               meta={{
                 pills: [
                   {
-                    label: String(selectedStatementRow.status || 'DRAFT'),
+                    // ★ Audyt FIN 2026-09-06 defekt #6: podgląd pokazywał surowe
+                    // „APPROVED", a tabela OBOK — „Zatwierdzone". Ta sama encja,
+                    // dwa napisy na jednym ekranie. Most `statusChip.*` istniał,
+                    // podgląd go nie wołał.
+                    label: statusChipLabel(selectedStatementRow.status || 'DRAFT', t),
                     tone: statusChipTone(selectedStatementRow.status),
                   },
                   {
@@ -2935,15 +2964,18 @@ export const FinanceHub: React.FC = () => {
                     value: `${selectedStatementRow.mappedLineCount ?? 0} / ${selectedStatementRow.totalLineCount ?? 0}`,
                     mono: true,
                   },
-                  ...(selectedStatementRow.readinessSummary
-                    ? [
-                        {
-                          id: 'packHealth',
-                          label: t('finance.statements.previewTitle', 'Pack health'),
-                          value: selectedStatementRow.readinessSummary,
-                        },
-                      ]
-                    : []),
+                  {
+                    id: 'packHealth',
+                    label: t('finance.statements.previewTitle', 'Stan pakietu'),
+                    // Zdanie składane po polsku ze STANU + KODÓW powodów, nigdy
+                    // z angielskiego `pack_quality_summary` z backendu
+                    // (audyt FIN 2026-09-06 defekt #8).
+                    value: statementPackStateSentence(
+                      selectedStatementRow.readinessStatus,
+                      selectedStatementRow.readinessReasonCodes,
+                      t
+                    ),
+                  },
                 ],
                 onCopy: () => {
                   void navigator.clipboard?.writeText(
@@ -3547,8 +3579,10 @@ export const FinanceHub: React.FC = () => {
                       <FinanceV3StatementPackWorkspace
                         businessVersionId={resolved.businessVersionId ?? ''}
                         displayName={activeDocument.title}
-                        resolveLineLabel={(rowKey, canonicalLineId, lineCode) =>
-                          lineCode ?? canonicalLineId ?? rowKey
+                        resolveLineLabel={(rowKey, canonicalLineId, lineCode, taxonomyNames) =>
+                          financeLineLabel(lineCode ?? canonicalLineId ?? rowKey, {
+                            fallback: taxonomyNames,
+                          })
                         }
                         onOpenArtifact={() => toast('Otwórz powiązany artefakt z listy Finance.')}
                         onCreateNew={(artifactType, sourceBusinessVersionId) =>
@@ -3985,7 +4019,11 @@ export const FinanceHub: React.FC = () => {
           <div className="flex items-center justify-center p-6">
             <div className="w-full max-w-3xl rounded-2xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-6">
               <div className="flex items-start gap-4">
-                <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-crimson-500/10 text-crimson-600 dark:text-crimson-300">
+                {/* CLAUDE.md reguła #1: crimson = WYŁĄCZNIE semantyka krytyczna.
+                    Pusty stan listy Modeli nie jest stanem krytycznym — ikona i CTA
+                    idą na neutralnych tokenach `c-*` (audyt FIN 2026-09-06 defekt #7,
+                    zmierzone pikselowo RGB 133,24,47 = #85182F). */}
+                <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-c-surface-raised text-c-text-secondary">
                   <Calculator size={20} />
                 </div>
                 <div className="min-w-0">
@@ -4002,7 +4040,7 @@ export const FinanceHub: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowCreateModelModal(true)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-crimson-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-crimson-700"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-c-text px-3.5 py-2 text-sm font-medium text-c-surface shadow-sm transition hover:opacity-90"
                     >
                       <Plus size={14} />
                       {t('finance.model.createModel', 'Create Financial Model')}
@@ -4021,7 +4059,7 @@ export const FinanceHub: React.FC = () => {
                           },
                         })
                       }
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-crimson-300 hover:text-crimson-700 dark:hover:text-crimson-300"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3.5 py-2 text-sm font-medium text-c-text-secondary transition hover:border-c-border hover:text-c-text"
                     >
                       <Sparkles size={14} />
                       {t('finance.model.emptyAskTeresa', 'Ask Teresa to start')}

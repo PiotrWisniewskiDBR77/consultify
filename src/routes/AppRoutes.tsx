@@ -16,11 +16,11 @@ import {
 
 import { ConversationRouteSync } from '@/components/AIChat/ConversationRouteSync';
 import { isCaseWorkspaceEnabled } from '@/components/CaseWorkspace/caseWorkspaceFlag';
+import { NotFoundPage } from '@/components/NotFoundPage';
 import { BetaGate, ProtectedRoute } from '@/components/ProtectedRoute';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { ResultsOwnerReviewEntry } from '@/components/Results/ResultsOwnerReviewEntry';
 import { AnimationWrapper } from '@/components/shared/AnimationWrapper';
-import { LoadingState } from '@/components/shared/states/LoadingState';
 import { V8UnavailableBanner } from '@/components/shared/V8UnavailableBanner';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
@@ -46,6 +46,7 @@ import { ProductEntryPage } from '@/views/ProductEntryPage';
 import { StudioUnavailableView } from '@/views/StudioUnavailableView';
 
 import { buildCanonicalRedirectTarget, buildCanonicalTabRedirectTarget } from './canonicalRedirect';
+import { DeferredRouteLoadingFallback } from './DeferredRouteLoadingFallback';
 import { LegacyAssessmentReportRedirect } from './LegacyAssessmentReportRedirect';
 import { LicensedToolsRedirect } from './LicensedToolsRedirect';
 import { buildMaterialsStudioBreadcrumb } from './materialsStudioBreadcrumb';
@@ -179,13 +180,25 @@ const KpiDeviationCaseSubview = lazyWithRetry(() =>
     default: m.default,
   }))
 );
-// Odrzucenie właściciela 2026-09-05 — POZIOM 3 („zbiór kart KPI") między
-// kartą KPI a kolejną kartą KPI. Patrz nagłówek `KpiCardSetPage.tsx`.
-const KpiCardSetPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/kpiTool/KpiCardSetPage').then((m) => ({
-    default: m.default,
-  }))
-);
+/**
+ * P7K (2026-09-05) — poziom 2 KPI to RAPORT jako tabela mierników pod
+ * `/results/kpi/scorecards/:scorecardId`, a nie siatka kafelków na osobnym,
+ * starym adresie. Strona siatki została usunięta; stary adres
+ * przekierowuje trwale, żeby linki zapisane 05.09 nie prowadziły donikąd.
+ */
+const KpiLegacyCardSetRedirect: React.FC = () => {
+  const { legacyScorecardId } = useParams<{ legacyScorecardId: string }>();
+  return (
+    <Navigate
+      replace
+      to={
+        legacyScorecardId
+          ? ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', legacyScorecardId)
+          : ROUTES.RESULTS_KPI.ROOT
+      }
+    />
+  );
+};
 // RN-G5 (2026-08-12) — full ROI Case tool (`/results/roi/cases/:roiCaseId`)
 // + full OKR Set tool (`/results/okr/sets/:okrSetId`) deep-link routes. D03
 // (klasa L, no big editors in a preview) is already binding — these mount
@@ -193,6 +206,14 @@ const KpiCardSetPage = lazyWithRetry(() =>
 // leaving them as unreachable dead constants. See
 // `src/components/ResultsVNext/roi/RoiCaseToolPage.tsx` /
 // `src/components/ResultsVNext/okr/OkrSetToolPage.tsx` headers.
+// ROI (P7K C) — karta analizy w trzech częściach (Założenia → Wyliczenia →
+// Realizacja) na `/results/roi/:roiCaseId`. To POZIOM 2 z SSOT §4, do czytania
+// analizy; `RoiCaseToolPage` niżej zostaje jako pełne narzędzie edycyjne.
+const RoiCaseCardPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/roi/card/RoiCaseCardPage').then((m) => ({
+    default: m.RoiCaseCardPage,
+  }))
+);
 const RoiCaseToolPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/roi/RoiCaseToolPage').then((m) => ({
     default: m.default,
@@ -204,24 +225,28 @@ const OkrSetToolPage = lazyWithRetry(() =>
   }))
 );
 
-// Odrzucenie właściciela 2026-09-05 („(…) mamy tabelę, pod nią kartę, piętro
-// niżej – zbiór kart, a poniżej kolejna karta") — trzy brakujące piętra
-// rodziny OKR: KARTA CELU (poziom 2), ZBIÓR kart kluczowych rezultatów
-// (poziom 3), KARTA kluczowego rezultatu (poziom 4). Zatwierdzony obraz
-// karty celu: `evidence/grafika/26-wyniki-karty-n/cel-jedna-karta__PO__*`.
+// OKR (P7K A) — TRZY poziomy formuły właściciela (SSOT §1): tabela raportów
+// → raport → karta celu. Poziomy 3 i 4 z 05.09 (zbiór kart KR i karta KR)
+// zostały USUNIĘTE razem ze swoimi stronami — kluczowy rezultat jest sekcją
+// karty celu, a stare adresy przekierowują (patrz trasy niżej).
 const OkrObjectiveCardPage = lazyWithRetry(() =>
   import('@/components/ResultsVNext/okr/OkrObjectiveCardPage').then((m) => ({
     default: m.OkrObjectiveCardPage,
   }))
 );
-const OkrKeyResultSetPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/okr/OkrKeyResultSetPage').then((m) => ({
-    default: m.OkrKeyResultSetPage,
+const OkrReportRegistryPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/p7k/OkrReportRegistryPage').then((m) => ({
+    default: m.OkrReportRegistryPage,
   }))
 );
-const OkrKeyResultCardPage = lazyWithRetry(() =>
-  import('@/components/ResultsVNext/okr/OkrKeyResultCardPage').then((m) => ({
-    default: m.OkrKeyResultCardPage,
+const OkrReportPage = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/p7k/OkrReportPage').then((m) => ({
+    default: m.OkrReportPage,
+  }))
+);
+const OkrKeyResultRedirect = lazyWithRetry(() =>
+  import('@/components/ResultsVNext/okr/p7k/OkrKeyResultRedirect').then((m) => ({
+    default: m.OkrKeyResultRedirect,
   }))
 );
 
@@ -579,14 +604,11 @@ const AuditReportDocumentView = lazyWithRetry(
 );
 
 // Assessment Output artifact screens (tor "wołacze" 2026-09-02): two
-// components built and visually accepted by Piotr but previously reachable
-// by ZERO routes (props `{ outputId: string | null }`, both read-only
-// against the frozen method-core Output — GET /api/method/outputs/:id).
-// Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF) — see
-// src/utils/assessmentOutputArtifactsFlag.ts for why: the SCREENS have an
-// accept, the ENTRY POINT (kebab row in AssessmentOutputsTab + these
-// routes) has not yet been shown to Piotr on a dev-render screenshot
-// (CLAUDE.md #7).
+// components built and visually accepted by Piotr, reachable by these two
+// routes. Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON
+// since naprawa MVP 06.09 — evidence/audyt-mvp-20260906/A2/RAPORT_A2.md
+// poz. 5.2, BLOKER: route always redirected regardless of assessment
+// status) — see src/utils/assessmentOutputArtifactsFlag.ts.
 const AssessmentOutputReportView = lazyWithRetry(
   () => import('@/components/assessment/report/AssessmentReportView')
 );
@@ -858,10 +880,9 @@ const AuditReportDocumentRoute: React.FC = () => {
  * outputId that identifies a row in `AssessmentOutputsTab.tsx` (Assessment
  * → zakładka "Wnioski"/Outputs) — that table's kebab is the intended
  * entry point.
- * Flag-gated (`isAssessmentOutputArtifactsEnabled`, default OFF): OFF →
- * redirects to the Outputs tab so the route is a no-op for every user
- * until Piotr accepts the visual on a dev-render screenshot (canon: "Piotr
- * nigdy nie jest pierwszym testerem wizualnym").
+ * Flag-gated (`isAssessmentOutputArtifactsEnabled`, default ON since
+ * naprawa MVP 06.09 — decyzja CTO). OFF (opt-out awaryjny) → redirects to
+ * the Outputs tab, exactly as before this route existed.
  */
 export const AssessmentOutputReportRoute: React.FC = () => {
   const params = useParams<{ outputId: string }>();
@@ -1162,13 +1183,7 @@ export const AppRoutes: React.FC = () => {
   );
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-        </div>
-      }
-    >
+    <Suspense fallback={<DeferredRouteLoadingFallback />}>
       <Routes>
         {/* ============================================ */}
         {/* PUBLIC ROUTES - No MainLayout wrapper        */}
@@ -2611,7 +2626,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('sidebar.materialy', 'Materials'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                 ]
               }
@@ -2635,7 +2650,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout
               breadcrumbs={
                 breadcrumbs || [
-                  t('sidebar.outputsLibrary', 'Outputs'),
+                  t('sidebar.materialy', 'Materials'),
                   t('sidebar.reportsBuilder', 'Report Builder'),
                   t('common.edit', 'Edit'),
                 ]
@@ -2858,7 +2873,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.outputsLibrary', 'Outputs'),
+                    t('sidebar.materialy', 'Materials'),
                     t('rap.breadcrumb.deckBuilder', 'Deck Builder'),
                   ]
                 }
@@ -2977,7 +2992,7 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.RESULTS}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki')]} noPadding>
                 <ProductionModuleGate
                   enabled={!hideNonCoreModulesOnPublicProduction}
                   moduleName="Results"
@@ -3003,7 +3018,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'KPI']
                 }
                 noPadding
               >
@@ -3031,7 +3046,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'KPI',
                     t('results.kpiScorecard', 'Scorecard'),
                   ]
@@ -3065,7 +3080,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'KPI']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'KPI']
                 }
                 noPadding
               >
@@ -3081,37 +3096,12 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* POZIOM 2 trzypoziomowej formuły KPI (odrzucenie właściciela
-            2026-09-05): LISTA zestawienia — jego opis i pozycje. Wchodzi się
-            tu z tabeli zestawień (`RESULTS_KPI.ROOT`), wychodzi w kartę N
-            wskaźnika (`RESULTS_KPI.TOOL`). Ekran sam renderuje ścieżkę
-            poziomów w Menu 1 (`StandardModuleBar breadcrumbs`), tak jak karta
-            KPI renderuje swoją (`ArtifactBreadcrumb`). */}
+        {/* P7K — trwałe przekierowanie starego adresu poziomu 2 na raport
+            (`RESULTS_KPI.SCORECARD`). Bez tego linki zapisane 05.09
+            prowadziłyby do nieistniejącej trasy. */}
         <Route
-          path={ROUTES.RESULTS_KPI.CARD_SET}
-          element={
-            <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.results', 'Results'),
-                    'KPI',
-                    t('results.kpiCardSet', 'KPI card set'),
-                  ]
-                }
-                noPadding
-              >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Results"
-                >
-                  <RouteErrorBoundary>
-                    <KpiCardSetPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
-          }
+          path={ROUTES.RESULTS_KPI.CARD_SET_REDIRECT}
+          element={<KpiLegacyCardSetRedirect />}
         />
         <Route
           path={ROUTES.RESULTS_KPI.DEVIATION_CASE}
@@ -3120,7 +3110,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'KPI',
                     t('results.kpiDeviationCase', 'Deviation case'),
                   ]
@@ -3145,7 +3135,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'ROI']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']
                 }
                 noPadding
               >
@@ -3175,7 +3165,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'ROI']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']
                 }
                 noPadding
               >
@@ -3202,7 +3192,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'ROI',
                     t('results.roiPirOutcomes', 'PIR outcomes'),
                   ]
@@ -3221,13 +3211,38 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
+        {/* ROI (P7K C) — poziom 2 wg SSOT §4: karta analizy w trzech częściach.
+            Ten sam łańcuch uprawnień i ta sama flaga `roiRegistry`, co
+            ROUTES.RESULTS_ROI.ROOT wyżej. Deklarowana PO trasach statycznych
+            (`cases/:roiCaseId`, `pir-outcomes`), choć React Router v6 i tak
+            rankuje po specyficzności — kolejność jest tu dla czytającego. */}
+        <Route
+          path={ROUTES.RESULTS_ROI.CARD}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki'), 'ROI']}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <RoiCaseCardPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
         <Route
           path={ROUTES.RESULTS_OKR.ROOT}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'OKR']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']
                 }
                 noPadding
               >
@@ -3236,6 +3251,7 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
+                    {/* OKR (P7K A) — poziom 1: tabela raportów OKR. */}
                     <ResultsOkrRegistryPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
@@ -3252,7 +3268,7 @@ export const AppRoutes: React.FC = () => {
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
-                  breadcrumbs || [t('sidebar.results', 'Results'), 'OKR']
+                  breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']
                 }
                 noPadding
               >
@@ -3268,15 +3284,41 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* POZIOM 2 formuły OKR — karta celu jako karta N. Ekran sam renderuje pełną ścieżkę poziomów (ArtifactBreadcrumb). */}
+        {/* OKR (P7K A) — POZIOM 2: RAPORT OKR (tabela kluczowych rezultatów
+            zgrupowana temat → cel). Zadeklarowana PO `/results/okr/sets/…`,
+            `/results/okr/programs`, `/results/okr/cycles` i
+            `/results/okr/objectives/…`, ale to bez znaczenia: React Router v6
+            rankuje po specyficzności, a segment statyczny bije dynamiczny. */}
         <Route
-          path={ROUTES.RESULTS_OKR.OBJECTIVE}
+          path={ROUTES.RESULTS_OKR.REPORT}
+          element={
+            <BetaGate moduleId="MODULE_BENEFITS">
+              <MainLayout
+                breadcrumbs={breadcrumbs || [t('sidebar.results', 'Wyniki'), 'OKR']}
+                noPadding
+              >
+                <ProductionModuleGate
+                  enabled={!hideNonCoreModulesOnPublicProduction}
+                  moduleName="Results"
+                >
+                  <RouteErrorBoundary>
+                    <OkrReportPage />
+                  </RouteErrorBoundary>
+                </ProductionModuleGate>
+              </MainLayout>
+            </BetaGate>
+          }
+        />
+        {/* OKR (P7K A) — POZIOM 3: karta celu W KONTEKŚCIE raportu. Ekran sam
+            renderuje pełną ścieżkę poziomów (ArtifactBreadcrumb). */}
+        <Route
+          path={ROUTES.RESULTS_OKR.REPORT_OBJECTIVE}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'OKR',
                     t('results.okrObjectiveCard', 'Objective card'),
                   ]
@@ -3295,17 +3337,18 @@ export const AppRoutes: React.FC = () => {
             </BetaGate>
           }
         />
-        {/* POZIOM 3 formuły OKR — zbiór kart kluczowych rezultatów (StandardModuleBar + StandardGridCard). */}
+        {/* OKR (P7K A) — karta celu BEZ kontekstu raportu (link z wyrównania
+            do celu z innego zestawu); okruszek dociąga raport z `setId` celu. */}
         <Route
-          path={ROUTES.RESULTS_OKR.OBJECTIVE_KEY_RESULTS}
+          path={ROUTES.RESULTS_OKR.OBJECTIVE}
           element={
             <BetaGate moduleId="MODULE_BENEFITS">
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'OKR',
-                    t('results.okrKeyResultSet', 'Key result set'),
+                    t('results.okrObjectiveCard', 'Objective card'),
                   ]
                 }
                 noPadding
@@ -3315,39 +3358,22 @@ export const AppRoutes: React.FC = () => {
                   moduleName="Results"
                 >
                   <RouteErrorBoundary>
-                    <OkrKeyResultSetPage />
+                    <OkrObjectiveCardPage />
                   </RouteErrorBoundary>
                 </ProductionModuleGate>
               </MainLayout>
             </BetaGate>
           }
         />
-        {/* POZIOM 4 formuły OKR — kolejna karta, tym razem kluczowego rezultatu. */}
+        {/* OKR (P7K A) — dawne poziomy 3 i 4: PRZEKIEROWANIE na kartę celu.
+            Strony `OkrKeyResultSetPage`/`OkrKeyResultCardPage` usunięte. */}
+        <Route
+          path={ROUTES.RESULTS_OKR.OBJECTIVE_KEY_RESULTS}
+          element={<OkrKeyResultRedirect />}
+        />
         <Route
           path={ROUTES.RESULTS_OKR.OBJECTIVE_KEY_RESULT}
-          element={
-            <BetaGate moduleId="MODULE_BENEFITS">
-              <MainLayout
-                breadcrumbs={
-                  breadcrumbs || [
-                    t('sidebar.results', 'Results'),
-                    'OKR',
-                    t('results.okrKeyResultCard', 'Key result card'),
-                  ]
-                }
-                noPadding
-              >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Results"
-                >
-                  <RouteErrorBoundary>
-                    <OkrKeyResultCardPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
-              </MainLayout>
-            </BetaGate>
-          }
+          element={<OkrKeyResultRedirect />}
         />
         {/* RN-G3 lane `okr` full-tool task (2026-08-11) — Program/Cycle admin
             surfaces. Same entitlement chain + same internal `okrRegistry`
@@ -3360,7 +3386,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'OKR',
                     t('results.okrPrograms', 'Programs'),
                   ]
@@ -3386,7 +3412,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     'OKR',
                     t('results.okrCycles', 'Cycles'),
                   ]
@@ -3416,7 +3442,7 @@ export const AppRoutes: React.FC = () => {
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
-                    t('sidebar.results', 'Results'),
+                    t('sidebar.results', 'Wyniki'),
                     t('results.attention', 'Attention'),
                   ]
                 }
@@ -3806,14 +3832,21 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* 404 - Redirect based on auth status */}
+        {/* 404 — WAŻNY RAPORT_B #4: nieznana trasa dostaje realny ekran „Nie ma
+            takiej strony" po polsku, nie ciche przekierowanie. Zalogowany widzi
+            go WEWNĄTRZ powłoki aplikacji (MainLayout); niezalogowany — bez
+            powłoki, samodzielnie. Wszystkie znane legacy-przekierowania mają
+            własne dedykowane <Route> WYŻEJ w tym pliku i nigdy tu nie trafiają —
+            ten wildcard łapie WYŁĄCZNIE naprawdę nieznane adresy. */}
         <Route
           path="*"
           element={
             currentUser?.isAuthenticated ? (
-              <Navigate to={ROUTES.AI_CHAT} replace />
+              <MainLayout breadcrumbs={breadcrumbs || [t('notFoundPage.title', 'Nie ma takiej strony')]}>
+                <NotFoundPage />
+              </MainLayout>
             ) : (
-              <Navigate to={ROUTES.WELCOME} replace />
+              <NotFoundPage />
             )
           }
         />

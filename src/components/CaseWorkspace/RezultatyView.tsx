@@ -42,6 +42,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   ARTIFACT_IDENTITY,
   type ArtifactType,
@@ -1522,8 +1523,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
         </section>
       </div>
 
-      {selectedMeasurement ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
+      <JedenPrawyPanel rekord={selectedMeasurement ? (
           <StandardPreview
             title={selectedMeasurement.metricName || selectedMeasurement.metricKey}
             onClose={() => setSelection(null)}
@@ -1620,9 +1620,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               )}
             </div>
           </StandardPreview>
-        </aside>
       ) : selectedLink ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
           <StandardPreview
             title={linkedTypeLabel(selectedLink.artifactType, true) || selectedLink.artifactType}
             onClose={() => setSelection(null)}
@@ -1771,9 +1769,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               </p>
             )}
           </StandardPreview>
-        </aside>
       ) : selectedNodeResult ? (
-        <aside className="w-full shrink-0 lg:w-[380px]">
           <StandardPreview
             title={
               planNodeTypeLabel(selectedNodeResult.nodeType, true) || selectedNodeResult.nodeType
@@ -1951,8 +1947,7 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
               )}
             </div>
           </StandardPreview>
-        </aside>
-      ) : null}
+      ) : null} />
 
       {/* ═══════════════════════════════════════════════════════════════════
          POWIĄZANIA — trzy okna komend (poza kolumnami układu celowo: `fixed

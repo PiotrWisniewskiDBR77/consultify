@@ -17,6 +17,7 @@
  * routingu kreatorów, tylko przekazuje intencję dalej).
  */
 
+import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React from 'react';
 
 import {
@@ -108,7 +109,16 @@ export function RelatedArtifactsSection(props: RelatedArtifactsSectionProps): Re
                       data-testid={`related-artifacts-open-${edge.targetVersionId}`}
                       className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left text-[11px] text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
-                      <span className="truncate font-mono text-[10px]">v.{edge.targetVersionId.slice(0, 8)}</span>
+                      {/* ★ Audyt FIN 2026-09-06 defekt #12: tu stał skrócony hash
+                          wersji („v.d7b0b5de"). Hash jest identyfikatorem, nie
+                          nazwą — właściciel ma zobaczyć tytuł swojej analizy. */}
+                      <span className="truncate">
+                        {financeArtifactDisplayTitle({
+                          displayName: edge.targetDisplayName,
+                          naturalKey: edge.targetNaturalKey,
+                          artifactType: edge.targetArtifactType,
+                        })}
+                      </span>
                       <span className="shrink-0 text-[9px] text-c-text-muted">
                         {financeLineageTransformationKindLabel(edge.transformationKind || edge.edgeType)}
                       </span>

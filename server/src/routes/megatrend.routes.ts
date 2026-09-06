@@ -9,6 +9,7 @@ import { Response, Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
+import { megatrendService } from '../services/megatrendService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import logger from '../utils/Logger.js';
@@ -33,26 +34,6 @@ const respondIfUnavailable = (res: Response, err: unknown) => {
   return null;
 };
 
-// Megatrend Service interface
-interface MegatrendServiceInterface {
-  getBaselineTrends?: (industry?: string) => Promise<unknown>;
-  getRadarData?: (industry?: string) => Promise<unknown>;
-  getTrendDetail?: (id: string) => Promise<unknown>;
-  createCustomTrend?: (data: unknown, companyId: string) => Promise<unknown>;
-  updateCustomTrend?: (id: string, data: unknown, companyId: string) => Promise<unknown>;
-}
-
-// Dynamic import for MegatrendService (may not be migrated yet)
-let MegatrendService: MegatrendServiceInterface | null = null;
-
-try {
-  const megatrendModule = (await import('../models/megatrend.js')) as any;
-  MegatrendService = (megatrendModule.default || megatrendModule) as MegatrendServiceInterface;
-} catch {
-  // Service may not exist or not migrated yet
-  logger.warn('[Megatrend] Service not available');
-}
-
 // All routes require authentication
 router.use(verifyToken);
 
@@ -63,13 +44,13 @@ router.use(verifyToken);
 router.get(
   '/baseline',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!MegatrendService?.getBaselineTrends) {
+    if (!megatrendService) {
       return notConfigured(res);
     }
 
     try {
       const industry = req.query.industry as string | undefined;
-      const data = await MegatrendService.getBaselineTrends(industry);
+      const data = await megatrendService.getBaselineTrends(industry);
       return res.json(data);
     } catch (err: any) {
       const unavailable = respondIfUnavailable(res, err);
@@ -94,13 +75,13 @@ router.get(
 router.get(
   '/radar',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!MegatrendService?.getRadarData) {
+    if (!megatrendService) {
       return notConfigured(res);
     }
 
     try {
       const industry = req.query.industry as string | undefined;
-      const data = await MegatrendService.getRadarData(industry);
+      const data = await megatrendService.getRadarData(industry);
       return res.json(data);
     } catch (err: any) {
       const unavailable = respondIfUnavailable(res, err);
@@ -123,12 +104,12 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!MegatrendService?.getTrendDetail) {
+    if (!megatrendService) {
       return notConfigured(res);
     }
 
     try {
-      const detail = await MegatrendService.getTrendDetail(req.params.id);
+      const detail = await megatrendService.getTrendDetail(req.params.id);
       if (!detail) {
         return res.status(404).json({ error: 'Trend not found' });
       }
@@ -154,7 +135,7 @@ router.get(
 router.post(
   '/custom',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!MegatrendService?.createCustomTrend) {
+    if (!megatrendService) {
       return notConfigured(res);
     }
 
@@ -166,7 +147,7 @@ router.post(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const created = await MegatrendService.createCustomTrend(req.body, companyId);
+      const created = await megatrendService.createCustomTrend(req.body, companyId);
       return res.status(201).json(created);
     } catch (err: any) {
       // Write — NEVER fail-soft. Code + log with correlationId, no err.message leak.
@@ -188,7 +169,7 @@ router.post(
 router.put(
   '/custom/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (!MegatrendService?.updateCustomTrend) {
+    if (!megatrendService) {
       return notConfigured(res);
     }
 
@@ -200,7 +181,7 @@ router.put(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const updated = await MegatrendService.updateCustomTrend(req.params.id, req.body, companyId);
+      const updated = await megatrendService.updateCustomTrend(req.params.id, req.body, companyId);
       if (!updated) {
         return res.status(404).json({ error: 'Custom trend not found' });
       }

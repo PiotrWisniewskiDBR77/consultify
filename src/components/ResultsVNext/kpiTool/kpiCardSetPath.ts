@@ -11,9 +11,10 @@
  *   1. `/results/kpi`                            — TABELA ZESTAWIEŃ
  *      (rejestr grup wskaźników: nazwa · opis · liczba wskaźników ·
  *      właściciel · status · aktualizacja), `StandardTable` + `StandardPreview`.
- *   2. `/results/kpi/zestawienie/:scorecardId`    — LISTA zestawienia:
- *      nagłówek z nazwą i OPISEM zestawienia + jego pozycje jako
- *      `StandardGridCard`.
+ *   2. `/results/kpi/scorecards/:scorecardId`     — RAPORT: nagłówek raportu
+ *      + TABELA mierników grupowana po obszarze, z parą CEL/Rezultat na każdy
+ *      okres, YTD i STANEM (P7K, SSOT §6). Wcześniejsza siatka kafelków na
+ *      osobnym, starym adresie została usunięta — raport jest tabelą.
  *   3. `/results/kpi/:kpiId?zbior=<scorecardId>`  — KARTA N wskaźnika
  *      (`KpiToolPage`), ścieżka „Rejestr KPI › <zestawienie> › <wskaźnik>".
  *
@@ -48,12 +49,19 @@ export function isUnassignedCardSetId(id: string | null | undefined): boolean {
   return id === UNASSIGNED_CARD_SET_ID;
 }
 
-/** Poziom 2 — lista zestawienia (opis + pozycje). */
-export function kpiCardSetPath(scorecardId: string): string {
-  return `/results/kpi/zestawienie/${encodeURIComponent(scorecardId)}`;
+/**
+ * Poziom 2 — RAPORT KPI. Od P7K (2026-09-05) poziom 2 to tabela mierników
+ * raportu pod `/results/kpi/scorecards/:scorecardId`
+ * (`ResultsKpiScorecardDetailPage`). Osobna strona-siatka kafelków pod
+ * starym adresie ZOSTAŁA USUNIĘTA: raport jest TABELĄ, nie siatką kart
+ * (SSOT §6, korekta P7K §4). Stary adres
+ * przekierowuje tu trwale (`AppRoutes.tsx`, `RESULTS_KPI.CARD_SET_REDIRECT`).
+ */
+export function kpiReportPath(scorecardId: string): string {
+  return `/results/kpi/scorecards/${encodeURIComponent(scorecardId)}`;
 }
 
-/** Poziom 3 — karta N wskaźnika, z zapamiętanym zestawieniem w ścieżce. */
+/** Poziom 3 — karta N miernika, z zapamiętanym raportem w ścieżce. */
 export function kpiCardFromSetPath(kpiId: string, scorecardId: string): string {
   const qs = new URLSearchParams();
   qs.set(KPI_CARD_SET_PARAM, scorecardId);

@@ -130,6 +130,13 @@ export interface KpiScorecardDto {
   ownerName: string | null;
   reviewFrequency: KpiScorecardReviewFrequency;
   lifecycleStatus: KpiScorecardLifecycleStatus;
+  /* P7K — nagłówek raportu (SSOT §2: „zakład, rok, edycja, data rewizji,
+     przygotował"). `preparedBy*` spada do właściciela, gdy nikogo nie zapisano
+     osobno. */
+  editionLabel: string | null;
+  revisionDate: string | null;
+  preparedByUserId: string | null;
+  preparedByName: string | null;
   rowVersion: number;
   createdBy: string;
   createdAt: string;
@@ -145,9 +152,69 @@ export interface KpiScorecardItemDto {
   role: KpiScorecardItemRole;
   sortOrder: number;
   displayConfig: Record<string, unknown> | null;
+  /* ── P7K · kontrakt miernika w raporcie (SSOT §2) ─────────────────────────
+     Serwer składa te pola z kolumn pozycji raportu (migracja 20261124) z
+     fallbackiem na zapis seeda DBR77 w `display_config`, a jednostkę, kierunek,
+     częstotliwość, definicję, metodę i odpowiedzialnego dokłada joinem do
+     bieżącej wersji definicji. `null` znaczy „nie zadeklarowano" i UI pokazuje
+     „—", nigdy 0 i nigdy wartości zgadniętej. */
+  areaName: string | null;
+  superiorOwnerName: string | null;
+  indicatorType: 'settlement' | 'informational' | null;
+  benchmarkValue: number | null;
+  limitPercent: number | null;
+  unit: string | null;
+  targetGeometry: string | null;
+  measurementFrequencyDays: number | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  description: string | null;
+  formulaText: string | null;
   addedBy: string;
   addedByName: string | null;
   addedAt: string;
+}
+
+// ==========================================
+// P7K — matryca okresów raportu (poziom 2)
+// ==========================================
+
+export type KpiPerformanceStatusDto = 'on_target' | 'warning' | 'critical' | 'neutral';
+
+export interface ScorecardPeriodDefinitionDto {
+  key: string;
+  periodStart: string;
+  periodEnd: string;
+  isCurrent: boolean;
+}
+
+export interface ScorecardPeriodCellDto {
+  periodKey: string;
+  measurementId: string | null;
+  targetValue: number | null;
+  actualValue: number | null;
+  performanceStatus: KpiPerformanceStatusDto | null;
+  dataQualityStatus: string | null;
+}
+
+export interface ScorecardPeriodMatrixItemDto {
+  kpiId: string;
+  itemId: string;
+  cells: ScorecardPeriodCellDto[];
+  ytdTargetValue: number | null;
+  ytdActualValue: number | null;
+  ytdPerformanceStatus: KpiPerformanceStatusDto | null;
+  ytdAggregation: 'sum' | 'average' | 'unknown';
+  latestPerformanceStatus: KpiPerformanceStatusDto | null;
+  openDeviationCaseCount: number;
+}
+
+export interface ScorecardPeriodMatrixDto {
+  scorecardId: string;
+  year: number;
+  granularity: 'month' | 'quarter' | 'year';
+  periods: ScorecardPeriodDefinitionDto[];
+  items: ScorecardPeriodMatrixItemDto[];
 }
 
 /** One frozen KPI fact inside a published review snapshot — the ONLY place
@@ -204,8 +271,18 @@ export interface KpiScorecardReviewSnapshotDto {
 
 /** `GET /:scorecardId/status` response shape — "realne źródło stanu karty"
  * per the task brief; rendered as-is, no invented health thresholds/colors. */
+export interface ScorecardAreaStatusDistributionDto extends ScorecardStatusCountsDto {
+  /** `null` = pozycja bez zadeklarowanego obszaru („Bez obszaru"), nigdy doliczona do cudzej grupy. */
+  areaName: string | null;
+  totalVisible: number;
+}
+
 export interface ScorecardStatusDistributionDto extends ScorecardStatusCountsDto {
   totalVisible: number;
+  /** P7K — otwarte karty działania w raporcie (kolumna „OTWARTE DZIAŁANIA" na L1). */
+  openDeviationCases: number;
+  /** P7K — rozkład stanu per OBSZAR (podgląd raportu KPI, paczka §14). */
+  byArea: ScorecardAreaStatusDistributionDto[];
 }
 
 // ==========================================
@@ -295,6 +372,27 @@ export async function getKpiScorecardStatusDistribution(
     `/vnext/results/kpi/scorecards/${encodeURIComponent(scorecardId)}/status${qs}`
   );
   return resp?.distribution as ScorecardStatusDistributionDto;
+}
+
+// ==========================================
+// getScorecardPeriodMatrix — GET .../periods (P7K)
+//
+// Jedno wywołanie na CAŁY raport. Alternatywa (`GET /kpi/:kpiId/measurements`
+// per miernik) to 138 przelotów dla raportu właściciela.
+// ==========================================
+
+export async function getKpiScorecardPeriodMatrix(
+  scorecardId: string,
+  params: { year?: number; granularity?: 'month' | 'quarter' | 'year' } = {}
+): Promise<ScorecardPeriodMatrixDto | null> {
+  const qs = new URLSearchParams();
+  if (params.year !== undefined) qs.set('year', String(params.year));
+  if (params.granularity) qs.set('granularity', params.granularity);
+  const query = qs.toString();
+  const resp = await Api.get(
+    `/vnext/results/kpi/scorecards/${encodeURIComponent(scorecardId)}/periods${query ? `?${query}` : ''}`
+  );
+  return (resp?.matrix ?? null) as ScorecardPeriodMatrixDto | null;
 }
 
 // ==========================================

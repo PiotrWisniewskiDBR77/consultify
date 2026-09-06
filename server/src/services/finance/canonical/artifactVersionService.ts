@@ -118,6 +118,13 @@ export interface ArtifactRow {
   organization_id: string;
   artifact_type: FinanceArtifactType;
   natural_key: string | null;
+  /**
+   * Nazwa widoczna dla użytkownika (migracja `20261102_finance_artifact_display_name.sql`).
+   * `null` = artefakt nie ma własnej nazwy — prezentacja cofa się do `natural_key`,
+   * o ile ten nie jest kluczem technicznym. NIGDY nie mylić z `natural_key`, który
+   * jest kluczem idempotencji seedów/backfillu, a nie tytułem.
+   */
+  display_name: string | null;
   current_business_version_id: string | null;
   created_by: string | null;
   created_at: string;
@@ -209,8 +216,12 @@ export async function renameArtifact(
 ): Promise<ArtifactRow | null> {
   return withPinnedPostgresTransaction((tx) =>
     tx.queryOne<ArtifactRow>(
-      `UPDATE finance_artifacts SET natural_key = ? WHERE artifact_id = ? AND organization_id = ? RETURNING *`,
-      [naturalKey, artifactId, organizationId]
+      // Zmiana nazwy w pasku tożsamości ustawia OBIE kolumny: `display_name`
+      // (nazwa dla człowieka — to ona jest odtąd renderowana) oraz `natural_key`
+      // (zachowane, bo dotychczasowe zachowanie i unikalność w organizacji na nim
+      // stoją; zmiana tylko jednej kolumny rozjechałaby stare artefakty z nowymi).
+      `UPDATE finance_artifacts SET natural_key = ?, display_name = ? WHERE artifact_id = ? AND organization_id = ? RETURNING *`,
+      [naturalKey, naturalKey, artifactId, organizationId]
     )
   );
 }

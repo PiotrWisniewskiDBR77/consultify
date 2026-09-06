@@ -30,6 +30,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 import { cn } from '@/utils/cn';
@@ -310,8 +311,7 @@ export const PromptRegistryTab: React.FC = () => {
             />
           </div>
 
-          {previewRow ? (
-            <aside className="w-[380px] shrink-0 bg-c-surface-raised p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewRow ? (
               <StandardPreview
                 title={previewRow.id}
                 onClose={() => setPreviewId(null)}
@@ -343,8 +343,7 @@ export const PromptRegistryTab: React.FC = () => {
                   },
                 }}
               />
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
     </div>

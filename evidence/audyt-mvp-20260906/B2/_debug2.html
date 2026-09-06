@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="pl" class="dark"><head>
+  <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+  <script type="module" src="/@vite/client"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-JTLZ5Z6W0H"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-JTLZ5Z6W0H');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultify — Transformation AI Consulting Platform</title>
+  <meta name="description" content="Consultify combines human governance with AI acceleration to transform enterprise strategy, PMO, and decision-making. Trusted by organizations worldwide.">
+  <meta name="theme-color" content="#A51C30">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Consultify">
+
+  <!-- OpenGraph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Consultify — Transformation AI Consulting Platform">
+  <meta property="og:description" content="Consultify combines human governance with AI acceleration to transform enterprise strategy, PMO, and decision-making.">
+  <meta property="og:image" content="/assets/og-share.png">
+  <meta property="og:url" content="https://consultinity.com">
+  <meta property="og:site_name" content="Consultify">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Consultify — Transformation AI Consulting Platform">
+  <meta name="twitter:description" content="Consultify combines human governance with AI acceleration to transform enterprise strategy, PMO, and decision-making.">
+  <meta name="twitter:image" content="/assets/og-share.png">
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+JP:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+
+  <script>
+    (function () {
+      var cacheSelfHealMarker = '__consultify_hard_reset_done_v4';
+      var host = String(location.hostname || '').toLowerCase();
+      var isCacheSensitiveHost =
+        host === 'consultify.ai' ||
+        host === 'www.consultify.ai' ||
+        host === 'demo.consultify.ai' ||
+        host === 'stage.consultinity.ai' ||
+        host === 'stage.consultify.ai' ||
+        host === 'staging.consultify.ai';
+      if (!isCacheSensitiveHost) return;
+
+      var cleanupTasks = [];
+
+      if ('serviceWorker' in navigator) {
+        cleanupTasks.push(navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          registrations.forEach(function (registration) {
+            registration.unregister().catch(function () {});
+          });
+        }));
+      }
+
+      if ('caches' in window) {
+        cleanupTasks.push(caches.keys().then(function (keys) {
+          keys.forEach(function (key) {
+            var isKnownAppCache =
+              key.indexOf('consultify-') === 0 ||
+              key.indexOf('workbox-') === 0 ||
+              key.indexOf('vite-') === 0 ||
+              key.indexOf('sw-precache-') === 0;
+            if (isKnownAppCache) {
+              caches.delete(key).catch(function () {});
+            }
+          });
+        }));
+      }
+
+      try {
+        if (sessionStorage.getItem(cacheSelfHealMarker) !== '1') {
+          sessionStorage.setItem(cacheSelfHealMarker, '1');
+          window.__consultifyBlockAppBoot = true;
+          Promise.allSettled(cleanupTasks).finally(function () {
+            location.replace(location.href);
+          });
+        }
+      } catch (error) {
+        window.__consultifyBlockAppBoot = false;
+      }
+    })();
+  </script>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx?t=1788643487641"></script>
+
+
+</body></html>

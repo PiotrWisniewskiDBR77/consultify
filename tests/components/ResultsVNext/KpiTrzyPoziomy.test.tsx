@@ -1,43 +1,41 @@
 /**
  * @vitest-environment jsdom
  *
- * TRZYPOZIOMOWA FORMUŁA KPI — odrzucenie właściciela 2026-09-05 (cytat):
- *   „To nie jest, niestety, to, co wcześniej zgłosiliśmy i omawialiśmy.
- *    Omawialiśmy tabelę; z poziomu tabeli otwiera się lista. Lista ma opis
- *    KPI, kilka pozycji, a każdy KPI ma swoją kartę typu N. Tego tu nie mamy
- *    teraz."
+ * TRZY POZIOMY WYNIKÓW → KPI (SSOT `docs/modules/07_rezultaty/
+ * SSOT_WYNIKI_KPI_OKR_ROI.md` §1 i §6, korekta P7K §4):
  *
- * Ten test pilnuje STANU NAWIGACJI całej formuły, nie wyglądu:
- *   poziom 1 (`ResultsKpiRegistryPage`) — TABELA ZESTAWIEŃ: nazwa, opis,
- *          liczba wskaźników, wiersz systemowy „Bez zestawienia";
- *          dwuklik w wiersz otwiera LISTĘ zestawienia;
- *   poziom 2 (`KpiCardSetPage`)         — LISTA: nagłówek z nazwą i OPISEM
- *          zestawienia + pozycje; klik w pozycję otwiera kartę wskaźnika;
- *   poziom 3 (`KpiToolPage`)            — karta N wskaźnika ze ŚCIEŻKĄ
- *          „Rejestr KPI › <zestawienie> › <wskaźnik>".
+ *   poziom 1  `/results/kpi`                       — TABELA RAPORTÓW
+ *             (nazwa · zakres · OKRES · mierniki · STAN · otwarte działania ·
+ *             przygotował · aktualizacja). Płaska lista wszystkich wskaźników
+ *             NIE jest punktem wejścia — pigułki „Wszystkie wskaźniki" nie ma.
+ *   poziom 2  `/results/kpi/scorecards/:scorecardId` — RAPORT: tabela mierników
+ *             grupowana po OBSZARZE, z parą CEL/Rezultat na okres, YTD i STANEM.
+ *   poziom 3  `/results/kpi/:kpiId?zbior=<raport>`   — KARTA N miernika,
+ *             ścieżka „Rejestr KPI › <raport> › <miernik>".
  *
- * BADANIE MUTACYJNE (wykonane 2026-09-05, opisane w teście „kolejność
- * poziomów"): test porównuje ścieżkę jako UPORZĄDKOWANĄ TABLICĘ etykiet i
- * cele nawigacji jako pełne adresy, więc odwrócenie kolejności poziomów
- * (np. powrót do odrzuconej formuły „tabela → karta → zbiór → karta", gdzie
- * zestawienie leży POD wskaźnikiem) wywraca go natychmiast: adres poziomu 2
- * zawierałby wtedy `kpiId`, a środkowym stopniem ścieżki byłaby karta KPI.
+ * BADANIE MUTACYJNE — test pilnuje KOLEJNOŚCI poziomów, nie wyglądu:
+ *   (a) cel nawigacji z poziomu 1 porównywany jako PEŁNY adres, więc
+ *       przywrócenie usuniętej trasy `/results/kpi/zestawienie/:id` albo
+ *       odwrócenie poziomów („karta → zbiór kart") natychmiast go wywraca;
+ *   (b) `ROUTES.RESULTS_KPI` nie może znowu mieć klucza `CARD_SET` —
+ *       dopisanie go z powrotem wywraca test;
+ *   (c) ścieżka poziomu 3 porównywana jako UPORZĄDKOWANA tablica etykiet,
+ *       więc raport MUSI stać między rejestrem a miernikiem.
  *
  * Konwencja mockowania 1:1 z `KpiToolPage.test.tsx` (mock `Api` na granicy
  * modułu + `useNavigate` jako szpieg — żywa podmiana trasy po `navigate()`
  * jest w tym repo niestabilna w jsdom/React 19/RRDv7; `useParams`/
- * `useSearchParams` zostają PRAWDZIWE, więc wejście w trasę jest ćwiczone
- * uczciwie).
+ * `useSearchParams` zostają PRAWDZIWE).
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
     i18n: { language: 'pl' },
   }),
   initReactI18next: { type: '3rdParty', init: () => {} },
@@ -48,8 +46,11 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 vi.mock('@/store/useAppStore', () => ({
-  useAppStore: (selector: (s: { currentUser: unknown }) => unknown) =>
-    selector({ currentUser: { id: 'user-owner', firstName: 'Piotr', role: 'ADMIN' } }),
+  useAppStore: (selector: (s: { currentUser: unknown; currentOrganization: unknown }) => unknown) =>
+    selector({
+      currentUser: { id: 'user-owner', firstName: 'Piotr', role: 'ADMIN' },
+      currentOrganization: { id: 'org-1', name: 'DBR77' },
+    }),
 }));
 
 vi.mock('@/services/api', () => ({
@@ -66,7 +67,7 @@ vi.mock('react-router-dom', async () => {
 
 import { Api } from '@/services/api';
 import { KpiToolPage } from '../../../src/components/ResultsVNext/kpiTool/KpiToolPage';
-import { KpiCardSetPage } from '../../../src/components/ResultsVNext/kpiTool/KpiCardSetPage';
+import { ResultsKpiScorecardDetailPage } from '../../../src/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage';
 import { ResultsKpiRegistryPage } from '../../../src/components/ResultsVNext/ResultsKpiRegistryPage';
 import { ROUTES } from '../../../src/routes/routeConfig';
 
@@ -90,27 +91,34 @@ const KPI_ROW = {
   updatedAt: '2026-08-01T00:00:00.000Z',
 };
 
-const CHILD_KPI_ROW = { ...KPI_ROW, kpiId: CHILD_KPI_ID, kpiCode: 'KPI-SMED-002', name: 'Czas przezbrojenia' };
+const CHILD_KPI_ROW = {
+  ...KPI_ROW,
+  kpiId: CHILD_KPI_ID,
+  kpiCode: 'KPI-SMED-002',
+  name: 'Czas przezbrojenia',
+};
 
 const SCORECARD_ROW = {
   scorecardId: SCORECARD_ID,
   organizationId: 'org-1',
   name: 'Przegląd operacyjny Q3',
-  description: 'Zestawienie wskaźników linii pakowania',
+  description: 'Raport wskaźników linii pakowania',
   scopeType: 'business_unit',
   scopeId: null,
   ownerUserId: 'user-owner',
   ownerName: 'Anna Kowalczyk',
   reviewFrequency: 'monthly',
   lifecycleStatus: 'active',
+  editionLabel: null,
+  revisionDate: null,
+  preparedByUserId: 'user-owner',
+  preparedByName: 'Anna Kowalczyk',
   rowVersion: 1,
   createdBy: 'user-owner',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-08-01T00:00:00.000Z',
 };
 
-/** Zestawienie ma JEDNĄ pozycję (`CHILD_KPI_ID`) — `KPI_ID` zostaje poza nim,
- * więc poziom 1 MUSI pokazać wiersz systemowy „Bez zestawienia". */
 const SCORECARD_ITEMS = [
   {
     itemId: 'item-1',
@@ -121,21 +129,92 @@ const SCORECARD_ITEMS = [
     role: 'primary',
     sortOrder: 1,
     displayConfig: null,
+    areaName: 'PRODUKCJA',
+    superiorOwnerName: 'Dyrektor Operacyjny',
+    indicatorType: 'settlement',
+    benchmarkValue: 28,
+    limitPercent: 5,
+    unit: 'min',
+    targetGeometry: 'threshold_max',
+    measurementFrequencyDays: 30,
+    ownerUserId: 'user-owner',
+    ownerName: 'Marek Zieliński',
+    description: null,
+    formulaText: null,
     addedBy: 'user-owner',
     addedByName: 'Anna Kowalczyk',
     addedAt: '2026-02-01T00:00:00.000Z',
   },
 ];
 
+const STATUS_DISTRIBUTION = {
+  safe: 3,
+  warning: 2,
+  critical: 1,
+  missing: 4,
+  totalVisible: 10,
+  openDeviationCases: 7,
+  byArea: [
+    { areaName: 'PRODUKCJA', safe: 3, warning: 2, critical: 1, missing: 4, totalVisible: 10 },
+  ],
+};
+
+const PERIOD_MATRIX = {
+  scorecardId: SCORECARD_ID,
+  year: 2026,
+  granularity: 'month' as const,
+  periods: [
+    {
+      key: '2026-07',
+      periodStart: '2026-07-01T00:00:00.000Z',
+      periodEnd: '2026-07-31T23:59:59.999Z',
+      isCurrent: false,
+    },
+    {
+      key: '2026-08',
+      periodStart: '2026-08-01T00:00:00.000Z',
+      periodEnd: '2026-08-31T23:59:59.999Z',
+      isCurrent: true,
+    },
+  ],
+  items: [
+    {
+      kpiId: CHILD_KPI_ID,
+      itemId: 'item-1',
+      cells: [
+        {
+          periodKey: '2026-07',
+          measurementId: 'm-07',
+          targetValue: 30,
+          actualValue: 31,
+          performanceStatus: 'warning',
+          dataQualityStatus: 'verified',
+        },
+        {
+          periodKey: '2026-08',
+          measurementId: null,
+          targetValue: null,
+          actualValue: null,
+          performanceStatus: null,
+          dataQualityStatus: null,
+        },
+      ],
+      ytdTargetValue: 30,
+      ytdActualValue: 31,
+      ytdPerformanceStatus: 'warning',
+      ytdAggregation: 'sum' as const,
+      latestPerformanceStatus: 'warning',
+      openDeviationCaseCount: 1,
+    },
+  ],
+};
+
 function mockApi(overrides: Record<string, unknown> = {}) {
   vi.mocked(Api.get).mockImplementation(async (url: string) => {
     if (url.startsWith('/vnext/results/kpi/scorecards?')) {
       return overrides.scorecards ?? { scorecards: [SCORECARD_ROW] };
     }
-    if (url === `/vnext/results/kpi/scorecards/for-kpi/${KPI_ID}`) {
-      return overrides.forKpi ?? { scorecards: [SCORECARD_ROW] };
-    }
-    if (url === `/vnext/results/kpi/scorecards/for-kpi/${CHILD_KPI_ID}`) {
+    if (url.startsWith('/vnext/results/kpi/scorecards/for-kpi/')) {
       return { scorecards: [SCORECARD_ROW] };
     }
     if (url === `/vnext/results/kpi/scorecards/${SCORECARD_ID}`) {
@@ -144,16 +223,26 @@ function mockApi(overrides: Record<string, unknown> = {}) {
     if (url === `/vnext/results/kpi/scorecards/${SCORECARD_ID}/items`) {
       return overrides.items ?? { items: SCORECARD_ITEMS };
     }
-    if (url === `/vnext/results/kpi/scorecards/${SCORECARD_ID}/review-snapshots/published`) {
+    if (url === `/vnext/results/kpi/scorecards/${SCORECARD_ID}/status`) {
+      return { distribution: STATUS_DISTRIBUTION };
+    }
+    if (url.startsWith(`/vnext/results/kpi/scorecards/${SCORECARD_ID}/periods`)) {
+      return { matrix: overrides.matrix ?? PERIOD_MATRIX };
+    }
+    if (url.includes('/review-snapshots/published')) {
       return overrides.published ?? { snapshot: null };
     }
+    if (url.includes('/review-snapshots')) return { snapshots: [] };
     if (url.startsWith('/vnext/results/kpi?')) {
       return { kpis: [KPI_ROW, CHILD_KPI_ROW] };
     }
     if (url === `/vnext/results/kpi/${KPI_ID}` || url.startsWith(`/vnext/results/kpi/${KPI_ID}?`)) {
       return { kpi: KPI_ROW };
     }
-    if (url === `/vnext/results/kpi/${CHILD_KPI_ID}` || url.startsWith(`/vnext/results/kpi/${CHILD_KPI_ID}?`)) {
+    if (
+      url === `/vnext/results/kpi/${CHILD_KPI_ID}` ||
+      url.startsWith(`/vnext/results/kpi/${CHILD_KPI_ID}?`)
+    ) {
       return { kpi: CHILD_KPI_ROW };
     }
     if (url.includes('/measurements')) return { measurements: [] };
@@ -173,6 +262,16 @@ function renderRegistry() {
   );
 }
 
+function renderReport(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path={ROUTES.RESULTS_KPI.SCORECARD} element={<ResultsKpiScorecardDetailPage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
 function renderTool(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -183,18 +282,7 @@ function renderTool(path: string) {
   );
 }
 
-function renderCardSet(path: string) {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path={ROUTES.RESULTS_KPI.CARD_SET} element={<KpiCardSetPage />} />
-      </Routes>
-    </MemoryRouter>
-  );
-}
-
-/** Etykiety ścieżki poziomów W KOLEJNOŚCI — porównywane jako tablica, nie jako
- * zbiór, bo to KOLEJNOŚĆ poziomów była przedmiotem odrzucenia. */
+/** Etykiety ścieżki poziomów W KOLEJNOŚCI — tablica, nie zbiór. */
 async function breadcrumbLabels(): Promise<string[]> {
   const nav = await screen.findByRole('navigation', { name: 'Breadcrumb' });
   return Array.from(nav.querySelectorAll('button, span'))
@@ -202,96 +290,123 @@ async function breadcrumbLabels(): Promise<string[]> {
     .filter(Boolean);
 }
 
-describe('KPI — trzypoziomowa formuła: tabela zestawień → lista → karta N', () => {
+describe('KPI — trzy poziomy: tabela raportów → raport → karta N', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
     window.localStorage.setItem('ff.results_vnext_kpi_registry', '1');
   });
 
-  it('POZIOM 1: domyślną tabelą /results/kpi są ZESTAWIENIA — z opisem i liczbą wskaźników', async () => {
+  it('POZIOM 1: /results/kpi to TABELA RAPORTÓW z okresem, stanem i otwartymi działaniami', async () => {
     mockApi();
     renderRegistry();
 
     await waitFor(() => expect(screen.getByText('Przegląd operacyjny Q3')).toBeInTheDocument());
-    expect(screen.getByText('Zestawienie wskaźników linii pakowania')).toBeInTheDocument();
-    // Kolumna „Liczba wskaźników" — realna liczba pozycji zestawienia (1).
-    // Do czasu policzenia pozycji kolumna pokazuje „—", NIE zero — dlatego
-    // czekamy na liczbę zamiast czytać pierwszy render.
+    // Kolumny SSOT §6 — nagłówki, nie wygląd.
+    expect(screen.getByText('NAZWA RAPORTU')).toBeInTheDocument();
+    expect(screen.getByText('OKRES')).toBeInTheDocument();
+    expect(screen.getByText('MIERNIKI')).toBeInTheDocument();
+    expect(screen.getByText('OTWARTE DZIAŁANIA')).toBeInTheDocument();
+
     await waitFor(() => {
       const row = screen.getByText('Przegląd operacyjny Q3').closest('tr') as HTMLElement;
-      expect(within(row).getByText('1')).toBeInTheDocument();
+      // MIERNIKI = `totalVisible` z rozkładu stanu, OTWARTE DZIAŁANIA = 7.
+      expect(within(row).getByText('10')).toBeInTheDocument();
+      expect(within(row).getByText('7')).toBeInTheDocument();
     });
   });
 
-  it('POZIOM 1: KPI spoza zestawień nie znika — dostaje wiersz systemowy „Bez zestawienia"', async () => {
+  it('POZIOM 1: pigułka „Wszystkie wskaźniki" ZNIKA — płaska lista nie jest punktem wejścia', async () => {
     mockApi();
     renderRegistry();
 
-    await waitFor(() => expect(screen.getByText('Bez zestawienia')).toBeInTheDocument());
-    await waitFor(() => {
-      const row = screen.getByText('Bez zestawienia').closest('tr') as HTMLElement;
-      // Jeden KPI (`KPI_ID`) nie należy do żadnego zestawienia.
-      expect(within(row).getByText('1')).toBeInTheDocument();
-      // Wiersz systemowy nie udaje rekordu: bez właściciela i bez daty.
-      expect(within(row).getAllByText('—').length).toBeGreaterThanOrEqual(2);
-    });
+    await waitFor(() => expect(screen.getByText('Przegląd operacyjny Q3')).toBeInTheDocument());
+    expect(screen.queryByText('Wszystkie wskaźniki')).not.toBeInTheDocument();
+    // Menu 3 ma DOKŁADNIE jedną akcję.
+    expect(screen.getByText('Nowy raport')).toBeInTheDocument();
   });
 
-  it('POZIOM 1 → 2: dwuklik w wiersz otwiera LISTĘ zestawienia (adres bez kpiId)', async () => {
+  it('POZIOM 1 → 2: dwuklik otwiera RAPORT pod /scorecards/:id (nie pod usuniętym adresem)', async () => {
     mockApi();
     renderRegistry();
 
     await waitFor(() => expect(screen.getByText('Przegląd operacyjny Q3')).toBeInTheDocument());
     fireEvent.doubleClick(screen.getByText('Przegląd operacyjny Q3'));
 
-    expect(navigateMock).toHaveBeenCalledWith(`/results/kpi/zestawienie/${SCORECARD_ID}`);
+    expect(navigateMock).toHaveBeenCalledWith(`/results/kpi/scorecards/${SCORECARD_ID}`);
+    // Mutacja (a): przywrócenie starej trasy poziomu 2 albo odwrócenie
+    // poziomów natychmiast wywraca oba twierdzenia poniżej.
+    expect(navigateMock).not.toHaveBeenCalledWith(expect.stringContaining('zestawienie'));
     expect(navigateMock).not.toHaveBeenCalledWith(expect.stringContaining(KPI_ID));
   });
 
-  it('POZIOM 2: lista ma NAZWĘ, OPIS zestawienia i jego pozycje', async () => {
-    mockApi();
-    renderCardSet(`/results/kpi/zestawienie/${SCORECARD_ID}`);
-
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-card-set-page')).toBeInTheDocument());
-
-    const header = await screen.findByTestId('kpi-card-set-header');
-    await waitFor(() => expect(header).toHaveTextContent('Przegląd operacyjny Q3'));
-    expect(await screen.findByTestId('kpi-card-set-description')).toHaveTextContent(
-      'Zestawienie wskaźników linii pakowania'
+  it('MUTACJA (b): trasa siatki kafelków poziomu 2 nie istnieje w konfiguracji', () => {
+    expect(ROUTES.RESULTS_KPI).not.toHaveProperty('CARD_SET');
+    expect(ROUTES.RESULTS_KPI.SCORECARD).toBe('/results/kpi/scorecards/:scorecardId');
+    // Stary adres zostaje WYŁĄCZNIE jako przekierowanie, z jawnie „starym"
+    // parametrem — żeby nie dało się go pomylić z żywą trasą poziomu 2.
+    expect(ROUTES.RESULTS_KPI.CARD_SET_REDIRECT).toBe(
+      '/results/kpi/zestawienie/:legacyScorecardId'
     );
-    expect(screen.getByTestId('kpi-card-set-count')).toHaveTextContent('Wskaźniki: 1');
-
-    const grid = await screen.findByTestId('kpi-card-set-grid');
-    expect(grid).toHaveTextContent('Czas przezbrojenia');
-    expect(grid).toHaveTextContent('Rola: Podstawowa');
   });
 
-  it('POZIOM 2: bez opublikowanej migawki NIE pokazujemy zmyślonych liczb, tylko uczciwy komunikat', async () => {
+  it('POZIOM 2: raport to TABELA mierników — grupa obszaru, para CEL/Rezultat, YTD i STAN', async () => {
     mockApi();
-    renderCardSet(`/results/kpi/zestawienie/${SCORECARD_ID}`);
+    renderReport(`/results/kpi/scorecards/${SCORECARD_ID}`);
 
-    const notice = await screen.findByTestId('kpi-card-set-snapshot-notice');
-    await waitFor(() => expect(notice).toHaveTextContent(/nie ma jeszcze opublikowanej migawki/i));
-    expect(screen.getByTestId('kpi-card-set-grid')).toHaveTextContent('—');
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-scorecard-detail-page')).toBeInTheDocument()
+    );
+    // Nagłówek raportu — nazwa jest i w okruszku Menu 1, i w nagłówku nad
+    // tabelą (dwa różne miejsca kanonu), więc liczymy WYSTĄPIENIA, nie jedno.
+    await waitFor(() =>
+      expect(screen.getAllByText('Przegląd operacyjny Q3').length).toBeGreaterThanOrEqual(2)
+    );
+    expect(
+      screen.getByTestId('results-vnext-kpi-registry-header')
+    ).toHaveTextContent('Przegląd operacyjny Q3');
+    // Wiersz grupy obszaru — JEDNA komórka na całą szerokość (werdykt K6).
+    const groupRow = await waitFor(() => {
+      const row = document.querySelector('tr[data-group-row="true"]') as HTMLElement | null;
+      expect(row).not.toBeNull();
+      return row as HTMLElement;
+    });
+    expect(groupRow).toHaveTextContent('PRODUKCJA');
+    expect(groupRow).toHaveTextContent('Dyrektor Operacyjny');
+    expect(groupRow.querySelectorAll('td')).toHaveLength(1);
+    // Kolumny okresów + YTD + STAN.
+    expect(screen.getByText('LIP 2026')).toBeInTheDocument();
+    expect(screen.getByText('SIE 2026')).toBeInTheDocument();
+    expect(screen.getByText('YTD')).toBeInTheDocument();
+    // Para CEL/Rezultat w komórce okresu, brak danych jako „—", nigdy 0.
+    const itemRow = screen.getByText('Czas przezbrojenia').closest('tr') as HTMLElement;
+    expect(within(itemRow).getAllByText('CEL').length).toBeGreaterThanOrEqual(2);
+    expect(within(itemRow).getAllByText('Rezultat').length).toBeGreaterThanOrEqual(2);
+    expect(within(itemRow).getAllByText('—').length).toBeGreaterThanOrEqual(2);
+    expect(within(itemRow).queryByText('0')).toBeNull();
+    // Akcja Menu 3 z SSOT.
+    expect(screen.getByText('Dodaj miernik')).toBeInTheDocument();
   });
 
-  it('POZIOM 2 → 3: klik w pozycję otwiera KARTĘ N wskaźnika z zapamiętanym zestawieniem', async () => {
+  it('POZIOM 2 → 3: dwuklik w miernik otwiera KARTĘ N z zapamiętanym raportem', async () => {
     mockApi();
-    renderCardSet(`/results/kpi/zestawienie/${SCORECARD_ID}`);
+    renderReport(`/results/kpi/scorecards/${SCORECARD_ID}`);
 
-    const grid = await screen.findByTestId('kpi-card-set-grid');
-    const user = userEvent.setup();
-    await user.click(grid.firstElementChild as HTMLElement);
+    await waitFor(() => expect(screen.getByText('Czas przezbrojenia')).toBeInTheDocument());
+    fireEvent.doubleClick(screen.getByText('Czas przezbrojenia'));
 
-    expect(navigateMock).toHaveBeenCalledWith(`/results/kpi/${CHILD_KPI_ID}?zbior=${SCORECARD_ID}`);
+    expect(navigateMock).toHaveBeenCalledWith(
+      `/results/kpi/${CHILD_KPI_ID}?zbior=${SCORECARD_ID}`
+    );
   });
 
   it('POZIOM 3: karta N ma DOKŁADNIE trzystopniową ścieżkę, w tej kolejności', async () => {
     mockApi();
     renderTool(`/results/kpi/${CHILD_KPI_ID}?zbior=${SCORECARD_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
 
     await waitFor(async () =>
       expect(await breadcrumbLabels()).toEqual([
@@ -302,11 +417,13 @@ describe('KPI — trzypoziomowa formuła: tabela zestawień → lista → karta 
     );
   });
 
-  it('POZIOM 3: stary adres bez parametru dalej działa — stopień zestawienia bierze się z REALNEJ przynależności', async () => {
+  it('POZIOM 3: adres bez parametru dalej działa — stopień raportu z REALNEJ przynależności', async () => {
     mockApi();
     renderTool(`/results/kpi/${KPI_ID}`);
 
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
 
     await waitFor(async () =>
       expect(await breadcrumbLabels()).toEqual([
@@ -317,29 +434,22 @@ describe('KPI — trzypoziomowa formuła: tabela zestawień → lista → karta 
     );
   });
 
-  it('KOLEJNOŚĆ POZIOMÓW (badanie mutacyjne): zestawienie leży NAD wskaźnikiem, nie pod nim', async () => {
+  it('MUTACJA (c): raport stoi MIĘDZY rejestrem a miernikiem, nie pod miernikiem', async () => {
     mockApi();
     renderTool(`/results/kpi/${CHILD_KPI_ID}?zbior=${SCORECARD_ID}`);
-    await waitFor(() => expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('results-vnext-kpi-tool-page')).toBeInTheDocument()
+    );
 
     const labels = await waitFor(async () => {
       const l = await breadcrumbLabels();
       expect(l).toHaveLength(3);
       return l;
     });
-
-    // Zestawienie jest ŚRODKOWYM stopniem — w odrzuconej formule
-    // („tabela → karta KPI → zbiór kart → kolejna karta") środkowym stopniem
-    // była KARTA KPI, a zestawienie stopniem trzecim.
-    expect(labels[1]).toBe('Przegląd operacyjny Q3');
-    expect(labels.indexOf('Przegląd operacyjny Q3')).toBeLessThan(labels.indexOf('Czas przezbrojenia'));
-    // Ścieżka NIE zawiera drugiej karty KPI (formuła ma trzy poziomy, nie cztery).
-    expect(labels).not.toContain('OEE linii pakowania');
-
-    // A wejście z listy prowadzi w kartę wskaźnika, nie w kolejne zestawienie.
-    const user = userEvent.setup();
-    const crumb = screen.getByRole('button', { name: 'Przegląd operacyjny Q3' });
-    await user.click(crumb);
-    expect(navigateMock).toHaveBeenCalledWith(`/results/kpi/zestawienie/${SCORECARD_ID}`);
+    expect(labels.indexOf('Przegląd operacyjny Q3')).toBe(1);
+    expect(labels.indexOf('Czas przezbrojenia')).toBe(2);
+    expect(labels.indexOf('Przegląd operacyjny Q3')).toBeLessThan(
+      labels.indexOf('Czas przezbrojenia')
+    );
   });
 });

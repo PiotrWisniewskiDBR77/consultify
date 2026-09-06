@@ -21,6 +21,12 @@
     "taskCreated": "Task created",
     "taskCreateFailed": "Could not create task"
   },
+  "notFoundPage": {
+    "title": "Page not found",
+    "message": "The address you followed doesn't exist or has moved.",
+    "backToChat": "Back to Chat",
+    "goBack": "Go back"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Actions",
@@ -524,17 +530,31 @@
         {
           "title": "Financial Intelligence",
           "description": "Consultify extends classic consulting with financial models, analysis, valuation, and forecasting.",
-          "bullets": ["Financial models", "Financial analysis", "Company valuation", "Forecasting"]
+          "bullets": [
+            "Financial models",
+            "Financial analysis",
+            "Company valuation",
+            "Forecasting"
+          ]
         },
         {
           "title": "Reports & Presentations",
           "description": "Consultify turns live work into reports, executive presentations, and consulting deliverables.",
-          "bullets": ["Reports", "Executive presentations", "Notes"]
+          "bullets": [
+            "Reports",
+            "Executive presentations",
+            "Notes"
+          ]
         },
         {
           "title": "My Work",
           "description": "Consultify gives teams a personal and shared workspace for follow-through after strategy work starts.",
-          "bullets": ["Tasks", "Decisions", "Ideas", "Initiatives"]
+          "bullets": [
+            "Tasks",
+            "Decisions",
+            "Ideas",
+            "Initiatives"
+          ]
         }
       ]
     },
@@ -693,37 +713,61 @@
           "badge": "AI Core",
           "title": "Strategic AI Advisor",
           "description": "AI analyzes your organization, identifies gaps, and generates a prioritized strategic roadmap — in minutes, not months.",
-          "highlights": ["Diagnostic Assessment", "Gap Analysis", "Benchmark vs. Industry"]
+          "highlights": [
+            "Diagnostic Assessment",
+            "Gap Analysis",
+            "Benchmark vs. Industry"
+          ]
         },
         "economics": {
           "badge": "Economics",
           "title": "Financial Modeling & ROI",
           "description": "Build business cases, model NPV / IRR scenarios, and track actual vs. projected returns across every initiative.",
-          "highlights": ["NPV / IRR Modeling", "Sensitivity Analysis", "Live ROI Tracking"]
+          "highlights": [
+            "NPV / IRR Modeling",
+            "Sensitivity Analysis",
+            "Live ROI Tracking"
+          ]
         },
         "execution": {
           "badge": "Execution",
           "title": "Initiative Management",
           "description": "Turn strategy into execution. Manage workstreams, milestones, and governance — with AI nudging you toward impact.",
-          "highlights": ["Initiative Roadmap", "Human Approval Gates", "Risk Flagging"]
+          "highlights": [
+            "Initiative Roadmap",
+            "Human Approval Gates",
+            "Risk Flagging"
+          ]
         },
         "deliverables": {
           "badge": "Deliverables",
           "title": "Report & Presentation Builder",
           "description": "Generate board-ready reports and investor decks from your live data. One click from analysis to polished output.",
-          "highlights": ["Auto-Generated Decks", "Narrative Engine", "Source Traceability"]
+          "highlights": [
+            "Auto-Generated Decks",
+            "Narrative Engine",
+            "Source Traceability"
+          ]
         },
         "chat": {
           "badge": "Chat",
           "title": "AI Expert Interview",
           "description": "Ask anything about your business context. AI draws on 10,000+ frameworks and your internal data to answer precisely.",
-          "highlights": ["Context-Aware Chat", "Framework Library", "Cited Answers"]
+          "highlights": [
+            "Context-Aware Chat",
+            "Framework Library",
+            "Cited Answers"
+          ]
         },
         "results": {
           "badge": "Results",
           "title": "Impact Tracking",
           "description": "Connect initiatives to real KPIs. Measure actual delivered value and automatically flag deviations before they become problems.",
-          "highlights": ["KPI Dashboard", "Deviation Alerts", "Value Attribution"]
+          "highlights": [
+            "KPI Dashboard",
+            "Deviation Alerts",
+            "Value Attribution"
+          ]
         }
       }
     },
@@ -1175,27 +1219,42 @@
       "registered": {
         "name": "Registered",
         "requirement": "Start here",
-        "benefits": ["Basic tools", "Directory listing"]
+        "benefits": [
+          "Basic tools",
+          "Directory listing"
+        ]
       },
       "bronze": {
         "name": "Bronze",
         "requirement": "3+ clients, €5K ARR",
-        "benefits": ["Priority support", "Training materials"]
+        "benefits": [
+          "Priority support",
+          "Training materials"
+        ]
       },
       "silver": {
         "name": "Silver",
         "requirement": "10+ clients, €25K ARR",
-        "benefits": ["Dedicated manager", "Beta feature access"]
+        "benefits": [
+          "Dedicated manager",
+          "Beta feature access"
+        ]
       },
       "gold": {
         "name": "Gold",
         "requirement": "25+ clients, €75K ARR",
-        "benefits": ["Co-marketing", "Conference speaking"]
+        "benefits": [
+          "Co-marketing",
+          "Conference speaking"
+        ]
       },
       "platinum": {
         "name": "Platinum",
         "requirement": "50+ clients, €200K+",
-        "benefits": ["Revenue share boost", "Executive partnership"]
+        "benefits": [
+          "Revenue share boost",
+          "Executive partnership"
+        ]
       }
     },
     "onboarding": {
@@ -3680,6 +3739,7 @@
     },
     "openDocuments": "Open documents",
     "inboxContent": {
+      "previewAriaLabel": "Item preview",
       "systemTitles": {
         "defineTargetProcess": "Define target process and acceptance criteria",
         "submitComplianceDocumentation": "Submit Compliance Documentation",
@@ -5550,7 +5610,15 @@
       "label2": "Assigned to me",
       "label3": "Owned by me",
       "today": "Today",
-      "weekdaysShort": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+      "weekdaysShort": [
+        "Mo",
+        "Tu",
+        "We",
+        "Th",
+        "Fr",
+        "Sa",
+        "Su"
+      ],
       "mobileFiltersButton": "Sources & filters",
       "mobileFiltersTitle": "Sources & filters"
     },
@@ -6206,6 +6274,7 @@
       "existingInterviewInitiatives": "Existing interview initiatives",
       "pendingReview2": "Pending review",
       "newSessionModalTitle": "New interview session",
+      "newSessionDefaultName": "Interview {{date}}",
       "sessionNameLabel": "Session name",
       "create": "Create",
       "creatingInterviewSession": "Creating interview session...",
@@ -8272,6 +8341,7 @@
       "initiativePackTooltip": "Generate an AI initiative pack from the assessment findings.",
       "resumeLatestLabel": "Resume latest assessment",
       "resumeLatestTooltip": "Opens the editor for your most recently updated assessment, back where you left off.",
+      "aiTriage": "AI Triage",
       "aiTriageTooltip": "Opens AI chat with a ready-made prompt: what in this list needs attention first.",
       "chatTooltip": "Opens a blank AI chat for this hub.",
       "connectionError": "Connection error",
@@ -8769,12 +8839,35 @@
       "rowMenu": {
         "openReport": "Show report",
         "openPresentation": "Show as presentation"
+      },
+      "emptyState": {
+        "title": "No insights yet",
+        "description": "Insights frozen from a completed assessment session will appear here."
+      },
+      "forbidden": {
+        "title": "No access to Insights",
+        "description": "Your account does not have permission to view this organization’s Insights."
+      }
+    },
+    "lineage": {
+      "forbidden": {
+        "title": "No access to lineage",
+        "description": "Your account does not have permission to view this session’s lineage."
+      },
+      "error": {
+        "title": "Could not load lineage",
+        "description": "The lineage for this session could not be loaded."
+      },
+      "unrecognized": {
+        "title": "Could not read this lineage",
+        "description": "The server returned a lineage response in an unrecognized shape."
       }
     },
     "emptyState": {
       "title": "No assessments yet",
       "createFirst": "Create First Assessment",
-      "description": "Create your first assessment to start the diagnosis."
+      "description": "Create your first assessment to start the diagnosis.",
+      "warningDescription": "Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers."
     },
     "team": {
       "addModal": {
@@ -9483,7 +9576,7 @@
       "executing": "Executing",
       "blocked": "Blocked",
       "done": "Done",
-      "tracking": "Benefits tracking",
+      "tracking": "Tracking",
       "cancelled": "Cancelled",
       "archived": "Archived",
       "unknown": "Unknown status"
@@ -12220,22 +12313,6 @@
       "advanceTitle": "Next in the process",
       "advanceCta": "Submit for review"
     },
-    "status": {
-      "draft": "Draft",
-      "pendingReview": "Pending review",
-      "review": "In review",
-      "promoted": "Promoted",
-      "planning": "Planning",
-      "approved": "Approved",
-      "scheduled": "Scheduled",
-      "executing": "Executing",
-      "blocked": "Blocked",
-      "done": "Done",
-      "tracking": "Tracking",
-      "cancelled": "Cancelled",
-      "archived": "Archived",
-      "unknown": "Unknown status"
-    },
     "priorityLevels": {
       "critical": "Critical",
       "high": "High",
@@ -14826,6 +14903,12 @@
         "admin": "Administrator",
         "member": "Member",
         "superadmin": "Super administrator",
+        "super_admin": "Super administrator",
+        "user": "User",
+        "guest": "Guest",
+        "viewer": "Viewer",
+        "project_manager": "Project manager",
+        "team_member": "Team member",
         "product": "Product",
         "sales": "Sales",
         "operations": "Operations",
@@ -16285,6 +16368,22 @@
         "ai_power_user": {
           "name": "AI power user",
           "description": "AI-heavy configuration for advanced workflows."
+        },
+        "minimal": {
+          "name": "Minimal",
+          "description": "Clean, distraction-free settings"
+        },
+        "power_user": {
+          "name": "Power User",
+          "description": "All features enabled"
+        },
+        "privacy_focused": {
+          "name": "Privacy Focused",
+          "description": "Maximum privacy settings"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Security and compliance focused"
         }
       }
     },
@@ -22173,7 +22272,33 @@
         "aiGenerateDescription": "Regenerate this slide with an AI image",
         "aiGenerateInstruction": "Add a relevant AI-generated image to this slide.",
         "upload": "Upload",
-        "uploadDescription": "Upload an image from your device"
+        "uploadDescription": "Upload an image from your device",
+        "layoutItems": {
+          "twoColumns": "2 Columns",
+          "threeColumns": "3 Columns",
+          "fourColumns": "4 Columns",
+          "boxes": "Boxes",
+          "cards": "Cards"
+        },
+        "diagramItems": {
+          "processSteps": "Process Steps",
+          "funnel": "Funnel",
+          "timeline": "Timeline",
+          "matrix2x2": "Matrix 2x2",
+          "swot": "SWOT",
+          "pyramid": "Pyramid",
+          "venn2": "Venn (2)",
+          "venn3": "Venn (3)",
+          "cycle": "Cycle",
+          "roadmap": "Now/Next/Later",
+          "hierarchy": "Hierarchy",
+          "decisionTree": "Decision Tree"
+        },
+        "chartItems": {
+          "bar": "Bar Chart",
+          "line": "Line Chart",
+          "pie": "Pie Chart"
+        }
       },
       "duplicate": "Duplicate",
       "delete": "Delete",
@@ -22197,7 +22322,27 @@
       },
       "lockSlideAction": "Lock slide",
       "unlockSlideAction": "Unlock slide",
-      "unlockSlide": "Manually edited — protected from AI rewrite. Click to unlock."
+      "unlockSlide": "Manually edited — protected from AI rewrite. Click to unlock.",
+      "defaultContent": {
+        "heading": "Heading",
+        "paragraph": "Enter text here…",
+        "item1": "Item 1",
+        "item2": "Item 2",
+        "item3": "Item 3",
+        "step1": "Step 1",
+        "step2": "Step 2",
+        "step3": "Step 3",
+        "chart": "Chart",
+        "metric": "Metric",
+        "callout": "Important note",
+        "calloutInfo": "Important information",
+        "timelineStart": "Start",
+        "timelineMid": "Mid",
+        "timelineEnd": "End",
+        "image": "Image",
+        "newSlide": "New slide",
+        "untitledArtifact": "Untitled artifact"
+      }
     },
     "governance": {
       "loading": "Loading…",
@@ -22717,7 +22862,7 @@
       "scenario": "Scenario",
       "horizon": "Horizon",
       "horizonYears": "Horizon",
-      "analysisType": "Type",
+      "analysisType": "Analysis type",
       "periods": "Periods",
       "subtype": "Subtype",
       "source": "Source",
@@ -22910,6 +23055,12 @@
       "status": "Status",
       "mappedLines": "Mapped lines",
       "previewTitle": "Pack health",
+      "state": {
+        "ready": "The pack is complete: profit and loss, balance sheet and cash flow statement.",
+        "rejected": "Every statement in this pack was rejected — the pack cannot seed downstream work.",
+        "needsAttention": "The pack needs attention",
+        "collecting": "The pack is still collecting the required statements."
+      },
       "ratios": "Statements",
       "validation": "Pack status",
       "computeRatios": "Compute ratios",
@@ -23957,7 +24108,12 @@
       },
       "rootcause": {
         "uploaderTitle": "Root Cause Signals",
-        "suggestions": ["Incident Reports", "5 Whys Docs", "PFMEA", "Ishikawa Diagrams"],
+        "suggestions": [
+          "Incident Reports",
+          "5 Whys Docs",
+          "PFMEA",
+          "Ishikawa Diagrams"
+        ],
         "diagnosticLabel": "Diagnostic Questions:",
         "diagnosticBody": "These answers help AI identify hidden root causes behind the declared challenges.",
         "questions": [
@@ -24025,7 +24181,12 @@
       },
       "evidence": {
         "uploaderTitle": "Evidence",
-        "suggestions": ["Raw Data Exports", "KPI Dashboards", "System Logs", "Financial Reports"],
+        "suggestions": [
+          "Raw Data Exports",
+          "KPI Dashboards",
+          "System Logs",
+          "Financial Reports"
+        ],
         "title": "Evidence & Data Points",
         "description": "Hard facts, metrics, or logs that prove the existence of challenges.",
         "columns": {
@@ -25798,6 +25959,65 @@
     }
   },
   "results": {
+    "okr": {
+      "report": {
+        "columns": {
+          "name": "NAME",
+          "scope": "SCOPE",
+          "cycle": "CYCLE",
+          "objectives": "OBJECTIVES",
+          "keyResults": "KEY RESULTS",
+          "state": "STATE",
+          "owners": "OWNERS",
+          "lastCheckIn": "LAST CHECK-IN",
+          "objective": "OBJECTIVE",
+          "keyResult": "KEY RESULT",
+          "owner": "OWNER",
+          "values": "START / TARGET / CURRENT",
+          "progress": "PROGRESS",
+          "confidence": "CONFIDENCE",
+          "deadline": "DEADLINE",
+          "stateOne": "STATE",
+          "team": "TEAM"
+        },
+        "ambition": {
+          "committed": "Committed",
+          "aspirational": "Aspirational",
+          "standard": "Standard"
+        },
+        "stateTooltip": "on track {{onTrack}} · at risk {{atRisk}} · critical {{critical}} · no check-in {{noSignal}}",
+        "stateWithCheckIn": "{{state}} · check-in {{date}}",
+        "stateWithoutCheckIn": "{{state}} · no check-in yet",
+        "newReport": "New report",
+        "openReport": "Open report",
+        "openObjective": "Open objective card",
+        "addObjective": "Add objective",
+        "registryCrumb": "OKR reports",
+        "summary": "Summary",
+        "noTheme": "No theme",
+        "groupOwner": "parent owner: {{name}}",
+        "groupOwners": "{{count}} objective owners",
+        "chipOwnerAll": "Owner: everyone",
+        "chipOwnerNamed": "Owner: {{name}}",
+        "chipAll": "All",
+        "chipRisk": "At risk",
+        "chipMissing": "No check-in",
+        "ownerFilter": "Owner",
+        "owner": "Owner",
+        "ownerLoad": "Key results and risks",
+        "ownerBreakdownValue": "{{total}} key results · {{atRisk}} at risk · {{critical}} critical",
+        "reportOwner": "Report owner",
+        "reportGoal": "Report goal",
+        "aboutReport": "About this report",
+        "noOwners": "No key result owners",
+        "noKeyResults": "No key results",
+        "noKeyResultsHint": "This objective has no key result yet.",
+        "emptyTitle": "No OKR reports",
+        "emptyDescription": "There is no OKR report in this organization yet. A report is created together with a set of objectives for a chosen cycle.",
+        "emptyRowsTitle": "No rows for this filter",
+        "emptyRowsDescription": "No key result matches the selected filter. Change the filter or add an objective to the report."
+      }
+    },
     "sampleData": {
       "banner": "Sample data — not from the database"
     },
@@ -26010,6 +26230,33 @@
       }
     },
     "roi": {
+      "card": {
+        "breadcrumb": "ROI analysis",
+        "registryTitle": "ROI analyses",
+        "registrySubtitle": "Investments · economics, risk and recommendation",
+        "parts": {
+          "assumptions": "Assumptions",
+          "calculations": "Calculations",
+          "realization": "Realization"
+        },
+        "recommendation": {
+          "go": "GO",
+          "conditional_go": "CONDITIONAL GO",
+          "no_go": "NO-GO"
+        },
+        "benefitClass": {
+          "hard": "Hard",
+          "avoided": "Avoided",
+          "soft": "Soft (not monetized)",
+          "strategic": "Strategic (not monetized)"
+        },
+        "verdict": {
+          "confirmed": "Confirmed",
+          "partially_confirmed": "Partially confirmed",
+          "refuted": "Refuted"
+        },
+        "empty": "No data"
+      },
       "totalPlanned": "Total Planned ROI",
       "totalRealized": "Total Realized ROI",
       "overallVariance": "Overall Variance",
@@ -27006,19 +27253,38 @@
           "registered": {
             "title": "Registered",
             "description": "For those starting the partnership",
-            "requirements": ["Registration", "Basic training"],
-            "benefits": ["10% discount", "Access to materials", "Email support"]
+            "requirements": [
+              "Registration",
+              "Basic training"
+            ],
+            "benefits": [
+              "10% discount",
+              "Access to materials",
+              "Email support"
+            ]
           },
           "certified": {
             "title": "Certified",
             "description": "For experienced consultants",
-            "requirements": ["Certification exam", "Min. 3 projects"],
-            "benefits": ["12% discount", "Partner logo", "Dedicated support", "Catalog listing"]
+            "requirements": [
+              "Certification exam",
+              "Min. 3 projects"
+            ],
+            "benefits": [
+              "12% discount",
+              "Partner logo",
+              "Dedicated support",
+              "Catalog listing"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "For strategic partners",
-            "requirements": ["10+ projects", "Case study", "References"],
+            "requirements": [
+              "10+ projects",
+              "Case study",
+              "References"
+            ],
             "benefits": [
               "14% discount",
               "Dedicated account manager",
@@ -36972,15 +37238,30 @@
         "dependency": "Dependencies"
       },
       "quickActions": {
-        "risk": ["Weekly review", "Escalate to PMO", "POC before rollout", "Transfer to vendor"],
+        "risk": [
+          "Weekly review",
+          "Escalate to PMO",
+          "POC before rollout",
+          "Transfer to vendor"
+        ],
         "assumption": [
           "Validate with stakeholder",
           "Data analysis",
           "Prototype / POC",
           "Expert interview"
         ],
-        "issue": ["Hotfix immediately", "Escalate to sponsor", "Rollback", "War room"],
-        "dependency": ["Sync meeting", "Mock API / stub", "Escalate to manager", "Alternative plan"]
+        "issue": [
+          "Hotfix immediately",
+          "Escalate to sponsor",
+          "Rollback",
+          "War room"
+        ],
+        "dependency": [
+          "Sync meeting",
+          "Mock API / stub",
+          "Escalate to manager",
+          "Alternative plan"
+        ]
       },
       "quickContingencyArgs": [
         "Manual fallback mode",
@@ -39028,10 +39309,22 @@
       "missionProcess": "Risk mission, scope, success signal, and constraints",
       "missionExample": "How do we protect a transformation from delays, cost pressure, and demand shifts?",
       "cards": [
-        ["Assumptions", "What must be true for the strategy to work"],
-        ["Risks", "What can hit outcome, cost, timing, or reputation"],
-        ["Scenarios", "How different futures change the decision"],
-        ["Moves", "Validate, mitigate, monitor, hedge, escalate"]
+        [
+          "Assumptions",
+          "What must be true for the strategy to work"
+        ],
+        [
+          "Risks",
+          "What can hit outcome, cost, timing, or reputation"
+        ],
+        [
+          "Scenarios",
+          "How different futures change the decision"
+        ],
+        [
+          "Moves",
+          "Validate, mitigate, monitor, hedge, escalate"
+        ]
       ]
     },
     "portfolioPriorityLibraryGraphic": {
@@ -39041,10 +39334,22 @@
       "missionProcess": "Portfolio mission, scope, constraints, and success signal",
       "missionExample": "Which products and initiatives should receive funding next quarter under a constrained budget?",
       "quadrants": [
-        ["Stars", "High growth and strong position: invest selectively"],
-        ["Question Marks", "High growth and weak position: test or choose the bet"],
-        ["Cash Cows", "Stable position: maintain and fund growth"],
-        ["Dogs", "Weak position: reduce, harvest, or redesign"]
+        [
+          "Stars",
+          "High growth and strong position: invest selectively"
+        ],
+        [
+          "Question Marks",
+          "High growth and weak position: test or choose the bet"
+        ],
+        [
+          "Cash Cows",
+          "Stable position: maintain and fund growth"
+        ],
+        [
+          "Dogs",
+          "Weak position: reduce, harvest, or redesign"
+        ]
       ],
       "insight": "The recommendation is not equal support for every topic, but deliberate allocation: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> portfolio initiatives -> deck -> report"
@@ -39056,10 +39361,22 @@
       "missionProcess": "Growth mission, scope, success signal, and constraints",
       "missionExample": "How do we grow premium-segment revenue without diluting margin?",
       "quadrants": [
-        ["Market penetration", "Use the current segment and channels better"],
-        ["Market development", "Enter new segments or geographies"],
-        ["Product development", "New value propositions for current customers"],
-        ["Diversification", "New product and new market, highest risk"]
+        [
+          "Market penetration",
+          "Use the current segment and channels better"
+        ],
+        [
+          "Market development",
+          "Enter new segments or geographies"
+        ],
+        [
+          "Product development",
+          "New value propositions for current customers"
+        ],
+        [
+          "Diversification",
+          "New product and new market, highest risk"
+        ]
       ],
       "insight": "The recommendation does not come from the longest idea list, but from the best sequence: scale core, test the new segment, then increase risk.",
       "output": "Source summary -> initiative -> deck -> report"
@@ -39088,11 +39405,31 @@
       "implicationsTitle": "Strategic implications",
       "movesTitle": "Bridge to initiatives",
       "forces": [
-        ["Rivalry", "4/5", "High price pressure and easily copied offers"],
-        ["New entrants", "3/5", "Entry is possible, but requires channel and trust"],
-        ["Substitutes", "2/5", "Alternatives exist but do not solve the full job"],
-        ["Buyer power", "5/5", "Large customers force discounts and SLA terms"],
-        ["Supplier power", "3/5", "Input costs move, but can be diversified"]
+        [
+          "Rivalry",
+          "4/5",
+          "High price pressure and easily copied offers"
+        ],
+        [
+          "New entrants",
+          "3/5",
+          "Entry is possible, but requires channel and trust"
+        ],
+        [
+          "Substitutes",
+          "2/5",
+          "Alternatives exist but do not solve the full job"
+        ],
+        [
+          "Buyer power",
+          "5/5",
+          "Large customers force discounts and SLA terms"
+        ],
+        [
+          "Supplier power",
+          "3/5",
+          "Input costs move, but can be diversified"
+        ]
       ],
       "implicationItems": [
         "The market may grow, but advantage without data and channel will be fragile.",
@@ -39120,11 +39457,31 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Audience, goal, success signal", "bg-sky-500"],
-        ["Core message", "One sentence that should stick", "bg-sky-500"],
-        ["Pillars", "Columns that hold the roof", "bg-blue-500"],
-        ["Proof", "What backs each pillar", "bg-amber-500"],
-        ["Narrative & outputs", "Threads, moves, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Audience, goal, success signal",
+          "bg-sky-500"
+        ],
+        [
+          "Core message",
+          "One sentence that should stick",
+          "bg-sky-500"
+        ],
+        [
+          "Pillars",
+          "Columns that hold the roof",
+          "bg-blue-500"
+        ],
+        [
+          "Proof",
+          "What backs each pillar",
+          "bg-amber-500"
+        ],
+        [
+          "Narrative & outputs",
+          "Threads, moves, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "houseTitle": "Message house",
       "houseHint": "Roof + pillars",
@@ -39133,9 +39490,18 @@
       "proofWord": "proof",
       "legendTitle": "Audience resonance",
       "legend": [
-        ["high", "High resonance"],
-        ["medium", "Medium resonance"],
-        ["low", "Low resonance"]
+        [
+          "high",
+          "High resonance"
+        ],
+        [
+          "medium",
+          "Medium resonance"
+        ],
+        [
+          "low",
+          "Low resonance"
+        ]
       ],
       "footer": "Narrative Engine = brief -> core message -> pillars -> proof -> narrative -> outputs",
       "pillars": [
@@ -39181,19 +39547,48 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Industry, domains, priorities, decision", "bg-sky-500"],
-        ["Capabilities", "Map capabilities by domain", "bg-sky-500"],
-        ["Maturity", "Current vs target 1-5 + weight", "bg-blue-500"],
-        ["Gaps", "Where gap × weight is widest", "bg-amber-500"],
-        ["Moves & outputs", "Build/buy/partner, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Industry, domains, priorities, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Capabilities",
+          "Map capabilities by domain",
+          "bg-sky-500"
+        ],
+        [
+          "Maturity",
+          "Current vs target 1-5 + weight",
+          "bg-blue-500"
+        ],
+        [
+          "Gaps",
+          "Where gap × weight is widest",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Build/buy/partner, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "ladderTitle": "Maturity ladder",
       "scaleHint": "Maturity scale 1-5",
       "legendTitle": "Gap size",
       "legend": [
-        ["critical", "Critical gap"],
-        ["moderate", "Moderate gap"],
-        ["minor", "Minor gap"]
+        [
+          "critical",
+          "Critical gap"
+        ],
+        [
+          "moderate",
+          "Moderate gap"
+        ],
+        [
+          "minor",
+          "Minor gap"
+        ]
       ],
       "currentLabel": "Current",
       "targetLabel": "Target",
@@ -39247,27 +39642,68 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Priorities, criteria, goal, constraints", "bg-sky-500"],
-        ["Priorities", "List of competing options", "bg-sky-500"],
-        ["Scoring", "Value vs effort 1-5 + fit", "bg-blue-500"],
-        ["Matrix", "Quick wins, big bets, fill-ins, money pit", "bg-amber-500"],
-        ["Moves & outputs", "Pursue/defer/drop, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Priorities, criteria, goal, constraints",
+          "bg-sky-500"
+        ],
+        [
+          "Priorities",
+          "List of competing options",
+          "bg-sky-500"
+        ],
+        [
+          "Scoring",
+          "Value vs effort 1-5 + fit",
+          "bg-blue-500"
+        ],
+        [
+          "Matrix",
+          "Quick wins, big bets, fill-ins, money pit",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Pursue/defer/drop, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "matrixTitle": "Value x effort matrix",
       "scaleHint": "Scale 1-5",
       "axisValue": "Value",
       "axisEffort": "Effort",
       "quadrants": [
-        ["Quick wins", "High value, low effort"],
-        ["Big bets", "High value, high effort"],
-        ["Fill-ins", "Low value, low effort"],
-        ["Money pit", "Low value, high effort"]
+        [
+          "Quick wins",
+          "High value, low effort"
+        ],
+        [
+          "Big bets",
+          "High value, high effort"
+        ],
+        [
+          "Fill-ins",
+          "Low value, low effort"
+        ],
+        [
+          "Money pit",
+          "Low value, high effort"
+        ]
       ],
       "legendTitle": "Recommendation",
       "legend": [
-        ["pursue", "Pursue"],
-        ["defer", "Defer"],
-        ["drop", "Drop"]
+        [
+          "pursue",
+          "Pursue"
+        ],
+        [
+          "defer",
+          "Defer"
+        ],
+        [
+          "drop",
+          "Drop"
+        ]
       ],
       "footer": "Focus & Trade-offs = brief -> priorities -> value vs effort -> matrix -> moves -> outputs",
       "bubbles": [
@@ -39313,19 +39749,48 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Ambition", "One sentence + scope + success signal", "bg-violet-500"],
-        ["Signals", "What drives and constrains the ambition", "bg-violet-500"],
-        ["Themes", "Decompose into strategic themes", "bg-indigo-500"],
-        ["Targets & horizon", "Metric, target value, and time window", "bg-sky-500"],
-        ["Moves & outputs", "Priorities, initiatives, report, deck", "bg-emerald-500"]
+        [
+          "Ambition",
+          "One sentence + scope + success signal",
+          "bg-violet-500"
+        ],
+        [
+          "Signals",
+          "What drives and constrains the ambition",
+          "bg-violet-500"
+        ],
+        [
+          "Themes",
+          "Decompose into strategic themes",
+          "bg-indigo-500"
+        ],
+        [
+          "Targets & horizon",
+          "Metric, target value, and time window",
+          "bg-sky-500"
+        ],
+        [
+          "Moves & outputs",
+          "Priorities, initiatives, report, deck",
+          "bg-emerald-500"
+        ]
       ],
       "cascadeTitle": "Ambition cascade",
       "cascadeHint": "Themes by horizon",
       "legendTitle": "Theme importance",
       "legend": [
-        ["high", "High importance"],
-        ["medium", "Medium importance"],
-        ["low", "Low importance"]
+        [
+          "high",
+          "High importance"
+        ],
+        [
+          "medium",
+          "Medium importance"
+        ],
+        [
+          "low",
+          "Low importance"
+        ]
       ],
       "horizonLabels": {
         "short": "Short",
@@ -39390,16 +39855,41 @@
       "stagesTitleProcess": "5 working steps",
       "stagesTitleExample": "5 working steps",
       "stages": [
-        ["Brief", "Industry, chain scope, position, decision", "bg-sky-500"],
-        ["Activities", "Map 5 primary + 4 support", "bg-sky-500"],
-        ["Contribution", "Cost, value, and margin role per activity", "bg-blue-500"],
-        ["Levers", "Where to cut cost, where to raise value", "bg-amber-500"],
-        ["Moves & outputs", "Moves, initiatives, report, deck, or idea", "bg-emerald-500"]
+        [
+          "Brief",
+          "Industry, chain scope, position, decision",
+          "bg-sky-500"
+        ],
+        [
+          "Activities",
+          "Map 5 primary + 4 support",
+          "bg-sky-500"
+        ],
+        [
+          "Contribution",
+          "Cost, value, and margin role per activity",
+          "bg-blue-500"
+        ],
+        [
+          "Levers",
+          "Where to cut cost, where to raise value",
+          "bg-amber-500"
+        ],
+        [
+          "Moves & outputs",
+          "Moves, initiatives, report, deck, or idea",
+          "bg-emerald-500"
+        ]
       ],
       "chainTitle": "Value chain",
       "support": "Support activities",
       "primary": "Primary activities",
-      "supportItems": ["Firm infrastructure", "HR management", "Technology", "Procurement"],
+      "supportItems": [
+        "Firm infrastructure",
+        "HR management",
+        "Technology",
+        "Procurement"
+      ],
       "primaryItems": [
         "Inbound logistics",
         "Operations",
@@ -39410,9 +39900,18 @@
       "margin": "Margin",
       "legendTitle": "Margin role",
       "legend": [
-        ["creator", "Creates margin"],
-        ["neutral", "Neutral"],
-        ["drain", "Drains margin"]
+        [
+          "creator",
+          "Creates margin"
+        ],
+        [
+          "neutral",
+          "Neutral"
+        ],
+        [
+          "drain",
+          "Drains margin"
+        ]
       ],
       "footer": "Value Chain = brief -> activities -> contribution -> levers -> moves -> outputs",
       "legendHint": "each activity's color shows whether it creates, is neutral to, or drains margin. Size and annotations follow cost and value contribution."
@@ -39819,7 +40318,13 @@
       "outputHintReport": "For a final source summary ready to be reviewed.",
       "outputHintPresentation": "For visual communication without rebuilding the narrative.",
       "outputHintIdea": "For promising hypotheses or directions that need further work.",
-      "groupLabels": ["Session", "Analysis", "Outputs", "Collaboration", "Records"],
+      "groupLabels": [
+        "Session",
+        "Analysis",
+        "Outputs",
+        "Collaboration",
+        "Records"
+      ],
       "finish": "Finish",
       "nextStep": "Next",
       "requestReviewTitleReady": "Request review for this session",
@@ -41892,6 +42397,16 @@
       "back": "Back",
       "createAndEdit": "Create and edit",
       "next": "Next"
+    }
+  },
+  "list": {
+    "rightPanel": {
+      "tabRecord": "Record",
+      "tabTeresa": "Teresa",
+      "close": "Close panel",
+      "show": "Show panel",
+      "openTeresa": "Teresa",
+      "teresaEmpty": "Select a row or ask about anything on this list."
     }
   }
 }

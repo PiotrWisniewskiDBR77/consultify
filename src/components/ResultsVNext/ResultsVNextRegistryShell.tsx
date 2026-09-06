@@ -71,6 +71,17 @@ export interface ResultsVNextRegistryShellProps {
    * NOT affect the Menu 1/2/3 bar, which still orients the user.
    */
   forbidden?: ResultsVNextForbiddenDetail | null;
+  /**
+   * ── NAGŁÓWEK OBIEKTU NAD TABELĄ (opt-in, P7K) ─────────────────────────────
+   *
+   * Raport KPI na poziomie 2 (SSOT §6) ma nad tabelą jedną linię opisu —
+   * zakres, okres, edycja, rewizja, przygotował — i podsumowanie stanów po
+   * prawej. Powłoka nie miała na to slotu, więc ekran musiałby albo wpisać to
+   * do Menu 3 (gdzie ta treść nie należy), albo skleić własną powłokę obok
+   * kanonicznej. Slot jest ADDYTYWNY: bez propa rejestry KPI/OKR/ROI
+   * renderują się bajt w bajt jak dotąd.
+   */
+  header?: React.ReactNode;
   /** Explicit owner-review fixture mode; absent for every real API-backed registry. */
   sampleData?: boolean;
   onForbiddenBack?: () => void;
@@ -83,6 +94,7 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
   table,
   preview,
   forbidden,
+  header,
   sampleData = false,
   onForbiddenBack,
   className,
@@ -212,6 +224,14 @@ export const ResultsVNextRegistryShell: React.FC<ResultsVNextRegistryShellProps>
                 {isPolish ? 'Raport zarządczy' : 'Management report'}
               </a>
             ) : null}
+          </div>
+        ) : null}
+        {header && !forbidden ? (
+          <div
+            className="border-b border-[color:var(--c-border-subtle)] px-4 py-3"
+            data-testid={`results-vnext-${domain}-registry-header`}
+          >
+            {header}
           </div>
         ) : null}
         {forbidden ? (

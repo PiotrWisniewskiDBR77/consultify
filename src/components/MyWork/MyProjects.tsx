@@ -49,6 +49,7 @@ import { type EffectiveStakeholder, StakeholderApi } from '@/services/api/stakeh
 import { ROUTES } from '@/routes/routeConfig';
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { formatListDate } from '@/utils/listDateFormat';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
 
@@ -881,8 +882,7 @@ export const MyProjects: React.FC = () => {
             />
           </div>
 
-          {previewProgramListRow ? (
-            <aside className="w-[420px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewProgramListRow ? (
               <StandardPreview
                 title={programRollup?.program.name || previewProgramListRow.name}
                 onClose={() => setProgramPreviewId(null)}
@@ -1074,8 +1074,7 @@ export const MyProjects: React.FC = () => {
                   </div>
                 ) : null}
               </StandardPreview>
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       ) : (
         <div className="flex-1 min-h-0 flex overflow-hidden">
@@ -1110,8 +1109,7 @@ export const MyProjects: React.FC = () => {
             />
           </div>
 
-          {previewProject ? (
-            <aside className="w-[420px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+          <JedenPrawyPanel rekord={previewProject ? (
               <StandardPreview
                 title={previewProject.name || t('myWork.projects.project2', 'Project')}
                 onClose={() => {
@@ -1447,8 +1445,7 @@ export const MyProjects: React.FC = () => {
                   )}
                 </div>
               </StandardPreview>
-            </aside>
-          ) : null}
+          ) : null} />
         </div>
       )}
 

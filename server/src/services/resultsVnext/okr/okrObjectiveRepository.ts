@@ -70,7 +70,13 @@ async function loadKeyResultsByObjectiveIds(
     client,
     `SELECT * FROM okr_vnext_key_results
       WHERE organization_id = $1 AND objective_id = ANY($2::uuid[])
-      ORDER BY created_at ASC`,
+      -- P7K (zmierzone 05.09 na danych DBR77): samo created_at NIE jest
+      -- porzadkiem calkowitym — seed wstawia wszystkie rezultaty jednego celu
+      -- z TYM SAMYM znacznikiem czasu, wiec Postgres oddawal je za kazdym
+      -- razem w innej kolejnosci i bloki Kluczowe rezultaty tanczyly miedzy
+      -- odswiezeniami (widoczne na zrzutach przed/po check-inie).
+      -- key_result_id jest rozstrzygnieciem remisu, nie zmiana porzadku.
+      ORDER BY created_at ASC, key_result_id ASC`,
     [organizationId, objectiveIds]
   );
   for (const row of rows) {
@@ -111,7 +117,9 @@ export async function listObjectivesForSet(params: ListObjectivesForSetParams): 
               ON vr.resource_type = '${OKR_SET_RESOURCE_TYPE}' AND vr.resource_id = o.set_id::text
      WHERE o.organization_id = $1
        AND o.set_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
-     ORDER BY o.sort_order ASC
+     -- Ten sam powod, co przy rezultatach nizej: sort_order moze sie
+     -- powtorzyc, a wtedy kolejnosc celow w raporcie bylaby losowa.
+     ORDER BY o.sort_order ASC, o.objective_id ASC
   `;
   const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: OKR_SET_RESOURCE_TYPE });
   const values = [...wrapped.values, setId];

@@ -150,7 +150,8 @@ export function buildOkrKeyResultColumns(
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '130px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: OkrKeyResultDto) => (
         <span className="text-sm text-c-text-muted tabular-nums">{formatOkrDate(row.updatedAt, isPolish)}</span>

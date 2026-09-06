@@ -75,7 +75,10 @@ import { isInitiativeBridgeEnabled } from '@/utils/initiativeBridgeFlag';
 import { isInitiativesBulkStubEnabled } from '@/utils/initiativesBulkStubFlag';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
-import { listRegisteredInitiatives } from '../../services/initiatives-execution/runtimeApi';
+import {
+  listLegacyInitiatives,
+  listRegisteredInitiatives,
+} from '../../services/initiatives-execution/runtimeApi';
 import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
@@ -131,9 +134,11 @@ import {
   INITIATIVE_LIFECYCLE_PRESETS,
   type InitiativeLifecyclePreset,
   lifecycleMatchesPreset,
+  mergeLegacyInitiativesIntoRegister,
   projectCanonicalInitiativeRegisterRow,
   selectInitiativeRegisterSource,
   toCanonicalInitiativeRegisterItem,
+  toCanonicalInitiativeRegisterItemFromLegacyRow,
 } from './initiativeRegisterProjection';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
@@ -501,14 +506,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setLoadErrorCode(null);
         // Explicit fixture mode is an exclusive source, never an overlay on
         // canonical rows. Ordinary DEV follows the same API path as production.
-        const canonicalRows: PortfolioInitiative[] = allowDemoData
-          ? []
-          : (await listRegisteredInitiatives()).initiatives.map((record) =>
-              toCanonicalInitiativeRegisterItem(record, {
-                id: currentUserId,
-                displayName: currentUserDisplayName,
-              })
-            );
+        //
+        // MVP fix 2026-09-05 (DEC-397): `listRegisteredInitiatives` reads the
+        // runtime-v1 event-sourced projection, which only contains
+        // initiatives created through the runtime-v1 command surface. Rows
+        // that exist in the classic `initiatives` table but were never
+        // promoted through that surface (seeded directly, or created before
+        // the runtime-v1 migration) are invisible there even though they are
+        // real — measured on org DBR77: 71 legacy rows, 0 runtime-v1 rows,
+        // list rendered empty. `listLegacyInitiatives` + the merge below
+        // backfill exactly those rows without touching write paths.
+        let canonicalRows: PortfolioInitiative[] = [];
+        if (!allowDemoData) {
+          const [registeredResult, legacyRows] = await Promise.all([
+            listRegisteredInitiatives(),
+            listLegacyInitiatives().catch((legacyError) => {
+              console.warn('[InitiativesHub] Legacy initiatives fetch failed:', legacyError);
+              return [];
+            }),
+          ]);
+          const registeredRows = registeredResult.initiatives.map((record) =>
+            toCanonicalInitiativeRegisterItem(record, {
+              id: currentUserId,
+              displayName: currentUserDisplayName,
+            })
+          );
+          const legacyCanonicalRows = legacyRows.map(toCanonicalInitiativeRegisterItemFromLegacyRow);
+          canonicalRows = mergeLegacyInitiativesIntoRegister(registeredRows, legacyCanonicalRows);
+        }
         const sourceRows = selectInitiativeRegisterSource(
           canonicalRows,
           initiativesDemoData.initiatives,

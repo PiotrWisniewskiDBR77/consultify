@@ -1,0 +1,50 @@
+{
+ "url": "http://localhost:3096/finance?tab=statements",
+ "tytul": "Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nSprawozdania\nDane\nModel\n1\nAudyt Nocny\nAN\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\nImportuj sprawozdanie\nWszystkie\n1\nOdrzucone importy\n0\nKolejka naprawcza\n0\nGotowe sprawozdania\n1\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nKOMPLETNOŚĆ\n\t\nOKRES\n\t\nWALUTA\n\t\nDOK.\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nSTM\n\t\nGrupa Kapitałowa CD PROJEKT\n\t\nP&L / BS / CF\n\t\nFY2024\n\t\nPLN\n\t\n6\n\t\nZatwierdzone\n\t3 godziny temu\t",
+ "dom": {
+  "th[data-column-id=\"updatedAt\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1251,
+     "y": 158,
+     "width": 141,
+     "height": 56
+    }
+   ]
+  },
+  "table": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 81,
+     "y": 158,
+     "width": 1391,
+     "height": 112
+    }
+   ]
+  },
+  ".overflow-x-auto": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 81,
+     "y": 158,
+     "width": 1302,
+     "height": 112
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-05T23:34:30.925Z"
+}

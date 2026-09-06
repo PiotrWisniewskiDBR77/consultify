@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -901,6 +902,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       id: 'framework',
       label: t('assessment.hub.table.type', 'Type'),
       width: '120px',
+      dataType: 'status',
       filterable: true,
       filterOptions: Object.entries(FRAMEWORK_META).map(([key, meta]) => ({
         value: key,
@@ -934,6 +936,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       id: 'progress',
       label: t('assessment.hub.table.progressHeader', 'Progress'),
       width: '150px',
+      dataType: 'number',
     };
     const businessUnitCol: TableColumn = {
       id: 'businessUnit',
@@ -966,6 +969,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       id: 'overallScore',
       label: t('assessment.hub.table.score', 'Wynik'),
       width: '110px',
+      dataType: 'number',
       align: 'right',
       sortable: true,
       render: (row) => {
@@ -981,6 +985,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       id: 'confidenceAvg',
       label: t('assessment.hub.table.confidence', 'Pewność'),
       width: '110px',
+      dataType: 'number',
       align: 'right',
       sortable: true,
       render: (row) => {
@@ -997,7 +1002,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     const updatedCol: TableColumn = {
       id: 'updatedAt',
       label: t('assessment.hub.table.updated', 'Updated'),
-      width: '120px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
     };
     // #69: Author column — wzór DiscoveryToolsHub.tsx (commit 94403b4f57):
@@ -1006,6 +1012,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       id: 'createdBy',
       label: t('assessment.hub.table.author', 'Author'),
       width: '140px',
+      dataType: 'owner',
       render: (row) => {
         const label = getAuthorLabel(row?.createdBy);
         return label ? (
@@ -1050,6 +1057,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           label: t('assessment.hub.table.status', 'Status'),
           width: '180px',
           filterable: true,
+          dataType: 'status',
           filterOptions: Object.values(REPORT_STATUSES).map((s) => ({
             value: s.id,
             label: s.label,
@@ -1132,6 +1140,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         label: t('assessment.hub.table.status', 'Status'),
         width: '160px',
         filterable: true,
+        dataType: 'status',
         filterOptions: Object.values(ASSESSMENT_STATUSES).map((s) => ({
           value: s.id,
           label: s.label,
@@ -1598,8 +1607,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
 
   const emptyStateMessage =
     (activeTab === 'list' || activeTab === 'processes') && loadWarning
-      ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
-      : 'No assessments found. Create your first assessment to get started.';
+      ? t(
+          'assessment.emptyState.warningDescription',
+          'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
+        )
+      : t(
+          'assessment.emptyState.description',
+          'No assessments found. Create your first assessment to get started.'
+        );
 
   const hubWorkspaceContext = useMemo(
     () =>
@@ -1900,8 +1915,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         // the click now does something Chat doesn't: opens the hub chat AND
         // posts a framing prompt asking the AI to prioritize the current tab's
         // list (see handleOpenHubTriage).
+        // NAPRAWA (audyt MVP 06.09, "angielskie napisy" — CLAUDE.md zakaz):
+        // literał był twardo po angielsku niezależnie od języka aplikacji —
+        // ten sam wzorzec co `assessment.hub.aiTriageTooltip` obok i jak
+        // `myWork.hub.aIPriorities` ("AI Priorities" → "AI Priorytety").
         id: 'triage',
-        label: 'AI Triage',
+        label: t('assessment.hub.aiTriage', 'AI Triage'),
         icon: Layers,
         onClick: () => void handleOpenHubTriage(),
         active: isHubChatActive,
@@ -2417,8 +2436,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Assessment'}
                 onClose={() => setSelectedAssessmentId(null)}
@@ -2483,8 +2501,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                     : undefined
                 }
               />
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }
@@ -2563,8 +2580,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Report'}
                 onClose={() => setSelectedReportRowId(null)}
@@ -2611,8 +2627,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                   />
                 )}
               </StandardPreview>
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }
@@ -2655,8 +2670,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
             />
           </div>
 
-          {selectedRow ? (
-            <PreviewPaneAside>
+          <JedenPrawyPanel rekord={selectedRow ? (
               <StandardPreview
                 title={selectedRow.name || 'Initiative'}
                 onClose={() => setSelectedInitiativeRowId(null)}
@@ -2703,8 +2717,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                 relations={[]}
                 actions={previewActions}
               />
-            </PreviewPaneAside>
-          ) : null}
+          ) : null} />
         </div>
       );
     }

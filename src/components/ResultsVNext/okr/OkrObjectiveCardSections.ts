@@ -28,7 +28,7 @@
 export type OkrObjectiveCardSectionId =
   | 'cel'
   | 'kluczowe-rezultaty'
-  | 'postep'
+  | 'check-iny'
   | 'powiazania'
   | 'refleksja';
 
@@ -52,9 +52,15 @@ export const OKR_OBJECTIVE_CARD_SECTIONS: OkrObjectiveCardSectionDef[] = [
     title: { pl: 'Kluczowe rezultaty', en: 'Key results' },
   },
   {
-    id: 'postep',
-    label: { pl: 'Postęp', en: 'Progress' },
-    title: { pl: 'Postęp celu i historia check-inów', en: 'Objective progress and check-in history' },
+    // P7K część A (05.09): SSOT §3 nazywa tę sekcję CHECK-INAMI („Karta
+    // celu: Cel · Kluczowe rezultaty · Check-iny · Powiązania · Refleksja"),
+    // a nie „Postępem" — i tak samo nazywa ją zatwierdzony zrzut
+    // `evidence/p7k-wyniki/prototype/okr-l3--light.png`. Treść sekcji się
+    // nie zmienia (stan celu + oś czasu check-inów), zmienia się nazwa, bo
+    // check-in jest tu CZYNNOŚCIĄ, a postęp jego skutkiem.
+    id: 'check-iny',
+    label: { pl: 'Check-iny', en: 'Check-ins' },
+    title: { pl: 'Check-iny i postęp celu', en: 'Check-ins and objective progress' },
   },
   {
     id: 'powiazania',
@@ -81,42 +87,11 @@ export function getOkrObjectiveCardSection(
 }
 
 // ==========================================
-// Karta Kluczowego Rezultatu (poziom 4) — ten sam kształt kontraktu.
+// KARTA KLUCZOWEGO REZULTATU — USUNIĘTA (P7K część A, 05.09).
+//
+// Poziomy OKR są TRZY, nie cztery: SSOT §1 („Karta celu N (rezultaty jako
+// sekcja)") i korekta P7K §4/§6 („usunąć trasy i strony OkrKeyResultSetPage,
+// OkrKeyResultCardPage — KR otwiera się w karcie celu, nie osobno").
+// Kontrakt `OKR_KEY_RESULT_CARD_SECTIONS` zniknął razem ze stronami, które
+// go czytały; kluczowy rezultat jest BLOKIEM w sekcji „Kluczowe rezultaty".
 // ==========================================
-
-export type OkrKeyResultCardSectionId = 'rezultat' | 'pomiar' | 'check-iny';
-
-export interface OkrKeyResultCardSectionDef {
-  id: OkrKeyResultCardSectionId;
-  label: { pl: string; en: string };
-  title: { pl: string; en: string };
-}
-
-/**
- * TRZY sekcje, nie pięć — i to nie jest skrót „bo mniej roboty”. Kluczowy
- * Rezultat NIE MA w backendzie ani opisu narracyjnego celu (`rationale`
- * istnieje tylko na `OkrObjectiveDto`), ani własnych wyrównań
- * (`/alignments` przyjmuje wyłącznie `objectiveId`), ani własnego przeglądu
- * (`OkrReviewComment.level` zna `key_result`, ale przegląd zawsze wisi na
- * ZESTAWIE). Dokładanie pustych sekcji „bo karta celu je ma” byłoby
- * udawaniem treści, której nie ma — patrz `okrWorkspaceApi.ts`.
- */
-export const OKR_KEY_RESULT_CARD_SECTIONS: OkrKeyResultCardSectionDef[] = [
-  {
-    id: 'rezultat',
-    label: { pl: 'Rezultat', en: 'Key result' },
-    title: { pl: 'Kluczowy Rezultat — kontrakt pomiaru', en: 'Key result — measurement contract' },
-  },
-  {
-    id: 'pomiar',
-    label: { pl: 'Pomiar', en: 'Measurement' },
-    title: { pl: 'Wartości i postęp', en: 'Values and progress' },
-  },
-  {
-    id: 'check-iny',
-    label: { pl: 'Check-iny', en: 'Check-ins' },
-    title: { pl: 'Historia check-inów', en: 'Check-in history' },
-  },
-];
-
-export const OKR_KEY_RESULT_CARD_DEFAULT_SECTION: OkrKeyResultCardSectionId = 'rezultat';

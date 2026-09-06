@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
+import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
 import {
   type StandardRowMenu,
   StandardTable,
@@ -160,8 +161,7 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
         />
       </div>
 
-      {selected ? (
-        <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+      <JedenPrawyPanel rekord={selected ? (
           <StandardPreview
             title={selected.label}
             onClose={() => setSelectedId(null)}
@@ -175,8 +175,7 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
             }}
             relations={[]}
           />
-        </aside>
-      ) : null}
+      ) : null} />
     </div>
   );
 };

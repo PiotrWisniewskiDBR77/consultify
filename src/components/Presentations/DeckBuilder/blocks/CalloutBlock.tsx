@@ -1,5 +1,6 @@
 import { AlertTriangle, Info, Lightbulb, Quote } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
 
@@ -16,9 +17,12 @@ const CALLOUT_ICONS: Record<string, React.FC<{ size?: number; className?: string
 };
 
 export const CalloutBlock: React.FC<Props> = ({ block, theme }) => {
+  const { t } = useTranslation();
   const variant =
     (block.content.variant as string) || (block.type === 'quote_block' ? 'quote' : 'info');
-  const text = (block.content.text as string) || 'Important information';
+  const text =
+    (block.content.text as string) ||
+    t('presentations.builder.defaultContent.calloutInfo', 'Ważna informacja');
   const author = block.content.author as string | undefined;
   const Icon = CALLOUT_ICONS[variant] || Info;
 

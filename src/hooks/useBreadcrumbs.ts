@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
+import { normalizeSettingsSectionFromPath } from '../views/settings/syncEntryResolver';
 
 // Admin section titles mapping
 const ADMIN_SECTION_TITLES: Record<string, { key: string; fallback: string }> = {
@@ -150,7 +151,7 @@ export const useBreadcrumbs = (): string[] | null => {
   // BENEFITS MODULE (Results / KPI)
   // =====================================================
   else if (currentView === AppView.BENEFITS_REALIZATION) {
-    section = t('sidebar.results', 'Results');
+    section = t('sidebar.results', 'Wyniki');
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     const mode = params.get('mode');
@@ -241,7 +242,7 @@ export const useBreadcrumbs = (): string[] | null => {
     };
     const tabLabel = TAB_LABELS[tab] || null;
     if (tabLabel) {
-      return [t('sidebar.outputsLibrary', 'Outputs'), tabLabel];
+      return [t('sidebar.materialy', 'Materials'), tabLabel];
     }
     return null;
   }
@@ -293,39 +294,24 @@ export const useBreadcrumbs = (): string[] | null => {
   // =====================================================
   // SETTINGS VIEWS
   // =====================================================
-  else if (viewParts.includes('SETTINGS')) {
+  // WAŻNY RAPORT_B #5: górny globalny breadcrumb NIE aktualizował się przy
+  // nawigacji między podstronami Ustawień poza kilkoma sekcjami z ręcznie
+  // wypisanej listy — każda inna podstrona (np. „Import/Eksport") dostawała
+  // stały fallback "Profil", bo `currentView` (AppView enum) tylko wtedy
+  // faktycznie zmienia się między sekcjami Ustawień, gdy trasa jest jedną z
+  // ośmiu jawnie zmapowanych w `getAppViewFromPath` (routeConfig.ts) — każda
+  // NIEwymieniona tam sekcja osiada na `AppView.SETTINGS_PROFILE_MODULE`
+  // (ostatni fallback tej funkcji). Zamiast łatać kolejne przypadki tym samym
+  // sposobem, czytamy sekcję WPROST z URL-a — dokładnie tak samo jak robi to
+  // SettingsView.tsx (lokalny, poprawny breadcrumb/tytuł strony), więc oba
+  // miejsca są teraz zsynchronizowane z tym samym źródłem prawdy (adres URL),
+  // nie z `currentView`, które dla Ustawień jest niekompletne.
+  else if (viewParts.includes('SETTINGS') || location.pathname.startsWith('/settings')) {
     section = t('sidebar.settings', 'Settings');
-    if (
-      currentView === AppView.SETTINGS_PROFILE ||
-      currentView === AppView.SETTINGS_PROFILE_MODULE
-    ) {
-      sub = t('settings.sidebar.profile', 'Profile');
-    } else if (currentView === AppView.SETTINGS_BILLING) {
-      sub = t('settings.billing', 'Billing');
-    } else if (currentView === AppView.SETTINGS_AI || currentView === AppView.SETTINGS_AI_MODULE) {
-      sub = t('settings.ai.title', 'AI');
-    } else if (
-      currentView === AppView.SETTINGS_NOTIFICATIONS ||
-      currentView === AppView.SETTINGS_NOTIFICATIONS_MODULE
-    ) {
-      sub = t('settings.notifications.label', 'Notifications');
-    } else if (
-      currentView === AppView.SETTINGS_INTEGRATIONS ||
-      currentView === AppView.SETTINGS_INTEGRATIONS_MODULE
-    ) {
-      sub = t('settings.integrations.title', 'Integrations');
-    } else if (
-      currentView === AppView.SETTINGS_SECURITY ||
-      currentView === AppView.SETTINGS_SECURITY_MODULE
-    ) {
-      sub = t('settings.security', 'Security');
-    } else if (currentView === AppView.SETTINGS_APPEARANCE_MODULE) {
-      sub = t('settings.appearance.label', 'Appearance');
-    } else if (currentView === AppView.SETTINGS_ORGANIZATION) {
-      sub = t('sidebar.organization', 'Organization');
-    } else {
-      sub = '';
-    }
+    const settingsSection = normalizeSettingsSectionFromPath(location.pathname);
+    sub = settingsSection
+      ? t(`settings.sections.${settingsSection}.title`, settingsSection)
+      : '';
   }
   // =====================================================
   // PARTNER PORTAL

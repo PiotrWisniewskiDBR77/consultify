@@ -62,6 +62,28 @@ export interface TableColumn {
    * Zapisany układ użytkownika (persistKey) ma pierwszeństwo nad tym domyślnym.
    */
   defaultVisible?: boolean;
+  /**
+   * ── PRZYPIĘCIE KOLUMNY PRZY PRZEWIJANIU POZIOMYM (opt-in, 2026-09-05) ─────
+   *
+   * Po co: raport KPI (SSOT `docs/modules/07_rezultaty/SSOT_WYNIKI_KPI_OKR_ROI.md`
+   * §6) ma dwanaście kolumn okresów przewijanych poziomo, a kolumna MIERNIK
+   * musi zostać widoczna z lewej, YTD i STAN z prawej. Do 2026-09-05 jądro
+   * umiało przypiąć WYŁĄCZNIE strukturalną kolumnę akcji (`sticky right-0`),
+   * więc każdy ekran, który potrzebował czegoś więcej, robił to sam —
+   * prototyp P7K liczył offsety w `useEffect` z `getBoundingClientRect()`
+   * i doklejał warianty `[&_td:nth-last-child(2)]:sticky`. To jest dokładnie
+   * ten kształt, przed którym ostrzega „naprawa per-wywołanie odrasta":
+   * mechanika należy do jądra, nie do wywołania.
+   *
+   * Offsety liczymy z TYCH SAMYCH szerokości, którymi renderują się komórki
+   * (`columnFit.widths` → `columnWidths` → `parsePx(column.width)`), więc
+   * nagłówek i wiersz nigdy się nie rozjadą — bez pomiaru DOM po renderze.
+   *
+   * ADDYTYWNE: bez tego pola tabela zachowuje się co do piksela jak dotąd
+   * (`pinnedLayout` jest wtedy pustym obiektem i żadna komórka nie dostaje
+   * ani jednej dodatkowej klasy).
+   */
+  pinned?: 'left' | 'right';
   render?: (row: any) => React.ReactNode;
 }
 
@@ -160,6 +182,38 @@ interface FilterableTableProps {
    * Omit for zero visual change (default undefined → no-op).
    */
   rowClassName?: string | ((row: TableRow) => string);
+  /**
+   * ── WIERSZ GRUPUJĄCY (opt-in, 2026-09-05) ────────────────────────────────
+   *
+   * Po co: raport KPI grupuje mierniki po OBSZARZE (SSOT §6, werdykt K6:
+   * „wiersz grupy = jedna komórka na całą szerokość (`colSpan`) z nazwą grupy
+   * i właścicielem nadrzędnym; zero »—« w wierszu grupy"). Bez tego wiersz
+   * grupy przechodził przez normalną ścieżkę komórek i każda kolumna, której
+   * grupa nie ma, rysowała „—".
+   *
+   * `isGroupRow(row)` decyduje, `renderGroupRow(row)` daje treść. Komórka
+   * dostaje `colSpan` na wszystkie widoczne kolumny + strukturalną kolumnę
+   * akcji, nieprzezroczyste tło (inaczej przewijana treść przebija spod
+   * przypiętych kolumn) i sticky-owiniętą treść, żeby nazwa grupy została
+   * widoczna także po przewinięciu w prawo.
+   *
+   * ADDYTYWNE: bez `isGroupRow` żaden wiersz nie wchodzi w tę gałąź.
+   */
+  isGroupRow?: (row: TableRow) => boolean;
+  renderGroupRow?: (row: TableRow) => React.ReactNode;
+  /**
+   * ── STARTOWE PRZEWINIĘCIE DO KOLUMNY (opt-in, 2026-09-05) ────────────────
+   *
+   * SSOT raportu KPI §6: „kolumny okresów przewijane, (…) domyślnie
+   * przewinięte do bieżącego miesiąca". Bez tego raport otwiera się na
+   * STYCZNIU i użytkownik za każdym razem przewija do miesiąca, o który mu
+   * chodzi. Offset liczymy z TYCH SAMYCH szerokości, którymi renderują się
+   * komórki — bez mierzenia DOM po renderze.
+   *
+   * Działa RAZ, przy pierwszym pojawieniu się kolumny o tym id; późniejsze
+   * przewinięcie użytkownika nie jest nadpisywane. Bez propa — zero zmiany.
+   */
+  scrollToColumnId?: string | null;
   /**
    * ── Minimalna szerokość elementu `table` (opt-in) ─────────────────────────
    *
@@ -260,6 +314,55 @@ export const getColumnFitFloor = (column: TableColumn, configuredFloor?: number)
   );
 
 /**
+ * ── SCROLLLEFT DLA `scrollToColumnId` (defekt: kolumna bieżącego miesiąca
+ * pod przypiętą kolumną MIERNIK przy 1440 px) ──────────────────────────────
+ *
+ * PRZYCZYNA. Poprzednia wersja liczyła `offset - pinnedLeftTotal`, gdzie OBA
+ * składniki brała z sumy szerokości `columnFit.widths` (stan JS) — czyli z
+ * modelu, a nie z tego, co naprawdę stoi na ekranie. Gdy `columnFit` skaluje
+ * kolumny w dół (bo naturalna szerokość tabeli > dostępny obszar — dokładnie
+ * przypadek 1440 px z dwunastoma kolumnami okresów), suma z modelu i
+ * rzeczywista szerokość `<th>` na DOM-ie mogą się rozjechać o kilka-kilkanaście
+ * pikseli (zaokrąglenia `Math.floor(width * ratio)` per kolumna, kumulowane
+ * przez WSZYSTKIE kolumny przed celem). Efekt: `scrollLeft` ustawiony za
+ * PŁYTKO, lewa krawędź kolumny miesiąca ląduje pod sticky MIERNIK-iem
+ * („CEL 6474" czytane jako „L 6474"). Przy ≥1800 px tabela mieści się bez
+ * skalowania (`scale === 1`), model i DOM są identyczne, defekt niewidoczny.
+ *
+ * NAPRAWA. Ta funkcja jest CZYSTA (bez DOM-u) — przyjmuje już ZMIERZONE z
+ * `getBoundingClientRect`/`offsetWidth` realnych sticky `<th>` wartości:
+ * pozycję i szerokość kolumny docelowej oraz sumaryczną szerokość kolumn
+ * przypiętych z lewej i z prawej. Woła ją efekt niżej, PO odczycie DOM-u —
+ * dzięki temu żadne zaokrąglenie modelu nie może już rozjechać się z ekranem.
+ *
+ * Kolumna docelowa ma być W CAŁOŚCI widoczna między przypiętymi: lewa krawędź
+ * nie może wpaść pod pinned-left, prawa — pod pinned-right (YTD/STAN). Gdy obie
+ * granice nie dają się spełnić naraz (kolumna szersza niż dostępny prześwit),
+ * wygrywa lewa krawędź — użytkownik zawsze widzi POCZĄTEK kolumny, do której
+ * go przewinięto, a nie jej ogon.
+ */
+export const obliczScrollDoKolumny = (
+  offsetKolumny: number,
+  szerokoscKolumny: number,
+  szerokoscPrzypietychLewo: number,
+  szerokoscPrzypietychPrawo: number,
+  clientWidth: number,
+  scrollWidth: number
+): number => {
+  const maxScroll = Math.max(0, scrollWidth - clientWidth);
+  // Wyrównanie do lewej krawędzi: kolumna zaczyna się DOKŁADNIE tam, gdzie
+  // kończą się przypięte kolumny z lewej.
+  let scrollLeft = offsetKolumny - szerokoscPrzypietychLewo;
+  // Gdyby to zostawiało prawą krawędź kolumny pod przypiętymi z prawej
+  // (kolumna blisko końca tabeli), dosuwamy scroll tak, by prawa krawędź
+  // też była widoczna — kosztem wyrównania do lewej.
+  const minDlaPrawejKrawedzi =
+    offsetKolumny + szerokoscKolumny - clientWidth + szerokoscPrzypietychPrawo;
+  if (scrollLeft < minDlaPrawejKrawedzi) scrollLeft = minDlaPrawejKrawedzi;
+  return Math.min(Math.max(0, Math.round(scrollLeft)), maxScroll);
+};
+
+/**
  * ŁAMANIE TEKSTU W KOMÓRCE — granica wyrazu, nigdy środek wyrazu (2026-08-30).
  *
  * Skąd to się wzięło: commit „ostatnia kolumna przestaje być ucinana" dołożył
@@ -357,6 +460,22 @@ const OverflowTooltip: React.FC<{
 // (null / undefined / empty-or-whitespace string).
 const isEmptyCell = (value: unknown): boolean =>
   value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+
+// KOSMETYKA RAPORT_B #10: `OverflowTooltip` w komórkach bez `column.render`
+// dostawał `content={String(row[column.id])}`, chronione tylko przez
+// `isEmptyCell()` (null/undefined/pusty string → myślnik). Rzadki, ale
+// realny przypadek — surowy obiekt/tablica przekazana bez `column.render` —
+// przechodzi `isEmptyCell` (nie jest null/undefined/pustym stringiem), więc
+// trafia do `String()`, który dla obiektu daje literał "[object Object]": to
+// jest TRUTHY string, więc `Tooltip`'s own `!content` guard go nie złapie —
+// użytkownik zobaczyłby dosłowny techniczny tekst w tooltipie. Tylko
+// genuine string/number/boolean dostają tekst; wszystko inne dostaje pusty
+// string (tooltip wtedy się po prostu nie pokazuje, zamiast kłamać).
+export const toTooltipSafeString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+};
 
 // Progress bar component
 // Per Table+Preview canon §4.0/§4.3: progress is NEVER red/crimson. Generic
@@ -717,6 +836,9 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
   defaultSort = null,
   rowDescription,
   rowClassName,
+  isGroupRow,
+  renderGroupRow,
+  scrollToColumnId = null,
   minTableWidth = DEFAULT_MIN_TABLE_WIDTH,
 }) => {
   const horizontalViewportRef = useRef<HTMLDivElement>(null);
@@ -962,11 +1084,36 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     }
   }, [columnConfigs, columnWidths, storageKey]);
 
+  /**
+   * ── KOLEJNOŚĆ KOLUMN: ZAPISANA TYLKO WTEDY, GDY JEST JEDNOZNACZNA ─────────
+   *
+   * DEFEKT ZMIERZONY 2026-09-05 na raporcie KPI (poziom 2), zrzut
+   * `evidence/p7k-a-kpi/L2-raport--light.png` z pierwszego przelotu:
+   * kolejność kolumn wyszła „MIERNIK · STY 2026 · YTD · LUT 2026 · STAN ·
+   * MAR 2026…", czyli YTD i STAN wylądowały W ŚRODKU miesięcy.
+   *
+   * Przyczyna: ekran z DYNAMICZNYM zestawem kolumn renderuje się najpierw bez
+   * nich (matryca okresów jeszcze leci), więc `persist` zapisuje kolejność dla
+   * KRÓTKIEJ listy (…, ytd=7, state=8). Po dojściu danych dochodzi dwanaście
+   * kolumn okresów o indeksach 7…18 — i `order` zapisane dla `ytd`/`state`
+   * ZDERZA SIĘ z indeksami nowych kolumn. Sort po zderzonych wartościach
+   * przeplata jedne z drugimi. To NIE jest problem tego jednego ekranu:
+   * dotyczy każdej tabeli, której zestaw kolumn zmienia się w czasie.
+   *
+   * Reguła: zapisana kolejność jest używana WYŁĄCZNIE gdy jest kompletna
+   * i różnowartościowa dla BIEŻĄCEGO zestawu kolumn. Gdy się zderza — znaczy,
+   * że pochodzi z innego zestawu i wygrywa kolejność DEKLARACJI modułu.
+   * Układ użytkownika nie ginie: gdy tylko zapisze się dla pełnego zestawu,
+   * znów jest jednoznaczny i znów obowiązuje.
+   */
   const visibleColumns = useMemo(() => {
     const byId = new Map(columnConfigs.map((c) => [c.id, c]));
-    return columns
-      .filter((c) => byId.get(c.id)?.visible !== false)
-      .sort((a, b) => (byId.get(a.id)?.order ?? 0) - (byId.get(b.id)?.order ?? 0));
+    const widoczne = columns.filter((c) => byId.get(c.id)?.visible !== false);
+    const kolejnosci = widoczne.map((c) => byId.get(c.id)?.order);
+    const kompletna = kolejnosci.every((o) => typeof o === 'number');
+    const jednoznaczna = new Set(kolejnosci).size === kolejnosci.length;
+    if (!kompletna || !jednoznaczna) return widoczne;
+    return [...widoczne].sort((a, b) => (byId.get(a.id)!.order ?? 0) - (byId.get(b.id)!.order ?? 0));
   }, [columns, columnConfigs]);
 
   /**
@@ -1178,6 +1325,166 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
     horizontalViewportWidth,
     effectiveMinTableWidth,
   ]);
+
+  /**
+   * ── GEOMETRIA PRZYPIĘTYCH KOLUMN (`column.pinned`) ────────────────────────
+   *
+   * Offset liczymy z tej samej szerokości, którą dostaje `style.width` komórki
+   * (`columnFit.widths` → `columnWidths` → `parsePx`), więc nagłówek i wiersz
+   * mają IDENTYCZNE `left`/`right` bez pomiaru DOM. Kolumny przypięte z prawej
+   * startują za strukturalną kolumną akcji (`sticky right-0`, 80 px), inaczej
+   * pierwsza z nich schowałaby się pod kebabem.
+   *
+   * `edge` oznacza kolumnę na granicy obszaru przewijanego — tylko ona dostaje
+   * cień, żeby granica przypięcia była widoczna, a nie sześć cieni na sobie.
+   */
+  const pinnedLayout = useMemo<
+    Record<string, { side: 'left' | 'right'; offset: number; edge: boolean; width: number }>
+  >(() => {
+    const map: Record<string, { side: 'left' | 'right'; offset: number; edge: boolean; width: number }> = {};
+    if (!visibleColumns.some((c) => c.pinned)) return map;
+    const widthOf = (column: TableColumn) =>
+      columnFit.widths[column.id] ?? columnWidths[column.id] ?? parsePx(column.width, 140);
+
+    let left = 0;
+    let lastLeftId: string | null = null;
+    for (const column of visibleColumns) {
+      if (column.pinned !== 'left') continue;
+      const w = widthOf(column);
+      map[column.id] = { side: 'left', offset: left, edge: false, width: w };
+      left += w;
+      lastLeftId = column.id;
+    }
+    if (lastLeftId && map[lastLeftId]) map[lastLeftId]!.edge = true;
+
+    let right = hideRowActions ? 0 : ROW_ACTIONS_COLUMN_WIDTH;
+    let lastRightId: string | null = null;
+    for (let i = visibleColumns.length - 1; i >= 0; i -= 1) {
+      const column = visibleColumns[i]!;
+      if (column.pinned !== 'right') continue;
+      const w = widthOf(column);
+      map[column.id] = { side: 'right', offset: right, edge: false, width: w };
+      right += w;
+      lastRightId = column.id;
+    }
+    if (lastRightId && map[lastRightId]) map[lastRightId]!.edge = true;
+    return map;
+  }, [visibleColumns, columnFit, columnWidths, parsePx, hideRowActions]);
+
+  /** Klasy komórki NAGŁÓWKA przypiętej kolumny — tło musi być NIEPRZEZROCZYSTE
+   *  (`thead` ma `bg-…/80 backdrop-blur`, spod którego przebijałaby przewijana
+   *  treść). Te same wartości co strukturalna kolumna akcji, żeby nie było
+   *  widocznego szwu koloru między nią a przypiętą kolumną obok. */
+  const pinnedHeaderClass = (column: TableColumn): string => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return '';
+    return [
+      'sticky top-0 z-[12] bg-slate-50 dark:bg-navy-900',
+      pin.edge
+        ? pin.side === 'left'
+          ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12)]'
+          : 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)]'
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+  };
+
+  /** Klasy komórki DANYCH przypiętej kolumny. Stan wiersza (zaznaczony/hover)
+   *  nakładamy jako `box-shadow: inset` — dokładnie tak, jak robi to kolumna
+   *  akcji: `background-color` jest tu zajęty przez nieprzezroczyste tło, więc
+   *  odcień stanu musi przyjść INNĄ właściwością CSS. */
+  const pinnedCellClass = (column: TableColumn, isSelected: boolean): string => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return '';
+    /* UWAGA: klasy MUSZĄ być zapisane jako pełne, statyczne literały. Tailwind
+       skanuje ŹRÓDŁO tekstowo — `shadow-[${zmienna}]` nie wygeneruje reguły
+       i cień po prostu nie powstanie. Dlatego sześć kombinacji jest wypisanych,
+       a nie sklejanych. */
+    const edge: 'left' | 'right' | 'none' = pin.edge ? pin.side : 'none';
+    const shadow = isSelected
+      ? edge === 'left'
+        ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+        : edge === 'right'
+          ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-selected)]'
+          : 'shadow-[inset_0_0_0_999px_var(--state-selected)]'
+      : edge === 'left'
+        ? 'shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+        : edge === 'right'
+          ? 'shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12)] group-hover:shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.12),inset_0_0_0_999px_var(--state-hover)]'
+          : 'group-hover:shadow-[inset_0_0_0_999px_var(--state-hover)]';
+    return `sticky z-[11] bg-white dark:bg-navy-900 ${shadow}`;
+  };
+
+  /**
+   * Offset przypięcia MUSI być policzony z DOKŁADNIE tej szerokości, którą
+   * komórka naprawdę dostanie — inaczej między kolumnami przypiętymi z prawej
+   * zostaje szczelina, przez którą przebija przewijana treść (defekt K10 na
+   * prototypie). `table-fixed` zaokrągla i rozdziela resztę, więc kolumnie
+   * przypiętej narzucamy jej szerokość ZAMKNIĘTĄ (`width` = `min` = `max`) —
+   * geometria staje się wtedy zgodna z konstrukcji, a nie z nadziei.
+   */
+  const pinnedStyle = (column: TableColumn): React.CSSProperties => {
+    const pin = pinnedLayout[column.id];
+    if (!pin) return {};
+    const fixed = {
+      width: `${pin.width}px`,
+      minWidth: `${pin.width}px`,
+      maxWidth: `${pin.width}px`,
+    };
+    return pin.side === 'left'
+      ? { ...fixed, left: `${pin.offset}px` }
+      : { ...fixed, right: `${pin.offset}px` };
+  };
+
+  /**
+   * Startowe przewinięcie do kolumny (`scrollToColumnId`) — patrz prop.
+   *
+   * Geometria MUSI pochodzić z DOM-u (`getBoundingClientRect`), nie z modelu
+   * JS (`columnFit`/`columnWidths`) — patrz komentarz przy
+   * `obliczScrollDoKolumny`. Model i ekran rozjeżdżają się dokładnie wtedy,
+   * gdy `columnFit` skaluje kolumny w dół (tabela szersza niż kontener), co
+   * jest normalnym stanem tego ekranu przy 1440 px (12 kolumn okresów).
+   */
+  const scrolledToColumnRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!scrollToColumnId) return;
+    if (scrolledToColumnRef.current === scrollToColumnId) return;
+    const scroller = horizontalViewportRef.current;
+    if (!scroller) return;
+    const index = visibleColumns.findIndex((c) => c.id === scrollToColumnId);
+    if (index < 0) return;
+    // Dopasowanie po `dataset` (nie przez selektor CSS ze sklejonym stringiem)
+    // — `scrollToColumnId` bywa postaci `period:2026-09` i nie powinien być
+    // wstrzykiwany w selektor bez escapowania.
+    const targetEl = Array.from(
+      scroller.querySelectorAll<HTMLElement>('thead th[data-column-id]')
+    ).find((el) => el.dataset.columnId === scrollToColumnId);
+    if (!targetEl) return;
+    const scrollerRect = scroller.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+    // Pozycja kolumny w NIEPRZEWIJANEJ treści (niezależna od bieżącego
+    // `scrollLeft`) — dokładnie to, co realnie stoi na ekranie w tym renderze.
+    const offsetKolumny = targetRect.left - scrollerRect.left + scroller.scrollLeft;
+    const szerokoscKolumny = targetRect.width;
+    const sumWidth = (selector: string) =>
+      Array.from(scroller.querySelectorAll<HTMLElement>(selector)).reduce(
+        (sum, el) => sum + el.getBoundingClientRect().width,
+        0
+      );
+    const szerokoscPrzypietychLewo = sumWidth('thead th[data-pinned-side="left"]');
+    const szerokoscPrzypietychPrawo = sumWidth('thead th[data-pinned-side="right"]');
+    if (scroller.scrollWidth - scroller.clientWidth <= 0) return;
+    scroller.scrollLeft = obliczScrollDoKolumny(
+      offsetKolumny,
+      szerokoscKolumny,
+      szerokoscPrzypietychLewo,
+      szerokoscPrzypietychPrawo,
+      scroller.clientWidth,
+      scroller.scrollWidth
+    );
+    scrolledToColumnRef.current = scrollToColumnId;
+  }, [scrollToColumnId, visibleColumns, columnFit, columnWidths, parsePx]);
 
   // First data (non-select) column hosts the optional row-description line.
   const firstDataColumnId = useMemo(
@@ -1399,14 +1706,18 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   const maxWidth = Math.max(declaredMaxWidth, width);
                   const isLastDataCol = idx === visibleColumns.length - 1;
                   const isSelectCol = column.type === 'select' && !!selection;
+                  const pin = pinnedLayout[column.id];
                   return (
                     <th
                       key={column.id}
-                      className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      data-column-id={column.id}
+                      data-pinned-side={pin?.side}
+                      className={`${ROW_HEIGHT_CLASS} ${cellPadding} relative ${alignToClass(column.align)} text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ${pinnedHeaderClass(column)}`}
                       style={{
                         width: `${width}px`,
                         minWidth: `${minWidth}px`,
                         maxWidth: `${maxWidth}px`,
+                        ...pinnedStyle(column),
                       }}
                     >
                       {isSelectCol ? (
@@ -1667,7 +1978,36 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                sortedData.map((row) => (
+                sortedData.map((row) =>
+                  isGroupRow?.(row) ? (
+                    /**
+                     * WIERSZ GRUPUJĄCY (K6) — jedna komórka na całą szerokość.
+                     * Nie jest klikalny, nie ma kebaba i NIE przechodzi przez
+                     * ścieżkę komórek, więc żadna kolumna nie rysuje w nim „—".
+                     * Treść owinięta w `sticky left-0`: przy przewijaniu okresów
+                     * nazwa obszaru zostaje przy lewej krawędzi, obok przypiętej
+                     * kolumny pierwotnej, zamiast wyjeżdżać z kadru.
+                     */
+                    <tr
+                      key={row.id}
+                      data-group-row="true"
+                      className={[
+                        'bg-[color:var(--c-surface-raised)]',
+                        typeof rowClassName === 'function' ? rowClassName(row) : rowClassName,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <td
+                        colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} bg-[color:var(--c-surface-raised)]`}
+                      >
+                        <div className="sticky left-0 inline-flex max-w-full items-center gap-3">
+                          {renderGroupRow ? renderGroupRow(row) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
                   <tr
                     key={row.id}
                     // DOSTĘPNOŚĆ KLAWIATURY — wiersz jest interaktywny, więc musi
@@ -1806,7 +2146,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                         // warstwie tekstu (CELL_TEXT_CLAMP_CLASS), a `break-words`
                         // zostaje tu jako ostatnia deska ratunku dla treści,
                         // którą moduł renderuje jako własne ELEMENTY.
-                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''}`}
+                        className={`${ROW_HEIGHT_CLASS} ${cellPadding} break-words ${column.align ? alignToClass(column.align) : ''} ${pinnedCellClass(column, row.id === selectedRowId)}`}
+                        style={pinnedStyle(column)}
                       >
                         {column.type === 'select' && selection ? (
                           <input
@@ -1824,7 +2165,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                           renderedIsPlainText ? (
                             <OverflowTooltip
                               className={CELL_TEXT_CLAMP_CLASS}
-                              content={String(rendered)}
+                              content={toTooltipSafeString(rendered)}
                             >
                               {rendered}
                             </OverflowTooltip>
@@ -1854,7 +2195,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                                   ? 'block truncate'
                                   : CELL_TEXT_CLAMP_CLASS,
                               ].join(' ')}
-                              content={String(row[column.id])}
+                              content={toTooltipSafeString(row[column.id])}
                             >
                               {row[column.id]}
                             </OverflowTooltip>
@@ -1999,7 +2340,8 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                       </td>
                     ) : null}
                   </tr>
-                ))
+                  )
+                )
               )}
             </tbody>
           </table>

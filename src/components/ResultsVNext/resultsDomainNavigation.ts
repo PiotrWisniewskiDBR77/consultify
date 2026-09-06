@@ -13,8 +13,16 @@ export const RESULTS_DOMAIN_TABS: StandardModuleTab[] = [
 ];
 
 export function getResultsDomainTabs(): StandardModuleTab[] {
+  /**
+   * SSOT §6: „Menu 2 modułu Wyniki: KPI · OKR · ROI (trzy funkcje)
+   * + wyszukiwarka". Do 2026-09-05 wyszukiwarka stała PRZED trzema funkcjami
+   * i miała angielską etykietę „Search" — na polskim koncie, w module, w
+   * którym każdy inny napis jest po polsku. Dwie naprawy naraz: słowo po
+   * polsku i miejsce ZA trzema funkcjami, żeby Menu 2 czytało się jako
+   * „KPI · OKR · ROI", a wyszukiwarka była dodatkiem, którym jest.
+   */
   const withSearch = isResultsVNextFlagEnabled('resultsSearch')
-    ? [{ id: 'search', label: 'Search' }, ...RESULTS_DOMAIN_TABS]
+    ? [...RESULTS_DOMAIN_TABS, { id: 'search', label: i18n.t('results.searchTab', 'Wyszukiwarka') }]
     : [...RESULTS_DOMAIN_TABS];
   // 2026-09-02 (wołacze duty) — "Archiwum"/"Archive" tab, default OFF
   // (`resultsLegacyArchive`, see resultsVNextFeatureFlags.ts). Appended

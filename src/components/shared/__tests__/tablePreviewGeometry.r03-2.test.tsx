@@ -165,6 +165,29 @@ describe('R03-2 · PreviewPaneShell', () => {
     expect(screen.getByTitle(title)).toHaveTextContent(title);
   });
 
+  // NAPRAWA (audyt MVP 06.09, RAPORT_A3.md, WAŻNY #3): nagłówek panelu
+  // Rekord|Teresa (`JedenPrawyPanel.tsx` osadza `PreviewPaneShell`) ucinał
+  // długi tytuł inicjatywy do "Sup…" — "Supply Chain Optimization" obok
+  // pasa akcji (zakładki Rekord/Teresa + "Otwórz" + ×) miało za mało miejsca
+  // na JEDNĄ linię `truncate`. `line-clamp-2` (2 linie) zamiast `truncate`
+  // (1 linia) — ten sam wzorzec co rodzeństwo w `StandardKanbanCard.tsx`/
+  // `StandardGridCard.tsx`. Natywny `title` (pełny tekst na hover) zostaje.
+  //
+  // DOWÓD MUTACYJNY: cofnij `line-clamp-2 break-words` do `truncate`
+  // w `PreviewPaneShell.tsx` → ten test pada (klasa `line-clamp-2` znika).
+  it('zawija długi tytuł do 2 linii (line-clamp-2) zamiast ucinać do 1 linii (truncate)', () => {
+    const title = 'Supply Chain Optimization';
+    render(
+      <PreviewPaneShell title={title}>
+        <div>body</div>
+      </PreviewPaneShell>
+    );
+    const tytul = screen.getByTitle(title);
+    expect(tytul.className).toContain('line-clamp-2');
+    expect(tytul.className).not.toMatch(/(?:^|\s)truncate(?:\s|$)/);
+    expect(tytul).toHaveTextContent(title);
+  });
+
   it('nie renderuje stopki, gdy jej nie podano', () => {
     const { container } = render(
       <PreviewPaneShell title="Alpha">

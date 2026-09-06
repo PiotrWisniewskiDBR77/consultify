@@ -63,6 +63,12 @@ router.get(
       computeRunId: e.compute_run_id,
       authorId: e.author_id,
       createdAt: e.created_at,
+      // Nazwy artefaktow na obu koncach (audyt FIN 2026-09-06 defekt #12) — panel
+      // "Powiazane artefakty" ma pokazac NAZWE, nie skrocony hash wersji.
+      sourceDisplayName: e.source_display_name ?? null,
+      sourceNaturalKey: e.source_natural_key ?? null,
+      targetDisplayName: e.target_display_name ?? null,
+      targetNaturalKey: e.target_natural_key ?? null,
     });
 
     return res.status(200).json({

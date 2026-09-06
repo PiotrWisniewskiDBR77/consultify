@@ -135,20 +135,24 @@ import {
   type KpiScorecardDto,
   type KpiScorecardItemDto,
   listKpiScorecardItems,
+  getKpiScorecardStatusDistribution,
+  getPublishedKpiScorecardSnapshot,
   listKpiScorecards,
   suspendKpiScorecard,
+  type ScorecardStatusDistributionDto,
 } from './kpiScorecards/kpiScorecardApi';
 import {
-  buildKpiCardSetColumns,
   buildKpiScorecardPreview,
   buildKpiScorecardRowMenu,
-  type KpiCardSetRowVm,
 } from './kpiScorecards/kpiScorecardPresenters';
 import {
-  kpiCardFromSetPath,
-  kpiCardSetPath,
-  UNASSIGNED_CARD_SET_ID,
-} from './kpiTool/kpiCardSetPath';
+  buildKpiReportColumns,
+  buildKpiReportPreview,
+  KPI_REPORT_TABLE_WIDTH_PX,
+  resolveKpiReportPeriodLabel,
+  type KpiReportRowVm,
+} from './kpiScorecards/kpiReportPresenters';
+import { kpiScorecardScopeLabel } from './kpiScorecards/kpiScorecardMappers';
 import { KpiTransitionDialog, type KpiTransitionKind } from './KpiTransitionDialog';
 import { LifecycleLockBadge, lockedRowMenuAction } from './LifecycleLockBadge';
 import {
@@ -959,6 +963,24 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     null
   );
 
+  /**
+   * P7K — poziom 1 to TABELA RAPORTÓW (SSOT §6), więc każdy wiersz potrzebuje
+   * dwóch rzeczy, których lista zestawień nie niesie:
+   *  · rozkładu stanu + liczby otwartych kart działania (`.../status`, jedno
+   *    wywołanie na raport, liczone po stronie serwera za filtrem widoczności),
+   *  · OKRESU, którego raport dotyczy — to ostatnia OPUBLIKOWANA migawka
+   *    przeglądu, a gdy jej nie ma, bieżący okres wg `reviewFrequency`
+   *    (korekta P7K §4). `404` z `review-snapshots/published` jest tu stanem
+   *    OCZEKIWANYM („raport nigdy nie opublikował przeglądu"), nie błędem —
+   *    klient zwraca wtedy `null`.
+   * Dopóki nie wrócą — komórki pokazują „—", nigdy 0.
+   */
+  const [scorecardDistributions, setScorecardDistributions] = useState<Record<
+    string,
+    ScorecardStatusDistributionDto
+  > | null>(null);
+  const [scorecardPeriods, setScorecardPeriods] = useState<Record<string, string> | null>(null);
+
   // RN-G6 UI fix — quick-create for scorecards (was wired-up API with zero
   // UI entry point, see CreateKpiScorecardModal.tsx header). Own state,
   // same "create" shape as the KPI draft form (formOpen/formBusy/formError)
@@ -990,6 +1012,12 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     if (typeof window === 'undefined') return;
     const view = new URLSearchParams(window.location.search).get('kpiView');
     if (view === 'scorecards') setTab('scorecards');
+    /* P7K — bliźniacze wejście do rejestru POJEDYNCZYCH wskaźników. Pigułka
+       „Wszystkie wskaźniki" znikła z Menu 3 (decyzja właściciela: płaska lista
+       nie jest punktem wejścia), ale rejestr żyje dalej — to jedyne miejsce
+       cyklu definicji miernika (szkic → zgłoszenie → zatwierdzenie → rewizja).
+       Adres daje do niego dostęp bez przywracania pigułki. */
+    else if (view === 'wskazniki' || view === 'indicators') setTab('org');
     // Jednorazowo, po włączeniu ekranu — dalej stan należy do pigułek Menu 3.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
@@ -1383,6 +1411,43 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     };
   }, [enabled, scorecardRows, tab]);
 
+  /**
+   * Rozkład stanu + okres przeglądu dla KAŻDEGO widocznego raportu. Wachlarz
+   * równoległych żądań po już pobranej, ograniczonej liście raportów — tak
+   * samo jak wachlarz pozycji wyżej. Błąd albo brak migawki w jednym raporcie
+   * NIE wywraca tabeli: ten raport zostaje bez okresu („—"), reszta się liczy.
+   */
+  useEffect(() => {
+    if (!enabled || tab !== 'scorecards') return;
+    let cancelled = false;
+    setScorecardDistributions(null);
+    setScorecardPeriods(null);
+    (async () => {
+      const results = await Promise.all(
+        scorecardRows.map(async (row) => {
+          const [distribution, snapshot] = await Promise.all([
+            getKpiScorecardStatusDistribution(row.scorecardId).catch(() => null),
+            getPublishedKpiScorecardSnapshot(row.scorecardId).catch(() => null),
+          ]);
+          return { row, distribution, snapshot };
+        })
+      );
+      if (cancelled) return;
+      const distributions: Record<string, ScorecardStatusDistributionDto> = {};
+      const periods: Record<string, string> = {};
+      for (const { row, distribution, snapshot } of results) {
+        if (distribution) distributions[row.scorecardId] = distribution;
+        const label = resolveKpiReportPeriodLabel(row, snapshot);
+        if (label) periods[row.scorecardId] = label;
+      }
+      setScorecardDistributions(distributions);
+      setScorecardPeriods(periods);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, scorecardRows, tab]);
+
   const runScorecardLifecycleAction = useCallback(
     async (row: KpiScorecardDto, action: 'activate' | 'suspend' | 'archive') => {
       setScorecardPending(true);
@@ -1454,7 +1519,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
       // obok filtrów Menu 3 (`work-intelligence-report` i rodzeństwo):
       // identyfikator z prefiksem `view:` odróżnia je od wartości
       // `KpiStatus`, więc `setStatusFilter` nigdy ich nie zobaczy.
-      { id: SCORECARDS_CHIP_ID, label: isPolish ? 'Zestawienia' : 'Card sets' },
+      { id: SCORECARDS_CHIP_ID, label: isPolish ? 'Raporty' : 'Reports' },
       { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: scopedRows.length },
       ...KPI_STATUSES.map((s) => ({
         id: s,
@@ -1559,48 +1624,59 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     const membershipKnown = !loading && !scorecardsLoading && scorecardItems !== null;
     const unassignedKpis = membershipKnown ? rows.filter((r) => !memberKpiIds.has(r.kpiId)) : [];
 
-    const cardSetRows: KpiCardSetRowVm[] = scorecardRows.map((row) => ({
-      id: row.scorecardId,
-      name: row.name,
-      description: row.description,
-      itemCount: scorecardItems ? (scorecardItems[row.scorecardId]?.length ?? 0) : null,
-      owner:
-        row.ownerName ??
-        (currentUser?.id && row.ownerUserId === currentUser.id
-          ? isPolish
-            ? 'Ty'
-            : 'You'
-          : memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish)),
-      status: row.lifecycleStatus,
-      updatedAt: row.updatedAt,
-      scorecard: row,
-    }));
-    // Wiersz systemowy dokładamy TYLKO gdy naprawdę coś zostaje poza
-    // zestawieniami — pusty „Bez zestawienia" byłby szumem, a nie uczciwością.
-    if (unassignedKpis.length > 0) {
-      cardSetRows.push({
-        id: UNASSIGNED_CARD_SET_ID,
-        name: isPolish ? 'Bez zestawienia' : 'Not in any card set',
-        description: isPolish
-          ? 'Wskaźniki, które nie należą do żadnego widocznego zestawienia (wiersz systemowy, nie rekord w bazie).'
-          : 'Indicators that belong to no visible card set (a system row, not a stored record).',
-        itemCount: unassignedKpis.length,
-        owner: null,
-        status: null,
-        updatedAt: null,
-        scorecard: null,
-      });
-    }
+    /**
+     * ── POZIOM 1 = TABELA RAPORTÓW (SSOT §6) ─────────────────────────────
+     *
+     * Wiersz to RAPORT OKRESOWY, nie „zestawienie". Kolumny OKRES, STAN
+     * i OTWARTE DZIAŁANIA pochodzą z odpowiedzi serwera (`.../status`
+     * i ostatnia opublikowana migawka przeglądu); dopóki nie wrócą,
+     * komórka pokazuje „—", nigdy 0 — bo „zero krytycznych" i „nie wiem,
+     * ile jest krytycznych" to dwie różne wiadomości.
+     */
+    const reportRows: KpiReportRowVm[] = scorecardRows.map((row) => {
+      const distribution = scorecardDistributions?.[row.scorecardId] ?? null;
+      return {
+        id: row.scorecardId,
+        name: row.name,
+        description: row.description,
+        /* ZAKRES = konkretny zakład/dział, gdy `scopeId` da się rozwiązać na
+           nazwę; w przeciwnym razie sam RODZAJ zakresu („Organizacja",
+           „Jednostka"). Nigdy identyfikator — kanon „nazwiska i nazwy, nie
+           identyfikatory" (P4). */
+        scope:
+          (row.scopeId ? resolveScopeName?.(row.scopeId) : null) ??
+          kpiScorecardScopeLabel(row.scopeType, isPolish),
+        period: scorecardPeriods?.[row.scorecardId] ?? null,
+        /* Liczba mierników bierze się z rozkładu stanu (`totalVisible`), a nie
+           z osobnego zliczania pozycji: to ta sama, już przefiltrowana przez
+           widoczność liczba, więc kolumna MIERNIKI i kolumna STAN nie mogą
+           pokazać dwóch różnych sum. */
+        indicatorCount:
+          distribution?.totalVisible ??
+          (scorecardItems ? (scorecardItems[row.scorecardId]?.length ?? 0) : null),
+        distribution,
+        openActions: distribution?.openDeviationCases ?? null,
+        preparedBy:
+          row.preparedByName ??
+          row.ownerName ??
+          (currentUser?.id && row.ownerUserId === currentUser.id
+            ? isPolish
+              ? 'Ty'
+              : 'You'
+            : memberNameOrUnknown(resolveMemberName, row.ownerUserId, isPolish)),
+        updatedAt: row.updatedAt,
+        scorecard: row,
+      };
+    });
 
-    const scorecardTableRows = cardSetRows.map(
+    const scorecardTableRows = reportRows.map(
       (r) => r as unknown as Record<string, unknown> & { id: string }
     );
-    const selectedCardSet = cardSetRows.find((r) => r.id === selectedScorecardId) ?? null;
+    const selectedReport = reportRows.find((r) => r.id === selectedScorecardId) ?? null;
     const openDetail = (scorecardId: string) =>
       navigate(ROUTES.RESULTS_KPI.SCORECARD.replace(':scorecardId', scorecardId));
-    const openCardSet = (cardSetId: string) => navigate(kpiCardSetPath(cardSetId));
-    const openKpiFromCardSet = (kpiId: string, cardSetId: string) =>
-      navigate(kpiCardFromSetPath(kpiId, cardSetId));
+    const openKpiCard = (kpiId: string) =>
+      navigate(ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpiId));
 
     return (
       <div className="h-full" data-testid="results-vnext-kpi-registry-page">
@@ -1616,75 +1692,61 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             showTabCounts: false,
             viewModes: ['table'],
             viewMode: 'table',
-            // Pigułki nawigacyjne Menu 3: ZESTAWIENIA (poziom 1) na pierwszym
-            // miejscu, obok nich pełna lista wskaźników — żeby przejście na
-            // tabelę zestawień nie odcięło nikomu drogi do rejestru KPI.
-            chips: [
-              {
-                id: SCORECARDS_CHIP_ID,
-                label: isPolish ? 'Zestawienia' : 'Card sets',
-                count: cardSetRows.length,
-              },
-              { id: KPI_CHIP_ID, label: isPolish ? 'Wszystkie wskaźniki' : 'All indicators' },
-            ],
-            activeChip: SCORECARDS_CHIP_ID,
-            onChipChange: (id) => {
-              if (id === KPI_CHIP_ID) {
-                setSelectedScorecardId(null);
-                setTab('org');
-              }
-            },
-            // RN-G6 UI fix — makes `createKpiScorecard` (already wired in
-            // kpiScorecardApi.ts) reachable from the UI, see
-            // CreateKpiScorecardModal.tsx header.
+            /**
+             * ── MENU 3 NA POZIOMIE 1: JEDNA AKCJA, ZERO PIGUŁEK ─────────────
+             *
+             * Pigułka „Wszystkie wskaźniki" ZNIKA (korekta P7K §4, decyzja
+             * właściciela nr 2 z 30.08: „płaska lista wszystkich wskaźników nie
+             * jest punktem wejścia"). Do miernika wchodzi się przez RAPORT albo
+             * przez wyszukiwarkę Menu 2 — dokładnie tak, jak opisuje SSOT §1.
+             *
+             * Rejestr pojedynczych wskaźników NIE został skasowany: to jedyne
+             * miejsce, w którym żyje cykl definicji (szkic → zgłoszenie →
+             * zatwierdzenie/odrzucenie → rewizja), więc jego usunięcie
+             * zabrałoby produktowi funkcję, której paczka nie kazała usuwać.
+             * Zostaje osiągalny adresem `?kpiView=wskazniki` (bliźniak
+             * istniejącego `?kpiView=scorecards`) i z wyszukiwarki.
+             */
+            chips: undefined,
             primaryCta: {
-              label: isPolish ? 'Nowe zestawienie' : 'New card set',
+              label: isPolish ? 'Nowy raport' : 'New report',
               icon: Plus,
               onClick: openCreateScorecard,
               testId: 'kpi-scorecard-new-cta',
             },
           }}
           table={{
-            columns: buildKpiCardSetColumns(isPolish),
+            columns: buildKpiReportColumns(isPolish),
             data: scorecardTableRows,
-            persistKey: 'results-vnext.kpi-scorecards',
+            persistKey: 'results-vnext.kpi-reports',
+            /* Geometria kolumn jest ZMIERZONA (patrz `KPI_REPORT_TABLE_WIDTH_PX`).
+               Gdy otwiera się podgląd, tabela ma się PRZEWIJAĆ poziomo, a nie
+               ściskać kolumny poniżej ich treści. */
+            minTableWidth: KPI_REPORT_TABLE_WIDTH_PX,
             loading: scorecardsLoading,
             error: scorecardsError,
             onRetry: () => void fetchScorecardRows(),
             empty:
-              !scorecardsLoading && !scorecardsError && cardSetRows.length === 0
+              !scorecardsLoading && !scorecardsError && reportRows.length === 0
                 ? {
-                    title: isPolish ? 'Brak zestawień' : 'No card sets yet',
+                    title: isPolish ? 'Brak raportów KPI' : 'No KPI reports yet',
                     description: isPolish
-                      ? 'Utwórz pierwsze zestawienie, aby zacząć grupować wskaźniki.'
-                      : 'Create the first card set to start grouping indicators.',
+                      ? 'Utwórz pierwszy raport, aby zacząć śledzić mierniki okres po okresie.'
+                      : 'Create the first report to start tracking indicators period by period.',
                   }
                 : undefined,
             selectedRowId: selectedScorecardId,
             onRowClick: (row) => setSelectedScorecardId(String(row.id)),
-            // Dwuklik = poziom 2 (lista zestawienia) — kanon triady: klik
-            // pokazuje, dwuklik otwiera obiekt.
-            onRowDoubleClick: (row) => openCardSet(String(row.id)),
+            // Kanon triady: klik pokazuje podgląd, dwuklik OTWIERA raport
+            // (poziom 2).
+            onRowDoubleClick: (row) => openDetail(String(row.id)),
             rowMenu: (row) => {
-              const vm = row as unknown as KpiCardSetRowVm;
-              if (!vm.scorecard) {
-                // Wiersz systemowy nie ma cyklu życia — jedyna uczciwa akcja
-                // to otwarcie jego listy.
-                return {
-                  primary: [
-                    {
-                      id: 'open-list',
-                      label: isPolish ? 'Otwórz listę wskaźników' : 'Open indicator list',
-                      onClick: () => openCardSet(vm.id),
-                    },
-                  ],
-                };
-              }
+              const vm = row as unknown as KpiReportRowVm;
               return buildKpiScorecardRowMenu(vm.scorecard, {
                 isPolish,
                 busy: scorecardPending,
-                memberCount: vm.itemCount ?? undefined,
-                onOpenCardSet: openCardSet,
+                memberCount: vm.indicatorCount ?? undefined,
+                onOpenCardSet: openDetail,
                 onOpenDetail: openDetail,
                 onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
                 onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
@@ -1694,62 +1756,13 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             defaultSort: { columnId: 'updatedAt', direction: 'desc' },
           }}
           preview={
-            selectedCardSet && selectedCardSet.scorecard
-              ? buildKpiScorecardPreview(selectedCardSet.scorecard, {
+            selectedReport
+              ? buildKpiReportPreview(selectedReport, {
                   isPolish,
-                  currentUserId: currentUser?.id,
-                  resolveMemberName,
-                  resolveScopeName,
-                  busy: scorecardPending,
-                  memberCount: selectedCardSet.itemCount ?? undefined,
-                  items: scorecardItems ? (scorecardItems[selectedCardSet.id] ?? []) : 'loading',
-                  onOpenKpi: (kpiId) => openKpiFromCardSet(kpiId, selectedCardSet.id),
-                  onOpenCardSet: openCardSet,
-                  onOpenDetail: openDetail,
-                  onActivate: (r) => void runScorecardLifecycleAction(r, 'activate'),
-                  onSuspend: (r) => void runScorecardLifecycleAction(r, 'suspend'),
-                  onArchive: (r) => void runScorecardLifecycleAction(r, 'archive'),
                   onClose: () => setSelectedScorecardId(null),
+                  onOpenReport: openDetail,
                 })
-              : selectedCardSet
-                ? {
-                    // Podgląd wiersza systemowego — te same bloki, ale bez
-                    // ani jednego pola, którego ten wiersz nie ma (właściciel,
-                    // status, cykl życia): kanon „widoczne i wyłączone z
-                    // powodem", nie zmyślone wartości.
-                    title: selectedCardSet.name,
-                    onClose: () => setSelectedScorecardId(null),
-                    onOpenFull: () => openCardSet(selectedCardSet.id),
-                    openLabel: isPolish ? 'Otwórz listę' : 'Open list',
-                    meta: {
-                      pills: [{ label: isPolish ? 'Systemowe' : 'System', tone: 'neutral' as const }],
-                    },
-                    details: {
-                      propertyLabel: isPolish ? 'Właściwość' : 'Property',
-                      valueLabel: isPolish ? 'Wartość' : 'Value',
-                      properties: [
-                        {
-                          id: 'description',
-                          label: isPolish ? 'Opis' : 'Description',
-                          value: selectedCardSet.description ?? '—',
-                        },
-                        {
-                          id: 'count',
-                          label: isPolish ? 'Liczba wskaźników' : 'Indicators',
-                          value: String(selectedCardSet.itemCount ?? '—'),
-                        },
-                      ],
-                    },
-                    relations: unassignedKpis.map((kpi) => ({
-                      id: kpi.kpiId,
-                      label: kpi.name || kpi.kpiCode,
-                      value: kpi.kpiCode,
-                      type: 'kpi',
-                      title: kpi.kpiId,
-                      onClick: () => openKpiFromCardSet(kpi.kpiId, UNASSIGNED_CARD_SET_ID),
-                    })),
-                  }
-                : null
+              : null
           }
         />
         <CreateKpiScorecardModal

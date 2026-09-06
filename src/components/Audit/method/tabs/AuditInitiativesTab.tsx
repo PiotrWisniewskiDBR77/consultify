@@ -18,6 +18,7 @@ import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
@@ -156,7 +157,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     {
       id: 'updatedAt',
       label: isPolish ? 'Zaktualizowano' : 'Updated',
-      width: '140px',
+      width: '200px',
+      dataType: 'date',
       sortable: true,
       render: (row: AuditProposalSummary) => (
         <span className="text-xs text-c-text-secondary tabular-nums">{formatListDate(row.updatedAt)}</span>
@@ -296,8 +298,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
             }}
           />
         </div>
-        {selected ? (
-          <div className="w-[380px] shrink-0 border-l border-c-border-subtle">
+        <JedenPrawyPanel
+          className="border-l border-c-border-subtle"
+          rekord={selected ? (
             <StandardPreview
               title={selected.title}
               onClose={() => setSelectedId(null)}
@@ -317,8 +320,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
                 valueLabel: isPolish ? 'Wartość' : 'Value',
               }}
             />
-          </div>
-        ) : null}
+          ) : null}
+        />
       </div>
     </div>
   );

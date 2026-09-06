@@ -89,26 +89,31 @@ describe('Assessment Output artifact routes', () => {
     window.localStorage.clear();
   });
 
-  it('flag OFF (default): report route redirects and does NOT mount AssessmentReportView', async () => {
+  // NAPRAWA MVP 06.09 (evidence/audyt-mvp-20260906/A2/RAPORT_A2.md poz. 5.2,
+  // BLOKER): flaga jest teraz domyślnie ON (decyzja CTO — patrz komentarz w
+  // assessmentOutputArtifactsFlag.ts). Testy OFF poniżej wymuszają OFF przez
+  // localStorage zamiast polegać na domyślnej wartości — to jest teraz ŚCIEŻKA
+  // AWARYJNA (wyłączenie w razie regresji na żywo), nie stan domyślny.
+  it('flag OFF (jawne wyłączenie awaryjne): report route redirects and does NOT mount AssessmentReportView', async () => {
+    window.localStorage.setItem(FLAG_LOCAL_STORAGE_KEY, '0');
     renderReportAt('/assessment/outputs/abc/report');
     expect(await screen.findByText('outputs tab (redirect target)')).toBeInTheDocument();
     expect(screen.queryByTestId('report-view')).not.toBeInTheDocument();
   });
 
-  it('flag ON: report route mounts AssessmentReportView with outputId from the URL', async () => {
-    window.localStorage.setItem(FLAG_LOCAL_STORAGE_KEY, '1');
+  it('flag ON (default): report route mounts AssessmentReportView with outputId from the URL', async () => {
     renderReportAt('/assessment/outputs/abc/report');
     expect(await screen.findByTestId('report-view')).toHaveTextContent('report:abc');
   });
 
-  it('flag OFF (default): presentation route redirects and does NOT mount AssessmentPresentationView', async () => {
+  it('flag OFF (jawne wyłączenie awaryjne): presentation route redirects and does NOT mount AssessmentPresentationView', async () => {
+    window.localStorage.setItem(FLAG_LOCAL_STORAGE_KEY, '0');
     renderPresentationAt('/assessment/outputs/xyz/presentation');
     expect(await screen.findByText('outputs tab (redirect target)')).toBeInTheDocument();
     expect(screen.queryByTestId('presentation-view')).not.toBeInTheDocument();
   });
 
-  it('flag ON: presentation route mounts AssessmentPresentationView with outputId from the URL', async () => {
-    window.localStorage.setItem(FLAG_LOCAL_STORAGE_KEY, '1');
+  it('flag ON (default): presentation route mounts AssessmentPresentationView with outputId from the URL', async () => {
     renderPresentationAt('/assessment/outputs/xyz/presentation');
     expect(await screen.findByTestId('presentation-view')).toHaveTextContent('presentation:xyz');
   });
@@ -157,13 +162,17 @@ describe('Assessment Output artifact — rejestracja wołacza (pin na źródle)'
     expect(outputsTab).toContain('isAssessmentOutputArtifactsEnabled()');
   });
 
-  it('flaga jest domyślnie OFF (bez tego cała bramka #7 jest pozorna)', () => {
+  // NAPRAWA MVP 06.09 (poz. 5.2, BLOKER — patrz komentarz nad testami OFF
+  // wyżej): odwrócona z domyślnie OFF na domyślnie ON, decyzja CTO. Ten test
+  // teraz pinuje NOWY stan zamiast starego, żeby przyszła zmiana defaultu
+  // była równie świadoma jak ta.
+  it('flaga jest domyślnie ON (naprawa MVP 06.09, poz. 5.2 — decyzja CTO)', () => {
     const flaga = readFileSync(
       resolve(process.cwd(), 'src/utils/assessmentOutputArtifactsFlag.ts'),
       'utf8'
     );
     const fn = flaga.slice(flaga.indexOf('export function isAssessmentOutputArtifactsEnabled'));
-    expect(fn).toContain('return false;');
-    expect(fn).not.toContain('return true;');
+    expect(fn).toContain('return true;');
+    expect(fn).not.toContain('return false;');
   });
 });

@@ -956,11 +956,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [notebookScopeFilter, setNotebookScopeFilter] = useState<'all' | 'personal' | 'team'>(
     'all'
   );
-  const [notebookScopeCounts, setNotebookScopeCounts] = useState({
-    all: 0,
-    personal: 0,
-    team: 0,
-  });
+  const [notebookScopeCounts, setNotebookScopeCounts] = useState<{
+    all: number;
+    personal: number;
+    team: number;
+  } | null>(null);
   const notebookActivePanel: WorkspacePanelKey = notebookChatOpen
     ? 'tools'
     : notebookLinkedIdeasOpen
@@ -3044,19 +3044,27 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // Notebook library (L1): scope presets in the single Command Row.
     if (activeTab === 'notebook' && !notebookOpenId) {
-      const presets: Array<{ id: 'all' | 'personal' | 'team'; label: string; count: number }> = [
-        { id: 'all', label: t('myWork.hub.label22', 'All'), count: notebookScopeCounts.all },
+      const presets: Array<{
+        id: 'all' | 'personal' | 'team';
+        label: string;
+        count: number | '—';
+      }> = [
+        {
+          id: 'all',
+          label: t('myWork.hub.label22', 'All'),
+          count: notebookScopeCounts?.all ?? '—',
+        },
         {
           id: 'personal',
           label: t('myWork.hub.label23', 'Personal'),
-          count: notebookScopeCounts.personal,
+          count: notebookScopeCounts?.personal ?? '—',
         },
         {
           // #11-extend: mirrors NotebookLibraryContent "Team"→"Organization" fix (#11) —
           // Consultify has no sub-team concept below the org, scope value stays 'team'.
           id: 'team',
           label: t('myWork.hub.label24', 'Organization'),
-          count: notebookScopeCounts.team,
+          count: notebookScopeCounts?.team ?? '—',
         },
       ];
       return (
@@ -3081,6 +3089,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     )}
                     {p.label}
                     <span
+                      data-testid="tab-count"
                       className={`${MENU_3_BADGE_BASE} ${isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}`}
                     >
                       {p.count}

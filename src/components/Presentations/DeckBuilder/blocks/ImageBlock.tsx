@@ -1,5 +1,6 @@
 import { ImageIcon } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
 
@@ -9,8 +10,10 @@ interface Props {
 }
 
 export const ImageBlock: React.FC<Props> = ({ block, theme }) => {
+  const { t } = useTranslation();
   const url = block.content.url as string | undefined;
-  const alt = (block.content.alt as string) || 'Image';
+  const alt =
+    (block.content.alt as string) || t('presentations.builder.defaultContent.image', 'Obraz');
 
   if (url) {
     return (

@@ -27,6 +27,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { useAppStore } from '../../../store/useAppStore';
@@ -846,8 +847,7 @@ export const ModelCatalogTable: React.FC = () => {
               />
             </div>
 
-            {previewModel ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <JedenPrawyPanel rekord={previewModel ? (
                 <StandardPreview
                   title={previewModel.name}
                   onClose={() => setPreviewId(null)}
@@ -888,8 +888,7 @@ export const ModelCatalogTable: React.FC = () => {
                   }}
                   actions={previewActions}
                 />
-              </aside>
-            ) : null}
+            ) : null} />
           </div>
 
           {editingModel && (

@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import {
   StandardPreview,
   type StandardRowMenu,
@@ -631,9 +632,8 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
           }}
         />
       </div>
-      {selectedId ? (
-        <PreviewPaneAside>
-          {(() => {
+      <JedenPrawyPanel
+        rekord={selectedId ? (() => {
             const item = METHODOLOGY_CATALOG.find((row) => row.id === selectedId);
             if (!item) return null;
             return (
@@ -710,9 +710,8 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
                 }
               />
             );
-          })()}
-        </PreviewPaneAside>
-      ) : null}
+          })() : null}
+      />
     </div>
   );
 };
