@@ -59,6 +59,9 @@ router.post(
 router.post('/:toolId/approve', validateBody(ApproveToolSchema), ToolController.approveTool);
 router.post('/:toolId/send-back', validateBody(SendBackSchema), ToolController.sendBackToDraft);
 router.post('/:toolId/promote', ToolController.promoteToOutput);
+// 1.1-T1 (DEC-412): insight (snapshot `tool_outputs`) dla sesji JUŻ
+// zatwierdzonej — zatwierdzenie nowej sesji tworzy go samo (approveTool).
+router.post('/:toolId/insight', ToolController.createToolInsight);
 router.post(
   '/:toolId/swot-candidates',
   validateBody(HandoffSwotCandidateSchema),

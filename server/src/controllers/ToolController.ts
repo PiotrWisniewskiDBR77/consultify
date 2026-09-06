@@ -1748,6 +1748,54 @@ export class ToolController {
         decisionId,
       });
 
+      /**
+       * 1.1-T1 (DEC-412) — PRODUCENT INSIGHTÓW.
+       *
+       * Uwaga właściciela 06.09: „nie tworzy insightów tak naprawdę. Nie ma
+       * tutaj generatora insightów." Przyczyna zmierzona na bazie stagingu:
+       * 53 sesje w statusie APPROVED i ZERO wierszy `tool_outputs`, bo
+       * `ensureToolOutputSnapshot` miało dokładnie JEDEN wołacz —
+       * `promoteToOutput` (POST /:toolId/promote), czyli osobną, ręczną
+       * promocję do raportu/prezentacji/inicjatywy. Samo zatwierdzenie sesji
+       * — jedyny krok, który konsultant faktycznie wykonuje — nie tworzyło
+       * niczego. Kontrakt TLS-OUTPUT-OWN-001 mówi wprost: insighty powstają z
+       * „wykorzystanych narzędzi z sekcji Sessions po ich zatwierdzeniu".
+       *
+       * Idempotentnie: `ensureToolOutputSnapshot` czyta-najpierw, a indeks
+       * częściowy `uq_tool_outputs_active_snapshot_per_session` gwarantuje
+       * jeden aktywny snapshot na sesję po stronie BAZY — powtórne
+       * zatwierdzenie/wyścig nie zrobi drugiego wiersza.
+       *
+       * FAIL-SAFE, ale NIE CICHO: zatwierdzenie sesji jest bramką ludzką i
+       * nie może paść przez insight (np. `EmptyToolOutputError` dla sesji
+       * dynamic-swot bez ani jednego wniosku, albo 503 gdy baza nie ma
+       * tabeli). Każda taka sytuacja idzie do logu z powodem i wraca do
+       * klienta w polu `insight` — konsultant widzi, że insight NIE powstał,
+       * zamiast „zatwierdzone" bez śladu.
+       */
+      let insightOutputId: string | null = null;
+      let insightSkippedReason: string | null = null;
+      try {
+        const snapshot = await ensureToolOutputSnapshot(
+          { ...session, status: 'APPROVED' } as ToolSessionRow,
+          { id: user.id },
+          now
+        );
+        insightOutputId = snapshot.id;
+      } catch (err) {
+        if (err instanceof EmptyToolOutputError) {
+          insightSkippedReason = err.code;
+        } else if (err instanceof ToolOutputPersistenceUnavailableError) {
+          insightSkippedReason = err.code;
+        } else {
+          insightSkippedReason = 'UNEXPECTED_ERROR';
+        }
+        logger.warn(
+          `[ToolController.approveTool] insight (tool_outputs) NOT created for session ${toolId}: ${insightSkippedReason}`,
+          { toolSessionId: toolId, organizationId: user.organizationId, error: String(err) }
+        );
+      }
+
       // CONCLUSION_LAYER bridge: the approve gate is the strongest evidence
       // signal — re-persist the session's W2 conclusion with the final answers.
       // Fire-and-forget + fail-safe (must never break approval).
@@ -1765,7 +1813,81 @@ export class ToolController {
         { logger }
       );
 
-      res.json({ id: toolId, status: 'APPROVED' });
+      res.json({
+        id: toolId,
+        status: 'APPROVED',
+        // Addytywne (żaden istniejący konsument tego nie czyta): id insightu
+        // utworzonego z tej sesji, albo powód, dla którego nie powstał.
+        insight: insightOutputId
+          ? { id: insightOutputId, created: true }
+          : { id: null, created: false, reason: insightSkippedReason },
+      });
+    }
+  );
+
+  /**
+   * POST /api/tools/:toolId/insight — 1.1-T1 (DEC-412).
+   *
+   * Cienki wołacz istniejącego `ensureToolOutputSnapshot` dla sesji, która
+   * JUŻ jest zatwierdzona. Po co osobna trasa, skoro `approveTool` robi to
+   * teraz sam: 53 sesje na stagingu (i każda sesja zatwierdzona przed tym
+   * commitem) są już APPROVED — `approveTool` odrzuci je z 409 („not in
+   * review"), a `promoteToOutput` wymaga wyboru typu downstream i tworzy
+   * dodatkowy rekord (inicjatywę/raport/pomysł), czego CTA „Nowy insight"
+   * robić nie ma. To NIE jest nowy generator: zero nowej logiki treści, ta
+   * sama funkcja, ten sam kernel lifecycle, ta sama idempotencja bazodanowa.
+   */
+  static createToolInsight = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const allowed = await ensurePermission(req, 'TOOLS_APPROVE');
+      if (!allowed) {
+        res.status(403).json({ error: 'Permission denied' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT * FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as ToolSessionRow | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const sessionStatus = normalizeStatus(session.status);
+      if (!['APPROVED', 'GENERATED', 'FINALIZED'].includes(sessionStatus)) {
+        res.status(409).json({
+          error: 'Tool session must be approved before an insight can be created',
+          code: 'SESSION_NOT_APPROVED',
+        });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      try {
+        const snapshot = await ensureToolOutputSnapshot(session, { id: user.id }, now);
+        await logAudit(user.organizationId, user.id, 'tool_insight_created', toolId, {
+          toolOutputId: snapshot.id,
+        });
+        res.json({ output: { id: snapshot.id, toolSessionId: toolId, status: snapshot.status } });
+      } catch (err) {
+        if (
+          err instanceof EmptyToolOutputError ||
+          err instanceof ToolOutputPersistenceUnavailableError
+        ) {
+          res.status(err.status).json({ error: err.message, code: err.code });
+          return;
+        }
+        throw err;
+      }
     }
   );
 
