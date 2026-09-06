@@ -211,6 +211,12 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   }, []);
 
   const isUnavailable = !isNetworkOnline || availabilityState === 'unavailable';
+  // [ODMROZENIE Model-dot DEC-402] Kropka koduje realny stan modelu: zielony/kolor
+  // poziomu = gotowy, szary neutralny = brak skonfigurowanego dostawcy (odpowiedź
+  // health-checku przyszła, po prostu nic nie jest gotowe), crimson/danger TYLKO
+  // dla realnego błędu (sieć offline). „Brak" nie jest błędem — nie koduj go czerwienią.
+  const isNetworkError = !isNetworkOnline;
+  const isNoProviderReady = isNetworkOnline && availabilityState === 'unavailable';
   const isDegraded =
     isNetworkOnline && (availabilityState === 'degraded' || availabilityState === 'unknown');
   const buttonTitle = !isNetworkOnline
@@ -258,10 +264,17 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
                 : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-c-info/50 hover:bg-slate-50 dark:hover:bg-white/5'
         } text-xs font-medium text-navy-900 dark:text-white`}
       >
-        {/* Status Dot / Icon */}
+        {/* Status Dot / Icon — crimson TYLKO dla realnego błędu (sieć offline);
+            brak skonfigurowanego dostawcy = neutralny szary (nie błąd, nie brand). */}
         <div
           className={`w-2 h-2 rounded-full animate-pulse ${
-            isUnavailable ? 'bg-danger-500' : isDegraded ? 'bg-amber-500' : activeTier.color
+            isNetworkError
+              ? 'bg-danger-500'
+              : isNoProviderReady
+                ? 'bg-c-text-muted'
+                : isDegraded
+                  ? 'bg-amber-500'
+                  : activeTier.color
           }`}
         />
 

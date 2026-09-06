@@ -286,6 +286,11 @@ export const toCanonicalInitiativeRegisterItem = (
     summary: initiative.problem,
     description: initiative.problem,
     axis: 'operational',
+    // [ODMROZENIE 05_INITIATIVES DEC-402] The runtime-v1 (event-sourced)
+    // read model carries no area/axis/category field at all (see
+    // `RegisteredInitiativeReadModel` in runtimeApi.ts) — leaving
+    // `registerArea`/`registerAxisRaw`/`registerCategory` unset here is an
+    // honest "brak danych", not a bug. Never invent a value for this source.
     status: lifecycleToInitiativeStatus(projection.lifecycle),
     displayStatus: projection.lifecycle,
     priority: initiative.priority as PortfolioInitiative['priority'],
@@ -358,6 +363,12 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
     summary: row.summary || row.hypothesis || undefined,
     description: row.summary || row.hypothesis || undefined,
     axis: 'operational',
+    // [ODMROZENIE 05_INITIATIVES DEC-402] Real "Obszar / oś" pass-through —
+    // `axis` above stays 'operational' (wider, pre-existing contract, not
+    // touched here); these three feed ONLY the register's dedicated column.
+    registerArea: row.area ?? null,
+    registerAxisRaw: row.axis ?? null,
+    registerCategory: row.category ?? null,
     status: normalizeLegacyInitiativeStatus(row.status),
     displayStatus: rawStatus || undefined,
     priority: (String(row.priority || 'MEDIUM').toUpperCase() ||

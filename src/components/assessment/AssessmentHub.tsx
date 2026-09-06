@@ -1127,7 +1127,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     }
 
     if (activeTab === 'initiatives') {
-      return createInitiativeRegisterColumns();
+      return createInitiativeRegisterColumns({ t });
     }
 
     // Default: assessment list
