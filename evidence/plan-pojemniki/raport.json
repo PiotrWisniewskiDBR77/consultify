@@ -1,0 +1,62 @@
+[
+  {
+    "theme": "light",
+    "width": 420,
+    "scrollWidth": 420,
+    "clientWidth": 420,
+    "bodyBg": "rgb(247, 246, 243)",
+    "lumaVal": 245.996,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-light-420.png"
+  },
+  {
+    "theme": "light",
+    "width": 800,
+    "scrollWidth": 800,
+    "clientWidth": 800,
+    "bodyBg": "rgb(247, 246, 243)",
+    "lumaVal": 245.996,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-light-800.png"
+  },
+  {
+    "theme": "light",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "bodyBg": "rgb(247, 246, 243)",
+    "lumaVal": 245.996,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-light-1440.png"
+  },
+  {
+    "theme": "dark",
+    "width": 420,
+    "scrollWidth": 420,
+    "clientWidth": 420,
+    "bodyBg": "rgb(21, 23, 26)",
+    "lumaVal": 22.7914,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-dark-420.png"
+  },
+  {
+    "theme": "dark",
+    "width": 800,
+    "scrollWidth": 800,
+    "clientWidth": 800,
+    "bodyBg": "rgb(21, 23, 26)",
+    "lumaVal": 22.7914,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-dark-800.png"
+  },
+  {
+    "theme": "dark",
+    "width": 1440,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "bodyBg": "rgb(21, 23, 26)",
+    "lumaVal": 22.7914,
+    "consoleErrors": [],
+    "outFile": "/private/tmp/wt-panel-pojemniki/evidence/plan-pojemniki/panel-dark-1440.png"
+  }
+]

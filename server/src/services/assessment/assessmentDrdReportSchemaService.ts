@@ -30,6 +30,7 @@ export const DRD_REPORT_FIXED_TEXT = Object.freeze({
   criticalGaps: 'Luki krytyczne i rekomendacja główna',
   finalConclusions: 'Wnioski końcowe',
   appendix: 'Załącznik A. Rejestr luk',
+  methodologyAppendix: 'Załącznik B. Nota metodyczna',
   confidentiality: 'Dokument poufny. Przeznaczony wyłącznie dla wskazanego odbiorcy.',
   notAssessed: 'Oś nie została oceniona.',
   decisionLine: 'LINIA DECYZYJNA',
@@ -54,8 +55,25 @@ export const CONTRACT_V1_MISSING_SLOT_LIMITS = Object.freeze({
 type ContractChapter = AssessmentReportContract['chapters'][number];
 type ContractArea = ContractChapter['matrix']['areas'][number];
 
+/**
+ * FIX (2026-09-06): to zdanie trafia do pliku, który czyta KLIENT. Do dziś
+ * brzmiało „Sekcja do uzupełnienia — limit 120–150 słów." — czyli instrukcja
+ * dla redaktora, w środku dokumentu doradczego. Dokładnie ta forma jest
+ * najstarszą obawą właściciela („nigdy nie powstał ani jeden naprawdę dobry
+ * dokument z szablonu"): plik wygląda na niedokończony szablon, nawet gdy
+ * wszystkie pozostałe sekcje są pełne. Pomiar na realnej ocenie DBR77:
+ * 8 wystąpień w jednym pliku.
+ *
+ * Nowe zdanie mówi DOKŁADNIE to samo — sekcji nie da się napisać, bo nie ma
+ * z czego — ale językiem raportu. Limity redakcyjne zostają w kontrakcie
+ * (`CONTRACT_V1_MISSING_SLOT_LIMITS`) i w narzędziach autorskich, nie w
+ * treści dla klienta; parametry są nadal przyjmowane, żeby wywołania
+ * pozostały jednoznaczne co do slotu.
+ */
 function placeholder(minWords: number, maxWords: number): string {
-  return `Sekcja do uzupełnienia — limit ${minWords}–${maxWords} słów.`;
+  void minWords;
+  void maxWords;
+  return 'Brak treści w tej sekcji — ocena nie zawiera danych, z których dałoby się ją napisać.';
 }
 
 // FIX-3 (nadzorca 2026-08-28): the raw editorial instruction
@@ -584,6 +602,46 @@ export function buildAssessmentDrdReportSchema(contract: AssessmentReportContrac
                 : `${area.targetLevel} — ${resolveDrdLevelLabelPL(chapter.axisId, area.targetLevel)}`,
             ]),
           'Rejestr luk posortowany malejąco według wielkości luki.'
+        ),
+      ],
+    },
+    {
+      // Załącznik metodyczny — siódmy rozdział kontraktu DEC-46. Wszystko tu
+      // jest wyprowadzone z `DRD_STRUCTURE` i z pól kontraktu; ani jedno
+      // zdanie nie opisuje metody „z pamięci".
+      sectionId: 'methodology-appendix',
+      orderIndex: 10,
+      level: 1,
+      title: DRD_REPORT_FIXED_TEXT.methodologyAppendix,
+      purpose: 'ZAŁĄCZNIK',
+      kind: 'appendix',
+      sourceRefs: [],
+      blocks: [
+        paragraph(
+          'methodology-scope',
+          `Ocena została przeprowadzona według struktury DRD: ${DRD_STRUCTURE.length} osi i ${DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0)} obszarów. Każdy obszar ma zapisany poziom obecny i poziom docelowy na skali własnej dla swojej osi. Luka jest różnicą poziomu docelowego i obecnego; priorytet wynika wyłącznie z wielkości luki i nie jest oceną ekspercką. Kolumna „Obecny" i „Docelowy" w zestawieniu osi to średnia poziomów obszarów tej osi wyrażona jako procent maksymalnego poziomu osi.`
+        ),
+        table(
+          'methodology-axes',
+          ['Oś', 'Nazwa', 'Liczba obszarów', 'Skala poziomów'],
+          DRD_STRUCTURE.map((axis) => [
+            axis.id,
+            axis.namePL ?? axis.name,
+            axis.areas.length,
+            `1–${axis.levelCount}`,
+          ]),
+          'Struktura metodyki DRD użyta w tej ocenie.'
+        ),
+        heading('methodology-source-heading', 'Źródło danych i ograniczenia', 2),
+        paragraph(
+          'methodology-source',
+          contract.sourceKind === 'legacy'
+            ? `Źródłem wyniku jest ocena prowadzona w warsztacie DRD (magazyn zastany), nie zamrożony Output jądra metodycznego. Oznacza to, że poziomy zostały zadeklarowane przez oceniającego i nie mają załączonych dowodów; kolumna stanu dowodowego w całym raporcie przyjmuje wartość „zadeklarowane". Wersja metodyki zapisana przy tej ocenie: ${contract.methodVersion}. Sygnatura oceny: ${contract.sessionId}.`
+            : `Źródłem wyniku jest zamrożony Output jądra metodycznego, rewizja ${contract.revision}. Stan dowodowy każdego obszaru wynika z liczby dowodów zapisanych przy findingu. Wersja paczki metodycznej: ${contract.methodVersion}. Sygnatura sesji: ${contract.sessionId}.`
+        ),
+        paragraph(
+          'methodology-honesty',
+          'Raport nie zawiera porównania z rynkiem, prognozy ani horyzontu czasowego — te dane nie istnieją w ocenie i nie zostały dopisane. Obszar bez zapisanego poziomu jest oznaczony jako nieoceniony, a nie jako poziom zerowy.'
         ),
       ],
     },

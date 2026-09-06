@@ -12,6 +12,18 @@ declare module 'pptxgenjs' {
     valign?: 'top' | 'middle' | 'bottom';
     bullet?: boolean;
     paraSpaceAfter?: number;
+    // Rozszerzenie 2026-09-06: realne API pptxgenjs 4.0.1 zna te opcje
+    // (types/index.d.ts `TextPropsOptions`), a ten ręczny shim ich nie
+    // wymieniał — dopisane addytywnie (same pola opcjonalne, więc żaden
+    // istniejący wołacz się nie zmienia).
+    italic?: boolean;
+    charSpacing?: number;
+    lineSpacing?: number;
+    lineSpacingMultiple?: number;
+    breakLine?: boolean;
+    fill?: { color: string };
+    margin?: number | number[];
+    isTextBox?: boolean;
   }
 
   interface TextProps {
@@ -48,7 +60,7 @@ declare module 'pptxgenjs' {
     w: number;
     h: number;
     fill?: { color: string };
-    line?: { color: string };
+    line?: { color: string; width?: number; dashType?: string };
   }
 
   interface ChartOptions {
@@ -65,6 +77,28 @@ declare module 'pptxgenjs' {
     chartColors?: string[];
     showLegend?: boolean;
     legendPos?: 'b' | 't' | 'l' | 'r';
+    h?: number;
+    barGrouping?: 'clustered' | 'stacked' | 'percentStacked' | 'standard';
+    legendFontFace?: string;
+    legendFontSize?: number;
+    catAxisLabelFontFace?: string;
+    catAxisLabelFontSize?: number;
+    valAxisLabelFontFace?: string;
+    valAxisLabelFontSize?: number;
+    valAxisMinVal?: number;
+    valAxisMajorUnit?: number;
+    dataBorder?: { pt?: number; color?: string };
+    catGridLine?: { color?: string; style?: string; size?: number };
+    valGridLine?: { color?: string; style?: string; size?: number };
+  }
+
+  /** Jedna seria wykresu w realnym API pptxgenjs 4.0.1: `addChart` przyjmuje
+   * TABLICĘ serii, a nie obiekt `{labels, data}` — shim opisywał kształt,
+   * którego biblioteka nie przyjmuje. Stary alias zostaje dla zgodności. */
+  interface ChartSeries {
+    name: string;
+    labels: string[];
+    values: number[];
   }
 
   interface ChartData {
@@ -75,11 +109,12 @@ declare module 'pptxgenjs' {
   interface Slide {
     addText(text: string | TextProps[], options?: TextOptions): void;
     addShape(shapeType: string, options: ShapeOptions): void;
-    addChart(chartType: string, data: ChartData, options: ChartOptions): void;
-    addTable(rows: Array<Array<TextProps>>, options?: { x?: number; y?: number; w?: number; h?: number; colW?: number[]; border?: { pt?: number; color?: string }; fontFace?: string }): void;
+    addChart(chartType: string, data: ChartData | ChartSeries[], options: ChartOptions): void;
+    addTable(rows: Array<Array<TextProps>>, options?: { x?: number; y?: number; w?: number; h?: number; colW?: number[]; border?: { type?: string; pt?: number; color?: string }; fontFace?: string; autoPage?: boolean; valign?: 'top' | 'middle' | 'bottom'; margin?: number | number[] }): void;
+    background?: { color: string };
   }
 
-  export type { Slide, TextProps, ChartData };
+  export type { Slide, TextProps, ChartData, ChartSeries, TextOptions };
 
   interface WriteOptions {
     outputType?: 'nodebuffer' | 'blob' | 'base64';

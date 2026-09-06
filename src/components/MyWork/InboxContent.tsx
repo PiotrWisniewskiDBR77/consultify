@@ -78,7 +78,8 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { PREVIEW_PANE_WIDTH } from '@/components/shared/PreviewPane/previewGeometry';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useDesktopPreviewOverlay } from '@/components/shared/PreviewPane/useDesktopPreviewOverlay';
 import {
   type RowAction,
   type RowActionSection,
@@ -1283,27 +1284,38 @@ function saveInboxRowDescriptionSetting(showDescription: boolean) {
 //   9. Snooze        — collapsible secondary
 // ═══════════════════════════════════════════════════════════════════════════════
 const PreviewPane: React.FC<{
+  /** P1 DEC-397: `title` jawnie jako prop — `JedenPrawyPanel` czyta
+   * `rekord.props.title` (nie liczy nic wewnątrz komponentu), więc musi
+   * być literalnie przekazany przez wywołującego, tak jak `StandardPreview`. */
+  title: string;
   item: InboxItem;
   isPolish: boolean;
   onClose: () => void;
-  onOpen: () => void;
+  onOpenFull: () => void;
   onTriage: (action: TriageAction) => void;
   onSnooze: (preset: SnoozePreset) => void;
   onSaveAsNote?: (item: InboxItem) => void;
   onUndoLastAI?: () => void;
   onOpenTask?: (taskId: string) => void;
   onOpenDecision?: (decisionId: string) => void;
+  /** P1 DEC-397: gdy `true`, `JedenPrawyPanel` już renderuje nagłówek
+   * (zakładki „Rekord | Teresa" + X) — ten panel wtedy oddaje chrome
+   * `PreviewPaneShell`owi w trybie `embedded` i renderuje wyłącznie ciało
+   * + stopkę, dokładnie jak `StandardPreview embedded`. */
+  embedded?: boolean;
 }> = ({
+  title,
   item,
   isPolish,
   onClose,
-  onOpen,
+  onOpenFull,
   onTriage,
   onSnooze,
   onSaveAsNote,
   onUndoLastAI,
   onOpenTask,
   onOpenDecision,
+  embedded = false,
 }) => {
   const u = urgencyConfig[item.urgency] || urgencyConfig.normal;
   const UIcon = u.icon;
@@ -1666,11 +1678,12 @@ const PreviewPane: React.FC<{
   return (
     <PreviewPaneShell
       kicker={undefined}
-      title={item.title || i18n.t('myWork.inboxContent.inboxItem', 'Inbox item')}
+      title={title || item.title || i18n.t('myWork.inboxContent.inboxItem', 'Inbox item')}
       onClose={onClose}
+      embedded={embedded}
       actions={
         <button
-          onClick={onOpen}
+          onClick={onOpenFull}
           className="inline-flex items-center h-7 px-3 rounded-full text-xs font-medium border border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors"
         >
           {i18n.t('myWork.inboxContent.open', 'Open')}
@@ -2309,6 +2322,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // Preview pane (A3)
   const [previewItem, setPreviewItem] = useState<InboxItem | null>(null);
+  // P1 DEC-397 §4.3: poniżej 1440 px panel jest nakładką (tabela nie traci
+  // szerokości) — patrz komentarz w useDesktopPreviewOverlay.ts.
+  const { containerRef: prawyPanelContainerRef, overlayMode: prawyPanelNakladka } =
+    useDesktopPreviewOverlay();
 
   // N1: Status tabs (Open / Done / Saved)
   const [uncontrolledStatusTab, setUncontrolledStatusTab] = useState<InboxStatusTab>('open');
@@ -4215,8 +4232,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg" ref={tableRef}>
-      {/* Main content + Preview pane */}
-      <div className="flex-1 flex min-h-0 gap-1.5">
+      {/* Main content + Preview pane. `relative` + `ref`: patrz
+          useDesktopPreviewOverlay.ts — poniżej 1440 px kontenera panel
+          staje się nakładką zamiast odbierać szerokość tabeli (P1 DEC-397). */}
+      <div className="relative flex-1 flex min-h-0 gap-1.5" ref={prawyPanelContainerRef}>
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
           {loading ? (
@@ -4318,46 +4337,68 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           )}
         </div>
 
-        {/* Preview Pane (A3) — <aside>, nie <div>: KOSMETYKA z RAPORT_A3
-            (2026-09-06) — panel był wizualnie identyczny z Wywiadem/
-            Realizacją, ale renderował się jako zwykły <div>, więc
-            `aside`/`role=complementary` liczyło 0 mimo widocznego panelu na
-            zrzucie (niespójność DOM między modułami, nie widać okiem). */}
-        {previewItem && (
-          <aside
-            aria-label={t('myWork.inboxContent.previewAriaLabel', 'Podgląd pozycji')}
-            data-preview-pane
-            className="shrink-0 bg-c-bg p-3"
-            style={{ width: PREVIEW_PANE_WIDTH }}
-          >
-            <PreviewPane
-              item={previewItem}
-              isPolish={isPolish}
-              onClose={() => setPreviewItem(null)}
-              onOpen={() => open(previewItem)}
-              onTriage={(action) => {
-                const isFromAI =
-                  action === previewItem.suggestedAction && previewItem.suggestedConfidence != null;
-                triage(
-                  previewItem,
-                  action,
-                  isFromAI
-                    ? { fromAISuggestion: true, confidence: previewItem.suggestedConfidence }
-                    : undefined
-                );
-                setPreviewItem(null);
-              }}
-              onSnooze={(preset) => {
-                handleSnooze(previewItem, preset);
-                setPreviewItem(null);
-              }}
-              onSaveAsNote={handleSaveAsNote}
-              onUndoLastAI={handleUndoLastAI}
-              onOpenTask={onOpenTask}
-              onOpenDecision={onOpenDecision}
-            />
-          </aside>
-        )}
+        {/* P1 DEC-397 (rodzina B): jeden prawy panel z zakładkami
+            „Rekord | Teresa" zamiast bespoke <aside> — wzorzec 1:1 z
+            ExecutionHub.tsx/InterviewHub.tsx (JedenPrawyPanel). Zastępuje
+            KOSMETYKĘ z RAPORT_A3 (2026-09-06), która dała panelowi `<aside
+            data-preview-pane>`, ale bez zakładki Teresa i bez lepkiego
+            zamknięcia — dokładnie defekt z hipotezy P1. */}
+        <div
+          className={
+            prawyPanelNakladka
+              ? 'pointer-events-none absolute inset-y-0 right-0 z-40 flex items-stretch justify-end gap-1.5 pl-3'
+              : 'contents'
+          }
+        >
+          <JedenPrawyPanel
+            className={
+              prawyPanelNakladka ? 'pointer-events-auto rounded-2xl shadow-2xl' : undefined
+            }
+            rekord={
+              previewItem ? (
+                <PreviewPane
+                  title={
+                    previewItem.title || t('myWork.inboxContent.inboxItem', 'Inbox item')
+                  }
+                  item={previewItem}
+                  isPolish={isPolish}
+                  // P1 DEC-397 BUGFIX (znalezione na żywo 06.09): NIE czyścić
+                  // `previewItem` tutaj — widocznością panelu steruje
+                  // WYŁĄCZNIE `JedenPrawyPanel`'s `panel.zamkniety` (lepkie
+                  // zamknięcie). Czyszczenie zaznaczenia tutaj psuło pigułkę
+                  // "Pokaż panel" z Menu 3: po X → zaznaczenie znika →
+                  // `rekord=null` → "Pokaż panel" nie ma czego pokazać.
+                  // Wzorzec 1:1 z rodziną A (`MyTasksListContent.tsx`:
+                  // `TableWithPreviewLayout selectedId={previewTaskId}` nigdy
+                  // nie jest czyszczone przez zamknięcie panelu).
+                  onClose={() => undefined}
+                  onOpenFull={() => open(previewItem)}
+                  onTriage={(action) => {
+                    const isFromAI =
+                      action === previewItem.suggestedAction &&
+                      previewItem.suggestedConfidence != null;
+                    triage(
+                      previewItem,
+                      action,
+                      isFromAI
+                        ? { fromAISuggestion: true, confidence: previewItem.suggestedConfidence }
+                        : undefined
+                    );
+                    setPreviewItem(null);
+                  }}
+                  onSnooze={(preset) => {
+                    handleSnooze(previewItem, preset);
+                    setPreviewItem(null);
+                  }}
+                  onSaveAsNote={handleSaveAsNote}
+                  onUndoLastAI={handleUndoLastAI}
+                  onOpenTask={onOpenTask}
+                  onOpenDecision={onOpenDecision}
+                />
+              ) : null
+            }
+          />
+        </div>
       </div>
     </div>
   );

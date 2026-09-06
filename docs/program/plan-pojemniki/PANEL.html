@@ -1,0 +1,1742 @@
+<title>Trzy pojemniki Consultify</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F7F6F3; --surface:#FFFFFF; --text:#1B1D21; --text-muted:#5F646C; --line:#E1DFD9;
+  --accent:#1F5F7A;
+  --green:#2E7D4F; --amber:#B7791F; --neutral:#8A8F98; --crimson:#85182F;
+  --green-bg:#e7f3ec; --amber-bg:#faf1de; --neutral-bg:#eeeeec; --crimson-bg:#f9e6ea;
+  --font-head:'IBM Plex Sans Condensed',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171A; --surface:#1B1E22; --text:#E8E6E1; --text-muted:#A2A6AE; --line:#2B2E33;
+    --accent:#7FB8D3;
+    --green:#6FCF97; --amber:#E3B341; --neutral:#8A8F98; --crimson:#E06C84;
+    --green-bg:#193226; --amber-bg:#332a15; --neutral-bg:#26282c; --crimson-bg:#341a20;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171A; --surface:#1B1E22; --text:#E8E6E1; --text-muted:#A2A6AE; --line:#2B2E33;
+  --accent:#7FB8D3;
+  --green:#6FCF97; --amber:#E3B341; --neutral:#8A8F98; --crimson:#E06C84;
+  --green-bg:#193226; --amber-bg:#332a15; --neutral-bg:#26282c; --crimson-bg:#341a20;
+}
+*{box-sizing:border-box;}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font-body);
+  font-size:14px; line-height:1.5;
+}
+h1,h2,h3,h4{font-family:var(--font-head); text-wrap:balance; margin:0;}
+.wrap{max-width:1400px; margin:0 auto; padding:20px 20px 60px;}
+.page-title{font-size:20px; font-weight:700; margin-bottom:4px;}
+.page-sub{color:var(--text-muted); font-size:13px; margin-bottom:20px;}
+.mono{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.muted{color:var(--text-muted);}
+.nowrap{white-space:nowrap;}
+a{color:var(--accent);}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+.kafle{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px;}
+@media (max-width:700px){.kafle{grid-template-columns:1fr;}}
+.kafel{
+  text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; cursor:pointer; font-family:var(--font-body); color:var(--text);
+  display:flex; flex-direction:column; gap:8px;
+}
+.kafel-active{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset;}
+.kafel-nazwa{font-family:var(--font-head); font-weight:700; font-size:16px;}
+.kafel-nazwa-pelna{font-weight:500; color:var(--text-muted); font-size:13px;}
+.kafel-termin{color:var(--text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.04em;}
+.progress-track{background:var(--neutral-bg); border-radius:4px; height:6px; overflow:hidden; flex:1;}
+.progress-fill{background:var(--accent); height:100%;}
+.kafel-progress{display:flex; align-items:center; gap:8px;}
+.progress-label{font-size:12px; color:var(--text-muted); white-space:nowrap;}
+.kafel-liczniki{display:flex; gap:14px; font-size:12px; color:var(--text-muted);}
+
+.tabs{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:16px; flex-wrap:wrap;}
+.tab-link{
+  background:transparent; border:none; border-bottom:2px solid transparent; padding:8px 14px;
+  font-family:var(--font-head); font-weight:600; font-size:14px; color:var(--text-muted); cursor:pointer;
+}
+.tab-active{color:var(--accent); border-bottom-color:var(--accent);}
+
+.pojemnik-definicja{color:var(--text-muted); margin-bottom:16px; max-width:80ch;}
+.section-title{
+  font-size:16px; font-weight:700; margin-top:28px; margin-bottom:10px;
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.section-title:first-of-type{margin-top:0;}
+
+.table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px;}
+.std-table{width:100%; border-collapse:collapse; min-width:640px; background:var(--surface);}
+.std-table th{
+  text-align:left; font-family:var(--font-head); font-size:12px; text-transform:uppercase;
+  letter-spacing:0.04em; color:var(--text-muted); padding:10px 12px; border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+.std-table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+.std-table tbody tr:last-child td{border-bottom:none;}
+.row-w-toku{box-shadow:inset 3px 0 0 var(--amber);}
+.row-stop{box-shadow:inset 3px 0 0 var(--crimson);}
+.uwagi{color:var(--text-muted); font-size:12.5px; margin-top:4px;}
+
+.card-list{display:none; flex-direction:column; gap:10px;}
+@media (max-width:700px){
+  .table-wrap{display:none;}
+  .card-list{display:flex;}
+}
+.pozycja-card{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px 14px;}
+.card-w-toku{box-shadow:inset 3px 0 0 var(--amber);}
+.card-stop{box-shadow:inset 3px 0 0 var(--crimson);}
+.pozycja-card-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+.pozycja-card-nazwa{font-weight:600; margin-bottom:6px;}
+.pozycja-card-meta{display:flex; gap:10px; flex-wrap:wrap; font-size:12.5px; color:var(--text-muted); margin-bottom:6px;}
+.pozycja-card-galaz{font-size:12px; color:var(--text-muted); margin-bottom:6px;}
+.pozycja-card-dowod{font-size:13px;}
+
+.chip{
+  display:inline-block; font-family:var(--font-head); font-size:11px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px; border-radius:99px; white-space:nowrap;
+}
+.chip-green{background:var(--green-bg); color:var(--green);}
+.chip-amber{background:var(--amber-bg); color:var(--amber);}
+.chip-neutral{background:var(--neutral-bg); color:var(--neutral);}
+.chip-crimson{background:var(--crimson-bg); color:var(--crimson);}
+
+.kryteria-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.kryterium-item{display:flex; gap:10px; align-items:flex-start;}
+.kryterium-ico{color:var(--neutral); flex:0 0 auto; margin-top:2px;}
+.kryterium-item.is-done .kryterium-ico{color:var(--green);}
+.ico{width:16px; height:16px; display:block;}
+.kryterium-tresc{font-size:13.5px;}
+.kryterium-dowod{color:var(--text-muted); font-size:12.5px; margin-top:2px;}
+
+.decyzje-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px;}
+.decyzja-item{border:1px solid var(--line); border-radius:8px; padding:10px 14px; background:var(--surface);}
+.decyzja-top{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;}
+.decyzja-tresc{font-weight:600; flex:1 1 auto;}
+.decyzja-nr{color:var(--text-muted); font-size:12px;}
+.decyzja-rekomendacja{color:var(--text-muted); font-size:12.5px;}
+
+.moduly-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
+.modul-card{border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:var(--surface);}
+.modul-card-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+.modul-nazwa{font-weight:700; font-family:var(--font-head);}
+.modul-zdanie{font-size:12.5px; color:var(--text-muted);}
+
+.footer{margin-top:32px; padding-top:14px; border-top:1px solid var(--line); font-size:12px; color:var(--text-muted);}
+</style>
+<div class="wrap">
+  <div class="page-title">Trzy pojemniki pracy — panel kontroli</div>
+  <div class="page-sub">MVP rękami właściciela → MVP rękami klienta → Fala 2</div>
+
+  <div class="kafle" id="kafle"><button class="kafel kafel-active" data-tab-target="1" id="tabbtn-1" role="tab" aria-selected="true" aria-controls="panel-1">
+      <div class="kafel-nazwa">Pojemnik 1 <span class="kafel-nazwa-pelna">— MVP rękami właściciela</span></div>
+      <div class="kafel-termin">10 dni, do ~16.09</div>
+      <div class="kafel-progress">
+        <div class="progress-track"><div class="progress-fill" style="width:10%"></div></div>
+        <span class="mono progress-label">1/10 pozycji</span>
+      </div>
+      <div class="kafel-liczniki">
+        <span class="mono">0/8 kryteriów</span>
+        <span class="mono">2 decyzji czeka</span>
+      </div>
+    </button>
+<button class="kafel" data-tab-target="2" id="tabbtn-2" role="tab" aria-selected="false" aria-controls="panel-2">
+      <div class="kafel-nazwa">Pojemnik 2 <span class="kafel-nazwa-pelna">— MVP rękami klienta</span></div>
+      <div class="kafel-termin">3 tygodnie po pojemniku 1, do ~7.10</div>
+      <div class="kafel-progress">
+        <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
+        <span class="mono progress-label">0/12 pozycji</span>
+      </div>
+      <div class="kafel-liczniki">
+        <span class="mono">0/15 kryteriów</span>
+        <span class="mono">0 decyzji czeka</span>
+      </div>
+    </button>
+<button class="kafel" data-tab-target="3" id="tabbtn-3" role="tab" aria-selected="false" aria-controls="panel-3">
+      <div class="kafel-nazwa">Pojemnik 3 <span class="kafel-nazwa-pelna">— Fala 2</span></div>
+      <div class="kafel-termin">po pilotażu (decyzje właściciela z 05.09, MVP_BACKLOG_20260905.md §E–K)</div>
+      <div class="kafel-progress">
+        <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
+        <span class="mono progress-label">0/8 pozycji</span>
+      </div>
+      <div class="kafel-liczniki">
+        <span class="mono">0/2 kryteriów</span>
+        <span class="mono">1 decyzji czeka</span>
+      </div>
+    </button></div>
+
+  <div class="tabs" role="tablist"><button class="tab-link tab-active" data-tab-target="1" id="tab-1" role="tab" aria-selected="true" aria-controls="panel-1">Pojemnik 1</button>
+<button class="tab-link" data-tab-target="2" id="tab-2" role="tab" aria-selected="false" aria-controls="panel-2">Pojemnik 2</button>
+<button class="tab-link" data-tab-target="3" id="tab-3" role="tab" aria-selected="false" aria-controls="panel-3">Pojemnik 3</button></div>
+
+  <section class="tab-panel active" id="panel-1" role="tabpanel" aria-labelledby="tab-1" >
+    <p class="pojemnik-definicja">Właściciel przechodzi cały system na stagingu na SWOICH danych, bez asysty, po ścieżce z PRZEKAZANIE_20260906_RANO.md §3, i nie znajduje nic, co go zawstydza.</p>
+
+    <h3 class="section-title">Pozycje</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr>
+        <th>NR</th><th>POZYCJA</th><th>WYKONAWCA</th><th>STAN</th><th>GAŁĄŹ / SHA</th><th>DOWÓD</th><th>DATA</th>
+      </tr></thead>
+      <tbody><tr class="">
+      <td class="mono nowrap">1.1</td>
+      <td>Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)</td>
+      <td class="nowrap">Sonnet/Opus</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.2</td>
+      <td>P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-amber">DO ODBIORU</span></td>
+      <td class="mono nowrap">mvp/p1-skrzynka-wywiad <span class="muted">·</span> c9a7e5bd0b</td>
+      <td>scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440<div class="uwagi">Czeka na słowo właściciela na żywym ekranie stagingu (karta 2). Po drodze 3 błędy naprawione u źródła: próg nakładki, reset zakładki Teresa, Menu 3 gubiło pigułki „Teresa/Pokaż panel”. STOP zastany: Moja Praca ma własne Menu 3 poza kanonem, więc pigułka „Pokaż panel” w Skrzynce nie działa (osobne zadanie).</div></td>
+      <td class="mono nowrap">06.09 10:05</td>
+    </tr>
+<tr class="row-w-toku">
+      <td class="mono nowrap">1.3</td>
+      <td>P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)</td>
+      <td class="nowrap">Codex, odbiór Sonnet</td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap">codex/p9-karta-dzialania</td>
+      <td>wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania<div class="uwagi">Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.</div></td>
+      <td class="mono nowrap">06.09 06:40</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.4</td>
+      <td>P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)</td>
+      <td class="nowrap">Opus</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="row-w-toku">
+      <td class="mono nowrap">1.5</td>
+      <td>P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)</td>
+      <td class="nowrap">Codex/Sonnet</td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap">codex/p8-teresa</td>
+      <td>wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)<div class="uwagi">Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.</div></td>
+      <td class="mono nowrap">06.09 06:40</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.6</td>
+      <td>Dokument i prezentacja z szablonu jako plik (prototyp → akcept właściciela → generator)</td>
+      <td class="nowrap">Opus</td>
+      <td><span class="chip chip-amber">DO ODBIORU</span></td>
+      <td class="mono nowrap">mvp/dokument-prezentacja-plik <span class="muted">·</span> 9fb2858bca</td>
+      <td>scalone na staging; pliki: evidence/dokument-plik-20260906/ (DOCX 26 stron, PPTX 14 slajdów, PDF); 3 przyciski „Pobierz” na ekranie raportu oceny; CTO obejrzał strony i slajdy<div class="uwagi">Czeka na słowo właściciela na PLIKU (S1.4). Samoocena Opusa 7,5/10: 39 powtarzalnych zdań „brak treści” (magazyn zastany nie ma rekomendacji), 4 angielskie etykiety poziomów DRD w raporcie, spis treści buduje się dopiero w Wordzie. Dane: ocena testowa z lokalnych seedów, nie z stagingu właściciela.</div></td>
+      <td class="mono nowrap">06.09 09:40</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.7</td>
+      <td>Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.8</td>
+      <td>Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤300, 16 testów z mockiem react-router</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-green">SCALONE</span></td>
+      <td class="mono nowrap">mvp/i18n-dlug-1 <span class="muted">·</span> ffd7302a8c</td>
+      <td>baseline pl==en 484 → 261 (cel ≤300), Czat i Admin = 0; 119/124 kluczy Czatu; pomiar niezależny a86883d249: scalić po poprawce<div class="uwagi">Dług zapisany w rejestrze: 5 brakujących kluczy Czatu, „Partner Slack”, dziura w białej liście ratchetu, 15 zastanych czerwonych testów po odmaskowaniu.</div></td>
+      <td class="mono nowrap">06.09 09:10</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.9</td>
+      <td>Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie zamroz.mjs per moduł</td>
+      <td class="nowrap">Sonnet ×2</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Nie może startować przed domknięciem pozycji 1.1–1.8.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">1.10</td>
+      <td>Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe</td>
+      <td class="nowrap">Opus + nadzorca</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.</div></td>
+      <td class="mono nowrap"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.1</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet/Opus</span>
+        <span class="muted">zależy: przejście właściciela</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.2</span>
+        <span class="chip chip-amber">DO ODBIORU</span>
+      </div>
+      <div class="pozycja-card-nazwa">P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        
+        <span class="mono muted">06.09 10:05</span>
+      </div>
+      <div class="mono pozycja-card-galaz">mvp/p1-skrzynka-wywiad · c9a7e5bd0b</div>
+      <div class="pozycja-card-dowod">scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440</div>
+      <div class="uwagi">Czeka na słowo właściciela na żywym ekranie stagingu (karta 2). Po drodze 3 błędy naprawione u źródła: próg nakładki, reset zakładki Teresa, Menu 3 gubiło pigułki „Teresa/Pokaż panel”. STOP zastany: Moja Praca ma własne Menu 3 poza kanonem, więc pigułka „Pokaż panel” w Skrzynce nie działa (osobne zadanie).</div>
+    </div>
+<div class="pozycja-card card-w-toku">
+      <div class="pozycja-card-top">
+        <span class="mono">1.3</span>
+        <span class="chip chip-amber">W TOKU</span>
+      </div>
+      <div class="pozycja-card-nazwa">P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)</div>
+      <div class="pozycja-card-meta">
+        <span>Codex, odbiór Sonnet</span>
+        
+        <span class="mono muted">06.09 06:40</span>
+      </div>
+      <div class="mono pozycja-card-galaz">codex/p9-karta-dzialania</div>
+      <div class="pozycja-card-dowod">wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania</div>
+      <div class="uwagi">Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.4</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)</div>
+      <div class="pozycja-card-meta">
+        <span>Opus</span>
+        <span class="muted">zależy: 1.3</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.</div>
+    </div>
+<div class="pozycja-card card-w-toku">
+      <div class="pozycja-card-top">
+        <span class="mono">1.5</span>
+        <span class="chip chip-amber">W TOKU</span>
+      </div>
+      <div class="pozycja-card-nazwa">P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)</div>
+      <div class="pozycja-card-meta">
+        <span>Codex/Sonnet</span>
+        
+        <span class="mono muted">06.09 06:40</span>
+      </div>
+      <div class="mono pozycja-card-galaz">codex/p8-teresa</div>
+      <div class="pozycja-card-dowod">wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)</div>
+      <div class="uwagi">Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.6</span>
+        <span class="chip chip-amber">DO ODBIORU</span>
+      </div>
+      <div class="pozycja-card-nazwa">Dokument i prezentacja z szablonu jako plik (prototyp → akcept właściciela → generator)</div>
+      <div class="pozycja-card-meta">
+        <span>Opus</span>
+        
+        <span class="mono muted">06.09 09:40</span>
+      </div>
+      <div class="mono pozycja-card-galaz">mvp/dokument-prezentacja-plik · 9fb2858bca</div>
+      <div class="pozycja-card-dowod">scalone na staging; pliki: evidence/dokument-plik-20260906/ (DOCX 26 stron, PPTX 14 slajdów, PDF); 3 przyciski „Pobierz” na ekranie raportu oceny; CTO obejrzał strony i slajdy</div>
+      <div class="uwagi">Czeka na słowo właściciela na PLIKU (S1.4). Samoocena Opusa 7,5/10: 39 powtarzalnych zdań „brak treści” (magazyn zastany nie ma rekomendacji), 4 angielskie etykiety poziomów DRD w raporcie, spis treści buduje się dopiero w Wordzie. Dane: ocena testowa z lokalnych seedów, nie z stagingu właściciela.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.7</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        <span class="muted">zależy: decyzje właściciela</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.8</span>
+        <span class="chip chip-green">SCALONE</span>
+      </div>
+      <div class="pozycja-card-nazwa">Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤300, 16 testów z mockiem react-router</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        
+        <span class="mono muted">06.09 09:10</span>
+      </div>
+      <div class="mono pozycja-card-galaz">mvp/i18n-dlug-1 · ffd7302a8c</div>
+      <div class="pozycja-card-dowod">baseline pl==en 484 → 261 (cel ≤300), Czat i Admin = 0; 119/124 kluczy Czatu; pomiar niezależny a86883d249: scalić po poprawce</div>
+      <div class="uwagi">Dług zapisany w rejestrze: 5 brakujących kluczy Czatu, „Partner Slack”, dziura w białej liście ratchetu, 15 zastanych czerwonych testów po odmaskowaniu.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.9</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie zamroz.mjs per moduł</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet ×2</span>
+        <span class="muted">zależy: 1.1–1.8</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Nie może startować przed domknięciem pozycji 1.1–1.8.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">1.10</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe</div>
+      <div class="pozycja-card-meta">
+        <span>Opus + nadzorca</span>
+        <span class="muted">zależy: 1.9</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.</div>
+    </div></div>
+
+    <h3 class="section-title">Kryteria gotowe</h3>
+    <ul class="kryteria-list">
+    <li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">1.</span> Przejście właściciela: 16 modułów, każdy z werdyktem „Tak” na jednym obrazie; defekty z przejścia = 0 otwartych BLOKER/WAŻNY.</div>
+        <div class="kryterium-dowod">Nierozpoczęte. Istnieje re-audyt lokalny A3/B3 (RAPORT_A3.md, RAPORT_B3.md) na stanowisku lokalnym, ale to nie jest przejście właściciela na stagingu.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">2.</span> Mechanika wartości działa end-to-end na żywo: rezultat KPI poza limitem → czerwony wiersz → wpis w Skrzynce → otwarta karta działania → zadanie osoby.</div>
+        <div class="kryterium-dowod">P9 (karta działania) ODESŁANE — tylko 35% zakresu, 0 wołaczy w produkcie; wklejka 2 wydana Codexowi (pozycja 1.3). P7K część B czeka na 1.3 (pozycja 1.4).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">3.</span> Jeden dokument i jedna prezentacja z szablonu na danych DBR77 zaakceptowane przez właściciela JAKO PLIK (DOCX/PDF), nie jako zrzut.</div>
+        <div class="kryterium-dowod">Pozycja 1.6 W TOKU (mvp/dokument-prezentacja-plik, Opus) — prototyp jeszcze nie zaakceptowany przez właściciela.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">4.</span> Jeden prawy panel (Rekord | Teresa) na wszystkich 8 ekranach listowych z P1 (Skrzynka i Wywiad włącznie), zmierzony na żywo 1280/1440/1920.</div>
+        <div class="kryterium-dowod">Zadania/Realizacja naprawione (regresja lepkiego zamknięcia usunięta w P1-LEPKIE). Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) nadal mają własny panel bez wzorca — pozycja 1.2 w toku.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">5.</span> Teresa w każdym module MVP zgodnie z docs/ssot/KONTRAKTY_NARZEDZI_AI.md (wejście widoczne, odpowiedź po polsku, źródła z modułu, zero „no_sources” tam, gdzie moduł ma dane).</div>
+        <div class="kryterium-dowod">P8 (kontrakty Teresy) GOTOWE jako paczka dokumentacyjna (P8_TERESA_KONTRAKTY.md, ~7–8 sesji Codexa), ale wdrożenie ma 32 niecommitowane pliki u Codexa — wklejka 2 wydana (pozycja 1.5), niedomknięte.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">6.</span> Dane właściciela czyste: jedna ocena wypełniona w 100%, oceny/inicjatywy/spotkania bez śmieci testowych, „PL · Silesia” = 0, legacy finanse DBR77 albo naprawione (bilans 2024), albo zarchiwizowane z decyzją.</div>
+        <div class="kryterium-dowod">Oceny właściciela na stagingu wypełnione 0–8% (PRZEKAZANIE_20260906_RANO.md §4). Legacy finanse DBR77 2023–2025 niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazywane na CD PROJEKT. Silesia częściowo naprawiona skryptem napraw-region-silesia.ts (MVP-NAPRAWY-6), ale higiena całości (pozycja 1.7) czeka na decyzje właściciela.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">7.</span> Strażniki zielone i dług nie rośnie: check-list-canon, check-artefakt, i18nTrescPolska (ratchet ≤484, cel ≤300), 0 zmodyfikowanych migracji, tsc serwera.</div>
+        <div class="kryterium-dowod">i18nTrescPolska.baseline.json = 484 zastałe klucze (głównie admin.*); cel ≤300 jeszcze nieosiągnięty — pozycja 1.8 w toku (mvp/i18n-dlug-1). tsc serwera i 0-migracji niezmierzone w tej sesji panelu.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">8.</span> Środowisko demo dla pojemnika 2 gotowe: demo.consultify.ai z własną bazą, własnymi zmiennymi, danymi pokazowymi, promocją staging→demo przećwiczoną, tagiem demo-safe.</div>
+        <div class="kryterium-dowod">Dziś demo i staging dzielą wspólną bazę „trolley” (pamięć nadzorcy: topologia-srodowisk-staging-demo, plan rozdziału w 5 fazach). Pozycja 1.10 czeka na 1.9.</div>
+      </div>
+    </li>
+  </ul>
+
+    <h3 class="section-title">🍾 Lista szampana</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr><th>NR</th><th>CO MUSI BYĆ PRAWDĄ</th><th>KTO</th><th>ARTEFAKT</th><th>STAN</th></tr></thead>
+      <tbody><tr>
+    <td class="mono nowrap">S1.1</td>
+    <td>Przeszedłem 16 modułów na stagingu na swoich danych po ścieżce pokazu; każdy ma moje „Tak”</td>
+    <td class="nowrap">właściciel</td>
+    <td>karta per moduł na 3100 (jeden obraz, Tak)</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.2</td>
+    <td>Zero otwartych BLOKER/WAŻNY z mojego przejścia</td>
+    <td class="nowrap">nadzorca</td>
+    <td>rejestr odbioru: wiersze z SHA i zrzutem PO</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.3</td>
+    <td>Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby</td>
+    <td class="nowrap">właściciel + Playwright</td>
+    <td>nagranie/zrzuty przepływu + bledyKonsoli=0</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.4</td>
+    <td>Trzymam w ręku jeden dokument i jedną prezentację z szablonu na danych DBR77 i nie wstydzę się ich</td>
+    <td class="nowrap">właściciel</td>
+    <td>pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.5</td>
+    <td>Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</td>
+    <td class="nowrap">nadzorca</td>
+    <td>8×3 zrzuty na żywo, aside ≤ 1</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.6</td>
+    <td>Teresa odpowiada po polsku ze źródłami w każdym module MVP</td>
+    <td class="nowrap">nadzorca</td>
+    <td>16 odpowiedzi z used_sources &gt; 0 w evidence/</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.7</td>
+    <td>Moje dane są czyste (jedna ocena 100%, zero śmieci, zero „Silesia”, legacy 2024 rozstrzygnięte)</td>
+    <td class="nowrap">nadzorca + właściciel</td>
+    <td>skrypty dry-run/apply z logiem, moje słowo</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.8</td>
+    <td>Strażniki zielone, dług nie rośnie, tsc serwera OK, 0 zmodyfikowanych migracji</td>
+    <td class="nowrap">nadzorca</td>
+    <td>wynik komend w rejestrze</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.9</td>
+    <td>Demo ma własną bazę, dane pokazowe i przećwiczoną promocję z cofnięciem</td>
+    <td class="nowrap">nadzorca + właściciel (klik na demo)</td>
+    <td>health demo = SHA, tag demo-safe-&lt;data&gt;, zrzuty z demo</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.10</td>
+    <td>Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</td>
+    <td class="nowrap">właściciel</td>
+    <td>ledger decyzji (DEC-…)</td>
+    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.11</td>
+    <td>Wszystkie 16 modułów + Wyniki + Finanse zamrożone tagiem</td>
+    <td class="nowrap">nadzorca</td>
+    <td>zamroz.mjs, tagi mvp-wlasciciel-&lt;data&gt;</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S1.12</td>
+    <td>Przekazanie dla pojemnika 2 napisane (stan, kolejka, decyzje)</td>
+    <td class="nowrap">nadzorca</td>
+    <td>PRZEKAZANIE_&lt;data&gt;.md + pamięć</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.1</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Przeszedłem 16 modułów na stagingu na swoich danych po ścieżce pokazu; każdy ma moje „Tak”</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">karta per moduł na 3100 (jeden obraz, Tak)</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.2</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Zero otwartych BLOKER/WAŻNY z mojego przejścia</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">rejestr odbioru: wiersze z SHA i zrzutem PO</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.3</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby</div>
+    <div class="pozycja-card-meta"><span>właściciel + Playwright</span></div>
+    <div class="pozycja-card-dowod">nagranie/zrzuty przepływu + bledyKonsoli=0</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.4</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Trzymam w ręku jeden dokument i jedną prezentację z szablonu na danych DBR77 i nie wstydzę się ich</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.5</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">8×3 zrzuty na żywo, aside ≤ 1</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.6</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Teresa odpowiada po polsku ze źródłami w każdym module MVP</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">16 odpowiedzi z used_sources &gt; 0 w evidence/</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.7</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Moje dane są czyste (jedna ocena 100%, zero śmieci, zero „Silesia”, legacy 2024 rozstrzygnięte)</div>
+    <div class="pozycja-card-meta"><span>nadzorca + właściciel</span></div>
+    <div class="pozycja-card-dowod">skrypty dry-run/apply z logiem, moje słowo</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.8</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Strażniki zielone, dług nie rośnie, tsc serwera OK, 0 zmodyfikowanych migracji</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">wynik komend w rejestrze</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.9</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Demo ma własną bazę, dane pokazowe i przećwiczoną promocję z cofnięciem</div>
+    <div class="pozycja-card-meta"><span>nadzorca + właściciel (klik na demo)</span></div>
+    <div class="pozycja-card-dowod">health demo = SHA, tag demo-safe-&lt;data&gt;, zrzuty z demo</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.10</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
+    <div class="pozycja-card-nazwa">Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">ledger decyzji (DEC-…)</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.11</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Wszystkie 16 modułów + Wyniki + Finanse zamrożone tagiem</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">zamroz.mjs, tagi mvp-wlasciciel-&lt;data&gt;</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S1.12</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Przekazanie dla pojemnika 2 napisane (stan, kolejka, decyzje)</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">PRZEKAZANIE_&lt;data&gt;.md + pamięć</div>
+  </div></div>
+
+    <h3 class="section-title">Decyzje właściciela</h3>
+    <ul class="decyzje-list">
+    <li class="decyzja-item">
+      <div class="decyzja-top">
+        <span class="decyzja-tresc">Finanse MINIMUM do MVP (F1 §0) czy poza</span>
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-399</span>
+      </div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: CTO: MINIMUM w pojemniku 2 (pierwsza linia sprzedaje analizę finansową, CD PROJEKT już stoi). Właściciel 06.09: „wyrzuć finanse do pojemnika 2” — MINIMUM (F‑M2/M3/M4/M6/M7) wykonywane w pozycji 2.6, poza pojemnikiem 1</div>
+    </li>
+<li class="decyzja-item">
+      <div class="decyzja-top">
+        <span class="decyzja-tresc">Grupowanie inicjatyw po zdjęciu Projektów</span>
+        <span class="chip chip-amber">CZEKA</span>
+        
+      </div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: Płaska lista + kolumna obszar/oś; program/portfel po MVP</div>
+    </li>
+<li class="decyzja-item">
+      <div class="decyzja-top">
+        <span class="decyzja-tresc">Kropka „Model” w crimson</span>
+        <span class="chip chip-amber">CZEKA</span>
+        
+      </div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)</div>
+    </li>
+<li class="decyzja-item">
+      <div class="decyzja-top">
+        <span class="decyzja-tresc">Program naprawczy Award/CES 2027 może odmrażać moduły zamrożone 05.09 wyłącznie w zakresie paczek P1–P6, II, III; każdy commit niesie znacznik odmrożenia; po zakończeniu paczki moduł jest ponownie zamrażany tego samego dnia</span>
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-397</span>
+      </div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: Podjęta przez CTO 05.09 jako jedyne pytanie w tym programie</div>
+    </li>
+  </ul>
+
+    <h3 class="section-title">Przejście właściciela</h3><div class="moduly-grid">
+    <div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Czat</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE. Ścieżka pokazu: „Podsumuj co tu widzisz” → odpowiedź po polsku ze „Źródła: 12”. Przejście właściciela na stagingu jeszcze się nie odbyło.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Moja Praca</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Ścieżka: Skrzynka → Zadania → wiersz → podgląd → Otwórz kartę zadania. Skrzynka nadal ma własny panel bez wzorca P1 (InboxContent.tsx:4324).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Wywiad</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE. Ścieżka: lista sesji (nazwy z datą) → sesja → Przydzielone. Panel Wywiadu nadal bez wzorca P1 (InterviewHub.tsx:8620).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Narzędzia</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Dynamiczny SWOT to jedyne pełne narzędzie; 35/36 pozostałych to „już wkrótce” (dane biblioteki, nie kod) — decyzja właściciela w kolejce.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Ocena</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Lista Outputów → raport oceny (sekcje + macierz DRD). Oceny właściciela wypełnione tylko 0–8%, raport będzie chudy przez dane.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Inicjatywy</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE (67 wierszy po scaleniu dwóch rejestrów). Ścieżka: lista → wiersz → podgląd → karta.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Realizacja</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Realizacje → wiersz → panel Rekord|Teresa; regresja „lepkiego zamknięcia” naprawiona (P1-LEPKIE).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Wyniki</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (B3): blisko, 3 blokery — dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku, częściowo naprawione w MVP-NAPRAWY-6), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Finanse</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (B3): TAK Z ZASTRZEŻENIEM na CD PROJEKT (4 blokery naprawione i potwierdzone). Ścieżka: Sprawozdania → CD PROJEKT → Otwórz → pakiet → Analiza (18 wskaźników). Nie klikać Baseline (409 znany). Legacy DBR77 2023–2025 niespójne.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Materiały</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Re-audyt lokalny (B3): NOWY BLOKER w chwili raportu — Dokumenty „Czysto” utykały na „Brak wczytanego dokumentu”; naprawione falą 6 (e6b0a152e3, Document Studio działa end-to-end), ale bez potwierdzenia żywym przejściem właściciela.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Audyty</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Nagłówek ZAKTUALIZOWANO naprawiony (MVP-NAPRAWY-3), rodzina uciętych nagłówków dat naprawiona na 7 ekranach 1440 (MVP-NAPRAWY-4).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Spotkania</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Administracja</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Panel administratora poprawiony kosmetycznie (MVP-NAPRAWY-7).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Ustawienia</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe, Szablony ustawień po polsku (4 klucze naprawione w MVP-NAPRAWY-6, wcześniej po angielsku wg B3).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Organizacja</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. „PL · Silesia” częściowo naprawione (napraw-region-silesia.ts), ale higiena całości danych (pozycja 1.7) jeszcze niewykonana.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Partner</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji.</div>
+    </div>
+  </div>
+  </section>
+<section class="tab-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+    <p class="pojemnik-definicja">Pilotaż na demo (własna baza z pozycji 1.10), rękami czterech nazwanych osób pierwszej linii (Tomek, Kasia, Irina, Justyna), które zakładają organizację i dochodzą od wywiadu do wyniku bez asysty właściciela. Produkcja (consultify.ai) wchodzi dopiero po pilotażu, dla pierwszego klienta zewnętrznego.</p>
+
+    <h3 class="section-title">Pozycje</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr>
+        <th>NR</th><th>POZYCJA</th><th>WYKONAWCA</th><th>STAN</th><th>GAŁĄŹ / SHA</th><th>DOWÓD</th><th>DATA</th>
+      </tr></thead>
+      <tbody><tr class="">
+      <td class="mono nowrap">2.0</td>
+      <td>Produkcja i cofnięcie przećwiczone</td>
+      <td class="nowrap">Opus + nadzorca</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">2 sesje szacowane. Nie rozpoczęte — pojemnik 1 niezamknięty.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.1</td>
+      <td>Przepływ „pusty stan → pierwsza wartość” per moduł</td>
+      <td class="nowrap">Sonnet ×2</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">2 sesje szacowane.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.2</td>
+      <td>Macierz cross-org + CSRF enforce + poczta</td>
+      <td class="nowrap">Sonnet/Opus</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">3 sesje szacowane. Macierz cross-org 2725 tras (dyżur 307) nadal niezmierzona (SEC, 05.09 noc).</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.3</td>
+      <td>Dwa magazyny → jedna projekcja</td>
+      <td class="nowrap">Opus</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">3 sesje szacowane. Dotyczy inicjatyw (runtime-v1 vs SQL), ocen (jądro vs zastane), analiz finansowych, artefaktów (aliasy).</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.4</td>
+      <td>Onboarding i TRIAL</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">1 sesja szacowana.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.5</td>
+      <td>Wydajność ekranów flagowych</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">1 sesja szacowana.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.6</td>
+      <td>Finanse wg decyzji (MINIMUM albo „wkrótce”)</td>
+      <td class="nowrap">Codex</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">5–8 sesji szacowane, zależnie od decyzji z pojemnika 1.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.7</td>
+      <td>Przewodnik „jak zacząć” w aplikacji</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">1 sesja szacowana.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.8</td>
+      <td>Obserwowalność + limiter AI + eksport/usunięcie danych</td>
+      <td class="nowrap">Sonnet</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">3 sesje szacowane. Limiter AI wyłączony od 05.09 — rachunek bez sufitu.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.9</td>
+      <td>Playbook wdrożenia klienta</td>
+      <td class="nowrap">właściciel + nadzorca</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">1 sesja szacowana.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.10</td>
+      <td>Pilotaż Tomek/Kasia/Irina/Justyna na demo z dziennikiem i systemem reakcji</td>
+      <td class="nowrap">nadzorca + 4 użytkownicy</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">2 tygodnie pilotażu.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">2.11</td>
+      <td>Zamrożenie „MVP klienta” tagiem</td>
+      <td class="nowrap">nadzorca</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td></td>
+      <td class="mono nowrap"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.0</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Produkcja i cofnięcie przećwiczone</div>
+      <div class="pozycja-card-meta">
+        <span>Opus + nadzorca</span>
+        <span class="muted">zależy: pojemnik 1 zamknięty</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">2 sesje szacowane. Nie rozpoczęte — pojemnik 1 niezamknięty.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.1</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Przepływ „pusty stan → pierwsza wartość” per moduł</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet ×2</span>
+        <span class="muted">zależy: 2.0</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">2 sesje szacowane.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.2</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Macierz cross-org + CSRF enforce + poczta</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet/Opus</span>
+        <span class="muted">zależy: 2.1</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">3 sesje szacowane. Macierz cross-org 2725 tras (dyżur 307) nadal niezmierzona (SEC, 05.09 noc).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.3</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Dwa magazyny → jedna projekcja</div>
+      <div class="pozycja-card-meta">
+        <span>Opus</span>
+        <span class="muted">zależy: 2.2</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">3 sesje szacowane. Dotyczy inicjatyw (runtime-v1 vs SQL), ocen (jądro vs zastane), analiz finansowych, artefaktów (aliasy).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.4</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Onboarding i TRIAL</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        <span class="muted">zależy: 2.3</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">1 sesja szacowana.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.5</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Wydajność ekranów flagowych</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        <span class="muted">zależy: 2.4</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">1 sesja szacowana.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.6</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Finanse wg decyzji (MINIMUM albo „wkrótce”)</div>
+      <div class="pozycja-card-meta">
+        <span>Codex</span>
+        <span class="muted">zależy: 2.5</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">5–8 sesji szacowane, zależnie od decyzji z pojemnika 1.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.7</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Przewodnik „jak zacząć” w aplikacji</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        <span class="muted">zależy: 2.6</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">1 sesja szacowana.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.8</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Obserwowalność + limiter AI + eksport/usunięcie danych</div>
+      <div class="pozycja-card-meta">
+        <span>Sonnet</span>
+        <span class="muted">zależy: 2.7</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">3 sesje szacowane. Limiter AI wyłączony od 05.09 — rachunek bez sufitu.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.9</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Playbook wdrożenia klienta</div>
+      <div class="pozycja-card-meta">
+        <span>właściciel + nadzorca</span>
+        <span class="muted">zależy: 2.8</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">1 sesja szacowana.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.10</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Pilotaż Tomek/Kasia/Irina/Justyna na demo z dziennikiem i systemem reakcji</div>
+      <div class="pozycja-card-meta">
+        <span>nadzorca + 4 użytkownicy</span>
+        <span class="muted">zależy: 2.9</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">2 tygodnie pilotażu.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">2.11</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Zamrożenie „MVP klienta” tagiem</div>
+      <div class="pozycja-card-meta">
+        <span>nadzorca</span>
+        <span class="muted">zależy: 2.10</span>
+        
+      </div>
+      
+      
+      
+    </div></div>
+
+    <h3 class="section-title">Kryteria gotowe</h3>
+    <ul class="kryteria-list">
+    <li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">1.</span> Świeża organizacja od zera przechodzi przepływ „pusty stan → pierwsza wartość” w każdym module: puste stany po polsku z jedną akcją, zero ekranów „—” bez wskazówki.</div>
+        <div class="kryterium-dowod">Pojemnik 2 niezaczęty.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">2.</span> Bezpieczeństwo: macierz cross-org 2725 tras zmierzona (dyżur 307) = 0 wycieków; CSRF enforce na stagingu bez regresji; MFA z karencją sprawdzone na koncie obcym; brak 500 w logach stagingu przez 7 dni.</div>
+        <div class="kryterium-dowod">Macierz 2725 tras nadal niezmierzona (SEC 05.09 noc). CSRF dziś w trybie report, nie enforce.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">3.</span> Onboarding: kreator „Krok 1 z 3” działa i kończy się, TRIAL nie blokuje po 3 pytaniach bez jasnego komunikatu, poczta żywa.</div>
+        <div class="kryterium-dowod">Poczta martwa w całej aplikacji (PRZEKAZANIE_20260906_RANO §2).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">4.</span> Wydajność: każdy ekran flagowy &lt; 3 s do treści na stagingu, szkielety z P5 potwierdzone na żywo, Megatrendy 200.</div>
+        <div class="kryterium-dowod">P5 scalone (kod), zrzuty pomiaru na żywo do powtórki.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">5.</span> Dwa magazyny danych zlikwidowane albo trwale spięte projekcją w SSOT dla: inicjatyw, ocen, analiz finansowych, artefaktów.</div>
+        <div class="kryterium-dowod">Inicjatywy: dwa rejestry (runtime-v1 vs SQL) scalone tylko przy odczycie listy (MVP-INICJATYWY), decyzja o docelowej architekturze po MVP. Oceny: projekcja assessmentOutputProjection.ts scala jądro i zastane (MVP-OCENA-RAPORT), ale to nie jest likwidacja dwóch magazynów.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">6.</span> Finanse: jeśli decyzja „MINIMUM do MVP” → F-M2/M3/M4/M6/M7 wykonane; jeśli „poza” → moduł ukryty za jawnym „wkrótce”.</div>
+        <div class="kryterium-dowod">Decyzja właściciela jeszcze nie podjęta (pojemnik 1, decyzja w kolejce).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">7.</span> Dokumentacja użytkownika: jedna strona „jak zacząć” po polsku w aplikacji.</div>
+        <div class="kryterium-dowod">Niezaczęte (pozycja 2.7).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">8.</span> Pilotaż: 2 tygodnie codziennego użycia przez DBR77 z dziennikiem zgłoszeń; 0 BLOKER otwartych na koniec.</div>
+        <div class="kryterium-dowod">Niezaczęte.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">9.</span> Produkcja: opisana i przećwiczona ścieżka promocji staging → demo → produkcja z kopią zapasową, migracjami z bramką, health=SHA, cofnięciem wg _RUNBOOK_COFANIA.md.</div>
+        <div class="kryterium-dowod">Niezaczęte (pozycja 2.0).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">10.</span> Obserwowalność: alert na 500/5xx i padnięcie health, logi csrf_violation/AI/błędów przeglądane raz dziennie przez 7 dni pilotażu.</div>
+        <div class="kryterium-dowod">Niezaczęte.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">11.</span> Koszt AI: limiter AI z powrotem włączony z budżetem per organizacja i czytelnym komunikatem po wyczerpaniu.</div>
+        <div class="kryterium-dowod">Limiter AI wyłączony od 05.09 (decyzja CTO tymczasowa) — rachunek bez sufitu.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">12.</span> Dane i prawo: eksport organizacji (JSON/CSV) i usunięcie na żądanie działają z UI; retencja opisana; umowa powierzenia jako szablon.</div>
+        <div class="kryterium-dowod">Niezaczęte.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">13.</span> Playbook wdrożenia klienta: kto zakłada organizację, kto ładuje kontekst, kto prowadzi pierwszy wywiad i ocenę, ile godzin kosztuje pierwszy tydzień klienta.</div>
+        <div class="kryterium-dowod">Niezaczęte (pozycja 2.9).</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">14.</span> Definicja pilotażu: czterech nazwanych użytkowników z własnymi kontami na demo, dziennik zgłoszeń przeglądany codziennie, próg wyjścia 0 BLOKER / ≤3 WAŻNE, każda osoba potwierdza „doszłam/doszedłem do wyniku sam”.</div>
+        <div class="kryterium-dowod">Niezaczęte (pozycja 2.10). Wymaga środowiska demo z pozycji 1.10.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">15.</span> System reakcji: kanał zgłoszeń → nadzorca → naprawa → zwrot do zgłaszającego, ustalony przez właściciela po starcie pilotażu.</div>
+        <div class="kryterium-dowod">Domyślnie: Feedback w aplikacji + dziennik + codzienny przegląd nadzorcy, do czasu decyzji właściciela.</div>
+      </div>
+    </li>
+  </ul>
+
+    <h3 class="section-title">🍾 Lista szampana</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr><th>NR</th><th>CO MUSI BYĆ PRAWDĄ</th><th>KTO</th><th>ARTEFAKT</th><th>STAN</th></tr></thead>
+      <tbody><tr>
+    <td class="mono nowrap">S2.1</td>
+    <td>Tomek, Kasia, Irina i Justyna (każde z osobna) założyli organizację na demo i doszli od wywiadu do wyniku bez pytania „gdzie to jest”</td>
+    <td class="nowrap">czworo użytkowników pilotażu + nadzorca</td>
+    <td>dziennik pilotażu (Feedback) + 4 potwierdzenia</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.2</td>
+    <td>Przepływ „pusty stan → pierwsza wartość” zielony w każdym module na świeżej organizacji</td>
+    <td class="nowrap">nadzorca</td>
+    <td>Playwright w CI, raport</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.3</td>
+    <td>Bezpieczeństwo: macierz cross-org 2725 tras = 0 wycieków, CSRF enforce, MFA z karencją, 0×500 przez 7 dni</td>
+    <td class="nowrap">nadzorca</td>
+    <td>raport pomiaru + logi 7 dni</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.4</td>
+    <td>Produkcja gotowa NA klienta zewnętrznego: promocja demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA</td>
+    <td class="nowrap">nadzorca + właściciel</td>
+    <td>runbook z datami ćwiczeń, tag prod-safe-&lt;data&gt;</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.5</td>
+    <td>Alert na 5xx/health dociera do nazwanej osoby; był sprawdzony sztucznym błędem</td>
+    <td class="nowrap">nadzorca</td>
+    <td>zrzut alertu</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.6</td>
+    <td>Limiter AI z budżetem per organizacja działa i mówi po polsku, co się stało</td>
+    <td class="nowrap">nadzorca</td>
+    <td>test na wyczerpanie budżetu</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.7</td>
+    <td>Eksport i usunięcie danych organizacji działają z UI; umowa powierzenia jako szablon</td>
+    <td class="nowrap">nadzorca + właściciel</td>
+    <td>plik eksportu, zrzut usunięcia, szablon umowy</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.8</td>
+    <td>Poczta żywa (zaproszenie, reset hasła) na produkcji</td>
+    <td class="nowrap">nadzorca</td>
+    <td>dwa e-maile dostarczone</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.9</td>
+    <td>Dwa magazyny danych spięte projekcją z testem „nowy rekord z UI widać wszędzie”</td>
+    <td class="nowrap">nadzorca</td>
+    <td>testy + mutacja</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.10</td>
+    <td>Finanse wg decyzji: MINIMUM działa na CD PROJEKT albo moduł jawnie „wkrótce”</td>
+    <td class="nowrap">właściciel</td>
+    <td>jeden obraz, Tak</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.11</td>
+    <td>Przewodnik „jak zacząć” w aplikacji po polsku</td>
+    <td class="nowrap">właściciel</td>
+    <td>jeden obraz, Tak</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.12</td>
+    <td>Playbook wdrożenia klienta sprawdzony na pilotażu (godziny ludzi DBR77 policzone)</td>
+    <td class="nowrap">właściciel</td>
+    <td>jedna strona z liczbami</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.13</td>
+    <td>2 tygodnie pilotażu czterech osób na demo: 0 BLOKER, ≤3 WAŻNE otwarte; system reakcji właściciela działa</td>
+    <td class="nowrap">nadzorca + właściciel</td>
+    <td>dziennik z werdyktem, czasy reakcji</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S2.14</td>
+    <td>Zamrożenie „MVP klienta” + przekazanie dla fali 2</td>
+    <td class="nowrap">nadzorca</td>
+    <td>tag mvp-klient-&lt;data&gt;, PRZEKAZANIE_&lt;data&gt;.md</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.1</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Tomek, Kasia, Irina i Justyna (każde z osobna) założyli organizację na demo i doszli od wywiadu do wyniku bez pytania „gdzie to jest”</div>
+    <div class="pozycja-card-meta"><span>czworo użytkowników pilotażu + nadzorca</span></div>
+    <div class="pozycja-card-dowod">dziennik pilotażu (Feedback) + 4 potwierdzenia</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.2</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Przepływ „pusty stan → pierwsza wartość” zielony w każdym module na świeżej organizacji</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">Playwright w CI, raport</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.3</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Bezpieczeństwo: macierz cross-org 2725 tras = 0 wycieków, CSRF enforce, MFA z karencją, 0×500 przez 7 dni</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">raport pomiaru + logi 7 dni</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.4</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Produkcja gotowa NA klienta zewnętrznego: promocja demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA</div>
+    <div class="pozycja-card-meta"><span>nadzorca + właściciel</span></div>
+    <div class="pozycja-card-dowod">runbook z datami ćwiczeń, tag prod-safe-&lt;data&gt;</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.5</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Alert na 5xx/health dociera do nazwanej osoby; był sprawdzony sztucznym błędem</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">zrzut alertu</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.6</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Limiter AI z budżetem per organizacja działa i mówi po polsku, co się stało</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">test na wyczerpanie budżetu</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.7</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Eksport i usunięcie danych organizacji działają z UI; umowa powierzenia jako szablon</div>
+    <div class="pozycja-card-meta"><span>nadzorca + właściciel</span></div>
+    <div class="pozycja-card-dowod">plik eksportu, zrzut usunięcia, szablon umowy</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.8</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Poczta żywa (zaproszenie, reset hasła) na produkcji</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">dwa e-maile dostarczone</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.9</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Dwa magazyny danych spięte projekcją z testem „nowy rekord z UI widać wszędzie”</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">testy + mutacja</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.10</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Finanse wg decyzji: MINIMUM działa na CD PROJEKT albo moduł jawnie „wkrótce”</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">jeden obraz, Tak</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.11</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Przewodnik „jak zacząć” w aplikacji po polsku</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">jeden obraz, Tak</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.12</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Playbook wdrożenia klienta sprawdzony na pilotażu (godziny ludzi DBR77 policzone)</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">jedna strona z liczbami</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.13</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">2 tygodnie pilotażu czterech osób na demo: 0 BLOKER, ≤3 WAŻNE otwarte; system reakcji właściciela działa</div>
+    <div class="pozycja-card-meta"><span>nadzorca + właściciel</span></div>
+    <div class="pozycja-card-dowod">dziennik z werdyktem, czasy reakcji</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S2.14</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Zamrożenie „MVP klienta” + przekazanie dla fali 2</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">tag mvp-klient-&lt;data&gt;, PRZEKAZANIE_&lt;data&gt;.md</div>
+  </div></div>
+
+    <h3 class="section-title">Decyzje właściciela</h3>
+    <p class="muted">Brak decyzji właściciela w kolejce dla tego pojemnika.</p>
+
+    
+  </section>
+<section class="tab-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+    <p class="pojemnik-definicja">Funkcje świadomie wyjęte z MVP, każda jako osobny program z własnym SSOT, prototypem i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.</p>
+
+    <h3 class="section-title">Pozycje</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr>
+        <th>NR</th><th>POZYCJA</th><th>WYKONAWCA</th><th>STAN</th><th>GAŁĄŹ / SHA</th><th>DOWÓD</th><th>DATA</th>
+      </tr></thead>
+      <tbody><tr class="">
+      <td class="mono nowrap">3.1</td>
+      <td>Agent (wykonawcy etapów, producent rozpoznawania sprawy, worker ENABLE_AI_TASKS_WORKER)</td>
+      <td class="nowrap">Opus</td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 6–8 sesji Opus. Zasady w docs/ssot/ZASADY_AI_TERESA_SSOT.md (Teresa nie jest silnikiem autonomicznym — Agent ma być jawny, z potwierdzeniem).</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.2</td>
+      <td>Projekty / grupowanie inicjatyw</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 2–3 sesje. project_id zostaje opcjonalne, wg decyzji właściciela (program/portfel/płaska lista).</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.3</td>
+      <td>Menedżer (rola i widok kierownika)</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 3–4 sesje. Kokpit dla przełożonego: zespół, Skrzynka zespołu, odchylenia, karty działania.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.4</td>
+      <td>SIRI (pakiety metodyczne)</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 8–12 sesji. seed-method-packs-siri, narzędzia z „już wkrótce” (35/36) — każde narzędzie: sesja → artefakt → dalej.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.5</td>
+      <td>Finanse PEŁNY</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 16 sesji. F-P1…F-P11: Baseline v3 (6 ogniw), prognoza, wycena, porównanie wersji, pełna tabela RZiS/BS/CF.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.6</td>
+      <td>Kręgosłup wartości — reszta konwersji</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 4–6 sesji. 20 z 32 nieklikalnych (docs/ssot/KREGOSLUP_WARTOSCI.md), rodowód i zatwierdzenia między modułami.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.7</td>
+      <td>Korpus wiedzy organizacji dla Teresy</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 2 sesje. Indeksowanie dokumentów org (teresa-indeksuj-org.ts), flagi ENABLE_ORG_KNOWLEDGE_RETRIEVAL po zaindeksowaniu, limiter AI z powrotem.</div></td>
+      <td class="mono nowrap"></td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.8</td>
+      <td>Tryb ciemny i dostępność jako bramka</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Szacunek 1–2 sesje. IV dokończone (E_TRYB_CIEMNY, klawiatura), bramka w CI.</div></td>
+      <td class="mono nowrap"></td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.1</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Agent (wykonawcy etapów, producent rozpoznawania sprawy, worker ENABLE_AI_TASKS_WORKER)</div>
+      <div class="pozycja-card-meta">
+        <span>Opus</span>
+        <span class="muted">zależy: SSOT Agenta + prototyp</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 6–8 sesji Opus. Zasady w docs/ssot/ZASADY_AI_TERESA_SSOT.md (Teresa nie jest silnikiem autonomicznym — Agent ma być jawny, z potwierdzeniem).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.2</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Projekty / grupowanie inicjatyw</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: decyzja właściciela</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 2–3 sesje. project_id zostaje opcjonalne, wg decyzji właściciela (program/portfel/płaska lista).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.3</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Menedżer (rola i widok kierownika)</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: SSOT roli</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 3–4 sesje. Kokpit dla przełożonego: zespół, Skrzynka zespołu, odchylenia, karty działania.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.4</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">SIRI (pakiety metodyczne)</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: _FORMULA_MENU_NARZEDZI_12.md</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 8–12 sesji. seed-method-packs-siri, narzędzia z „już wkrótce” (35/36) — każde narzędzie: sesja → artefakt → dalej.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.5</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Finanse PEŁNY</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: F1 §PEŁNY</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 16 sesji. F-P1…F-P11: Baseline v3 (6 ogniw), prognoza, wycena, porównanie wersji, pełna tabela RZiS/BS/CF.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.6</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Kręgosłup wartości — reszta konwersji</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: SSOT gotowy</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 4–6 sesji. 20 z 32 nieklikalnych (docs/ssot/KREGOSLUP_WARTOSCI.md), rodowód i zatwierdzenia między modułami.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.7</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Korpus wiedzy organizacji dla Teresy</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: skrypt gotowy</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 2 sesje. Indeksowanie dokumentów org (teresa-indeksuj-org.ts), flagi ENABLE_ORG_KNOWLEDGE_RETRIEVAL po zaindeksowaniu, limiter AI z powrotem.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.8</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Tryb ciemny i dostępność jako bramka</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: przyrząd gotowy</span>
+        
+      </div>
+      
+      
+      <div class="uwagi">Szacunek 1–2 sesje. IV dokończone (E_TRYB_CIEMNY, klawiatura), bramka w CI.</div>
+    </div></div>
+
+    <h3 class="section-title">Kryteria gotowe</h3>
+    <ul class="kryteria-list">
+    <li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">1.</span> Każdy program fali 2 ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową.</div>
+        <div class="kryterium-dowod">Fala 2 niezaczęta — czeka na pilotaż i decyzję właściciela o kolejności.</div>
+      </div>
+    </li>
+<li class="kryterium-item ">
+      <span class="kryterium-ico"><svg class="ico ico-open" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></span>
+      <div>
+        <div class="kryterium-tresc"><span class="mono muted">2.</span> Programy wchodzą pojedynczo, nigdy hurtem i nigdy za flagą w ciszy.</div>
+        <div class="kryterium-dowod">Zasada zapisana w definicji pojemnika 3; brak jeszcze programu w realizacji, więc niezweryfikowana w praktyce.</div>
+      </div>
+    </li>
+  </ul>
+
+    <h3 class="section-title">🍾 Lista szampana</h3>
+    <div class="table-wrap">
+    <table class="std-table">
+      <thead><tr><th>NR</th><th>CO MUSI BYĆ PRAWDĄ</th><th>KTO</th><th>ARTEFAKT</th><th>STAN</th></tr></thead>
+      <tbody><tr>
+    <td class="mono nowrap">S3.1</td>
+    <td>Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową</td>
+    <td class="nowrap">właściciel</td>
+    <td>SSOT w docs/ssot/, karta prototypu z „Tak”</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S3.2</td>
+    <td>Zbudowany na kanonie (StandardTable/SPEC-A/ArtifactRightPanel), zero flag chowających, po polsku</td>
+    <td class="nowrap">nadzorca</td>
+    <td>strażniki + zrzuty</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S3.3</td>
+    <td>Mechanika działa end-to-end na produkcji na danych pilotażu, z testem mutacyjnym w zabezpieczenie</td>
+    <td class="nowrap">nadzorca</td>
+    <td>Playwright + testy</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S3.4</td>
+    <td>Użytkownik pilotażu użył funkcji sam i dziennik nie ma BLOKER</td>
+    <td class="nowrap">użytkownik + nadzorca</td>
+    <td>dziennik</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr>
+<tr>
+    <td class="mono nowrap">S3.5</td>
+    <td>Program zamrożony tagiem, rejestr i przekazanie zaktualizowane</td>
+    <td class="nowrap">nadzorca</td>
+    <td>tag fala2-&lt;program&gt;-&lt;data&gt;</td>
+    <td><span class="chip chip-neutral">NIE</span></td>
+  </tr></tbody>
+    </table>
+  </div>
+  <div class="card-list"><div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S3.1</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową</div>
+    <div class="pozycja-card-meta"><span>właściciel</span></div>
+    <div class="pozycja-card-dowod">SSOT w docs/ssot/, karta prototypu z „Tak”</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S3.2</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Zbudowany na kanonie (StandardTable/SPEC-A/ArtifactRightPanel), zero flag chowających, po polsku</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">strażniki + zrzuty</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S3.3</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Mechanika działa end-to-end na produkcji na danych pilotażu, z testem mutacyjnym w zabezpieczenie</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">Playwright + testy</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S3.4</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Użytkownik pilotażu użył funkcji sam i dziennik nie ma BLOKER</div>
+    <div class="pozycja-card-meta"><span>użytkownik + nadzorca</span></div>
+    <div class="pozycja-card-dowod">dziennik</div>
+  </div>
+<div class="pozycja-card">
+    <div class="pozycja-card-top"><span class="mono">S3.5</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-nazwa">Program zamrożony tagiem, rejestr i przekazanie zaktualizowane</div>
+    <div class="pozycja-card-meta"><span>nadzorca</span></div>
+    <div class="pozycja-card-dowod">tag fala2-&lt;program&gt;-&lt;data&gt;</div>
+  </div></div>
+
+    <h3 class="section-title">Decyzje właściciela</h3>
+    <ul class="decyzje-list">
+    <li class="decyzja-item">
+      <div class="decyzja-top">
+        <span class="decyzja-tresc">Kolejność programów fali 2 (3.1–3.8) ustala właściciel jedną decyzją po pilotażu</span>
+        <span class="chip chip-amber">CZEKA</span>
+        
+      </div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent)</div>
+    </li>
+  </ul>
+
+    
+  </section>
+
+  <div class="footer">Stan z: <span class="mono">2026-09-06T06:40:00+02:00</span> · rejestr <span class="mono">74d48a0c41</span> · źródło: <span class="mono">docs/program/plan-pojemniki/stan.json</span></div>
+</div>
+<script>
+(function(){
+  function activate(id){
+    document.querySelectorAll('.tab-link').forEach(function(btn){
+      var on = btn.getAttribute('data-tab-target') === String(id);
+      btn.classList.toggle('tab-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.kafel').forEach(function(btn){
+      btn.classList.toggle('kafel-active', btn.getAttribute('data-tab-target') === String(id));
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(panel){
+      var on = panel.id === 'panel-' + id;
+      panel.classList.toggle('active', on);
+      if (on) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+    });
+    try { localStorage.setItem('plan-pojemniki-tab', String(id)); } catch (e) {}
+  }
+  document.querySelectorAll('[data-tab-target]').forEach(function(el){
+    el.addEventListener('click', function(){ activate(el.getAttribute('data-tab-target')); });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem('plan-pojemniki-tab'); } catch (e) {}
+  if (saved && document.getElementById('panel-' + saved)) activate(saved);
+})();
+</script>

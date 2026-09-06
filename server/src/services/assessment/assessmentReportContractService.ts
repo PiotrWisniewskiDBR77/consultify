@@ -1,24 +1,10 @@
-import DRD_STRUCTURE from '../../data/drdStructure.js';
 import { methodOutputService } from '../../method-core/outputs/index.js';
 import * as DbPromise from '../../utils/DbPromise.js';
+import { composeReportContract } from './assessmentReportContractComposer.js';
 import {
   AssessmentSkipReasonError,
   assessmentSkipReasonService,
-  type AssessmentSkipReason,
 } from './assessmentSkipReasonService.js';
-import {
-  composeAreaNarrative,
-  composeChapterAggregateNarrative,
-  composeProgramAggregateNarrative,
-} from './assessmentNarrativeComposer.js';
-
-const AREA_MICROSTRUCTURE = [
-  'stan_faktyczny',
-  'ocena_i_wiarygodnosc',
-  'znaczenie_dla_przedsiebiorstwa',
-  'luka_i_sens_targetu',
-  'najblizszy_krok',
-] as const;
 
 // W1 (nadzorca 2026-08-28): the cover-metadata table has five fields the
 // database can actually answer for — but none of them live on
@@ -216,83 +202,24 @@ export class AssessmentReportContractService {
             output.frozenAt
           )
         : await assessmentSkipReasonService.listActive(organizationId, sessionId);
-    // FIX-2 (P1-2, nadzorca 2026-08-26): skip decisions are per-question
-    // (unitId + questionId), never per-area. Group every active decision for
-    // an area instead of collapsing to one arbitrary record — a single
-    // skipped question must not make the whole area read as fully skipped.
-    const skipsByUnit = new Map<string, AssessmentSkipReason[]>();
-    for (const reason of skipReasons) {
-      const existing = skipsByUnit.get(reason.unitId);
-      if (existing) existing.push(reason);
-      else skipsByUnit.set(reason.unitId, [reason]);
-    }
-    const findingByUnit = new Map(
-      (output?.findings ?? []).map((finding) => [finding.unitId, finding])
-    );
 
-    // Area-level `skipped` is a true aggregate: true only when every
-    // assessable slot of the area (one per canonical axis level, the same
-    // bound already enforced on write by INVALID_UNIT_OR_LEVEL) has an
-    // active skip decision. A partial skip keeps `skipped: false` and
-    // surfaces the full per-question list so the consumer can see exactly
-    // which questions were skipped and with which code.
-    const areaSkipInfo = (
-      axis: (typeof DRD_STRUCTURE)[number],
-      area: (typeof DRD_STRUCTURE)[number]['areas'][number]
-    ) => {
-      const areaSkips = skipsByUnit.get(area.id) ?? [];
-      const skips = areaSkips.map((reason) => ({
-        questionId: reason.questionId,
-        skipCode: reason.skipCode,
-      }));
-      const distinctLevelsSkipped = new Set(areaSkips.map((reason) => reason.level)).size;
-      const allSkipped = areaSkips.length > 0 && distinctLevelsSkipped >= axis.levelCount;
-      return {
-        skipped: allSkipped,
-        // Deterministic single code only when exactly one question is
-        // skipped; never arbitrarily pick among multiple different codes.
-        skipCode: skips.length === 1 ? skips[0].skipCode : null,
-        skips,
-      };
-    };
-
-    const programNarrative = composeProgramAggregateNarrative({
-      axisCount: DRD_STRUCTURE.length,
-      totalAreas: DRD_STRUCTURE.reduce((sum, axis) => sum + axis.areas.length, 0),
-      findings: (output?.findings ?? []).map((finding) => {
-        const area = DRD_STRUCTURE.flatMap((axis) => axis.areas).find(
-          (candidate) => candidate.id === finding.unitId
-        );
-        return {
-          unitId: finding.unitId,
-          unitNamePL: area?.namePL ?? finding.unitName,
-          currentLevel: finding.currentLevel,
-          targetLevel: finding.targetLevel,
-          gap: finding.gap,
-          confidence: finding.confidence,
-          evidenceCount: finding.supportingEvidence.length,
-          recommendation: finding.recommendation,
-          expectedOutcome: finding.expectedOutcome,
-        };
-      }),
-      limitations: output?.limitations ?? [],
-    });
-
-    return {
-      contractVersion: 'assessment-report-contract-v1',
+    // Od 2026-09-06 składanie kontraktu żyje w JEDNEJ czystej funkcji
+    // (`assessmentReportContractComposer.ts`) — ten serwis odpowiada już tylko
+    // za odczyt z jądra metodycznego. Ten sam kompozytor obsługuje magazyn
+    // zastany (`assessmentLegacyReportContractService.ts`), więc raport DOCX
+    // nie jest już zależny od tego, czy sesja przeszła przez zamrożenie.
+    return composeReportContract({
       sessionId,
       outputId: output?.id ?? null,
       revision: output?.outputVersion ?? 0,
       generatedAt: output?.frozenAt ?? session.created_at,
       methodVersion: output?.methodPackVersion ?? session.method_pack_version,
+      sourceKind: 'method-core',
       sessionLabel: {
         displayName: project?.name ?? null,
         source: project ? ('project' as const) : null,
         projectId: session.project_id,
       },
-      // W1 cover-metadata fields — every one is null-safe; no field here is
-      // ever fabricated. See the comment block above the helper functions
-      // for exactly which table each one reads.
       businessProfile:
         normalizeIndustry(organizationProfile?.industry) ??
         normalizeIndustry(organization?.industry) ??
@@ -302,126 +229,14 @@ export class AssessmentReportContractService {
         extractEmploymentFromDescription(project?.description ?? null),
       assessmentPeriod,
       assessor,
-      // `clientSponsor` has no home anywhere in the schema today — neither
-      // method_session_roles (METHOD_PROCESS_ROLES has no 'sponsor' role:
-      // owner/lead_assessor/assessor/respondent/evidence_owner/reviewer/
-      // approver/observer) nor projects/organizations carry a sponsor
-      // field. Left null on purpose; the renderer shows the honest
-      // "Do uzupełnienia" placeholder for it.
-      clientSponsor: null as string | null,
-      executiveSummary: programNarrative.executiveSummary,
-      criticalGaps: programNarrative.criticalGaps,
-      finalConclusions: programNarrative.finalConclusions,
-      programDecisionLine: programNarrative.decisionLine,
-      chapters: DRD_STRUCTURE.map((axis) => {
-        const axisFindings = axis.areas.flatMap((area) => {
-          const finding = findingByUnit.get(area.id);
-          return finding
-            ? [
-                {
-                  unitId: finding.unitId,
-                  unitNamePL: area.namePL ?? area.name,
-                  currentLevel: finding.currentLevel,
-                  targetLevel: finding.targetLevel,
-                  gap: finding.gap,
-                  confidence: finding.confidence,
-                  evidenceCount: finding.supportingEvidence.length,
-                  recommendation: finding.recommendation,
-                  expectedOutcome: finding.expectedOutcome,
-                },
-              ]
-            : [];
-        });
-        const aggregateNarrative = composeChapterAggregateNarrative({
-          axisId: axis.id,
-          axisNamePL: axis.namePL ?? axis.name,
-          maxLevel: axis.levelCount,
-          totalAreas: axis.areas.length,
-          skippedCount: axis.areas.filter((area) => (skipsByUnit.get(area.id) ?? []).length > 0)
-            .length,
-          findings: axisFindings,
-          frozenDate: new Date(output?.frozenAt ?? session.created_at).toISOString().slice(0, 10),
-        });
-        return {
-          axisId: axis.id,
-          axisName: axis.name,
-          axisNamePL: axis.namePL,
-          maxLevel: axis.levelCount,
-          introduction: { content: aggregateNarrative.introduction, minWords: 120, maxWords: 180 },
-          matrix: {
-            caption: { content: aggregateNarrative.matrixCaption, minWords: 30, maxWords: 60 },
-            areas: axis.areas.map((area) => {
-              const finding = findingByUnit.get(area.id);
-              const skipInfo = areaSkipInfo(axis, area);
-              const currentLevel = finding?.currentLevel ?? null;
-              const targetLevel = finding?.targetLevel ?? null;
-              return {
-                unitId: area.id,
-                unitName: area.name,
-                unitNamePL: area.namePL,
-                currentLevel,
-                targetLevel,
-                gap:
-                  currentLevel === null || targetLevel === null ? null : targetLevel - currentLevel,
-                skipped: skipInfo.skipped,
-                skipCode: skipInfo.skipCode,
-                skips: skipInfo.skips,
-                evidenceState: finding
-                  ? finding.supportingEvidence.length > 0
-                    ? 'evidenced'
-                    : finding.confidence === 'low'
-                      ? 'incomplete'
-                      : 'declared'
-                  : 'not_assessed',
-              };
-            }),
-          },
-          areaComments: axis.areas.map((area) => {
-            const finding = findingByUnit.get(area.id);
-            const skipInfo = areaSkipInfo(axis, area);
-            const evidenceState = finding
-              ? finding.supportingEvidence.length > 0
-                ? ('evidenced' as const)
-                : finding.confidence === 'low'
-                  ? ('incomplete' as const)
-                  : ('declared' as const)
-              : ('not_assessed' as const);
-            const narrative = composeAreaNarrative(finding ?? null, {
-              axisId: axis.id,
-              evidenceState,
-              skipped: skipInfo.skipped,
-            });
-            return {
-              unitId: area.id,
-              content: narrative?.text ?? null,
-              minWords: 110,
-              maxWords: 170,
-              microstructure: AREA_MICROSTRUCTURE,
-              skipped: skipInfo.skipped,
-              skipCode: skipInfo.skipCode,
-              skips: skipInfo.skips,
-              answerRefs: narrative?.provenance.answerRefs ?? (finding ? [finding.id] : []),
-              evidenceRefs:
-                narrative?.provenance.evidenceRefs ??
-                finding?.supportingEvidence.map((evidence) => evidence.evidenceId) ??
-                [],
-              sourceLocators: narrative?.provenance.sourceLocators ?? finding?.sourceLocators ?? [],
-              sourceFields: narrative?.provenance.sourceFields ?? [],
-              narrativeKind: narrative?.kind ?? null,
-              uncertainty: evidenceState,
-            };
-          }),
-          conclusion: {
-            content: aggregateNarrative.conclusion,
-            minWords: 180,
-            maxWords: 260,
-            decisionLine: {
-              ...aggregateNarrative.decisionLine,
-            },
-          },
-        };
-      }),
-    };
+      // `clientSponsor` nie ma dziś nigdzie w schemacie swojego miejsca —
+      // ani method_session_roles, ani projects/organizations go nie niosą.
+      // Zostaje null świadomie; renderer pokazuje uczciwe „Do uzupełnienia”.
+      clientSponsor: null,
+      findings: output?.findings ?? [],
+      limitations: output?.limitations ?? [],
+      skipReasons,
+    });
   }
 }
 

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('react-router-dom', async () => ({
   ...(await vi.importActual<typeof import('react-router-dom')>('react-router-dom')),
   useNavigate: () => mocks.navigate,
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
 }));
 
 vi.mock('react-i18next', () => ({

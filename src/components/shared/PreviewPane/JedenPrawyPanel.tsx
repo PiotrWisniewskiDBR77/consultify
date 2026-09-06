@@ -34,16 +34,31 @@ export interface JedenPrawyPanelProps {
 export function JedenPrawyPanel({ rekord, kontekst, className }: JedenPrawyPanelProps) {
   const { t } = useTranslation();
   const panel = useJedenPanel();
-  const poprzedniRekord = useRef(rekord);
+  // BUGFIX (P1 DEC-397, zmierzone na żywo 06.09 — Teresa na Skrzynce w realnej
+  // apce wracała na "Rekord" natychmiast po kliknięciu zakładki): `rekord` to
+  // element JSX budowany na nowo przy KAŻDYM renderze wywołującego (nowa
+  // referencja), a strony typu Skrzynka/Wywiad renderują się często z powodów
+  // niezwiązanych z zaznaczeniem (liczniki SLA, odświeżenia listy). Porównanie
+  // po REFERENCJI (`rekord !== poprzedniRekord.current`) resetowało zakładkę
+  // na "Rekord" po każdym takim renderze — w testach jsdom (bez tła
+  // odświeżeń) tego nie było widać, na żywo Teresa była praktycznie
+  // nieklikalna. Tożsamość rekordu = `props.title` (to samo pole, po którym
+  // panel i tak identyfikuje rekord w nagłówku) — stabilna między
+  // niepowiązanymi renderami, zmienia się dokładnie wtedy, gdy użytkownik
+  // faktycznie zaznaczy inny wiersz.
+  const rekordTozsamosc = rekord?.props?.title ?? null;
+  const poprzedniaTozsamosc = useRef(rekordTozsamosc);
+  const zamkniety = panel.zamkniety;
+  const { ustawZakladke } = panel;
 
   useEffect(() => registerEmbeddedModuleChatHost(), []);
 
   useEffect(() => {
-    if (rekord && rekord !== poprzedniRekord.current && !panel.zamkniety) {
-      panel.ustawZakladke('rekord');
+    if (rekordTozsamosc !== null && rekordTozsamosc !== poprzedniaTozsamosc.current && !zamkniety) {
+      ustawZakladke('rekord');
     }
-    poprzedniRekord.current = rekord;
-  }, [panel, rekord]);
+    poprzedniaTozsamosc.current = rekordTozsamosc;
+  }, [rekordTozsamosc, zamkniety, ustawZakladke]);
 
   const widoczny = !panel.zamkniety && (!!rekord || panel.zakladka === 'teresa');
   if (!widoczny) return null;

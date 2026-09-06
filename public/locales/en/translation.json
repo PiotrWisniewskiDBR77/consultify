@@ -3183,7 +3183,9 @@
         }
       },
       "savedFromChatToast": "Saved from chat to My Ideas",
-      "sentToWorkspaceToast": "Opened in Ideas workspace"
+      "sentToWorkspaceToast": "Opened in Ideas workspace",
+      "gardenSpark": "Idea Garden Spark",
+      "plantInGarden": "Plant in Idea Garden"
     },
     "whiteboard": {
       "regionLabel": "Idea whiteboard with freeform elements",
@@ -6033,6 +6035,9 @@
       "createdField": "Created",
       "updatedField": "Updated",
       "noActivity": "No activity"
+    },
+    "initiatives": {
+      "createdFromChatToast": "Initiative created from chat"
     }
   },
   "step1": {
@@ -8458,7 +8463,15 @@
       "longTerm": "Long-term (18-36 months)",
       "quickWins": "Quick Wins",
       "strategicInitiatives": "Strategic Initiatives",
-      "longTermTransformation": "Long-term Transformation"
+      "longTermTransformation": "Long-term Transformation",
+      "download": {
+        "heading": "Files to send to the client",
+        "docx": "Download report (DOCX)",
+        "pptx": "Download deck (PPTX)",
+        "pdf": "Download deck (PDF)",
+        "inProgress": "Preparing the file…",
+        "error": "Could not download the file — code: {{code}}"
+      }
     },
     "lean": {
       "overallDashboard": "Overall Assessment Dashboard",
@@ -17767,7 +17780,16 @@
       "more": "more",
       "continue": "Continue",
       "continueInstruction": "Continue the previous answer from where it stopped.",
-      "regenerate": "Regenerate"
+      "regenerate": "Regenerate",
+      "copy": "Copy",
+      "edit": "Edit",
+      "savedToContext": "Saved to Context OS",
+      "saveToContext": "Save to Context OS",
+      "stop": "Stop",
+      "speak": "Speak",
+      "toggleResponseActions": "More actions",
+      "openPanel": "Open in panel",
+      "download": "Download"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -17875,7 +17897,38 @@
       "sent": "Report sent for review.",
       "failed": "Report could not be sent. Please try again."
     },
-    "conversationLandmark": "Conversation"
+    "conversationLandmark": "Conversation",
+    "initiativeHandoff": {
+      "createdDraft": "The initiative draft is ready. Review it before passing it to execution.",
+      "missing": {
+        "project": "project",
+        "owner": "initiative owner",
+        "problem": "problem statement"
+      },
+      "readFailed": "Could not verify the initiative draft.",
+      "adoptionFailed": "Adoption failed.",
+      "state": {
+        "idle": "Awaiting consent",
+        "checking": "Checking",
+        "blocked": "Needs details",
+        "ready": "Ready",
+        "adopting": "Adopting",
+        "adopted": "Adopted",
+        "failed": "Failed"
+      },
+      "title": "Pass the initiative to execution?",
+      "missingPrefix": "Missing",
+      "check": "Check before handoff",
+      "consent": "Pass to execution",
+      "complete": "Complete in Initiatives"
+    },
+    "governedHandoff": {
+      "proposeDocument": "Propose governed document",
+      "citations": "{{count}} source references preserved."
+    },
+    "sources": {
+      "details": "Sources details"
+    }
   },
   "aiChat": {
     "confirmDeleteBulk": "Delete {{count}} conversations?",
@@ -18284,7 +18337,10 @@
       "missingInfo": "What was missing? (optional)",
       "missingInfoPlaceholder": "Describe what was missing from the response...",
       "submit": "Submit feedback",
-      "whatWasGood": "What was good? (optional)"
+      "whatWasGood": "What was good? (optional)",
+      "saving": "Saving…",
+      "forbidden": "This message's rating can't be saved.",
+      "saveFailed": "Couldn't save the rating."
     },
     "greeting": {
       "morning": "Good morning",
@@ -18660,7 +18716,15 @@
     "noTargetFolders": "No other folders",
     "teresaProposal": {
       "failed": "Failed",
-      "reject": "Reject"
+      "reject": "Reject",
+      "approved": "Teresa proposal approved.",
+      "rejected": "Teresa proposal rejected.",
+      "undone": "Teresa workbook change undone.",
+      "executed": "Teresa handoff executed.",
+      "approve": "Approve",
+      "execute": "Execute",
+      "undo": "Undo change",
+      "navigate": "Open target"
     },
     "attachments": {
       "allFailed": "❌ Could not process the attached source(s): {{names}}. The AI will respond without them. Please re-upload in a supported format (PDF, TXT, MD, CSV, JSON) or check that the link is publicly accessible.",
@@ -18741,7 +18805,17 @@
     "visibilityHistory": "Visibility history",
     "noVisibilityChanges": "No organization visibility changes recorded.",
     "visibilityChanged": "Visibility changed",
-    "visibilityChangedBy": "Actor"
+    "visibilityChangedBy": "Actor",
+    "errors": {
+      "messageSaveFailed": "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds."
+    },
+    "citationUnavailable": "Source unavailable",
+    "citationStale": "Source may be outdated",
+    "citationNoAccess": "Source not accessible to you",
+    "deepSearchSources": "Deep search sources",
+    "citationExternalBadge": "External",
+    "citationFragmentEmpty": "No excerpt available.",
+    "citationOpenSource": "Open source"
   },
   "agentAudit": {
     "title": "Agent Audit Layer",
@@ -19101,7 +19175,16 @@
     "sources": "sources",
     "searchQueries": "Search Queries",
     "topSources": "Top Sources",
-    "researching": "Researching"
+    "researching": "Researching",
+    "followUp": "Follow-up",
+    "deepening": "Deepening research with follow-up queries...",
+    "generatingFollowUp": "Analyzing gaps and generating follow-up queries...",
+    "synthesizingReport": "Synthesizing comprehensive report...",
+    "activity": "Activity",
+    "waitingForActivity": "Starting research...",
+    "initialQueries": "Initial Queries",
+    "followUpQueries": "Follow-up Queries (Iterative Deepening)",
+    "noSourcesYet": "No sources found yet..."
   },
   "admin": {
     "health": {
@@ -29679,17 +29762,37 @@
   },
   "chatProposal": {
     "step": {
-      "more": "more"
+      "more": "more",
+      "untitled": "Step"
     },
     "state": {
       "failed": "Failed",
-      "unknown": "unknown"
+      "unknown": "unknown",
+      "proposed": "Proposal drafted",
+      "pendingReview": "Awaiting review",
+      "approved": "Approved",
+      "executing": "Executing",
+      "executed": "Executed",
+      "audited": "Audited",
+      "closed": "Closed",
+      "rejected": "Rejected"
     },
     "action": {
       "approve": "Approve",
       "reject": "Reject",
-      "inspect": "View run"
-    }
+      "inspect": "View run",
+      "execute": "Execute"
+    },
+    "risk": {
+      "high": "High risk",
+      "medium": "Medium risk",
+      "low": "Low risk"
+    },
+    "ariaLabel": "Governed execution proposal",
+    "stepCount": "{{count}} steps",
+    "expiresAt": "Expires {{when}}",
+    "rejectionReason": "Reason",
+    "reviewer": "Reviewed by {{name}}"
   },
   "focusMode": {
     "all": "All",
@@ -29705,7 +29808,20 @@
     "badge": {
       "more": "more",
       "sources": "{{count}} sources",
-      "noSources": "No cited sources"
+      "noSources": "No cited sources",
+      "ariaLabel": "Response sources",
+      "dialogLabel": "Sources for this response",
+      "answeredBy": "Answered by",
+      "openSource": "Open source in a new tab: {{title}}",
+      "citationDomain": "Source domain: {{domain}}",
+      "noSourcesBody": "This reply is based on the model’s own reasoning, not on retrieved documents or search results.",
+      "reasoningToggle": "Why this answer?",
+      "copyReasoningAriaLabel": "Copy reasoning observations to clipboard",
+      "copied": "Copied",
+      "copyFailed": "Copy failed",
+      "copy": "Copy",
+      "disclaimer": "Sources tell you what was retrieved. Always verify claims that matter to you.",
+      "copyCitationsAriaLabel": "Copy citation list to clipboard"
     }
   },
   "voice": {
@@ -42386,5 +42502,44 @@
       "openTeresa": "Teresa",
       "teresaEmpty": "Select a row or ask about anything on this list."
     }
+  },
+  "policy": {
+    "refusal": {
+      "title": "Request blocked by policy",
+      "nextSteps": "What to do next"
+    },
+    "uncertainty": {
+      "title": "Uncertainty marker",
+      "body": "This response includes factual claims without sufficient citations from available sources."
+    },
+    "noSources": {
+      "title": "No sources found",
+      "body": "This answer could not be verified against available sources in your allowed scope."
+    }
+  },
+  "stream": {
+    "retrying": "Connection issue, retrying...",
+    "complete": "Response complete",
+    "costEstimateTooltip": "Estimated AI cost for this response based on token usage",
+    "stoppedPartial": "Response stopped. Partial answer shown above.",
+    "cancelled": "Response cancelled."
+  },
+  "deepThinking": {
+    "hint": "This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.",
+    "enableHint": "Enable Deep Thinking",
+    "dismissHint": "Not now",
+    "ctaTitle": "What do you want to do with this output?",
+    "saving": "Saving…",
+    "saveDecision": "Save as Decision",
+    "convertInitiative": "Convert to Initiative",
+    "exportReport": "Export Report",
+    "saveToNotebook": "Save to Notebook",
+    "listenBrief": "Listen to Brief",
+    "decisionSaved": "Decision saved successfully",
+    "interimInsight": "Preliminary insight — dominant paths emerging:",
+    "narrowFocus": "Narrow focus on the first path",
+    "narrowFocusBtn": "Narrow focus",
+    "goDeeper": "Go deeper",
+    "continueDeeper": "Continue to full report"
   }
 }
