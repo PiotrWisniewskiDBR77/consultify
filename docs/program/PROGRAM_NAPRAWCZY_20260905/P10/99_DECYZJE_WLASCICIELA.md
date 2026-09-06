@@ -22,4 +22,3 @@ Każdy wiersz zawiera jedno pytanie. Brak odpowiedzi nie zatrzymuje pozostałej 
 | task | Czy sekcje Pomysły realizacji, Ryzyko i alternatywy oraz RACI mają pozostać mimo niepełnego kontraktu writerów? | Tak, pod warunkiem wskazania trwałych pól i writerów. | Sekcje dostaną egzekwowalne źródła danych; bez danych będą ukrywane. |
 | wszystkie poza powiadomieniem | Czy zaakceptować odbiór bez zrzutu otwartego realnego rekordu, gdy hub/lista pozostaje na „Ładowanie…” albo nie ma seeda? | Nie. | Po Tak byłby to wyjątek od bramki wizualnej; rekomendacja pozostaje: naprawić stanowisko/dane i powtórzyć pomiar. |
 | insight i initiative | Czy zaakceptować zagregowane wiersze sekcji bez raportu K1? | Nie. | Po Tak odstąpilibyśmy od wymogu „wiersz per sekcja”; rekomendacja: wciągnąć K1 albo rozpisać każdą sekcję osobno po działającym runtime. |
-
