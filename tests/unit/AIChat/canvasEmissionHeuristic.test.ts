@@ -79,3 +79,49 @@ describe('shouldOfferDocumentEmission (B4 auto-emission)', () => {
     expect(shouldOfferDocumentEmission('   ').offer).toBe(false);
   });
 });
+
+/**
+ * [ODMROZENIE 13_CHAT DEC-397] Odpowiedź Teresy po polsku bywa dokumentem BEZ
+ * ani jednego nagłówka markdown — sekcje pisze pogrubieniem („1. **Wizja i cele
+ * transformacji**: …"). Zmierzone 06.09 (1.1-D) na żywej odpowiedzi z prośby
+ * właściciela o „krótką zajawkę planu strategicznego": 1457 znaków, 5 sekcji,
+ * ZERO „# ". Heurystyka wymagała `headingCount >= 1`, więc chip „Otwórz jako
+ * dokument" nie pojawiał się nigdy i bramka DEC-400 nie mogła przejść.
+ *
+ * Dowód mutacyjny (ręcznie zweryfikowany): usunięcie składnika `boldSections`
+ * z `headingCount` w canvasEmissionHeuristic.ts czerwieni pierwszy przypadek.
+ */
+describe('[DEC-397] sekcje pisane pogrubieniem zamiast nagłówków markdown', () => {
+  const ODPOWIEDZ_TERESY_0609 = [
+    'Plan strategiczny w kontekście cyfrowej transformacji przemysłu zazwyczaj obejmuje kilka kluczowych elementów:',
+    '',
+    '1. **Wizja i cele transformacji**: Określenie, jaki jest docelowy stan organizacji po transformacji i jakie konkretne cele biznesowe ma ona osiągnąć, np. zwiększenie efektywności operacyjnej czy poprawa jakości produktów.',
+    '',
+    '2. **Analiza bieżącego stanu**: Ocena obecnej dojrzałości cyfrowej organizacji, identyfikacja istniejących procesów, systemów oraz luk, które wymagają adresowania.',
+    '',
+    '3. **Inicjatywy transformacyjne**: Lista priorytetowych projektów i działań, które są niezbędne do osiągnięcia wyznaczonych celów.',
+    '',
+    '4. **Plan wdrożenia**: Szczegółowy harmonogram realizacji poszczególnych inicjatyw, uwzględniający zasoby, terminy oraz kluczowe kamienie milowe.',
+    '',
+    '5. **Monitorowanie i ewaluacja**: Mechanizmy śledzenia postępów oraz metody oceny skuteczności transformacji, np. poprzez KPI.',
+    '',
+    'Każdy z tych elementów zapewnia, że transformacja jest dobrze zaplanowana, zarządzana i monitorowana.',
+  ].join('\n');
+
+  it('oferuje dokument dla realnej odpowiedzi Teresy z 06.09', () => {
+    const decision = shouldOfferDocumentEmission(ODPOWIEDZ_TERESY_0609);
+    expect(decision.offer).toBe(true);
+    expect(decision.title.length).toBeGreaterThan(0);
+  });
+
+  it('POJEDYNCZA pogrubiona etykieta to nadal nie dokument', () => {
+    const zwyklaOdpowiedz = [
+      'Jasne, mogę to zrobić. **Uwaga**: potrzebuję jeszcze dostępu do danych z zeszłego kwartału,',
+      'bo bez nich każde wyliczenie będzie zgadywanką, a tego chcemy uniknąć w rozmowie z zarządem.',
+      'Daj znać, kiedy będą gotowe, to wrócę do tematu i przygotuję dla Ciebie porządne zestawienie.',
+      'W międzyczasie mogę przejrzeć to, co już mamy w systemie, i powiedzieć, czego brakuje.',
+    ].join('\n');
+    expect(zwyklaOdpowiedz.length).toBeGreaterThan(300);
+    expect(shouldOfferDocumentEmission(zwyklaOdpowiedz).offer).toBe(false);
+  });
+});

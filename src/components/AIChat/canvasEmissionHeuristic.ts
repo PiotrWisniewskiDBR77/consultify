@@ -30,6 +30,17 @@ const MIN_CHARS = 700;
 const ABSOLUTE_MIN_CHARS = 300;
 
 const HEADING_RE = /^#{1,4}\s+\S/;
+// [ODMROZENIE 13_CHAT DEC-397] Etykieta sekcji pisana POGRUBIENIEM zamiast „# ".
+// Zmierzone 06.09 (1.1-D): odpowiedź Teresy po polsku na „krótka zajawka planu
+// strategicznego" ma 1457 znaków i PIĘĆ sekcji w postaci „1. **Wizja i cele
+// transformacji**: …", ale ANI JEDNEGO nagłówka markdown. Heurystyka wymagała
+// `headingCount >= 1`, więc chip „Otwórz jako dokument" nigdy się nie pokazywał —
+// odpowiedź document-shaped nie dawała się przenieść do dokumentu.
+// Zachowawczo: pojedyncza pogrubiona etykieta to NADAL nie dokument; dopiero
+// MIN_BOLD_SECTIONS takich linii czyta się jak sekcje (patrz test).
+const BOLD_SECTION_RE = /^\s*(?:[-*]|\d+[.)])?\s*\*\*[^*\n]{2,80}\*\*\s*:?/;
+/** Ile pogrubionych etykiet czyni z odpowiedzi zestaw sekcji. */
+const MIN_BOLD_SECTIONS = 3;
 const BULLET_RE = /^\s*([-*]|\d+\.)\s+\S/;
 const TABLE_ROW_RE = /^\s*\|.*\|\s*$/;
 
@@ -86,7 +97,12 @@ export function shouldOfferDocumentEmission(content: string): DocumentEmissionDe
   const nonEmpty = lines.filter((l) => l.trim().length > 0);
   if (nonEmpty.length === 0) return NO;
 
-  const headingCount = lines.filter((l) => HEADING_RE.test(l.trim())).length;
+  const markdownHeadings = lines.filter((l) => HEADING_RE.test(l.trim())).length;
+  // [ODMROZENIE 13_CHAT DEC-397] — pogrubione etykiety liczą się jak nagłówki
+  // dopiero, gdy jest ich MIN_BOLD_SECTIONS lub więcej.
+  const boldSections = lines.filter((l) => BOLD_SECTION_RE.test(l)).length;
+  const headingCount =
+    markdownHeadings + (boldSections >= MIN_BOLD_SECTIONS ? boldSections : 0);
   const bulletCount = lines.filter((l) => BULLET_RE.test(l)).length;
   const tableRows = lines.filter((l) => TABLE_ROW_RE.test(l)).length;
 

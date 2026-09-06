@@ -5734,8 +5734,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setRequestedCanvasDraftId(draftId);
       setRequestedCanvasStarterId('document');
       setIsWorkPanelOpen(true);
+      // [ODMROZENIE 13_CHAT DEC-397 + 11_MATERIALS] Sam szkic canvasa NIE trafia
+      // do Materiały → Dokumenty (zmierzone 06.09: wiersz w work_canvas_drafts
+      // jest, listy Materiałów nie ma). Rejestracja w bibliotece Wyników to
+      // dokładnie ten sam ruch, co `registerChatDeliverable` robi dla generacji —
+      // tu brakowało ostatniego przewodu. Fire-and-forget: błąd rejestracji nie
+      // może zabrać użytkownikowi otwartego dokumentu.
+      void Api.workCanvasRegisterInOutputs(draftId).catch((regErr: unknown) => {
+        console.warn('[UnifiedChatPanel] register-in-outputs failed (non-blocking):', regErr);
+      });
     } catch (err) {
       console.error('[UnifiedChatPanel] auto-emit to document failed:', err);
+      // [ODMROZENIE 13_CHAT DEC-397] Cisza po kliknięciu to najgorszy możliwy
+      // wynik: użytkownik klika „Otwórz jako dokument" i NIC się nie dzieje.
+      // Powód po polsku, nigdy surowa odpowiedź serwera.
+      toast.error(
+        (i18n.language || 'en').startsWith('pl')
+          ? 'Nie udało się otworzyć dokumentu z tej odpowiedzi. Spróbuj ponownie za chwilę.'
+          : 'Could not open a document from this answer. Please try again in a moment.'
+      );
     }
   }, []);
 
