@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
@@ -86,6 +87,9 @@ interface RegisterRow extends TableRow {
   latest: string;
   updatedAt: string;
   timeBasisState: 'KNOWN' | 'UNKNOWN';
+  initiativeCount: number;
+  conflicts: number;
+  author: string;
 }
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
@@ -383,6 +387,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           latest: periods[2].end,
           updatedAt: scenario.publishedAt || '',
           timeBasisState: 'KNOWN',
+          initiativeCount: scenario.windows.length,
+          conflicts: 0,
+          author: scenario.updatedBy,
         },
       ]);
       setSelectedId(scenario.scenarioId);
@@ -407,18 +414,36 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             periods: Array<{ periodId: string; start: string; end: string }>;
             knowledgeState: 'KNOWN' | 'UNKNOWN';
           };
+          initiativeCount?: number;
+          conflicts?: number;
+          author?: string;
         }>;
       };
       const nextRows = (result.scenarios ?? []).map((item) => ({
         id: item.id,
-        title: item.name,
+        title: resolveBusinessDisplayLabel({
+          displayName: item.name,
+          rawId: item.id,
+          fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
+        }),
         state: item.state,
         version: item.version,
-        portfolio: `${item.portfolioRef.scenarioId}:v${item.portfolioRef.scenarioVersion}`,
+        portfolio: `${resolveBusinessDisplayLabel({
+          displayName: item.portfolioRef.scenarioId,
+          rawId: item.portfolioRef.scenarioId,
+          fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
+        })} · v${item.portfolioRef.scenarioVersion}`,
         earliest: item.window.earliest ?? 'Unknown',
         latest: item.window.latest ?? 'Unknown',
         updatedAt: item.updatedAt,
         timeBasisState: item.timeBasis?.knowledgeState ?? 'UNKNOWN',
+        initiativeCount: item.initiativeCount ?? 0,
+        conflicts: item.conflicts ?? 0,
+        author: resolveBusinessDisplayLabel({
+          displayName: item.author,
+          rawId: item.author,
+          fallback: t('common.unknown', 'Nieznane'),
+        }),
       }));
       setRows(nextRows);
       if (nextRows.length) {
@@ -873,6 +898,65 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         </button>
       </div>
     );
+  if (!workspaceOpen && !showCreate) {
+    const visiblePlans = rows.filter((row) =>
+      activePreset === 'drafts'
+        ? row.state === 'DRAFT'
+        : activePreset === 'published'
+          ? row.state === 'PUBLISHED'
+          : activePreset === 'conflicted'
+            ? row.conflicts > 0
+            : true
+    );
+    const selectedPlan = visiblePlans.find((row) => row.id === selectedId) ?? null;
+    return (
+      <section aria-label={t('initiatives.plan.listAria', 'Lista planów')} className="h-full min-h-0">
+        <TableWithPreviewLayout<RegisterRow>
+          selectedId={selectedId}
+          selectedItem={selectedPlan}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => void open(id)}
+          itemIds={visiblePlans.map((row) => row.id)}
+          getItemById={(id) => visiblePlans.find((row) => row.id === id) ?? null}
+          previewOpen={Boolean(selectedPlan)}
+          renderPreview={(row) => (
+            <StandardPreview
+              embedded
+              title={row.title}
+              onClose={() => setSelectedId(null)}
+              onOpenFull={() => void open(row.id)}
+              meta={{ pills: [{ label: t(planStatusKey[row.state as PlanScenario['status']]), tone: 'neutral' }] }}
+              details={{
+                properties: [
+                  { id: 'portfolio', label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'), value: row.portfolio },
+                  { id: 'horizon', label: t('initiatives.plan.columns.horizon', 'Horyzont'), value: `${formatDate(row.earliest)} – ${formatDate(row.latest)}` },
+                  { id: 'initiatives', label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'), value: String(row.initiativeCount) },
+                  { id: 'conflicts', label: t('initiatives.plan.columns.conflicts', 'Konflikty'), value: row.conflicts ? String(row.conflicts) : t('common.none', 'Brak') },
+                ],
+              }}
+            />
+          )}
+        >
+          <StandardTable
+            columns={[
+              { id: 'title', label: t('initiatives.plan.columns.name', 'Nazwa'), sortable: true },
+              { id: 'portfolio', label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'), sortable: true },
+              { id: 'earliest', label: t('initiatives.plan.columns.horizon', 'Horyzont'), render: (row) => `${formatDate(row.earliest)} – ${formatDate(row.latest)}` },
+              { id: 'state', label: t('common.status', 'Status'), render: (row) => t(planStatusKey[row.state as PlanScenario['status']]) },
+              { id: 'initiativeCount', label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'), sortable: true },
+              { id: 'conflicts', label: t('initiatives.plan.columns.conflicts', 'Konflikty'), render: (row) => row.conflicts ? row.conflicts : t('common.none', 'Brak') },
+              { id: 'updatedAt', label: t('initiatives.plan.columns.updatedAt', 'Zaktualizowano'), render: (row) => formatDate(row.updatedAt) },
+              { id: 'author', label: t('initiatives.plan.columns.author', 'Autor') },
+            ]}
+            data={visiblePlans}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowDoubleClick={(row) => void open(String(row.id))}
+          />
+        </TableWithPreviewLayout>
+      </section>
+    );
+  }
   return (
     <section aria-label={t('initiatives.planScenario.sectionAria')} className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border p-3">
