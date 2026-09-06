@@ -3,7 +3,7 @@
 **Data napisania:** 2026-09-06 · **Gałąź:** `mvp/demo-rozdzial-przygotowanie` · **Stan:** PRZYGOTOWANIE.
 Nic z tego dokumentu nie zostało wykonane na demo, stagingu ani produkcji.
 Wszystkie komendy przećwiczone na sucho na bazie lokalnej — log:
-`evidence/demo-pilotaz/proba-na-sucho-20260906.log` (173 linie).
+`evidence/demo-pilotaz/PROBA_NA_SUCHO_20260906.md` (12 kroków, z liczbami).
 
 **Zasada dokumentu:** każdy krok ma komendę i oczekiwany wynik. Krok bez jednego
 z nich jest błędem dokumentu, nie „oczywistością".
@@ -587,9 +587,19 @@ pomiarowi. ⛔ RĘCZNIE — NADZORCA, **po** potwierdzeniu zdrowia z F4.6:
 
 ```bash
 for Z in DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do
-  railway variables delete "$Z" --environment demo --service consultify --skip-deploys
+  railway variables delete "$Z" --environment demo --service consultify
 done
+railway variables --environment demo --service consultify --json \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s);
+      console.log("pozostale DB_*:", Object.keys(v).filter(k=>/^DB_/.test(k)).join(" ")||"(brak)")})'
 ```
+
+**Oczekiwany wynik:** `pozostale DB_*: DB_SSL DB_TYPE` (te dwie są czytane niezależnie
+od `DATABASE_URL` — `DatabaseConfig.ts:196-204`) i **żadnego** `DB_HOST/DB_PASSWORD`.
+
+**Uwaga:** `railway variables delete` **nie ma** `--skip-deploys` (sprawdzone
+`railway variables delete --help`), więc każde skasowanie wyzwala redeploy — rób to
+jednym ciągiem i potem powtórz pomiar z F4.6.
 
 **STOP:** nie rób tego przed F4.6 — gdyby `DATABASE_URL` zniknęło, to jedyna
 awaryjna droga do bazy.
@@ -631,6 +641,27 @@ Jeśli się różnią — wdrożył się inny kod; promuj świadomie tag `stagin
 
 Wg `Harvard/wdrozenie-100/_RUNBOOK_COFANIA.md`, warstwa 2:
 Railway → deployments → poprzedni `SUCCESS` → „Rollback". ~30 s, zero gita.
+
+Z linii poleceń:
+
+```bash
+railway redeploy --service consultify --environment demo --yes
+```
+
+**★ NIGDY nie dodawaj `--from-source`.** `railway redeploy` bez tej flagi odtwarza
+**istniejące wdrożenie** (ten sam obraz, ten sam kod). Z `--from-source` Railway
+pobiera **najnowszy commit z podpiętego źródła** — a to dokładnie mechanizm, który
+05.09 wdrożył na środowisko kod, którego nikt nie promował (pamięć: „zmiana zmiennej
+wdraża obcy kod").
+
+**Oczekiwany wynik:**
+```bash
+railway deployment list --service consultify --environment demo --limit 2 --json
+curl -s https://demo.consultify.ai/api/health
+```
+`commitHash` nowego wdrożenia = `commitHash` tego, do którego wracasz, i `gitSha`
+z health = ta sama wartość.
+
 **Nigdy force-push ani reset na `demo`** — cofanie zawsze do przodu.
 
 ### F5.3 — przywrócenie danych z kopii (utrata danych)
