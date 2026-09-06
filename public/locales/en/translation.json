@@ -5545,7 +5545,6 @@
       "nextStep5": "Review the status and logs in Integrations.",
       "statusLabel7": "Not connected",
       "nextStep6": "Connect {{providerLabel}} in Integrations.",
-      "connectCta": "Connect",
       "title": "Day load",
       "body": "Checking the selected day load...",
       "title2": "Day-load preview limited",

@@ -259,6 +259,20 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
 
               if (state.available && lifecycle === 'connected') return null;
 
+              // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] ZLECENIE 1.1-K (06.09):
+              // owner flagged that this callout duplicated the source row
+              // above — for the plain disconnected state it repeated the same
+              // "Google Calendar / Outlook: Not connected — connect it,
+              // Connect" message that the row's own
+              // "Connect in Integrations →" sub-label (see the
+              // `!isAvailable && isExternalSource` block above) already
+              // shows. Pending/reauth/error carry information the row cannot
+              // express (a status name plus a state-specific next step), so
+              // this callout stays reserved for those; the disconnected case
+              // now renders nothing here.
+              const isDisconnected = !state.statusKey || state.statusKey === 'disconnected';
+              if (isDisconnected) return null;
+
               const variant = lifecycleInfo
                 ? lifecycleInfo.variant === 'success'
                   ? 'info'
@@ -267,33 +281,16 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                     : lifecycleInfo.variant
                 : 'info';
 
-              // SET-INT-REC-001: the disconnected/not-yet-connected state must
-              // offer a real "Connect" action, not just copy suggesting one.
-              // Pending/reauth/error already went through a connection attempt
-              // and need a different next step, so only 'disconnected' (or an
-              // unrecognized/missing status, defensively) gets the CTA.
-              const isDisconnected = !state.statusKey || state.statusKey === 'disconnected';
-
               return (
                 <Callout
                   key={source}
                   variant={variant as 'info' | 'warning' | 'critical' | 'success'}
                   compact
                   title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${lifecycleInfo ? lifecycleInfo.label : state.statusLabel}`}
-                  action={
-                    isDisconnected
-                      ? {
-                          label: t('myWork.calendarView.connectCta', 'Connect'),
-                          onClick: () => navigate('/settings/integrations'),
-                        }
-                      : undefined
-                  }
                 >
                   <div>{state.helper}</div>
                   {recoveryHint ? <div className="mt-1 text-[10px]">{recoveryHint}</div> : null}
-                  {!isDisconnected && state.nextStep ? (
-                    <div className="mt-1">{state.nextStep}</div>
-                  ) : null}
+                  {state.nextStep ? <div className="mt-1">{state.nextStep}</div> : null}
                 </Callout>
               );
             })}

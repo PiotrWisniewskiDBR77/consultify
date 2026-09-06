@@ -4904,7 +4904,6 @@
       "nextStep5": "Sprawdź stan i logi w Integracjach.",
       "statusLabel7": "Niepołączone",
       "nextStep6": "Połącz {{providerLabel}} w Integracjach.",
-      "connectCta": "Połącz",
       "title": "Obciążenie dnia",
       "body": "Sprawdzanie obciążenia wybranego dnia...",
       "title2": "Podgląd obciążenia ograniczony",

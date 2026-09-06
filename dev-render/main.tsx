@@ -418,6 +418,9 @@ const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
+const MyWorkCalendarDisconnectedScreen = React.lazy(
+  () => import('./screens/mywork-calendar-disconnected')
+);
 // M03 (dyżur 2026-09-03, "ekrany bez wpisu w harnessie"): DecisionsPanelContent
 // — następca 12 wycofanych kolejek decyzyjnych, osiągalny (MyWorkHub.tsx:135
 // import, :4202 mount), NIGDY dotąd niezmierzony ani niepokazany właścicielowi.
@@ -1251,6 +1254,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'mywork-calendar': {
     label: '02-moja-praca — Kalendarz (widok bazowy) — 145-nowe-ekrany 2026-08-31',
     render: () => <MyWorkCalendarScreen />,
+  },
+  'mywork-calendar-disconnected': {
+    label:
+      'ZLECENIE 1.1-K (06.09) — Kalendarz, Google/Outlook rozłączone: dowód usunięcia zdublowanego komunikatu "Niepołączone" pod listą ŹRÓDŁA',
+    render: () => <MyWorkCalendarDisconnectedScreen />,
   },
   'mywork-decisions': {
     label:
