@@ -15,7 +15,7 @@
  *
  * Zrzuty z żywego renderu: `proof-notatnik-*.png` (aside = 1 / 1 / 0).
  */
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
@@ -174,7 +174,14 @@ describe('Notatnik — jeden prawy panel (decyzja CTO 05.09)', () => {
         onTagKeyDown={vi.fn()}
       />
     );
-    screen.getByText('Wstaw blok').click();
+    // DEC-397 (06.09): Akcje/Właściwości now start collapsed — expand both
+    // ("Wstaw blok" lives in Akcje, tags live in Właściwości). `fireEvent`
+    // wraps the click in `act(...)`, unlike a bare native `.click()`, so the
+    // resulting re-render (aria-expanded flip) is committed before the next
+    // assertion reads the DOM.
+    fireEvent.click(screen.getByRole('button', { name: /^Akcje/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
+    fireEvent.click(screen.getByText('Wstaw blok'));
     expect(onInsertBlock).toHaveBeenCalledOnce();
     const tagi = screen.getByTestId('notebook-rail-tags');
     expect(tagi).toHaveTextContent('strategy');

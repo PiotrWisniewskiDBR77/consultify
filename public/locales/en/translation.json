@@ -33930,6 +33930,7 @@
       "title11": "Note menu",
       "ariaLabel5": "Note menu",
       "placeholder": "Untitled",
+      "titleAriaLabel": "Note title",
       "placeholder2": "+ tag",
       "title12": "Download original source file",
       "label59": "Download source",

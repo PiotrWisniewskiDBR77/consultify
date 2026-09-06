@@ -92,16 +92,39 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     );
   });
 
-  it('renders the shared ArtifactRightPanel by default (no override needed anymore)', () => {
+  // ★ [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — właściciel 06.09: „panel z
+  // prawej strony ma być zawsze zamknięty; gdy się go uruchamia, wszystkie
+  // poszczególne okna (sekcje) muszą być zamknięte”. Do 06.09 Akcje i
+  // Właściwości startowały rozwinięte na TEJ WŁAŚNIE ścieżce (SPEC-A shell,
+  // domyślnie ON — czyli to, co realnie widzi użytkownik po otwarciu
+  // notatki) — ten test celowo ZASTĘPUJE poprzednią asercję
+  // ("aria-expanded: true" dla Akcje/Właściwości), zamiast dopisywać obok:
+  // stary kształt jest dokładnie tym, co właściciel odrzucił.
+  it('renders the shared ArtifactRightPanel with EVERY section collapsed by default (DEC-397, 06.09)', () => {
     render(<Harness />);
     const panel = screen.getByLabelText('Document details and context');
     expect(panel).toHaveClass('border-l', 'border-c-border-subtle');
-    expect(screen.getByRole('button', { name: /^Akcje/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: /^Akcje/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     expect(screen.getByRole('button', { name: /^Właściwości/ })).toHaveAttribute(
       'aria-expanded',
-      'true'
+      'false'
     );
     expect(screen.getByRole('button', { name: /^Powiązania/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: /^Źródła i założenia/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: /^Komentarze/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: /^Historia/ })).toHaveAttribute(
       'aria-expanded',
       'false'
     );
@@ -113,6 +136,10 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
     expect(screen.getByLabelText('Decision note')).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Akcje/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Właściwości/ })).toBeTruthy();
+    // DEC-397 (06.09): Właściwości now starts collapsed here too (same
+    // `specASections` feed as the default shell) — expand it to reach
+    // "Alex Owner".
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
     expect(screen.getByText('Alex Owner')).toBeTruthy();
   });
 
@@ -155,6 +182,13 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
 
   it('shows governance fields under Właściwości without a separate tab click', () => {
     render(<Harness />);
+    // DEC-397 (06.09): every section now starts collapsed — expand
+    // Właściwości first. This test is about the fields living in ONE
+    // section reachable with ONE click (not split across a Work/Context
+    // tablist), not about the section's default open/closed state — that is
+    // covered by the dedicated "EVERY section collapsed by default" test
+    // above.
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
     expect(screen.getByText('Verification')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Verification' })).toHaveValue('verified');
     expect(screen.getByText('Alex Owner')).toBeInTheDocument();
@@ -229,6 +263,8 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
         onToggleVersionHistory={onToggleVersionHistory}
       />
     );
+    // DEC-397 (06.09): Akcje now starts collapsed — expand it first.
+    fireEvent.click(screen.getByRole('button', { name: /^Akcje/ }));
     const actionsSection = screen.getByRole('button', { name: /^Akcje/ }).closest('section')!;
     fireEvent.click(within(actionsSection).getByText('Eksportuj'));
     fireEvent.click(within(actionsSection).getByText('Udostępnij'));
@@ -240,6 +276,8 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
 
   it('disables Kopiuj link with an explicit reason instead of a dead click handler', () => {
     render(<Harness />);
+    // DEC-397 (06.09): Akcje now starts collapsed — expand it first.
+    fireEvent.click(screen.getByRole('button', { name: /^Akcje/ }));
     const button = screen.getByText('Kopiuj link').closest('button')!;
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('title', 'Akcja czeka na definicję zakresu');
@@ -272,6 +310,8 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
       />
     );
 
+    // DEC-397 (06.09): Właściwości now starts collapsed — expand it first.
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
     expect(screen.getByRole('alert')).toHaveTextContent('Save failed — changes remain local');
     fireEvent.change(screen.getByRole('combobox', { name: 'Verification' }), {
       target: { value: 'disputed' },
@@ -310,6 +350,8 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
       />
     );
 
+    // DEC-397 (06.09): Właściwości now starts collapsed — expand it first.
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
     expect(screen.getByRole('status')).toHaveTextContent(
       'Changed elsewhere — your edits remain local'
     );
@@ -342,6 +384,8 @@ describe('NotebookRightRail — SPEC-A accordion', () => {
       />
     );
 
+    // DEC-397 (06.09): Właściwości now starts collapsed — expand it first.
+    fireEvent.click(screen.getByRole('button', { name: /^Właściwości/ }));
     const retry = screen.getByRole('button', { name: 'Retry' });
     const privateAction = screen.getByRole('button', { name: 'Private' });
     expect(retry).toHaveAttribute('aria-disabled', 'true');
