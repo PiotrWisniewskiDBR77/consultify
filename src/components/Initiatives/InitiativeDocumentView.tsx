@@ -11687,7 +11687,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                   analizaOtwarta={initiativeCardAnalysis.open}
                                   aktywnaSekcja={activeNSection}
                                   kontekstArtefaktu={{
-                                    title,
+                                    title: titleDraft || initiative?.name || '',
                                     status,
                                     type: 'initiative',
                                   }}

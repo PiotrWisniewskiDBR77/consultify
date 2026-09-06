@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3139/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [
+  "mywork-open-item::{\"type\":\"task\",\"id\":\"seed_task_1788642392883_3_4258047e-72fc-4e64-afc8-f0db3c3c6276\",\"name\":\"zamkniete\"}"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nZadania\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nLista\nzamkniete\nDBR77: Zweryfikować uprawnienia i role (RBAC)\nUkończone\nZapisano\nAI\nSekcje\nPracuj z AI\nUwaga: zbliża się lub minął termin!\nOpis i zakres\nPomysły realizacji\nRyzyko i alternatywy\nLista kontrolna\nZależności\nDowody\nRACI i eskalacja\nZałączniki i powiązania\nStrategia\nOpis i zakres\nWYNIKA ZBrak powiązania — zadanie samodzielne\nOPIS ZADANIA\nOCZEKIWANY REZULTAT\n\nReview this draft, then save the task to persist it.\n\nAKCJE\n0\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tUkończone\nPriorytet\tNiski\nTermin\t02 wrz 2026\nWłaściciel\t—\nŹródło\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n1\nAnalizuj\n\nTylko do odczytu: zadanie zamknięte (status „zrobione\")",
+ "kiedy": "2026-09-06T12:44:53.793Z"
+}

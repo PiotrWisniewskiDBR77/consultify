@@ -1,0 +1,152 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11k2
+
+
+ RUN  v4.1.8 /private/tmp/wt-11k2
+
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.hideSaveState.test.tsx > NModeHeader — hideSaveState (FIX-4, additive) > without the prop, renders the save-state indicator exactly as before 31ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.hideSaveState.test.tsx > NModeHeader — hideSaveState (FIX-4, additive) > explicit hideSaveState={false} still renders the indicator (back-compat default) 5ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.hideSaveState.test.tsx > NModeHeader — hideSaveState (FIX-4, additive) > with hideSaveState={true}, the save-state indicator does not render 3ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.hideSaveState.test.tsx > NModeHeader — hideSaveState (FIX-4, additive) > hideSaveState={true} leaves the rest of the header intact (title, status pill) 5ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.hideSaveState.test.tsx (4 tests) 46ms
+ ✓ src/components/standard/__tests__/actionCard.pola.test.tsx > ActionCard — jeden kontrakt pól §2.4 > renderuje wszystkie 10 pól w kolejności arkusza właściciela 187ms
+ ✓ src/components/standard/__tests__/actionCard.pola.test.tsx > ActionCard — jeden kontrakt pól §2.4 > nie pokazuje surowego identyfikatora właściciela, gdy brak nazwiska 6ms
+ ✓ src/components/standard/__tests__/actionCard.pola.test.tsx > ActionCard — jeden kontrakt pól §2.4 > nie używa tokenów primary, a crimson wiąże wyłącznie z otwartym RED 14ms
+ ✓ src/components/standard/__tests__/actionCard.pola.test.tsx (3 tests) 210ms
+ ✓ src/components/standard/__tests__/ArtifactRightPanel.teresaEntry.test.tsx > ArtifactRightPanel Teresa entry > puts Teresa first in Actions 165ms
+ ✓ src/components/standard/__tests__/ArtifactRightPanel.teresaEntry.test.tsx > ArtifactRightPanel Teresa entry > leaves Actions unchanged without the prop 31ms
+ ✓ src/components/standard/__tests__/ArtifactRightPanel.teresaEntry.test.tsx (2 tests) 199ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.a11y.test.tsx > NModeHeader — F1 back-button accessible name (axe critical, 2026-08-12) > exposes an accessible name on the icon-only back button 186ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.a11y.test.tsx > NModeHeader — F1 back-button accessible name (axe critical, 2026-08-12) > the accessible name does not duplicate the adjacent kebab (⋮) name 26ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.a11y.test.tsx > NModeHeader — F1 back-button accessible name (axe critical, 2026-08-12) > clicking the named back button still invokes the real onClose (no behavior change) 23ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.a11y.test.tsx > NModeHeader — F1 back-button accessible name (axe critical, 2026-08-12) > the back button is keyboard-focusable and reachable via Tab order 16ms
+ ✓ src/components/shared/NModeLayout/__tests__/NModeHeader.a11y.test.tsx (4 tests) 255ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx > StandardPreview — Escape zamyka podgląd > wywołuje onClose po naciśnięciu Escape 25ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx > StandardPreview — Escape zamyka podgląd > nie przechwytuje Escape, który obsłużyła bardziej lokalna warstwa 3ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx > StandardPreview — Escape zamyka podgląd > inne klawisze nie zamykają podglądu 3ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx > StandardPreview — Escape zamyka podgląd > nasłuch znika po odmontowaniu — brak wycieku i wywołań po zamknięciu 2ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx > StandardPreview — Escape zamyka podgląd > podgląd bez onClose nie rejestruje nasłuchu i nie wybucha na Escape 8ms
+ ✓ src/components/standard/__tests__/keyboardAccessCanon.test.tsx (5 tests) 43ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx > IdeaRightPanel — sekcja otwierana z Menu 1 > activeSection="properties" (ikona Narzędzia) otwiera Właściwości i pokazuje propertiesContent 25ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx > IdeaRightPanel — sekcja otwierana z Menu 1 > activeSection="relations" (ikona Kontekst i powiązania) otwiera Powiązania i pokazuje relationsContent 6ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx > IdeaRightPanel — sekcja otwierana z Menu 1 > activeSection="teresa" (ikona Sugestie AI) otwiera Akcje i pokazuje teresaContent — jako treść dostarczoną przez wołającego, nie bespoke czat 6ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx > IdeaRightPanel — sekcja otwierana z Menu 1 > Eksportuj/Konwertuj (parytet z kebabem Menu 1/3) renderują się i wywołują realne handlery workspace 12ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx > IdeaRightPanel — sekcja otwierana z Menu 1 > bez onExport/onConvert (brak realnego handlera) Akcje nie renderuje przycisków-widm 5ms
+ ✓ src/components/standard/__tests__/IdeaRightPanel.menu1Sections.test.tsx (5 tests) 57ms
+ × src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 1440px without empty toolbar 28ms
+   → [2mexpect([22m[31mreceived[39m[2m).toHaveClass()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ × src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 768px without empty toolbar 5ms
+   → [2mexpect([22m[31mreceived[39m[2m).toHaveClass()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ × src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 390px without empty toolbar 4ms
+   → [2mexpect([22m[31mreceived[39m[2m).toHaveClass()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ × src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > preserves the empty toolbar host for non-opt-in consumers 3ms
+   → [2mexpect([22m[31mreceived[39m[2m).toBeInTheDocument()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx (4 tests | 4 failed) 42ms
+     × keeps one bounded header action row at 1440px without empty toolbar 28ms
+     × keeps one bounded header action row at 768px without empty toolbar 5ms
+     × keeps one bounded header action row at 390px without empty toolbar 4ms
+     × preserves the empty toolbar host for non-opt-in consumers 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 1440px without empty toolbar
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 768px without empty toolbar
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 390px without empty toolbar
+Error: [2mexpect([22m[31mreceived[39m[2m).toHaveClass()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx:147:32
+    145|       expect(container.querySelector('[data-nmode-toolbar-shell]')).no…
+    146|       const boundedActionRow = container.querySelector('[data-nmode-he…
+    147|       expect(boundedActionRow).toHaveClass('w-full', 'min-w-0', 'lg:w-…
+       |                                ^
+    148|       const actionRow = container.querySelector('[data-nmode-header-se…
+    149|       expect(actionRow).toHaveClass('min-w-0', 'flex-1', 'overflow-x-a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > preserves the empty toolbar host for non-opt-in consumers
+Error: [2mexpect([22m[31mreceived[39m[2m).toBeInTheDocument()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx:167:7
+    165|     expect(
+    166|       renderShell(false).container.querySelector('[data-nmode-toolbar-…
+    167|     ).toBeInTheDocument();
+       |       ^
+    168|   });
+    169| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  4 failed | 23 passed (27)
+   Start at  13:51:53
+   Duration  1.80s (transform 1.96s, setup 1.01s, import 3.42s, tests 852ms, environment 4.19s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 1440px without empty toolbar
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 768px without empty toolbar
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > keeps one bounded header action row at 390px without empty toolbar
+Error: [2mexpect([22m[31mreceived[39m[2m).toHaveClass()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx:147:32
+    145|       expect(container.querySelector('[data-nmode-toolbar-shell]')).no…
+    146|       const boundedActionRow = container.querySelector('[data-nmode-he…
+    147|       expect(boundedActionRow).toHaveClass('w-full', 'min-w-0', 'lg:w-…
+       |                                ^
+    148|       const actionRow = container.querySelector('[data-nmode-header-se…
+    149|       expect(actionRow).toHaveClass('min-w-0', 'flex-1', 'overflow-x-a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx > NModeShell owner action hierarchy > preserves the empty toolbar host for non-opt-in consumers
+Error: [2mexpect([22m[31mreceived[39m[2m).toBeInTheDocument()[22m
+
+[31mreceived[39m value must be an HTMLElement or an SVGElement.
+Received has type:  Null
+Received has value: [31mnull[39m
+ ❯ src/components/shared/NModeLayout/__tests__/NModeHeader.ownerActions.test.tsx:167:7
+    165|     expect(
+    166|       renderShell(false).container.querySelector('[data-nmode-toolbar-…
+    167|     ).toBeInTheDocument();
+       |       ^
+    168|   });
+    169| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  4 failed | 23 passed (27)
+   Start at  13:51:53
+   Duration  1.81s (transform 1.96s, setup 1.01s, import 3.42s, tests 852ms, environment 4.19s)
+
+JSON report written to /private/tmp/wt-11k2/junit.xml
+JUNIT report written to /private/tmp/wt-11k2/junit.xml
