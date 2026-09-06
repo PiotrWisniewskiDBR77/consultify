@@ -1,0 +1,50 @@
+{
+ "url": "http://127.0.0.1:3128/my-work?tab=notebook",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=[data-testid=menu1-teresa]"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nNotatnik\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nNowy notatnik\nWszystkie\n1\nOsobiste\n1\nCała organizacja\n0\nNOTATNIK\n\t\nTYP\n\t\nKONTEKST\n\t\nNOTATKI\n\t\nZMIENIONO\n\t\n\n\nMoje notatki\n1 notatek · 3 godz. temu\n\t\nOsobisty\n\t\n—\n\t\n1\n\t\n3 godz. temu\n\t\nPrzejdź do pola wiadomości\nTERESA\n\nZapytaj Teresę o kontekst tej pracy albo poproś o propozycję kolejnego kroku.\n\nPodsumuj tę notatkę\nWyodrębnij działania\nJakich perspektyw nie uwzględniam?",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1028,
+     "y": 48,
+     "width": 380,
+     "height": 852
+    }
+   ]
+  },
+  "[data-right-panel]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=chat-header-left-controls]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1041,
+     "y": 52.5,
+     "width": 323,
+     "height": 32
+    }
+   ]
+  },
+  "[data-testid=open-list-teresa]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-06T11:16:07.746Z"
+}

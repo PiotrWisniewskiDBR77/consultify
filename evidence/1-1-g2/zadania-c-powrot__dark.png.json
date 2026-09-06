@@ -1,0 +1,52 @@
+{
+ "url": "http://127.0.0.1:3128/my-work?tab=tasks",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=DBR77: Zweryfikować eksport raportów publicznych",
+  "css=[data-testid=menu1-teresa]",
+  "css=button[aria-label='Zamknij panel AI']"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nZadania\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nNowe zadanie\nWszystkie\n20\nZaległe\n6\nDzisiaj\n1\nTen tydzień\n7\nPilne\n10\nNowe\n3\nAI Priorytety\n\t\nZADANIE\n\t\nSTATUS\n\t\nPRIORYTET\n\t\nTERMIN\n\t\nOSOBA PRZYPISANA\n\t\n\n\t\nDBR77: Ustalić ownerów inicjatyw i zadań\n\t\nZrobione\n\t\nKrytyczny\n\t\n28 sie\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zweryfikować eksport raportów publicznych\n\t\nW przeglądzie\n\t\nKrytyczny\n\t\n2 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Ustawić monitoring i alerting dla backendu\n\t\nZablokowane\n\t\nKrytyczny\n\t\n8 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Przegląd jakości danych po migracji\n\t\nW trakcie\n\t\nKrytyczny\n\t\n8 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)\n\t\nDo zrobienia\n\t\nKrytyczny\n\t\n12 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Utworzyć raport statusowy dla PMO\n\t\nZrobione\n\t\nWysoki\n\t\n2 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zmapować zależności i ryzyka wdrożenia\n\t\nW trakcie\n\t\nWysoki\n\t\n5 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Porządek w notyfikacjach (grupowanie)\n\t\nZablokowane\n\t\nWysoki\n\t\n5 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Ustalić SLA dla kluczowych procesów\n\t\nDo zrobienia\n\t\nWysoki\n\t\nJutro\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Skonfigurować integracje (webhooks)\n\t\nW przeglądzie\n\t\nWysoki\n\t\n11 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zoptymalizować dashboard My Work\n\t\nZrobione\n\t\nŚredni\n\t\n28 sie\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Przygotować plan warsztatu z interesariuszami\n\t\nDo zrobienia\n\t\nŚredni\n\t\n3 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Przegląd wydajności: indeksy i cache\n\t\nW trakcie\n\t\nŚredni\n\t\n4 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zamknąć krytyczne bugi przed cutover\n\t\nW przeglądzie\n\t\nŚredni\n\t\nDziś\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Przygotować komunikację do użytkowników\n\t\nZablokowane\n\t\nŚredni\n\t\n14 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zweryfikować uprawnienia i role (RBAC)\n\t\nZrobione\n\t\nNiski\n\t\n2 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Zadbać o backup i rollback plan\n\t\nDo zrobienia\n\t\nNiski\n\t\n3 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Weryfikacja E2E smoke po deploy\n\t\nW przeglądzie\n\t\nNiski\n\t\nJutro\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Przygotować checklistę go-live\n\t\nZablokowane\n\t\nNiski\n\t\n9 wrz\n\t\nA\nAudyt Nocny\n\t\n\n\t\nDBR77: Audyt kosztów i budżetu AI\n\t\nW trakcie\n\t\nNiski\n\t\n13 wrz\n\t\nA\nAudyt Nocny\n\t\nDBR77: Zweryfikować eksport raportów publicznych\nOtwórz\nW przeglądzie\nKrytyczny\n2 wrz\nSZCZEGÓŁY\n~7 słów\n\nDBR77 / My Work: seeded task (execution/review/critical).\n\nAI\nDlaczego pilne?\nPlan działania\nKto może pomóc?\nPOWIĄZANIA\nBrak powiązań\nDziś\nT\nOdłóż\nZ\nGotowe\nD",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1031.6875,
+     "y": 172,
+     "width": 376.3125,
+     "height": 728
+    }
+   ]
+  },
+  "[data-right-panel]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1031.6875,
+     "y": 172,
+     "width": 376.3125,
+     "height": 728
+    }
+   ]
+  },
+  "[data-testid=chat-header-left-controls]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "[data-testid=open-list-teresa]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-06T11:13:45.104Z"
+}

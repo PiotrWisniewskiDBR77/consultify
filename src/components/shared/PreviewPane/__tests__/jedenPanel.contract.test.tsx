@@ -1,4 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import fs from 'node:fs';
+import path from 'node:path';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -139,16 +141,67 @@ describe('jeden prawy panel — kontrakt', () => {
     expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
   });
 
-  it('T2 startuje na Rekordzie i przełącza ciało na Teresę bez drugiego panelu', async () => {
+  /*
+   * ★ DEC-404 — T2 PRZEPISANY. Do 06.09 mierzył DOKŁADNIE ten kształt, który
+   * właściciel odrzucił: rząd zakładek „Rekord | Teresa" i czat w kolumnie
+   * podglądu. Teraz mierzy kontrakt odwrotny.
+   */
+  it('T2 panel podglądu nie ma zakładek ani Teresy (MUTACJA: przywróć zakładkę → RED)', async () => {
     const { container } = render(<Surface />, { wrapper: Wrapper });
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
 
-    fireEvent.click(tabs[1]);
-
-    expect(await screen.findByLabelText('Teresa composer')).toBeInTheDocument();
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
+    expect(screen.queryByLabelText('Teresa composer')).toBeNull();
     expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    // Nagłówek panelu = tytuł rekordu, nie „Teresa".
+    expect(screen.getAllByText('Pierwszy rekord').length).toBeGreaterThan(0);
+
+    const zrodloPanelu = fs.readFileSync(
+      path.resolve('src/components/shared/PreviewPane/JedenPrawyPanel.tsx'),
+      'utf8'
+    );
+    // Mierzymy KOD, nie komentarze: import czatu i rząd zakładek.
+    expect(zrodloPanelu).not.toMatch(/from '@\/components\/AIChat\/UnifiedChatPanel'/);
+    expect(zrodloPanelu).not.toMatch(/role=["']tablist["']/);
+  });
+
+  it('T2b otwarty dok Teresy CHOWA kolumnę podglądu (MUTACJA: usuń `dokOtwarty` → RED)', () => {
+    const view = render(<TableSurface />, { wrapper: Wrapper });
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+
+    // Klik ikony Teresy w Menu 1 = globalne `toggleChatCollapse()`.
+    act(() => {
+      appStore.isChatCollapsed = false;
+    });
+    view.rerender(<TableSurface />);
+
+    // Dok zastępuje podgląd — zero paneli podglądu, więc na ekranie
+    // (razem z dokiem `MainLayout`) nadal DOKŁADNIE JEDEN <aside>
+    // i DOKŁADNIE JEDEN UnifiedChatPanel.
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(0);
+    expect(screen.queryByLabelText('Teresa composer')).toBeNull();
+
+    act(() => {
+      appStore.isChatCollapsed = true;
+    });
+    view.rerender(<TableSurface />);
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+  });
+
+  it('T2c ekran listowy nie montuje własnego UnifiedChatPanel (MUTACJA: dołóż lazy czat → RED)', () => {
+    const zrodloListy = fs.readFileSync(
+      path.resolve('src/components/shared/TableWithPreviewLayout.tsx'),
+      'utf8'
+    );
+    expect(zrodloListy).not.toMatch(/from '@\/components\/AIChat\/UnifiedChatPanel'/);
+    expect(zrodloListy).not.toMatch(/role=["']tablist["']/);
+    expect(zrodloListy).not.toMatch(/zakladka ===/);
+    const zrodloMenu3 = fs.readFileSync(
+      path.resolve('src/components/standard/StandardModuleBar.tsx'),
+      'utf8'
+    );
+    // DEC-404: pigułka „Teresa" w Menu 3 znika, „Pokaż panel" zostaje.
+    expect(zrodloMenu3).not.toMatch(/data-testid="open-list-teresa"/);
+    expect(zrodloMenu3).toContain('show-list-panel');
   });
 
   it('T3 X jest lepki: zmiana rekordu nie otwiera panelu, jawny powrót otwiera', () => {
@@ -183,11 +236,10 @@ describe('jeden prawy panel — kontrakt', () => {
   });
 
   it('T7 nie wprowadza zakazanych rodzin tokenów', () => {
+    // DEC-404: rzędu zakładek już nie ma — mierzymy sam korzeń panelu.
     const { container } = render(<Surface />, { wrapper: Wrapper });
-    const controlledMarkup = [
-      container.querySelector('[data-right-panel]')?.getAttribute('class'),
-      ...screen.getAllByRole('tab').map((tab) => tab.getAttribute('class')),
-    ].join(' ');
+    const controlledMarkup =
+      container.querySelector('[data-right-panel]')?.getAttribute('class') ?? '';
     expect(controlledMarkup).not.toMatch(/primary-|navy-|slate-/);
   });
 

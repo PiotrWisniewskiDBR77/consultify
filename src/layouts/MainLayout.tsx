@@ -25,7 +25,6 @@ import { BottomNavigation } from '../components/navigation/BottomNavigation';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { FirstRunOnboarding } from '../components/Onboarding/FirstRunOnboarding';
 import { OnboardingFirstLoginCTA } from '../components/Onboarding/OnboardingFirstLoginCTA';
-import { useEmbeddedModuleChatHost } from '../components/shared/embeddedModuleChatHost';
 import { SystemHealth } from '../components/SystemHealth';
 import { TaskDropdown } from '../components/TaskDropdown';
 import { TrialExpiredGate } from '../components/Trial/TrialExpiredGate';
@@ -120,15 +119,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   ];
 
   /*
-   * ★ 2026-09-05 (decyzja CTO „jeden prawy panel", część II — Notatnik).
-   * Ekran, który sam renderuje Teresę w swoim JEDYNYM prawym panelu, melduje
-   * się w rejestrze `embeddedModuleChatHost`. Ścieżka nie wystarcza tam, gdzie
-   * pod jednym adresem żyją dwa ekrany (`/my-work/notebook` = lista notatników
-   * ORAZ otwarta notatka): wyłączenie doku po ścieżce wygasiłoby Teresę także
-   * na liście, gdzie nikt jej nie osadza.
+   * ★ DEC-404 (właściciel, 06.09.2026) — rejestr gospodarzy P1 NIE gasi już
+   * doku. Do 06.09 gasił: ekran listowy z jednym prawym panelem meldował się
+   * tu i zamiast doku dostawał czat wciśnięty w kolumnę podglądu, jako
+   * zakładkę „Teresa" z podwójnym nagłówkiem. Właściciel odrzucił ten kształt
+   * („tu nie jest jej miejsce", „zupełnie bez sensu").
+   *
+   * OD TERAZ Teresa ma na KAŻDYM ekranie jedną postać: ten standardowy dok
+   * poniżej (ten sam komponent i pasek co na /results, /organization, /chat).
+   * Na ekranie listowym dok ZASTĘPUJE kolumnę podglądu — gospodarz P1 chowa
+   * swój panel, gdy `isChatCollapsed === false` (`useJedenPanel.dokOtwarty`),
+   * więc nadal jest dokładnie JEDEN `<aside>` i JEDEN `UnifiedChatPanel`.
+   * Rejestr został wyłącznie po to, żeby Menu 3 wiedziało, czy pokazać
+   * pigułkę „Pokaż panel" (`useStandardPanelControls`).
+   *
+   * Gaszenie doku po ŚCIEŻCE zostaje bez zmian — Wordy/Excele/Prezentacje/
+   * Tabele i warsztat Pomysłów mają własną, zaakceptowaną powierzchnię czatu.
    */
-  const embeddedModuleChatHosted = useEmbeddedModuleChatHost();
-
   const hasEmbeddedModuleChatByPath = React.useMemo(() => {
     const path = location.pathname.toLowerCase();
     // KIMI workspaces and Outputs Deck Builder render their own Teresa panel.
@@ -151,7 +158,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return false;
   }, [location.pathname]);
 
-  const hasEmbeddedModuleChat = hasEmbeddedModuleChatByPath || embeddedModuleChatHosted;
+  const hasEmbeddedModuleChat = hasEmbeddedModuleChatByPath;
 
   const shouldShowChatPanel =
     (currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true) &&
@@ -182,27 +189,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
    * w Menu 1 i nie mogę otworzyć panelu AI w tym module".
    *
    * PRZYCZYNA (zmierzona na żywo 06.09, 16 ekranów): przycisk Teresy wisiał
-   * pod `shouldShowChatPanel`, a ten ma DWA człony — „ten widok w ogóle ma
-   * czat" ORAZ „nikt nie osadza Teresy u siebie" (`hasEmbeddedModuleChat`).
-   * Drugi człon jest słuszny dla MONTOWANIA doku (inaczej byłyby dwa panele),
-   * ale gasił też WEJŚCIE. Efekt: każdy ekran listowy z jednym prawym panelem
-   * P1 (`JedenPrawyPanel`/`TableWithPreviewLayout`/`NotebookContent`) tracił
-   * ikonę — Skrzynka, Zadania, Pomysły, Wywiad, Inicjatywy, Wykonanie,
-   * Wyniki, Ocena, Audyty, Spotkania. To dokładnie kształt „zamknięte przez
+   * pod `shouldShowChatPanel`, a ten miał DWA człony — „ten widok w ogóle ma
+   * czat" ORAZ „nikt nie osadza Teresy u siebie". Drugi człon gasił WEJŚCIE
+   * na każdym ekranie listowym z gospodarzem P1. To kształt „zamknięte przez
    * wygaszenie": bramka gasząca dok zgasiła wejście dla wszystkich.
    *
-   * REGUŁA: ikona pokazuje się wszędzie, gdzie NAPRAWDĘ jest co otworzyć —
-   * albo zamontuje się globalny dok, albo na ekranie siedzi gospodarz P1.
-   * Nigdy nie renderujemy martwego przycisku (Czat = sam jest Teresą; ekrany
-   * Ustawień świadomie nie mają panelu AI).
+   * Po uzupełnieniu DEC-404 rejestr gospodarzy P1 nie gasi już doku, więc
+   * `shouldMountChatPanel` jest na tych ekranach prawdziwe samo z siebie —
+   * ikona i dok mają jeden i ten sam warunek. Nigdy nie renderujemy martwego
+   * przycisku (Czat = sam jest Teresą; ekrany Ustawień świadomie nie mają
+   * panelu AI).
    *
-   * KLIK: jedno i to samo `toggleChatCollapse()` obsługuje OBA przypadki —
-   * `useJedenPanel` nasłuchuje przejścia `isChatCollapsed` i przełącza swój
-   * JEDEN panel na zakładkę „Teresa" (a drugi klik wraca na „Rekord").
-   * Dzięki temu nadal istnieje DOKŁADNIE JEDEN `UnifiedChatPanel` i jeden
-   * `<aside>` — dok nie montuje się tam, gdzie jest gospodarz.
+   * KLIK: `toggleChatCollapse()` wysuwa TEN dok. Gospodarz P1 na ekranie
+   * listowym chowa wtedy kolumnę podglądu (`useJedenPanel.dokOtwarty`) —
+   * dok ZASTĘPUJE podgląd, nie staje obok niego. Zamknięcie doku (ikona lub X)
+   * przywraca podgląd w stanie sprzed otwarcia.
    */
-  const hasTeresaEntry = shouldMountChatPanel || embeddedModuleChatHosted;
+  const hasTeresaEntry = shouldMountChatPanel;
 
   // Compute workspace context for AI awareness
   const workspaceContext = useMemo(() => {
@@ -513,7 +516,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     className={`hidden lg:block w-1 hover:w-1.5 cursor-col-resize bg-transparent hover:bg-primary-500/50 active:bg-primary-500 transition-all ${isResizing ? 'bg-primary-500 w-1.5' : ''}`}
                     onMouseDown={startResizing}
                   />
-                  <div
+                  {/* ★ DEC-404: dok jest tym samym BYTEM co kolumna podglądu
+                      na liście — na ekranie listowym ZASTĘPUJE ją w tej samej
+                      kolumnie. Dlatego ten sam znacznik semantyczny `<aside>`
+                      co `JedenPrawyPanel`/`TableWithPreviewLayout`: bramka
+                      „dokładnie jeden <aside>" ma mierzyć to samo w obu
+                      stanach (podgląd otwarty ↔ dok otwarty). Sam znacznik —
+                      zero zmiany klas, stylu i zachowania. */}
+                  <aside
+                    aria-label={t('layout.teresa.label', 'Teresa')}
                     style={{ width: chatPanelWidth }}
                     className="shrink-0 bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 hidden lg:flex flex-col h-full relative"
                   >
@@ -554,7 +565,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         contextActions={chatContextActions || undefined}
                       />
                     </React.Suspense>
-                  </div>
+                  </aside>
                 </>
               )}
             </div>

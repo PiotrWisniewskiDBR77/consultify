@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { useAppStore } from '@/store/useAppStore';
 
-export type JedenPanelZakladka = 'rekord' | 'teresa';
-
 interface JedenPanelState {
   zamkniety: boolean;
-  zakladka: JedenPanelZakladka;
 }
 
 const stany = new Map<string, JedenPanelState>();
@@ -34,7 +31,7 @@ const zapiszZamkniecie = (modul: string, zamkniety: boolean): void => {
 const pobierzStan = (modul: string): JedenPanelState => {
   const istniejacy = stany.get(modul);
   if (istniejacy) return istniejacy;
-  const nowy = { zamkniety: wczytajZamkniecie(modul), zakladka: 'rekord' as const };
+  const nowy = { zamkniety: wczytajZamkniecie(modul) };
   stany.set(modul, nowy);
   return nowy;
 };
@@ -42,12 +39,7 @@ const pobierzStan = (modul: string): JedenPanelState => {
 const ustawStan = (modul: string, zmiana: Partial<JedenPanelState>): void => {
   const poprzedni = pobierzStan(modul);
   const nastepny = { ...poprzedni, ...zmiana };
-  if (
-    nastepny.zamkniety === poprzedni.zamkniety &&
-    nastepny.zakladka === poprzedni.zakladka
-  ) {
-    return;
-  }
+  if (nastepny.zamkniety === poprzedni.zamkniety) return;
   stany.set(modul, nastepny);
   sluchacze.get(modul)?.forEach((powiadom) => powiadom());
 };
@@ -64,18 +56,35 @@ const subskrybuj = (modul: string, powiadom: () => void): (() => void) => {
 
 export interface UseJedenPanelResult extends JedenPanelState {
   modul: string;
+  /**
+   * ★ DEC-404 — dok Teresy JEST otwarty (globalny `isChatCollapsed === false`).
+   * Gospodarz P1 chowa wtedy kolumnę podglądu: dok ZASTĘPUJE podgląd, nie staje
+   * obok niego. `zamkniety` zostaje nietknięty, więc po zamknięciu doku podgląd
+   * wraca DOKŁADNIE w stanie sprzed otwarcia (nie ma czego przywracać ręcznie).
+   */
+  dokOtwarty: boolean;
   zamknij: () => void;
   pokazPanel: () => void;
-  otworzTerese: () => void;
-  ustawZakladke: (zakladka: JedenPanelZakladka) => void;
 }
 
+/**
+ * ★ DEC-404 (właściciel, 06.09.2026 — „tu nie jest jej miejsce",
+ * „zupełnie bez sensu"). Do 06.09 ten hook trzymał JESZCZE zakładkę
+ * (`zakladka: 'rekord' | 'teresa'`): klik ikony Teresy w Menu 1 przełączał
+ * kolumnę podglądu na czat wciśnięty w 380 px, z podwójnym nagłówkiem
+ * („Teresa" + zakładka „Teresa" + pasek czatu). Właściciel to odrzucił.
+ *
+ * OD TERAZ: Teresa ma na KAŻDYM ekranie jedną postać — standardowy dok
+ * `UnifiedChatPanel` montowany przez `MainLayout` (ten sam co na /results,
+ * /organization, /chat). Na ekranie listowym dok ZASTĘPUJE kolumnę podglądu,
+ * więc nadal jest dokładnie JEDEN `<aside>` i JEDEN `UnifiedChatPanel`.
+ * Panel podglądu = wyłącznie rekord; nie ma tu żadnej zakładki.
+ */
 export function useJedenPanel(): UseJedenPanelResult {
   const { pathname } = useLocation();
   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed) ?? true;
   const toggleChatCollapse = useAppStore((state) => state.toggleChatCollapse);
-  const poprzedniStanCzatu = useRef(isChatCollapsed);
 
   const stan = useSyncExternalStore(
     useCallback((powiadom) => subskrybuj(modul, powiadom), [modul]),
@@ -83,46 +92,20 @@ export function useJedenPanel(): UseJedenPanelResult {
     useCallback(() => pobierzStan(modul), [modul])
   );
 
-  useEffect(() => {
-    // Globalny stan czatu jest zdarzeniem przejścia, nigdy stanem początkowym zakładki.
-    if (poprzedniStanCzatu.current !== isChatCollapsed) {
-      ustawStan(modul, {
-        zamkniety: false,
-        zakladka: isChatCollapsed ? 'rekord' : 'teresa',
-      });
-      zapiszZamkniecie(modul, false);
-      poprzedniStanCzatu.current = isChatCollapsed;
-    }
-  }, [isChatCollapsed, modul]);
-
-  const ustawZakladke = useCallback(
-    (zakladka: JedenPanelZakladka) => {
-      ustawStan(modul, { zamkniety: false, zakladka });
-      zapiszZamkniecie(modul, false);
-      if (zakladka === 'teresa' && isChatCollapsed) toggleChatCollapse?.();
-      if (zakladka === 'rekord' && !isChatCollapsed) toggleChatCollapse?.();
-      poprzedniStanCzatu.current = zakladka !== 'teresa';
-    },
-    [isChatCollapsed, modul, toggleChatCollapse]
-  );
-
   const zamknij = useCallback(() => {
-    ustawStan(modul, { zamkniety: true, zakladka: 'rekord' });
+    ustawStan(modul, { zamkniety: true });
     zapiszZamkniecie(modul, true);
-    if (!isChatCollapsed) toggleChatCollapse?.();
-    poprzedniStanCzatu.current = true;
-  }, [isChatCollapsed, modul, toggleChatCollapse]);
+  }, [modul]);
 
   const pokazPanel = useCallback(() => {
-    ustawStan(modul, { zamkniety: false, zakladka: 'rekord' });
+    ustawStan(modul, { zamkniety: false });
     zapiszZamkniecie(modul, false);
+    // Dok i podgląd zajmują tę samą kolumnę — „Pokaż panel" przy otwartym doku
+    // musi go najpierw zwinąć, inaczej pigułka byłaby martwym przyciskiem.
     if (!isChatCollapsed) toggleChatCollapse?.();
-    poprzedniStanCzatu.current = true;
   }, [isChatCollapsed, modul, toggleChatCollapse]);
 
-  const otworzTerese = useCallback(() => ustawZakladke('teresa'), [ustawZakladke]);
-
-  return { modul, ...stan, zamknij, pokazPanel, otworzTerese, ustawZakladke };
+  return { modul, ...stan, dokOtwarty: !isChatCollapsed, zamknij, pokazPanel };
 }
 
 /** Wyłącznie do izolowania testów hooka. */

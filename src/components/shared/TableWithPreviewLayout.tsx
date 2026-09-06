@@ -31,13 +31,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import type { WorkspaceContext } from '@/types/workspace';
 
 import { registerEmbeddedModuleChatHost } from './embeddedModuleChatHost';
-import { type JedenPanelZakladka, useJedenPanel } from './PreviewPane/useJedenPanel';
-
-const UnifiedChatPanelLazy = React.lazy(() =>
-  import('@/components/AIChat/UnifiedChatPanel').then((modul) => ({
-    default: modul.UnifiedChatPanel,
-  }))
-);
+import { useJedenPanel } from './PreviewPane/useJedenPanel';
 
 const PANEL_INLINE_CONTAINER_WIDTH = 1184;
 const PANEL_RESIZE_HYSTERESIS = 24;
@@ -99,12 +93,14 @@ export interface TableWithPreviewLayoutProps<T extends PreviewableItem> {
   desktopPreviewOverlay?: boolean;
   /** Render the selected entity as the main full-width card instead of table + preview. */
   fullView?: boolean;
-  /** Teresa occupies the same right-hand panel. Enabled by default for list surfaces. */
+  /**
+   * ★ DEC-404: zachowane wyłącznie po to, by wołacze nie musiały zmieniać
+   * kształtu wywołania. Panel podglądu NIE renderuje już Teresy — Teresa ma
+   * jedną postać (standardowy dok `MainLayout`), a dok zastępuje tę kolumnę.
+   * `wylacz: true` nadal znaczy „ten ekran nie melduje się jako gospodarz P1",
+   * czyli w Menu 3 nie pojawi się pigułka „Pokaż panel".
+   */
   teresa?: { kontekst?: WorkspaceContext; wylacz?: boolean };
-  /** Optional controlled panel tab. */
-  zakladka?: JedenPanelZakladka;
-  /** Optional controlled panel-tab callback. */
-  onZakladkaChange?: (zakladka: JedenPanelZakladka) => void;
 }
 
 export function TableWithPreviewLayout<T extends PreviewableItem>({
@@ -127,8 +123,6 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   desktopPreviewOverlay = false,
   fullView = false,
   teresa,
-  zakladka: kontrolowanaZakladka,
-  onZakladkaChange,
 }: TableWithPreviewLayoutProps<T>) {
   const { t } = useTranslation();
   const { isMobile, safeAreaInsets } = useDeviceType();
@@ -141,10 +135,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const containerRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const poprzednieZaznaczenie = useRef<string | null>(selectedId);
   const jedenPanel = useJedenPanel();
   const teresaWlaczona = teresa?.wylacz !== true;
-  const zakladka = kontrolowanaZakladka ?? jedenPanel.zakladka;
 
   useEffect(() => {
     if (!teresaWlaczona || fullView) return;
@@ -172,25 +164,11 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     return () => obserwator.disconnect();
   }, []);
 
-  const ustawZakladke = useCallback(
-    (nowaZakladka: JedenPanelZakladka) => {
-      onZakladkaChange?.(nowaZakladka);
-      if (kontrolowanaZakladka === undefined) jedenPanel.ustawZakladke(nowaZakladka);
-    },
-    [jedenPanel, kontrolowanaZakladka, onZakladkaChange]
-  );
-
-  useEffect(() => {
-    if (
-      selectedId &&
-      selectedId !== poprzednieZaznaczenie.current &&
-      !jedenPanel.zamkniety &&
-      zakladka !== 'rekord'
-    ) {
-      ustawZakladke('rekord');
-    }
-    poprzednieZaznaczenie.current = selectedId;
-  }, [jedenPanel.zamkniety, selectedId, ustawZakladke, zakladka]);
+  /*
+   * ★ DEC-404: efekt „nowe zaznaczenie wraca na zakładkę Rekord" (wraz z refem
+   * `poprzednieZaznaczenie`) zniknął razem z samą zakładką — panel podglądu
+   * pokazuje wyłącznie rekord, więc nie ma z czego wracać.
+   */
 
   // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] USUNIĘTE: efekt wołał
   // `jedenPanel.pokazPanel()` na KAŻDE przejście `controlledPreviewOpen`
@@ -221,9 +199,14 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   }, []);
 
   const isPreviewOpen = controlledPreviewOpen ?? internalPreviewOpen;
+  /*
+   * ★ DEC-404: dok Teresy ZASTĘPUJE kolumnę podglądu (`jedenPanel.dokOtwarty`).
+   * `zamkniety` zostaje nietknięty, więc po zamknięciu doku podgląd wraca
+   * dokładnie w stanie sprzed otwarcia. Dzięki temu na ekranie nadal jest
+   * dokładnie jeden `<aside>` i jeden `UnifiedChatPanel`.
+   */
   const panelWidoczny =
-    !jedenPanel.zamkniety &&
-    ((isPreviewOpen && !!selectedItem) || (teresaWlaczona && zakladka === 'teresa'));
+    !jedenPanel.zamkniety && !jedenPanel.dokOtwarty && isPreviewOpen && !!selectedItem;
   const isBatchMode = (selectedIds?.size ?? 0) > 1 && !!renderBatchPreview;
 
   const [pinnedId, setPinnedId] = useState<string | null>(null);
@@ -440,41 +423,9 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     goForward,
   ]);
 
-  const zakladkiPanelu = teresaWlaczona ? (
-    <div
-      role="tablist"
-      aria-label={t('list.rightPanel.tabs', 'Panel tabs')}
-      className="inline-flex items-center gap-0.5 rounded-full bg-c-surface-raised p-0.5"
-    >
-      {(selectedItem
-        ? ([
-            { id: 'rekord' as const, label: t('list.rightPanel.tabRecord', 'Record') },
-            { id: 'teresa' as const, label: t('list.rightPanel.tabTeresa', 'Teresa') },
-          ] as const)
-        : ([{ id: 'teresa' as const, label: t('list.rightPanel.tabTeresa', 'Teresa') }] as const)
-      ).map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-selected={zakladka === tab.id}
-          onClick={() => ustawZakladke(tab.id)}
-          className={`rounded-full px-3 py-1 text-[12px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] ${
-            zakladka === tab.id
-              ? 'bg-c-surface text-c-text shadow-sm'
-              : 'text-c-text-secondary hover:text-c-text'
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  ) : null;
-
   const previewActions = !isBatchMode ? (
       <>
-        {zakladkiPanelu}
-        {zakladka === 'rekord' && selectedItem &&
+        {selectedItem &&
         (historyBack.length > 0 || historyForward.length > 0) ? (
           <div className="flex items-center gap-0.5 mr-1">
             <button
@@ -497,7 +448,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             </button>
           </div>
         ) : null}
-        {zakladka === 'rekord' && selectedItem && getItemById && !isMobile ? (
+        {selectedItem && getItemById && !isMobile ? (
           <button
             onClick={handlePin}
             className={
@@ -515,8 +466,8 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             )}
           </button>
         ) : null}
-        {zakladka === 'rekord' && selectedItem ? renderPreviewActions?.(selectedItem) : null}
-        {zakladka === 'rekord' && selectedItem && onOpenFull && (
+        {selectedItem ? renderPreviewActions?.(selectedItem) : null}
+        {selectedItem && onOpenFull && (
           <button
             onClick={() => onOpenFull(selectedItem.id)}
             /* §7.3 pkt 1 — ten sam pill co w `StandardPreview` (wspólne klasy
@@ -528,7 +479,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             <span>{t('common.open', 'Open')}</span>
           </button>
         )}
-        {zakladka === 'rekord' && selectedItem && !onOpenFull && openDisabledReason && (
+        {selectedItem && !onOpenFull && openDisabledReason && (
           <button
             type="button"
             disabled
@@ -542,30 +493,9 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
       </>
     ) : null;
 
-  const trescPanelu =
-    teresaWlaczona && zakladka === 'teresa' ? (
-      <React.Suspense
-        fallback={
-          <div className="flex h-full items-center justify-center text-sm text-c-text-secondary">
-            {t('common.loading', 'Loading…')}
-          </div>
-        }
-      >
-        <UnifiedChatPanelLazy
-          mode="split"
-          showModeToggle={false}
-          workspaceContext={teresa?.kontekst ?? null}
-          className="h-full"
-        />
-      </React.Suspense>
-    ) : selectedItem ? (
-      renderPreview(selectedItem)
-    ) : null;
+  const trescPanelu = selectedItem ? renderPreview(selectedItem) : null;
 
-  const tytulPanelu =
-    zakladka === 'teresa'
-      ? t('list.rightPanel.tabTeresa', 'Teresa')
-      : selectedItem?.title ?? t('list.rightPanel.tabRecord', 'Record');
+  const tytulPanelu = selectedItem?.title ?? t('list.rightPanel.tabRecord', 'Record');
 
   if (fullView && selectedItem) {
     return (
@@ -691,7 +621,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
             </motion.div>
           ) : isMobile && panelWidoczny ? (
             <motion.div
-              key={`mobile-${zakladka}-${selectedItem?.id ?? 'teresa'}`}
+              key={`mobile-${selectedItem?.id ?? 'rekord'}`}
               initial={reduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -724,11 +654,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                   onClose={handleClose}
                   closeLabel={t('list.rightPanel.close', 'Close panel')}
                   actions={previewActions}
-                  footer={
-                    zakladka === 'rekord' && selectedItem
-                      ? renderPreviewFooter?.(selectedItem)
-                      : undefined
-                  }
+                  footer={selectedItem ? renderPreviewFooter?.(selectedItem) : undefined}
                   className="h-full rounded-2xl shadow-2xl"
                 >
                   {trescPanelu}
@@ -763,7 +689,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                przy widocznym panelu, bo tu stał `div`). Sam znacznik — zero
                zmiany klas, stylu i zachowania. */
             <motion.aside
-              key={`${zakladka}-${selectedItem?.id ?? 'teresa'}`}
+              key={selectedItem?.id ?? 'rekord'}
               initial={reduceMotion ? false : { opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
@@ -778,11 +704,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
                 onClose={handleClose}
                 closeLabel={t('list.rightPanel.close', 'Close panel')}
                 actions={previewActions}
-                footer={
-                  zakladka === 'rekord' && selectedItem
-                    ? renderPreviewFooter?.(selectedItem)
-                    : undefined
-                }
+                footer={selectedItem ? renderPreviewFooter?.(selectedItem) : undefined}
                 className={overlayMode ? 'h-full rounded-2xl shadow-2xl !bg-c-surface' : undefined}
               >
                 {trescPanelu}

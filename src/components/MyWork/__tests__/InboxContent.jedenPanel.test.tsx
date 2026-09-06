@@ -172,7 +172,14 @@ afterEach(() => {
 });
 
 describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
-  it('T1: dokładnie jeden [data-right-panel] przy zaznaczonym wierszu i otwartej Teresie', async () => {
+  /*
+   * ★ DEC-404 (06.09.2026) — PRZEPISANE. Do 06.09 ten przypadek klikał
+   * zakładkę „Teresa" w panelu podglądu i sprawdzał, że czat pokazuje się
+   * W ŚRODKU tej kolumny. Właściciel odrzucił ten kształt („tu nie jest jej
+   * miejsce"). Teraz mierzymy kontrakt DEC-404: panel podglądu = TYLKO rekord,
+   * bez rzędu zakładek i bez czatu.
+   */
+  it('T1: panel podglądu = tylko rekord, bez zakładek i bez Teresy (MUTACJA: przywróć zakładkę → RED)', async () => {
     const { container } = renderInbox();
 
     const row = await screen.findByText('Pierwsza pozycja skrzynki');
@@ -183,14 +190,8 @@ describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
     });
 
     const panel = container.querySelector('[data-right-panel]') as HTMLElement;
-    const tabs = within(panel).getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
-
-    fireEvent.click(tabs[1]);
-    expect(await within(panel).findByLabelText('Teresa composer')).toBeInTheDocument();
-    // Hipoteza P1: dziś globalny dok Teresy dokładałby TU drugi <aside>.
-    expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    expect(within(panel).queryAllByRole('tab')).toHaveLength(0);
+    expect(within(panel).queryByLabelText('Teresa composer')).toBeNull();
   });
 
   it('T2: X jest lepki — klik w inny wiersz po zamknięciu NIE otwiera panelu ponownie', async () => {
@@ -215,7 +216,7 @@ describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
     expect(container.querySelector('[data-right-panel]')).toBeNull();
   });
 
-  it('T4: nowy markup (korzeń panelu + zakładki) nie wprowadza klas spoza tokenów', async () => {
+  it('T4: markup korzenia panelu nie wprowadza klas spoza tokenów', async () => {
     const { container } = renderInbox();
     const row = await screen.findByText('Pierwsza pozycja skrzynki');
     fireEvent.click(row);
@@ -223,12 +224,9 @@ describe('InboxContent — jeden prawy panel (P1 DEC-397)', () => {
       expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
     });
 
+    // DEC-404: rzędu zakładek już nie ma — mierzymy sam korzeń panelu.
     const panel = container.querySelector('[data-right-panel]') as HTMLElement;
-    const controlledMarkup = [
-      panel.getAttribute('class'),
-      ...within(panel).getAllByRole('tab').map((tab) => tab.getAttribute('class')),
-    ].join(' ');
-    expect(controlledMarkup).not.toMatch(/primary-|navy-|slate-/);
+    expect(panel.getAttribute('class') ?? '').not.toMatch(/primary-|navy-|slate-/);
   });
 
   it('T4 (źródło): bespoke <aside data-preview-pane> nie istnieje już w InboxContent.tsx', async () => {
