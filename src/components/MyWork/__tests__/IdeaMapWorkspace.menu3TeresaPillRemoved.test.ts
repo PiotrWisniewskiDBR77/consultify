@@ -40,7 +40,15 @@ describe('1.1-N: Menu 3 (róg top bara) nie renderuje ghost pigułki "Teresa"', 
     expect(source.match(/handleDiscussWithTeresa/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('"Pokaż panel" zostaje JEDYNYM jawnym wejściem do panelu w klastrze rogu (poza zakładką panelu samego)', () => {
-    expect(source).toContain('data-testid="idea-show-panel"');
+  // ★ AKTUALIZACJA 1.1-N2 (2026-09-06, DEC-409): pigułka „Pokaż panel" została
+  // zastąpiona przyciskiem „Panel" w rogu (`IdeaCornerActions`, testid
+  // `idea-corner-panel`) — patrz `IdeaMapWorkspace.rogWarsztatu1-1-n2.test.ts`.
+  // Warunek kroku 1 zostaje ten sam co do treści: klaster rogu ma JEDNO jawne
+  // wejście do panelu i ŻADNEJ pigułki „Teresa" — wejście AI to przycisk „AI"
+  // otwierający zakładkę tego samego panelu.
+  it('róg ma jawne wejście do panelu (przycisk „Panel") i żadnej pigułki Teresa', () => {
+    expect(source).toContain('<IdeaCornerActions');
+    expect(source).toContain("t('mindmap.cornerPanel', 'Panel')");
+    expect(source).not.toContain('data-testid="idea-menu1-teresa"');
   });
 });

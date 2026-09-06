@@ -28,6 +28,8 @@ interface WorkspaceGraphRuntimeOptions {
   language: string;
   initialViewport?: { x: number; y: number; zoom: number } | null;
   onConflict?: (serverVersion: number, serverMap?: IdeaMapHydrationPayload | null) => void;
+  /** Błąd zapisu (inny niż 409) — patrz `useIdeaMapSync` `onSaveError`. */
+  onSaveError?: (error: unknown, state: 'offline' | 'queued') => void;
 }
 
 interface QueueGraphSyncOptions {
@@ -109,6 +111,7 @@ export function useWorkspaceGraphRuntime({
   language,
   initialViewport = null,
   onConflict,
+  onSaveError,
 }: WorkspaceGraphRuntimeOptions) {
   const [graph, setGraph] = useState<WorkspaceGraphState>({
     nodes: [],
@@ -154,6 +157,7 @@ export function useWorkspaceGraphRuntime({
     open,
     locked,
     onConflict,
+    onSaveError,
   });
 
   const buildPayload = useCallback(
