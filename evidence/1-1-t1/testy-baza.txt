@@ -1,0 +1,1521 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11t1
+
+
+ RUN  v4.1.8 /private/tmp/wt-11t1
+
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > builds rich factual pl Details within 80–140 words 7ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > builds rich factual en Details within 80–140 words 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > keeps the shortest complete Polish record within the 80–140 word contract 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > builds minimal non-empty pl Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > builds minimal non-empty en Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > uses only persisted whitelist facts without recommendations or date defaults 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > returns empty text for empty and entirely rejected rows 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > blocks credentials in output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > rejects raw JSON-like output field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx > T17 Discovery outputs preview Details > limits Details to outputs and preserves reports, openOutput, layout, kebab, and PPM paths 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputPreviewDetails.t17.test.tsx (80 tests) 18ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builds rich factual pl Details within 80–140 words 4ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builds rich factual en Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > keeps the shortest complete Polish record within the 80–140 word contract 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builds minimal non-empty pl Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builds minimal non-empty en Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > uses only persisted whitelist facts without recommendations or date defaults 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > returns empty text for empty and entirely rejected rows 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > blocks credentials in report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field id 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field outputKind 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field createdAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field updatedAt 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field projectId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > rejects raw JSON-like report field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > never stringifies a nested object or array value wholesale 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > selects the Details builder by outputKind on the live outputs tab, not by a reports guard 2ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > leaves the shared outputs/reports data-source and column merge untouched 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builder selection mirrors the component rule for each outputKind > report-like kinds (assessment_report, report_builder) resolve to buildReportPreviewDetails 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builder selection mirrors the component rule for each outputKind > presentation_deck resolves to buildOutputPreviewDetails, not the report builder 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx > T18 Discovery reports preview Details > builder selection mirrors the component rule for each outputKind > a report-like row renders Reports-flavored, factual text distinguishable from the outputs builder 6ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.reportPreviewDetails.t18.test.tsx (85 tests) 21ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > builds rich factual pl Details within 80–140 words 6ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > builds rich factual en Details within 80–140 words 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > falls back to title only when name is absent 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > keeps the shortest complete Polish record within the 80–140 word contract 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > builds minimal non-empty pl Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > builds minimal non-empty en Details within 80–140 words 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > uses only persisted whitelist facts without recommendations or date defaults 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > returns empty text for empty and entirely rejected rows 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials in initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field name 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field status 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field priority 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field axis 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedStartDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field plannedEndDate 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceType 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > rejects raw JSON-like initiative field sourceId 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > never stringifies the owner object wholesale, only its firstName/lastName 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > blocks credentials smuggled inside an owner name field 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > a missing owner is reported as a persisted gap, not silently dropped 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > adds a canonical initiatives Details block on the live tab without touching T17/T18, InitiativePreviewV3Body, footer, or table wiring 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx > T19 Discovery initiatives preview Details > does not touch the frozen InitiativePreviewV3 component file 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.initiativePreviewDetails.t19.test.tsx (77 tests) 20ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > defaults OFF with no query, localStorage, or env override 53ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > localStorage "off"/"0"/"false" still disables it (redundant with default, still honoured) 1ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > enables via localStorage "on"/"1"/"true" despite the OFF default 0ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > enables via URL query "on"/"1"/"true" despite the OFF default 0ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > query wins over localStorage: query=0 beats localStorage on 1ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > query wins over localStorage: query=1 beats localStorage off 0ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > invalid localStorage value falls through to the OFF default 2ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > caches the resolution: a query flip after first read has no effect until reset 0ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts > Tools Insights Wiring flag (default OFF again — cofnięte 28.08, DEC-158: tool_outputs nie istnieje na bazie staging) > resetToolsInsightsWiringFlagCache forces a fresh read reflecting new state 0ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.test.ts (9 tests) 64ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > normalizeSurfaceParam accepts only the five known surfaces, else falls back 1ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > deep-link with no prior Hub visit: a cold ?tab=reports URL activates Reports immediately 17ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > deep-link works for all five surfaces, not just one 8ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > an invalid/unknown ?tab= value falls back to the default surface, not a crash 1ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > switching surfaces writes the URL (state -> URL, so hard reload / share preserves it) 6ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > mounting directly on a non-default surface (equivalent to landing there via back/forward) applies it, same as any other URL-first mount 3ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx > useSurfaceUrlSync (TLS-01 five surfaces) > hard reload (fresh mount reading the current URL) never resets to a different tab 3ms
+ ✓ tests/components/Discovery/useSurfaceUrlSync.test.tsx (7 tests) 42ms
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > shows a loading state on generate, and Cancel aborts + ignores a later-resolving stale response 188ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > renders an update proposal with before/after + sources, and an add proposal with an assumption badge 27ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > Accept without editing calls acceptSwotProposal with proposedAfter and no editedAfter 58ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > renders without crashing 117ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > displays the pain point text 47ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > shows severity indicators 33ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > applies selected styles when selected 8ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > renders handles for connections 6ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > displays area badge 11ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > handles different severity levels 3ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx > PainPointNode > handles different pain areas 3ms
+ ✓ tests/components/Discovery/nodes/PainPointNode.test.tsx (8 tests) 234ms
+stdout | tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 13:49:18:4918 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx > buildToolSessionOverflowItems — wyjście jest, pauzy nie ma > daje „Wyjdź z sesji" wołające przekazany onBack 2ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx > buildToolSessionOverflowItems — wyjście jest, pauzy nie ma > ma wersję angielską 0ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx > buildToolSessionOverflowItems — wyjście jest, pauzy nie ma > NIE udaje wstrzymania sesji — słownik statusów nie ma takiego stanu 0ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx > NModeHeader — kebab Menu 1 realnie renderuje dołożone pozycje > pokazuje „Wyjdź z sesji" w menu ⋮ i woła jego akcję 115ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx > ToolDocumentView — podaje fabrykę do nagłówka (ogniwo sprawdzane na źródle) > importuje i wywołuje buildToolSessionOverflowItems w konfiguracji nagłówka 1ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.sessionExit.test.tsx (5 tests) 122ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > Edit then Accept calls acceptSwotProposal with editedAfter carrying the edited text 595ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > Reject calls rejectSwotProposal and the card leaves the pending list 86ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > renders without crashing 69ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > displays correct number of nodes 11ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > a row whose backend status is "approved" renders as Approved, not Draft 202ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > a row whose backend status is "GENERATED" (uppercase, tool_sessions casing) does NOT render as Draft 25ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > APPROVED (tool_sessions casing) renders as Approved in Polish too 12ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > IN_PROGRESS (present in tool_sessions, missing from the old ad-hoc maps) does not fall back to Draft 19ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > FAILED does not fall back to Draft 32ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > superseded (tool_outputs casing) does not fall back to Draft 7ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > displays correct number of edges 18ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > renders canvas controls 13ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > renders minimap 8ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx > DiscoveryCanvas > renders with empty nodes array 18ms
+ ✓ tests/components/Discovery/DiscoveryCanvas.test.tsx (6 tests) 142ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > a genuinely unrecognized status renders the explicit fallback text, never a silent Draft 14ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx > renderToolStatusCell — the confirmed defect > a real DRAFT status still renders as Draft (control — the fix must not over-correct) 12ms
+ ✓ src/components/Discovery/__tests__/toolStatusCell.test.tsx (8 tests) 329ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.swotReportWiring.test.ts > Raport SWOT — przewód z sesji do ToolOutputsPanel > ToolDocumentView renderuje ToolOutputsPanel pod bramką APPROVED + id sesji 106ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.swotReportWiring.test.ts > Raport SWOT — przewód z sesji do ToolOutputsPanel > hub narzędzi otwiera sesję z warsztatem właśnie przez ToolDocumentView 1ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.swotReportWiring.test.ts > Raport SWOT — przewód z sesji do ToolOutputsPanel > ToolWorkspace nadal nie jest na żadnej trasie — dlatego przewód musi być w ToolDocumentView 9ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.swotReportWiring.test.ts > Raport SWOT — przewód z sesji do ToolOutputsPanel > renderer raportu istnieje i jest tym, którego używa ToolOutputsPanel 1ms
+ ✓ tests/components/DiscoveryTools/ToolDocumentView.swotReportWiring.test.ts (4 tests) 121ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > shows a stale-conflict message on 409 STALE_VERSION and does not auto-retry 216ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > shows an already-decided message on 409 ALREADY_DECIDED, not a generic error 162ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > shows an honest error + Retry on generate failure, and Retry genuinely re-invokes generation 95ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx > TeresaSwotProposals (TLS-04) > renders no proposal card while generation is pending, only after it resolves 42ms
+ ✓ tests/components/discovery-tools/TeresaSwotProposals.test.tsx (9 tests) 1471ms
+     ✓ Edit then Accept calls acceptSwotProposal with editedAfter carrying the edited text  595ms
+ ✓ tests/components/DiscoveryTools/MyWorkTraceDocumentView.test.tsx > MyWorkTraceDocumentView — czytelny polski stan zamiast JSON-u > czyta ślad z realnego kształtu zapisanego przez createMyWorkToolSession 2ms
+ ✓ tests/components/DiscoveryTools/MyWorkTraceDocumentView.test.tsx > MyWorkTraceDocumentView — czytelny polski stan zamiast JSON-u > spada na contextSnapshot, gdy answers są puste 0ms
+ ✓ tests/components/DiscoveryTools/MyWorkTraceDocumentView.test.tsx > MyWorkTraceDocumentView — czytelny polski stan zamiast JSON-u > rysuje polski ekran śladu z linkiem do źródła, bez surowego JSON-a 58ms
+ ✓ tests/components/DiscoveryTools/MyWorkTraceDocumentView.test.tsx > MyWorkTraceDocumentView — czytelny polski stan zamiast JSON-u > bez identyfikatora źródła mówi wprost, że nie ma dokąd przejść 51ms
+ ✓ tests/components/DiscoveryTools/MyWorkTraceDocumentView.test.tsx (4 tests) 114ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > renders without crashing 46ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > displays the insight text 7ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > shows linked pain points count 5ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > applies selected styles when selected 5ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > renders handles for connections 10ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > handles empty linked pains 10ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx > InsightNode > indicates AI-generated insights 4ms
+ ✓ tests/components/Discovery/nodes/InsightNode.test.tsx (7 tests) 94ms
+ ✓ tests/components/discovery-tools/StrategicToolsView.artifact-query.contract.test.tsx > StrategicToolsView artifact query hygiene > clears malformed artifact and code params without fetching session 108ms
+ ✓ tests/components/discovery-tools/StrategicToolsView.artifact-query.contract.test.tsx > StrategicToolsView artifact query hygiene > clears unsupported artifact type and code params without fetching session 19ms
+ ✓ tests/components/discovery-tools/StrategicToolsView.artifact-query.contract.test.tsx > StrategicToolsView artifact query hygiene > keeps happy-path behavior for supported tool artifact links 27ms
+ ✓ tests/components/discovery-tools/StrategicToolsView.artifact-query.contract.test.tsx (3 tests) 156ms
+ ✓ tests/components/DiscoveryTools/toolSessionKinds.test.ts > toolShortCodeFallback — nieznany typ nie udaje SWOT-a > buduje kod z prawdziwego typu, nie z SWT 74ms
+ ✓ tests/components/DiscoveryTools/toolSessionKinds.test.ts > toolShortCodeFallback — nieznany typ nie udaje SWOT-a > dla pustego typu daje neutralne TOOL, nadal nie SWT 1ms
+ ✓ tests/components/DiscoveryTools/toolSessionKinds.test.ts > isMyWorkTraceToolType — ślad z Mojej Pracy, nie sesja narzędzia > rozpoznaje MYWORK niezależnie od wielkości liter i spacji 0ms
+ ✓ tests/components/DiscoveryTools/toolSessionKinds.test.ts > isMyWorkTraceToolType — ślad z Mojej Pracy, nie sesja narzędzia > nie przechwytuje realnych narzędzi 0ms
+ ✓ tests/components/DiscoveryTools/toolSessionKinds.test.ts (4 tests) 79ms
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders without crashing
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders without crashing
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > creates a new session if none exists
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > creates a new session if none exists
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+ ✓ tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders without crashing 80ms
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > displays the canvas area
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > displays the canvas area
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts > SHIPPED_TOOL_TYPES matches ToolCanvas.tsx bespoke branches exactly > re-derives the same set of toolTypes from a fresh grep of ToolCanvas.tsx 73ms
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts > SHIPPED_TOOL_TYPES matches ToolCanvas.tsx bespoke branches exactly > is exactly 16 tool types (the number DEC-118 verified, not assumed) 1ms
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts > SHIPPED_TOOL_TYPES matches ToolCanvas.tsx bespoke branches exactly > is a strict subset of DEDICATED_TOOL_TYPES (31 declared) 3ms
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts > SHIPPED_TOOL_TYPES matches ToolCanvas.tsx bespoke branches exactly > isShippedToolType agrees with SHIPPED_TOOL_TYPES membership 1ms
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts > SHIPPED_TOOL_TYPES matches ToolCanvas.tsx bespoke branches exactly > an unknown tool type is never "shipped" 0ms
+ ✓ tests/components/discovery-tools/shippedToolTypes.test.ts (5 tests) 80ms
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders controls
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+stdout | tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders controls
+[DiscoveryConsultantView] Initialized session: new-session-id
+
+ ✓ tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > creates a new session if none exists 22ms
+ ✓ tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > displays the canvas area 26ms
+ ✓ tests/components/Discovery/DiscoveryConsultantView.test.tsx > DiscoveryConsultantView > renders controls 21ms
+ ✓ tests/components/Discovery/DiscoveryConsultantView.test.tsx (4 tests) 152ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.day225.commentAccuracy.test.ts > Day225 toolsInsightsWiringFlag comment accuracy > records the dated correction and keeps owner acceptance as the reason for default OFF 94ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.day225.commentAccuracy.test.ts > Day225 toolsInsightsWiringFlag comment accuracy > rejects the three stale claims that tool_outputs is absent from staging 2ms
+ ✓ src/utils/__tests__/toolsInsightsWiringFlag.day225.commentAccuracy.test.ts (2 tests) 101ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.networkBootstrap.test.ts > DiscoveryToolsHub network bootstrap > uses the explicit legacy assessment read without probing feature-gated V8 108ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.networkBootstrap.test.ts (1 test) 116ms
+ ✓ tests/components/discovery-tools/dedicatedToolTypes.test.ts > dedicated tool document routing > routes implemented strategic tool ambition-decomposer to ToolDocumentView 55ms
+ ✓ tests/components/discovery-tools/dedicatedToolTypes.test.ts > dedicated tool document routing > routes implemented strategic tool focus-tradeoff to ToolDocumentView 1ms
+ ✓ tests/components/discovery-tools/dedicatedToolTypes.test.ts > dedicated tool document routing > routes implemented strategic tool narrative-engine to ToolDocumentView 0ms
+ ✓ tests/components/discovery-tools/dedicatedToolTypes.test.ts > dedicated tool document routing > keeps unknown tool types on the explicit generic fallback 0ms
+ ✓ tests/components/discovery-tools/dedicatedToolTypes.test.ts (4 tests) 59ms
+ ✓ tests/components/Discovery/KnownToolDetailView.headerLabels.pl.fala1.test.tsx > KnownToolDetailView — header action labels, PL (M3/M4/M5) > renders the short PL labels: "Baza wiedzy", "Analizuj", "Rozpocznij sesję" 555ms
+ ✓ tests/components/Discovery/KnownToolDetailView.headerLabels.pl.fala1.test.tsx (1 test) 557ms
+     ✓ renders the short PL labels: "Baza wiedzy", "Analizuj", "Rozpocznij sesję"  555ms
+ ✓ tests/components/Discovery/KnownToolDetailView.headerLabels.fala1.test.tsx > KnownToolDetailView — header action labels (M3/M4/M5) > renders the short EN labels: "Knowledge base", "Analyze", "Start session" 677ms
+ ✓ tests/components/Discovery/KnownToolDetailView.headerLabels.fala1.test.tsx (1 test) 679ms
+     ✓ renders the short EN labels: "Knowledge base", "Analyze", "Start session"  677ms
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race 567ms
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > disables Approve and never calls Api.approveTool while review gaps remain unresolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > disables Approve and never calls Api.approveTool while review gaps remain unresolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > disables Approve and never calls Api.approveTool while review gaps remain unresolved 836ms
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Request review is disabled by the exact same gaps (same completionReady invariant as Approve)
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Request review is disabled by the exact same gaps (same completionReady invariant as Approve)
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Request review is disabled by the exact same gaps (same completionReady invariant as Approve) 383ms
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx > ToolDocumentView — RB-024 Approve readiness invariant > Approve is enabled and calls Api.approveTool once completion gaps are resolved 262ms
+ ✓ tests/components/discovery-tools/ToolDocumentView.approveReadiness.test.tsx (3 tests) 1485ms
+     ✓ disables Approve and never calls Api.approveTool while review gaps remain unresolved  836ms
+     ✓ Request review is disabled by the exact same gaps (same completionReady invariant as Approve)  383ms
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > reopening an existing session is read-only until the user changes it 2426ms
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > deduplicates the recovery prompt when StrictMode loads the same session twice
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > deduplicates the recovery prompt when StrictMode loads the same session twice
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ContextStep inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > deduplicates the recovery prompt when StrictMode loads the same session twice 147ms
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-03: an edit made in the SWOT Build phase survives switching sections away and back
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SWOTBuildPhase inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-03: an edit made in the SWOT Build phase survives switching sections away and back
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SWOTBuildPhase inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to QuadrantCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ToolDocumentView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-03: an edit made in the SWOT Build phase survives switching sections away and back 362ms
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx > ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav + unmount autosave flush) > TLS-03: unmounting before the 2s autosave debounce fires still persists the edit 132ms
+ ✓ tests/components/discovery-tools/ToolDocumentView.golden-flow.test.tsx (5 tests) 3638ms
+     ✓ TLS-02: calls Api.createToolSession exactly once under a StrictMode double-invoke race  567ms
+     ✓ reopening an existing session is read-only until the user changes it  2426ms
+     ✓ TLS-03: an edit made in the SWOT Build phase survives switching sections away and back  362ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts > dedupeById — deduplikacja outputów u źródła mappera (nie w UI) > usuwa duplikaty po id, zachowując pierwsze wystąpienie i kolejność 34ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts > dedupeById — deduplikacja outputów u źródła mappera (nie w UI) > nie zmienia listy bez duplikatów 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts > dedupeById — deduplikacja outputów u źródła mappera (nie w UI) > działa na pustej liście 0ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts > kolumna TYP — etykieta "assessment_report" jest po polsku, nie mieszana > i18n pl.json: tools.hub.outputs.type.assessmentReport nie zawiera angielskiego słowa "assessment" 33ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts > kolumna TYP — etykieta "assessment_report" jest po polsku, nie mieszana > DiscoveryToolsHub.tsx: etykieta TYP dla assessment_report w wariancie polskim nie zawiera "assessment" 1ms
+ ✓ src/components/Discovery/__tests__/DiscoveryToolsHub.outputsInsightsDedupeAndI18n.test.ts (5 tests) 70ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > the real production allowlist has exactly the one owner-approved MVP entry 1ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies vsm-builder as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies constraint-control as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies decision-engine as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies control-tower as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies automation-pipeline as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies robotics-feasibility as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies logistics-automation as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies integration-diagnostic as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies digital-value-pool as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies legacy-analyzer as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies data-inventory as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > real registry classifies pain-to-solution as NOT active (coming soon) 0ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > ACTIVE_KNOWN_TOOL_TYPES (real backend registry) — RV-028 > control: the real registry DOES classify a genuinely shipped tool as active 0ms
+stderr | tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > keeps the hub alive and shows an honest message when only tool outputs return 500
+[DiscoveryToolsHub] tool outputs unavailable: { status: 500, message: 'tool_outputs missing' }
+
+stderr | tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > keeps the hub alive and shows an honest message when only tool outputs return 500
+[DiscoveryToolsHub] tool outputs unavailable: { status: 500, message: 'tool_outputs missing' }
+
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > flag OFF (default, no explicit override): never calls Api.listToolOutputs and the row never appears 154ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > flag ON (explicit localStorage override): calls Api.listToolOutputs and merges the row into the Outputs tab as kind "tool_output" 28ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > flag ON (explicit override): a superseded revision (isCurrent: false) is excluded from the aggregate list 31ms
+stderr | tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > preserves the full-hub error when tool sessions return 500
+[DiscoveryToolsHub] Fetch error: { status: 500, message: 'sessions unavailable' }
+
+stderr | tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > preserves the full-hub error when tool sessions return 500
+[DiscoveryToolsHub] Fetch error: { status: 500, message: 'sessions unavailable' }
+
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool vsm-builder renders as inactive/coming-soon with Open and Start disabled 166ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool constraint-control renders as inactive/coming-soon with Open and Start disabled 37ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool decision-engine renders as inactive/coming-soon with Open and Start disabled 42ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > keeps the hub alive and shows an honest message when only tool outputs return 500 44ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #1: tool_outputs wiring behind ff_toolsInsightsWiring > preserves the full-hub error when tool sessions return 500 31ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report Builder with a pre-selected TOOL source > navigates to /reports/builder with sourceType=TOOL and the originating tool session id 36ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report Builder with a pre-selected TOOL source > is disabled for a non-approved tool output (in_review) 26ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool control-tower renders as inactive/coming-soon with Open and Start disabled 39ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool automation-pipeline renders as inactive/coming-soon with Open and Start disabled 36ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool robotics-feasibility renders as inactive/coming-soon with Open and Start disabled 37ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #6: "Create report" enters Report Builder with a pre-selected TOOL source > is disabled for a non-tool_output row (e.g. an assessment report) 34ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an approved tool output > calls Api.reopenToolOutput(outputId) and refetches on click 37ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an approved tool output > is disabled for a non-approved tool output (in_review) 25ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx > DiscoveryToolsHub — DEC-118 repair #5 (partial): "Reopen" for an approved tool output > is disabled for a non-tool_output row (e.g. an assessment report) 22ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.toolOutputsWiring.test.tsx (11 tests) 468ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool logistics-automation renders as inactive/coming-soon with Open and Start disabled 29ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool integration-diagnostic renders as inactive/coming-soon with Open and Start disabled 35ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool digital-value-pool renders as inactive/coming-soon with Open and Start disabled 30ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool legacy-analyzer renders as inactive/coming-soon with Open and Start disabled 30ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool data-inventory renders as inactive/coming-soon with Open and Start disabled 26ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > real tool pain-to-solution renders as inactive/coming-soon with Open and Start disabled 28ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > forcing the disabled Open action on a real inactive tool creates no session and mounts no document — the library stays put 59ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M6: empty-count filter chips are dropped > does not render the "Other" chip when every known tool has a real category 328ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > forcing the disabled Start action on a real inactive tool creates no session either 54ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub library — RV-028 inactive Consulting Tools (real slugs) > control: the real active tool in the same list is NOT disabled (the gate is registry-driven, not a blanket block) 23ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing vsm-builder session shows the honest unavailable gate, never ToolDocumentView 15ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing constraint-control session shows the honest unavailable gate, never ToolDocumentView 14ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing decision-engine session shows the honest unavailable gate, never ToolDocumentView 12ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M6: empty-count filter chips are dropped > also drops OTHER zero-count category chips (not just "Other") while keeping populated ones 358ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M9: no bulk-selection prop without a bulk action bar > the Library StandardTable mounts without a `selection` prop 24ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M9: no bulk-selection prop without a bulk action bar > the Sessions StandardTable mounts without a `selection` prop 22ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M14: Sessions tab shows the full session lifecycle > an APPROVED tool session reaches the Sessions tab instead of being dropped 26ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx > DiscoveryToolsHub — M8: Outputs "Chat" opens real chat, not a Preview duplicate > clicking Chat on an output row calls openChatWithContext with the row as context, not setPreviewItemId 31ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.fala1.test.tsx (6 tests) 791ms
+     ✓ does not render the "Other" chip when every known tool has a real category  328ms
+     ✓ also drops OTHER zero-count category chips (not just "Other") while keeping populated ones  358ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing control-tower session shows the honest unavailable gate, never ToolDocumentView 13ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing automation-pipeline session shows the honest unavailable gate, never ToolDocumentView 14ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing robotics-feasibility session shows the honest unavailable gate, never ToolDocumentView 15ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing logistics-automation session shows the honest unavailable gate, never ToolDocumentView 13ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing integration-diagnostic session shows the honest unavailable gate, never ToolDocumentView 15ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing digital-value-pool session shows the honest unavailable gate, never ToolDocumentView 25ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing legacy-analyzer session shows the honest unavailable gate, never ToolDocumentView 12ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing data-inventory session shows the honest unavailable gate, never ToolDocumentView 12ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > direct document entry for an existing pain-to-solution session shows the honest unavailable gate, never ToolDocumentView 13ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx > DiscoveryToolsHub document mount — RV-028 direct document entry (real slugs) > control: direct document entry for an existing session of a REAL ACTIVE tool still mounts ToolDocumentView (no regression) 11ms
+ ✓ tests/components/Discovery/DiscoveryToolsHub.inactiveTools.test.tsx (42 tests) 861ms
+
+ Test Files  28 passed (28)
+      Tests  406 passed (406)
+   Start at  13:49:16
+   Duration  11.00s (transform 40.16s, setup 4.17s, import 61.43s, tests 12.08s, environment 17.69s)
+
+
+ Test Files  28 passed (28)
+      Tests  406 passed (406)
+   Start at  13:49:16
+   Duration  11.01s (transform 40.16s, setup 4.17s, import 61.43s, tests 12.08s, environment 17.69s)
+
+JSON report written to /private/tmp/wt-11t1/junit.xml
+JUNIT report written to /private/tmp/wt-11t1/junit.xml
