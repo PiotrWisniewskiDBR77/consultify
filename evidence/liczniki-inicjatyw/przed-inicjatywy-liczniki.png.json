@@ -1,0 +1,41 @@
+{
+  "url": "http://localhost:3111/initiatives",
+  "etykieta": "przed",
+  "liczby": {
+    "menu3Wszystkie": 63,
+    "menu2PrzyFiltrze": 72,
+    "dropdownWszystkie": 72,
+    "statusy": [
+      {
+        "etykieta": "Propozycja0",
+        "liczba": 0
+      },
+      {
+        "etykieta": "Szkic9",
+        "liczba": 9
+      },
+      {
+        "etykieta": "Do zatwierdzenia16",
+        "liczba": 16
+      },
+      {
+        "etykieta": "Zatwierdzona13",
+        "liczba": 13
+      },
+      {
+        "etykieta": "W realizacji22",
+        "liczba": 22
+      },
+      {
+        "etykieta": "Zamknięta0",
+        "liczba": 0
+      },
+      {
+        "etykieta": "Odrzucona0",
+        "liczba": 0
+      }
+    ],
+    "sumaStatusow": 60
+  },
+  "bledyKonsoli": []
+}

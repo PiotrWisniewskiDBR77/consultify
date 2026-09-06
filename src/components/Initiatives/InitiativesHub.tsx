@@ -172,6 +172,14 @@ const ALLOWED_STATUSES: InitiativeStatus[] =
     ? MODULE_STATUSES
     : Object.values(InitiativeStatus);
 
+// ODMROZENIE 05_INITIATIVES: statusy odcinane przez zakres „Aktywne" — ten sam
+// zbiór, którym `fetchData` przycina wyrenderowaną listę, użyty ponownie przez
+// liczniki (`registerCountBase`), żeby lista i liczba nigdy się nie rozjechały.
+const SCOPE_ACTIVE_EXCLUDED_STATUSES = new Set<string>([
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.REJECTED,
+]);
+
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
   'ml-1.5 inline-flex items-center rounded-full bg-c-surface-raised px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-c-text-muted';
@@ -666,14 +674,50 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // STATUS FILTERS
   // ============================================
 
-  // Status counts for dropdown
+  // ODMROZENIE 05_INITIATIVES (06.09.2026) — JEDEN policzony zbiór dla WSZYSTKICH
+  // liczników ekranu. Zmierzone przed naprawą na jednym kadrze /initiatives
+  // (org DBR77, przełącznik "Aktywne"): Menu 2 "Status: Wszystkie 72",
+  // pigułka Menu 3 "Wszystkie 63", suma pozycji statusów w dropdownie 60 —
+  // trzy różne liczby tego samego zbioru, bo liczyły je trzy niezależne
+  // wyrażenia na trzech różnych podstawach:
+  //   72 = `allInitiatives.length` (surowe źródło, ignoruje zakres/projekt/priorytet),
+  //   63 = własne memo po `displayStatus` (odrzucało CLOSED/ARCHIVED/CANCELLED,
+  //        ale NIE odrzucało REJECTED — 3 wiersze),
+  //   60 = `initiatives` (lista realnie wyrenderowana; zgodne z bazą:
+  //        72 wierszy org − 9 CLOSED − 3 REJECTED = 60).
+  // `registerCountBase` odtwarza DOKŁADNIE predykaty listy (projekt, priorytet,
+  // zakres Aktywne/Wszystkie, szukajka, ALLOWED_STATUSES) i celowo NIE stosuje
+  // filtra statusu ani presetu cyklu życia — licznik ma pokazywać rozmiar
+  // zbioru do wyboru, a nie rozmiar aktualnego wyboru (przed naprawą wybór
+  // statusu w Menu 2 zerował pozostałe pozycje dropdownu).
+  const registerCountBase = useMemo(() => {
+    const scoped = filterCanonicalInitiativeRegisterScope(allInitiatives, {
+      projectId: currentProjectId,
+      priorities: filters.priority,
+    });
+    const needle = searchQuery.toLocaleLowerCase();
+    return scoped.filter((initiative) => {
+      if (scope === 'active' && SCOPE_ACTIVE_EXCLUDED_STATUSES.has(String(initiative.status))) {
+        return false;
+      }
+      if (
+        needle &&
+        !`${initiative.name ?? ''} ${initiative.summary ?? ''}`.toLocaleLowerCase().includes(needle)
+      ) {
+        return false;
+      }
+      return ALLOWED_STATUSES.includes(initiative.status as InitiativeStatus);
+    });
+  }, [allInitiatives, currentProjectId, filters.priority, scope, searchQuery]);
+
+  // Status counts for dropdown — jedyne miejsce liczenia (podawane w dół).
   const statusCounts: Record<string, number> = useMemo(() => {
-    const counts: Record<string, number> = { all: initiatives.length };
-    initiatives.forEach((i) => {
+    const counts: Record<string, number> = { all: registerCountBase.length };
+    registerCountBase.forEach((i) => {
       counts[i.status] = (counts[i.status] || 0) + 1;
     });
     return counts;
-  }, [initiatives]);
+  }, [registerCountBase]);
 
   // Available view modes — plan and capacity are dedicated analysis workspaces.
   const availableViewModes: ViewMode[] =
@@ -2129,28 +2173,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       ? v8InitiativeSnapshot.wbsCompleteness.gaps.length
       : 0;
 
+  // ODMROZENIE 05_INITIATIVES: presety cyklu życia liczone z TEGO SAMEGO
+  // `registerCountBase`, co pozycje statusów w dropdownie Menu 2 — dzięki temu
+  // `lifecyclePresetCounts.all` jest z definicji tą samą liczbą co
+  // `statusCounts.all` (poprzednio własny, luźniejszy predykat dawał 63 zamiast 60).
   const lifecyclePresetCounts = useMemo(() => {
-    const registerScoped = filterCanonicalInitiativeRegisterScope(allInitiatives, {
-      projectId: currentProjectId,
-      priorities: filters.priority,
-    });
-    const countable =
-      scope === 'active'
-        ? registerScoped.filter(
-            (initiative) =>
-              !['CLOSED', 'ARCHIVED', 'CANCELLED'].includes(
-                String((initiative as any).displayStatus)
-              )
-          )
-        : registerScoped;
-    const counts: Record<string, number> = { all: countable.length };
+    const counts: Record<string, number> = { all: registerCountBase.length };
     for (const preset of INITIATIVE_LIFECYCLE_PRESETS) {
-      counts[preset.id] = countable.filter((initiative) =>
+      counts[preset.id] = registerCountBase.filter((initiative) =>
         preset.states.includes(String((initiative as any).displayStatus))
       ).length;
     }
     return counts;
-  }, [allInitiatives, currentProjectId, filters.priority, scope]);
+  }, [registerCountBase]);
 
   // Canon §15.3 Formula 2 — MULTI-SELECT bulk action bar.
   // When ≥1 row is selected in table view, Menu 3 becomes a bulk bar:
@@ -2412,8 +2447,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   };
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
 
+  // ODMROZENIE 05_INITIATIVES: "Wszystkie" w dropdownie Menu 2 to ten sam zbiór,
+  // co pigułka "Wszystkie" w Menu 3 i suma pozycji poniżej — `statusCounts.all`,
+  // nie surowe `allInitiatives.length` (które ignorowało przełącznik
+  // Aktywne/Wszystkie oraz filtry projektu i priorytetu, stąd "72" obok "63" i "60").
   const lifecycleDropdownOptions = [
-    { id: 'all', label: 'Wszystkie', count: allInitiatives.length },
+    { id: 'all', label: 'Wszystkie', count: statusCounts.all ?? 0 },
     ...Object.values(InitiativeStatus).map((status) => ({
       id: status,
       label: getLocalizedStatusLabel(status, t),
