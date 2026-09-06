@@ -37,7 +37,9 @@ export type KartaNKey =
   | 'decision'
   | 'notification'
   | 'task'
-  | 'action';
+  | 'action'
+  | 'plan'
+  | 'capacity_analysis';
 
 /**
  * Klasa wielkości wg SPEC-A §12.2 (drabina otwierania) i SPEC-N §2.1:
@@ -62,7 +64,9 @@ export type KartaNEkranHarnessu =
   | 'karta-decision'
   | 'karta-notification'
   | 'karta-task'
-  | 'karta-dzialania';
+  | 'karta-dzialania'
+  | 'karta-plan'
+  | 'karta-capacity-analysis';
 
 export interface KartaNWpis {
   /** Nazwa typu karty widoczna w raportach i tabeli smoke'a. */
@@ -84,6 +88,22 @@ export interface KartaNWpis {
  * Kolejność wpisów = kolejność migracji wg ciężaru (SPEC-N §6, plan §3: M1…M7).
  */
 export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
+  plan: {
+    nazwa: 'Plan',
+    komponent: 'src/components/Initiatives/PlanScenarioSurface.tsx',
+    klasa: 'L',
+    paragraf: 'P11 §4.2 · DEC-421',
+    ekranHarnessu: 'karta-plan',
+    statusMigracji: 'przed',
+  },
+  capacity_analysis: {
+    nazwa: 'Capacity analysis',
+    komponent: 'src/components/Initiatives/CapacityScenarioSurface.tsx',
+    klasa: 'L',
+    paragraf: 'P11 §4.5 · DEC-421',
+    ekranHarnessu: 'karta-capacity-analysis',
+    statusMigracji: 'przed',
+  },
   action: {
     nazwa: 'Action',
     komponent: 'src/components/standard/ActionCard.tsx',

@@ -428,6 +428,10 @@ const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'))
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'));
+const KartaPlanScreen = React.lazy(() => import('./screens/karta-plan'));
+const KartaCapacityAnalysisScreen = React.lazy(
+  () => import('./screens/karta-capacity-analysis')
+);
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
@@ -1274,6 +1278,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-dzialania': {
     label: 'P9 — wspólna karta działania (DEC-397)',
     render: () => <KartaDzialaniaScreen />,
+  },
+  'karta-plan': {
+    label: 'P11 — karta planu inicjatyw (DEC-421)',
+    render: () => <KartaPlanScreen />,
+  },
+  'karta-capacity-analysis': {
+    label: 'P11 — karta analizy obciążenia inicjatyw (DEC-421)',
+    render: () => <KartaCapacityAnalysisScreen />,
   },
   'karta-task-pelna': {
     label:

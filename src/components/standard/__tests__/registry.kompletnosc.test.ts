@@ -15,6 +15,8 @@ const OCZEKIWANE_W_REJESTRZE = [
   'insight',
   'task',
   'initiative',
+  'plan',
+  'capacity_analysis',
 ] as const;
 
 const JAWNE_WYJATKI = {
@@ -32,7 +34,7 @@ const JAWNE_WYJATKI = {
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
-  it('zawiera wszystkie 8 kart wskazanych przez KartaNKey', () => {
+  it('zawiera wszystkie 10 kart wskazanych przez KartaNKey, w tym plan i analizę obciążenia', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
@@ -43,6 +45,6 @@ describe('P10 — kompletność rejestru kart N', () => {
 
   it('pokrywa cały inwentarz P10 bez anonimowych pozycji', () => {
     const pokryte = new Set([...OCZEKIWANE_W_REJESTRZE, ...Object.keys(JAWNE_WYJATKI)]);
-    expect(pokryte.size).toBe(19);
+    expect(pokryte.size).toBe(21);
   });
 });
