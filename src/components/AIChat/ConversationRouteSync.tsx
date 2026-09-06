@@ -36,6 +36,15 @@ export const ConversationRouteSync: React.FC = () => {
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
   const isChatRoute = normalizedPath === '/chat' || normalizedPath.startsWith('/chat/');
 
+  useEffect(() => {
+    if (!activeConversationId) return;
+    try {
+      window.sessionStorage.setItem('teresa.lastActiveConversationId', activeConversationId);
+    } catch {
+      // Session continuity is an enhancement; storage denial must not block chat.
+    }
+  }, [activeConversationId]);
+
   // URL → Store sync
   useEffect(() => {
     if (!isChatRoute) return;
