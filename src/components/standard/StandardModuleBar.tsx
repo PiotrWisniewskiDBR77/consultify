@@ -407,7 +407,16 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
   const chipsContent =
     chips && chips.length > 0 ? (
       <div
-        className={`${MENU_3_LEFT_CLASS} app-table-scrollbar overflow-x-auto whitespace-nowrap pb-1`}
+        /* Z2 (re-audyt B, Audyty @1440px: chip "Weryfikacja" nachodzi na
+           pigułkę "Teresa") — `flex` (block-level), NIE `MENU_3_LEFT_CLASS`
+           (inline-flex): box inline-level ma dolną granicę szerokości =
+           min-content, a przy `whitespace-nowrap` min-content ≈ pełna
+           szerokość chipów — więc rząd nigdy się nie kurczy, `overflow-x-auto`
+           nie startuje i chipy NACHODZĄ na `menu3Right` (ten sam kształt co
+           `codex/menu3-chips-shrink-20260826`, c094b27c4c). Block-level
+           wypełnia rodzica (`min-w-0` w ModuleNavBar) i scroll przejmuje
+           nadmiar zamiast nachodzić. */
+        className="app-table-scrollbar flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap pb-1"
         aria-label="Presety tabeli"
       >
         {chips.map((chip) => {
