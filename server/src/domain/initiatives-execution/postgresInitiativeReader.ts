@@ -225,6 +225,14 @@ export class PostgresInitiativeReader {
         name: String((r.payload_json as any).name ?? r.aggregate_id),
         state: r.payload_json.status,
         version: r.payload_json.scenarioVersion,
+        periodCount: r.payload_json.periods.length,
+        roleCount: new Set(r.payload_json.proposedAssignments.map((item) => item.resourceOrRoleId)).size,
+        gapCount: r.payload_json.periods.filter(
+          (period) =>
+            period.demand.base !== null &&
+            period.supply.base !== null &&
+            period.demand.base > period.supply.base
+        ).length,
         planRef: {
           scenarioId: r.payload_json.planScenarioId,
           scenarioVersion: r.payload_json.planScenarioVersion,
@@ -1226,6 +1234,9 @@ export class PostgresInitiativeReader {
       name: String((r.payload_json as any).name ?? r.aggregate_id),
       state: r.payload_json.status,
       version: r.payload_json.scenarioVersion,
+      initiativeCount: r.payload_json.windows.length,
+      conflicts: 0,
+      author: r.payload_json.updatedBy,
       portfolioRef: {
         scenarioId: r.payload_json.portfolioScenarioId,
         scenarioVersion: r.payload_json.portfolioScenarioVersion,

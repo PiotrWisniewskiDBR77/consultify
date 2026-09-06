@@ -17,7 +17,7 @@ kolejny agent rozlicza się tym samym arkuszem postępu”. Ten plik = jedyny pu
 4. `date '+%H:%M'` przed KAŻDYM wpisem czasu (dziś 4× wpisałem czas z głowy i prostowałem).
 
 ## 1. Stan na 17:07
-- Paczka 8 WYPCHNIĘTA (`HEAD m03 na chwilę pushu`, run dispatch 17:07) — sprawdź health; jeśli gitSha ≠ HEAD sprzed dispatchu, patrz §5. Na stagingu po niej: R2, M-1, K5, R4, przekazanie. Zostają do scalenia: M-2, A2 (+ Codex P10 r2, P11).
+- Paczka 8 WYPCHNIĘTA (`HEAD m03 na chwilę pushu`, run dispatch 17:07) — sprawdź health; jeśli gitSha ≠ HEAD sprzed dispatchu, patrz §5. Na stagingu po niej: R2, M-1, K5, R4, przekazanie. Zostają do scalenia: Codex P10 r2, P11 (M-2 i A2 już scalone lokalnie, niepushowane).
 - Właściciel odebrał (TAK): Czat, Moja Praca, Organizacja, Panel administratora, Ustawienia, DRD hotfix.
   Ocenił: Wyniki „narzędzia świetne, sterowanie nie”; Inicjatywy karta „bez większych uwag”; Materiały „zachwycony”;
   ROI/OKR/KPI „naprawdę świetne, brak tylko menu 1–3 i Pracuj z AI”. Właściciel dojeżdża do ~95% zgłoszeń przeglądu.
@@ -25,7 +25,6 @@ kolejny agent rozlicza się tym samym arkuszem postępu”. Ten plik = jedyny pu
 ## 2. Robotnicy W TOKU (worktree · gałąź · co · co zrobić z meldunkiem)
 | worktree | gałąź | zadanie | po meldunku |
 |---|---|---|---|
-| `/private/tmp/wt-11m2b` | `mvp/1-1-m2-materialy-standard-menu` | DEC-423b/c/d: Materiały standard Menu 2 (Status z „Robocze”, Widoczność, widok, CTA; bez „Pokaż robocze”/„Filtry”), Menu 3 ≤3, Arkusze bez „Źródeł danych”, Biblioteka: Galeria/Tabela w Menu 2, formaty+źródła = Menu 3, „Nowy wzorzec” zamrożony | 7 zrzutów → merge → wiersz; potem właściciel dostaje kartę Materiałów |
 | `/private/tmp/codex-p10-karty-n` | `codex/p10-karty-n` | Codex, P10 runda 2 (wklejka 7 wydana właścicielowi 14:51) | gdy właściciel powie „Codex skończył”: `git -C /private/tmp/m03 fetch /private/tmp/codex-p10-karty-n HEAD && git merge --no-ff FETCH_HEAD` po obejrzeniu `P10/98_RAPORT.md`; 99_DECYZJE → jedna karta decyzji dla właściciela |
 | `/private/tmp/codex-p11-plan-obciazenie` | `codex/p11-plan-obciazenie` | Codex, P11 Plan i Obciążenie (wklejka 8 wydana 16:10; paczka `P11_PLAN_I_OBCIAZENIE.md` na stagingu) | jw.; 5 decyzji już rozstrzygnięte przez CTO i wpisane do paczki |
 Robotnicy piszą meldunki jako wynik Agenta (task-notification). SendMessage do agentów NIE działa w tej sesji — rozszerzenia = nowe zlecenie po scaleniu poprzedniego (ten sam plik = kolejka).
@@ -94,6 +93,6 @@ gdy zgłasza coś, co już naprawiono — sprawdź czas zrzutu vs deploy i popro
 
 ## 9. KOORDYNACJA DWÓCH SESJI (17:08)
 Sesja #24 już pracuje (worktree `wt-111-statusy-inicjatyw`, `wt-11z1-znaleziska-front`, `wt-11z2-znaleziska-serwer` widoczne o 17:08).
-Sesja #23 (ta) robi już TYLKO: odbiór meldunku M-2 (`wt-11m2b`) + merge do m03 + wiersz w rejestrze, nic więcej; potem kończy.
-Sesja #24: nie scalaj M-2 i nie pushuj, dopóki w rejestrze nie ma wiersza „1.1-M-2 … scalone lokalnie” (albo do 17:45 — wtedy M-2 przejmujesz ty).
+Sesja #23 SKOŃCZYŁA 17:14: M-2 scalone `cab6f65c61`, wiersz w rejestrze, `wt-11m2b` usunięty. Od teraz jedyna sesja nadzorcza = #24.
+Sesja #24: M-2 jest w m03 — do następnej paczki (karta Materiałów dla właściciela po deployu).
 Jeden pusher: sesja #24 od momentu przejęcia. Wspólny m03 = kolejka scaleń; sprawdzaj `git log -1` przed każdym merge.

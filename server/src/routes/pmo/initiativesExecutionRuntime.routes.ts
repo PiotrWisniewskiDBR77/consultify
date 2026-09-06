@@ -446,6 +446,7 @@ const PlanScenarioSchema = z.object({
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
   scenario: z.object({
     scenarioId: z.string().min(1),
+    name: z.string().trim().min(1).nullable().optional(),
     scenarioVersion: z.number().int().min(0),
     status: z.enum(['DRAFT', 'PUBLISHED', 'SUPERSEDED']),
     portfolioScenarioId: z.string().min(1),
@@ -492,6 +493,7 @@ const PlanAnalysisCreateSchema = z.object({
   clientRequestId: z.string().min(1),
   scenarioId: z.string().min(1),
   inputAggregateVersion: z.number().int().min(1),
+  useCapacity: z.boolean().optional().default(true),
 });
 const PlanAnalysisReviewSchema = z.object({
   expectedVersion: z.number().int().min(1),
@@ -517,6 +519,7 @@ const CapacityScenarioSchema = z.object({
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
   scenario: z.object({
     scenarioId: z.string().min(1),
+    name: z.string().trim().min(1).nullable().optional(),
     scenarioVersion: z.number().int().min(0),
     status: z.enum(['DRAFT', 'PUBLISHED', 'SUPERSEDED']),
     planScenarioId: z.string().min(1),
@@ -3512,7 +3515,7 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: {
           scenarioId: parsed.data.scenarioId,
           inputAggregateVersion: parsed.data.inputAggregateVersion,
-          capacityScenarioId: linkedCapacity?.id,
+          capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);

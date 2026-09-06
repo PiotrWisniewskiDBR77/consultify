@@ -21,6 +21,7 @@ export interface PlannedWindow {
 }
 export interface PlanScenario {
   scenarioId: string;
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   portfolioScenarioId: string;

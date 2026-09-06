@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { seedDefaultHiddenColumns } from '@/components/shared/ModuleHub/defaultHiddenColumns';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
@@ -27,7 +28,8 @@ import {
   writeCapacityScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
-import { type CanonicalMenu3Contract, countPresets } from './canonicalMenu3';
+import type { CanonicalMenu3Contract } from './canonicalMenu3';
+import { CapacityAnalysisCard } from './cards/CapacityAnalysisCard';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
 // 2026-09-03 (i18n-r3): te były Record<K,string> ze stałą wartością PL —
@@ -115,6 +117,7 @@ type Range = {
 };
 type Scenario = {
   scenarioId: string;
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   planScenarioId: string;
@@ -184,6 +187,9 @@ interface Row extends TableRow {
   knowledge: string;
   updatedAt: string;
   version: number;
+  periods: number;
+  roles: number;
+  gaps: number;
 }
 interface CapacityRegisterItem {
   id: string;
@@ -194,6 +200,9 @@ interface CapacityRegisterItem {
   knowledgeSummary: { known: number; estimated: number; unknown: number; unconfirmed: number };
   updatedAt: string;
   version: number;
+  periodCount?: number;
+  roleCount?: number;
+  gapCount?: number;
 }
 interface PublishedPlanBasis {
   id: string;
@@ -203,20 +212,10 @@ interface PublishedPlanBasis {
   timezone: string;
   periods: Array<{ periodId: string; start: string; end: string }>;
 }
-const capacityPresets = [
-  'all',
-  'critical',
-  'unknown-supply',
-  'missing-demand',
-  'skill-gaps',
-  'management-load',
-  'budget-envelope',
-  'unconfirmed',
-  'resolved',
-] as const;
 export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMode?: boolean }> = ({
   activePreset,
   onCountsChange,
+  createRequestId = 0,
   demoMode = false,
 }) => {
   const { t } = useTranslation();
@@ -240,6 +239,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const [showCreate, setShowCreate] = useState(false);
   const [newAnalysisId, setNewAnalysisId] = useState('');
   const [newPlanId, setNewPlanId] = useState('');
+  const handledCreateRequest = useRef(createRequestId);
+  useEffect(() => {
+    if (createRequestId === handledCreateRequest.current) return;
+    handledCreateRequest.current = createRequestId;
+    setShowCreate(true);
+  }, [createRequestId]);
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
@@ -381,12 +386,18 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                       ? /budget|cost/i.test(row.detail)
                       : false;
   const visibleConstraintRows = constraintRows.filter((row) =>
-    matchesCapacityPreset(row, activePreset || 'all')
+    matchesCapacityPreset(
+      row,
+      ['drafts', 'published', 'gaps'].includes(activePreset) ? 'all' : activePreset || 'all'
+    )
   );
-  useEffect(
-    () => onCountsChange?.(countPresets(constraintRows, capacityPresets, matchesCapacityPreset)),
-    [constraintRows, onCountsChange]
-  );
+  useEffect(() => {
+    onCountsChange?.({
+      drafts: rows.filter((row) => row.state === 'DRAFT').length,
+      published: rows.filter((row) => row.state === 'PUBLISHED').length,
+      gaps: rows.filter((row) => row.gaps > 0).length,
+    });
+  }, [rows, onCountsChange]);
   const [commitment, setCommitment] = useState({
     assignmentId: '',
     initiativeId: '',
@@ -512,6 +523,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           knowledge: `K ${known} · E ${estimated} · U 0 · UC ${unconfirmed}`,
           updatedAt: scenario.publishedAt || '',
           version: scenario.scenarioVersion,
+          periods: scenario.periods.length,
+          roles: new Set(scenario.proposedAssignments.map((item) => item.resourceOrRoleId)).size,
+          gaps: scenario.periods.filter((period) => period.demand.base != null && period.supply.base != null && period.demand.base > period.supply.base).length,
         },
       ]);
       setSelectedId(scenario.scenarioId);
@@ -557,13 +571,20 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       ];
       const nextRows = (body.scenarios ?? []).map((x) => ({
         id: x.id,
-        title: x.name,
+        title: resolveBusinessDisplayLabel({
+          displayName: x.name,
+          rawId: x.id,
+          fallback: `${t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy')} · ${formatPeriodDate(x.updatedAt)}`,
+        }),
         state: x.state,
-        plan: `${x.planRef.scenarioId} v${x.planRef.scenarioVersion}`,
+        plan: `${resolveBusinessDisplayLabel({ displayName: x.planRef.scenarioId, rawId: x.planRef.scenarioId, fallback: t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy') })} · v${x.planRef.scenarioVersion}`,
         window: `${x.window.start ?? '—'} → ${x.window.end ?? '—'}`,
         knowledge: `K ${x.knowledgeSummary.known} · E ${x.knowledgeSummary.estimated} · U ${x.knowledgeSummary.unknown} · UC ${x.knowledgeSummary.unconfirmed}`,
         updatedAt: x.updatedAt,
         version: x.version,
+        periods: x.periodCount ?? 0,
+        roles: x.roleCount ?? 0,
+        gaps: x.gapCount ?? 0,
       }));
       setRows(nextRows);
       if (nextRows.length) {
@@ -619,8 +640,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   };
   const createAnalysis = async () => {
     const plan = publishedPlans.find((item) => item.id === newPlanId);
-    const scenarioId = newAnalysisId.trim();
-    if (!plan || !scenarioId || writeState === 'SAVING') return;
+    const name = newAnalysisId.trim();
+    if (!plan || !name || writeState === 'SAVING') return;
+    const scenarioId = `capacity-${crypto.randomUUID()}`;
     const unknownRange = (ownerId: string): Range => ({
       knowledgeState: 'UNKNOWN',
       low: null,
@@ -635,6 +657,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     });
     const next: Scenario = {
       scenarioId,
+      name,
       scenarioVersion: 0,
       status: 'DRAFT',
       planScenarioId: plan.id,
@@ -829,6 +852,62 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         </button>
       </div>
     );
+  if (workspaceOpen && scenario) {
+    return <CapacityAnalysisCard scenario={scenario} noPressure={advisorState === 'NO_PRESSURE'} onBack={() => setWorkspaceOpen(false)} onAnalyze={() => void proposeOptions()} onPublish={() => void write('PUBLISH')} />;
+  }
+  if (!workspaceOpen && !showCreate) {
+    const visibleAnalyses = rows.filter((row) =>
+      activePreset === 'drafts'
+        ? row.state === 'DRAFT'
+        : activePreset === 'published'
+          ? row.state === 'PUBLISHED'
+          : activePreset === 'gaps'
+            ? row.gaps > 0
+            : true
+    );
+    const selectedAnalysis = visibleAnalyses.find((row) => row.id === selectedId) ?? null;
+    return (
+      <section aria-label={t('initiatives.capacityAnalysis.listAria', 'Lista analiz obciążenia')} className="h-full min-h-0">
+        <TableWithPreviewLayout<Row>
+          selectedId={selectedId}
+          selectedItem={selectedAnalysis}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => void open(id)}
+          itemIds={visibleAnalyses.map((row) => row.id)}
+          getItemById={(id) => visibleAnalyses.find((row) => row.id === id) ?? null}
+          previewOpen={Boolean(selectedAnalysis)}
+          renderPreview={(row) => (
+            <StandardPreview
+              embedded title={row.title} onClose={() => setSelectedId(null)} onOpenFull={() => void open(row.id)}
+              meta={{ pills: [{ label: scenarioStateLabel(row.state) ?? t('common.unknown', 'Nieznane'), tone: 'neutral' }] }}
+              details={{ properties: [
+                { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Plan źródłowy'), value: row.plan },
+                { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), value: String(row.periods) },
+                { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), value: String(row.roles) },
+                { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), value: row.gaps ? String(row.gaps) : t('common.none', 'Brak') },
+              ] }}
+            />
+          )}
+        >
+          <StandardTable
+            columns={[
+              { id: 'title', label: t('initiatives.capacityAnalysis.columns.name', 'Nazwa'), sortable: true },
+              { id: 'plan', label: t('initiatives.capacityAnalysis.columns.sourcePlan', 'Plan źródłowy'), sortable: true },
+              { id: 'periods', label: t('initiatives.capacityAnalysis.columns.periods', 'Okresy'), sortable: true },
+              { id: 'roles', label: t('initiatives.capacityAnalysis.columns.roles', 'Role'), sortable: true },
+              { id: 'gaps', label: t('initiatives.capacityAnalysis.columns.gaps', 'Luki'), sortable: true, render: (row) => row.gaps ? row.gaps : t('common.none', 'Brak') },
+              { id: 'state', label: t('common.status', 'Status'), render: (row) => scenarioStateLabel(row.state) ?? t('common.unknown', 'Nieznane') },
+              { id: 'updatedAt', label: t('initiatives.capacityAnalysis.columns.updatedAt', 'Zaktualizowano'), render: (row) => formatPeriodDate(row.updatedAt) },
+            ]}
+            data={visibleAnalyses}
+            selectedRowId={selectedId}
+            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowDoubleClick={(row) => void open(String(row.id))}
+          />
+        </TableWithPreviewLayout>
+      </section>
+    );
+  }
   return (
     <section aria-label="Capacity scenarios" className="flex h-full min-h-0 flex-col p-4">
       <header className="mb-3">
@@ -843,7 +922,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       <div className="mb-3 flex justify-end">
         <button
           type="button"
-          className="btn-primary"
+          className="btn-secondary"
           onClick={() => setShowCreate((open) => !open)}
         >
           <Plus size={15} /> {t('initiatives.capacityAdvisor.newAnalysis', 'New analysis')}
@@ -878,7 +957,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           </label>
           <button
             type="button"
-            className="btn-primary"
+            className="btn-secondary"
             disabled={!newAnalysisId.trim() || !newPlanId || writeState === 'SAVING'}
             onClick={() => void createAnalysis()}
           >
@@ -1176,7 +1255,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                 Zapisz szkic
               </button>
               <button
-                className="btn-primary"
+                className="btn-secondary"
                 disabled={scenario.status !== 'DRAFT' || writeState === 'SAVING'}
                 onClick={() => void write('PUBLISH')}
               >

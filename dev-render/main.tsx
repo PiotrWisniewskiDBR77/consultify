@@ -428,6 +428,10 @@ const KartaDecisionScreen = React.lazy(() => import('./screens/karta-decision'))
 const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notification'));
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'));
+const KartaPlanScreen = React.lazy(() => import('./screens/karta-plan'));
+const KartaCapacityAnalysisScreen = React.lazy(
+  () => import('./screens/karta-capacity-analysis')
+);
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
 // [ODMROZENIE 00_SHARED DEC-422] Trzy karty N modułu Wyniki weszły do rejestru
 // (`src/components/standard/registry.ts`), a bramka `scripts/karty-n-smoke.mjs`
@@ -1289,6 +1293,14 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'KARTY N — Analiza ROI (DEC-422): REALNY <RoiCaseCardPage> z Menu 5 i Pracuj z AI; PIR w statusie draft, więc Uzupełnij ma gdzie zapisać',
     render: () => <KartaAnalizaRoiScreen />,
+  },
+  'karta-plan': {
+    label: 'P11 — karta planu inicjatyw (DEC-421)',
+    render: () => <KartaPlanScreen />,
+  },
+  'karta-capacity-analysis': {
+    label: 'P11 — karta analizy obciążenia inicjatyw (DEC-421)',
+    render: () => <KartaCapacityAnalysisScreen />,
   },
   'karta-task-pelna': {
     label:

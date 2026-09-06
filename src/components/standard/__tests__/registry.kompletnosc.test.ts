@@ -23,6 +23,8 @@ const OCZEKIWANE_W_REJESTRZE = [
   'metric',
   'objective',
   'roi_case',
+  'plan',
+  'capacity_analysis',
 ] as const;
 
 const JAWNE_WYJATKI = {
@@ -38,7 +40,7 @@ const JAWNE_WYJATKI = {
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
-  it('zawiera wszystkie 11 kart wskazanych przez KartaNKey', () => {
+  it('zawiera wszystkie 13 kart wskazanych przez KartaNKey (DEC-422 Wyniki + DEC-421 plan i analiza obciążenia)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
@@ -51,7 +53,8 @@ describe('P10 — kompletność rejestru kart N', () => {
     const pokryte = new Set([...OCZEKIWANE_W_REJESTRZE, ...Object.keys(JAWNE_WYJATKI)]);
     // 19 → 20 (DEC-422): `metric` i `objective` PRZESZŁY z wyjątków do
     // rejestru (bilans zerowy), a karta analizy ROI (`roi_case`) doszła jako
-    // dwudziesta pozycja inwentarza — wcześniej nie było jej nigdzie.
-    expect(pokryte.size).toBe(20);
+    // dwudziesta pozycja inwentarza — wcześniej nie było jej nigdzie;
+    // 20 → 22 (DEC-421, P11): karty `plan` i `capacity_analysis`.
+    expect(pokryte.size).toBe(22);
   });
 });

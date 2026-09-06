@@ -1,6 +1,8 @@
 export interface CanonicalMenu3Contract {
   activePreset: string;
   onCountsChange?: (counts: Record<string, number>) => void;
+  /** Rosnący sygnał z CTA Menu 2; powierzchnia otwiera własny kreator dokładnie raz. */
+  createRequestId?: number;
 }
 
 export const countPresets = <T>(
