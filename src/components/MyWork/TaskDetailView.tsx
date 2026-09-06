@@ -160,7 +160,8 @@ import { RelatedContext } from './shared/RelatedContext';
 import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsList';
 // MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
-import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
+import { sekcjeZKontraktu } from '../standard/contractSections';
+import { TASK_CARDS, TASK_CARD_SPEC } from './taskCardContract';
 import { isTaskSectionVisible } from './taskSectionVisibility';
 import { TaskCardV2 } from './TaskCardV2';
 import { isTaskCardV2Enabled } from './taskCardV2Flag';
@@ -279,46 +280,6 @@ const VF1_TASK_SPECA = import.meta.env.VITE_VF1_TASK_SPECA === 'true';
 // `ff.cardContract` działają TAKŻE na produkcji (bez DEV guardu) — żeby Piotr mógł
 // włączyć kontrakt tylko sobie jednym linkiem, publiczność bez linku widzi demo bez
 // zmian. Kolejność: URL → localStorage → env → OFF. Wzór: isInitiativeCardContractEnabled.
-function parseCardContractFlag(raw: string | null | undefined): boolean | null {
-  if (raw === null || raw === undefined) return null;
-  const v = String(raw).trim().toLowerCase();
-  if (v === '1' || v === 'true' || v === 'on') return true;
-  if (v === '0' || v === 'false' || v === 'off') return false;
-  return null;
-}
-
-function useTaskCardContractEnabled(): boolean {
-  return useMemo(() => {
-    if (typeof window !== 'undefined' && window.location) {
-      try {
-        const q = parseCardContractFlag(
-          new URLSearchParams(window.location.search).get('cardContract')
-        );
-        if (q !== null) {
-          try {
-            window.localStorage.setItem('ff.cardContract', q ? '1' : '0');
-          } catch {
-            /* ignore */
-          }
-          return q;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const ls = parseCardContractFlag(window.localStorage.getItem('ff.cardContract'));
-        if (ls !== null) return ls;
-      } catch {
-        /* ignore */
-      }
-    }
-    if (import.meta.env.VITE_VF1_TASK_CARD_CONTRACT === 'true') return true;
-    return false;
-  }, []);
-}
-
 // M1 primary CTA icon while the accept/mark-in-progress golden flow (Step 1
 // task PUT + Step 2 Inbox close) is in flight. `NModeHeaderPrimaryAction.icon`
 // is rendered as `<Icon size={16} />` with no className passthrough, so a
@@ -3004,63 +2965,8 @@ Return ONLY the final comment text.`;
   }, [dueDate]);
 
   // ── N-mode section navigation ────────────────────────────────────────────
-  const taskNSections: NModeSection[] = useMemo(
-    () => [
-      {
-        id: 'description-scope',
-        icon: FileText,
-        label: { en: 'Description & Scope', pl: 'Opis i zakres' },
-        component: null,
-      },
-      {
-        id: 'implementation',
-        icon: Lightbulb,
-        label: { en: 'Implementation Ideas', pl: 'Pomysły realizacji' },
-        component: null,
-      },
-      {
-        id: 'risk-alternatives',
-        icon: AlertCircle,
-        label: { en: 'Risk & Alternatives', pl: 'Ryzyko i alternatywy' },
-        component: null,
-      },
-      {
-        id: 'checklist',
-        icon: CheckSquare,
-        label: { en: 'Checklist', pl: 'Lista kontrolna' },
-        component: null,
-      },
-      {
-        id: 'dependencies',
-        icon: GitBranch,
-        label: { en: 'Dependencies', pl: 'Zależności' },
-        component: null,
-      },
-      {
-        id: 'evidence',
-        icon: ShieldCheck,
-        label: { en: 'Evidence', pl: 'Dowody' },
-        component: null,
-      },
-      {
-        id: 'governance',
-        icon: Users,
-        label: { en: 'RACI & Escalation', pl: 'RACI i eskalacja' },
-        component: null,
-      },
-      {
-        id: 'attachments-links',
-        icon: FolderOpen,
-        label: { en: 'Attachments & Links', pl: 'Załączniki i powiązania' },
-        component: null,
-      },
-      // SPEC-N §2.1 — identyfikatory ZAREZERWOWANE dla prawego panelu:
-      // `comments` · `history` · `activity-log` nie mogą być sekcją lewej
-      // kolumny. Obie (Komentarze, Aktywność) zjechały stąd do
-      // `rightPanelSections` w PEŁNEJ formie (CommentsCanvas /
-      // ActivityLogCanvas) — nie jako skrót, żeby żadna funkcja nie zniknęła
-      // użytkownikowi (dodawanie komentarza, filtr, sort, AI-enhance).
-    ],
+  const taskContractSections: NModeSection[] = useMemo(
+    () => sekcjeZKontraktu(TASK_CARDS, 'task'),
     []
   );
 
@@ -3071,7 +2977,7 @@ Return ONLY the final comment text.`;
   // dopiero na audycie za trzy tygodnie.
   useEffect(() => {
     if (!import.meta.env?.DEV) return;
-    const missing = taskNSections
+    const missing = taskContractSections
       .map((s) => s.id)
       .filter((id) => !TASK_AI_CARD_META[id] && !TASK_AI_CONTRACT_NONE[id]);
     if (missing.length > 0) {
@@ -3081,7 +2987,7 @@ Return ONLY the final comment text.`;
         missing
       );
     }
-  }, [taskNSections]);
+  }, [taskContractSections]);
 
   // ── CommentsCanvas props mapping ─────────────────────────────────────────
   const nModeComments: CommentItem[] = useMemo(
@@ -3336,7 +3242,7 @@ Return ONLY the final comment text.`;
 
   // ── Build N-mode sections with components ────────────────────────────────
   const nModeSectionsWithContent: NModeSection[] = useMemo(() => {
-    return taskNSections.map((section) => {
+    return taskContractSections.map((section) => {
       let component: React.ReactNode = null;
 
       switch (section.id) {
@@ -4694,7 +4600,7 @@ Return ONLY the final comment text.`;
       return { ...section, component };
     });
   }, [
-    taskNSections,
+    taskContractSections,
     isPolish,
     cardState,
     cardAI,
@@ -4767,10 +4673,7 @@ Return ONLY the final comment text.`;
   // MIGRACJA (D-8): gdy włączony kontrakt, layout ma INNE znaczenie (węższy zestaw
   // domyślny), więc namespace klucza jest osobny — stary 10-kartowy layout nie
   // hydratuje się nad węższy domyślny, a wyłączenie flagi wraca do 'v1' bez utraty.
-  const taskCardContractEnabled = useTaskCardContractEnabled();
-  const taskCardLayoutStorageKey = `task:nmode:card-layout:${
-    taskCardContractEnabled ? 'v2-contract' : 'v1'
-  }:${taskId ?? 'new'}`;
+  const taskCardLayoutStorageKey = `task:nmode:card-layout:v2-contract:${taskId ?? 'new'}`;
   const initialTaskCardLayout = useMemo<CardLayout | null>(() => {
     try {
       const raw = localStorage.getItem(taskCardLayoutStorageKey);
@@ -4808,7 +4711,7 @@ Return ONLY the final comment text.`;
     // MIGRACJA: gdy flaga ON, katalog + zestawy płyną z kontraktu kanonicznego
     // (TASK_CARD_SPEC — stała moduł-const, stabilna referencja); gdy OFF,
     // `undefined` ⇒ useCardLayout czyta DEFAULT_CARD_SETS['task'] jak dotąd.
-    spec: taskCardContractEnabled ? TASK_CARD_SPEC : undefined,
+    spec: TASK_CARD_SPEC,
     initialLayout: initialTaskCardLayout,
     onLayoutChange: persistTaskCardLayout,
   });
@@ -4835,20 +4738,6 @@ Return ONLY the final comment text.`;
     stakeholders,
     escalationRules,
   ]);
-
-  // R3 (przepis §3): każda sekcja renderowana przez Task ma wpis w katalogu
-  // kanonicznym i odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog —
-  // nie blokuje renderu, ale ostrzega, gdyby alias został źle zmapowany.
-  useEffect(() => {
-    if (!import.meta.env.DEV || !taskCardContractEnabled) return;
-    const missing = taskNSections
-      .map((s) => s.id)
-      .filter((id) => !TASK_CARD_RENDER_IDS.includes(id));
-    if (missing.length > 0) {
-      // eslint-disable-next-line no-console
-      console.warn('[taskCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
-    }
-  }, [taskCardContractEnabled, taskNSections]);
 
   useEffect(() => {
     if (visibleTaskNModeSections.length === 0) return;
@@ -5286,12 +5175,12 @@ Return ONLY the final comment text.`;
   const zrodlaPracujZAI = useMemo(
     () =>
       zbudujZrodlaPracujZAI({
-        sekcje: taskNSections,
+        sekcje: taskContractSections,
         polaSekcji: taskPolaSekcji,
         applyChange: applyTaskAnalysisChange,
         isPolish,
       }),
-    [taskNSections, taskPolaSekcji, applyTaskAnalysisChange, isPolish]
+    [taskContractSections, taskPolaSekcji, applyTaskAnalysisChange, isPolish]
   );
 
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
