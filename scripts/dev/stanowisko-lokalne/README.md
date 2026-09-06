@@ -175,8 +175,18 @@ zalogowane konta w tej organizacji.
 - `seed-production-dbr77-sample-data.ts` — pada na
   `null value in column "organization_id" of relation "assessment_workflows"`
   (rozjazd seeda ze schematem). Część danych wchodzi przed błędem.
-- **Spotkania**: brak seeda Postgres z parametrem org — tabela `meetings` pusta.
-- **Materiały / Audyty**: jw., brak seeda per-org.
+- **Spotkania**: brak seeda Postgres z parametrem org. Tabela `meetings` miała
+  0 wierszy do 06.09/DEC-437 — teraz ma 1 (patrz „Dane pokazowe: odchylenie
+  KPI + karta działania + spotkanie" niżej). Rekord da się TWORZYĆ przez
+  `POST /api/meeting/`, ale **nie da się go OBEJRZEĆ** na żadnym realnym
+  ekranie: `VITE_MODULE_MEETINGS` (`src/utils/meetingsModuleFlag.ts`) jest
+  OFF na całe MVP per DEC-425 (właściciel, 06.09 — „Wrzuć Spotkania za flagę,
+  Fala 2, nie rozwijamy teraz") i każda trasa `/meetings/**` (oraz legacy
+  `/meeting`) renderuje `MeetingsWave2Placeholder`, nie `MeetingHub`/
+  `MeetingObjectPage`. To DRUGA, niezależna bramka od `BETA_MENU_STATUS.
+  MODULE_MEETING` (ta jest `'open'`, admini są z niej zwolnieni) — DEC-425
+  chce pełnej niewidzialności bez wyjątku dla adminów, więc rola nie pomaga.
+- **Materiały / Audyty**: jw. (seed), brak seeda per-org.
 - `seed-dbr77-fill-all-tables.ts` — wyłącznie SQLite, nie działa tu.
 - `seed-apator-organization.ts` i `build-demo-dataset.ts` zakładają **osobne**
   organizacje (Apator / Atelier Toys) — audytor zalogowany jako DBR77 ich nie zobaczy.
@@ -194,3 +204,97 @@ Organizacja DBR77 na lokalnej bazie ma `organization_type=PAID` (jak org właśc
 Jeden dokument sejfu utworzony przez kontrakt produktu (`POST /api/knowledge/documents`), docId `c0fc94e7…`
 (pełny id i sposób usunięcia w `docs/program/PROGRAM_NAPRAWCZY_20260905/P10/vault-document.md` §0/§6).
 Zostawiony celowo: oba sejfy DBR77 miały 0 dokumentów, więc karta `vault-document` nie była mierzalna (P10-S STOP).
+
+### Dane pokazowe: odchylenie KPI + karta działania + spotkanie (06.09, DEC-437)
+
+Cel: stanowisko miało 0 odchyleń KPI, 0 kart działania i 0 spotkań w DBR77 —
+przepływ Wyniki→Skrzynka→Spotkanie nie był możliwy do pokazania na żywo.
+Wszystkie trzy rekordy powstały PRZEZ KONTRAKT PRODUKTU (te same trasy, którymi
+przeszedłby użytkownik), kontem `audyt@dbr77.local` (org DBR77 `cc9db573-260f-
+4a19-927f-f3cc1fbaea38` — **nie** `a3e05d4a…` ze zlecenia; ten uuid w bazie
+lokalnej nie istnieje, `a3e05d4a…` to org właściciela na stagingu, patrz
+„Typ organizacji" wyżej).
+
+**Ustalenie kontraktu (zweryfikowane w kodzie, nie założone):** `vnext` nie ma
+ręcznego `POST` tworzącego wprost sprawę odchylenia — `kpiDeviation.routes.ts`
+ma tylko czynności NA już istniejącej sprawie (`acknowledge`/`root-cause`/
+`plan`/…). Sprawa odchylenia powstaje jako SKUTEK zapisu pomiaru: zarówno
+`POST /:kpiId/measurements` (`recordMeasurement`), jak i `POST
+/:kpiId/measurements/:measurementId/corrections` (`correctMeasurement`)
+wołają `openOrEscalateDeviationCase` w TEJ SAMEJ transakcji, gdy serwerowo
+policzony `performanceStatus` (funkcja czysta `evaluatePerformanceStatus`,
+nigdy nie ufa liczbie od klienta) wychodzi `warning`/`critical`. Kartę
+działania (`action_cards`) otwiera dokładnie ten sam handler zaraz po
+zapisie, ale TYLKO dla `performanceStatus === 'critical'` (`warning` to żółty
+wiersz, nie zobowiązanie) — `server/src/services/actionCard/
+kpiDeviationActionCard.ts::ensureActionCardForKpiDeviation`, wołane z
+`server/src/routes/resultsVnext/kpi.routes.ts` w obu handlerach (linie ~985 i
+~1130). Jedno wywołanie API = odchylenie + karta naraz.
+
+Wszystkie 138 aktywnych/zatwierdzonych KPI w DBR77 miały już komplet 9
+pomiarów miesięcznych styczeń–wrzesień 2026 (unikalny indeks `kpi_id +
+period_start + period_end` blokuje drugi pomiar w tym samym okresie), więc
+nowego pomiaru „na pusto" nie dało się dopisać bez cofania się w przyszłość
+(wrzesień 2026 — miesiąc jeszcze trwa, październik byłby datą bez sensu).
+Zamiast tworzyć nowy KPI (wymagałoby DRUGIEGO zalogowanego użytkownika —
+`approveDefinitionVersion` odrzuca samo-zatwierdzenie, `submitted_by`/
+`created_by` == zatwierdzający → `SelfApprovalDeniedError`, bez wyjątku dla
+roli), użyta została KOREKTA już istniejącego pomiaru — też natywna trasa
+kontraktu, też realny scenariusz biznesowy (dane księgowe z zamknięcia
+miesiąca niższe niż wstępny raport operacyjny).
+
+| Obiekt | ID | Trasa / plik:linia | Jak powstał |
+|---|---|---|---|
+| Pomiar (korekta, wywołuje odchylenie) | `ee4a5251-e817-4060-9d63-fef7a5467245` (koryguje `44b10ed4-…`) | `POST /api/vnext/results/kpi/:kpiId/measurements/:measurementId/corrections` — `server/src/routes/resultsVnext/kpi.routes.ts:1072` | KPI `DBR77.BSC.001` „WIELKOŚĆ SPRZEDAŻY NETTO" (`ed531550-a7bc-54bb-bbfc-71f2daa14d7f`), okres 09.2026, `actualValue: 5920` (cel 6474, próg ostrzegawczy 6150 LC/1000 → `performanceStatus: critical`), `correctionReason` po polsku (patrz commit) |
+| Sprawa odchylenia | `78374416-2c54-4847-be1d-2b401349dd18` | powstaje w TEJ SAMEJ transakcji co wiersz wyżej — `kpiMeasurementCommands.ts:266`/`567` → `kpiDeviationCommands.ts::openOrEscalateDeviationCase` | severity `critical`, status `open`, właściciel = autor korekty (jest właścicielem KPI) |
+| Karta działania | `967b8f76-5c7c-4656-bf32-481f943879e7` | jw., ten sam handler → `kpiDeviationActionCard.ts::ensureActionCardForKpiDeviation` | `sourceKind='kpi_deviation'`, `sourceId='ed531550-…:2026-09-01:2026-09-30'` (idempotentny klucz — druga korekta w tym samym okresie NIE dubluje karty), widoczna w Moja Praca → Skrzynka |
+| Spotkanie | `meeting-7b03171c-ff9a-4335-abbd-ef2cf11684a9` | `POST /api/meeting/` — `server/src/routes/meeting.routes.ts:356` | „Korekta wyniku sprzedaży netto — wrzesień 2026", 10.09.2026 09:00–10:00 Europe/Warsaw, uczestnicy: piotr.wisniewski@dbr77.com, anna.kowalska@dbr77.com, marek.nowak@dbr77.com |
+
+**★ ZNALEZISKO — sprzeczność DEC-437 × DEC-425 (obie 06.09):** spotkanie
+powyżej istnieje naprawdę w bazie i przeszło przez realny kontrakt API (dowód:
+`meetings` w DBR77 0→1, wiersz z poprawną treścią), ale **nie da się go
+obejrzeć na żadnym realnym ekranie dzisiaj**. Właściciel tego samego dnia
+podjął DEC-425: „Wrzuć Spotkania za flagę i wpisz to do Fali 2. Nie będziemy
+teraz tego rozwijać" (`src/utils/meetingsModuleFlag.ts`) — KAŻDA trasa
+`/meetings/**` (i legacy `/meeting`) renderuje `MeetingsWave2Placeholder`
+zamiast `MeetingHub`/`MeetingObjectPage`, bez wyjątku dla roli (to NIE jest
+`BETA_MENU_STATUS.MODULE_MEETING`, z tamtej bramki admini są zwolnieni — tu
+nie ma zwolnienia dla nikogo). Zrzut `03-spotkanie.png` niżej pokazuje
+dokładnie ten ekran-zaślepkę — to jest PRAWDZIWY, aktualny stan trasy, nie
+błąd tego zlecenia. Nie zmieniałem `VITE_MODULE_MEETINGS` (zakaz zmiany flag
+env w tym zleceniu) ani kodu produkcyjnego. Do rozstrzygnięcia z właścicielem:
+czy DEC-437 (pokaż spotkanie na ekranie) ma pierwszeństwo przed DEC-425
+(schowaj cały moduł) — jeśli tak, odmrożenie modułu `08_MEETINGS` to osobna,
+świadoma decyzja, nie efekt uboczny tego zlecenia.
+
+**Zrzuty** (`evidence/dane-437/`, 1440×900, jasny motyw, org DBR77):
+- `01-odchylenie-kpi.png` — `/results/kpi/ed531550-…/deviation-cases/78374416-…` (sprawa „Otwarta"/„Krytyczna")
+- `02-karta-dzialania-skrzynka.png` — `/my-work` → zakładka Skrzynka, sekcja „Karty działania (1)" z treścią karty
+- `03-spotkanie.png` — `/meetings/meeting-7b03171c-…` → zaślepka Fali 2 (patrz ZNALEZISKO wyżej)
+
+**Pomiar (org DBR77, przed → po, 06.09):**
+
+| Tabela | Przed | Po | Delta |
+|---|---|---|---|
+| `rvn_kpi_measurements` | 1098 | 1099 | +1 (korekta) |
+| `rvn_kpi_deviation_cases` | 0 | 1 | +1 |
+| `action_cards` | 0 | 1 | +1 |
+| `meetings` | 0 | 1 | +1 |
+| `rvn_kpi_definitions` | 138 | 138 | 0 (żaden nowy KPI — użyty istniejący) |
+
+Zero sond/prób odrzuconych do sprzątnięcia — obie trasy (korekta, spotkanie)
+przeszły za pierwszym razem.
+
+**Usunięcie (gdyby dane miały zniknąć):**
+```sql
+DELETE FROM meetings WHERE id = 'meeting-7b03171c-ff9a-4335-abbd-ef2cf11684a9';
+DELETE FROM action_cards WHERE id = '967b8f76-5c7c-4656-bf32-481f943879e7';
+DELETE FROM rvn_kpi_deviation_cases WHERE case_id = '78374416-2c54-4847-be1d-2b401349dd18';
+DELETE FROM rvn_kpi_measurements WHERE measurement_id = 'ee4a5251-e817-4060-9d63-fef7a5467245';
+-- oryginalny pomiar 44b10ed4-… wraca do bycia "bieżącym" automatycznie —
+-- unikalny indeks (kpi_id, period_start, period_end) WHERE correction_of_measurement_id IS NULL
+-- znów widzi tylko jego, bo korekta zniknęła.
+```
+Kolejność usuwania ma znaczenie (dziecko przed rodzicem: spotkanie i karta są
+niezależne, ale pomiar-korekta musi zniknąć PO sprawie odchylenia, bo
+`rvn_kpi_deviation_cases.trigger_measurement_id` na niego wskazuje).
