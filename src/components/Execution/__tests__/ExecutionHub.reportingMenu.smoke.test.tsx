@@ -20,14 +20,17 @@ describe('ExecutionHub Reporting row menu', () => {
   it('declares one context Open full and delegates the only preview to the manage block', () => {
     expect(reportingMenuSource).not.toContain("id: 'open_preview'");
     expect(reportingMenuSource.match(/id: 'open_full'/g)).toHaveLength(1);
-    expect(
-      reportingMenuSource.match(/preview: \(\) => setReportPreviewId\(report\.id\)/g)
-    ).toHaveLength(1);
+    // DEC-397b (1.1-K6): `preview:` now also calls `jedenPanel.otworz()` (so a
+    // row click after closing the panel with X reopens it) — the handler body
+    // is a block, not a one-line arrow, but it still calls
+    // `setReportPreviewId(report.id)` exactly once inside `universalHandlers`.
+    expect(reportingMenuSource.match(/preview: \(\) => \{/g)).toHaveLength(1);
+    expect(reportingMenuSource.match(/setReportPreviewId\(report\.id\)/g)).toHaveLength(1);
 
     const composedActionOrder = [
       ...Array.from(reportingMenuSource.matchAll(/id: '(open_[^']+)'/g), (match) => match[1]),
       ...(reportingMenuSource.includes('universalHandlers:') &&
-      reportingMenuSource.includes('preview: () => setReportPreviewId(report.id)')
+      reportingMenuSource.includes('setReportPreviewId(report.id)')
         ? ['open_preview']
         : []),
     ];

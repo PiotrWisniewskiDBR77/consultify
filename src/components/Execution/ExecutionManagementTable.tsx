@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type MetaPill, StandardPreview } from '../standard/StandardPreview';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '../shared/PreviewPane/useJedenPanel';
 import {
   type StandardRowMenu,
   StandardTable,
@@ -59,6 +60,9 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = useMemo(
@@ -135,7 +139,10 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
             ]
           : undefined,
         universalHandlers: {
-          preview: () => setSelectedId(String(row.id)),
+          preview: () => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          },
         },
       };
     },
@@ -152,7 +159,10 @@ export const ExecutionManagementTable: React.FC<ExecutionManagementTableProps> =
           persistKey="execution.management"
           defaultSort={{ columnId: 'critical', direction: 'desc' }}
           selectedRowId={selectedId}
-          onRowClick={(row) => setSelectedId(String(row.id))}
+          onRowClick={(row) => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          }}
           rowMenu={rowMenu}
           rowDescription={() => null}
           empty={{

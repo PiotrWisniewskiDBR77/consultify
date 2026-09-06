@@ -55,6 +55,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -815,6 +816,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [workFilterControl, setWorkFilterControl] = useState<React.ReactNode>(null);
   const [resourcesFilterControl, setResourcesFilterControl] = useState<React.ReactNode>(null);
   const [controlFilterControl, setControlFilterControl] = useState<React.ReactNode>(null);
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -2940,7 +2944,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             ]
           : undefined,
         universalHandlers: {
-          preview: () => setSummaryPreviewInitiativeId(init.id),
+          preview: () => {
+            jedenPanel.otworz();
+            setSummaryPreviewInitiativeId(init.id);
+          },
           edit: isPilotParticipant ? undefined : () => handleOpenDocument(init),
           // Brak API archiwizacji inicjatywy — pozycja disabled z notą
           // (StandardTable dokłada ją sama, canon A6 blok 4).
@@ -2971,7 +2978,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       ],
       universalHandlers: {
-        preview: () => setReportPreviewId(report.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setReportPreviewId(report.id);
+        },
         // Brak API edycji/archiwizacji definicji raportu — pozycje disabled
         // z notą (StandardTable dokłada je sama, canon A6 blok 4).
       },
@@ -5227,7 +5237,10 @@ Please return:
                   >
                 }
                 selectedRowId={selectedReportPreviewId}
-                onRowClick={(row) => setReportPreviewId(String((row as any).id))}
+                onRowClick={(row) => {
+                  jedenPanel.otworz();
+                  setReportPreviewId(String((row as any).id));
+                }}
                 onRowDoubleClick={(row) => {
                   const r = filteredReportCatalog.find((x) => x.id === (row as any).id);
                   if (r) handleOpenReport(r);
@@ -5685,7 +5698,10 @@ Please return:
                   summaryInitiatives as unknown as Array<Record<string, unknown> & { id: string }>
                 }
                 selectedRowId={summaryPreviewInitiativeId}
-                onRowClick={(row) => setSummaryPreviewInitiativeId(String((row as any).id))}
+                onRowClick={(row) => {
+                  jedenPanel.otworz();
+                  setSummaryPreviewInitiativeId(String((row as any).id));
+                }}
                 onRowDoubleClick={(row) => {
                   const init = summaryInitiatives.find((x) => x.id === (row as any).id);
                   if (init) handleOpenDocument(init);
