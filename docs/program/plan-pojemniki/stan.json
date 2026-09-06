@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 15:38",
+  "zaktualizowano": "2026-09-06 16:25",
   "sha_rejestru": "74d48a0c41",
   "pojemniki": [
     {
@@ -988,8 +988,8 @@
     },
     {
       "modul": "Inicjatywy",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE (67 wierszy po scaleniu dwóch rejestrów). Ścieżka: lista → wiersz → podgląd → karta."
+      "werdykt": "w_toku",
+      "zdanie": "06.09 15:41: „nie mam większych uwag” do karty; I3 na żywo (Menu 3), I4 w toku (FILTERS, podgląd na klik); Plan/Obciążenie → P11 Codex; 1.11 statusy."
     },
     {
       "modul": "Realizacja",
@@ -998,8 +998,8 @@
     },
     {
       "modul": "Wyniki",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (B3): blisko, 3 blokery — dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku, częściowo naprawione w MVP-NAPRAWY-6), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2."
+      "werdykt": "w_toku",
+      "zdanie": "06.09 16:00: „narzędzia świetne, sterowanie nie” → R1 scalone (Uwaga/Raport zarządczy precz), R3 scalone (KPI bez UUID), R2 (Raporty zarządcze) i R4 (karty N) w toku."
     },
     {
       "modul": "Finanse",
@@ -1008,13 +1008,13 @@
     },
     {
       "modul": "Materiały",
-      "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (B3): NOWY BLOKER w chwili raportu — Dokumenty „Czysto” utykały na „Brak wczytanego dokumentu”; naprawione falą 6 (e6b0a152e3, Document Studio działa end-to-end), ale bez potwierdzenia żywym przejściem właściciela."
+      "werdykt": "w_toku",
+      "zdanie": "06.09 16:20: „zachwycony”; jedyna uwaga: popover filtrów → 2 dropdowny (M-1 w toku)."
     },
     {
       "modul": "Audyty",
       "werdykt": "w_toku",
-      "zdanie": "06.09: uwagi 15:27–15:38 — sidebar pod Oceną, bez Raportów DRD i Ustaleń, Nowy audyt zamrożony (A1 w toku), Menu 3 jeden wzór + generatory (A2 w kolejce)."
+      "zdanie": "06.09: A1 na żywo (dbc1a03e19); A2 (Menu 3 jeden wzór, bez Ustaleń, generatory) w kolejce."
     },
     {
       "modul": "Spotkania",
@@ -1049,7 +1049,7 @@
     {
       "modul": "Partnerzy",
       "werdykt": "w_toku",
-      "zdanie": "06.09 15:40: „w całości nie jest podłączony… daj mi partnerów” → P-1 (Opus) w toku."
+      "zdanie": "06.09 16:20: podłączeni (P-1 na żywo dbc1a03e19) — czeka na odbiór właściciela."
     }
   ]
 }
