@@ -32,7 +32,31 @@ Do uzupełnienia po krokach 1–12.
 
 ## 3. Migracja danych
 
-Do uzupełnienia po kroku 9.
+Pierwsza próba została w całości wycofana: zastany ścisły CHECK odrzucił pierwszy
+nowy kod `IN_EXECUTION`. Polecenie „zdejmij stary CHECK dopiero po backfillu” jest
+technicznie niewykonalne dla CHECK-a zmierzonego w kroku 0. Migracja utrzymuje więc
+ochronę bez przerwy: dodaje przejściowy CHECK na sumę słowników, zdejmuje stary,
+wykonuje backfill, dodaje docelowy CHECK i zdejmuje przejściowy — wszystko w jednej
+transakcji.
+
+Skuteczny przebieg pierwszy: `UPDATE 58`. Przebieg drugi: `UPDATE 0`.
+
+| Status zastany | Status docelowy | Wiersze |
+|---|---|---:|
+| DRAFT | DRAFT | 19 |
+| PENDING_REVIEW, REVIEW, PROMOTED, PLANNING | PENDING_APPROVAL | 16 |
+| APPROVED, SCHEDULED | APPROVED | 12 |
+| EXECUTING, BLOCKED | IN_EXECUTION | 23 |
+| DONE, TRACKING, ARCHIVED | CLOSED | 9 |
+| CANCELLED | REJECTED | 3 |
+
+Po migracji: 0 wartości spoza siedmiu kodów, `on_hold=true` dla 6 wierszy,
+`archived=true` dla 1 wiersza. Brak `PROPOSED` w danych jest wynikiem pomiaru,
+nie brakującym mapowaniem.
+
+`20262103_p12_initiative_status_slownik.sql` jest ostatni w fazie datowanej.
+Nie jest ostatni globalnie: runner ma późniejsze fazy late/unordered. Instrukcja
+pomija te fazy; nowe pytanie zapisano w `99_DECYZJE_WLASCICIELA.md`.
 
 ## 4. Procedura dla stagingu
 
