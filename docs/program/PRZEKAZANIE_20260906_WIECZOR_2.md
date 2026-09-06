@@ -91,3 +91,9 @@ Fala 2: 3.9–3.18 (m.in. 3.12 zatwierdzanie odpowiedzi wywiadu, 3.13 układ DRD
 Krótko, po polsku, bez pytań o szczegóły; decyzje CTO podejmuj sam i zapisuj (właściciel zmienia jednym zdaniem); karta odbioru = jeden żywy obraz + Tak/Nie;
 wklejki dla Codexa w bloku kodu (właściciel = listonosz); każde jego zdanie z przeglądu → wiersz w rejestrze (cytat + zakres + DEC) ZANIM wydasz zlecenie;
 gdy zgłasza coś, co już naprawiono — sprawdź czas zrzutu vs deploy i poproś o odświeżenie (3× dziś).
+
+## 9. KOORDYNACJA DWÓCH SESJI (17:08)
+Sesja #24 już pracuje (worktree `wt-111-statusy-inicjatyw`, `wt-11z1-znaleziska-front`, `wt-11z2-znaleziska-serwer` widoczne o 17:08).
+Sesja #23 (ta) robi już TYLKO: odbiór meldunku M-2 (`wt-11m2b`) + merge do m03 + wiersz w rejestrze, nic więcej; potem kończy.
+Sesja #24: nie scalaj M-2 i nie pushuj, dopóki w rejestrze nie ma wiersza „1.1-M-2 … scalone lokalnie” (albo do 17:45 — wtedy M-2 przejmujesz ty).
+Jeden pusher: sesja #24 od momentu przejęcia. Wspólny m03 = kolejka scaleń; sprawdzaj `git log -1` przed każdym merge.
