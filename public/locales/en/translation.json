@@ -1169,7 +1169,12 @@
       "onboardingDescription": "The connection is active. Complete the required operational steps in the Partner workspace; this dashboard does not show registration or marketing content.",
       "connectionErrorTitle": "We could not determine the connection status",
       "connectionErrorDescription": "We do not show registration or program content until the server confirms your status. Try again.",
-      "retryConnection": "Check again"
+      "retryConnection": "Check again",
+      "connectOrganization": "Connect this organization as a partner",
+      "connecting": "Connecting…",
+      "connectSuccess": "Organization connected to the partner program",
+      "connectFailed": "Could not connect the organization. Try again.",
+      "unconnectedAdminDescription": "Your organization is not connected to the partner program yet. As an administrator you can connect it now — the portal will open with your organization data."
     },
     "becomePartner": "Become Partner",
     "footerCta": {
@@ -2685,7 +2690,7 @@
     "help": "Help",
     "knowledge": "Knowledge Base",
     "organization": "Organization",
-    "adminPanel": "Admin Panel",
+    "adminPanel": "Admin",
     "adminSection": {
       "overview": "Overview",
       "people": "People & Access",
