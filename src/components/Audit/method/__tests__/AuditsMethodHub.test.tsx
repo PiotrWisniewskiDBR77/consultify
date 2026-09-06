@@ -359,8 +359,7 @@ describe('AuditsMethodHub', () => {
     renderHub(['/audit-programs/method?tab=outputs']);
     await waitFor(() => expect(screen.getByText('No outputs yet')).toBeInTheDocument());
     expect(screen.getByText(/separate, explicit audit-session finalization/i)).toBeInTheDocument();
-    // DEC-417d: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2), a nie do
-    // kontrolki, która przy `ff_auditsReportChain` OFF w ogóle się nie renderuje.
+    // DEC-417d: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2).
     expect(screen.getByText(/“New output” in the module bar/i)).toBeInTheDocument();
   });
 

@@ -137,6 +137,7 @@ import {
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '../shared/PreviewPane/useJedenPanel';
 import { useDesktopPreviewOverlay } from '../shared/PreviewPane/useDesktopPreviewOverlay';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -799,6 +800,9 @@ export const InterviewHub: React.FC = () => {
   const canReviewInsights = permissionsCanReviewInsights || isUsingDemoData;
   const canViewTemplates = canViewManaged || templates.length > 0 || isUsingDemoData;
 
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
   const [previewAssignmentOpen, setPreviewAssignmentOpen] = useState(false);
@@ -8463,6 +8467,7 @@ Return ONLY the answer text (no markdown fences).`;
                 data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
                 selectedRowId={previewAssignmentId}
                 onRowClick={(row) => {
+                  jedenPanel.otworz();
                   setPreviewAssignmentId(String((row as any).id));
                   setPreviewAssignmentOpen(true);
                 }}
@@ -8532,6 +8537,7 @@ Return ONLY the answer text (no markdown fences).`;
                     ],
                     universalHandlers: {
                       preview: () => {
+                        jedenPanel.otworz();
                         setPreviewAssignmentId(a.id);
                         setPreviewAssignmentOpen(true);
                       },

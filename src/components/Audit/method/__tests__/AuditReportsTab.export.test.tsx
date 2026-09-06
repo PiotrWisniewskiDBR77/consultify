@@ -5,15 +5,22 @@
  * `grep -rn "export.docx" src/` dawał 0 trafień — żaden ekran nie miał
  * wołacza. To dowodzi drugiego miejsca (obok pełnego widoku raportu,
  * `AuditReportDocumentView.export.test.tsx`): kanoniczny slot „⋮ Pobierz”
- * w kebabie bloku Details podglądu listy Raportów, za tą samą flagą co
- * reszta łańcucha (`ff_audits_report_chain`), którą test włącza jawnie —
- * bez dotykania domyślnego stanu produkcyjnego (OFF).
+ * w kebabie bloku Details podglądu listy Raportów.
  *
  * FIX-187: bliźniak PDF (`export.pdf`) obok DOCX — kanoniczny drugi slot
- * `details.extraActions` (patrz `StandardPreview.tsx`), ta sama flaga.
+ * `details.extraActions` (patrz `StandardPreview.tsx`).
+ *
+ * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — te czynności są
+ * teraz widoczne zawsze, bez warunku.
+ *
+ * `MemoryRouter`: `AuditReportsTab` woła `useNavigate()` i osadza
+ * `JedenPrawyPanel` (→ `useJedenPanel()`/`useLocation()` bezwarunkowo, K5) —
+ * bez Routera render rzuca „useLocation() may be used only in the context
+ * of a <Router>” niezależnie od tej flagi (ZNALEZISKO przy 1.1-A3/K6).
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../auditsMethodApi', async () => {
@@ -21,7 +28,6 @@ vi.mock('../auditsMethodApi', async () => {
   return { ...actual, listReports: vi.fn() };
 });
 
-import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
 import { AuditReportsTab } from '../tabs/AuditReportsTab';
 import { listReports, type AuditReportSummary } from '../auditsMethodApi';
 
@@ -43,17 +49,22 @@ const draftReport: AuditReportSummary = {
   updatedAt: '2026-08-10',
 };
 
-function flag(on: boolean) {
-  localStorage.setItem('ff.audits_report_chain', on ? '1' : '0');
-  resetAuditsReportChainFlagCache();
-}
-
 async function openReportPreview() {
   mockedListReports.mockResolvedValue({ items: [draftReport], total: 1 });
-  render(<AuditReportsTab isPolish={false} />);
+  render(
+    <MemoryRouter>
+      <AuditReportsTab isPolish={false} />
+    </MemoryRouter>
+  );
   await waitFor(() => expect(screen.getByText('Day 41 Audit Report')).toBeInTheDocument());
   fireEvent.click(screen.getByText('Day 41 Audit Report'));
-  await screen.findByTestId('audit-report-preview');
+  // ZNALEZISKO (1.1-A3): `data-testid="audit-report-preview"` istniał na
+  // opakowaniu, które K5 (`d1270acba2`) zastąpiło `JedenPrawyPanel` bez
+  // przeniesienia testid — czekamy więc na realny element panelu (kebab
+  // Details), a nie na usunięty atrybut.
+  await screen.findByRole('button', {
+    name: 'sharedComponents.previewDetailsSection.detailsOptions',
+  });
 }
 
 async function openDetailsKebab() {
@@ -75,24 +86,11 @@ describe('AuditReportsTab DOCX/PDF export (FIX-1, FIX-187)', () => {
   });
 
   afterEach(() => {
-    localStorage.removeItem('ff.audits_report_chain');
-    resetAuditsReportChainFlagCache();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  it('flag OFF: the preview Details block renders no kebab at all (zero actions when onDownload is unset)', async () => {
-    flag(false);
-    await openReportPreview();
-    expect(
-      screen.queryByRole('button', {
-        name: 'sharedComponents.previewDetailsSection.detailsOptions',
-      })
-    ).toBeNull();
-  });
-
-  it('flag ON: the preview Details kebab offers "Download DOCX" and requests the real export route', async () => {
-    flag(true);
+  it('the preview Details kebab offers "Download DOCX" and requests the real export route', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['PKdocx']), { status: 200 }));
     await openReportPreview();
     await openDetailsKebab();
@@ -108,8 +106,7 @@ describe('AuditReportsTab DOCX/PDF export (FIX-1, FIX-187)', () => {
     await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
   });
 
-  it('flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187)', async () => {
-    flag(true);
+  it('the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187)', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['%PDF']), { status: 200 }));
     await openReportPreview();
     await openDetailsKebab();
@@ -125,8 +122,7 @@ describe('AuditReportsTab DOCX/PDF export (FIX-1, FIX-187)', () => {
     await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
   });
 
-  it('flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX)', async () => {
-    flag(true);
+  it('a backend error surfaces inline in the preview panel, not as alert() (DOCX)', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {
@@ -142,8 +138,7 @@ describe('AuditReportsTab DOCX/PDF export (FIX-1, FIX-187)', () => {
     expect(alertSpy).not.toHaveBeenCalled();
   });
 
-  it('flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187)', async () => {
-    flag(true);
+  it('a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187)', async () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {

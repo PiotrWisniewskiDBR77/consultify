@@ -1,6 +1,18 @@
+/**
+ * AuditProcessesTab — "Finalize Output" control.
+ *
+ * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — kontrolka jest
+ * teraz widoczna zawsze, bez warunku.
+ *
+ * `MemoryRouter`: `AuditProcessesTab` osadza `JedenPrawyPanel`, który woła
+ * `useJedenPanel()`/`useLocation()` bezwarunkowo (K5, `useJedenPanel.ts`) —
+ * bez Routera render rzuca „useLocation() may be used only in the context
+ * of a <Router>” niezależnie od tej flagi (ZNALEZISKO przy 1.1-A3/K6).
+ */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
@@ -14,7 +26,6 @@ vi.mock('../auditsMethodApi', async () => {
   };
 });
 
-import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
 import { AuditProcessesTab } from '../tabs/AuditProcessesTab';
 import {
   finalizeOutput,
@@ -42,22 +53,19 @@ const program: AuditProgramSummary = {
   updatedAt: '2026-08-28',
 };
 
-function arrangeFlag(on: boolean) {
-  window.localStorage.setItem('ff.audits_report_chain', on ? '1' : '0');
-  resetAuditsReportChainFlagCache();
-}
-
 function renderTab(onProgramChanged = vi.fn()) {
   return render(
-    <AuditProcessesTab
-      programs={[program]}
-      loading={false}
-      error={null}
-      onRetry={vi.fn()}
-      isPolish={false}
-      onProgramChanged={onProgramChanged}
-      initialSelectedId="prog-1"
-    />
+    <MemoryRouter>
+      <AuditProcessesTab
+        programs={[program]}
+        loading={false}
+        error={null}
+        onRetry={vi.fn()}
+        isPolish={false}
+        onProgramChanged={onProgramChanged}
+        initialSelectedId="prog-1"
+      />
+    </MemoryRouter>
   );
 }
 
@@ -74,19 +82,7 @@ describe('AuditProcessesTab finalize Output control', () => {
     vi.mocked(finalizeOutput).mockReset();
   });
 
-  afterEach(() => {
-    window.localStorage.removeItem('ff.audits_report_chain');
-    resetAuditsReportChainFlagCache();
-  });
-
-  it('flag OFF leaves the control out of the DOM', async () => {
-    arrangeFlag(false);
-    renderTab();
-    expect(screen.queryByRole('button', { name: 'Finalize Output' })).toBeNull();
-  });
-
-  it('flag ON calls finalizeOutput with the selected program', async () => {
-    arrangeFlag(true);
+  it('calls finalizeOutput with the selected program', async () => {
     vi.mocked(finalizeOutput).mockResolvedValue({
       id: 'out-1',
       programId: 'prog-1',
@@ -107,7 +103,6 @@ describe('AuditProcessesTab finalize Output control', () => {
   });
 
   it('success shows version and shortened hash and refreshes once', async () => {
-    arrangeFlag(true);
     const changed = vi.fn();
     vi.mocked(finalizeOutput).mockResolvedValue({
       id: 'out-1',
@@ -131,7 +126,6 @@ describe('AuditProcessesTab finalize Output control', () => {
   });
 
   it('shows the literal backend conflict message', async () => {
-    arrangeFlag(true);
     vi.mocked(finalizeOutput).mockRejectedValue({
       response: { status: 409, data: { error: '2 findings remain in draft; example afnd_1' } },
     });
@@ -143,7 +137,6 @@ describe('AuditProcessesTab finalize Output control', () => {
   });
 
   it('disables during the request so two clicks produce one call', async () => {
-    arrangeFlag(true);
     let resolve!: (value: any) => void;
     vi.mocked(finalizeOutput).mockReturnValue(
       new Promise((done) => {

@@ -43,6 +43,7 @@ import { getDocumentStudioArtifact } from '@/components/DocumentStudio/api';
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableColumn } from '@/components/standard/StandardTable';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   ARTIFACT_IDENTITY,
   type ArtifactType,
@@ -719,12 +720,16 @@ export const RezultatyView: React.FC<RezultatyViewProps> = ({
   // wszędzie poza jednym wywołaniem.
   const [wlasnyWybor, setWlasnyWybor] = useState<Selection>(null);
   const selection = wybor !== undefined ? wybor : wlasnyWybor;
+  // DEC-397b (1.1-K6): klik wiersza po zamknięciu panelu (X) ma go ponownie
+  // otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const setSelection = useCallback(
     (next: Selection) => {
+      if (next) jedenPanel.otworz();
       if (onWybor) onWybor(next);
       else setWlasnyWybor(next);
     },
-    [onWybor]
+    [onWybor, jedenPanel]
   );
 
   const otworz = useCallback(

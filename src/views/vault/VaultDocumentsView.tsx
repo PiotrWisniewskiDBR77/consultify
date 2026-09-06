@@ -110,6 +110,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { MetaChip, StatusChip } from '@/components/ui/primitives';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/utils/cn';
@@ -202,6 +203,9 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   // ani Menu 2 (Kategoria), ani Menu 3 (status) — więc lejek nie dubluje niczego.
   const [tagFilters, setTagFilters] = useState<FilterChip[]>([]);
 
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(initialDocumentId);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   // MYW-CV-REC-003 — dynamiczny kwit per element po akcji zbiorczej (usuń /
@@ -799,7 +803,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(doc.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setSelectedId(doc.id);
+        },
         edit: () => openEdit(doc),
         // Brak endpointu archiwizacji dokumentów wiedzy — pozycja zostaje
         // widoczna i wyłączona z powodem (kanon A6 blok 4: nigdy nie ukrywamy).
@@ -1327,7 +1334,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
             error={error}
             onRetry={() => void load()}
             selectedRowId={selectedId}
-            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowClick={(row) => {
+              jedenPanel.otworz();
+              setSelectedId(String(row.id));
+            }}
             onRowDoubleClick={(row) => openEdit(row as unknown as VaultDocument)}
             rowDescription={(row) =>
               t('vault.docs.rowDescription', {

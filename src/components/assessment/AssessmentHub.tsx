@@ -38,6 +38,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -494,6 +495,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // (bespoke full-viewport backdrop drawer) — both were reported (#73,
   // _PRZEGLAD_DOMOWY_WYNIKI_2026-07-10.md) to paint over the whole screen instead of
   // a contained right-hand panel.
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
   const [selectedReportRowId, setSelectedReportRowId] = useState<string | null>(null);
   const [selectedInitiativeRowId, setSelectedInitiativeRowId] = useState<string | null>(null);
@@ -2443,7 +2447,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               columns={tableColumns}
               data={currentData}
               selectedRowId={selectedAssessmentId}
-              onRowClick={(row) => setSelectedAssessmentId(String((row as any).id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setSelectedAssessmentId(String((row as any).id));
+              }}
               onRowDoubleClick={(row) => handleOpenDocument(row as any)}
               rowDescription={() => null}
               defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
@@ -2472,7 +2479,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                   },
                 ],
                 universalHandlers: {
-                  preview: () => setSelectedAssessmentId(String((row as any).id)),
+                  preview: () => {
+                    jedenPanel.otworz();
+                    setSelectedAssessmentId(String((row as any).id));
+                  },
                   // Brak API archiwizacji assessmentu — pozycja disabled z notą (StandardTable dokłada ją sama).
                 },
                 destructive: {
@@ -2571,7 +2581,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               columns={tableColumns}
               data={currentData}
               selectedRowId={selectedReportRowId}
-              onRowClick={(row) => setSelectedReportRowId(String((row as any).id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setSelectedReportRowId(String((row as any).id));
+              }}
               onRowDoubleClick={(row) => handleOpenDocument(row as any)}
               rowDescription={() => null}
               defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
@@ -2607,7 +2620,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                         ]),
                   ],
                   universalHandlers: {
-                    preview: () => setSelectedReportRowId(String((row as any).id)),
+                    preview: () => {
+                      jedenPanel.otworz();
+                      setSelectedReportRowId(String((row as any).id));
+                    },
                     edit: isImported
                       ? undefined
                       : () => navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`),
@@ -2694,7 +2710,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
               columns={tableColumns}
               data={currentData}
               selectedRowId={selectedInitiativeRowId}
-              onRowClick={(row) => setSelectedInitiativeRowId(String((row as any).id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setSelectedInitiativeRowId(String((row as any).id));
+              }}
               onRowDoubleClick={(row) => handleOpenDocument(row as any)}
               rowDescription={() => null}
               defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
@@ -2710,7 +2729,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
                 createInitiativeRegisterRowMenu({
                   row: row as any,
                   onOpen: (initiative) => handleOpenDocument(initiative),
-                  onPreview: (initiative) => setSelectedInitiativeRowId(String(initiative.id)),
+                  onPreview: (initiative) => {
+                    jedenPanel.otworz();
+                    setSelectedInitiativeRowId(String(initiative.id));
+                  },
                 })
               }
             />

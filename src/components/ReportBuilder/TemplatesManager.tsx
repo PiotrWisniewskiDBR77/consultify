@@ -26,6 +26,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 
 import { Api } from '../../services/api';
 import { ReportEditor } from './ReportEditor/ReportEditor';
@@ -207,6 +208,9 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
   const [filter, setFilter] = useState<'all' | 'app' | 'org'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
     { id: string; column: string; value: string; label: string }[]
@@ -545,7 +549,10 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
       return {
         primary,
         universalHandlers: {
-          preview: () => setPreviewId(template.id),
+          preview: () => {
+            jedenPanel.otworz();
+            setPreviewId(template.id);
+          },
           edit: template.isSystem ? undefined : () => openEditor(template),
           editNote: template.isSystem ? t(`${NS}.rowMenu.systemTemplate`, 'System template') : undefined,
         },
@@ -558,7 +565,7 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
             },
       };
     },
-    [handleDuplicate, handleDelete, openEditor, onUseTemplate, t]
+    [handleDuplicate, handleDelete, openEditor, onUseTemplate, t, jedenPanel]
   );
 
   // ── Preview actions (StandardPreview) ────────────────────────────────────
@@ -675,7 +682,10 @@ export const TemplatesManager: React.FC<TemplatesManagerProps> = ({
               onAction: searchQuery ? undefined : () => openEditor(),
             }}
             selectedRowId={previewId}
-            onRowClick={(row) => setPreviewId(String(row.id))}
+            onRowClick={(row) => {
+              jedenPanel.otworz();
+              setPreviewId(String(row.id));
+            }}
             onRowDoubleClick={(row) => {
               const template = row as unknown as Template;
               if (!template.isSystem) openEditor(template);

@@ -31,6 +31,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { Api } from '@/services/api';
 import { normalizeApiErrorMessage } from '@/utils/apiError';
 import { cn } from '@/utils/cn';
@@ -117,6 +118,9 @@ export const PromptRegistryTab: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [checksumFilter, setChecksumFilter] = useState<ChecksumFilter>('all');
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -260,7 +264,10 @@ export const PromptRegistryTab: React.FC = () => {
     const prompt = row as unknown as PromptRegistryRow;
     return {
       universalHandlers: {
-        preview: () => setPreviewId(prompt.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setPreviewId(prompt.id);
+        },
       },
       destructive: { note: 'Read-only registry — edit server/src/ai/promptRegistry.ts to change' },
     };
@@ -305,7 +312,10 @@ export const PromptRegistryTab: React.FC = () => {
                 title: 'No prompt assets match this filter',
               }}
               selectedRowId={previewId}
-              onRowClick={(row) => setPreviewId(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setPreviewId(String(row.id));
+              }}
               rowMenu={rowMenu}
               persistKey="superadmin.aiPlatform.promptRegistry"
             />

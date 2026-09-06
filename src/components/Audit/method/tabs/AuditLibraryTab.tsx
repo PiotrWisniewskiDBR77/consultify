@@ -25,6 +25,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -98,6 +99,9 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
   onStartAudit,
   startingPackId,
 }) => {
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AuditPackDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -249,7 +253,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(row.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setSelectedId(row.id);
+        },
       },
     };
   };
@@ -326,7 +333,10 @@ export const AuditLibraryTab: React.FC<AuditLibraryTabProps> = ({
           data={packs}
           loading={loading}
           rowMenu={rowMenu}
-          onRowClick={(row) => setSelectedId(String(row.id))}
+          onRowClick={(row) => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          }}
           selectedRowId={selectedId}
           persistKey="audits.method.library"
           empty={{

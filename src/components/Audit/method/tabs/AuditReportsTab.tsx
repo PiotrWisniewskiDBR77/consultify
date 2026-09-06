@@ -27,11 +27,11 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
-import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { reportStatusLabel, reportStatusTone } from '../auditStatusTones';
@@ -76,8 +76,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   statusFilter = 'all',
   onCountsChange,
 }) => {
-  const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [items, setItems] = useState<AuditReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -390,7 +392,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(row.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setSelectedId(row.id);
+        },
         editNote: isPolish
           ? 'Raport jest renderem Outputu — poprawka to nowa wersja, nie edycja tego wiersza.'
           : 'A report is a render of an Output — a correction is a new version, not an edit of this row.',
@@ -483,13 +488,15 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           data={visibleItems}
           loading={loading}
           rowMenu={rowMenu}
-          onRowClick={(row) => setSelectedId(String(row.id))}
+          onRowClick={(row) => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          }}
           selectedRowId={selectedId}
           persistKey="audits.method.reports"
           // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
-          // raport" w Menu 2 (wynik → typ → Generuj) istnieje niezależnie od
-          // `ff_auditsReportChain`, więc wariant „ścieżka nie jest dostępna z
-          // ekranu" stał się nieprawdą w momencie podpięcia generatora.
+          // raport" w Menu 2 (wynik → typ → Generuj) tworzy raport przez ten
+          // sam generator, którego kebab tej tabeli używa do eksportu.
           empty={{
             icon: FileText,
             title: isPolish ? 'Brak raportów' : 'No reports yet',
@@ -531,10 +538,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
               label: isPolish ? 'Szczegóły' : 'Details',
               propertyLabel: isPolish ? 'Właściwość' : 'Property',
               valueLabel: isPolish ? 'Wartość' : 'Value',
-              // FIX-1 (dyżur 41, odbiór): kanoniczny slot „⋮ Pobierz" —
-              // za tą samą flagą co reszta łańcucha raportów (D.2-D.9),
-              // flaga NIE jest tu włączana.
-              onDownload: reportChainEnabled ? () => void downloadReportDocx(selected) : undefined,
+              // FIX-1 (dyżur 41, odbiór): kanoniczny slot „⋮ Pobierz".
+              onDownload: () => void downloadReportDocx(selected),
               downloadLabel:
                 exportingId === selected.id && exportingFormat === 'docx'
                   ? isPolish
@@ -545,25 +550,22 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
                     : 'Download DOCX',
               // FIX-187: bliźniak powyższego slotu — druga pozycja kebaba,
               // kanoniczny `extraActions` (patrz `StandardPreview.tsx`,
-              // renderowane PO standardowych Copy/Export/Pobierz), ta sama
-              // flaga, zero nowego kontraktu.
-              extraActions: reportChainEnabled
-                ? [
-                    {
-                      id: 'download-pdf',
-                      label:
-                        exportingId === selected.id && exportingFormat === 'pdf'
-                          ? isPolish
-                            ? 'Pobieranie…'
-                            : 'Downloading…'
-                          : isPolish
-                            ? 'Pobierz PDF'
-                            : 'Download PDF',
-                      onClick: () => void downloadReportPdf(selected),
-                      disabled: exportingId === selected.id && exportingFormat === 'pdf',
-                    },
-                  ]
-                : undefined,
+              // renderowane PO standardowych Copy/Export/Pobierz).
+              extraActions: [
+                {
+                  id: 'download-pdf',
+                  label:
+                    exportingId === selected.id && exportingFormat === 'pdf'
+                      ? isPolish
+                        ? 'Pobieranie…'
+                        : 'Downloading…'
+                      : isPolish
+                        ? 'Pobierz PDF'
+                        : 'Download PDF',
+                  onClick: () => void downloadReportPdf(selected),
+                  disabled: exportingId === selected.id && exportingFormat === 'pdf',
+                },
+              ],
             }}
           >
             {exportError ? (

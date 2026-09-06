@@ -1,14 +1,25 @@
+/**
+ * AuditOutputsTab report generation.
+ *
+ * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — akcje generowania
+ * raportu są teraz widoczne zawsze, bez warunku.
+ *
+ * DEC-397b (1.1-K6): drugi opisany blok niżej — klik wiersza po zamknięciu
+ * panelu (X) ma go ponownie otworzyć (`jedenPanel.otworz()` w `onRowClick`/
+ * kebab „Podgląd", ten sam wzorzec co `InboxContent.tsx`, K5 2f5161f3b4).
+ */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { resetJedenPanelForTests } from '@/components/shared/PreviewPane/useJedenPanel';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
   return { ...actual, listOutputs: vi.fn(), generateReport: vi.fn() };
 });
 
-import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
 import { generateReport, listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
 import { AuditOutputsTab } from '../tabs/AuditOutputsTab';
 
@@ -43,11 +54,6 @@ const report = {
   updatedAt: '2026-08-28',
 };
 
-function setFlag(on: boolean) {
-  window.localStorage.setItem('ff.audits_report_chain', on ? '1' : '0');
-  resetAuditsReportChainFlagCache();
-}
-
 async function openMenu() {
   fireEvent.click(await screen.findByRole('button', { name: /row actions/i }));
   return screen.findByRole('menu');
@@ -67,20 +73,7 @@ describe('AuditOutputsTab report generation', () => {
     vi.mocked(generateReport).mockReset();
   });
 
-  afterEach(() => {
-    window.localStorage.removeItem('ff.audits_report_chain');
-    resetAuditsReportChainFlagCache();
-  });
-
-  it('keeps generation actions absent with the flag OFF', async () => {
-    setFlag(false);
-    renderTab();
-    const menu = await openMenu();
-    expect(within(menu).queryByText('Generate audit report')).toBeNull();
-  });
-
-  it('shows both real generation actions with the flag ON', async () => {
-    setFlag(true);
+  it('shows both real generation actions', async () => {
     renderTab();
     const menu = await openMenu();
     expect(within(menu).getByText('Generate audit report')).toBeInTheDocument();
@@ -88,7 +81,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('generates an audit report, reports success, and notifies the Hub', async () => {
-    setFlag(true);
     const created = vi.fn();
     vi.mocked(generateReport).mockResolvedValue(report);
     renderTab({ isPolish: false, onReportCreated: created });
@@ -108,7 +100,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('opens remediation date modal and omits an empty asOfDate', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockResolvedValue({
       ...report,
       reportKind: 'remediation_progress',
@@ -127,7 +118,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('passes the selected remediation as-of date', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockResolvedValue({
       ...report,
       reportKind: 'remediation_progress',
@@ -146,7 +136,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('disables both actions for a superseded Output and explains why', async () => {
-    setFlag(true);
     vi.mocked(listOutputs).mockResolvedValue({
       items: [{ ...output, supersededBy: 'out-2' }],
       total: 1,
@@ -158,7 +147,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('shows the literal backend error in the selected Output preview', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockRejectedValue({
       response: { data: { error: 'Output out-1 has already been superseded' } },
     });
@@ -168,5 +156,38 @@ describe('AuditOutputsTab report generation', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Output out-1 has already been superseded'
     );
+  });
+});
+
+describe('AuditOutputsTab — jeden prawy panel (DEC-397b, 1.1-K6)', () => {
+  beforeEach(() => {
+    vi.mocked(listOutputs).mockResolvedValue({ items: [output], total: 1 });
+    vi.mocked(generateReport).mockReset();
+    resetJedenPanelForTests();
+    localStorage.clear();
+  });
+
+  it('zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED)', async () => {
+    const { container } = renderTab();
+
+    fireEvent.click(await screen.findByText('Audit 41 Output'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
+
+    const closeButton = within(
+      container.querySelector('[data-right-panel]') as HTMLElement
+    ).getByRole('button', { name: /close/i });
+    fireEvent.click(closeButton);
+    await waitFor(() => {
+      expect(container.querySelector('[data-right-panel]')).toBeNull();
+    });
+
+    // DEC-397b: pojedynczy klik wiersza — realna zmiana zaznaczenia z punktu
+    // widzenia użytkownika — ma PONOWNIE otworzyć panel, mimo wcześniejszego X.
+    fireEvent.click(await screen.findByText('Audit 41 Output'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
   });
 });

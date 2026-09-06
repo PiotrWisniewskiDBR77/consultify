@@ -74,8 +74,8 @@
  * bliźniak `.docx` — ten sam aktor/walidacja/kontekst/schemat, różnica
  * tylko renderer+Content-Type, zero nowej flagi) ma teraz realny przycisk
  * „Pobierz PDF" obok „Pobierz DOCX" w sekcji Akcje prawego panelu — ten sam
- * wzorzec pobierania (fetch → blob → `<a download>` → revoke), ta sama
- * bramka `reportChainEnabled`. Wyszarzały wiersz „Planowane" usunięty.
+ * wzorzec pobierania (fetch → blob → `<a download>` → revoke). Wyszarzały
+ * wiersz „Planowane" usunięty.
  */
 import {
   AlertTriangle,
@@ -116,7 +116,6 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import { formatListDate } from '@/utils/listDateFormat';
-import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 
 import { auditRoleLabel } from './auditRoleLabels';
 import {
@@ -543,7 +542,6 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
   const [activeSection, setActiveSection] = useState<string>('executive_summary');
   const [transitioning, setTransitioning] = useState<'approve' | 'publish' | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
-  const reportChainEnabled = useMemo(() => isAuditsReportChainEnabled(), []);
   const [exportingDocx, setExportingDocx] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -1368,28 +1366,24 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
                 : `Requires approved status (current: ${reportStatusLabel(report.status, false)}).`}
             </p>
           ) : null}
-          {reportChainEnabled ? (
-            <button
-              type="button"
-              disabled={exportingDocx}
-              onClick={() => void downloadDocx()}
-              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              {exportingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
-            </button>
-          ) : null}
-          {reportChainEnabled ? (
-            <button
-              type="button"
-              disabled={exportingPdf}
-              onClick={() => void downloadPdf()}
-              className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            >
-              {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {isPolish ? 'Pobierz PDF' : 'Download PDF'}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            disabled={exportingDocx}
+            onClick={() => void downloadDocx()}
+            className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {exportingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            {isPolish ? 'Pobierz DOCX' : 'Download DOCX'}
+          </button>
+          <button
+            type="button"
+            disabled={exportingPdf}
+            onClick={() => void downloadPdf()}
+            className="flex items-center justify-center gap-2 rounded-lg border border-c-border px-3 py-2 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {exportingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            {isPolish ? 'Pobierz PDF' : 'Download PDF'}
+          </button>
         </div>
       ),
     },

@@ -1,0 +1,159 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11k6-podglad-klik-23-ekrany
+
+
+ RUN  v4.1.8 /private/tmp/wt-11k6-podglad-klik-23-ekrany
+
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > synchronously rejects a duplicate Start dispatch for the same pack 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > retains the Start key across remount/reload and rotates only after confirmed success 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes" 226ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > defaults to Library when ?tab= is absent 51ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens Outputs when ?tab=outputs is in the URL 27ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > falls back to Processes for an unknown ?tab= value 45ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > writes the active tab into the URL when a tab is clicked 100ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the default Library tab 22ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the Sessions tab — `?tab=processes` still works, only the label changed 28ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens a canonical criterion workspace from the selected program 82ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > keeps the program preview mounted when canonical detail omits optional members 43ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > cold-opens the program preview from the canonical programId query deep link 23ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows an ErrorState with retry when the Library API call fails 48ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows the honest Outputs EmptyState explaining why the list is empty 19ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > renders exactly one chip row (verification), with visible zero counts, and no source-type chips 24ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > selecting a verification chip narrows the list to that single axis 33ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > the Library verification chip row does not appear on the Sessions (processes) tab 18ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx (17 tests) 794ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > keeps generation actions absent with the flag OFF 153ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows both real generation actions with the flag ON 57ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > generates an audit report, reports success, and notifies the Hub 76ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > opens remediation date modal and omits an empty asOfDate 102ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > passes the selected remediation as-of date 99ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > disables both actions for a superseded Output and explains why 47ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx > AuditOutputsTab report generation > shows the literal backend error in the selected Output preview 70ms
+ ✓ src/components/Audit/method/__tests__/AuditOutputsTab.reportGeneration.test.tsx (7 tests) 606ms
+ × src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag OFF: the preview Details block renders no kebab at all (zero actions when onDownload is unset) 43ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download DOCX" and requests the real export route 15ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187) 13ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX) 12ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187) 11ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx (5 tests | 5 failed) 95ms
+     × flag OFF: the preview Details block renders no kebab at all (zero actions when onDownload is unset) 43ms
+     × flag ON: the preview Details kebab offers "Download DOCX" and requests the real export route 15ms
+     × flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187) 13ms
+     × flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX) 12ms
+     × flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187) 11ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > flag OFF omits both DOCX and PDF export buttons 158ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > flag ON adds both DOCX and PDF export buttons 81ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (DOCX) 63ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > requests the encoded report export endpoint (PDF, FIX-187) 58ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the DOCX control while the response is pending 49ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > disables the PDF control while the response is pending (FIX-187) 47ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (DOCX) 65ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx > AuditReportDocumentView DOCX/PDF export > shows an inline backend error and never calls alert (PDF, FIX-187) 63ms
+ ✓ src/components/Audit/method/__tests__/AuditReportDocumentView.export.test.tsx (8 tests) 585ms
+ × src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag OFF leaves the control out of the DOM 46ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag ON calls finalizeOutput with the selected program 16ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > success shows version and shortened hash and refreshes once 14ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > shows the literal backend conflict message 14ms
+   → useLocation() may be used only in the context of a <Router> component.
+ × src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call 15ms
+   → useLocation() may be used only in the context of a <Router> component.
+ ❯ src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx (5 tests | 5 failed) 106ms
+     × flag OFF leaves the control out of the DOM 46ms
+     × flag ON calls finalizeOutput with the selected program 16ms
+     × success shows version and shortened hash and refreshes once 14ms
+     × shows the literal backend conflict message 14ms
+     × disables during the request so two clicks produce one call 15ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts > Audits report-chain flag > defaults OFF 32ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts > Audits report-chain flag > query enables and query=0 wins over localStorage=1 0ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts > Audits report-chain flag > localStorage enables when query is absent 0ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts > Audits report-chain flag > fails closed when localStorage access throws 0ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts > Audits report-chain flag > reset clears the cached resolution 0ms
+ ✓ src/utils/__tests__/auditsReportChainFlag.test.ts (5 tests) 35ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag OFF leaves the control out of the DOM
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag ON calls finalizeOutput with the selected program
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > success shows version and shortened hash and refreshes once
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > shows the literal backend conflict message
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag OFF: the preview Details block renders no kebab at all (zero actions when onDownload is unset)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download DOCX" and requests the real export route
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187)
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ JedenPrawyPanel src/components/shared/PreviewPane/JedenPrawyPanel.tsx:42:17
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  10 failed | 37 passed (47)
+   Start at  17:20:55
+   Duration  7.04s (transform 844ms, setup 280ms, import 2.35s, tests 2.22s, environment 1.45s)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag OFF leaves the control out of the DOM
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > flag ON calls finalizeOutput with the selected program
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > success shows version and shortened hash and refreshes once
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > shows the literal backend conflict message
+ FAIL  src/components/Audit/method/__tests__/AuditProcessesTab.finalizeOutput.test.tsx > AuditProcessesTab finalize Output control > disables during the request so two clicks produce one call
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag OFF: the preview Details block renders no kebab at all (zero actions when onDownload is unset)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download DOCX" and requests the real export route
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: the preview Details kebab offers "Download PDF" and requests the real export route (FIX-187)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (DOCX)
+ FAIL  src/components/Audit/method/__tests__/AuditReportsTab.export.test.tsx > AuditReportsTab DOCX/PDF export (FIX-1, FIX-187) > flag ON: a backend error surfaces inline in the preview panel, not as alert() (PDF, FIX-187)
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ JedenPrawyPanel src/components/shared/PreviewPane/JedenPrawyPanel.tsx:42:17
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  10 failed | 37 passed (47)
+   Start at  17:20:55
+   Duration  7.05s (transform 844ms, setup 280ms, import 2.35s, tests 2.22s, environment 1.45s)
+
+JSON report written to /private/tmp/wt-11k6-podglad-klik-23-ekrany/junit.xml
+JUNIT report written to /private/tmp/wt-11k6-podglad-klik-23-ekrany/junit.xml

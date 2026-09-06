@@ -72,6 +72,7 @@ import {
 
 import { PreviewPaneAside } from '../shared/PreviewPane';
 import { JedenPrawyPanel } from '../shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '../shared/PreviewPane/useJedenPanel';
 import { EmptyState } from '../shared/states';
 import {
   type MetaPill,
@@ -172,6 +173,9 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
   const [hasLoadError, setHasLoadError] = useState(false);
   const [forbidden, setForbidden] = useState(false);
 
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedOutputId, setSelectedOutputId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<{
     output: MethodOutputSummary;
@@ -506,7 +510,10 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
             },
           ],
           universalHandlers: {
-            preview: () => setSelectedOutputId(rowId),
+            preview: () => {
+              jedenPanel.otworz();
+              setSelectedOutputId(rowId);
+            },
           },
         };
       }
@@ -545,7 +552,10 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
       return {
         primary: primary.length ? primary : undefined,
         universalHandlers: {
-          preview: () => setSelectedOutputId(String(row.id)),
+          preview: () => {
+            jedenPanel.otworz();
+            setSelectedOutputId(String(row.id));
+          },
         },
       };
     },
@@ -590,7 +600,10 @@ export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({
             persistKey="assessment.outputs"
             defaultSort={{ columnId: 'frozenAt', direction: 'desc' }}
             selectedRowId={selectedOutputId}
-            onRowClick={(row) => setSelectedOutputId(String(row.id))}
+            onRowClick={(row) => {
+              jedenPanel.otworz();
+              setSelectedOutputId(String(row.id));
+            }}
             rowMenu={rowMenu}
             rowDescription={() => null}
             empty={{

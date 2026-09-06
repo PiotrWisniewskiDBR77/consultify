@@ -28,6 +28,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { useAppStore } from '../../../store/useAppStore';
@@ -344,6 +345,9 @@ export const ModelCatalogTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [kindTab, setKindTab] = useState<'all' | ModelKind>('all');
   const [editingModel, setEditingModel] = useState<RegistryModel | null>(null);
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<
@@ -688,7 +692,10 @@ export const ModelCatalogTable: React.FC = () => {
             },
           ],
           universalHandlers: {
-            preview: () => setPreviewId(model.id),
+            preview: () => {
+              jedenPanel.otworz();
+              setPreviewId(model.id);
+            },
             edit: () => handleEdit(model),
           },
           destructive: { label: 'Delete', icon: Trash2, onClick: () => handleDelete(model) },
@@ -838,7 +845,10 @@ export const ModelCatalogTable: React.FC = () => {
                   description: 'Try a different search term or clear the active filters.',
                 }}
                 selectedRowId={previewId}
-                onRowClick={(row) => setPreviewId(String(row.id))}
+                onRowClick={(row) => {
+                  jedenPanel.otworz();
+                  setPreviewId(String(row.id));
+                }}
                 onRowDoubleClick={(row) => handleEdit(row as unknown as RegistryModel)}
                 rowMenu={rowMenu}
                 activeFilters={activeFilters}
