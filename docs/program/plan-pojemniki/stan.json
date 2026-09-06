@@ -25,7 +25,7 @@
           "nazwa": "P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo",
           "wykonawca": "Sonnet",
           "zalezy_od": "—",
-          "stan": "do_odbioru",
+          "stan": "odebrane",
           "galaz": "mvp/p1-skrzynka-wywiad",
           "sha": "c9a7e5bd0b",
           "dowod": "scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440",
@@ -37,36 +37,36 @@
           "nazwa": "P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)",
           "wykonawca": "Codex, odbiór Sonnet",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "scalone",
           "galaz": "codex/p9-karta-dzialania",
-          "sha": "",
-          "dowod": "wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania",
-          "uwagi": "Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.",
-          "data": "06.09 06:40"
+          "sha": "ad8d847e38",
+          "dowod": "fundament + jedna karta na 5 powierzchniach (Wyniki, Realizacja, Audyty, Finanse, Skrzynka), 3 sieroty usunięte, K1, K3, adaptery; pomiar nadzorcy: tsc OK, serwer 43 pass (2 pliki = baza)",
+          "uwagi": "Reszta (sekcja „Do akceptacji” w Skrzynce, e2e, zrzuty powierzchni, test zależny od rg) przeniesiona do 1.4.",
+          "data": "06.09 12:30"
         },
         {
           "nr": "1.4",
           "nazwa": "P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)",
           "wykonawca": "Opus",
           "zalezy_od": "1.3",
-          "stan": "czeka",
-          "galaz": "",
+          "stan": "w_toku",
+          "galaz": "mvp/p7k-b-odchylenie",
           "sha": "",
-          "dowod": "",
-          "uwagi": "Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.",
-          "data": ""
+          "dowod": "worktree /private/tmp/wt-p7k-b (Opus, serwer 4103 / vite 3105); cel: e2e rezultat poza limitem → czerwony wiersz → Skrzynka → karta → zadanie (S1.3)",
+          "uwagi": "Obejmuje też dokończenie K2 (sekcja „Do akceptacji” w Skrzynce) i naprawę testu Codexa zależnego od rg.",
+          "data": "06.09 12:50"
         },
         {
           "nr": "1.5",
           "nazwa": "P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)",
           "wykonawca": "Codex/Sonnet",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "odebrane",
           "galaz": "codex/p8-teresa",
-          "sha": "",
-          "dowod": "wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)",
-          "uwagi": "Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.",
-          "data": "06.09 06:40"
+          "sha": "72def3b049",
+          "dowod": "scalone na staging; 13 wejść Teresy w prawym panelu (inicjatywa, notatka, zadanie, wywiad, narzędzia, ocena, audyty, organizacja, spotkania…), e2e: dok z historią czatu i odpowiedź PL ze źródłami; 5 zrzutów evidence/p8-teresa-20260905/; CTO obejrzał inicjatywę",
+          "uwagi": "Właściciel 06.09 o zrzucie karty inicjatywy: „dokładnie taki jak kocham” = Tak (karta 3). Codex: 2 STOP-y rozstrzygnięte decyzjami DEC-398/DEC-400.",
+          "data": "06.09 10:55"
         },
         {
           "nr": "1.6",
@@ -85,12 +85,12 @@
           "nazwa": "Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)",
           "wykonawca": "Sonnet",
           "zalezy_od": "decyzje właściciela",
-          "stan": "czeka",
-          "galaz": "",
-          "sha": "",
-          "dowod": "",
-          "uwagi": "Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.",
-          "data": ""
+          "stan": "odebrane",
+          "galaz": "codex/higiena-danych",
+          "sha": "a3c74fd297",
+          "dowod": "APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach",
+          "uwagi": "Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.",
+          "data": "06.09 13:05"
         },
         {
           "nr": "1.8",
@@ -121,12 +121,12 @@
           "nazwa": "Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe",
           "wykonawca": "Opus + nadzorca",
           "zalezy_od": "1.9",
-          "stan": "czeka",
-          "galaz": "",
-          "sha": "",
-          "dowod": "",
-          "uwagi": "Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.",
-          "data": ""
+          "stan": "w_toku",
+          "galaz": "mvp/demo-rozdzial-przygotowanie",
+          "sha": "f21953eef4",
+          "dowod": "przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie",
+          "uwagi": "ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.",
+          "data": "06.09 12:40"
         }
       ],
       "kryteria": [
@@ -217,16 +217,16 @@
           "tresc": "Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu",
           "kto": "nadzorca",
           "artefakt": "8×3 zrzuty na żywo, aside ≤ 1",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "06.09: Skrzynka i Wywiad na żywo aside 1/1/0/0 (evidence/p1-skrzynka-wywiad/), właściciel „Tak” dla karty 2; Zadania/Realizacja z nocy (P1-LEPKIE); pozostałe 4 listy do pomiaru w 1.9"
         },
         {
           "nr": "S1.6",
           "tresc": "Teresa odpowiada po polsku ze źródłami w każdym module MVP",
           "kto": "nadzorca",
           "artefakt": "16 odpowiedzi z used_sources > 0 w evidence/",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "06.09: wejście do Teresy w prawym panelu 13 ekranów (P8, 72def3b049), e2e inicjatywa → odpowiedź PL ze Źródła>0; Czat „Źródła: 12” (A3); pomiar 16 odpowiedzi per moduł na stagingu w 1.9"
         },
         {
           "nr": "S1.7",
@@ -257,8 +257,8 @@
           "tresc": "Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)",
           "kto": "właściciel",
           "artefakt": "ledger decyzji (DEC-…)",
-          "stan": "czesciowo",
-          "dowod": "1/3: Finanse MINIMUM → pojemnik 2 (DEC-399, 06.09); czekają: grupowanie inicjatyw, kropka „Model”"
+          "stan": "tak",
+          "dowod": "3/3: Finanse MINIMUM → pojemnik 2 (DEC-399), płaska lista + obszar/oś i kropka „Model” neutralna (DEC-402, 06.09) — plus 7 dalszych decyzji (bazy demo/staging, higiena, pilotaż, budżet AI)"
         },
         {
           "nr": "S1.11",
@@ -286,15 +286,15 @@
         },
         {
           "tresc": "Grupowanie inicjatyw po zdjęciu Projektów",
-          "rekomendacja": "Płaska lista + kolumna obszar/oś; program/portfel po MVP",
-          "stan": "czeka",
-          "dec": ""
+          "rekomendacja": "Płaska lista + kolumna obszar/oś; program/portfel po MVP. Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)",
+          "stan": "podjeta",
+          "dec": "DEC-402"
         },
         {
           "tresc": "Kropka „Model” w crimson",
-          "rekomendacja": "Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)",
-          "stan": "czeka",
-          "dec": ""
+          "rekomendacja": "CTO: neutralna (czerwień tylko dla stanu krytycznego). Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)",
+          "stan": "podjeta",
+          "dec": "DEC-402"
         },
         {
           "tresc": "Program naprawczy Award/CES 2027 może odmrażać moduły zamrożone 05.09 wyłącznie w zakresie paczek P1–P6, II, III; każdy commit niesie znacznik odmrożenia; po zakończeniu paczki moduł jest ponownie zamrażany tego samego dnia",

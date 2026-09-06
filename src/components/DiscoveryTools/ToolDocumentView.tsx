@@ -27,6 +27,7 @@ import {
 import { LoadingState } from '@/components/ui/primitives';
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import {
   mapToolSessionSyncStatusToLegacySaveState,
@@ -304,6 +305,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     rethinkCard,
     abortStream,
   } = useToolAI({ toolType });
+  const openChatWithContext = useOpenChatWithContext();
 
   const isStrategicPhaseTool = [
     'dynamic-swot',
@@ -2462,6 +2464,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           <div data-testid="tool-session-properties" className="h-full">
             <ArtifactRightPanel
               sections={sessionRightPanelSections}
+              teresaEntry={{
+                label: isPolish ? 'Zapytaj Teresę o tę analizę' : 'Ask Teresa about this analysis',
+                onOpen: () => void openChatWithContext({
+                  entityType: 'tool-session',
+                  entityId: toolSessionId || sessionId || toolType,
+                  entityName: sessionName || toolMeta.namePl || toolMeta.name,
+                  contextData: { toolType, sessionId: toolSessionId },
+                  reuseActiveConversation: true,
+                }),
+              }}
               className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
               ariaLabel={isPolish ? 'Panel sesji narzędzia' : 'Tool session panel'}
             />

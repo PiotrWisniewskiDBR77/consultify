@@ -67,6 +67,8 @@ export function useOpenChatWithContext() {
     activeConversationId,
     conversations,
     createConversation,
+    fetchConversation,
+    setActiveConversation,
     setWorkspaceContext,
     setTeresaEntityContext,
   } = useConversationStore();
@@ -160,7 +162,20 @@ export function useOpenChatWithContext() {
         }
       }
 
-      if ((alreadyHasContext || options.reuseActiveConversation) && activeConversationId) {
+      let reusableConversationId = activeConversationId;
+      if (!reusableConversationId && options.reuseActiveConversation) {
+        try {
+          reusableConversationId = window.sessionStorage.getItem('teresa.lastActiveConversationId');
+        } catch {
+          reusableConversationId = null;
+        }
+      }
+
+      if ((alreadyHasContext || options.reuseActiveConversation) && reusableConversationId) {
+        if (reusableConversationId !== activeConversationId) {
+          setActiveConversation(reusableConversationId);
+          await fetchConversation(reusableConversationId);
+        }
         // Already in context — just update workspace context
         setWorkspaceContext({
           type: entityType as any,
@@ -168,8 +183,8 @@ export function useOpenChatWithContext() {
           entityName: entityName || entityType,
           entityData: contextData || {},
         } as any);
-        pinEntityContext(activeConversationId);
-        return activeConversationId;
+        pinEntityContext(reusableConversationId);
+        return reusableConversationId;
       }
 
       // Create new conversation with entity context
@@ -265,6 +280,8 @@ export function useOpenChatWithContext() {
       activeConversationId,
       conversations,
       createConversation,
+      fetchConversation,
+      setActiveConversation,
       isChatCollapsed,
       isDesktop,
       isMobile,

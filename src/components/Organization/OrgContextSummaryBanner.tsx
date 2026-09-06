@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { io, type Socket } from 'socket.io-client';
 
 import { Button } from '@/components/ui/primitives';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 
@@ -39,7 +40,7 @@ interface OrgContextRebuiltEvent {
   counts?: { items: number; claims: number; conflicts: number };
 }
 
-interface OrgContextSummaryBannerProps {
+export interface OrgContextSummaryBannerProps {
   organizationId?: string;
   isAdmin?: boolean;
   className?: string;
@@ -67,6 +68,7 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
 
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -226,6 +228,24 @@ export const OrgContextSummaryBanner: React.FC<OrgContextSummaryBannerProps> = (
       </div>
 
       <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+        <button
+          type="button"
+          onClick={() =>
+            void openChatWithContext({
+              entityType: 'organization',
+              entityId: organizationId,
+              entityName: isPl ? 'Kontekst organizacji' : 'Organization context',
+              contextData: { organizationId },
+              reuseActiveConversation: true,
+            })
+          }
+          className="inline-flex items-center gap-1 rounded-lg border border-c-border bg-c-surface-raised px-2.5 py-1.5 text-xs font-medium text-c-text transition-colors hover:bg-c-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          {t(
+            'organization.context.banner.askTeresa',
+            isPl ? 'Zapytaj Teresę o kontekst organizacji' : 'Ask Teresa about the organization context'
+          )}
+        </button>
         <button
           type="button"
           onClick={() => navigate(`${ROUTES.ORGANIZATION.ROOT}/knowledge-graph`)}

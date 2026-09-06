@@ -1,4 +1,33 @@
 {
+  "actionCard": {
+    "title": "Karta działania",
+    "open": "Otwórz kartę",
+    "fields": {
+      "period": "Okres",
+      "goalMet": "Cel osiągnięty?",
+      "actionRequired": "Działania wymagane?",
+      "problem": "Opis problemu",
+      "rootCause": "Główna przyczyna",
+      "action": "Opis działania",
+      "owner": "Odpowiedzialność",
+      "dueDate": "Termin",
+      "comment": "Komentarz",
+      "status": "Status"
+    },
+    "status": { "open": "OTWARTY", "closed": "ZAMKNIĘTY" }
+  },
+  "meetingActionItemsP9": {
+    "createTask": "Zrób zadanie",
+    "taskCreated": "Zadanie utworzone",
+    "taskCreateFailed": "Nie udało się utworzyć zadania"
+  },
+  "p9Handoff": {
+    "requestAction": "Przekaż do realizacji",
+    "requested": "Przekazanie czeka na akceptację w Skrzynce.",
+    "notReady": "Najpierw uzupełnij pakiet przekazania i kierownika realizacji.",
+    "failed": "Nie udało się przekazać inicjatywy do realizacji.",
+    "acceptanceSection": "Do akceptacji"
+  },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
     "message": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",
@@ -2391,6 +2420,7 @@
       "emptySubtitle": "Jesteś na bieżąco!",
       "empty": "Brak prezentacji."
     },
+    "taskCreatedFromChatToast": "Utworzono zadanie z czatu",
     "decisions": {
       "addDecision": "Dodaj decyzję",
       "emptyColumn": "Brak decyzji",
@@ -18226,7 +18256,7 @@
       },
       "community": {
         "title": "Społeczność",
-        "slack": "Partner Slack",
+        "slack": "Slack partnerów",
         "webinars": "Comiesięczne webinary",
         "successStories": "Historie sukcesu",
         "forum": "Forum partnerów"
@@ -20156,7 +20186,9 @@
     "citationNoAccess": "Źródło niedostępne dla Ciebie",
     "deepSearchSources": "Źródła głębokiego wyszukiwania",
     "citationExternalBadge": "Zewnętrzne",
+    "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "Brak dostępnego fragmentu.",
+    "citationFragmentOpenLabel": "Fragment {{index}}",
     "citationOpenSource": "Otwórz źródło"
   },
   "agentAudit": {
@@ -20510,6 +20542,8 @@
     "generatingQueries": "Generowanie zapytań badawczych...",
     "queriesReady": "Zapytania badawcze gotowe",
     "searching": "Wyszukiwanie źródeł...",
+    "searchingRound": "Wyszukiwanie (runda {{round}}/{{totalRounds}})...",
+    "round": "Runda {{round}}/{{totalRounds}}",
     "aggregating": "Agregowanie wyników...",
     "synthesizing": "Syntezowanie ustaleń...",
     "complete": "Badanie zakończone",
@@ -35252,7 +35286,9 @@
         "templateUpdated": "Szablon zaktualizowany",
         "templateCreated": "Szablon utworzony",
         "failedToSaveTemplate": "Nie udało się zapisać szablonu",
-        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym."
+        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym.",
+        "previewYes": "Tak",
+        "previewNo": "Nie"
       },
       "refineDialog": {
         "suggestionAddPriority": "Dodaj pole priorytet",
@@ -35715,6 +35751,7 @@
       "noFilterResultsBody_one": "Jedyny wiersz nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "noFilterResultsBody_few": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_other": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "tableTemplates": "Szablony tabeli"
     },
     "mindmap": {
@@ -36145,13 +36182,15 @@
       "collapsePeriods": "Zwiń okresy miesięczne",
       "expandPeriods": "Edytuj okresy miesięczne",
       "col": {
+        "expand": "Rozwiń",
         "label": "Czynnik",
         "type": "Typ",
         "category": "Kategoria",
         "unit": "Jednostka",
         "total": "Suma",
         "confidence": "Pewność",
-        "evidence": "Dowody"
+        "evidence": "Dowody",
+        "actions": "Akcje"
       },
       "monthlyValues": "Wartości miesięczne",
       "months": "mies.",

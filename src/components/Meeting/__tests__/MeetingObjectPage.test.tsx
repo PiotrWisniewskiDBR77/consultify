@@ -51,10 +51,13 @@ vi.mock('react-router-dom', () => ({
   useParams: () => ({ meetingId: routerState.meetingId, noteId: routerState.noteId }),
 }));
 
-const { getMeetingMock, listNotesMock } = vi.hoisted(() => ({
-  getMeetingMock: vi.fn(),
-  listNotesMock: vi.fn(),
-}));
+const { getMeetingMock, listNotesMock, listDecisionRecordsMock, listFollowUpRecordsMock } =
+  vi.hoisted(() => ({
+    getMeetingMock: vi.fn(),
+    listNotesMock: vi.fn(),
+    listDecisionRecordsMock: vi.fn(),
+    listFollowUpRecordsMock: vi.fn(),
+  }));
 
 vi.mock('@/services/api', () => ({
   Api: {
@@ -62,12 +65,12 @@ vi.mock('@/services/api', () => ({
     listMeetingNotes: listNotesMock,
     // DEC-82: the right panel's Properties table now also reads the org
     // roster (organizer lookup) and the D.4/D.5 decision/follow-up-record
-    // resources (counts). Stubbed to honest empty defaults here — this
-    // suite doesn't assert on them, but an unmocked call would throw
-    // "not a function" on every render instead of resolving cleanly.
+    // resources (counts). Stubbed to honest empty defaults by default (see
+    // `beforeEach`) — one test overrides them to cover the D.4/D.5 real
+    // records rendering path.
     getUsers: vi.fn().mockResolvedValue([]),
-    listMeetingDecisionRecords: vi.fn().mockResolvedValue({ decisions: [] }),
-    listMeetingFollowUpRecords: vi.fn().mockResolvedValue({ followUps: [] }),
+    listMeetingDecisionRecords: listDecisionRecordsMock,
+    listMeetingFollowUpRecords: listFollowUpRecordsMock,
   },
 }));
 
@@ -93,6 +96,10 @@ describe('MeetingObjectPage', () => {
     getMeetingMock.mockReset();
     listNotesMock.mockReset();
     listNotesMock.mockResolvedValue({ notes: [] });
+    listDecisionRecordsMock.mockReset();
+    listDecisionRecordsMock.mockResolvedValue({ decisions: [] });
+    listFollowUpRecordsMock.mockReset();
+    listFollowUpRecordsMock.mockResolvedValue({ followUps: [] });
     routerState.pathname = '/meetings/meeting-1';
     routerState.meetingId = 'meeting-1';
     routerState.noteId = undefined;
@@ -100,6 +107,7 @@ describe('MeetingObjectPage', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('fetches through the dedicated single-meeting endpoint, not the list', async () => {
@@ -216,9 +224,70 @@ describe('MeetingObjectPage', () => {
     expect(dashes.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('renders Zrób zadanie for every action item and prevents a duplicate request', async () => {
+    routerState.pathname = '/meetings/meeting-1/minutes';
+    getMeetingMock.mockResolvedValue({ meeting });
+    listNotesMock.mockResolvedValue({ notes: [{ id: 'note-1', source: 'heuristic', summary: 'Draft minutes', keyPoints: [], decisions: [], actionItems: [{ task: 'Write recap', owner: 'Bob' }], status: 'proposed', proposalId: 'proposal-1' }] });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<MeetingObjectPage />);
+
+    await screen.findByText('Write recap');
+    const button = screen.getByRole('button', { name: 'Zrób zadanie' });
+    button.click();
+    button.click();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith('/api/meeting/meeting-1/notes/note-1/action-items/0/task', { method: 'POST', credentials: 'include' });
+    expect(await screen.findByRole('button', { name: 'Zadanie utworzone' })).toBeDisabled();
+  });
+
   it('Decyzje i działania section shows meeting decisions and follow-ups', async () => {
+    // D.4/D.5 (day 10 UI wiring, see MeetingObjectPage.tsx comment above
+    // `decisionsContent`): this section reads the dedicated decision/
+    // follow-up-record resources now, not the legacy `meeting.decisions` /
+    // `meeting.followUps` display-only arrays (dead once a note is
+    // approved) — the fixture's `meeting.decisions: ['Ship v2']` and
+    // `meeting.followUps: [{ title: 'Recap' }]` are intentionally unused
+    // here; this test mocks the real D.4/D.5 records instead.
     routerState.pathname = '/meetings/meeting-1/decisions';
     getMeetingMock.mockResolvedValue({ meeting });
+    listDecisionRecordsMock.mockResolvedValue({
+      decisions: [
+        {
+          id: 'decision-1',
+          organizationId: 'org-1',
+          meetingId: 'meeting-1',
+          statement: 'Ship v2',
+          rationale: '',
+          decidedBy: null,
+          decidedAt: null,
+          status: 'recorded',
+          sourceKind: 'manual',
+          sourceNoteId: null,
+          sourceIndex: null,
+          createdBy: 'user-1',
+          createdAt: '2026-07-01T10:00:00.000Z',
+          updatedAt: '2026-07-01T10:00:00.000Z',
+        },
+      ],
+    });
+    listFollowUpRecordsMock.mockResolvedValue({
+      followUps: [
+        {
+          id: 'fu-1',
+          organizationId: 'org-1',
+          meetingId: 'meeting-1',
+          title: 'Recap',
+          owner: 'Bob',
+          ownerUserId: null,
+          dueAt: null,
+          status: 'open',
+          sourceKind: 'manual',
+          sourceNoteId: null,
+          sourceIndex: null,
+        },
+      ],
+    });
     render(<MeetingObjectPage />);
 
     await waitFor(() => expect(getMeetingMock).toHaveBeenCalled());

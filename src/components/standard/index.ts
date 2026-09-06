@@ -5,6 +5,9 @@
  * + żywy ekran My Work Tasks/Decisions. Moduły używają WYŁĄCZNIE tych fasad;
  * własny chrome / własne tabele / własne preview = błąd implementacji.
  */
+export { ActionCard, type ActionCardProps } from './ActionCard';
+export { ActionCardList, type ActionCardListProps } from './ActionCardList';
+export type { ActionCardModel, ActionCardSeverity, ActionCardSourceKind, ActionCardStatus } from './ActionCard.types';
 export {
   // Komponent karty (wartość) + model danych `StandardGridCard` (typ) — JEDEN
   // kanon karty grid/kafelkowego (#76a). Nazwa dzielona: wartość=komponent,

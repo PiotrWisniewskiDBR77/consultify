@@ -89,7 +89,7 @@ import { Api, API_URL, getHeaders } from '@/services/api';
 import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import { V8ResultsApi } from '@/services/api/v8/results';
-import { readRegisteredInitiative } from '@/services/initiatives-execution/runtimeApi';
+import { readRegisteredInitiative, requestHandoffAcceptance } from '@/services/initiatives-execution/runtimeApi';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -197,7 +197,7 @@ import {
   isShowcaseArtifactId,
   isShowcaseInitiativeId,
 } from './initiativesDemoData';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { InitiativeSourceLink } from './InitiativeSourceLink';
 // DZIEŃ 2026-09-01: realny loader załączników Inicjatywy (naprawa utraty danych
 // AttachmentsSection.tsx — `fetchAll` wcześniej NIGDY nie wołał serwera dla
 // prawdziwych, nie-showcase'owych inicjatyw, więc stan po odświeżeniu zawsze
@@ -8342,9 +8342,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       className="rounded-xl border border-c-border-subtle dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
                     >
                       <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-c-text truncate">
-                          {getSourceDisplayLabel(bl.sourceType, isPolish)}
-                        </div>
+                        <InitiativeSourceLink sourceType={bl.sourceType} sourceId={bl.sourceId} isPolish={isPolish} />
                         <div className="text-[10px] text-c-text-muted truncate">{bl.sourceId}</div>
                       </div>
                       <button
@@ -9522,6 +9520,35 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [isForking, initiativeId, isPolish]);
 
+  const handleRequestHandoffAcceptance = useCallback(async () => {
+    const registered = await readRegisteredInitiative(initiativeId) as any;
+    const current = registered?.initiative ?? registered?.detail ?? initiative;
+    const handoffPackageId = String(current?.handoffPackageId || '');
+    const authorityId = String(current?.executionManagerId || current?.ownerId || '');
+    const expectedVersion = Number(registered?.version ?? current?.version ?? 0);
+    if (!handoffPackageId || !authorityId || !expectedVersion) {
+      toast.error(t('p9Handoff.notReady', 'Najpierw uzupełnij pakiet przekazania i kierownika realizacji.'));
+      return;
+    }
+    try {
+      const suffix = crypto.randomUUID();
+      await requestHandoffAcceptance(initiativeId, {
+        expectedVersion,
+        clientRequestId: `handoff-request-${suffix}`,
+        decisionId: `handoff-decision-${suffix}`,
+        handoffPackageId,
+        handoffPackageVersion: Number(current?.handoffPackageVersion ?? 1),
+        executionCaseId: `execution-case-${suffix}`,
+        authorityId,
+        dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        rolloutChildren: { pilot: [], waves: [] },
+      });
+      toast.success(t('p9Handoff.requested', 'Przekazanie czeka na akceptację w Skrzynce.'));
+    } catch (error: any) {
+      toast.error(error?.message || t('p9Handoff.failed', 'Nie udało się przekazać inicjatywy do realizacji.'));
+    }
+  }, [initiative, initiativeId, t]);
+
   // ==========================================
   // CANON TOOLBAR (Warstwa 3) — derived helpers
   // ==========================================
@@ -9589,6 +9616,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }> = [];
     // Tworzenie — tylko w Edycji (Podgląd ma być czysty; tak było w Menu 2).
     if (!readMode) {
+      items.push({
+        id: 'request-handoff-acceptance',
+        label: t('p9Handoff.requestAction', 'Przekaż do realizacji'),
+        icon: ArrowRight,
+        onClick: () => void handleRequestHandoffAcceptance(),
+      });
       for (const item of newMenuActions) {
         items.push({
           id: item.id,
@@ -9658,6 +9691,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     canArchiveDoc,
     canDeleteDoc,
     setShowExportDialog,
+    handleRequestHandoffAcceptance,
   ]);
 
   // Slot 5 — section-level AI: dispatches to the existing per-section request
@@ -9997,6 +10031,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       entityType: 'initiative',
       entityId: String(initiative?.id ?? initiativeId),
       entityName: title || undefined,
+      reuseActiveConversation: true,
     });
   }, [
     activeNSection,

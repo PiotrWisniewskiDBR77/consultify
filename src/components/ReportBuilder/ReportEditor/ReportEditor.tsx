@@ -46,7 +46,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 
 import { Api } from '../../../services/api';
-import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
+import { InitiativeSourceLink } from '../../Initiatives/InitiativeSourceLink';
 import TeresaMark from '../../shared/TeresaMark';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
@@ -929,9 +929,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 className="flex items-center justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03]/[0.08] bg-c-surface/[0.03] px-3 py-2"
               >
                 <div className="min-w-0">
-                  <div className="truncate text-xs font-medium text-c-text">
-                    {getSourceDisplayLabel(bl.sourceType, isPl)}
-                  </div>
+                  <InitiativeSourceLink sourceType={bl.sourceType} sourceId={bl.sourceId} isPolish={isPl} />
                   <div className="truncate text-[11px] text-c-text-secondary">{bl.sourceId}</div>
                 </div>
                 <button

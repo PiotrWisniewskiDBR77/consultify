@@ -9769,6 +9769,12 @@ Use userId only from this list:
           <div className="shrink-0 sticky top-4 self-start">
             <ArtifactRightPanel
               sections={rightPanelSections}
+              teresaEntry={{
+                label: isPolish ? 'Zapytaj Teresę o tę decyzję' : 'Ask Teresa about this decision',
+                onOpen: () => void openChatWithContext({ entityType: 'decision', entityId: decisionId || 'new', entityName: title || (isPolish ? 'Decyzja' : 'Decision'), pmoContext: decisionId ? { decisionId } : undefined, reuseActiveConversation: true }),
+                disabled: !decisionId,
+                disabledReason: isPolish ? 'Najpierw zapisz decyzję' : 'Save the decision first',
+              }}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
               ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
               statusBar={

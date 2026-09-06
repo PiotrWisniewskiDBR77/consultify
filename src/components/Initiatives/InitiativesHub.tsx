@@ -141,7 +141,7 @@ import {
   toCanonicalInitiativeRegisterItemFromLegacyRow,
 } from './initiativeRegisterProjection';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { initiativeSourceLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import { PlanScenarioSurface } from './PlanScenarioSurface';
@@ -947,21 +947,34 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
     const run = async () => {
       try {
-        // Resolve the owning read model before choosing a document renderer. A legacy
-        // initiative may share the same ID/name shape, but it is not a registered V8
-        // runtime card and must stay in InitiativeDocumentView.
+        // [ODMROZENIE 05_INITIATIVES DEC-397] INI-404 (2026-09-06).
+        //
+        // Tu stała sonda `GET /initiatives/runtime-v1/initiatives/<id>`, której JEDYNYM
+        // zadaniem było ustawienie flagi „czy rekord należy do rejestru runtime" i wybór
+        // między dwoma handlerami otwarcia dokumentu. Sonda była pozostałością po świecie, w którym istniał
+        // `CanonicalInitiativeCardWorkspace` — usunięty commitem aed131a2ab (decyzja
+        // właściciela 2026-09-03: KAŻDA inicjatywa otwiera `InitiativeDocumentView`).
+        // Po tamtym usunięciu obie gałęzie dawały ten sam dokument
+        // (`type:'initiative'`, `subType:'initiative'`, ten sam `activeDocumentId`),
+        // więc odpowiedź sondy nie zmieniała już NICZEGO na ekranie.
+        //
+        // Zmierzone 2026-09-06 na realnym rekordzie klasycznego rejestru DBR77
+        // (`fa87dc75-…`, 71 wierszy w tabeli `initiatives`, 0 w projekcji runtime-v1):
+        // ścieżka lista → wiersz → podgląd → „Otwórz" dawała DOKŁADNIE JEDNO
+        // `404 GET /api/initiatives/runtime-v1/initiatives/<id>` i jeden czerwony błąd
+        // w konsoli — z tej sondy. Runtime-v1 zwraca 404 poprawnie: rekord nie należy do
+        // tamtego rejestru (`postgresInitiativeReader.findById` filtruje po
+        // `organization_id`), a ten sam 404 dostaje obca organizacja — celowo
+        // nieodróżnialnie (anty-enumeracja). Dlatego naprawiamy WOŁACZA, nie trasę:
+        // zamiana 404→200 skasowałaby jedyny sygnał izolacji organizacji na tej trasie.
+        //
+        // Sonda niosła też drugą pułapkę: każdy błąd INNY niż 404 (500, sieć) był
+        // rethrow'owany i przerywał otwarcie karty toastem „Failed to open initiative",
+        // choć jej wynik i tak był nieużywany.
         const fromList = initiatives.find((i) => i.id === openId);
         const fromShowcase = initiativesDemoData.initiatives.find((i) => i.id === openId);
         let response: any = null;
-        let isCanonicalRuntime = false;
         if (!fromShowcase) {
-          try {
-            await Api.get(`/initiatives/runtime-v1/initiatives/${encodeURIComponent(openId)}`);
-            isCanonicalRuntime = true;
-          } catch (registrationError: any) {
-            if (registrationError?.status !== 404) throw registrationError;
-          }
-
           try {
             const v8Response = await V8PlanningApi.getInitiative(openId);
             if (readV8InitiativeId(v8Response) === openId) {
@@ -1003,16 +1016,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         setActiveStatusFilter(reveal.activeStatusFilter);
 
         if (mode === 'doc') {
-          if (isCanonicalRuntime) {
-            handleOpenInitiativeDocument(initiative);
-          } else {
-            handleOpenDocument({
-              id: initiative.id,
-              name: initiative.name,
-              type: 'initiative',
-              status: initiative.status,
-            });
-          }
+          // [ODMROZENIE 05_INITIATIVES DEC-397] Jeden handler dla KAŻDEJ inicjatywy —
+          // patrz uzasadnienie przy usuniętej sondzie runtime-v1 wyżej.
+          handleOpenInitiativeDocument(initiative);
         } else {
           handleInitiativeClick(initiative);
         }
@@ -1031,7 +1037,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     initiatives,
     initiativesDemoData,
     handleInitiativeClick,
-    handleOpenDocument,
     handleOpenInitiativeDocument,
     scope,
     activeStatusFilter,
@@ -1945,7 +1950,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               row.sourceType && row.sourceId
                 ? [
                     {
-                      label: getSourceDisplayLabel(row.sourceType),
+                      label: initiativeSourceLabel(row.sourceType),
                       onClick: () => navigate(buildInitiativeDeepLink(row.id, { mode: 'doc' })),
                     },
                   ]

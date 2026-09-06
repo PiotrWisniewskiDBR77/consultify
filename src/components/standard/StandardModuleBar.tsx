@@ -51,6 +51,43 @@ import {
 
 const noop = () => undefined;
 
+/**
+ * useStandardPanelControls — pigułki „Pokaż panel"/„Teresa" prawego skrajа
+ * Menu 3 (jeden prawy panel, `useJedenPanel`), WYEKSTRAHOWANE z prywatnego
+ * dotąd `panelControls` poniżej (ZERO zmiany zachowania — czysta ekstrakcja,
+ * ten sam hook/JSX/data-testid).
+ *
+ * POWÓD ISTNIENIA (MP-MENU3, 2026-09-06): huby z WŁASNYM bespoke Menu 2
+ * (np. `MyWorkHub` — search/tabs/CTA renderowane poza `StandardModuleBar`)
+ * nie mogą po prostu zamontować pełnej fasady tylko dla Command Row (Menu 3)
+ * — `ModuleNavBar` zawsze renderuje też swój Main Navigation Row (lupa),
+ * co dałoby DRUGĄ, osieroconą ikonę wyszukiwania nad istniejącym paskiem.
+ * Eksport tego hooka pozwala takim hubom wstrzyknąć te same pigułki
+ * BEZPOŚREDNIO do własnego prawego klastra Menu 3 — bez montowania drugiego
+ * Menu 2. `StandardModuleBar` poniżej używa TEGO SAMEGO hooka (nie ma dwóch
+ * wersji logiki).
+ */
+export function useStandardPanelControls(): React.ReactNode {
+  const { t } = useTranslation();
+  const maJedenPanel = useEmbeddedModuleChatHost();
+  const jedenPanel = useJedenPanel();
+
+  return maJedenPanel ? (
+    <>
+      {jedenPanel.zamkniety ? (
+        <Menu3Chip onClick={jedenPanel.pokazPanel} data-testid="show-list-panel">
+          <PanelRightOpen size={12} aria-hidden="true" />
+          <span>{t('list.rightPanel.show', 'Show panel')}</span>
+        </Menu3Chip>
+      ) : null}
+      <Menu3Chip onClick={jedenPanel.otworzTerese} data-testid="open-list-teresa">
+        <Sparkles size={12} aria-hidden="true" />
+        <span>{t('list.rightPanel.openTeresa', 'Teresa')}</span>
+      </Menu3Chip>
+    </>
+  ) : null;
+}
+
 // Wariant zablokowanego (pilot-lock) primaryCta — ten sam kształt (rounded-lg,
 // h-9) co MENU_1_PRIMARY_CTA, powierzchnia wyciszona zamiast wypełnienia
 // granatem. Kursor `not-allowed` to sam WYGLĄD — przycisk NADAL jest klikalny
@@ -294,23 +331,7 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
-  const maJedenPanel = useEmbeddedModuleChatHost();
-  const jedenPanel = useJedenPanel();
-
-  const panelControls = maJedenPanel ? (
-    <>
-      {jedenPanel.zamkniety ? (
-        <Menu3Chip onClick={jedenPanel.pokazPanel} data-testid="show-list-panel">
-          <PanelRightOpen size={12} aria-hidden="true" />
-          <span>{t('list.rightPanel.show', 'Show panel')}</span>
-        </Menu3Chip>
-      ) : null}
-      <Menu3Chip onClick={jedenPanel.otworzTerese} data-testid="open-list-teresa">
-        <Sparkles size={12} aria-hidden="true" />
-        <span>{t('list.rightPanel.openTeresa', 'Teresa')}</span>
-      </Menu3Chip>
-    </>
-  ) : null;
+  const panelControls = useStandardPanelControls();
 
   const navTabs = useMemo<TabConfig[]>(
     () =>

@@ -69,6 +69,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { HubBarSlotsProvider, useHubBar } from '@/components/shared/HubBarSlots';
+import { useStandardPanelControls } from '@/components/standard/StandardModuleBar';
 import { Menu3DropdownChip } from '@/components/shared/Menu3DropdownChip';
 import {
   MENU_2_TAB_ACTIVE,
@@ -774,6 +775,12 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // ★ JEDEN PASEK NA EKRAN — co ekran-dziecko (Run agent, Client Vault)
   // zadeklarował przez `useHubBarSlot`. Poza providerem: zawsze `{}` (no-op).
   const hubBarSlot = useHubBar();
+  // MP-MENU3 (2026-09-06): pigułki „Teresa"/„Pokaż panel" (jeden prawy panel,
+  // `useJedenPanel`) — TA SAMA logika co `StandardModuleBar` (kanoniczny hook
+  // wyeksportowany stamtąd, zero duplikacji). Wołane BEZWARUNKOWO na szczycie
+  // komponentu (reguły hooków) — użyte tylko w Menu 3 Skrzynki niżej, więc na
+  // innych zakładkach wartość jest liczona, ale nigdy nie renderowana.
+  const jedenPanelControls = useStandardPanelControls();
   // Górny pasek Idei w jednej linii (flaga, domyślnie OFF) — steruje TYLKO
   // slotem portalu w rzędzie pilli + kurczliwością tego rzędu. Reszta huba
   // przy OFF jest bajt-w-bajt jak dziś.
@@ -3375,6 +3382,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   <X size={14} />
                   {t('myWork.hub.dismiss', 'Dismiss')}
                 </button>
+                {/* MP-MENU3: pigułki „Teresa"/„Pokaż panel" — patrz komentarz
+                    przy `jedenPanelControls` na szczycie komponentu. */}
+                {jedenPanelControls}
               </div>
             </div>
           </div>
@@ -3418,6 +3428,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <Sparkles size={14} />
                 {t('myWork.hub.aITriage', 'Wstępna klasyfikacja AI')}
               </button>
+              {/* MP-MENU3: pigułki „Teresa"/„Pokaż panel" — patrz komentarz
+                  przy `jedenPanelControls` na szczycie komponentu. */}
+              {jedenPanelControls}
             </div>
           </div>
         </div>

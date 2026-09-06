@@ -1,4 +1,33 @@
 {
+  "actionCard": {
+    "title": "Action card",
+    "open": "Open card",
+    "fields": {
+      "period": "Period",
+      "goalMet": "Goal met?",
+      "actionRequired": "Action required?",
+      "problem": "Problem description",
+      "rootCause": "Root cause",
+      "action": "Action description",
+      "owner": "Owner",
+      "dueDate": "Due date",
+      "comment": "Comment",
+      "status": "Status"
+    },
+    "status": { "open": "OPEN", "closed": "CLOSED" }
+  },
+  "meetingActionItemsP9": {
+    "createTask": "Create task",
+    "taskCreated": "Task created",
+    "taskCreateFailed": "Could not create task"
+  },
+  "p9Handoff": {
+    "requestAction": "Hand over to execution",
+    "requested": "The handoff is awaiting acceptance in Inbox.",
+    "notReady": "Complete the handoff package and execution manager first.",
+    "failed": "The initiative could not be handed over to execution.",
+    "acceptanceSection": "For acceptance"
+  },
   "notFoundPage": {
     "title": "Page not found",
     "message": "The address you followed doesn't exist or has moved.",
@@ -3057,6 +3086,7 @@
       "emptySubtitle": "You're all caught up!",
       "empty": "No presentations yet."
     },
+    "taskCreatedFromChatToast": "Task created from chat",
     "decisions": {
       "addDecision": "Add decision",
       "emptyColumn": "No decisions",
@@ -18814,7 +18844,9 @@
     "citationNoAccess": "Source not accessible to you",
     "deepSearchSources": "Deep search sources",
     "citationExternalBadge": "External",
+    "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "No excerpt available.",
+    "citationFragmentOpenLabel": "Fragment {{index}}",
     "citationOpenSource": "Open source"
   },
   "agentAudit": {
@@ -19168,6 +19200,8 @@
     "generatingQueries": "Generating research queries...",
     "queriesReady": "Research queries ready",
     "searching": "Searching sources...",
+    "searchingRound": "Searching (round {{round}}/{{totalRounds}})...",
+    "round": "Round {{round}}/{{totalRounds}}",
     "aggregating": "Aggregating results...",
     "synthesizing": "Synthesizing findings...",
     "complete": "Research complete",
@@ -32698,7 +32732,9 @@
         "templateUpdated": "Template updated",
         "templateCreated": "Template created",
         "failedToSaveTemplate": "Failed to save template",
-        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine."
+        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine.",
+        "previewYes": "Yes",
+        "previewNo": "No"
       },
       "refineDialog": {
         "suggestionAddPriority": "Add a priority field",
@@ -33584,13 +33620,15 @@
       "collapsePeriods": "Collapse monthly periods",
       "expandPeriods": "Edit monthly periods",
       "col": {
+        "expand": "Expand",
         "label": "Driver",
         "type": "Type",
         "category": "Category",
         "unit": "Unit",
         "total": "Total",
         "confidence": "Confidence",
-        "evidence": "Evidence"
+        "evidence": "Evidence",
+        "actions": "Actions"
       },
       "monthlyValues": "Monthly values",
       "months": "mo",

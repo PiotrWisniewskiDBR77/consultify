@@ -1,0 +1,33 @@
+{
+ "url": "http://127.0.0.1:3096/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=Zadania",
+  "text=DBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nZadania\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nDBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)\nDBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)\nDo zrobienia\nZapisano\nAI\nRozpocznij\nSekcje\nEdycja\nPodgląd\nAnalizuj z AI\nOpis i zakres\nPomysły realizacji\nRyzyko i alternatywy\nLista kontrolna\nZależności\nDowody\nRACI i eskalacja\nZałączniki i powiązania\nStrategia\nEdytowane\nOpis i zakres\nWYNIKA ZBrak powiązania — zadanie samodzielne\nOPIS ZADANIA\nAI\nPOWIĄZANE POMYSŁY\n\nBrak sugestii\n\nZapisuj pomysły z czatu, aby zbudować prywatną bibliotekę.\nPOWIĄZANE NOTATKI\n\nBrak sugestii\n\nZapisuj notatki, aby zbudować prywatną bazę wiedzy.\nOCZEKIWANY REZULTAT\nAI\n\nReview this draft, then save the task to persist it.\n\nRegeneruj\nEdytuj\nAKCJE\nZapytaj Teresę o to zadanie\nZablokuj\nPrzydziel\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tDo zrobienia\nPriorytet\tKrytyczny\nTermin\t12 wrz 2026\nWłaściciel\t—\nŹródło\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n1",
+ "dom": {
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1064,
+     "y": 182,
+     "width": 320,
+     "height": 640
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T05:20:29.197Z"
+}

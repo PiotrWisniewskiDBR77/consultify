@@ -137,12 +137,12 @@ a{color:var(--accent);}
       <div class="kafel-nazwa">Pojemnik 1 <span class="kafel-nazwa-pelna">— MVP rękami właściciela</span></div>
       <div class="kafel-termin">10 dni, do ~16.09</div>
       <div class="kafel-progress">
-        <div class="progress-track"><div class="progress-fill" style="width:20%"></div></div>
-        <span class="mono progress-label">2/10 pozycji</span>
+        <div class="progress-track"><div class="progress-fill" style="width:60%"></div></div>
+        <span class="mono progress-label">6/10 pozycji</span>
       </div>
       <div class="kafel-liczniki">
         <span class="mono">0/8 kryteriów</span>
-        <span class="mono">2 decyzji czeka</span>
+        <span class="mono">0 decyzji czeka</span>
       </div>
     </button>
 <button class="kafel" data-tab-target="2" id="tabbtn-2" role="tab" aria-selected="false" aria-controls="panel-2">
@@ -196,37 +196,37 @@ a{color:var(--accent);}
       <td class="mono nowrap">1.2</td>
       <td>P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo</td>
       <td class="nowrap">Sonnet</td>
-      <td><span class="chip chip-amber">DO ODBIORU</span></td>
+      <td><span class="chip chip-green">ODEBRANE</span></td>
       <td class="mono nowrap">mvp/p1-skrzynka-wywiad <span class="muted">·</span> c9a7e5bd0b</td>
       <td>scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440<div class="uwagi">Czeka na słowo właściciela na żywym ekranie stagingu (karta 2). Po drodze 3 błędy naprawione u źródła: próg nakładki, reset zakładki Teresa, Menu 3 gubiło pigułki „Teresa/Pokaż panel”. STOP zastany: Moja Praca ma własne Menu 3 poza kanonem, więc pigułka „Pokaż panel” w Skrzynce nie działa (osobne zadanie).</div></td>
       <td class="mono nowrap">06.09 10:05</td>
     </tr>
-<tr class="row-w-toku">
+<tr class="">
       <td class="mono nowrap">1.3</td>
       <td>P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)</td>
       <td class="nowrap">Codex, odbiór Sonnet</td>
-      <td><span class="chip chip-amber">W TOKU</span></td>
-      <td class="mono nowrap">codex/p9-karta-dzialania</td>
-      <td>wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania<div class="uwagi">Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.</div></td>
-      <td class="mono nowrap">06.09 06:40</td>
+      <td><span class="chip chip-green">SCALONE</span></td>
+      <td class="mono nowrap">codex/p9-karta-dzialania <span class="muted">·</span> ad8d847e38</td>
+      <td>fundament + jedna karta na 5 powierzchniach (Wyniki, Realizacja, Audyty, Finanse, Skrzynka), 3 sieroty usunięte, K1, K3, adaptery; pomiar nadzorcy: tsc OK, serwer 43 pass (2 pliki = baza)<div class="uwagi">Reszta (sekcja „Do akceptacji” w Skrzynce, e2e, zrzuty powierzchni, test zależny od rg) przeniesiona do 1.4.</div></td>
+      <td class="mono nowrap">06.09 12:30</td>
     </tr>
-<tr class="">
+<tr class="row-w-toku">
       <td class="mono nowrap">1.4</td>
       <td>P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)</td>
       <td class="nowrap">Opus</td>
-      <td><span class="chip chip-neutral">CZEKA</span></td>
-      <td class="mono nowrap"></td>
-      <td><div class="uwagi">Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.</div></td>
-      <td class="mono nowrap"></td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap">mvp/p7k-b-odchylenie</td>
+      <td>worktree /private/tmp/wt-p7k-b (Opus, serwer 4103 / vite 3105); cel: e2e rezultat poza limitem → czerwony wiersz → Skrzynka → karta → zadanie (S1.3)<div class="uwagi">Obejmuje też dokończenie K2 (sekcja „Do akceptacji” w Skrzynce) i naprawę testu Codexa zależnego od rg.</div></td>
+      <td class="mono nowrap">06.09 12:50</td>
     </tr>
-<tr class="row-w-toku">
+<tr class="">
       <td class="mono nowrap">1.5</td>
       <td>P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)</td>
       <td class="nowrap">Codex/Sonnet</td>
-      <td><span class="chip chip-amber">W TOKU</span></td>
-      <td class="mono nowrap">codex/p8-teresa</td>
-      <td>wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)<div class="uwagi">Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.</div></td>
-      <td class="mono nowrap">06.09 06:40</td>
+      <td><span class="chip chip-green">ODEBRANE</span></td>
+      <td class="mono nowrap">codex/p8-teresa <span class="muted">·</span> 72def3b049</td>
+      <td>scalone na staging; 13 wejść Teresy w prawym panelu (inicjatywa, notatka, zadanie, wywiad, narzędzia, ocena, audyty, organizacja, spotkania…), e2e: dok z historią czatu i odpowiedź PL ze źródłami; 5 zrzutów evidence/p8-teresa-20260905/; CTO obejrzał inicjatywę<div class="uwagi">Właściciel 06.09 o zrzucie karty inicjatywy: „dokładnie taki jak kocham” = Tak (karta 3). Codex: 2 STOP-y rozstrzygnięte decyzjami DEC-398/DEC-400.</div></td>
+      <td class="mono nowrap">06.09 10:55</td>
     </tr>
 <tr class="">
       <td class="mono nowrap">1.6</td>
@@ -241,10 +241,10 @@ a{color:var(--accent);}
       <td class="mono nowrap">1.7</td>
       <td>Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</td>
       <td class="nowrap">Sonnet</td>
-      <td><span class="chip chip-neutral">CZEKA</span></td>
-      <td class="mono nowrap"></td>
-      <td><div class="uwagi">Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.</div></td>
-      <td class="mono nowrap"></td>
+      <td><span class="chip chip-green">ODEBRANE</span></td>
+      <td class="mono nowrap">codex/higiena-danych <span class="muted">·</span> a3c74fd297</td>
+      <td>APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach<div class="uwagi">Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.</div></td>
+      <td class="mono nowrap">06.09 13:05</td>
     </tr>
 <tr class="">
       <td class="mono nowrap">1.8</td>
@@ -264,14 +264,14 @@ a{color:var(--accent);}
       <td><div class="uwagi">Nie może startować przed domknięciem pozycji 1.1–1.8.</div></td>
       <td class="mono nowrap"></td>
     </tr>
-<tr class="">
+<tr class="row-w-toku">
       <td class="mono nowrap">1.10</td>
       <td>Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe</td>
       <td class="nowrap">Opus + nadzorca</td>
-      <td><span class="chip chip-neutral">CZEKA</span></td>
-      <td class="mono nowrap"></td>
-      <td><div class="uwagi">Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.</div></td>
-      <td class="mono nowrap"></td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap">mvp/demo-rozdzial-przygotowanie <span class="muted">·</span> f21953eef4</td>
+      <td>przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie<div class="uwagi">ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.</div></td>
+      <td class="mono nowrap">06.09 12:40</td>
     </tr></tbody>
     </table>
   </div>
@@ -293,7 +293,7 @@ a{color:var(--accent);}
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
         <span class="mono">1.2</span>
-        <span class="chip chip-amber">DO ODBIORU</span>
+        <span class="chip chip-green">ODEBRANE</span>
       </div>
       <div class="pozycja-card-nazwa">P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo</div>
       <div class="pozycja-card-meta">
@@ -305,50 +305,50 @@ a{color:var(--accent);}
       <div class="pozycja-card-dowod">scalone na staging; 18 zrzutów evidence/p1-skrzynka-wywiad/ (aside 1/1/0/0, tabela Skrzynki 1184 px przy 1280); CTO obejrzał Skrzynkę 1440 i Wywiad 1440</div>
       <div class="uwagi">Czeka na słowo właściciela na żywym ekranie stagingu (karta 2). Po drodze 3 błędy naprawione u źródła: próg nakładki, reset zakładki Teresa, Menu 3 gubiło pigułki „Teresa/Pokaż panel”. STOP zastany: Moja Praca ma własne Menu 3 poza kanonem, więc pigułka „Pokaż panel” w Skrzynce nie działa (osobne zadanie).</div>
     </div>
-<div class="pozycja-card card-w-toku">
+<div class="pozycja-card ">
       <div class="pozycja-card-top">
         <span class="mono">1.3</span>
-        <span class="chip chip-amber">W TOKU</span>
+        <span class="chip chip-green">SCALONE</span>
       </div>
       <div class="pozycja-card-nazwa">P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)</div>
       <div class="pozycja-card-meta">
         <span>Codex, odbiór Sonnet</span>
         
-        <span class="mono muted">06.09 06:40</span>
+        <span class="mono muted">06.09 12:30</span>
       </div>
-      <div class="mono pozycja-card-galaz">codex/p9-karta-dzialania</div>
-      <div class="pozycja-card-dowod">wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania</div>
-      <div class="uwagi">Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.</div>
+      <div class="mono pozycja-card-galaz">codex/p9-karta-dzialania · ad8d847e38</div>
+      <div class="pozycja-card-dowod">fundament + jedna karta na 5 powierzchniach (Wyniki, Realizacja, Audyty, Finanse, Skrzynka), 3 sieroty usunięte, K1, K3, adaptery; pomiar nadzorcy: tsc OK, serwer 43 pass (2 pliki = baza)</div>
+      <div class="uwagi">Reszta (sekcja „Do akceptacji” w Skrzynce, e2e, zrzuty powierzchni, test zależny od rg) przeniesiona do 1.4.</div>
     </div>
-<div class="pozycja-card ">
+<div class="pozycja-card card-w-toku">
       <div class="pozycja-card-top">
         <span class="mono">1.4</span>
-        <span class="chip chip-neutral">CZEKA</span>
+        <span class="chip chip-amber">W TOKU</span>
       </div>
       <div class="pozycja-card-nazwa">P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)</div>
       <div class="pozycja-card-meta">
         <span>Opus</span>
         <span class="muted">zależy: 1.3</span>
-        
+        <span class="mono muted">06.09 12:50</span>
       </div>
-      
-      
-      <div class="uwagi">Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.</div>
+      <div class="mono pozycja-card-galaz">mvp/p7k-b-odchylenie</div>
+      <div class="pozycja-card-dowod">worktree /private/tmp/wt-p7k-b (Opus, serwer 4103 / vite 3105); cel: e2e rezultat poza limitem → czerwony wiersz → Skrzynka → karta → zadanie (S1.3)</div>
+      <div class="uwagi">Obejmuje też dokończenie K2 (sekcja „Do akceptacji” w Skrzynce) i naprawę testu Codexa zależnego od rg.</div>
     </div>
-<div class="pozycja-card card-w-toku">
+<div class="pozycja-card ">
       <div class="pozycja-card-top">
         <span class="mono">1.5</span>
-        <span class="chip chip-amber">W TOKU</span>
+        <span class="chip chip-green">ODEBRANE</span>
       </div>
       <div class="pozycja-card-nazwa">P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)</div>
       <div class="pozycja-card-meta">
         <span>Codex/Sonnet</span>
         
-        <span class="mono muted">06.09 06:40</span>
+        <span class="mono muted">06.09 10:55</span>
       </div>
-      <div class="mono pozycja-card-galaz">codex/p8-teresa</div>
-      <div class="pozycja-card-dowod">wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)</div>
-      <div class="uwagi">Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.</div>
+      <div class="mono pozycja-card-galaz">codex/p8-teresa · 72def3b049</div>
+      <div class="pozycja-card-dowod">scalone na staging; 13 wejść Teresy w prawym panelu (inicjatywa, notatka, zadanie, wywiad, narzędzia, ocena, audyty, organizacja, spotkania…), e2e: dok z historią czatu i odpowiedź PL ze źródłami; 5 zrzutów evidence/p8-teresa-20260905/; CTO obejrzał inicjatywę</div>
+      <div class="uwagi">Właściciel 06.09 o zrzucie karty inicjatywy: „dokładnie taki jak kocham” = Tak (karta 3). Codex: 2 STOP-y rozstrzygnięte decyzjami DEC-398/DEC-400.</div>
     </div>
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
@@ -368,17 +368,17 @@ a{color:var(--accent);}
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
         <span class="mono">1.7</span>
-        <span class="chip chip-neutral">CZEKA</span>
+        <span class="chip chip-green">ODEBRANE</span>
       </div>
       <div class="pozycja-card-nazwa">Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)</div>
       <div class="pozycja-card-meta">
         <span>Sonnet</span>
         <span class="muted">zależy: decyzje właściciela</span>
-        
+        <span class="mono muted">06.09 13:05</span>
       </div>
-      
-      
-      <div class="uwagi">Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.</div>
+      <div class="mono pozycja-card-galaz">codex/higiena-danych · a3c74fd297</div>
+      <div class="pozycja-card-dowod">APPLY na stagingu po słowie właściciela („wywalaj puste i stare”): 9 ocen do archiwum, 16 rekordów testowych usuniętych z kopią CSV i manifestem cofnięcia, drugi apply = 0; finanse 0; Silesia tylko w logach</div>
+      <div class="uwagi">Runda 2 (dane, które już nie pasują do aplikacji) = pomiar Codexa → lista → słowo właściciela → apply (plan demo F0). 2 zadania BUG z zależnościami zostały do rundy 2.</div>
     </div>
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
@@ -410,20 +410,20 @@ a{color:var(--accent);}
       
       <div class="uwagi">Nie może startować przed domknięciem pozycji 1.1–1.8.</div>
     </div>
-<div class="pozycja-card ">
+<div class="pozycja-card card-w-toku">
       <div class="pozycja-card-top">
         <span class="mono">1.10</span>
-        <span class="chip chip-neutral">CZEKA</span>
+        <span class="chip chip-amber">W TOKU</span>
       </div>
       <div class="pozycja-card-nazwa">Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe</div>
       <div class="pozycja-card-meta">
         <span>Opus + nadzorca</span>
         <span class="muted">zależy: 1.9</span>
-        
+        <span class="mono muted">06.09 12:40</span>
       </div>
-      
-      
-      <div class="uwagi">Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.</div>
+      <div class="mono pozycja-card-galaz">mvp/demo-rozdzial-przygotowanie · f21953eef4</div>
+      <div class="pozycja-card-dowod">przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie</div>
+      <div class="uwagi">ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.</div>
     </div></div>
 
     <h3 class="section-title">Kryteria gotowe</h3>
@@ -523,14 +523,14 @@ a{color:var(--accent);}
     <td>Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</td>
     <td class="nowrap">nadzorca</td>
     <td>8×3 zrzuty na żywo, aside ≤ 1</td>
-    <td><span class="chip chip-neutral">NIE</span></td>
+    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
   </tr>
 <tr>
     <td class="mono nowrap">S1.6</td>
     <td>Teresa odpowiada po polsku ze źródłami w każdym module MVP</td>
     <td class="nowrap">nadzorca</td>
     <td>16 odpowiedzi z used_sources &gt; 0 w evidence/</td>
-    <td><span class="chip chip-neutral">NIE</span></td>
+    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
   </tr>
 <tr>
     <td class="mono nowrap">S1.7</td>
@@ -558,7 +558,7 @@ a{color:var(--accent);}
     <td>Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</td>
     <td class="nowrap">właściciel</td>
     <td>ledger decyzji (DEC-…)</td>
-    <td><span class="chip chip-amber">CZĘŚCIOWO</span></td>
+    <td><span class="chip chip-green">TAK</span></td>
   </tr>
 <tr>
     <td class="mono nowrap">S1.11</td>
@@ -601,13 +601,13 @@ a{color:var(--accent);}
     <div class="pozycja-card-dowod">pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”</div>
   </div>
 <div class="pozycja-card">
-    <div class="pozycja-card-top"><span class="mono">S1.5</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-top"><span class="mono">S1.5</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
     <div class="pozycja-card-nazwa">Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu</div>
     <div class="pozycja-card-meta"><span>nadzorca</span></div>
     <div class="pozycja-card-dowod">8×3 zrzuty na żywo, aside ≤ 1</div>
   </div>
 <div class="pozycja-card">
-    <div class="pozycja-card-top"><span class="mono">S1.6</span><span class="chip chip-neutral">NIE</span></div>
+    <div class="pozycja-card-top"><span class="mono">S1.6</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
     <div class="pozycja-card-nazwa">Teresa odpowiada po polsku ze źródłami w każdym module MVP</div>
     <div class="pozycja-card-meta"><span>nadzorca</span></div>
     <div class="pozycja-card-dowod">16 odpowiedzi z used_sources &gt; 0 w evidence/</div>
@@ -631,7 +631,7 @@ a{color:var(--accent);}
     <div class="pozycja-card-dowod">health demo = SHA, tag demo-safe-&lt;data&gt;, zrzuty z demo</div>
   </div>
 <div class="pozycja-card">
-    <div class="pozycja-card-top"><span class="mono">S1.10</span><span class="chip chip-amber">CZĘŚCIOWO</span></div>
+    <div class="pozycja-card-top"><span class="mono">S1.10</span><span class="chip chip-green">TAK</span></div>
     <div class="pozycja-card-nazwa">Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)</div>
     <div class="pozycja-card-meta"><span>właściciel</span></div>
     <div class="pozycja-card-dowod">ledger decyzji (DEC-…)</div>
@@ -662,18 +662,18 @@ a{color:var(--accent);}
 <li class="decyzja-item">
       <div class="decyzja-top">
         <span class="decyzja-tresc">Grupowanie inicjatyw po zdjęciu Projektów</span>
-        <span class="chip chip-amber">CZEKA</span>
-        
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-402</span>
       </div>
-      <div class="decyzja-rekomendacja">Rekomendacja CTO: Płaska lista + kolumna obszar/oś; program/portfel po MVP</div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: Płaska lista + kolumna obszar/oś; program/portfel po MVP. Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)</div>
     </li>
 <li class="decyzja-item">
       <div class="decyzja-top">
         <span class="decyzja-tresc">Kropka „Model” w crimson</span>
-        <span class="chip chip-amber">CZEKA</span>
-        
+        <span class="chip chip-green">PODJĘTA</span>
+        <span class="mono decyzja-nr">DEC-402</span>
       </div>
-      <div class="decyzja-rekomendacja">Rekomendacja CTO: Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)</div>
+      <div class="decyzja-rekomendacja">Rekomendacja CTO: CTO: neutralna (czerwień tylko dla stanu krytycznego). Właściciel 06.09: Tak (w realizacji: zlecenie DEC-402)</div>
     </li>
 <li class="decyzja-item">
       <div class="decyzja-top">

@@ -55,7 +55,7 @@ import { formatRoiDisplay } from '@/utils/safeFormat';
 
 import { CapabilityGate } from '../shared/CapabilityGate';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
-import { getSourceDisplayLabel } from './InitiativeSourceLink';
+import { InitiativeSourceLink } from './InitiativeSourceLink';
 
 // FAZA C (model ról PM): gate → capability z katalogu backendu
 // (effectiveAccessService). Fallback = generyczna zmiana statusu.
@@ -718,14 +718,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       {t(`initiatives.priority.${initiative.priority.toLowerCase()}`)}
                     </span>
                   )}
-                  {initiative.sourceType && (
-                    <span className="text-xs text-slate-500 flex items-center gap-1">
-                      <Zap size={10} />
-                      {t('initiatives.fullView.fromSource', {
-                        source: getSourceDisplayLabel(initiative.sourceType),
-                      })}
-                    </span>
-                  )}
+                  {initiative.sourceType && initiative.sourceId ? <InitiativeSourceLink sourceType={initiative.sourceType} sourceId={initiative.sourceId} /> : null}
                 </div>
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">
                   {initiative.name}
@@ -910,34 +903,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
               </div>
 
               {/* Source Info */}
-              {initiative.sourceType && (
-                <div className="bg-white/50 dark:bg-navy-900/50 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <Zap size={12} className="text-amber-400" />
-                    <span>
-                      Generated from:{' '}
-                      <span className="text-slate-900 dark:text-white capitalize">
-                        {getSourceDisplayLabel(initiative.sourceType)}
-                      </span>
-                    </span>
-                    {initiative.sourceId && (
-                      <a
-                        href={
-                          ['tool', 'tool_session', 'idea'].includes(
-                            initiative.sourceType.toLowerCase()
-                          )
-                            ? `/my-work?tab=ideas&sessionId=${initiative.sourceId}`
-                            : initiative.sourceType.toLowerCase() === 'assessment'
-                              ? `/interview?assessmentId=${initiative.sourceId}`
-                              : '#'
-                        }
-                        className="inline-flex items-center gap-1 text-c-info dark:text-c-info hover:underline ml-1"
-                      >
-                        <ExternalLink size={10} />
-                        {t('initiatives.initiativeFullView.viewSource')}
-                      </a>
-                    )}
-                  </div>
+              {initiative.sourceType && initiative.sourceId && (
+                <div className="space-y-2">
+                  <InitiativeSourceLink sourceType={initiative.sourceType} sourceId={initiative.sourceId} />
                 </div>
               )}
             </div>

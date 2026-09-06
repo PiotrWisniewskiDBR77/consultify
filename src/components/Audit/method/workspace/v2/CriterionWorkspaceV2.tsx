@@ -57,6 +57,7 @@ import { ErrorState, LoadingState, SaveStateIndicator, type SaveStatus } from '@
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { StatusChip, type StatusTone } from '@/components/ui/primitives/chips';
 import { useAppStore } from '@/store/useAppStore';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
@@ -387,6 +388,7 @@ export const CriterionWorkspaceV2: React.FC = () => {
   const programId = params.programId ?? '';
   const criterionId = params.criterionId ?? '';
   const navigate = useNavigate();
+  const openChatWithContext = useOpenChatWithContext();
 
   const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id ?? null;
@@ -1808,7 +1810,15 @@ export const CriterionWorkspaceV2: React.FC = () => {
         </div>
 
         {/* ===== Prawy panel artefaktu (SPEC-A) ===== */}
-        <ArtifactRightPanel sections={rightPanelSections} width="100%" className="!h-auto rounded-token-md border shadow-token-card xl:sticky xl:top-4 xl:!h-fit xl:self-start" />
+        <ArtifactRightPanel
+          sections={rightPanelSections}
+          teresaEntry={{
+            label: 'Zapytaj Teresę o to kryterium',
+            onOpen: () => void openChatWithContext({ entityType: 'audit-criterion', entityId: criterionId, entityName: criterion?.title || criterionId, contextData: { programId, criterionId }, reuseActiveConversation: true }),
+          }}
+          width="100%"
+          className="!h-auto rounded-token-md border shadow-token-card xl:sticky xl:top-4 xl:!h-fit xl:self-start"
+        />
       </div>
     </div>
   );

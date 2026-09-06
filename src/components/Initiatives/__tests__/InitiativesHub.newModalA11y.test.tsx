@@ -31,6 +31,13 @@ const { getPortfolio, portfolioStoreState, appStoreState, conversationStoreState
 );
 vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   listRegisteredInitiatives: vi.fn(async () => ({ initiatives: [] })),
+  // DEC-397 (MVP fix 2026-09-05): InitiativesHub now backfills legacy rows
+  // via `listLegacyInitiatives` alongside `listRegisteredInitiatives` (see
+  // InitiativesHub.tsx fetchData). Missing this export made every fetch
+  // throw synchronously on property access — before the component's own
+  // `.catch()` on the call result could run — which set a fetch error and
+  // hid the empty-state "New initiative" CTA, breaking this test's count.
+  listLegacyInitiatives: vi.fn(async () => []),
 }));
 vi.mock('@/services/api/v8/planning', () => ({
   V8PlanningApi: {

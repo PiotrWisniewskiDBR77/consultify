@@ -14,6 +14,13 @@ if [ -n "$STAGED" ]; then
   fi
 fi
 
+# P8 Teresa: wspólne wejście, brak martwych powierzchni i kontrakt każdego
+# narzędzia z realnym handlerem zastosowania.
+if ! bash scripts/check-teresa-kontrakty.sh; then
+  echo "  ⛔ Commit zablokowany: kontrakt Teresy jest niespójny." >&2
+  exit 1
+fi
+
 # 2) Crimson w powłoce artefaktów (SPEC-A, CLAUDE.md UI pkt 6) — ratchet na
 #    stałym, małym zakresie plików (NModeLayout/ExecutiveModuleShell/
 #    ArtifactRightPanel/IdeaMapWorkspace), więc odpala się zawsze i tanio.
