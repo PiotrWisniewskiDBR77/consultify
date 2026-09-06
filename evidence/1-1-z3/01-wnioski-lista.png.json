@@ -1,0 +1,32 @@
+{
+ "url": "http://127.0.0.1:3102/conclusions",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3102/api/conclusions/sync"
+  },
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3102/api/conclusions/sync"
+  }
+ ],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWnioski\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nWnioski\n\nUgruntowane wnioski z Twoich narzędzi i ocen — werdykt, uzasadnienie i dowody w jednym miejscu.\n\nOdśwież\nWszystkie\nNarzędzie\nInne\nNarzędzie\nŚrednia pewność\nOpublikowany\nSWOT — ekspansja DACH 2026\n\n{}\n\n1 dowodów\nŹródło\nNarzędzie\nŚrednia pewność\nOpublikowany\nSWOT — model serwisowy po wdrożeniu\n\n{}\n\n1 dowodów\nŹródło\nNarzędzie\nŚrednia pewność\nOpublikowany\nSWOT — portfel produktowy robotyki\n\n{}\n\n1 dowodów\nŹródło\nNarzędzie\nŚrednia pewność\nDo przeglądu\nSWOT — kompetencje zespołu wdrożeń\n\n{}\n\n1 dowodów\nŹródło\nInne\nNiewystarczające dowody\nKandydat\nDRD Enterprise — Board Presentation & Strategic Investment Case\n\nDBR77 osiąga zagregowaną dojrzałość cyfrową na poziomie 0% wobec celu 0% (luka 0 p.p.), co plasuje organizację w fazie „Inicjacja Cyfrowa”. Ocena objęła 0 obszarów w 7 osiach transformacji cyfrowej metodyki DRD. Najsilniejszą osią jest „Procesy Cyfrowe”, gdzie fundamenty cyfrowe są najlepiej ugruntowane. Największy potencjał wzrostu koncentruje się w osi „Procesy Cyfrowe”, która wyznacza priorytet kolejnej fali inwestycji. Profil dojrzałości jest nierównomierny: dojrzałe procesy operacyjne współistnieją z lukami w obszarach o wyższej dźwigni strategicznej. Zamknięcie tych luk wymaga sekwencjonowania działań według relacji wpływ/nakład, a nie równoległego frontu inwestycji. Rekomendowana ścieżka to trzy fale wdrożeniowe (F1–F3): najpierw „szybkie zwycięstwa” o wysokim wpływie i niskim nakładzie, następnie inicjatywy strukturalne, na końcu przedsięwzięcia transformacyjne o horyzoncie wieloletnim. Wszystkie wartości liczbowe w raporcie pochodzą wyłącznie z silnika oceny DRD i odzwierciedlają stan zarejestrowany w assessmencie. Warstwa narracyjna interpretuje te dane, nie modyfikując ich.\n\n9 dowodów\nŹródło\nInne\nNiewystarczające dowody\nKandydat\nDRD Manufacturing — Executive Summary & Deep Analysis (C-suite)\n\nDBR77 osiąga zagregowaną dojrzałość cyfrową na poziomie 0% wobec celu 0% (luka 0 p.p.), co plasuje organizację w fazie „Inicjacja Cyfrowa”. Ocena objęła 0 obszarów w 7 osiach transformacji cyfrowej metodyki DRD. Najsilniejszą osią jest „Procesy Cyfrowe”, gdzie fundamenty cyfrowe są najlepiej ugruntowane. Największy potencjał wzrostu koncentruje się w osi „Procesy Cyfrowe”, która wyznacza priorytet kolejnej fali inwestycji. Profil dojrzałości jest nierównomierny: dojrzałe procesy operacyjne współistnieją z lukami w obszarach o wyższej dźwigni strategicznej. Zamknięcie tych luk wymaga sekwencjonowania działań według relacji wpływ/nakład, a nie równoległego frontu inwestycji. Rekomendowana ścieżka to trzy fale wdrożeniowe (F1–F3): najpierw „szybkie zwycięstwa” o wysokim wpływie i niskim nakładzie, następnie inicjatywy strukturalne, na końcu przedsięwzięcia transformacyjne o horyzoncie wieloletnim. Wszystkie wartości liczbowe w raporcie pochodzą wyłącznie z silnika oceny DRD i odzwierciedlają stan zarejestrowany w assessmencie. Warstwa narracyjna interpretuje te dane, nie modyfikując ich.\n\n7 dowodów\nŹródło",
+ "kiedy": "2026-09-06T15:49:39.176Z"
+}

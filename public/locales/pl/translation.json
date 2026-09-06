@@ -34368,6 +34368,8 @@
     "context": "Zapisany kontekst",
     "conversions": "Wygenerowane z tego wniosku",
     "backToList": "Wszystkie wnioski",
+    "refresh": "Odśwież",
+    "refreshing": "Odświeżanie…",
     "source": {
       "tool": "Narzędzie",
       "assessment": "Ocena",
