@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 17:54",
+  "zaktualizowano": "2026-09-06 17:58",
   "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
@@ -928,6 +928,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 17:54: „generalnie tych statusów jest tam 12 i zrobimy je w fali 2”.",
           "data": "06.09"
+        },
+        {
+          "nr": "3.20",
+          "nazwa": "Spotkania — rozwój modułu (dziś za flagą OFF: edycja, notatki AI, usuwanie „już wkrótce”)",
+          "wykonawca": "",
+          "zalezy_od": "decyzja właściciela po pilotażu",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 17:58: „Wrzuć spotkania za flagi i wpisz to do fali drugiej. Nie będziemy teraz tego rozwijać.” DEC-425.",
+          "data": "06.09"
         }
       ],
       "kryteria": [
@@ -1030,7 +1042,7 @@
     {
       "modul": "Realizacja",
       "werdykt": "brak",
-      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Realizacje → wiersz → panel Rekord|Teresa; regresja „lepkiego zamknięcia” naprawiona (P1-LEPKIE)."
+      "zdanie": "06.09 17:58: JEDYNY moduł, który został właścicielowi do przejścia („została nam już tylko realizacja”). Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Realizacje → wiersz → panel Rekord|Teresa; regresja „lepkiego zamknięcia” naprawiona (P1-LEPKIE)."
     },
     {
       "modul": "Wyniki",
@@ -1054,8 +1066,8 @@
     },
     {
       "modul": "Spotkania",
-      "werdykt": "brak",
-      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji."
+      "werdykt": "nie",
+      "zdanie": "06.09 17:58 — właściciel: „wrzuć spotkania za flagi, zrobimy to w fali drugiej” (DEC-425; M-3 u robotnika; Fala 2 pozycja 3.20)."
     },
     {
       "modul": "Administracja",
@@ -1074,8 +1086,8 @@
     },
     {
       "modul": "Partner",
-      "werdykt": "brak",
-      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji."
+      "werdykt": "tak",
+      "zdanie": "06.09 17:58 — właściciel: „zaakceptuj cały moduł partnerów jako odebrany” (P-1 podłączenie na żywo ad35c3c09e)."
     },
     {
       "modul": "Panel administratora",
@@ -1084,8 +1096,8 @@
     },
     {
       "modul": "Partnerzy",
-      "werdykt": "brak",
-      "zdanie": "06.09 16:20: podłączeni (P-1 na żywo dbc1a03e19) — czeka na odbiór właściciela."
+      "werdykt": "tak",
+      "zdanie": "06.09 17:58 — właściciel: „zaakceptuj cały moduł partnerów jako odebrany” (P-1 podłączenie na żywo ad35c3c09e)."
     }
   ]
 }
