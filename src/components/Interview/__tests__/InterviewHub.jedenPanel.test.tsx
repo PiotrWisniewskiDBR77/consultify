@@ -271,7 +271,7 @@ describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)
     expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
   });
 
-  it('T3: X jest lepki — klik w inny wiersz po zamknięciu NIE otwiera panelu ponownie', async () => {
+  it('T3b (DEC-397b, nadpisuje DEC-397): zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED)', async () => {
     const { container } = renderInbox();
 
     const rows1 = await screen.findAllByText('Pierwsze zadanie');
@@ -290,8 +290,15 @@ describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)
 
     const rows2 = await screen.findAllByText('Drugie zadanie');
     fireEvent.click(rows2[rows2.length - 1]);
-    // Lepkie zamknięcie: klik w DRUGI wiersz nie przywraca panelu.
-    expect(container.querySelector('[data-right-panel]')).toBeNull();
+    // DEC-397b (właściciel, 06.09.2026 15:47): klik wiersza jest realna zmiana
+    // zaznaczenia — PONOWNIE otwiera panel, mimo wcześniejszego X. Nadpisuje
+    // DEC-397 „zamknięcie zostaje lepkie na klik" (test do 06.09 sprawdzał
+    // dokładnie odwrotność tego zachowania).
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
+    const reopenedPanel = container.querySelector('[data-right-panel]') as HTMLElement;
+    expect(within(reopenedPanel).getByText('Drugie zadanie')).toBeInTheDocument();
   });
 
   it('T4: markup korzenia panelu nie wprowadza klas spoza tokenów', async () => {
