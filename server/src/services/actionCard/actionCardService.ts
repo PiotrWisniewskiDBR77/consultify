@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import notificationService from '../notificationService.js';
+export { readLegacyActionCardCandidates } from './adapters/index.js';
 
 export const ACTION_CARD_SOURCE_KINDS = [
   'kpi_deviation',

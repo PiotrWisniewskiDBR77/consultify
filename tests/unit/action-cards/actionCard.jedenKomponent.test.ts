@@ -27,6 +27,11 @@ describe('P9 action-card spine static gates', () => {
     expect(result.status).toBe(1);
   });
 
+  it('nie pozwala powierzchniom budować własnego markup karty działania', () => {
+    const result = spawnSync('rg', ['-n', '<article[^>]*data-action-card', 'src', '-g', '!**/__tests__/**', '-g', '!src/components/standard/**'], { cwd: root, encoding: 'utf8' });
+    expect(result.status).toBe(1);
+  });
+
   it('nie zapisuje canonical_inbox_items poza inboxService', () => {
     const result = spawnSync('rg', ['-n', 'INSERT INTO canonical_inbox_items', 'server/src', '-g', '!**/__tests__/**', '-g', '!**/inboxService.ts'], { cwd: root, encoding: 'utf8' });
     expect(result.status).toBe(1);
@@ -36,7 +41,7 @@ describe('P9 action-card spine static gates', () => {
   it('renderuje klikalny InitiativeSourceLink we wszystkich miejscach rodowodu', () => {
     const links = spawnSync('rg', ['-n', '<InitiativeSourceLink', 'src', '-g', '!**/__tests__/**'], { cwd: root, encoding: 'utf8' });
     expect(links.status).toBe(0);
-    expect(links.stdout.trim().split('\n').length).toBeGreaterThanOrEqual(9);
+    expect(links.stdout.trim().split('\n').length).toBe(10);
     const labels = spawnSync('rg', ['-n', 'getSourceDisplayLabel', 'src', '-g', '!**/__tests__/**', '-g', '!**/InitiativeSourceLink.tsx'], { cwd: root, encoding: 'utf8' });
     expect(labels.status).toBe(1);
   });

@@ -4,6 +4,7 @@ import { Client } from 'pg';
 import { describe, expect, it } from 'vitest';
 
 import { materializeInboxItems } from '../inboxService.js';
+import { createActionCard } from '../actionCard/actionCardService.js';
 
 const url = process.env.DATABASE_URL || '';
 const realPg = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false' && url.startsWith('postgres');
@@ -28,6 +29,38 @@ describe.skipIf(!realPg)('P9 fourth inbox source (real PostgreSQL)', () => {
     } finally {
       await db.query(`DELETE FROM canonical_inbox_items WHERE source_entity_type='action_card' AND source_entity_id = ANY($1::text[])`, [[ownCard, otherCard]]);
       await db.query(`DELETE FROM action_cards WHERE id = ANY($1::uuid[])`, [[ownCard, otherCard]]);
+      await db.end();
+    }
+  });
+
+  it('createActionCard materializes an inbox entry only for its owner', async () => {
+    const db = new Client({ connectionString: url });
+    await db.connect();
+    const fixture = await db.query(`SELECT organization_id, array_agg(id ORDER BY id) AS users FROM users WHERE organization_id IS NOT NULL GROUP BY organization_id HAVING count(*) >= 2 LIMIT 1`);
+    expect(fixture.rowCount).toBe(1);
+    const orgId = String(fixture.rows[0].organization_id);
+    const [ownerId, otherId] = fixture.rows[0].users.map(String);
+    let cardId = '';
+    try {
+      const card = await createActionCard({ organizationId: orgId, actorUserId: ownerId }, {
+        sourceKind: 'finance_variance', sourceId: `p9-create-${randomUUID()}`,
+        periodStart: '2026-09-01', periodEnd: '2026-09-30', goalMet: false,
+        actionRequired: true, problem: 'Odchylenie', rootCause: 'Do ustalenia',
+        actionText: 'Wyjaśnić odchylenie', ownerUserId: ownerId, dueDate: '2026-10-01',
+      });
+      cardId = card.id;
+      await materializeInboxItems(ownerId, orgId);
+      await materializeInboxItems(otherId, orgId);
+      const ownerRows = await db.query(`SELECT 1 FROM canonical_inbox_items WHERE user_id=$1 AND source_entity_type='action_card' AND source_entity_id=$2`, [ownerId, cardId]);
+      const strangerRows = await db.query(`SELECT 1 FROM canonical_inbox_items WHERE user_id=$1 AND source_entity_type='action_card' AND source_entity_id=$2`, [otherId, cardId]);
+      expect(ownerRows.rowCount).toBe(1);
+      expect(strangerRows.rowCount).toBe(0);
+    } finally {
+      if (cardId) {
+        await db.query(`DELETE FROM canonical_inbox_items WHERE source_entity_type='action_card' AND source_entity_id=$1`, [cardId]);
+        await db.query(`DELETE FROM notifications WHERE entity_type='action_card' AND entity_id=$1`, [cardId]);
+        await db.query(`DELETE FROM action_cards WHERE id=$1`, [cardId]);
+      }
       await db.end();
     }
   });
