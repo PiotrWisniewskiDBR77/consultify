@@ -20,17 +20,17 @@ import { FileText, Lightbulb } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
+import { ErrorState } from '@/components/shared/states';
 import {
-  type StandardRowMenu,
   StandardPreview,
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
-import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
-import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
-import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { ConclusionsApi } from '@/services/api/conclusions.api';
 import { formatListDate } from '@/utils/listDateFormat';
@@ -318,7 +318,8 @@ export const AuditConclusionsTab: React.FC<AuditConclusionsTabProps> = ({
                   {isPolish ? 'Werdykt' : 'Verdict'}
                 </p>
                 <p className="mt-1 whitespace-pre-line text-xs text-c-text-secondary">
-                  {selected.statement || (isPolish ? 'Brak treści wniosku.' : 'No conclusion text.')}
+                  {selected.statement ||
+                    (isPolish ? 'Brak treści wniosku.' : 'No conclusion text.')}
                 </p>
               </div>
             </StandardPreview>

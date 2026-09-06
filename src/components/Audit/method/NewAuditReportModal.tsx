@@ -26,10 +26,10 @@ import { Modal } from '@/components/ui/primitives/Modal';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import {
-  generateReport,
-  listOutputs,
   type AuditOutputSummary,
   type AuditReportSummary,
+  generateReport,
+  listOutputs,
 } from './auditsMethodApi';
 
 export interface NewAuditReportModalProps {
@@ -222,18 +222,16 @@ export const NewAuditReportModal: React.FC<NewAuditReportModalProps> = ({
             <legend className="text-xs font-medium text-c-text-secondary">
               {isPolish ? 'Typ raportu' : 'Report type'}
             </legend>
-            {(
-              [
-                {
-                  id: 'audit_report' as ReportKind,
-                  label: isPolish ? 'Raport audytu' : 'Audit report',
-                },
-                {
-                  id: 'remediation_progress' as ReportKind,
-                  label: isPolish ? 'Postęp naprawy' : 'Remediation progress',
-                },
-              ]
-            ).map((kind) => (
+            {[
+              {
+                id: 'audit_report' as ReportKind,
+                label: isPolish ? 'Raport audytu' : 'Audit report',
+              },
+              {
+                id: 'remediation_progress' as ReportKind,
+                label: isPolish ? 'Postęp naprawy' : 'Remediation progress',
+              },
+            ].map((kind) => (
               <label
                 key={kind.id}
                 className="flex items-center gap-2 text-sm text-c-text"

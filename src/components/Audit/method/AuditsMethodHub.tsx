@@ -57,27 +57,23 @@
  *   przekierowywany na `conclusions` — żaden nie kończy się pustką.
  *   CTA zakładki Wnioski → „Nowy wniosek" → POST /audits/reports/:id/conclusion.
  */
-import {
-  ClipboardList,
-  FileText,
-  Library,
-  Lightbulb,
-  Package,
-  Plus,
-} from 'lucide-react';
+import { ClipboardList, FileText, Library, Lightbulb, Package, Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { adapterAudit } from '@/components/Initiatives/Generator/adapters/audit';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import {
+  Menu2PresetDropdown,
+  type Menu2PresetOption,
+} from '@/components/Initiatives/Menu2PresetDropdown';
 import {
   type StandardCounterChip,
   StandardModuleBar,
   type StandardModuleTab,
 } from '@/components/standard';
-import { Menu2PresetDropdown, type Menu2PresetOption } from '@/components/Initiatives/Menu2PresetDropdown';
-import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterAudit } from '@/components/Initiatives/Generator/adapters/audit';
 import type { StatusTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
@@ -88,9 +84,20 @@ import { useAppStore } from '@/store/useAppStore';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
-import { NewAuditModal } from './NewAuditModal';
-import { NewAuditOutputModal } from './NewAuditOutputModal';
-import { NewAuditReportModal } from './NewAuditReportModal';
+import {
+  AUDIT_LIFECYCLE_STATES,
+  AUDIT_PROPOSAL_STATUSES,
+  AUDIT_REPORT_STATUSES,
+  AUDIT_VERIFICATION_STATES,
+  type AuditLifecycleState,
+  type AuditPackSummary,
+  type AuditProgramSummary,
+  type AuditVerificationState,
+  createProgram,
+  getProgram,
+  listPacks,
+  listPrograms,
+} from './auditsMethodApi';
 import {
   packVerificationLabel,
   packVerificationTone,
@@ -101,34 +108,18 @@ import {
   reportStatusLabel,
   reportStatusTone,
 } from './auditStatusTones';
-import {
-  createProgram,
-  getProgram,
-  listPacks,
-  listPrograms,
-  AUDIT_VERIFICATION_STATES,
-  AUDIT_LIFECYCLE_STATES,
-  AUDIT_PROPOSAL_STATUSES,
-  AUDIT_REPORT_STATUSES,
-  type AuditPackSummary,
-  type AuditProgramSummary,
-  type AuditVerificationState,
-  type AuditLifecycleState,
-} from './auditsMethodApi';
 import { GeneratorWnioskuAudytuModal } from './GeneratorWnioskuAudytuModal';
-import { etykietaStanuWniosku } from './wnioski/projekcjaWnioskowAudytu';
+import { NewAuditModal } from './NewAuditModal';
+import { NewAuditOutputModal } from './NewAuditOutputModal';
+import { NewAuditReportModal } from './NewAuditReportModal';
 import { AuditConclusionsTab } from './tabs/AuditConclusionsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';
 import { AuditProcessesTab } from './tabs/AuditProcessesTab';
 import { AuditReportsTab } from './tabs/AuditReportsTab';
+import { etykietaStanuWniosku } from './wnioski/projekcjaWnioskowAudytu';
 
-export type AuditsMethodTabId =
-  | 'library'
-  | 'processes'
-  | 'conclusions'
-  | 'reports'
-  | 'initiatives';
+export type AuditsMethodTabId = 'library' | 'processes' | 'conclusions' | 'reports' | 'initiatives';
 
 export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
   if (inFlight.has(packId)) return false;
@@ -615,7 +606,10 @@ export const AuditsMethodHub: React.FC = () => {
       options: libraryOptions,
       value: libraryVerification,
       onChange: (id) => setLibraryVerification(id as 'all' | AuditVerificationState),
-      dropdownLabel: t('audits.method.filters.verification', isPolish ? 'Weryfikacja' : 'Verification'),
+      dropdownLabel: t(
+        'audits.method.filters.verification',
+        isPolish ? 'Weryfikacja' : 'Verification'
+      ),
       testId: 'audits-library-verification-dropdown',
     },
     processes: {

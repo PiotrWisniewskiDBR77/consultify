@@ -72,11 +72,9 @@ function renderTab(props: Partial<React.ComponentProps<typeof AuditConclusionsTa
 describe('AuditConclusionsTab', () => {
   beforeEach(() => {
     sync.mockReset().mockResolvedValue({ synced: { audit: 1 } });
-    list
-      .mockReset()
-      .mockResolvedValue({
-        conclusions: [WNIOSEK_AUDYTU, WNIOSEK_OCENY, WNIOSEK_BEZ_RODOWODU],
-      });
+    list.mockReset().mockResolvedValue({
+      conclusions: [WNIOSEK_AUDYTU, WNIOSEK_OCENY, WNIOSEK_BEZ_RODOWODU],
+    });
   });
 
   it('pokazuje TYLKO wnioski z audytu — nie cudze wnioski z warstwy org-wide', async () => {

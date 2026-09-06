@@ -18,10 +18,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '@/utils/cn';
 
 import {
-  generateReportConclusion,
-  listReports,
   type AuditConclusionResult,
   type AuditReportSummary,
+  generateReportConclusion,
+  listReports,
 } from './auditsMethodApi';
 
 const POLE =
