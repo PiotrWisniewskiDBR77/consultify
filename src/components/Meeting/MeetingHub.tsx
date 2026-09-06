@@ -34,6 +34,7 @@ import {
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
@@ -99,6 +100,9 @@ export const MeetingHub: React.FC = () => {
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Triada standard (StandardTable MUST #7): checkbox selection, left of each row.
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
@@ -888,7 +892,10 @@ export const MeetingHub: React.FC = () => {
                 columns={columns}
                 data={tableRows as unknown as Array<Record<string, unknown> & { id: string }>}
                 selectedRowId={selectedId}
-                onRowClick={(row) => setSelectedId(String((row as any).id))}
+                onRowClick={(row) => {
+                  jedenPanel.otworz();
+                  setSelectedId(String((row as any).id));
+                }}
                 onRowDoubleClick={(row) => openMeetingDocument(row as unknown as MeetingItem)}
                 rowDescription={() => null}
                 defaultSort={{ columnId: 'startAt', direction: 'asc' }}
@@ -935,7 +942,10 @@ export const MeetingHub: React.FC = () => {
                         ]
                       : [],
                     universalHandlers: {
-                      preview: () => setSelectedId(meeting.id),
+                      preview: () => {
+                        jedenPanel.otworz();
+                        setSelectedId(meeting.id);
+                      },
                       // PUT /:id (server) requires admin/owner/superadmin OR
                       // the meeting's own creator — same `canManage` check
                       // PATCH /:id/status uses above.
