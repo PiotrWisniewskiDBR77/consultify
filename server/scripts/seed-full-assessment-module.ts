@@ -1005,7 +1005,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'MES Full Rollout — Line 3 Deployment & Integration',
     description:
       'Complete MES deployment on remaining production Line 3. Integrate with existing Lines 1-2 for unified OEE monitoring. Scope: hardware installation, software configuration, ERP integration, operator training, parallel run, go-live support.',
-    status: 'EXECUTING',
+    status: 'IN_EXECUTION',
     priority: 'critical',
     impact: 'high',
     effort: 'high',
@@ -1039,7 +1039,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'Data Governance Framework',
     description:
       'Establish enterprise data governance: data quality rules, ownership model, metadata catalog (Collibra), GDPR/NIS2 compliance. Quick win with high organizational impact.',
-    status: 'PLANNING',
+    status: 'PENDING_APPROVAL',
     priority: 'high',
     impact: 'high',
     effort: 'medium',
@@ -1056,7 +1056,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'Digital Skills Academy — Phase 1',
     description:
       'Launch digital literacy program for 200 shop floor operators and 50 team leaders. Curriculum: Industry 4.0 basics, data reading, MES usage, IoT awareness. Blended learning: 60% online (LMS), 40% hands-on workshops.',
-    status: 'SCHEDULED',
+    status: 'APPROVED',
     priority: 'medium',
     impact: 'medium',
     effort: 'medium',
@@ -1073,7 +1073,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'OT/IT Network Segmentation & Hardening',
     description:
       'Critical cybersecurity initiative: network segmentation between OT and IT, firewall rule optimization, IDS/IPS deployment on OT network, vulnerability scanning for SCADA/PLC systems.',
-    status: 'REVIEW',
+    status: 'PENDING_APPROVAL',
     priority: 'critical',
     impact: 'critical',
     effort: 'medium',
@@ -1107,7 +1107,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'Energy Management & Carbon Tracking',
     description:
       'ISO 50001-aligned energy management: real-time monitoring, anomaly detection, carbon footprint dashboard. Quick integration with existing SCADA data. Low cost, high visibility.',
-    status: 'DONE',
+    status: 'CLOSED',
     priority: 'low',
     impact: 'medium',
     effort: 'low',
@@ -1124,7 +1124,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'Supply Chain Visibility Dashboard',
     description:
       'Build real-time supply chain dashboard integrating ERP, WMS, and carrier APIs. Show OTIF, lead times, inventory levels, disruption alerts. Power BI + Azure Data Factory.',
-    status: 'TRACKING',
+    status: 'CLOSED',
     priority: 'medium',
     impact: 'medium',
     effort: 'low',
@@ -1141,7 +1141,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'Digital Twin — Pilot for Line 1',
     description:
       'Create digital twin of production Line 1 for simulation-based optimization and virtual commissioning. Technology: Siemens Xcelerator / Azure Digital Twins. Very high innovation value but also high complexity and cost.',
-    status: 'PROMOTED',
+    status: 'PENDING_APPROVAL',
     priority: 'high',
     impact: 'high',
     effort: 'high',
@@ -1158,7 +1158,7 @@ const INITIATIVES_DRD_TEST: SeedInitiative[] = [
     name: 'MLOps Pipeline Setup',
     description:
       'Establish ML model lifecycle management: training, versioning, deployment, monitoring. Docker + Airflow + MLflow. Foundation for all future AI initiatives.',
-    status: 'CANCELLED',
+    status: 'REJECTED',
     priority: 'medium',
     impact: 'high',
     effort: 'medium',
@@ -1179,7 +1179,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Enterprise Data Platform Modernization',
     description:
       'Migrate from legacy data warehouse to modern lakehouse architecture (Databricks/Delta Lake on Azure). Unified data platform for all BUs. Phase 1: ingest + catalog. Phase 2: analytics + ML workbench. Phase 3: real-time streaming.',
-    status: 'EXECUTING',
+    status: 'IN_EXECUTION',
     priority: 'critical',
     impact: 'critical',
     effort: 'high',
@@ -1209,7 +1209,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Customer 360 & CRM Enhancement',
     description:
       'Build unified customer view combining CRM, ERP, e-commerce, and support data. Deploy customer segmentation ML model. Enable personalized B2B experience.',
-    status: 'SCHEDULED',
+    status: 'APPROVED',
     priority: 'high',
     impact: 'high',
     effort: 'high',
@@ -1224,7 +1224,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'SOC Enhancement — SIEM Full Deployment',
     description:
       'Complete SIEM deployment (Sentinel), integrate IT+OT log sources, establish detection rules, automate incident response workflows. 24/7 SOC readiness.',
-    status: 'PLANNING',
+    status: 'PENDING_APPROVAL',
     priority: 'critical',
     impact: 'critical',
     effort: 'high',
@@ -1239,7 +1239,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Demand Forecasting ML Enhancement',
     description:
       'Improve existing demand forecasting from MAPE 12% to <8%. Add external signal processing (weather, market, social). Deploy model monitoring and auto-retraining.',
-    status: 'REVIEW',
+    status: 'PENDING_APPROVAL',
     priority: 'medium',
     impact: 'high',
     effort: 'medium',
@@ -1254,7 +1254,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Digital Academy — Enterprise-wide Program',
     description:
       'Company-wide digital skills program: executive digital immersion (50 leaders), manager digital toolkit (200 managers), specialist certifications (100 tech staff), basic digital literacy (4000 employees). LMS + external partnerships.',
-    status: 'BLOCKED',
+    status: 'IN_EXECUTION',
     priority: 'medium',
     impact: 'medium',
     effort: 'high',
@@ -1284,7 +1284,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Master Data Management — Product Data',
     description:
       'Extend MDM from product data to customer, supplier, and asset master data. Implement data quality scoring, automated cleansing, and cross-system synchronization.',
-    status: 'DONE',
+    status: 'CLOSED',
     priority: 'high',
     impact: 'high',
     effort: 'medium',
@@ -1299,7 +1299,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Process Mining — Finance & Procurement',
     description:
       'Deploy process mining (Celonis) for finance and procurement workflows. Identify automation opportunities, bottlenecks, and compliance deviations. Small scope, big insight.',
-    status: 'TRACKING',
+    status: 'CLOSED',
     priority: 'low',
     impact: 'medium',
     effort: 'low',
@@ -1314,7 +1314,7 @@ const INITIATIVES_DRD_FINAL: SeedInitiative[] = [
     name: 'Robotic Process Automation — HR & Finance',
     description:
       'Implement RPA bots for repetitive back-office tasks: invoice processing, employee onboarding documents, report generation. UiPath platform. Target: 2000 hours/year saved.',
-    status: 'PROMOTED',
+    status: 'PENDING_APPROVAL',
     priority: 'low',
     impact: 'medium',
     effort: 'low',
@@ -1333,7 +1333,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'OPC-UA Migration & Industrial Connectivity Standard',
     description:
       'Migrate all machine communication to OPC-UA standard. Replace proprietary protocols, deploy UA gateways for legacy equipment. Establish connectivity architecture standard for future expansions. Foundation for all intelligence initiatives.',
-    status: 'EXECUTING',
+    status: 'IN_EXECUTION',
     priority: 'critical',
     impact: 'high',
     effort: 'high',
@@ -1363,7 +1363,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'Real-time Analytics Platform (BI Upgrade)',
     description:
       'Replace static BI reports with real-time analytics dashboard. Stream data from MES/IoT → Azure Event Hub → Power BI Embedded. Enable self-service analytics for production managers.',
-    status: 'PLANNING',
+    status: 'PENDING_APPROVAL',
     priority: 'high',
     impact: 'high',
     effort: 'medium',
@@ -1378,7 +1378,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'Operator Upskilling Program — 50 Pilot',
     description:
       'Pilot digital skills program for 50 machine operators. Curriculum: data reading, dashboard usage, basic troubleshooting with digital tools, IoT sensor understanding. Success metric: digital competency score improvement by 40%.',
-    status: 'SCHEDULED',
+    status: 'APPROVED',
     priority: 'medium',
     impact: 'medium',
     effort: 'low',
@@ -1408,7 +1408,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'Supplier Portal & EDI Integration',
     description:
       'Deploy supplier collaboration portal with EDI integration. Automate PO transmission, delivery scheduling, and invoice reconciliation. Cover top 20 suppliers (80% of spend).',
-    status: 'REVIEW',
+    status: 'PENDING_APPROVAL',
     priority: 'medium',
     impact: 'medium',
     effort: 'medium',
@@ -1423,7 +1423,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'Digital Leadership KPI Dashboard',
     description:
       'Build executive dashboard showing digital transformation progress: initiative status, KPI trends, investment vs actual, skills gap metrics. Monthly automated reporting to steering committee.',
-    status: 'DONE',
+    status: 'CLOSED',
     priority: 'low',
     impact: 'low',
     effort: 'low',
@@ -1438,7 +1438,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'AGV Fleet Expansion & Traffic Management',
     description:
       'Expand AGV fleet from 4 to 12 units. Deploy traffic management system for multi-AGV coordination. Integrate with MES for automated material delivery scheduling.',
-    status: 'PROMOTED',
+    status: 'PENDING_APPROVAL',
     priority: 'high',
     impact: 'high',
     effort: 'high',
@@ -1453,7 +1453,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'PLM-MES Integration for Recipe Management',
     description:
       'Connect PLM system with MES for automated recipe/work instruction transfer. Eliminate manual data entry errors in production configuration. Critical for product changeover efficiency.',
-    status: 'BLOCKED',
+    status: 'IN_EXECUTION',
     priority: 'medium',
     impact: 'high',
     effort: 'medium',
@@ -1468,7 +1468,7 @@ const INITIATIVES_SIRI: SeedInitiative[] = [
     name: 'Industrial WiFi 6 Network Upgrade',
     description:
       'Upgrade plant WiFi to WiFi 6 (802.11ax) for reliable IoT connectivity. Replace aging access points, deploy mesh network, QoS for industrial applications. Prerequisite for mobile HMI and AR maintenance.',
-    status: 'CANCELLED',
+    status: 'REJECTED',
     priority: 'low',
     impact: 'medium',
     effort: 'medium',
@@ -1502,7 +1502,7 @@ const INITIATIVES_ADMA: SeedInitiative[] = [
     name: 'OPC-UA Migration & Edge Gateway',
     description:
       'Migrate factory communications from proprietary to OPC-UA. Deploy edge gateways for protocol conversion on legacy machines. Standardize data model across both plants.',
-    status: 'REVIEW',
+    status: 'PENDING_APPROVAL',
     priority: 'high',
     impact: 'high',
     effort: 'medium',
@@ -1517,7 +1517,7 @@ const INITIATIVES_ADMA: SeedInitiative[] = [
     name: 'Shop Floor Analytics Dashboard',
     description:
       'Deploy real-time production KPI dashboards on shop floor displays. Replace manual SPC charts. Show OEE, cycle time, reject rate, energy consumption per line. Low cost, immediate value.',
-    status: 'PLANNING',
+    status: 'PENDING_APPROVAL',
     priority: 'medium',
     impact: 'medium',
     effort: 'low',
@@ -1562,7 +1562,7 @@ const INITIATIVES_ADMA: SeedInitiative[] = [
     name: 'ERP-MES Real-time Integration',
     description:
       'Establish real-time bidirectional integration between ERP and MES. Currently batch sync (overnight). Enable real-time production order management, material consumption reporting, and quality data flow.',
-    status: 'SCHEDULED',
+    status: 'APPROVED',
     priority: 'high',
     impact: 'high',
     effort: 'medium',
@@ -1577,7 +1577,7 @@ const INITIATIVES_ADMA: SeedInitiative[] = [
     name: 'Supply Chain Visibility — Phase 1',
     description:
       'Basic supply chain visibility: integrate top 10 supplier lead times, automate OTIF tracking, deploy disruption alert mechanism. Foundation for future control tower.',
-    status: 'PROMOTED',
+    status: 'PENDING_APPROVAL',
     priority: 'medium',
     impact: 'medium',
     effort: 'low',
@@ -1592,7 +1592,7 @@ const INITIATIVES_ADMA: SeedInitiative[] = [
     name: 'Digital Strategy Cascading Workshops',
     description:
       'Series of workshops to cascade digital strategy to all BUs. Create BU-specific digital action plans aligned with corporate strategy. 8 workshops, 4 weeks, output: digital roadmap per BU.',
-    status: 'DONE',
+    status: 'CLOSED',
     priority: 'medium',
     impact: 'medium',
     effort: 'low',
@@ -2335,7 +2335,7 @@ async function main() {
 
   log.info(`Initiatives: ${ALL_INITIATIVES.length}`);
   log.info(
-    `  ${statusCounts(ALL_INITIATIVES, ['DRAFT', 'REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING', 'CANCELLED'])}`
+    `  ${statusCounts(ALL_INITIATIVES, ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'IN_EXECUTION', 'CLOSED', 'REJECTED'])}`
   );
   log.info(
     `  Budgets: €${Math.min(...ALL_INITIATIVES.map((i) => i.estimatedBudget || 0)) / 1000}k–€${Math.max(...ALL_INITIATIVES.map((i) => i.estimatedBudget || 0)) / 1000}k`

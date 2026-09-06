@@ -204,7 +204,10 @@ async function main() {
           summary: cols.has('summary')
             ? 'Pilot GenAI chatbot for L1 support.'
             : undefined,
-          status: 'EXECUTING',
+          // DEC-424: 'EXECUTING' był poprawny przed migracją P12
+          // (20262103_p12_initiative_status_slownik.sql); dziś initiatives_status_check_p12
+          // dopuszcza wyłącznie 7 kodów z server/src/constants/initiativeStatuses.ts.
+          status: 'IN_EXECUTION',
           current_stage: cols.has('current_stage') ? 'execution' : undefined,
           progress: cols.has('progress') ? 45 : undefined,
           owner_execution_id: cols.has('owner_execution_id') ? ownerId : undefined,
@@ -227,7 +230,10 @@ async function main() {
             ? 'Build dashboard for master data quality monitoring.'
             : undefined,
           summary: cols.has('summary') ? 'Data quality monitoring dashboard.' : undefined,
-          status: 'EXECUTING',
+          // DEC-424: 'EXECUTING' był poprawny przed migracją P12
+          // (20262103_p12_initiative_status_slownik.sql); dziś initiatives_status_check_p12
+          // dopuszcza wyłącznie 7 kodów z server/src/constants/initiativeStatuses.ts.
+          status: 'IN_EXECUTION',
           current_stage: cols.has('current_stage') ? 'execution' : undefined,
           progress: cols.has('progress') ? 25 : undefined,
           owner_execution_id: cols.has('owner_execution_id') ? ownerId : undefined,

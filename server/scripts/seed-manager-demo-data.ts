@@ -80,19 +80,19 @@ const initiatives: Array<{
   id: string; name: string; status: string; owner: number; priority: string;
   startOff: number; endOff: number; desc: string;
 }> = [
-  { id: uuid(), name: 'Cloud Migration — Azure', status: 'EXECUTING', owner: 0, priority: 'HIGH', startOff: -30, endOff: 45, desc: 'Migracja infrastruktury do Azure Cloud' },
-  { id: uuid(), name: 'Data Platform — Lakehouse', status: 'EXECUTING', owner: 1, priority: 'HIGH', startOff: -20, endOff: 60, desc: 'Budowa platformy danych w architekturze Lakehouse' },
-  { id: uuid(), name: 'API Gateway v2', status: 'EXECUTING', owner: 2, priority: 'MEDIUM', startOff: -15, endOff: 30, desc: 'Nowa warstwa API Gateway z rate limiting i observability' },
-  { id: uuid(), name: 'Process Automation — RPA', status: 'BLOCKED', owner: 3, priority: 'HIGH', startOff: -25, endOff: 40, desc: 'Automatyzacja procesów back-office z UiPath' },
-  { id: uuid(), name: 'Security Hardening', status: 'EXECUTING', owner: 4, priority: 'CRITICAL', startOff: -10, endOff: 20, desc: 'Wzmocnienie bezpieczeństwa: SOC2, pen-testy, ZeroTrust' },
-  { id: uuid(), name: 'Customer Portal Redesign', status: 'SCHEDULED', owner: 5, priority: 'MEDIUM', startOff: 5, endOff: 75, desc: 'Przeprojektowanie portalu klienta — UX/UI + nowe funkcje' },
-  { id: uuid(), name: 'ERP SAP Integration', status: 'BLOCKED', owner: 1, priority: 'HIGH', startOff: -35, endOff: 50, desc: 'Integracja z SAP ERP — moduły FI, MM, SD' },
-  { id: uuid(), name: 'Legacy Decommission', status: 'EXECUTING', owner: 3, priority: 'LOW', startOff: -40, endOff: 90, desc: 'Wygaszanie systemów legacy: stary CRM i monolith' },
-  { id: uuid(), name: 'DevOps Maturity Program', status: 'EXECUTING', owner: 0, priority: 'MEDIUM', startOff: -12, endOff: 55, desc: 'CI/CD, IaC, observability, SRE practices' },
-  { id: uuid(), name: 'AI-Powered Analytics', status: 'SCHEDULED', owner: 4, priority: 'HIGH', startOff: 10, endOff: 80, desc: 'Wdrożenie analityki predykcyjnej i ML pipeline' },
-  { id: uuid(), name: 'Compliance & GDPR Audit', status: 'EXECUTING', owner: 2, priority: 'CRITICAL', startOff: -8, endOff: 15, desc: 'Audyt zgodności GDPR i przygotowanie do kontroli' },
-  { id: uuid(), name: 'Talent Upskilling Program', status: 'BLOCKED', owner: 5, priority: 'MEDIUM', startOff: -18, endOff: 65, desc: 'Program szkoleniowy — cloud, data, AI dla zespołów' },
-  { id: uuid(), name: 'Vendor Consolidation', status: 'EXECUTING', owner: 0, priority: 'LOW', startOff: -22, endOff: 35, desc: 'Konsolidacja dostawców IT — redukcja z 14 do 6' },
+  { id: uuid(), name: 'Cloud Migration — Azure', status: 'IN_EXECUTION', owner: 0, priority: 'HIGH', startOff: -30, endOff: 45, desc: 'Migracja infrastruktury do Azure Cloud' },
+  { id: uuid(), name: 'Data Platform — Lakehouse', status: 'IN_EXECUTION', owner: 1, priority: 'HIGH', startOff: -20, endOff: 60, desc: 'Budowa platformy danych w architekturze Lakehouse' },
+  { id: uuid(), name: 'API Gateway v2', status: 'IN_EXECUTION', owner: 2, priority: 'MEDIUM', startOff: -15, endOff: 30, desc: 'Nowa warstwa API Gateway z rate limiting i observability' },
+  { id: uuid(), name: 'Process Automation — RPA', status: 'IN_EXECUTION', owner: 3, priority: 'HIGH', startOff: -25, endOff: 40, desc: 'Automatyzacja procesów back-office z UiPath' },
+  { id: uuid(), name: 'Security Hardening', status: 'IN_EXECUTION', owner: 4, priority: 'CRITICAL', startOff: -10, endOff: 20, desc: 'Wzmocnienie bezpieczeństwa: SOC2, pen-testy, ZeroTrust' },
+  { id: uuid(), name: 'Customer Portal Redesign', status: 'APPROVED', owner: 5, priority: 'MEDIUM', startOff: 5, endOff: 75, desc: 'Przeprojektowanie portalu klienta — UX/UI + nowe funkcje' },
+  { id: uuid(), name: 'ERP SAP Integration', status: 'IN_EXECUTION', owner: 1, priority: 'HIGH', startOff: -35, endOff: 50, desc: 'Integracja z SAP ERP — moduły FI, MM, SD' },
+  { id: uuid(), name: 'Legacy Decommission', status: 'IN_EXECUTION', owner: 3, priority: 'LOW', startOff: -40, endOff: 90, desc: 'Wygaszanie systemów legacy: stary CRM i monolith' },
+  { id: uuid(), name: 'DevOps Maturity Program', status: 'IN_EXECUTION', owner: 0, priority: 'MEDIUM', startOff: -12, endOff: 55, desc: 'CI/CD, IaC, observability, SRE practices' },
+  { id: uuid(), name: 'AI-Powered Analytics', status: 'APPROVED', owner: 4, priority: 'HIGH', startOff: 10, endOff: 80, desc: 'Wdrożenie analityki predykcyjnej i ML pipeline' },
+  { id: uuid(), name: 'Compliance & GDPR Audit', status: 'IN_EXECUTION', owner: 2, priority: 'CRITICAL', startOff: -8, endOff: 15, desc: 'Audyt zgodności GDPR i przygotowanie do kontroli' },
+  { id: uuid(), name: 'Talent Upskilling Program', status: 'IN_EXECUTION', owner: 5, priority: 'MEDIUM', startOff: -18, endOff: 65, desc: 'Program szkoleniowy — cloud, data, AI dla zespołów' },
+  { id: uuid(), name: 'Vendor Consolidation', status: 'IN_EXECUTION', owner: 0, priority: 'LOW', startOff: -22, endOff: 35, desc: 'Konsolidacja dostawców IT — redukcja z 14 do 6' },
 ];
 
 async function seedInitiatives() {
