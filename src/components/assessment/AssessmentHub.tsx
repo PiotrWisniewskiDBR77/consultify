@@ -1989,10 +1989,32 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // (zero wysokości, nie pusty pasek). Filtry OBSZAR/STATUS zostają w
   // nagłówku tabeli (`AssessmentLibraryTab`, kolumny `filterable`) — to
   // osobny, kanoniczny mechanizm, nietknięty tą zmianą.
+  //
+  // DEC-414b (1.1-O2, 06.09.2026): to samo dla WSZYSTKICH pozostałych
+  // zakładek Oceny — Procesy/`processes`, Wnioski/`outputs`, Raporty/
+  // `reports`, Inicjatywy/`initiatives`. Słowa właściciela (Ocena → Procesy):
+  // „W drugim menu mamy filtr [...], a w trzecim wszystkie opcje do
+  // wyklikania [...]. To nie ma sensu — zostaw tylko to, co jest w filtrze.
+  // Trzecie menu jest zbędne." Filtr statusu zostaje WYŁĄCZNIE w Menu 2
+  // (`statusDropdownControl`/`StatusDropdown`, już podłączony pod
+  // `filterControls` dla processes/reports/initiatives — patrz
+  // `onNewItem`/`filterControls` niżej). `outputs` nigdy nie filtrował
+  // naprawdę przez te chipy (AssessmentOutputsTab ignoruje `statusFilter`,
+  // ma własne filtrowalne kolumny jak Biblioteka) — traktowany tak samo jak
+  // `library`, bez dodawania dropdownu, którego by nic nie zasilało.
+  // Legacy 3-zakładkowy tryb (`activeTab === 'list'`, flaga
+  // `assessmentFiveSurfacesV1` OFF) NIE wchodzi w zakres DEC-414b — nie
+  // istnieje w nim ani „Procesy", ani „Wnioski"; `AI Triage` na nim zostaje
+  // (patrz test `AssessmentHub.rate-limit-resilience.test.tsx` — „renders
+  // only the canonical contextual AI action in Menu 3").
   const hubCommandRowContent = useMemo(
     () =>
-      activeTab === 'library'
-        ? null
+      activeTab === 'library' ||
+      activeTab === 'processes' ||
+      activeTab === 'outputs' ||
+      activeTab === 'reports' ||
+      activeTab === 'initiatives'
+        ? bulkCommandRowContent
         : (bulkCommandRowContent ?? (
             <AssessmentMenu3ActionBar chips={hubMenu3Chips} actions={hubMenu3Actions} />
           )),
