@@ -1,6 +1,6 @@
 # P10 — inwentarz kart N (DEC-411)
 
-Punkt kodu: `be5dfe691d03e30ea495b47141729b6d7c339d4f` (`origin/staging`, pomiar 06.09.2026). „Z listy” oznacza nawigację z realnej listy stanowiska lokalnego, bez tworzenia rekordu i bez zapisu.
+Punkt kodu rundy 2: `c163c90a29` po wymaganym scaleniu `codex/m03-admin-20260824` (pomiar 06.09.2026). „Z listy” oznacza nawigację z realnej listy stanowiska lokalnego. Jeżeli rekordu nie ma, runda 2 dopuszcza utworzenie przez kontrakt produktu z zapisaniem ID i obowiązkowym sprzątnięciem.
 
 | karta | karta N | rejestr | komponent | trasa / wejście z listy | realny rekord użyty do pomiaru | kontrakt |
 |---|---|---|---|---|---|---|
@@ -16,6 +16,9 @@ Punkt kodu: `be5dfe691d03e30ea495b47141729b6d7c339d4f` (`origin/staging`, pomiar
 | idea | tak | wyjątek: poza rejestrem | `src/components/MyWork/IdeaMapWorkspace.tsx` + `panel/IdeaElementInspector.tsx` | `/my-work` → Pomysły → rekord | lista zawiera „AI monitoring jakości” i inne; nie otwarto warsztatu | brak kontraktu |
 | metric | tak | wyjątek: poza rejestrem | `src/components/ResultsVNext/kpiTool/KpiToolPage.tsx` | `/results/kpi` → rejestr → miernik | ekran modułu bez załadowanej listy | brak kontraktu karty N |
 | objective | tak | wyjątek: poza rejestrem | `src/components/ResultsVNext/okr/OkrObjectiveCardPage.tsx` | `/results/okr` → zestaw OKR → cel | brak osiągalnego rekordu | brak kontraktu karty N |
+| roi_case | tak | `roi_case` | `src/components/ResultsVNext/roi/card/RoiCaseCardPage.tsx` | `/results/roi` → rejestr analiz → rekord | do powtórnego pomiaru rundy 2 | sekcje `RoiCaseCardPage.tsx`: Założenia → Wyliczenia → Realizacja |
+| plan | tak | `plan` | `src/components/Initiatives/cards/PlanCard.tsx` | `/initiatives` → Plan → zapisany scenariusz | do powtórnego pomiaru rundy 2 | `StandardSekcjaDef[]` w `PlanCard.tsx` (6 sekcji) |
+| capacity_analysis | tak | `capacity_analysis` | `src/components/Initiatives/cards/CapacityAnalysisCard.tsx` | `/initiatives` → Obciążenie → zapisana analiza | do powtórnego pomiaru rundy 2 | `StandardSekcjaDef[]` w `CapacityAnalysisCard.tsx` (5 sekcji) |
 | audit-criterion | tak | wyjątek: poza rejestrem | `src/components/Audit/method/workspace/v2/CriterionWorkspaceV2.tsx` | `/audit-programs` → program → kryterium | lista utknęła na „Ładowanie audytów…” | brak kontraktu karty N |
 | audit-report | tak | wyjątek: poza rejestrem | `src/components/Audit/method/AuditReportDocumentView.tsx` | `/audit-programs` → Raporty → rekord | brak osiągalnego rekordu | brak kontraktu karty N |
 | assessment-report | tak | wyjątek: poza rejestrem | `src/components/assessment/AssessmentReportContractView.tsx` | `/assessment` → ocena → output → raport | hub utknął na „Ładowanie narzędzi…” | kontrakt raportu w komponencie, nie `KanonicznaKarta` |
@@ -24,4 +27,4 @@ Punkt kodu: `be5dfe691d03e30ea495b47141729b6d7c339d4f` (`origin/staging`, pomiar
 | meeting | tak | wyjątek: poza rejestrem | `src/components/Meeting/MeetingObjectPage.tsx` | `/meetings` → spotkanie | brak danych seeda; hub utknął na „Ładowanie narzędzi…” | brak kontraktu karty N |
 | vault-document | tak | wyjątek: poza rejestrem | `src/views/vault/VaultDocumentPanel.tsx` | `/my-work` → Sejf klienta → sejf → dokument | wejście ponowne utknęło na „Ładowanie narzędzi…” | brak kontraktu karty N |
 
-Licznik: **19/19 pozycji inwentarza** (8 rejestr + 11 poza). Pomiar treści i zrzut szczegółu nie jest równoznaczny z samym odnalezieniem komponentu; braki są zachowane w `98_RAPORT.md` i `99_DECYZJE_WLASCICIELA.md`.
+Licznik rundy 2: **22 pozycje inwentarza** (13 rejestr + 9 poza). Rachunek wynika z testu `registry.kompletnosc.test.ts`: 19 pozycji rundy 1 + nowa karta `roi_case` + `plan` + `capacity_analysis`. Pomiar treści i zrzut szczegółu nie jest równoznaczny z samym odnalezieniem komponentu; braki pozostają jawne w `98_RAPORT.md`.

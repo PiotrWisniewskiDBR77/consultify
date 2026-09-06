@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3101/interview?tab=insights",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Approvals are the main bottleneck",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nWniosek: Approvals are the main bottleneck\nDane\nModel\n1\n12\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nApprovals are the main bottleneck\nApprovals are the main bottleneck\nUkończone\nZapisano\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nWGLĄD\nPodsumowanie\nOdczyt konsultingowy\nKluczowe wnioski\nRekomendacje\nMIĘDZY WIERSZAMI\nPorównanie cytatów\nDynamika władzy\nNapięcia\nWzorce\nModele myślowe\nDOWODY\nŹródła\n1\nMomenty\nBank cytatów\nMapa interesariuszy\nWiarygodność źródeł\nDOSTARCZANE\nPakiet raportu\n4\nNarracja konsultingowa\nMemo zarządcze\nAUDYT\nJakość i zaufanie\n2\nPokaż wszystkie sekcje (7)\n\nCzytaj jak brief konsultingowy\n\nExecutive Summary\nODPOWIEDZI OFICJALNE\n2\nPROBLEMY / RYZYKA\n0\nSYGNAŁY / SZANSE\n3\n\"integration layer\"\nAKCJE\n0\n\nW trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie wniosek — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\t\nUkończone\n\nŹródło\t1 sesji\nData\t29 sie 2026\nPewność\t—\nUstalenia\t0\nEtykieta\tPodsumowanie wykonawcze\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\nKOMENTARZE\nHISTORIA\nApprovals are the main bottleneck\nPodsumowanie\n\nExecutive Summary Across accepted interviews, the dominant throughput limiter is approval latency and changeover variability.\n\nOdczyt konsultingowy\n\nExecutive Summary Across accepted interviews, the dominant throughput limiter is approval latency and changeover variability. What we heard (facts) Approvals create queue time between planning and execution. Changeovers on Line 3 are long and inconsistent. Excel is used as the “integration layer”, delaying visibility. Implications Decisions arrive too late to prevent overtime and expedite costs. Teams optimize locally due to missing shared metrics and owners. Quick wins (30–60 days) Introduce a lightweight approval SLA (who/when/escalation). Start SMED pilot on top 3 SKUs. Daily dashboard: OTIF, changeovers, top blockers.\n\nNarracja konsultingowa\n\nExecutive Summary Across accepted interviews, the dominant throughput limiter is approval latency and changeover variability. What we heard (facts) Approvals create queue time between planning and execution. Changeovers on Line 3 are long and inconsistent. Excel is used as the “integration layer”, delaying visibility. Implications Decisions arrive too late to prevent overtime and expedite costs. Teams optimize locally due to missing shared metrics and owners. Quick wins (30–60 days) Introduce a lightweight approval SLA (who/when/escalation). Start SMED pilot on top 3 SKUs. Daily dashboard: OTIF, changeovers, top blockers.\n\nMemo zarządcze\n\nExecutive Summary",
+ "kiedy": "2026-09-06T16:24:24.685Z"
+}

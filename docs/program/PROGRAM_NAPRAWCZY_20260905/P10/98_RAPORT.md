@@ -1,60 +1,58 @@
-# P10 — raport (DEC-411)
+# P10 — raport rundy 2 (DEC-411)
 
 ## Werdykt
 
-**PARTIAL / NOT PROVEN — progi P10 nie są spełnione.** Stanowisko jako usługa działa (`GET http://127.0.0.1:4100/api/health` → 200, `database=connected`), ale większość hubów/szczegółów na kodzie bazowym `origin/staging` nie materializuje realnego rekordu. Nie uznaję spinnera, listy ani analizy źródła za dowód karty.
+**PARTIAL / NOT PROVEN.** Runda 2 usunęła błąd przyrządu z rundy 1 dla wielu kart: przy `--czekaj=6000` realnie otwarto 9 różnych typów kart/rekordów. Nie osiągnięto jednak bramki 22/22 ani kompletu rozwiniętych sekcji dla każdej karty, więc S1.13 pozostaje niespełnione.
 
-## Liczniki
+## Mianownik po scaleniu
 
-- Inwentarz: 19 pozycji = 8 rejestr + 11 poza rejestrem.
-- Otwarte realne szczegóły: **1/19 (5,26%)** — notification. Karty spełniające cały próg zrzutu (wszystkie sekcje rozwinięte): **0/19 (0%)**.
-- Karty z kontraktem sekcji: 8 (7 kontraktów `KanonicznaKarta` + lokalny kontrakt raportu oceny).
-- Karty bez kontraktu sekcji: 11; każda ma propozycję, nie wdrożenie.
-- Sekcje widoczne na udanym zrzucie notification bez wiersza tabeli: 0.
-- Rozjazdy przed → po Fazie B: `angielski` 1→0; `etykieta inna` 1→0; `sekcja poza kontraktem` 33→33; `sekcja z kontraktu nieobecna` 1→1; `pusta na wyrost` 10→10; `kolejność inna` 0→0.
-- Wnioski i inicjatywy: brak `K1_WNIOSKI_INICJATYWY_RAPORT.md` na bazowym refie; wykonano własny, niepełny pomiar i oznaczono brak dowodu runtime.
+Test i rejestr po `c163c90a29` definiują **22**, nie 21 kart: 13 wpisów `REJESTR_KART_N` + 9 jawnych wyjątków. To 19 kart rundy 1 + nowa `roi_case` + `plan` + `capacity_analysis`. Nie usunięto ROI z mianownika tylko po to, by uzyskać 21/21.
 
-## MARTWE — brak potwierdzonego writera `server/src`
+## Przed → po
 
-- tool: Cel, Proces, Rezultat, Przykład — treść statyczna frontendowa, brak serwerowego writera.
-- task: RACI i eskalacja — brak jednoznacznego writera zadania w pomiarze.
-- notification: Komentarze — komentarze jawnie pozostają atrapą bez tabeli/writera (`NotificationDetailView.tsx:3278-3298`).
-- vault-document: Streszczenie — zastany placeholder bez odnalezionego writera.
+| miara | runda 1 | runda 2, stan tego raportu |
+|---|---:|---:|
+| pozycje inwentarza | 19 | 22 |
+| realne typy kart otwarte z listy, URL ≠ `/login` | 1/19 | 9/22 |
+| z błędami konsoli na końcowym bezpośrednim otwarciu | niepełny pomiar | 0 dla zaliczonych 9 |
+| notification: sekcje poza zatwierdzonym kontraktem | 5 | 0 |
+| task: puste warunkowe Pomysły/Ryzyko/RACI | 3 | 0 na realnym pustym rekordzie |
+| kontrakty K1 wciągnięte do tabel P10 | 0/2 | 2/2 |
+| test rejestru po merge | — | 3/3 PASS, 0 skipped |
 
-## Faza B wykonana
+Otwarte realnie: `notification`, `task`, `decision`, `note`, `idea`, `interview`, `insight`, `initiative`, `metric`. Dla `initiative` 24 sekcje kliknięto w czterech deterministycznych partiach; każdy JSON ma 0 błędów. Dla `task` kliknięto każdą pozostałą widoczną sekcję po naprawie. `metric` ma końcowy bezpośredni zrzut bez błędów, lecz próba przejścia wszystkich sekcji omyłkowo trafiła w globalne „Raporty”, więc komplet sekcji nie jest zaliczony.
 
-- Typ otwartej karty powiadomienia: `Notification` → `Powiadomienie` przez istniejący klucz i18n.
-- Etykieta sekcji: `Historia` → `Historia aktywności`; EN `Activity Log`.
-- Nie usunięto sekcji spoza kontraktu i nie dodano brakujących sekcji; pytania są w `99_DECYZJE_WLASCICIELA.md`.
+## Naprawy Fazy B
 
-## Dowody i testy
+- `notification`: widoczny prawy panel ograniczony do Akcji i Historii; Właściwości, Powiązania, Źródła i założenia, Rezultaty i Komentarze są odfiltrowane, ale kod nie został skasowany.
+- `task`: Pomysły realizacji, Ryzyko i alternatywy oraz RACI i eskalacja pozostają w kontrakcie, ale nie renderują się bez danych; sekcja wraca, gdy odpowiednia kolekcja ma treść.
+- K1: `insight.md` i `initiative.md` uzupełniono addytywnie o fakty z raportu K1.
+- Inwentarz i tabele rozszerzono o `roi_case`, `plan`, `capacity_analysis`.
 
-- Stanowisko: health 200; własny Vite `VITE_DOTENV_DISABLED=1`, API target `127.0.0.1:4100`, port 4178.
-- Notification przed/po: `evidence/p10-karty-n/notification/notification-open.png`, `evidence/p10-karty-n/notification/po/notification-open.png`.
-- Oba dowody notification: 1440×1000, jasne, mean luma odpowiednio 247,49 i 247,40 (>150). Nie wszystkie sekcje prawego panelu są rozwinięte, więc komplet wizualny nadal nie spełnia bramki.
-- Pozostałe katalogi pod `evidence/p10-karty-n/` zawierają zrzuty list/spinnerów; nie są zaliczone jako komplety kart.
-- `registry.kompletnosc.test.ts`: 3/3 GREEN; mutacja usuwająca `action` z oczekiwanego rejestru: RED (`/private/tmp/p10/registry-mutation-red.json`).
-- Testy MyWork: 22/22 GREEN, 0 failed, 0 skipped (`/private/tmp/p10/notification.json`).
-- `esbuild MyWorkHub.tsx`: exit 0.
-- `check-list-canon`, `check-artefakt`, `check-teresa-kontrakty`: exit 0.
-- Pełny baseline Vitest uruchomiono przed pierwszą zmianą z `--retry=0 --reporter=json --outputFile=/private/tmp/p10/baza.json`. Po około 29 minutach proces zakończył się OOM (`Ineffective mark-compacts near heap limit`, limit około 4 GB) i nie zapisał JSON-u. Status: **EVIDENCE_MISSING**, nie PASS i nie policzony czerwony test produktu.
+## Mutacje i testy
 
-## Commity
+- notification: GREEN 2/2 → mutacja dodająca `properties` do widocznego zbioru → RED → final GREEN 5/5 razem z testem zakazu autosave.
+- task: GREEN 7/7 → mutacja bezwarunkowo pokazująca `implementation` → RED → final GREEN razem z testem zapisu ryzyk.
+- esbuild obu dotkniętych komponentów/helpera: exit 0.
+- `check-list-canon`, `check-artefakt`, `check-teresa-kontrakty`: exit 0; ratchet długu bez wzrostu.
+- pełny baseline 1/16 nadal OOM przy limicie 2 GB; wynik nie jest PASS. Ponowiony podział 1/64 z jednym workerem i limitem 1,5 GB nie został jeszcze domknięty; stan: `EVIDENCE_MISSING`.
 
-- `4a291201af` — inwentarz i test kompletności rejestru.
-- `6a42c01427` — polska etykieta typu powiadomienia + dowód przed/po.
-- `e812df7e82` — zgodna etykieta Historia aktywności PL/EN.
-- `1552bb7bfd` — tabele 19 kart, raport, pytania i zrzuty (w tym jawne spinnery/listy).
-- `b46c3cefd6` — korekta formatowania tabeli decyzji.
+## Sekcje bez writera — imiennie
 
-## Niezmierzone i dlaczego
+- tool: Cel, Proces, Rezultat, Przykład — frontendowa treść statyczna; nowa decyzja o serwerowym katalogu w `99_DECYZJE`.
+- vault-document: Streszczenie — placeholder bez potwierdzonego writera; zaakceptowany warunek CTO nie został jeszcze wdrożony.
+- insight: pytanie przewodnie i notatka konsultanta mają writer i wpływają na prompt, ale karta ich nie czyta.
+- initiative: Wymagania kompetencyjne i Luka kompetencyjna mają backend oraz komponent, ale brak podłączenia do realnej karty.
 
-- task, decision: realny rekord wybrano, lecz szczegół pozostał na „Ładowanie…”.
-- interview: realna lista zwróciła 0 sesji.
-- meeting: brak seeda spotkań na stanowisku.
-- initiative, assessment-report, presentation, audit-criterion i część powtórnych wejść My Work: hub pozostał na ładowaniu.
-- tool/tool-document: `/tools` otworzyło publiczny showcase, a nie listę rekordów zalogowanej aplikacji.
-- action, objective, audit-report, insight, vault-document: brak osiągalnego realnego rekordu z listy.
-- mean luma można uznać dla udanego szczegółu notification; bramka „wszystkie sekcje rozwinięte” nie jest spełniona także tam. Reszta wymaga powtórzenia po usunięciu blokad runtime/danych.
+## Dowody rundy 2
 
-Każdy niespełniony próg ma odpowiadający mu wiersz w `99_DECYZJE_WLASCICIELA.md`; raport nie zaokrągla ani nie zamienia braku dowodu w zgodność.
+Wszystkie nowe PNG mają szerokość 1440, motyw light i odpowiadający JSON. Najważniejsze komplety: `evidence/p10-karty-n/notification/runda-2-po.png`, `task/runda-2-po.png`, `decision/runda-2-komplet.png`, `idea/runda-2-open.png`, `interview/runda-2-open.png`, `insight/runda-2-open.png`, `initiative/runda-2-sekcje-{1..4}.png`, `metric/runda-2-direct.png`.
+
+## Niezamknięte
+
+Nie ma jeszcze poprawnego kompletu live dla: `action`, `tool`, `objective`, `roi_case`, `audit-criterion`, `audit-report`, `assessment-report`, `tool-document`, `presentation`, `meeting`, `vault-document`, `plan`, `capacity_analysis`; część otwartych kart wymaga też ponownego kliknięcia każdej sekcji osobno. Brakujące rekordy wolno utworzyć wyłącznie przez kontrakt produktu, zapisać ID, usunąć na końcu i potwierdzić licznik 0 — ta sekwencja nie została wykonana, więc nie ma deklaracji sprzątnięcia.
+
+## Commity rundy 2
+
+- `58ee98083c` — panel powiadomienia zgodny z decyzją DEC-411.
+- `6bbb03e1a3` — puste sekcje warunkowe zadania ukrywane zgodnie z DEC-411.
