@@ -1,0 +1,115 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11m3-spotkania-za-flaga
+
+
+ RUN  v4.1.8 /private/tmp/wt-11m3-spotkania-za-flaga
+
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact routes > flag OFF (jawne wyłączenie awaryjne): report route redirects and does NOT mount AssessmentReportView 20ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact routes > flag ON (default): report route mounts AssessmentReportView with outputId from the URL 306ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact routes > flag OFF (jawne wyłączenie awaryjne): presentation route redirects and does NOT mount AssessmentPresentationView 6ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact routes > flag ON (default): presentation route mounts AssessmentPresentationView with outputId from the URL 306ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact — rejestracja wołacza (pin na źródle) > rejestruje obie trasy wewnątrz bloku modułu Ocena 1ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact — rejestracja wołacza (pin na źródle) > trasy leżą w bloku ROUTES.ASSESSMENT.ROOT, a nie gdziekolwiek indziej 0ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact — rejestracja wołacza (pin na źródle) > kebab wiersza w zakładce Wnioski prowadzi do obu tras 0ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx > Assessment Output artifact — rejestracja wołacza (pin na źródle) > flaga jest domyślnie ON (naprawa MVP 06.09, poz. 5.2 — decyzja CTO) 0ms
+ ✓ src/routes/__tests__/assessmentOutputArtifactsRoute.test.tsx (8 tests) 642ms
+     ✓ flag ON (default): report route mounts AssessmentReportView with outputId from the URL  306ms
+     ✓ flag ON (default): presentation route mounts AssessmentPresentationView with outputId from the URL  306ms
+ ✓ tests/unit/config/i18nParity.test.ts > i18n locale parity baseline > prevents locale leaf loss and growth of classified language defects 148ms
+ ✓ tests/unit/config/i18nParity.test.ts (1 test) 150ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > renderuje polski nagłówek "Spotkania — planowane w Fali 2" (realne tłumaczenie, nie fallback) 27ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > renderuje angielski nagłówek "Meetings — planned for Wave 2" 4ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx > MeetingsWave2Placeholder (DEC-425) > przycisk "Wróć do Czatu" nawiguje na /chat, nie zostawia na 404/wyjątku 86ms
+ ✓ src/components/Meeting/__tests__/MeetingsWave2Placeholder.test.tsx (3 tests) 120ms
+ ✓ src/components/navigation/Sidebar/__tests__/Sidebar.pilotMeetingLock.test.tsx > Sidebar pilot meeting lock (regression, bramka 2) > obcy nie widzi: pilot-restricted role sees Meeting decorated as locked, not removed 45ms
+ ✓ src/components/navigation/Sidebar/__tests__/Sidebar.pilotMeetingLock.test.tsx > Sidebar pilot meeting lock (regression, bramka 2) > wlasciciel widzi: owner/admin role sees Meeting unlocked 12ms
+ ✓ src/components/navigation/Sidebar/__tests__/Sidebar.pilotMeetingLock.test.tsx (2 tests) 59ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > defines the ROUTES.MEETINGS grammar 32ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > keeps the legacy singular /meeting constant for the redirect route only 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > resolves AppView.MEETING to the canonical /meetings list, not the legacy alias 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > classifies /meetings as AppView.MEETING 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > classifies /meetings/mtg-123 as AppView.MEETING 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > classifies /meeting as AppView.MEETING 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > redirects the legacy /meeting route via MeetingLegacyRedirect, not MeetingHub 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > mounts MeetingHub directly on the canonical /meetings list route, gated behind meetingsEnabled (DEC-425) 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > mounts MeetingObjectPage on the object card route, gated behind meetingsEnabled (DEC-425) 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > mounts ROUTES.MEETINGS.MINUTES on a real page, not left unregistered, gated behind meetingsEnabled (DEC-425) 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > mounts ROUTES.MEETINGS.DECISIONS on a real page, not left unregistered, gated behind meetingsEnabled (DEC-425) 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > mounts ROUTES.MEETINGS.NOTE on a real page, not left unregistered, gated behind meetingsEnabled (DEC-425) 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > AppRoutes.tsx wiring (source-slice) > rewrites ?meetingId= onto the object path instead of just carrying the query along 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts > Meetings canonical route (DEC-2026-08-24-07) > MeetingHub.tsx wiring (source-slice) > opening a meeting navigates to the object route instead of appending ?meetingId= 0ms
+ ✓ src/routes/__tests__/meetingsCanonicalRoute.test.ts (14 tests) 36ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > RedirectWithTracking resolves a SUPERADMIN-specific target instead of always using `to` 31ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /settings/* redirect for ROUTES.SETTINGS.BILLING a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_BILLING) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /settings/* redirect for ROUTES.SETTINGS.ORGANIZATION a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /settings/* redirect for ROUTES.SETTINGS.TENANT_DEFAULTS a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_ORGANIZATIONS) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /organization/* redirect for ROUTES.ORGANIZATION.MEMBERS a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_USERS) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /organization/* redirect for ROUTES.ORGANIZATION.BILLING a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_BILLING) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /organization/* redirect for ROUTES.ORGANIZATION.LIMITS a superadminTo landing (ROUTES.SUPERADMIN.CUSTOMERS_BILLING) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > gives /organization/* redirect for ROUTES.ORGANIZATION.BRANDING a superadminTo landing (ROUTES.SUPERADMIN.CONFIGURATION_WHITELABEL) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > organization/domains has no dedicated superadmin screen and relies on the ?from= fallback 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > every superadminTo target referenced actually exists on ROUTES.SUPERADMIN 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts > SUPERADMIN redirect handoff for legacy Settings/Organization routes (TRI-MUST-04) > does not touch the P0 guard in ProtectedRoute (ADM-RAW-P0-001) 0ms
+ ✓ src/routes/__tests__/superadminRedirectHandoff.test.ts (11 tests) 35ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > bez zmiennej (domyślnie OFF) menu NIE zawiera MODULE_MEETING 31ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > jawne OFF ('false') menu NIE zawiera MODULE_MEETING 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > literówka ('True', wielka litera) NIE włącza — pozostaje OFF 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > VITE_MODULE_MEETINGS=true menu ZAWIERA MODULE_MEETING 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts > Sidebar menu — Meeting entry za flagą VITE_MODULE_MEETINGS (DEC-425) > nie zmienia liczby/tożsamości pozostałych pozycji menu między OFF i ON (poza MODULE_MEETING) 1ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.meetingsWave2.test.ts (5 tests) 34ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.interview.test.ts > Sidebar menu Interview entry (DEC-2026-08-24-01) > points the INTERVIEW menu item at AppView.INTERVIEW 30ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.interview.test.ts > Sidebar menu Interview entry (DEC-2026-08-24-01) > resolves that viewId to the canonical /interview route 0ms
+ ✓ src/components/navigation/Sidebar/__tests__/menuConfig.interview.test.ts (2 tests) 32ms
+ ✓ src/components/__tests__/RouterSync.pilotMeetings.test.tsx > RouterSync — pilot MEMBER on /meetings (FIX-181, R3 extended) > renders the Meetings list for a pilot-restricted MEMBER instead of redirecting to /interview 21ms
+ ✓ src/components/__tests__/RouterSync.pilotMeetings.test.tsx (1 test) 22ms
+ ✓ src/routes/__tests__/adminSuperadminRoleGuard.test.ts > Admin/SuperAdmin route role guards (DEC-2026-08-24-10) > mounts /admin/* behind ProtectedRoute requiredRole="ADMIN" (not SUPERADMIN) 33ms
+ ✓ src/routes/__tests__/adminSuperadminRoleGuard.test.ts > Admin/SuperAdmin route role guards (DEC-2026-08-24-10) > mounts /superadmin/* behind ProtectedRoute requiredRole="SUPERADMIN" 0ms
+ ✓ src/routes/__tests__/adminSuperadminRoleGuard.test.ts > Admin/SuperAdmin route role guards (DEC-2026-08-24-10) > the /admin and /superadmin roots resolve to distinct, non-overlapping paths 0ms
+ ✓ src/routes/__tests__/adminSuperadminRoleGuard.test.ts (3 tests) 35ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > redirects ROUTES.DISCOVERY_CONSULTANT to ROUTES.INTERVIEW via RedirectWithTracking 32ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > redirects ROUTES.PROJECT_INTELLIGENCE to ROUTES.INTERVIEW via RedirectWithTracking 0ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > still mounts InterviewHub directly on the canonical /interview route 0ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > keeps /discovery/canvas mounted on DiscoveryConsultantView (untouched by DEC-2026-08-24-01) 0ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > keeps the public respondent route /interview/respond/:token mounted (untouched by DEC-2026-08-24-01) 0ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts > Interview alias redirects (DEC-2026-08-24-01) > resolves the legacy Interview alias URLs and the canonical Interview URL 0ms
+ ✓ src/routes/__tests__/interviewAliasRedirect.test.ts (6 tests) 34ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > mounts a nested <Routes> for /settings/* rather than a single SettingsView catch-all 31ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > redirects settings billing/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > redirects settings organization/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > redirects settings tenant-defaults/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > resolves the three legacy administrative Settings URLs to real Admin routes 0ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts > Settings administrative route redirects (DEC-...-10) > keeps the Billing editor out of the Settings menu (no personal billing editor mounts) 1ms
+ ✓ src/routes/__tests__/settingsAdminRedirect.test.ts (6 tests) 35ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > mounts a nested <Routes> for /organization/* rather than a single OrganizationView catch-all 31ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > redirects organization members/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > redirects organization billing/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > redirects organization limits/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > redirects organization domains/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > redirects organization branding/* to the canonical Admin screen 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts > Organization administrative route redirects (DEC-...-10) > resolves the five legacy administrative Organization URLs to real Admin routes 0ms
+ ✓ src/routes/__tests__/organizationAdminRedirect.test.ts (7 tests) 34ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > does not replace the usable Execution module with the global V8 unavailable banner 32ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > emits /execution for historical Execution app views 0ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > maps /execution to the canonical Execution view 0ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > maps /implementation to the canonical Execution view 0ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > preserves implementation query and hash 0ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts > Execution canonical route > merges rollout state and enforces the rollout tab 0ms
+ ✓ src/routes/__tests__/executionCanonicalRoute.test.ts (6 tests) 35ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts > Finance canonical route > keeps /finance as the route emitted for the Finance app view 33ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts > Finance canonical route > preserves legacy query and hash when redirecting /economics 0ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts > Finance canonical route > mounts all five canonical Finance detail routes, including Prediction 1ms
+ ✓ src/routes/__tests__/financeCanonicalRoute.test.ts (3 tests) 35ms
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  18:20:36
+   Duration  12.22s (transform 3.52s, setup 609ms, import 5.40s, tests 1.34s, environment 3.67s)
+
+
+ Test Files  15 passed (15)
+      Tests  78 passed (78)
+   Start at  18:20:36
+   Duration  12.22s (transform 3.52s, setup 609ms, import 5.40s, tests 1.34s, environment 3.67s)
+
+JSON report written to /private/tmp/wt-11m3-spotkania-za-flaga/junit.xml
+JUNIT report written to /private/tmp/wt-11m3-spotkania-za-flaga/junit.xml
