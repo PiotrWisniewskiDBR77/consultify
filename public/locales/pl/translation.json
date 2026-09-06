@@ -9061,7 +9061,8 @@
         "budgetEnvelope": "Limit budżetowy",
         "unconfirmed": "Niepotwierdzone",
         "resolved": "Rozwiązane w scenariuszu"
-      }
+      },
+      "more": "Więcej"
     },
     "status": {
       "draft": "Szkic",
@@ -9267,7 +9268,20 @@
     },
     "filters": {
       "priority": "Priorytet",
-      "allPriorities": "Wszystkie priorytety"
+      "allPriorities": "Wszystkie priorytety",
+      "lifecycle": "Cykl życia",
+      "planState": "Stan planu",
+      "capacityConstraint": "Ograniczenie"
+    },
+    "bridge": {
+      "contextMissing": "Wymagany jest projekt i właściciel inicjatywy.",
+      "initiativeId": "ID klasycznej inicjatywy do przejęcia",
+      "candidateId": "ID zaakceptowanego kandydata powiązanego z tą inicjatywą",
+      "confirm": "Przejąć klasyczną inicjatywę „{{initiativeId}}” do rejestru kanonicznego?",
+      "adopting": "Przejmowanie…",
+      "action": "Przejmij klasyczną inicjatywę",
+      "adopted": "Inicjatywa dodana do rejestru kanonicznego.",
+      "failed": "Nie udało się przejąć klasycznej inicjatywy."
     },
     "materialize": {
       "working": "Generowanie materiału z portfolio…",
