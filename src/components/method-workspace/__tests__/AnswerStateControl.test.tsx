@@ -81,7 +81,12 @@ describe('AnswerStateControl', () => {
     expect(onChange).toHaveBeenCalledWith('not_applicable', 'Proces nie istnieje w tej organizacji.');
   });
 
-  it('"Nie wiem" is styled as info/neutral, never as a negative/danger tone — an honest "don\'t know" is not a mistake', () => {
+  // ★ 06.09 (DEC-415): mapa kolorów przeniesiona do `answerStateColors.ts`, a
+  // właściciel rozstrzygnął, że stany bez rozstrzygnięcia (Nie wiem / Nie mam
+  // dowodu / Nie dotyczy) mają być NEUTRALNE — mają być widocznie WYBRANE, ale
+  // nie mogą pożyczać koloru wyniku. Gwarancja tego testu jest ta sama co
+  // wcześniej: „nie wiem" nigdy nie jest pomyłką, więc nigdy nie jest czerwone.
+  it('"Nie wiem" is styled neutral — never danger, and never borrows a result colour (success/warning)', () => {
     render(
       <AnswerStateControl
         value="dont_know"
@@ -91,8 +96,13 @@ describe('AnswerStateControl', () => {
       />
     );
     const option = screen.getByText('Nie wiem / potrzebuję pomocy').closest('button')!;
-    expect(option.className).toMatch(/c-info/);
+    expect(option.getAttribute('data-tone')).toBe('neutral');
     expect(option.className).not.toMatch(/c-danger/);
+    expect(option.className).not.toMatch(/c-success/);
+    expect(option.className).not.toMatch(/c-warning/);
+    // wyraźnie „wybrany", nie zlany z niewybranymi
+    expect(option.className).toMatch(/border-c-border-strong/);
+    expect(option.getAttribute('aria-checked')).toBe('true');
   });
 
   it('ResolutionCard actions forward to onResolutionAction', () => {

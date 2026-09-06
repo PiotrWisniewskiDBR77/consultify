@@ -1,0 +1,10 @@
+PRZED (sesje method-core / zdarzenia):
+{"sessions":[],"total":0,"limit":20,"offset":0}
+
+PO (sesja utworzona przeze mnie do zrzutow, wczesniej w bazie bylo 0 sesji):
+sesje: 1 ['2d1fc7a8-8145-48f1-aaf5-24fd86f1dfd7']
+zdarzenia w sesji 2d1fc7a8-8145-48f1-aaf5-24fd86f1dfd7:
+razem: 2
+Counter({'ANSWER_CONFIRMED': 2})
+  ANSWER_CONFIRMED 1A L1 1A-L1-Q1 confirmed
+  ANSWER_CONFIRMED 1A L2 1A-L2-Q1 partial

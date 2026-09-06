@@ -1,0 +1,4 @@
+MUTACJA C: onTranscript przestaje dopisywac rozpoznany tekst do pola
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)

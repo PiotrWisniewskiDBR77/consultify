@@ -11,6 +11,7 @@ import { AlertCircle, Check, CircleSlash, FileQuestion, HelpCircle, Minus } from
 import React, { useState } from 'react';
 
 import type { MethodAnswerState, ResolutionAction, ResolutionCardData } from './types';
+import { ANSWER_STATE_TONE, ANSWER_TONE_BUTTON_SELECTED } from './answerStateColors';
 import { ResolutionCard } from './ResolutionCard';
 
 export interface AnswerStateControlProps {
@@ -26,23 +27,14 @@ const OPTIONS: Array<{
   id: MethodAnswerState;
   label: string;
   icon: React.ReactNode;
-  tone: 'success' | 'warning' | 'neutral' | 'info' | 'muted';
 }> = [
-  { id: 'confirmed', label: 'Potwierdzone', icon: <Check size={14} />, tone: 'success' },
-  { id: 'partial', label: 'Częściowo', icon: <Minus size={14} />, tone: 'warning' },
-  { id: 'no', label: 'Nie', icon: <CircleSlash size={14} />, tone: 'neutral' },
-  { id: 'dont_know', label: 'Nie wiem / potrzebuję pomocy', icon: <HelpCircle size={14} />, tone: 'info' },
-  { id: 'no_evidence', label: 'Nie mam dowodu', icon: <FileQuestion size={14} />, tone: 'muted' },
-  { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} />, tone: 'muted' },
+  { id: 'confirmed', label: 'Potwierdzone', icon: <Check size={14} /> },
+  { id: 'partial', label: 'Częściowo', icon: <Minus size={14} /> },
+  { id: 'no', label: 'Nie', icon: <CircleSlash size={14} /> },
+  { id: 'dont_know', label: 'Nie wiem / potrzebuję pomocy', icon: <HelpCircle size={14} /> },
+  { id: 'no_evidence', label: 'Nie mam dowodu', icon: <FileQuestion size={14} /> },
+  { id: 'not_applicable', label: 'Nie dotyczy', icon: <AlertCircle size={14} /> },
 ];
-
-const TONE_CLASSES: Record<string, string> = {
-  success: 'data-[selected=true]:border-c-success data-[selected=true]:bg-c-success/10 data-[selected=true]:text-c-success',
-  warning: 'data-[selected=true]:border-c-warning data-[selected=true]:bg-c-warning/10 data-[selected=true]:text-c-warning',
-  neutral: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text',
-  info: 'data-[selected=true]:border-c-info data-[selected=true]:bg-c-info/10 data-[selected=true]:text-c-info',
-  muted: 'data-[selected=true]:border-c-border data-[selected=true]:bg-c-surface-raised data-[selected=true]:text-c-text-secondary',
-};
 
 export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
   value,
@@ -83,7 +75,12 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
               data-selected={selected}
               disabled={disabled}
               onClick={() => handleSelect(option.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface px-2.5 py-2 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${TONE_CLASSES[option.tone]}`}
+              data-tone={ANSWER_STATE_TONE[option.id]}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                selected
+                  ? `font-semibold ${ANSWER_TONE_BUTTON_SELECTED[ANSWER_STATE_TONE[option.id]]}`
+                  : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
+              }`}
             >
               {option.icon}
               <span className="truncate">{option.label}</span>
