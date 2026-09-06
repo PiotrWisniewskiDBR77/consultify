@@ -23475,7 +23475,8 @@
         "librarySearchNoResults": "Brak wyników dla frazy \"{{query}}\". Zmień frazę lub wyczyść filtry.",
         "sessions": "Brak aktywnych sesji. Zacznij z Biblioteki.",
         "outputs": "Brak outputów. Wygeneruj raporty lub prezentacje z sesji.",
-        "initiatives": "Brak roboczych inicjatyw. Uruchom narzędzie lub assessment, aby je wygenerować."
+        "initiatives": "Brak roboczych inicjatyw. Uruchom narzędzie lub assessment, aby je wygenerować.",
+        "insights": "Brak insightów. Insighty powstają z zatwierdzonych sesji — zatwierdź sesję w zakładce Sesje."
       },
       "license": {
         "licensed": "Licencjonowane",
@@ -23492,10 +23493,35 @@
       "defaultSessionName": "Sesja",
       "initiatives": {
         "columns": {
-          "status": "Status"
+          "status": "Status",
+          "initiative": "Inicjatywa",
+          "axis": "Oś",
+          "priority": "Priorytet",
+          "tasks": "Zadania",
+          "updated": "Aktualizacja"
         }
       },
-      "loadingSessions": "Ładowanie sesji narzędzi…"
+      "loadingSessions": "Ładowanie sesji narzędzi…",
+      "insights": {
+        "columns": {
+          "toolType": "Narzędzie",
+          "sourceSession": "Sesja źródłowa"
+        }
+      },
+      "cta": {
+        "newSession": "Nowa sesja",
+        "newInsight": "Nowy insight",
+        "newReport": "Nowy raport",
+        "newInitiative": "Nowa inicjatywa",
+        "pickSessionInsight": "Wybierz zatwierdzoną sesję bez insightu",
+        "pickSessionReport": "Wybierz zatwierdzoną sesję jako źródło raportu",
+        "pickSessionInitiative": "Wybierz zatwierdzoną sesję jako źródło inicjatyw",
+        "emptyNoApproved": "Insighty powstają z zatwierdzonych sesji — zatwierdź sesję w zakładce Sesje.",
+        "emptyAllHaveInsight": "Każda zatwierdzona sesja ma już insight. Nowy powstanie po zatwierdzeniu kolejnej sesji.",
+        "emptyNoApprovedReport": "Raport powstaje z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
+        "emptyNoApprovedInitiative": "Inicjatywy powstają z zatwierdzonej sesji — zatwierdź sesję w zakładce Sesje.",
+        "goToSessions": "Przejdź do Sesji"
+      }
     },
     "integrations": {
       "syncHub": {
@@ -23628,6 +23654,17 @@
     },
     "session": {
       "notLoadedYet": "Sesja wciąż się ładuje — spróbuj ponownie za chwilę"
+    },
+    "axis": {
+      "strategic": "Strategiczna",
+      "operational": "Operacyjna",
+      "digital": "Cyfrowa"
+    },
+    "priority": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "urgent": "Krytyczny"
     }
   },
   "aiAuthoring": {

@@ -22122,7 +22122,8 @@
         "librarySearchNoResults": "No results for \"{{query}}\". Try a different phrase or clear filters.",
         "sessions": "No active sessions. Start from the Library.",
         "outputs": "No outputs yet. Generate reports or presentations from your sessions.",
-        "initiatives": "No draft initiatives yet. Run a tool or assessment to generate initiatives."
+        "initiatives": "No draft initiatives yet. Run a tool or assessment to generate initiatives.",
+        "insights": "No insights yet. Insights are created from approved sessions — approve a session in the Sessions tab."
       },
       "license": {
         "licensed": "Licensed",
@@ -22139,10 +22140,35 @@
       "defaultSessionName": "Session",
       "initiatives": {
         "columns": {
-          "status": "Status"
+          "status": "Status",
+          "initiative": "Initiative",
+          "axis": "Axis",
+          "priority": "Priority",
+          "tasks": "Tasks",
+          "updated": "Updated"
         }
       },
-      "loadingSessions": "Loading tool sessions…"
+      "loadingSessions": "Loading tool sessions…",
+      "insights": {
+        "columns": {
+          "toolType": "Tool",
+          "sourceSession": "Source session"
+        }
+      },
+      "cta": {
+        "newSession": "New session",
+        "newInsight": "New insight",
+        "newReport": "New report",
+        "newInitiative": "New initiative",
+        "pickSessionInsight": "Pick an approved session without an insight",
+        "pickSessionReport": "Pick an approved session as the report source",
+        "pickSessionInitiative": "Pick an approved session as the source",
+        "emptyNoApproved": "Insights are created from approved sessions — approve a session in the Sessions tab.",
+        "emptyAllHaveInsight": "Every approved session already has an insight. New ones appear when you approve another session.",
+        "emptyNoApprovedReport": "A report is generated from an approved session — approve a session in the Sessions tab.",
+        "emptyNoApprovedInitiative": "Initiatives are generated from an approved session — approve a session in the Sessions tab.",
+        "goToSessions": "Go to Sessions"
+      }
     },
     "integrations": {
       "syncHub": {
@@ -22275,6 +22301,17 @@
     },
     "session": {
       "notLoadedYet": "Session is still loading — try again in a moment"
+    },
+    "axis": {
+      "strategic": "Strategic",
+      "operational": "Operational",
+      "digital": "Digital"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Critical"
     }
   },
   "aiAuthoring": {
