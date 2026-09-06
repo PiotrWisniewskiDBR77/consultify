@@ -36490,6 +36490,7 @@
       "title11": "Menu notatki",
       "ariaLabel5": "Menu notatki",
       "placeholder": "Bez tytułu",
+      "titleAriaLabel": "Tytuł notatki",
       "placeholder2": "+ tag",
       "title12": "Pobierz oryginalny plik źródłowy",
       "label59": "Pobierz źródło",

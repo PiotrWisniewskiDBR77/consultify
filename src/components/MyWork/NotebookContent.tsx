@@ -958,6 +958,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const [pageProjectId, setPageProjectId] = useState(activePage?.projectId || '');
   const [pageTags, setPageTags] = useState<string[]>(activePage?.tags || []);
   const [tagInput, setTagInput] = useState('');
+  // ★ [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — właściciel: „potrzebuję
+  // możliwości edycji tytułu tej notatki — teraz nie mogę tej nazwy
+  // edytować”. Pole tytułu (JSX niżej, "Page icon + title") było już
+  // TECHNICZNIE edytowalnym <input>, ale bez zaznaczenia całości przy
+  // wejściu w edycję: klik + pisanie WSTAWIAŁO tekst w miejscu kursora
+  // zamiast go zastępować (zmierzone na żywo — klik w "Untitled" i wpisanie
+  // nowego tytułu dawało "UntitledNowyTytuł"). Dla nietechnicznego
+  // użytkownika to wygląda jak "nie mogę edytować nazwy". Ten ref pamięta
+  // wartość SPRZED wejścia w edycję — potrzebny do Esc = anuluj (patrz
+  // onKeyDown przy polu tytułu).
+  const titleBeforeEditRef = useRef<string>(activePage?.title || '');
   const saveTimer = useRef<number | null>(null);
   const isSavingRef = useRef(false);
   const pendingDraftRef = useRef<NotebookPage | null>(null);
@@ -3766,10 +3777,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         <div className="flex-1 min-w-0">
                           <input
                             value={title}
+                            onFocus={(e) => {
+                              // Zapisz stan SPRZED edycji (Esc wraca dokładnie
+                              // tutaj) i zaznacz całość — klik w tytuł ma
+                              // działać jak "zmień nazwę", nie jak wstawianie
+                              // znaków w środku istniejącego tekstu.
+                              titleBeforeEditRef.current = title;
+                              e.target.select();
+                            }}
                             onChange={(e) => {
                               setTitle(e.target.value);
                               scheduleSave({ title: e.target.value });
                             }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.currentTarget.blur();
+                              } else if (e.key === 'Escape') {
+                                e.preventDefault();
+                                const restored = titleBeforeEditRef.current;
+                                setTitle(restored);
+                                scheduleSave({ title: restored });
+                                e.currentTarget.blur();
+                              }
+                            }}
+                            aria-label={t('notebook.notebookContent.titleAriaLabel', 'Tytuł notatki')}
                             placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
                             className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
                           />
