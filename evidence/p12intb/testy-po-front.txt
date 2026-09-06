@@ -1,0 +1,96 @@
+      Tests  34 failed | 456 passed | 8 skipped | 1 todo (499)
+      Tests  34 failed | 456 passed | 8 skipped | 1 todo (499)
+ FAIL  src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakres „w toku" > TRACKING jest wczytywane i mieści się w zakresie aktywnym
+ FAIL  src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakres „w toku" > TRACKING jest wczytywane i mieści się w zakresie aktywnym
+ FAIL  src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > RAG ma cztery stany, w tym SZARY „brak dat planu" (nie zieleń)
+ FAIL  src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > RAG ma cztery stany, w tym SZARY „brak dat planu" (nie zieleń)
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > kolumna kontekstu „Źródło" pojawia się TYLKO jako opcja tej samej definicji
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > niesie kanoniczny kebab wiersza (pozycja „Otwórz") na każdej powierzchni
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—"
+ FAIL  src/components/Initiatives/__tests__/a19-jedna-tabela-render.test.tsx > A19 — jedna tabela inicjatyw także dla rekordów Oceny > wylicza bramkę i następne działanie z legacy statusu zamiast drukować „—"
+ FAIL  src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > language toggle still matches the same block via the stable marker token
+ FAIL  src/components/Initiatives/__tests__/financialNarrativeBlocks.test.ts > upsertFinancialBlock > language toggle still matches the same block via the stable marker token
+ FAIL  src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL
+ FAIL  src/components/Initiatives/__tests__/initiativeAttachments.persistence.realpg.test.ts > Initiative attachments survive a reload through real ApiGateway + PostgreSQL
+ FAIL  src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > adapter zachowuje tozsamosc i cykl zycia rekordu rejestru
+ FAIL  src/components/Initiatives/__tests__/initiativeKartaRealnyRekord.test.ts > karta inicjatywy — ladowanie realnego rekordu > adapter zachowuje tozsamosc i cykl zycia rekordu rejestru
+ FAIL  src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL
+ FAIL  src/components/Initiatives/__tests__/initiativeSections.day136.pg.test.ts > Day 136 initiative sections via production ApiGateway + real PostgreSQL
+ FAIL  tests/components/Initiatives/CandidatesPanel.receipt.test.tsx [ tests/components/Initiatives/CandidatesPanel.receipt.test.tsx ]
+ FAIL  tests/components/Initiatives/CandidatesPanel.receipt.test.tsx [ tests/components/Initiatives/CandidatesPanel.receipt.test.tsx ]
+ FAIL  tests/components/Initiatives/CandidatesTable.t28.test.tsx [ tests/components/Initiatives/CandidatesTable.t28.test.tsx ]
+ FAIL  tests/components/Initiatives/CandidatesTable.t28.test.tsx [ tests/components/Initiatives/CandidatesTable.t28.test.tsx ]
+ FAIL  tests/components/Initiatives/ControlSection.cardRenderer.test.tsx > ControlSection — CardBlockRenderer display layer > renders the generic CardBlockRenderer preview with resolved governance labels
+ FAIL  tests/components/Initiatives/ControlSection.cardRenderer.test.tsx > ControlSection — CardBlockRenderer display layer > renders the generic CardBlockRenderer preview with resolved governance labels
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > coalesces rapid edits into a single validation of the final value
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > coalesces rapid edits into a single validation of the final value
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > does not validate when the thesis is shorter than 8 chars
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > does not validate when the thesis is shorter than 8 chars
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > validates the thesis after debounce and renders amber hints
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.b3-hints.test.tsx > InitiativeCharterWizard — §B3 hints > validates the thesis after debounce and renders amber hints
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > checks for similar initiatives after debounce and renders the amber box
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > checks for similar initiatives after debounce and renders the amber box
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > coalesces rapid edits into a single check of the final value
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > coalesces rapid edits into a single check of the final value
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > does not check when the title is shorter than 4 chars
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > does not check when the title is shorter than 4 chars
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > renders no box when no similar initiatives are returned
+ FAIL  tests/components/Initiatives/InitiativeCharterWizard.dedup.test.tsx > InitiativeCharterWizard — C1 dedup > renders no box when no similar initiatives are returned
+ FAIL  tests/components/Initiatives/InitiativeGantt.drag-reschedule.test.tsx > InitiativeGantt — drag-reschedule (W5) > persists a task drag via PUT /api/pmo/tasks/:id and calls onReschedule
+ FAIL  tests/components/Initiatives/InitiativeGantt.drag-reschedule.test.tsx > InitiativeGantt — drag-reschedule (W5) > persists a task drag via PUT /api/pmo/tasks/:id and calls onReschedule
+ FAIL  tests/components/Initiatives/InitiativeGantt.features.test.tsx > InitiativeGantt — V1 features > highlights critical-path bars with a ring + title marker
+ FAIL  tests/components/Initiatives/InitiativeGantt.features.test.tsx > InitiativeGantt — V1 features > highlights critical-path bars with a ring + title marker
+ FAIL  tests/components/Initiatives/InitiativeGantt.render.test.tsx > InitiativeGantt — render (V1) > renders a task bar with the task colour class and the title text
+ FAIL  tests/components/Initiatives/InitiativeGantt.render.test.tsx > InitiativeGantt — render (V1) > renders a task bar with the task colour class and the title text
+ FAIL  tests/components/Initiatives/InitiativeGantt.render.test.tsx > InitiativeGantt — render (V1) > shows the "today" marker when now falls inside the rendered range
+ FAIL  tests/components/Initiatives/InitiativeGantt.render.test.tsx > InitiativeGantt — render (V1) > shows the "today" marker when now falls inside the rendered range
+ FAIL  tests/components/Initiatives/InitiativeGantt.rollback.test.tsx > InitiativeGantt — drag rollback (W5) > reverts the bar and does NOT call onReschedule when the PUT rejects
+ FAIL  tests/components/Initiatives/InitiativeGantt.rollback.test.tsx > InitiativeGantt — drag rollback (W5) > reverts the bar and does NOT call onReschedule when the PUT rejects
+ FAIL  tests/components/Initiatives/InitiativeObservabilityPanel.test.tsx [ tests/components/Initiatives/InitiativeObservabilityPanel.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativeObservabilityPanel.test.tsx [ tests/components/Initiatives/InitiativeObservabilityPanel.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativeObservabilityTable.t27.test.tsx [ tests/components/Initiatives/InitiativeObservabilityTable.t27.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativeObservabilityTable.t27.test.tsx [ tests/components/Initiatives/InitiativeObservabilityTable.t27.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativesGoalsTable.t30.test.tsx [ tests/components/Initiatives/InitiativesGoalsTable.t30.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativesGoalsTable.t30.test.tsx [ tests/components/Initiatives/InitiativesGoalsTable.t30.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativesHub.load-error-state.test.tsx [ tests/components/Initiatives/InitiativesHub.load-error-state.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativesHub.load-error-state.test.tsx [ tests/components/Initiatives/InitiativesHub.load-error-state.test.tsx ]
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > CandidatesPanel component import dropped (type-only reuse for AcceptCandidatePayload) — no unused import
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > CandidatesPanel component import dropped (type-only reuse for AcceptCandidatePayload) — no unused import
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > T25 preserved: buildInitiativePreviewDetails import and both usage sites intact
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > T25 preserved: buildInitiativePreviewDetails import and both usage sites intact
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > imports all three new canonical tables
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > imports all three new canonical tables
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts CandidatesTable (not the retired CandidatesPanel) under activeTab==="candidates"
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts CandidatesTable (not the retired CandidatesPanel) under activeTab==="candidates"
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts InitiativeObservabilityTable + preserved InitiativeObservabilityPanel dashboard under activeTab==="observability"
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts InitiativeObservabilityTable + preserved InitiativeObservabilityPanel dashboard under activeTab==="observability"
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts PortfolioHealthTable + preserved PortfolioHealthView dashboard under activeTab==="portfolioHealth"
+ FAIL  tests/components/Initiatives/InitiativesHub.r11-wiring.source-anchor.test.ts > R11 InitiativesHub wiring — source anchors > mounts PortfolioHealthTable + preserved PortfolioHealthView dashboard under activeTab==="portfolioHealth"
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > declares the Goals tab entry in the tabs array
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > declares the Goals tab entry in the tabs array
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > excludes the goals tab from table/kanban/timeline/grid view modes
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > excludes the goals tab from table/kanban/timeline/grid view modes
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > imports InitiativesGoalsTable and mounts it on activeTab==="goals"
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 InitiativesHub wiring — source anchors > imports InitiativesGoalsTable and mounts it on activeTab==="goals"
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 — R11/R24 (T25) wiring preserved byte-for-byte > R11 T27/T28/T29 mounts and T25 buildInitiativePreviewDetails wiring are unchanged
+ FAIL  tests/components/Initiatives/InitiativesHub.t30-wiring.source-anchor.test.ts > T30 — R11/R24 (T25) wiring preserved byte-for-byte > R11 T27/T28/T29 mounts and T25 buildInitiativePreviewDetails wiring are unchanged
+ FAIL  tests/components/Initiatives/PortfolioAnalysisTable.t26.test.tsx [ tests/components/Initiatives/PortfolioAnalysisTable.t26.test.tsx ]
+ FAIL  tests/components/Initiatives/PortfolioAnalysisTable.t26.test.tsx [ tests/components/Initiatives/PortfolioAnalysisTable.t26.test.tsx ]
+ FAIL  tests/components/Initiatives/PortfolioAnalysisView.r13-wiring.source-anchor.test.ts [ tests/components/Initiatives/PortfolioAnalysisView.r13-wiring.source-anchor.test.ts ]
+ FAIL  tests/components/Initiatives/PortfolioAnalysisView.r13-wiring.source-anchor.test.ts [ tests/components/Initiatives/PortfolioAnalysisView.r13-wiring.source-anchor.test.ts ]
+ FAIL  tests/components/Initiatives/PortfolioHealthTable.t29.test.tsx [ tests/components/Initiatives/PortfolioHealthTable.t29.test.tsx ]
+ FAIL  tests/components/Initiatives/PortfolioHealthTable.t29.test.tsx [ tests/components/Initiatives/PortfolioHealthTable.t29.test.tsx ]
+ Test Files  26 failed | 61 passed (87)
+ Test Files  26 failed | 61 passed (87)
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯ Failed Tests 34 ⎯⎯⎯⎯⎯⎯⎯

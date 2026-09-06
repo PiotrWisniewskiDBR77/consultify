@@ -8,6 +8,7 @@
 import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { InitiativeStatus } from '../constants/initiativeStatuses.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import {
   createDecisionAlternative,
@@ -396,12 +397,23 @@ const refreshInitiativeDecisionBlock = async (input: {
     return;
   }
 
-  const initiative = await queryHelpers.queryOne<{ status?: string }>(
-    `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+  // DEC-424 (P12): „zablokowana" to już nie status, tylko IN_EXECUTION + on_hold.
+  // Stary warunek `status === 'BLOCKED'` po migracji 20262103_p12 nie trafiał w
+  // żaden wiersz, więc kaskadowe odblokowanie po zamknięciu decyzji NIGDY nie
+  // startowało (cichy no-op na każdej rozstrzygniętej decyzji-blokerze).
+  const initiative = await queryHelpers.queryOne<{ status?: string; on_hold?: unknown }>(
+    `SELECT status, on_hold FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
   );
   if (!initiative) return;
-  if (String(initiative.status || '').toUpperCase() !== 'BLOCKED') return;
+  const onHold =
+    initiative.on_hold === true ||
+    initiative.on_hold === 1 ||
+    initiative.on_hold === '1' ||
+    initiative.on_hold === 't' ||
+    initiative.on_hold === 'true';
+  if (String(initiative.status || '').toUpperCase() !== InitiativeStatus.IN_EXECUTION) return;
+  if (!onHold) return;
 
   // Cheap PRE-FILTER only, deliberately NOT run inside a transaction and NOT
   // a correctness boundary: `executeInitiativeTransition` below re-verifies
@@ -467,8 +479,12 @@ const refreshInitiativeDecisionBlock = async (input: {
       orgId: organizationId,
       initiativeId,
       actorId: DECISION_UNBLOCK_SYSTEM_ACTOR_ID,
-      nextStatusInput: 'EXECUTING',
-      expectedCurrentStatus: 'BLOCKED',
+      // DEC-424: odblokowanie to operacja na fladze (RESUME), nie przejście statusu.
+      // Bez `flagOperation` silnik dostawał IN_EXECUTION -> IN_EXECUTION i odmawiał
+      // (INVALID_TRANSITION) — kaskada była martwa po obu stronach.
+      nextStatusInput: InitiativeStatus.IN_EXECUTION,
+      expectedCurrentStatus: InitiativeStatus.IN_EXECUTION,
+      flagOperation: 'RESUME',
       reason: `Decision ${resolvedDecisionId} resolved (approved) — cascade unblock: last open decision-blocker cleared${
         actorId ? ` (resolved by user ${actorId})` : ''
       }`,

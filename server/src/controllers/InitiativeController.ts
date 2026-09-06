@@ -14,6 +14,7 @@ import {
   GATE_PERMISSIONS,
   GateType,
   getGateForTransition,
+  InitiativeStatus,
   isScheduledOnward,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
@@ -765,8 +766,13 @@ export class InitiativeController {
           ? `${req.user.firstName} ${req.user.lastName}`
           : req.user?.email || undefined;
 
-      // 2. Block editing for terminal statuses (CANCELLED, ARCHIVED)
-      if (currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED') {
+      // 2. DEC-424: statusy terminalne słownika 7 to CLOSED i REJECTED
+      // (dawniej CANCELLED/ARCHIVED — po migracji nie istnieją; warunek był martwy,
+      // więc zamknięte i odrzucone inicjatywy dało się edytować).
+      if (
+        currentStatus === InitiativeStatus.CLOSED ||
+        currentStatus === InitiativeStatus.REJECTED
+      ) {
         res.status(403).json({
           error: 'Cannot edit initiative in terminal status',
           status: currentStatus,
@@ -1591,9 +1597,29 @@ export class InitiativeController {
           -- inside comments and string literals, so use {0,1} for the optional quantifier.
           SUM(CASE WHEN i.business_value ~ '^-{0,1}[0-9]+([.][0-9]+){0,1}$'
                    THEN i.business_value::numeric ELSE 0 END) AS total_value,
-          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('EXECUTING','DONE','TRACKING') THEN 1 ELSE 0 END) AS health_green,
-          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') THEN 1 ELSE 0 END) AS health_amber,
-          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) NOT IN ('EXECUTING','DONE','TRACKING','APPROVED','REVIEW','PROMOTED','SCHEDULED','PLANNING') OR i.status IS NULL THEN 1 ELSE 0 END) AS health_red
+          -- DEC-424 (P12): zdrowie portfela na słowniku 7 + flagach.
+          -- GREEN = IN_EXECUTION bez wstrzymania i bez opóźnienia + CLOSED.
+          -- AMBER = APPROVED / PENDING_APPROVAL (czeka, jeszcze nie startuje).
+          -- RED   = wstrzymane (on_hold) albo po terminie, plus cała reszta.
+          -- Stary zbiór (EXECUTING/DONE/TRACKING/REVIEW/PROMOTED/SCHEDULED/PLANNING)
+          -- po migracji 20262103_p12 nie trafiał w ŻADEN wiersz: zero zielonych.
+          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) = '${InitiativeStatus.CLOSED}'
+                     OR (UPPER(COALESCE(i.status,'')) = '${InitiativeStatus.IN_EXECUTION}'
+                         AND COALESCE(i.on_hold, FALSE) = FALSE
+                         AND (NULLIF(BTRIM(COALESCE(i.planned_end_date, '')), '') IS NULL
+                              OR SUBSTR(i.planned_end_date, 1, 10) >= CAST(CURRENT_DATE AS TEXT)))
+                   THEN 1 ELSE 0 END) AS health_green,
+          SUM(CASE WHEN UPPER(COALESCE(i.status,'')) IN ('${InitiativeStatus.APPROVED}', '${InitiativeStatus.PENDING_APPROVAL}')
+                   THEN 1 ELSE 0 END) AS health_amber,
+          SUM(CASE WHEN i.status IS NULL
+                     OR (UPPER(COALESCE(i.status,'')) = '${InitiativeStatus.IN_EXECUTION}'
+                         AND (COALESCE(i.on_hold, FALSE) = TRUE
+                              OR (NULLIF(BTRIM(COALESCE(i.planned_end_date, '')), '') IS NOT NULL
+                                  AND SUBSTR(i.planned_end_date, 1, 10) < CAST(CURRENT_DATE AS TEXT))))
+                     OR UPPER(COALESCE(i.status,'')) NOT IN (
+                          '${InitiativeStatus.CLOSED}', '${InitiativeStatus.IN_EXECUTION}',
+                          '${InitiativeStatus.APPROVED}', '${InitiativeStatus.PENDING_APPROVAL}')
+                   THEN 1 ELSE 0 END) AS health_red
         FROM initiatives i
         LEFT JOIN programs p ON p.id = i.program_id AND p.organization_id = i.organization_id
         WHERE i.organization_id = ?
@@ -2180,7 +2206,10 @@ export class InitiativeController {
         actorEmail: req.user?.email ?? null,
         requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'PROMOTED',
+        // DEC-424: bramka APPROVE prowadzi PENDING_APPROVAL -> APPROVED.
+        // Stare 'PROMOTED' normalizowało się do PENDING_APPROVAL, więc silnik
+        // dostawał przejście PENDING_APPROVAL -> PENDING_APPROVAL (nieistniejące).
+        nextStatusInput: InitiativeStatus.APPROVED,
         reason: comment ? String(comment) : null,
         // ACCEPT (REVIEW->PROMOTED) is one of the 9 AI_GATES — inherited from the
         // canonical engine along with everything else. Threaded through so a
@@ -2280,8 +2309,9 @@ export class InitiativeController {
         actorEmail: req.user?.email ?? null,
         requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'EXECUTING',
-        // START (SCHEDULED->EXECUTING) is also an AI_GATE — see the identical
+        // DEC-424: START prowadzi APPROVED -> IN_EXECUTION (dawniej SCHEDULED->EXECUTING).
+        nextStatusInput: InitiativeStatus.IN_EXECUTION,
+        // START (APPROVED->IN_EXECUTION) is also an AI_GATE — see the identical
         // note in approveInitiative above.
         overrideReason: overrideReason ? String(overrideReason) : null,
       });
@@ -2840,11 +2870,17 @@ export class InitiativeController {
       // initiative (PLANNING…TRACKING) is linked into M14/15/16 (deployment,
       // results, finance) and must be CANCELLED first so those rows unwind
       // through the lifecycle rather than being orphaned by a raw delete.
-      const DELETABLE_STATUSES = new Set(['DRAFT', 'CANCELLED']);
-      const currentStatus = String(existing.status || 'DRAFT').toUpperCase();
+      // DEC-424: słownik 7 — kasować wolno tylko szkic i odrzuconą
+      // (dawne 'CANCELLED' zmapowało się na REJECTED; literał był martwy,
+      // więc odrzucone inicjatywy przestały być usuwalne).
+      const DELETABLE_STATUSES = new Set<string>([
+        InitiativeStatus.DRAFT,
+        InitiativeStatus.REJECTED,
+      ]);
+      const currentStatus = normalizeStatus(String(existing.status || InitiativeStatus.DRAFT));
       if (!DELETABLE_STATUSES.has(currentStatus)) {
         res.status(409).json({
-          error: 'Only DRAFT or CANCELLED initiatives can be deleted. Cancel the initiative first.',
+          error: 'Only DRAFT or REJECTED initiatives can be deleted. Reject the initiative first.',
           code: 'INITIATIVE_DELETE_INVALID_STATE',
           status: currentStatus,
         });
@@ -5627,7 +5663,9 @@ export class InitiativeController {
       }
 
       const ini = initiative as any;
-      const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
+      // DEC-424: normalizuj przez SSOT — inaczej readiness porównuje kod zastany
+      // z docelowym słownikiem 7 i cichnie (żaden warunek nie trafia).
+      const currentStatus = normalizeStatus(String(ini.status || InitiativeStatus.DRAFT));
 
       // Canonical role resolution (system role + project membership + gate roles
       // + steering board + RACI) — INI-04: identical profile to the writers.
@@ -5754,7 +5792,9 @@ export class InitiativeController {
         'PMO / Project Manager'
       );
 
-      if (['PENDING_REVIEW', 'REVIEW', 'PROMOTED', 'PLANNING'].includes(currentStatus)) {
+      // DEC-424: cała rodzina PENDING_REVIEW/REVIEW/PROMOTED/PLANNING to jeden
+      // status docelowy PENDING_APPROVAL.
+      if (currentStatus === InitiativeStatus.PENDING_APPROVAL) {
         addCheck(
           'summary',
           'Summary / problem statement',
@@ -5764,7 +5804,11 @@ export class InitiativeController {
           'Initiative Owner'
         );
       }
-      if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(currentStatus)) {
+      // DEC-424: REVIEW/PROMOTED/PLANNING -> PENDING_APPROVAL, APPROVED bez zmian.
+      if (
+        currentStatus === InitiativeStatus.PENDING_APPROVAL ||
+        currentStatus === InitiativeStatus.APPROVED
+      ) {
         addCheck(
           'sponsor',
           'Sponsor assigned',

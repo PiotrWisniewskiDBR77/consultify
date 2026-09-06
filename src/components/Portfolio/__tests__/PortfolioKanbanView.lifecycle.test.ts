@@ -124,14 +124,14 @@ describe('anti-regression guard: a homeless status is never swallowed in silence
 
     const total = Object.values(grouped).reduce((sum, list) => sum + list.length, 0);
     expect(total).toBe(0);
-    expect(homelessStatuses).toEqual(['EXECUTING']);
+    expect(homelessStatuses).toEqual([InitiativeStatus.IN_EXECUTION]);
   });
 
   it('warns on the developer console, naming the status', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    warnOnHomelessStatuses('active', ['EXECUTING']);
+    warnOnHomelessStatuses('active', [InitiativeStatus.IN_EXECUTION]);
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0][0])).toContain('EXECUTING');
+    expect(String(warn.mock.calls[0][0])).toContain(InitiativeStatus.IN_EXECUTION);
   });
 
   it('stays quiet when nothing is homeless', () => {

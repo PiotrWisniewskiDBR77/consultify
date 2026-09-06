@@ -2082,8 +2082,13 @@ export async function applyDecisionBlockTransitionOnClient(
   const reasonText = params.reason ?? `Blocked by Decision ${decisionId}`;
 
   const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
-  const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
-  const lifecycleParams: unknown[] = ['BLOCKED', now];
+  // DEC-424 (P12): blokada to FLAGA `on_hold`, nie status. Zapis `status = 'BLOCKED'`
+  // po migracji 20262103_p12 łamie CHECK `initiatives_status_check_p12` — cała
+  // transakcja `createDecision` padała, więc decyzji-blokera NIE DAŁO SIĘ utworzyć.
+  // Status zostaje bez zmian; „zablokowana" czyta się jako IN_EXECUTION AND on_hold.
+  const lifecycleUpdates: string[] = ['updated_at = ?'];
+  const lifecycleParams: unknown[] = [now];
+  pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'on_hold', true);
   pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'blocked_at', now);
   // Legacy `blocked_reason` bookkeeping (best-effort, additive only — the
   // canonical audit trail is the two INSERTs below, not this column). Only
@@ -2108,12 +2113,15 @@ export async function applyDecisionBlockTransitionOnClient(
     await queryHelpers.getTableColumns('initiative_status_history')
   );
   const statusHistoryCols = ['id', 'initiative_id', 'organization_id', 'from_status', 'to_status'];
+  // DEC-424: przejście statusu nie następuje (zmienia się flaga), więc ślad
+  // audytowy zapisuje ten sam status po obu stronach — gate DECISION_AUTO_BLOCK
+  // niżej niesie informację, CO się wydarzyło.
   const statusHistoryVals: unknown[] = [
     correlationId,
     initiativeId,
     orgId,
     currentStatus,
-    'BLOCKED',
+    currentStatus,
   ];
   if (statusHistoryColumns.has('changed_by')) {
     statusHistoryCols.push('changed_by');
@@ -2142,7 +2150,9 @@ export async function applyDecisionBlockTransitionOnClient(
   const histId = uuidv4();
   const historyNotes = JSON.stringify({
     from: currentStatus,
-    to: 'BLOCKED',
+    // DEC-424: status się nie zmienia — zapala się flaga `on_hold`.
+    to: currentStatus,
+    onHold: true,
     reason: reasonText,
     gate: 'DECISION_AUTO_BLOCK',
     correlationId,
@@ -2172,7 +2182,8 @@ export async function applyDecisionBlockTransitionOnClient(
   return {
     ok: true,
     id: initiativeId,
-    status: 'BLOCKED',
+    // DEC-424: status nietknięty; blokadę niesie flaga `on_hold`.
+    status: currentStatus,
     previousStatus: currentStatus,
     alreadyBlocked: false,
     correlationId,

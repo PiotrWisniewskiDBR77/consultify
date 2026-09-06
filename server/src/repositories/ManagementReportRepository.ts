@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { InitiativeStatus } from '../constants/initiativeStatuses.js';
 import { getDatabase } from '../database/index.js';
 const db = getDatabase();
 
@@ -417,14 +418,23 @@ class ManagementReportRepository {
     });
   }
 
+  // DEC-424 (P12): statystyki inicjatyw na słowniku 7 + fladze `on_hold`.
+  // onTrack = IN_EXECUTION bez wstrzymania + CLOSED; atRisk = wstrzymane.
+  // Stare ('EXECUTING','DONE') / 'BLOCKED' po migracji 20262103_p12 nie trafiały
+  // w żaden wiersz — raport pokazywał 0/0 przy pełnym portfelu.
   async getInitiativeStatistics(projectId) {
     return new Promise((resolve, reject) => {
       this.db.get(
         `
                 SELECT 
                     COUNT(*) as total,
-                    SUM(CASE WHEN status IN ('EXECUTING', 'DONE') THEN 1 ELSE 0 END) as "onTrack",
-                    SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as "atRisk"
+                    SUM(CASE WHEN (status = '${InitiativeStatus.IN_EXECUTION}'
+                                   AND COALESCE(on_hold, FALSE) = FALSE)
+                                  OR status = '${InitiativeStatus.CLOSED}'
+                             THEN 1 ELSE 0 END) as "onTrack",
+                    SUM(CASE WHEN status = '${InitiativeStatus.IN_EXECUTION}'
+                                  AND COALESCE(on_hold, FALSE) = TRUE
+                             THEN 1 ELSE 0 END) as "atRisk"
                 FROM initiatives WHERE project_id = ?
             `,
         [projectId],

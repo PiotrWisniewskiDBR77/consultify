@@ -5,11 +5,16 @@
  * Handles project execution summary, blockers, gate checks, portfolio health,
  * and execution statistics for the Execution Center module.
  *
- * Execution Center Statuses: EXECUTING, BLOCKED, DONE, CANCELLED, ARCHIVED
+ * DEC-424 (P12): moduł czyta słownik 7 statusów + flagi `on_hold`/`archived`.
+ * Realizacja = IN_EXECUTION (w tym `on_hold = true` jako „wstrzymana") + CLOSED
+ * (zakończone, do statystyk) + REJECTED (tam, gdzie dawniej liczono CANCELLED).
+ * „Zablokowana" = IN_EXECUTION AND on_hold. „Zakończona" = CLOSED AND NOT archived.
+ * Statusy zadań (`tasks.status`: DONE/BLOCKED/...) to OSOBNY słownik — nie ruszamy.
  */
 
 import type { Response } from 'express';
 
+import { InitiativeStatus, normalizeInitiativeStatus } from '../constants/initiativeStatuses.js';
 import { derivePortfolioEvm } from '../services/evmService.js';
 import { computeCanonicalExecutionHealth } from '../services/execution/canonicalExecutionHealthService.js';
 import { getActualCostByInitiative } from '../services/executionBudgetService.js';
@@ -25,8 +30,27 @@ import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
-// Valid execution statuses
-const EXECUTION_STATUSES = ['EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED'];
+// DEC-424: statusy widoczne w module Realizacja (słownik 7, bez literałów).
+// Zastąpiło ['EXECUTING','BLOCKED','DONE','CANCELLED','ARCHIVED'] — po migracji
+// 20262103_p12 żaden z tych kodów nie występuje już w `initiatives.status`.
+const EXECUTION_STATUSES = [
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.REJECTED,
+] as const;
+
+// Postgres oddaje BOOLEAN, SQLite 0/1, a sterowniki bywają rozstrojone o string.
+// Jedno miejsce prawdy o „flaga zapalona", żeby czytanie on_hold/archived nie
+// rozjeżdżało się między silnikami.
+const isTruthyFlag = (value: unknown): boolean =>
+  value === true || value === 1 || value === '1' || value === 't' || value === 'true';
+
+// Fragment listy SQL (`'A', 'B'`) budowany ze stałych SSOT — zero literałów.
+const EXECUTION_STATUS_SQL_LIST = EXECUTION_STATUSES.map((s) => `'${s}'`).join(', ');
+// Realizacja „w toku + zakończone" dla podsumowania projektu (bez odrzuconych).
+const ACTIVE_EXECUTION_STATUS_SQL_LIST = [InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED]
+  .map((s) => `'${s}'`)
+  .join(', ');
 
 // Escalation thresholds
 const ESCALATION_AMBER_DAYS = 3;
@@ -133,10 +157,10 @@ export class ExecutionController {
 
       // Get initiatives in execution phase
       const initiativesSql = `
-        SELECT id, name, status, progress
+        SELECT id, name, status, progress, on_hold, archived
         FROM initiatives
         WHERE project_id = ? AND organization_id = ?
-          AND status IN ('EXECUTING', 'BLOCKED', 'DONE')
+          AND status IN (${ACTIVE_EXECUTION_STATUS_SQL_LIST})
       `;
       const initiatives = (await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) || [];
 
@@ -172,8 +196,14 @@ export class ExecutionController {
         atRiskTasks,
         blockedTasks,
         totalInitiatives: initiatives.length,
-        executingCount: initiatives.filter((i: any) => i.status === 'EXECUTING').length,
-        doneCount: initiatives.filter((i: any) => i.status === 'DONE').length,
+        // DEC-424: „w realizacji" = IN_EXECUTION (także wstrzymane — nadal trwają),
+        // „zakończone" = CLOSED AND NOT archived.
+        executingCount: initiatives.filter(
+          (i: any) => i.status === InitiativeStatus.IN_EXECUTION
+        ).length,
+        doneCount: initiatives.filter(
+          (i: any) => i.status === InitiativeStatus.CLOSED && !isTruthyFlag(i.archived)
+        ).length,
         updatedAt: new Date().toISOString(),
       });
     }
@@ -199,7 +229,7 @@ export class ExecutionController {
         FROM initiatives i
         LEFT JOIN users u ON i.owner_business_id = u.id OR i.owner_execution_id = u.id
         WHERE i.project_id = ? AND i.organization_id = ?
-          AND i.status = 'BLOCKED'
+          AND i.status = '${InitiativeStatus.IN_EXECUTION}' AND i.on_hold = TRUE
         ORDER BY i.updated_at DESC
       `;
       const blockedInitiatives =
@@ -285,8 +315,13 @@ export class ExecutionController {
       const errors: string[] = [];
       let canAdvance = true;
 
+      // DEC-424: bramka „domknięcia" celuje w CLOSED (dawniej DONE). Wejście od
+      // klienta normalizujemy przez SSOT, żeby stary kod ('DONE') też trafiał.
+      const normalizedTarget = normalizeInitiativeStatus(String(targetStatus ?? ''));
+      const isClosureGate = normalizedTarget === InitiativeStatus.CLOSED;
+
       // Check for pending blocking decisions
-      if (targetStatus === 'DONE') {
+      if (isClosureGate) {
         const pendingDecisionsSql = `
           SELECT COUNT(*) as count
           FROM decisions d
@@ -311,7 +346,7 @@ export class ExecutionController {
       }
 
       // Check for blocked tasks when completing
-      if (targetStatus === 'DONE' && initiativeId) {
+      if (isClosureGate && initiativeId) {
         const blockedTasksSql = `
           SELECT COUNT(*) as count
           FROM tasks
@@ -370,10 +405,11 @@ export class ExecutionController {
 
       // Get initiatives in execution phase
       const initiativesSql = `
-        SELECT id, name, status, progress, cost_capex, cost_opex, planned_start_date, planned_end_date
+        SELECT id, name, status, progress, on_hold, archived,
+               cost_capex, cost_opex, planned_start_date, planned_end_date
         FROM initiatives
         WHERE project_id = ? AND organization_id = ?
-          AND status IN ('EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED')
+          AND status IN (${EXECUTION_STATUS_SQL_LIST})
       `;
       const initiatives = (await queryHelpers.queryAll(initiativesSql, [projectId, orgId])) || [];
 
@@ -405,10 +441,11 @@ export class ExecutionController {
       const raidRisks = (await queryHelpers.queryAll(risksSql, [orgId, projectId, orgId])) || [];
 
       // Calculate metrics
-      const totalInitiatives = initiatives.filter((i: any) =>
-        ['EXECUTING', 'BLOCKED'].includes(i.status)
-      ).length;
-      const blockedCount = initiatives.filter((i: any) => i.status === 'BLOCKED').length;
+      // DEC-424: „w toku" = IN_EXECUTION (wstrzymane też trwają, tylko są RED).
+      const isInExecution = (i: any) => i.status === InitiativeStatus.IN_EXECUTION;
+      const isOnHold = (i: any) => isInExecution(i) && isTruthyFlag(i.on_hold);
+      const totalInitiatives = initiatives.filter(isInExecution).length;
+      const blockedCount = initiatives.filter(isOnHold).length;
       const onTrackCount = totalInitiatives - blockedCount;
       const atRiskCount = blockedCount;
 
@@ -416,7 +453,7 @@ export class ExecutionController {
         totalInitiatives > 0
           ? Math.round(
               initiatives
-                .filter((i: any) => ['EXECUTING', 'BLOCKED'].includes(i.status))
+                .filter(isInExecution)
                 .reduce((sum: number, i: any) => sum + (i.progress || 0), 0) / totalInitiatives
             )
           : 0;
@@ -450,9 +487,7 @@ export class ExecutionController {
 
       // V4-EXEC-01: Per-initiative health + whyRed chain
       const initiativeHealth: InitiativeHealthItem[] = [];
-      const execInitiatives = initiatives.filter((i: any) =>
-        ['EXECUTING', 'BLOCKED'].includes(i.status)
-      );
+      const execInitiatives = initiatives.filter(isInExecution);
       for (const ini of execInitiatives) {
         const initiativeId = ini.id;
         const blockedTasksForIni = (tasks as any[]).filter(
@@ -480,14 +515,10 @@ export class ExecutionController {
 
         const risksForIni = (raidRisks as any[]).filter((r) => r.initiative_id === initiativeId);
 
-        if (
-          String(ini.status).toUpperCase() === 'BLOCKED' ||
-          blockedTasksForIni.length > 0 ||
-          overdueDecForIni.length > 0
-        ) {
+        if (isOnHold(ini) || blockedTasksForIni.length > 0 || overdueDecForIni.length > 0) {
           health = 'RED';
-          if (String(ini.status).toUpperCase() === 'BLOCKED') {
-            whyRed.signals.push({ type: 'status', message: 'Initiative is BLOCKED' });
+          if (isOnHold(ini)) {
+            whyRed.signals.push({ type: 'status', message: 'Initiative is on hold' });
           }
           if (risksForIni.length > 0) {
             whyRed.signals.push({
@@ -620,7 +651,7 @@ export class ExecutionController {
           AVG(progress) as avg_progress
         FROM initiatives
         WHERE organization_id = ?
-          AND status IN ('EXECUTING', 'BLOCKED', 'DONE', 'CANCELLED', 'ARCHIVED')
+          AND status IN (${EXECUTION_STATUS_SQL_LIST})
       `;
       const params: (string | number)[] = [orgId];
 

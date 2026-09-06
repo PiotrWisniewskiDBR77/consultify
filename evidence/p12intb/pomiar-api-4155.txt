@@ -1,0 +1,48 @@
+=== POMIAR NA STANOWISKU — wlasny serwer 4155 (kod z worktree), baza 54400 (po migracji P12) ===
+org=cc9db573-260f-4a19-927f-f3cc1fbaea38  project=e100da3b-a502-485d-860d-4b265a226949
+
+--- GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/summary ---
+{"projectId":"e100da3b-a502-485d-860d-4b265a226949","completionPercentage":37,"onTrackTasks":45,"atRiskTasks":7,"blockedTasks":0,"totalInitiatives":13,"executingCount":13,"doneCount":0,"updatedAt":"2026-09-06T19:26:12.635Z"}
+
+--- GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/blockers ---
+{"blockedInitiatives":[{"id":"fdcd78d0-677d-4a6e-96c4-1815e0055747","type":"initiative","name":"Process Automation — RPA","reason":null,"ownerName":"Jan Zieliński","updatedAt":"2026-09-06T16:43:00.068Z"},{"id":"4d991c47-07cb-4b09-a108-8a61d85718a0","type":"initiative","name":"ERP SAP Integration","reason":null,"ownerName":"Marek Nowak","updatedAt":"2026-09-06T16:43:00.068Z"},{"id":"70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"initiative","name":"Talent Upskilling Program","reason":null,"ownerName":"Tomasz Lewandowski","updatedAt":"2026-09-06T16:43:00.068Z"}],"blockedTasks":[],"blockingDecisions":[],"totalBlockers":3}
+
+--- GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/health ---
+{"healthScore":29,"onTrackCount":10,"atRiskCount":3,"blockedCount":3,"avgProgress":37,"overdueDecisions":8,"totalDecisions":8,"budgetHealth":null,"breakdown":{"execution":37,"decisions":0,"capacity":0,"risk":77},"initiativeHealth":[{"id":"7869d1ac-f584-4a94-9054-56102132daad","name":"Cloud Migration — Azure","health":"RED","whyRed":{"signals":[{"type":"risks","message":"3 open RAID risk(s)"}],"risks":[{"id":"65cc22ab-6063-4307-906e-137955d4771c","title":"Azure region outage risk","severity":"HIGH"},{"id":"f9ba38d3-811f-4aff-872f-aa6ef517ac4d","title":"Key person dependency — Marek Nowak","severity":"HIGH"},{"id":"af990768-2cd8-4132-9113-1a830ea549cd","title":"Budget overrun on contractor hiring","severity":"MEDIUM"}],"decisions":[{"id":"13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7","title":"DevOps toolchain consolidation","overdue":true},{"id":"9f34e810-fcb1-4f15-8821-5fd4bb3fdcae","title":"
+
+--- GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/action-queue ---
+{"status":"error","correlationId":"80508aa9-dc24-422a-a23e-8bf29ffd8a44","error":{"code":"DATABASE_ERROR","message":"Nie udało się odczytać danych. Spróbuj ponownie lub zgłoś identyfikator korelacji.","timestamp":"2026-09-06T19:26:12.700Z"}}
+
+
+=== PORÓWNANIE: serwer 4100 = KOD SPRZED P12-int-b, ta sama baza 54400 ===
+--- 4100 GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/summary ---
+{"projectId":"e100da3b-a502-485d-860d-4b265a226949","completionPercentage":0,"onTrackTasks":45,"atRiskTasks":7,"blockedTasks":0,"totalInitiatives":0,"executingCount":0,"doneCount":0,"updatedAt":"2026-09-06T19:26:28.133Z"}
+--- 4100 GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/blockers ---
+{"blockedInitiatives":[],"blockedTasks":[],"blockingDecisions":[],"totalBlockers":0}
+--- 4100 GET /api/execution/e100da3b-a502-485d-860d-4b265a226949/health ---
+{"healthScore":25,"onTrackCount":0,"atRiskCount":0,"blockedCount":0,"avgProgress":0,"overdueDecisions":8,"totalDecisions":8,"budgetHealth":null,"breakdown":{"execution":0,"decisions":0,"capacity":0,"risk":100},"initiativeHealth":[],"evm":null,"evmHealthApplied":false,"healthFormulaVersion":"execution-health-v1"}
+
+action-queue: BLAD DATABASE_ERROR na OBU serwerach (4100 i 4155) — defekt ZASTANY, nie regresja tego zlecenia.
+
+=== UWAGA — CO ZRZUT NAPRAWDE POKAZUJE (uczciwie) ===
+00-realizacja-summary-PRZED.png (vite 3142 -> serwer 4100, kod sprzed naprawy) i
+01-realizacja-summary.png (vite 3141 -> serwer 4155, kod po naprawie) sa TAKIE SAME:
+Kondycja 67/100, Na czas 100%, Obłożenie 38%, Do rozstrzygnięcia 25.
+
+Powod (zmierzony, nie domniemany): Kokpit Realizacji NIE WOLA napraconych tras.
+W logu serwera 4155 jedyne trafienia /api/execution/<projectId>/{summary,blockers,
+health,action-queue} to MOJE 4 wywolania curl-em — UI nie zrobil ani jednego.
+`ExecutionHub.tsx:1809` ma `if (!currentProjectId) return;`, a w tej organizacji
+43 z 72 inicjatyw nie ma project_id i zaden projekt nie jest wybrany.
+Kafle Kondycja/Na czas licza sie z `execSnapshot` / `onTimeFromInitiatives(daty)`
+(ExecutionHub.tsx:3617-3640), nie z `GET /execution/:id/health`.
+
+WNIOSEK: naprawa serwera jest udowodniona POMIAREM API (4100 vs 4155, ta sama
+baza: 0 -> 13 inicjatyw, 0 -> 3 wstrzymane, 0 -> 10 na tor), a nie zrzutem
+Kokpitu. Zrzuty widocznej zmiany to Kanban inicjatyw (00-...-PRZED: cztery
+kolumny "NIEZNANY STATUS 0" -> 03-...: PROPOZYCJA/SZKIC/DO ZATWIERDZENIA/
+ZATWIERDZONA/W REALIZACJI z realnymi licznikami) oraz kolumna Status po polsku
+(02-inicjatywy-status-pl.png).
+
+ZASTANE (nie regresja tego zlecenia): GET /api/execution/:projectId/action-queue
+zwraca DATABASE_ERROR na OBU serwerach (4100 i 4155).
