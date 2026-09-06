@@ -65,6 +65,7 @@ import {
 } from '@/components/standard/ArtifactRightPanel';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
@@ -474,6 +475,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
     currentUser,
   } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const openChatWithContext = useOpenChatWithContext();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -6050,6 +6052,12 @@ Return ONLY the final comment text.`;
             <div className="shrink-0 sticky top-4 self-start">
               <ArtifactRightPanel
                 sections={rightPanelSections}
+                teresaEntry={{
+                  label: isPolish ? 'Zapytaj Teresę o to zadanie' : 'Ask Teresa about this task',
+                  onOpen: () => void openChatWithContext({ entityType: 'task', entityId: taskId || 'new', entityName: title || (isPolish ? 'Zadanie' : 'Task'), pmoContext: taskId ? { taskId } : undefined, reuseActiveConversation: true }),
+                  disabled: !taskId,
+                  disabledReason: isPolish ? 'Najpierw zapisz zadanie' : 'Save the task first',
+                }}
                 className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                 ariaLabel={t('myWork.taskDetail.ariaLabel', 'Task details')}
               />

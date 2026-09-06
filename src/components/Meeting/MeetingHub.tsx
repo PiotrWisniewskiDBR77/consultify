@@ -248,6 +248,7 @@ export const MeetingHub: React.FC = () => {
     const briefApi = (Api as any).getAIOperatorMeetingBrief;
     if (typeof briefApi !== 'function') {
       setOperatorBriefLoading(false);
+      setOperatorBriefError(true);
       return;
     }
     void briefApi(targetMeetingId)
@@ -897,8 +898,10 @@ export const MeetingHub: React.FC = () => {
                   icon: CalendarDays,
                   title: t('meeting.empty', 'No meetings yet'),
                   description: t(
-                    'meeting.emptyState.description',
-                    'Schedule your first meeting to start tracking agendas and follow-ups.'
+                    'meeting.emptyState.teresaUnavailableP8',
+                    isPolish
+                      ? 'Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy. Podsumowanie Teresy jest niedostępne, dopóki nie wybierzesz spotkania.'
+                      : 'Schedule your first meeting to track agendas and follow-ups. Teresa summary is unavailable until you select a meeting.'
                   ),
                   actionLabel: t('meeting.actions.new', 'New meeting'),
                   onAction: openCreateModal,
@@ -1052,7 +1055,12 @@ export const MeetingHub: React.FC = () => {
                     loading: operatorBriefLoading && briefingMeeting?.id === selectedMeeting.id,
                     error:
                       operatorBriefError && briefingMeeting?.id === selectedMeeting.id
-                        ? t('meeting.operatorBriefError', 'Could not load the operator brief.')
+                        ? t(
+                            'meeting.operatorBriefError',
+                            isPolish
+                              ? 'Podsumowanie Teresy jest niedostępne dla tej organizacji. Skontaktuj się z administratorem, aby sprawdzić dostęp.'
+                              : 'Teresa summary is unavailable for this organization. Contact an administrator to check access.'
+                          )
                         : null,
                     result: briefMatchesMeeting(operatorBrief, selectedMeeting.id)
                       ? [

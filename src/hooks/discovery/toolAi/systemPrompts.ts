@@ -175,6 +175,29 @@ Focus on:
 When generating items for mapping/redesign steps, return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
 
+/** Kontrakt per narzędzie: realna rola Teresy i jawna granica działania. */
+export const TOOL_AI_CONTRACTS: Partial<Record<ToolType, string>> = {
+  'dynamic-swot': 'Proponuj pozycje SWOT, uzasadniaj i przekazuj kandydatów dalej. Nie zapisuj bez akceptu ani nie uznawaj twierdzeń bez dowodu za fakty.',
+  'ambition-decomposer': 'Rozbijaj ambicję na proponowane cele cząstkowe. Nie zatwierdzaj celów ani nie twórz wartości pomiaru.',
+  'capability-mapper': 'Proponuj luki zdolności na podstawie danych sesji. Nie wystawiaj ocen za konsultanta i nie zapisuj bez akceptu.',
+  'ai-discovery': 'Proponuj domeny i przypadki użycia jako szkice. Nie zatwierdzaj wyboru ani nie fabrykuj korzyści liczbowych.',
+  'pain-explorer': 'Proponuj obszary bólu i hipotezy przyczyn jako szkice. Nie przedstawiaj hipotez jako potwierdzonych faktów.',
+  'rpa-scanner': 'Proponuj kandydatów automatyzacji. Nie obiecuj oszczędności ani nie uruchamiaj automatyzacji.',
+  'process-automation': 'Proponuj kandydatów i warianty procesu. Nie twórz pomiarów, nie zapisuj bez akceptu i nie uruchamiaj automatyzacji.',
+  'focus-tradeoff': 'Nazywaj kompromisy i proponuj kryteria. Nie wybieraj priorytetu za człowieka.',
+  'growth-paths': 'Proponuj ścieżki wzrostu jako opcje do oceny. Nie zatwierdzaj kierunku ani nie wymyślaj danych rynkowych.',
+  'market-forces': 'Proponuj siły rynkowe i ich uzasadnienie. Nie podawaj wag ani ocen jako faktów bez źródła.',
+  'narrative-engine': 'Redaguj narrację na podstawie zaakceptowanych danych. Nie publikuj i nie dopisuj faktów bez rodowodu.',
+  'sop-builder': 'Proponuj kroki operacyjne i definicje mierników. Nie wpisuj wartości pomiaru ani nie wdrażaj zmian.',
+  'a3-problem-solving': 'Proponuj kroki operacyjne i hipotezy przyczyn. Nie uznawaj hipotez za fakty ani nie zapisuj bez akceptu.',
+  'smed-planner': 'Proponuj kroki usprawnienia przezbrojenia. Nie twórz wartości pomiaru ani nie wykonuj zmian.',
+  'dms-builder': 'Proponuj elementy systemu zarządzania jako szkice. Nie przypisuj odpowiedzialnych i terminów za człowieka.',
+  'inventory-autopilot': 'Proponuj reguły pracy z zapasem. Nie podejmuj decyzji zakupowych ani nie twórz wartości pomiaru.',
+  'portfolio-priority': 'Proponuj kryteria i wariant rankingu. Nie ustalaj priorytetu ani alokacji zasobów za człowieka.',
+  'risk-uncertainty': 'Proponuj ryzyka i scenariusze z jawnymi założeniami. Nie podawaj prawdopodobieństw jako faktów.',
+  'value-chain': 'Proponuj ogniwa i luki łańcucha wartości. Nie wystawiaj ocen ani nie zapisuj bez akceptu.',
+};
+
 const SYSTEM_PROMPT_MAP: Partial<Record<ToolType, string>> = {
   'dynamic-swot': SWOT_SYSTEM_PROMPT,
   'market-forces': PORTER_SYSTEM_PROMPT,
@@ -211,7 +234,12 @@ const SYSTEM_PROMPT_MAP: Partial<Record<ToolType, string>> = {
 
 export function getToolSystemPrompt(toolType: ToolType, orgContext: string): string {
   const basePrompt = SYSTEM_PROMPT_MAP[toolType] || PORTER_SYSTEM_PROMPT;
+  const toolContract = TOOL_AI_CONTRACTS[toolType];
   return `${basePrompt}
+
+=== TOOL CONTRACT ===
+${toolContract || 'Explain and propose only. Never silently write, approve, publish, or invent measurements.'}
+=== END TOOL CONTRACT ===
 
 === ORGANIZATION CONTEXT ===
 ${orgContext}

@@ -19,6 +19,7 @@ import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   buildArtifactCode,
   buildArtifactPermalink,
@@ -64,6 +65,7 @@ When the user provides a prompt, explain your plan briefly, then the system will
 If the user asks to modify the workbook, suggest changes and regenerate.`;
 
 export const ExceleView: React.FC = () => {
+  const openChatWithContext = useOpenChatWithContext();
   const { t } = useTranslation();
   const pipeline = useKimiArtifactPipeline('excele');
   const navigate = useNavigate();
@@ -610,6 +612,7 @@ export const ExceleView: React.FC = () => {
             onDownload={handleWorkbookDownload}
             onPreviewFile={handlePreviewFile}
             onAllFiles={handleAllFiles}
+            onOpenTeresa={() => void openChatWithContext({ entityType: 'spreadsheet', entityId: effectiveWorkbookId || 'draft', entityName: effectivePreview?.fileName || 'Arkusz', contextData: { workbookId: effectiveWorkbookId }, reuseActiveConversation: true })}
           />
         )
       }

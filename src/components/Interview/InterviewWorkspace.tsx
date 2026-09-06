@@ -3633,6 +3633,12 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         rightPanel={
           <ArtifactRightPanel
             sections={rightPanelSections}
+            teresaEntry={{
+              label: isPolish ? 'Zapytaj Teresę o ten wywiad' : 'Ask Teresa about this interview',
+              onOpen: handleOpenChat,
+              disabled: !session,
+              disabledReason: isPolish ? 'Najpierw otwórz sesję wywiadu' : 'Open an interview session first',
+            }}
             className="h-full border-l border-c-border-subtle"
             ariaLabel={t('interview.workspace.sessionDetails', 'Session details')}
           />

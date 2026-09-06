@@ -600,16 +600,11 @@ export const OrganizationView: React.FC = () => {
                 {contextSync.error ? ` ${contextSync.error}` : ''}
               </div>
             )}
-            {/* §5.2 konsolidacji: pod flagą ON baner Teresy znika z KAŻDEGO
-                ekranu — jego treść (liczba twierdzeń, ostatnia aktualizacja)
-                mieszka w prawym panelu stanu. */}
-            {!redesignEnabled && (
-              <OrgContextSummaryBanner
-                organizationId={currentOrganization?.id}
-                isAdmin={false}
-                className="mb-4"
-              />
-            )}
+            <OrgContextSummaryBanner
+              organizationId={currentOrganization?.id}
+              isAdmin={false}
+              className="mb-4"
+            />
           </div>
           <div className="organization-domain-content mx-auto w-full max-w-[1280px] px-4 pb-6 pt-0 sm:px-5 lg:px-6">
             {renderContent()}

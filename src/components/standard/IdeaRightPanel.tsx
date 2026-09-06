@@ -413,6 +413,14 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
   const currentPanel = (
     <ArtifactRightPanel
       sections={sections}
+      teresaEntry={
+        onDiscussWithTeresa
+          ? {
+              label: isPolish ? 'Zapytaj Teresę o tę ideę' : 'Ask Teresa about this idea',
+              onOpen: onDiscussWithTeresa,
+            }
+          : undefined
+      }
       width={width}
       ariaLabel={isPolish ? 'Panel narzędzi idei' : 'Idea tools panel'}
     />

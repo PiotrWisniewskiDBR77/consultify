@@ -54,7 +54,7 @@ const SUMMARY_STEP_IDS = new Set([
  * `src/hooks/discovery/useToolAI.ts` and ship the corresponding
  * `applyXxxPendingAction` function.
  */
-const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
+export const TOOLS_WITH_APPLY_HANDLER: ReadonlySet<ToolType> = new Set<ToolType>([
   'dynamic-swot',
   'market-forces',
   'value-chain',

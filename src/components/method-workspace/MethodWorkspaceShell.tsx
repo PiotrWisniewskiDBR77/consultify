@@ -43,7 +43,7 @@ import { LiveMatrix } from './LiveMatrix';
 import type { MethodNavigatorProps } from './MethodNavigator';
 import { MethodNavigator } from './MethodNavigator';
 import { SaveStateIndicator } from './SaveStateIndicator';
-import type { TeresaPreviewPanelProps } from './TeresaPreviewPanel';
+import { TeresaPreviewPanel, type TeresaPreviewPanelProps } from './TeresaPreviewPanel';
 import type { MethodWorkspaceViewMode } from './types';
 
 export interface MethodWorkspaceShellProps {
@@ -150,6 +150,7 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
   onSaveStay,
   navigatorProps,
   interviewProps,
+  teresaProps,
   matrixProps,
   matrixContent,
   reportContent,
@@ -353,6 +354,9 @@ export const MethodWorkspaceShell: React.FC<MethodWorkspaceShellProps> = ({
               </button>
             </div>
           )}
+          <div className="hidden w-80 shrink-0 overflow-y-auto border-l border-c-border-subtle p-3 xl:block">
+            <TeresaPreviewPanel {...teresaProps} />
+          </div>
         </div>
       </header>
 
