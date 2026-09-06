@@ -15,7 +15,7 @@
  * disabled Edit/Archive/Delete z powodem.
  */
 import { Ban, CheckCircle2, Clock3, Lightbulb } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
@@ -23,9 +23,6 @@ import type { ArtifactPropertyRow } from '@/components/standard/ArtifactProperti
 import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
-
-import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterAudit } from '@/components/Initiatives/Generator/adapters/audit';
 
 import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 import {
@@ -46,6 +43,15 @@ export interface AuditInitiativesTabProps {
    * danych, które Hub już wczytał (`programsAll`).
    */
   programNameById?: Map<string, string>;
+  /**
+   * DEC-417b (1.1-A2): filtr statusu wybrany w Menu 3 / dropdownie Menu 2
+   * Huba (`all` albo jedna z `AUDIT_PROPOSAL_STATUSES`).
+   */
+  statusFilter?: string;
+  /** Rozkład statusów dla liczników chipów/dropdownu Menu 2 (Hub rysuje). */
+  onCountsChange?: (counts: Record<string, number>) => void;
+  /** Wymuszone przeładowanie po zamknięciu generatora z CTA Menu 2. */
+  reloadToken?: number;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -60,6 +66,9 @@ const PRIORITY_LEVEL: Record<string, PriorityLevel> = {
 export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
+  statusFilter = 'all',
+  onCountsChange,
+  reloadToken = 0,
 }) => {
   const [items, setItems] = useState<AuditProposalSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +76,6 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
-  // DEC-413 — ten sam generator, co w Ocenie, Wywiadzie i Narzedziach.
-  const [generatorOtwarty, setGeneratorOtwarty] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -83,7 +90,21 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, reloadToken]);
+
+  // Liczniki dla Menu 3/Menu 2 — z TEJ SAMEJ listy, którą widać w tabeli.
+  useEffect(() => {
+    const counts: Record<string, number> = { all: items.length };
+    for (const status of AUDIT_PROPOSAL_STATUSES) {
+      counts[status] = items.filter((p) => p.status === status).length;
+    }
+    onCountsChange?.(counts);
+  }, [items, onCountsChange]);
+
+  const visibleItems = useMemo(
+    () => (statusFilter === 'all' ? items : items.filter((p) => p.status === statusFilter)),
+    [items, statusFilter]
+  );
 
   const runTransition = useCallback(
     async (id: string, action: 'register' | 'dismiss' | 'defer') => {
@@ -274,21 +295,11 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-start justify-between gap-4 px-4 pt-4">
-        <p className="text-xs text-c-text-muted">
-          {isPolish
-            ? 'To są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje.'
-            : 'These are local Proposal drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.'}
-        </p>
-        <button
-          type="button"
-          data-testid="audit-generate-initiatives"
-          onClick={() => setGeneratorOtwarty(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        >
-          {isPolish ? 'Generuj inicjatywy' : 'Generate initiatives'}
-        </button>
-      </div>
+      {/* DEC-417b: linijka disclaimera nad tabelą znikła z paska (właściciel,
+          06.09: „Straszny bałagan w menu trzecim") — to samo zdanie mówi
+          teraz stan pusty tabeli, czyli tam, gdzie ktoś naprawdę pyta „co to
+          w ogóle jest". Przycisk „Generuj inicjatywy" przeniesiony do CTA
+          Menu 2 Huba („Nowa inicjatywa") — JEDNO wejście do generatora. */}
       <div className="flex min-h-0 flex-1">
         <div className="flex-1 min-w-0 overflow-auto p-4">
           {transitionError ? (
@@ -298,7 +309,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
           ) : null}
           <StandardTable
             columns={columns}
-            data={items}
+            data={visibleItems}
             loading={loading}
             rowMenu={rowMenu}
             onRowClick={(row) => setSelectedId(String(row.id))}
@@ -308,8 +319,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
               icon: Lightbulb,
               title: isPolish ? 'Brak szkiców propozycji' : 'No Proposal drafts yet',
               description: isPolish
-                ? 'Szkic propozycji powstaje z ustalenia audytu podczas przeglądu ustaleń. Żadne ustalenie nie wygenerowało jeszcze propozycji.'
-                : 'A Proposal draft is created from an audit finding during findings review. No finding has produced a proposal yet.',
+                ? 'To są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje. Szkic powstaje z ustalenia audytu; żadne ustalenie nie wygenerowało jeszcze propozycji. Użyj „Nowa inicjatywa” w pasku modułu.'
+                : 'These are local Proposal drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them. A draft is created from an audit finding; no finding has produced a proposal yet. Use “New initiative” in the module bar.',
             }}
           />
         </div>
@@ -339,17 +350,6 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
         />
       </div>
 
-      {/* JEDEN generator inicjatyw (DEC-413) — adapter `audit` wola istniejacy
-          POST /audits/proposals { programId, findingIds[] }
-          (`proposalService.draftProposalsFromFindings`). Konczy sie na
-          szkicach propozycji, bo promocja do realnej inicjatywy to osobne,
-          istniejace przejscie POST /audits/proposals/:id/register w kebabie. */}
-      <GeneratorInicjatywModal
-        isOpen={generatorOtwarty}
-        onClose={() => setGeneratorOtwarty(false)}
-        adaptery={[adapterAudit]}
-        onCompleted={() => load()}
-      />
     </div>
   );
 };

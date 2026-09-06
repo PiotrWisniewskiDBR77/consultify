@@ -16,7 +16,7 @@
  * pojedynczego wiersza tej listy).
  */
 import { CheckCircle2, FileText, Send } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -53,6 +53,13 @@ export interface AuditReportsTabProps {
    */
   programNameById?: Map<string, string>;
   reloadToken?: number;
+  /**
+   * DEC-417b (1.1-A2): filtr statusu wybrany w Menu 3 / dropdownie Menu 2
+   * Huba (`all` albo jedna z `AUDIT_REPORT_STATUSES`).
+   */
+  statusFilter?: string;
+  /** Rozkład statusów dla liczników chipów/dropdownu Menu 2 (Hub rysuje). */
+  onCountsChange?: (counts: Record<string, number>) => void;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -66,6 +73,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
   reloadToken = 0,
+  statusFilter = 'all',
+  onCountsChange,
 }) => {
   const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
@@ -95,6 +104,20 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   useEffect(() => {
     load();
   }, [load, reloadToken]);
+
+  // Liczniki dla Menu 3/Menu 2 — z TEJ SAMEJ listy, którą widać w tabeli.
+  useEffect(() => {
+    const counts: Record<string, number> = { all: items.length };
+    for (const status of AUDIT_REPORT_STATUSES) {
+      counts[status] = items.filter((r) => r.status === status).length;
+    }
+    onCountsChange?.(counts);
+  }, [items, onCountsChange]);
+
+  const visibleItems = useMemo(
+    () => (statusFilter === 'all' ? items : items.filter((r) => r.status === statusFilter)),
+    [items, statusFilter]
+  );
 
   const runTransition = useCallback(
     async (id: string, action: 'approve' | 'publish') => {
@@ -457,7 +480,7 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         ) : null}
         <StandardTable
           columns={columns}
-          data={items}
+          data={visibleItems}
           loading={loading}
           rowMenu={rowMenu}
           onRowClick={(row) => setSelectedId(String(row.id))}

@@ -28770,8 +28770,26 @@
         "processes": "Sessions",
         "outputs": "Outputs",
         "reports": "Reports",
-        "findings": "Findings",
         "initiatives": "Initiatives"
+      },
+      "filters": {
+        "verification": "Verification",
+        "stage": "Stage",
+        "status": "Status"
+      },
+      "newAudit": {
+        "cta": "New audit",
+        "frozenReason": "Frozen until wave 2: uploading audit assumptions and the question generator.",
+        "title": "New audit"
+      },
+      "newOutput": {
+        "cta": "New output"
+      },
+      "newReport": {
+        "cta": "New report"
+      },
+      "newInitiative": {
+        "cta": "New initiative"
       }
     }
   },
