@@ -2587,19 +2587,55 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       },
       {
         /*
-         * 1.12-R1 (A) — ODCHYLENIE od planowanego końca w dniach.
-         * Dodatnie = po terminie (czerwone). Ujemne = zostało tyle dni.
-         * `null` = nie ma z czego liczyć → „—", nie zero.
+         * 1.12-R3 — ODCHYLENIE OD PLANU BAZOWEGO (baseline), nie od dzisiejszej
+         * daty końca. Do 06.09 ta kolumna liczyła `dziś − plannedEndDate`, więc
+         * pokazywała −55/−90 („tyle dni zostało") obok RAG „Na czas" i była
+         * ślepa na to, co miała mierzyć: wystarczyło PRZESUNĄĆ termin, żeby
+         * opóźnienie zniknęło z raportu. Teraz punktem odniesienia jest data
+         * ZAMROŻONA, a serwer nie pozwala jej ruszyć drugi raz bez decyzji
+         * z zatwierdzającym (kod `REBASELINE_DECISION_REQUIRED`).
+         *
+         * CZERWIEŃ = wyłącznie przekroczone zobowiązanie (> 0). Zero i wartości
+         * ujemne (przed czasem) są neutralne — crimson to semantyka krytyczna,
+         * a nie „liczba różna od zera". `null` = brak baseline'u → „—", nie zero.
          */
         id: 'deviation',
         label: t('execution.table.deviation', 'Odchylenie (dni)'),
         width: '130px',
         render: (row) => {
           const dni = initiativeDeviationDays(row as any);
-          if (dni == null) return <span className="text-c-text-muted">—</span>;
+          const baseline = (row as any)?.baselineEndDate as string | null | undefined;
+          if (dni == null)
+            return (
+              <span
+                className="text-c-text-muted"
+                title={t(
+                  'execution.table.deviationNoBaseline',
+                  'Brak planu bazowego — nie ma od czego liczyć odchylenia'
+                )}
+              >
+                —
+              </span>
+            );
+          const bazowa = baseline ? new Date(baseline).toLocaleDateString() : '—';
+          const aktualna = (row as any)?.plannedEndDate
+            ? new Date((row as any).plannedEndDate as string).toLocaleDateString()
+            : '—';
+          const opis = `${t('execution.table.deviationBaseline', 'Plan bazowy')}: ${bazowa} · ${t(
+            'execution.table.deviationCurrent',
+            'plan aktualny'
+          )}: ${aktualna}`;
           if (dni > 0)
-            return <span className="font-semibold tabular-nums text-c-danger">+{dni}</span>;
-          return <span className="tabular-nums text-c-text-secondary">{dni}</span>;
+            return (
+              <span className="font-semibold tabular-nums text-c-danger" title={opis}>
+                +{dni}
+              </span>
+            );
+          return (
+            <span className="tabular-nums text-c-text-secondary" title={opis}>
+              {dni}
+            </span>
+          );
         },
       },
       {

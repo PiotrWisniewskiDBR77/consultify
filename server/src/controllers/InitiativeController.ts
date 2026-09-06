@@ -10,6 +10,13 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import { isAiGate } from '../constants/initiativeGateAi.js';
+// R3 (plan 1.12 §C4) — reguła re-baseline i odchylenie od baseline'u.
+import {
+  deviationDaysFromBaseline,
+  evaluateScheduleShift,
+  isSameScheduledDay,
+  type RebaselineDecisionInput,
+} from '../domain/initiatives-execution/scheduleBaseline.js';
 import {
   GATE_PERMISSIONS,
   GateType,
@@ -382,6 +389,13 @@ export class InitiativeController {
         plannedEndDate: i.planned_end_date,
         baselineVersion: (i as any).baseline_version ? Number((i as any).baseline_version) : null,
         scheduleBaselineId: (i as any).schedule_baseline_id ?? null,
+        // R3 (plan 1.12 §C4) — plan ZAMROŻONY. Kolumna „Odchylenie (dni)"
+        // w Realizacji liczy od tych dat, nie od `plannedEndDate`; bez nich
+        // przesunięcie terminu kasowałoby opóźnienie bez śladu.
+        baselineStartDate: (i as any).baseline_start_date ?? null,
+        baselineEndDate: (i as any).baseline_end_date ?? null,
+        baselineSetAt: (i as any).baseline_set_at ?? null,
+        scheduleShiftCount: Number((i as any).schedule_shift_count ?? 0) || 0,
         actualStartDate: i.actual_start_date,
         actualEndDate: i.actual_end_date,
         createdAt: i.created_at,
@@ -1053,6 +1067,98 @@ export class InitiativeController {
         }
       }
 
+      // ── R3 (plan 1.12 §C4) — BASELINE HARMONOGRAMU ────────────────────
+      // Pierwsze przesunięcie daty wolno zrobić wprost; DRUGIE i każde kolejne
+      // wymaga decyzji ze wskazanym zatwierdzającym (odpowiedź właściciela na
+      // pytanie C5.3). Reguła stoi TUTAJ, a nie w interfejsie, bo zabezpieczenie,
+      // które da się obejść jednym `PUT` z konsoli, nie jest zabezpieczeniem —
+      // a cała wartość baseline'u polega na tym, że termin nie „dopasowuje się"
+      // po cichu do rzeczywistości. Werdykt liczy czysty moduł
+      // `domain/initiatives-execution/scheduleBaseline.ts` (testowalny bez bazy).
+      const r3HasBaselineCols =
+        existingCols.has('schedule_shift_count') && existingCols.has('baseline_end_date');
+      let r3Shift: {
+        shiftIndex: number;
+        previousDate: string | null;
+        newDate: string | null;
+        previousBaseline: string | null;
+        newBaseline: string | null;
+        baselineReset: boolean;
+        decision: RebaselineDecisionInput | null;
+      } | null = null;
+
+      if (r3HasBaselineCols) {
+        const existingRow = existing as Record<string, unknown>;
+        const baselineEnd = (existingRow.baseline_end_date ?? null) as string | null;
+        const currentEnd = (existingRow[plannedEndCol] ?? null) as string | null;
+        const currentStart = (existingRow[plannedStartCol] ?? null) as string | null;
+        const endChanged =
+          body.plannedEndDate !== undefined && !isSameScheduledDay(body.plannedEndDate, currentEnd);
+        const startChanged =
+          body.plannedStartDate !== undefined &&
+          !isSameScheduledDay(body.plannedStartDate, currentStart);
+
+        if (baselineEnd == null) {
+          // Plan zamrażany PIERWSZY RAZ: to nie jest przesunięcie, tylko
+          // powstanie zobowiązania. Baseline = to, co właśnie wpisano.
+          if (body.plannedEndDate !== undefined && body.plannedEndDate !== null) {
+            updates.push('baseline_end_date = ?');
+            params.push(body.plannedEndDate as string);
+            updates.push('baseline_start_date = ?');
+            params.push((body.plannedStartDate ?? currentStart ?? null) as string | null);
+            updates.push('baseline_set_at = ?');
+            params.push(new Date().toISOString());
+          }
+        } else if (endChanged || startChanged) {
+          const decision = (body.rebaselineDecision ?? null) as RebaselineDecisionInput | null;
+          const doneShifts = Number(existingRow.schedule_shift_count ?? 0) || 0;
+          const verdict = evaluateScheduleShift(doneShifts, decision);
+          if (!verdict.allowed) {
+            res.status(verdict.status).json({
+              error: verdict.error,
+              code: verdict.code,
+              rule: 'SCHEDULE_REBASELINE_REQUIRES_DECISION',
+              field: endChanged ? 'plannedEndDate' : 'plannedStartDate',
+              shiftIndex: verdict.shiftIndex,
+              shiftsAlreadyUsed: doneShifts,
+              baselineEndDate: baselineEnd,
+              currentEndDate: currentEnd,
+              requestedEndDate: (body.plannedEndDate ?? currentEnd ?? null) as string | null,
+              deviationDaysFromBaseline: deviationDaysFromBaseline({
+                baselineDate: baselineEnd,
+                currentDate: (body.plannedEndDate ?? currentEnd ?? null) as string | null,
+              }),
+            });
+            return;
+          }
+          const newEnd = (body.plannedEndDate ?? currentEnd ?? null) as string | null;
+          const resetBaseline = decision?.resetBaseline === true;
+          updates.push('schedule_shift_count = ?');
+          params.push(verdict.shiftIndex);
+          if (resetBaseline) {
+            updates.push('baseline_end_date = ?');
+            params.push(newEnd);
+            updates.push('baseline_start_date = ?');
+            params.push((body.plannedStartDate ?? currentStart ?? null) as string | null);
+            updates.push('baseline_set_at = ?');
+            params.push(new Date().toISOString());
+            if (existingCols.has('baseline_version')) {
+              updates.push('baseline_version = ?');
+              params.push((Number(existingRow.baseline_version ?? 0) || 0) + 1);
+            }
+          }
+          r3Shift = {
+            shiftIndex: verdict.shiftIndex,
+            previousDate: currentEnd,
+            newDate: newEnd,
+            previousBaseline: baselineEnd,
+            newBaseline: resetBaseline ? newEnd : baselineEnd,
+            baselineReset: resetBaseline,
+            decision,
+          };
+        }
+      }
+
       // 5. Execute the update
       const now = new Date().toISOString();
       updates.push('updated_at = ?');
@@ -1067,6 +1173,40 @@ export class InitiativeController {
 
       const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, params);
+
+      // R3 — ŚLAD PRZESUNIĘCIA. Bez tego wiersza „decyzja z zatwierdzającym"
+      // byłaby słowem w żądaniu, którego nikt później nie odtworzy.
+      if (r3Shift) {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_rebaseline_log
+               (id, organization_id, initiative_id, milestone_id, shift_index,
+                previous_date, new_date, previous_baseline_date, new_baseline_date,
+                baseline_reset, reason, decision_id, approved_by, requested_by, created_at)
+             VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              orgId,
+              id,
+              r3Shift.shiftIndex,
+              r3Shift.previousDate,
+              r3Shift.newDate,
+              r3Shift.previousBaseline,
+              r3Shift.newBaseline,
+              r3Shift.baselineReset ? 1 : 0,
+              r3Shift.decision?.reason ?? null,
+              r3Shift.decision?.decisionId ?? null,
+              String(r3Shift.decision?.approvedBy ?? actorId ?? 'first-shift-no-decision'),
+              actorId ?? null,
+              new Date().toISOString(),
+            ]
+          );
+        } catch (err) {
+          // Ślad jest częścią reguły, a nie ozdobą: jeśli nie da się go zapisać,
+          // musi to być widoczne w logu, a nie połknięte w ciszy.
+          console.error('[R3] rebaseline log write failed', err);
+        }
+      }
 
       // 6. Log changes to initiative_history (diff audit trail)
       if (changes.length > 0) {
@@ -3232,6 +3372,22 @@ export class InitiativeController {
       // response on Postgres (and `Boolean(m.isGate)` was silently ALWAYS false).
       // Double-quoting preserves the case on both engines without touching the
       // frontend contract (Gantt/timeline UI already expects these camelCase keys).
+      // R3 (plan 1.12 §C4): TRZECIA data kamienia — planowana ZAMROŻONA
+      // (`baselineDate`). `targetDate` to plan AKTUALNY, `actualDate` to FAKT;
+      // bez baseline'u przesunięcie terminu kasowało poślizg bez śladu.
+      // Kolumny są czytane WARUNKOWO: na bazie bez migracji 20262106 endpoint
+      // ma dalej odpowiadać, a nie wywracać się na 42703.
+      const milestoneCols = getColumnNameSet(
+        await queryHelpers.getTableColumns('initiative_milestones')
+      );
+      const hasMilestoneBaseline = milestoneCols.has('baseline_date');
+      const baselineSelect = hasMilestoneBaseline
+        ? `,
+          baseline_date as "baselineDate",
+          baseline_version as "baselineVersion",
+          schedule_shift_count as "scheduleShiftCount"`
+        : '';
+
       const milestones = await queryHelpers.queryAll(
         `SELECT
           id,
@@ -3245,14 +3401,31 @@ export class InitiativeController {
           is_gate as "isGate",
           gate_decision_id as "gateDecisionId",
           created_at as "createdAt",
-          updated_at as "updatedAt"
+          updated_at as "updatedAt"${baselineSelect}
         FROM initiative_milestones
         WHERE initiative_id = ?
         ORDER BY order_index ASC`,
         [initiativeId]
       );
 
-      res.json({ milestones: milestones.map((m: any) => ({ ...m, isGate: Boolean(m.isGate) })) });
+      res.json({
+        milestones: milestones.map((m: any) => ({
+          ...m,
+          isGate: Boolean(m.isGate),
+          baselineDate: hasMilestoneBaseline ? (m.baselineDate ?? null) : null,
+          baselineVersion: hasMilestoneBaseline ? (Number(m.baselineVersion ?? 0) || 0) : null,
+          scheduleShiftCount: hasMilestoneBaseline ? (Number(m.scheduleShiftCount ?? 0) || 0) : 0,
+          // Liczba, a nie surowe daty: żeby raport i tabela nie liczyły jej
+          // każde po swojemu (to jest ten sam wzór, co w kolumnie Realizacji).
+          deviationDays: hasMilestoneBaseline
+            ? deviationDaysFromBaseline({
+                baselineDate: m.baselineDate ?? null,
+                currentDate: m.targetDate ?? null,
+                actualDate: m.actualDate ?? null,
+              })
+            : null,
+        })),
+      });
     }
   );
 
@@ -3439,7 +3612,7 @@ export class InitiativeController {
 
       // Verify milestone exists and belongs to org
       const milestone = await queryHelpers.queryOne(
-        `SELECT m.id FROM initiative_milestones m
+        `SELECT m.* FROM initiative_milestones m
          JOIN initiatives i ON m.initiative_id = i.id
          WHERE m.id = ? AND m.initiative_id = ? AND i.organization_id = ?`,
         [milestoneId, initiativeId, orgId]
@@ -3463,6 +3636,95 @@ export class InitiativeController {
 
       const updates: string[] = [];
       const params: unknown[] = [];
+
+      // ── R3 (plan 1.12 §C4) — RE-BASELINE KAMIENIA TYLKO PRZEZ DECYZJĘ ────
+      // ⚠ ZMIERZONE 06.09, TRASA JEST DZIŚ NIEOSIĄGALNA: `PUT
+      // /api/initiatives/:id/milestones/:mid` dostaje 409
+      // EXECUTION_RUNTIME_V1_WRITE_REQUIRED z middleware
+      // `requireCanonicalInitiativeExecutionWriter`
+      // (routes/pmo/initiatives.routes.ts:161, montowany BEZWARUNKOWO,
+      // decyzja 26A) ZANIM dojdzie tutaj. Kanoniczny pisarz to Runtime-v1.
+      // Ta reguła jest więc dziś BEZ WOŁACZA — zostaje jako bezpiecznik na
+      // wypadek otwarcia okna zgodności, ale NIE wolno jej liczyć za dowód.
+      // Dowód reguły jest na poziomie INICJATYWY (updateInitiative wyżej,
+      // evidence/r3-kamienie/mutacja-rebaseline-inicjatywa.txt).
+      // Ta sama reguła co dla dat inicjatywy i z tego samego czystego modułu:
+      // pierwsze przesunięcie `targetDate` wolno zrobić wprost, DRUGIE i każde
+      // kolejne wymaga `rebaselineDecision.approvedBy`. Odmowa jest po stronie
+      // serwera (409 + kod), więc nie da się jej obejść wywołaniem API z
+      // pominięciem interfejsu.
+      const milestoneRow = milestone as Record<string, unknown>;
+      const milestoneCols = getColumnNameSet(
+        await queryHelpers.getTableColumns('initiative_milestones')
+      );
+      const r3MilestoneReady =
+        milestoneCols.has('baseline_date') && milestoneCols.has('schedule_shift_count');
+      const r3Decision = (req.body?.rebaselineDecision ?? null) as RebaselineDecisionInput | null;
+      let r3MilestoneShift: {
+        shiftIndex: number;
+        previousDate: string | null;
+        newDate: string | null;
+        previousBaseline: string | null;
+        newBaseline: string | null;
+        baselineReset: boolean;
+      } | null = null;
+
+      if (r3MilestoneReady && targetDate !== undefined) {
+        const currentTarget = (milestoneRow.target_date ?? null) as string | null;
+        const currentBaseline = (milestoneRow.baseline_date ?? null) as string | null;
+        const targetChanged = !isSameScheduledDay(targetDate, currentTarget);
+
+        if (currentBaseline == null) {
+          // Pierwsze zamrożenie — nie przesunięcie, tylko powstanie zobowiązania.
+          if (targetDate !== null) {
+            updates.push('baseline_date = ?');
+            params.push(targetDate);
+            updates.push('baseline_set_at = ?');
+            params.push(new Date().toISOString());
+          }
+        } else if (targetChanged) {
+          const doneShifts = Number(milestoneRow.schedule_shift_count ?? 0) || 0;
+          const verdict = evaluateScheduleShift(doneShifts, r3Decision);
+          if (!verdict.allowed) {
+            res.status(verdict.status).json({
+              error: verdict.error,
+              code: verdict.code,
+              rule: 'SCHEDULE_REBASELINE_REQUIRES_DECISION',
+              field: 'targetDate',
+              milestoneId,
+              shiftIndex: verdict.shiftIndex,
+              shiftsAlreadyUsed: doneShifts,
+              baselineDate: currentBaseline,
+              currentTargetDate: currentTarget,
+              requestedTargetDate: (targetDate ?? null) as string | null,
+              deviationDaysFromBaseline: deviationDaysFromBaseline({
+                baselineDate: currentBaseline,
+                currentDate: (targetDate ?? null) as string | null,
+              }),
+            });
+            return;
+          }
+          const resetBaseline = r3Decision?.resetBaseline === true;
+          updates.push('schedule_shift_count = ?');
+          params.push(verdict.shiftIndex);
+          if (resetBaseline) {
+            updates.push('baseline_date = ?');
+            params.push(targetDate);
+            updates.push('baseline_set_at = ?');
+            params.push(new Date().toISOString());
+            updates.push('baseline_version = ?');
+            params.push((Number(milestoneRow.baseline_version ?? 1) || 1) + 1);
+          }
+          r3MilestoneShift = {
+            shiftIndex: verdict.shiftIndex,
+            previousDate: currentTarget,
+            newDate: (targetDate ?? null) as string | null,
+            previousBaseline: currentBaseline,
+            newBaseline: resetBaseline ? ((targetDate ?? null) as string | null) : currentBaseline,
+            baselineReset: resetBaseline,
+          };
+        }
+      }
 
       if (name !== undefined) {
         updates.push('name = ?');
@@ -3506,6 +3768,38 @@ export class InitiativeController {
         `UPDATE initiative_milestones SET ${updates.join(', ')} WHERE id = ?`,
         params
       );
+
+      // R3 — ŚLAD PRZESUNIĘCIA KAMIENIA (kto zatwierdził, z czego na co).
+      if (r3MilestoneShift) {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_rebaseline_log
+               (id, organization_id, initiative_id, milestone_id, shift_index,
+                previous_date, new_date, previous_baseline_date, new_baseline_date,
+                baseline_reset, reason, decision_id, approved_by, requested_by, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              orgId,
+              initiativeId,
+              milestoneId,
+              r3MilestoneShift.shiftIndex,
+              r3MilestoneShift.previousDate,
+              r3MilestoneShift.newDate,
+              r3MilestoneShift.previousBaseline,
+              r3MilestoneShift.newBaseline,
+              r3MilestoneShift.baselineReset ? 1 : 0,
+              r3Decision?.reason ?? null,
+              r3Decision?.decisionId ?? null,
+              String(r3Decision?.approvedBy ?? req.user?.id ?? 'first-shift-no-decision'),
+              req.user?.id ?? null,
+              new Date().toISOString(),
+            ]
+          );
+        } catch (err) {
+          console.error('[R3] milestone rebaseline log write failed', err);
+        }
+      }
 
       try {
         await auditEventsService.log({

@@ -13129,7 +13129,10 @@
       "plan": "Planned start / end",
       "deviation": "Variance (days)",
       "rag": "RAG",
-      "noPlanDates": "no plan dates"
+      "noPlanDates": "no plan dates",
+      "deviationNoBaseline": "No baseline plan — nothing to measure the variance against",
+      "deviationBaseline": "Baseline plan",
+      "deviationCurrent": "current plan"
     },
     "badges": {
       "done": "Done",

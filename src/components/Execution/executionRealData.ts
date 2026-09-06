@@ -37,6 +37,11 @@ export interface RealInitiativeLike {
   status?: string | null;
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
+  /** R3 — plan ZAMROŻONY (baseline). Od tego liczy się odchylenie. */
+  baselineStartDate?: string | null;
+  baselineEndDate?: string | null;
+  actualEndDate?: string | null;
+  scheduleShiftCount?: number | null;
   currentStage?: string | null;
   [key: string]: unknown;
 }
@@ -157,16 +162,37 @@ export function openDecisions<T extends RealDecisionLike>(decisions: T[]): T[] {
 }
 
 /**
- * Odchylenie terminu inicjatywy w dniach (dodatnie = po terminie).
- * `null` = nie da się policzyć (brak `plannedEndDate`) — SZARY, nie zielony.
+ * ODCHYLENIE OD PLANU BAZOWEGO w dniach (dodatnie = później niż zobowiązanie).
+ *
+ * POMIAR, KTÓRY TO ZMIENIŁ (06.09, ekran Realizacja › Realizacje, zrzut
+ * `evidence/realizacja-filtr/PO-realizacje.png`): kolumna „Odchylenie (dni)"
+ * pokazywała −55, −48, −35, −90 obok RAG „Na czas" w każdym wierszu. Liczyła
+ * `dziś − plannedEndDate`, czyli DNI POZOSTAŁE DO KOŃCA AKTUALNEGO PLANU —
+ * a nie odchylenie od czegokolwiek. Gorzej: liczona od `plannedEndDate` jest
+ * z definicji ślepa na to, co ma mierzyć, bo wystarczy PRZESUNĄĆ tę datę
+ * i opóźnienie znika z raportu bez śladu (R3, uzasadnienie właściciela:
+ * „bez baseline'u nie ma uczciwego opóźnienia").
+ *
+ * Teraz liczy od `baselineEndDate` — daty planowanej ZAMROŻONEJ (migracja
+ * `20262106_r3_milestone_baseline_rebaseline.sql`, serwer odmawia jej zmiany
+ * bez decyzji z zatwierdzającym od DRUGIEGO przesunięcia):
+ *   · jest FAKT (`actualEndDate`) → fakt − baseline; sprawa zamknięta,
+ *   · nie ma faktu → PÓŹNIEJSZA z dwóch dat: aktualny plan i DZIŚ (bez `max`
+ *     opóźnienie przestawałoby rosnąć dokładnie wtedy, gdy zaczyna boleć),
+ *   · brak baseline'u → `null` („—"), NIGDY zero: zero znaczy „zgodnie
+ *     z zobowiązaniem" i nie wolno go zmyślać z braku danych.
  */
 export function initiativeDeviationDays(
   initiative: RealInitiativeLike,
   now = Date.now()
 ): number | null {
-  const end = parseDate(initiative?.plannedEndDate);
-  if (end == null) return null;
-  return Math.floor((now - end) / DAY_MS);
+  const baseline = parseDate(initiative?.baselineEndDate);
+  if (baseline == null) return null;
+  const actual = parseDate(initiative?.actualEndDate);
+  if (actual != null) return Math.round((actual - baseline) / DAY_MS);
+  const planned = parseDate(initiative?.plannedEndDate);
+  const reference = planned == null ? now : Math.max(planned, now);
+  return Math.round((reference - baseline) / DAY_MS);
 }
 
 /**

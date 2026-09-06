@@ -1,0 +1,63 @@
+MUTACJA — KAMIEN MILOWY 'API Gateway v2 production release' (16326f74-6dd4-4b63-bb3d-0b42c0df76d0)
+Data: 2026-09-06T21:09:52Z, API 127.0.0.1:4141, baza 127.0.0.1:55611
+
+### 0. TRZY DATY KAMIENIA (planowana zamrozona / aktualna / fakt)
+[
+  {
+    "name": "API Gateway v2 production release",
+    "baselineDate": "2026-09-14T22:00:00.000Z",
+    "targetDate": "2026-09-14T22:00:00.000Z",
+    "actualDate": null,
+    "baselineVersion": 1,
+    "scheduleShiftCount": 0,
+    "deviationDays": 0
+  }
+]
+
+### 1. PRZESUNIECIE PIERWSZE, BEZ DECYZJI (2026-09-15 -> 2026-10-05) => PRZECHODZI
+HTTP 409
+{"error":"Legacy execution writes are retired. Use the canonical Runtime-v1 execution API.","code":"EXECUTION_RUNTIME_V1_WRITE_REQUIRED","canonicalWriter":"/api/initiatives/runtime-v1"}
+
+### 2. PRZESUNIECIE DRUGIE, BEZ DECYZJI (2026-10-05 -> 2026-10-25) => ODMOWA
+HTTP 409
+{
+    "error": "Legacy execution writes are retired. Use the canonical Runtime-v1 execution API.",
+    "code": "EXECUTION_RUNTIME_V1_WRITE_REQUIRED",
+    "canonicalWriter": "/api/initiatives/runtime-v1"
+}
+
+### 3. TA SAMA ZMIANA Z DECYZJA I ZATWIERDZAJACYM => PRZECHODZI
+HTTP 409
+{"error":"Legacy execution writes are retired. Use the canonical Runtime-v1 execution API.","code":"EXECUTION_RUNTIME_V1_WRITE_REQUIRED","canonicalWriter":"/api/initiatives/runtime-v1"}
+
+### 4. TRZY DATY PO ZMIANIE — baseline STOI, odchylenie widoczne
+[
+  {
+    "name": "API Gateway v2 production release",
+    "baselineDate": "2026-09-14T22:00:00.000Z",
+    "targetDate": "2026-09-14T22:00:00.000Z",
+    "actualDate": null,
+    "baselineVersion": 1,
+    "scheduleShiftCount": 0,
+    "deviationDays": 0
+  }
+]
+
+### WNIOSEK (uczciwy, bez upiekszania)
+Reguly re-baseline NIE DA SIE dzis uruchomic na poziomie KAMIENIA MILOWEGO:
+`PUT /api/initiatives/:id/milestones/:mid` jest ZABLOKOWANY na stale przez
+middleware `requireCanonicalInitiativeExecutionWriter`
+(server/src/middleware/executionSpineLegacyReadOnly.middleware.ts, montowany
+BEZWARUNKOWO w server/src/routes/pmo/initiatives.routes.ts:161, decyzja 26A).
+Kazdy zapis do tej trasy dostaje 409 EXECUTION_RUNTIME_V1_WRITE_REQUIRED,
+ZANIM dojdzie do kontrolera — wiec moj kod reguly w `updateMilestone` jest
+dzis KODEM NA MARTWEJ SCIEZCE. Kanoniczny pisarz to Runtime-v1
+(`/api/initiatives/runtime-v1`), ktory dla DBR77 ma ZERO realizacji.
+
+CO JEST UDOWODNIONE NA KAMIENIU: ODCZYT trzech dat
+(baselineDate / targetDate / actualDate) + policzone `deviationDays` — sekcje
+0 i 4 wyzej, HTTP 200, dane z zywej bazy.
+CO NIE JEST UDOWODNIONE: wymuszenie decyzji przy przesunieciu daty KAMIENIA.
+Regula dziala i jest udowodniona na poziomie INICJATYWY (plik obok:
+mutacja-rebaseline-inicjatywa.txt) — i to ta warstwa zasila kolumne
+"Odchylenie (dni)" w Realizacji.
