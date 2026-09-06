@@ -34634,7 +34634,8 @@
       "both": "Strzałka: na obu końcach",
       "noEdges": "Ta gałąź nie ma połączeń"
     },
-    "showPanel": "Pokaż panel"
+    "showPanel": "Pokaż panel",
+    "ideaStatusAriaLabel": "Etap i zapis"
   },
   "ideas": {
     "table": {

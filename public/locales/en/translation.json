@@ -32080,7 +32080,8 @@
       "both": "Arrow: both ends",
       "noEdges": "This branch has no connections"
     },
-    "showPanel": "Show panel"
+    "showPanel": "Show panel",
+    "ideaStatusAriaLabel": "Stage and save status"
   },
   "ideas": {
     "table": {
