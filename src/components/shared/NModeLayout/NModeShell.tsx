@@ -28,6 +28,7 @@ import { Loader2 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
 import type { PresentationMode } from '@/hooks/usePresentationMode';
+import { StickyStosKartyN } from '@/components/standard/StickyStosKartyN';
 
 import NModeActionBar from './NModeActionBar';
 import NModeCanvas from './NModeCanvas';
@@ -67,6 +68,20 @@ interface NModeShellExtraProps extends NModeShellProps {
    * zachowuje dzisiejsze zachowanie 1:1.
    */
   readMode?: boolean;
+  /**
+   * [DEC-407 zasada 2] Menu 4 (nagłówek) i Menu 5 (pasek sekcji/trybu/AI) jako
+   * JEDEN przyklejony stos — przewija się tylko treść sekcji.
+   *
+   * Opt-in, bo powłoka ma dziś kilkunastu konsumentów spoza rejestru kart N
+   * (Wyniki, ROI, OKR, Ocena, Sprawa) i przyklejenie nagłówka jest u nich
+   * zmianą wizualną, której nikt nie odbierał. Karty objęte DEC-407 podają
+   * `stickyStosMenu45`; reszta renderuje się bit w bit jak dotąd.
+   *
+   * DLACZEGO NIE `header.sticky`: to były DWA niezależne bloki `sticky top-0`,
+   * czyli rodzeństwo przyklejone do tej samej krawędzi — drugie wjeżdżało na
+   * pierwsze i nagłówek znikał pod paskiem Menu 5.
+   */
+  stickyStosMenu45?: boolean;
 }
 
 /**
@@ -104,8 +119,26 @@ const resolveReadMode = (bar: React.ReactNode): boolean => {
  * stałej (a nie w każdej karcie z osobna), bo stałą importują też karty
  * budujące własny kontener paska — więc jedna zmiana ustawia je wszystkie.
  */
+/**
+ * Wariant paska Menu 5 UŻYWANY WEWNĄTRZ przyklejonego stosu (DEC-407 zasada 2):
+ * bez własnego `sticky` (stos klei się w całości) i bez `border-b`/tła, bo tło
+ * daje kontener stosu. Dublowanie `sticky top-0` było właśnie tym defektem,
+ * przez który nagłówek chował się pod paskiem.
+ */
+export const NMODE_TOOLBAR_W_STOSIE_CLASS = 'mt-2';
+
 export const NMODE_TOOLBAR_SHELL_CLASS =
   'sticky top-0 z-30 mt-2 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/40';
+
+/**
+ * Owija segmenty 1+2 w jeden przyklejony stos, gdy karta o to prosi. Bez flagi
+ * zwraca dzieci bez żadnego dodatkowego węzła DOM — zero zmiany dla powłok,
+ * które DEC-407 nie obejmuje.
+ */
+const StosNaglowkow: React.FC<{ wlaczony: boolean; children: React.ReactNode }> = ({
+  wlaczony,
+  children,
+}) => (wlaczony ? <StickyStosKartyN>{children}</StickyStosKartyN> : <>{children}</>);
 
 export const NModeShell: React.FC<NModeShellExtraProps> = ({
   header,
@@ -130,6 +163,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
   loading = false,
   rightPanel,
   readMode,
+  stickyStosMenu45 = false,
   children,
 }) => {
   const centerScrollRef = useRef<HTMLDivElement>(null);
@@ -172,9 +206,10 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
         ref={centerScrollRef}
         className="flex-1 min-w-0 h-full min-h-0 overflow-y-auto bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950"
       >
+        <StosNaglowkow wlaczony={stickyStosMenu45}>
         {/* ── Segment 1: Header + PropertiesStrip (scrolls away) ────────────────── */}
         <div
-          className={`${header.sticky ? 'sticky top-0 z-30 bg-c-bg/90 pb-2 backdrop-blur-xl' : 'pb-0'} px-6 pt-4`}
+          className={`${!stickyStosMenu45 && header.sticky ? 'sticky top-0 z-30 bg-c-bg/90 pb-2 backdrop-blur-xl' : 'pb-0'} px-6 pt-4`}
         >
           <div className="max-w-6xl mx-auto">
             <NModeHeader
@@ -201,7 +236,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             krawędzi do krawędzi. Zmiana jest wspólna dla wszystkich sześciu
             kart N na tej powłoce. */}
         {hasActionBar && (
-          <div className={NMODE_TOOLBAR_SHELL_CLASS}>
+          <div className={stickyStosMenu45 ? NMODE_TOOLBAR_W_STOSIE_CLASS : NMODE_TOOLBAR_SHELL_CLASS}>
             <div className="px-6 py-2">
               <div className="max-w-6xl mx-auto">
                 {renderActionBar
@@ -218,6 +253,7 @@ export const NModeShell: React.FC<NModeShellExtraProps> = ({
             </div>
           </div>
         )}
+        </StosNaglowkow>
 
         {/* ── Segment 3: Main content (scrollable, padded) ──────────────────────── */}
         <div className="px-6 pb-6">

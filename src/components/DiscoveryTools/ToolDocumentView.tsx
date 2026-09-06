@@ -2419,6 +2419,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         ? createPortal(lifecycleControls, commandRowPortalTarget)
         : null}
       <NModeShell
+        /* [ODMROZENIE 03_TOOLS DEC-407] Zasada 2 — Menu 4 i Menu 5
+           jako JEDEN przyklejony stos (powłoka, nie hack w karcie). */
+        stickyStosMenu45
         loading={loading}
         presentationMode="n"
         onPresentationModeChange={() => {}}
