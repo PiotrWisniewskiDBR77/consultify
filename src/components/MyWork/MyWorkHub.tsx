@@ -65,7 +65,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPresentations/outputsLibraryTabQuery';
 import { HubBarSlotsProvider, useHubBar } from '@/components/shared/HubBarSlots';
@@ -159,6 +159,12 @@ import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } fr
 import { MyTasksListContent } from './MyTasksListContent';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
+import { UKRYTE_DEC406 } from './mojaPracaWidocznosc';
+import {
+  czyNazwaZastepcza,
+  pobierzTytulRekordu,
+  sciezkaTytuluRekordu,
+} from './tytulyKartMenu3';
 import { resolveOpenItemRoute } from './openItemRouting';
 import { ScrollEdgeFade } from './shared/ScrollEdgeFade';
 import { useScrollEdges } from './shared/useScrollEdges';
@@ -466,6 +472,13 @@ function readStoredMyWorkDocuments(
           .filter(isOpenDocument)
           // Temporary "new-*" placeholders should not survive a full page reload.
           .filter((doc: OpenDocument) => !isTransientDocumentId(doc.id))
+          // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] DEC-406: karty starego warsztatu
+          // inicjatywy zapisane PRZED ukryciem nie moga wrocic po odswiezeniu —
+          // inaczej wlasciciel dalej widzi ekran, ktory z MVP zniknal.
+          .filter(
+            (doc: OpenDocument) =>
+              !(doc.type === 'initiative' && UKRYTE_DEC406.warsztatInicjatywy)
+          )
       : [];
     const activeDocumentId =
       typeof parsed?.activeDocumentId === 'string' &&
@@ -1053,6 +1066,43 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const openDocumentsRef = useRef<OpenDocument[]>(openDocuments);
   useEffect(() => {
     openDocumentsRef.current = openDocuments;
+  }, [openDocuments]);
+
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] DEC-406 punkt (2): CHIP MENU 3 NOSI
+  // TYTUL REKORDU, nie nazwe typu. Polowa wolaczy (`handleTaskClick(id)` z
+  // powiadomienia, gleboki link `?taskId=`, panel powiazan) nie ma pod reka
+  // danych rekordu i karta rodzi sie z nazwa zastepcza „Zadanie"/„Task" —
+  // wlasciciel zobaczyl rzad „Task | Task | Task". Tutaj, JEDEN RAZ na karte,
+  // dociagamy tytul i podmieniamy etykiete. Kontrakt (ktora nazwa jest
+  // zastepcza, spod jakiej sciezki czytamy tytul) siedzi w czystym module
+  // `tytulyKartMenu3.ts`, wiec da sie go zmierzyc bez montowania huba.
+  const tytulyDociagnieteRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const doUzupelnienia = openDocuments.filter(
+      (doc) =>
+        !isTransientDocumentId(doc.id) &&
+        czyNazwaZastepcza(doc.name, doc.type) &&
+        sciezkaTytuluRekordu(doc.type, doc.id) !== null &&
+        !tytulyDociagnieteRef.current.has(`${doc.type}:${doc.id}`)
+    );
+    if (doUzupelnienia.length === 0) return;
+    let aktualny = true;
+    for (const doc of doUzupelnienia) {
+      tytulyDociagnieteRef.current.add(`${doc.type}:${doc.id}`);
+      void pobierzTytulRekordu(doc.type, doc.id, (sciezka) => Api.get(sciezka)).then((tytul) => {
+        if (!aktualny || !tytul) return;
+        setOpenDocuments((biezace) =>
+          biezace.map((d) =>
+            d.id === doc.id && d.type === doc.type && czyNazwaZastepcza(d.name, d.type)
+              ? { ...d, name: tytul }
+              : d
+          )
+        );
+      });
+    }
+    return () => {
+      aktualny = false;
+    };
   }, [openDocuments]);
 
   useEffect(() => {
@@ -1891,12 +1941,16 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: taskId,
         type: 'task',
-        name: taskData?.title || 'Task',
+        // DEC-406 (2): gdy wolacz nie zna tytulu, karta rodzi sie z nazwa
+        // ZASTEPCZA (w jezyku interfejsu) — efekt uboczny: przez chwile chip
+        // pokazuje typ. Efekt dociagajacy tytul (`tytulyKartMenu3`) podmienia
+        // etykiete, gdy tylko rekord odpowie.
+        name: taskData?.title || t('myWork.hub.name2', 'Task'),
         status: (taskData?.status?.toLowerCase() || 'todo') as ItemStatus,
         data: taskData,
       });
     },
-    [handleOpenDocument]
+    [handleOpenDocument, t]
   );
 
   // Idea handlers
@@ -2002,12 +2056,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleOpenDocument({
         id: decisionId,
         type: 'decision',
-        name: decisionData?.title || 'Decision',
+        // DEC-406 (2) — jak wyzej: nazwa zastepcza tylko do czasu odpowiedzi API.
+        name: decisionData?.title || t('myWork.hub.name5', 'Decision'),
         status: (decisionData?.status?.toLowerCase() || 'pending') as ItemStatus,
         data: decisionData,
       });
     },
-    [handleOpenDocument]
+    [handleOpenDocument, t]
   );
 
   // Notification handlers
@@ -2024,10 +2079,21 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     [handleOpenDocument]
   );
 
-  // Initiative handler — L-08 (DP-2): open IN-CONTEXT in the document overlay
-  // (parallel to task/decision) instead of hard-navigating to the M13 module.
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] [05_INITIATIVES]
+  // Initiative handler — DEC-406 (06.09): KAZDE wejscie do inicjatywy z Mojej Pracy
+  // (chip Menu 3, Skrzynka, Zadania, Decyzje, Kalendarz, „Co dalej -> Inicjatywa")
+  // prowadzi do KANONICZNEJ karty inicjatywy w module Inicjatywy — dokladnie tej
+  // samej trasy, co lista Inicjatyw -> wiersz -> Otworz (`getArtifactPath` dokleja
+  // `open=<id>&mode=doc`, co `InitiativesHub` czyta jako `InitiativeDocumentView`).
+  // Do 06.09 otwieral sie tu stary warsztat (`InitiativeFullView`, stepper
+  // ZRODLO…KORZYSCI) — rownolegly ekran, ktorego wlasciciel nie rozpoznal.
+  // Zdjecie ukrycia: `UKRYTE_DEC406.warsztatInicjatywy = false`.
   const handleInitiativeClick = useCallback(
     (initiativeId: string, initiativeData?: any) => {
+      if (UKRYTE_DEC406.warsztatInicjatywy) {
+        navigate(getArtifactPath('initiative', String(initiativeId)));
+        return;
+      }
       handleOpenDocument({
         id: String(initiativeId),
         type: 'initiative',
@@ -2037,7 +2103,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         data: initiativeData,
       });
     },
-    [handleOpenDocument, t]
+    [handleOpenDocument, navigate, t]
   );
 
   // Handle document saved/updated
@@ -2893,7 +2959,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     // jest tyle, ile otwartych kart — nazwa musi wskazywac ktora.
                     title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
                     aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                    className="p-1 rounded-md opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
                   >
                     <X size={14} aria-hidden="true" />
                   </button>
@@ -2926,7 +2992,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                     title={t('myWork.closeOpenDocument', { nazwa: doc.name })}
                     aria-label={t('myWork.closeOpenDocument', { nazwa: doc.name })}
-                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                    className="p-1 rounded-md opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
                   >
                     <X size={14} aria-hidden="true" />
                   </button>
@@ -3933,6 +3999,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </React.Suspense>
         );
       case 'initiative':
+        // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] DEC-406: stary warsztat inicjatywy
+        // jest UKRYTY (jedno miejsce: `UKRYTE_DEC406.warsztatInicjatywy`). Gdyby
+        // mimo wszystko powstala karta tego typu (np. stan sprzed ukrycia w innej
+        // zakladce), NIE rysujemy warsztatu — odsylamy do kanonicznej karty.
+        if (UKRYTE_DEC406.warsztatInicjatywy) {
+          return (
+            <Navigate to={getArtifactPath('initiative', activeDoc.id)} replace />
+          );
+        }
         return (
           <React.Suspense fallback={lazyFallback}>
             <InitiativeFullView
