@@ -1607,8 +1607,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
 
   const emptyStateMessage =
     (activeTab === 'list' || activeTab === 'processes') && loadWarning
-      ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
-      : 'No assessments found. Create your first assessment to get started.';
+      ? t(
+          'assessment.emptyState.warningDescription',
+          'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
+        )
+      : t(
+          'assessment.emptyState.description',
+          'No assessments found. Create your first assessment to get started.'
+        );
 
   const hubWorkspaceContext = useMemo(
     () =>
