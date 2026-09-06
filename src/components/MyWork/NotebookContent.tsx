@@ -102,10 +102,7 @@ import {
 import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
-import {
-  NotebookRightRail,
-  type NotebookPanelTab,
-} from './notebook/NotebookRightRail';
+import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
 import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
 import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
@@ -118,7 +115,6 @@ import {
 import { NotebookSearchDialog } from './notebook/NotebookSearchDialog';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
 import { NotebookHeaderActions } from './NotebookHeaderActions';
-import { registerEmbeddedModuleChatHost } from '@/components/shared/embeddedModuleChatHost';
 
 import { buildAskAIMessage } from './shared/askAiHelper';
 
@@ -177,19 +173,13 @@ type OutlineDraft = {
   assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 };
 
-/**
- * ★ JEDEN PRAWY PANEL — Teresa jako ZAKŁADKA (decyzja CTO 2026-09-05).
- * DOKŁADNIE ten sam komponent czatu, który renderuje dok globalny
- * (`MainLayout`, `mode="split"`) i warsztat Pomysłów — tylko osadzony
- * WEWNĄTRZ panelu Notatnika. Import leniwy (czat to duży moduł; nie
- * ładujemy go, dopóki użytkownik nie otworzy zakładki). Moduł 13_CHAT jest
- * ZAMROŻONY: importujemy, nie zmieniamy.
+/*
+ * ★ DEC-404 (właściciel, 06.09.2026): Notatnik NIE osadza już Teresy u siebie.
+ * Do 06.09 stał tu leniwy `UnifiedChatPanel`, montowany jako zakładka „Teresa"
+ * w prawym railu — ten sam odrzucony kształt co na ekranach listowych. Teresa
+ * ma jedną postać: standardowy dok `MainLayout`, a dok ZASTĘPUJE tu rail
+ * (patrz `railWidoczny` niżej), więc nadal jest jeden panel po prawej.
  */
-const UnifiedChatPanelLazy = React.lazy(() =>
-  import('@/components/AIChat/UnifiedChatPanel').then((mod) => ({
-    default: mod.UnifiedChatPanel,
-  }))
-);
 
 const MATURITY_CONFIG: Record<
   NotebookMaturity,
@@ -766,8 +756,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     setChatKickoffMessage,
     isChatCollapsed,
     toggleChatCollapse,
-    chatKickoffMessage,
-    clearChatKickoffMessage,
     notebookRailOpen,
     notebookRailTab,
     setNotebookRailOpen,
@@ -1901,88 +1889,24 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
 
-  /**
-   * ★ JEDEN PRAWY PANEL — zakładka „Teresa" (decyzja CTO 2026-09-05).
+  /*
+   * ★ DEC-404: cała maszyneria zakładki „Teresa" tego railu (`notebookPanelTab`,
+   * `setNotebookPanelTab`, `notebookHostsTeresa`, `notebookTeresaNode`, meldunek
+   * do rejestru `embeddedModuleChatHost`) została usunięta. Rail pokazuje
+   * wyłącznie notatkę; Teresa wysuwa się jako standardowy dok `MainLayout`.
    *
-   * Zakładka ma WŁASNY stan — wejście na notatkę zawsze zaczyna od obiektu.
-   * Globalny sygnał czatu jest tu ZDARZENIEM, nie źródłem prawdy: przejście
-   * „czat zamknięty → otwarty" przelącza na Teresę, przejście w drugą stronę
-   * wraca na notatkę. Liczenie zakładki WPROST z tego sygnału dawało panel
-   * otwarty na Teresie u każdego, kto zostawił czat otwarty na innym ekranie
-   * — zmierzone na żywym renderze Tabeli pomysłów przed tą naprawą.
-   * Każde dotychczasowe wołanie (`handleAskAI`, `setChatOpen`, skrót,
-   * komenda z innego miejsca) ustawia zakładkę JAWNIE, więc nie da się
-   * doprowadzić do stanu „czat otwarty, a zakładka nie".
-   * Wzorzec 1:1 z `IdeaMapWorkspace`.
+   * Rail chowa się na czas otwartego doku — dok ZASTĘPUJE go w tej samej
+   * kolumnie, a `notebookRailOpen` zostaje nietknięty, więc po zamknięciu doku
+   * rail wraca dokładnie w stanie sprzed.
    */
-  const [notebookPanelTab, setNotebookPanelTabState] = useState<NotebookPanelTab>('note');
-  const poprzedniStanCzatuNotatnika = useRef<boolean>(isChatCollapsed);
-  useEffect(() => {
-    if (poprzedniStanCzatuNotatnika.current !== isChatCollapsed) {
-      setNotebookPanelTabState(isChatCollapsed ? 'note' : 'teresa');
-      poprzedniStanCzatuNotatnika.current = isChatCollapsed;
-    }
-  }, [isChatCollapsed]);
-  const setNotebookPanelTab = useCallback(
-    (tab: NotebookPanelTab) => {
-      setNotebookRailOpen(true);
-      setNotebookPanelTabState(tab);
-      // Globalny sygnał zostaje zsynchronizowany — reszta aplikacji ma widzieć
-      // ten sam stan rozmowy co panel.
-      if (tab === 'teresa' && isChatCollapsed) toggleChatCollapse();
-      if (tab === 'note' && !isChatCollapsed) toggleChatCollapse();
-      poprzedniStanCzatuNotatnika.current = tab === 'teresa';
-    },
-    [isChatCollapsed, setNotebookRailOpen, toggleChatCollapse]
-  );
-
-  /*
-   * Otwarcie Teresy SKĄDKOLWIEK musi też otworzyć panel — inaczej przy
-   * zamkniętym panelu rozmowa nie miałaby gdzie się pokazać, a globalny dok
-   * jest na tym ekranie wyłączony (rejestr `embeddedModuleChatHost`). To jest
-   * bezpiecznik przed kształtem „zamknięte przez wygaszenie".
-   */
-  useEffect(() => {
-    if (!isChatCollapsed) setNotebookRailOpen(true);
-  }, [isChatCollapsed, setNotebookRailOpen]);
-
-  /*
-   * Meldunek do `MainLayout`: ten ekran osadza Teresę u siebie, więc globalny
-   * dok się tu nie pojawia. Meldujemy WYŁĄCZNIE, gdy panel ma gdzie żyć —
-   * otwarta notatka poza trybem mobilnym. Na LIŚCIE notatników (brak
-   * `activePage`) i na wąskim ekranie dok globalny działa jak dotąd.
-   */
-  const notebookHostsTeresa = Boolean(activePage) && !isMobile;
-  useEffect(() => {
-    if (!notebookHostsTeresa) return undefined;
-    return registerEmbeddedModuleChatHost();
-  }, [notebookHostsTeresa]);
-
-  /** Ciało zakładki „Teresa" — ten sam komponent co dok globalny. */
-  const notebookTeresaNode = notebookHostsTeresa ? (
-    <React.Suspense fallback={null}>
-      <UnifiedChatPanelLazy
-        mode="split"
-        showModeToggle={false}
-        showHistoryTrigger
-        showFocusMode
-        kickoffMessage={chatKickoffMessage || undefined}
-        onKickoffConsumed={clearChatKickoffMessage}
-      />
-    </React.Suspense>
-  ) : undefined;
+  const railWidoczny = notebookRailOpen && isChatCollapsed;
 
   const setChatOpen = (open: boolean) => {
     if (onChatOpenChange) onChatOpenChange(open);
-    if (open) {
-      setNotebookRailOpen(true);
-      // ★ 2026-09-05 (decyzja CTO „jeden prawy panel"): „otwórz Teresę" nie
-      // wysuwa już globalnego doku obok panelu — przełącza JEDYNY panel na
-      // zakładkę Teresy. Zakładkę ustawiamy JAWNIE: gdy czat był już otwarty,
-      // `toggleChatCollapse()` się nie wykona i samo przejście stanu nie
-      // zaszłoby (martwy przycisk).
-      setNotebookPanelTab('teresa');
-    }
+    // ★ DEC-404: „otwórz Teresę" wysuwa standardowy dok (ten sam co na
+    // /results). Rail sam się chowa na czas doku — nie ma dwóch kolumn.
+    if (open && isChatCollapsed) toggleChatCollapse();
+    if (!open && !isChatCollapsed) toggleChatCollapse();
   };
 
   /**
@@ -2342,10 +2266,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           undefined,
       })
     );
+    // ★ DEC-404: rozmowa otwiera się w standardowym doku Teresy.
     if (isChatCollapsed) toggleChatCollapse();
-    // ★ 2026-09-05: rozmowa otwiera się w JEDYNYM prawym panelu (zakładka
-    // „Teresa"), nie w globalnym doku obok niego.
-    setNotebookPanelTab('teresa');
   };
 
   // Share via email — mirrors WorkspaceTools ShareSection.handleEmail so the ⋯ menu
@@ -4333,7 +4255,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             Not offered on mobile — see the toggle button comment above. */}
           {!isMobile && (
             <NotebookRightRail
-              open={notebookRailOpen}
+              open={railWidoczny}
               activeTab={notebookRailTab}
               onTabChange={setNotebookRailTab}
               onClose={() => {
@@ -4472,12 +4394,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               }
               onHandoffInitiatives={handleHandoffInitiatives}
               onOpenTopic={(topicId) => setOpenTopicId(topicId)}
-              /* ★ JEDEN PRAWY PANEL (decyzja CTO 2026-09-05): Teresa jest
-                 ZAKŁADKĄ tego panelu, nie drugą kolumną. Globalny dok jest na
-                 tym ekranie wyłączony rejestrem `embeddedModuleChatHost`. */
-              teresaContent={notebookTeresaNode}
-              panelTab={notebookPanelTab}
-              onPanelTabChange={setNotebookPanelTab}
+              /* ★ DEC-404: bez `teresaContent` rail nie buduje rzędu zakładek —
+                 pokazuje sam obiekt. Teresa = standardowy dok `MainLayout`. */
               /* ★ 05.09 — „Wstaw blok" i TAGI zeszły ze środka dokumentu do
                  panelu. TE SAME handlery, żadnej drugiej implementacji. */
               onInsertBlock={handleInsertBlockFromPanel}
