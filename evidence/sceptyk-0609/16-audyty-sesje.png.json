@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3090/audit-programs?tab=processes",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Sesje"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nBiblioteka\nSesje\nWnioski\nRaporty\nInicjatywy\nEtap: Wszystkie\n1\nNowy audyt\nZamrożone do fali 2: wgrywanie założeń audytu i generator pytań.\nWszystkie\n1\nPlanowanie\n1\nPraca w terenie\n0\nNAZWA\n\t\nPAKIET\n\t\nETAP\n\t\nPOSTĘP\n\t\nUSTALENIA OTWARTE\n\t\nAUDYTOR WIODĄCY\n\t\nPOCZĄTEK\n\t\nTERMIN\n\t\nZAKTUALIZOWANO\n\t\n\n\nAudyt procesu zakupowego Q3 (dane pokazowe)\n\t\nAudyt procesu — pakiet demonstracyjny Consultify v1\n\t\nPlanowanie\n\t\n0/12\n\t\n0\n\t\n—\n\t\n—\n\t\n—\n\t\n06/09/2026\n\t",
+ "kiedy": "2026-09-06T19:45:50.123Z"
+}

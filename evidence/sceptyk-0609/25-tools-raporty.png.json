@@ -1,0 +1,45 @@
+{
+ "url": "http://127.0.0.1:3090/discovery-tools?tab=reports",
+ "tytul": "Discovery Tools — Consultify",
+ "kliki": [
+  "text=Raporty"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — "
+ ],
+ "bledyKonsoli": [
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — ",
+  "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — "
+ ],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nNarzędzia\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nBiblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nNowy raport\nWszystkie\n16\nZatwierdzone\n2\nZakończony\n0\nTYP\n\t\nNAZWA\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\nRaport\n\t\nDRD Manufacturing — Quick Summary One-Pager\n\t\nSzkic\n\t\n5 wrz 2026\n\t\n\n\nRaport\n\t\nADMA — Quick Brief for Steering Committee\n\t\nSzkic\n\t\n4 wrz 2026\n\t\n\n\nRaport\n\t\nDRD Enterprise — Stakeholder Communication Brief\n\t\nSzkic\n\t\n4 wrz 2026\n\t\n\n\nRaport\n\t\nDRD Manufacturing — 12-Month Transformation Roadmap\n\t\nDo akceptacji\n\t\n4 wrz 2026\n\t\n\n\nRaport oceny\n\t\nADMA — Transformation Roadmap (Review)\n\t\nDo akceptacji\n\t\n3 wrz 2026\n\t\n\n\nRaport oceny\n\t\nDRD Manufacturing — Executive Summary & Deep Analysis (C-suite)\n\t\nZatwierdzone\n\t\n3 wrz 2026\n\t\n\n\nRaport\n\t\nADMA — Transformation Roadmap (Review)\n\t\nDo akceptacji\n\t\n3 wrz 2026\n\t\n\n\nRaport\n\t\nSIRI — Management Summary (Draft)\n\t\nSzkic\n\t\n3 wrz 2026\n\t\n\n\nRaport\n\t\nDRD Enterprise — Investment Case & Benefits Realization Plan\n\t\nWygenerowane\n\t\n3 wrz 2026\n\t\n\n\nRaport\n\t\nDRD Manufacturing — Executive Summary & Deep Analysis (C-suite)\n\t\nZatwierdzone\n\t\n3 wrz 2026\n\t\n\n\nRaport\n\t\nADMA — Deep Pillar Analysis & Technology Roadmap\n\t\nWygenerowane\n\t\n2 wrz 2026\n\t\n\n\nRaport\n\t\nSIRI — 6 Month Sprint Plan (Quick Wins)\n\t\nWygenerowane\n\t\n2 wrz 2026\n\t\n\n\nRaport oceny\n\t\nSIRI — Full Industry 4.0 Readiness Report & Benchmark\n\t\nDo akceptacji\n\t\n1 wrz 2026\n\t\n\n\nRaport\n\t\nSIRI — Full Industry 4.0 Readiness Report & Benchmark\n\t\nDo akceptacji\n\t\n1 wrz 2026\n\t\n\n\nRaport oceny\n\t\nDRD Enterprise — Board Presentation & Strategic Investment Case\n\t\nZakończone\n\t\n29 sie 2026\n\t\n\n\nRaport\n\t\nDRD Enterprise — Board Presentation & Strategic Investment Case\n\t\nZakończone\n\t\n29 sie 2026\n\t",
+ "kiedy": "2026-09-06T19:48:00.360Z"
+}

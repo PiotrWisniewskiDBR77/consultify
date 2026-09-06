@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3090/initiatives?tab=capacity",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Obciążenie"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Wszystkie\n0\nNowa analiza\nSzkice\n0\nOpublikowane\n1\nZ lukami\n1\nNAZWA\n\t\nPLAN ŹRÓDŁOWY\n\t\nOKRESY\n\t\nROLE\n\t\nLUKI\n\t\nSTATUS\n\t\nZAKTUALIZOWANO\n\n\nAnaliza obciążenia — Controls Engineer\n\t\nPlan źródłowy · v3\n\t\n12\n\t\n1\n\t\n12\n\t\nOpublikowany\n\t\n06 wrz 2026\nAnaliza obciążenia — Controls Engineer\nOtwórz\nOpublikowany\nSZCZEGÓŁY\nWłaściwość\tWartość\nPlan źródłowy\tPlan źródłowy · v3\nOkresy\t12\nRole\t1\nLuki\t12\nPOWIĄZANIA\nBrak powiązań",
+ "kiedy": "2026-09-06T19:57:17.271Z"
+}

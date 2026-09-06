@@ -1,0 +1,40 @@
+{
+ "url": "http://127.0.0.1:3090/results/okr",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=OKR"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3090/api/vnext/results/kpi/scorecards/0a9a0f97-c029-5687-98a3-b94c7a8c6ec7/review-snapshots/published"
+  },
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3090/api/vnext/results/kpi/scorecards/f590a9ef-46a5-5287-bcc9-4188eb665d0d/review-snapshots/published"
+  },
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3090/api/vnext/results/kpi/scorecards/45ca89b1-9ecb-5f4c-ba7a-4b4244cbf0bf/review-snapshots/published"
+  }
+ ],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nNowy raport\nNAZWA\n\t\nZAKRES\n\t\nCYKL\n\t\nCELE\n\t\nREZULTATY\n\t\nSTAN\n\t\nWŁAŚCICIELE\n\t\nOSTATNI CHECK-IN\n\t\n\n\nOKR automatyzacji — Q4 2026\n\t\nJednostka biznesowa\n\t\nQ4 2026\n\t\n3\n\t\n8\n\t\n6\n·\n2\n·\n—\n·\n—\n\t\n1\n\t\n3 wrz 2026\n\t\n\n\nOKR sprzedaży — H2 2026\n\t\nJednostka biznesowa\n\t\nH2 2026\n\t\n3\n\t\n9\n\t\n5\n·\n2\n·\n1\n·\n1\n\t\n1\n\t\n1 wrz 2026\n\t\n\n\nOKR zakładu — Q4 2026\n\t\nFirma\n\t\nQ4 2026\n\t\n4\n\t\n11\n\t\n7\n·\n3\n·\n1\n·\n—\n\t\n1\n\t\n4 wrz 2026\n\t",
+ "kiedy": "2026-09-06T19:49:51.732Z"
+}
