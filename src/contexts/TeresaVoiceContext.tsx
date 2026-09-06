@@ -415,17 +415,23 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     [addMessage, activeConversationId]
   );
 
-  const onVoiceStatusChange = useCallback((status: string) => {
+  // [ODMROZENIE 13_CHAT DEC-397] `reason` (added to useTeresaVoice's
+  // onStatusChange) tells us WHY a session ended — e.g. `user_stopped` vs an
+  // unexpected `ws_close_<code>:<text>` from the transport. Threading it into
+  // the `voice_stopped`/`voice_error` telemetry closes the gap the MVP gate
+  // called out: staging logs showed `voice_stopped (idle)` with zero
+  // indication of cause.
+  const onVoiceStatusChange = useCallback((status: string, reason?: string) => {
     if (status === 'live') {
       postTeresaVoiceEvent({ eventName: 'voice_started', status: 'live' });
       return;
     }
     if (status === 'error') {
-      postTeresaVoiceEvent({ eventName: 'voice_error', status: 'error' });
+      postTeresaVoiceEvent({ eventName: 'voice_error', status: 'error', reason });
       return;
     }
     if (status === 'idle') {
-      postTeresaVoiceEvent({ eventName: 'voice_stopped', status: 'idle' });
+      postTeresaVoiceEvent({ eventName: 'voice_stopped', status: 'idle', reason });
       // Ending the session discards (never auto-sends) whatever was still
       // pending review — consistent with "nothing reaches the conversation
       // without an explicit Send".
