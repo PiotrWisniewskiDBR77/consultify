@@ -75,6 +75,12 @@ export interface InitiativeTransitionDefinition {
   condition: InitiativeTransitionCondition;
   authorOnly?: boolean;
 }
+export const INITIATIVE_FLAG_RULES = {
+  HOLD: { gate: GateType.BLOCK, roles: [Role.INITIATIVE_OWNER, Role.PMO], reasonRequired: true },
+  RESUME: { gate: GateType.UNBLOCK, roles: [Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE], reasonRequired: false },
+  ARCHIVE: { gate: GateType.ARCHIVE, roles: [Role.PMO, Role.STEERING_COMMITTEE], reasonRequired: false },
+} as const;
+export type InitiativeFlagOperation = keyof typeof INITIATIVE_FLAG_RULES;
 
 /** Brak wiersza oznacza zakaz. Admin omija role, nigdy warunek merytoryczny. */
 export const INITIATIVE_TRANSITION_MATRIX = [
@@ -102,8 +108,10 @@ export const INITIATIVE_TRANSITION_MATRIX = [
 
 export const GATE_PERMISSIONS: Record<GateTypeValue, RoleType[]> = Object.values(GateType).reduce(
   (out, gate) => {
-    out[gate] = Array.from(new Set(INITIATIVE_TRANSITION_MATRIX
-      .filter((row) => row.gate === gate).flatMap((row) => row.roles)));
+    out[gate] = Array.from(new Set([
+      ...INITIATIVE_TRANSITION_MATRIX.filter((row) => row.gate === gate).flatMap((row) => row.roles),
+      ...Object.values(INITIATIVE_FLAG_RULES).filter((row) => row.gate === gate).flatMap((row) => row.roles),
+    ]));
     return out;
   }, {} as Record<GateTypeValue, RoleType[]>)
 ;

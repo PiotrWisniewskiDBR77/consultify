@@ -2093,56 +2093,23 @@ export class InitiativeController {
         return;
       }
 
-      // Check current status is planning
-      const initiative = await queryHelpers.queryOne<{ status: string }>(
-        'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
-
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
-        return;
-      }
-
-      // M13 SECURITY: governance gate role check (SUBMIT_REVIEW owned by
-      // Initiative Owner / PMO / Project Lead / Admin). A bare TEAM_MEMBER /
-      // pilot participant is rejected with 403.
-      const submitGate = await evaluateInitiativeGateAccess({
-        organizationId: String(orgId),
-        initiativeId: String(initiativeId),
-        userId: String(userId),
-        gate: 'SUBMIT_REVIEW',
-        systemRoleHint: req.user?.role,
-        isSuperAdmin: req.user?.isSuperAdmin === true,
+      const result = await executeInitiativeTransition({
+        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        requestUserAgent: (req as any).get?.('user-agent') ?? null,
+        nextStatusInput: 'PENDING_APPROVAL', expectedCurrentStatus: 'DRAFT',
       });
-      if (!submitGate.allowed) {
-        res.status(403).json({ error: submitGate.reason, code: submitGate.code });
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
         return;
       }
-
-      if (initiative.status !== 'planning') {
-        res
-          .status(400)
-          .json({ error: `Cannot submit for review from status: ${initiative.status}` });
-        return;
-      }
-
-      // Update status to review
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'review',
-                review_requested_at = CURRENT_TIMESTAMP,
-                review_requested_by = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
-        [userId, initiativeId]
-      );
 
       res.json({
         success: true,
         message: 'Initiative submitted for review',
         initiativeId,
-        newStatus: 'review',
+        newStatus: result.status,
       });
     }
   );
@@ -2374,28 +2341,32 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const userId = req.user?.id;
       const initiativeId = req.params.id;
-      const { reason, decisionId } = req.body;
+      const { reason } = req.body;
 
       if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
-                status = 'blocked',
-                blocked_at = CURRENT_TIMESTAMP,
-                blocked_reason = ?,
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ? AND organization_id = ?`,
-        [reason || 'Blocked', initiativeId, orgId]
-      );
+      const result = await executeInitiativeTransition({
+        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        requestUserAgent: (req as any).get?.('user-agent') ?? null,
+        nextStatusInput: 'IN_EXECUTION', expectedCurrentStatus: 'IN_EXECUTION',
+        flagOperation: 'HOLD', reason: reason ? String(reason) : null,
+      });
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
+        return;
+      }
 
       res.json({
         success: true,
         message: 'Initiative blocked',
         initiativeId,
-        newStatus: 'blocked',
+        newStatus: result.status,
+        onHold: true,
       });
     }
   );
@@ -2468,8 +2439,9 @@ export class InitiativeController {
         actorEmail: req.user?.email ?? null,
         requestIp: (req as any).ip ?? null,
         requestUserAgent: (req as any).get?.('user-agent') ?? null,
-        nextStatusInput: 'EXECUTING',
-        expectedCurrentStatus: 'BLOCKED',
+        nextStatusInput: 'IN_EXECUTION',
+        expectedCurrentStatus: 'IN_EXECUTION',
+        flagOperation: 'RESUME',
         reason: reason ? String(reason) : null,
       });
 
@@ -2763,50 +2735,32 @@ export class InitiativeController {
   static archiveInitiative = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const userId = req.user?.id;
       const initiativeId = req.params.id;
 
-      if (!orgId) {
+      if (!orgId || !userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
-      const initiative = await queryHelpers.queryOne<{ status: string }>(
-        'SELECT status FROM initiatives WHERE id = ? AND organization_id = ?',
-        [initiativeId, orgId]
-      );
-
-      if (!initiative) {
-        res.status(404).json({ error: 'Initiative not found' });
+      const result = await executeInitiativeTransition({
+        orgId, initiativeId, actorId: userId, actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null, actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null, requestIp: (req as any).ip ?? null,
+        requestUserAgent: (req as any).get?.('user-agent') ?? null,
+        nextStatusInput: 'CLOSED', flagOperation: 'ARCHIVE',
+      });
+      if (!result.ok) {
+        res.status(result.statusCode).json({ ...result.body, initiativeId });
         return;
       }
-
-      // Status is persisted with the canonical UPPERCASE enum values
-      // (InitiativeStatus.DONE/CANCELLED). A previous lowercase guard
-      // ('done'/'cancelled') never matched, so archive was effectively
-      // always rejected — normalize before comparing. DRAFT initiatives
-      // are not archivable; use hard delete to discard them.
-      const currentStatus = normalizeStatus(initiative.status);
-      if (!['DONE', 'CANCELLED'].includes(currentStatus)) {
-        res.status(400).json({
-          error: 'Only done or cancelled initiatives can be archived',
-          status: currentStatus,
-        });
-        return;
-      }
-
-      await queryHelpers.queryRun(
-        `UPDATE initiatives SET
-                status = 'ARCHIVED',
-                updated_at = CURRENT_TIMESTAMP
-             WHERE id = ?`,
-        [initiativeId]
-      );
 
       res.json({
         success: true,
         message: 'Initiative archived',
         initiativeId,
-        newStatus: 'ARCHIVED',
+        newStatus: result.status,
+        archived: true,
       });
     }
   );

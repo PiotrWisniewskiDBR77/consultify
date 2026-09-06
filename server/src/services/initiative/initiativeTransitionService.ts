@@ -16,12 +16,14 @@ import { isAiGate } from '../../constants/initiativeGateAi.js';
 import {
   GATE_PERMISSIONS,
   GateType,
+  INITIATIVE_FLAG_RULES,
   getGateForTransition,
   getTransitionDefinition,
   InitiativeStatus,
   isTerminalStatus,
   isValidTransition,
   VALID_TRANSITIONS,
+  type InitiativeFlagOperation,
 } from '../../constants/initiativeStatuses.js';
 import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
@@ -327,6 +329,8 @@ interface ExecuteInitiativeTransitionParams {
   actorLastName?: string | null;
   actorEmail?: string | null;
   nextStatusInput: string;
+  /** Operacja na fladze DEC-424; status pozostaje bez zmian. */
+  flagOperation?: InitiativeFlagOperation;
   reason?: string | null;
   overrideReason?: string | null;
   /** Best-effort request metadata for the audit-events log. Absent for
@@ -484,6 +488,50 @@ export async function executeInitiativeTransition(
       const currentStatus = normalizeInitiativeDbStatusForRead(String(lockedRow.status || ''));
       const initiativeName = String(lockedRow.name || 'Initiative');
       const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+
+      if (params.flagOperation) {
+        const operation = params.flagOperation;
+        const rule = INITIATIVE_FLAG_RULES[operation];
+        const onHold = Boolean(lockedRow.on_hold);
+        const allowedState = operation === 'ARCHIVE'
+          ? currentStatus === 'CLOSED' || currentStatus === 'REJECTED'
+          : currentStatus === 'IN_EXECUTION';
+        if (!allowedState || (operation === 'RESUME' && !onHold)) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: `Flag operation ${operation} is not allowed for ${currentStatus}`,
+            rule: 'INVALID_FLAG_OPERATION',
+          } };
+        }
+        if (rule.reasonRequired && !String(reason ?? '').trim()) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: 'Reason is required', rule: 'REASON_REQUIRED',
+          } };
+        }
+        if (!isSystemActor) {
+          const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
+          if (!canExecuteGate({ gate: rule.gate, effectiveRoles: accessCtx.effectiveRoles,
+            steeringBoardEnabled: accessCtx.steeringBoardEnabled, conditionSatisfied: true })) {
+            return { kind: 'error', statusCode: 403, body: {
+              error: 'Permission denied for initiative flag operation', gate: rule.gate,
+              requiredRoles: resolveGateRequiredRoles(rule.gate, accessCtx.steeringBoardEnabled),
+            } };
+          }
+        }
+        if (operation === 'HOLD') {
+          await client.query(`UPDATE initiatives SET on_hold = TRUE, blocked_at = CURRENT_TIMESTAMP,
+            blocked_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+          [String(reason).trim(), id, orgId]);
+        } else if (operation === 'RESUME') {
+          await client.query(`UPDATE initiatives SET on_hold = FALSE, blocked_at = NULL,
+            blocked_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+          [id, orgId]);
+        } else {
+          await client.query(`UPDATE initiatives SET archived = TRUE, archived_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`, [id, orgId]);
+        }
+        return { kind: 'success', currentStatus, nextStatus: currentStatus, gate: rule.gate,
+          correlationId: uuidv4(), initiativeName };
+      }
 
       // DISAMBIGUATION GUARD (see ExecuteInitiativeTransitionParams.expectedCurrentStatus
       // doc comment): must run BEFORE isValidTransition, since e.g. SCHEDULED->EXECUTING
