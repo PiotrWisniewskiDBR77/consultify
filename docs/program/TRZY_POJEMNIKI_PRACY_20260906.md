@@ -44,6 +44,9 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 | 1.9 | Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie `zamroz.mjs` per moduł | Sonnet ×2 | 1 | 1.1–1.8 |
 | 1.10 | **Środowisko demo dla pojemnika 2**: rozdział bazy demo od stagingu (5 faz z `topologia-srodowisk-staging-demo`), zmienne, seedy pokazowe (DBR77 Wyniki, CD PROJEKT Finanse, organizacja pilotażowa), promocja staging → demo przećwiczona z cofnięciem, tag `demo-safe` | Opus + nadzorca | 2–3 | 1.9 |
 
+**Stan (dopisywany, nie zmienia kryteriów):**
+- 06.09 06:40 (sesja #23): 1.2 W TOKU (`mvp/p1-skrzynka-wywiad`, Sonnet) · 1.8 W TOKU (`mvp/i18n-dlug-1`, Sonnet) · 1.6 W TOKU (`mvp/dokument-prezentacja-plik`, Opus) · 1.3 i 1.5 WYDANE Codexowi jako funkcja celu (wklejki nr 2, wznowienie istniejących worktree) · 1.1 czeka na przejście właściciela · 1.4 czeka na 1.3 · 1.7 czeka na decyzje właściciela. Szczegóły i dowody: rejestr odbioru w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+
 **Decyzje właściciela w tym pojemniku (jedna dziennie):** Finanse MINIMUM do MVP (F1 §0) czy poza; grupowanie inicjatyw po zdjęciu Projektów (rekomendacja: płaska lista + obszar/oś); kropka „Model” w crimson.
 ### 🍾 Lista kontrolna szampana — koniec pojemnika 1 (co właściciel dowozi, kto potwierdza, jaki artefakt)
 | # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
