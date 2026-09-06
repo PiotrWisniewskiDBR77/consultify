@@ -33,7 +33,6 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
-import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 import type { ArtifactPreview } from '../KimiWorkspaceShell';
 import TabelePreviewLayout from '../tabelePreview/TabelePreviewLayout';
@@ -249,10 +248,7 @@ export const TabeleMelsView: React.FC<TabeleMelsViewProps> = ({
   // szuka po `activeToolId`, nie po obecności ikony), panel nie ma się mieć
   // co pokazać — OFF musi być identyczne na KAŻDYM poziomie, nie tylko szyny.
   const rightPanels = useMemo<TabeleRightRailPanelRenderers>(
-    () =>
-      isArtifactRightRailEnabled()
-        ? { ...rightRailPanels, artefakt: <TabeleArtifactPanel meta={artifactMeta} /> }
-        : rightRailPanels,
+    () => ({ ...rightRailPanels, artefakt: <TabeleArtifactPanel meta={artifactMeta} /> }),
     [rightRailPanels, artifactMeta]
   );
 

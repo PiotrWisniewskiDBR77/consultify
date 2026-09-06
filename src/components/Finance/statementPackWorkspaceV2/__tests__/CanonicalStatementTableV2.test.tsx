@@ -62,9 +62,10 @@ describe('CanonicalStatementTableV2', () => {
         emptyLabel="Brak danych dla tego dokumentu."
       />
     );
-    expect(screen.getByTestId('canonical-statement-table-v2-empty')).toHaveTextContent(
-      'Brak danych'
-    );
+    expect(screen.getAllByTestId('canonical-statement-table-v2-empty')).toHaveLength(3);
+    expect(screen.getByText('Rachunek zysków i strat')).toBeInTheDocument();
+    expect(screen.getByText('Bilans')).toBeInTheDocument();
+    expect(screen.getByText('Rachunek przepływów pieniężnych')).toBeInTheDocument();
   });
 
   it('renders currency+scale in the table header (not just the workspace bar)', () => {

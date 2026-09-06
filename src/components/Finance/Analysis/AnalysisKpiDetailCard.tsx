@@ -15,7 +15,7 @@ import type { AnalysisKpiValueDto } from '../../../services/api/financeV2.types'
 import { financeValueDisplayReasonLabel, formatAnalysisKpiValueForDisplay } from '../../../services/api/financeV2.types';
 import { industryLabelForCode } from './analysisKpiCatalog';
 import type { AnalysisKpiCatalogFormulaInfo } from './analysisKpiTable.contract';
-import type { YoyDelta } from './analysisKpiTable.contract';
+import { formatYoyDeltaText, type YoyDelta } from './analysisKpiTable.contract';
 
 export interface AnalysisKpiHistoryEntry {
   versionLabel: string;
@@ -120,11 +120,7 @@ export function AnalysisKpiDetailCard(props: AnalysisKpiDetailCardProps): React.
           {reason ? <p className="text-xs text-c-text-muted mt-1">{reason}</p> : null}
           <p className="text-xs text-c-text-muted mt-2">
             Zmiana r/r:{' '}
-            {yoyDelta.status === 'COMPUTED' && yoyDelta.percentDelta !== null
-              ? `${yoyDelta.percentDelta >= 0 ? '+' : ''}${yoyDelta.percentDelta.toFixed(1)}%`
-              : yoyDelta.status === 'PRIOR_ZERO_PCT_UNDEFINED'
-                ? 'zmiana % nieokreślona (poprzedni okres = 0)'
-                : '—'}
+            {formatYoyDeltaText(yoyDelta)}
           </p>
         </section>
 

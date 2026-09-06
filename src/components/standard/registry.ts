@@ -50,7 +50,28 @@ export type KartaNKey =
   | 'objective'
   | 'roi_case'
   | 'plan'
-  | 'capacity_analysis';
+  | 'capacity_analysis'
+  | 'kpi-scorecard'
+  | 'kpi-deviation'
+  | 'okr-report'
+  | 'okr-set-tool'
+  | 'roi-case-tool'
+  | 'document'
+  | 'sheet'
+  | 'presentation'
+  | 'template'
+  | 'template-architect-doc'
+  | 'template-architect-deck'
+  | 'vault-document'
+  | 'report-builder'
+  | 'management-report'
+  | 'reporting-automation'
+  | 'governed-context'
+  | 'chat-artifact'
+  | 'finance-statement-pack'
+  | 'finance-analysis'
+  | 'execution-report'
+  | 'execution-work-doc';
 
 /**
  * Klasa wielkości wg SPEC-A §12.2 (drabina otwierania) i SPEC-N §2.1:
@@ -93,7 +114,7 @@ export interface KartaNWpis {
   /** Odwołanie do paragrafu SPEC-N / planu wdrożenia, z którego wynika ten wiersz. */
   readonly paragraf: string;
   /** Ekran harnessu `dev-render` — zrzut PRZED/PO i bramka runtime. */
-  readonly ekranHarnessu: KartaNEkranHarnessu;
+  readonly ekranHarnessu?: KartaNEkranHarnessu;
   /** Status migracji — w fali F wszystkie 'przed'. */
   readonly statusMigracji: KartaNStatusMigracji;
 }
@@ -238,6 +259,27 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
     ekranHarnessu: 'karta-analiza-roi',
     statusMigracji: 'przed',
   },
+  'kpi-scorecard': { nazwa: 'Raport KPI', komponent: 'src/components/ResultsVNext/kpiScorecards/ResultsKpiScorecardDetailPage.tsx', klasa: 'L', paragraf: 'DEC-435 · DEC-436', statusMigracji: 'przed' },
+  'kpi-deviation': { nazwa: 'Odchylenie KPI', komponent: 'src/components/ResultsVNext/kpiTool/KpiDeviationCaseSubview.tsx', klasa: 'L', paragraf: 'DEC-434 · DEC-437', statusMigracji: 'przed' },
+  'okr-report': { nazwa: 'Raport OKR', komponent: 'src/components/ResultsVNext/okr/p7k/OkrReportPage.tsx', klasa: 'L', paragraf: 'DEC-435 · DEC-436', statusMigracji: 'przed' },
+  'okr-set-tool': { nazwa: 'Narzędzie zestawu OKR', komponent: 'src/components/ResultsVNext/okr/OkrSetToolPage.tsx', klasa: 'L', paragraf: 'DEC-436', statusMigracji: 'przed' },
+  'roi-case-tool': { nazwa: 'Narzędzie analizy ROI', komponent: 'src/components/ResultsVNext/roi/RoiCaseFullTool.tsx', klasa: 'L', paragraf: 'DEC-436', statusMigracji: 'przed' },
+  document: { nazwa: 'Dokument', komponent: 'src/components/DocumentStudio/DocumentStudioView.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  sheet: { nazwa: 'Arkusz', komponent: 'src/components/AIChat/KimiWorkspace/SpreadsheetArtifactStudio.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  presentation: { nazwa: 'Prezentacja', komponent: 'src/components/Presentations/DeckBuilder/DeckBuilder.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  template: { nazwa: 'Wzorzec', komponent: 'src/components/TemplateBuilder/TemplateBuilderShell.tsx', klasa: 'L', paragraf: 'DEC-432 · DEC-434', statusMigracji: 'przed' },
+  'template-architect-doc': { nazwa: 'Architekt wzorca dokumentu', komponent: 'src/components/DocumentStudio/DocumentStudioTemplateArchitectView.tsx', klasa: 'L', paragraf: 'DEC-432 · DEC-434', statusMigracji: 'przed' },
+  'template-architect-deck': { nazwa: 'Architekt wzorca prezentacji', komponent: 'src/components/Presentations/PresentationTemplateArchitectView.tsx', klasa: 'L', paragraf: 'DEC-432 · DEC-434', statusMigracji: 'przed' },
+  'vault-document': { nazwa: 'Dokument sejfu', komponent: 'src/views/vault/VaultDocumentsView.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  'report-builder': { nazwa: 'Raport', komponent: 'src/views/ReportBuilderView.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  'management-report': { nazwa: 'Raport zarządczy', komponent: 'src/components/Reports/Management/ManagementReportsView.tsx', klasa: 'L', paragraf: 'DEC-432 · DEC-434', statusMigracji: 'przed' },
+  'reporting-automation': { nazwa: 'Automatyzacja raportowania', komponent: 'src/components/Reports/Management/ReportingAutomationWorkspace.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  'governed-context': { nazwa: 'Kontekst zarządzany', komponent: 'src/components/Organization/GovernedContextWorkspace.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  'chat-artifact': { nazwa: 'Artefakt czatu', komponent: 'src/components/AIChat/Artifacts/ArtifactViewer.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
+  'finance-statement-pack': { nazwa: 'Pakiet sprawozdań finansowych', komponent: 'src/components/Finance/statementPackWorkspaceV2/StatementPackWorkspaceV2.tsx', klasa: 'L', paragraf: 'DEC-440', statusMigracji: 'przed' },
+  'finance-analysis': { nazwa: 'Analiza finansowa', komponent: 'src/components/Finance/Analysis/AnalysisWorkspace.tsx', klasa: 'L', paragraf: 'DEC-440', statusMigracji: 'przed' },
+  'execution-report': { nazwa: 'Raport realizacji', komponent: 'src/components/Execution/ExecutionReportDocument.tsx', klasa: 'L', paragraf: 'DEC-441', statusMigracji: 'przed' },
+  'execution-work-doc': { nazwa: 'Element pracy realizacji', komponent: 'src/components/Execution/ExecutionWorkSurface.tsx', klasa: 'L', paragraf: 'DEC-441', statusMigracji: 'przed' },
 };
 
 /** Wszystkie klucze rejestru — do iteracji w testach i skryptach. */

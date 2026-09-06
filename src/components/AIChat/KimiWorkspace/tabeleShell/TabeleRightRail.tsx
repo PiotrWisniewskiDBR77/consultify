@@ -61,7 +61,6 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { isArtifactRightRailEnabled } from '@/utils/artifactRightRailFlag';
 
 export type TabeleRightRailToolId =
   | 'artefakt'
@@ -172,7 +171,7 @@ export function buildTabeleRightRailTools(args: {
     { id: 'analytics', label: L.analytics, icon: Activity },
   ];
 
-  if (artifact && isArtifactRightRailEnabled()) {
+  if (artifact) {
     tools.unshift({
       id: 'artefakt',
       label: artifactLabel ?? (artifact.isPolish ? 'Artefakt' : 'Artifact'),

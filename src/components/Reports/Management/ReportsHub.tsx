@@ -29,7 +29,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '../../../hooks/useOpenChatWithContext';
 import { Api } from '../../../services/api';
@@ -147,6 +147,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   // B9.1: Chat about report
   const openChatWithContext = useOpenChatWithContext();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { reportId: reportIdParam } = useParams<{ reportId?: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   // State
@@ -576,11 +578,14 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
           return [...prev, doc];
         });
         setActiveDocumentId(report.id);
+        if (reportIdParam !== report.id) {
+          navigate(`/reports/management/${encodeURIComponent(report.id)}`);
+        }
       }
     } catch (error) {
       toast.error(t('reports.toast.loadReportError', 'Nie udało się załadować raportu'));
     }
-  }, []);
+  }, [navigate, reportIdParam, setActiveDocumentId, setOpenDocuments, t]);
 
   const handleDownloadPDF = useCallback(async (reportId: string) => {
     try {
@@ -645,10 +650,15 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
     setCurrentReport(null);
-  }, []);
+    navigate('/reports/management');
+  }, [navigate, setActiveDocumentId]);
 
   useEffect(() => {
     if (!hydrated) return;
+    if (reportIdParam) {
+      void openReportById(reportIdParam);
+      return;
+    }
     const docId = String(searchParams.get('docId') || '').trim();
     if (!docId) return;
     void openReportById(docId).finally(() => {
@@ -656,7 +666,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
       next.delete('docId');
       setSearchParams(next, { replace: true });
     });
-  }, [hydrated, openReportById, searchParams, setSearchParams]);
+  }, [hydrated, openReportById, reportIdParam, searchParams, setSearchParams]);
 
   const handleRemoveFilter = useCallback((id: string) => {
     setActiveFilters((prev) => prev.filter((f) => f.id !== id));

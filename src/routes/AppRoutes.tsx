@@ -2669,6 +2669,23 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route
+          path={`${ROUTES.REPORTS.MANAGEMENT}/:reportId`}
+          element={
+            <MainLayout
+              breadcrumbs={breadcrumbs || [t('sidebar.reports', 'Reports'), t('sidebar.reportsManagement', 'Management Reports')]}
+              noPadding
+            >
+              <ProductionModuleGate enabled={!hideNonCoreModulesOnPublicProduction} moduleName="Management Reports">
+                <RouteErrorBoundary>
+                  <Suspense fallback={<LoadingScreen message="Loading reports..." />}>
+                    <ManagementReportsHub />
+                  </Suspense>
+                </RouteErrorBoundary>
+              </ProductionModuleGate>
+            </MainLayout>
+          }
+        />
         {/*
           /kpi-okr is a permanent alias for /benefits (Results). It redirects
           directly rather than mounting a view, so the router manifest no longer

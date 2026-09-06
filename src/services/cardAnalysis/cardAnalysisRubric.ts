@@ -83,6 +83,22 @@ export interface AnalysisCriterion {
   failsWhen: Bilingual;
 }
 
+const STRUCTURAL_COMPLETENESS: AnalysisCriterion[] = [
+  {
+    id: 'structural-completeness',
+    pl: 'kompletność strukturalna',
+    en: 'structural completeness',
+    definition: {
+      pl: 'Treść zawiera wszystkie sekcje wymagane przez kontrakt tego typu artefaktu, a każda teza ma wskazane źródło lub jawne założenie.',
+      en: 'The content contains every section required by this artifact type contract, and every claim identifies a source or an explicit assumption.',
+    },
+    failsWhen: {
+      pl: 'Brakuje wymaganej sekcji, źródła albo jawnego oznaczenia założenia.',
+      en: 'A required section, source, or explicit assumption marker is missing.',
+    },
+  },
+];
+
 /**
  * Kryteria oceny. Kolejność = kolejność z kontraktu (właściciel czyta je jako lista).
  * Zmiana OSI (`pl`/`en`) = zmiana kontraktu, nie refactor. Zmiana `definition`
@@ -90,6 +106,27 @@ export interface AnalysisCriterion {
  * bo bezpośrednio przesuwa liczbę zgłaszanych braków.
  */
 export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriterion[]> = {
+  'kpi-scorecard': STRUCTURAL_COMPLETENESS,
+  'kpi-deviation': STRUCTURAL_COMPLETENESS,
+  'okr-report': STRUCTURAL_COMPLETENESS,
+  'okr-set-tool': STRUCTURAL_COMPLETENESS,
+  'roi-case-tool': STRUCTURAL_COMPLETENESS,
+  document: STRUCTURAL_COMPLETENESS,
+  sheet: STRUCTURAL_COMPLETENESS,
+  presentation: STRUCTURAL_COMPLETENESS,
+  template: STRUCTURAL_COMPLETENESS,
+  'template-architect-doc': STRUCTURAL_COMPLETENESS,
+  'template-architect-deck': STRUCTURAL_COMPLETENESS,
+  'vault-document': STRUCTURAL_COMPLETENESS,
+  'report-builder': STRUCTURAL_COMPLETENESS,
+  'management-report': STRUCTURAL_COMPLETENESS,
+  'reporting-automation': STRUCTURAL_COMPLETENESS,
+  'governed-context': STRUCTURAL_COMPLETENESS,
+  'chat-artifact': STRUCTURAL_COMPLETENESS,
+  'finance-statement-pack': STRUCTURAL_COMPLETENESS,
+  'finance-analysis': STRUCTURAL_COMPLETENESS,
+  'execution-report': STRUCTURAL_COMPLETENESS,
+  'execution-work-doc': STRUCTURAL_COMPLETENESS,
   action: [],
   plan: [],
   capacity_analysis: [],
@@ -1017,6 +1054,27 @@ export const SEVERITY_ANCHORS: readonly SeverityAnchor[] = [
 
 /** Deskryptory kanoniczne per artefakt. Klucz = `KartaNKey`. */
 const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKarta[]> = {
+  'kpi-scorecard': [],
+  'kpi-deviation': [],
+  'okr-report': [],
+  'okr-set-tool': [],
+  'roi-case-tool': [],
+  document: [],
+  sheet: [],
+  presentation: [],
+  template: [],
+  'template-architect-doc': [],
+  'template-architect-deck': [],
+  'vault-document': [],
+  'report-builder': [],
+  'management-report': [],
+  'reporting-automation': [],
+  'governed-context': [],
+  'chat-artifact': [],
+  'finance-statement-pack': [],
+  'finance-analysis': [],
+  'execution-report': [],
+  'execution-work-doc': [],
   action: [],
   plan: [],
   capacity_analysis: [],

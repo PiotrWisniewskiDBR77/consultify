@@ -26,6 +26,27 @@ const OCZEKIWANE_W_REJESTRZE = [
   'roi_case',
   'plan',
   'capacity_analysis',
+  'kpi-scorecard',
+  'kpi-deviation',
+  'okr-report',
+  'okr-set-tool',
+  'roi-case-tool',
+  'document',
+  'sheet',
+  'presentation',
+  'template',
+  'template-architect-doc',
+  'template-architect-deck',
+  'vault-document',
+  'report-builder',
+  'management-report',
+  'reporting-automation',
+  'governed-context',
+  'chat-artifact',
+  'finance-statement-pack',
+  'finance-analysis',
+  'execution-report',
+  'execution-work-doc',
 ] as const;
 
 const JAWNE_WYJATKI = {
@@ -34,18 +55,16 @@ const JAWNE_WYJATKI = {
   'audit-criterion': 'CriterionWorkspaceV2 jest rekordem audytu poza rejestrem',
   'audit-report': 'AuditReportDocumentView jest dokumentem raportu poza rejestrem',
   'assessment-report': 'AssessmentReportContractView ma osobny kontrakt raportu',
-  presentation: 'DeckBuilder jest dokumentem prezentacji poza rejestrem',
   meeting: 'MeetingObjectPage jest rekordem spotkania poza rejestrem',
-  'vault-document': 'VaultDocumentPanel jest dokumentem sejfu poza rejestrem',
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
-  it('zawiera wszystkie 14 kart wskazanych przez KartaNKey (w tym osobny tool-document DEC-439)', () => {
+  it('zawiera wszystkie 35 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
 
-  it('ma jawny, niepusty powód dla każdej z 8 kart poza rejestrem', () => {
-    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(8);
+  it('ma jawny, niepusty powód dla każdej z 6 kart poza rejestrem', () => {
+    expect(Object.keys(JAWNE_WYJATKI)).toHaveLength(6);
     for (const powod of Object.values(JAWNE_WYJATKI)) expect(powod.trim()).not.toBe('');
   });
 
@@ -55,6 +74,15 @@ describe('P10 — kompletność rejestru kart N', () => {
     // rejestru (bilans zerowy), a karta analizy ROI (`roi_case`) doszła jako
     // dwudziesta pozycja inwentarza — wcześniej nie było jej nigdzie;
     // 20 → 22 (DEC-421, P11): karty `plan` i `capacity_analysis`.
-    expect(pokryte.size).toBe(22);
+    // 22 → 41 (scalenie P13-B×P13-C): P13-B przeniósł `tool-document` z wyjątków
+    // do rejestru (9→8 wyjątków, DEC-439); P13-C, nieświadom tej zmiany, osobno
+    // przeniósł `presentation` i `vault-document` z wyjątków do rejestru i dodał
+    // 19 nowych kart Wyników/Materiałów/Finansów/Realizacji (DEC-432–441) — u niego
+    // rejestr 13→34, wyjątki 9→7 (wciąż z `tool-document` jako wyjątkiem, bo nie
+    // widział pracy B). Scalenie sumuje oba rejestry (13 wspólnych + tool-document
+    // z B + 21 nowych z C = 35) i usuwa z wyjątków WSZYSTKO, co po sumowaniu trafiło
+    // do rejestru po którejkolwiek stronie (`tool-document`, `presentation`,
+    // `vault-document`) — zostaje 6 prawdziwych wyjątków, więc 35 + 6 = 41.
+    expect(pokryte.size).toBe(41);
   });
 });
