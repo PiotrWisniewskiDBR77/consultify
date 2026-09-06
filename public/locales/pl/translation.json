@@ -45351,5 +45351,29 @@
     "narrowFocusBtn": "Zawęź uwagę",
     "goDeeper": "Zgłęb temat",
     "continueDeeper": "Przejdź do pełnego raportu"
+  },
+  "karta": {
+    "pracujZAI": {
+      "przycisk": "Pracuj z AI",
+      "menu": "Pracuj z AI — lista działań",
+      "analizuj": "Analizuj",
+      "analizujTytul": "Ocena karty: co jest wypełnione, czego brakuje, co jest słabe. Nie zmienia treści.",
+      "uzupelnijSekcje": "Uzupełnij tę sekcję",
+      "uzupelnijDokument": "Uzupełnij cały dokument",
+      "brakGeneratora": "Brak generatora dla tej karty",
+      "brakAktywnejSekcji": "Najpierw wybierz sekcję",
+      "tylkoOdczyt": "Tylko do odczytu",
+      "propozycja": "Propozycja AI",
+      "zbieranie": "AI przygotowuje propozycję…",
+      "zatwierdz": "Zatwierdź",
+      "odrzuc": "Odrzuć",
+      "zamknij": "Zamknij",
+      "brakPol": "Nie ma tu pustych pól do uzupełnienia — wszystko jest już wypełnione.",
+      "pominiete": "Pominięto (wypełnione przez człowieka)",
+      "nieudane": "Nie udało się wygenerować",
+      "nicNiewybrane": "Nie wybrano żadnej propozycji.",
+      "zgodaTytul": "Uruchomić AI?",
+      "postep": "Pole {{i}} z {{n}}"
+    }
   }
 }

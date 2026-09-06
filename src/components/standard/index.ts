@@ -6,6 +6,20 @@
  * własny chrome / własne tabele / własne preview = błąd implementacji.
  */
 export { ActionCard, type ActionCardProps } from './ActionCard';
+export { PracujZAI } from './PracujZAI';
+export type {
+  PoleDoUzupelnienia,
+  PracujZAIProps,
+  PracujZAIStan,
+  ZakresUzupelnienia,
+  ZrodloPol,
+  ZrodloUzupelnienia,
+} from './PracujZAI.types';
+export {
+  KARTA_STICKY_STOS_CLASS,
+  StickyStosKartyN,
+} from './StickyStosKartyN';
+
 export { ActionCardList, type ActionCardListProps } from './ActionCardList';
 export type { ActionCardModel, ActionCardSeverity, ActionCardSourceKind, ActionCardStatus } from './ActionCard.types';
 export {

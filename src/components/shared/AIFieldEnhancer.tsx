@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { generujTrescPola } from '@/services/ai/generujTrescPola';
 import { Api } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -215,66 +216,21 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
     [t, aiFailureReason]
   );
 
+  // Prompt i wywołanie `/ai/refine-text` (tryb `generate`) mieszkały do
+  // 2026-09-06 W TYM MIEJSCU i były osiągalne wyłącznie stąd. DEC-407 (poziom
+  // karty „Pracuj z AI") potrzebuje tego samego generatora, więc kod przeniósł
+  // się bit w bit do `src/services/ai/generujTrescPola.ts`. Zachowanie tego
+  // przycisku jest identyczne: wynik ląduje w PROPOZYCJI, nie w polu (§4.5).
   const handleGenerate = useCallback(async () => {
     setLoading(true);
     setIsOpen(false);
 
     try {
-      const formatInstruction =
-        outputFormat === 'list'
-          ? [
-              `Format: return 5–8 distinct items.`,
-              `- ONE item per line`,
-              `- No bullets, no numbering, no markdown`,
-              `- No empty lines`,
-            ].join('\n')
-          : outputFormat === 'short'
-            ? [
-                `Format: return ONE concise line (max ~12–16 words).`,
-                `- No quotes, no markdown, no prefixes.`,
-              ].join('\n')
-            : `Length: 2–4 sentences. Style: concrete, delivery-oriented, executive/PMO.`;
-
-      const systemInstruction = [
-        `You are a senior PMO consultant and an expert business writer.`,
-        artifactContext.title
-          ? `Generate professional content for the field "${sectionLabel}" in the context of the artifact "${artifactContext.title}".`
-          : `Generate professional content for the field "${sectionLabel}" of a "${artifactContext.type}" artifact.`,
-        `Rules:`,
-        `- Output language MUST be ${targetLanguageName}. If the input/context is in another language, translate as needed.`,
-        `- Do NOT invent new facts, numbers, dates, systems, or KPI values that are not present in the provided context. If information is missing, keep it generic and/or explicitly mark what needs confirmation in a single short sentence.`,
-        `- Return ONLY the final field text. No commentary, no quotes, no prefixes, no markdown.`,
-        formatInstruction,
-      ].join('\n');
-
-      // Błąd transportu NIE jest tu połykany — powód z backendu musi dojść
-      // do użytkownika (kiedyś `catch { generatedText = '' }` gubił kod błędu).
-      const aiRes = await Api.post('/ai/refine-text', {
-        // Do promptu idą TYLKO pola, które faktycznie mamy. Wcześniejsze
-        // `|| 'draft'` / `|| 'medium'` wmawiały modelowi status i priorytet,
-        // których karta nie ma — to ta sama choroba co atrapa w wyniku.
-        text: [
-          `[GENERATE FROM SCRATCH]`,
-          `Field: ${sectionLabel}`,
-          artifactContext.title
-            ? `Artifact: ${artifactContext.title} (${artifactContext.type})`
-            : `Artifact type: ${artifactContext.type}`,
-          artifactContext.status ? `Status: ${artifactContext.status}` : '',
-          artifactContext.priority ? `Priority: ${artifactContext.priority}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n'),
-        mode: 'generate',
-        systemInstruction,
-        fieldLabel: sectionLabel,
-        artifactContext,
-        language: aiLanguage,
+      const generatedText = await generujTrescPola({
+        etykietaPola: sectionLabel,
+        kontekstArtefaktu: artifactContext,
+        format: outputFormat,
       });
-      const generatedText = String(aiRes?.text || '').trim();
-
-      if (!generatedText) {
-        throw emptyAiResponseError();
-      }
 
       // §4.5: propozycja, nie nadpisanie — pole zmieni się dopiero po „Zastosuj".
       setProposal(generatedText);

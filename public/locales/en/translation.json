@@ -42686,5 +42686,29 @@
     "narrowFocusBtn": "Narrow focus",
     "goDeeper": "Go deeper",
     "continueDeeper": "Continue to full report"
+  },
+  "karta": {
+    "pracujZAI": {
+      "przycisk": "Work with AI",
+      "menu": "Work with AI — actions",
+      "analizuj": "Analyze",
+      "analizujTytul": "Card review: what is filled in, what is missing, what is weak. Changes nothing.",
+      "uzupelnijSekcje": "Fill in this section",
+      "uzupelnijDokument": "Fill in the whole document",
+      "brakGeneratora": "No generator for this card",
+      "brakAktywnejSekcji": "Select a section first",
+      "tylkoOdczyt": "Read-only",
+      "propozycja": "AI proposal",
+      "zbieranie": "AI is preparing a proposal…",
+      "zatwierdz": "Approve",
+      "odrzuc": "Discard",
+      "zamknij": "Close",
+      "brakPol": "There are no empty fields to fill in here — everything is already filled.",
+      "pominiete": "Skipped (filled in by a human)",
+      "nieudane": "Could not generate",
+      "nicNiewybrane": "No proposal selected.",
+      "zgodaTytul": "Run AI?",
+      "postep": "Field {{i}} of {{n}}"
+    }
   }
 }
