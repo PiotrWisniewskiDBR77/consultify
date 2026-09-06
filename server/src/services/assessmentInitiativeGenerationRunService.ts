@@ -17,6 +17,7 @@ import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import AssessmentInitiativeService from './assessmentInitiativeService.js';
 import { upsertActiveAssessmentInitiativeBatch } from './assessment/AssessmentWorkbenchService.js';
+import { executeInitiativeTransition } from './initiative/initiativeTransitionService.js';
 
 export type InitiativeGenerationRunMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
 export type InitiativeGenerationRunStatus =
@@ -421,47 +422,38 @@ export class AssessmentInitiativeGenerationRunService {
       throw new Error('Run not found');
     }
 
-    const role = String(params.actorRole || '').toUpperCase();
-    const updatedAt = nowIso();
-
-    // Consultant can only submit initiatives they created (created_by)
-    if (role === 'CONSULTANT') {
-      await queryHelpers.queryRun(
-        `UPDATE initiatives
-         SET status = 'PENDING_REVIEW', updated_at = ?
-         WHERE id IN (
-           SELECT i.id
-           FROM assessment_initiative_links l
-           JOIN assessment_initiative_batches b ON b.id = l.batch_id
-           JOIN initiatives i ON i.id = l.initiative_id
-           WHERE b.run_id = ? AND i.organization_id = ? AND i.status = 'DRAFT' AND i.created_by = ?
-         )`,
-        [updatedAt, params.runId, params.organizationId, params.actorId]
-      );
-    } else {
-      await queryHelpers.queryRun(
-        `UPDATE initiatives
-         SET status = 'PENDING_REVIEW', updated_at = ?
-         WHERE id IN (
-           SELECT i.id
-           FROM assessment_initiative_links l
-           JOIN assessment_initiative_batches b ON b.id = l.batch_id
-           JOIN initiatives i ON i.id = l.initiative_id
-           WHERE b.run_id = ? AND i.organization_id = ? AND i.status = 'DRAFT'
-         )`,
-        [updatedAt, params.runId, params.organizationId]
-      );
-    }
-
-    const countRow = await queryHelpers.queryOne<any>(
-      `SELECT COUNT(*) as c
+    const drafts = await queryHelpers.queryAll<{ id: string }>(
+      `SELECT i.id
        FROM initiatives i
        JOIN assessment_initiative_links l ON l.initiative_id = i.id
        JOIN assessment_initiative_batches b ON b.id = l.batch_id
-       WHERE b.run_id = ? AND i.organization_id = ? AND i.status = 'PENDING_REVIEW'`,
-      [params.runId, params.organizationId]
+       WHERE b.run_id = ? AND i.organization_id = ? AND i.status = 'DRAFT'
+         AND i.created_by = ?
+       ORDER BY i.id`,
+      [params.runId, params.organizationId, params.actorId]
     );
-    return { updated: Number(countRow?.c || 0) };
+    let updated = 0;
+    for (const draft of drafts) {
+      const result = await executeInitiativeTransition({
+        orgId: params.organizationId,
+        initiativeId: String(draft.id),
+        actorId: params.actorId,
+        actorRole: params.actorRole,
+        nextStatusInput: 'PENDING_APPROVAL',
+        expectedCurrentStatus: 'DRAFT',
+      });
+      if (!result.ok) {
+        const error = new Error(String(result.body.error || 'Initiative transition rejected')) as Error & {
+          statusCode?: number;
+          code?: unknown;
+        };
+        error.statusCode = result.statusCode;
+        error.code = result.body.code ?? result.body.rule;
+        throw error;
+      }
+      updated += 1;
+    }
+    return { updated };
   }
 
   /**
