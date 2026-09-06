@@ -1,0 +1,14 @@
+{
+  "chatStreamRequests": [
+    {
+      "url": "http://localhost:3121/api/ai/chat/stream",
+      "postData": "{\"message\":\"Odpowiedz jednym krótkim zdaniem: ile to 2+2?\",\"history\":[],\"context\":{\"focusMode\":\"all\",\"attachments\":[],\"failedAttachments\":[],\"attachmentDocIds\":[],\"attachmentFileNames\":[],\"hasAttachments\":false,\"projectId\":null,\"screenContext\":{\"screenId\":null,\"currentScreen\":null,\"selectedObjectId\":null,\"selectedObjectType\":null,\"route\":{\"pathname\":\"/chat\",\"search\":\"\",\"hash\":\"\"},\"page\":null},\"workspaceContext\":null,\"canvasContextPacket\":null,\"canvasMemorySnapshot\":null,\"canvasContext\":null,\"con"
+    },
+    {
+      "url": "http://localhost:3121/api/ai/chat/stream",
+      "postData": "{\"message\":\"Odpowiedz jednym krótkim zdaniem: ile to 2+2?\",\"history\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Odpowiedz jednym krótkim zdaniem: ile to 2+2?\"}]},{\"role\":\"model\",\"parts\":[{\"text\":\"2+2 wynosi 4.\"}]}],\"context\":{\"focusMode\":\"all\",\"attachments\":[],\"failedAttachments\":[],\"attachmentDocIds\":[],\"attachmentFileNames\":[],\"hasAttachments\":false,\"projectId\":null,\"screenContext\":{\"screenId\":null,\"currentScreen\":null,\"selectedObjectId\":null,\"selectedObjectType\":null,\"route\":{\"pathname\":\"/chat/7830b36"
+    }
+  ],
+  "consoleErrors": [],
+  "regenVisibleWithoutExpand": true
+}

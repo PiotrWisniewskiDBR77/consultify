@@ -2105,6 +2105,23 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           >
             <Volume2 size={12} />
           </button>
+          {/* [ODMROZENIE 13_CHAT DEC-397] Ponów odpowiedź — MVP 1.1-E: właściciel
+              zgłosił 06.09 że nie ma jak ponownie zaprosić Teresę do przemyślenia
+              krótkiej odpowiedzi, bo ten przycisk siedział wyłącznie w rozwijanym
+              `fieldset` niżej (za `showCompactActions`, domyślnie false — patrz
+              stan na górze komponentu). Zawsze widoczny, bez rozwijania; bez
+              poprzedzającej wiadomości użytkownika jest uczciwie disabled zamiast
+              znikać (ta sama zasada co reszta rzędu). */}
+          <button
+            onClick={handleRegenerateMessage}
+            disabled={isDisabled || msg.isStreaming || !canRegenerate}
+            data-testid="message-action-regenerate"
+            className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            title={t('chat.actions.regenerate', 'Ponów odpowiedź')}
+            aria-label={t('chat.actions.regenerate', 'Ponów odpowiedź')}
+          >
+            <RefreshCw size={12} />
+          </button>
           {/* More (feedback / save / sources) */}
           <button
             onClick={() =>
@@ -2148,18 +2165,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   : null
               }
             />
-            {/* Regenerate remains mounted; without a preceding user turn it is
-                honestly disabled instead of changing the action-row geometry. */}
-            <button
-              onClick={handleRegenerateMessage}
-              disabled={isDisabled || msg.isStreaming || !canRegenerate}
-              data-testid="message-action-regenerate"
-              className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-              title={t('chat.actions.regenerate', 'Regenerate')}
-              aria-label={t('chat.actions.regenerate', 'Regenerate')}
-            >
-              <RefreshCw size={12} />
-            </button>
             {/* M01-010 — Continue: sends a continuation instruction on the
                     same `handleSendMessage` path. */}
             <button
