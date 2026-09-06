@@ -1,0 +1,12 @@
+    373|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 17 passed (18)
+      Tests  1 failed | 92 passed (93)
+   Start at  16:52:35
+   Duration  3.77s (transform 8.87s, setup 2.81s, import 15.49s, tests 4.42s, environment 11.20s)
+
+JSON report written to /private/tmp/wt-11r4/junit.xml
+JUNIT report written to /private/tmp/wt-11r4/junit.xml

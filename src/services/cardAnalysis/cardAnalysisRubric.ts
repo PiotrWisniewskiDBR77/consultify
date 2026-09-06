@@ -622,6 +622,177 @@ export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriteri
   // Initiative). Gdyby przycisk kiedyś powstał — najpierw decyzja właściciela
   // o osiach, potem wpis tutaj.
   interview: [],
+
+  // ── [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] Trzy karty modułu Wyniki ─────
+  // Osie NIE są wymyślone tutaj: pochodzą z `docs/modules/07_rezultaty/
+  // SSOT_WYNIKI_KPI_OKR_ROI.md` (§2 kontrakt miernika, §3 cel OKR, §4 analiza
+  // ROI) — tego samego dokumentu, z którego wzięte są sekcje tych kart.
+  // Progi (`definition`/`failsWhen`) są sprawdzalne przez osobę trzecią bez
+  // pytania autora — to warunek z nagłówka `AnalysisCriterion`.
+  metric: [
+    {
+      id: 'metric-definition',
+      pl: 'jednoznaczność definicji',
+      en: 'unambiguity of the definition',
+      definition: {
+        pl: 'Definicja mówi, CO jest mierzone, na jakiej populacji i w jakim okresie, tak że dwie osoby policzą tę samą liczbę.',
+        en: 'The definition states WHAT is measured, on which population and over which period, so that two people compute the same number.',
+      },
+      failsWhen: {
+        pl: 'Definicja to sama nazwa zjawiska („terminowość", „jakość") bez populacji i okresu, albo dopuszcza dwa różne liczenia.',
+        en: 'The definition is just the name of the phenomenon ("timeliness", "quality") with no population or period, or admits two different counts.',
+      },
+    },
+    {
+      id: 'metric-formula',
+      pl: 'wykonalność formuły',
+      en: 'feasibility of the formula',
+      definition: {
+        pl: 'Formuła podaje licznik, mianownik, źródło danych i moment odczytu; da się ją wykonać na istniejących danych.',
+        en: 'The formula gives numerator, denominator, data source and read moment; it can be executed on existing data.',
+      },
+      failsWhen: {
+        pl: 'Formuła jest opisowa („liczone z systemu ERP") bez wskazania pól i momentu odczytu, albo brakuje mianownika przy wskaźniku procentowym.',
+        en: 'The formula is descriptive ("taken from the ERP") with no fields or read moment, or a percentage metric has no denominator.',
+      },
+    },
+    {
+      id: 'metric-target',
+      pl: 'sensowność progu',
+      en: 'soundness of the target',
+      definition: {
+        pl: 'Próg (cel, ostrzeżenie, wartość krytyczna) ma uzasadnienie: punkt odniesienia, wymóg klienta albo decyzję — nie samą liczbę.',
+        en: 'The target (goal, warning, critical value) is justified by a baseline, a customer requirement or a decision — not a bare number.',
+      },
+      failsWhen: {
+        pl: 'Wartość progu stoi bez źródła, albo geometria celu przeczy kierunkowi zjawiska (próg „maks." dla miernika, który ma rosnąć).',
+        en: 'The threshold value stands with no source, or the target geometry contradicts the phenomenon (a "max" threshold for a metric that should grow).',
+      },
+    },
+    {
+      id: 'metric-response',
+      pl: 'reakcja na odchylenie',
+      en: 'response to a deviation',
+      definition: {
+        pl: 'Napisane jest, KTO reaguje i W JAKIM CZASIE, gdy miernik wyjdzie poza próg, oraz co jest pierwszym krokiem.',
+        en: 'It states WHO reacts and WITHIN WHAT TIME when the metric breaches the threshold, and what the first step is.',
+      },
+      failsWhen: {
+        pl: 'Odchylenie „będzie omówione na przeglądzie" bez osoby i terminu, albo brak jakiejkolwiek reguły reakcji.',
+        en: 'A deviation "will be discussed at the review" with no person and no deadline, or no response rule at all.',
+      },
+    },
+  ],
+
+  objective: [
+    {
+      id: 'objective-outcome',
+      pl: 'cel jako rezultat, nie zadanie',
+      en: 'objective as an outcome, not a task',
+      definition: {
+        pl: 'Cel opisuje ZMIANĘ STANU organizacji, którą widać po zakończeniu, a nie listę czynności do wykonania.',
+        en: 'The objective describes a CHANGE OF STATE visible when it is done, not a list of activities to perform.',
+      },
+      failsWhen: {
+        pl: 'Cel zaczyna się od czasownika czynnościowego („wdrożyć", „przeprowadzić") i jest spełniony przez samo wykonanie prac.',
+        en: 'The objective starts with an activity verb ("implement", "run") and is satisfied by merely doing the work.',
+      },
+    },
+    {
+      id: 'objective-key-results',
+      pl: 'mierzalność kluczowych rezultatów',
+      en: 'measurability of key results',
+      definition: {
+        pl: 'Każdy kluczowy rezultat ma wartość startową, wartość docelową i źródło odczytu; da się bez dyskusji powiedzieć, czy jest osiągnięty.',
+        en: 'Every key result has a start value, a target value and a read source; whether it is met can be stated without debate.',
+      },
+      failsWhen: {
+        pl: 'Kluczowy rezultat bez wartości startowej albo bez źródła odczytu; „poprawa satysfakcji" bez skali i pomiaru.',
+        en: 'A key result with no start value or no read source; "improved satisfaction" with no scale and no measurement.',
+      },
+    },
+    {
+      id: 'objective-ambition',
+      pl: 'zgodność ambicji z poziomem celu',
+      en: 'ambition matching the target level',
+      definition: {
+        pl: 'Zadeklarowana ambicja (zobowiązanie / aspiracja) zgadza się z rozpiętością między wartością startową a docelową.',
+        en: 'The declared ambition (committed / aspirational) matches the gap between the start and the target value.',
+      },
+      failsWhen: {
+        pl: 'Cel „aspiracyjny" z progiem osiąganym bez zmiany sposobu pracy, albo „zobowiązanie" z progiem, którego nikt nie umie uzasadnić.',
+        en: 'An "aspirational" objective whose target is reached without changing how work is done, or a "committed" one whose target nobody can justify.',
+      },
+    },
+    {
+      id: 'objective-reflection',
+      pl: 'uczciwość refleksji z przeglądu',
+      en: 'honesty of the review reflection',
+      definition: {
+        pl: 'Refleksja mówi, co NIE wyszło i dlaczego, oraz co zmienia się w następnym cyklu — nie tylko relacjonuje postęp.',
+        en: 'The reflection says what did NOT work and why, and what changes in the next cycle — not merely reporting progress.',
+      },
+      failsWhen: {
+        pl: 'Refleksja to podsumowanie osiągnięć bez ani jednej przyczyny niepowodzenia i bez wniosku na następny cykl.',
+        en: 'The reflection is a list of achievements with no cause of failure and no conclusion for the next cycle.',
+      },
+    },
+  ],
+
+  roi_case: [
+    {
+      id: 'roi-baseline',
+      pl: 'punkt odniesienia',
+      en: 'baseline',
+      definition: {
+        pl: 'Podany jest stan „bez inwestycji": zmierzona wartość, jednostka, moment pomiaru i źródło danych.',
+        en: 'The "do nothing" state is given: measured value, unit, measurement moment and data source.',
+      },
+      failsWhen: {
+        pl: 'Punkt odniesienia jest oszacowaniem bez źródła, albo w ogóle go nie ma i korzyść liczy się od zera.',
+        en: 'The baseline is an estimate with no source, or is missing entirely and the benefit is counted from zero.',
+      },
+    },
+    {
+      id: 'roi-assumptions',
+      pl: 'jawność założeń',
+      en: 'explicitness of assumptions',
+      definition: {
+        pl: 'Każde założenie ma wartość, źródło i osobę, która za nie odpowiada; wiadomo, które są wrażliwe na wynik.',
+        en: 'Every assumption has a value, a source and an owner; it is clear which ones the result is sensitive to.',
+      },
+      failsWhen: {
+        pl: 'Założenie zapisane samą liczbą („20% oszczędności") bez źródła i bez wskazania, kto je przyjął.',
+        en: 'An assumption written as a bare number ("20% savings") with no source and no indication of who accepted it.',
+      },
+    },
+    {
+      id: 'roi-recommendation',
+      pl: 'rekomendacja z warunkiem',
+      en: 'recommendation with a condition',
+      definition: {
+        pl: 'Rekomendacja mówi WPROST: iść / nie iść / iść pod warunkiem — a przy warunku nazywa, co musi się wydarzyć i kiedy to sprawdzimy.',
+        en: 'The recommendation states plainly: go / no-go / conditional go — and for a condition it names what must happen and when it will be checked.',
+      },
+      failsWhen: {
+        pl: 'Rekomendacja to streszczenie liczb bez werdyktu, albo „warunkowo tak" bez nazwanego warunku i terminu weryfikacji.',
+        en: 'The recommendation summarises numbers with no verdict, or says "conditional yes" with no named condition and no verification date.',
+      },
+    },
+    {
+      id: 'roi-realization',
+      pl: 'rozliczenie po wdrożeniu',
+      en: 'post-implementation reckoning',
+      definition: {
+        pl: 'Napisane jest, kto i kiedy porówna prognozę z wykonaniem, oraz co się stanie, gdy korzyść nie wystąpi.',
+        en: 'It states who compares forecast with actuals and when, and what happens if the benefit does not materialise.',
+      },
+      failsWhen: {
+        pl: 'Brak terminu przeglądu po wdrożeniu, albo wnioski z przeglądu bez konsekwencji dla dalszych decyzji.',
+        en: 'No post-implementation review date, or review conclusions with no consequence for further decisions.',
+      },
+    },
+  ],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -835,6 +1006,15 @@ const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKart
   initiative: INITIATIVE_CANONICAL_CARDS,
   tool: TOOL_CARDS,
   interview: [],
+  // Trzy karty Wyników NIE mają deskryptorów w kanonie kart
+  // (`_KONTRAKT_KARTY_SSOT`) — kanon opisuje karty Zadania/Decyzji/Wniosku/
+  // Inicjatywy/Narzędzia, a sekcje KPI/OKR/ROI pochodzą z osobnego SSOT
+  // modułu Wyniki. Pusta lista jest UCZCIWA: `buildCardStandard` zejdzie
+  // wtedy na etykietę sekcji + kryteria typu artefaktu (`ARTIFACT_CRITERIA`
+  // wyżej), zamiast udawać standard, którego kanon nie deklaruje.
+  metric: [],
+  objective: [],
+  roi_case: [],
 };
 
 /**

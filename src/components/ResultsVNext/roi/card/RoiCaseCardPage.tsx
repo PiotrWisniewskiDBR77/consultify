@@ -49,6 +49,14 @@ import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { SectionsManagerMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
+import { useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import type { ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
 import { EmptyState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives';
@@ -57,7 +65,19 @@ import { ROUTES } from '@/routes/routeConfig';
 
 import { ResultsVNextForbiddenState } from '../../ResultsVNextForbiddenState';
 import { isResultsVNextFlagEnabled } from '../../resultsVNextFeatureFlags';
+import {
+  KartaWynikowChrome,
+  PasekZapisuAI,
+  useZapisPolAI,
+  zbudujSpecSekcji,
+} from '../../shared/kartaWynikow';
 import type { ResultsVNextForbiddenDetail } from '../../types';
+import { newRoiIdempotencyKey } from '../roiApi';
+import {
+  getRoiPostInvestmentReview,
+  updateRoiPostInvestmentReviewDraft,
+  type UpdateRoiPirDraftInput,
+} from '../roiCaseFullToolApi';
 import { getRoiCaseCard, type RoiCaseCard } from './roiCardApi';
 import {
   BRAK,
@@ -178,7 +198,7 @@ export const RoiCaseCardPage: React.FC = () => {
     ];
   }, [card, ownerName, isPolish, t]);
 
-  const sections: NModeSection[] = useMemo(() => {
+  const wszystkieSekcje: NModeSection[] = useMemo(() => {
     if (!card) return [];
     return [
       {
@@ -305,6 +325,248 @@ export const RoiCaseCardPage: React.FC = () => {
     ];
   }, [card, propertyRows, t, navigate]);
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] KARTA N ANALIZY ROI — Menu 5,
+  // „Pracuj z AI", przyklejone nagłówki.
+  //
+  // SŁOWA WŁAŚCICIELA (06.09.2026, otwarta analiza ROI): „narzędzie naprawdę
+  // świetne; jedyny brak: ustabilizować menu 1–3 i formułę Pracuj z AI".
+  //
+  // SSOT: docs/ssot/STEROWANIE_KART_N_I_AI.md (zasady 2, 2b, 3).
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * ZASADA 2b — prawo edycji tej karty. Karta jest NARRACJĄ do czytania i nie
+   * ma ANI JEDNEGO pola edytowalnego inline; jedyny tekst tej sprawy, do
+   * którego backend przyjmuje zapis, to SZKIC przeglądu po wdrożeniu:
+   * `PATCH .../post-investment-reviews/:pirId` z polami `lessonsLearned`
+   * i `recommendation` (`roiCaseFullToolApi.ts`). Serwer odrzuca ten zapis
+   * kodem `NOT_EDITABLE`, gdy PIR nie jest szkicem (`roiPirCommands.ts:678`).
+   *
+   * Prawem edycji jest więc ISTNIENIE PIR-u w statusie `draft`. Gdy go nie ma,
+   * przełącznik „Edycja | Podgląd" NIE renderuje się, a z „Pracuj z AI"
+   * zostaje samo „Analizuj" — dokładnie tak, jak każe Zasada 2b.
+   */
+  const szkicPir = useMemo(
+    () => card?.pirs?.find((pir) => pir.status === 'draft') ?? null,
+    [card]
+  );
+  const mozeEdytowac = !!szkicPir;
+
+  const [readMode, setReadMode] = useState(true);
+  useEffect(() => {
+    setReadMode(!mozeEdytowac);
+  }, [mozeEdytowac]);
+
+  /**
+   * Pola przeglądu po wdrożeniu, do których backend potrafi zapisać.
+   * LICZB NIE GENERUJEMY: sekcja „Wyliczenia" (NPV, IRR, payback, przepływy)
+   * pochodzi z silnika kalkulacji — model miałby tam zmyślić pomiar, nie
+   * uzupełnić prozę. Ta sekcja dostaje pozycję WYSZARZONĄ.
+   */
+  const POLA_PIR: Record<string, 'lessonsLearned' | 'recommendation'> = useMemo(
+    () => ({ lessonsLearned: 'lessonsLearned', recommendation: 'recommendation' }),
+    []
+  );
+
+  /**
+   * `RoiCardPir` (kształt karty) NIE niesie `rowVersion`, a komenda PATCH
+   * wymaga `expectedVersion` (CAS). Dlatego zapis DOCZYTUJE bieżący PIR
+   * (`GET .../post-investment-reviews/:pirId`) tuż przed wysłaniem — zgadnięta
+   * wersja to gwarantowany konflikt 409, a nie oszczędność zapytania.
+   */
+  const zapiszPolePir = useCallback(
+    async (poleId: string, wartosc: string) => {
+      const klucz = POLA_PIR[poleId];
+      if (!klucz) throw Object.assign(new Error('FIELD_NOT_WRITABLE'), { code: 'FIELD_NOT_WRITABLE' });
+      if (!card || !szkicPir) throw Object.assign(new Error('NO_DRAFT_PIR'), { code: 'NO_DRAFT_PIR' });
+      const biezacy = await getRoiPostInvestmentReview(card.caseId, szkicPir.pirId);
+      if (!biezacy) throw Object.assign(new Error('PIR_NOT_FOUND'), { code: 'PIR_NOT_FOUND' });
+      const patch: UpdateRoiPirDraftInput & { idempotencyKey: string } = {
+        expectedVersion: biezacy.rowVersion,
+        idempotencyKey: newRoiIdempotencyKey(),
+      };
+      if (klucz === 'lessonsLearned') patch.lessonsLearned = wartosc;
+      else patch.recommendation = wartosc;
+      await updateRoiPostInvestmentReviewDraft(card.caseId, szkicPir.pirId, patch);
+      await load();
+    },
+    [POLA_PIR, card, szkicPir, load]
+  );
+
+  const zapisAI = useZapisPolAI(zapiszPolePir);
+
+  const roiPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+      if (!card) return [];
+      if (sekcjaId === 'zalozenia') {
+        return [
+          {
+            id: 'problemStatement',
+            label: t('Problem', 'Problem statement'),
+            value: card.problemStatement ?? '',
+            kind: 'text',
+            // Brak trasy zapisu: `roiApi.ts` ma wyłącznie tworzenie sprawy
+            // i przejścia cyklu życia — żadnego PATCH na narracji sprawy.
+            writable: false,
+          },
+          {
+            id: 'scopeSummary',
+            label: t('Zakres', 'Scope'),
+            value: card.scopeSummary ?? '',
+            kind: 'text',
+            writable: false,
+          },
+          {
+            id: 'baselineSource',
+            label: t('Źródło punktu odniesienia', 'Baseline source'),
+            value: card.baseline?.source ?? '',
+            kind: 'text',
+            writable: false,
+          },
+        ];
+      }
+      if (sekcjaId === 'wyliczenia') {
+        return [
+          {
+            id: 'storedRun',
+            label: t('Zapisany przebieg kalkulacji', 'Stored calculation run'),
+            value: card.storedRun
+              ? `ROI ${card.storedRun.roiPct ?? '—'}%, payback ${card.storedRun.paybackPeriods ?? '—'}`
+              : '',
+            kind: 'text',
+            writable: false,
+          },
+        ];
+      }
+      if (sekcjaId === 'realizacja') {
+        return [
+          {
+            id: 'lessonsLearned',
+            label: t('Wnioski z przeglądu', 'Review learnings'),
+            value: szkicPir?.lessonsLearned ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: t(
+              'Co się potwierdziło, co nie, i co z tego wynika dla następnych analiz.',
+              'What held true, what did not, and what follows for the next analyses.'
+            ),
+          },
+          {
+            id: 'recommendation',
+            label: t('Rekomendacja po wdrożeniu', 'Post-implementation recommendation'),
+            value: szkicPir?.recommendation ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: t(
+              'Werdykt wprost i warunek, pod którym obowiązuje.',
+              'A plain verdict and the condition under which it holds.'
+            ),
+          },
+        ];
+      }
+      return [];
+    },
+    [card, szkicPir, mozeEdytowac, t]
+  );
+
+  /**
+   * Tylko „Realizacja" ma pola tekstowe z drogą zapisu. „Założenia" ich nie
+   * mają (brak trasy PATCH na narracji sprawy — zgłoszone w meldunku),
+   * „Wyliczenia" to liczby z silnika. Obie dostają pozycję wyszarzoną.
+   */
+  const SEKCJE_Z_POLAMI_TEKSTOWYMI = useMemo(() => new Set(['realizacja']), []);
+
+  const roiWritableFieldIds = useMemo(
+    () => (mozeEdytowac ? Object.keys(POLA_PIR) : []),
+    [mozeEdytowac, POLA_PIR]
+  );
+
+  const roiApplyChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (!mozeEdytowac || readMode) return false;
+      if (!POLA_PIR[change.fieldId]) return false;
+      return zapisAI.zastosuj(change.fieldId, change.proposedValue);
+    },
+    [mozeEdytowac, readMode, POLA_PIR, zapisAI]
+  );
+
+  const roiCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: () => ({
+      artifactType: 'roi_case',
+      cardId: activeSection,
+      artifactTitle: card?.title ?? '',
+      artifactContext: [
+        card ? `Faza: ${card.phase}` : '',
+        card ? `Waluta: ${card.currency}` : '',
+        card?.recommendation ? `Rekomendacja: ${card.recommendation}` : '',
+        card ? `Założenia: ${card.assumptions.length}` : '',
+        card ? `Wariancje: ${card.variances.length}` : '',
+        card ? `Przeglądy po wdrożeniu: ${card.pirs.length}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      fields: roiPolaSekcji(activeSection),
+      isPolish,
+    }),
+    applyChange: roiApplyChange,
+  });
+
+  const zrodloSekcji = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: ({ sekcjaId }) =>
+        (sekcjaId ? roiPolaSekcji(sekcjaId) : [])
+          .filter((f) => f.writable)
+          .map((f) => ({
+            id: f.id,
+            etykieta: f.label,
+            wartosc: String(f.value ?? ''),
+            format: 'paragraph' as const,
+            sekcjaId: sekcjaId ?? undefined,
+            sekcjaEtykieta: t('Realizacja', 'Realization'),
+          })),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [roiPolaSekcji, t, zapisAI.zastosuj]
+  );
+
+  const zrodloDokumentu = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: () =>
+        [...SEKCJE_Z_POLAMI_TEKSTOWYMI].flatMap((id) =>
+          roiPolaSekcji(id)
+            .filter((f) => f.writable)
+            .map((f) => ({
+              id: f.id,
+              etykieta: f.label,
+              wartosc: String(f.value ?? ''),
+              format: 'paragraph' as const,
+              sekcjaId: id,
+              sekcjaEtykieta: t('Realizacja', 'Realization'),
+            }))
+        ),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [SEKCJE_Z_POLAMI_TEKSTOWYMI, roiPolaSekcji, t, zapisAI.zastosuj]
+  );
+
+  const specSekcji = useMemo(
+    () =>
+      zbudujSpecSekcji(
+        [
+          { id: 'zalozenia', label: { pl: 'Założenia', en: 'Assumptions' }, ikona: 'FileText' },
+          { id: 'wyliczenia', label: { pl: 'Wyliczenia', en: 'Calculations' }, ikona: 'BarChart3' },
+          { id: 'realizacja', label: { pl: 'Realizacja', en: 'Realization' }, ikona: 'Target' },
+        ],
+        { pl: 'Karta analizy ROI', en: 'ROI analysis card' }
+      ),
+    []
+  );
+  const ukladSekcji = useCardLayout({ artifactType: 'tool', spec: specSekcji });
+
   if (!enabled) {
     return (
       <div className="flex h-full items-center justify-center p-6" data-testid="results-vnext-roi-card-disabled">
@@ -378,7 +640,20 @@ export const RoiCaseCardPage: React.FC = () => {
     primaryAction: undefined,
   };
 
+  /** Kropka statusu pigułki Menu 3 — mapa z fazy analizy. */
+  const statusPigulki =
+    card.phase === 'realization' ? 'TRACKING' : card.phase === 'calculations' ? 'PLANNING' : 'DRAFT';
+
   return (
+    <KartaWynikowChrome
+      domena="roi"
+      kartaId={card.caseId}
+      kartaNazwa={card.title}
+      kartaOdznaka="ROI"
+      kartaStatus={statusPigulki}
+      onPokazListe={goToRegistry}
+      testId="results-vnext-roi-card-chrome"
+    >
     <div className="flex h-full min-h-0 flex-col" data-testid="results-vnext-roi-card-page">
       <ArtifactBreadcrumb
         items={[
@@ -408,15 +683,53 @@ export const RoiCaseCardPage: React.FC = () => {
           hideDot
         />
       </div>
+      <PasekZapisuAI stan={zapisAI.stan} isPolish={isPolish} onZamknij={zapisAI.wyczysc} />
       <div className="min-h-0 flex-1">
         <NModeShell
           header={header}
-          sections={sections}
+          sections={ukladSekcji.applyToSections(wszystkieSekcje)}
           activeSection={activeSection}
           onSectionChange={(id) => setActiveSection(id as RoiCardSectionId)}
           presentationMode="n"
           onPresentationModeChange={() => {}}
           showModeSwitcher={false}
+          readMode={readMode}
+          stickyStosMenu45
+          renderActionBar={() => (
+            <NModeMenu2
+              isPolish={isPolish}
+              sectionsMenu={<SectionsManagerMenu layout={ukladSekcji} isPolish={isPolish} />}
+              readMode={readMode}
+              onReadModeChange={mozeEdytowac ? setReadMode : undefined}
+              aiButton={
+                <PracujZAI
+                  isPolish={isPolish}
+                  onAnalizuj={roiCardAnalysis.run}
+                  analizaWToku={roiCardAnalysis.loading}
+                  analizaOtwarta={roiCardAnalysis.open}
+                  aktywnaSekcja={activeSection}
+                  kontekstArtefaktu={{
+                    title: card.title,
+                    status: card.phase,
+                    type: 'roi_case',
+                  }}
+                  moznaEdytowac={mozeEdytowac && !readMode}
+                  powodTylkoOdczyt={
+                    !szkicPir
+                      ? t(
+                          'brak przeglądu po wdrożeniu w statusie szkicu — pozostałe treści analizy edytuje się w pełnym narzędziu ROI',
+                          'no post-implementation review in draft status — the rest of the analysis is edited in the full ROI tool'
+                        )
+                      : t('karta otwarta w trybie Podgląd', 'card opened in Preview mode')
+                  }
+                  uzupelnijSekcje={
+                    SEKCJE_Z_POLAMI_TEKSTOWYMI.has(activeSection) ? zrodloSekcji : undefined
+                  }
+                  uzupelnijDokument={zrodloDokumentu}
+                />
+              }
+            />
+          )}
           rightPanel={
             <ArtifactRightPanel
               sections={rightPanelSections}
@@ -425,7 +738,21 @@ export const RoiCaseCardPage: React.FC = () => {
           }
         />
       </div>
+      <NCardAIAnalysisPanel
+        open={roiCardAnalysis.open}
+        onClose={roiCardAnalysis.close}
+        loading={roiCardAnalysis.loading}
+        result={roiCardAnalysis.result}
+        errorCode={roiCardAnalysis.errorCode}
+        serverErrorCode={roiCardAnalysis.serverErrorCode}
+        onRerun={roiCardAnalysis.rerun}
+        onApplyChange={roiCardAnalysis.applyChange}
+        writableFieldIds={roiWritableFieldIds}
+        readMode={readMode}
+        isPolish={isPolish}
+      />
     </div>
+    </KartaWynikowChrome>
   );
 };
 

@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3174/?screen=karta-analiza-roi&lang=pl",
+ "tytul": "Consultify · Dev Render Harness",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "KPI\nOKR\nROI\nWyszukiwarka\nLista\nROI\nAutomatyzacja pakowania — linia 2\nWyniki\nROI\nAutomatyzacja pakowania — linia 2\nwariant 2 · 5 lat · CONDITIONAL GO\nCAPEX 480 000 zł\nROI 5Y 128 %\nPayback 2,4 roku\nAutomatyzacja pakowania — linia 2\nRealizacja\nZapisano\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nZałożenia\nWyliczenia\nRealizacja\nPrzegląd po 12 miesiącach\n\nExpected vs Actual per KPI i per korzyść. Kolor niesie kierunek: wariancja niekorzystna jest czerwona, korzystna neutralna.\n\nBrak porównania Expected vs Actual — przegląd po realizacji nie został jeszcze przeprowadzony.\n\nPrawdziwość założeń\n\nWerdykt per założenie: potwierdzone / częściowo / obalone, z opisem.\n\nŻadne założenie nie zostało jeszcze ocenione po realizacji.\n\nROI po realizacji i wnioski\nROI PO REALIZACJI\n—\nNPV PO REALIZACJI\n—\nPAYBACK PO REALIZACJI\n—\nElement\tWartość\nWynik przeglądu\t—\nWnioski\t—\nRekomendacja przeglądu\t—\nZamknięty\t—\nAKCJE\nOtwórz pełne narzędzie ROI\n\nTa karta jest do czytania analizy. Wprowadzanie pozycji, przebiegi kalkulacji, wykonania i przegląd PIR robi się w pełnym narzędziu.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tNieznany użytkownik\nPrzedmiot\tInwestycja produkcyjna\nWariant\t2 · Wariant 2 — cobot + przenośnik\nHoryzont\t5 lat\nWaluta\tPLN\nStopa dyskontowa\t8 %\nFaza\tRealizacja\nAktualizacja\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\n← Lista\nUwagi\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument",
+ "kiedy": "2026-09-06T14:59:03.391Z"
+}

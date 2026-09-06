@@ -109,7 +109,18 @@ function plikEkranuIstnieje(ekran) {
 
 /** Ekran liczy sie za zarejestrowany, gdy main.tsx ma i import pliku, i klucz w SCREENS. */
 function czyZarejestrowany(mainTekst, ekran) {
-  const maImport = new RegExp(`from\\s+'\\./screens/${ekran}'`).test(mainTekst);
+  // BRAMKA, KTORA NIGDY NIE MOGLA PRZEJSC (naprawione 2026-09-06, DEC-422).
+  // Detektor szukal WYLACZNIE statycznego `from './screens/<ekran>'`, a
+  // `dev-render/main.tsx` laduje KAZDY ekran leniwie:
+  //     const KartaToolScreen = React.lazy(() => import('./screens/karta-tool'));
+  // Zmierzone na commicie f3655ddb56: `grep -c "from './screens/karta-"` = 0,
+  // wiec smoke zglaszal WSZYSTKIE 8 kart jako niezarejestrowane, mimo ze kazda
+  // miala i plik, i klucz w SCREENS. Bramka czerwona zawsze nie mierzy niczego.
+  // Teraz uznajemy obie formy: statyczny `from '...'` i dynamiczny `import('...')`.
+  const sciezka = `\\./screens/${ekran}`;
+  const maImport =
+    new RegExp(`from\\s+'${sciezka}'`).test(mainTekst) ||
+    new RegExp(`import\\(\\s*'${sciezka}'\\s*\\)`).test(mainTekst);
   const maKlucz = new RegExp(`'${ekran}'\\s*:\\s*\\{`).test(mainTekst);
   return { maImport, maKlucz, ok: maImport && maKlucz };
 }

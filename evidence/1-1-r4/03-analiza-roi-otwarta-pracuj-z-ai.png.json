@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3173/results/roi/b4001151-ae5c-5259-81b2-6674c22e3732?ff_resultsVNextRoi=1",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nWyszukiwarka\nLista\nROI\nRobotyzacja gniazda spawalniczego\nWyniki\nROI\nRobotyzacja gniazda spawalniczego\n5 lat\nCAPEX 1 000 000 zł\nROI 5Y 100 %\nPayback 2,5 roku\nRobotyzacja gniazda spawalniczego\nWyliczenia\nZapisano\nSekcje\nPracuj z AI\nZałożenia\nWyliczenia\nRealizacja\nWskaźniki inwestycyjne\n\nLiczby z przebiegu silnika (seed-wyniki-dbr77-v1, 5 wrz 2026). PI liczone z tej samej serii przepływów.\n\nCAPEX\n1 000 000 zł\nROCZNA KORZYŚĆ NETTO\n400 000 zł\nROI 5Y\n100 %\nPAYBACK\n2,5 roku\nPAYBACK ZDYSKONTOWANY\n3,1 roku\nNPV\n516 315 zł\nstopa 8 %\nIRR\n28,7 %\nPI\n1,60\nBCR\n2,00\nARR\n40 %\nPrzepływy pieniężne, rok 0–n\n\nRok 0 niesie nakład, lata 1–n różnicę korzyści i kosztów cyklicznych. Analizujemy cash flow, nie wynik księgowy.\n\nROK\tKOSZTY\tKORZYŚCI\tNETTO\tNARASTAJĄCO\tZDYSKONTOWANE\tNARAST. ZDYSK.\n2025\t1 000 000 zł\t0 zł\t-1 000 000 zł\t-1 000 000 zł\t-1 000 000 zł\t-1 000 000 zł\n2026\t0 zł\t400 000 zł\t400 000 zł\t-600 000 zł\t370 370 zł\t-629 630 zł\n2027\t0 zł\t400 000 zł\t400 000 zł\t-200 000 zł\t342 936 zł\t-286 694 zł\n2028\t0 zł\t400 000 zł\t400 000 zł\t200 000 zł\t317 533 zł\t30 839 zł\n2029\t0 zł\t400 000 zł\t400 000 zł\t600 000 zł\t294 012 zł\t324 851 zł\n2030\t0 zł\t400 000 zł\t400 000 zł\t1 000 000 zł\t272 233 zł\t597 084 zł\nScenariusze\n\nConservative / Base / Upside. Wskaźniki scenariusza pochodzą z JEGO przebiegu kalkulacji — bez przebiegu jest „—\", nie liczba przepisana z wariantu bazowego.\n\nSCENARIUSZ\tNAZWA\tOPIS\tROI\tPAYBACK\tNPV\nConservative\tWolniejszy ramp-up\tPełna wydajność dopiero po 14 tygodniach, korzyści przesunięte o kwartał\t—\t—\t—\nUpside\tDruga zmiana od stycznia\tWolumen 88 tys. detali i pełne obłożenie gniazda od początku 2027\t—\t—\t—\nWrażliwość ±20 %\n\nPojedyncze sterowniki modelu wychylone o ±20 % — im większa zmiana NPV, tym mocniejszy value driver.\n\nSTEROWNIK\tNPV PRZY −20 %\tROI PRZY −20 %\tPAYBACK PRZY −20 %\tNPV PRZY +20 %\tROI PRZY +20 %\tPAYBACK PRZY +20 %\nCAPEX\t797 084 zł\t150 %\t2 lata\t397 084 zł\t67 %\t3 lata\nRoczna korzyść\t277 667 zł\t60 %\t3,13 roku\t916 501 zł\t140 %\t2,08 roku\nStopa dyskontowa\t666 768 zł\t100 %\t2,5 roku\t531 937 zł\t100 %\t2,5 roku\nRekomendacja\n\nRekomendacja nie została jeszcze wydana — analiza nie przeszła części wyliczeniowej.\n\nRekomendacja: CONDITIONAL GO — warunek: potwierdzony wolumen 2 zmian przez 2 kolejne kwartały. (Rekomendacja nie ma dziś własnego pola w schemacie — patrz KROK_0 mapowania P7K.)\n\nAKCJE\nOtwórz pełne narzędzie ROI\n\nTa karta jest do czytania analizy. Wprowadzanie pozycji, przebiegi kalkulacji, wykonania i przegląd PIR robi się w pełnym narzędziu.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tAudyt Nocny\nPrzedmiot\t—\nWariant\t—\nHoryzont\t5 lat\nWaluta\tPLN\nStopa dyskontowa\t8 %\nFaza\tWyliczenia\nAktualizacja\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\n\nTylko do odczytu: brak przeglądu po wdrożeniu w statusie szkicu — pozostałe treści analizy edytuje się w pełnym narzędziu ROI",
+ "kiedy": "2026-09-06T14:56:03.663Z"
+}

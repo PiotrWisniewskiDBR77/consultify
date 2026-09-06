@@ -429,6 +429,12 @@ const KartaNotificationScreen = React.lazy(() => import('./screens/karta-notific
 const KartaTaskScreen = React.lazy(() => import('./screens/karta-task'));
 const KartaDzialaniaScreen = React.lazy(() => import('./screens/karta-dzialania'));
 const KartaTaskPelnaScreen = React.lazy(() => import('./screens/karta-task-pelna'));
+// [ODMROZENIE 00_SHARED DEC-422] Trzy karty N modułu Wyniki weszły do rejestru
+// (`src/components/standard/registry.ts`), a bramka `scripts/karty-n-smoke.mjs`
+// wymaga dla każdego wpisu żywego ekranu harnessu.
+const KartaMiernikScreen = React.lazy(() => import('./screens/karta-miernik'));
+const KartaCelOkrScreen = React.lazy(() => import('./screens/karta-cel-okr'));
+const KartaAnalizaRoiScreen = React.lazy(() => import('./screens/karta-analiza-roi'));
 const MyWorkInboxScreen = React.lazy(() => import('./screens/mywork-inbox'));
 const MyWorkCalendarScreen = React.lazy(() => import('./screens/mywork-calendar'));
 const MyWorkCalendarDisconnectedScreen = React.lazy(
@@ -1268,6 +1274,21 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'karta-dzialania': {
     label: 'P9 — wspólna karta działania (DEC-397)',
     render: () => <KartaDzialaniaScreen />,
+  },
+  'karta-miernik': {
+    label:
+      'KARTY N — Miernik KPI (DEC-422): REALNY <KpiToolPage> z Menu 5 (Sekcje · Edycja|Podgląd · Pracuj z AI), paskiem modułu z pigułką otwartej karty i przyklejonym stosem Menu 4/5',
+    render: () => <KartaMiernikScreen />,
+  },
+  'karta-cel-okr': {
+    label:
+      'KARTY N — Cel OKR (DEC-422): REALNY <OkrObjectiveCardPage> z Menu 5 i Pracuj z AI; zestaw w statusie draft, więc prawo edycji jest realne',
+    render: () => <KartaCelOkrScreen />,
+  },
+  'karta-analiza-roi': {
+    label:
+      'KARTY N — Analiza ROI (DEC-422): REALNY <RoiCaseCardPage> z Menu 5 i Pracuj z AI; PIR w statusie draft, więc Uzupełnij ma gdzie zapisać',
+    render: () => <KartaAnalizaRoiScreen />,
   },
   'karta-task-pelna': {
     label:

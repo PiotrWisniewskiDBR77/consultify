@@ -62,6 +62,14 @@ import {
 
 import { EmptyState } from '@/components/shared/states';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { SectionsManagerMenu } from '@/components/shared/NModeLayout/NModeCardManager';
+import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
+import { useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import type { ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import { NModeContentBlock } from '@/components/shared/NModeLayout/NModeContentBlock';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
@@ -70,6 +78,12 @@ import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components
 import { StatusChip } from '@/components/ui/primitives';
 
 import { HonestValueCell } from '../HonestValue';
+import {
+  KartaWynikowChrome,
+  PasekZapisuAI,
+  useZapisPolAI,
+  zbudujSpecSekcji,
+} from '../shared/kartaWynikow';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
 import type { ResultsVNextForbiddenDetail } from '../types';
 import { isResultsVNextFlagEnabled } from '../resultsVNextFeatureFlags';
@@ -81,11 +95,15 @@ import { listCheckIns, type OkrCheckInDto } from './okrCheckInApi';
 import { OKR_CHECKIN_STATUS_TONE, okrCheckInStatusLabel } from './okrCheckInMappers';
 import {
   getObjectiveWithKeyResults,
+  newOkrIdempotencyKey,
+  updateObjective,
   type OkrKeyResultDto,
   type OkrObjectiveWithKeyResultsDto,
+  type UpdateOkrObjectiveInput,
 } from './okrObjectiveApi';
 import {
   getOkrCheckInSetLock,
+  getOkrSetChildEditLock,
   formatOkrDate,
   formatOkrNumeric,
   formatOkrProgressPercent,
@@ -395,6 +413,233 @@ export const OkrObjectiveCardPage: React.FC = () => {
     () => navigate({ pathname: OKR_REPORT_REGISTRY_PATH, search: window.location.search }),
     [navigate]
   );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // [ODMROZENIE 16_GLOBAL_STANDARDS DEC-422] KARTA N CELU OKR — Menu 5,
+  // „Pracuj z AI", przyklejone nagłówki.
+  //
+  // SŁOWA WŁAŚCICIELA (06.09.2026, otwarta karta celu): „dokładnie te same
+  // uwagi" co przy karcie miernika — brak drugiego i trzeciego menu, brak
+  // przycisku „Work with AI", brak zarządzania kartą.
+  //
+  // SSOT: docs/ssot/STEROWANIE_KART_N_I_AI.md (zasady 2, 2b, 3).
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * ZASADA 2b — prawo edycji celu. Karta NIE ma własnego sprawdzenia roli
+   * (grep `canEdit|readOnly` 06.09.2026 = 0 trafień), ale ma bramkę cyklu
+   * życia, którą już dziś czyta jej rodzeństwo: `getOkrSetChildEditLock`
+   * (`okrObjectiveMappers.ts` — biała lista `draft`/`changes_requested`,
+   * serwerowy kod `SET_NOT_EDITABLE`). Cele pod zestawem w innym statusie są
+   * zablokowane do EDYCJI TREŚCI i to jest właśnie prawo, którego szuka
+   * Zasada 2b. Dopóki zestaw się nie wczyta, traktujemy kartę jak zamkniętą
+   * (fail-closed) — nie zgadujemy uprawnienia.
+   */
+  const blokadaEdycji = parentSet ? getOkrSetChildEditLock(parentSet.status) : null;
+  const mozeEdytowac = !!parentSet && !blokadaEdycji && objective?.status !== 'cancelled';
+
+  const [readMode, setReadMode] = useState(true);
+  useEffect(() => {
+    setReadMode(!mozeEdytowac);
+  }, [mozeEdytowac]);
+
+  /** `rowVersion` po ostatnim zapisie — komenda CAS podnosi ją przy każdym PATCH. */
+  const wersjaRef = React.useRef<number | null>(null);
+  useEffect(() => {
+    wersjaRef.current = objective?.rowVersion ?? null;
+  }, [objective?.rowVersion]);
+
+  /**
+   * Pola celu, do których backend REALNIE potrafi zapisać.
+   * `UpdateOkrObjectiveInput` przyjmuje `title`/`description`/`rationale`/
+   * `ambitionType`/`ownerUserId`. Uzupełniamy WYŁĄCZNIE dwa pola prozy
+   * (opis i uzasadnienie): tytuł jest tożsamością rekordu widoczną na
+   * listach, a ambicja i właściciel to WYBORY, nie tekst do napisania.
+   */
+  const POLA_CELU: Record<string, 'description' | 'rationale'> = useMemo(
+    () => ({ description: 'description', rationale: 'rationale' }),
+    []
+  );
+
+  const zapiszPoleCelu = useCallback(
+    async (poleId: string, wartosc: string) => {
+      const klucz = POLA_CELU[poleId];
+      const wersja = wersjaRef.current;
+      if (!klucz) throw Object.assign(new Error('FIELD_NOT_WRITABLE'), { code: 'FIELD_NOT_WRITABLE' });
+      if (!objectiveId || wersja === null) {
+        throw Object.assign(new Error('NO_OBJECTIVE_VERSION'), { code: 'NO_OBJECTIVE_VERSION' });
+      }
+      const patch: UpdateOkrObjectiveInput = {
+        expectedVersion: wersja,
+        idempotencyKey: newOkrIdempotencyKey(),
+      };
+      if (klucz === 'description') patch.description = wartosc;
+      else patch.rationale = wartosc;
+      const wynik = await updateObjective(objectiveId, patch);
+      wersjaRef.current = wynik.objective.rowVersion;
+      await loadObjective();
+    },
+    [POLA_CELU, objectiveId, loadObjective]
+  );
+
+  const zapisAI = useZapisPolAI(zapiszPoleCelu);
+
+  /**
+   * Deklaracja pól per sekcja. Zapisywalne są tylko dwa pola sekcji „Cel".
+   * Sekcja „Refleksja" NIE dostaje pól zapisywalnych, mimo że jest prozą:
+   * refleksja mieszka w PRZEGLĄDZIE ZESTAWU (`listOkrSetReviews`), a nie
+   * w celu — nie ma trasy „zapisz refleksję dla tego celu". Zgłoszone
+   * w meldunku; udawanie zapisu byłoby obietnicą bez pokrycia.
+   */
+  const okrPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+      if (!objective) return [];
+      if (sekcjaId === 'cel') {
+        return [
+          {
+            id: 'description',
+            label: isPolish ? 'Co chcemy osiągnąć' : 'What we want to achieve',
+            value: objective.description ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: isPolish
+              ? 'Zmiana stanu organizacji, którą widać po zakończeniu cyklu.'
+              : 'The change of state visible when the cycle ends.',
+          },
+          {
+            id: 'rationale',
+            label: isPolish ? 'Dlaczego ten cel' : 'Why this objective',
+            value: objective.rationale ?? '',
+            kind: 'text',
+            writable: mozeEdytowac,
+            hint: isPolish
+              ? 'Powód, dla którego ten cel jest ważniejszy od innych w tym cyklu.'
+              : 'Why this objective outranks the others in this cycle.',
+          },
+          {
+            id: 'title',
+            label: isPolish ? 'Tytuł celu' : 'Objective title',
+            value: objective.title,
+            kind: 'text',
+            writable: false,
+          },
+        ];
+      }
+      if (sekcjaId === 'kluczowe-rezultaty') {
+        return keyResults.map((kr) => ({
+          id: `kr-${kr.keyResultId}`,
+          label: kr.title,
+          value: [kr.startValue, kr.targetValue, kr.currentValue]
+            .map((v) => (v === null || v === undefined ? '—' : String(v)))
+            .join(' → '),
+          kind: 'text' as const,
+          writable: false,
+        }));
+      }
+      return [];
+    },
+    [objective, keyResults, mozeEdytowac, isPolish]
+  );
+
+  const SEKCJE_Z_POLAMI_TEKSTOWYMI = useMemo(() => new Set(['cel']), []);
+
+  const okrWritableFieldIds = useMemo(
+    () => (mozeEdytowac ? Object.keys(POLA_CELU) : []),
+    [mozeEdytowac, POLA_CELU]
+  );
+
+  const okrApplyChange = useCallback(
+    (change: CardAnalysisChange): boolean => {
+      if (!mozeEdytowac || readMode) return false;
+      if (!POLA_CELU[change.fieldId]) return false;
+      return zapisAI.zastosuj(change.fieldId, change.proposedValue);
+    },
+    [mozeEdytowac, readMode, POLA_CELU, zapisAI]
+  );
+
+  const okrCardAnalysis = useCardAIAnalysis({
+    activeCardId: activeSection,
+    buildInput: () => ({
+      artifactType: 'objective',
+      cardId: activeSection,
+      artifactTitle: objective?.title ?? '',
+      artifactContext: [
+        objective ? `Status celu: ${objective.status}` : '',
+        objective ? `Ambicja: ${objective.ambitionType}` : '',
+        parentSet ? `Zestaw OKR: ${parentSet.title} (status ${parentSet.status})` : '',
+        `Kluczowe rezultaty: ${keyResults.length}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      fields: okrPolaSekcji(activeSection),
+      isPolish,
+    }),
+    applyChange: okrApplyChange,
+  });
+
+  const zrodloSekcji = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: ({ sekcjaId }) =>
+        (sekcjaId ? okrPolaSekcji(sekcjaId) : [])
+          .filter((f) => f.writable)
+          .map((f) => ({
+            id: f.id,
+            etykieta: f.label,
+            wartosc: String(f.value ?? ''),
+            format: 'paragraph' as const,
+            sekcjaId: sekcjaId ?? undefined,
+            sekcjaEtykieta: isPolish ? 'Cel' : 'Objective',
+          })),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [okrPolaSekcji, isPolish, zapisAI.zastosuj]
+  );
+
+  const zrodloDokumentu = useMemo<ZrodloUzupelnienia>(
+    () => ({
+      rodzaj: 'pola',
+      pola: () =>
+        [...SEKCJE_Z_POLAMI_TEKSTOWYMI].flatMap((id) =>
+          okrPolaSekcji(id)
+            .filter((f) => f.writable)
+            .map((f) => ({
+              id: f.id,
+              etykieta: f.label,
+              wartosc: String(f.value ?? ''),
+              format: 'paragraph' as const,
+              sekcjaId: id,
+              sekcjaEtykieta: isPolish ? 'Cel' : 'Objective',
+            }))
+        ),
+      zastosuj: zapisAI.zastosuj,
+    }),
+    [SEKCJE_Z_POLAMI_TEKSTOWYMI, okrPolaSekcji, isPolish, zapisAI.zastosuj]
+  );
+
+  /** Menu 5 → „Sekcje": pięć sekcji 1:1 z kontraktem `OkrObjectiveCardSections`. */
+  const specSekcji = useMemo(
+    () =>
+      zbudujSpecSekcji(
+        OKR_OBJECTIVE_CARD_SECTIONS.map((sekcja) => ({
+          id: sekcja.id,
+          label: sekcja.label,
+          ikona:
+            sekcja.id === 'cel'
+              ? 'Target'
+              : sekcja.id === 'kluczowe-rezultaty'
+                ? 'CheckSquare'
+                : sekcja.id === 'check-iny'
+                  ? 'TrendingUp'
+                  : sekcja.id === 'powiazania'
+                    ? 'Link2'
+                    : 'Flag',
+        })),
+        { pl: 'Karta celu', en: 'Objective card' }
+      ),
+    []
+  );
+  const ukladSekcji = useCardLayout({ artifactType: 'tool', spec: specSekcji });
 
   if (!enabled) {
     return (
@@ -1029,13 +1274,16 @@ export const OkrObjectiveCardPage: React.FC = () => {
     ),
   };
 
-  const sections: NModeSection[] = [
+  const wszystkieSekcje: NModeSection[] = [
     celSection,
     keyResultsSection,
     progressSection,
     relationsSection,
     reflectionSection,
   ];
+  // Widoczność i kolejność sekcji steruje Menu 5 → „Sekcje" (kanoniczny
+  // `useCardLayout.applyToSections`), nie kolejność zapisana w tym pliku.
+  const sections: NModeSection[] = ukladSekcji.applyToSections(wszystkieSekcje);
 
   // Pigułka statusu obok tytułu + tytuł „Cel — …" — 1:1 z zatwierdzonym obrazem.
   const header: NModeHeaderConfig = {
@@ -1157,9 +1405,35 @@ export const OkrObjectiveCardPage: React.FC = () => {
     { label: objective.title },
   ];
 
+  /** Kropka statusu pigułki Menu 3 — mapa ze statusu celu. */
+  const statusPigulki =
+    objective.status === 'cancelled'
+      ? 'CANCELLED'
+      : objective.status === 'completed' || objective.status === 'closed'
+        ? 'DONE'
+        : objective.status === 'at_risk'
+          ? 'BLOCKED'
+          : objective.status === 'active'
+            ? 'TRACKING'
+            : objective.status === 'approved'
+              ? 'APPROVED'
+              : objective.status === 'submitted'
+                ? 'PENDING_REVIEW'
+                : 'DRAFT';
+
   return (
+    <KartaWynikowChrome
+      domena="okr"
+      kartaId={objective.objectiveId}
+      kartaNazwa={objective.title}
+      kartaOdznaka="OKR"
+      kartaStatus={statusPigulki}
+      onPokazListe={goToRegistry}
+      testId="results-vnext-okr-objective-card-chrome"
+    >
     <div className="flex h-full min-h-0 flex-col" data-testid="results-vnext-okr-objective-card-page">
       <ArtifactBreadcrumb items={breadcrumbItems} />
+      <PasekZapisuAI stan={zapisAI.stan} isPolish={isPolish} onZamknij={zapisAI.wyczysc} />
       <div className="min-h-0 flex-1">
         <NModeShell
           header={header}
@@ -1169,11 +1443,66 @@ export const OkrObjectiveCardPage: React.FC = () => {
           presentationMode="n"
           onPresentationModeChange={() => {}}
           showModeSwitcher={false}
+          readMode={readMode}
+          stickyStosMenu45
+          renderActionBar={() => (
+            <NModeMenu2
+              isPolish={isPolish}
+              sectionsMenu={<SectionsManagerMenu layout={ukladSekcji} isPolish={isPolish} />}
+              readMode={readMode}
+              onReadModeChange={mozeEdytowac ? setReadMode : undefined}
+              aiButton={
+                <PracujZAI
+                  isPolish={isPolish}
+                  onAnalizuj={okrCardAnalysis.run}
+                  analizaWToku={okrCardAnalysis.loading}
+                  analizaOtwarta={okrCardAnalysis.open}
+                  aktywnaSekcja={activeSection}
+                  kontekstArtefaktu={{
+                    title: objective.title,
+                    status: objective.status,
+                    type: 'objective',
+                  }}
+                  moznaEdytowac={mozeEdytowac && !readMode}
+                  powodTylkoOdczyt={
+                    objective.status === 'cancelled'
+                      ? isPolish
+                        ? 'cel anulowany'
+                        : 'objective is cancelled'
+                      : blokadaEdycji
+                        ? isPolish
+                          ? blokadaEdycji.reason.pl
+                          : blokadaEdycji.reason.en
+                        : isPolish
+                          ? 'karta otwarta w trybie Podgląd'
+                          : 'card opened in Preview mode'
+                  }
+                  uzupelnijSekcje={
+                    SEKCJE_Z_POLAMI_TEKSTOWYMI.has(activeSection) ? zrodloSekcji : undefined
+                  }
+                  uzupelnijDokument={zrodloDokumentu}
+                />
+              }
+            />
+          )}
           rightPanel={
             <ArtifactRightPanel sections={rightPanelSections} ariaLabel={t('Panel celu OKR', 'OKR objective panel')} />
           }
         />
       </div>
+      <NCardAIAnalysisPanel
+        open={okrCardAnalysis.open}
+        onClose={okrCardAnalysis.close}
+        loading={okrCardAnalysis.loading}
+        result={okrCardAnalysis.result}
+        errorCode={okrCardAnalysis.errorCode}
+        serverErrorCode={okrCardAnalysis.serverErrorCode}
+        onRerun={okrCardAnalysis.rerun}
+        onApplyChange={okrCardAnalysis.applyChange}
+        writableFieldIds={okrWritableFieldIds}
+        readMode={readMode}
+        isPolish={isPolish}
+      />
       <OkrCheckInRecordDialog
         open={!!checkInTarget}
         keyResultTitle={checkInTarget?.title ?? ''}
@@ -1196,6 +1525,7 @@ export const OkrObjectiveCardPage: React.FC = () => {
         isConflict={checkInConflict}
       />
     </div>
+    </KartaWynikowChrome>
   );
 };
 
