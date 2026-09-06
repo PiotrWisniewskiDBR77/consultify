@@ -77,7 +77,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -235,6 +235,7 @@ export const MeetingObjectPage: React.FC = () => {
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
   const [actionItemTasks, setActionItemTasks] = useState<Record<string, 'saving' | 'created'>>({});
+  const actionItemTaskLocks = useRef(new Set<string>());
 
   const [operatorBrief, setOperatorBrief] = useState<MeetingOperatorBriefDto | null>(null);
   const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
@@ -341,7 +342,8 @@ export const MeetingObjectPage: React.FC = () => {
 
   const createTaskFromActionItem = async (noteIdValue: string, actionIndex: number) => {
     const key = `${noteIdValue}:${actionIndex}`;
-    if (actionItemTasks[key]) return;
+    if (actionItemTaskLocks.current.has(key) || actionItemTasks[key]) return;
+    actionItemTaskLocks.current.add(key);
     setActionItemTasks((current) => ({ ...current, [key]: 'saving' }));
     try {
       const response = await fetch(
@@ -352,6 +354,7 @@ export const MeetingObjectPage: React.FC = () => {
       setActionItemTasks((current) => ({ ...current, [key]: 'created' }));
       toast.success(t('meetingActionItemsP9.taskCreated', 'Zadanie utworzone'));
     } catch (error) {
+      actionItemTaskLocks.current.delete(key);
       console.error('Failed to create task from meeting action item:', error);
       setActionItemTasks((current) => {
         const next = { ...current };

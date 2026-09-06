@@ -49,7 +49,7 @@ describe('P9 action-card spine static gates', () => {
   it('łączy K1 i K2 z kanonicznymi wołaczami oraz blokuje drugi klik K1', () => {
     const meeting = readFileSync(resolve(root, 'src/components/Meeting/MeetingObjectPage.tsx'), 'utf8');
     expect(meeting).toContain('/action-items/${actionIndex}/task');
-    expect(meeting).toContain('if (actionItemTasks[key]) return');
+    expect(meeting).toContain('if (actionItemTaskLocks.current.has(key) || actionItemTasks[key]) return');
     expect(meeting).toContain('disabled={Boolean(taskState)}');
     const initiative = readFileSync(resolve(root, 'src/components/Initiatives/InitiativeDocumentView.tsx'), 'utf8');
     expect(initiative).toContain('requestHandoffAcceptance(initiativeId');
