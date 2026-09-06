@@ -27,6 +27,13 @@
 #   scripts/mvp-final/check-freeze.sh --tylko-ostrzez       # tryb informacyjny (pre-commit)
 #   scripts/mvp-final/check-freeze.sh --pliki a b c [--komunikat="..."]   # do testów
 #
+# DEC-398 — WYJĄTEK DLA COMMITU SCALAJĄCEGO STAGINGU:
+#   `git merge --no-ff <starsza-gałąź>` wnosi w diffu WSZYSTKIE pliki różniące repo od
+#   tej gałęzi — także zamrożone — mimo że treść jest już na `origin/staging` (przyjęta
+#   wcześniej, merge nic nowego nie odmraża). Gdy druga strona scalenia (MERGE_HEAD) jest
+#   już przodkiem `origin/staging`, znaczniki [ODMROZENIE ...] nie są wymagane. Patrz
+#   sekcja niżej oznaczona "DEC-398".
+#
 # Zgodne z bash 3.2 (macOS): bez mapfile, bez declare -A, bez tablic asocjacyjnych.
 
 set -uo pipefail
@@ -34,7 +41,10 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 1
 
-REJESTR="docs/program/MVP_FINAL_ZAMROZONE.json"
+# MVP_FINAL_TEST_REJESTR: furtka WYŁĄCZNIE dla testów (checkFreeze.merge.test.mjs) — pozwala
+# podmienić ścieżkę rejestru zamrożeń na atrapę w piaskownicy tmp, bez dotykania repo.
+# Domyślnie nieaktywna: bez zmiennej zachowanie identyczne jak przed DEC-398.
+REJESTR="${MVP_FINAL_TEST_REJESTR:-docs/program/MVP_FINAL_ZAMROZONE.json}"
 TRYB="blokuj"
 PLIK_KOMUNIKATU=""
 KOMUNIKAT=""
@@ -51,6 +61,26 @@ $1"; shift; done; continue ;;
   esac
   shift
 done
+
+# --- DEC-398: WYJĄTEK COMMITU SCALAJĄCEGO STAGINGU ---------------------------------
+# Warunek (oba, inaczej reguła zwykła):
+#   1) commit jest scalający: istnieje plik $(git rev-parse --git-path MERGE_HEAD)
+#   2) druga strona scalenia (SHA z MERGE_HEAD) jest już PRZODKIEM refs/remotes/origin/staging
+#      — czyli treść jest już przyjęta na stagingu, merge nic nowego nie odmraża.
+# Gdy ref refs/remotes/origin/staging nie istnieje lokalnie (np. brak fetch z origin) →
+# wyjątek NIE działa, obowiązuje zwykła reguła (bezpiecznik, który nie może zmierzyć,
+# MUSI blokować, a nie przepuszczać — patrz brak node/brak rejestru wyżej/niżej).
+MERGE_HEAD_PLIK="$(git rev-parse --git-path MERGE_HEAD 2>/dev/null || true)"
+if [ -n "$MERGE_HEAD_PLIK" ] && [ -f "$MERGE_HEAD_PLIK" ]; then
+  MERGE_HEAD_SHA="$(tr -d '[:space:]' < "$MERGE_HEAD_PLIK" 2>/dev/null || true)"
+  if [ -n "$MERGE_HEAD_SHA" ] \
+     && git rev-parse --verify --quiet refs/remotes/origin/staging >/dev/null 2>&1 \
+     && git merge-base --is-ancestor "$MERGE_HEAD_SHA" refs/remotes/origin/staging 2>/dev/null; then
+    echo "check-freeze: commit scalający stagingu (MERGE_HEAD $MERGE_HEAD_SHA jest na origin/staging) — markery niewymagane (DEC-398)" >&2
+    exit 0
+  fi
+fi
+# --- KONIEC WYJĄTKU DEC-398 ---------------------------------------------------------
 
 # Brak rejestru = nic jeszcze nie zamrożone = przepuszczamy (i mówimy to wprost,
 # żeby cisza nigdy nie udawała zieleni — „brak pomiaru nie jest wynikiem").
