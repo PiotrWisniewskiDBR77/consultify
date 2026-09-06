@@ -17856,7 +17856,7 @@
       "more": "more",
       "continue": "Continue",
       "continueInstruction": "Continue the previous answer from where it stopped.",
-      "regenerate": "Regenerate",
+      "regenerate": "Regenerate response",
       "copy": "Copy",
       "edit": "Edit",
       "savedToContext": "Saved to Context OS",

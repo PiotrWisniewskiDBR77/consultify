@@ -477,6 +477,9 @@ const ChatV8ArtifactRunSearchScreen = React.lazy(
 const ChatMessageRequiredSurfacesScreen = React.lazy(
   () => import('./screens/chat-message-required-surfaces')
 );
+const Mvp11ePonowOdpowiedzScreen = React.lazy(
+  () => import('./screens/mvp-11e-ponow-odpowiedz')
+);
 const TeresaChipySugestiiScreen = React.lazy(() => import('./screens/teresa-chipy-sugestii'));
 const TeresaChipyPanelArtefaktuScreen = React.lazy(
   () => import('./screens/teresa-chipy-panel-artefaktu')
@@ -2222,6 +2225,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'chat-message-required-surfaces': {
     label: 'CHAT 315 — realny MessageRenderer: research/opcje/deep-thinking/przerwanie/ostrzeżenie',
     render: () => <ChatMessageRequiredSurfacesScreen />,
+  },
+  'mvp-11e-ponow-odpowiedz': {
+    label: 'MVP 1.1-E — krótka odpowiedź Teresy: "Ponów odpowiedź" w widocznym rzędzie akcji',
+    render: () => <Mvp11ePonowOdpowiedzScreen />,
   },
   'teresa-chipy-sugestii': {
     label: 'TERESA — chipy sugestii pod oknem rozmowy (kontekst raportu vs insightu)',
