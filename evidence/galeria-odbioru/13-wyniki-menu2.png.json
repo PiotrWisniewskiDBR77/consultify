@@ -1,0 +1,11 @@
+{
+  "url": "http://localhost:3090/results/kpi",
+  "bledyKonsoli": [
+    "HTTP 404 http://localhost:3090/api/vnext/results/kpi/scorecards/0a9a0f97-c029-5687-98a3-b94c7a8c6ec7/review-snapshots/published",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "HTTP 404 http://localhost:3090/api/vnext/results/kpi/scorecards/f590a9ef-46a5-5287-bcc9-4188eb665d0d/review-snapshots/published",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "HTTP 404 http://localhost:3090/api/vnext/results/kpi/scorecards/45ca89b1-9ecb-5f4c-ba7a-4b4244cbf0bf/review-snapshots/published",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}
