@@ -102,7 +102,10 @@ describe('OrganizationRootCausesBlockersScreen', () => {
   it('dodanie blockera trafia do setChallenges(activeBlockers)', () => {
     renderScreen();
 
-    fireEvent.click(screen.getByText('Dodaj blocker'));
+    // Etykieta przycisku to poprawna polska pisownia „Dodaj bloker" (jedno
+    // „c") — spójna z resztą ekranów redesignu (np. „Dodaj wyzwanie",
+    // „Dodaj ryzyko" w OrganizationCardPrimitives.tsx addLabel).
+    fireEvent.click(screen.getByText('Dodaj bloker'));
     expect(setChallenges).toHaveBeenCalledWith({
       activeBlockers: expect.arrayContaining([
         expect.objectContaining({ title: 'Lęk przed porażką' }),

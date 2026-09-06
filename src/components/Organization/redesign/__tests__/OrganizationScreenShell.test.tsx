@@ -5,6 +5,7 @@
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import OrganizationScreenShell from '../OrganizationScreenShell';
@@ -19,23 +20,28 @@ vi.mock('react-i18next', () => ({
 describe('OrganizationScreenShell', () => {
   it('renderuje sekcje Menu 2, chipy Menu 3 z licznikami i panel stanu', () => {
     render(
-      <OrganizationScreenShell
-        sections={[
-          { id: 'identity', label: 'Tożsamość' },
-          { id: 'scale', label: 'Skala' },
-        ]}
-        activeSection="identity"
-        onSectionChange={vi.fn()}
-        chips={[
-          { id: 'all', label: 'Wszystkie', count: 17 },
-          { id: 'missing', label: 'Do uzupełnienia', count: 0 },
-        ]}
-        activeChip="all"
-        onChipChange={vi.fn()}
-        statePanel={{ filledFields: 12, totalFields: 17, approvedFacts: 26, onSave: vi.fn() }}
-      >
-        <p>Treść ekranu</p>
-      </OrganizationScreenShell>
+      // `StandardModuleBar` (wewnątrz szkieletu, gdy są sekcje/chipy) czyta
+      // `useLocation()` przez `useJedenPanel` — bez `<Router>` w drzewie
+      // rzuca "useLocation() may be used only in the context of a <Router>".
+      <MemoryRouter>
+        <OrganizationScreenShell
+          sections={[
+            { id: 'identity', label: 'Tożsamość' },
+            { id: 'scale', label: 'Skala' },
+          ]}
+          activeSection="identity"
+          onSectionChange={vi.fn()}
+          chips={[
+            { id: 'all', label: 'Wszystkie', count: 17 },
+            { id: 'missing', label: 'Do uzupełnienia', count: 0 },
+          ]}
+          activeChip="all"
+          onChipChange={vi.fn()}
+          statePanel={{ filledFields: 12, totalFields: 17, approvedFacts: 26, onSave: vi.fn() }}
+        >
+          <p>Treść ekranu</p>
+        </OrganizationScreenShell>
+      </MemoryRouter>
     );
 
     expect(screen.getByText('Tożsamość')).toBeInTheDocument();

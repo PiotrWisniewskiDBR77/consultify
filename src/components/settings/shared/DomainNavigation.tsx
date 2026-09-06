@@ -76,7 +76,13 @@ export function DomainNavigation<TModule extends string, TChild extends string>(
   };
 
   return (
-    <aside
+    // [ODMROZENIE 15_SETTINGS DEC-397] [ODMROZENIE 01_ORGANIZATION DEC-397]
+    // Korzeń to `<nav>`, nie `<aside>` — nawigacja sekcji jest treścią główną
+    // (landmark nawigacyjny), nie dodatkiem. Wcześniej istniał osobny fork
+    // (osobny plik w Organizacji) różniący się WYŁĄCZNIE tagiem korzenia i
+    // tagiem wewnętrznego kontenera listy — usunięty na rzecz tej, wspólnej
+    // wersji. Zero zmiany wyglądu, klas ani zachowania.
+    <nav
       aria-label={navigationLabel}
       className={cn(
         'flex h-full w-[280px] flex-col border-r border-[var(--c-border-subtle)] bg-[var(--c-surface)]',
@@ -98,10 +104,7 @@ export function DomainNavigation<TModule extends string, TChild extends string>(
         <p className="mt-1 text-sm leading-5 text-[var(--c-text-muted)]">{description}</p>
       </div>
 
-      <nav
-        aria-label={navigationLabel}
-        className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4"
-      >
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4">
         {modules.map((module) => {
           const expanded = expandedModules.has(module.id);
           const containsActive = module.id === activeModule;
@@ -169,8 +172,8 @@ export function DomainNavigation<TModule extends string, TChild extends string>(
             </section>
           );
         })}
-      </nav>
-    </aside>
+      </div>
+    </nav>
   );
 }
 
