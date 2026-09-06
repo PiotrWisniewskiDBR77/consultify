@@ -43008,7 +43008,8 @@
       "openReport": "Open report",
       "downloadDocx": "Download DOCX",
       "downloadPdf": "Download PDF",
-      "publish": "Publish"
+      "publish": "Publish",
+      "newDefinition": "New definition"
     },
     "field": {
       "asOf": "Data as of",
@@ -43331,6 +43332,11 @@
       "CAPACITY": "no available capacity",
       "MISSING_DATES": "missing plan dates",
       "OPEN_DECISIONS": "unresolved decisions"
+    },
+    "registerToggle": "Report register view",
+    "tab": {
+      "runs": "Reports",
+      "definitions": "Definitions"
     }
   }
 }

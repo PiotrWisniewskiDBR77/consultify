@@ -12755,7 +12755,7 @@
         "onDemand": "Na żądanie",
         "sponsor": "Sponsorskie",
         "needsGeneration": "Wymaga wygenerowania",
-        "needsReview": "Wymaga przeglądu",
+        "needsReview": "Do przeglądu",
         "partialStale": "Częściowe/nieaktualne",
         "published": "Opublikowane",
         "failed": "Nieudane",
@@ -45672,7 +45672,8 @@
       "openReport": "Otwórz raport",
       "downloadDocx": "Pobierz DOCX",
       "downloadPdf": "Pobierz PDF",
-      "publish": "Opublikuj"
+      "publish": "Opublikuj",
+      "newDefinition": "Nowa definicja"
     },
     "field": {
       "asOf": "Stan danych na",
@@ -45995,6 +45996,11 @@
       "CAPACITY": "brak dostępnych zasobów",
       "MISSING_DATES": "brak dat w planie",
       "OPEN_DECISIONS": "nierozstrzygnięte decyzje"
+    },
+    "registerToggle": "Widok rejestru raportów",
+    "tab": {
+      "runs": "Raporty",
+      "definitions": "Definicje"
     }
   }
 }

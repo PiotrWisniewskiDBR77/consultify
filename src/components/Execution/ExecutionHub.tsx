@@ -765,18 +765,18 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
       ['po-terminie', t('execution.menu3.governance.overdue', 'Po terminie')],
     ].map(([id, label]) => ({ id, label })),
+    // 1.12-R4b (zlecenie 12r4b): 11 chipów → 3. Zrzut R4
+    // (`evidence/1-12-r4/03-zdrowie-programu.png`) pokazał rząd 10+ chipów
+    // wychodzący poza ekran przy 1440 — kanon Menu 3 to ≤3. Kadencja/poziom/
+    // audytorium i „nieudane" nie znikają — przenoszą się do dropdownu
+    // „Poziom" w Menu 2 (`Menu2PresetDropdown`, wzorzec Materiałów DEC-420),
+    // bo realnym wymiarem raportów MVP jest poziom (OWNER/PMO/STEERCO/BOARD
+    // — `EXECUTION_REPORT_CATALOG` po stronie serwera), nie kadencja z
+    // martwego kontraktu runtime-v1.
     reports: [
       ['all', t('common.all', 'All')],
-      ['weekly', t('execution.menu3.reports.weekly', 'Weekly')],
-      ['monthly', t('execution.menu3.reports.monthly', 'Monthly')],
-      ['on-demand', t('execution.menu3.reports.onDemand', 'On demand')],
-      ['sponsor', t('execution.menu3.reports.sponsor', 'Sponsor')],
-      ['needs-generation', t('execution.menu3.reports.needsGeneration', 'Needs generation')],
       ['needs-review', t('execution.menu3.reports.needsReview', 'Needs review')],
-      ['partial-stale', t('execution.menu3.reports.partialStale', 'Partial/stale')],
       ['published', t('execution.menu3.reports.published', 'Published')],
-      ['failed', t('execution.menu3.reports.failed', 'Failed')],
-      ['recent', t('execution.menu3.reports.recent', 'Recent runs')],
     ].map(([id, label]) => ({ id, label })),
     // DEC-426 (1.1-E-1, właściciel 06.09): Kokpit menedżera nie miał Menu 3 —
     // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są
@@ -867,6 +867,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [workFilterControl, setWorkFilterControl] = useState<React.ReactNode>(null);
   const [resourcesFilterControl, setResourcesFilterControl] = useState<React.ReactNode>(null);
   const [controlFilterControl, setControlFilterControl] = useState<React.ReactNode>(null);
+  // 1.12-R4b — Poziom (dropdown Menu2PresetDropdown) + przełącznik
+  // Raporty|Definicje + akcje zaawansowane, zarejestrowane przez
+  // `ExecutionReportsSurface` samo, 1:1 z work/resources/control powyżej.
+  const [reportsFilterControl, setReportsFilterControl] = useState<React.ReactNode>(null);
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
@@ -2724,7 +2728,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           ? resourcesFilterControl
           : activeTab === ('control' as ModuleTab)
             ? controlFilterControl
-            : null;
+            : activeTab === 'reports'
+              ? reportsFilterControl
+              : null;
 
     if (!showScope) {
       return (
@@ -2751,6 +2757,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     workFilterControl,
     resourcesFilterControl,
     controlFilterControl,
+    reportsFilterControl,
   ]);
 
   const portfolioMetrics = useMemo(() => {
@@ -3101,38 +3108,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       };
     },
     [handleOpenDocument, isPilotParticipant, t]
-  );
-
-  // Triada standard (StandardTable rowMenu contract, canon A6) — Reports
-  // catalog kebab. Module declares blocks 1-3 only; StandardTable auto-adds
-  // block 4 (Open preview · Edit · Archive) and block 5 (Delete, danger,
-  // always last). Report catalog rows are generated definitions (no per-row
-  // edit/archive backend) → left undeclared so StandardTable renders them
-  // disabled with "Coming soon (backend)", never silently omitted.
-  const buildReportRowMenu = useCallback(
-    (report: ReportDef): StandardRowMenu => ({
-      primary: [
-        {
-          id: 'open_full',
-          label: t('common.openFull', 'Otwórz pełny widok'),
-          icon: FileText,
-          onClick: () => handleOpenReport(report),
-        },
-      ],
-      universalHandlers: {
-        preview: () => {
-          jedenPanel.otworz();
-          setReportPreviewId(report.id);
-        },
-        // Brak API edycji/archiwizacji definicji raportu — pozycje disabled
-        // z notą (StandardTable dokłada je sama, canon A6 blok 4).
-      },
-      destructive: {
-        // Brak endpointu usuwania raportu — disabled z notą (StandardTable
-        // dokłada ją sama, canon A6 blok 5).
-      },
-    }),
-    [handleOpenReport, t]
   );
 
   const portfolioInitiatives = useMemo(
@@ -5403,255 +5378,6 @@ Please return:
   // StandardPreview canon A7 block 6 action grid — see `reportPreviewActions`
   // below, wired into the 'reports' table-view preview pane.
 
-  const renderReportsCatalog = () => {
-    if (reportDataContext.totalInitiatives === 0) {
-      return (
-        <div className="p-4">
-          <Callout
-            variant="info"
-            title={t('execution.reportCatalog.noData', 'No execution data yet')}
-          >
-            {t(
-              'execution.reportCatalog.noDataDesc',
-              'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.'
-            )}
-          </Callout>
-        </div>
-      );
-    }
-
-    if (viewMode === 'table') {
-      // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Execution
-      // 'reports' tab → StandardTable + StandardPreview, 1:1 with the 'list'
-      // (Portfolio) tab in this same file. Module declares TYLKO data + kebab
-      // contract (buildReportRowMenu); all chrome comes from Standard* facades.
-      type ReportRow = ReportDef & { title: string };
-      const selectedReportPreviewId = reportPreviewId;
-      const selectedReport = selectedReportPreviewId
-        ? ((filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as
-            | ReportRow
-            | undefined) ?? null)
-        : null;
-      const rag = selectedReport ? computeRAG(selectedReport) : null;
-      const ragConf = rag ? RAG_CONFIG[rag] : null;
-      const ragTone: 'success' | 'warning' | 'danger' | 'neutral' =
-        rag === 'green'
-          ? 'success'
-          : rag === 'amber'
-            ? 'warning'
-            : rag === 'red'
-              ? 'danger'
-              : 'neutral';
-
-      return (
-        <div className="flex h-full flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 flex overflow-hidden">
-            <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-              <StandardTable
-                columns={reportColumns}
-                data={
-                  filteredReportCatalog as unknown as Array<
-                    Record<string, unknown> & { id: string }
-                  >
-                }
-                selectedRowId={selectedReportPreviewId}
-                onRowClick={(row) => {
-                  jedenPanel.otworz();
-                  setReportPreviewId(String((row as any).id));
-                }}
-                onRowDoubleClick={(row) => {
-                  const r = filteredReportCatalog.find((x) => x.id === (row as any).id);
-                  if (r) handleOpenReport(r);
-                }}
-                rowDescription={() => null}
-                persistKey="execution-reports"
-                density="compact"
-                selection={{ selectedIds: reportSelectedIds, onChange: setReportSelectedIds }}
-                empty={{
-                  icon: FileText,
-                  title: t('execution.reportCatalog.noData', 'No reports'),
-                  description: t(
-                    'execution.reportCatalog.noDataDesc',
-                    'Reports will be populated once initiatives are actively executing. Add initiatives to the portfolio to start generating reports.'
-                  ),
-                }}
-                rowMenu={(row) => {
-                  const r = filteredReportCatalog.find((x) => x.id === (row as any).id);
-                  return r
-                    ? buildReportRowMenu(r)
-                    : ({ primary: [], universalHandlers: {}, destructive: {} } as StandardRowMenu);
-                }}
-                activeFilters={reportFilters}
-                onFilterChange={setReportFilters}
-              />
-            </div>
-
-            <JedenPrawyPanel rekord={selectedReport ? (
-                <StandardPreview
-                  title={selectedReport.title}
-                  onClose={() => setReportPreviewId(null)}
-                  onOpenFull={() => handleOpenReport(selectedReport)}
-                  meta={{
-                    pills: [
-                      ...(ragConf ? [{ label: ragConf.label, tone: ragTone }] : []),
-                      { label: selectedReport.cadence, tone: 'neutral' as const },
-                    ],
-                    trailing: (
-                      <span className="text-[11px] font-semibold text-c-text-secondary">
-                        {selectedReport.audience}
-                      </span>
-                    ),
-                  }}
-                  details={{
-                    text: [
-                      `${t('execution.reportCatalog.col.data', 'Live Data')}: ${
-                        selectedReport.highlights.map((h) => `${h.label}: ${h.value}`).join(', ') ||
-                        '—'
-                      }`,
-                      `${t('execution.reportCatalog.col.sections', 'Sections')}: ${selectedReport.sections.length}`,
-                      '',
-                      selectedReport.scope,
-                    ].join('\n'),
-                    onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedReport.title} — ${selectedReport.cadence} (${ragConf?.label ?? ''})`
-                      );
-                    },
-                  }}
-                  ai={{
-                    hints: [
-                      t(
-                        'execution.reportPanel.summarizePrompt',
-                        'Summarize this report in 5 bullets and propose 3 next steps.'
-                      ),
-                    ],
-                    onRunHint: () => handleGenerateReport(selectedReport),
-                  }}
-                  relations={selectedReport.dataSources.map((ds) => ({ label: ds }))}
-                  actions={reportPreviewActions(selectedReport)}
-                >
-                  {/* Rich generated report document + methodology descriptor —
-                      preserved from the pre-triada preview (module-specific
-                      content beyond the 6 canon blocks, canon A7 `children`). */}
-                  {renderReportPreviewBody(selectedReport)}
-                </StandardPreview>
-            ) : null} />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="p-4 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-c-text">
-              {t('execution.reports.title', 'Execution reports')}
-            </h2>
-            <p className="mt-0.5 text-xs text-c-text-muted">
-              {t(
-                'execution.reportCatalog.subheading',
-                'Pre-defined reports built from live execution data. Click to expand contract, then generate or export.'
-              )}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/reports')}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-          >
-            {t('execution.reportCatalog.openGlobal', 'Global Reports →')}
-          </button>
-        </div>
-
-        {executiveHealthFailed && (
-          <Callout
-            variant="warning"
-            title={t('execution.executiveHealth.failed', 'Executive health signals unavailable')}
-          >
-            {t(
-              'execution.executiveHealth.failedDesc',
-              'Per-initiative health (RAG status, why-red chains) could not be loaded. The dashboard is operating without execution-health overlays — a degraded state, not an all-healthy portfolio.'
-            )}
-          </Callout>
-        )}
-
-        {renderActionCenter()}
-
-        <details className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
-          <summary className="cursor-pointer px-4 py-3 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
-            {t('execution.reports.workloadPreview', 'Workload preview')}
-          </summary>
-          <div className="border-t border-c-border-subtle">
-            <ExecutionWorkloadView
-              initiatives={dashboardBaseInitiatives as FullInitiative[]}
-              onInitiativeClick={handleOpenSidePanel}
-              projectId={currentProjectId || undefined}
-              showControls={false}
-            />
-          </div>
-        </details>
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredReportCatalog.map((report) => {
-            return (
-              <button
-                key={report.id}
-                type="button"
-                onClick={() => handleOpenReport(report)}
-                className="group rounded-xl border bg-c-surface transition-all text-left border-c-border-subtle hover:border-c-border-strong hover:shadow-sm"
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-c-surface-raised group-hover:bg-c-surface-raised transition-colors">
-                        {report.icon}
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-c-text leading-tight">
-                          {report.title}
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] font-medium uppercase tracking-wide text-c-text-muted">
-                            {report.cadence}
-                          </span>
-                          <span className="text-[10px] text-c-text-muted">·</span>
-                          <span className="text-[10px] text-c-text-muted">{report.audience}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <ChevronRight
-                      size={14}
-                      className="text-c-text-muted transition-transform group-hover:text-c-text-secondary"
-                    />
-                  </div>
-
-                  {report.highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {report.highlights.map((h) => (
-                        <span
-                          key={h.label}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
-                            h.variant === 'critical'
-                              ? 'bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
-                              : h.variant === 'warn'
-                                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                                : 'bg-c-surface-raised text-c-text-muted'
-                          }`}
-                        >
-                          {h.label}: {h.value}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
@@ -6075,6 +5801,7 @@ Please return:
         <ExecutionReportsSurface
           activePreset={canonicalMenu3Preset.reports}
           onCountsChange={menu3CountHandlers.reports}
+          onRegisterFilterControl={setReportsFilterControl}
         />
       );
     // Rollout tab manages its own data + loading/error states independently of
@@ -6271,9 +5998,13 @@ Please return:
       );
     }
 
-    if (activeTab === 'reports') {
-      return renderReportsCatalog();
-    }
+    // 1.12-R4b: 'reports' jest już obsłużone wyżej w tej samej funkcji
+    // (`<ExecutionReportsSurface>`, kilkaset linii nad tym miejscem) —
+    // ta gałąź nigdy nie była osiągalna. `renderReportsCatalog` i jej jedyny
+    // wołacz usunięte (zero innych wołaczy, potwierdzone grepem;
+    // `buildReportRowMenu` — jedyne miejsce użycia — usunięte razem z nią).
+    // Test broniący martwego menu:
+    // `ExecutionHub.reportingMenu.smoke.test.tsx`, usunięty w tym samym kroku.
 
     return null;
   };
@@ -6304,9 +6035,13 @@ Please return:
     const dispatch = (name: string) => () => window.dispatchEvent(new CustomEvent(name));
 
     if (activeTab === 'reports') {
+      // 1.12-R4b: STOP z R4 domknięty — CTA żyje teraz w Menu 2 gospodarza
+      // (tu), nie we własnym nagłówku `ExecutionReportsSurface`. Otwiera
+      // kreator migawki zdarzeniem (ten sam wzorzec co Rollout niżej) —
+      // surface nasłuchuje w `useEffect` i ustawia `wizardOpen`.
       return {
-        onNewItem: undefined,
-        newItemLabel: t('execution.reports.newReport', 'New Report'),
+        onNewItem: dispatch('execution:reports-new-report'),
+        newItemLabel: t('executionReports.action.newReport', 'Nowy raport'),
       };
     }
 
