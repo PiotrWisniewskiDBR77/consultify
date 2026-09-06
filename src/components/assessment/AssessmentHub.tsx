@@ -68,6 +68,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext } from '@/types/workspace';
+import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { formatListDate, formatListDateTime } from '@/utils/listDateFormat';
 import {
   formatPresentationBadge,
@@ -103,6 +104,7 @@ import { Menu3BulkRow } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { AssessmentOutputsTab } from './AssessmentOutputsTab';
+import { trasaOtwarciaRaportuOceny } from './assessmentOutputProjection';
 import {
   buildAssessmentInitiativePreviewDetails,
   buildAssessmentPreviewDetails,
@@ -505,6 +507,19 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
 
   // API data state
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
+  /**
+   * ★ [ODMROZENIE 04_ASSESSMENT DEC-397] Identyfikatory ocen z magazynu
+   * ZASTANEGO (tabela `assessments`, `GET /api/assessments`) — WSZYSTKIE,
+   * takze DRD. `assessments` wyzej celowo wycina zastane DRD (kanonem jest
+   * jadro method-core), wiec nie da sie z niego odczytac, czy dana ocena ma
+   * wiersz w magazynie zastanym. A wlasnie to rozstrzyga, czy „Otworz" ma
+   * uzyc przestrzeni `ocena~<id>`, czy identyfikatora surowego
+   * (`trasaOtwarciaRaportuOceny`). Zrodlo to ta SAMA odpowiedz, ktora juz
+   * pobieramy — zero dodatkowych zadan.
+   */
+  const [idOcenZastanych, setIdOcenZastanych] = useState<ReadonlySet<string>>(
+    () => new Set<string>()
+  );
   const [reports, setReports] = useState<ReportBuilderReportFromAPI[]>([]);
   const [initiatives, setInitiatives] = useState<any[]>([]);
   // Count of the org-wide Outputs Library (AssessmentOutputsTab, rendered
@@ -672,6 +687,18 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       : [];
     if (legacyOutcome.status === 'fulfilled') writeCachedAssessmentHubList(legacyNonDrd);
     setAssessments([...canonicalDrd, ...legacyNonDrd]);
+    // Pelny zbior id magazynu zastanego — przed odsianiem DRD (patrz komentarz
+    // przy `idOcenZastanych`). Przy nieudanym odczycie zostaje poprzedni zbior:
+    // pusty zbior wygenerowalby surowe identyfikatory i pewne 404 w konsoli.
+    if (legacyOutcome.status === 'fulfilled' && Array.isArray(legacyData)) {
+      setIdOcenZastanych(
+        new Set(
+          legacyData
+            .map((item: any) => (typeof item?.id === 'string' ? item.id : null))
+            .filter((id: string | null): id is string => !!id)
+        )
+      );
+    }
 
     if (methodOutcome.status === 'rejected') {
       return t(
@@ -1225,6 +1252,33 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       // StandardPreview aside's content instead (see renderContent's 'reports'
       // branch + selectedReportRow), so "Open" needs its own, deeper action.
       if (docType === 'report') {
+        // ★ [ODMROZENIE 04_ASSESSMENT DEC-397] Raport, ktory ma ocene zrodlowa,
+        // jest RAPORTEM OCENY — jego czytnikiem jest `AssessmentReportDocument`
+        // (`/assessment/outputs/:outputId/report`), nie Kreator raportow.
+        // Zmierzone 06.09: „Otworz" na wierszu „DRD Manufacturing …
+        // (Zatwierdzone, 100 %)" wchodzilo do PUSTEGO kreatora („Zacznij
+        // budowac raport", zero blokow), a ta sama ocena pod trasa raportu
+        // rysuje 4 rozdzialy + macierz DRD + przepisana tresc raportu.
+        // Reguly wyboru identyfikatora: `trasaOtwarciaRaportuOceny`.
+        // Kreator zostaje sciezka EDYCJI (podglad „Otworz w edytorze", kebab
+        // „Edytuj") — zadna praca w kreatorze nie przepada.
+        // Za flaga: gdy `isAssessmentOutputArtifactsEnabled()` jest OFF, trasa
+        // raportu przekierowuje na `?tab=outputs` (AppRoutes), wiec zostajemy
+        // przy dotychczasowym zachowaniu zamiast odbijac uzytkownika na liste.
+        if (isAssessmentOutputArtifactsEnabled()) {
+          const trasaRaportu = trasaOtwarciaRaportuOceny(
+            {
+              id: String(row.id),
+              assessmentId: (row as any).assessmentId ?? (row as any).assessment_id ?? null,
+              _isImported: !!(row as any)._isImported,
+            },
+            idOcenZastanych
+          );
+          if (trasaRaportu) {
+            navigate(trasaRaportu);
+            return;
+          }
+        }
         const builderId = (row as any).builderReportId || (row as any).builder_report_id || row.id;
         navigate(`/reports/builder/${encodeURIComponent(String(builderId))}`);
         return;
@@ -1244,7 +1298,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
       });
       setActiveDocumentId(row.id);
     },
-    [activeTab, navigate]
+    [activeTab, navigate, idOcenZastanych]
   );
 
   const handleCloseDocument = useCallback(

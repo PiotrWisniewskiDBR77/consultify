@@ -26,6 +26,7 @@ import {
   projektujOceneZastanaNaWierszListy,
   projektujRaportZastanyNaTresc,
   scalOcenyZastaneZOutputami,
+  trasaOtwarciaRaportuOceny,
   type LegacyAssessmentDetail,
   type LegacyAssessmentListRow,
 } from '../assessmentOutputProjection';
@@ -132,5 +133,40 @@ describe('projekcja ocen zastanych — treść raportu', () => {
   it('brak raportu = null, nie pusty obiekt-wypełniacz', () => {
     expect(projektujRaportZastanyNaTresc(null)).toBeNull();
     expect(projektujRaportZastanyNaTresc({ content: {} })).toBeNull();
+  });
+});
+
+/**
+ * [ODMROZENIE 04_ASSESSMENT DEC-397] Wybór celu dla „Otwórz" w zakładce
+ * Ocena → Raporty. Test WIRUJĄCY (klik → nawigacja) leży w
+ * `tests/components/assessment/AssessmentHub.otworzRaportOceny.dec397.test.tsx`
+ * — tu pilnujemy samej reguły wyboru identyfikatora.
+ */
+describe('[DEC-397] trasaOtwarciaRaportuOceny', () => {
+  it('ocena obecna w magazynie zastanym dostaje przestrzeń `ocena~`', () => {
+    const trasa = trasaOtwarciaRaportuOceny(
+      { id: 'report-drd-test-exec', assessmentId: 'assess-drd-manufacturing-01' },
+      new Set(['assess-drd-manufacturing-01'])
+    );
+    expect(trasa).toBe('/assessment/outputs/ocena~assess-drd-manufacturing-01/report');
+  });
+
+  it('ocena spoza magazynu zastanego idzie identyfikatorem surowym', () => {
+    const trasa = trasaOtwarciaRaportuOceny(
+      { id: 'rep-x', assessmentId: '11111111-2222-3333-4444-555555555555' },
+      new Set(['assess-drd-manufacturing-01'])
+    );
+    expect(trasa).toBe('/assessment/outputs/11111111-2222-3333-4444-555555555555/report');
+  });
+
+  it('raport bez oceny źródłowej i import PDF zostają przy Kreatorze (null)', () => {
+    expect(trasaOtwarciaRaportuOceny({ id: 'rep-y', assessmentId: null }, new Set())).toBeNull();
+    expect(trasaOtwarciaRaportuOceny({ id: 'rep-z' }, new Set())).toBeNull();
+    expect(
+      trasaOtwarciaRaportuOceny(
+        { id: 'import-1', assessmentId: 'assess-1', _isImported: true },
+        new Set(['assess-1'])
+      )
+    ).toBeNull();
   });
 });
