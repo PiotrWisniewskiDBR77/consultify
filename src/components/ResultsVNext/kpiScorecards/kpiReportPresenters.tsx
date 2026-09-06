@@ -319,7 +319,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'period',
       label: t('OKRES', 'PERIOD'),
-      width: '124px',
+      width: '114px',
       dataType: 'number',
       sortable: true,
       render: (row: KpiReportRowVm) =>
@@ -341,8 +341,16 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     },
     {
       id: 'state',
+      // KOSMETYKA (RAPORT_A3/B3, 2026-09-06): 140px ucinało dystrybucję na
+      // rzeczywistych zestawieniach (np. "93 · 21 · " — krytyczne/brakujące
+      // niewidoczne, `overflow-hidden` w `KpiStateCounts` wycinał treść w
+      // połowie kropki), a sąsiednia kolumna OTWARTE DZIAŁANIA zaczynała się
+      // od razu za uciętą treścią. 190px mieści 4 dwucyfrowe grupy z
+      // separatorami bez ucinania; -50px rozłożone na okres/otwarte
+      // działania/przygotował/aktualizację (patrz te kolumny niżej) — suma
+      // szerokości (`KPI_REPORT_TABLE_WIDTH_PX`) bez zmian.
       label: t('STAN', 'STATUS'),
-      width: '140px',
+      width: '210px',
       dataType: 'number',
       render: (row: KpiReportRowVm) =>
         row.distribution ? (
@@ -360,7 +368,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'openActions',
       label: t('OTWARTE DZIAŁANIA', 'OPEN ACTIONS'),
-      width: '172px',
+      width: '146px',
       dataType: 'number',
       sortable: true,
       render: (row: KpiReportRowVm) => numberCell(row.openActions),
@@ -368,7 +376,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'preparedBy',
       label: t('PRZYGOTOWAŁ', 'PREPARED BY'),
-      width: '146px',
+      width: '128px',
       dataType: 'owner',
       sortable: true,
       render: (row: KpiReportRowVm) =>
@@ -383,7 +391,7 @@ export function buildKpiReportColumns(isPolish: boolean): TableColumn[] {
     {
       id: 'updatedAt',
       label: t('AKTUALIZACJA', 'UPDATED'),
-      width: '140px',
+      width: '124px',
       dataType: 'date',
       sortable: true,
       render: (row: KpiReportRowVm) =>

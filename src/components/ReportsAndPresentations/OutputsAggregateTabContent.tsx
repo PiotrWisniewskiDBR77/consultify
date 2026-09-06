@@ -417,28 +417,16 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'title',
         label: t('rap.columns.title', 'Tytuł'),
-        // Rodzina „ucinany tekst" (2026-08-31): 10 kolumn na tym ekranie
-        // (grafika/140-rodzina-ucinanie) przy 1440px nigdy się nie mieściło
-        // (suma deklarowanych szerokości + kolumna zaznaczenia + kolumna akcji
-        // > realny obszar tabeli — zmierzone: 1384px na jednym adopterze
-        // harnessu, 1334px na drugim). `FilterableTable`'s `table-fixed`
-        // renderuje KAŻDĄ kolumnę dokładnie na jej deklarowanym `width` — przy
-        // niedoborze dopasowanie do kontenera (`columnFit`) ściska WSZYSTKIE
-        // kolumny proporcjonalnie w dół, aż utknie na wspólnej podłodze 112px.
-        // „Format" (sortowalna + filtrowalna, więc DWIE ikony obok etykiety)
-        // i „Widoczność" (samo słowo „WIDOCZNOŚĆ" w wersji z majuskułami) nie
-        // mieszczą się w 112px — stąd „FOR…"/„WIDOCZNO…" mimo pełnej
-        // szerokości ekranu. `min-width` na komórce NIE ratuje (pułapka z
-        // pamięci projektu): to WŁAŚNIE deklarowany `width` rozpycha sumę,
-        // a podłoga dopasowania jest wspólna dla wszystkich kolumn, nie per
-        // treść nagłówka. Naprawa: przeliczona cała szerokości poniżej, tak
-        // żeby SUMA (10 kolumn + zaznaczenie 44px + akcje 80px) zmieściła się
-        // w OBU adopterach BEZ włączania ściskania (`scale === 1`) — każda
-        // kolumna renderuje się dokładnie na swojej deklarowanej szerokości,
-        // z zapasem zmierzonym na realnym, wyrenderowanym tekście nagłówka
-        // (canvas/DOM measurement, nie oko) ponad potrzebę „Format"/
-        // „Widoczność" (~125px/~117px z ikonami+tekstem) i pozostałych kolumn.
-        width: '190px',
+        // Rodzina „ucinany tekst" (2026-08-31, rozszerzone 2026-09-06 —
+        // KOSMETYKA z RAPORT_A3/B3): 190px ucinało realne tytuły dokumentów
+        // ("Notatka z przejścia…") już po ~17 znakach na 1440px. Podniesione
+        // do 260px + `dataType: 'text'` (podłoga tekstowa, zamiast domyślnej
+        // liczbowej) — budżet SUMY kolumn utrzymany: -70px rozłożone na
+        // exports/review/source/updatedAt (kolumny z krótką treścią: „—" lub
+        // 1 słowo, nie tracą czytelności przy 95px). Patrz też komentarze przy
+        // tamtych czterech kolumnach niżej.
+        width: '260px',
+        dataType: 'text',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
           return (
@@ -460,7 +448,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'outputKind',
         label: t('rap.outputs.columns.kind', 'Typ'),
-        width: '100px',
+        width: '90px',
         filterable: true,
         filterOptions: [
           {
@@ -512,7 +500,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'status',
         label: t('rap.columns.status', 'Status'),
-        width: '120px',
+        width: '110px',
         filterable: true,
         filterOptions: [
           { value: 'draft', label: t('reports.draft') },
@@ -562,7 +550,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'source',
         label: t('rap.outputs.columns.source', 'Source'),
-        width: '100px',
+        width: '90px',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
           return (
@@ -575,7 +563,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'review',
         label: t('rap.outputs.columns.review', 'Review'),
-        width: '110px',
+        width: '95px',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
           return (
@@ -588,7 +576,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'exports',
         label: t('rap.outputs.columns.exports', 'Exports'),
-        width: '110px',
+        width: '95px',
         render: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;
           return (
@@ -601,7 +589,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
       {
         id: 'updatedAt',
         label: t('rap.columns.date', 'Data'),
-        width: '100px',
+        width: '90px',
         sortable: true,
         sortAccessor: (rawRow: Record<string, unknown>) => {
           const row = rawRow as unknown as AggregateRow;

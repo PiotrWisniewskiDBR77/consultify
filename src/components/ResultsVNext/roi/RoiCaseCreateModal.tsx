@@ -193,7 +193,7 @@ export const RoiCaseCreateModal: React.FC<RoiCaseCreateModalProps> = ({
     <Modal
       open={open}
       onClose={busy ? () => {} : onClose}
-      title={isPolish ? 'Nowa sprawa ROI' : 'New ROI case'}
+      title={isPolish ? 'Nowa analiza' : 'New ROI case'}
       description={
         isPolish
           ? 'Zapisze się jako prawdziwy szkic (Draft) w rejestrze ROI.'

@@ -3717,6 +3717,7 @@
     },
     "openDocuments": "Open documents",
     "inboxContent": {
+      "previewAriaLabel": "Item preview",
       "systemTitles": {
         "defineTargetProcess": "Define target process and acceptance criteria",
         "submitComplianceDocumentation": "Submit Compliance Documentation",

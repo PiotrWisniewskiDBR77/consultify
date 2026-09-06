@@ -4318,9 +4318,14 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           )}
         </div>
 
-        {/* Preview Pane (A3) */}
+        {/* Preview Pane (A3) — <aside>, nie <div>: KOSMETYKA z RAPORT_A3
+            (2026-09-06) — panel był wizualnie identyczny z Wywiadem/
+            Realizacją, ale renderował się jako zwykły <div>, więc
+            `aside`/`role=complementary` liczyło 0 mimo widocznego panelu na
+            zrzucie (niespójność DOM między modułami, nie widać okiem). */}
         {previewItem && (
-          <div
+          <aside
+            aria-label={t('myWork.inboxContent.previewAriaLabel', 'Podgląd pozycji')}
             data-preview-pane
             className="shrink-0 bg-c-bg p-3"
             style={{ width: PREVIEW_PANE_WIDTH }}
@@ -4351,7 +4356,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               onOpenTask={onOpenTask}
               onOpenDecision={onOpenDecision}
             />
-          </div>
+          </aside>
         )}
       </div>
     </div>

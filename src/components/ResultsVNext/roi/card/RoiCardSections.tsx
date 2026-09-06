@@ -490,7 +490,10 @@ export const RoiCalculationsPart: React.FC<{ card: RoiCaseCard; isPolish: boolea
           />
           <Tile label={roiHorizonLabel(ind.horizonYears)} value={fmtPercent(run?.roiPct ?? null, isPolish, 0)} />
           <Tile label="Payback" value={fmtYears(run?.paybackPeriods ?? null, isPolish)} />
-          <Tile label="Discounted Payback" value={fmtYears(run?.discountedPaybackPeriods ?? null, isPolish)} />
+          <Tile
+            label={t('Payback zdyskontowany', 'Discounted Payback')}
+            value={fmtYears(run?.discountedPaybackPeriods ?? null, isPolish)}
+          />
           <Tile
             label="NPV"
             value={fmtMoney(run?.npv ?? null, cur, isPolish)}

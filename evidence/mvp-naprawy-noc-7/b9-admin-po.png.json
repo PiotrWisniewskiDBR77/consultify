@@ -1,0 +1,16 @@
+{
+ "url": "http://localhost:3086/admin/team/members",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nPanel administratora\nPrzegląd\nDane\nModel\n1\nAudyt Nocny\nAN\nWstecz\nPANEL ADMINISTRATORA\n\nDostęp, polityki organizacji, dowody i bezpieczne operacje\n\nZESPÓŁ I DOSTĘP\nUżytkownicy\nZaproszenia\nRole i uprawnienia\nZespoły\nGoście i dostęp zewnętrzny\nWnioski o dostęp\nPrzeglądy dostępów\nWłasność\nROZLICZENIA I PLANY\nSTEROWANIE AI\nBEZPIECZEŃSTWO I TOŻSAMOŚĆ\nDZIENNIK AUDYTU\nCENTRUM DOWODZENIA\nSTAN SYSTEMU\nPanel administratora\nZespół i dostęp\nUżytkownicy\nUżytkownicy\n\nZarządzanie członkostwem, zmiany ról, przekazanie własności i kody zaproszeń zespołu.\n\nWłaściciel\n\nPełna kontrola nad przestrzenią, przekazanie własności i zabezpieczenia zarezerwowane dla właściciela.\n\nTylko właściciel może przypisać lub usunąć innego właściciela.\n\nAdministrator\n\nMoże zarządzać członkami zespołu, ich rolami i kodami zaproszeń.\n\nNie może zmienić członkostwa właściciela ani ominąć jego zabezpieczeń.\n\nCzłonek\n\nStandardowy dostęp do przestrzeni bez uprawnień administracyjnych zespołu.\n\nNie może otworzyć administracji zespołu ani zmieniać członkostwa.\n\nGość\n\nOgraniczona rola współpracownika bez dostępu administracyjnego.\n\nGoście nie mają dostępu do narzędzi administracyjnych.\n\nCzłonkowie i role\n\nKanoniczna powierzchnia P32 do zarządzania członkostwem, zmianami ról i zabezpieczeniami właściciela.\n\nRola w zaproszeniu\nCzłonek\nAdministrator\nGość\nDodaj członka\nCZŁONEK\n\t\nE-MAIL\n\t\nROLA\n\t\nSTATUS\n\t\n\n\nAudyt Nocny\n\t\naudyt@dbr77.local\n\t\nRola użytkownika Audyt Nocny\nWłaściciel\nAdministrator\nCzłonek\nGość\n\t\nAktywne\n\t",
+ "kiedy": "2026-09-06T00:27:40.304Z"
+}

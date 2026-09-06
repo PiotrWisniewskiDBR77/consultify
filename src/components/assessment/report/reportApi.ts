@@ -134,6 +134,12 @@ async function pobierzTrescRaportuZastanego(
   }
 }
 
+/** Prawdziwe Output jądra metodycznego mają identyfikator UUID (klucz główny
+ * tabeli jądra). Stare linki do ocen zastanych sprzed dodania prefiksu
+ * `ocena~` (np. `assess-drd-enterprise-01`, seed demo) nie są UUID-em — pytanie
+ * jądra o taki identyfikator dałoby PEWNY 404. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Fetches the immutable Output. Returns `null` on a 404 ("this id does not
  * exist / does not belong to this org") — the caller renders the honest
  * "not frozen" state, never a substitute calculation. */
@@ -142,6 +148,19 @@ export async function fetchOutputForReport(outputId: string): Promise<OutputFetc
   // pytanie o niego dałoby tylko 404 i mylący log.
   const idOcenyZastanej = idOcenyZWierszaZastanego(outputId);
   if (idOcenyZastanej) return pobierzRaportZMagazynuZastanego(idOcenyZastanej);
+
+  // KOSMETYKA (RAPORT_A3 KOSMETYKA #6, 2026-09-06): dla identyfikatora bez
+  // prefiksu, ale też NIE w kształcie UUID — stary link sprzed prefiksu —
+  // sprawdzamy magazyn zastany OD RAZU, zamiast najpierw pytać jądro o
+  // identyfikator, który nie może tam istnieć. Bez tego KAŻDE wejście w
+  // taki raport logowało pewny, oczekiwany `GET /api/method/outputs/<id>`
+  // 404 w konsoli przeglądarki (log sieciowy, nie da się go stłumić inaczej
+  // niż nie wysyłając żądania). Jeśli magazyn zastany też nic nie ma —
+  // spadamy do zwykłej ścieżki jądra niżej (bez zmiany zachowania brzegowego).
+  if (!UUID_RE.test(outputId)) {
+    const zastany = await pobierzRaportZMagazynuZastanego(outputId);
+    if (zastany) return zastany;
+  }
 
   try {
     const res = await getOutputSummary(outputId);
