@@ -521,6 +521,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
   // below whenever no assessment is selected on the Processes tab) — drives
   // the 'outputs' tab badge. `null` = load error, distinct from a genuine 0.
   const [outputsCount, setOutputsCount] = useState<number | null>(null);
+  // DEC-416 — CTA Menu 2 „Nowy wniosek" na zakładce Wnioski. Licznik, nie
+  // boolean: kolejne kliknięcia mają otwierać generator także po zamknięciu.
+  const [sygnalNowyWniosek, setSygnalNowyWniosek] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
@@ -2404,6 +2407,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
           <AssessmentOutputsTab
             onCountChange={setOutputsCount}
             onNavigate={(target) => setActiveTab(target)}
+            sygnalNowyWniosek={sygnalNowyWniosek}
           />
         </div>
       );
@@ -2881,6 +2885,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
     // module — zatwierdzone zrzuty mialy tu „Nowa ocena".
     if (activeTab === 'reports') return t('assessment.hub.newReport', 'Nowy raport');
     if (activeTab === 'initiatives') return t('assessment.hub.newInitiative', 'Nowa inicjatywa');
+    // DEC-416: zakładka Wnioski miała CTA wyłączone — właściciel widział listę
+    // zapisów sesji bez żadnego sposobu zrobienia wniosku.
+    if (activeTab === 'outputs') return t('assessment.hub.newConclusion', 'Nowy wniosek');
     return t('assessment.hub.newAssessment', 'Nowa ocena');
   };
 
@@ -2910,7 +2917,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={activeTab === 'library' || activeTab === 'outputs' ? undefined : handleNewItem}
+        onNewItem={
+          activeTab === 'outputs'
+            ? // CTA żyje TYLKO na liście Wniosków; gdy zakładka pokazuje panel
+              // jakości wybranej oceny, generator nie ma do czego się odnieść.
+              selectedAssessmentId
+              ? undefined
+              : () => setSygnalNowyWniosek((n) => n + 1)
+            : activeTab === 'library'
+              ? undefined
+              : handleNewItem
+        }
         newItemLabel={getNewItemLabel()}
         filterControls={
           activeTab === 'library' || activeTab === 'outputs' ? undefined : statusDropdownControl

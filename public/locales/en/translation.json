@@ -8392,6 +8392,7 @@
       "listWorkspace": "List workspace",
       "newAssessment": "New assessment",
       "newReport": "New report",
+      "newConclusion": "New conclusion",
       "newInitiative": "New initiative",
       "uploadPdf": "Upload PDF",
       "uploadPdfTooltip": "Upload a DRD report (PDF)",

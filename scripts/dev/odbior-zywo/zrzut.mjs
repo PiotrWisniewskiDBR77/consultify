@@ -16,6 +16,10 @@
  *   Potrzebne dla ekranów osiągalnych WYŁĄCZNIE zdarzeniem (np. `mywork-open-item` — wejście do rekordu
  *   z panelu powiązań w Mojej Pracy). Kroki --klik/--wpisz/--zdarzenie wykonują się w KOLEJNOŚCI Z WIERSZA POLECEŃ.
  *   Przykład: --zdarzenie='mywork-open-item::{"type":"initiative","id":"abc","name":"X"}'
+ * --wybierz=<selektor>::<wartość> (OPT-IN, 2026-09-06): wybiera opcję w <select> (`selectOption`).
+ *   `--wpisz` na <select> pada („Element is not an <input>…”), a kreatory (np. generator wniosku
+ *   Oceny) prowadzą przez listy rozwijane — bez tego kroku ich ekranu wynikowego nie da się
+ *   odtworzyć zrzutem. Wykonuje się w KOLEJNOŚCI Z WIERSZA POLECEŃ razem z --klik/--wpisz/--zdarzenie.
  * --wpisz=<selektor>::<tekst> (OPT-IN, 2026-09-06): wpisuje tekst w pole/edytor. Można podać wiele razy;
  *   kroki --klik i --wpisz wykonują się w KOLEJNOŚCI Z WIERSZA POLECEŃ. Pola formularza dostają `fill`,
  *   `contenteditable` (TipTap) — realne pisanie z klawiatury. Bez tego parametru zero zmiany zachowania.
@@ -59,9 +63,21 @@ const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7))
 // Pola formularza dostają `fill`, edytory `contenteditable` — realne pisanie
 // z klawiatury (TipTap i spółka ignorują podmianę wartości).
 const kroki = args
-  .filter((x) => x.startsWith('--klik=') || x.startsWith('--wpisz=') || x.startsWith('--zdarzenie='))
+  .filter(
+    (x) =>
+      x.startsWith('--klik=') ||
+      x.startsWith('--wpisz=') ||
+      x.startsWith('--wybierz=') ||
+      x.startsWith('--zdarzenie=')
+  )
   .map((x) => {
     if (x.startsWith('--klik=')) return { rodzaj: 'klik', selektor: x.slice(7) };
+    if (x.startsWith('--wybierz=')) {
+      const surowy = x.slice(10);
+      const i = surowy.indexOf('::');
+      if (i < 0) return { rodzaj: 'blad', selektor: surowy };
+      return { rodzaj: 'wybierz', selektor: surowy.slice(0, i), tekst: surowy.slice(i + 2) };
+    }
     if (x.startsWith('--zdarzenie=')) {
       // --zdarzenie=<nazwa>::<jsonDetail> (OPT-IN, 2026-09-06, zlecenie 1.1-L).
       // Aplikacja ma powierzchnie osiagalne WYLACZNIE przez `window.dispatchEvent`
@@ -161,6 +177,19 @@ for (const krok of kroki) {
   if (krok.rodzaj === 'klik') {
     try { await page.locator(krok.selektor).first().click({ timeout: 8000 }); await page.waitForTimeout(900); }
     catch (e) { bledy.push(`klik nieudany: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
+    continue;
+  }
+  if (krok.rodzaj === 'wybierz') {
+    try {
+      const cel = page.locator(krok.selektor).first();
+      await cel.waitFor({ state: 'visible', timeout: 8000 });
+      await cel.selectOption(krok.tekst, { timeout: 8000 });
+      await page.waitForTimeout(900);
+    } catch (e) {
+      bledy.push(
+        `wybor nieudany: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`
+      );
+    }
     continue;
   }
   if (krok.rodzaj === 'zdarzenie') {

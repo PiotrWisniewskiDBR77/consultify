@@ -1212,6 +1212,171 @@ router.get('/:reportId/drd-report', async (req: AuthRequest, res: Response) => {
 });
 
 // =============================================================================
+// WNIOSEK Z OCENY (DEC-416) — przewód do ISTNIEJĄCEGO silnika wniosków.
+//
+// POMIAR 06.09: modul Ocena NIE mial wlasnego generatora wnioskow, ale silnik
+// istnial i pracowal „w bok": `GET /:reportId/drd-report` buduje model raportu
+// DRD, a most `safePersistDrdReportConclusion` zapisuje jego streszczenie
+// wykonawcze jako WNIOSEK w warstwie Conclusions (`conclusions`, karta
+// `/conclusions?id=`). Most byl wolany `void` (fire-and-forget) jako efekt
+// uboczny ogladania raportu — uzytkownik nie mial zadnego przycisku „zrob
+// wniosek" i nie dostawal jego identyfikatora.
+//
+// Ta trasa to CIENKI PRZEWOD, nie nowy silnik: ten sam `buildDrdReportHtmlServer`
+// i ten sam most, ale wolany JAWNIE i Z OCZEKIWANIEM (`await`), z jednoznaczna
+// odpowiedzia `{ conclusionId }`, ktora zakladka „Wnioski" moze od razu otworzyc.
+// Zero nowego promptu, zero nowej tabeli, zero zmiany schematu.
+//
+// Rodowod (lineage) jest twardym warunkiem powodzenia: zapisany wniosek MUSI
+// nosic `sourceRefs` typu `assessment_report` wskazujace DOKLADNIE raport z
+// adresu. Gdy go nie ma — wyszukanie po `source_artifact_refs_json` nie trafia
+// i trasa zwraca 500 zamiast udawac sukces (test mutacyjny celuje w ten warunek).
+// =============================================================================
+router.post('/:reportId/conclusion', async (req: AuthRequest, res: Response) => {
+  try {
+    await ensureAssessmentReportsSchema();
+    const organizationId = requireRequestOrganizationId(req, res);
+    if (!organizationId) return;
+    const { reportId } = req.params;
+
+    const reportRow = await get<any>(
+      `SELECT r.*, a.name as "assessmentName", a.assessment_type as "assessmentType"
+       FROM assessment_reports r
+       LEFT JOIN assessments a ON a.id = r.assessment_id
+       WHERE r.id = ? AND r.organization_id = ?`,
+      [reportId, organizationId]
+    );
+    if (!reportRow) return res.status(404).json({ error: 'Report not found' });
+
+    const axisData = safeJsonParse<Record<string, { actual?: number; target?: number }>>(
+      reportRow.axis_data,
+      {}
+    );
+
+    let organizationName = 'Organizacja';
+    try {
+      const orgRow = await get<any>(`SELECT name FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (orgRow?.name) organizationName = orgRow.name;
+    } catch {
+      /* non-fatal — fall back to default label */
+    }
+
+    const language: 'pl' | 'en' =
+      String((req.body?.language as string) || reportRow.language || 'pl').toLowerCase() === 'en'
+        ? 'en'
+        : 'pl';
+
+    // Narrator LLM i ugruntowanie ksiazkowe — identycznie fail-safe jak w
+    // `/:reportId/drd-report`: brak uslugi = narrator deterministyczny, wniosek
+    // i tak powstaje.
+    let llm: any = null;
+    try {
+      const mod = await import('../services/ai/llmService.js');
+      llm = mod.llmService || mod.default || null;
+    } catch {
+      logger.warn('[AssessmentReports] LLM unavailable for conclusion — deterministic narrator');
+    }
+    let grounding: any = undefined;
+    try {
+      const { buildDrdGroundingProvider } = await import(
+        '../services/report/drdReportGrounding.js'
+      );
+      grounding = buildDrdGroundingProvider({
+        organizationId,
+        userId: req.user?.id,
+        language,
+        logger: { warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta) },
+      });
+    } catch {
+      grounding = undefined;
+    }
+
+    const { buildDrdReportHtmlServer } = await import('../services/report/drdReportService.js');
+    const { model } = await buildDrdReportHtmlServer({
+      axisData,
+      meta: {
+        organizationName,
+        language,
+        assessmentName: reportRow.assessmentName || undefined,
+        reportDate: reportRow.created_at || undefined,
+      },
+      llm: llm || undefined,
+      grounding,
+      logger: { warn: (msg: string, meta?: unknown) => logger.warn(`[DRDReport] ${msg}`, meta) },
+    });
+
+    const { buildDrdReportConclusion, safePersistDrdReportConclusion } = await import(
+      '../services/conclusions/reportConclusionBridge.js'
+    );
+    const source = {
+      reportId: String(reportId),
+      reportTitle: reportRow.name || reportRow.assessmentName || null,
+      projectId: reportRow.project_id || null,
+    };
+    const candidate = buildDrdReportConclusion(model, source);
+    if (!candidate) {
+      return res.status(422).json({
+        error:
+          'Ten raport nie ma jeszcze streszczenia wykonawczego — nie ma z czego zbudowac wniosku.',
+        code: 'ASSESSMENT_CONCLUSION_NO_EXECUTIVE_SUMMARY',
+      });
+    }
+
+    const persisted = await safePersistDrdReportConclusion(
+      {
+        organizationId,
+        actorUserId: String(req.user?.id || 'system'),
+        model,
+        source,
+      },
+      { logger: { warn: (msg: string, meta?: unknown) => logger.warn(msg, meta) } }
+    );
+    if (!persisted) {
+      return res.status(500).json({
+        error: 'Nie udalo sie zapisac wniosku',
+        code: 'ASSESSMENT_CONCLUSION_PERSIST_FAILED',
+      });
+    }
+
+    // Odczyt po RODOWODZIE, nie po tytule: `upsertExternalConclusion` deduplikuje
+    // po (organization_id, source_module, source_artifact_refs_json), wiec ten
+    // sam raport nigdy nie mnozy wnioskow, a brak rodowodu = brak trafienia.
+    const conclusionRow = await get<any>(
+      `SELECT id, title, status, source_artifact_refs_json
+       FROM conclusions
+       WHERE organization_id = ? AND source_module = ? AND source_artifact_refs_json = ?
+       LIMIT 1`,
+      [organizationId, candidate.sourceModule, JSON.stringify(candidate.sourceRefs)]
+    );
+    if (!conclusionRow?.id) {
+      return res.status(500).json({
+        error: 'Wniosek zapisany bez rodowodu do oceny — przerwane',
+        code: 'ASSESSMENT_CONCLUSION_LINEAGE_MISSING',
+      });
+    }
+
+    return res.status(201).json({
+      conclusionId: String(conclusionRow.id),
+      title: candidate.title,
+      status: String(conclusionRow.status || candidate.status),
+      sourceRefs: candidate.sourceRefs,
+      narrative: model.executiveSummary?.narrative || null,
+    });
+  } catch (err: any) {
+    logger.error('[AssessmentReports] Error generating assessment conclusion', {
+      err: err,
+      correlationId: (res.req as any)?.correlationId,
+    });
+    return res.status(500).json({
+      error: 'Nie udalo sie wygenerowac wniosku z oceny',
+      code: 'ASSESSMENT_REPORTS_GENERATE_CONCLUSION_FAILED',
+    });
+  }
+});
+
+// =============================================================================
 // GENERATE / REGENERATE REPORT SECTIONS FROM TEMPLATE
 // =============================================================================
 router.post('/:reportId/generate', async (req: AuthRequest, res: Response) => {

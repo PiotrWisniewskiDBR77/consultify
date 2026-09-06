@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3151/assessment?tab=outputs",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Nowy wniosek"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nOcena\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nBiblioteka\nProcesy\nWnioski\nRaporty\nInicjatywy\nNowy wniosek\nTYP\n\t\nZAKRES\n\t\nMODUŁ\n\t\nWERSJA\n\t\nZAMROŻONO\n\t\n\n\nWniosek\n\t\nDRD Manufacturing — Executive Summary & Deep Analysis (C-suite)\n\t\nOcena\n\t\n—\nKandydat\n\t\n05/09/2026\n\t\n\n\nZapis sesji\n\t\nADMA — Digital Maturity Assessment\n\t\nOcena\n\t\n—\nZapis sesji\n\t\n—\n\t\n\n\nZapis sesji\n\t\nSIRI — Industry 4.0 Readiness\n\t\nOcena\n\t\n—\nZapis sesji\n\t\n—\n\t\n\n\nZapis sesji\n\t\nDRD — Finalny (Enterprise)\n\t\nOcena\n\t\n—\nZapis sesji\n\t\n—\n\t\n\n\nZapis sesji\n\t\nDRD — Testowy (Manufacturing)\n\t\nOcena\n\t\n—\nZapis sesji\n\t\n—\n\t\nNowy wniosek z oceny\n\nWybierz źródło i uruchom generator\n\n1. Źródło danych\nOcena + raport oceny\nJedyne źródło, które silnik dziś przyjmuje: streszczenie wykonawcze raportu wraz z dowodami i ograniczeniami.\n2. Wybierz ocenę\n— wybierz ocenę —\nADMA — Digital Maturity Assessment (ADMA)\nDRD — Testowy (Manufacturing) (DRD)\nSIRI — Industry 4.0 Readiness (SIRI)\nDRD — Finalny (Enterprise) (DRD)\n3. Wybierz raport oceny\nNajpierw wybierz ocenę.\nAnuluj\nGeneruj wniosek",
+ "kiedy": "2026-09-06T13:35:45.174Z"
+}
