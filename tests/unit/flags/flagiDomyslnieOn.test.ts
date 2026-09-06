@@ -56,19 +56,24 @@ afterEach(() => {
 });
 
 describe('DEC 03.09 wieczór — flagi domyślnie ON (bez query/localStorage/env)', () => {
-  describe('A1 — 5 domen Wyników (resultsVNextFeatureFlags.ts)', () => {
-    it.each([
-      ['kpiRegistry'],
-      ['roiRegistry'],
-      ['okrRegistry'],
-      ['resultsSearch'],
-      ['attentionEntry'],
-    ] as const)('%s domyślnie ON poza publiczną produkcją', (flag) => {
-      expect(isResultsVNextFlagEnabled(flag)).toBe(true);
-    });
+  /**
+   * Rejestr flag Wyników skurczył się po dwóch odbiorach właściciela:
+   * DEC-422 (06.09) skasowała `attentionEntry` i `managementReportEntry`,
+   * DEC-422b/e (06.09) — `resultsSearch` (zakładka „Wyszukiwarka" zastąpiona
+   * „Raportami zarządczymi"). Ten plik wołał je dalej po nazwie i od DEC-422
+   * przewracał się na `TypeError: Cannot read properties of undefined
+   * (reading 'query')` — 3 czerwone testy ZASTANE, zmierzone przed tą zmianą.
+   * Lista wraca do stanu faktycznego: trzy żyjące domeny.
+   */
+  describe('A1 — domeny Wyników (resultsVNextFeatureFlags.ts)', () => {
+    it.each([['kpiRegistry'], ['roiRegistry'], ['okrRegistry']] as const)(
+      '%s domyślnie ON poza publiczną produkcją',
+      (flag) => {
+        expect(isResultsVNextFlagEnabled(flag)).toBe(true);
+      }
+    );
 
-    it('managementReportEntry i resultsLegacyArchive NIE są objęte DEC 03.09 A1 — zostają OFF', () => {
-      expect(isResultsVNextFlagEnabled('managementReportEntry')).toBe(false);
+    it('resultsLegacyArchive NIE jest objęty DEC 03.09 A1 — zostaje OFF', () => {
       expect(isResultsVNextFlagEnabled('resultsLegacyArchive')).toBe(false);
     });
   });

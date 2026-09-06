@@ -1020,6 +1020,11 @@ class ManagementReportsService {
       generatedByName: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
       projectName: row.project_name,
       createdAt: row.created_at,
+      // DEC-422b/e (06.09): kolumna „Zaktualizowano" w tabeli raportów
+      // zarządczych w Menu 2 Wyników. Wiersz i tak przychodzi jako `mr.*`
+      // (ManagementReportRepository.getReports) — dokładamy jedno pole do
+      // mapowania, zero zmian w zapytaniu i zero nowych tras.
+      updatedAt: row.updated_at,
       pdfPath: row.pdf_path,
       pptxPath: row.pptx_path,
     }));

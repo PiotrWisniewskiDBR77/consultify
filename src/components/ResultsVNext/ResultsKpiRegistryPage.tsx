@@ -161,7 +161,7 @@ import {
   isResultsDomain,
 } from './resultsDomainNavigation';
 import { isResultsVNextFlagEnabled } from './resultsVNextFeatureFlags';
-import { ResultsSearchRegistry } from './ResultsSearchRegistry';
+import { ResultsManagementReportsRegistry } from './reports/ResultsManagementReportsRegistry';
 import { ResultsVNextLegacyArchivePanel } from './legacy/ResultsVNextLegacyArchivePanel';
 import {
   ResultsVNextRegistryShell,
@@ -860,10 +860,18 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
   // the old prop). Scorecards' legacy cutover is already enforced
   // server-side, so this mounted successor must not be strandable behind
   // the `kpiRegistry` rollout flag.
-  const searchMode =
-    isResultsVNextFlagEnabled('resultsSearch') &&
+  /**
+   * DEC-422b/e (06.09) — zakładka „Wyszukiwarka" USUNIĘTA z Menu 2 Wyników i
+   * zastąpiona „Raportami zarządczymi". Słowa właściciela: „Ten wyszukiwak
+   * wywalamy, tutaj robimy raporty zarządcze." `ResultsSearchRegistry` i
+   * `resultsSearchApi` nie miały żadnego innego konsumenta (zmierzone grepem
+   * przed kasacją) — skasowane razem z flagą `resultsSearch`. Bypass ma tę
+   * samą, sprawdzoną mechanikę co poprzednik: jeden parametr `resultsView`,
+   * bez flagi (zakładka jest stałym elementem Menu 2).
+   */
+  const managementReportsMode =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('resultsView') === 'search';
+    new URLSearchParams(window.location.search).get('resultsView') === 'reports';
   // 2026-09-02 (wołacze duty) — "Archiwum" bypass, byte-for-byte the same
   // shape as `searchMode` above: default OFF (`resultsLegacyArchive`), and
   // when off this is always `false` — zero behavioural change today.
@@ -872,7 +880,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('resultsView') === 'legacy';
   const enabled =
-    !searchMode &&
+    !managementReportsMode &&
     !legacyArchiveMode &&
     (initialTab === 'scorecards' || isResultsVNextFlagEnabled('kpiRegistry'));
 
@@ -1558,7 +1566,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
     [visibleRows]
   );
 
-  if (searchMode) return <ResultsSearchRegistry />;
+  if (managementReportsMode) return <ResultsManagementReportsRegistry />;
 
   if (legacyArchiveMode) return <ResultsVNextLegacyArchivePanel domain="kpi" />;
 
@@ -1687,7 +1695,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -1836,7 +1844,7 @@ export const ResultsKpiRegistryPage: React.FC<ResultsKpiRegistryPageProps> = ({
             tabs: getResultsDomainTabs(),
             activeTab: 'kpi',
             onTabChange: (id) => {
-              if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
