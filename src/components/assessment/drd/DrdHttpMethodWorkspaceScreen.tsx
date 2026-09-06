@@ -44,6 +44,8 @@ import { MethodWorkspaceShell } from '@/components/method-workspace/MethodWorksp
 import { LiveMatrix } from '@/components/method-workspace/LiveMatrix';
 import { DrdOwnerMatrixPanel } from '@/components/assessment/drd/DrdOwnerMatrixPanel';
 import { StandardTable } from '@/components/standard/StandardTable';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import type { PoleDoUzupelnienia, ZrodloUzupelnienia } from '@/components/standard/PracujZAI.types';
 import type {
   InterviewFocusQuestion,
   MethodWorkspaceViewMode,
@@ -412,7 +414,8 @@ const ErrorRetryView: React.FC<{ message: string; onRetry: () => void; onExit: (
 export const DrdHttpMethodWorkspaceScreen: React.FC<
   HttpScreenProps & { forceState?: DrdHttpDebugForcedState }
 > = ({ storage: storageProp, demoSessionId, onExit, seedTo, initialViewMode, forceState }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.language || 'pl').toLowerCase().startsWith('pl');
   // MVP-OWNER-FREEZE (2026-09-05) — czytane NA GÓRZE komponentu, przed
   // jakimkolwiek wczesnym `return` (reguły hooków); używane dopiero przy
   // `canFreeze` niżej.
@@ -458,6 +461,8 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
    * zmienia się tylko to, KTÓRY poziom pokazujemy człowiekowi.
    */
   const [pinnedFocus, setPinnedFocus] = useState<{ unitId: string; level: number } | null>(null);
+  /** Panel „Analizuj" z „Pracuj z AI" — ocena gotowości sesji, zero zapisu. */
+  const [analizaOtwarta, setAnalizaOtwarta] = useState(false);
   // True for the duration of an explicit reconciliation call (refresh() from
   // the offline banner / ErrorRetryView, or the Conflict/Recovery views'
   // "load server" / "apply pending" / "discard pending" actions) — feeds
@@ -989,6 +994,82 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
         : 'Odpowiedz na bieżące pytanie lub dołącz dowód.',
   };
 
+
+  // ── „Pracuj z AI" w nagłówku sesji (DEC-415c, K2) ─────────────────────────
+  //
+  // Trzy pozycje narzuca współdzielony `PracujZAI` — ten ekran tylko DEKLARUJE,
+  // co pod nimi stoi, i oddaje JEDNĄ drogę zapisu. Zero nowych silników AI:
+  //
+  //  · Analizuj              → panel oceny gotowości sesji zbudowany z JUŻ
+  //    liczonych w tym pliku `readiness` (MethodReadiness) i
+  //    `teresaSixQuestions`. Czyta, nie zapisuje — jedyna pozycja dostępna bez
+  //    prawa edycji (Zasada 2b).
+  //  · Uzupełnij tę sekcję   → propozycja treści do pola „Twoja odpowiedź"
+  //    BIEŻĄCEGO pytania, z istniejącego generatora `generujTrescPola`
+  //    (`POST /ai/refine-text`, tryb generate) — domyślnego dla `PracujZAI`.
+  //  · Uzupełnij cały dokument → to samo dla wszystkich pytań BIEŻĄCEJ
+  //    jednostki (wszystkie poziomy), jeden podgląd i jedno „Zatwierdź".
+  //
+  // ★ DLACZEGO NIE `runtime.createTeresaPreview`: zmierzone 06.09 —
+  // `POST /api/method/sessions/:id/teresa/preview`
+  // (server/src/routes/method-core.routes.ts:1338) NIE generuje treści; zapisuje
+  // propozycję, którą klient PRZYSYŁA (statements/proposedChanges w body). Jako
+  // „silnik pisania odpowiedzi" byłby atrapą. Generatorem tekstu w tej aplikacji
+  // jest `generujTrescPola` i to on tu pracuje.
+  //
+  // ★ ZAPIS NIE ZMIENIA STANU ODPOWIEDZI: „Zatwierdź" wpisuje tekst do pola
+  // (`draftAnswerText` + `markDirty`) — dokładnie tak, jakby człowiek go
+  // wpisał. Świadomie NIE wołamy `runtime.recordAnswer`, bo szkic leci tam z
+  // `answerState: 'partial'`, co przestawiłoby pigułkę stanu na „Częściowo"
+  // za człowieka (`questionAnswerState` czyta `ANSWER_DRAFTED`).
+  const unitQuestions = useMemo(
+    () => pack.questions.filter((q) => q.unitId === activeArea.id),
+    [activeArea.id]
+  );
+
+  const poleZPytania = useCallback(
+    (q: (typeof pack.questions)[number]): PoleDoUzupelnienia => ({
+      id: q.questionId,
+      etykieta: `Odpowiedź na pytanie: „${q.canonicalWording}"`,
+      wartosc: draftAnswerText[q.questionId] ?? questionAnswerState(events, q.questionId).text ?? '',
+      format: 'paragraph',
+      sekcjaId: q.questionId,
+      sekcjaEtykieta: `Poziom ${q.level}`,
+    }),
+    [draftAnswerText, events]
+  );
+
+  const zastosujPropozycje = useCallback(
+    (poleId: string, wartosc: string): boolean => {
+      if (!canWrite) return false;
+      setDraftAnswerText((prev) => ({ ...prev, [poleId]: wartosc }));
+      markDirty();
+      return true;
+    },
+    [canWrite, markDirty]
+  );
+
+  const zrodloSekcjaAI: ZrodloUzupelnienia = useMemo(
+    () => ({
+      rodzaj: 'pola',
+      pola: ({ sekcjaId }) => {
+        const q = unitQuestions.find((x) => x.questionId === sekcjaId);
+        return q ? [poleZPytania(q)] : [];
+      },
+      zastosuj: zastosujPropozycje,
+    }),
+    [unitQuestions, poleZPytania, zastosujPropozycje]
+  );
+
+  const zrodloDokumentAI: ZrodloUzupelnienia = useMemo(
+    () => ({
+      rodzaj: 'pola',
+      pola: () => unitQuestions.map(poleZPytania),
+      zastosuj: zastosujPropozycje,
+    }),
+    [unitQuestions, poleZPytania, zastosujPropozycje]
+  );
+
   // -- render: bootstrap phases (no runtime state yet, or a hard boot error) --
   if (bootError) {
     return (
@@ -1170,6 +1251,23 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           // duplicated the header's own status pill, no separate fact left
           // to report.
           degradedMessage={null}
+          aiButton={
+            <PracujZAI
+              onAnalizuj={() => setAnalizaOtwarta((v) => !v)}
+              analizaOtwarta={analizaOtwarta}
+              uzupelnijSekcje={zrodloSekcjaAI}
+              uzupelnijDokument={zrodloDokumentAI}
+              aktywnaSekcja={focusQuestions[0]?.questionId ?? null}
+              kontekstArtefaktu={{
+                type: 'assessment-question',
+                title: `DRD · ${activeAxis.namePL || activeAxis.name} · ${activeArea.namePL || activeArea.name} — poziom ${focusLevelFallback}`,
+                status: session.state,
+              }}
+              moznaEdytowac={canWrite}
+              powodTylkoOdczyt="Sesja jest tylko do odczytu — brak roli z prawem zapisu."
+              isPolish={isPolish}
+            />
+          }
           navigatorProps={{
             nodes: navigatorNodes,
             activeUnitId: activeArea.id,
@@ -1385,6 +1483,72 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
           }
         />
       </div>
+
+      {/* ★ „Analizuj" z „Pracuj z AI" — OCENA GOTOWOŚCI SESJI, zero zapisu.
+          Wszystkie liczby i zdania pochodzą z już istniejących w tym pliku
+          `readiness` (MethodReadiness) i `teresaSixQuestions` — nie liczymy tu
+          niczego nowego i nie wołamy modelu. Panel jest jedyną pozycją „Pracuj
+          z AI" dostępną bez prawa edycji (Zasada 2b). */}
+      {analizaOtwarta && (
+        <aside
+          role="dialog"
+          aria-modal="false"
+          aria-label="Ocena gotowości sesji"
+          data-testid="drd-analiza-gotowosci"
+          className="fixed bottom-5 right-5 z-40 max-h-[70vh] w-[min(460px,calc(100vw-2.5rem))] overflow-y-auto rounded-2xl border border-c-border bg-c-surface p-4 shadow-2xl"
+        >
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <strong className="text-sm text-c-text">Ocena gotowości sesji</strong>
+            <button
+              type="button"
+              onClick={() => setAnalizaOtwarta(false)}
+              aria-label="Zamknij"
+              className="rounded-lg px-2 py-1 text-xs text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              Zamknij
+            </button>
+          </div>
+          <dl className="space-y-2 text-sm text-c-text-secondary">
+            <div>
+              <dt className="font-medium text-c-text">Gdzie jesteśmy</dt>
+              <dd>{teresaSixQuestions.whereAreWe}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-c-text">Co teraz ma znaczenie</dt>
+              <dd>{teresaSixQuestions.whatMattersNow}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-c-text">Czego brakuje</dt>
+              <dd>{teresaSixQuestions.whatIsMissing}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-c-text">Dowody</dt>
+              <dd>
+                {readiness.totalUnits - readiness.unitsMissingEvidence}/{readiness.totalUnits}{' '}
+                jednostek ma dowód
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium text-c-text">Blokery zamrożenia</dt>
+              <dd>
+                {readiness.freezeBlockers.length === 0 ? (
+                  'Brak blokerów zamrożenia.'
+                ) : (
+                  <ul className="ml-4 list-disc space-y-0.5">
+                    {readiness.freezeBlockers.map((b, i) => (
+                      <li key={i}>{b}</li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium text-c-text">Bezpieczny następny ruch</dt>
+              <dd>{teresaSixQuestions.nextSafeAction}</dd>
+            </div>
+          </dl>
+        </aside>
+      )}
     </div>
   );
 };

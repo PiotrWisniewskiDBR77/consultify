@@ -9,7 +9,7 @@
  * Before the fix, `DrdMethodWorkspaceScreen`'s `degradedMessage` prop
  * rendered `Status: ${session.state}` for any non-active session — e.g. a
  * freshly-created (draft) session showed BOTH the header's own status pill
- * ("Szkic") AND a second full-width "⚠ Status: draft" banner underneath,
+ * ("Szkic", zdjęta 06.09 — DEC-415b) AND a second full-width banner underneath,
  * repeating the exact same fact `MethodWorkspaceShell`'s header already
  * displays unconditionally. This proves the duplicate banner is gone while
  * the header pill still honestly reports the session's real state.
@@ -60,8 +60,13 @@ describe('DrdMethodWorkspaceScreen — no duplicate draft-status banner', () => 
       />
     );
 
-    // Header pill: single source of truth for session state.
-    expect(screen.getByText('Szkic')).toBeInTheDocument();
+    // ★ AKTUALIZACJA 06.09 (DEC-415b): pigułki statusu w nagłówku już NIE MA —
+    // właściciel kazał zdjąć z nagłówka wszystko poza „Pracuj z AI",
+    // „Ustawienia" i kebabem, bo sesja zapisuje się sama. Stan sesji czyta się
+    // dziś w panelu Ustawień. Sens tego pliku zostaje bez zmian: pilnuje, że
+    // NIE WRACA drugi, pełnowymiarowy baner „⚠ Status: draft" (regresja
+    // NIGHT_SWEEP_A_REPORT_20260826.md P0 #5).
+    expect(screen.getByTestId('method-workspace-shell')).toBeInTheDocument();
     // The removed duplicate banner must not reappear.
     expect(screen.queryByTestId('method-workspace-degraded-banner')).not.toBeInTheDocument();
     expect(screen.queryByText(/Status: draft/)).not.toBeInTheDocument();
