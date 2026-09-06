@@ -10111,6 +10111,20 @@
       "destructiveNote": "Capacity scenarios are superseded, not deleted",
       "resourceOwnerFallback": "Resource owner"
     },
+    "plan": {
+      "newPlan": "New plan",
+      "unnamed": "Unnamed plan",
+      "portfolioFallback": "Source portfolio",
+      "filters": { "drafts": "Drafts", "published": "Published", "conflicted": "With conflicts" },
+      "columns": { "name": "Name", "portfolio": "Portfolio / version", "horizon": "Horizon", "initiatives": "Initiatives in plan", "conflicts": "Conflicts", "updatedAt": "Updated", "author": "Author" }
+    },
+    "capacityAnalysis": {
+      "newAnalysis": "New analysis",
+      "unnamed": "Unnamed analysis",
+      "sourcePlanFallback": "Source plan",
+      "filters": { "drafts": "Drafts", "published": "Published", "gaps": "With gaps" },
+      "columns": { "name": "Name", "sourcePlan": "Source plan", "periods": "Periods", "roles": "Roles", "gaps": "Gaps", "updatedAt": "Updated" }
+    },
     "planScenario": {
       "status": {
         "draft": "Draft",
@@ -10125,7 +10139,7 @@
       "newPlan": "New plan",
       "form": {
         "planName": "Plan name",
-        "planNameAria": "Plan Scenario ID",
+        "planNameAria": "Plan name you provided",
         "sourcePortfolio": "Source portfolio",
         "sourcePortfolioAria": "Portfolio Scenario ID",
         "portfolioVersion": "Portfolio version",

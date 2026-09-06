@@ -9547,6 +9547,20 @@
       "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
       "resourceOwnerFallback": "Właściciel zasobów"
     },
+    "plan": {
+      "newPlan": "Nowy plan",
+      "unnamed": "Plan bez nazwy",
+      "portfolioFallback": "Portfel źródłowy",
+      "filters": { "drafts": "Szkice", "published": "Opublikowane", "conflicted": "Z konfliktami" },
+      "columns": { "name": "Nazwa", "portfolio": "Portfel / wersja", "horizon": "Horyzont", "initiatives": "Inicjatyw w planie", "conflicts": "Konflikty", "updatedAt": "Zaktualizowano", "author": "Autor" }
+    },
+    "capacityAnalysis": {
+      "newAnalysis": "Nowa analiza",
+      "unnamed": "Analiza bez nazwy",
+      "sourcePlanFallback": "Plan źródłowy",
+      "filters": { "drafts": "Szkice", "published": "Opublikowane", "gaps": "Z lukami" },
+      "columns": { "name": "Nazwa", "sourcePlan": "Plan źródłowy", "periods": "Okresy", "roles": "Role", "gaps": "Luki", "updatedAt": "Zaktualizowano" }
+    },
     "planScenario": {
       "status": {
         "draft": "Szkic",
@@ -9561,7 +9575,7 @@
       "newPlan": "Nowy plan",
       "form": {
         "planName": "Nazwa planu",
-        "planNameAria": "Identyfikator scenariusza planu",
+        "planNameAria": "Nazwa planu nadana przez Ciebie",
         "sourcePortfolio": "Źródłowy portfel",
         "sourcePortfolioAria": "Identyfikator scenariusza portfela",
         "portfolioVersion": "Wersja portfela",
