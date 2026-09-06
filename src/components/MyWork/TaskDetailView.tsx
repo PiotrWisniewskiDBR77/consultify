@@ -97,7 +97,10 @@ import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { PracujZAI } from '../standard/PracujZAI';
+import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
+import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
 import type { NModeSection } from '../shared/NModeLayout/types';
 import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
@@ -4923,8 +4926,13 @@ Return ONLY the final comment text.`;
   // kryteria akceptacji · zależności · ryzyka blokady · kompletność dowodów ·
   // spójność z decyzją źródłową. Tu deklarujemy TYLKO zawartość aktywnej karty
   // i to, gdzie wolno zapisać.
-  const taskAnalysisFields = useMemo<CardAnalysisField[]>(() => {
-    switch (activeNSection) {
+  // DEC-407: ta sama deklaracja pól obsługuje DWA wejścia — „Analizuj" (aktywna
+  // karta) i „Pracuj z AI → Uzupełnij…" (aktywna sekcja albo cały dokument).
+  // Dlatego `useMemo(activeNSection)` stało się funkcją sekcji; memo poniżej
+  // zachowuje dotychczasowe zachowanie 1:1.
+  const taskPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+    switch (sekcjaId) {
       case 'description-scope':
         return [
           {
@@ -5030,8 +5038,8 @@ Return ONLY the final comment text.`;
         // attachments-links (fakty: pliki, powiązania) — bez pól do zapisu.
         return [];
     }
-  }, [
-    activeNSection,
+    },
+    [
     isPolish,
     description,
     expectedOutcome,
@@ -5042,7 +5050,13 @@ Return ONLY the final comment text.`;
     dependencies,
     evidenceRequired,
     evidenceItems,
-  ]);
+    ]
+  );
+
+  const taskAnalysisFields = useMemo<CardAnalysisField[]>(
+    () => taskPolaSekcji(activeNSection),
+    [taskPolaSekcji, activeNSection]
+  );
 
   const taskWritableFieldIds = useMemo(
     () => taskAnalysisFields.filter((f) => f.writable).map((f) => f.id),
@@ -5213,6 +5227,24 @@ Return ONLY the final comment text.`;
     buildInput: buildTaskAnalysisInput,
     applyChange: applyTaskAnalysisChange,
   });
+
+  // ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] „Pracuj z AI" ───────────────────
+  // Jedna struktura sterowania AI w karcie (SSOT `STEROWANIE_KART_N_I_AI.md`
+  // zasada 3): Analizuj · Uzupełnij tę sekcję · Uzupełnij cały dokument.
+  // „Analizuj" to dokładnie dotychczasowa ścieżka `taskCardAnalysis.run`;
+  // „Uzupełnij…" stoi na TEJ SAMEJ deklaracji pól (`taskPolaSekcji`) i na tej
+  // samej, jedynej drodze zapisu (`applyTaskAnalysisChange`) — zapis dopiero
+  // po „Zatwierdź" w podglądzie propozycji.
+  const zrodlaPracujZAI = useMemo(
+    () =>
+      zbudujZrodlaPracujZAI({
+        sekcje: taskNSections,
+        polaSekcji: taskPolaSekcji,
+        applyChange: applyTaskAnalysisChange,
+        isPolish,
+      }),
+    [taskNSections, taskPolaSekcji, applyTaskAnalysisChange, isPolish]
+  );
 
   // ── Loading guard (AFTER all hooks to respect Rules of Hooks) ────────────
   // VF1-1 (SPEC-A): swap ad-hoc spinner/empty markup for the shared
@@ -5738,6 +5770,14 @@ Return ONLY the final comment text.`;
           >
             {/* ── Lewa kolumna: header + treść (dokowany panel po prawej) ── */}
             <div className="xl:flex-1 xl:min-w-0 space-y-0">
+              {/* ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] Zasada 2 ─────────
+                  Menu 4 (nagłówek) i Menu 5 (pasek sekcji/trybu/AI) są jednym
+                  PRZYKLEJONYM stosem — do 2026-09-06 nagłówek tej karty nie
+                  kleił się wcale (powłoka klei go tylko przy `header.sticky`,
+                  którego karta nie podawała), więc po przewinięciu w dół
+                  użytkownik nie widział ani tytułu, ani trybu, ani AI.
+                  Rozwiązanie jest JEDNO i wspólne: `StickyStosKartyN`. ── */}
+              <StickyStosKartyN>
               {/* ── Header ──────────────────────────────────────── */}
               <NModeHeader
                 title={title}
@@ -5769,8 +5809,8 @@ Return ONLY the final comment text.`;
                 primaryAction={taskPrimaryAction}
               />
 
-              {/* ── N-Mode Content ──────────────────────────────── */}
-              <div className="col-span-full space-y-4 pt-4">
+              {/* ── Menu 5 wewnątrz przyklejonego stosu ─────────── */}
+              <div className="pt-4 pb-2">
                 {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
                     tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
                     Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
@@ -5792,19 +5832,45 @@ Return ONLY the final comment text.`;
                   isPolish={isPolish}
                   sectionsMenu={<SectionsManagerMenu layout={taskCardLayout} isPolish={isPolish} />}
                   readMode={readMode}
-                  onReadModeChange={setReadMode}
+                  /* Zasada 2b — bez prawa edycji przełącznik „Edycja | Podgląd"
+                     NIE renderuje się (NModeMenu2 pokazuje go tylko wtedy, gdy
+                     dostanie `onReadModeChange`). Jedyne sprawdzenie uprawnień,
+                     jakie ta karta ma, to status zamrożony: `isDone`. Roli ani
+                     właścicielstwa rekordu karta Zadania NIE sprawdza nigdzie
+                     (grep `canEdit|readOnly|isReadOnly` = 0 trafień na prawo do
+                     edycji) — to zgłoszone w meldunku, nie zmyślone tutaj. */
+                  onReadModeChange={isDone ? undefined : setReadMode}
                   aiButton={
-                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                    // wyników. Było: `handleOpenChat` — otwarcie ogólnego czatu
-                    // Teresy, które nie oceniało karty ani nie proponowało zmian.
-                    <Menu2AIButton
+                    // DEC-407: „Analizuj z AI" ZASTĄPIONE przez „Pracuj z AI"
+                    // (jeden przycisk, trzy pozycje). Stary przycisk nie jest
+                    // zdublowany — zniknął.
+                    <PracujZAI
                       isPolish={isPolish}
-                      busy={taskCardAnalysis.loading}
-                      aria-expanded={taskCardAnalysis.open}
-                      onClick={taskCardAnalysis.run}
+                      onAnalizuj={taskCardAnalysis.run}
+                      analizaWToku={taskCardAnalysis.loading}
+                      analizaOtwarta={taskCardAnalysis.open}
+                      aktywnaSekcja={activeNSection}
+                      kontekstArtefaktu={{ title, status, priority, type: 'task' }}
+                      moznaEdytowac={!isDone && !readMode}
+                      powodTylkoOdczyt={
+                        isDone
+                          ? isPolish
+                            ? 'zadanie zamknięte (status „zrobione")'
+                            : 'task is closed (status "done")'
+                          : isPolish
+                            ? 'karta otwarta w trybie Podgląd'
+                            : 'card opened in Preview mode'
+                      }
+                      uzupelnijSekcje={zrodlaPracujZAI.sekcja}
+                      uzupelnijDokument={zrodlaPracujZAI.dokument}
                     />
                   }
                 />
+              </div>
+              </StickyStosKartyN>
+
+              {/* ── N-Mode Content ──────────────────────────────── */}
+              <div className="col-span-full space-y-4 pt-4">
                 {/* Deadline Alert */}
                 {dueDate && dueDateAlertBorderClass && (
                   <div className="mb-3 px-4 py-2 rounded-xl bg-danger-500/5 dark:bg-danger-500/10 border border-danger-200/60 dark:border-danger-500/30 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
