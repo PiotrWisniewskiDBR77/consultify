@@ -325,7 +325,17 @@ export function formatAnalysisKpiValueForDisplay(
   input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
   formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
 ): FinanceValueDisplay {
-  const numericFormatter = input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
+  // KOSMETYKA (RAPORT_B3, 2026-09-06): DAYS bez własnego zaokrąglenia
+  // dziedziczył domyślny `toLocaleString('pl-PL')` (do 3 miejsc po przecinku)
+  // — cykl konwersji gotówki potrafił pokazać „-234,897 dni". Dni liczymy w
+  // całości (nikt nie mówi „45,3 dnia"), więc zaokrąglamy PRZED formatowaniem,
+  // analogicznie do specjalnego traktowania PERCENT (×100) obok.
+  const numericFormatter =
+    input.unitType === 'PERCENT'
+      ? (n: number) => formatNumber(n * 100)
+      : input.unitType === 'DAYS'
+        ? (n: number) => formatNumber(Math.round(n))
+        : formatNumber;
   const base = formatFinanceValueForDisplay(input.value, numericFormatter);
   if (base.isMissingLikeGlyph) return base;
 
