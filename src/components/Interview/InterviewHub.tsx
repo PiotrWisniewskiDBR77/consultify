@@ -69,7 +69,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { utworzAdapterInterview } from '@/components/Initiatives/Generator/adapters/interview';
 import {
   InterviewCapabilityError,
   isInterviewCapabilityForbidden,
@@ -2025,6 +2026,24 @@ export const InterviewHub: React.FC = () => {
       ).length,
     }),
     [interviewInitiatives]
+  );
+
+  // DEC-413 — adapter zrodla `interview` dla wspoldzielonego generatora.
+  // Projekt i wlasciciel sa wymagane przez kanoniczny zapis inicjatywy
+  // (`createInitiativeWriteTruth`), wiec ida z kontekstu Huba, nie z modalu.
+  const adapterInicjatywWywiad = useMemo(
+    () =>
+      utworzAdapterInterview({
+        projectId: currentProjectId || '',
+        ownerUserId: String((currentUser as any)?.id || ''),
+      }),
+    [currentProjectId, currentUser]
+  );
+
+  // Wnioski zaznaczone w tabeli wchodza do generatora jako wstepny wybor.
+  const wstepnieWybraneWnioski = useMemo(
+    () => Array.from(selectedInsightIds),
+    [selectedInsightIds]
   );
 
   const initiativeWizardSourceBasket = useMemo(
@@ -4049,6 +4068,17 @@ export const InterviewHub: React.FC = () => {
                   {t('interview.hub.clear')}
                 </button>
                 <span className="mx-1 h-5 w-px bg-slate-200/80 dark:bg-white/10" />
+                {/* DEC-413 — ten sam generator co w Ocenie, zaznaczone wnioski
+                    wchodza do niego jako wstepny wybor kroku 2. */}
+                <button
+                  type="button"
+                  data-testid="interview-insights-to-initiative"
+                  onClick={() => setShowInitiativeWizard(true)}
+                  className={MENU_3_ACTION_NEUTRAL}
+                >
+                  <Sparkles size={14} />
+                  {t('interview.hub.generateInitiatives', 'Generuj inicjatywy')}
+                </button>
                 <button
                   type="button"
                   onClick={handleBulkExportInsights}
@@ -9517,53 +9547,23 @@ Return ONLY the answer text (no markdown fences).`;
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </StandardModuleBar>
 
-      <InitiativeWizardModal
+      {/* JEDEN generator inicjatyw (DEC-413) — ten sam modal, co w Ocenie,
+          Narzedziach i Audytach. Zastapil przestarzaly 5-krokowy
+          kreator z modulu Inicjatywy; silnik pod spodem TEN SAM (sesja kreatora +
+          kandydaci AI + kanoniczny zapis z lineage interview_insight), wiec
+          `GET /initiatives?source=interview_insight` dalej widzi swoje
+          rekordy. */}
+      <GeneratorInicjatywModal
         isOpen={showInitiativeWizard}
-        language={isPolish ? 'pl' : 'en'}
-        projectId={currentProjectId || undefined}
-        existingInitiatives={interviewInitiatives.map((initiative) => ({
-          id: initiative.id,
-          name: initiative.name || initiative.title || initiative.id,
-          title: initiative.title || initiative.name,
-          status: String(initiative.status || 'DRAFT') as any,
-        }))}
-        initialMode="generate_from_evidence"
-        initialBusinessPriorities={['quality', 'automation', 'governance']}
-        initialTargetCount={5}
-        initialTimeHorizon="90_days"
-        initialRiskAppetite="balanced"
-        initialManualNotes={initiativeWizardManualNotes}
-        initialSourceBasket={initiativeWizardSourceBasket}
-        creationSourceType="interview_insight"
-        creationSourceId={null}
         onClose={() => {
           setShowInitiativeWizard(false);
           void loadInterviewInitiatives();
         }}
-        onCreated={async (created) => {
-          if (created.length > 0) {
-            setInterviewInitiatives((prev) => {
-              const byId = new Map(prev.map((initiative) => [initiative.id, initiative]));
-              created.forEach((initiative) => {
-                byId.set(initiative.id, {
-                  id: initiative.id,
-                  name: initiative.name,
-                  title: initiative.name,
-                  description: initiative.description || initiative.summary || '',
-                  status: initiative.status,
-                  priority: initiative.priority,
-                  sourceType: (initiative as any).sourceType || 'interview_insight',
-                  sourceId: (initiative as any).sourceId || initiative.id,
-                  createdAt: initiative.createdAt,
-                  updatedAt: initiative.updatedAt,
-                });
-              });
-              return Array.from(byId.values());
-            });
-            changeInterviewTab('initiatives');
-            setSelectedInterviewInitiativeId(created[0].id);
-          }
-          await loadInterviewInitiatives();
+        adaptery={[adapterInicjatywWywiad]}
+        wstepnyWybor={wstepnieWybraneWnioski}
+        onCompleted={() => {
+          void loadInterviewInitiatives();
+          changeInterviewTab('initiatives');
         }}
       />
 

@@ -758,29 +758,6 @@ export function AssessmentManagePanel(props: {
               canManage={canManage}
               canGenerateInitiatives={Boolean(eligibility?.actions?.generateInitiatives?.allowed)}
               onRefresh={reload}
-              onGenerateInitiatives={async (config) => {
-                setActionBusy('gen-init');
-                setError(null);
-                try {
-                  await Api.post(`/assessment-workflow-v2/${assessmentId}/generate-initiatives`, {
-                    methodologyId: config.methodologyId,
-                    count: config.count,
-                    includeChatContext: config.includeChatContext,
-                  });
-                  await reload();
-                } catch (e: any) {
-                  setError(
-                    e?.message ||
-                      t(
-                        'assessment.managePanel.error.generateInitiativesFailed',
-                        'Failed to generate initiatives'
-                      )
-                  );
-                  throw e;
-                } finally {
-                  setActionBusy(null);
-                }
-              }}
             />
           </div>
         ) : tab === 'reports' ? (

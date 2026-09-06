@@ -6109,7 +6109,8 @@
       "sessionCreateMissingId": "Odpowiedź z utworzeniem sesji wywiadu nie zawierała identyfikatora",
       "sessionCreateNotInList": "Utworzona sesja wywiadu nie pojawiła się na liście sesji (źródło prawdy)",
       "sessionNotFound": "Nie znaleziono sesji",
-      "failedToLoadSessionGeneric": "Nie udało się wczytać sesji"
+      "failedToLoadSessionGeneric": "Nie udało się wczytać sesji",
+      "generateInitiatives": "Generuj inicjatywy"
     },
     "insightViewer": {
       "panelResults": "Rezultaty",

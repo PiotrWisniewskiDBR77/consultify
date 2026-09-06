@@ -5,7 +5,6 @@
  */
 
 // Main components
-export { GenerateInitiativesModal } from './GenerateInitiativesModal';
 export { InlineAssist } from './InlineAssist';
 export { ToolActionBar } from './ToolActionBar';
 export { ToolCanvas } from './ToolCanvas';

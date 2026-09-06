@@ -87,7 +87,8 @@ import {
 } from '../assessment/AssessmentSessionPreviewV3';
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { hasDedicatedToolDocumentView } from '../DiscoveryTools/dedicatedToolTypes';
-import { GenerateInitiativesModal } from '../DiscoveryTools/GenerateInitiativesModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterTool } from '@/components/Initiatives/Generator/adapters/tool';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { MyWorkTraceDocumentView } from '../DiscoveryTools/MyWorkTraceDocumentView';
 import {
@@ -5472,7 +5473,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
    * zadaniem — nie budujemy nowych generatorów:
    *   Insighty    -> POST /api/tools/:id/insight (ensureToolOutputSnapshot)
    *   Raporty     -> /reports/builder?sourceType=TOOL (ReportBuilderView)
-   *   Inicjatywy  -> GenerateInitiativesModal -> POST /tools/:id/generate-initiatives
+   *   Inicjatywy  -> GeneratorInicjatywModal (adapter `tool`) -> POST /tools/:id/generate-initiatives
    */
   const sourcePickerConfig = useMemo(() => {
     if (activeTab === 'outputs') {
@@ -6078,71 +6079,27 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         {renderContent()}
       </StandardModuleBar>
 
-      {generateInitiativesForId ? (
-        <GenerateInitiativesModal
-          isPolish={isPolish}
-          defaults={generationDefaults}
-          onClose={() => setGenerateInitiativesForId(null)}
-          onGenerate={async (payload) => {
-            const toolId = generateInitiativesForId;
-            try {
-              setGenerationDefaults(payload);
-              const result = await Api.generateToolInitiatives(toolId, payload);
-              toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
-              // I1 — actionable dedup. When the server-side flag
-              // (INITIATIVE_DEDUP_ACTIONABLE) is ON it SKIPS creating
-              // high-confidence duplicates and returns them in `skipped`. Surface
-              // that as a concrete outcome ("N skipped") instead of a vague warning.
-              // Server flag OFF → `skipped` absent/empty → legacy warning path below.
-              const skipped = Array.isArray(result?.skipped) ? result.skipped : [];
-              if (skipped.length > 0) {
-                const skippedNames = skipped
-                  .map((s: { title: string }) => s.title)
-                  .filter(Boolean)
-                  .slice(0, 3)
-                  .join(', ');
-                toast(
-                  isPolish
-                    ? `Pominięto ${skipped.length} duplikat(ów) — już istnieją w portfolio (${skippedNames}).`
-                    : `Skipped ${skipped.length} duplicate(s) — already in the portfolio (${skippedNames}).`,
-                  { icon: '⏭️', duration: 6000 }
-                );
-              }
-              // #68b — functional parity with the canonical AI Initiative Wizard's
-              // duplicate/similar detection (POST /initiatives/similarity-check).
-              // Informational only, shown after success — never blocks creation.
-              const duplicateWarnings = Array.isArray(result?.duplicateWarnings)
-                ? result.duplicateWarnings
-                : [];
-              if (duplicateWarnings.length > 0) {
-                const names = duplicateWarnings
-                  .map((w: { title: string }) => w.title)
-                  .filter(Boolean)
-                  .slice(0, 3)
-                  .join(', ');
-                toast(
-                  isPolish
-                    ? `Uwaga: ${duplicateWarnings.length} z wygenerowanych inicjatyw przypomina istniejące (${names}). Sprawdź portfolio pod kątem duplikatów.`
-                    : `Heads up: ${duplicateWarnings.length} generated initiative(s) resemble existing ones (${names}). Review the portfolio for duplicates.`,
-                  { icon: '⚠️', duration: 6000 }
-                );
-              }
-              setGenerateInitiativesForId(null);
-              await fetchData(true);
-              // Refresh preview details if preview is open for this session
-              if (previewItemId === toolId) {
-                const refreshed = await Api.getToolSession(toolId);
-                setPreviewFullSession(refreshed || null);
-              }
-            } catch (e: any) {
-              toast.error(
-                e?.message ||
-                  (isPolish ? 'Nie udało się wygenerować inicjatyw' : 'Generation failed')
-              );
+      {/* JEDEN generator inicjatyw (DEC-413) — ten sam modal, co w Ocenie,
+          Wywiadzie i Audytach. Endpoint bez zmian
+          (POST /tools/:toolId/generate-initiatives, w adapterze `tool`);
+          sesja wybrana w CTA wchodzi jako wstepny wybor kroku 2, a po
+          generacji odswiezamy liste i otwarty podglad. */}
+      <GeneratorInicjatywModal
+        isOpen={Boolean(generateInitiativesForId)}
+        onClose={() => setGenerateInitiativesForId(null)}
+        adaptery={[adapterTool]}
+        wstepnyWybor={generateInitiativesForId ? [generateInitiativesForId] : undefined}
+        onCompleted={() => {
+          const toolId = generateInitiativesForId;
+          void (async () => {
+            await fetchData(true);
+            if (toolId && previewItemId === toolId) {
+              const refreshed = await Api.getToolSession(toolId);
+              setPreviewFullSession(refreshed || null);
             }
-          }}
-        />
-      ) : null}
+          })();
+        }}
+      />
     </>
   );
 };
