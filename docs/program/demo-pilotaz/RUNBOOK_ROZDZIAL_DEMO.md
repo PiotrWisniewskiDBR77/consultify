@@ -51,7 +51,7 @@ Rozdział baz **jest już faktem**. Zostaje to, co naprawdę blokuje pilotaż:
 | c | `CSRF_MODE=report` na demo | ❌ nie ma zmiennej (staging ma) |
 | d | limiter AI z budżetem | ❌ `AI_BUDGETS_ENABLED` nie ustawione po żadnej stronie |
 | e | dane pokazowe (Wyniki DBR77, Finanse CD PROJEKT) | ❓ do zmierzenia na trolley (F3) |
-| f | czysta organizacja pilotażowa + 5 kont | ❌ nie istnieje — `scripts/demo/seed-organizacja-pilotaz.ts` |
+| f | czysta organizacja pilotażowa + 8 kont (DEC-402: 7 osób + administrator) | ⚠️ mechanika gotowa i zmierzona lokalnie (`scripts/demo/seed-organizacja-pilotaz.ts`), NIE uruchomiona jeszcze na demo/trolley |
 | g | promocja z cofnięciem przećwiczona | ❌ `LISTA_KONTROLNA_PROMOCJI.md` |
 | h | odciski bazy w GitHubie po ewentualnej zmianie bazy | ⚠️ pułapka, patrz F4 krok 5 |
 
@@ -319,7 +319,16 @@ OCZ_KLUCZE=<liczba ze źródła z F1.4> DATABASE_URL="$NOWA_DB" \
 Jeśli mniej — w bazie demo są wiersze-sieroty; zapisz to jako osobne znalezisko
 i **nie** udawaj, że kopia jest wierna.
 
-### F3.5 — organizacja pilotażowa „DBR77 Pilotaż" i 5 kont
+### F3.5 — organizacja pilotażowa „DBR77 Pilotaż" i 8 kont (DEC-402)
+
+Lista 7 osób pierwszej linii mieszka w `scripts/demo/pilotaz-uzytkownicy.json`
+(SSOT — DEC-402, właściciel, 06.09, `PLAN_DEMO_KLIENCI_I_POKAZY.md` §5). Ósme
+konto — administrator organizacji — skrypt ustala SAM w czasie działania: próbuje
+`piotr.wisniewski@dbr77.com` (prawdziwe konto właściciela, jeśli już jest na tej
+bazie), inaczej `audyt@dbr77.local`. Jeśli wybrany e-mail już istnieje —
+skrypt **nigdy go nie rusza** (zero zmiany hasła/roli/organizacji), dopisuje mu
+tylko członkostwo `OWNER` w organizacji pilotażu. Podmień przez `--admin-email
+<e-mail>`, jeśli trzeba inny.
 
 Najpierw plan, bez zapisu:
 
@@ -328,62 +337,99 @@ DATABASE_URL="$NOWA_DB" npx tsx scripts/demo/seed-organizacja-pilotaz.ts \
   --oczekiwany-host <nowy-host> --dry-run
 ```
 
-**Oczekiwany wynik:** lista pięciu kont ze stanem `utworzy` i linia
-`dry-run: 11 rzeczy do zmiany. Nic nie zapisano.`
+**Oczekiwany wynik:** plan na **8 kont** (7 + administrator), linia
+`dry-run: plan obejmuje 8 kont (7 + administrator). N rzeczy do zmiany. Nic nie
+zapisano.`
 
-**Pułapka, którą skrypt wykrywa sam (zmierzona na próbie):** jeśli konta
-`tomasz.jankowski@dbr77.com`, `katarzyna.marszalkiewicz@dbr77.com` czy
-`justyna.laskowska@dbr77.com` już istnieją na tej bazie w **innej** organizacji
-(`users_email_key` jest globalne), skrypt wypisze `KONFLIKT` i **nic nie zapisze**:
-
+**Ostrzeżenie, które skrypt wypisuje sam:** e-mail Bartłomieja Straszaka jest na
+domenie `db77.pl` (podanej przez właściciela w DEC-402), różnej od `dbr77.com`
+pozostałych sześciu osób:
 ```
-konto tomasz.jankowski@dbr77.com  KONFLIKT — konto istnieje już w innej organizacji
-  (organization_id="cc9db573-…"). E-mail jest globalnie unikalny — nie przenoszę.
-  Użyj --alias albo rozstrzygnij z właścicielem.
-[pilotaz] KONFLIKTY: 3. Nic nie zapisano — to decyzja właściciela, nie skryptu.
+[pilotaz] OSTRZEŻENIE: bartlomiej.straszak+pilotaz@db77.pl — domena różna od
+  dbr77.com — potwierdzić z właścicielem przed wysyłką zaproszenia.
 ```
+To jest tylko ostrzeżenie (informacja do potwierdzenia), nie blokada.
 
-Wyjście: `--alias` zakłada konta pod adresami `imie.nazwisko+pilotaz@dbr77.com`
-(poczta trafia do tej samej skrzynki, konto jest osobne). Alternatywa — przeniesienie
-istniejących kont — to decyzja właściciela, nie skryptu.
+**Pułapka, którą skrypt wykrywa sam (zmierzona na próbie):** jeśli któreś z 7
+kont (aliasy `imie.nazwisko+pilotaz@…`) już istnieje na tej bazie w **innej**
+organizacji (`users_email_key` jest globalne), skrypt wypisze `KONFLIKT` i **nic
+nie zapisze** — decyzja należy do właściciela, skrypt jej nie podejmuje:
+```
+konto tomasz.jankowski+pilotaz@dbr77.com  KONFLIKT — konto istnieje już w innej
+  organizacji (organization_id="cc9db573-…"). E-mail jest globalnie unikalny —
+  nie przenoszę. Rozstrzygnij z właścicielem.
+[pilotaz] KONFLIKTY: 1. Nic nie zapisano — to decyzja właściciela, nie skryptu.
+```
 
 Zapis:
 
 ```bash
 DATABASE_URL="$NOWA_DB" npx tsx scripts/demo/seed-organizacja-pilotaz.ts \
   --oczekiwany-host <nowy-host> --apply \
-  --haslo-plik "$HOME/pilotaz-hasla-$(date -u +%Y%m%d).txt"
+  --haslo-plik "/private/tmp/stanowisko-noc/pilotaz-hasla-$(date -u +%Y%m%d).json"
 ```
 
-**Oczekiwany wynik:**
+(Domyślna ścieżka haseł w skrypcie, gdy nie podasz `--haslo-plik` z inną
+lokalizacją, to właśnie `/private/tmp/stanowisko-noc/pilotaz-hasla-<data>.json`
+— zawsze POZA repozytorium, zawsze `chmod 600`.)
+
+**Oczekiwany wynik** (gdy administrator jest kontem JUŻ ISTNIEJĄCYM — nie dostaje
+hasła, bo skrypt go nie rusza):
 ```
-[pilotaz] hasła (5) zapisane do /Users/<user>/pilotaz-hasla-<data>.txt (chmod 600). NIE są drukowane.
-[pilotaz] utworzono=11 zmieniono=0
+[pilotaz] hasła (7) zapisane do …/pilotaz-hasla-<data>.json (chmod 600). NIE są drukowane.
+[pilotaz] utworzono=15 zmieniono=1
 ```
-(11 = 1 organizacja + 5 kont + 5 członkostw.)
+(15 = 1 organizacja + 7 kont + 7 członkostw; 1 zmieniono = dopisanie członkostwa
+`OWNER` cudzemu/istniejącemu kontu administratora. Jeśli administrator też
+trzeba założyć od zera — np. `audyt@dbr77.local` na czystej bazie — wtedy
+`utworzono=16 zmieniono=0` i hasło administratora też ląduje w pliku, razem 8.)
 
 Dowód idempotencji — uruchom **drugi raz**:
 
 ```bash
 DATABASE_URL="$NOWA_DB" npx tsx scripts/demo/seed-organizacja-pilotaz.ts \
-  --oczekiwany-host <nowy-host> --apply --haslo-plik /dev/null
+  --oczekiwany-host <nowy-host> --apply \
+  --haslo-plik /private/tmp/stanowisko-noc/pilotaz-hasla-drugi-raz.json
 ```
 
-**Oczekiwany wynik:** `utworzono=0 zmieniono=0` i `idempotentnie: nic nie było do zrobienia.`
-(Tak zmierzone na próbie: 06.09, log krok 8.)
+**Oczekiwany wynik:** `utworzono=0 zmieniono=0` i `idempotentnie: nic nie było do
+zrobienia.` — i plik haseł drugim razem w ogóle NIE powstaje (zero nowych haseł
+do zapisania). Zmierzone lokalnie 06.09 (127.0.0.1:54400, `consultify_noc`):
+dry-run 0 zmian, apply `utworzono=15 zmieniono=1`, drugi apply `utworzono=0
+zmieniono=0`, `sprawdz-demo.sh --tylko-baza` → 8/8, rollback przywrócił bazę do
+stanu sprzed (organizacje/konta wróciły do liczby wyjściowej), konto właściciela
+nietknięte przez cały cykl.
+
+**Cofnięcie (nowość — poprzednia wersja tego skryptu tego nie miała):**
+
+```bash
+DATABASE_URL="$NOWA_DB" npx tsx scripts/demo/seed-organizacja-pilotaz.ts \
+  --oczekiwany-host <nowy-host> --rollback
+```
+
+Kasuje organizację pilotażu i konta, które seed **sam utworzył** — nigdy konto
+administratora, jeśli było cudze/wcześniej istniejące (dostaje wtedy tylko
+odebrane członkostwo, przez skasowanie organizacji — `organization_members` ma
+`ON DELETE CASCADE`). Bezpieczne do uruchomienia dwa razy z rzędu (drugi raz:
+„organizacja pilotażu już nie istnieje — nic do zrobienia").
 
 **Hasła:** plik jest `chmod 600` i leży **poza repozytorium**. Przekaż go
 właścicielowi kanałem prywatnym i skasuj. Nie wklejaj haseł do żadnego dokumentu,
 zgłoszenia ani czatu.
 
 **Typ organizacji = `PAID`, i to nie jest kosmetyka.**
-`server/src/services/access/AccessTypes.ts:13-40`: `DEFAULT_TRIAL_LIMITS.max_users = 4`,
-`DEFAULT_DEMO_LIMITS.max_users = 1`. Pilotaż ma 5 kont — na `TRIAL` piąte konto
-uderzyłoby w limit, na `DEMO` drugie. Seed ustawia `PAID` z tego powodu.
+`server/src/services/access/AccessTypes.ts`: `DEFAULT_TRIAL_LIMITS.max_users = 4`,
+`DEFAULT_DEMO_LIMITS.max_users = 1`, `DEFAULT_PAID_LIMITS.max_users = 10000`.
+Pilotaż ma **8 kont** (DEC-402) — na `TRIAL` piąte konto już uderzyłoby w limit,
+na `DEMO` drugie. Seed ustawia `PAID` z tego powodu.
 
 **Czego seed NIE robi:** nie nadaje `users.role = 'SUPERADMIN'` (i odmawia, gdyby
 ktoś podał taką rolę w konfiguracji). Wymuszony superadmin zapisuje się w bazie na
 trwałe i odbiera dostęp do `/chat` — to już raz zablokowało właściciela (05.09).
+Nie rusza konta administratora, gdy jest cudze/wcześniej istniejące — zmierzone
+testem izolacji `scripts/demo/__tests__/seed-organizacja-pilotaz.pg.test.mjs`
+(`RUN_DB_TESTS=1`), włącznie z dowodem mutacyjnym: ręcznie ścięty guard
+„administrator utworzony przez seed" w rollbacku faktycznie kasuje obce konto.
 
 ---
 
@@ -704,10 +750,10 @@ Ostatnie istniejące tagi: `demo-safe-20260904`, `demo-safe-20260905-p1`.
 | # | pytanie | rekomendacja CTO | co przyjęto na razie |
 |---|---|---|---|
 | 1 | Wariant A (zostajemy na trolley) czy B (świeża baza dla pilotażu)? | **B** — czysta twarz produktu + dowód, że produkt stawia się od zera | runbook opisuje oba, F3 dotyczy B |
-| 2 | Jedna wspólna organizacja „DBR77 Pilotaż" czy cztery osobne? | **jedna wspólna** — pilotaż ma sprawdzić współpracę, nie cztery samotności; osobne organizacje wymagają czterokrotnego seedu danych pokazowych | przyjęto **jedną wspólną**; alternatywa: powtórz F3.5 z `--konta` per osoba i inną nazwą organizacji (zmienna `ORG_NAZWA` w skrypcie) |
-| 3 | Adres e-mail Iriny — nie występuje nigdzie w repozytorium | podać przed F3.5 | w skrypcie stoi `irina@dbr77.com` z nazwiskiem „(do potwierdzenia)"; podmień przez `--konta <plik.json>` |
-| 4 | Konta pod prawdziwymi adresami czy pod aliasami `+pilotaz`? | zależy od wyniku `--dry-run`: jeśli konta już istnieją w innej organizacji, alias jest jedynym wyjściem bez ruszania cudzych rekordów | skrypt sam zgłasza KONFLIKT i nie decyduje |
-| 5 | Budżet AI per organizacja (`organizations.monthly_budget_usd`) — jaka kwota na pilotaż? | ustawić cokolwiek skończonego przed startem; dziś limiter jest wyłączony od 05.09 = rachunek bez sufitu | brak wartości — do podania |
+| 2 | Jedna wspólna organizacja „DBR77 Pilotaż" czy osobne? | **jedna wspólna** — pilotaż ma sprawdzić współpracę | **ROZSTRZYGNIĘTE DEC-402 (06.09):** jedna wspólna organizacja, typ `PAID` |
+| 3 | Lista osób i adres e-mail Iriny — nie występował nigdzie w repozytorium | podać przed F3.5 | **ROZSTRZYGNIĘTE DEC-402 (06.09):** 7 osób — Tomek, Kasia, Justyna, Irina Lebedjuk, Torian Richardson, Bartłomiej Straszak (`db77.pl` — do potwierdzenia), Paweł Mroczkowski; lista w `scripts/demo/pilotaz-uzytkownicy.json` |
+| 4 | Konta pod prawdziwymi adresami czy pod aliasami `+pilotaz`? | zależy od wyniku `--dry-run`: jeśli konta już istnieją w innej organizacji, alias jest jedynym wyjściem bez ruszania cudzych rekordów | **ROZSTRZYGNIĘTE DEC-402 (06.09):** aliasy `+pilotaz` dla wszystkich 7 (zakodowane wprost w `pilotaz-uzytkownicy.json`, skrypt nie ma już flagi `--alias`) |
+| 5 | Budżet AI per organizacja (`organizations.monthly_budget_usd`) — jaka kwota na pilotaż? | ustawić cokolwiek skończonego przed startem; dziś limiter jest wyłączony od 05.09 = rachunek bez sufitu | **ROZSTRZYGNIĘTE DEC-402 (06.09):** 50 USD |
 
 ---
 
