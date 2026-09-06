@@ -1,5 +1,6 @@
 import { Copy, Lightbulb } from 'lucide-react';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
@@ -75,10 +76,11 @@ export const CanonicalInitiativeRegister = ({
   emptyActionLabel,
   onEmptyAction,
 }: CanonicalInitiativeRegisterProps) => {
+  const { t } = useTranslation();
   const includeSource = !!columnOptions?.includeSource;
   const columns = useMemo(
-    () => createCanonicalInitiativeRegisterColumns({ includeSource }),
-    [includeSource]
+    () => createCanonicalInitiativeRegisterColumns({ includeSource, t }),
+    [includeSource, t]
   );
   const layoutRows = useMemo(
     () => rows.map((row) => ({ ...row, title: row.title || row.name })),

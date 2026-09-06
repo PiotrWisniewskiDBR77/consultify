@@ -9871,6 +9871,9 @@
       "transformational": "Transformational",
       "compliance": "Compliance"
     },
+    "columns": {
+      "areaOrAxis": "Area / Axis"
+    },
     "approval": {
       "needsTasks": "Add at least one task before changing status.",
       "needsDeadline": "Set a deadline before changing status.",

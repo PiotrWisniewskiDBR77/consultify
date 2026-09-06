@@ -1,6 +1,8 @@
 import { ExternalLink } from 'lucide-react';
 import React from 'react';
 
+import i18n from '@/i18n';
+import { executionTypeLabel, UNKNOWN_EXECUTION_TYPE_LABEL } from '@/labels/executionTypeLabels';
 import type { StandardRowMenu, TableColumn } from '@/components/standard';
 import { statusChipTone } from '@/components/ui/primitives/chips';
 import type { PortfolioInitiative } from '@/types';
@@ -21,6 +23,7 @@ export const INITIATIVE_REGISTER_COLUMN_IDS = [
   'gateName',
   'gateReadiness',
   'owner',
+  'areaOrAxis',
   'nextAction',
   'expectedImpact',
   'plannedWindow',
@@ -79,6 +82,14 @@ export const resolveInitiativeRegisterLifecycle = (row: InitiativeRegisterRow): 
 export interface InitiativeRegisterColumnOptions {
   /** Dokłada kolumnę „Źródło" (np. „Ocena: DRD"). Domyślnie wyłączona. */
   includeSource?: boolean;
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-402] Opcjonalny `t()` do lokalizacji
+   * WYŁĄCZNIE nowej kolumny „Obszar / oś" (pl+en). Pozostałych dziesięć
+   * kolumn ustalonego kontraktu z dyżuru 274 zostaje bez zmian — nie mają
+   * i18n dziś i nie jest to naprawiane tym zleceniem. Brak `t` → polski
+   * fallback (zachowanie sprzed zmiany, oba wołające miejsca dziś je podają).
+   */
+  t?: (key: string, fallback: string) => string;
 }
 
 export type InitiativeRegisterRow = PortfolioInitiative & {
@@ -123,6 +134,49 @@ const statusDotClass = (status: string): string => {
         : tone === 'danger'
           ? 'bg-c-danger'
           : 'bg-c-text-muted';
+};
+
+/** Kategoria-tag pochodzenia rekordu, nie obszar — nigdy nie renderuj wprost. */
+const INITIATIVE_CATEGORY_INTERNAL_TAGS = new Set(['interview_insight']);
+
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-402] „Obszar / oś" — zmierzone na żywo
+ * (`/api/initiatives`, org DBR77, 71 wierszy): `area` 13/71, `axis` 23/71,
+ * `category` 53/71 niepuste, 56/71 (79%) po tej rezolucji ma wartość.
+ * Kolejność (pierwszy niepusty wygrywa):
+ *   1. `registerArea` — realny obszar biznesowy/DRD (np. „IT", „Production") —
+ *      to już czytelny tekst, wyświetlany wprost.
+ *   2. `registerAxisRaw` — realna oś transformacji DRD LUB
+ *      `InitiativeAxisEnum` (np. „Digital Processes", „transformational") —
+ *      etykietowana TYM SAMYM, przetestowanym słownikiem co kolumna TYP w
+ *      Execution (`executionTypeLabel`, src/labels/executionTypeLabels.ts,
+ *      dyżur DEC-397 06_EXECUTION — ten sam pomiar na tym samym rekordzie).
+ *      Nierozpoznana wartość pokazuje SUROWY tekst zamiast „Nieznany typ" —
+ *      ta kolumna nie jest zamkniętą klasyfikacją, tylko orientacyjnym
+ *      obszarem, więc surowy tekst niesie więcej niż placeholder.
+ *   3. `registerCategory` — szersza kategoria źródła, z pominięciem
+ *      wewnętrznego znacznika `interview_insight` (tag pochodzenia rekordu,
+ *      nie obszar).
+ *   4. brak sygnału → `null` (wołający renderuje „—" — brak pomiaru ≠ wynik).
+ */
+export const resolveInitiativeAreaOrAxis = (row: InitiativeRegisterRow): string | null => {
+  const area = String(row.registerArea ?? '').trim();
+  if (area) return area;
+
+  const axisRaw = String(row.registerAxisRaw ?? '').trim();
+  if (axisRaw) {
+    const isPolish = (i18n.language || '').toLowerCase().startsWith('pl');
+    const label = executionTypeLabel(axisRaw, isPolish);
+    const unknownLabel = isPolish
+      ? UNKNOWN_EXECUTION_TYPE_LABEL.pl
+      : UNKNOWN_EXECUTION_TYPE_LABEL.en;
+    return label === unknownLabel ? axisRaw : label;
+  }
+
+  const category = String(row.registerCategory ?? '').trim();
+  if (category && !INITIATIVE_CATEGORY_INTERNAL_TAGS.has(category)) return category;
+
+  return null;
 };
 
 export const createInitiativeRegisterColumns = (
@@ -217,6 +271,23 @@ export const createInitiativeRegisterColumns = (
           ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || '—'
           : row.ownerName || '—';
         return h('span', { className: 'block truncate text-xs text-c-text-secondary' }, label);
+      },
+    },
+    {
+      // [ODMROZENIE 05_INITIATIVES DEC-402] „Obszar / oś" — patrz
+      // `resolveInitiativeAreaOrAxis` powyżej dla źródła danych i pomiaru.
+      id: 'areaOrAxis',
+      label: options.t ? options.t('initiatives.columns.areaOrAxis', 'Obszar / oś') : 'Obszar / oś',
+      width: '150px',
+      sortable: true,
+      sortAccessor: (raw) => resolveInitiativeAreaOrAxis(raw as InitiativeRegisterRow) || '',
+      render: (raw) => {
+        const label = resolveInitiativeAreaOrAxis(raw as InitiativeRegisterRow) || '—';
+        return h(
+          'span',
+          { className: 'block truncate text-xs text-c-text-secondary', title: label },
+          label
+        );
       },
     },
     {

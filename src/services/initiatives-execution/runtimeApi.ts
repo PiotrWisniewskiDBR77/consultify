@@ -1117,6 +1117,17 @@ export interface LegacyInitiativeApiRow {
   plannedEndDate?: string | null;
   sourceId?: string | null;
   sourceType?: string | null;
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-402] Real columns on the classic
+   * `initiatives` table (measured live on `/api/initiatives`, org DBR77,
+   * 71 rows: `area` 13/71, `axis` 23/71, `category` 53/71 non-null). Typed
+   * explicitly so `initiativeRegisterProjection.ts` can read them without
+   * `as any` — previously only reachable via the `[key: string]: unknown`
+   * index signature below.
+   */
+  area?: string | null;
+  axis?: string | null;
+  category?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   ownerBusiness?: {

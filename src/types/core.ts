@@ -858,6 +858,24 @@ export interface PortfolioInitiative {
   summary?: string;
   description?: string;
   axis: string;
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-402] Raw pass-through fields from
+   * `/api/initiatives` (legacy table) used ONLY by the "Obszar / oś" column
+   * in `initiativeRegisterColumns.shared.ts`. Kept separate from `axis`
+   * above — that field is hardcoded to 'operational' by the register
+   * adapters in `initiativeRegisterProjection.ts` for a different, wider
+   * consumer set (RoadmapGantt, Portfolio views, CSV export…), and fixing
+   * that contract is out of this ticket's scope. `registerArea` carries the
+   * real functional/business area (e.g. "IT", "Production"), `registerAxisRaw`
+   * the real DRD transformation axis or `InitiativeAxisEnum` value (e.g.
+   * "Digital Processes", "transformational") the same way ExecutionHub's
+   * TYP column already reads it, and `registerCategory` a coarser fallback
+   * category tag. Any of the three may be null — that is an honest "brak
+   * danych", not a bug.
+   */
+  registerArea?: string | null;
+  registerAxisRaw?: string | null;
+  registerCategory?: string | null;
   status: InitiativeStatus;
   /** V8 planning read: normalized PMO status when raw DB value needed coercion */
   displayStatus?: string;

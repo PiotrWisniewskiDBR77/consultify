@@ -41,7 +41,7 @@ const readCode = (relativePath: string) =>
     .join('\n');
 
 describe('Day 274 + A19/A13 — jeden kontrakt listy inicjatyw', () => {
-  it('utrzymuje dziesięć identyfikatorów kolumn w ustalonej kolejności', () => {
+  it('utrzymuje ustaloną listę identyfikatorów kolumn w ustalonej kolejności (jedenaście od DEC-402 — dołożono "areaOrAxis")', () => {
     expect(createInitiativeRegisterColumns().map((column) => column.id)).toEqual([
       ...INITIATIVE_REGISTER_COLUMN_IDS,
     ]);

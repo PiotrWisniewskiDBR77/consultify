@@ -9312,6 +9312,9 @@
       "transformational": "Transformacyjna",
       "compliance": "Zgodność"
     },
+    "columns": {
+      "areaOrAxis": "Obszar / oś"
+    },
     "approval": {
       "needsTasks": "Dodaj przynajmniej jedno zadanie przed zmianą statusu.",
       "needsDeadline": "Ustaw termin przed zmianą statusu.",
