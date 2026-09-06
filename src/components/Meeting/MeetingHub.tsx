@@ -898,8 +898,10 @@ export const MeetingHub: React.FC = () => {
                   icon: CalendarDays,
                   title: t('meeting.empty', 'No meetings yet'),
                   description: t(
-                    'meeting.emptyState.description',
-                    'Schedule your first meeting to start tracking agendas and follow-ups.'
+                    'meeting.emptyState.teresaUnavailableP8',
+                    isPolish
+                      ? 'Zaplanuj pierwsze spotkanie, aby śledzić agendę i follow-upy. Podsumowanie Teresy jest niedostępne, dopóki nie wybierzesz spotkania.'
+                      : 'Schedule your first meeting to track agendas and follow-ups. Teresa summary is unavailable until you select a meeting.'
                   ),
                   actionLabel: t('meeting.actions.new', 'New meeting'),
                   onAction: openCreateModal,
