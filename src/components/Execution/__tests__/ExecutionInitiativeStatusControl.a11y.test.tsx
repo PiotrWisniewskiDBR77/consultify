@@ -64,10 +64,10 @@ describe('ExecutionInitiativeStatusControl — accessible contract (EN)', () => 
     await mountWithLang('en', onChange);
 
     const select = screen.getByRole('combobox', { name: 'Change status for Apator rollout' });
-    fireEvent.change(select, { target: { value: InitiativeStatus.PENDING_REVIEW } });
+    fireEvent.change(select, { target: { value: InitiativeStatus.PENDING_APPROVAL } });
 
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith(InitiativeStatus.PENDING_REVIEW);
+    expect(onChange).toHaveBeenCalledWith(InitiativeStatus.PENDING_APPROVAL);
   });
 
   it('does not render a mutation control when disabled', async () => {
@@ -104,8 +104,8 @@ describe('ExecutionInitiativeStatusControl — accessible contract (real PL)', (
     await mountWithLang('pl', onChange);
 
     const select = screen.getByRole('combobox', { name: 'Zmień status dla Apator rollout' });
-    fireEvent.change(select, { target: { value: InitiativeStatus.PENDING_REVIEW } });
+    fireEvent.change(select, { target: { value: InitiativeStatus.PENDING_APPROVAL } });
 
-    expect(onChange).toHaveBeenCalledWith(InitiativeStatus.PENDING_REVIEW);
+    expect(onChange).toHaveBeenCalledWith(InitiativeStatus.PENDING_APPROVAL);
   });
 });

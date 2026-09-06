@@ -15,10 +15,7 @@ import { InitiativeStatus } from '../../../src/types/initiative';
  * w `InitiativesManagementPanel` / `ExecutionInitiativeStatusControl` oraz
  * `id: status-<target>` w kebabie StandardTable. Dwie akcje o tym samym
  * `targetStatus` dawały twardy błąd Reacta „Encountered two children with the
- * same key, EXECUTING" (status BLOCKED dostawał „Start Execution" ORAZ
- * „Unblock"). Test pilnuje niezmiennika dla WSZYSTKICH statusów, nie tylko
- * tego jednego — bo dowolne nowe przejście wchodzące do statusu osiągalnego
- * z dwóch stron odtworzy ten sam defekt.
+ * same key. Test pilnuje niezmiennika dla wszystkich siedmiu statusów DEC-424.
  */
 describe('getStatusActions — targetStatus jako klucz listy', () => {
   const ALL_STATUSES = Object.keys(VALID_TRANSITIONS) as InitiativeStatus[];
@@ -36,15 +33,12 @@ describe('getStatusActions — targetStatus jako klucz listy', () => {
     });
   });
 
-  it('BLOCKED oferuje odblokowanie do EXECUTING dokładnie raz, pod nazwą Unblock', () => {
-    const actions = getStatusActions(InitiativeStatus.BLOCKED);
-    const toExecuting = actions.filter((a) => a.targetStatus === InitiativeStatus.EXECUTING);
-    expect(toExecuting).toHaveLength(1);
-    expect(toExecuting[0]?.label).toBe('Unblock');
+  it('pokrywa dokładnie siedem kodów DEC-424', () => {
+    expect(ALL_STATUSES).toEqual(Object.values(InitiativeStatus));
   });
 
-  it('SCHEDULED zachowuje „Start Execution" (straż nie zabrała akcji właściwemu statusowi)', () => {
-    const actions = getStatusActions(InitiativeStatus.SCHEDULED);
-    expect(actions.map((a) => a.label)).toContain('Start Execution');
+  it('APPROVED oferuje przejście do IN_EXECUTION dokładnie raz', () => {
+    const actions = getStatusActions(InitiativeStatus.APPROVED);
+    expect(actions.filter((a) => a.targetStatus === InitiativeStatus.IN_EXECUTION)).toHaveLength(1);
   });
 });

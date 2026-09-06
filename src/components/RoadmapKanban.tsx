@@ -105,7 +105,7 @@ const SortableItem: React.FC<{ id: string; initiative: FullInitiative; onClick: 
               </span>
             )}
 
-            {initiative.status === InitiativeStatus.EXECUTING && (
+            {initiative.status === InitiativeStatus.IN_EXECUTION && (
               <span
                 className="w-2 h-2 rounded-full bg-blue-500 block animate-pulse"
                 title="In Execution"

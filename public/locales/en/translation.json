@@ -9698,19 +9698,13 @@
       "more": "More"
     },
     "status": {
-      "draft": "Draft",
-      "pendingReview": "Pending review",
-      "review": "In review",
-      "promoted": "Promoted",
-      "planning": "Planning",
-      "approved": "Approved",
-      "scheduled": "Scheduled",
-      "executing": "Executing",
-      "blocked": "Blocked",
-      "done": "Done",
-      "tracking": "Tracking",
-      "cancelled": "Cancelled",
-      "archived": "Archived",
+      "PROPOSED": "Proposed",
+      "DRAFT": "Draft",
+      "PENDING_APPROVAL": "Pending approval",
+      "APPROVED": "Approved",
+      "IN_EXECUTION": "In execution",
+      "CLOSED": "Closed",
+      "REJECTED": "Rejected",
       "unknown": "Unknown status"
     },
     "statusDescription": {

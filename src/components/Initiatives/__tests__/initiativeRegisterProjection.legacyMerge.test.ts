@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { InitiativeStatus } from '@/types';
+import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 import type { LegacyInitiativeApiRow } from '@/services/initiatives-execution/runtimeApi';
 
 import {
@@ -28,11 +29,13 @@ const fixturePath = path.resolve(__dirname, '../../../../tests/fixtures/initiati
 const legacyFixtureRows: LegacyInitiativeApiRow[] = JSON.parse(readFileSync(fixturePath, 'utf8'));
 
 describe('legacy initiative register bridge (MVP fix, org DBR77 empty list)', () => {
-  it('fixture is the real measured payload: 71 rows, all with a known InitiativeStatus', () => {
+  it('fixture is the real measured payload: 71 legacy rows, all mapped explicitly to DEC-424', () => {
     expect(legacyFixtureRows.length).toBe(71);
     const knownStatuses = new Set(Object.values(InitiativeStatus) as string[]);
     for (const row of legacyFixtureRows) {
-      expect(knownStatuses.has(String(row.status))).toBe(true);
+      const runtime = mapInitiativeStatus({ direction: 'legacy-to-runtime', status: String(row.status) });
+      const mapped = runtime ? mapInitiativeStatus({ direction: 'runtime-to-status', lifecycle: runtime }).status : null;
+      expect(knownStatuses.has(String(mapped))).toBe(true);
     }
   });
 

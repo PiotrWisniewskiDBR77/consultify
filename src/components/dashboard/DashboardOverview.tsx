@@ -58,7 +58,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     const initiatives = safeSession.initiatives || [];
     const totalInit = initiatives.length;
     const completedInit = initiatives.filter(
-      (i) => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED
+      (i) => i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.CLOSED
     ).length;
     const executionScore = totalInit > 0 ? (completedInit / totalInit) * 20 : 0;
 
@@ -76,16 +76,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const initiativeStats = useMemo(() => {
     const inits = safeSession.initiatives || [];
     const onTrack = inits.filter((i) =>
-      [InitiativeStatus.EXECUTING, InitiativeStatus.DONE, InitiativeStatus.ARCHIVED].includes(
+      [InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED, InitiativeStatus.CLOSED].includes(
         i.status as InitiativeStatus
       )
     ).length;
     const atRisk = inits.filter(
       (i) =>
-        i.priority === 'High' && [InitiativeStatus.BLOCKED].includes(i.status as InitiativeStatus)
+        i.priority === 'High' && [InitiativeStatus.IN_EXECUTION].includes(i.status as InitiativeStatus)
     ).length;
-    const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
-    const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
+    const delayed = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
+    const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length;
 
     return { total: inits.length, onTrack, atRisk, delayed, done };
   }, [safeSession]);

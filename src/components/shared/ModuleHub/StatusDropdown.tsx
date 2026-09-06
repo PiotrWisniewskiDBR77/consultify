@@ -5,7 +5,7 @@
  * Supports three distinct status families:
  * 1. Assessment statuses: DRAFT → IN_REVIEW → AWAITING_APPROVAL → APPROVED
  * 2. Report statuses: DRAFT → GENERATING → FINAL → APPROVED → UTILIZED
- * 3. Initiative statuses (canonical 13): DRAFT → REVIEW → PROMOTED → ... → TRACKING
+ * 3. Initiative statuses (DEC-424): PROPOSED → DRAFT → ... → CLOSED / REJECTED
  *
  * Each module/tab shows only its relevant statuses.
  *
@@ -15,25 +15,15 @@
 import { Check, ChevronDown, Filter } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  InitiativeStatus as InitiativeStatusCodes,
+  type InitiativeStatus,
+} from '../../../../packages/shared/src/constants/initiativeStatuses.generated';
+import { getStatusMeta } from '../../../services/initiativeLifecycle';
 
 // ============================================
 // TYPES
 // ============================================
-
-export type InitiativeStatus =
-  | 'DRAFT'
-  | 'PENDING_REVIEW'
-  | 'REVIEW'
-  | 'PROMOTED'
-  | 'PLANNING'
-  | 'APPROVED'
-  | 'SCHEDULED'
-  | 'EXECUTING'
-  | 'BLOCKED'
-  | 'DONE'
-  | 'TRACKING'
-  | 'CANCELLED'
-  | 'ARCHIVED';
 
 export type AssessmentStatus =
   | 'DRAFT'
@@ -54,8 +44,8 @@ export type ReportStatus =
 
 export interface StatusOption {
   id: string;
-  label: string;
-  labelPL: string;
+  label?: string;
+  labelPL?: string;
   /** i18n key (public/locales/*\/translation.json) — canonical source of truth for the label. */
   labelKey: string;
   color: string;
@@ -78,126 +68,11 @@ export type ModuleContext =
 // STATUS CONFIGURATIONS
 // ============================================
 
-// --- Initiative statuses (canonical 13) ---
-const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
-  DRAFT: {
-    id: 'DRAFT',
-    label: 'Draft',
-    labelPL: 'Szkic',
-    labelKey: 'common.initiativeStatus.draft',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
-    order: 1,
-  },
-  PENDING_REVIEW: {
-    id: 'PENDING_REVIEW',
-    label: 'Pending Review',
-    labelPL: 'Oczekuje na przegląd',
-    labelKey: 'common.initiativeStatus.pendingReview',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500',
-    order: 2,
-  },
-  REVIEW: {
-    id: 'REVIEW',
-    label: 'In Review',
-    labelPL: 'W przeglądzie',
-    labelKey: 'common.initiativeStatus.review',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500',
-    order: 3,
-  },
-  PROMOTED: {
-    id: 'PROMOTED',
-    label: 'Promoted',
-    labelPL: 'Promowana',
-    labelKey: 'common.initiativeStatus.promoted',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500',
-    order: 4,
-  },
-  PLANNING: {
-    id: 'PLANNING',
-    label: 'Planning',
-    labelPL: 'Planowanie',
-    labelKey: 'common.initiativeStatus.planning',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500',
-    order: 5,
-  },
-  APPROVED: {
-    id: 'APPROVED',
-    label: 'Approved',
-    labelPL: 'Zatwierdzona',
-    labelKey: 'common.initiativeStatus.approved',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500',
-    order: 6,
-  },
-  SCHEDULED: {
-    id: 'SCHEDULED',
-    label: 'Scheduled',
-    labelPL: 'Zaplanowana',
-    labelKey: 'common.initiativeStatus.scheduled',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500',
-    order: 7,
-  },
-  EXECUTING: {
-    id: 'EXECUTING',
-    label: 'Executing',
-    labelPL: 'W realizacji',
-    labelKey: 'common.initiativeStatus.executing',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500',
-    order: 8,
-  },
-  BLOCKED: {
-    id: 'BLOCKED',
-    label: 'Blocked',
-    labelPL: 'Zablokowana',
-    labelKey: 'common.initiativeStatus.blocked',
-    color: 'text-danger-500',
-    bgColor: 'bg-danger-500',
-    order: 9,
-  },
-  DONE: {
-    id: 'DONE',
-    label: 'Done',
-    labelPL: 'Ukończona',
-    labelKey: 'common.initiativeStatus.done',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500',
-    order: 10,
-  },
-  TRACKING: {
-    id: 'TRACKING',
-    label: 'Tracking',
-    labelPL: 'Śledzenie',
-    labelKey: 'common.initiativeStatus.tracking',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500',
-    order: 11,
-  },
-  CANCELLED: {
-    id: 'CANCELLED',
-    label: 'Cancelled',
-    labelPL: 'Anulowana',
-    labelKey: 'common.initiativeStatus.cancelled',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
-    order: 12,
-  },
-  ARCHIVED: {
-    id: 'ARCHIVED',
-    label: 'Archived',
-    labelPL: 'Zarchiwizowana',
-    labelKey: 'common.initiativeStatus.archived',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
-    order: 13,
-  },
-};
+// --- Initiative statuses (generated from the server SSOT) ---
+const ALL_STATUSES = Object.fromEntries(Object.values(InitiativeStatusCodes).map((id, index) => {
+  const meta = getStatusMeta(id);
+  return [id, { id, labelKey: meta.labelKey, color: meta.color, bgColor: meta.bgColor, order: index + 1 }];
+})) as Record<InitiativeStatus, StatusOption>;
 
 // --- Assessment statuses ---
 const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
@@ -346,11 +221,11 @@ function getStatusesForModule(module: ModuleContext): StatusOption[] {
   switch (module) {
     case 'tools':
       // Source modules — initiative statuses
-      return [ALL_OPTION, ALL_STATUSES.DRAFT, ALL_STATUSES.PENDING_REVIEW];
+      return [ALL_OPTION, ALL_STATUSES.PROPOSED, ALL_STATUSES.DRAFT];
 
     case 'assessment_initiatives':
       // Assessment is also a source module for initiatives (phase 1 only)
-      return [ALL_OPTION, ALL_STATUSES.DRAFT, ALL_STATUSES.PENDING_REVIEW];
+      return [ALL_OPTION, ALL_STATUSES.PROPOSED, ALL_STATUSES.DRAFT];
 
     case 'assessment':
     case 'assessment_list':
@@ -365,34 +240,21 @@ function getStatusesForModule(module: ModuleContext): StatusOption[] {
       // D1.2: Complete initiative lifecycle — all 13 statuses visible for filtering
       return [
         ALL_OPTION,
-        ALL_STATUSES.DRAFT,
-        ALL_STATUSES.PENDING_REVIEW,
-        ALL_STATUSES.REVIEW,
-        ALL_STATUSES.PROMOTED,
-        ALL_STATUSES.PLANNING,
-        ALL_STATUSES.APPROVED,
-        ALL_STATUSES.SCHEDULED,
-        ALL_STATUSES.EXECUTING,
-        ALL_STATUSES.BLOCKED,
-        ALL_STATUSES.DONE,
-        ALL_STATUSES.TRACKING,
-        ALL_STATUSES.CANCELLED,
-        ALL_STATUSES.ARCHIVED,
+        ...Object.values(ALL_STATUSES),
       ];
 
     case 'execution':
       // Active work statuses
       return [
         ALL_OPTION,
-        ALL_STATUSES.SCHEDULED,
-        ALL_STATUSES.EXECUTING,
-        ALL_STATUSES.BLOCKED,
-        ALL_STATUSES.DONE,
+        ALL_STATUSES.APPROVED,
+        ALL_STATUSES.IN_EXECUTION,
+        ALL_STATUSES.CLOSED,
       ];
 
     case 'benefits':
       // Tracking only
-      return [ALL_OPTION, ALL_STATUSES.TRACKING];
+      return [ALL_OPTION, ALL_STATUSES.CLOSED];
 
     case 'reporting':
       // All statuses (legacy)
@@ -492,7 +354,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const getLabel = (option: StatusOption) =>
     t(option.labelKey, {
       lng: effectiveLanguage,
-      defaultValue: effectiveLanguage === 'pl' ? option.labelPL : option.label,
+      defaultValue: (effectiveLanguage === 'pl' ? option.labelPL : option.label) ?? option.id,
     });
 
   return (

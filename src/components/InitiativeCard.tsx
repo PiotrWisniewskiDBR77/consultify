@@ -59,21 +59,21 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
     switch (status) {
       case InitiativeStatus.DRAFT:
         return 'bg-slate-500/10 text-slate-600 dark:text-slate-500 border-slate-500/20';
-      case InitiativeStatus.PLANNING:
+      case InitiativeStatus.PENDING_APPROVAL:
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      case InitiativeStatus.REVIEW:
+      case InitiativeStatus.PENDING_APPROVAL:
         return 'bg-primary-500/10 text-primary-400 border-primary-500/20';
       case InitiativeStatus.APPROVED:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case InitiativeStatus.EXECUTING:
+      case InitiativeStatus.IN_EXECUTION:
         return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      case InitiativeStatus.BLOCKED:
+      case InitiativeStatus.IN_EXECUTION:
         return 'bg-danger-500/10 text-danger-400 border-danger-500/20';
-      case InitiativeStatus.DONE:
+      case InitiativeStatus.CLOSED:
         return 'bg-green-500/10 text-green-400 border-green-500/20';
-      case InitiativeStatus.CANCELLED:
+      case InitiativeStatus.REJECTED:
         return 'bg-slate-300/10 text-slate-600 dark:text-slate-500 border-slate-300 dark:border-navy-700/20';
-      case InitiativeStatus.ARCHIVED:
+      case InitiativeStatus.CLOSED:
         return 'bg-slate-200/10 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-navy-700/20';
       default:
         return 'bg-slate-500/10 text-slate-600 dark:text-slate-500';
@@ -83,14 +83,14 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
   const getStatusLabel = (status: InitiativeStatus) => {
     const labels: Record<string, string> = {
       [InitiativeStatus.DRAFT]: 'Draft',
-      [InitiativeStatus.PLANNING]: 'Planning',
-      [InitiativeStatus.REVIEW]: 'In Review',
+      [InitiativeStatus.PENDING_APPROVAL]: 'Planning',
+      [InitiativeStatus.PENDING_APPROVAL]: 'In Review',
       [InitiativeStatus.APPROVED]: 'Approved',
-      [InitiativeStatus.EXECUTING]: 'Executing',
-      [InitiativeStatus.BLOCKED]: 'Blocked',
-      [InitiativeStatus.DONE]: 'Done',
-      [InitiativeStatus.CANCELLED]: 'Cancelled',
-      [InitiativeStatus.ARCHIVED]: 'Archived',
+      [InitiativeStatus.IN_EXECUTION]: 'Executing',
+      [InitiativeStatus.IN_EXECUTION]: 'Blocked',
+      [InitiativeStatus.CLOSED]: 'Done',
+      [InitiativeStatus.REJECTED]: 'Cancelled',
+      [InitiativeStatus.CLOSED]: 'Archived',
     };
     return labels[status] || status;
   };
@@ -439,19 +439,19 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
       <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
           <div
-            className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PLANNING && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}
+            className={`flex items-center gap-1 ${initiative.status !== InitiativeStatus.PENDING_APPROVAL && initiative.status !== InitiativeStatus.DRAFT ? 'text-blue-500' : ''}`}
           >
             <CheckCircle size={12} />
             <span>Plan</span>
           </div>
           <div
-            className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.DONE ? 'text-blue-500' : ''}`}
+            className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.CLOSED ? 'text-blue-500' : ''}`}
           >
             <Clock size={12} />
             <span>Pilot</span>
           </div>
           <div
-            className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.EXECUTING || initiative.status === InitiativeStatus.DONE ? 'text-blue-500' : ''}`}
+            className={`flex items-center gap-1 ${initiative.status === InitiativeStatus.IN_EXECUTION || initiative.status === InitiativeStatus.CLOSED ? 'text-blue-500' : ''}`}
           >
             <Target size={12} />
             <span>Scale</span>
@@ -462,8 +462,8 @@ export const InitiativeCard: React.FC<InitiativeCardProps> = ({
           {/* Quick Actions - visible on hover */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {onQuickAdvance &&
-              initiative.status !== InitiativeStatus.DONE &&
-              initiative.status !== InitiativeStatus.CANCELLED && (
+              initiative.status !== InitiativeStatus.CLOSED &&
+              initiative.status !== InitiativeStatus.REJECTED && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

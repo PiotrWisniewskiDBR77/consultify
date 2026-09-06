@@ -40,12 +40,6 @@ interface StatusMachine {
   ) => { valid: boolean; reason?: string };
 }
 
-interface InitiativeRow {
-  id: string;
-  status: string;
-  project_id?: string;
-}
-
 interface TaskRow {
   id: string;
   status: string;
@@ -219,82 +213,6 @@ export const validateTask = async (
       });
       return;
     }
-    safeNext(next);
-  } catch {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-/**
- * Validate initiative status transition
- */
-export const validateInitiativeStatus = async (
-  req: PMORequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  const { StatusMachine } = deps;
-
-  const body = safeBody(req);
-  const status = normalizeStatusValue(body.status);
-  const blockedReason = normalizeBlockedReason(body.blockedReason, body.blocked_reason);
-  const initiativeId = safeParamsId(req);
-  const rawInitiativeId = readRawParamsId(req);
-
-  if (status === null) {
-    safeNext(next);
-    return;
-  }
-  if (status === '__INVALID_STATUS_TYPE__') {
-    res.status(400).json({ error: 'Status must be a string', rule: 'INVALID_STATUS_TYPE' });
-    return;
-  }
-  if (status === '__STATUS_TOO_LONG__') {
-    res.status(400).json({ error: 'Status value too long', rule: 'STATUS_VALUE_TOO_LONG' });
-    return;
-  }
-  if (!initiativeId) {
-    res.status(400).json({ error: 'Invalid initiative id', rule: 'INVALID_ENTITY_ID' });
-    return;
-  }
-  if (typeof rawInitiativeId === 'string' && rawInitiativeId.trim().length > MAX_ID_LENGTH) {
-    res.status(400).json({ error: 'Invalid initiative id', rule: 'INVALID_ENTITY_ID' });
-    return;
-  }
-
-  try {
-    const row = await DbPromise.get<InitiativeRow>(
-      `SELECT status, project_id FROM initiatives WHERE id = ?`,
-      [initiativeId]
-    );
-    if (!row) {
-      res.status(404).json({ error: 'Initiative not found' });
-      return;
-    }
-    const currentStatus = normalizeCurrentStatus(row.status);
-    if (!currentStatus) {
-      res.status(500).json({ error: 'Invalid current initiative status' });
-      return;
-    }
-
-    const validation = StatusMachine.validateInitiativeTransition(currentStatus, status, {
-      blockedReason,
-    });
-
-    if (!validation || validation.valid !== true) {
-      res.status(400).json({
-        error:
-          typeof validation?.reason === 'string' ? validation.reason : 'Invalid status transition',
-        rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus,
-        requestedStatus: status,
-      });
-      return;
-    }
-
-    // Store current status for audit
-    req.previousStatus = currentStatus;
-    req.projectId = row.project_id;
     safeNext(next);
   } catch {
     res.status(500).json({ error: 'Internal server error' });

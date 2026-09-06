@@ -26,7 +26,7 @@ const initiative = {
   id: 'init-1',
   name: 'Standaryzacja raportów zarządczych KPI',
   axis: 'finance',
-  status: InitiativeStatus.EXECUTING,
+  status: InitiativeStatus.IN_EXECUTION,
   priority: 'HIGH',
   progress: 42,
   budget: 100000,

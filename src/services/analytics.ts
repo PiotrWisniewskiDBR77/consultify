@@ -26,8 +26,8 @@ export interface VelocityData {
 }
 
 export const calculateAnalytics = (initiatives: FullInitiative[], tasks: Task[]): AnalyticsData => {
-  const completedInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.DONE);
-  const inProgressInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.EXECUTING);
+  const completedInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.CLOSED);
+  const inProgressInitiatives = initiatives.filter((i) => i.status === InitiativeStatus.IN_EXECUTION);
   const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE);
 
   const totalCost = initiatives.reduce(

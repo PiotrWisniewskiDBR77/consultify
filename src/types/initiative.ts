@@ -154,14 +154,14 @@ export type ModuleId =
  * Get statuses visible in Tools module
  */
 export function getToolsVisibleStatuses(): InitiativeStatus[] {
-  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL];
 }
 
 /**
  * Get statuses visible in Assessment module
  */
 export function getAssessmentVisibleStatuses(): InitiativeStatus[] {
-  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW];
+  return [InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL];
 }
 
 /**
@@ -169,13 +169,13 @@ export function getAssessmentVisibleStatuses(): InitiativeStatus[] {
  */
 export function getInitiativesVisibleStatuses(): InitiativeStatus[] {
   return [
-    InitiativeStatus.REVIEW,
-    InitiativeStatus.PROMOTED,
-    InitiativeStatus.PLANNING,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.PENDING_APPROVAL,
     InitiativeStatus.APPROVED,
-    InitiativeStatus.SCHEDULED,
-    InitiativeStatus.CANCELLED,
-    InitiativeStatus.ARCHIVED,
+    InitiativeStatus.APPROVED,
+    InitiativeStatus.REJECTED,
+    InitiativeStatus.CLOSED,
   ];
 }
 
@@ -184,10 +184,10 @@ export function getInitiativesVisibleStatuses(): InitiativeStatus[] {
  */
 export function getExecutionVisibleStatuses(): InitiativeStatus[] {
   return [
-    InitiativeStatus.SCHEDULED,
-    InitiativeStatus.EXECUTING,
-    InitiativeStatus.BLOCKED,
-    InitiativeStatus.DONE,
+    InitiativeStatus.APPROVED,
+    InitiativeStatus.IN_EXECUTION,
+    InitiativeStatus.IN_EXECUTION,
+    InitiativeStatus.CLOSED,
   ];
 }
 
@@ -195,7 +195,7 @@ export function getExecutionVisibleStatuses(): InitiativeStatus[] {
  * Get statuses visible in Benefits module
  */
 export function getBenefitsVisibleStatuses(): InitiativeStatus[] {
-  return [InitiativeStatus.TRACKING];
+  return [InitiativeStatus.CLOSED];
 }
 
 /**
@@ -226,20 +226,20 @@ export function isStatusVisibleInModule(status: InitiativeStatus, module: Module
 export function getDisplayModule(status: InitiativeStatus): ModuleId {
   switch (status) {
     case InitiativeStatus.DRAFT:
-    case InitiativeStatus.PENDING_REVIEW:
+    case InitiativeStatus.PENDING_APPROVAL:
       return 'assessment'; // or 'tools' depending on source
-    case InitiativeStatus.REVIEW:
-    case InitiativeStatus.PROMOTED:
-    case InitiativeStatus.PLANNING:
+    case InitiativeStatus.PENDING_APPROVAL:
+    case InitiativeStatus.PENDING_APPROVAL:
+    case InitiativeStatus.PENDING_APPROVAL:
     case InitiativeStatus.APPROVED:
-    case InitiativeStatus.SCHEDULED:
-    case InitiativeStatus.CANCELLED:
+    case InitiativeStatus.APPROVED:
+    case InitiativeStatus.REJECTED:
       return 'initiatives';
-    case InitiativeStatus.EXECUTING:
-    case InitiativeStatus.BLOCKED:
-    case InitiativeStatus.DONE:
+    case InitiativeStatus.IN_EXECUTION:
+    case InitiativeStatus.IN_EXECUTION:
+    case InitiativeStatus.CLOSED:
       return 'execution';
-    case InitiativeStatus.TRACKING:
+    case InitiativeStatus.CLOSED:
       return 'benefits';
     default:
       return 'initiatives';
@@ -272,171 +272,9 @@ export function getStatusesForModuleId(moduleId: ModuleId): InitiativeStatus[] {
 // STATUS METADATA (for UI)
 // ============================================
 
-export interface StatusMeta {
-  label: string;
-  labelPL: string;
-  color: string;
-  bgColor: string;
-  dotColor: string;
-  description: string;
-  descriptionPL: string;
-  icon: string;
-  order: number;
-}
+export { STATUS_METADATA as INITIATIVE_STATUS_METADATA } from "../services/initiativeLifecycle";
 
-export const INITIATIVE_STATUS_METADATA: Record<InitiativeStatus, StatusMeta> = {
-  [InitiativeStatus.DRAFT]: {
-    label: 'Draft',
-    labelPL: 'Szkic',
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-500/10',
-    dotColor: 'bg-slate-400',
-    description: 'Initial draft, awaiting promotion',
-    descriptionPL: 'Początkowy szkic, oczekuje na promocję',
-    icon: 'FileText',
-    order: 1,
-  },
-  [InitiativeStatus.PENDING_REVIEW]: {
-    label: 'Pending Review',
-    labelPL: 'Oczekuje na przegląd',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500/10',
-    dotColor: 'bg-amber-400',
-    description: 'Awaiting PM/Lead review',
-    descriptionPL: 'Oczekuje na przegląd PM/Lead',
-    icon: 'Clock',
-    order: 2,
-  },
-  [InitiativeStatus.REVIEW]: {
-    label: 'In Review',
-    labelPL: 'W przeglądzie',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500/10',
-    dotColor: 'bg-amber-400',
-    description: 'Under business review',
-    descriptionPL: 'W przeglądzie biznesowym',
-    icon: 'Eye',
-    order: 3,
-  },
-  [InitiativeStatus.PROMOTED]: {
-    label: 'Promoted',
-    labelPL: 'Promowana',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    dotColor: 'bg-blue-400',
-    description: 'Accepted for planning',
-    descriptionPL: 'Zaakceptowana do planowania',
-    icon: 'TrendingUp',
-    order: 4,
-  },
-  [InitiativeStatus.PLANNING]: {
-    label: 'Planning',
-    labelPL: 'Planowanie',
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-500/10',
-    dotColor: 'bg-indigo-400',
-    description: 'Being planned and scoped',
-    descriptionPL: 'W trakcie planowania',
-    icon: 'ClipboardList',
-    order: 5,
-  },
-  [InitiativeStatus.APPROVED]: {
-    label: 'Approved',
-    labelPL: 'Zatwierdzona',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10',
-    dotColor: 'bg-emerald-400',
-    description: 'Approved, ready for scheduling',
-    descriptionPL: 'Zatwierdzona, gotowa do zaplanowania',
-    icon: 'CheckCircle',
-    order: 6,
-  },
-  [InitiativeStatus.SCHEDULED]: {
-    label: 'Scheduled',
-    labelPL: 'Zaplanowana',
-    color: 'text-primary-500',
-    bgColor: 'bg-primary-500/10',
-    dotColor: 'bg-primary-400',
-    description: 'Scheduled in roadmap',
-    descriptionPL: 'Zaplanowana w roadmapie',
-    icon: 'Calendar',
-    order: 7,
-  },
-  [InitiativeStatus.EXECUTING]: {
-    label: 'Executing',
-    labelPL: 'W realizacji',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    dotColor: 'bg-blue-400',
-    description: 'Currently being implemented',
-    descriptionPL: 'W trakcie realizacji',
-    icon: 'Play',
-    order: 8,
-  },
-  [InitiativeStatus.BLOCKED]: {
-    label: 'Blocked',
-    labelPL: 'Zablokowana',
-    color: 'text-danger-500',
-    bgColor: 'bg-danger-500/10',
-    dotColor: 'bg-danger-400',
-    description: 'Blocked, requires decision',
-    descriptionPL: 'Zablokowana, wymaga decyzji',
-    icon: 'AlertTriangle',
-    order: 9,
-  },
-  [InitiativeStatus.DONE]: {
-    label: 'Done',
-    labelPL: 'Ukończona',
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10',
-    dotColor: 'bg-green-400',
-    description: 'Delivery completed',
-    descriptionPL: 'Realizacja zakończona',
-    icon: 'CheckCircle2',
-    order: 10,
-  },
-  [InitiativeStatus.TRACKING]: {
-    label: 'Tracking',
-    labelPL: 'Śledzenie',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    dotColor: 'bg-blue-400',
-    description: 'Benefits tracking in progress',
-    descriptionPL: 'Śledzenie korzyści w toku',
-    icon: 'BarChart',
-    order: 11,
-  },
-  [InitiativeStatus.CANCELLED]: {
-    label: 'Cancelled',
-    labelPL: 'Anulowana',
-    color: 'text-gray-500',
-    bgColor: 'bg-gray-500/10',
-    dotColor: 'bg-gray-400',
-    description: 'Initiative was cancelled',
-    descriptionPL: 'Inicjatywa została anulowana',
-    icon: 'XCircle',
-    order: 12,
-  },
-  [InitiativeStatus.ARCHIVED]: {
-    label: 'Archived',
-    labelPL: 'Zarchiwizowana',
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400/10',
-    dotColor: 'bg-slate-500',
-    description: 'Archived for reference',
-    descriptionPL: 'Zarchiwizowana do celów referencyjnych',
-    icon: 'Archive',
-    order: 13,
-  },
-};
-
-/**
- * Get status label for display
- */
-export function getInitiativeStatusLabel(
-  status: InitiativeStatus,
-  lang: 'en' | 'pl' = 'en'
-): string {
-  const meta = INITIATIVE_STATUS_METADATA[status];
-  return lang === 'pl' ? meta?.labelPL : meta?.label || status;
+/*  UI consumers must call getLocalizedStatusLabel with i18n. */
+export function getInitiativeStatusLabel(status: InitiativeStatus): string {
+  return status;
 }

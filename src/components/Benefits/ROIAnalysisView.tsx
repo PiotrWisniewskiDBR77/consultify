@@ -182,9 +182,9 @@ const ROIBarChart: React.FC<ROIBarChartProps> = ({ metrics, onBarClick }) => {
               <div className="absolute inset-y-0 left-2 flex items-center">
                 <span
                   className={`text-xs ${
-                    metric.status === InitiativeStatus.DONE
+                    metric.status === InitiativeStatus.CLOSED
                       ? 'text-green-400'
-                      : metric.status === InitiativeStatus.BLOCKED
+                      : metric.status === InitiativeStatus.IN_EXECUTION
                         ? 'text-danger-400'
                         : 'text-slate-600'
                   }`}
@@ -276,9 +276,9 @@ const VarianceTable: React.FC<VarianceTableProps> = ({ metrics, onRowClick }) =>
                 <div className="flex items-center gap-2">
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      metric.status === InitiativeStatus.DONE
+                      metric.status === InitiativeStatus.CLOSED
                         ? 'bg-green-400'
-                        : metric.status === InitiativeStatus.BLOCKED
+                        : metric.status === InitiativeStatus.IN_EXECUTION
                           ? 'bg-danger-400'
                           : 'bg-slate-400'
                     }`}
@@ -337,13 +337,13 @@ export const ROIAnalysisView: React.FC<ROIAnalysisViewProps> = ({
   // Calculate ROI metrics for each initiative
   const roiMetrics = useMemo((): ROIMetrics[] => {
     return initiatives
-      .filter((i) => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.BLOCKED)
+      .filter((i) => i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.IN_EXECUTION)
       .map((initiative) => {
         const totalInvestment = (initiative.costCapex || 0) + (initiative.costOpex || 0);
         const projectedBenefits =
           initiative.annualBenefit || initiative.estimatedAnnualBenefit || 0;
 
-        const realizationRate = initiative.status === InitiativeStatus.DONE ? 0.85 : 0.4;
+        const realizationRate = initiative.status === InitiativeStatus.CLOSED ? 0.85 : 0.4;
         const realizedBenefits = projectedBenefits * realizationRate;
 
         const roi = calculateROI(realizedBenefits, totalInvestment);

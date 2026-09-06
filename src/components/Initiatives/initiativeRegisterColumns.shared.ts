@@ -4,9 +4,11 @@ import React from 'react';
 import i18n from '@/i18n';
 import { executionTypeLabel, UNKNOWN_EXECUTION_TYPE_LABEL } from '@/labels/executionTypeLabels';
 import type { StandardRowMenu, TableColumn } from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
+import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
+import { InitiativeStatus } from '@/types';
 import type { PortfolioInitiative } from '@/types';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
+import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
 
 import {
   INITIATIVE_GATE_NAME_LABELS,
@@ -56,27 +58,11 @@ export const INITIATIVE_REGISTER_OPTIONAL_COLUMN_IDS = ['source'] as const;
  * slownika statusow. Alias zalatwia to w JEDNYM miejscu — obie powierzchnie
  * Oceny naprawiaja sie bez wlasnego kodu.
  */
-export const INITIATIVE_REGISTER_LEGACY_LIFECYCLE_ALIASES: Record<string, string> = {
-  DRAFT: 'REGISTERED_DRAFT',
-  PLANNING: 'DEFINING',
-  PENDING_REVIEW: 'DEFINED',
-  REVIEW: 'ANALYZING',
-  PROMOTED: 'READY_FOR_DECISION',
-  APPROVED: 'APPROVED_BACKLOG',
-  SCHEDULED: 'SCHEDULED',
-  EXECUTING: 'IN_EXECUTION',
-  BLOCKED: 'IN_EXECUTION',
-  TRACKING: 'BENEFITS_TRACKING',
-  DONE: 'CLOSED',
-  ARCHIVED: 'ARCHIVED',
-  CANCELLED: 'CANCELLED',
-};
-
 /** Kanoniczny stan cyklu zycia wiersza — niezaleznie od tego, ktory slownik go przyniosl. */
 export const resolveInitiativeRegisterLifecycle = (row: InitiativeRegisterRow): string => {
   const raw = String(row.displayStatus || row.status || '').toUpperCase();
   if (!raw) return '';
-  return INITIATIVE_REGISTER_LEGACY_LIFECYCLE_ALIASES[raw] || raw;
+  return mapInitiativeStatus({ direction: 'legacy-to-runtime', status: raw }) ?? '';
 };
 
 export interface InitiativeRegisterColumnOptions {
@@ -123,8 +109,8 @@ export const formatPlannedWindow = (raw: unknown): string => {
   return `${startLabel} — ${endLabel}`;
 };
 
-const statusDotClass = (status: string): string => {
-  const tone = statusChipTone(status);
+const statusDotClass = (status: string, onHold?: boolean): string => {
+  const tone = getInitiativeStatusChipTone(status as InitiativeStatus, { onHold });
   return tone === 'info'
     ? 'bg-c-info'
     : tone === 'warning'
@@ -182,6 +168,7 @@ export const resolveInitiativeAreaOrAxis = (row: InitiativeRegisterRow): string 
 export const createInitiativeRegisterColumns = (
   options: InitiativeRegisterColumnOptions = {}
 ): TableColumn[] => {
+  const t = options.t;
   const base: TableColumn[] = [
     {
       id: 'name',
@@ -207,25 +194,25 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'status',
-      label: 'Cykl życia',
+      label: 'Status',
       width: '170px',
       filterable: true,
-      filterOptions: Object.entries(INITIATIVE_LIFECYCLE_LABELS).map(([value, label]) => ({
+      filterOptions: Object.values(InitiativeStatus).map((value) => ({
         value,
-        label,
+        label: getLocalizedStatusLabel(value, t ?? ((key) => key)),
       })),
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
-        const lifecycle = resolveInitiativeRegisterLifecycle(row) || 'UNKNOWN';
+        const status = row.status as InitiativeStatus;
         return h(
           'span',
           {
             className: 'inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary',
           },
           h('span', {
-            className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status))}`,
+            className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status), row.onHold)}`,
           }),
-          INITIATIVE_LIFECYCLE_LABELS[lifecycle] || lifecycle.replaceAll('_', ' ')
+          getLocalizedStatusLabel(status, t ?? ((key) => key))
         );
       },
     },

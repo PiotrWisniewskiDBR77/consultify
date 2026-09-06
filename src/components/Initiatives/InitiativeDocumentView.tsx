@@ -95,6 +95,7 @@ import { mergeChangeValue } from '@/services/cardAnalysis';
 import {
   getContextActions,
   getFilteredStatusActions,
+  getLocalizedStatusLabel,
   getModuleForStatus,
   getStatusMeta,
   StatusAction,
@@ -129,7 +130,7 @@ import {
 } from '@/utils/initiativeWorkflowStatus';
 import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 
-import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types/initiative';
+import { InitiativeStatus } from '../../types/initiative';
 import { isInitiativeSectionsCompleteEnabled } from '../../utils/initiativeSectionsCompleteFlag';
 import {
   type Attachment,
@@ -305,19 +306,13 @@ const REVIEW_PASS_THRESHOLD = 90;
 // progressing = approved; problem/terminal-negative = rejected; ARCHIVED = neutral.
 type NModeStatusTone = 'draft' | 'review' | 'approved' | 'rejected' | 'neutral';
 const INITIATIVE_STATUS_TONE: Record<InitiativeStatus, NModeStatusTone> = {
+  [InitiativeStatus.PROPOSED]: 'neutral',
   [InitiativeStatus.DRAFT]: 'draft',
-  [InitiativeStatus.PENDING_REVIEW]: 'review',
-  [InitiativeStatus.REVIEW]: 'review',
-  [InitiativeStatus.PROMOTED]: 'approved',
-  [InitiativeStatus.PLANNING]: 'approved',
+  [InitiativeStatus.PENDING_APPROVAL]: 'review',
   [InitiativeStatus.APPROVED]: 'approved',
-  [InitiativeStatus.SCHEDULED]: 'approved',
-  [InitiativeStatus.EXECUTING]: 'approved',
-  [InitiativeStatus.BLOCKED]: 'rejected',
-  [InitiativeStatus.DONE]: 'approved',
-  [InitiativeStatus.TRACKING]: 'approved',
-  [InitiativeStatus.CANCELLED]: 'rejected',
-  [InitiativeStatus.ARCHIVED]: 'neutral',
+  [InitiativeStatus.IN_EXECUTION]: 'approved',
+  [InitiativeStatus.CLOSED]: 'approved',
+  [InitiativeStatus.REJECTED]: 'rejected',
 };
 
 // Wzorzec N (§1 BCG) — sekcje-karty generowane przez AI, którym doklejamy
@@ -1440,11 +1435,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   ) as InitiativeStatus;
   initiativeStatusRef.current = status;
   const statusMeta = getStatusMeta(status);
-  // D-B: Menu 1 status pill. Label comes from INITIATIVE_STATUS_METADATA (already
-  // bilingual — no new i18n key, no raw key on screen); tone from the fold above.
-  const statusPillLabel = isPolish
-    ? INITIATIVE_STATUS_METADATA[status].labelPL
-    : INITIATIVE_STATUS_METADATA[status].label;
+  const statusPillLabel = getLocalizedStatusLabel(status, t);
   const statusPillTone = INITIATIVE_STATUS_TONE[status];
   // Status actions are driven by backend `gate-readiness-check` (source of truth).
   //
@@ -3173,8 +3164,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // nie może zamienić się w awarię blokującą pracę (ten sam wzorzec co
     // gate-ai-check niżej).
     if (
-      targetStatus === InitiativeStatus.REVIEW ||
-      targetStatus === InitiativeStatus.PENDING_REVIEW
+      targetStatus === InitiativeStatus.PENDING_APPROVAL ||
+      targetStatus === InitiativeStatus.PENDING_APPROVAL
     ) {
       try {
         const envelope = await fetchEvidenceEnvelope('initiative', initiativeId);
@@ -5052,7 +5043,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       setTimelineMilestones,
       timelinePhases,
       setTimelinePhases,
-      timelineLocked: ['SCHEDULED', 'EXECUTING', 'BLOCKED', 'DONE', 'TRACKING'].includes(status),
+      timelineLocked: ['SCHEDULED', 'IN_EXECUTION', 'IN_EXECUTION', 'DONE', 'CLOSED'].includes(status),
       baselineVersion: initiative?.baselineVersion ?? null,
       estimatedDurationMonths,
       setEstimatedDurationMonths,
@@ -5739,9 +5730,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
     // Status color mapping
     const statusAlertBorder = (() => {
-      if (status === 'BLOCKED') return 'border-danger-400/60';
-      if (status === 'EXECUTING') return 'border-emerald-400/60';
-      if (status === 'DONE' || status === 'TRACKING') return 'border-blue-400/60';
+      if (status === 'IN_EXECUTION') return 'border-danger-400/60';
+      if (status === 'IN_EXECUTION') return 'border-emerald-400/60';
+      if (status === 'DONE' || status === 'CLOSED') return 'border-blue-400/60';
       if (status === 'CANCELLED' || status === 'ARCHIVED') return 'border-c-border-strong';
       return undefined;
     })();
@@ -5756,13 +5747,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     // Helper: get metadata for current status.
     // `bgColor`/`color` z metadanych NIE są już używane — wartości właściwości
     // stoją na neutralnej pigułce (kontrast AA), semantykę niesie kropka.
-    const currentStatusMeta = INITIATIVE_STATUS_METADATA[status as InitiativeStatus];
+    const currentStatusMeta = getStatusMeta(status as InitiativeStatus);
     const currentStatusDot = currentStatusMeta?.dotColor || 'bg-c-border-strong';
-    const currentStatusLabel = currentStatusMeta
-      ? isPolish
-        ? currentStatusMeta.labelPL
-        : currentStatusMeta.label
-      : status;
+    const currentStatusLabel = getLocalizedStatusLabel(status as InitiativeStatus, t);
 
     // Helper: get metadata for current priority
     const priorityMeta: Record<
@@ -9661,9 +9648,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         id: `status-${sa.targetStatus}`,
         label: t(sa.labelKey),
         icon:
-          sa.targetStatus === InitiativeStatus.CANCELLED
+          sa.targetStatus === InitiativeStatus.REJECTED
             ? XCircle
-            : sa.targetStatus === InitiativeStatus.BLOCKED
+            : sa.targetStatus === InitiativeStatus.IN_EXECUTION
               ? Ban
               : AlertTriangle,
         onClick: () => void handleStatusAction(sa),

@@ -299,9 +299,9 @@ const AllocationDetailModal: React.FC<AllocationDetailModalProps> = ({
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={`text-xs px-2 py-0.5 rounded ${
-                      allocation.status === InitiativeStatus.EXECUTING
+                      allocation.status === InitiativeStatus.IN_EXECUTION
                         ? 'bg-blue-500/20 text-blue-400'
-                        : allocation.status === InitiativeStatus.BLOCKED
+                        : allocation.status === InitiativeStatus.IN_EXECUTION
                           ? 'bg-danger-500/20 text-danger-400'
                           : 'bg-slate-500/20 text-slate-600'
                     }`}

@@ -1871,7 +1871,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {daysRemaining !== null &&
-            (mode === 'BASELINED' || mode === 'TRACKING' || mode === 'PLANNING') && (
+            (mode === 'BASELINED' || mode === "TRACKING" || mode === "PLANNING") && (
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-lg font-medium ${
                   isOverdue
@@ -1923,7 +1923,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {/* ══════════════════════════════════════════════
           MODE: PLANNING (PROMOTED → PLANNING)
           ══════════════════════════════════════════════ */}
-      {mode === 'PLANNING' && (
+      {mode === "PLANNING" && (
         <>
           {/* Date summary strip */}
           <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 p-4">
@@ -2118,7 +2118,7 @@ export const TimelineSection: React.FC<InitiativeSectionProps> = ({
       {/* ══════════════════════════════════════════════
           MODE: BASELINED / TRACKING (SCHEDULED → EXECUTING)
           ══════════════════════════════════════════════ */}
-      {(mode === 'BASELINED' || mode === 'TRACKING') && (
+      {(mode === 'BASELINED' || mode === "TRACKING") && (
         <>
           {timelineLocked && (
             <Callout variant="success">

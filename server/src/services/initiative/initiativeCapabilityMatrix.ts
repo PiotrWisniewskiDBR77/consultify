@@ -240,31 +240,31 @@ export function resolveGateRequiredRoles(
 ): string[] {
   if (!gate) return [];
   const required = (GATE_PERMISSIONS as Record<string, string[]>)[gate] || [];
-  if (steeringBoardEnabled) return [...required];
-  return required.flatMap((role) =>
+  if (steeringBoardEnabled) return uniq(required);
+  return uniq(required.flatMap((role) =>
     role === 'STEERING_COMMITTEE' ? ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'] : [role]
-  );
+  ));
 }
 
 export interface GateExecutionInput {
   gate: string | null;
   effectiveRoles: string[];
   steeringBoardEnabled: boolean;
+  /** Wynik warunku merytorycznego. Admin nie może go ominąć. */
+  conditionSatisfied?: boolean;
 }
 
 /**
  * Single source of truth for "may this actor pass this gate".
  *
- * NOTE ON THE `!gate` BRANCH: a transition with no gate is an ungated edge of
- * the state machine (there is no approval profile to satisfy), so it returns
- * true — that is the pre-existing, deliberate contract of VALID_TRANSITIONS,
- * NOT a default-allow for a missing ROLE. Every gated transition still requires
- * a role from the approval profile, and an empty role set never passes one.
+ * DEC-424: brak bramki oznacza brak jawnej krawędzi i zawsze kończy się odmową.
+ * `conditionSatisfied=false` jest sprawdzane przed administracyjnym obejściem roli.
  */
 export function canExecuteGate(input: GateExecutionInput): boolean {
   const roles = uniq((input.effectiveRoles || []).map(upper).filter(Boolean));
+  if (input.conditionSatisfied === false) return false;
+  if (!input.gate) return false;
   if (roles.some((role) => ADMIN_ROLES.has(role))) return true;
-  if (!input.gate) return true;
   const required = resolveGateRequiredRoles(input.gate, input.steeringBoardEnabled);
   return required.some((role) => roles.includes(upper(role)));
 }

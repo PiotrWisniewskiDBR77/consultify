@@ -137,7 +137,7 @@ function buildKebabSections(
 ): RowActionSection[] {
   const { isPolish, onClick, onArchive, onOpenFull } = opts;
   const comingSoonBackend = isPolish ? 'Wkrótce (backend)' : 'Soon (backend)';
-  const archiveable = ([InitiativeStatus.DONE, InitiativeStatus.CANCELLED] as string[]).includes(
+  const archiveable = ([InitiativeStatus.CLOSED, InitiativeStatus.REJECTED] as string[]).includes(
     initiative.status
   );
 
@@ -164,7 +164,7 @@ function buildKebabSections(
       icon: Edit2,
       onClick,
     },
-    initiative.status === InitiativeStatus.ARCHIVED
+    initiative.status === InitiativeStatus.CLOSED
       ? {
           id: 'restore',
           label: isPolish ? 'Przywróć' : 'Restore',

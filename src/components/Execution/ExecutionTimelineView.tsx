@@ -108,13 +108,13 @@ const STATUS_COLORS: Record<
   InitiativeStatus,
   { bg: string; border: string; text: string; progress: string }
 > = {
-  [InitiativeStatus.PENDING_REVIEW]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     bg: 'bg-amber-500/20',
     border: 'border-amber-500/50',
     text: 'text-amber-400',
     progress: 'bg-amber-500',
   },
-  [InitiativeStatus.PROMOTED]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     bg: 'bg-blue-500/20',
     border: 'border-blue-500/50',
     text: 'text-blue-400',
@@ -126,32 +126,32 @@ const STATUS_COLORS: Record<
     text: 'text-emerald-400',
     progress: 'bg-emerald-500',
   },
-  [InitiativeStatus.SCHEDULED]: {
+  [InitiativeStatus.APPROVED]: {
     // §9.2④ crimson is NEVER a status — use info/blue-violet, not primary(=crimson)
     bg: 'bg-indigo-500/20',
     border: 'border-indigo-500/50',
     text: 'text-indigo-500 dark:text-indigo-400',
     progress: 'bg-indigo-500',
   },
-  [InitiativeStatus.EXECUTING]: {
+  [InitiativeStatus.IN_EXECUTION]: {
     bg: 'bg-blue-500/20',
     border: 'border-blue-500/50',
     text: 'text-blue-400',
     progress: 'bg-blue-500',
   },
-  [InitiativeStatus.BLOCKED]: {
+  [InitiativeStatus.IN_EXECUTION]: {
     bg: 'bg-danger-500/20',
     border: 'border-danger-500/50',
     text: 'text-danger-400',
     progress: 'bg-danger-500',
   },
-  [InitiativeStatus.DONE]: {
+  [InitiativeStatus.CLOSED]: {
     bg: 'bg-green-500/20',
     border: 'border-green-500/50',
     text: 'text-green-400',
     progress: 'bg-green-500',
   },
-  [InitiativeStatus.TRACKING]: {
+  [InitiativeStatus.CLOSED]: {
     bg: 'bg-blue-500/20',
     border: 'border-blue-500/50',
     text: 'text-blue-400',
@@ -163,25 +163,25 @@ const STATUS_COLORS: Record<
     text: 'text-c-text-muted',
     progress: 'bg-slate-500',
   },
-  [InitiativeStatus.PLANNING]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     bg: 'bg-blue-500/20',
     border: 'border-blue-500/50',
     text: 'text-blue-400',
     progress: 'bg-blue-500',
   },
-  [InitiativeStatus.REVIEW]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     bg: 'bg-amber-500/20',
     border: 'border-amber-500/50',
     text: 'text-amber-400',
     progress: 'bg-amber-500',
   },
-  [InitiativeStatus.CANCELLED]: {
+  [InitiativeStatus.REJECTED]: {
     bg: 'bg-gray-500/20',
     border: 'border-gray-500/50',
     text: 'text-gray-600',
     progress: 'bg-gray-500',
   },
-  [InitiativeStatus.ARCHIVED]: {
+  [InitiativeStatus.CLOSED]: {
     bg: 'bg-slate-500/20',
     border: 'border-slate-500/50',
     text: 'text-c-text-muted',
@@ -395,7 +395,7 @@ function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning
   const now = new Date();
 
   for (const init of initiatives) {
-    if (init.status === InitiativeStatus.DONE || init.status === InitiativeStatus.CANCELLED)
+    if (init.status === InitiativeStatus.CLOSED || init.status === InitiativeStatus.REJECTED)
       continue;
 
     const endDate = init.plannedEndDate || init.slaDeadline;
@@ -411,7 +411,7 @@ function computeTimelineWarnings(initiatives: FullInitiative[]): TimelineWarning
       });
     }
 
-    if (init.status === InitiativeStatus.BLOCKED) {
+    if (init.status === InitiativeStatus.IN_EXECUTION) {
       warnings.push({
         initiativeId: init.id,
         initiativeName: init.name,
@@ -475,7 +475,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   criticalSlackDays,
 }) => {
   const { t } = useTranslation();
-  const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.EXECUTING];
+  const colors = STATUS_COLORS[initiative.status] || STATUS_COLORS[InitiativeStatus.IN_EXECUTION];
   const span = Math.max(1, endIdx - startIdx + 1);
   const progress = initiative.progress || 0;
   const leftPercent = (startIdx / totalWeeks) * 100;
@@ -1551,9 +1551,9 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         <div className="flex items-center gap-4">
           {[
             InitiativeStatus.APPROVED,
-            InitiativeStatus.EXECUTING,
-            InitiativeStatus.BLOCKED,
-            InitiativeStatus.DONE,
+            InitiativeStatus.IN_EXECUTION,
+            InitiativeStatus.IN_EXECUTION,
+            InitiativeStatus.CLOSED,
           ].map((status) => (
             <div key={status} className="flex items-center gap-1.5">
               <div className={`w-3 h-3 rounded ${STATUS_COLORS[status].progress}`} />

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
-import { getStatusActions, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { getInitiativeStatusChipTone, getStatusActions, STATUS_METADATA } from '@/services/initiativeLifecycle';
 
 import { InitiativeStatus } from '../../types';
 
@@ -12,6 +12,7 @@ export interface ExecutionInitiativeStatusControlProps {
   onChange: (nextStatus: InitiativeStatus) => void;
   /** Hides the mutation control while still showing the status chip (e.g. pilot participants). */
   disabled?: boolean;
+  onHold?: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ export const ExecutionInitiativeStatusControl: React.FC<ExecutionInitiativeStatu
   currentStatus,
   onChange,
   disabled = false,
+  onHold = false,
 }) => {
   const { t } = useTranslation();
   const meta = STATUS_METADATA[currentStatus];
@@ -35,6 +37,7 @@ export const ExecutionInitiativeStatusControl: React.FC<ExecutionInitiativeStatu
       <EntityStatusChip
         status={String(currentStatus)}
         label={t(meta?.labelKey ?? 'initiatives.status.unknown')}
+        tone={getInitiativeStatusChipTone(currentStatus, { onHold })}
       />
       {canMutateStatus && (
         <select

@@ -1,52 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  GateType,
-  InitiativeStatus,
-  Role,
-  canExecuteGate,
-  getGateForTransition,
-  validateTransition,
-} from '../../../../server/src/constants/initiativeStatuses.ts';
+import { GateType, InitiativeStatus, Role, canExecuteGate, getGateForTransition, validateTransition } from '../../../../server/src/constants/initiativeStatuses.ts';
 
-describe('initiativeStatuses: gates + transition validation', () => {
-  it('allows ADMIN to execute any gate (technical override)', () => {
-    expect(canExecuteGate(Role.ADMIN, GateType.ACCEPT)).toBe(true);
+describe('DEC-424 gates and conditions', () => {
+  it('allows ADMIN to bypass roles, not content conditions', () => {
+    expect(canExecuteGate(Role.ADMIN, GateType.APPROVE)).toBe(true);
+    expect(validateTransition(InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.APPROVED, { userRole: Role.ADMIN, hasCurrentGoDecision: false }).valid).toBe(false);
   });
 
-  it('restricts CONSULTANT to SUBMIT_FOR_REVIEW only', () => {
+  it('restricts draft submission to its configured role and author', () => {
     expect(canExecuteGate(Role.CONSULTANT, GateType.SUBMIT_FOR_REVIEW)).toBe(true);
-    expect(canExecuteGate(Role.CONSULTANT, GateType.ACCEPT)).toBe(false);
+    expect(validateTransition(InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL, { userRole: Role.CONSULTANT, isAuthor: false, hasRequiredArtefacts: true }).valid).toBe(false);
   });
 
-  it('finds the gate required for a transition', () => {
-    expect(getGateForTransition(InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW)).toBe(
-      GateType.SUBMIT_FOR_REVIEW
-    );
-    expect(getGateForTransition(InitiativeStatus.REVIEW, InitiativeStatus.PROMOTED)).toBe(
-      GateType.ACCEPT
-    );
+  it('maps the pivotal transitions to their gates', () => {
+    expect(getGateForTransition(InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL)).toBe(GateType.SUBMIT_FOR_REVIEW);
+    expect(getGateForTransition(InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.APPROVED)).toBe(GateType.APPROVE);
+    expect(getGateForTransition(InitiativeStatus.APPROVED, InitiativeStatus.IN_EXECUTION)).toBe(GateType.START);
   });
 
-  it('rejects a transition when user role cannot execute its gate and returns requiredRoles', () => {
-    const res = validateTransition(InitiativeStatus.REVIEW, InitiativeStatus.PROMOTED, {
-      userRole: Role.TEAM_MEMBER,
-    });
-    expect(res.valid).toBe(false);
-    expect(res.reason).toContain('cannot execute gate');
-    expect(res.requiredRoles).toEqual(
-      expect.arrayContaining([Role.PROJECT_SPONSOR, Role.STEERING_COMMITTEE])
-    );
+  it('requires a reason for rejection', () => {
+    expect(validateTransition(InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.REJECTED, { userRole: Role.PROJECT_SPONSOR, reason: '' }).valid).toBe(false);
+    expect(validateTransition(InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.REJECTED, { userRole: Role.PROJECT_SPONSOR, reason: 'Brak uzasadnienia biznesowego' }).valid).toBe(true);
   });
 
-  it('rejects BLOCKED -> EXECUTING when escalation is red and role is not Steering', () => {
-    const res = validateTransition(InitiativeStatus.BLOCKED, InitiativeStatus.EXECUTING, {
-      // Must be a role that can execute UNBLOCK gate, otherwise gate permission check fails first.
-      userRole: Role.PROJECT_SPONSOR,
-      escalationLevel: 'red',
-    });
-    expect(res.valid).toBe(false);
-    expect(res.reason).toBe('Escalated (red) blocks require Steering Committee decision');
-    expect(res.requiredRoles).toEqual([Role.STEERING_COMMITTEE]);
+  it('requires no open work before closure', () => {
+    expect(validateTransition(InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED, { userRole: Role.INITIATIVE_OWNER, pendingTasks: 1 }).valid).toBe(false);
+    expect(validateTransition(InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED, { userRole: Role.INITIATIVE_OWNER, pendingTasks: 0, hasBlockingDecisions: false }).valid).toBe(true);
   });
 });

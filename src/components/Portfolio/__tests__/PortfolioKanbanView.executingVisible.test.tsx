@@ -16,7 +16,7 @@ import { PortfolioKanbanView } from '../PortfolioKanbanView';
 const executing = {
   id: 'init-executing-1',
   name: 'Initiative in execution',
-  status: InitiativeStatus.EXECUTING,
+  status: InitiativeStatus.IN_EXECUTION,
   priority: 'HIGH',
 } as unknown as PortfolioInitiative;
 

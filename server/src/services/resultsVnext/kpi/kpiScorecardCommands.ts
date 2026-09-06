@@ -394,8 +394,8 @@ export async function addScorecardItem(
       assertScorecardNotArchived(currentRow, scorecardId);
       beforeState = toScorecardSummary(currentRow);
 
-      const kpiCheck = await client.query(
-        `SELECT 1 FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2`,
+      const kpiCheck = await client.query<{ status: string }>(
+        `SELECT status FROM rvn_kpi_definitions WHERE kpi_id = $1 AND organization_id = $2`,
         [kpiId, organizationId]
       );
       if (!kpiCheck.rowCount) {
@@ -403,6 +403,13 @@ export async function addScorecardItem(
           `KPI ${kpiId} does not exist in organization ${organizationId}`,
           'KPI_NOT_FOUND',
           { kpiId, organizationId }
+        );
+      }
+      if (kpiCheck.rows[0]?.status?.toLowerCase() !== 'active') {
+        throw new KpiScorecardValidationError(
+          'Na kartę wyników można dodać wyłącznie zatwierdzony KPI',
+          'KPI_NOT_APPROVED',
+          { kpiId, organizationId, status: kpiCheck.rows[0]?.status }
         );
       }
 

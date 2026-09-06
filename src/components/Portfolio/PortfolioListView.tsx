@@ -142,18 +142,18 @@ const STATUS_ORDER: Record<string, number> = {
 // All statuses for the inline status dropdown
 const ALL_INITIATIVE_STATUSES: InitiativeStatus[] = [
   InitiativeStatus.DRAFT,
-  InitiativeStatus.PENDING_REVIEW,
-  InitiativeStatus.REVIEW,
-  InitiativeStatus.PROMOTED,
-  InitiativeStatus.PLANNING,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.PENDING_APPROVAL,
   InitiativeStatus.APPROVED,
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
-  InitiativeStatus.DONE,
-  InitiativeStatus.TRACKING,
-  InitiativeStatus.CANCELLED,
-  InitiativeStatus.ARCHIVED,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.REJECTED,
+  InitiativeStatus.CLOSED,
 ];
 
 const LEVEL_ORDER: Record<string, number> = STATUS_ORDER;
@@ -635,7 +635,7 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                 icon: Edit2,
                                 onClick: () => onInitiativeClick(initiative),
                               },
-                              initiative.status === InitiativeStatus.ARCHIVED
+                              initiative.status === InitiativeStatus.CLOSED
                                 ? {
                                     id: 'restore',
                                     label: t('common.restore', 'Przywróć'),
@@ -650,12 +650,12 @@ export const PortfolioListView: React.FC<PortfolioListViewProps> = ({
                                     icon: Archive,
                                     disabled:
                                       !onArchive ||
-                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                      ![InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
                                         initiative.status
                                       ),
                                     description:
                                       !onArchive ||
-                                      ![InitiativeStatus.DONE, InitiativeStatus.CANCELLED].includes(
+                                      ![InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
                                         initiative.status
                                       )
                                         ? t(

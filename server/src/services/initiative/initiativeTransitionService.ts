@@ -16,11 +16,14 @@ import { isAiGate } from '../../constants/initiativeGateAi.js';
 import {
   GATE_PERMISSIONS,
   GateType,
+  INITIATIVE_FLAG_RULES,
   getGateForTransition,
+  getTransitionDefinition,
   InitiativeStatus,
   isTerminalStatus,
   isValidTransition,
   VALID_TRANSITIONS,
+  type InitiativeFlagOperation,
 } from '../../constants/initiativeStatuses.js';
 import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
@@ -326,6 +329,8 @@ interface ExecuteInitiativeTransitionParams {
   actorLastName?: string | null;
   actorEmail?: string | null;
   nextStatusInput: string;
+  /** Operacja na fladze DEC-424; status pozostaje bez zmian. */
+  flagOperation?: InitiativeFlagOperation;
   reason?: string | null;
   overrideReason?: string | null;
   /** Best-effort request metadata for the audit-events log. Absent for
@@ -484,6 +489,50 @@ export async function executeInitiativeTransition(
       const initiativeName = String(lockedRow.name || 'Initiative');
       const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
 
+      if (params.flagOperation) {
+        const operation = params.flagOperation;
+        const rule = INITIATIVE_FLAG_RULES[operation];
+        const onHold = Boolean(lockedRow.on_hold);
+        const allowedState = operation === 'ARCHIVE'
+          ? currentStatus === 'CLOSED' || currentStatus === 'REJECTED'
+          : currentStatus === 'IN_EXECUTION';
+        if (!allowedState || (operation === 'RESUME' && !onHold)) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: `Flag operation ${operation} is not allowed for ${currentStatus}`,
+            rule: 'INVALID_FLAG_OPERATION',
+          } };
+        }
+        if (rule.reasonRequired && !String(reason ?? '').trim()) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: 'Reason is required', rule: 'REASON_REQUIRED',
+          } };
+        }
+        if (!isSystemActor) {
+          const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
+          if (!canExecuteGate({ gate: rule.gate, effectiveRoles: accessCtx.effectiveRoles,
+            steeringBoardEnabled: accessCtx.steeringBoardEnabled, conditionSatisfied: true })) {
+            return { kind: 'error', statusCode: 403, body: {
+              error: 'Permission denied for initiative flag operation', gate: rule.gate,
+              requiredRoles: resolveGateRequiredRoles(rule.gate, accessCtx.steeringBoardEnabled),
+            } };
+          }
+        }
+        if (operation === 'HOLD') {
+          await client.query(`UPDATE initiatives SET on_hold = TRUE, blocked_at = CURRENT_TIMESTAMP,
+            blocked_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+          [String(reason).trim(), id, orgId]);
+        } else if (operation === 'RESUME') {
+          await client.query(`UPDATE initiatives SET on_hold = FALSE, blocked_at = NULL,
+            blocked_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+          [id, orgId]);
+        } else {
+          await client.query(`UPDATE initiatives SET archived = TRUE, archived_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`, [id, orgId]);
+        }
+        return { kind: 'success', currentStatus, nextStatus: currentStatus, gate: rule.gate,
+          correlationId: uuidv4(), initiativeName };
+      }
+
       // DISAMBIGUATION GUARD (see ExecuteInitiativeTransitionParams.expectedCurrentStatus
       // doc comment): must run BEFORE isValidTransition, since e.g. SCHEDULED->EXECUTING
       // and BLOCKED->EXECUTING are BOTH independently valid — this is the check that
@@ -524,11 +573,75 @@ export async function executeInitiativeTransition(
       // RBAC + gate enforcement (enterprise governance)
       // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
       // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
-      // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
-      const gate =
-        nextStatus === 'CANCELLED'
-          ? null
-          : getGateForTransition(currentStatus as any, nextStatus as any);
+      const transitionDefinition = getTransitionDefinition(currentStatus as any, nextStatus as any);
+      const gate = getGateForTransition(currentStatus as any, nextStatus as any);
+      // `isValidTransition` above and this guard intentionally fail closed twice:
+      // a matrix row without a gate is never an executable transition.
+      if (!transitionDefinition || !gate) {
+        return { kind: 'error', statusCode: 400, body: {
+          error: 'Status transition has no governed gate', rule: 'MISSING_TRANSITION_GATE',
+          from: currentStatus, to: nextStatus,
+        } };
+      }
+
+      const condition = transitionDefinition.condition;
+      const trimmedReason = String(reason ?? '').trim();
+      const ownerId = lockedRow.owner_business_id ?? lockedRow.owner_execution_id;
+      const scopePresent = [lockedRow.scope_in, lockedRow.scope_out]
+        .some((value) => Array.isArray(value) ? value.length > 0 : String(value ?? '').trim().length > 0);
+      if (condition === 'TITLE_AND_JUSTIFICATION' &&
+        (!String(lockedRow.title ?? lockedRow.name ?? '').trim() || !String(lockedRow.description ?? '').trim())) {
+        return { kind: 'error', statusCode: 400, body: {
+          error: 'Title and justification are required', rule: 'TITLE_AND_JUSTIFICATION_REQUIRED',
+        } };
+      }
+      if (condition === 'REASON_REQUIRED' && !trimmedReason) {
+        return { kind: 'error', statusCode: 400, body: { error: 'Reason is required', rule: 'REASON_REQUIRED' } };
+      }
+      if (condition === 'CARD_COMPLETE' &&
+        (!String(lockedRow.description ?? '').trim() || !ownerId || !scopePresent)) {
+        return { kind: 'error', statusCode: 400, body: {
+          error: 'Description, owner and scope are required', rule: 'INITIATIVE_CARD_INCOMPLETE',
+        } };
+      }
+      if (transitionDefinition.authorOnly && !isSystemActor) {
+        const createdBy = lockedRow.created_by ? String(lockedRow.created_by) : null;
+        if (!createdBy || createdBy !== String(actorId)) {
+          return { kind: 'error', statusCode: 403, body: {
+            error: 'Only the initiative author can execute this transition', rule: 'AUTHOR_ONLY',
+          } };
+        }
+      }
+      if (condition === 'CURRENT_GO_DECISION') {
+        const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING', client);
+        if (!goNoGo.ok) return { kind: 'error', statusCode: 400, body: {
+          error: 'A current GO decision is required', rule: 'GATE_DECISION_REQUIRED',
+        } };
+      }
+      if (condition === 'HANDOFF_AND_START_DATE') {
+        const handoff = (await client.query<{ ok: boolean }>(
+          `SELECT TRUE AS ok FROM initiative_handoffs
+           WHERE initiative_id = ? AND organization_id = ? AND readiness_allowed = TRUE
+           ORDER BY created_at DESC LIMIT 1`, [id, orgId]
+        )).rows[0];
+        if (!handoff?.ok || !(lockedRow.planned_start_date ?? lockedRow.start_date)) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: 'Accepted handoff and start date are required', rule: 'HANDOFF_AND_START_DATE_REQUIRED',
+          } };
+        }
+      }
+      if (condition === 'NO_OPEN_WORK') {
+        const openTasks = Number((await client.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count FROM tasks
+           WHERE initiative_id = ? AND organization_id = ?
+             AND UPPER(COALESCE(status, '')) NOT IN ('DONE', 'COMPLETED', 'CANCELLED')`, [id, orgId]
+        )).rows[0]?.count ?? 0);
+        if (openTasks > 0 || await hasPendingExecutionGateDecisions(orgId, id)) {
+          return { kind: 'error', statusCode: 400, body: {
+            error: 'Open tasks or blocking decisions prevent closure', rule: 'OPEN_WORK_BLOCKS_CLOSURE',
+          } };
+        }
+      }
       if (gate && isSystemActor) {
         // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01; widened
         // 2026-08-01 for the Decision/Initiative integration packet) —
@@ -576,6 +689,7 @@ export async function executeInitiativeTransition(
           gate,
           effectiveRoles: accessCtx.effectiveRoles,
           steeringBoardEnabled,
+          conditionSatisfied: true,
         });
 
         if (!canExecute) {
@@ -1952,7 +2066,7 @@ export async function applyDecisionBlockTransitionOnClient(
     };
   }
 
-  if (currentStatus === InitiativeStatus.BLOCKED) {
+  if (lockedRow.on_hold === true) {
     // Idempotent no-op — do not fabricate a second transition/audit row.
     return {
       ok: true,

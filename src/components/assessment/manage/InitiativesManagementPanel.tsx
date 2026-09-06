@@ -41,6 +41,7 @@ import { adapterAssessment } from '@/components/Initiatives/Generator/adapters/a
 import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
 import type { InitiativeRegisterRow } from '@/components/Initiatives/initiativeRegisterColumns.shared';
 import { Api } from '@/services/api';
+import { getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
 import { cn } from '@/utils/cn';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
@@ -118,110 +119,39 @@ const STATUS_CONFIG: Partial<
     }
   >
 > = {
+  [InitiativeStatus.PROPOSED]: { labelKey: 'PROPOSED', label: 'PROPOSED', color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle', icon: Lightbulb },
   [InitiativeStatus.DRAFT]: {
     labelKey: 'draft',
     label: 'Draft',
-    color: 'text-slate-600 dark:text-slate-400',
-    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
-    borderColor: 'border-slate-200 dark:border-slate-500/30',
+    color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle',
     icon: Edit3,
   },
-  [InitiativeStatus.PENDING_REVIEW]: {
-    labelKey: 'pendingReview',
-    label: 'Pending Review',
-    // Pułapka #1 (kanon): `primary`=crimson; status informacyjny → niebieski, nie crimson.
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
-    icon: Clock,
-  },
-  [InitiativeStatus.REVIEW]: {
-    labelKey: 'review',
-    label: 'Review',
-    color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
-    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
-    icon: Eye,
-  },
-  [InitiativeStatus.PROMOTED]: {
-    labelKey: 'promoted',
-    label: 'Promoted',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
-    icon: TrendingUp,
-  },
-  [InitiativeStatus.PLANNING]: {
-    labelKey: 'planning',
-    label: 'Planning',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
-    icon: Calendar,
+  [InitiativeStatus.PENDING_APPROVAL]: {
+    labelKey: 'PENDING_APPROVAL', label: 'PENDING_APPROVAL', color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle', icon: Clock,
   },
   [InitiativeStatus.APPROVED]: {
     labelKey: 'approved',
     label: 'Approved',
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
-    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle',
     icon: CheckCircle2,
   },
-  [InitiativeStatus.SCHEDULED]: {
-    labelKey: 'scheduled',
-    label: 'Scheduled',
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
-    borderColor: 'border-blue-200 dark:border-blue-500/30',
-    icon: Calendar,
-  },
-  [InitiativeStatus.EXECUTING]: {
+  [InitiativeStatus.IN_EXECUTION]: {
     labelKey: 'executing',
     label: 'Executing',
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
-    borderColor: 'border-amber-200 dark:border-amber-500/30',
+    color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle',
     icon: Play,
   },
-  [InitiativeStatus.BLOCKED]: {
-    labelKey: 'blocked',
-    label: 'Blocked',
-    color: 'text-danger-600 dark:text-danger-400',
-    bgColor: 'bg-danger-50 dark:bg-danger-500/10',
-    borderColor: 'border-danger-200 dark:border-danger-500/30',
-    icon: AlertCircle,
-  },
-  [InitiativeStatus.DONE]: {
+  [InitiativeStatus.CLOSED]: {
     labelKey: 'done',
     label: 'Done',
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
-    borderColor: 'border-emerald-200 dark:border-emerald-500/30',
+    color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle',
     icon: CheckCircle2,
   },
-  [InitiativeStatus.TRACKING]: {
-    labelKey: 'tracking',
-    label: 'Tracking',
-    color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'bg-indigo-50 dark:bg-indigo-500/10',
-    borderColor: 'border-indigo-200 dark:border-indigo-500/30',
-    icon: Target,
-  },
-  [InitiativeStatus.CANCELLED]: {
+  [InitiativeStatus.REJECTED]: {
     labelKey: 'cancelled',
     label: 'Cancelled',
-    color: 'text-danger-600 dark:text-danger-400',
-    bgColor: 'bg-danger-50 dark:bg-danger-500/10',
-    borderColor: 'border-danger-200 dark:border-danger-500/30',
+    color: 'text-c-text-secondary', bgColor: 'bg-c-surface-2', borderColor: 'border-c-border-subtle',
     icon: X,
-  },
-  [InitiativeStatus.ARCHIVED]: {
-    labelKey: 'archived',
-    label: 'Archived',
-    color: 'text-slate-500 dark:text-slate-400',
-    bgColor: 'bg-slate-50 dark:bg-slate-500/10',
-    borderColor: 'border-slate-200 dark:border-slate-500/30',
-    icon: Archive,
   },
 };
 
@@ -269,20 +199,7 @@ const METHODOLOGY_OPTIONS = [
   { value: 'strategic-fit', key: 'strategicFit', label: 'Strategic Fit' },
 ];
 
-const STATUS_FILTER_OPTIONS: InitiativeStatus[] = [
-  InitiativeStatus.DRAFT,
-  InitiativeStatus.PENDING_REVIEW,
-  InitiativeStatus.REVIEW,
-  InitiativeStatus.PROMOTED,
-  InitiativeStatus.PLANNING,
-  InitiativeStatus.APPROVED,
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
-  InitiativeStatus.TRACKING,
-  InitiativeStatus.DONE,
-  InitiativeStatus.ARCHIVED,
-];
+const STATUS_FILTER_OPTIONS: InitiativeStatus[] = Object.values(InitiativeStatus);
 
 /**
  * Wspólny formatter daty — 1:1 z dawnym formatDate wiersza tabeli (przed migracją
@@ -350,9 +267,7 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   /** Etykieta statusu/priorytetu przez t(); STATUS_CONFIG niesie tylko klucz + angielski domyślny. */
   const statusLabel = useCallback(
     (status: InitiativeStatus): string => {
-      const cfg = STATUS_CONFIG[status];
-      if (!cfg) return String(status);
-      return t(`assessment.initiativesPanel.status.${cfg.labelKey}`, cfg.label);
+      return getLocalizedStatusLabel(status, t);
     },
     [t]
   );
@@ -576,10 +491,10 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
     () => ({
       total: initiatives.length,
       draft: initiatives.filter((i) => i.status === InitiativeStatus.DRAFT).length,
-      pendingReview: initiatives.filter((i) => i.status === InitiativeStatus.PENDING_REVIEW).length,
-      review: initiatives.filter((i) => i.status === InitiativeStatus.REVIEW).length,
-      executing: initiatives.filter((i) => i.status === InitiativeStatus.EXECUTING).length,
-      done: initiatives.filter((i) => i.status === InitiativeStatus.DONE).length,
+      pendingReview: initiatives.filter((i) => i.status === InitiativeStatus.PENDING_APPROVAL).length,
+      review: initiatives.filter((i) => i.status === InitiativeStatus.PENDING_APPROVAL).length,
+      executing: initiatives.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length,
+      done: initiatives.filter((i) => i.status === InitiativeStatus.CLOSED).length,
     }),
     [initiatives]
   );

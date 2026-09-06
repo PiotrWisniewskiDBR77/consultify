@@ -1,0 +1,17 @@
+P12 DEC-424 — testy po zmianie (2026-09-06)
+
+Wszystkie komendy Vitest wykonano osobno per plik. Wynik: 20 plików, 121/121 PASS.
+Zestaw bazowy po świadomej aktualizacji starego kontraktu: 9 plików, 70/70 PASS.
+Testy kontraktu i regresji P12 poza bazą: 10 plików, 49/49 PASS.
+RealPG: tests/integration/p12InitiativeStatuses.realpg.test.ts — 2/2 PASS.
+
+RealPG 127.0.0.1:54400/consultify_noc:
+- każdy z 7 kodów zaakceptowany,
+- EXECUTING odrzucony przez CHECK z SQLSTATE 23514,
+- on_hold i archived utrwalone niezależnie,
+- fixture initiatives po afterAll: 0,
+- fixture organizations po afterAll: 0,
+- wartości spoza słownika: 0.
+
+Kompilacja esbuild per każdy dotknięty niezatwierdzony plik TS/TSX: PASS.
+scripts/check-list-canon.sh: exit 0; baseline długu 361, po 361.

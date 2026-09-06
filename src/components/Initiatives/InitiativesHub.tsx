@@ -49,7 +49,6 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -60,7 +59,7 @@ import {
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
-import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -171,21 +170,7 @@ export const readV8InitiativeId = (response: unknown): string => {
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
     ? MODULE_STATUSES
-    : [
-        InitiativeStatus.DRAFT,
-        InitiativeStatus.PENDING_REVIEW,
-        InitiativeStatus.REVIEW,
-        InitiativeStatus.PROMOTED,
-        InitiativeStatus.PLANNING,
-        InitiativeStatus.APPROVED,
-        InitiativeStatus.SCHEDULED,
-        InitiativeStatus.EXECUTING,
-        InitiativeStatus.BLOCKED,
-        InitiativeStatus.DONE,
-        InitiativeStatus.TRACKING,
-        InitiativeStatus.CANCELLED,
-        InitiativeStatus.ARCHIVED,
-      ];
+    : Object.values(InitiativeStatus);
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
@@ -552,11 +537,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }
             if (
               scope === 'active' &&
-              [
-                InitiativeStatus.DONE,
-                InitiativeStatus.CANCELLED,
-                InitiativeStatus.ARCHIVED,
-              ].includes(initiative.status as InitiativeStatus)
+              [InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
+                initiative.status as InitiativeStatus
+              )
             ) {
               return false;
             }
@@ -2238,7 +2221,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             const eligible = initiatives.filter(
               (i) =>
                 selectedIds.has(i.id) &&
-                (i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.CANCELLED)
+                (i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.REJECTED)
             );
             if (eligible.length === 0) {
               toast.error(
@@ -2293,10 +2276,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // (`rightControls`). Wybór: „Do decyzji" (kolejka wymagająca akcji
   // właściciela) i „W realizacji" (aktywna praca) — to dwa stany o
   // największej wartości decyzyjnej po samym „Wszystkie".
-  const KEPT_LIFECYCLE_MENU3_IDS: InitiativeLifecyclePreset[] = ['DECISION', 'IN_EXECUTION'];
-  const menu3LifecyclePresets = INITIATIVE_LIFECYCLE_PRESETS.filter((preset) =>
-    KEPT_LIFECYCLE_MENU3_IDS.includes(preset.id)
-  );
+  const menu3Statuses = [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.IN_EXECUTION];
 
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
@@ -2307,32 +2287,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setActiveLifecyclePreset(null);
             setActiveStatusFilter(null);
           }}
-          className={!activeLifecyclePreset ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+          className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           data-testid="initiatives-menu3-chip-all"
         >
           <span className={MENU_3_ALL_DOT_CLASS} />
           <span>Wszystkie</span>
-          <span className={!activeLifecyclePreset ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+          <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
             {lifecyclePresetCounts.all ?? 0}
           </span>
         </button>
-        {menu3LifecyclePresets.map((preset) => {
-          const isActive = activeLifecyclePreset === preset.id;
-          const count = lifecyclePresetCounts[preset.id] ?? 0;
+        {menu3Statuses.map((status) => {
+          const isActive = activeStatusFilter === status;
+          const count = statusCounts[status] ?? 0;
           return (
             <button
-              key={preset.id}
+              key={status}
               type="button"
               onClick={() => {
-                setActiveLifecyclePreset(isActive ? null : preset.id);
-                setActiveStatusFilter(null);
-                if (preset.id === 'HISTORICAL' && !isActive) setScope('all');
+                setActiveStatusFilter(isActive ? null : status);
+                setActiveLifecyclePreset(null);
               }}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-              data-testid={`initiatives-menu3-chip-${preset.id}`}
+              data-testid={`initiatives-menu3-chip-${status}`}
             >
               <span className="h-2 w-2 rounded-full bg-c-text-muted" />
-              <span>{preset.label}</span>
+              <span>{getLocalizedStatusLabel(status, t)}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
               </span>
@@ -2434,11 +2413,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
 
   const lifecycleDropdownOptions = [
-    { id: 'all', label: 'Wszystkie', count: lifecyclePresetCounts.all ?? 0 },
-    ...INITIATIVE_LIFECYCLE_PRESETS.map((preset) => ({
-      id: preset.id,
-      label: preset.label,
-      count: lifecyclePresetCounts[preset.id] ?? 0,
+    { id: 'all', label: 'Wszystkie', count: allInitiatives.length },
+    ...Object.values(InitiativeStatus).map((status) => ({
+      id: status,
+      label: getLocalizedStatusLabel(status, t),
+      count: statusCounts[status] ?? 0,
     })),
   ];
 
@@ -2476,14 +2455,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               presetów), Menu 3 obok trzyma tylko "Wszystkie · Do decyzji ·
               W realizacji". */}
           <Menu2PresetDropdown
-            label={t('initiatives.filters.lifecycle', 'Cykl życia')}
+            label={t('initiatives.filters.status', 'Status')}
             options={lifecycleDropdownOptions}
-            value={activeLifecyclePreset ?? 'all'}
+            value={activeStatusFilter ?? 'all'}
             onChange={(id) => {
-              const nextPreset = id === 'all' ? null : (id as InitiativeLifecyclePreset);
-              setActiveLifecyclePreset(nextPreset);
-              setActiveStatusFilter(null);
-              if (nextPreset === 'HISTORICAL') setScope('all');
+              setActiveStatusFilter(id === 'all' ? null : id);
+              setActiveLifecyclePreset(null);
             }}
             data-testid="initiatives-lifecycle-dropdown"
           />

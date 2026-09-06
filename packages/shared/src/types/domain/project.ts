@@ -2,6 +2,7 @@
  * Project Domain Types
  * Enterprise SaaS Architecture - Core Project Types
  */
+import type { InitiativeStatus as CanonicalInitiativeStatus } from '../../constants/initiativeStatuses.generated';
 
 // ==========================================
 // PROJECT CORE TYPES
@@ -214,15 +215,7 @@ export interface CommentReaction {
 // INITIATIVE TYPES
 // ==========================================
 
-export type InitiativeStatus =
-  | 'draft'
-  | 'planning'
-  | 'approved'
-  | 'active'
-  | 'on_hold'
-  | 'completed'
-  | 'cancelled'
-  | 'archived';
+export type InitiativeStatus = CanonicalInitiativeStatus;
 
 export type InitiativeCategory =
   | 'digital_transformation'

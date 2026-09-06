@@ -9134,19 +9134,13 @@
       "more": "Więcej"
     },
     "status": {
-      "draft": "Szkic",
-      "pendingReview": "Do przeglądu",
-      "review": "W przeglądzie",
-      "promoted": "Promowana",
-      "planning": "Planowanie",
-      "approved": "Zatwierdzona",
-      "scheduled": "Zaplanowana",
-      "executing": "W realizacji",
-      "blocked": "Zablokowana",
-      "done": "Zakończona",
-      "tracking": "Śledzenie",
-      "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana",
+      "PROPOSED": "Propozycja",
+      "DRAFT": "Szkic",
+      "PENDING_APPROVAL": "Do zatwierdzenia",
+      "APPROVED": "Zatwierdzona",
+      "IN_EXECUTION": "W realizacji",
+      "CLOSED": "Zamknięta",
+      "REJECTED": "Odrzucona",
       "unknown": "Nieznany status"
     },
     "statusDescription": {

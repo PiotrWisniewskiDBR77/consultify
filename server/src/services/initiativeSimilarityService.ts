@@ -33,9 +33,8 @@ const MAX_EXISTING_INITIATIVES = 200;
 // We exclude cancelled, archived, and completed (DONE) so the wizard only warns
 // about initiatives that are genuinely "live" in the org/project right now.
 const EXCLUDED_STATUSES = new Set<string>([
-  InitiativeStatus.CANCELLED.toUpperCase(),
-  InitiativeStatus.ARCHIVED.toUpperCase(),
-  InitiativeStatus.DONE.toUpperCase(),
+  InitiativeStatus.REJECTED.toUpperCase(),
+  InitiativeStatus.CLOSED.toUpperCase(),
 ]);
 
 export type SimilarityVerdict = 'duplicate' | 'similar' | 'related' | 'new';

@@ -36,6 +36,7 @@ const WILDCARD_ACCESS = { capabilities: ['*'], platformRole: null } as const;
 let currentScorecard: Record<string, unknown> | null = null;
 let currentSnapshot: Record<string, unknown> | null = null;
 let publishedSnapshotForSupersede: Record<string, unknown> | null = null;
+let kpiDefinitionStatus = 'active';
 const releaseMock = vi.fn();
 const executedSql: string[] = [];
 
@@ -97,8 +98,8 @@ async function fakeQuery(
   }
 
   // addScorecardItem's KPI-existence check
-  if (s.includes('SELECT 1 FROM rvn_kpi_definitions WHERE kpi_id')) {
-    return { rows: [{ '?column?': 1 }], rowCount: 1 };
+  if (s.includes('SELECT status FROM rvn_kpi_definitions WHERE kpi_id')) {
+    return { rows: [{ status: kpiDefinitionStatus }], rowCount: 1 };
   }
 
   // addScorecardItem's duplicate-membership pre-check
@@ -229,6 +230,7 @@ beforeEach(() => {
   currentScorecard = null;
   currentSnapshot = null;
   publishedSnapshotForSupersede = null;
+  kpiDefinitionStatus = 'active';
   releaseMock.mockClear();
   executedSql.length = 0;
 });
@@ -343,9 +345,29 @@ describe('ScorecardItem commands never write to KPI tables (AC #2, structural, n
     // addScorecardItem DOES read rvn_kpi_definitions (existence check) — the
     // property under test is WRITE isolation, not read isolation (AC #2's
     // own wording: "ScorecardItem never writes to KPI tables").
-    expect(executedSql.some((s) => s.includes('SELECT 1 FROM rvn_kpi_definitions'))).toBe(true);
+    expect(executedSql.some((s) => s.includes('SELECT status FROM rvn_kpi_definitions'))).toBe(true);
     assertNoKpiTableWrites();
   });
+
+  for (const status of ['draft', 'pending_approval', 'suspended']) {
+    it(`addScorecardItem rejects KPI in ${status} with KPI_NOT_APPROVED`, async () => {
+      currentScorecard = baseScorecard({ row_version: 1 });
+      kpiDefinitionStatus = status;
+
+      await expect(
+        addScorecardItem({
+          scorecardId: 'card-1',
+          organizationId: 'org-1',
+          expectedVersion: 1,
+          actorUserId: 'user-owner',
+          actorEffectiveRole: 'consultant',
+          idempotencyKey: `idem-${status}`,
+          kpiId: 'kpi-1',
+          access: WILDCARD_ACCESS,
+        })
+      ).rejects.toMatchObject({ code: 'KPI_NOT_APPROVED' });
+    });
+  }
 
   it('removeScorecardItem never writes to a KPI-fact table', async () => {
     currentScorecard = baseScorecard({ row_version: 1 });

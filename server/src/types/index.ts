@@ -9,6 +9,7 @@ import type { NextFunction, Request, Response } from 'express';
 // EXPRESS EXTENSIONS
 // ==========================================
 import type { IDatabase } from '../database/IDatabase.js';
+import type { InitiativeStatusType } from '../constants/initiativeStatuses.js';
 
 export interface AuthenticatedUser {
   id: string;
@@ -161,7 +162,7 @@ export interface Task {
  * z `../constants/initiativeStatuses.js`. Pozostawione dla legacy interfejsu
  * `Initiative` poniżej do pełnego usunięcia (F6, docs/initiatives/INITIATIVE_PROCESS_EFFECTIVENESS.md).
  */
-export type InitiativeStatus = 'draft' | 'planning' | 'active' | 'completed' | 'cancelled';
+export type InitiativeStatus = InitiativeStatusType;
 
 export interface Initiative {
   id: string;

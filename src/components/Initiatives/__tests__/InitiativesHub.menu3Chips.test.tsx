@@ -137,14 +137,14 @@ afterEach(() => {
 });
 
 describe('InitiativesHub — Menu 3 ograniczone do ≤3 chipów + dropdown Menu 2 (DEC-420)', () => {
-  it('zakładka Inicjatywy: dokładnie 3 chipy cyklu życia w Menu 3 + jeden dropdown "Cykl życia" w Menu 2', async () => {
+  it('zakładka Inicjatywy: dokładnie 3 chipy statusu w Menu 3 + jeden dropdown statusu w Menu 2', async () => {
     renderHubAt('/initiatives');
     await screen.findByTestId('initiatives-hub');
 
     const chips = screen.getAllByTestId(/^initiatives-menu3-chip-/);
     expect(chips).toHaveLength(3);
     expect(screen.getByTestId('initiatives-menu3-chip-all')).toBeInTheDocument();
-    expect(screen.getByTestId('initiatives-menu3-chip-DECISION')).toBeInTheDocument();
+    expect(screen.getByTestId('initiatives-menu3-chip-PENDING_APPROVAL')).toBeInTheDocument();
     expect(screen.getByTestId('initiatives-menu3-chip-IN_EXECUTION')).toBeInTheDocument();
 
     expect(screen.getByTestId('initiatives-lifecycle-dropdown')).toBeInTheDocument();

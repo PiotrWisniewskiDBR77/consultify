@@ -45,11 +45,7 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
  */
 const UNREADY_DEPENDENCY_STATUSES: ReadonlySet<string> = new Set<InitiativeStatusType>([
   InitiativeStatus.DRAFT,
-  InitiativeStatus.PENDING_REVIEW,
-  InitiativeStatus.REVIEW,
-  InitiativeStatus.PROMOTED,
-  InitiativeStatus.PLANNING,
-  InitiativeStatus.APPROVED,
+  InitiativeStatus.PENDING_APPROVAL,
 ]);
 
 interface InitiativeTimelineRow {
@@ -191,7 +187,7 @@ export async function getTimelineFlags(
            AND id <> ?
            AND UPPER(status) = ?
            AND (owner_execution_id = ? OR owner_business_id = ?)`,
-        [organizationId, initiativeId, InitiativeStatus.SCHEDULED, ownerId, ownerId]
+        [organizationId, initiativeId, InitiativeStatus.APPROVED, ownerId, ownerId]
       );
 
       for (const other of conflicts || []) {
