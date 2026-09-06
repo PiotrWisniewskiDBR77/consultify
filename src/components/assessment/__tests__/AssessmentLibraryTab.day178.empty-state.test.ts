@@ -6,6 +6,7 @@ import { AssessmentLibraryTab } from '../library/AssessmentLibraryTab';
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
 }));
 
 vi.mock('react-i18next', () => ({

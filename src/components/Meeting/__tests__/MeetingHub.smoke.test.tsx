@@ -28,6 +28,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
   useSearchParams: () => [searchParamsMock, setSearchParamsMock],
+  useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'test' }),
 }));
 
 const { getMeetingsMock, getBriefMock, listNotesMock, generateNotesMock, decideNoteMock } =

@@ -1,0 +1,124 @@
+myWork.tasks.createdFromChatToast	Task created from chat
+chat.initiativeHandoff.createdDraft	The initiative draft is ready. Review it before passing it to execution.
+myWork.initiatives.createdFromChatToast	Initiative created from chat
+aiChat.errors.messageSaveFailed	Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds.
+policy.refusal.title	Request blocked by policy
+policy.refusal.nextSteps	What to do next
+policy.uncertainty.title	Uncertainty marker
+policy.uncertainty.body	This response includes factual claims without sufficient citations from available sources.
+policy.noSources.title	No sources found
+policy.noSources.body	This answer could not be verified against available sources in your allowed scope.
+myWork.ideas.gardenSpark	Idea Garden Spark
+myWork.ideas.plantInGarden	Plant in Idea Garden
+stream.retrying	Connection issue, retrying...
+stream.complete	Response complete
+stream.costEstimateTooltip	Estimated AI cost for this response based on token usage
+stream.stoppedPartial	Response stopped. Partial answer shown above.
+stream.cancelled	Response cancelled.
+chat.actions.copy	Copy
+chat.actions.edit	Edit
+chat.actions.savedToContext	Saved to Context OS
+chat.actions.saveToContext	Save to Context OS
+chat.actions.stop	Stop
+chat.actions.speak	Speak
+chat.actions.toggleResponseActions	More actions
+chat.governedHandoff.proposeDocument	Propose governed document
+chat.sources.details	Sources details
+deepThinking.hint	This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.
+deepThinking.enableHint	Enable Deep Thinking
+deepThinking.dismissHint	Not now
+deepThinking.ctaTitle	What do you want to do with this output?
+deepThinking.saving	Saving…
+deepThinking.saveDecision	Save as Decision
+deepThinking.convertInitiative	Convert to Initiative
+deepThinking.exportReport	Export Report
+deepThinking.saveToNotebook	Save to Notebook
+deepThinking.listenBrief	Listen to Brief
+deepThinking.decisionSaved	Decision saved successfully
+deepThinking.interimInsight	Preliminary insight — dominant paths emerging:
+deepThinking.narrowFocus	Narrow focus on the first path
+deepThinking.narrowFocusBtn	Narrow focus
+deepThinking.goDeeper	Go deeper
+deepThinking.continueDeeper	Continue to full report
+chat.actions.openPanel	Open in panel
+chat.actions.download	Download
+aiChat.citationUnavailable	Source unavailable
+aiChat.citationStale	Source may be outdated
+aiChat.citationNoAccess	Source not accessible to you
+aiChat.deepSearchSources	Deep search sources
+aiChat.citationExternalBadge	External
+aiChat.citationFragmentBadge	Fragment ${(citation.fragmentIndex as number) + 1}
+aiChat.citationFragmentOpenLabel	Fragment ${(citation.fragmentIndex as number) + 1}
+aiChat.citationFragmentEmpty	No excerpt available.
+aiChat.citationOpenSource	Open source
+chatProposal.step.untitled	Step
+chatProposal.state.proposed	Proposal drafted
+chatProposal.state.pendingReview	Awaiting review
+chatProposal.state.approved	Approved
+chatProposal.state.executing	Executing
+chatProposal.state.executed	Executed
+chatProposal.state.audited	Audited
+chatProposal.state.closed	Closed
+chatProposal.state.rejected	Rejected
+chatProposal.risk.high	High risk
+chatProposal.risk.medium	Medium risk
+chatProposal.risk.low	Low risk
+chatProposal.ariaLabel	Governed execution proposal
+chatProposal.stepCount	{{count}} steps
+chatProposal.expiresAt	Expires {{when}}
+chatProposal.rejectionReason	Reason
+chatProposal.reviewer	Reviewed by {{name}}
+chatProposal.action.execute	Execute
+chat.governedHandoff.citations	{{count}} source references preserved.
+chat.initiativeHandoff.missing.project	project
+chat.initiativeHandoff.missing.owner	initiative owner
+chat.initiativeHandoff.missing.problem	problem statement
+chat.initiativeHandoff.readFailed	Could not verify the initiative draft.
+chat.initiativeHandoff.adoptionFailed	Adoption failed.
+chat.initiativeHandoff.state.idle	Awaiting consent
+chat.initiativeHandoff.state.checking	Checking
+chat.initiativeHandoff.state.blocked	Needs details
+chat.initiativeHandoff.state.ready	Ready
+chat.initiativeHandoff.state.adopting	Adopting
+chat.initiativeHandoff.state.adopted	Adopted
+chat.initiativeHandoff.state.failed	Failed
+chat.initiativeHandoff.title	Pass the initiative to execution?
+chat.initiativeHandoff.missingPrefix	Missing
+chat.initiativeHandoff.check	Check before handoff
+chat.initiativeHandoff.consent	Pass to execution
+chat.initiativeHandoff.complete	Complete in Initiatives
+aiChat.feedback.saving	Zapisywanie…
+aiChat.feedback.forbidden	Nie można zapisać oceny dla tej wiadomości.
+aiChat.feedback.saveFailed	Nie udało się zapisać oceny.
+research.followUp	Follow-up
+research.searchingRound	Searching (round ${round}/${totalRounds})...
+research.deepening	Deepening research with follow-up queries...
+research.generatingFollowUp	Analyzing gaps and generating follow-up queries...
+research.synthesizingReport	Synthesizing comprehensive report...
+research.round	Round ${round}/${totalRounds}
+research.activity	Activity
+research.waitingForActivity	Starting research...
+research.initialQueries	Initial Queries
+research.followUpQueries	Follow-up Queries (Iterative Deepening)
+research.noSourcesYet	No sources found yet...
+aiChat.teresaProposal.approved	Teresa proposal approved.
+aiChat.teresaProposal.rejected	Teresa proposal rejected.
+aiChat.teresaProposal.undone	Teresa workbook change undone.
+aiChat.teresaProposal.executed	Teresa handoff executed.
+aiChat.teresaProposal.approve	Approve
+aiChat.teresaProposal.execute	Execute
+aiChat.teresaProposal.undo	Undo change
+aiChat.teresaProposal.navigate	Open target
+trust.badge.ariaLabel	Response sources
+trust.badge.dialogLabel	Sources for this response
+trust.badge.answeredBy	Answered by
+trust.badge.openSource	Open source in a new tab: {{title}}
+trust.badge.citationDomain	Source domain: {{domain}}
+trust.badge.noSourcesBody	This reply is based on the model\u2019s own reasoning, not on retrieved documents or search results.
+trust.badge.reasoningToggle	Why this answer?
+trust.badge.copyReasoningAriaLabel	Copy reasoning observations to clipboard
+trust.badge.copied	Copied
+trust.badge.copyFailed	Copy failed
+trust.badge.copy	Copy
+trust.badge.disclaimer	Sources tell you what was retrieved. Always verify claims that matter to you.
+trust.badge.copyCitationsAriaLabel	Copy citation list to clipboard

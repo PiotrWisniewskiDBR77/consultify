@@ -1,0 +1,314 @@
+[
+  {
+    "term": "Menu",
+    "reason": "Nazwa UI bez odrębnego odpowiednika w polskim oprogramowaniu (jak już whitelistowane Dashboard/Kanban)."
+  },
+  {
+    "term": "VaR (5%)",
+    "reason": "Skrót finansowy Value at Risk — ta sama kategoria co whitelistowane NPV/IRR/ROI."
+  },
+  {
+    "term": "ISO 21500, PMBOK, PRINCE2",
+    "reason": "Lista nazw własnych standardów/metodyk zarządzania projektami."
+  },
+  {
+    "term": "https://…",
+    "reason": "Literalny placeholder URL (wielokropek typograficzny) — nie jest treścią językową."
+  },
+  {
+    "term": "https://...",
+    "reason": "Literalny placeholder URL (trzy kropki ASCII) — nie jest treścią językową."
+  },
+  {
+    "term": "https://example.com",
+    "reason": "Literalny placeholder domeny przykładowej — nie jest treścią językową."
+  },
+  {
+    "term": "email@...",
+    "reason": "Literalny placeholder adresu e-mail — nie jest treścią językową."
+  },
+  {
+    "term": "min",
+    "reason": "Skrót jednostki czasu (minuty) identyczny w polskim."
+  },
+  {
+    "term": "Premium",
+    "reason": "Nazwa własna warstwy cenowej SaaS, używana bez tłumaczenia globalnie."
+  },
+  {
+    "term": "Enterprise",
+    "reason": "Nazwa własna warstwy cenowej SaaS (ta sama kategoria co Premium) — dryf spoza zakresu tego dyżuru, naprawiony przy okazji regeneracji baseline."
+  },
+  {
+    "term": "JSON",
+    "reason": "Skrót formatu pliku — ta sama kategoria co whitelistowane PDF/DOCX/XLSX/CSV."
+  },
+  {
+    "term": "Autopilot",
+    "reason": "Nazwa własna trybu/funkcji produktu, używana bez tłumaczenia."
+  },
+  {
+    "term": "WACC",
+    "reason": "Skrót finansowy (Weighted Average Cost of Capital) — kategoria NPV/IRR/CAPEX/OPEX."
+  },
+  {
+    "term": "SLA / SLO",
+    "reason": "Skróty inżynierii niezawodności, używane bez tłumaczenia."
+  },
+  {
+    "term": "SLA",
+    "reason": "Skrót (Service Level Agreement) w formie samodzielnej — jak wyżej."
+  },
+  {
+    "term": "Break-glass",
+    "reason": "Nazwa własna procedury bezpieczeństwa, standardowy termin branżowy bez polskiego odpowiednika."
+  },
+  {
+    "term": "IP",
+    "reason": "Skrót sieciowy (adres IP) — ta sama kategoria co whitelistowane URL/API."
+  },
+  {
+    "term": "Deuteranopia",
+    "reason": "Oficjalny polski termin medyczny (identyczny z angielskim, łacińska nazwa)."
+  },
+  {
+    "term": "Protanopia",
+    "reason": "Jak wyżej — oficjalny polski termin medyczny."
+  },
+  {
+    "term": "Tritanopia",
+    "reason": "Jak wyżej — oficjalny polski termin medyczny."
+  },
+  {
+    "term": "OpenDyslexic",
+    "reason": "Nazwa własna kroju pisma (czcionki)."
+  },
+  {
+    "term": "Inter",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "Lato",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "Open Sans",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "Roboto",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "Fira Code",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "JetBrains Mono",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "Poppins",
+    "reason": "Nazwa własna kroju pisma."
+  },
+  {
+    "term": "AI Chat V2",
+    "reason": "Nazwa własna funkcji produktu z numerem wersji."
+  },
+  {
+    "term": "Pop",
+    "reason": "Nazwa własna dźwięku UI (onomatopeja), nie treść językowa."
+  },
+  {
+    "term": "HTML",
+    "reason": "Skrót formatu znaczników — kategoria PDF/DOCX/CSV."
+  },
+  {
+    "term": "Outlook",
+    "reason": "Nazwa własna marki (Microsoft Outlook)."
+  },
+  {
+    "term": "SMS",
+    "reason": "Skrót techniczny, używany bez tłumaczenia w polskim."
+  },
+  {
+    "term": "Microsoft Teams",
+    "reason": "Nazwa własna marki."
+  },
+  {
+    "term": "WhatsApp",
+    "reason": "Nazwa własna marki."
+  },
+  {
+    "term": "ClickUp",
+    "reason": "Nazwa własna marki."
+  },
+  {
+    "term": "Trello",
+    "reason": "Nazwa własna marki."
+  },
+  {
+    "term": "DD.MM.YYYY (31.12.2024)",
+    "reason": "Literalny wzorzec formatu daty (tokeny/liczby), nie treść językowa."
+  },
+  {
+    "term": "DD/MM/YYYY (31/12/2024)",
+    "reason": "Literalny wzorzec formatu daty."
+  },
+  {
+    "term": "MM/DD/YYYY (12/31/2024)",
+    "reason": "Literalny wzorzec formatu daty."
+  },
+  {
+    "term": "YYYY-MM-DD (2024-12-31)",
+    "reason": "Literalny wzorzec formatu daty."
+  },
+  {
+    "term": "CEO",
+    "reason": "Skrót stanowiska używany w polskim biznesie bez tłumaczenia."
+  },
+  {
+    "term": "CFO",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "CMO",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "COO",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "CTO",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "Chicago (CST/CDT)",
+    "reason": "Nazwa własna miasta + skrót strefy czasowej."
+  },
+  {
+    "term": "Denver (MST/MDT)",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "Los Angeles (PST/PDT)",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "Sydney (AEST/AEDT)",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "Berlin (CET/CEST)",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "UTC",
+    "reason": "Skrót strefy czasowej."
+  },
+  {
+    "term": "Euro",
+    "reason": "Oficjalna nazwa waluty, niezmieniona w polskim."
+  },
+  {
+    "term": "Sublime Text",
+    "reason": "Nazwa własna marki (edytor kodu)."
+  },
+  {
+    "term": "Vim",
+    "reason": "Nazwa własna marki (edytor kodu)."
+  },
+  {
+    "term": "VS Code",
+    "reason": "Nazwa własna marki (edytor kodu)."
+  },
+  {
+    "term": "Push",
+    "reason": "Techniczny termin mechanizmu powiadomień — kategoria whitelistowanego Webhook."
+  },
+  {
+    "term": "AI / Copilot",
+    "reason": "Nazwa własna funkcji produktu (AI już whitelistowane osobno)."
+  },
+  {
+    "term": "ISO 27001",
+    "reason": "Nazwa własna standardu bezpieczeństwa."
+  },
+  {
+    "term": "SOC2 Type II",
+    "reason": "Nazwa własna standardu audytowego."
+  },
+  {
+    "term": "DBR77 Vector",
+    "reason": "Nazwa własna funkcji/produktu (DBR77 już whitelistowane osobno)."
+  },
+  {
+    "term": "20s",
+    "reason": "Literalny token liczbowy z jednostką czasu (20 sekund), nie treść językowa."
+  },
+  {
+    "term": "Blog",
+    "reason": "W pełni przyswojone polskie słowo — brak innego słowa używanego w praktyce."
+  },
+  {
+    "term": "Blog Consultify",
+    "reason": "Nazwa własna złożona (Consultify już whitelistowane osobno)."
+  },
+  {
+    "term": "Blog DBR77",
+    "reason": "Nazwa własna złożona (DBR77 już whitelistowane osobno)."
+  },
+  {
+    "term": "DPA",
+    "reason": "Skrót prawny (Data Processing Agreement), używany bez tłumaczenia również w polskich dokumentach RODO."
+  },
+  {
+    "term": "AI Core",
+    "reason": "Nazwa własna funkcji produktu."
+  },
+  {
+    "term": "Nordic Digital Solutions",
+    "reason": "Rzeczywista nazwa firmy w cytowanej referencji klienta — nie tłumaczy się nazw firm."
+  },
+  {
+    "term": "TransformACE Consulting",
+    "reason": "Rzeczywista nazwa firmy w cytowanej referencji klienta."
+  },
+  {
+    "term": "Bartosz Sotomski",
+    "reason": "Imię i nazwisko osoby — nie tłumaczy się nazwisk."
+  },
+  {
+    "term": "FAQ",
+    "reason": "Skrót używany bez tłumaczenia również w polskim."
+  },
+  {
+    "term": "Partner Slack",
+    "reason": "Nazwa własna kanału (Slack już whitelistowane osobno)."
+  },
+  {
+    "term": "45 min",
+    "reason": "Literalny token liczba+jednostka czasu, nie treść językowa."
+  },
+  {
+    "term": "60 min",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "30 min",
+    "reason": "Jak wyżej."
+  },
+  {
+    "term": "DBR77 Consultify",
+    "reason": "Nazwa własna złożona (oba człony już whitelistowane osobno)."
+  },
+  {
+    "term": "JQL ({{optional}})",
+    "reason": "Nazwa własna języka zapytań Jiry (Jira Query Language) + placeholder — nie jest treścią do tłumaczenia."
+  },
+  {
+    "term": "Program",
+    "reason": "Termin taksonomii PPM (Portfolio > Program > Projekt) — ta sama kategoria co whitelistowane Portfolio."
+  }
+]
