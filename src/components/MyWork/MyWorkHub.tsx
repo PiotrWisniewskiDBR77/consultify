@@ -1433,7 +1433,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       decisions: t('myWork.hub.decisions', 'Decisions'),
       projects: t('myWork.hub.projects', 'Projects'),
       manager: t('myWork.hub.manager', 'Manager'),
-      vault: t('myWork.hub.vault', 'Sejf klienta'),
+      // DEC-408 (przejście właściciela 06.09) — Menu 2 zakładka „Sejf
+      // klienta” → „Sejfy” (en: "Vaults"); okruszek staje się „Moja Praca ›
+      // Sejfy”. Ten sam klucz zasila tab label poniżej (Menu 2 array) —
+      // jedno źródło prawdy dla obu miejsc.
+      vault: t('myWork.hub.vault', 'Sejfy'),
       agent: t('myWork.hub.agent', 'Run agent'),
     };
     const base = t('myWork.hub.myWork', 'My Work');
@@ -1782,7 +1786,13 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       // sidebar item doesn't leave a dangling tab if the flag is ever flipped OFF.
       {
         id: 'vault' as ModuleTab,
-        label: t('sidebar.clientVault', 'Client Vault'),
+        // DEC-408 — was `sidebar.clientVault` ("Client Vault"), a key shared
+        // with the dead standalone `/vault` route (AppRoutes.tsx redirects
+        // it straight into this tab — that route never renders its own
+        // title). Moved onto the same `myWork.hub.vault` key the breadcrumb
+        // above uses ("Sejfy"/"Vaults"), so the tab and the breadcrumb never
+        // drift apart again.
+        label: t('myWork.hub.vault', 'Sejfy'),
         icon: <Database size={16} />,
         color: 'bg-slate-500',
         requiresManagerAccess: false,
