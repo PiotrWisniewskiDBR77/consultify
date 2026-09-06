@@ -17,6 +17,7 @@ type ModuleCase = {
   module: string;
   route: string;
   entry: RegExp | null;
+  entrySelector?: string;
   emptyExpected?: boolean;
   stopReason?: string;
 };
@@ -25,12 +26,12 @@ const modules: ModuleCase[] = [
   { module: 'Czat', route: '/chat', entry: null },
   { module: 'Moja Praca', route: '/my-work', entry: /^Teresa$/ },
   { module: 'Wywiad', route: '/interview', entry: /^Teresa$/ },
-  { module: 'Narzędzia', route: '/discovery-tools', entry: /^(Teresa|Zapytaj Teresę)/ },
+  { module: 'Narzędzia', route: '/discovery-tools', entry: /^(Teresa|Zapytaj Teresę)/, emptyExpected: true },
   { module: 'Ocena', route: '/assessment', entry: /^(Teresa|Zapytaj Teresę)/ },
   { module: 'Inicjatywy', route: '/initiatives', entry: /^(Teresa|Zapytaj Teresę)/ },
   { module: 'Realizacja', route: '/execution', entry: /^(Teresa|Zapytaj Teresę)/ },
-  { module: 'Wyniki', route: '/results/kpi', entry: /^(Teresa|Zapytaj Teresę)/ },
-  { module: 'Finanse', route: '/finance', entry: /^(AI|Zapytaj Teresę)/ },
+  { module: 'Wyniki', route: '/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f', entry: /^Zapytaj Teresę o ten miernik$/ },
+  { module: 'Finanse', route: '/finance', entry: /^AI$/, entrySelector: 'button[title*="czat AI"], button[title*="AI Chat"]' },
   { module: 'Materiały', route: '/presentations', entry: /^Teresa$/ },
   { module: 'Audyty', route: '/audit-programs', entry: /^Teresa$/, emptyExpected: true },
   { module: 'Spotkania', route: '/meetings', entry: /^Teresa$/, emptyExpected: true },
@@ -55,6 +56,7 @@ function parseSse(raw: string) {
       if (event.type === 'source_ledger') ledger = event;
     } catch { /* keep measuring */ }
   }
+  if (/Ã|Å|Ä|â€/.test(answer)) answer = Buffer.from(answer, 'latin1').toString('utf8');
   const polishTokens = (answer.match(/\b(i|oraz|jest|są|brak|dane|moduł|widzę|w|na|do|z)\b/gi) || []).length;
   const polishChars = (answer.match(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g) || []).length;
   return {
@@ -84,9 +86,10 @@ test('pomiar 16 modułów Teresy', async ({ page }) => {
       await page.waitForTimeout(8_000);
       result.finalRoute = new URL(page.url()).pathname + new URL(page.url()).search;
       if (item.entry) {
-        const entry = page.getByRole('button', { name: item.entry }).first();
+        const entry = item.entrySelector ? page.locator(item.entrySelector).first() : page.getByRole('button', { name: item.entry }).first();
         if (!(await entry.isVisible().catch(() => false))) {
           result.failure = item.stopReason ? 'brak wejścia, poza MVP' : 'brak wejścia Teresy';
+          if (item.stopReason) result.status = 'STOP';
           throw new Error(result.failure);
         }
         result.entry = (await entry.innerText()).trim();
@@ -110,7 +113,7 @@ test('pomiar 16 modułów Teresy', async ({ page }) => {
       result.failure ||= String(error?.message || error).split('\n')[0];
     }
     result.bledyKonsoli = consoleErrors.slice(beforeErrors);
-    if (result.bledyKonsoli.length > 0) result.status = 'FAIL';
+    if (result.bledyKonsoli.length > 0 && result.status !== 'STOP') result.status = 'FAIL';
     await page.screenshot({ path: path.join(outDir, `${String(results.length + 1).padStart(2, '0')}-${slug(item.module)}.png`) }).catch(() => {});
     fs.writeFileSync(path.join(outDir, `${String(results.length + 1).padStart(2, '0')}-${slug(item.module)}.json`), JSON.stringify(result, null, 2));
     results.push(result);

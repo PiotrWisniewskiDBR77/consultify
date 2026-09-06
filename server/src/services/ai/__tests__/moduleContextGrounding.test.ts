@@ -36,6 +36,14 @@ describe('detectModuleKey', () => {
     expect(detectModuleKey({ pathname: '/my-work/tasks' })).toBe('my_work');
     expect(detectModuleKey({ page: { route: '/execution/rollout' } })).toBe('execution');
     expect(detectModuleKey({ currentScreen: '/assessment' })).toBe('assessment');
+    expect(detectModuleKey({ route: { pathname: '/finance' } } as any)).toBe('finance');
+    expect(detectModuleKey({ currentScreen: 'interview_module' })).toBe('interview');
+    expect(detectModuleKey({ currentScreen: 'discovery_tools' })).toBe('tools');
+    expect(detectModuleKey({ currentScreen: '/results/kpi' })).toBe('results');
+    expect(detectModuleKey({ currentScreen: '/presentations' })).toBe('materials');
+    expect(detectModuleKey({ currentScreen: '/audit-programs' })).toBe('audits');
+    expect(detectModuleKey({ currentScreen: '/meetings' })).toBe('meetings');
+    expect(detectModuleKey({ currentScreen: '/organization' })).toBe('organization');
   });
 
   it('brak screenContext → przegląd organizacji (czat ogólny), nie pustka', () => {
@@ -153,7 +161,7 @@ describe('buildModuleContextGrounding — izolacja tenanta', () => {
 });
 
 describe('buildModuleContextGrounding — uczciwe no_sources', () => {
-  it('pusty moduł → null (nie wymyślamy źródeł)', async () => {
+  it('pusty moduł → jawna instrukcja braku i zero źródeł', async () => {
     const fn = vi.fn(async () => []);
     const out = await buildModuleContextGrounding({
       organizationId: ORG,
@@ -161,9 +169,10 @@ describe('buildModuleContextGrounding — uczciwe no_sources', () => {
       screenContext: { currentScreen: '/initiatives' },
       queryFn: fn,
     });
-    // MUTACJA: zwrócenie tu pustego obiektu zamiast `null` sprawiłoby, że
-    // `used_sources` byłoby niepuste bez ani jednego realnego rekordu — fałsz.
-    expect(out).toBeNull();
+    // Pusty moduł niesie instrukcję uczciwego braku, ale zero cytatów.
+    expect(out).not.toBeNull();
+    expect(out!.citations).toHaveLength(0);
+    expect(out!.systemInstructionAddon).toContain('BRAK DANYCH W MODULE');
   });
 
   it('brak organizationId → null (żadnego czytania danych)', async () => {

@@ -4286,6 +4286,15 @@ router.post(
           if (moduleGrounding) {
             pipelineRequest = {
               ...pipelineRequest,
+              // [ODMROZENIE 13_CHAT DEC-397] Pusty moduł nie może odziedziczyć
+              // ogólnych danych organizacji i udawać odpowiedzi modułowej.
+              ...(moduleGrounding.citations.length === 0
+                ? {
+                    prompt:
+                      `Odpowiedz po polsku jednym krótkim komunikatem: „Brak danych w module ${moduleGrounding.moduleKey}.” ` +
+                      'Możesz dodać, jakiego rekordu brakuje. Nie omawiaj profilu organizacji, inicjatyw ani zadań z innych modułów.',
+                  }
+                : {}),
               options: {
                 ...(pipelineRequest.options || {}),
                 systemInstruction:
