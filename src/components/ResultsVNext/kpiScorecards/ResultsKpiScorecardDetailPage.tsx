@@ -368,7 +368,10 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           expectedVersion: scorecard.rowVersion,
           kpiId: values.kpiId,
           role: values.role,
-          reason: values.reason,
+          // DEC-422c: okno nie zbiera już „Notatki" — pole opisowe, które
+          // właściciel chciał wymusić, to OPIS KPI (idzie do `createKpiDraft`
+          // wewnątrz okna), a nie powód audytowy pozycji karty.
+          reason: null,
         });
         setAddItemOpen(false);
         await Promise.all([loadScorecard(), loadItems()]);
@@ -1002,6 +1005,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         onClose={() => (addItemBusy ? undefined : setAddItemOpen(false))}
         onSubmit={(values) => void handleAddItem(values)}
         isPolish={isPolish}
+        scorecardName={scorecard?.name ?? null}
         busy={addItemBusy}
         errorMessage={addItemError}
         isConflict={addItemConflict}
