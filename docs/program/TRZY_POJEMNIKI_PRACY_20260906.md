@@ -159,4 +159,4 @@ Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomenda
 
 - 06.09 13:00 (właściciel, Sejfy): **Fala 2, pozycja 3.11 (nowa): Foldery w Sejfach** — zakładka „Foldery” zdjęta z MVP, wraca jako osobny program po pilotażu.
 
-- 06.09 13:40 (właściciel, Wywiad): **Fala 2, pozycja 3.12 (nowa): zatwierdzanie i dopuszczanie odpowiedzi w Wywiadzie** — „menedżer zwracający ma mieć możliwość przyjęcia albo nieprzyjęcia udzielonych odpowiedzi”. W pojemniku 1 tylko porządek: stepper etapów i zakładka „Dopuszczenie” usunięte (DEC-410, DEC-410b), istniejące „zatwierdź / odeślij” w Przydzielone zostaje.
+- 06.09 13:31 (właściciel, Wywiad): **Fala 2, pozycja 3.12 (nowa): zatwierdzanie i dopuszczanie odpowiedzi w Wywiadzie** — „menedżer zwracający ma mieć możliwość przyjęcia albo nieprzyjęcia udzielonych odpowiedzi”. W pojemniku 1 tylko porządek: stepper etapów i zakładka „Dopuszczenie” usunięte (DEC-410, DEC-410b), istniejące „zatwierdź / odeślij” w Przydzielone zostaje.
