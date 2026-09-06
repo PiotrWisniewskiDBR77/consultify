@@ -42305,7 +42305,13 @@
       "rowOpen": "Open",
       "levelUser": "My safe",
       "levelOrganization": "Organization safe",
-      "levelProject": "Project safe"
+      "levelProject": "Project safe",
+      "scopeMine": "Mine",
+      "scopeClient": "Client",
+      "previewAddDocument": "Add document",
+      "whatsNextFixErrors": "Show indexing errors",
+      "previewRecentDocuments": "Recent documents",
+      "previewNoDocuments": "No documents in this safe yet."
     },
     "categories": {
       "bestPractices": "Best Practices",
@@ -42348,6 +42354,11 @@
         "confirm": "Delete",
         "cancel": "Cancel"
       }
+    },
+    "docs": {
+      "emptyCta": "Add the first document",
+      "detailStreszczenie": "Summary",
+      "detailFileName": "File name"
     }
   },
   "presentationState": {

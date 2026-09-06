@@ -359,9 +359,7 @@ export interface CzytelnaNazwaPliku {
 /** Prefiks uploadu: `Date.now()` (13 cyfr) albo unix-sekundy (10) + separator. */
 const PREFIKS_ZNACZNIKA_CZASU = /^\d{10,}[-_ ]+/;
 
-export const czytelnaNazwaPliku = (
-  filename: string | null | undefined
-): CzytelnaNazwaPliku => {
+export const czytelnaNazwaPliku = (filename: string | null | undefined): CzytelnaNazwaPliku => {
   const oryginal = typeof filename === 'string' ? filename : '';
   const bezSciezki = oryginal.split(/[\\/]/).pop() || '';
   const bezPrefiksu = bezSciezki.replace(PREFIKS_ZNACZNIKA_CZASU, '');
