@@ -316,9 +316,29 @@ describe('InitiativesHub smoke', () => {
   });
 
   it('opens a 404-unregistered deep link in the persisted initiative document', async () => {
+    // Znalezisko 1.1-Z1 (dyżur — pozycja 7): ten test przechodził wcześniej
+    // TYLKO dzięki `sessionStorage` z sąsiedniego testu w tym samym pliku
+    // (activeDocumentId przetrwał między testami — patrz komentarz przy
+    // `window.sessionStorage.clear()` niżej w tym pliku); w izolacji (`-t`)
+    // FAILował: `screen.findByTestId('legacy-initiative')` timeout, hub
+    // zostawał na liście.
+    //
+    // Przyczyna realna (nie kształt sessionStorage): drugi `Api.get(...)` w
+    // tym łańcuchu to fallback `GET /initiatives?source=interview_insight`
+    // (InitiativesHub.tsx, gałąź po 404 z `/initiatives/:id`) — realny
+    // serwer (`InitiativeController.getInitiatives`,
+    // server/src/controllers/InitiativeController.ts:~412 `res.json(initiatives)`)
+    // zwraca SUROWĄ TABLICĘ, nigdy pojedynczy obiekt. Mock zwracał pojedynczy
+    // obiekt `{ id: 'legacy-1', ... }` — `unwrapApiList` (InitiativesHub.tsx)
+    // poprawnie NIE rozpoznaje tego jako listy (nie jest ani tablicą, ani
+    // `{data:[...]}`, ani `{initiatives:[...]}`) i zwraca `[]`; `.find(...)`
+    // na pustej tablicy nie znajduje rekordu, kod robi `throw v8Error` i
+    // otwarcie dokumentu cicho się urywa. `unwrapApiList` sam w sobie jest
+    // poprawny wobec REALNEGO kontraktu serwera — to fixtura testu miała
+    // niehonestny kształt. Poprawka: tablica, jak naprawdę odpowiada serwer.
     apiGet
       .mockRejectedValueOnce(Object.assign(new Error('not registered'), { status: 404 }))
-      .mockResolvedValueOnce({ id: 'legacy-1', name: 'Legacy persisted', status: 'DRAFT' });
+      .mockResolvedValueOnce([{ id: 'legacy-1', name: 'Legacy persisted', status: 'DRAFT' }]);
     renderHubAt('/initiatives?open=legacy-1&mode=doc');
     expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
