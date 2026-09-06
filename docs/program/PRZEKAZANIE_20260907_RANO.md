@@ -33,6 +33,11 @@ Ten plik = jedyny punkt wejścia. Poprzedni: `PRZEKAZANIE_20260906_NOC.md` (niea
   3. Świeża baza demo wstawała **cicho uszkodzona** (CHECK zawężony o `document_template` i `assessment_report`).
   4. Ekran Inicjatyw pokazywał **trzy różne liczby tego samego zbioru naraz** (72 / 63 / 60) → teraz 60/60/60 zgodne z bazą.
 
+**UWAGA, ZEBY NIE WSZCZAC FALSZYWEGO ALARMU:** gałąź `staging` wskazuje `2be8b5dae5`, a health zwraca `996a0d265b`.
+To NIE jest nieudany deploy — `2be8b5dae5` to commit z samym wierszem rejestru (dokumentacja), wypchnięty bez uruchamiania wdrożenia,
+bo budowanie 10 minut dla zmiany w pliku .md jest marnotrawstwem. Ostatni kod na żywo = `996a0d265b`, potwierdzony odczytem.
+Przy następnym pushu kodu różnica zniknie sama.
+
 ## 2. CZTERY DECYZJE CZEKAJĄCE NA WŁAŚCICIELA (w karcie odbioru, rekomendacja = opcja A)
 | # | Sprawa | Rekomendacja CTO |
 |---|---|---|
