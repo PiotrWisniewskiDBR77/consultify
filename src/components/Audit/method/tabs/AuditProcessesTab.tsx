@@ -28,7 +28,6 @@ import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
-import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
@@ -95,7 +94,6 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   const [criteriaError, setCriteriaError] = useState<string | null>(null);
   const scaleAndPolishEnabled = React.useMemo(() => isAuditsScaleAndPolishEnabled(), []);
   const [criteriaBrowserOpen, setCriteriaBrowserOpen] = useState(false);
-  const reportChainEnabled = React.useMemo(() => isAuditsReportChainEnabled(), []);
   const [finalizingOutput, setFinalizingOutput] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState<AuditOutputSummary | null>(null);
   const [finalizeError, setFinalizeError] = useState<string | null>(null);
@@ -465,43 +463,41 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
             }
             relationsEmptyLabel={isPolish ? 'Brak przypisanego zespołu' : 'No team assigned'}
           >
-            {reportChainEnabled ? (
-              <div
-                className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
-                data-testid="audit-finalize-output-control"
-              >
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                  {isPolish ? 'Output programu' : 'Program Output'}
-                </div>
-                <button
-                  type="button"
-                  disabled={finalizingOutput}
-                  onClick={() => void handleFinalizeOutput()}
-                  className="inline-flex h-8 items-center rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  {finalizingOutput
-                    ? isPolish
-                      ? 'Finalizowanie…'
-                      : 'Finalizing…'
-                    : isPolish
-                      ? 'Sfinalizuj Output'
-                      : 'Finalize Output'}
-                </button>
-                {finalizeResult ? (
-                  <p className="mt-2 text-xs text-c-text-secondary" role="status">
-                    {isPolish ? 'Utworzono Output' : 'Output created'} v{finalizeResult.version} ·{' '}
-                    <span className="font-mono">
-                      {(finalizeResult.contentHash || '—').slice(0, 12)}
-                    </span>
-                  </p>
-                ) : null}
-                {finalizeError ? (
-                  <p className="mt-2 text-xs text-c-danger" role="alert">
-                    {finalizeError}
-                  </p>
-                ) : null}
+            <div
+              className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+              data-testid="audit-finalize-output-control"
+            >
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                {isPolish ? 'Output programu' : 'Program Output'}
               </div>
-            ) : null}
+              <button
+                type="button"
+                disabled={finalizingOutput}
+                onClick={() => void handleFinalizeOutput()}
+                className="inline-flex h-8 items-center rounded-full border border-c-border bg-c-surface px-3 text-xs font-medium text-c-text transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {finalizingOutput
+                  ? isPolish
+                    ? 'Finalizowanie…'
+                    : 'Finalizing…'
+                  : isPolish
+                    ? 'Sfinalizuj Output'
+                    : 'Finalize Output'}
+              </button>
+              {finalizeResult ? (
+                <p className="mt-2 text-xs text-c-text-secondary" role="status">
+                  {isPolish ? 'Utworzono Output' : 'Output created'} v{finalizeResult.version} ·{' '}
+                  <span className="font-mono">
+                    {(finalizeResult.contentHash || '—').slice(0, 12)}
+                  </span>
+                </p>
+              ) : null}
+              {finalizeError ? (
+                <p className="mt-2 text-xs text-c-danger" role="alert">
+                  {finalizeError}
+                </p>
+              ) : null}
+            </div>
             <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
                 {isPolish ? 'Bramki następnego etapu' : 'Next-stage gates'}

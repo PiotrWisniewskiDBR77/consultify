@@ -27,7 +27,6 @@ import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Button } from '@/components/ui/primitives/Button';
 import { Modal } from '@/components/ui/primitives/Modal';
-import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import {
@@ -72,7 +71,6 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   onCountsChange,
   reloadToken = 0,
 }) => {
-  const reportChainEnabled = isAuditsReportChainEnabled();
   const [items, setItems] = useState<AuditOutputSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -227,26 +225,24 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
       ? 'Raport można wygenerować tylko z aktualnej wersji Outputu.'
       : 'A report can only be generated from the current Output version.';
     return {
-      statusTransitions: reportChainEnabled
-        ? [
-            {
-              id: 'generate-audit-report',
-              label: isPolish ? 'Generuj raport audytu' : 'Generate audit report',
-              icon: FileText,
-              onClick: current ? () => void createReport(row, 'audit_report') : undefined,
-              disabled: !current || creatingReport !== null,
-              note: current ? undefined : disabledReason,
-            },
-            {
-              id: 'generate-remediation-report',
-              label: isPolish ? 'Generuj raport naprawczy' : 'Generate remediation report',
-              icon: Wrench,
-              onClick: current ? () => setRemediationOutput(row) : undefined,
-              disabled: !current || creatingReport !== null,
-              note: current ? undefined : disabledReason,
-            },
-          ]
-        : undefined,
+      statusTransitions: [
+        {
+          id: 'generate-audit-report',
+          label: isPolish ? 'Generuj raport audytu' : 'Generate audit report',
+          icon: FileText,
+          onClick: current ? () => void createReport(row, 'audit_report') : undefined,
+          disabled: !current || creatingReport !== null,
+          note: current ? undefined : disabledReason,
+        },
+        {
+          id: 'generate-remediation-report',
+          label: isPolish ? 'Generuj raport naprawczy' : 'Generate remediation report',
+          icon: Wrench,
+          onClick: current ? () => setRemediationOutput(row) : undefined,
+          disabled: !current || creatingReport !== null,
+          note: current ? undefined : disabledReason,
+        },
+      ],
       universalHandlers: { preview: () => setSelectedId(row.id) },
     };
   };
@@ -322,7 +318,7 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   return (
     <div className="flex h-full min-h-0">
       <div className="flex-1 min-w-0 overflow-auto p-4">
-        {reportChainEnabled && (createdReport || reportError) ? (
+        {(createdReport || reportError) ? (
           <div className="mb-3 rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 text-xs">
             {createdReport ? (
               <p className="text-c-text" role="status">
@@ -352,10 +348,8 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
           selectedRowId={selectedId}
           persistKey="audits.method.outputs"
           // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
-          // wynik" w Menu 2 istnieje niezależnie od `ff_auditsReportChain`
-          // (ta flaga bramkuje kebab raportów, nie finalizację), więc stary
-          // wariant „ta czynność nie jest dostępna z ekranu" stał się
-          // nieprawdą w momencie podpięcia generatora.
+          // wynik" w Menu 2 tworzy Output przez finalizację sesji audytowej,
+          // niezależnie od kebaba raportów w tej tabeli.
           empty={{
             icon: Package,
             title: isPolish ? 'Brak wyników' : 'No outputs yet',
@@ -378,21 +372,19 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
               valueLabel: isPolish ? 'Wartość' : 'Value',
             }}
           >
-            {reportChainEnabled ? (
-              <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-                <p className="text-xs text-c-text-secondary">
-                  {isPolish
-                    ? 'Raporty utworzysz z menu wiersza (⋮).'
-                    : 'Create reports from the row menu (⋮).'}
+            <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+              <p className="text-xs text-c-text-secondary">
+                {isPolish
+                  ? 'Raporty utworzysz z menu wiersza (⋮).'
+                  : 'Create reports from the row menu (⋮).'}
+              </p>
+              {createdReport ? (
+                <p className="mt-2 text-xs text-c-text" role="status">
+                  {isPolish ? 'Utworzono' : 'Created'} {createdReport.reportKind} v
+                  {createdReport.version}
                 </p>
-                {createdReport ? (
-                  <p className="mt-2 text-xs text-c-text" role="status">
-                    {isPolish ? 'Utworzono' : 'Created'} {createdReport.reportKind} v
-                    {createdReport.version}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </StandardPreview>
         ) : null}
       />

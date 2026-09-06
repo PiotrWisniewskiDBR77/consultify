@@ -1,3 +1,9 @@
+/**
+ * AuditReportDocumentView — DOCX/PDF export buttons.
+ *
+ * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — oba przyciski są
+ * teraz widoczne zawsze, bez warunku.
+ */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,7 +20,6 @@ vi.mock('../auditsMethodApi', async () => {
 });
 vi.mock('@/services/api', () => ({ Api: { getUsers: vi.fn().mockResolvedValue([]) } }));
 
-import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
 import { AuditReportDocumentView } from '../AuditReportDocumentView';
 import { getProgram, getReport, listEvidence, listProgramCriteria } from '../auditsMethodApi';
 
@@ -39,11 +44,6 @@ const report = {
   },
 };
 
-function flag(on: boolean) {
-  localStorage.setItem('ff.audits_report_chain', on ? '1' : '0');
-  resetAuditsReportChainFlagCache();
-}
-
 async function renderView() {
   render(<AuditReportDocumentView reportId="rep/41" />);
   await screen.findAllByText('Audit 41 report');
@@ -65,28 +65,17 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   afterEach(() => {
-    localStorage.removeItem('ff.audits_report_chain');
-    resetAuditsReportChainFlagCache();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  it('flag OFF omits both DOCX and PDF export buttons', async () => {
-    flag(false);
-    await renderView();
-    expect(screen.queryByRole('button', { name: 'Pobierz DOCX' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Pobierz PDF' })).toBeNull();
-  });
-
-  it('flag ON adds both DOCX and PDF export buttons', async () => {
-    flag(true);
+  it('shows both DOCX and PDF export buttons', async () => {
     await renderView();
     expect(screen.getByRole('button', { name: 'Pobierz DOCX' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Pobierz PDF' })).toBeInTheDocument();
   });
 
   it('requests the encoded report export endpoint (DOCX)', async () => {
-    flag(true);
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['PKdocx']), { status: 200 }));
     await renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Pobierz DOCX' }));
@@ -98,7 +87,6 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   it('requests the encoded report export endpoint (PDF, FIX-187)', async () => {
-    flag(true);
     vi.mocked(fetch).mockResolvedValue(new Response(new Blob(['%PDF']), { status: 200 }));
     await renderView();
     fireEvent.click(screen.getByRole('button', { name: 'Pobierz PDF' }));
@@ -110,7 +98,6 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   it('disables the DOCX control while the response is pending', async () => {
-    flag(true);
     vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
     await renderView();
     const button = screen.getByRole('button', { name: 'Pobierz DOCX' });
@@ -119,7 +106,6 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   it('disables the PDF control while the response is pending (FIX-187)', async () => {
-    flag(true);
     vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
     await renderView();
     const button = screen.getByRole('button', { name: 'Pobierz PDF' });
@@ -128,7 +114,6 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   it('shows an inline backend error and never calls alert (DOCX)', async () => {
-    flag(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {
@@ -143,7 +128,6 @@ describe('AuditReportDocumentView DOCX/PDF export', () => {
   });
 
   it('shows an inline backend error and never calls alert (PDF, FIX-187)', async () => {
-    flag(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(
       new Response(JSON.stringify({ error: 'AUDIT_NOT_FOUND' }), {

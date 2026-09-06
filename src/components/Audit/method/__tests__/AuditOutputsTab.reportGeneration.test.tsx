@@ -1,14 +1,19 @@
+/**
+ * AuditOutputsTab report generation.
+ *
+ * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — akcje generowania
+ * raportu są teraz widoczne zawsze, bez warunku.
+ */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
   return { ...actual, listOutputs: vi.fn(), generateReport: vi.fn() };
 });
 
-import { resetAuditsReportChainFlagCache } from '@/utils/auditsReportChainFlag';
 import { generateReport, listOutputs, type AuditOutputSummary } from '../auditsMethodApi';
 import { AuditOutputsTab } from '../tabs/AuditOutputsTab';
 
@@ -43,11 +48,6 @@ const report = {
   updatedAt: '2026-08-28',
 };
 
-function setFlag(on: boolean) {
-  window.localStorage.setItem('ff.audits_report_chain', on ? '1' : '0');
-  resetAuditsReportChainFlagCache();
-}
-
 async function openMenu() {
   fireEvent.click(await screen.findByRole('button', { name: /row actions/i }));
   return screen.findByRole('menu');
@@ -67,20 +67,7 @@ describe('AuditOutputsTab report generation', () => {
     vi.mocked(generateReport).mockReset();
   });
 
-  afterEach(() => {
-    window.localStorage.removeItem('ff.audits_report_chain');
-    resetAuditsReportChainFlagCache();
-  });
-
-  it('keeps generation actions absent with the flag OFF', async () => {
-    setFlag(false);
-    renderTab();
-    const menu = await openMenu();
-    expect(within(menu).queryByText('Generate audit report')).toBeNull();
-  });
-
-  it('shows both real generation actions with the flag ON', async () => {
-    setFlag(true);
+  it('shows both real generation actions', async () => {
     renderTab();
     const menu = await openMenu();
     expect(within(menu).getByText('Generate audit report')).toBeInTheDocument();
@@ -88,7 +75,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('generates an audit report, reports success, and notifies the Hub', async () => {
-    setFlag(true);
     const created = vi.fn();
     vi.mocked(generateReport).mockResolvedValue(report);
     renderTab({ isPolish: false, onReportCreated: created });
@@ -108,7 +94,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('opens remediation date modal and omits an empty asOfDate', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockResolvedValue({
       ...report,
       reportKind: 'remediation_progress',
@@ -127,7 +112,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('passes the selected remediation as-of date', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockResolvedValue({
       ...report,
       reportKind: 'remediation_progress',
@@ -146,7 +130,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('disables both actions for a superseded Output and explains why', async () => {
-    setFlag(true);
     vi.mocked(listOutputs).mockResolvedValue({
       items: [{ ...output, supersededBy: 'out-2' }],
       total: 1,
@@ -158,7 +141,6 @@ describe('AuditOutputsTab report generation', () => {
   });
 
   it('shows the literal backend error in the selected Output preview', async () => {
-    setFlag(true);
     vi.mocked(generateReport).mockRejectedValue({
       response: { data: { error: 'Output out-1 has already been superseded' } },
     });
