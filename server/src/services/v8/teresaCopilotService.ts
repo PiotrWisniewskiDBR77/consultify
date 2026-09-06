@@ -190,6 +190,17 @@ const CHAT_ACTION_KEYWORDS: Array<{
     patterns: [
       /\b(initiative|roadmap|plan|execution|project|proposal|strategy|goal|objective|milestone|backlog|sprint)\b/i,
       /\b(inicjatyw|roadmap|plan|wdroż|projekt|propozycj|strategi|cel|kamień.?milowy|backlog|sprint)\b/i,
+      // 1.1-A (06.09): domykające `\b` po polskiej alternatywie ODCINA
+      // odmianę — „inicjatywe"/„planu" nie pasują do `inicjatyw\b`/`plan\b`
+      // (między „w" a „e" nie ma granicy słowa). Zmierzone: „Zrob inicjatywe
+      // z tego planu" nie tworzyło ŻADNEJ propozycji — regex dawał null, a
+      // zapasowy klasyfikator LLM padał (`llmService.call` → provider
+      // undefined, log `[P08-TeresaCopilot] LLM intent detection failed`).
+      // Samo zdjęcie `\b` byłoby ZA SZEROKIE: pytanie „Czym różni się
+      // roadmapa od backlogu?" zaczęłoby produkować propozycję. Dlatego
+      // odmiana jest dopuszczona TYLKO z czasownikiem tworzącym — pytanie
+      // bez czasownika nadal daje null.
+      /\b(utw[oó]rz|stw[oó]rz|za[łl][oó][zż]|zr[oó]b|zr[oó]bmy|dodaj|przygotuj|rozpisz|create|make|add|start)\b[^.?!]{0,80}\b(inicjatyw|projekt|roadmap|plan|backlog|sprint|kamie[nń])/i,
     ],
   },
   {
