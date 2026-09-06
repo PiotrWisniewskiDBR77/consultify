@@ -4214,6 +4214,105 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Bridged via a CustomEvent the WorkCanvasDocumentPanel listens for — no
       // direct coupling to the editor instance.
       const canvasStreamMode = activeCanvasDocument ? detectCanvasWriteIntent(text) : null;
+
+      // ── 1.1-A (06.09) — PROPOZYCJA zamiast cichego zapisu ──────────────
+      // `append`/`generate` (czyli „napisz mi to w oknie obok") NIE wjeżdżają
+      // już prosto do edytora. Teresa wytwarza treść, karta w czacie pokazuje
+      // podgląd, a do dokumentu wstawia dopiero kliknięcie „Wstaw do
+      // dokumentu" (ZASADY_AI_TERESA_SSOT §3 „Zakaz auto-apply").
+      // `patch` i `replace` zostają na swoich ścieżkach — one mają WŁASNĄ
+      // bramkę człowieka (znaczniki aiAdded/aiRemoved + Akceptuj/Odrzuć w
+      // CanvasRichEditor), więc nie było tam cichego zapisu do naprawy.
+      if (
+        activeCanvasDocument &&
+        (canvasStreamMode === 'append' || canvasStreamMode === 'generate')
+      ) {
+        const uiLang = (i18n.language || 'en').split('-')[0];
+
+        void (async () => {
+          // Bąbelki tej gałęzi MUSZĄ iść przez `useConversationStore`
+          // (`addMessageToConversation`), nie przez `addChatMessage` z
+          // `useAppStore`: pełny Czat renderuje `activeMessages` ze STORE'U
+          // ROZMOWY, więc wiadomości dodane tamtym drugim kanałem po prostu
+          // nie istnieją na ekranie (zmierzone 06.09 — chat pusty mimo
+          // poprawnej odpowiedzi z /api/ai/generate).
+          let conversationId = useConversationStore.getState().activeConversationId;
+          if (!conversationId) {
+            try {
+              const conv = await createConversation();
+              conversationId = conv.id;
+            } catch (err) {
+              console.error('[UnifiedChatPanel] Failed to create conversation:', err);
+              toast.error(getTeresaStartFailureMessage(i18n.language));
+              return;
+            }
+          }
+          if (useConversationStore.getState().activeConversationId !== conversationId) {
+            setActiveConversation(conversationId);
+          }
+
+          const say = async (text: string, metadata?: Record<string, unknown>) => {
+            try {
+              await addMessageToConversation({
+                conversationId: conversationId as string,
+                role: 'ai',
+                content: text,
+                messageType: 'text',
+                ...(metadata ? { metadata } : {}),
+              });
+            } catch {
+              /* Historia rozmowy jest wtórna wobec widocznej odpowiedzi. */
+            }
+          };
+
+          try {
+            await addMessageToConversation({
+              conversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch {
+            /* j.w. */
+          }
+
+          try {
+            const { requestDocumentProposal } = await import('./canvasDocumentProposal');
+            const proposal = await requestDocumentProposal({
+              request: content,
+              documentMarkdown: String(activeCanvasDocument.contentMd || ''),
+              documentTitle: String(activeCanvasDocument.title || ''),
+              selectedText: activeCanvasSelection?.selectedText || undefined,
+              language: effectiveChatLanguage,
+            });
+            if (!proposal) {
+              await say(
+                uiLang === 'pl'
+                  ? 'Nie udało mi się przygotować treści. Doprecyzuj, co ma znaleźć się w dokumencie.'
+                  : 'I could not prepare the content. Tell me what should go into the document.'
+              );
+              return;
+            }
+            await say(
+              uiLang === 'pl'
+                ? 'Przygotowałam propozycję do dokumentu obok. Obejrzyj ją i kliknij „Wstaw do dokumentu", jeśli ma tam trafić.'
+                : 'Here is a proposal for the document next to you. Review it and click "Insert into document" if it should go in.',
+              { documentProposal: proposal }
+            );
+          } catch (err) {
+            await say(
+              (uiLang === 'pl'
+                ? 'Nie udało się przygotować propozycji do dokumentu: '
+                : 'Could not prepare the document proposal: ') +
+                (err instanceof Error ? err.message : String(err))
+            );
+          }
+        })();
+
+        onMessageSent?.(content);
+        return;
+      }
+
       if (canvasStreamMode) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,

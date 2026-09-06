@@ -19,39 +19,75 @@ const STATUS_STYLES: Record<TeresaChatProposal['state'], { badge: string; label:
   proposal: {
     badge:
       'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300',
-    label: 'Proposal ready',
+    // 1.1-A: „Do zatwierdzenia" nie jest kosmetyką — mówi, że NIC się jeszcze
+    // nie stało. „Proposal ready" właściciel odczytał jako wykonane.
+    label: 'Do zatwierdzenia',
   },
   pending_approval: {
     badge:
       'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300',
-    label: 'Awaiting approval',
+    label: 'Do zatwierdzenia',
   },
   approved: {
     badge:
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
-    label: 'Approved',
+    label: 'Zatwierdzone',
   },
   executing: {
     badge:
       'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    label: 'Executing',
+    label: 'W trakcie',
   },
   completed: {
     badge:
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
-    label: 'Completed',
+    label: 'Wykonane',
   },
   undone: {
     badge:
       'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    label: 'Undone',
+    label: 'Cofnięte',
   },
   rejected: {
     badge:
       'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300',
-    label: 'Rejected',
+    label: 'Odrzucone',
   },
 };
+
+// 1.1-A (06.09): serwer podaje etykietę modułu i intencję po angielsku
+// (`TARGET_LABELS` / `handoff_intent` w `teresaCopilotService.ts`). Karta jest
+// powierzchnią użytkownika, więc tłumaczy je tutaj — bez ruszania kontraktu
+// serwerowego, który jest też kluczem w audycie i w bazie.
+const TARGET_LABEL_PL: Record<string, string> = {
+  Radar: 'Radar',
+  Initiatives: 'Inicjatywy',
+  Calendar: 'Kalendarz',
+  Notebook: 'Notatnik',
+  'Interview Insights': 'Wnioski z wywiadów',
+  'Excele Workbooks': 'Skoroszyty',
+  'Document Studio': 'Studio dokumentu',
+  'Presentation Studio': 'Studio prezentacji',
+};
+
+const HANDOFF_INTENT_PL: Record<string, string> = {
+  create: 'utworzenie',
+  open: 'otwarcie',
+  append: 'dopisanie',
+  draft: 'szkic',
+  remember: 'zapamiętanie',
+  schedule: 'zaplanowanie',
+  triage: 'triage',
+  generate: 'wygenerowanie',
+};
+
+function localizeTargetLabel(label: string): string {
+  return TARGET_LABEL_PL[label] || label;
+}
+
+function localizeHandoffIntent(intent: string): string {
+  return HANDOFF_INTENT_PL[String(intent).toLowerCase()] || intent;
+}
 
 function unwrapProposalResponse(payload: any): TeresaChatProposal | null {
   if (!payload) return null;
@@ -165,8 +201,13 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
     <div className="mt-4 rounded-2xl border border-c-border bg-white/90 p-4 shadow-sm dark:border-c-border dark:bg-navy-900/60">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
+          {/* 1.1-A (06.09): nagłówek i plakietka stanu były przybite po
+              angielsku („TERESA PROPOSAL", „Proposal ready") mimo polskiego
+              UI — właściciel zobaczył je na stagingu. Klucze `aiChat.
+              teresaProposal.heading` / `.state.*` istnieją teraz w pl i en
+              (ZASADY_AI_TERESA_SSOT §8 J1). */}
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-c-text-secondary dark:text-c-text-secondary">
-            Teresa proposal
+            {t('aiChat.teresaProposal.heading', 'Propozycja Teresy')}
           </div>
           <div className="text-sm font-semibold text-navy-900 dark:text-slate-100">
             {currentProposal.title}
@@ -184,7 +225,8 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
 
       <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 text-xs text-slate-600 dark:border-navy-700 dark:bg-navy-950/60 dark:text-slate-300">
         <div className="font-medium text-slate-700 dark:text-slate-200">
-          {currentProposal.targetLabel} · {currentProposal.handoffIntent}
+          {localizeTargetLabel(currentProposal.targetLabel)} ·{' '}
+          {localizeHandoffIntent(currentProposal.handoffIntent)}
         </div>
         {currentProposal.previewLines.length > 0 && (
           <div className="mt-2 space-y-1">

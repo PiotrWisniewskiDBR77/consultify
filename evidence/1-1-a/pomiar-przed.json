@@ -1,0 +1,520 @@
+{
+  "url": "http://localhost:3116/chat/a66f194e-3ecb-4738-8b05-511e31682044",
+  "tytulPrzed": "",
+  "trescPrzed": "Company Work NoteArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.ContextWrite the situation, goal, constraints, and audience here.Working DraftDefine the business question.Capture assumptions.List open decisions.Decide the next action.NotesThis is Markdown canonical. The document view and MD view read from the same source.",
+  "trescPo": "Company Work NoteArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.ContextWrite the situation, goal, constraints, and audience here.Working DraftDefine the business question.Capture assumptions.List open decisions.Decide the next action.NotesThis is Markdown canonical. The document view and MD view read from the same source.",
+  "zadania": [
+    {
+      "m": "GET",
+      "url": "/src/services/api/organizationContextWorker.api.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/settings.api.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/assessment.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/my-work.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/types/api/requests.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/types/api/responses.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/client.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/baseClient.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/index.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/admin.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/ai-core.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/chat.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/execution-control.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/finance.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/interview.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/kb.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/multiplayer.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/partner.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/planning.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/prompt-os.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/results.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/retrieval.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8/sync.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/workCanvas.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/tablePlatform.api.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/artifactRuns.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/src/services/api/v8Execution.ts",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/settings/preferences/accessibility",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/organization-context",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/auth/me",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/csrf-token",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/organizations/current",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/v8/admin/flags",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/feature-flags/runtime",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/feature-flags/runtime",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/v10/teresa/voice-event",
+      "body": "{\"eventName\":\"voice_stopped\",\"status\":\"idle\"}"
+    },
+    {
+      "m": "POST",
+      "url": "/api/v10/teresa/voice-event",
+      "body": "{\"eventName\":\"voice_stopped\",\"status\":\"idle\"}"
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai-settings/user",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/health",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/v10/teresa/voice-config",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/health",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/demo/status",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/mfa/status",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/health",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/llm/providers/health?timeoutMs=4000",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/my-work/personal-tasks",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/organizations/current",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/cloud/providers",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/conversations?",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/chat-projects",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai/agent-audit/agents",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/my-work/personal-tasks",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/organizations/current",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/cloud/providers",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai/agent-audit/agents",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/v10/teresa/voice-event",
+      "body": "{\"eventName\":\"voice_config_loaded\",\"status\":\"idle\"}"
+    },
+    {
+      "m": "GET",
+      "url": "/api/notifications?limit=20",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/notifications/unread-count",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/cloud/providers",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.presentation",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.table",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.report",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.idea",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.note",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.initiative",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.decision",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.task",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.share",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/cloud/providers",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.presentation",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.table",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.report",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.idea",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.note",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.initiative",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.decision",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.task",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.share",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/conversations",
+      "body": "{\"language\":\"pl\"}"
+    },
+    {
+      "m": "GET",
+      "url": "/api/work-canvas/drafts?conversationId=a66f194e-3ecb-4738-8b05-511e31682044",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.presentation",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.table",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.output.report",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.idea",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.note",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.initiative",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.decision",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.convert.task",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/access/effective?capability=canvas.share",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai/conversations/a66f194e-3ecb-4738-8b05-511e31682044/proposals",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/v8/chat/conversations/a66f194e-3ecb-4738-8b05-511e31682044/handoff-proposals",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai/stream/partial/a66f194e-3ecb-4738-8b05-511e31682044",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/conversations/a66f194e-3ecb-4738-8b05-511e31682044",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/conversations/a66f194e-3ecb-4738-8b05-511e31682044/branches",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/conversations/a66f194e-3ecb-4738-8b05-511e31682044/messages",
+      "body": "{\"role\":\"user\",\"content\":\"Zrob mi plan w okni obok\",\"messageType\":\"text\",\"metadata\":{\"canvasContext\":{\"schemaVersion\":\"canvas-context/v1\",\"activeDraft\":{\"draftId\":null,\"researchSessionId\":null,\"title\":\"Company Work Note\",\"kind\":\"document\",\"lifecycleState\":\"draft\",\"saveState\":\"unsaved\",\"markdownProjectionStatus\":\"synced\"},\"memorySnapshot\":{\"summary\":\"Active Canvas \\\"Company Work Note\\\" · unsaved draft · kind document · no native blocks · no workflow runs\",\"anchors\":{\"draftId\":null,\"researchSessionId\":null,\"title\":\"Company Work Note\",\"kind\":\"document\",\"workflowRunIds\":[],\"blockIds\":[]},\"limitations\":[\"Canvas packet uses Markdown projection and summaries only; raw native block JSON is not included.\"]},\"selection\":null}},\"clientMessageId\":\"local-1788687265810-6d4a582084de38\"}"
+    },
+    {
+      "m": "GET",
+      "url": "/api/ai/stream/partial/a66f194e-3ecb-4738-8b05-511e31682044",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/ai/chat/stream",
+      "body": "{\"message\":\"Zrob mi plan w okni obok\",\"history\":[],\"context\":{\"focusMode\":\"all\",\"attachments\":[],\"failedAttachments\":[],\"attachmentDocIds\":[],\"attachmentFileNames\":[],\"hasAttachments\":false,\"projectId\":null,\"screenContext\":{\"screenId\":null,\"currentScreen\":null,\"selectedObjectId\":null,\"selectedObjectType\":null,\"route\":{\"pathname\":\"/chat\",\"search\":\"\",\"hash\":\"\"},\"page\":null},\"workspaceContext\":null,\"canvasContextPacket\":{\"schemaVersion\":\"canvas-context/v1\",\"activeDraft\":{\"draftId\":null,\"researchSessionId\":null,\"title\":\"Company Work Note\",\"kind\":\"document\",\"lifecycleState\":\"draft\",\"saveState\":\"unsaved\",\"markdownProjectionStatus\":\"synced\"},\"markdownProjection\":\"# Company Work Note\\n\\nArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.\\n\\n## Context\\n\\nWrite the situation, goal, constraints, and audience here.\\n\\n## Working Draft\\n\\n-   Define the business question.\\n    \\n-   Capture assumptions.\\n    \\n-   List open decisions.\\n    \\n-   Decide the next action.\\n    \\n\\n## Notes\\n\\n> This is Markdown canonical. The document view and MD view read from the same source.\",\"selection\":null,\"blockSummaries\":[],\"workflowRuns\":[],\"w"
+    },
+    {
+      "m": "GET",
+      "url": "/api/v8/teresa/proposal/7f4eda70-c915-4e4b-8ff3-5b06c92d4bba",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/conversations/a66f194e-3ecb-4738-8b05-511e31682044/messages",
+      "body": "{\"role\":\"ai\",\"content\":\"Aby stworzyć plan, potrzebuję bardziej szczegółowych informacji na temat jego zakresu i celu. Proszę podaj więcej szczegółów dotyczących tego, co ma obejmować ten plan i na czym dokładnie chciałbyś się skupić. Czy chodzi o plan projektu, harmonogram, czy może inny rodzaj planu?\",\"messageType\":\"text\",\"metadata\":{\"thinkingSteps\":[],\"artifacts\":[],\"citations\":[{\"id\":\"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621\",\"type\":\"module_data\",\"title\":\"Inicjatywa: Supply Chain Optimization\",\"reference\":\"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621\",\"excerpt\":\"Status: EXECUTING\"},{\"id\":\"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756\",\"type\":\"module_data\",\"title\":\"Inicjatywa: Digital Workplace Platform\",\"reference\":\"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756\",\"excerpt\":\"Status: EXECUTING\"},{\"id\":\"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8\",\"type\":\"module_data\",\"title\":\"Inicjatywa: Vendor Consolidation\",\"reference\":\"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8\",\"excerpt\":\"Status: EXECUTING\"},{\"id\":\"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af\",\"type\":\"module_data\",\"title\":\"Inicjatywa: Talent Upskilling Program\",\"r"
+    },
+    {
+      "m": "GET",
+      "url": "/api/v8/teresa/proposal/7f4eda70-c915-4e4b-8ff3-5b06c92d4bba",
+      "body": ""
+    },
+    {
+      "m": "POST",
+      "url": "/api/conversations/a66f194e-3ecb-4738-8b05-511e31682044/title/generate",
+      "body": ""
+    },
+    {
+      "m": "GET",
+      "url": "/api/llm/providers/health?timeoutMs=4000",
+      "body": ""
+    }
+  ],
+  "konsola": [],
+  "czat": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nCzat AI\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPrzejdź do pola wiadomości\nMain\nAudyt Nocny\nZrob mi plan w okni obok\nTERESA PROPOSAL\nZrob mi plan w okni obok\ncreate\nProposal ready\nInitiatives · create\nZrob mi plan w okni obok\nAby stworzyć plan, potrzebuję bardziej szczegółowych informacji na temat jego zakresu i celu. Proszę podaj więcej szcze…\nZatwierdź\nOdrzuć\nOtwórz cel\n\nAby stworzyć plan, potrzebuję bardziej szczegółowych informacji na temat jego zakresu i celu. Proszę podaj więcej szczegółów dotyczących tego, co ma obejmować ten plan i na czym dokładnie chciałbyś się skupić. Czy chodzi o plan projektu, harmonogram, czy może inny rodzaj planu?\n\nŹródła: 6\nDocument title\nNiezapisane zmiany\nEdytor\nDok\nMD\nUtwórz w workspace\nCompany Work Note\n\nArea: Operating workspace Purpose: Shape a business output with Teresa on the left and the document on the right.\n\nContext\n\nWrite the situation, goal, constraints, and audience here.\n\nWorking Draft\n\nDefine the business question.\n\nCapture assumptions.\n\nList open decisions.\n\nDecide the next action.\n\nNotes\n\nThis is Markdown canonical. The document view and MD view read from the same source.\n\n\n"
+}

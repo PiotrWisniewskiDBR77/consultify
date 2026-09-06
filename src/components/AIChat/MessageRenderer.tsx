@@ -60,6 +60,7 @@ import { ReasoningTrace } from './Messages/ReasoningTrace';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
+import { TeresaDocumentProposalCard } from './TeresaDocumentProposalCard';
 import { TeresaProposalCard } from './TeresaProposalCard';
 import { ToolStepList } from './ToolStepList';
 import { hasDeepResearchProgress } from './toolSteps';
@@ -858,6 +859,17 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 (msg as any).metadata.toolSteps.length > 0 && (
                   <ToolStepList steps={(msg as any).metadata.toolSteps} />
                 )}
+
+              {/* 1.1-A — propozycja treści do OTWARTEGO dokumentu obok.
+                  Karta ma podgląd Markdown i przycisk „Wstaw do dokumentu";
+                  nic nie zapisuje sama (ZASADY_AI_TERESA_SSOT §3). */}
+              {msg.role === 'ai' && (msg as any).metadata?.documentProposal && (
+                <div className="not-prose mb-3">
+                  <TeresaDocumentProposalCard
+                    proposal={(msg as any).metadata.documentProposal}
+                  />
+                </div>
+              )}
 
               {msg.role === 'ai' &&
                 (msg as any).metadata?.proposal &&

@@ -119,11 +119,11 @@ describe('day371 proposal-card family remount behavior', () => {
 
   it('TeresaProposalCard shows a completed proposal after remount', () => {
     const first = render(<TeresaProposalCard proposal={teresaProposal('proposal') as any} />);
-    expect(screen.getByText('Proposal ready')).toBeInTheDocument();
+    expect(screen.getByText('Do zatwierdzenia')).toBeInTheDocument();
     first.unmount();
 
     render(<TeresaProposalCard proposal={teresaProposal('completed') as any} />);
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('Wykonane')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
   });
 
@@ -132,11 +132,11 @@ describe('day371 proposal-card family remount behavior', () => {
     vi.mocked(Api.getTeresaProposal).mockResolvedValue(teresaProposal('completed'));
 
     const first = render(<TeresaProposalCard proposal={staleProposal as any} />);
-    expect(screen.getByText('Proposal ready')).toBeInTheDocument();
+    expect(screen.getByText('Do zatwierdzenia')).toBeInTheDocument();
     first.unmount();
 
     render(<TeresaProposalCard proposal={staleProposal as any} />);
-    await waitFor(() => expect(screen.getByText('Completed')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Wykonane')).toBeInTheDocument());
     expect(Api.getTeresaProposal).toHaveBeenCalledWith('teresa-proposal-1');
     expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
   });

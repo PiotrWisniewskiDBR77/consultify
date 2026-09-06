@@ -33,6 +33,7 @@ import type {
   WorkCanvasConversionProposal,
   WorkCanvasTarget,
 } from '@/components/AIChat/WorkCanvas/types';
+import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { WorkCanvasApi } from '@/services/api/workCanvas';
 import { useAppStore } from '@/store/useAppStore';
@@ -64,7 +65,8 @@ import { isCanvasNewDocOptionsEnabled } from '@/utils/canvasNewDocOptionsFlag';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
-import { markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
+import { htmlToMarkdown, markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
+import { CANVAS_DOCUMENT_APPLY_EVENT } from './canvasDocumentProposal';
 import { CanvasRichEditor, requestCanvasQuickAI } from './CanvasEditor/CanvasRichEditor';
 import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
@@ -230,29 +232,33 @@ Purpose: Capture rough thinking before it becomes a decision, plan, or deliverab
   {
     id: 'document',
     label: 'Napisz dokument',
-    title: 'Company Work Note',
+    // 1.1-A (06.09): szablon był po angielsku („Company Work Note", „Area:
+    // Operating workspace", „Write the situation…") — właściciel zobaczył go
+    // w polskim UI. Domyślny język Teresy i treści to polski
+    // (ZASADY_AI_TERESA_SSOT §8 J1). Wersja EN: `documentStarterEn`.
+    title: 'Notatka robocza',
     description: 'Czysty dokument Markdown do pracy biznesowej.',
     capability: 'real',
     capabilityNote: 'Markdown document, autosave, versions, export and Teresa context are backed.',
-    markdown: `# Company Work Note
+    markdown: `# Notatka robocza
 
-Area: Operating workspace
-Purpose: Shape a business output with Teresa on the left and the document on the right.
+Obszar: Przestrzeń robocza
+Cel: Wypracuj wynik biznesowy — Teresa obok, dokument tutaj.
 
-## Context
+## Kontekst
 
-Write the situation, goal, constraints, and audience here.
+Opisz sytuację, cel, ograniczenia i odbiorców.
 
-## Working Draft
+## Szkic roboczy
 
-- [ ] Define the business question.
-- [ ] Capture assumptions.
-- [ ] List open decisions.
-- [ ] Decide the next action.
+- [ ] Nazwij pytanie biznesowe.
+- [ ] Zapisz założenia.
+- [ ] Wypisz otwarte decyzje.
+- [ ] Ustal następny krok.
 
-## Notes
+## Notatki
 
-> This is Markdown canonical. The document view and MD view read from the same source.`,
+> Markdown jest kanoniczny. Widok dokumentu i widok MD czytają z tego samego źródła.`,
   },
   {
     id: 'research',
@@ -350,8 +356,45 @@ Purpose: Convert the business idea into accountable execution.
   },
 ];
 
+// 1.1-A (06.09) — wariant EN domyślnego szablonu „dokument". Treść bazowa
+// jest po polsku (ZASADY_AI_TERESA_SSOT §8 J1); tu leży para dla interfejsu
+// w innym języku, żeby polska naprawa nie odcięła użytkownika EN.
+const DOCUMENT_STARTER_EN: Pick<StarterTemplate, 'title' | 'markdown'> = {
+  title: 'Work note',
+  markdown: `# Work note
+
+Area: Operating workspace
+Purpose: Shape a business output — Teresa next to you, the document here.
+
+## Context
+
+Describe the situation, goal, constraints and audience.
+
+## Working draft
+
+- [ ] Name the business question.
+- [ ] Write down assumptions.
+- [ ] List open decisions.
+- [ ] Decide the next action.
+
+## Notes
+
+> Markdown is canonical. The document view and the MD view read from the same source.`,
+};
+
+function localizeStarterTemplate(template: StarterTemplate): StarterTemplate {
+  if (template.id !== 'document') return template;
+  const lang = String(i18n.language || 'pl')
+    .split('-')[0]
+    .toLowerCase();
+  if (lang === 'pl') return template;
+  return { ...template, ...DOCUMENT_STARTER_EN };
+}
+
 function starterTemplateById(starterId?: CanvasStarterId | null): StarterTemplate {
-  return starterTemplates.find((template) => template.id === starterId) || starterTemplates[1];
+  return localizeStarterTemplate(
+    starterTemplates.find((template) => template.id === starterId) || starterTemplates[1]
+  );
 }
 
 const LAST_DRAFT_ID_STORAGE_KEY = 'workCanvas.lastDraftId';
@@ -1141,8 +1184,10 @@ function WorkCanvasMarkdownDocumentPanel({
   const handoffFlightsRef = React.useRef(new Map<string, Promise<WorkCanvasConversionProposal>>());
 
   const activeTemplate =
-    starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
-    starterTemplates[1];
+    localizeStarterTemplate(
+      starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
+        starterTemplates[1]
+    );
   const selectedWorkflowTemplateOption =
     workflowTemplateOptions.find((template) => template.id === selectedWorkflowTemplate) ||
     workflowTemplateOptions[0];
@@ -2378,6 +2423,55 @@ function WorkCanvasMarkdownDocumentPanel({
     window.addEventListener('canvas-stream-request', handler);
     return () => window.removeEventListener('canvas-stream-request', handler);
   }, [richEditor, streamToCanvas, documentState.draftId]);
+
+  // ── 1.1-A (06.09) — WSTAW ZATWIERDZONĄ PROPOZYCJĘ ──────────────────
+  // [ODMROZENIE 13_CHAT DEC-397]
+  // Jedyna droga, którą treść z czatu wchodzi do dokumentu przez tę kartę —
+  // i wychodzi WYŁĄCZNIE z kliknięcia człowieka w
+  // `TeresaDocumentProposalCard` („Wstaw do dokumentu" / „Zastąp sekcję").
+  // Zdarzenie nie niesie żadnej ścieżki auto-wykonania: brak kliknięcia =
+  // brak zdarzenia = brak zapisu (ZASADY_AI_TERESA_SSOT §3, S4).
+  // Markdown jest kanoniczny — ten sam `latestContentRef`/`persistDraft`, co
+  // każda inna ścieżka zmieniająca treść, więc Edytor, Dok i MD widzą jedno.
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as
+        | { markdown?: string; mode?: 'append' | 'replace' }
+        | undefined;
+      const markdown = String(detail?.markdown || '').trim();
+      if (!markdown) return;
+
+      const base = (latestContentRef.current || documentState.contentMd || '').trimEnd();
+      const selection = richEditor?.state.selection;
+      const hasSelection = Boolean(selection && selection.from !== selection.to);
+
+      if (detail?.mode === 'replace' && richEditor && !richEditor.isDestroyed && hasSelection) {
+        richEditor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent(markdownToHtml(markdown))
+          .run();
+        const next = htmlToMarkdown(richEditor.getHTML()).trim();
+        updateMarkdown(next);
+        void persistDraft({ ...documentState, contentMd: next });
+      } else {
+        const next = base ? `${base}\n\n${markdown}\n` : `${markdown}\n`;
+        if (richEditor && !richEditor.isDestroyed) {
+          richEditor.commands.setContent(markdownToHtml(next), { emitUpdate: false });
+        }
+        updateMarkdown(next);
+        void persistDraft({ ...documentState, contentMd: next });
+      }
+
+      setStatusFeedback(
+        t('canvas.panel.documentProposal.inserted', 'Propozycja Teresy wstawiona do dokumentu.')
+      );
+    };
+    window.addEventListener(CANVAS_DOCUMENT_APPLY_EVENT, handler);
+    return () => window.removeEventListener(CANVAS_DOCUMENT_APPLY_EVENT, handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [richEditor, documentState, t]);
 
   const buildQuickAddMarkdown = (element: CanvasQuickAddElement, prompt: string) => {
     const cleanedPrompt = prompt.trim();

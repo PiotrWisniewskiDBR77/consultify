@@ -88,6 +88,46 @@ const PATTERNS: Array<{ pattern: RegExp; mode: CanvasStreamMode }> = [
   },
 ];
 
+// ── 1.1-A (06.09) — „Zrob mi plan w okni obok" ───────────────────────
+// Defekt zmierzony przez właściciela: żadna z reguł wyżej nie łapała tej
+// prośby (czasownik „zrób" nie występował na żadnej liście, a „w okni obok"
+// nie jest ani „dokumentem", ani „canvasem"). Wiadomość szła na backend,
+// gdzie regex Teresy trafiał w słowo „plan" i tworzył propozycję
+// `Initiatives · create` — intencja „napisz w oknie obok" była rutowana na
+// „utwórz inicjatywę". Dwie dopisane reguły (obie na KOŃCU, żeby nie ruszyć
+// zachowania istniejących trybów replace/patch):
+//   R1 — czasownik wytwórczy + wskazanie miejsca „obok / w dokumencie /
+//        tutaj / w kanwie" (łapie też literówkę „w okni obok" — kotwicą
+//        jest „obok", nie „oknie");
+//   R2 — czasownik wytwórczy + rzeczownik-wytwór („plan", „harmonogram",
+//        „agenda", „lista", „konspekt"…), bo przy OTWARTYM dokumencie obok
+//        naturalnym miejscem takiej treści jest ten dokument.
+// Obie są bezpieczne dopiero od momentu, gdy skutkiem jest PROPOZYCJA z
+// podglądem („Wstaw do dokumentu"), a nie cichy zapis: fałszywe trafienie
+// kosztuje jedno kliknięcie „Odrzuć", nie zepsuty dokument.
+const PRODUCE_VERB =
+  /\b(zr[oó]b|zrobisz|napisz|napisała?by[sś]|stw[oó]rz|utw[oó]rz|wygeneruj|przygotuj|opracuj|sporz[ąa]d[zź]|rozpisz|rozpisała?by[sś]|dopisz|wpisz|wstaw|uzupe[łl]nij|write|draft|create|make|generate|prepare|compose|outline|sketch)/i;
+
+const DOC_PLACE =
+  /(\bobok\b|\btutaj\b|\bhere\b|\bdokumen\w*|\bkanw\w*|\bcanvas\w*|\bnotatc\w*|\bnotatk\w*|\bdocument\b|\bdoc\b|\bpage\b|\bside panel\b|\bpanel\w*\s+obok)/i;
+
+const PRODUCE_NOUN =
+  /\b(plan\w*|harmonogram\w*|agend\w*|list[eęa]\b|list[eę]\s|konspekt\w*|szkic\w*|podsumowani\w*|raport\w*|analiz\w*|propozycj\w*|roadmap\w*|checklist\w*|instrukcj\w*|scenariusz\w*|plan|schedule|agenda|checklist|outline|summary|report|analysis)/i;
+
+// Weto: gdy prośba nazywa OBIEKT innego modułu („zrób inicjatywę z tego
+// planu", „załóż zadanie"), nowa reguła stoi. Wiadomość ma iść na ścieżkę
+// Teresy, gdzie powstaje propozycja z przyciskiem „Zatwierdź" — tam człowiek
+// decyduje, czy obiekt ma powstać. Weto działa tylko na TĘ regułę: jawne
+// „napisz w dokumencie…" złapały już wcześniejsze, węższe wzorce.
+const MODULE_OBJECT =
+  /\b(inicjatyw\w*|zadani\w*|zadanie\b|decyzj\w*|ryzyk\w*|sygna[łl]\w*|kamie[nń]\w*\s+milow\w*|spotkani\w*|initiative|task|decision|risk|signal|milestone|meeting|ticket)/i;
+
+function isDocumentProduceRequest(text: string): boolean {
+  if (!PRODUCE_VERB.test(text)) return false;
+  if (MODULE_OBJECT.test(text)) return false;
+  return DOC_PLACE.test(text) || PRODUCE_NOUN.test(text);
+}
+
 export function detectCanvasWriteIntent(message: string): CanvasStreamMode | null {
   const text = String(message || '').trim();
   if (!text) return null;
@@ -97,5 +137,9 @@ export function detectCanvasWriteIntent(message: string): CanvasStreamMode | nul
   for (const { pattern, mode } of PATTERNS) {
     if (pattern.test(text)) return mode;
   }
+  // 1.1-A — ostatnia szansa: prośba o wytworzenie treści przy otwartym
+  // dokumencie obok. Celowo NA KOŃCU: nie może wyprzedzić trybu patch ani
+  // replace, których reguły są węższe i bardziej precyzyjne.
+  if (isDocumentProduceRequest(text)) return 'append';
   return null;
 }
