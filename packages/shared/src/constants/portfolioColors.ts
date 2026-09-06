@@ -5,8 +5,6 @@
  * Uses explicit Tailwind classes (no dynamic string interpolation).
  */
 
-import { InitiativeStatus } from '../types';
-
 // ============================================
 // STATUS COLORS
 // ============================================
