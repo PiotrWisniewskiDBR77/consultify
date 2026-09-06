@@ -19,6 +19,68 @@ export function parseCli(argv = process.argv.slice(2)): { org: string; mode: Mod
   return { org, mode: rollback ? { kind: 'rollback', manifest: rollback } : { kind: argv.includes('--apply') ? 'apply' : 'dry-run' } };
 }
 
+// Runda 2 — filtry CLI addytywne (opt-in). Nie zmieniają parseCli/runMain, więc
+// pozostałe skrypty (smieci.ts, oceny.ts, legacy-finanse-2024.ts, sprawdz-silesia.ts)
+// działają bez zmian. Skrypt woła parseFilters() sam, w swoim entrypoincie.
+export type Filters = {
+  tylkoTabele: Set<string> | null;
+  tylkoPowod: string | null;
+  bezTytul: RegExp | null;
+  zZaleznosciami: boolean;
+  planCsv: string | null;
+};
+
+export function defaultFilters(): Filters {
+  return { tylkoTabele: null, tylkoPowod: null, bezTytul: null, zZaleznosciami: false, planCsv: null };
+}
+
+export function parseFilters(argv = process.argv.slice(2)): Filters {
+  const tylkoTabeleRaw = argv.find((x) => x.startsWith('--tylko-tabele='))?.slice('--tylko-tabele='.length);
+  const tylkoPowodRaw = argv.find((x) => x.startsWith('--tylko-powod='))?.slice('--tylko-powod='.length);
+  const bezTytulRaw = argv.find((x) => x.startsWith('--bez-tytul='))?.slice('--bez-tytul='.length);
+  const planCsvRaw = argv.find((x) => x.startsWith('--plan-csv='))?.slice('--plan-csv='.length);
+  let bezTytul: RegExp | null = null;
+  if (bezTytulRaw) {
+    try { bezTytul = new RegExp(bezTytulRaw, 'i'); }
+    catch (e) { throw new Error(`--bez-tytul: niepoprawny regex: ${(e as Error).message}`); }
+  }
+  return {
+    tylkoTabele: tylkoTabeleRaw ? new Set(tylkoTabeleRaw.split(',').map((s) => s.trim()).filter(Boolean)) : null,
+    tylkoPowod: tylkoPowodRaw && tylkoPowodRaw.length ? tylkoPowodRaw : null,
+    bezTytul,
+    zZaleznosciami: argv.includes('--z-zaleznosciami'),
+    planCsv: planCsvRaw && planCsvRaw.length ? planCsvRaw : null,
+  };
+}
+
+export function describeFilters(f: Filters): string {
+  const parts: string[] = [];
+  if (f.tylkoTabele) parts.push(`tylko-tabele=${[...f.tylkoTabele].join(',')}`);
+  if (f.tylkoPowod) parts.push(`tylko-powod="${f.tylkoPowod}"`);
+  if (f.bezTytul) parts.push(`bez-tytul=/${f.bezTytul.source}/i`);
+  if (f.zZaleznosciami) parts.push('z-zaleznosciami');
+  if (f.planCsv) parts.push(`plan-csv=${f.planCsv}`);
+  return parts.length ? parts.join(' · ') : 'brak';
+}
+
+export function filterCandidates<T extends { table: string; title: string; reason: string }>(items: T[], f: Filters): T[] {
+  return items.filter((x) => {
+    if (f.tylkoTabele && !f.tylkoTabele.has(x.table)) return false;
+    if (f.tylkoPowod && !x.reason.toLowerCase().includes(f.tylkoPowod.toLowerCase())) return false;
+    if (f.bezTytul && f.bezTytul.test(x.title)) return false;
+    return true;
+  });
+}
+
+export function writePlanCsv(p: string, rows: { table: string; id: string; title: string; date: string; reason: string; decision: string }[]): string {
+  const abs = path.resolve(p);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  const header = 'table,id,title,date,reason,decision\n';
+  const body = rows.map((r) => [r.table, r.id, r.title, r.date, r.reason, r.decision].map(csvCell).join(',')).join('\n');
+  fs.writeFileSync(abs, header + body + (body ? '\n' : ''));
+  return abs;
+}
+
 export function pool(): Pool {
   if (!process.env.DATABASE_URL) throw new Error('Brak jawnego DATABASE_URL');
   return new Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
