@@ -707,7 +707,7 @@ export const ResultsRoiHub: React.FC = () => {
                 }
               : undefined
             : {
-                label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                label: isPolish ? 'Nowa analiza' : 'New ROI case',
                 icon: Plus,
                 onClick: openCreateModal,
                 testId: 'roi-registry-create-cta',
@@ -753,7 +753,7 @@ export const ResultsRoiHub: React.FC = () => {
                         : isPolish
                           ? 'Żadna sprawa nie pasuje do tego filtra.'
                           : 'No case matches this filter.',
-                    actionLabel: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                    actionLabel: isPolish ? 'Nowa analiza' : 'New ROI case',
                     onAction: openCreateModal,
                   }
               : undefined,
