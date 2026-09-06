@@ -2517,7 +2517,9 @@
         }
       },
       "savedFromChatToast": "Zapisano z czatu w Moich Pomysłach",
-      "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę"
+      "sentToWorkspaceToast": "Pomysł zapisany, otwieram Moją Pracę",
+      "gardenSpark": "Iskra Ogrodu Pomysłów",
+      "plantInGarden": "Zasadź w Ogrodzie Pomysłów"
     },
     "whiteboard": {
       "regionLabel": "Tablica idei z elementami swobodnymi",
@@ -5402,6 +5404,9 @@
       "createdField": "Utworzono",
       "updatedField": "Zaktualizowano",
       "noActivity": "Brak aktywności"
+    },
+    "initiatives": {
+      "createdFromChatToast": "Utworzono inicjatywę z czatu"
     }
   },
   "step1": {
@@ -19083,7 +19088,16 @@
       "more": "więcej",
       "continue": "Kontynuuj",
       "continueInstruction": "Kontynuuj poprzednią odpowiedź od miejsca, w którym się zatrzymała.",
-      "regenerate": "Wygeneruj ponownie"
+      "regenerate": "Wygeneruj ponownie",
+      "copy": "Kopiuj",
+      "edit": "Edytuj",
+      "savedToContext": "Zapisano w Context OS",
+      "saveToContext": "Zapisz w Context OS",
+      "stop": "Zatrzymaj",
+      "speak": "Odczytaj na głos",
+      "toggleResponseActions": "Więcej akcji",
+      "openPanel": "Otwórz w panelu",
+      "download": "Pobierz"
     },
     "coThinker": {
       "title": "Współmyśliciel",
@@ -19218,7 +19232,36 @@
       "created": "Dokument utworzony",
       "rejected": "Propozycja odrzucona",
       "defaultTitle": "Dokument z czatu",
-      "createFailed": "Nie udało się utworzyć propozycji."
+      "createFailed": "Nie udało się utworzyć propozycji.",
+      "proposeDocument": "Zaproponuj kontrolowany dokument",
+      "citations": "Zachowano odwołania do źródeł ({{count}})."
+    },
+    "initiativeHandoff": {
+      "createdDraft": "Szkic inicjatywy jest gotowy. Przejrzyj go przed przekazaniem do realizacji.",
+      "missing": {
+        "project": "projekt",
+        "owner": "właściciel inicjatywy",
+        "problem": "opis problemu"
+      },
+      "readFailed": "Nie udało się zweryfikować szkicu inicjatywy.",
+      "adoptionFailed": "Nie udało się przyjąć.",
+      "state": {
+        "idle": "Oczekuje na zgodę",
+        "checking": "Sprawdzanie",
+        "blocked": "Wymaga uzupełnienia",
+        "ready": "Gotowe",
+        "adopting": "Przyjmowanie",
+        "adopted": "Przyjęto",
+        "failed": "Niepowodzenie"
+      },
+      "title": "Przekazać inicjatywę do realizacji?",
+      "missingPrefix": "Brakuje",
+      "check": "Sprawdź przed przekazaniem",
+      "consent": "Przekaż do realizacji",
+      "complete": "Dokończ w Inicjatywach"
+    },
+    "sources": {
+      "details": "Szczegóły źródeł"
     }
   },
   "aiChat": {
@@ -19628,7 +19671,10 @@
       "missingInfo": "Czego brakowało? (opcjonalnie)",
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi...",
       "submit": "Wyślij opinię",
-      "whatWasGood": "Co było dobre? (opcjonalnie)"
+      "whatWasGood": "Co było dobre? (opcjonalnie)",
+      "saving": "Zapisywanie…",
+      "forbidden": "Nie można zapisać oceny dla tej wiadomości.",
+      "saveFailed": "Nie udało się zapisać oceny."
     },
     "greeting": {
       "morning": "Dzień dobry",
@@ -20004,7 +20050,15 @@
     "noTargetFolders": "Brak innych folderów",
     "teresaProposal": {
       "failed": "Błąd",
-      "reject": "Odrzuć"
+      "reject": "Odrzuć",
+      "approved": "Propozycja Teresy zatwierdzona.",
+      "rejected": "Propozycja Teresy odrzucona.",
+      "undone": "Cofnięto zmianę w skoroszycie Teresy.",
+      "executed": "Przekazanie do Teresy wykonane.",
+      "approve": "Zatwierdź",
+      "execute": "Wykonaj",
+      "undo": "Cofnij zmianę",
+      "navigate": "Otwórz cel"
     },
     "attachments": {
       "allFailed": "❌ Nie udało się przetworzyć załączonych źródeł: {{names}}. AI odpowie bez nich. Prześlij ponownie w obsługiwanym formacie (PDF, TXT, MD, CSV, JSON) lub sprawdź, czy link jest publicznie dostępny.",
@@ -20085,7 +20139,17 @@
     "visibilityHistory": "Historia widoczności",
     "noVisibilityChanges": "Nie zarejestrowano zmian widoczności w organizacji.",
     "visibilityChanged": "Zmieniono widoczność",
-    "visibilityChangedBy": "Osoba"
+    "visibilityChangedBy": "Osoba",
+    "errors": {
+      "messageSaveFailed": "Nie udało się zapisać Twojej wiadomości — ponawiam próbę. Może nie być widoczna po odświeżeniu, dopóki zapis się nie powiedzie."
+    },
+    "citationUnavailable": "Źródło niedostępne",
+    "citationStale": "Źródło może być nieaktualne",
+    "citationNoAccess": "Źródło niedostępne dla Ciebie",
+    "deepSearchSources": "Źródła głębokiego wyszukiwania",
+    "citationExternalBadge": "Zewnętrzne",
+    "citationFragmentEmpty": "Brak dostępnego fragmentu.",
+    "citationOpenSource": "Otwórz źródło"
   },
   "agentAudit": {
     "title": "Warstwa audytu agentów",
@@ -20445,7 +20509,16 @@
     "sources": "źródeł",
     "searchQueries": "Zapytania wyszukiwania",
     "topSources": "Najlepsze źródła",
-    "researching": "Badanie"
+    "researching": "Badanie",
+    "followUp": "Uzupełniające",
+    "deepening": "Pogłębianie badania zapytaniami uzupełniającymi…",
+    "generatingFollowUp": "Analiza luk i generowanie zapytań uzupełniających…",
+    "synthesizingReport": "Syntezowanie pełnego raportu…",
+    "activity": "Aktywność",
+    "waitingForActivity": "Rozpoczynanie badania…",
+    "initialQueries": "Zapytania początkowe",
+    "followUpQueries": "Zapytania uzupełniające (iteracyjne pogłębianie)",
+    "noSourcesYet": "Na razie nie znaleziono źródeł…"
   },
   "admin": {
     "health": {
@@ -32080,17 +32153,37 @@
   },
   "chatProposal": {
     "step": {
-      "more": "więcej"
+      "more": "więcej",
+      "untitled": "Krok"
     },
     "state": {
       "failed": "Błąd",
-      "unknown": "nieznana"
+      "unknown": "nieznana",
+      "proposed": "Propozycja przygotowana",
+      "pendingReview": "Oczekuje na weryfikację",
+      "approved": "Zatwierdzono",
+      "executing": "W trakcie wykonania",
+      "executed": "Wykonano",
+      "audited": "Zaudytowano",
+      "closed": "Zamknięto",
+      "rejected": "Odrzucono"
     },
     "action": {
       "reject": "Odrzuć",
       "approve": "Zatwierdź",
-      "inspect": "Zobacz przebieg"
-    }
+      "inspect": "Zobacz przebieg",
+      "execute": "Wykonaj"
+    },
+    "risk": {
+      "high": "Wysokie ryzyko",
+      "medium": "Średnie ryzyko",
+      "low": "Niskie ryzyko"
+    },
+    "ariaLabel": "Kontrolowana propozycja wykonania",
+    "stepCount": "{{count}} kroków",
+    "expiresAt": "Wygasa {{when}}",
+    "rejectionReason": "Powód",
+    "reviewer": "Zweryfikowane przez {{name}}"
   },
   "focusMode": {
     "all": "Wszystkie",
@@ -32106,7 +32199,20 @@
     "badge": {
       "more": "więcej",
       "sources": "Źródła: {{count}}",
-      "noSources": "Brak cytowanych źródeł"
+      "noSources": "Brak cytowanych źródeł",
+      "ariaLabel": "Źródła odpowiedzi",
+      "dialogLabel": "Źródła tej odpowiedzi",
+      "answeredBy": "Odpowiedź od",
+      "openSource": "Otwórz źródło w nowej karcie: {{title}}",
+      "citationDomain": "Domena źródła: {{domain}}",
+      "noSourcesBody": "Ta odpowiedź opiera się na własnym rozumowaniu modelu, a nie na pobranych dokumentach czy wynikach wyszukiwania.",
+      "reasoningToggle": "Dlaczego taka odpowiedź?",
+      "copyReasoningAriaLabel": "Skopiuj obserwacje rozumowania do schowka",
+      "copied": "Skopiowano",
+      "copyFailed": "Nie udało się skopiować",
+      "copy": "Kopiuj",
+      "disclaimer": "Źródła pokazują, co zostało pobrane. Zawsze weryfikuj twierdzenia, które są dla Ciebie ważne.",
+      "copyCitationsAriaLabel": "Skopiuj listę cytowań do schowka"
     }
   },
   "voice": {
@@ -45052,5 +45158,44 @@
       "openTeresa": "Teresa",
       "teresaEmpty": "Zaznacz wiersz albo zapytaj o cokolwiek z tej listy."
     }
+  },
+  "policy": {
+    "refusal": {
+      "title": "Żądanie zablokowane przez politykę",
+      "nextSteps": "Co zrobić dalej"
+    },
+    "uncertainty": {
+      "title": "Znacznik niepewności",
+      "body": "Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających odwołań do dostępnych źródeł."
+    },
+    "noSources": {
+      "title": "Nie znaleziono źródeł",
+      "body": "Tej odpowiedzi nie udało się zweryfikować względem dostępnych źródeł w Twoim zakresie dostępu."
+    }
+  },
+  "stream": {
+    "retrying": "Problem z połączeniem, ponawiam próbę…",
+    "complete": "Odpowiedź zakończona",
+    "costEstimateTooltip": "Szacowany koszt AI tej odpowiedzi na podstawie zużycia tokenów",
+    "stoppedPartial": "Odpowiedź zatrzymana. Powyżej pokazano częściową odpowiedź.",
+    "cancelled": "Odpowiedź anulowana."
+  },
+  "deepThinking": {
+    "hint": "To wygląda na problem strategiczny. Tryb Głębokiego Myślenia może dać ustrukturyzowaną analizę gotową do decyzji.",
+    "enableHint": "Włącz Głębokie Myślenie",
+    "dismissHint": "Nie teraz",
+    "ctaTitle": "Co chcesz zrobić z tym wynikiem?",
+    "saving": "Zapisywanie…",
+    "saveDecision": "Zapisz jako decyzję",
+    "convertInitiative": "Przekształć w inicjatywę",
+    "exportReport": "Eksportuj raport",
+    "saveToNotebook": "Zapisz w Notatniku",
+    "listenBrief": "Odsłuchaj podsumowanie",
+    "decisionSaved": "Decyzja zapisana pomyślnie",
+    "interimInsight": "Wstępny wniosek — wyłaniają się dominujące ścieżki:",
+    "narrowFocus": "Zawęź uwagę do pierwszej ścieżki",
+    "narrowFocusBtn": "Zawęź uwagę",
+    "goDeeper": "Zgłęb temat",
+    "continueDeeper": "Przejdź do pełnego raportu"
   }
 }

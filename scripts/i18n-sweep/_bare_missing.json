@@ -276,14 +276,6 @@
     "src/components/AIChat/AgentWorkshopPalette.tsx"
   ],
   [
-    "chat.actions.openPanel",
-    "src/components/AIChat/ArtifactBadge.tsx"
-  ],
-  [
-    "chat.actions.download",
-    "src/components/AIChat/ArtifactBadge.tsx"
-  ],
-  [
     "artifacts.hidePreview",
     "src/components/AIChat/Artifacts/ArtifactEditor.tsx"
   ],
@@ -616,71 +608,11 @@
     "src/components/AIChat/BranchSelector.tsx"
   ],
   [
-    "canvas.aiMenu.tooLong",
-    "src/components/AIChat/CanvasEditor/CanvasRichEditor.tsx"
-  ],
-  [
-    "aiChat.folderColor",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.folder",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.confirmDeleteFolderWithConvs",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.confirmDeleteFolder",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.deleteFolderFailed",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.confirmMovePrivateToOrganization",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.visibilityConsentRecorded",
-    "src/components/AIChat/ChatHistorySidebar.tsx"
-  ],
-  [
-    "aiChat.citationUnavailable",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.citationStale",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.citationNoAccess",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.deepSearchSources",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.citationExternalBadge",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
     "aiChat.citationFragmentBadge",
     "src/components/AIChat/CitationList.tsx"
   ],
   [
     "aiChat.citationFragmentOpenLabel",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.citationFragmentEmpty",
-    "src/components/AIChat/CitationList.tsx"
-  ],
-  [
-    "aiChat.citationOpenSource",
     "src/components/AIChat/CitationList.tsx"
   ],
   [
@@ -714,26 +646,6 @@
   [
     "code.executing",
     "src/components/AIChat/CodeInterpreter/CodeExecutionBlock.tsx"
-  ],
-  [
-    "aiChat.exportTooLarge",
-    "src/components/AIChat/ConversationActions.tsx"
-  ],
-  [
-    "aiChat.actions.export",
-    "src/components/AIChat/ConversationActions.tsx"
-  ],
-  [
-    "aiChat.confirmDeleteDestructive",
-    "src/components/AIChat/ConversationActions.tsx"
-  ],
-  [
-    "aiChat.confirmPurge",
-    "src/components/AIChat/ConversationActions.tsx"
-  ],
-  [
-    "aiChat.actions.purge",
-    "src/components/AIChat/ConversationActions.tsx"
   ],
   [
     "aiChat.toggleGroup",
@@ -774,162 +686,6 @@
   [
     "aiChat.startVoiceConversation",
     "src/components/AIChat/EnhancedChatInput.tsx"
-  ],
-  [
-    "chatProposal.step.untitled",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.proposed",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.pendingReview",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.approved",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.executing",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.executed",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.audited",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.closed",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.state.rejected",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.risk.high",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.risk.medium",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.risk.low",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.ariaLabel",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.stepCount",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.expiresAt",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.rejectionReason",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.reviewer",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chatProposal.action.execute",
-    "src/components/AIChat/ExecutionProposalMessage.tsx"
-  ],
-  [
-    "chat.governedHandoff.citations",
-    "src/components/AIChat/GovernedChatHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.missing.project",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.missing.owner",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.missing.problem",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.readFailed",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.adoptionFailed",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.idle",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.checking",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.blocked",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.ready",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.adopting",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.adopted",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.state.failed",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.title",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.missingPrefix",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.check",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.consent",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.complete",
-    "src/components/AIChat/GovernedInitiativeHandoffCard.tsx"
-  ],
-  [
-    "aiChat.feedback.saving",
-    "src/components/AIChat/InlineResponseFeedback.tsx"
-  ],
-  [
-    "aiChat.feedback.forbidden",
-    "src/components/AIChat/InlineResponseFeedback.tsx"
-  ],
-  [
-    "aiChat.feedback.saveFailed",
-    "src/components/AIChat/InlineResponseFeedback.tsx"
   ],
   [
     "focusMode.pmoDocs",
@@ -1216,178 +972,6 @@
     "src/components/AIChat/KimiWorkspace/tabeleShell/TabeleMelsView.tsx"
   ],
   [
-    "policy.refusal.title",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "policy.refusal.nextSteps",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "policy.uncertainty.title",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "policy.uncertainty.body",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "policy.noSources.title",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "policy.noSources.body",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "myWork.ideas.gardenSpark",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "myWork.ideas.plantInGarden",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "stream.retrying",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "stream.complete",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "stream.costEstimateTooltip",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "stream.stoppedPartial",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "stream.cancelled",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.copy",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.edit",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.savedToContext",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.saveToContext",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.stop",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.speak",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.actions.toggleResponseActions",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.governedHandoff.proposeDocument",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "chat.sources.details",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.hint",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.enableHint",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.dismissHint",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.ctaTitle",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.saving",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.saveDecision",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.convertInitiative",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.exportReport",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.saveToNotebook",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.listenBrief",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.decisionSaved",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.interimInsight",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.narrowFocus",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.narrowFocusBtn",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.goDeeper",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "deepThinking.continueDeeper",
-    "src/components/AIChat/MessageRenderer.tsx"
-  ],
-  [
-    "aiChat.visibilityHistoryUnavailable",
-    "src/components/AIChat/MoveToProjectModal.tsx"
-  ],
-  [
-    "aiChat.visibilityHistory",
-    "src/components/AIChat/MoveToProjectModal.tsx"
-  ],
-  [
-    "aiChat.noVisibilityChanges",
-    "src/components/AIChat/MoveToProjectModal.tsx"
-  ],
-  [
-    "aiChat.visibilityChanged",
-    "src/components/AIChat/MoveToProjectModal.tsx"
-  ],
-  [
-    "aiChat.visibilityChangedBy",
-    "src/components/AIChat/MoveToProjectModal.tsx"
-  ],
-  [
     "trust.privateMode.details.title",
     "src/components/AIChat/PrivateModeDetails.tsx"
   ],
@@ -1476,23 +1060,7 @@
     "src/components/AIChat/ResearchClarification.tsx"
   ],
   [
-    "research.followUp",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
     "research.searchingRound",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.deepening",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.generatingFollowUp",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.synthesizingReport",
     "src/components/AIChat/ResearchProgress.tsx"
   ],
   [
@@ -1500,223 +1068,11 @@
     "src/components/AIChat/ResearchProgress.tsx"
   ],
   [
-    "research.activity",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.waitingForActivity",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.initialQueries",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.followUpQueries",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
-    "research.noSourcesYet",
-    "src/components/AIChat/ResearchProgress.tsx"
-  ],
-  [
     "aiChat.speaking",
     "src/components/AIChat/TTSIndicator.tsx"
   ],
   [
-    "aiChat.teresaProposal.approved",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.rejected",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.undone",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.executed",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.approve",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.execute",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.undo",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "aiChat.teresaProposal.navigate",
-    "src/components/AIChat/TeresaProposalCard.tsx"
-  ],
-  [
-    "trust.badge.ariaLabel",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.dialogLabel",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.answeredBy",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.openSource",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.citationDomain",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.noSourcesBody",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.reasoningToggle",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.copyReasoningAriaLabel",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.copied",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.copyFailed",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.copy",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.disclaimer",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "trust.badge.copyCitationsAriaLabel",
-    "src/components/AIChat/TrustBadge.tsx"
-  ],
-  [
-    "chat.governedHandoff.defaultTitle",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.governedHandoff.createFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "myWork.ideas.savedFromChatToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "myWork.ideas.sentToWorkspaceToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "myWork.notebook.savedFromChatToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
     "myWork.tasks.createdFromChatToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "myWork.decisions.createdFromChatToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.initiativeHandoff.createdDraft",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "myWork.initiatives.createdFromChatToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.suggestions.generateReport",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.suggestions.generatePresentation",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.suggestions.browseTemplates",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.suggestions.useTemplate",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "chat.suggestions.recordKpi",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.errors.messageSaveFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.loadFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.switchFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.createFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.renameFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.deleteFailed",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "branch.backToParent",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.business",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "voice.bargeInToast",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.muteNow",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.streamError",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.quickClicks.brief.prompt",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.workPanel.title",
-    "src/components/AIChat/UnifiedChatPanel.tsx"
-  ],
-  [
-    "aiChat.workPanel.resizeDivider",
     "src/components/AIChat/UnifiedChatPanel.tsx"
   ],
   [
@@ -2672,26 +2028,6 @@
     "src/components/DocumentStudio/DocumentStudioView.tsx"
   ],
   [
-    "common.status.draft",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "common.status.review",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "common.status.approved",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "finance.blocked",
-    "src/components/Economics/FinanceHub.tsx"
-  ],
-  [
-    "finance.model.manualModeNotice",
-    "src/components/Economics/modals/CreateModelModal.tsx"
-  ],
-  [
     "execution.budget.entries",
     "src/components/Execution/BudgetControlPanel.tsx"
   ],
@@ -2706,14 +2042,6 @@
   [
     "feedback.ai.unavailable",
     "src/components/Feedback/FeedbackSidePanel.tsx"
-  ],
-  [
-    "finance.model.seededFromManualBaseline",
-    "src/components/Finance/FinancialModelWorkspace.tsx"
-  ],
-  [
-    "finance.model.manualBaselineHint",
-    "src/components/Finance/FinancialModelWorkspace.tsx"
   ],
   [
     "common.reload",
@@ -5564,6 +4892,10 @@
     "src/components/Presentations/DeckBuilder/DeckBuilder.tsx"
   ],
   [
+    "presentations.builder.blocks.headingDefaultText",
+    "src/components/Presentations/DeckBuilder/blocks/HeadingBlock.tsx"
+  ],
+  [
     "presentations.templateArchitect.imageStyleLabel",
     "src/components/Presentations/PresentationTemplateArchitectView.tsx"
   ],
@@ -6052,24 +5384,16 @@
     "src/components/Reports/RichTextEditor.tsx"
   ],
   [
+    "results.searchTab",
+    "src/components/ResultsVNext/resultsDomainNavigation.ts"
+  ],
+  [
     "survey.readOnlyTitle",
     "src/components/Survey/SurveyShell.tsx"
   ],
   [
     "survey.readOnlyHint",
     "src/components/Survey/SurveyShell.tsx"
-  ],
-  [
-    "system.demoDataTitle",
-    "src/components/SystemHealth.tsx"
-  ],
-  [
-    "system.demoData",
-    "src/components/SystemHealth.tsx"
-  ],
-  [
-    "system.dataAccess",
-    "src/components/SystemHealth.tsx"
   ],
   [
     "analytics.noData",
@@ -6120,51 +5444,11 @@
     "src/components/assessment/AssessmentOutputsTab.tsx"
   ],
   [
-    "assessment.outputs.forbidden.title",
-    "src/components/assessment/AssessmentOutputsTab.tsx"
-  ],
-  [
-    "assessment.outputs.forbidden.description",
-    "src/components/assessment/AssessmentOutputsTab.tsx"
-  ],
-  [
-    "assessment.outputs.emptyState.title",
-    "src/components/assessment/AssessmentOutputsTab.tsx"
-  ],
-  [
-    "assessment.outputs.emptyState.description",
-    "src/components/assessment/AssessmentOutputsTab.tsx"
-  ],
-  [
     "assessment.outputs.actions.viewLineage",
     "src/components/assessment/AssessmentOutputsTab.tsx"
   ],
   [
     "assessment.lineage.title",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.forbidden.title",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.forbidden.description",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.error.title",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.error.description",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.unrecognized.title",
-    "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
-  ],
-  [
-    "assessment.lineage.unrecognized.description",
     "src/components/assessment/artifacts/ArtifactLineagePanel.tsx"
   ],
   [
@@ -6246,6 +5530,10 @@
   [
     "assessment.workflowStages.daysWaiting",
     "src/components/assessment/manage/WorkflowStagesTable.tsx"
+  ],
+  [
+    "assessment.report.lifecycleSessionRecord",
+    "src/components/assessment/report/AssessmentReportDocument.tsx"
   ],
   [
     "assessmentModule.drdRadar.current",
@@ -10320,6 +9608,10 @@
     "src/components/shared/NModeSections/RiskCanvas.tsx"
   ],
   [
+    "list.rightPanel.tabs",
+    "src/components/shared/PreviewPane/JedenPrawyPanel.tsx"
+  ],
+  [
     "common.moreOptions",
     "src/components/shared/PreviewPane/PreviewAIHintStrip.tsx"
   ],
@@ -10341,6 +9633,14 @@
   ],
   [
     "initiative.loadFailedDesc",
+    "src/components/shared/states/ErrorState.tsx"
+  ],
+  [
+    "common.loadingTimeoutTitle",
+    "src/components/shared/states/ErrorState.tsx"
+  ],
+  [
+    "common.loadingTimeoutDescription",
     "src/components/shared/states/ErrorState.tsx"
   ],
   [

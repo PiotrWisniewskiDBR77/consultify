@@ -1,0 +1,478 @@
+{
+  "chat.initiativeHandoff.createdDraft": {
+    "en": "The initiative draft is ready. Review it before passing it to execution.",
+    "pl": "Szkic inicjatywy jest gotowy. Przejrzyj go przed przekazaniem do realizacji."
+  },
+  "myWork.initiatives.createdFromChatToast": {
+    "en": "Initiative created from chat",
+    "pl": "Utworzono inicjatywę z czatu"
+  },
+  "aiChat.errors.messageSaveFailed": {
+    "en": "Couldn't save your message — retrying. It may not appear after a refresh until the save succeeds.",
+    "pl": "Nie udało się zapisać Twojej wiadomości — ponawiam próbę. Może nie być widoczna po odświeżeniu, dopóki zapis się nie powiedzie."
+  },
+  "policy.refusal.title": {
+    "en": "Request blocked by policy",
+    "pl": "Żądanie zablokowane przez politykę"
+  },
+  "policy.refusal.nextSteps": {
+    "en": "What to do next",
+    "pl": "Co zrobić dalej"
+  },
+  "policy.uncertainty.title": {
+    "en": "Uncertainty marker",
+    "pl": "Znacznik niepewności"
+  },
+  "policy.uncertainty.body": {
+    "en": "This response includes factual claims without sufficient citations from available sources.",
+    "pl": "Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających odwołań do dostępnych źródeł."
+  },
+  "policy.noSources.title": {
+    "en": "No sources found",
+    "pl": "Nie znaleziono źródeł"
+  },
+  "policy.noSources.body": {
+    "en": "This answer could not be verified against available sources in your allowed scope.",
+    "pl": "Tej odpowiedzi nie udało się zweryfikować względem dostępnych źródeł w Twoim zakresie dostępu."
+  },
+  "myWork.ideas.gardenSpark": {
+    "en": "Idea Garden Spark",
+    "pl": "Iskra Ogrodu Pomysłów"
+  },
+  "myWork.ideas.plantInGarden": {
+    "en": "Plant in Idea Garden",
+    "pl": "Zasadź w Ogrodzie Pomysłów"
+  },
+  "stream.retrying": {
+    "en": "Connection issue, retrying...",
+    "pl": "Problem z połączeniem, ponawiam próbę…"
+  },
+  "stream.complete": {
+    "en": "Response complete",
+    "pl": "Odpowiedź zakończona"
+  },
+  "stream.costEstimateTooltip": {
+    "en": "Estimated AI cost for this response based on token usage",
+    "pl": "Szacowany koszt AI tej odpowiedzi na podstawie zużycia tokenów"
+  },
+  "stream.stoppedPartial": {
+    "en": "Response stopped. Partial answer shown above.",
+    "pl": "Odpowiedź zatrzymana. Powyżej pokazano częściową odpowiedź."
+  },
+  "stream.cancelled": {
+    "en": "Response cancelled.",
+    "pl": "Odpowiedź anulowana."
+  },
+  "chat.actions.copy": {
+    "en": "Copy",
+    "pl": "Kopiuj"
+  },
+  "chat.actions.edit": {
+    "en": "Edit",
+    "pl": "Edytuj"
+  },
+  "chat.actions.savedToContext": {
+    "en": "Saved to Context OS",
+    "pl": "Zapisano w Context OS"
+  },
+  "chat.actions.saveToContext": {
+    "en": "Save to Context OS",
+    "pl": "Zapisz w Context OS"
+  },
+  "chat.actions.stop": {
+    "en": "Stop",
+    "pl": "Zatrzymaj"
+  },
+  "chat.actions.speak": {
+    "en": "Speak",
+    "pl": "Odczytaj na głos"
+  },
+  "chat.actions.toggleResponseActions": {
+    "en": "More actions",
+    "pl": "Więcej akcji"
+  },
+  "chat.governedHandoff.proposeDocument": {
+    "en": "Propose governed document",
+    "pl": "Zaproponuj kontrolowany dokument"
+  },
+  "chat.sources.details": {
+    "en": "Sources details",
+    "pl": "Szczegóły źródeł"
+  },
+  "deepThinking.hint": {
+    "en": "This looks like a strategic problem. Deep Thinking Mode can provide structured, decision-grade analysis.",
+    "pl": "To wygląda na problem strategiczny. Tryb Głębokiego Myślenia może dać ustrukturyzowaną analizę gotową do decyzji."
+  },
+  "deepThinking.enableHint": {
+    "en": "Enable Deep Thinking",
+    "pl": "Włącz Głębokie Myślenie"
+  },
+  "deepThinking.dismissHint": {
+    "en": "Not now",
+    "pl": "Nie teraz"
+  },
+  "deepThinking.ctaTitle": {
+    "en": "What do you want to do with this output?",
+    "pl": "Co chcesz zrobić z tym wynikiem?"
+  },
+  "deepThinking.saving": {
+    "en": "Saving…",
+    "pl": "Zapisywanie…"
+  },
+  "deepThinking.saveDecision": {
+    "en": "Save as Decision",
+    "pl": "Zapisz jako decyzję"
+  },
+  "deepThinking.convertInitiative": {
+    "en": "Convert to Initiative",
+    "pl": "Przekształć w inicjatywę"
+  },
+  "deepThinking.exportReport": {
+    "en": "Export Report",
+    "pl": "Eksportuj raport"
+  },
+  "deepThinking.saveToNotebook": {
+    "en": "Save to Notebook",
+    "pl": "Zapisz w Notatniku"
+  },
+  "deepThinking.listenBrief": {
+    "en": "Listen to Brief",
+    "pl": "Odsłuchaj podsumowanie"
+  },
+  "deepThinking.decisionSaved": {
+    "en": "Decision saved successfully",
+    "pl": "Decyzja zapisana pomyślnie"
+  },
+  "deepThinking.interimInsight": {
+    "en": "Preliminary insight — dominant paths emerging:",
+    "pl": "Wstępny wniosek — wyłaniają się dominujące ścieżki:"
+  },
+  "deepThinking.narrowFocus": {
+    "en": "Narrow focus on the first path",
+    "pl": "Zawęź uwagę do pierwszej ścieżki"
+  },
+  "deepThinking.narrowFocusBtn": {
+    "en": "Narrow focus",
+    "pl": "Zawęź uwagę"
+  },
+  "deepThinking.goDeeper": {
+    "en": "Go deeper",
+    "pl": "Zgłęb temat"
+  },
+  "deepThinking.continueDeeper": {
+    "en": "Continue to full report",
+    "pl": "Przejdź do pełnego raportu"
+  },
+  "chat.actions.openPanel": {
+    "en": "Open in panel",
+    "pl": "Otwórz w panelu"
+  },
+  "chat.actions.download": {
+    "en": "Download",
+    "pl": "Pobierz"
+  },
+  "aiChat.citationUnavailable": {
+    "en": "Source unavailable",
+    "pl": "Źródło niedostępne"
+  },
+  "aiChat.citationStale": {
+    "en": "Source may be outdated",
+    "pl": "Źródło może być nieaktualne"
+  },
+  "aiChat.citationNoAccess": {
+    "en": "Source not accessible to you",
+    "pl": "Źródło niedostępne dla Ciebie"
+  },
+  "aiChat.deepSearchSources": {
+    "en": "Deep search sources",
+    "pl": "Źródła głębokiego wyszukiwania"
+  },
+  "aiChat.citationExternalBadge": {
+    "en": "External",
+    "pl": "Zewnętrzne"
+  },
+  "aiChat.citationFragmentEmpty": {
+    "en": "No excerpt available.",
+    "pl": "Brak dostępnego fragmentu."
+  },
+  "aiChat.citationOpenSource": {
+    "en": "Open source",
+    "pl": "Otwórz źródło"
+  },
+  "chatProposal.step.untitled": {
+    "en": "Step",
+    "pl": "Krok"
+  },
+  "chatProposal.state.proposed": {
+    "en": "Proposal drafted",
+    "pl": "Propozycja przygotowana"
+  },
+  "chatProposal.state.pendingReview": {
+    "en": "Awaiting review",
+    "pl": "Oczekuje na weryfikację"
+  },
+  "chatProposal.state.approved": {
+    "en": "Approved",
+    "pl": "Zatwierdzono"
+  },
+  "chatProposal.state.executing": {
+    "en": "Executing",
+    "pl": "W trakcie wykonania"
+  },
+  "chatProposal.state.executed": {
+    "en": "Executed",
+    "pl": "Wykonano"
+  },
+  "chatProposal.state.audited": {
+    "en": "Audited",
+    "pl": "Zaudytowano"
+  },
+  "chatProposal.state.closed": {
+    "en": "Closed",
+    "pl": "Zamknięto"
+  },
+  "chatProposal.state.rejected": {
+    "en": "Rejected",
+    "pl": "Odrzucono"
+  },
+  "chatProposal.risk.high": {
+    "en": "High risk",
+    "pl": "Wysokie ryzyko"
+  },
+  "chatProposal.risk.medium": {
+    "en": "Medium risk",
+    "pl": "Średnie ryzyko"
+  },
+  "chatProposal.risk.low": {
+    "en": "Low risk",
+    "pl": "Niskie ryzyko"
+  },
+  "chatProposal.ariaLabel": {
+    "en": "Governed execution proposal",
+    "pl": "Kontrolowana propozycja wykonania"
+  },
+  "chatProposal.stepCount": {
+    "en": "{{count}} steps",
+    "pl": "{{count}} kroków"
+  },
+  "chatProposal.expiresAt": {
+    "en": "Expires {{when}}",
+    "pl": "Wygasa {{when}}"
+  },
+  "chatProposal.rejectionReason": {
+    "en": "Reason",
+    "pl": "Powód"
+  },
+  "chatProposal.reviewer": {
+    "en": "Reviewed by {{name}}",
+    "pl": "Zweryfikowane przez {{name}}"
+  },
+  "chatProposal.action.execute": {
+    "en": "Execute",
+    "pl": "Wykonaj"
+  },
+  "chat.governedHandoff.citations": {
+    "en": "{{count}} source references preserved.",
+    "pl": "Zachowano odwołania do źródeł ({{count}})."
+  },
+  "chat.initiativeHandoff.missing.project": {
+    "en": "project",
+    "pl": "projekt"
+  },
+  "chat.initiativeHandoff.missing.owner": {
+    "en": "initiative owner",
+    "pl": "właściciel inicjatywy"
+  },
+  "chat.initiativeHandoff.missing.problem": {
+    "en": "problem statement",
+    "pl": "opis problemu"
+  },
+  "chat.initiativeHandoff.readFailed": {
+    "en": "Could not verify the initiative draft.",
+    "pl": "Nie udało się zweryfikować szkicu inicjatywy."
+  },
+  "chat.initiativeHandoff.adoptionFailed": {
+    "en": "Adoption failed.",
+    "pl": "Nie udało się przyjąć."
+  },
+  "chat.initiativeHandoff.state.idle": {
+    "en": "Awaiting consent",
+    "pl": "Oczekuje na zgodę"
+  },
+  "chat.initiativeHandoff.state.checking": {
+    "en": "Checking",
+    "pl": "Sprawdzanie"
+  },
+  "chat.initiativeHandoff.state.blocked": {
+    "en": "Needs details",
+    "pl": "Wymaga uzupełnienia"
+  },
+  "chat.initiativeHandoff.state.ready": {
+    "en": "Ready",
+    "pl": "Gotowe"
+  },
+  "chat.initiativeHandoff.state.adopting": {
+    "en": "Adopting",
+    "pl": "Przyjmowanie"
+  },
+  "chat.initiativeHandoff.state.adopted": {
+    "en": "Adopted",
+    "pl": "Przyjęto"
+  },
+  "chat.initiativeHandoff.state.failed": {
+    "en": "Failed",
+    "pl": "Niepowodzenie"
+  },
+  "chat.initiativeHandoff.title": {
+    "en": "Pass the initiative to execution?",
+    "pl": "Przekazać inicjatywę do realizacji?"
+  },
+  "chat.initiativeHandoff.missingPrefix": {
+    "en": "Missing",
+    "pl": "Brakuje"
+  },
+  "chat.initiativeHandoff.check": {
+    "en": "Check before handoff",
+    "pl": "Sprawdź przed przekazaniem"
+  },
+  "chat.initiativeHandoff.consent": {
+    "en": "Pass to execution",
+    "pl": "Przekaż do realizacji"
+  },
+  "chat.initiativeHandoff.complete": {
+    "en": "Complete in Initiatives",
+    "pl": "Dokończ w Inicjatywach"
+  },
+  "aiChat.feedback.saving": {
+    "en": "Saving…",
+    "pl": "Zapisywanie…"
+  },
+  "aiChat.feedback.forbidden": {
+    "en": "This message's rating can't be saved.",
+    "pl": "Nie można zapisać oceny dla tej wiadomości."
+  },
+  "aiChat.feedback.saveFailed": {
+    "en": "Couldn't save the rating.",
+    "pl": "Nie udało się zapisać oceny."
+  },
+  "research.followUp": {
+    "en": "Follow-up",
+    "pl": "Uzupełniające"
+  },
+  "research.deepening": {
+    "en": "Deepening research with follow-up queries...",
+    "pl": "Pogłębianie badania zapytaniami uzupełniającymi…"
+  },
+  "research.generatingFollowUp": {
+    "en": "Analyzing gaps and generating follow-up queries...",
+    "pl": "Analiza luk i generowanie zapytań uzupełniających…"
+  },
+  "research.synthesizingReport": {
+    "en": "Synthesizing comprehensive report...",
+    "pl": "Syntezowanie pełnego raportu…"
+  },
+  "research.activity": {
+    "en": "Activity",
+    "pl": "Aktywność"
+  },
+  "research.waitingForActivity": {
+    "en": "Starting research...",
+    "pl": "Rozpoczynanie badania…"
+  },
+  "research.initialQueries": {
+    "en": "Initial Queries",
+    "pl": "Zapytania początkowe"
+  },
+  "research.followUpQueries": {
+    "en": "Follow-up Queries (Iterative Deepening)",
+    "pl": "Zapytania uzupełniające (iteracyjne pogłębianie)"
+  },
+  "research.noSourcesYet": {
+    "en": "No sources found yet...",
+    "pl": "Na razie nie znaleziono źródeł…"
+  },
+  "aiChat.teresaProposal.approved": {
+    "en": "Teresa proposal approved.",
+    "pl": "Propozycja Teresy zatwierdzona."
+  },
+  "aiChat.teresaProposal.rejected": {
+    "en": "Teresa proposal rejected.",
+    "pl": "Propozycja Teresy odrzucona."
+  },
+  "aiChat.teresaProposal.undone": {
+    "en": "Teresa workbook change undone.",
+    "pl": "Cofnięto zmianę w skoroszycie Teresy."
+  },
+  "aiChat.teresaProposal.executed": {
+    "en": "Teresa handoff executed.",
+    "pl": "Przekazanie do Teresy wykonane."
+  },
+  "aiChat.teresaProposal.approve": {
+    "en": "Approve",
+    "pl": "Zatwierdź"
+  },
+  "aiChat.teresaProposal.execute": {
+    "en": "Execute",
+    "pl": "Wykonaj"
+  },
+  "aiChat.teresaProposal.undo": {
+    "en": "Undo change",
+    "pl": "Cofnij zmianę"
+  },
+  "aiChat.teresaProposal.navigate": {
+    "en": "Open target",
+    "pl": "Otwórz cel"
+  },
+  "trust.badge.ariaLabel": {
+    "en": "Response sources",
+    "pl": "Źródła odpowiedzi"
+  },
+  "trust.badge.dialogLabel": {
+    "en": "Sources for this response",
+    "pl": "Źródła tej odpowiedzi"
+  },
+  "trust.badge.answeredBy": {
+    "en": "Answered by",
+    "pl": "Odpowiedź od"
+  },
+  "trust.badge.openSource": {
+    "en": "Open source in a new tab: {{title}}",
+    "pl": "Otwórz źródło w nowej karcie: {{title}}"
+  },
+  "trust.badge.citationDomain": {
+    "en": "Source domain: {{domain}}",
+    "pl": "Domena źródła: {{domain}}"
+  },
+  "trust.badge.noSourcesBody": {
+    "en": "This reply is based on the model’s own reasoning, not on retrieved documents or search results.",
+    "pl": "Ta odpowiedź opiera się na własnym rozumowaniu modelu, a nie na pobranych dokumentach czy wynikach wyszukiwania."
+  },
+  "trust.badge.reasoningToggle": {
+    "en": "Why this answer?",
+    "pl": "Dlaczego taka odpowiedź?"
+  },
+  "trust.badge.copyReasoningAriaLabel": {
+    "en": "Copy reasoning observations to clipboard",
+    "pl": "Skopiuj obserwacje rozumowania do schowka"
+  },
+  "trust.badge.copied": {
+    "en": "Copied",
+    "pl": "Skopiowano"
+  },
+  "trust.badge.copyFailed": {
+    "en": "Copy failed",
+    "pl": "Nie udało się skopiować"
+  },
+  "trust.badge.copy": {
+    "en": "Copy",
+    "pl": "Kopiuj"
+  },
+  "trust.badge.disclaimer": {
+    "en": "Sources tell you what was retrieved. Always verify claims that matter to you.",
+    "pl": "Źródła pokazują, co zostało pobrane. Zawsze weryfikuj twierdzenia, które są dla Ciebie ważne."
+  },
+  "trust.badge.copyCitationsAriaLabel": {
+    "en": "Copy citation list to clipboard",
+    "pl": "Skopiuj listę cytowań do schowka"
+  }
+}
