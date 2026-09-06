@@ -136,11 +136,13 @@ const cell = (value: string) => String(value ?? '').replace(/\|/g, '\\|').replac
  */
 export function snapshotToMarkdown(
   snapshot: ExecutionReportSnapshotPayload,
-  level: ExecutionReportLevel
+  level: ExecutionReportLevel,
+  statusLabel = 'Szkic'
 ): string {
   const lines: string[] = [];
   if (snapshot.subtitle) lines.push(`_${snapshot.subtitle}_`, '');
   lines.push(
+    `**Status:** ${statusLabel}  `,
     `**Poziom raportu:** ${LEVEL_LABEL_PL[level]}  `,
     `**Okres:** ${formatDatePl(snapshot.period.start)} – ${formatDatePl(snapshot.period.end)}  `,
     `**Stan danych na:** ${formatDatePl(snapshot.asOf)}  `,
@@ -180,6 +182,63 @@ export function snapshotToMarkdown(
     }
   }
   return lines.join('\n');
+}
+
+/**
+ * Sanitizer wejścia serwera koduje encje HTML w CIELE ŻĄDANIA, więc migawka wysłana
+ * z przeglądarki jako „Compliance & GDPR Audit" ląduje w bazie jako
+ * „Compliance &amp; GDPR Audit" (zmierzone 06.09 na pierwszym eksporcie PDF).
+ * Odkodowujemy przy ODCZYCIE — jedno miejsce dla dokumentu na ekranie i dla pliku.
+ * Wynik jest zwykłym tekstem: React go ponownie escapuje, a DOCX/PDF nie interpretują HTML.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+function decodeEntitiesOnce(value: string): string {
+  return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
+    if (body[0] === '#') {
+      const isHex = body[1] === 'x' || body[1] === 'X';
+      const code = Number.parseInt(isHex ? body.slice(2) : body.slice(1), isHex ? 16 : 10);
+      if (Number.isFinite(code) && code > 0 && code <= 0x10ffff) {
+        try {
+          return String.fromCodePoint(code);
+        } catch {
+          return match;
+        }
+      }
+      return match;
+    }
+    const named = NAMED_ENTITIES[body.toLowerCase()];
+    return named !== undefined ? named : match;
+  });
+}
+export function decodeSnapshotEntities<T>(value: T): T {
+  if (typeof value === 'string') {
+    let current = value;
+    for (let i = 0; i < 5; i += 1) {
+      const next = decodeEntitiesOnce(current);
+      if (next === current) break;
+      current = next;
+    }
+    return current as unknown as T;
+  }
+  if (Array.isArray(value)) return value.map((item) => decodeSnapshotEntities(item)) as unknown as T;
+  // Daty z pg wracają jako `Date`. Bez tego wyjątku rekurencja zamieniała je w `{}`
+  // i rejestr pokazywał „UNKNOWN – UNKNOWN" w kolumnie Okres (zmierzone na zrzucie 02).
+  if (value instanceof Date) return value;
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = decodeSnapshotEntities(item);
+    }
+    return out as unknown as T;
+  }
+  return value;
 }
 
 const rowToDto = (row: any) => ({
@@ -256,7 +315,7 @@ router.get(
         ORDER BY created_at DESC`,
       [orgId]
     )) as any[];
-    res.json({ items: rows.map(rowToDto) });
+    res.json({ items: rows.map((row) => decodeSnapshotEntities(rowToDto(row))) });
   })
 );
 
@@ -272,7 +331,10 @@ router.get(
       res.status(404).json({ error: 'NOT_FOUND' });
       return;
     }
-    res.json({ ...rowToDto(row), payload: parseMaybeJson<any>(row.payload, {}) });
+    res.json({
+      ...rowToDto(row),
+      payload: decodeSnapshotEntities(parseMaybeJson<any>(row.payload, {})),
+    });
   })
 );
 
@@ -317,8 +379,18 @@ router.post(
       return;
     }
     const id = uuidv4();
+    // Nazwisko autora czytamy z bazy, nie z tokenu: `req.user.name` powstaje z claimu,
+    // którego nasze tokeny nie niosą — `splitDisplayName` daje wtedy zastępcze „User"
+    // i taki podpis trafiłby na dokument raportu (zmierzone 06.09 na pierwszej migawce).
+    const authorRow = req.user?.id
+      ? ((await dbGet(`SELECT first_name AS "firstName", last_name AS "lastName" FROM users WHERE id = ?`, [
+          req.user.id,
+        ])) as any)
+      : null;
     const authorName =
-      [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() || null;
+      [authorRow?.firstName, authorRow?.lastName].filter(Boolean).join(' ').trim() ||
+      [req.user?.firstName, req.user?.lastName].filter(Boolean).join(' ').trim() ||
+      null;
     await dbRun(
       `INSERT INTO execution_report_snapshots
          (id, organization_id, definition_key, level, title, period_start, period_end, as_of,
@@ -340,7 +412,7 @@ router.post(
       ]
     );
     const row = await loadSnapshot(id, orgId);
-    res.status(201).json({ ...rowToDto(row), payload: snapshot });
+    res.status(201).json({ ...rowToDto(row), payload: decodeSnapshotEntities(snapshot) });
   })
 );
 
@@ -394,19 +466,24 @@ const exportSnapshot = (format: 'docx' | 'pdf') =>
       res.status(404).json({ error: 'NOT_FOUND' });
       return;
     }
-    const payload = parseMaybeJson<ExecutionReportSnapshotPayload | null>(row.payload, null);
+    const payload = decodeSnapshotEntities(
+      parseMaybeJson<ExecutionReportSnapshotPayload | null>(row.payload, null)
+    );
     if (!payload?.sections?.length) {
       res.status(409).json({ error: 'EMPTY_SNAPSHOT', code: 'NO_SECTIONS' });
       return;
     }
     const target = EXPORTS[format];
     try {
+      const statusLabel = row.status === 'PUBLISHED' ? 'Opublikowany' : 'Szkic';
       const buffer = await target.render({
         title: row.title,
-        markdown: snapshotToMarkdown(payload, row.level as ExecutionReportLevel),
+        markdown: snapshotToMarkdown(payload, row.level as ExecutionReportLevel, statusLabel),
         sourceLabel: `Consultify · Realizacja · ${LEVEL_LABEL_PL[row.level as ExecutionReportLevel] ?? row.level}`,
-        lifecycle: row.status === 'PUBLISHED' ? 'Opublikowany' : 'Szkic',
-        updatedAt: formatDatePl(String(row.asOf)),
+        // `lifecycle` i `updatedAt` CELOWO pominięte: UnifiedExportService drukuje przy nich
+        // zaszyte po angielsku etykiety „Lifecycle:" / „Updated:" (UnifiedExportService.ts:296,
+        // :306). Ta sama informacja jest w markdownie po polsku, więc dokument zostaje w
+        // jednym języku bez ruszania współdzielonego silnika eksportu.
         author: row.createdByName || undefined,
       });
       const safeName = String(row.title)

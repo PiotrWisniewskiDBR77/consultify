@@ -45579,5 +45579,372 @@
       "zgodaTytul": "Uruchomić AI?",
       "postep": "Pole {{i}} z {{n}}"
     }
+  },
+  "executionReports": {
+    "definitionsHeading": "Definicje raportów",
+    "definitionsHelp": "Cztery definicje — po jednej na poziom raportowania — generują migawkę. Pozostałe są widoczne w katalogu i wchodzą w Fali 2.",
+    "subtitle": "Zamrożona migawka danych realizacji",
+    "back": "Wróć do rejestru raportów",
+    "level": {
+      "OWNER": "Właściciel inicjatywy",
+      "PMO": "PMO",
+      "STEERCO": "Komitet sterujący",
+      "BOARD": "Zarząd",
+      "CONTRACT": "Kontrakt runtime"
+    },
+    "ragLabel": {
+      "GREEN": "Zielony",
+      "AMBER": "Żółty",
+      "RED": "Czerwony",
+      "GREY": "Szary (luka danych)"
+    },
+    "status": {
+      "draft": "Szkic",
+      "published": "Opublikowany"
+    },
+    "state": {
+      "active": "Aktywna"
+    },
+    "format": {
+      "SCREEN": "Ekran",
+      "DOCX": "DOCX",
+      "PDF": "PDF"
+    },
+    "wave2": {
+      "chip": "Fala 2",
+      "title": "Dostępne w Fali 2",
+      "body": "Ta definicja jest widoczna w katalogu, ale nie generuje jeszcze migawki."
+    },
+    "action": {
+      "newReport": "Nowy raport",
+      "newContractRun": "Kontrakt raportu (zaawansowane)",
+      "generate": "Wygeneruj raport",
+      "openReport": "Otwórz raport",
+      "downloadDocx": "Pobierz DOCX",
+      "downloadPdf": "Pobierz PDF",
+      "publish": "Opublikuj"
+    },
+    "field": {
+      "asOf": "Stan danych na",
+      "period": "Okres",
+      "status": "Status",
+      "author": "Autor",
+      "rag": "Ocena RAG"
+    },
+    "col": {
+      "task": "Zadanie",
+      "decision": "Decyzja",
+      "owner": "Osoba",
+      "due": "Termin",
+      "slip": "Po terminie",
+      "overdue": "Po terminie",
+      "status": "Status",
+      "escalation": "Eskalacja",
+      "initiative": "Inicjatywa",
+      "plannedEnd": "Koniec wg planu",
+      "deviation": "Odchylenie",
+      "progress": "Postęp",
+      "rag": "RAG",
+      "risk": "Ryzyko / problem",
+      "type": "Typ",
+      "severity": "Waga",
+      "score": "Wynik",
+      "audience": "Odbiorcy",
+      "cadence": "Kadencja",
+      "formats": "Formy",
+      "definition": "Definicja"
+    },
+    "metric": {
+      "initiatives": "Inicjatywy w realizacji",
+      "overdueTasks": "Zadania po terminie",
+      "blocked": "Zadania zablokowane",
+      "openDecisions": "Decyzje do rozstrzygnięcia",
+      "overdueDecisions": "{{count}} po terminie",
+      "onTime": "Na czas",
+      "risks": "Otwarte pozycje RAID"
+    },
+    "value": {
+      "days": "{{count}} dni",
+      "unassigned": "Nieprzypisane",
+      "noData": "brak danych",
+      "none": "brak",
+      "noReason": "bez uzasadnienia"
+    },
+    "rag": {
+      "green": "Brak blokad i pozycji po terminie.",
+      "amber": "{{tasks}} zadań i {{decisions}} decyzji po terminie.",
+      "red": "{{blocked}} blokad, {{signals}} sygnałów krytycznych.",
+      "grey": "Nie da się ocenić — brak danych źródłowych dla tego okresu."
+    },
+    "empty": {
+      "none": "Brak danych w tym okresie.",
+      "unavailable": "Brak danych — źródło nie odpowiedziało.",
+      "milestones": "Brak danych — kamienie milowe nie istnieją jeszcze jako osobny obiekt (pakiet R3); pokazujemy daty końcowe inicjatyw.",
+      "definitions": {
+        "title": "Brak definicji raportów",
+        "body": "Katalog nie odpowiedział. Odśwież ekran albo utwórz wersjonowaną definicję kontraktową."
+      },
+      "runs": {
+        "title": "Brak raportów",
+        "body": "Kliknij „Nowy raport\", wybierz poziom i okres — migawka powstanie z realnych danych realizacji."
+      }
+    },
+    "narrative": {
+      "ownerProgress": "W realizacji jest {{initiatives}} inicjatyw. Otwartych zadań: {{open}}, z tego {{overdue}} po terminie. Wskaźnik „na czas\": {{onTime}}.",
+      "weeklyProgress": "Okres {{start}} – {{end}}. Domknięte zadania: {{done}}. Otwarte po terminie: {{overdue}}. Zablokowane: {{blocked}}. Decyzje czekające na rozstrzygnięcie: {{decisions}}.",
+      "confidence": "Na czas: {{onTime}}. Inicjatyw z sygnałem opóźnienia: {{withSignals}} z {{total}}. Otwartych pozycji RAID: {{risks}}, w tym o wysokim wyniku ryzyka: {{highRisks}}.",
+      "program": "Ocena okresu: {{rag}} — {{reason}} Największe odchylenie: {{worst}}. Rekomendacja: zdjąć blokady z {{blocked}} zadań i domknąć {{overdueDecisions}} decyzji po terminie przed kolejnym przeglądem.",
+      "sponsorProgress": "W realizacji {{initiatives}} inicjatyw. Domknięte w okresie: {{done}} zadań. Po terminie: {{overdue}}. Ocena okresu: {{rag}}."
+    },
+    "bullet": {
+      "escalated": "Eskalacja: {{title}} ({{owner}})",
+      "signal": "{{name}} — {{type}}, {{days}} dni odchylenia ({{reason}})"
+    },
+    "wizard": {
+      "title": "Nowy raport",
+      "help": "Wybierz poziom raportu i okres. Migawka powstaje z realnych danych organizacji i zamraża stan na dzień wygenerowania.",
+      "definition": "Definicja raportu",
+      "periodStart": "Okres od",
+      "periodEnd": "Okres do",
+      "generate": "Generuj migawkę",
+      "generating": "Generuję migawkę…"
+    },
+    "preview": {
+      "contract": "Zawartość raportu",
+      "scope": "Zakres raportu",
+      "noSections": "Brak sekcji",
+      "noSources": "Brak źródeł"
+    },
+    "recommendation": {
+      "active": "Gotowa — generuje migawkę na realnych danych.",
+      "wave2": "Widoczna w katalogu, generowanie w Fali 2.",
+      "snapshot": "Zamrożona migawka — otwórz dokument, pobierz DOCX lub PDF."
+    },
+    "section": {
+      "metrics": "Mierniki"
+    },
+    "error": {
+      "download": "Nie udało się pobrać pliku.",
+      "publish": "Nie udało się opublikować raportu."
+    },
+    "definitions": {
+      "initiative-card": {
+        "name": "Karta realizacji",
+        "audience": "Właściciel inicjatywy",
+        "cadence": "Tygodniowo",
+        "scope": "Jedna inicjatywa w realizacji — widok właściciela",
+        "sections": {
+          "0": "Postęp i harmonogram",
+          "1": "Kamienie milowe",
+          "2": "Zadania po terminie",
+          "3": "Blokady",
+          "4": "Decyzje ode mnie"
+        }
+      },
+      "weekly-exec": {
+        "name": "Tygodniowy pakiet realizacji",
+        "audience": "PMO, liderzy zespołów",
+        "cadence": "Tygodniowo",
+        "scope": "Wszystkie aktywne inicjatywy w bieżącym cyklu realizacji",
+        "sections": {
+          "0": "Podsumowanie postępu",
+          "1": "Blokady i eskalacje",
+          "2": "Pozycje po terminie",
+          "3": "Najbliższe kamienie",
+          "4": "Potrzebne decyzje"
+        }
+      },
+      "program-health": {
+        "name": "Zdrowie programu",
+        "audience": "Komitet sterujący",
+        "cadence": "Co 2 tygodnie",
+        "scope": "RAG per inicjatywa i zbiorcze zdrowie programu",
+        "sections": {
+          "0": "RAG per inicjatywa",
+          "1": "Alerty okresu",
+          "2": "Pewność dowiezienia",
+          "3": "Narracja",
+          "4": "Decyzje do podjęcia"
+        }
+      },
+      "sponsor-onepager": {
+        "name": "Jedna strona dla sponsora",
+        "audience": "Zarząd, sponsorzy",
+        "cadence": "Na żądanie",
+        "scope": "Zwięzły skrót stanu portfela dla zarządu",
+        "sections": {
+          "0": "Postęp",
+          "1": "TOP 3 ryzyka",
+          "2": "Najbliższe kamienie",
+          "3": "Decyzje od sponsora",
+          "4": "Osiągnięcia okresu"
+        }
+      },
+      "milestone-slippage": {
+        "name": "Poślizg kamieni milowych",
+        "audience": "PMO, sponsorzy",
+        "cadence": "Tygodniowo",
+        "scope": "Wszystkie kamienie z odchyleniem planu bazowego od prognozy",
+        "sections": {
+          "0": "Kamienie z poślizgiem",
+          "1": "Odchylenie per inicjatywa",
+          "2": "Analiza przyczyn",
+          "3": "Trend trafności prognozy",
+          "4": "Harmonogram naprawczy"
+        }
+      },
+      "decision-backlog": {
+        "name": "Zaległe decyzje",
+        "audience": "PMO, właściciele decyzji",
+        "cadence": "Tygodniowo",
+        "scope": "Wszystkie decyzje czekające na rozstrzygnięcie i wiek zatwierdzeń",
+        "sections": {
+          "0": "Lista decyzji oczekujących",
+          "1": "Histogram starzenia",
+          "2": "Ryzyko zwłoki decyzyjnej",
+          "3": "Luki odpowiedzialności",
+          "4": "Praca zablokowana w dół"
+        }
+      },
+      "capacity-utilization": {
+        "name": "Obłożenie zasobów",
+        "audience": "Kierownicy zasobów, PMO",
+        "cadence": "Miesięcznie",
+        "scope": "Obciążenie osoby i zespołu wobec dostępnej podaży",
+        "sections": {
+          "0": "Obłożenie per osoba",
+          "1": "Średnie zespołowe",
+          "2": "Alerty przeciążenia",
+          "3": "Zasoby niewykorzystane",
+          "4": "Horyzont podaży (4 tygodnie)"
+        }
+      },
+      "blockers-recovery": {
+        "name": "Blokady i plan odzyskania",
+        "audience": "PMO, kierownicy dostarczania",
+        "cadence": "Na żądanie",
+        "scope": "Wszystkie zablokowane inicjatywy i zasięg skutków",
+        "sections": {
+          "0": "Lista aktywnych blokad",
+          "1": "Zasięg skutków blokady",
+          "2": "Odpowiedzialność właścicieli",
+          "3": "Proponowane działania naprawcze",
+          "4": "Wpływ łańcucha zależności"
+        }
+      },
+      "cross-dependency": {
+        "name": "Zależności między inicjatywami",
+        "audience": "PMO, architekci",
+        "cadence": "Co 2 tygodnie",
+        "scope": "Graf zależności między inicjatywami i ryzyko kaskady",
+        "sections": {
+          "0": "Mapa zależności",
+          "1": "Ścieżka krytyczna",
+          "2": "Analiza kaskady skutków",
+          "3": "Kondycja zależności",
+          "4": "Ryzyka zależności zewnętrznych"
+        }
+      },
+      "delivery-confidence": {
+        "name": "Pewność dowiezienia",
+        "audience": "Komitet sterujący, sponsorzy",
+        "cadence": "Miesięcznie",
+        "scope": "Prognoza dowiezienia skorygowana o ryzyko wraz z oceną pewności",
+        "sections": {
+          "0": "Pewność per inicjatywa",
+          "1": "Kierunek trendu",
+          "2": "Prognoza z korektą o ryzyko",
+          "3": "Narracja dla sponsora",
+          "4": "Rekomendowane działania nadzorcze"
+        }
+      },
+      "budget-variance": {
+        "name": "Wariancja budżetu",
+        "audience": "Finanse, sponsorzy",
+        "cadence": "Miesięcznie",
+        "scope": "Budżet planowany wobec wykonanego per inicjatywa",
+        "sections": {
+          "0": "Zbiorczy stan budżetu",
+          "1": "Wariancja per inicjatywa",
+          "2": "Alerty przekroczenia prognozy",
+          "3": "Trend tempa wydatków",
+          "4": "Podział na kategorie kosztów"
+        }
+      },
+      "monthly-pmo": {
+        "name": "Miesięczny przegląd PMO",
+        "audience": "Dyrektor PMO, sponsorzy",
+        "cadence": "Miesięcznie",
+        "scope": "Trendy całego portfela miesiąc do miesiąca",
+        "sections": {
+          "0": "Trend portfela (m/m)",
+          "1": "Podsumowanie poślizgu kamieni",
+          "2": "Wariancja budżetu",
+          "3": "Pewność dowiezienia",
+          "4": "Przegląd obłożenia"
+        }
+      }
+    },
+    "initiativeStatus": {
+      "IN_EXECUTION": "W realizacji",
+      "EXECUTING": "W realizacji",
+      "IN_PROGRESS": "W toku",
+      "BLOCKED": "Zablokowana",
+      "TRACKING": "Monitorowana",
+      "SCHEDULED": "Zaplanowana",
+      "APPROVED": "Zatwierdzona",
+      "DRAFT": "Szkic",
+      "CLOSED": "Zamknięta",
+      "REJECTED": "Odrzucona",
+      "PENDING_APPROVAL": "Czeka na zatwierdzenie"
+    },
+    "taskStatus": {
+      "TODO": "Do zrobienia",
+      "IN_PROGRESS": "W toku",
+      "BLOCKED": "Zablokowane",
+      "REVIEW": "W przeglądzie",
+      "DONE": "Zrobione",
+      "COMPLETED": "Zrobione",
+      "CANCELLED": "Anulowane"
+    },
+    "escalation": {
+      "NONE": "Brak",
+      "LOW": "Niska",
+      "MEDIUM": "Średnia",
+      "HIGH": "Wysoka",
+      "CRITICAL": "Krytyczna",
+      "PENDING": "Oczekuje",
+      "ESCALATED": "Eskalowana",
+      "AMBER": "Żółta",
+      "RED": "Czerwona"
+    },
+    "deviation": {
+      "LATE_START": "późny start",
+      "OVERDUE": "po terminie",
+      "SLIP": "poślizg",
+      "NO_MOVEMENT": "brak ruchu"
+    },
+    "raidType": {
+      "RISK": "Ryzyko",
+      "ISSUE": "Problem",
+      "DEPENDENCY": "Zależność",
+      "ASSUMPTION": "Założenie",
+      "ACTION": "Działanie"
+    },
+    "severity": {
+      "LOW": "Niska",
+      "MEDIUM": "Średnia",
+      "HIGH": "Wysoka",
+      "CRITICAL": "Krytyczna"
+    },
+    "slipReason": {
+      "RAID_HIGH_RISK": "aktywne ryzyko wysokie lub krytyczne",
+      "NO_MOVEMENT": "brak ruchu na zadaniach",
+      "BLOCKED_TASKS": "zadania zablokowane",
+      "DEPENDENCY": "zależność zewnętrzna",
+      "CAPACITY": "brak dostępnych zasobów",
+      "MISSING_DATES": "brak dat w planie",
+      "OPEN_DECISIONS": "nierozstrzygnięte decyzje"
+    }
   }
 }
