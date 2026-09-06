@@ -7,9 +7,10 @@
  * snapshot-not-session-state on open, lineage hand-off, empty/error/
  * forbidden states, and canonical sibling-surface navigation.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hoisted = vi.hoisted(() => ({
@@ -41,6 +42,14 @@ vi.mock('@/method-core/api/methodCoreApi', async () => {
 import { MethodCoreApiError } from '@/method-core/api/methodCoreApi';
 
 import { AssessmentOutputsTab } from '../AssessmentOutputsTab';
+
+// `AssessmentOutputsTab` embeds `JedenPrawyPanel`, which (K5, d1270acba2) calls
+// `useJedenPanel()`/`useLocation()` unconditionally — render without a Router
+// throws "useLocation() may be used only in the context of a <Router>"
+// regardless of any prop here (ZNALEZISKO, 1.1-K6).
+function renderTab(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 function outputRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -101,7 +110,7 @@ describe('AssessmentOutputsTab', () => {
   it('renders the kernel Outputs list via StandardTable, not the legacy artifacts registry', async () => {
     hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow()], total: 1 });
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     expect(await screen.findByText('Digital Readiness — Area A')).toBeInTheDocument();
     expect(hoisted.listOutputs).toHaveBeenCalledTimes(1);
@@ -114,7 +123,7 @@ describe('AssessmentOutputsTab', () => {
     });
     const onCountChange = vi.fn();
 
-    render(<AssessmentOutputsTab onCountChange={onCountChange} />);
+    renderTab(<AssessmentOutputsTab onCountChange={onCountChange} />);
 
     await waitFor(() => {
       expect(onCountChange).toHaveBeenCalledWith(2);
@@ -132,7 +141,7 @@ describe('AssessmentOutputsTab', () => {
     });
     const onCountChange = vi.fn();
 
-    render(<AssessmentOutputsTab onCountChange={onCountChange} />);
+    renderTab(<AssessmentOutputsTab onCountChange={onCountChange} />);
 
     expect(await screen.findByText('Digital Readiness — Area A')).toBeInTheDocument();
     expect(screen.queryByText('Tool output')).not.toBeInTheDocument();
@@ -155,7 +164,7 @@ describe('AssessmentOutputsTab', () => {
       total: 2,
     });
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     await screen.findByText('Old revision');
     expect(screen.getByText('Superseded')).toBeInTheDocument();
@@ -177,7 +186,7 @@ describe('AssessmentOutputsTab', () => {
       total: 2,
     });
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     await screen.findByText('Older');
     expect(screen.getByText('Superseded')).toBeInTheDocument();
@@ -188,7 +197,7 @@ describe('AssessmentOutputsTab', () => {
     hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow()], total: 1 });
     const user = userEvent.setup();
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
     await screen.findByText('Digital Readiness — Area A');
 
     await user.click(screen.getByText('Digital Readiness — Area A'));
@@ -206,7 +215,7 @@ describe('AssessmentOutputsTab', () => {
   it('shows an honest empty state with an explanation when there are no Outputs', async () => {
     hoisted.listOutputs.mockResolvedValue({ outputs: [], total: 0 });
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     expect(await screen.findByText('No insights yet')).toBeInTheDocument();
     expect(
@@ -218,7 +227,7 @@ describe('AssessmentOutputsTab', () => {
     hoisted.listOutputs.mockRejectedValueOnce(new Error('network down'));
     const user = userEvent.setup();
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     expect(
       await screen.findByText('Failed to load Insights. Please try again.')
@@ -241,7 +250,7 @@ describe('AssessmentOutputsTab', () => {
   it('shows a distinct "no access" state (not just an empty list) on a 403', async () => {
     hoisted.listOutputs.mockRejectedValueOnce(new MethodCoreApiError('Forbidden', 403, {}));
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
 
     expect(await screen.findByText('No access to Insights')).toBeInTheDocument();
     expect(screen.queryByText('No insights yet')).not.toBeInTheDocument();
@@ -252,7 +261,7 @@ describe('AssessmentOutputsTab', () => {
     const onNavigate = vi.fn();
     const user = userEvent.setup();
 
-    render(<AssessmentOutputsTab onNavigate={onNavigate} />);
+    renderTab(<AssessmentOutputsTab onNavigate={onNavigate} />);
     await user.click(await screen.findByText('Digital Readiness — Area A'));
     await screen.findByText('3'); // preview loaded
 
@@ -274,7 +283,7 @@ describe('AssessmentOutputsTab', () => {
     });
     const user = userEvent.setup();
 
-    render(<AssessmentOutputsTab />);
+    renderTab(<AssessmentOutputsTab />);
     await user.click(await screen.findByText('Digital Readiness — Area A'));
     await screen.findByText('3');
 
@@ -284,5 +293,32 @@ describe('AssessmentOutputsTab', () => {
       expect(hoisted.getSessionLineage).toHaveBeenCalledWith('sess-1');
     });
     expect(await screen.findByText('Lineage')).toBeInTheDocument();
+  });
+
+  it('DEC-397b (1.1-K6): zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED)', async () => {
+    hoisted.listOutputs.mockResolvedValue({ outputs: [outputRow()], total: 1 });
+    const user = userEvent.setup();
+
+    const { container } = renderTab(<AssessmentOutputsTab />);
+
+    await user.click(await screen.findByText('Digital Readiness — Area A'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
+
+    const closeButton = within(
+      container.querySelector('[data-right-panel]') as HTMLElement
+    ).getByRole('button', { name: /close/i });
+    await user.click(closeButton);
+    await waitFor(() => {
+      expect(container.querySelector('[data-right-panel]')).toBeNull();
+    });
+
+    // DEC-397b (właściciel, 06.09.2026 15:47): pojedynczy klik wiersza jest
+    // realna zmiana zaznaczenia — PONOWNIE otwiera panel mimo wcześniejszego X.
+    await user.click(await screen.findByText('Digital Readiness — Area A'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
   });
 });

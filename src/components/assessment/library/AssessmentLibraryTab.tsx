@@ -35,6 +35,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PreviewPaneAside } from '@/components/shared/PreviewPane';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import {
   StandardPreview,
   type StandardRowMenu,
@@ -288,6 +289,9 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const [startError, setStartError] = useState<string | null>(null);
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<MethodologyId | null>(null);
   /*
    * Odbiór 05.09 (05-ocena, defekt 3) — USUNIĘTY zasiew widoczności kolumn.
@@ -573,7 +577,12 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
               ]
             : []),
         ],
-        universalHandlers: { preview: () => setSelectedId(methodology.id) },
+        universalHandlers: {
+          preview: () => {
+            jedenPanel.otworz();
+            setSelectedId(methodology.id);
+          },
+        },
       };
     },
     [canStartRow, handleStart, isPolish]
@@ -609,7 +618,10 @@ export const AssessmentLibraryTab: React.FC<AssessmentLibraryTabProps> = ({
           loading={false}
           rowMenu={rowMenu}
           selectedRowId={selectedId}
-          onRowClick={(row: any) => setSelectedId((row as MethodologyRow).id)}
+          onRowClick={(row: any) => {
+            jedenPanel.otworz();
+            setSelectedId((row as MethodologyRow).id);
+          }}
           rowDescription={(row: any) =>
             isPolish
               ? (row as MethodologyRow).description.pl
