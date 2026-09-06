@@ -275,6 +275,14 @@
           "artefakt": "PRZEKAZANIE_<data>.md + pamięć",
           "stan": "nie",
           "dowod": ""
+        },
+        {
+          "nr": "S1.13",
+          "tresc": "Analiza kart N: ekran + kontrakt treści dla każdej karty (rejestr 8 + karty poza rejestrem), tabela rozjazdów, rozjazdy blokujące naprawione lub rozstrzygnięte słowem właściciela",
+          "kto": "Sonnet (Wnioski+Inicjatywy, K1) + Codex (reszta, wklejka nr 6)",
+          "artefakt": "RAPORT_K1.md + raport Codexa + tabela w rejestrze",
+          "stan": "nie",
+          "dowod": ""
         }
       ],
       "decyzje": [

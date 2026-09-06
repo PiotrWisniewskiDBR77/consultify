@@ -64,7 +64,8 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 | S1.10 | Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”) | właściciel | ledger decyzji (DEC-…) |
 | S1.11 | Wszystkie 16 modułów + Wyniki + Finanse zamrożone tagiem | nadzorca | `zamroz.mjs`, tagi `mvp-wlasciciel-<data>` |
 | S1.12 | Przekazanie dla pojemnika 2 napisane (stan, kolejka, decyzje) | nadzorca | `PRZEKAZANIE_<data>.md` + pamięć |
-**Komunikat po S1.1–S1.12:** „MVP działa w moich rękach na moich danych, na demo z własną bazą.” Szampan nr 1.
+| S1.13 | Analiza kart N (DEC-411, słowo właściciela 06.09): dla każdej karty N ekran + kontrakt treści, tabela rozjazdów „kontrakt mówi / ekran pokazuje / rozjazd”, rozjazdy blokujące naprawione albo rozstrzygnięte słowem właściciela; start: Wnioski (kreator + karta) i Inicjatywy | Sonnet K1 + Codex wklejka nr 6 | `RAPORT_K1.md`, raport Codexa, tabela w rejestrze |
+**Komunikat po S1.1–S1.13:** „MVP działa w moich rękach na moich danych, na demo z własną bazą.” Szampan nr 1.
 
 
 ---
