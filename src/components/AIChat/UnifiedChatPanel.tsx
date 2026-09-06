@@ -7778,7 +7778,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             onMouseDown={handleWorkCanvasEdgeMouseDown}
             onDoubleClick={() => setPersistedWorkCanvasWidth(DEFAULT_WORK_CANVAS_WIDTH_PERCENT)}
             onKeyDown={handleWorkCanvasEdgeKeyDown}
-            className="group absolute inset-y-0 right-0 z-50 hidden w-4 translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
+            // top-12: starts BELOW the Canvas document toolbar row (Edytor/Dok/MD
+            // tabs + action icons, ~37px tall — measured live 06.09, ZLECENIE
+            // 1.1-B). Previously `inset-y-0` made this 16px-wide hit target
+            // (w-4 translate-x-1/2, straddling the panel's right edge) overlap
+            // the toolbar's rightmost buttons (e.g. "Udostępnij dokument Canvas"
+            // sits almost exactly on the boundary at the default 45% split) —
+            // a real click on that button's visual center hit the invisible
+            // resizer instead (confirmed via elementsFromPoint, not a visual
+            // guess). Clipping the resizer to start below the toolbar removes
+            // the conflict for every split width, not just the one measured.
+            className="group absolute top-12 bottom-0 right-0 z-50 hidden w-4 translate-x-1/2 cursor-col-resize touch-none outline-none lg:block"
           >
             <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-c-border transition-colors group-hover:bg-c-border-strong group-focus:bg-c-focus-solid" />
           </div>

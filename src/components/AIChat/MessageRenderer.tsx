@@ -1862,6 +1862,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
               className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
               title={t('chat.actions.copy', 'Copy')}
+              aria-label={t('chat.actions.copy', 'Copy')}
             >
               {isCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
             </button>
@@ -1871,6 +1872,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               onClick={() => handleStartEditMessage(msg.id)}
               className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
               title={t('chat.actions.edit', 'Edit')}
+              aria-label={t('chat.actions.edit', 'Edit')}
             >
               <Pencil size={12} />
             </button>
@@ -1881,6 +1883,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 disabled={isContextSaveBusy || isContextSaved}
                 className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised disabled:opacity-50 disabled:cursor-not-allowed"
                 title={
+                  isContextSaved
+                    ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                    : t('chat.actions.saveToContext', 'Save to Context OS')
+                }
+                aria-label={
                   isContextSaved
                     ? t('chat.actions.savedToContext', 'Saved to Context OS')
                     : t('chat.actions.saveToContext', 'Save to Context OS')
@@ -1903,6 +1910,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 onClick={() => handleBranchFromMessage(msg.id)}
                 className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised"
                 title={t('chat.actions.branch', 'Branch from here')}
+                aria-label={t('chat.actions.branch', 'Branch from here')}
               >
                 <GitBranch size={12} />
               </button>
