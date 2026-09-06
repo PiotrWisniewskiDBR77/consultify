@@ -57,6 +57,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { TeresaEntryButton } from './TeresaEntryButton';
+
 /**
  * KANONICZNA kolejność sekcji prawego panelu (standard n-Type ETAP 1.3).
  * Wzorzec = karta Inicjatywy. Karta może POMINĄĆ sekcję (brak zastosowania),
@@ -238,6 +240,13 @@ export interface ArtifactRightPanelProps {
    * ten prop tylko udostępnia miejsce w powłoce.
    */
   statusBar?: React.ReactNode;
+  /** Jedyne wejście do wspólnej rozmowy Teresy, na czele sekcji „Akcje". */
+  teresaEntry?: {
+    label: string;
+    onOpen: () => void;
+    disabled?: boolean;
+    disabledReason?: string;
+  };
   /**
    * ★ 2026-09-05 (decyzja CTO „jeden prawy panel" na Mapie myśli). Panel
    * renderuje domyślnie WŁASNY `<aside>` — poprawne, gdy jest jedynym
@@ -345,6 +354,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   className,
   ariaLabel,
   statusBar,
+  teresaEntry,
   renderAs = 'aside',
 }) => {
   const { t, i18n } = useTranslation();
@@ -375,10 +385,37 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
    * widzi użytkownik, nie miała jej wcale.
    */
   const sections = useMemo<ArtifactRightPanelSection[]>(() => {
+    const withTeresaEntry = (
+      sourceSections: ArtifactRightPanelSection[]
+    ): ArtifactRightPanelSection[] => {
+      if (!teresaEntry) return sourceSections;
+      return sourceSections.map((section) =>
+        section.id === 'actions'
+          ? {
+              ...section,
+              isEmpty: false,
+              children: (
+                <>
+                  <TeresaEntryButton
+                    label={teresaEntry.label}
+                    onClick={teresaEntry.onOpen}
+                    disabled={teresaEntry.disabled}
+                    title={teresaEntry.disabledReason || teresaEntry.label}
+                    className="mb-2"
+                  />
+                  {section.isEmpty ? null : section.children}
+                </>
+              ),
+            }
+          : section
+      );
+    };
     const declaredCanonical = declaredSections.filter((section) =>
       CANONICAL_SECTION_IDS.has(section.id)
     );
-    if (declaredCanonical.length < CANONICAL_SHELL_THRESHOLD) return declaredSections;
+    if (declaredCanonical.length < CANONICAL_SHELL_THRESHOLD) {
+      return withTeresaEntry(declaredSections);
+    }
 
     const label = (id: ArtifactPanelSectionId): string => {
       const entry = ARTIFACT_PANEL_SECTION_LABELS[id];
@@ -438,8 +475,8 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
     });
 
     ranked.sort((a, b) => (a.rank === b.rank ? a.seq - b.seq : a.rank - b.rank));
-    return ranked.map((entry) => entry.section);
-  }, [declaredSections, isPolish, t]);
+    return withTeresaEntry(ranked.map((entry) => entry.section));
+  }, [declaredSections, isPolish, t, teresaEntry]);
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
   );
