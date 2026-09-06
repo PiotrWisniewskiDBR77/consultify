@@ -60,7 +60,7 @@ export function isIdeaBusinessCaseEnabled(profileSource?: DemoAcceptanceProfileS
   try {
     const env =
       profileSource?.env ??
-      (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+      (import.meta.env as unknown as Record<string, string | undefined>);
     const fromEnv = parseFlag(env?.[ENV_KEY]);
     if (fromEnv !== null) return fromEnv;
   } catch {

@@ -1157,7 +1157,7 @@ export function isInitiativeCardContractEnabled(): boolean {
   }
   try {
     const env = parseFlag(
-      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[FLAG_ENV]
+      (import.meta.env as unknown as Record<string, string | undefined>)?.[FLAG_ENV]
     );
     if (env !== null) return env;
   } catch {

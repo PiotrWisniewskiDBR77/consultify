@@ -1104,7 +1104,7 @@ export {
 // API-backed functions (DB first, in-memory fallback)
 // ---------------------------------------------------------------------------
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
+const API_URL = (import.meta.env as any)?.VITE_API_URL || '/api';
 
 async function fetchFromApi<T>(url: string): Promise<T | null> {
   try {

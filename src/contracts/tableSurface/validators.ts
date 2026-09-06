@@ -1018,7 +1018,7 @@ export function validateSurfaceRegister(
  */
 export function assertContractInDev(context: string, result: ValidationResult): void {
   if (result.valid) return;
-  const env = (import.meta as ImportMeta & { env?: { DEV?: boolean } }).env;
+  const env = (import.meta.env as unknown as { DEV?: boolean });
   if (!env?.DEV) return;
   for (const violation of result.violations) {
     // eslint-disable-next-line no-console

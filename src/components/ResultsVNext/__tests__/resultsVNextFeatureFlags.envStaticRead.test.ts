@@ -8,6 +8,11 @@
  * pelne wyjasnienie mechanizmu w
  * `src/utils/__tests__/assessmentDocxFlag.envStaticRead.test.ts`.
  *
+ * SKORYGOWANE 2026-09-06 (zlecenie Z5 — pomiar empiryczny): zmierzone, że
+ * nawet ten "juz poprawny" ksztalt (cast NA `import.meta` przed `.env`)
+ * zwraca `undefined` w Vitest z `vi.stubEnv` (dziala tylko w build/dev).
+ * Naprawa Z5: cast przeniesiony na WYNIK `.env`.
+ *
  * DOWOD MUTACYJNY (wykonany recznie przy pisaniu tego testu): zamiana
  * `const env = (import.meta as unknown as {...}).env;` na
  * `const meta = import.meta as unknown as {...}; const env = meta?.env;`
@@ -25,8 +30,8 @@ describe('resultsVNextFeatureFlags — readEnv() musi czytać import.meta.env w 
   );
   const source = raw.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 
-  it('readEnv() ma .env w TYM SAMYM wyrażeniu co cast import.meta', () => {
-    expect(source).toMatch(/\(import\.meta as unknown as \{[^}]*\}\)\.env\b/);
+  it('readEnv() ma cast na WYNIKU import.meta.env (nie na import.meta przed .env)', () => {
+    expect(source).toMatch(/\(import\.meta\.env as unknown as Record<string, string>\)/);
   });
 
   it('kod wykonywalny NIE deklaruje osobnej zmiennej trzymającej samo import.meta (bez .env w tej samej instrukcji)', () => {

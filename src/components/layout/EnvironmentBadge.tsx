@@ -74,8 +74,8 @@ export const EnvironmentBadge: React.FC = () => {
 
   const envLabel = useMemo(() => {
     const fromVite =
-      (import.meta as { env?: Record<string, string> }).env?.VITE_APP_ENV ||
-      (import.meta as { env?: Record<string, string> }).env?.MODE ||
+      (import.meta.env as Record<string, string>)?.VITE_APP_ENV ||
+      (import.meta.env as Record<string, string>)?.MODE ||
       '';
     return normalizeEnvLabel(inferredEnv || fromVite || 'unknown');
   }, [inferredEnv]);

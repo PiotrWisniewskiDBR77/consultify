@@ -65,15 +65,15 @@ export function snapshotAppContext(user?: AppUserContext): AppRuntimeContext & {
 } {
   const env =
     appEnvOverride ||
-    (import.meta as { env?: Record<string, string> }).env?.VITE_APP_ENV ||
-    (import.meta as { env?: Record<string, string> }).env?.MODE ||
+    (import.meta.env as Record<string, string>)?.VITE_APP_ENV ||
+    (import.meta.env as Record<string, string>)?.MODE ||
     null;
   const buildSha =
-    (import.meta as { env?: Record<string, string> }).env?.VITE_BUILD_SHA ||
+    (import.meta.env as Record<string, string>)?.VITE_BUILD_SHA ||
     (typeof window !== 'undefined' ? (window as any).__APP_BUILD_SHA__ : null) ||
     null;
   const buildAt =
-    (import.meta as { env?: Record<string, string> }).env?.VITE_BUILD_AT ||
+    (import.meta.env as Record<string, string>)?.VITE_BUILD_AT ||
     (typeof window !== 'undefined' ? (window as any).__APP_BUILD_AT__ : null) ||
     null;
 

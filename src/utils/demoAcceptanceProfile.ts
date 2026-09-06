@@ -14,7 +14,7 @@ function parseEnabled(raw: string | null | undefined): boolean {
 
 function runtimeEnv(): Record<string, string | undefined> {
   try {
-    return (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+    return (import.meta.env as unknown as Record<string, string | undefined>) ?? {};
   } catch {
     return {};
   }

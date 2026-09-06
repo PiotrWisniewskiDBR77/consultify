@@ -14,10 +14,23 @@
  * czyli DWA oddzielone wyrazenia -- `import.meta.env` nigdy nie powstaje jako
  * jeden node, wiec Vite nigdy go nie podstawia. `meta.env` jest wtedy zawsze
  * `undefined` w `vite build` (dziala tylko przypadkiem w `vite dev`/vitest,
- * ktore maja inny mechanizm wstrzykiwania). Poprawny wzorzec trzyma `.env`
- * (lub `.env?.[KEY]`) w TYM SAMYM wyrazeniu co cast:
+ * ktore maja inny mechanizm wstrzykiwania).
+ *
+ * SPROSTOWANE 2026-09-06 (zlecenie Z5 — pomiar empiryczny `vi.stubEnv`):
+ * wzorzec ponizej ("poprawny" wg tego komentarza od 05.09) —
  *
  *   (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[KEY]
+ *
+ * — DZIALA w `vite build` i w przegladarkowym `vite dev` (esbuild zdejmuje
+ * cast PRZED podstawieniem), ale zwraca `undefined` w Vitest przy
+ * `vi.stubEnv` (Vitest/vite-node czyta SUROWE zrodlo, gdzie cast rozdziela
+ * "import.meta" od ".env" — evidence/z5/05-vitest-cast-vs-literal-dowod.txt
+ * w gałęzi Z5). Ten skan (a) tego NIE lapie (lapie tylko SPLIT), wiec dalej
+ * jest poprawny jako bezpiecznik na regresje do formy z 05.09, ale NOWY
+ * kanoniczny ksztalt (Z5, dziala WSZEDZIE wlacznie z Vitest) to cast na
+ * WYNIKU `.env`, nie na `import.meta` przed `.env`:
+ *
+ *   (import.meta.env as unknown as Record<string, string | undefined>)?.[KEY]
  *
  * lub statyczny `import.meta.env.VITE_KLUCZ`.
  *

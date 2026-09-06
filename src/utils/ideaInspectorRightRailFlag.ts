@@ -20,7 +20,7 @@ export function isIdeaInspectorRightRailEnabled(): boolean {
     query === null && typeof window !== 'undefined'
       ? parse(window.localStorage.getItem(LS_KEY))
       : null;
-  const env = parse((import.meta as unknown as { env?: Record<string, string> }).env?.[ENV_KEY]);
+  const env = parse((import.meta.env as unknown as Record<string, string>)?.[ENV_KEY]);
   // DEC-90: default ON. localStorage 'off' (and the URL query override) must
   // still be able to disable it per-user/per-session — only the bottom of
   // the fallback chain flipped from false to true.
