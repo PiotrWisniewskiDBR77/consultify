@@ -135,9 +135,23 @@ import { ExecutionManagementView } from './ExecutionManagementView';
 import {
   executionModuleTabIds,
   isExecutionDeepLinkTabAllowed,
+  resolveExecutionDeepLinkTab,
 } from './executionModuleTabs';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { buildExecutionSourceRelations } from './executionSourceRelations';
+// 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
+// dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
+import {
+  normalizeInitiativeStatus,
+  initiativeDeviationDays,
+  initiativeLevelLabel,
+  initiativeRag,
+  isDecisionOverdue,
+  isOpenDecision,
+  onTimeFromInitiatives,
+  openDecisions,
+  overdueOpenDecisions,
+} from './executionRealData';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
@@ -491,14 +505,27 @@ const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
   InitiativeStatus.ARCHIVED,
 ];
 const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
-  new Set([...MODULE_STATUSES, ...EXECUTION_STATUS_FALLBACK])
+  new Set([
+    ...MODULE_STATUSES,
+    ...EXECUTION_STATUS_FALLBACK,
+    // 1.12-R1 (A): TRACKING (3 inicjatywy DBR77) należy do modułu `benefits`
+    // w `initiativeLifecycle`, więc Realizacja jej NIE wczytywała — mimo że
+    // „śledzona" inicjatywa jest w toku i ma terminy. Dołożone jawnie.
+    InitiativeStatus.TRACKING,
+  ])
 );
 
-// Execution "Active" scope = ongoing work only (hide terminal-ish outcomes)
+/**
+ * Zakres „w toku" Realizacji — decyzja CTO na pytanie C5.1 planu 1.12:
+ * moduł pokazuje WSZYSTKIE inicjatywy w toku (EXECUTING/BLOCKED/TRACKING;
+ * 26 na pomiarze 06.09), a formalny handoff jest opcjonalną bramką jakości,
+ * nie warunkiem istnienia wiersza. SCHEDULED (7) to jeszcze plan — widać je
+ * po przełączeniu zakresu na „Wszystkie".
+ */
 const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.SCHEDULED,
   InitiativeStatus.EXECUTING,
   InitiativeStatus.BLOCKED,
+  InitiativeStatus.TRACKING,
 ];
 
 // NAPRAWA MVP 06.09 (poz. 7.2, BLOKER): `getTypeCode()` renderowała surowy
@@ -684,29 +711,26 @@ type TFn = TFunction;
 // `t` is available (matches this file's dominant react-i18next convention).
 function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: string }>> {
   return {
+    // 1.12-R1 (A): 9 chipów → 3. ZNALEZISKO przy okazji: żaden z tych
+    // dziewięciu nigdy nie filtrował tabeli — `canonicalMenu3Preset.list`
+    // nie miał ANI JEDNEGO czytelnika (pozostałe zakładki przekazują swój
+    // preset do powierzchni, lista nie). Chipy były dekoracją z licznikiem.
+    // Teraz trzy chipy realnie zawężają wiersze (patrz `summaryInitiatives`).
     list: [
-      ['active', t('execution.menu3.list.active', 'Active')],
-      ['at-risk', t('execution.menu3.list.atRisk', 'At risk')],
-      ['critical', t('execution.menu3.list.critical', 'Critical')],
-      ['blocked', t('execution.menu3.list.blocked', 'Blocked work')],
-      ['missing-baseline', t('execution.menu3.list.missingBaseline', 'Missing baseline')],
-      ['missing-forecast', t('execution.menu3.list.missingForecast', 'Missing forecast')],
-      ['closing', t('execution.menu3.list.closing', 'Closing')],
-      ['delivered', t('execution.menu3.list.delivered', 'Recently delivered')],
-      ['unknown', t('execution.menu3.list.unknown', 'Unknown data')],
+      ['wszystkie', t('common.all', 'All')],
+      ['zagrozone', t('execution.menu3.list.atRisk', 'At risk')],
+      ['po-terminie', t('execution.menu3.list.overdue', 'Overdue')],
     ].map(([id, label]) => ({ id, label })),
+    // 1.12-R1 (B): 11 chipów → 3. Kanon list dopuszcza ≤3, a osiem usuniętych
+    // („Tasks", „Decisions", „Due soon", „Missing owner", „Missing DoD/evidence",
+    // „Waiting dependency", „Mine", „By team") liczyło się z pól, których realne
+    // zadania w ogóle nie niosą. Presety muszą zostać zgodne z `workPresets`
+    // w ExecutionWorkSurface.tsx — inaczej chip pokazuje licznik do widoku,
+    // którego tabela nie umie zbudować.
     work: [
       ['all', t('common.all', 'All')],
-      ['tasks', t('execution.menu3.work.tasks', 'Tasks')],
-      ['decisions', t('execution.menu3.work.decisions', 'Decisions')],
-      ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
       ['overdue', t('execution.menu3.work.overdue', 'Overdue')],
-      ['due-soon', t('execution.menu3.work.dueSoon', 'Due soon')],
-      ['missing-owner', t('execution.menu3.work.missingOwner', 'Missing owner')],
-      ['missing-evidence', t('execution.menu3.work.missingEvidence', 'Missing DoD/evidence')],
-      ['waiting', t('execution.menu3.work.waiting', 'Waiting dependency')],
-      ['mine', t('execution.menu3.work.mine', 'Mine')],
-      ['team', t('execution.menu3.work.team', 'By team')],
+      ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
     ].map(([id, label]) => ({ id, label })),
     resources: [
       ['all', t('common.all', 'All')],
@@ -720,22 +744,14 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['team', t('execution.menu3.resources.team', 'By team')],
       ['initiative', t('execution.menu3.resources.initiative', 'By Initiative')],
     ].map(([id, label]) => ({ id, label })),
+    // 1.12-R1 (C): 12 chipów → 3. Osiem z dwunastu filtrowało regexem po
+    // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który
+    // ma na DBR77 zero rekordów. Zgodne z `controlPresets`
+    // w ExecutionControlSurface.tsx.
     control: [
-      ['needs-action', t('execution.menu3.control.needsAction', 'Needs action')],
-      ['critical', t('execution.menu3.control.critical', 'Critical')],
-      ['decisions', t('execution.menu3.control.decisions', 'Decisions')],
-      ['schedule', t('execution.menu3.control.schedule', 'Schedule')],
-      ['resources', t('execution.menu3.control.resources', 'Resources')],
-      ['cost', t('execution.menu3.control.cost', 'Cost')],
-      ['risk', t('execution.menu3.control.risk', 'Risk')],
-      ['dependencies', t('execution.menu3.control.dependencies', 'Dependencies')],
-      ['adoption', t('execution.menu3.control.adoption', 'Adoption')],
-      ['outcome-risk', t('execution.menu3.control.outcomeRisk', 'Outcome risk')],
-      [
-        'verification-overdue',
-        t('execution.menu3.control.verificationOverdue', 'Verification overdue'),
-      ],
-      ['resolved', t('execution.menu3.control.resolved', 'Resolved')],
+      ['decyzje', t('execution.menu3.governance.decisions', 'Decyzje')],
+      ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
+      ['po-terminie', t('execution.menu3.governance.overdue', 'Po terminie')],
     ].map(([id, label]) => ({ id, label })),
     reports: [
       ['all', t('common.all', 'All')],
@@ -794,10 +810,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   // State
   const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
-    list: 'active',
+    list: 'wszystkie',
     work: 'all',
     resources: 'all',
-    control: 'needs-action',
+    control: 'decyzje',
     reports: 'all',
     // DEC-426 (1.1-E-1): domyślnie aktywne „Ryzyka" (KROK 3, test a).
     summary: 'ryzyka',
@@ -1039,7 +1055,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // (domyślnie wszędzie, reguła #7) deep-link nadal degraduje się do listy,
     // zamiast pokazywać pustą powierzchnię.
     if (isExecutionDeepLinkTabAllowed(targetTab, { summaryOneLookEnabled })) {
-      setActiveTab(targetTab as ModuleTab);
+      // 1.12-R1 (C): alias starych linków „Sterowania" → `control`.
+      setActiveTab(resolveExecutionDeepLinkTab(targetTab) as ModuleTab);
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
       setDeepLinkHandled(true);
       return;
@@ -1331,11 +1348,29 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setInitiativesLoadError(null);
       setInitiativesLoadErrorCode(null);
       try {
+        // 1.12-R1 (D): bez `projectId` — 43 z 72 inicjatyw organizacji nie ma
+        // przypisanego projektu (pomiar 06.09), a Realizacja pokazuje portfel
+        // ORGANIZACJI. `listExecutionCases()` zostaje jako WZBOGACENIE wiersza
+        // (realizacja + handoff), nie jako warunek istnienia (decyzja CTO
+        // C5.1: wszystkie inicjatywy w toku, handoff = opcjonalna bramka).
         const [response, executionCasesResponse] = await Promise.all([
-          Api.getInitiatives(currentProjectId || undefined),
+          Api.getInitiatives(),
           listExecutionCases(),
         ]);
-        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
+        // 1.12-R1 (A): sprowadź status do enumu frontu, ZANIM cokolwiek go
+        // porówna. `GET /api/initiatives` potrafi oddać ten sam portfel
+        // w drugim słowniku (`IN_EXECUTION`/`PENDING_APPROVAL`/`CLOSED`…),
+        // którego `InitiativeStatus` nie zna — i wtedy KAŻDY wiersz wypadał
+        // z filtra, a zakładka „Realizacje" była pusta przy 72 inicjatywach
+        // w odpowiedzi. Pomiar i mapa: executionRealData.STATUS_ALIASES.
+        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, [
+          'initiatives',
+        ]).map((initiative) => {
+          const znormalizowany = normalizeInitiativeStatus(initiative.status);
+          return znormalizowany === String(initiative.status)
+            ? initiative
+            : { ...initiative, status: znormalizowany as InitiativeStatus };
+        });
         const activeExecutionInitiativeIds = new Set(
           normalizeExecutionArrayEnvelope<{ initiativeId?: string; state?: string }>(
             executionCasesResponse,
@@ -1648,12 +1683,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
   }, [currentProjectId, executionTruthRefreshKey]);
 
+  // 1.12-R1 (D): ZDJĘTY FILTR PO PROJEKCIE.
+  // POMIAR 06.09 (org DBR77): 43 z 72 inicjatyw i 20 z 35 decyzji NIE MA
+  // `projectId`. Oba efekty niżej robiły `if (!currentProjectId) return;`
+  // i pytały `/tasks?projectId=…` / `/decisions?projectId=…`, więc:
+  //   · bez wybranego projektu nie ładowało się NIC (pusty kokpit),
+  //   · z wybranym projektem znikała ponad połowa realnych rekordów.
+  // Realizacja jest widokiem ORGANIZACJI, nie jednego projektu — pytamy więc
+  // o cały zbiór. (Zawężenie do projektu wróci jako filtr UI, nie jako brama.)
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
       try {
-        const data = await Api.getTasks({ projectId: currentProjectId });
+        const data = await Api.getTasks();
         setTasks(normalizeExecutionArrayEnvelope<Task>(data, ['tasks']));
         setTasksFailed(false);
       } catch (err) {
@@ -1668,11 +1710,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
       try {
-        const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
+        const response = await Api.get('/decisions');
         const data = normalizeExecutionArrayEnvelope<any>(response, ['decisions']);
         setDecisions(data);
         setDecisionsFailed(false);
@@ -2004,13 +2045,45 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     return result;
   }, [dashboardBaseInitiatives, activeFilters, activeStatusFilter, matchesAttentionPreset]);
 
+  /**
+   * 1.12-R1 (A): dopasowanie wiersza do chipa Menu 3 zakładki „Realizacje".
+   * Reguła TA SAMA co kolumna RAG (`initiativeRag`), więc licznik chipa
+   * i kolory w tabeli nie mogą się rozjechać. Zablokowana inicjatywa jest
+   * „po terminie" w sensie zarządczym niezależnie od dat — bo stoi.
+   */
+  const matchesListPreset = useCallback((initiative: FullInitiative, preset: string) => {
+    if (preset === 'wszystkie') return true;
+    const zablokowana = initiative.status === InitiativeStatus.BLOCKED;
+    const rag = zablokowana ? 'red' : initiativeRag(initiative as any);
+    if (preset === 'po-terminie') return rag === 'red';
+    if (preset === 'zagrozone') return rag === 'amber';
+    return false;
+  }, []);
+
   const summaryInitiatives = useMemo(() => {
     let result = dashboardBaseInitiatives;
     if (activeStatusFilter) {
       result = result.filter((i) => i.status === activeStatusFilter);
     }
-    return result;
-  }, [dashboardBaseInitiatives, activeStatusFilter]);
+    return result.filter((initiative) =>
+      matchesListPreset(initiative, canonicalMenu3Preset.list ?? 'wszystkie')
+    );
+  }, [dashboardBaseInitiatives, activeStatusFilter, canonicalMenu3Preset.list, matchesListPreset]);
+
+  // Liczniki chipów Menu 3 „Realizacji" — z tej samej listy, którą widzi
+  // użytkownik po kliknięciu chipa (bez zawężenia presetem, żeby licznik
+  // pokazywał ile BĘDZIE, a nie ile jest teraz widoczne).
+  useEffect(() => {
+    setCanonicalMenu3Counts((current) => ({
+      ...current,
+      list: {
+        wszystkie: dashboardBaseInitiatives.length,
+        zagrozone: dashboardBaseInitiatives.filter((i) => matchesListPreset(i, 'zagrozone')).length,
+        'po-terminie': dashboardBaseInitiatives.filter((i) => matchesListPreset(i, 'po-terminie'))
+          .length,
+      },
+    }));
+  }, [dashboardBaseInitiatives, matchesListPreset]);
 
   // #12 — bulk selection helpers for the Execution Summary table.
   const summaryVisibleIds = useMemo(
@@ -2280,8 +2353,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.tabs.moduleBar.resources', 'Resources'),
         icon: <Users size={16} />,
       },
+      // 1.12-R1 (C): „Sterowanie" → „Decyzje i ryzyka". Zakładka przestała
+      // być rejestrem pustych sygnałów `runtime-v1` (0 rekordów), a stała się
+      // rejestrem decyzji (25 otwartych) i RAID (16) — nazwa mówi, co jest
+      // w środku. Identyfikator zakładki (`control`) NIE zmienia się, więc
+      // stare linki `?tab=control` działają dalej.
       control: {
-        label: t('execution.tabs.moduleBar.control', 'Control'),
+        label: t('execution.tabs.moduleBar.decisionsRisks', 'Decisions & risks'),
         icon: <Target size={16} />,
       },
       reports: {
@@ -2331,33 +2409,26 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ),
       },
       {
-        // #12 — TYPE moved AFTER the NAME column.
-        // NAPRAWA (audyt MVP 06.09, poz. 7.2, BLOKER): kolumna renderowala
-        // surowy 3-literowy kod wewnetrzny (`getTypeCode`, np. "EXE" na
-        // KAZDYM wierszu, bo realne `row.axis` z bazy — "Digital Processes",
-        // "Cybersecurity", "AI Maturity"… — nie trafialy w mape enumow tego
-        // kodu). `executionTypeLabel` normalizuje te realne zapisy na
-        // czytelna polska etykiete (pill neutralny, bez mono/kodu) —
-        // patrz src/labels/executionTypeLabels.ts.
-        id: 'type',
-        label: t('execution.table.type'),
-        width: '140px',
-        render: (row) => {
-          const label = executionTypeLabel(row.axis, isPolish);
-          return (
-            <div className="flex items-center gap-2">
-              <Target size={14} className="text-blue-400 shrink-0" />
-              <span className="inline-flex h-6 items-center rounded-full border border-c-border-subtle bg-c-surface-raised px-2 text-xs font-medium text-c-text-secondary whitespace-nowrap">
-                {label}
-              </span>
-            </div>
-          );
-        },
+        /*
+         * 1.12-R1 (A) — POZIOM BRAMKI L0–L5 (metodyka A1 pkt 3).
+         * POMIAR 06.09: kolumna `currentStage` istnieje na wszystkich 72
+         * inicjatywach i jest `null` na WSZYSTKICH — więc kolumna pokazuje
+         * uczciwe „—", a nie zmyślone L2. Gdy silnik zacznie ją wypełniać,
+         * wartość pojawi się bez zmiany w tym pliku.
+         */
+        id: 'level',
+        label: t('execution.table.level', 'Poziom'),
+        width: '90px',
+        render: (row) => (
+          <span className="text-sm tabular-nums text-c-text-secondary">
+            {initiativeLevelLabel(row as any)}
+          </span>
+        ),
       },
       {
         id: 'status',
         label: t('execution.table.status'),
-        width: '160px',
+        width: '150px',
         filterable: true,
         filterOptions: EXECUTION_STATUSES.map((status) => {
           // Guard: EXECUTION_STATUSES is partly config-driven; never assume a
@@ -2370,10 +2441,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             // WYŁĄCZNIE EXECUTING na sztywno ('W realizacji'), więc każdy inny
             // status (Scheduled/Blocked/Done…) spadał na `meta.label`
             // angielski — kolumna statusu mieszała języki MIĘDZY WIERSZAMI.
-            // `getLocalizedStatusLabel` to kanoniczna PL/EN etykieta (CB-06 /
-            // RB-035, `services/initiativeLifecycle.ts`) — czyta klucz
-            // `initiativeStatus.<status>` z i18n, zawsze poprawnie dla
-            // WSZYSTKICH statusów, nie tylko jednego.
             label: getLocalizedStatusLabel(status, t),
             color: meta?.dotColor || 'bg-slate-400',
           };
@@ -2391,175 +2458,126 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       {
         id: 'assignee',
         label: t('execution.table.assignee'),
-        width: '150px',
+        width: '160px',
         render: (row) => {
           const owner = row.ownerBusiness || row.ownerTechnical;
           if (!owner)
             return (
               <span className="text-c-text-muted text-sm">{t('execution.table.unassigned')}</span>
             );
+          const pelne = `${owner.firstName ?? ''} ${owner.lastName ?? ''}`.trim();
           return (
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-c-border-subtle flex items-center justify-center text-xs text-c-text">
+            <div className="flex items-center gap-2" title={pelne}>
+              <div className="w-6 h-6 shrink-0 rounded-full bg-c-border-subtle flex items-center justify-center text-xs text-c-text">
                 {owner.firstName?.[0]}
                 {owner.lastName?.[0]}
               </div>
-              <span className="text-sm text-c-text-secondary">
-                {owner.firstName} {owner.lastName}
-              </span>
+              <span className="truncate text-sm text-c-text-secondary">{pelne}</span>
             </div>
           );
         },
       },
       {
-        id: 'progress',
-        label: t('execution.table.progress'),
-        width: '140px',
+        /*
+         * 1.12-R1 (A) — START/KONIEC PLANU w jednej kolumnie.
+         * `plannedStartDate`/`plannedEndDate` są kolumnami inicjatywy
+         * (pomiar B1); na DBR77 ma je 13 z 26 inicjatyw w toku. Brak dat jest
+         * NAZWANY („brak dat planu"), nie pokazany jako pusta komórka —
+         * to ta sama zasada, co szary RAG obok.
+         */
+        id: 'plan',
+        label: t('execution.table.plan', 'Start / koniec planu'),
+        width: '190px',
         render: (row) => {
-          const progress = row.progress || 0;
-          // §4.3/§4.0: progress fill is NEVER danger/crimson. info (in-progress)
-          // → success @100%; amber only for the explicit "at-risk" (overdue) signal.
-          const isOverdue =
-            row.plannedEndDate &&
-            new Date(row.plannedEndDate) < new Date() &&
-            row.status !== InitiativeStatus.DONE;
-          const color = isOverdue
-            ? 'bg-amber-500'
-            : progress >= 100
-              ? 'bg-emerald-500'
-              : 'bg-blue-500';
-          return (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-c-border-subtle rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${color} rounded-full transition-all`}
-                  style={{ width: `${Math.min(progress, 100)}%` }}
-                />
-              </div>
-              <span className="text-xs text-c-text-muted w-8 text-right">{progress}%</span>
-            </div>
-          );
-        },
-      },
-      {
-        // Canon §4.4 — ONE DueChip column (was split across timeRemaining +
-        // alerts overdue badge + deadline). DueChip renders relative time +
-        // overdue/soon state itself; falls back to SLA deadline.
-        id: 'due',
-        label: t('execution.table.deadline'),
-        width: '130px',
-        render: (row) => {
-          const deadline = row.plannedEndDate || row.slaDeadline;
-          if (!deadline) {
-            return <span className="text-xs text-c-text-muted">—</span>;
-          }
-          const terminal = row.status === InitiativeStatus.DONE;
-          return (
-            <DueChip
-              label={new Date(deadline).toLocaleDateString()}
-              due={terminal ? null : deadline}
-              showIcon
-            />
-          );
-        },
-      },
-      {
-        id: 'alerts',
-        label: t('execution.table.alerts'),
-        width: '130px',
-        render: (row) => {
-          const badges: React.ReactNode[] = [];
-          const initiativeTasks = tasksByInitiative[row.id] || [];
-          const relatedDecisions = decisionsByInitiative[row.id] || [];
-          const blockedTasks = initiativeTasks.filter(
-            (t) => normalizeTaskStatus(t.status) === 'blocked'
-          ).length;
-          const overdueDecisions = relatedDecisions.filter(
-            (d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate)
-          ).length;
-
-          // #12 — signal-tone system (danger/warning/success) with a leading
-          // signal dot, readable in light mode. Hard-coded rose/amber/emerald
-          // tints replaced with the c.* tokens.
-          //
-          // axe `color-contrast` (odbior G06, 06_EXECUTION, execution-tab-list):
-          // text-c-danger na bg-c-danger/10 dawal 3.88:1 zamiast 4,5:1 (#e80538
-          // pada ponizej progu na kazdym jasnym tintowanym tle, nie tylko tutaj
-          // — patrz ten sam fix w ExecutionSummaryOneLook.tsx i
-          // WorkIntelligenceReport.tsx). danger-700 w light (7.69:1 na tym tle),
-          // dark: token zostaje (juz przechodzi).
-          if (row.status === InitiativeStatus.BLOCKED) {
-            badges.push(
-              <span
-                key="blocked"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-danger-700 dark:text-c-danger"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
-                {t('execution.badges.blocked')}
-              </span>
-            );
-          }
-
-          // Overdue signal lives in the single DueChip column (canon §4.4) —
-          // not duplicated here.
-
-          if (blockedTasks > 0) {
-            badges.push(
-              <span
-                key="btasks"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-danger/10 text-danger-700 dark:text-c-danger"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-c-danger" aria-hidden="true" />
-                {blockedTasks} {t('execution.badges.blocked')}
-              </span>
-            );
-          }
-
-          if (overdueDecisions > 0) {
-            badges.push(
-              <span
-                key="odecisions"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-c-warning/10 text-c-warning"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-c-warning" aria-hidden="true" />
-                {overdueDecisions} {t('execution.badges.decision')}
-              </span>
-            );
-          }
-
-          if (badges.length === 0) {
+          const start = row.plannedStartDate
+            ? new Date(row.plannedStartDate).toLocaleDateString()
+            : null;
+          const end = row.plannedEndDate ? new Date(row.plannedEndDate).toLocaleDateString() : null;
+          if (!start && !end)
             return (
-              <span className="inline-flex items-center gap-1 text-xs text-c-success">
-                <span className="h-1.5 w-1.5 rounded-full bg-c-success" aria-hidden="true" />
-                {t('execution.badges.ok')}
+              <span className="text-xs text-c-text-muted">
+                {t('execution.table.noPlanDates', 'brak dat planu')}
               </span>
             );
-          }
-
-          return <div className="flex flex-wrap gap-1">{badges}</div>;
+          return (
+            <span
+              className="whitespace-nowrap text-xs text-c-text-secondary"
+              title={`${start ?? '—'} → ${end ?? '—'}`}
+            >
+              {start ?? '—'} → {end ?? '—'}
+            </span>
+          );
         },
       },
       {
-        id: 'tasks',
-        label: t('execution.table.tasks'),
-        width: '90px',
+        /*
+         * 1.12-R1 (A) — ODCHYLENIE od planowanego końca w dniach.
+         * Dodatnie = po terminie (czerwone). Ujemne = zostało tyle dni.
+         * `null` = nie ma z czego liczyć → „—", nie zero.
+         */
+        id: 'deviation',
+        label: t('execution.table.deviation', 'Odchylenie (dni)'),
+        width: '130px',
         render: (row) => {
-          const initiativeTasks = tasksByInitiative[row.id] || [];
-          if (initiativeTasks.length === 0) {
-            return <span className="text-xs text-c-text-muted">-</span>;
-          }
-          const doneCount = initiativeTasks.filter(
-            (task) => normalizeTaskStatus(task.status) === 'done'
-          ).length;
+          const dni = initiativeDeviationDays(row as any);
+          if (dni == null) return <span className="text-c-text-muted">—</span>;
+          if (dni > 0)
+            return <span className="font-semibold tabular-nums text-c-danger">+{dni}</span>;
+          return <span className="tabular-nums text-c-text-secondary">{dni}</span>;
+        },
+      },
+      {
+        /*
+         * 1.12-R1 (A) — RAG z czterema kolorami (metodyka A1 pkt 8).
+         * SZARY jest osobnym stanem „luka danych" z etykietą CZEGO brakuje,
+         * a nie fałszywą zielenią. Zablokowana inicjatywa jest czerwona
+         * niezależnie od dat — blokada jest faktem, nie prognozą.
+         */
+        id: 'rag',
+        label: t('execution.table.rag', 'RAG'),
+        width: '150px',
+        render: (row) => {
+          const zablokowana = row.status === InitiativeStatus.BLOCKED;
+          const rag = zablokowana ? 'red' : initiativeRag(row as any);
+          const opis = zablokowana
+            ? t('execution.rag.blocked', 'Zablokowana')
+            : rag === 'red'
+              ? t('execution.rag.late', 'Po terminie')
+              : rag === 'amber'
+                ? t('execution.rag.atRisk', 'Zagrożona')
+                : rag === 'green'
+                  ? t('execution.rag.onTrack', 'Na czas')
+                  : t('execution.rag.noDates', 'Brak dat planu');
+          const kropka =
+            rag === 'red'
+              ? 'bg-c-danger'
+              : rag === 'amber'
+                ? 'bg-c-warning'
+                : rag === 'green'
+                  ? 'bg-c-success'
+                  : 'bg-c-text-muted';
+          const tekst =
+            rag === 'red'
+              ? 'text-danger-700 dark:text-c-danger'
+              : rag === 'amber'
+                ? 'text-c-warning'
+                : rag === 'green'
+                  ? 'text-c-success'
+                  : 'text-c-text-muted';
           return (
-            <span className="text-xs text-c-text-secondary">
-              {doneCount}/{initiativeTasks.length}
+            <span
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${tekst}`}
+              data-rag={rag}
+              title={opis}
+            >
+              <span className={`h-2 w-2 shrink-0 rounded-full ${kropka}`} aria-hidden="true" />
+              {opis}
             </span>
           );
         },
       },
     ],
-    [decisionsByInitiative, isPolish, t, tasksByInitiative]
+    [t]
   );
 
   const scopeToggle = (
@@ -2682,15 +2700,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       initiatives.reduce((sum, i) => sum + (i.progress || 0), 0) / Math.max(totalInitiatives, 1)
     );
 
+    // 1.12-R1 (D): ta sama definicja „otwarta / po terminie" co w kaflu
+    // (patrz executionRealData.ts) — inaczej kondycja i kafel liczyłyby
+    // z dwóch różnych zbiorów tych samych decyzji.
     const overdueDecisions =
-      healthSnapshot?.decisions?.overdueCount ??
-      decisions.filter(
-        (decision) =>
-          String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
-      ).length;
+      healthSnapshot?.decisions?.overdueCount ?? overdueOpenDecisions(decisions).length;
     const totalDecisions =
-      healthSnapshot?.decisions?.pendingCount ??
-      decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length;
+      healthSnapshot?.decisions?.pendingCount ?? openDecisions(decisions).length;
     const decisionHealth = totalDecisions
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
@@ -3524,9 +3540,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
 
-    const overdueDecisions = decisions
-      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate))
-      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+    // 1.12-R1 (D): „otwarta decyzja po terminie" = PENDING **lub ESCALATED**.
+    // POMIAR 06.09 (DBR77): 12 decyzji po terminie, WSZYSTKIE ze statusem
+    // ESCALATED, zero z PENDING — poprzedni filtr `PENDING && isPastDue`
+    // zwracał dokładnie 0 i to on (nie tylko filtr po projekcie) robił
+    // z kafla „Do rozstrzygnięcia" jedynkę przy 25 otwartych decyzjach.
+    const overdueDecisions = overdueOpenDecisions(decisions).sort((a, b) =>
+      (a.dueDate || '').localeCompare(b.dueDate || '')
+    );
 
     const dueSoonTasks = tasks
       .filter((t) => {
@@ -3556,12 +3577,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const wsDelayed = wsItems.reduce((s, w) => s + (w.delayedCount || 0), 0);
     const wsTotal = wsOnTrack + wsAtRisk + wsDelayed;
 
-    // On-time %: preferuj workstreamy (silnik), inaczej portfolioMetrics.
-    const totalInit = wsTotal || dashboardBaseInitiatives.length;
-    const onTrack = wsTotal ? wsOnTrack : portfolioMetrics.onTrackCount;
-    const delayed = wsTotal ? wsDelayed : portfolioMetrics.blockedCount;
-    const atRisk = wsTotal ? wsAtRisk : Math.max(totalInit - onTrack - delayed, 0);
-    const onTimePercent = totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
+    // 1.12-R1 (D): „Na czas" z REALNYCH DAT inicjatyw.
+    // Do 06.09 zapasowa ścieżka liczyła `onTrack = wszystkie − zablokowane`,
+    // więc portfel bez ani jednej daty pokazywał ~92 % „na czas". Teraz
+    // mianownikiem są wyłącznie inicjatywy Z `plannedEndDate`; te bez daty
+    // idą do osobnego licznika „brak dat" (metodyka A1 pkt 8: szary to luka
+    // danych, nie zieleń). Silnik workstreamów, jeśli COKOLWIEK zwróci,
+    // nadal ma pierwszeństwo — jest bogatszy niż same daty.
+    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives);
+    const totalInit = wsTotal || dateOnTime.totalInitiatives;
+    const onTrack = wsTotal ? wsOnTrack : dateOnTime.onTrackCount;
+    const delayed = wsTotal ? wsDelayed : dateOnTime.delayedCount;
+    const atRisk = wsTotal ? wsAtRisk : dateOnTime.atRiskCount;
+    const onTimePercent = wsTotal
+      ? Math.round((wsOnTrack / wsTotal) * 100)
+      : dateOnTime.onTimePercent;
 
     // Obłożenie (#77 wiring fix 2026-07-19): realny silnik istnieje
     // (workloadCapacityService.getCapacityTimeline, DB-backed) i jest już
@@ -3638,9 +3668,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         context: null,
       };
     });
+    // 1.12-R1 (D): otwarte, jeszcze nie po terminie. Bez `slice(0, 6)` —
+    // kafel „Do rozstrzygnięcia" ma pokazywać LICZBĘ WSZYSTKICH otwartych
+    // pozycji, a nie sześciu pierwszych (kafel i tabela liczą z tej samej
+    // listy, więc obcięcie kłamało w obie strony).
     const pendingDecisionItems = decisions
-      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate))
-      .slice(0, 6)
+      .filter((d) => isOpenDecision(d) && !isDecisionOverdue(d))
       .map((d) => {
         const relId =
           (d as any).relatedObjectType === 'initiative' ? (d as any).relatedObjectId : null;
@@ -6159,9 +6192,15 @@ Please return:
         commandRowContent={undefined}
         commandRowRightContent={undefined}
         chips={
-          activeTab === 'list'
-            ? []
-            : [
+          /*
+           * 1.12-R1 (A): PRZYCZYNA martwego Menu 3 „Realizacji" — chipy były
+           * tu WYŁĄCZONE NA TWARDO (`activeTab === 'list' ? [] : …`), mimo że
+           * `getExecutionMenu3().list` deklarował dziewięć pozycji, a
+           * `canonicalMenu3Preset.list` miał wartość domyślną. Zakładka jako
+           * jedyna nie miała żadnego filtra Menu 3. Trzy chipy (Wszystkie ·
+           * Zagrożone · Po terminie) realnie zawężają teraz `summaryInitiatives`.
+           */
+          [
                 ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
                   ...preset,
                   count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
@@ -6203,7 +6242,7 @@ Please return:
                   : []),
               ]
         }
-        activeChip={activeTab === 'list' ? null : (canonicalMenu3Preset[activeTab] ?? null)}
+        activeChip={canonicalMenu3Preset[activeTab] ?? null}
         onChipChange={(id) => {
           if (id === 'work-intelligence-report') {
             openWorkIntelligenceReport();

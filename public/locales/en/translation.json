@@ -10116,19 +10116,24 @@
       "destructiveNote": "Capacity scenarios are superseded, not deleted",
       "resourceOwnerFallback": "Resource owner"
     },
-    "plan": {
-      "newPlan": "New plan",
-      "unnamed": "Unnamed plan",
-      "portfolioFallback": "Source portfolio",
-      "filters": { "drafts": "Drafts", "published": "Published", "conflicted": "With conflicts" },
-      "columns": { "name": "Name", "portfolio": "Portfolio / version", "horizon": "Horizon", "initiatives": "Initiatives in plan", "conflicts": "Conflicts", "updatedAt": "Updated", "author": "Author" }
-    },
+    "plan": "Plan",
     "capacityAnalysis": {
       "newAnalysis": "New analysis",
       "unnamed": "Unnamed analysis",
       "sourcePlanFallback": "Source plan",
-      "filters": { "drafts": "Drafts", "published": "Published", "gaps": "With gaps" },
-      "columns": { "name": "Name", "sourcePlan": "Source plan", "periods": "Periods", "roles": "Roles", "gaps": "Gaps", "updatedAt": "Updated" }
+      "filters": {
+        "drafts": "Drafts",
+        "published": "Published",
+        "gaps": "With gaps"
+      },
+      "columns": {
+        "name": "Name",
+        "sourcePlan": "Source plan",
+        "periods": "Periods",
+        "roles": "Roles",
+        "gaps": "Gaps",
+        "updatedAt": "Updated"
+      }
     },
     "planScenario": {
       "status": {
@@ -10681,7 +10686,6 @@
     "toAdd": "To add",
     "noAdditionsProposed": "No additions proposed.",
     "ifTheThreadIsCompleteAi": "If the thread is complete, AI may not add new comments.",
-    "plan": "Plan",
     "cancel": "Cancel",
     "apply": "Apply",
     "kpisBenefits": "KPIs & Benefits",
@@ -12750,7 +12754,8 @@
         "work": "Work",
         "resources": "Resources",
         "control": "Control",
-        "reports": "Reports"
+        "reports": "Reports",
+        "decisionsRisks": "Decisions & risks"
       }
     },
     "manager": {
@@ -13114,7 +13119,12 @@
       "selectedCount": "{{count}} selected",
       "changeStatusFor": "Change status for {{name}}",
       "demoSampleBadge": "Sample",
-      "demoSampleTitle": "Sample data, not real"
+      "demoSampleTitle": "Sample data, not real",
+      "level": "Level",
+      "plan": "Planned start / end",
+      "deviation": "Variance (days)",
+      "rag": "RAG",
+      "noPlanDates": "no plan dates"
     },
     "badges": {
       "done": "Done",
@@ -13236,7 +13246,8 @@
         "missingForecast": "Missing forecast",
         "closing": "Closing",
         "delivered": "Recently delivered",
-        "unknown": "Unknown data"
+        "unknown": "Unknown data",
+        "overdue": "Overdue"
       },
       "work": {
         "tasks": "Tasks",
@@ -13286,6 +13297,11 @@
         "published": "Published",
         "failed": "Failed",
         "recent": "Recent runs"
+      },
+      "governance": {
+        "decisions": "Decisions",
+        "risks": "Risks",
+        "overdue": "Overdue"
       }
     },
     "scope": {
@@ -13690,11 +13706,15 @@
     },
     "work": {
       "columns": {
-        "title": "Work item",
+        "title": "Task",
         "kind": "Type",
         "status": "Status",
         "owner": "Owner / decision maker",
-        "dueAt": "Due / SLA"
+        "dueAt": "Due / SLA",
+        "initiative": "Initiative",
+        "person": "Person",
+        "due": "Due",
+        "slip": "Slip (days)"
       },
       "degraded": "Partial data: {{count}} {{unit}} unavailable"
     },
@@ -13721,6 +13741,26 @@
         "proposeAllocation": "Propose allocation",
         "addAvailability": "Add availability"
       }
+    },
+    "governance": {
+      "columns": {
+        "title": "Title",
+        "type": "Type",
+        "owner": "Owner",
+        "due": "Due",
+        "daysOverdue": "Days overdue",
+        "escalation": "Escalation"
+      },
+      "actions": {
+        "newDecision": "New decision"
+      }
+    },
+    "rag": {
+      "blocked": "Blocked",
+      "late": "Overdue",
+      "atRisk": "At risk",
+      "onTrack": "On track",
+      "noDates": "No plan dates"
     }
   },
   "benefits": {
