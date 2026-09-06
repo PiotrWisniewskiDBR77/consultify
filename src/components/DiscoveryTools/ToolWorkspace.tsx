@@ -20,7 +20,8 @@ import { AppView } from '@/types';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
-import { GenerateInitiativesModal } from './GenerateInitiativesModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterTool } from '@/components/Initiatives/Generator/adapters';
 import ToolOutputsPanel from './report/ToolOutputsPanel';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
@@ -205,15 +206,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   );
   const [reviewDecisionOwnerId, setReviewDecisionOwnerId] = useState<string>('');
   const [users, setUsers] = useState<any[]>([]);
-  const [generationDefaults, setGenerationDefaults] = useState<{
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-  }>({
-    methodologyId: 'impact-feasibility',
-    count: 3,
-    includeChatContext: true,
-  });
+  // DEC-413 — wartosci startowe generatora sa teraz stanem wspoldzielonego
+  // modalu; tutaj zostaja wylacznie jako podpis pod przyciskiem w panelu
+  // przegladu (ToolReviewPanel pokazuje, z czym generator wystartuje).
+  const generationDefaults = useMemo(
+    () => ({ methodologyId: 'impact-feasibility', count: 3, includeChatContext: true }),
+    []
+  );
 
   // Tool store
   const {
@@ -703,27 +702,20 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     }
   };
 
-  const handleGenerate = async (payload: {
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-    decisionOwnerId?: string;
-  }) => {
+  /**
+   * DEC-413 — samo wolanie endpointu przejal adapter `tool` wspoldzielonego
+   * generatora; tutaj zostaje wylacznie odczyt po generacji (lista
+   * wygenerowanych inicjatyw + odswiezenie sesji), bo to stan TEGO ekranu.
+   */
+  const odswiezPoGeneracji = async () => {
     if (!toolSessionId) return;
-    if (toolPermissions.canGenerate === false) {
-      toast.error(t('discoveryToolsMain.toolWorkspace.permissionDenied'));
-      return;
-    }
     try {
-      setGenerationDefaults(payload);
-      await Api.generateToolInitiatives(toolSessionId, payload);
       const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
       setGeneratedInitiatives(updated.initiatives || []);
       await refreshToolSession();
-      setShowGenerateModal(false);
       toast.success(t('discoveryToolsMain.toolWorkspace.generatedInitiatives'));
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to generate initiatives');
+      toast.error(err?.message || 'Failed to refresh generated initiatives');
     }
   };
 
@@ -853,14 +845,19 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         />
       )}
 
-      {showGenerateModal && (
-        <GenerateInitiativesModal
-          isPolish={isPolish}
-          defaults={generationDefaults}
-          onClose={() => setShowGenerateModal(false)}
-          onGenerate={handleGenerate}
-        />
-      )}
+      {/* JEDEN generator inicjatyw (DEC-413) — ten sam modal, co w Ocenie,
+          Wywiadzie i Audytach; adapter `tool` woła bez zmian
+          POST /tools/:toolId/generate-initiatives, a biezaca sesja wchodzi
+          jako wstepny wybor kroku 2. */}
+      <GeneratorInicjatywModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        adaptery={[adapterTool]}
+        wstepnyWybor={toolSessionId ? [toolSessionId] : undefined}
+        onCompleted={() => {
+          void odswiezPoGeneracji();
+        }}
+      />
 
       {showRequestReviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

@@ -8,6 +8,8 @@
  * Serwer nie zna template'ów inicjatywy → `wymagaTemplate: false`.
  */
 
+import toast from 'react-hot-toast';
+
 import { Api } from '@/services/api';
 
 import type {
@@ -55,6 +57,38 @@ export const adapterTool: AdapterGeneratora = {
       count: Math.max(1, Math.min(7, Number(a.liczba) || 1)),
       includeChatContext: a.includeChatContext,
     });
+
+    // I1 (INITIATIVE_DEDUP_ACTIONABLE) — serwer POMIJA tworzenie duplikatow
+    // o wysokiej pewnosci i zwraca je w `skipped`. Konkretny wynik zamiast
+    // ciszy. Flaga OFF -> pole nieobecne -> nic nie pokazujemy.
+    const skipped: any[] = Array.isArray(resp?.skipped) ? resp.skipped : [];
+    if (skipped.length > 0) {
+      const nazwy = skipped
+        .map((s: any) => s?.title)
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(', ');
+      toast(
+        `Pominięto ${skipped.length} duplikat(ów) — już istnieją w portfolio (${nazwy}).`,
+        { duration: 6000 }
+      );
+    }
+
+    // #68b — parytet z detekcja podobienstwa kreatora
+    // (POST /initiatives/similarity-check). Informacyjne, nigdy nie blokuje.
+    const podobne: any[] = Array.isArray(resp?.duplicateWarnings) ? resp.duplicateWarnings : [];
+    if (podobne.length > 0) {
+      const nazwy = podobne
+        .map((w: any) => w?.title)
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(', ');
+      toast(
+        `Uwaga: ${podobne.length} z wygenerowanych inicjatyw przypomina istniejące (${nazwy}). Sprawdź portfolio pod kątem duplikatów.`,
+        { duration: 6000 }
+      );
+    }
+
     const list: any[] = Array.isArray(resp?.initiatives)
       ? resp.initiatives
       : Array.isArray(resp?.created)
