@@ -10,9 +10,11 @@
  * construction — it never imports either session runtime.
  */
 import type { TableColumn } from '@/components/standard/StandardTable';
+import { rollupAnswerState } from '@/components/method-workspace/answerStateColors';
 import type {
   InterviewFocusQuestion,
   MatrixRow,
+  MethodAnswerState,
   MethodEvidenceState,
   MethodNavigatorNode,
 } from '@/components/method-workspace/types';
@@ -101,6 +103,26 @@ export function evidenceStateFor(
   return 'complete';
 }
 
+/**
+ * Ostatni zapisany stan odpowiedzi PER PYTANIE w jednostce. Kolejność zdarzeń
+ * jest chronologiczna, więc późniejszy wpis nadpisuje wcześniejszy — tak samo
+ * jak w `questionAnswerState` poniżej (jedna semantyka, dwa zasięgi).
+ */
+export function unitAnswerStates(
+  events: readonly MethodEvent[],
+  unitId: string
+): MethodAnswerState[] {
+  const byQuestion = new Map<string, MethodAnswerState>();
+  for (const e of events) {
+    if (e.type !== 'ANSWER_CONFIRMED' && e.type !== 'ANSWER_DRAFTED') continue;
+    if (e.unitId !== unitId) continue;
+    const payload = e.payload as { questionId?: string; answerState?: MethodAnswerState } | undefined;
+    if (!payload?.questionId || !payload.answerState) continue;
+    byQuestion.set(payload.questionId, payload.answerState);
+  }
+  return [...byQuestion.values()];
+}
+
 export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavigatorNode[] {
   const nodes: MethodNavigatorNode[] = [];
   for (const axis of DRD_STRUCTURE as DRDAxis[]) {
@@ -125,6 +147,9 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
       currentLevel: null,
       targetLevel: null,
       evidenceState: axisEvidenceState,
+      answerRollup: rollupAnswerState(
+        axis.areas.flatMap((area) => unitAnswerStates(events, area.id))
+      ),
       gap: null,
       openQuestionCount: 0,
     });
@@ -143,6 +168,7 @@ export function buildNavigatorNodes(events: readonly MethodEvent[]): MethodNavig
         currentLevel: progression.currentLevel,
         targetLevel: target,
         evidenceState: evidenceStateFor(events, area.id, progression.blockedAtLevel),
+        answerRollup: rollupAnswerState(unitAnswerStates(events, area.id)),
         gap: target !== null && progression.currentLevel !== null ? target - progression.currentLevel : null,
         openQuestionCount: openCount,
       });

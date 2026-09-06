@@ -66,6 +66,13 @@ export interface MethodNavigatorNode {
   readonly currentLevel: number | null;
   readonly targetLevel: number | null;
   readonly evidenceState: MethodEvidenceState;
+  /**
+   * Rollup STANU ODPOWIEDZI jednostki (`null` = nikt jeszcze nie odpowiedział).
+   * Świadomie ODDZIELNA oś od `evidenceState` (jakość dowodu) — dlatego drzewo
+   * rysuje dwie kropki, a nie jedną o zlanym znaczeniu. Opcjonalne, żeby
+   * wołacze, które jeszcze tego nie liczą (np. SIRI), pozostały nietknięte.
+   */
+  readonly answerRollup?: MethodAnswerState | null;
   /** target - current, when both are known. */
   readonly gap: number | null;
   readonly ownerLabel?: string;

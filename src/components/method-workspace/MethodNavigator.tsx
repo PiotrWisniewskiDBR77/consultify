@@ -10,6 +10,7 @@
 import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { answerStateDotClass } from './answerStateColors';
 import type { MethodEvidenceState, MethodNavigatorNode } from './types';
 
 export interface MethodNavigatorProps {
@@ -67,6 +68,7 @@ const NodeRow: React.FC<{
   const isLeaf = !hasChildren;
   const active = node.unitId === activeUnitId;
   const expanded = depth === 0 ? expandedRootId === node.unitId : nestedExpanded;
+  const answerDot = answerStateDotClass(node.answerRollup);
 
   useEffect(() => {
     if (depth > 0 && containsActiveUnit) setNestedExpanded(true);
@@ -106,6 +108,15 @@ const NodeRow: React.FC<{
           <ChevronRight
             size={12}
             className={`shrink-0 transition-transform text-c-text-muted ${expanded ? 'rotate-90' : ''}`}
+          />
+        )}
+        {answerDot && (
+          <span
+            aria-hidden="true"
+            data-testid={`navigator-answer-dot-${node.unitId}`}
+            data-answer-state={node.answerRollup}
+            className={`shrink-0 h-1.5 w-1.5 rounded-full ${answerDot}`}
+            title={`Stan odpowiedzi: ${node.answerRollup}`}
           />
         )}
         <span
