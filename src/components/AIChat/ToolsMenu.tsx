@@ -332,6 +332,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
         `}
         title={t('aiChat.menu.tools', 'Narzędzia AI')}
+        aria-label={t('aiChat.menu.tools', 'Narzędzia AI')}
       >
         <IconComponent size={20} />
         {activeModeCount > 0 && (

@@ -45,6 +45,7 @@ const Btn: React.FC<{
     }}
     disabled={disabled}
     title={title}
+    aria-label={title}
     className={`p-1.5 rounded transition-colors ${
       active
         ? 'bg-slate-200 dark:bg-white/[0.12] text-slate-900 dark:text-white'

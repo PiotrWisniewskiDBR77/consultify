@@ -18123,6 +18123,12 @@
     "voiceUnavailable": "Voice is unavailable. You can continue by text or dictation.",
     "send": "Send",
     "startDictation": "Dictate (fills input; review and send)",
+    "stopDictation": "Stop dictation",
+    "muteMic": "Mute microphone",
+    "unmuteMic": "Unmute microphone",
+    "stopGenerating": "Stop generating",
+    "startVoiceConversation": "Start voice conversation with Teresa",
+    "stopVoiceConversation": "Stop voice conversation",
     "workPanel": {
       "open": "Open work panel",
       "close": "Close work panel",

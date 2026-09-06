@@ -19465,6 +19465,12 @@
     "voiceUnavailable": "Głos jest niedostępny. Możesz kontynuować tekstowo lub przez dyktowanie.",
     "send": "Wyślij",
     "startDictation": "Dyktuj (uzupełnia pole; sprawdź tekst i wyślij)",
+    "stopDictation": "Zatrzymaj dyktowanie",
+    "muteMic": "Wycisz mikrofon",
+    "unmuteMic": "Włącz mikrofon",
+    "stopGenerating": "Zatrzymaj generowanie",
+    "startVoiceConversation": "Rozpocznij rozmowę głosową z Teresą",
+    "stopVoiceConversation": "Zakończ rozmowę głosową",
     "workPanel": {
       "open": "Otwórz panel roboczy",
       "close": "Zamknij panel roboczy",

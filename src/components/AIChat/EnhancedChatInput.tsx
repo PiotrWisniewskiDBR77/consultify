@@ -1294,6 +1294,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     ? t('aiChat.unmuteMic', 'Unmute microphone')
                     : t('aiChat.muteMic', 'Mute microphone')
                 }
+                aria-label={
+                  teresaVoiceMuted
+                    ? t('aiChat.unmuteMic', 'Unmute microphone')
+                    : t('aiChat.muteMic', 'Mute microphone')
+                }
               >
                 {teresaVoiceMuted ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
@@ -1312,6 +1317,11 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                   ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
                 `}
                 title={
+                  isDictating
+                    ? t('aiChat.stopDictation', 'Stop dictation')
+                    : t('aiChat.startDictation', 'Dictate (fills input, you review & send)')
+                }
+                aria-label={
                   isDictating
                     ? t('aiChat.stopDictation', 'Stop dictation')
                     : t('aiChat.startDictation', 'Dictate (fills input, you review & send)')
@@ -1353,6 +1363,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                     : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] shadow-black/10'
                 }`}
                 title={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
+                aria-label={t('aiChat.stopVoiceConversation', 'Stop voice conversation')}
               >
                 {teresaVoiceStatus === 'connecting' ? (
                   <Loader2 size={18} className="animate-spin" />

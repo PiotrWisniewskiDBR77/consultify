@@ -303,6 +303,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         data-testid="add-files-trigger"
         className={`p-2 rounded-lg transition-colors text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title={t('aiChat.menu.addFiles', 'Add files')}
+        aria-label={t('aiChat.menu.addFiles', 'Add files')}
       >
         <Plus size={20} />
       </button>
