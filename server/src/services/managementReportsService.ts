@@ -130,6 +130,55 @@ const normalizeSeverity = (severity: string | null | undefined) => {
   return 'LOW';
 };
 
+// 1.1-Z2 #2 — tytuły raportów zarządczych były zawsze po angielsku,
+// niezależnie od języka użytkownika/organizacji (żadnego udziału SSOT
+// językowego services/ai/languagePolicy.ts, mimo że route dostaje `language`
+// tak samo jak inne trasy ai.routes.ts). `options.language` jest resztą tego
+// samego rozstrzygnięcia co reszta aplikacji (managementReports.routes.ts:
+// `resolveAiLanguageFromRequest`) — te funkcje są jedynym miejscem, w którym
+// rozstrzyga się język TYTUŁU raportu. `RAID` i `Steering Committee` zostają
+// nieprzetłumaczone celowo — to ten sam żargon, którego polski UI używa wprost
+// bez tłumaczenia (public/locales/pl/translation.json: "RAID", "Steering
+// Committee" występują dosłownie).
+const isPolishLanguage = (language: unknown): boolean => language === 'pl';
+
+const teamMeetingReportTitle = (
+  projectName: string,
+  reportType: string | undefined,
+  language: unknown
+): string => {
+  const isWeekly = reportType === 'TEAM_WEEKLY';
+  if (isPolishLanguage(language)) {
+    return isWeekly
+      ? `Tygodniowy raport zespołu — ${projectName}`
+      : `Raport ze spotkania zespołu — ${projectName}`;
+  }
+  return `${projectName} ${isWeekly ? 'Team Weekly' : 'Team Meeting'} Report`;
+};
+
+const steeringCommitteeReportTitle = (
+  scope: string,
+  projectName: string | undefined,
+  language: unknown
+): string => {
+  const pl = isPolishLanguage(language);
+  if (scope === 'PORTFOLIO') {
+    return pl ? 'Raport Steering Committee — portfel' : 'Steering Committee Portfolio Report';
+  }
+  return pl
+    ? `Raport Steering Committee — ${projectName || 'Projekt'}`
+    : `Steering Committee Report - ${projectName || 'Project'}`;
+};
+
+const portfolioHealthReportTitle = (language: unknown): string =>
+  isPolishLanguage(language) ? 'Raport kondycji portfela' : 'Portfolio Health Report';
+
+const raidReportTitle = (hasProject: boolean, language: unknown): string => {
+  const pl = isPolishLanguage(language);
+  if (hasProject) return pl ? 'Raport RAID — projekt' : 'Project RAID Report';
+  return pl ? 'Raport RAID — portfel' : 'Portfolio RAID Report';
+};
+
 class ManagementReportsService {
   // Tenant-scoping helper (DEC-131 P1-4): resolves the report AND verifies
   // it belongs to organizationId in one query, before any other logic runs
@@ -500,7 +549,7 @@ class ManagementReportsService {
       scope: 'PROJECT',
       projectId,
       organizationId: options.organizationId || project.organization_id,
-      title: `${project.name} ${options.reportType === 'TEAM_WEEKLY' ? 'Team Weekly' : 'Team Meeting'} Report`,
+      title: teamMeetingReportTitle(project.name, options.reportType, options.language),
       periodStart,
       periodEnd,
       status: 'DRAFT',
@@ -698,10 +747,7 @@ class ManagementReportsService {
       scope,
       projectId: projectId,
       organizationId: organizationId,
-      title:
-        scope === 'PORTFOLIO'
-          ? 'Steering Committee Portfolio Report'
-          : `Steering Committee Report - ${project?.name || 'Project'}`,
+      title: steeringCommitteeReportTitle(scope, project?.name, options.language),
       periodStart,
       periodEnd,
       status: 'DRAFT',
@@ -825,7 +871,7 @@ class ManagementReportsService {
       scope: 'PORTFOLIO',
       projectId: undefined,
       organizationId,
-      title: 'Portfolio Health Report',
+      title: portfolioHealthReportTitle(options.language),
       periodStart,
       periodEnd,
       status: 'DRAFT',
@@ -975,7 +1021,7 @@ class ManagementReportsService {
       scope: options.scope || 'PROJECT',
       projectId,
       organizationId,
-      title: projectId ? 'Project RAID Report' : 'Portfolio RAID Report',
+      title: raidReportTitle(Boolean(projectId), options.language),
       periodStart,
       periodEnd,
       status: 'DRAFT',

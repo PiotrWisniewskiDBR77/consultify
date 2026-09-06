@@ -1,0 +1,76 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:17:10:1710 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: pl → "Raport kondycji portfela"
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:17:11:1711 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: pl → "Raport kondycji portfela"
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:17:11:1711 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:17:11:1711 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: pl → "Raport kondycji portfela"
+2026-09-06 17:17:11:1711 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: pl → "Raport kondycji portfela"
+2026-09-06 17:17:11:1711 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: pl → "Raport kondycji portfela" 91ms
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — language: en → "Portfolio Health Report" 12ms
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > RAID — language: pl, brak projectId (portfel) → "Raport RAID — portfel" 10ms
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > RAID — language: en, brak projectId (portfolio) → "Portfolio RAID Report" 11ms
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts > 1.1-Z2 #2 — tytuł raportu podąża za językiem żądania (real Postgres) > PORTFOLIO_HEALTH — brak language w body/nagłówkach → domyślnie polski (SSOT: DEFAULT_AI_LANGUAGE = pl) 17ms
+ ✓ tests/integration/managementReports.titleLanguage.realdb.test.ts (5 tests) 268ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:17:09
+   Duration  1.88s (transform 927ms, setup 99ms, import 1.19s, tests 268ms, environment 241ms)
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:17:09
+   Duration  1.88s (transform 927ms, setup 99ms, import 1.19s, tests 268ms, environment 241ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
