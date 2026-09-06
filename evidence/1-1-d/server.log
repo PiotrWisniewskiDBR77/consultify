@@ -1,0 +1,1370 @@
+2026-09-06 11:41:32:4132 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 11:41:32:4132 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 11:41:32:4132 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 11:41:32:4132 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 11:41:32:4132 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Redis] Initializing client...[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Redis] Connecting to: redis://localhost:6379[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m✅ Environment variables validated successfully[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m✅ Environment variables validated successfully[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Sentry] Disabled (no SENTRY_DSN or not in production/staging)[39m
+2026-09-06 11:41:34:4134 [33mwarn[39m: [33m[Server] DB_MANAGED_SCHEMA=off (no auto-DDL/migrations).[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Server] Starting HTTP listener eagerly (routes may still be warming up)...[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Server] Initializing database...[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[RateLimit] startup posture: posture=single-replica (inferred, not declared) store=local (default) failMode=closed (default) disableRateLimit=true allowProdDisable=true redisUrl=absent mockRedis=false[39m
+2026-09-06 11:41:34:4134 [31merror[39m: [31m[RateLimit] MISCONFIGURATION: DISABLE_RATE_LIMIT=true disables EVERY rate limiter, including the public demo signup brake — set RATE_LIMIT_POSTURE to make this a startup failure[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-06 11:41:34:4134 [32minfo[39m: [32m[Server] Database instance created:[39m
+2026-09-06 11:41:56:4156 [32minfo[39m: [32m[Server] Database schema initialized: DB_MANAGED_SCHEMA disabled; skipping initializeDatabase()[39m
+2026-09-06 11:41:56:4156 [32minfo[39m: [32m[Server] Database connected in verify-only owner-review mode[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+2026-09-06 11:41:58:4158 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+2026-09-06 11:41:58:4158 [33mwarn[39m: [33m[Encryption] No ENCRYPTION_KEY set. Using development fallback key.[39m
+2026-09-06 11:41:58:4158 [33mwarn[39m: [33m[Encryption] SET ENCRYPTION_KEY in production![39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"createSecurityIncident","184":"deleteSecurityIncident","185":"getSecurityIncidentById","186":"getSecurityIncidentStats","187":"getSecurityIncidents","188":"resolveSecurityIncident","189":"updateSecurityIncident","190":"addThreat","191":"blockThreat","192":"bulkImportThreats","193":"checkDomainReputation","194":"checkIPReputation","195":"createDLPPolicy","196":"deleteDLPPolicy","197":"deleteThreat","198":"getBlockedDomains","199":"getBlockedIPs","200":"getDLPPolicies","201":"getDLPPolicyById","202":"getDLPStats","203":"getDLPViolationById","204":"getDLPViolations","205":"getThreatById","206":"getThreatStats","207":"getThreats","208":"resolveDLPViolation","209":"scanResourceDLP","210":"toggleDLPPolicy","211":"unblockThreat","212":"updateDLPPolicy","213":"updateThreat","214":"connectIntegration","215":"createWebhook","216":"deleteWebhook","217":"disconnectIntegration","218":"getIntegrations","219":"getWebhookDeliveries","220":"getWebhooks","221":"refreshIntegration","222":"testIntegration","223":"testWebhook","224":"updateIntegrationConfig","225":"updateWebhook","226":"addDashboardWidget","227":"cloneDashboard","228":"createDashboard","229":"deleteDashboard","230":"getDashboardBuilderStats","231":"getDashboardById","232":"getDashboardWidgetData","233":"getDashboards","234":"removeDashboardWidget","235":"reorderDashboardWidgets","236":"toggleDashboardShare","237":"updateDashboard","238":"updateDashboardWidget","239":"addPaymentMethod","240":"addPlanFeature","241":"approveSubscriptionChange","242":"calculateProration","243":"comparePricingPlans","244":"createPricingPlan","245":"createRevenueForecast","246":"createRevenueRecognition","247":"createSubscriptionChange","248":"deletePaymentMethod","249":"deletePricingPlan","250":"deleteRevenueForecast","251":"generateRevenueForecast","252":"getPaymentFailureStats","253":"getPaymentFailures","254":"getPaymentMethods","255":"getPlanFeatures","256":"getPricingPlans","257":"getRecognitionSchedule","258":"getRevenueForecastStats","259":"getRevenueForecasts","260":"getRevenueRecognitionStats","261":"getRevenueRecognitions","262":"getSubscriptionChangeStats","263":"getSubscriptionChanges","264":"recognizeRevenue","265":"rejectSubscriptionChange","266":"removePlanFeature","267":"retryPayment","268":"updatePaymentMethod","269":"updatePricingPlan","270":"updateRevenueForecast","271":"updateRevenueRecognition","272":"createContractAmendment","273":"createCustomerContract","274":"createLifecycleStage","275":"createSuccessPlaybook","276":"deleteCustomerContract","277":"deleteLifecycleStage","278":"deleteSuccessPlaybook","279":"executeSuccessPlaybook","280":"getContractAmendments","281":"getContractStats","282":"getCustomerContracts","283":"getLifecycleStages","284":"getLifecycleStats","285":"getLifecycleTransitions","286":"getPlaybookStats","287":"getSuccessActions","288":"getSuccessPlaybooks","289":"getUpcomingRenewals","290":"transitionOrganization","291":"updateCustomerContract","292":"updateLifecycleStage","293":"updateSuccessPlaybook"}
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11d/server/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] ==========================================[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Setting up frontend static file serving...[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] NODE_ENV: development[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] __dirname: /private/tmp/wt-11d/server/src[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Frontend dist path (dev): /private/tmp/wt-11d/dist[39m
+2026-09-06 11:41:59:4159 [31merror[39m: [31m[Server] Frontend index.html not found at: /private/tmp/wt-11d/dist/index.html[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] ✓ Stored frontend dist path globally: /private/tmp/wt-11d/dist[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Final frontend dist path: /private/tmp/wt-11d/dist[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Final frontend dist path: /private/tmp/wt-11d/dist[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Registering root route handler with frontendDistPath: /private/tmp/wt-11d/dist[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Starting HTTP server after route registration...[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[Server] Feedback artifact pruner started (retention: 30 days).[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[feedbackDigest] FEEDBACK_DIGEST_ENABLED!=true — cron not started.[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[feedbackSla] Overdue-escalation sweep started (every 15 min).[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[NotificationOutbox] Drain cron started (every 60s).[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[RvnPlatformOutbox] Drain cron started (every 60s).[39m
+2026-09-06 11:41:59:4159 [32minfo[39m: [32m[CaseWorkspaceOutboxWorker] started (every 5000ms, backoff up to 40000ms, tick timeout 30000ms, reconciliation every 12 ticks).[39m
+2026-09-06 11:42:00:420 [33mwarn[39m: [33m[CaseWorkspace capability bootstrap] skipped: missing configuration (CASE_WORKSPACE_CAPABILITY_BOOT_ACTOR_ID=unset, CASE_WORKSPACE_CAPABILITY_BOOT_ORG_ID=unset). Set both to a dedicated synthetic service principal (ADMIN of a disposable test organization) to enable the builtin capability adapters.[39m
+2026-09-06 11:42:00:420 [33mwarn[39m: [33m[Server] Case Workspace capability adapters not registered: SKIPPED_MISSING_CONFIG.[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Initiative/Execution outbox consumer: DISABLED[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[BullMQ] ai-tasks worker disabled; set ENABLE_AI_TASKS_WORKER=true after owner approval[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[ProgressFeed] Started (flush every 15 min).[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[IdeaCollabWs] Native WebSocket /ws/collab/:ideaId attached (auth+session)[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Idea collab WebSocket /ws/collab/:ideaId initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[PresentationCollabWs] Native WebSocket /ws/presentations/:deckId attached[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Presentation collab WebSocket /ws/presentations/:deckId initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[NotebookCollabWs] Native WebSocket /ws/notebook/:noteId attached[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Notebook collab WebSocket /ws/notebook/:noteId initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[TablePlatformRealtime] Initialized on /table-platform namespace[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Table Platform Realtime (Socket.IO /table-platform) initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[OrgContextRealtime] Initialized on /org-context namespace[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Org Context Realtime (Socket.IO /org-context) initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[ChatProjectsRealtime] Initialized on /chat-projects namespace[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Chat Projects Realtime (Socket.IO /chat-projects) initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[FacilitationRealtime] Initialized on /facilitation namespace[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Facilitation Realtime (Socket.IO /facilitation) initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] Frontend will be served from: /private/tmp/wt-11d/dist[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[PurgeScheduler] Starting — grace=30d, interval=3600000ms, batch=100[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m✅ Server running on http://0.0.0.0:4109[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m✅ WebSocket available at ws://0.0.0.0:4109/ws[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Server] ✅ Server started on port 4109[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 11:42:00:420 [33mwarn[39m: [33m[Postgres] DB_MANAGED_SCHEMA is disabled; skipping initDb()[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Redis] Connecting...[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Redis] Connected and ready[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[Redis] Successfully connected[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check function set for [openrouter][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check registered for [openrouter][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check function set for [anthropic][39m
+2026-09-06 11:42:00:420 [32minfo[39m: [32m[2026-09-06T09:42:00.238Z] [INFO] [AI:CircuitBreaker] Health check registered for [anthropic][39m
+2026-09-06 11:42:05:425 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/deliverables/generations","reason":"CSRF_MISSING","mode":"report"}
+2026-09-06 11:42:05:425 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/deliverables/generations[39m
+2026-09-06 11:42:05:425 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/deliverables/generations","statusCode":404,"responseTime":5,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":483056,"external":40,"rss":344064},"userId":null,"organizationId":null,"route":"/api/deliverables/generations","isSlow":false,"isError":true}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:43:04:434 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":36}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:43:04:434 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":128}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:43:04:434 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/cloud/providers","dbQueryCount":23,"dbQueryTime":267}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:43:04:434 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/agent-audit/agents","dbQueryCount":17,"dbQueryTime":59}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:43:04:434 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:43:04:434 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:43:06:436 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:43:06:436 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:43:08:438 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:43:08:438 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations[39m
+2026-09-06 11:43:08:438 [32minfo[39m: [32m[Conversations] Created: 4c0dedab-f6ef-4fc9-94f6-0aad91191490 for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m
+2026-09-06 11:43:08:438 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations","dbQueryCount":16,"dbQueryTime":93}
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/proposals[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/handoff-proposals[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/4c0dedab-f6ef-4fc9-94f6-0aad91191490[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/branches[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:43:09:439 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/messages[39m
+2026-09-06 11:43:09:439 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/4c0dedab-f6ef-4fc9-94f6-0aad91191490/messages","dbQueryCount":24,"dbQueryTime":54}
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/4c0dedab-f6ef-4fc9-94f6-0aad91191490[39m
+2026-09-06 11:43:09:439 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/deliverables/generations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:43:09:439 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/deliverables/generations[39m
+2026-09-06 11:43:09:439 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/deliverables/generations","statusCode":404,"responseTime":0,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":110240,"external":0,"rss":0},"userId":null,"organizationId":null,"route":"/api/deliverables/generations","isSlow":false,"isError":true}
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:50:25:5025 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:50:25:5025 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":54}
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:50:25:5025 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":133}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:50:25:5025 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":14,"dbQueryTime":127}
+2026-09-06 11:50:25:5025 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:50:26:5026 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/cloud/providers","dbQueryCount":12,"dbQueryTime":44}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:50:26:5026 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":25}
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:50:26:5026 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/agent-audit/agents","dbQueryCount":14,"dbQueryTime":26}
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:50:26:5026 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/agent-audit/agents","dbQueryCount":12,"dbQueryTime":81}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:50:26:5026 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":66}
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:50:26:5026 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:50:28:5028 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:50:28:5028 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:50:29:5029 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:29:5029 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations[39m
+2026-09-06 11:50:29:5029 [32minfo[39m: [32m[Conversations] Created: 3b1ba3a9-5c85-44c7-8684-0d9c62985784 for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m
+2026-09-06 11:50:29:5029 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations","dbQueryCount":16,"dbQueryTime":44}
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/proposals[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/handoff-proposals[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/3b1ba3a9-5c85-44c7-8684-0d9c62985784[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/branches[39m
+2026-09-06 11:50:30:5030 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/branches","dbQueryCount":12,"dbQueryTime":32}
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:50:30:5030 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/3b1ba3a9-5c85-44c7-8684-0d9c62985784[39m
+2026-09-06 11:50:30:5030 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages","dbQueryCount":24,"dbQueryTime":185}
+2026-09-06 11:50:30:5030 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/ai/chat/stream","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat/stream[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[ChatPolicyGateway] Decision 95a79043-dfea-4182-b37f-88a9626097ec: outcome=allow, category=ok, scopes=[user_private,org_shared,public_kb], blocked=[other_user_private,other_tenant][39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[ChatPolicyGateway] Retrieval decision 9560b6be-84e2-4a5b-ba14-f04ba3402931: consumer=worker, outcome=allow, scopes=[user_private,org_shared,public_kb][39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[VWKnowledge] Policy decision: outcome=allow, allowed=true[39m
+2026-09-06 11:50:30:5030 [32minfo[39m: [32m[AI Stream] Processing request for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m {"projectId":null,"focusMode":"all","hasScreenContext":true,"screenId":"unknown"}
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AIPipeline] Building context for user: 76015d70-9117-444f-97a6-4f5eda9d7ad5, org: cc9db573-260f-4a19-927f-f3cc1fbaea38, project: null[39m
+2026-09-06 11:50:31:5031 [33mwarn[39m: [33m[AIContextBuilder] Context is large (13527 chars), trimming execution layer[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AIPipeline] Context built successfully[39m {"hasExecution":true,"taskCount":5,"initiativeCount":3,"hasUserMemory":true,"hasOrgMemory":true}
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AdaptiveResponseService] Config for user 76015d70-9117-444f-97a6-4f5eda9d7ad5: format=structured, length=medium[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AIPipeline] Applied adaptive style preferences for user[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[2026-09-06T09:50:31.748Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[2026-09-06T09:50:31.779Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:50:31:5031 [33mwarn[39m: [33m[2026-09-06T09:50:31.780Z] [WARN] [AI:ModelRouter] Using static fallback: openai/gpt-4o for tier STANDARD[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AIPipeline] Routed model: openrouter/openai/gpt-4o (tier: STANDARD)[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[2026-09-06T09:50:31.785Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:50:31:5031 [32minfo[39m: [32m[AIPipeline] Starting stream with openrouter/openai/gpt-4o[39m
+2026-09-06 11:50:32:5032 [32minfo[39m: [32m[AIPipeline] Stream started: openrouter/openai/gpt-4o[39m
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[AI Pipeline] chat completed in 4135ms (trace: ai-1788688231197-6s1kniw)[39m {"traceId":"ai-1788688231197-6s1kniw","capability":"chat","promptKey":null,"promptVersion":null,"promptSsotUsed":false,"routingTrace":{"requestedPurpose":"chat_simple","normalizedPurpose":"chat_simple","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","tier":"STANDARD","downgradeReason":null,"selected":{"id":"openai/gpt-4o","provider":"openrouter","tier":"STANDARD","source":"static_fallback","endpoint":"https://openrouter.ai/api/v1","healthStatus":null,"breakerState":"CLOSED","releaseBundleId":null,"promptKey":null,"promptVersion":null,"policyVersion":null},"candidates":["[Circular]"],"skipped":[]}}
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[KnowledgeGraph] Stored 1 entities, 0 relations for org cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[P08-TeresaCopilot] Teresa DB tables ensured[39m
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[P08-TeresaCopilot] Proposal created: eccdcb07-1e23-4c45-8607-5349c0cc7ff6 → initiatives[39m
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[CitationVerifier] 6 citations: 0 verified, score=0[39m
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[RuntimeCitationVerify] runtime verification (surface=chat_stream): 6 citations → 0 verified, 6 unverified, 0 broken, score=0[39m
+2026-09-06 11:50:35:5035 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/ai/chat/stream","statusCode":200,"responseTime":4989,"dbQueryCount":344,"dbQueryTime":2251,"memoryDelta":{"heapUsed":14652504,"external":197811,"rss":14860288},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/ai/chat/stream","isSlow":true,"isError":false}
+2026-09-06 11:50:35:5035 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/chat/stream","dbQueryCount":344,"dbQueryTime":2251}
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/eccdcb07-1e23-4c45-8607-5349c0cc7ff6[39m
+2026-09-06 11:50:35:5035 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:35:5035 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages[39m
+2026-09-06 11:50:35:5035 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/messages","dbQueryCount":18,"dbQueryTime":68}
+2026-09-06 11:50:36:5036 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/eccdcb07-1e23-4c45-8607-5349c0cc7ff6[39m
+2026-09-06 11:50:37:5037 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/title/generate","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:50:37:5037 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/title/generate[39m
+2026-09-06 11:50:37:5037 [32minfo[39m: [32m[AIPipeline] Building context for user: 76015d70-9117-444f-97a6-4f5eda9d7ad5, org: cc9db573-260f-4a19-927f-f3cc1fbaea38, project: null[39m
+2026-09-06 11:50:37:5037 [33mwarn[39m: [33m[AIContextBuilder] Context is large (13728 chars), trimming execution layer[39m
+2026-09-06 11:50:37:5037 [32minfo[39m: [32m[AIPipeline] Context built successfully[39m {"hasExecution":true,"taskCount":5,"initiativeCount":3,"hasUserMemory":true,"hasOrgMemory":true}
+2026-09-06 11:50:38:5038 [32minfo[39m: [32m[AdaptiveResponseService] Config for user 76015d70-9117-444f-97a6-4f5eda9d7ad5: format=structured, length=medium[39m
+2026-09-06 11:50:38:5038 [32minfo[39m: [32m[AIPipeline] Applied adaptive style preferences for user[39m
+2026-09-06 11:50:38:5038 [32minfo[39m: [32m[2026-09-06T09:50:38.682Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:50:38:5038 [32minfo[39m: [32m[2026-09-06T09:50:38.713Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:50:38:5038 [33mwarn[39m: [33m[2026-09-06T09:50:38.713Z] [WARN] [AI:ModelRouter] Using static fallback: openai/gpt-4o-mini for tier BUDGET[39m
+2026-09-06 11:50:38:5038 [32minfo[39m: [32m[AIPipeline] Routed model: openrouter/openai/gpt-4o-mini (tier: BUDGET)[39m
+2026-09-06 11:50:39:5039 [32minfo[39m: [32m[2026-09-06T09:50:39.701Z] [INFO] [AI:LLMServiceMetrics] LLM call success for openrouter {"providerId":"openrouter","durationMs":980,"tokens":5316,"promptTokens":5309,"completionTokens":7}[39m
+2026-09-06 11:50:39:5039 [32minfo[39m: [32m[AI Pipeline] chat completed in 2455ms (trace: ai-1788688237250-pbgtte6)[39m {"traceId":"ai-1788688237250-pbgtte6","capability":"chat","promptKey":null,"promptVersion":null,"promptSsotUsed":false,"routingTrace":{"requestedPurpose":"chat_simple","normalizedPurpose":"chat_simple","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","tier":"BUDGET","downgradeReason":null,"selected":{"id":"openai/gpt-4o-mini","provider":"openrouter","tier":"BUDGET","source":"static_fallback","endpoint":"https://openrouter.ai/api/v1","healthStatus":null,"breakerState":"CLOSED","releaseBundleId":null,"promptKey":null,"promptVersion":null,"policyVersion":null},"candidates":["[Circular]"],"skipped":[]}}
+2026-09-06 11:50:39:5039 [32minfo[39m: [32m[Conversations] Generated title for 3b1ba3a9-5c85-44c7-8684-0d9c62985784: "Strategic Plan Overview for Digital Transformation"[39m
+2026-09-06 11:50:39:5039 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/title/generate","statusCode":200,"responseTime":2530,"dbQueryCount":180,"dbQueryTime":5003,"memoryDelta":{"heapUsed":-883376,"external":-6647,"rss":1605632},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/conversations/:id/title/generate","isSlow":true,"isError":false}
+2026-09-06 11:50:39:5039 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/3b1ba3a9-5c85-44c7-8684-0d9c62985784/title/generate","dbQueryCount":180,"dbQueryTime":5003}
+2026-09-06 11:51:11:5111 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":16,"dbQueryTime":52}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":60}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":12,"dbQueryTime":7}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/cloud/providers","dbQueryCount":17,"dbQueryTime":131}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":65}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:53:48:5348 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":26}
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:53:48:5348 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:53:50:5350 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:53:50:5350 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:53:52:5352 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations[39m
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Conversations] Created: c820831d-9d87-430b-988b-03ee00aa7afe for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m
+2026-09-06 11:53:52:5352 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations","dbQueryCount":16,"dbQueryTime":40}
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/proposals[39m
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/handoff-proposals[39m
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:53:52:5352 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/branches[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:53:53:5353 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages[39m
+2026-09-06 11:53:53:5353 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages","dbQueryCount":24,"dbQueryTime":84}
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:53:53:5353 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/ai/chat/stream","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat/stream[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[ChatPolicyGateway] Decision 05e63431-339a-4120-84de-40003453001a: outcome=allow, category=ok, scopes=[user_private,org_shared,public_kb], blocked=[other_user_private,other_tenant][39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[ChatPolicyGateway] Retrieval decision cdfbc7f0-2b99-4acc-9179-cc01f8397d39: consumer=worker, outcome=allow, scopes=[user_private,org_shared,public_kb][39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[VWKnowledge] Policy decision: outcome=allow, allowed=true[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AI Stream] Processing request for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m {"projectId":null,"focusMode":"all","hasScreenContext":true,"screenId":"unknown"}
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AIPipeline] Building context for user: 76015d70-9117-444f-97a6-4f5eda9d7ad5, org: cc9db573-260f-4a19-927f-f3cc1fbaea38, project: null[39m
+2026-09-06 11:53:53:5353 [33mwarn[39m: [33m[AIContextBuilder] Context is large (13728 chars), trimming execution layer[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AIPipeline] Context built successfully[39m {"hasExecution":true,"taskCount":5,"initiativeCount":3,"hasUserMemory":true,"hasOrgMemory":true}
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AdaptiveResponseService] Config for user 76015d70-9117-444f-97a6-4f5eda9d7ad5: format=structured, length=medium[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AIPipeline] Applied adaptive style preferences for user[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[2026-09-06T09:53:53.586Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[2026-09-06T09:53:53.597Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:53:53:5353 [33mwarn[39m: [33m[2026-09-06T09:53:53.597Z] [WARN] [AI:ModelRouter] Using static fallback: openai/gpt-4o for tier STANDARD[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AIPipeline] Routed model: openrouter/openai/gpt-4o (tier: STANDARD)[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[2026-09-06T09:53:53.599Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:53:53:5353 [32minfo[39m: [32m[AIPipeline] Starting stream with openrouter/openai/gpt-4o[39m
+2026-09-06 11:53:54:5354 [32minfo[39m: [32m[AIPipeline] Stream started: openrouter/openai/gpt-4o[39m
+2026-09-06 11:53:56:5356 [32minfo[39m: [32m[AI Pipeline] chat completed in 3417ms (trace: ai-1788688433527-1ts5bqi)[39m {"traceId":"ai-1788688433527-1ts5bqi","capability":"chat","promptKey":null,"promptVersion":null,"promptSsotUsed":false,"routingTrace":{"requestedPurpose":"chat_simple","normalizedPurpose":"chat_simple","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","tier":"STANDARD","downgradeReason":null,"selected":{"id":"openai/gpt-4o","provider":"openrouter","tier":"STANDARD","source":"static_fallback","endpoint":"https://openrouter.ai/api/v1","healthStatus":null,"breakerState":"CLOSED","releaseBundleId":null,"promptKey":null,"promptVersion":null,"policyVersion":null},"candidates":["[Circular]"],"skipped":[]}}
+2026-09-06 11:53:56:5356 [32minfo[39m: [32m[KnowledgeGraph] Stored 1 entities, 0 relations for org cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[P08-TeresaCopilot] Proposal created: bd3813ad-6d5e-4eab-96e0-82572cd23121 → initiatives[39m
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[CitationVerifier] 6 citations: 0 verified, score=0[39m
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[RuntimeCitationVerify] runtime verification (surface=chat_stream): 6 citations → 0 verified, 6 unverified, 0 broken, score=0[39m
+2026-09-06 11:53:57:5357 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/ai/chat/stream","statusCode":200,"responseTime":3606,"dbQueryCount":303,"dbQueryTime":809,"memoryDelta":{"heapUsed":3573608,"external":183352,"rss":3112960},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/ai/chat/stream","isSlow":true,"isError":false}
+2026-09-06 11:53:57:5357 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/chat/stream","dbQueryCount":303,"dbQueryTime":809}
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121[39m
+2026-09-06 11:53:57:5357 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages[39m
+2026-09-06 11:53:57:5357 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/messages","dbQueryCount":12,"dbQueryTime":24}
+2026-09-06 11:53:57:5357 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121[39m
+2026-09-06 11:53:58:5358 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/title/generate","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:53:58:5358 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/title/generate[39m
+2026-09-06 11:53:58:5358 [32minfo[39m: [32m[AIPipeline] Building context for user: 76015d70-9117-444f-97a6-4f5eda9d7ad5, org: cc9db573-260f-4a19-927f-f3cc1fbaea38, project: null[39m
+2026-09-06 11:53:58:5358 [33mwarn[39m: [33m[AIContextBuilder] Context is large (13929 chars), trimming execution layer[39m
+2026-09-06 11:53:58:5358 [32minfo[39m: [32m[AIPipeline] Context built successfully[39m {"hasExecution":true,"taskCount":5,"initiativeCount":3,"hasUserMemory":true,"hasOrgMemory":true}
+2026-09-06 11:53:59:5359 [32minfo[39m: [32m[AdaptiveResponseService] Config for user 76015d70-9117-444f-97a6-4f5eda9d7ad5: format=structured, length=medium[39m
+2026-09-06 11:53:59:5359 [32minfo[39m: [32m[AIPipeline] Applied adaptive style preferences for user[39m
+2026-09-06 11:53:59:5359 [32minfo[39m: [32m[2026-09-06T09:53:59.321Z] [INFO] [AI:ModelRouter] Selecting model for tier: BUDGET, org: cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:53:59:5359 [32minfo[39m: [32m[2026-09-06T09:53:59.333Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:53:59:5359 [33mwarn[39m: [33m[2026-09-06T09:53:59.333Z] [WARN] [AI:ModelRouter] Using static fallback: openai/gpt-4o-mini for tier BUDGET[39m
+2026-09-06 11:53:59:5359 [32minfo[39m: [32m[AIPipeline] Routed model: openrouter/openai/gpt-4o-mini (tier: BUDGET)[39m
+2026-09-06 11:54:00:540 [32minfo[39m: [32m[2026-09-06T09:54:00.302Z] [INFO] [AI:LLMServiceMetrics] LLM call success for openrouter {"providerId":"openrouter","durationMs":965,"tokens":5329,"promptTokens":5321,"completionTokens":8}[39m
+2026-09-06 11:54:00:540 [32minfo[39m: [32m[AI Pipeline] chat completed in 1621ms (trace: ai-1788688438684-numyma9)[39m {"traceId":"ai-1788688438684-numyma9","capability":"chat","promptKey":null,"promptVersion":null,"promptSsotUsed":false,"routingTrace":{"requestedPurpose":"chat_simple","normalizedPurpose":"chat_simple","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","tier":"BUDGET","downgradeReason":null,"selected":{"id":"openai/gpt-4o-mini","provider":"openrouter","tier":"BUDGET","source":"static_fallback","endpoint":"https://openrouter.ai/api/v1","healthStatus":null,"breakerState":"CLOSED","releaseBundleId":null,"promptKey":null,"promptVersion":null,"policyVersion":null},"candidates":["[Circular]"],"skipped":[]}}
+2026-09-06 11:54:00:540 [32minfo[39m: [32m[Conversations] Generated title for c820831d-9d87-430b-988b-03ee00aa7afe: "Strategic Plan Overview for Digital Transformation"[39m
+2026-09-06 11:54:00:540 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/title/generate","statusCode":200,"responseTime":1642,"dbQueryCount":180,"dbQueryTime":1551,"memoryDelta":{"heapUsed":1994336,"external":122890,"rss":81920},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/conversations/:id/title/generate","isSlow":true,"isError":false}
+2026-09-06 11:54:00:540 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/title/generate","dbQueryCount":180,"dbQueryTime":1551}
+2026-09-06 11:54:33:5433 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:54:49:5449 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:54:49:5449 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":42,"dbQueryTime":872}
+2026-09-06 11:54:49:5449 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:54:49:5449 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":185}
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":14,"dbQueryTime":25}
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":43}
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/cloud/providers","dbQueryCount":17,"dbQueryTime":110}
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/my-work/personal-tasks","dbQueryCount":12,"dbQueryTime":53}
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":152}
+2026-09-06 11:54:50:5450 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/agent-audit/agents","dbQueryCount":13,"dbQueryTime":171}
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:54:50:5450 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:54:52:5452 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:54:52:5452 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:54:53:5453 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations[39m
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Conversations] Created: 4e36d17c-2685-4263-9e4e-c462a88c77c7 for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m
+2026-09-06 11:54:53:5453 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations","dbQueryCount":16,"dbQueryTime":48}
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/proposals[39m
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/handoff-proposals[39m
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/4e36d17c-2685-4263-9e4e-c462a88c77c7[39m
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7[39m
+2026-09-06 11:54:53:5453 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/branches[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:54:54:5454 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/messages[39m
+2026-09-06 11:54:54:5454 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/4e36d17c-2685-4263-9e4e-c462a88c77c7/messages","dbQueryCount":24,"dbQueryTime":67}
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/4e36d17c-2685-4263-9e4e-c462a88c77c7[39m
+2026-09-06 11:54:54:5454 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/ai/chat/stream","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/ai/chat/stream[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[ChatPolicyGateway] Decision d7b23872-d2ea-4683-94c1-75664f52dd10: outcome=allow, category=ok, scopes=[user_private,org_shared,public_kb], blocked=[other_user_private,other_tenant][39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[ChatPolicyGateway] Retrieval decision c23e5ee1-8e08-475d-aea1-413b8e901eb6: consumer=worker, outcome=allow, scopes=[user_private,org_shared,public_kb][39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[VWKnowledge] Policy decision: outcome=allow, allowed=true[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AI Stream] Processing request for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m {"projectId":null,"focusMode":"all","hasScreenContext":true,"screenId":"unknown"}
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AIPipeline] Building context for user: 76015d70-9117-444f-97a6-4f5eda9d7ad5, org: cc9db573-260f-4a19-927f-f3cc1fbaea38, project: null[39m
+2026-09-06 11:54:54:5454 [33mwarn[39m: [33m[AIContextBuilder] Context is large (13929 chars), trimming execution layer[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AIPipeline] Context built successfully[39m {"hasExecution":true,"taskCount":5,"initiativeCount":3,"hasUserMemory":true,"hasOrgMemory":true}
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AdaptiveResponseService] Config for user 76015d70-9117-444f-97a6-4f5eda9d7ad5: format=structured, length=medium[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AIPipeline] Applied adaptive style preferences for user[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[2026-09-06T09:54:54.379Z] [INFO] [AI:ModelRouter] Selecting model for tier: STANDARD, org: cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[2026-09-06T09:54:54.386Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:54:54:5454 [33mwarn[39m: [33m[2026-09-06T09:54:54.386Z] [WARN] [AI:ModelRouter] Using static fallback: openai/gpt-4o for tier STANDARD[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AIPipeline] Routed model: openrouter/openai/gpt-4o (tier: STANDARD)[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[2026-09-06T09:54:54.387Z] [INFO] [AI:ModelRouter] Using env fallback for openrouter[39m
+2026-09-06 11:54:54:5454 [32minfo[39m: [32m[AIPipeline] Starting stream with openrouter/openai/gpt-4o[39m
+2026-09-06 11:54:55:5455 [32minfo[39m: [32m[AIPipeline] Stream started: openrouter/openai/gpt-4o[39m
+2026-09-06 11:54:55:5455 [32minfo[39m: [32m[Stream] Client disconnected: 4e36d17c-2685-4263-9e4e-c462a88c77c7[39m
+2026-09-06 11:54:55:5455 [32minfo[39m: [32m[Stream] Client disconnected: 4e36d17c-2685-4263-9e4e-c462a88c77c7[39m
+2026-09-06 11:54:55:5455 [31merror[39m: [31m[Stream] Iterator error: chat_stream_client_disconnected[39m
+2026-09-06 11:54:57:5457 [32minfo[39m: [32m[AI Pipeline] chat completed in 3248ms (trace: ai-1788688494327-ri60hyo)[39m {"traceId":"ai-1788688494327-ri60hyo","capability":"chat","promptKey":null,"promptVersion":null,"promptSsotUsed":false,"routingTrace":{"requestedPurpose":"chat_simple","normalizedPurpose":"chat_simple","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","tier":"STANDARD","downgradeReason":null,"selected":{"id":"openai/gpt-4o","provider":"openrouter","tier":"STANDARD","source":"static_fallback","endpoint":"https://openrouter.ai/api/v1","healthStatus":null,"breakerState":"CLOSED","releaseBundleId":null,"promptKey":null,"promptVersion":null,"policyVersion":null},"candidates":["[Circular]"],"skipped":[]}}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":52}
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":38,"dbQueryTime":234}
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":14,"dbQueryTime":12}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":38}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121","dbQueryCount":15,"dbQueryTime":64}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/cloud/providers","dbQueryCount":11,"dbQueryTime":19}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/proposals[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/handoff-proposals[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/branches[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:55:10:5510 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":24}
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:55:10:5510 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:55:11:5511 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:55:12:5512 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:55:12:5512 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:55:17:5517 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/work-canvas/drafts","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/work-canvas/drafts[39m
+2026-09-06 11:55:17:5517 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/work-canvas/drafts","dbQueryCount":38,"dbQueryTime":80}
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts/47f465e6-e1a0-4cda-b189-377984ad8f41[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts/47f465e6-e1a0-4cda-b189-377984ad8f41[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:17:5517 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:18:5518 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:18:5518 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:55:18:5518 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts[39m
+2026-09-06 11:55:19:5519 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"PUT","path":"/work-canvas/drafts/47f465e6-e1a0-4cda-b189-377984ad8f41","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:55:19:5519 [32minfo[39m: [32m[Index] Pre-Gateway: PUT /api/work-canvas/drafts/47f465e6-e1a0-4cda-b189-377984ad8f41[39m
+2026-09-06 11:55:19:5519 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/work-canvas/drafts/47f465e6-e1a0-4cda-b189-377984ad8f41","dbQueryCount":12,"dbQueryTime":37}
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:55:59:5559 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:56:00:560 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:00:560 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":210}
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:56:00:560 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":50,"dbQueryTime":171}
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:00:560 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":70}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":138,"dbQueryTime":1961}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":13,"dbQueryTime":91}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":14,"dbQueryTime":101}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":34,"dbQueryTime":750}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":26,"dbQueryTime":311}
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":44,"dbQueryTime":273}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":42,"dbQueryTime":409}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:56:01:561 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:56:01:561 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":83}
+2026-09-06 11:56:03:563 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:56:03:563 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":100}
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":18,"dbQueryTime":180}
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe","dbQueryCount":20,"dbQueryTime":288}
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai-settings/user","dbQueryCount":18,"dbQueryTime":47}
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:56:49:5649 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":50,"dbQueryTime":127}
+2026-09-06 11:56:49:5649 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:50:5650 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":74}
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 11:56:50:5650 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/v8/teresa/proposal/bd3813ad-6d5e-4eab-96e0-82572cd23121","dbQueryCount":24,"dbQueryTime":190}
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/proposals[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/handoff-proposals[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/c820831d-9d87-430b-988b-03ee00aa7afe/branches[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:56:50:5650 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:56:51:5651 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/v10/teresa/voice-config","statusCode":200,"responseTime":1694,"dbQueryCount":6,"dbQueryTime":8,"memoryDelta":{"heapUsed":1178192,"external":9999,"rss":262144},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/v10/teresa/voice-config","isSlow":true,"isError":false}
+2026-09-06 11:56:51:5651 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/c820831d-9d87-430b-988b-03ee00aa7afe[39m
+2026-09-06 11:56:51:5651 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:56:51:5651 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:56:51:5651 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:56:52:5652 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:56:52:5652 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:56:58:5658 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/work-canvas/drafts","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/work-canvas/drafts[39m
+2026-09-06 11:56:58:5658 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a/register-in-outputs","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a/register-in-outputs[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[V8:ArtifactRegistry] Registered native_artifact:99849d62-cdef-4507-bacd-85081b6c430a as artifact 1e1ddef3-3ed0-4ef0-a26d-f65ac57bf00e[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[V8:ArtifactRegistry] Context notification: artifact 1e1ddef3-3ed0-4ef0-a26d-f65ac57bf00e (document/report) registered for org cc9db573-260f-4a19-927f-f3cc1fbaea38[39m
+2026-09-06 11:56:58:5658 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a/register-in-outputs","dbQueryCount":26,"dbQueryTime":364}
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/work-canvas/drafts[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:56:58:5658 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/access/effective[39m
+2026-09-06 11:57:00:570 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"PUT","path":"/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:57:00:570 [32minfo[39m: [32m[Index] Pre-Gateway: PUT /api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a[39m
+2026-09-06 11:57:00:570 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/work-canvas/drafts/99849d62-cdef-4507-bacd-85081b6c430a","dbQueryCount":14,"dbQueryTime":46}
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:57:18:5718 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":46,"dbQueryTime":374}
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:57:18:5718 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:57:18:5718 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":64}
+2026-09-06 11:57:18:5718 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":100}
+2026-09-06 11:57:18:5718 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":14,"dbQueryTime":13}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":78}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":41,"dbQueryTime":336}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":34}
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":14,"dbQueryTime":40}
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":14,"dbQueryTime":24}
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":21,"dbQueryTime":180}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":12,"dbQueryTime":75}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":47,"dbQueryTime":205}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":34,"dbQueryTime":72}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":22,"dbQueryTime":42}
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:57:19:5719 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:57:19:5719 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":26}
+2026-09-06 11:57:21:5721 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:57:21:5721 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:57:21:5721 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/notifications/unread-count","dbQueryCount":13,"dbQueryTime":18}
+2026-09-06 11:58:13:5813 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:13:5813 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:13:5813 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?view=all&limit=50","dbQueryCount":48,"dbQueryTime":202}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":42,"dbQueryTime":378}
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai-settings/user","dbQueryCount":14,"dbQueryTime":176}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":50,"dbQueryTime":94}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":13,"dbQueryTime":32}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":32,"dbQueryTime":140}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":22,"dbQueryTime":49}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":28}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":14,"dbQueryTime":22}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":22,"dbQueryTime":61}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":40,"dbQueryTime":99}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":24,"dbQueryTime":81}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":42,"dbQueryTime":94}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:25:5825 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":22}
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:25:5825 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:58:27:5827 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:58:27:5827 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:58:33:5833 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:33:5833 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:33:5833 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:33:5833 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200&include=drafts","dbQueryCount":50,"dbQueryTime":171}
+2026-09-06 11:58:33:5833 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":51}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":12,"dbQueryTime":16}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":15,"dbQueryTime":55}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":14,"dbQueryTime":83}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":22,"dbQueryTime":85}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":18,"dbQueryTime":71}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":24}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":19,"dbQueryTime":76}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":19,"dbQueryTime":76}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":20,"dbQueryTime":143}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":14,"dbQueryTime":31}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":12,"dbQueryTime":20}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":38,"dbQueryTime":153}
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:58:52:5852 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:58:52:5852 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":56}
+2026-09-06 11:58:54:5854 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:58:54:5854 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:59:26:5926 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":44,"dbQueryTime":596}
+2026-09-06 11:59:26:5926 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:59:26:5926 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":98}
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 11:59:26:5926 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":42}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/my-work/personal-tasks","dbQueryCount":14,"dbQueryTime":26}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":28,"dbQueryTime":106}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":17,"dbQueryTime":79}
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":54,"dbQueryTime":389}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":18,"dbQueryTime":68}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":40,"dbQueryTime":110}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":44,"dbQueryTime":166}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 11:59:27:5927 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 11:59:27:5927 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":36}
+2026-09-06 11:59:29:5929 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 11:59:29:5929 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":16,"dbQueryTime":24}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":54}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":14,"dbQueryTime":34}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":11,"dbQueryTime":47}
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":40,"dbQueryTime":126}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":16,"dbQueryTime":48}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":34}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":24,"dbQueryTime":55}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":19,"dbQueryTime":172}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":40,"dbQueryTime":99}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":42,"dbQueryTime":177}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":40,"dbQueryTime":111}
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:16:016 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:16:016 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":29}
+2026-09-06 12:00:18:018 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:00:18:018 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:00:19:019 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/v10/teresa/voice-config","statusCode":200,"responseTime":3140,"dbQueryCount":6,"dbQueryTime":8,"memoryDelta":{"heapUsed":-22878048,"external":2603330,"rss":12124160},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/v10/teresa/voice-config","isSlow":true,"isError":false}
+2026-09-06 12:00:19:019 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:00:19:019 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:19:019 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:00:53:053 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:53:053 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":107}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:00:53:053 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai-settings/user","dbQueryCount":14,"dbQueryTime":30}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:00:53:053 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":50,"dbQueryTime":106}
+2026-09-06 12:00:53:053 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":84}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":92,"dbQueryTime":976}
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":27,"dbQueryTime":350}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":15,"dbQueryTime":81}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":38,"dbQueryTime":473}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":28,"dbQueryTime":505}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":26,"dbQueryTime":285}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:00:54:054 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:00:54:054 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:00:56:056 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:00:56:056 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:07:17 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":46}
+2026-09-06 12:01:07:17 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":38,"dbQueryTime":214}
+2026-09-06 12:01:07:17 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:07:17 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":12,"dbQueryTime":17}
+2026-09-06 12:01:07:17 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":23,"dbQueryTime":113}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=presentation","dbQueryCount":16,"dbQueryTime":67}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":40,"dbQueryTime":188}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":12,"dbQueryTime":14}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":20,"dbQueryTime":36}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":38,"dbQueryTime":106}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":14,"dbQueryTime":17}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":16,"dbQueryTime":38}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":16,"dbQueryTime":16}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":12,"dbQueryTime":23}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mPerformance metric[39m {"method":"GET","path":"/api/v10/teresa/voice-config","statusCode":200,"responseTime":1077,"dbQueryCount":6,"dbQueryTime":11,"memoryDelta":{"heapUsed":-682952,"external":-407355,"rss":9551872},"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","route":"/api/v10/teresa/voice-config","isSlow":true,"isError":false}
+2026-09-06 12:01:08:18 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:08:18 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:01:10:110 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:01:10:110 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:34:134 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":34}
+2026-09-06 12:01:34:134 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":14,"dbQueryTime":28}
+2026-09-06 12:01:34:134 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:34:134 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organization-context","dbQueryCount":14,"dbQueryTime":24}
+2026-09-06 12:01:34:134 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":46}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":26,"dbQueryTime":41}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":60,"dbQueryTime":333}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":46,"dbQueryTime":165}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":45,"dbQueryTime":158}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":32,"dbQueryTime":57}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":14,"dbQueryTime":18}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":42,"dbQueryTime":111}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:35:135 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200","dbQueryCount":32,"dbQueryTime":69}
+2026-09-06 12:01:37:137 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:01:37:137 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/feature-flags/runtime","dbQueryCount":28,"dbQueryTime":116}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":34}
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":48}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":12,"dbQueryTime":42}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=report","dbQueryCount":14,"dbQueryTime":82}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?limit=200&artifactFamily=template&outputType=sheet","dbQueryCount":16,"dbQueryTime":101}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":22,"dbQueryTime":62}
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:46:146 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:47:147 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":68,"dbQueryTime":201}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=report&limit=200","dbQueryCount":20,"dbQueryTime":44}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:47:147 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=sheet&limit=200","dbQueryCount":34,"dbQueryTime":131}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/artifacts[39m
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:47:147 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/artifacts?outputType=presentation&limit=200","dbQueryCount":22,"dbQueryTime":44}
+2026-09-06 12:01:47:147 [32minfo[39m: [32m[DeckQualityGates] Check complete[39m {"deckId":"62cc49a56d7f4af895ed43d9b4caf428","gates":3,"errors":1,"warnings":1,"score":75,"p0":0,"p1":1,"p2":2}
+2026-09-06 12:01:48:148 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:01:48:148 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/settings/preferences/accessibility[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organization-context[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/auth/me[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/admin/flags[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_stopped","status":"idle"}
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/feature-flags/runtime[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:09:13:913 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":14,"dbQueryTime":238}
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai-settings/user[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v10/teresa/voice-config[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/demo/status[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:09:13:913 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":125}
+2026-09-06 12:09:13:913 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/my-work/personal-tasks","dbQueryCount":18,"dbQueryTime":160}
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/chat-projects[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/my-work/personal-tasks[39m
+2026-09-06 12:09:13:913 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/ai/agent-audit/agents","dbQueryCount":14,"dbQueryTime":176}
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:09:13:913 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":116}
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 12:09:13:913 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/agent-audit/agents[39m
+2026-09-06 12:09:14:914 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/v10/teresa/voice-event","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:09:14:914 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/v10/teresa/voice-event[39m
+2026-09-06 12:09:14:914 [32minfo[39m: [32m[TeresaVoice] event[39m {"organizationId":"cc9db573-260f-4a19-927f-f3cc1fbaea38","userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","eventName":"voice_config_loaded","status":"idle"}
+2026-09-06 12:09:15:915 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications[39m
+2026-09-06 12:09:15:915 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/notifications/unread-count[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Conversations] Created: 5f8f7535-8e36-49f5-962d-6f7099ef08c2 for user 76015d70-9117-444f-97a6-4f5eda9d7ad5[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations","dbQueryCount":16,"dbQueryTime":42}
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/proposals[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/v8/chat/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/handoff-proposals[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/5f8f7535-8e36-49f5-962d-6f7099ef08c2[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/branches[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/cloud/providers[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/messages","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/messages[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/conversations/5f8f7535-8e36-49f5-962d-6f7099ef08c2/messages","dbQueryCount":24,"dbQueryTime":62}
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/ai/stream/partial/5f8f7535-8e36-49f5-962d-6f7099ef08c2[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mcsrf_violation[39m {"event":"csrf_violation","method":"POST","path":"/deliverables/generations","reason":"CSRF_INVALID","mode":"report"}
+2026-09-06 12:09:17:917 [32minfo[39m: [32m[Index] Pre-Gateway: POST /api/deliverables/generations[39m
+2026-09-06 12:09:17:917 [33mwarn[39m: [33mPerformance metric[39m {"method":"POST","path":"/api/deliverables/generations","statusCode":404,"responseTime":2,"dbQueryCount":0,"dbQueryTime":0,"memoryDelta":{"heapUsed":97248,"external":0,"rss":0},"userId":null,"organizationId":null,"route":"/api/deliverables/generations","isSlow":false,"isError":true}
+2026-09-06 12:09:18:918 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/mfa/status[39m
+2026-09-06 12:09:18:918 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/llm/providers/health[39m
+2026-09-06 12:09:18:918 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+2026-09-06 12:09:18:918 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/document-studio/templates[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:09:18:918 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":44}
+2026-09-06 12:09:18:918 [32minfo[39m: [32m[Index] Pre-Gateway: GET /api/organizations/current[39m
+[OrgSwitcher] userId=76015d70-9117-444f-97a6-4f5eda9d7ad5 orgs=1: DBR77(cc9db573-260f-4a19-927f-f3cc1fbaea38)
+2026-09-06 12:09:18:918 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/organizations/current","dbQueryCount":12,"dbQueryTime":37}
+2026-09-06 12:09:18:918 [33mwarn[39m: [33mHigh DB query count[39m {"path":"/api/document-studio/templates?status=approved","dbQueryCount":14,"dbQueryTime":73}

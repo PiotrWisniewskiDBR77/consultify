@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:3119/chat/4c0dedab-f6ef-4fc9-94f6-0aad91191490",
+ "tytul": "AI Chat — Consultify",
+ "kliki": [
+  "css=[data-testid=\"chat-send-btn\"]"
+ ],
+ "wpisy": [
+  "css=[data-testid=\"chat-input\"]"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3119/api/deliverables/generations"
+  }
+ ],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nCzat AI\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPrzejdź do pola wiadomości\nMain\nAudyt Nocny\nSłuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda normalnie plan strategiczny w tym zakresie bez głębszej analizy\n\nDokument: „Słuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda…”\n\n Plan: dokument\n Pisanie treści\n Walidacja treści\n Artefakt gotowy\n\n❌ Generacja nie powiodła się: Not found",
+ "kiedy": "2026-09-06T09:43:35.491Z"
+}
