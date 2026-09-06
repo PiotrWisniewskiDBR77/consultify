@@ -205,7 +205,7 @@ export const KnownToolPreviewV3Body: React.FC<{
     const s = previewSnippet;
     const goalL = t('discoveryToolsMain.knownToolPreviewV3.goal', 'Goal');
     const outcomeL = t('discoveryToolsMain.knownToolPreviewV3.outcome', 'Outcome');
-    const teamL = 'Team';
+    const teamL = t('discoveryToolsMain.knownToolPreviewV3.team', 'Team');
     const aiL = t('discoveryToolsMain.knownToolPreviewV3.aiRole', 'AI Role');
     const durL = t('discoveryToolsMain.knownToolPreviewV3.duration', 'Duration');
     return `${goalL}: ${s.goal}\n${outcomeL}: ${s.outcome}\n${teamL}: ${s.team}\n${aiL}: ${s.aiRole}\n${durL}: ${s.duration}`;
@@ -318,7 +318,11 @@ export const KnownToolPreviewV3Body: React.FC<{
       value: previewSnippet.outcome,
       minH: 'min-h-[40px]',
     },
-    { label: 'Team', value: previewSnippet.team, minH: 'min-h-[28px]' },
+    {
+      label: t('discoveryToolsMain.knownToolPreviewV3.team', 'Team'),
+      value: previewSnippet.team,
+      minH: 'min-h-[28px]',
+    },
     {
       label: t('discoveryToolsMain.knownToolPreviewV3.aiRole', 'AI Role'),
       value: previewSnippet.aiRole,

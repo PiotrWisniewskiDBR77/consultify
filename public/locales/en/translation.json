@@ -40217,6 +40217,7 @@
       "dependsOnScope": "Depends on scope",
       "goal": "Goal",
       "outcome": "Outcome",
+      "team": "Team",
       "aiRole": "AI Role",
       "duration": "Duration",
       "aiUnavailable": "AI unavailable",
