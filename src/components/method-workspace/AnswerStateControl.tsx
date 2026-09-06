@@ -59,15 +59,16 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
 
   return (
     <div className={`space-y-3 ${className}`} data-testid="answer-state-control">
-      {/* ★ WYSOKOŚĆ I SZEROKOŚĆ (DEC-415c). Przyciski stanu to najczęściej
-          klikany element karty — min. 44 px wysokości (cel dotykowy) i
-          etykieta `text-sm`. Na 1440 px sześć stanów mieści się w JEDNYM
-          rzędzie (`xl:grid-cols-6`), więc karta wykorzystuje szerokość
-          zamiast zostawiać pustkę po prawej. */}
+      {/* ★ WYSOKOŚĆ (DEC-415c). Przyciski stanu to najczęściej klikany element
+          karty — min. 44 px wysokości (cel dotykowy) i etykieta `text-sm`.
+          Zostają TRZY kolumny: przy sześciu na 1440 px etykieta „Nie wiem /
+          potrzebuję pomocy" ucinała się w połowie (zmierzone na zrzucie
+          `a-naglowek-po.png`) — pełna nazwa stanu jest ważniejsza niż
+          upchnięcie sześciu przycisków w jednym rzędzie. */}
       <div
         role="radiogroup"
         aria-label="Stan odpowiedzi"
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3"
       >
         {OPTIONS.map((option) => {
           const selected = value === option.id;
