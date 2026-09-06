@@ -66,8 +66,7 @@ z `PRZEKAZANIE_20260906_RANO.md` §3, i nie znajduje nic, co go zawstydza.
 ---
 
 ## Pojemnik 2 — MVP rękami klienta (cel: 3 tygodnie po pojemniku 1, do ~7.10)
-**Definicja:** obcy użytkownik (klient pilotażowy, pierwszy: DBR77 jako firma, potem 1 klient zewnętrzny)
-zakłada organizację, wchodzi bez asysty i dochodzi od wywiadu do wyniku bez pytania „gdzie to jest”.
+**Definicja (uściślona słowem właściciela 06.09):** pilotaż odbywa się **na demo** (własna baza z pozycji 1.10), rękami czterech nazwanych osób pierwszej linii kontaktu z klientem — **Tomek, Kasia, Irina, Justyna** — które zakładają organizację, wchodzą bez asysty właściciela i dochodzą od wywiadu do wyniku bez pytania „gdzie to jest”. Produkcja (`consultify.ai`) wchodzi dopiero po pilotażu, dla pierwszego klienta zewnętrznego. Po starcie pilotażu właściciel buduje **system reakcji** (jak zgłoszenia od czterech osób trafiają do nadzorcy i wracają naprawione — dziś: Feedback w aplikacji + dziennik; docelowo wg decyzji właściciela).
 
 **Kryterium „gotowe”:**
 1. Świeża organizacja od zera (rejestracja → kontekst → wywiad → ocena → inicjatywy → realizacja → wyniki) przechodzi przepływ Playwright „pusty stan → pierwsza wartość” w każdym module: puste stany po polsku z jedną akcją, zero ekranów „—” bez wskazówki.
@@ -85,16 +84,17 @@ zakłada organizację, wchodzi bez asysty i dochodzi od wywiadu do wyniku bez py
 11. **Koszt AI:** limiter AI z powrotem włączony z budżetem per organizacja i czytelnym komunikatem po wyczerpaniu (dziś wyłączony od 05.09 = rachunek bez sufitu).
 12. **Dane i prawo:** eksport organizacji (JSON/CSV) i usunięcie na żądanie działają z UI; retencja opisana; umowa powierzenia jako szablon; produkcja nietykalna dla robotników.
 13. **Playbook wdrożenia klienta (usługa, nie sklep):** kto zakłada organizację, kto ładuje kontekst, kto prowadzi pierwszy wywiad i ocenę, ile godzin ludzi DBR77 kosztuje pierwszy tydzień klienta — jedna strona, sprawdzona na pilotażu.
-14. **Definicja pilotażu:** jeden NAZWANY użytkownik, który nie jest właścicielem, jego dane, dziennik zgłoszeń (Feedback w aplikacji) przeglądany codziennie, próg wyjścia: 0 BLOKER, ≤ 3 WAŻNE otwarte.
+14. **Definicja pilotażu:** czterech nazwanych użytkowników (Tomek, Kasia, Irina, Justyna) z własnymi kontami na demo, każdy z własną organizacją testową albo wspólną (decyzja właściciela), dziennik zgłoszeń (Feedback w aplikacji) przeglądany codziennie przez nadzorcę, próg wyjścia: 0 BLOKER, ≤ 3 WAŻNE otwarte, każda z czterech osób potwierdza „doszłam/doszedłem do wyniku sam”.
+15. **System reakcji (właściciel, po starcie pilotażu):** kanał zgłoszeń → nadzorca → naprawa → zwrot do zgłaszającego; czas reakcji i rytm przeglądu ustala właściciel; do czasu jego decyzji obowiązuje: Feedback w aplikacji + dziennik + codzienny przegląd nadzorcy.
 
-**Pozycje (kolejność):** 2.0 produkcja i cofnięcie przećwiczone (Opus + nadzorca, 2 sesje) → 2.1 przepływ „pusty stan → pierwsza wartość” per moduł (Sonnet ×2, 2 sesje) → 2.2 macierz cross-org + CSRF enforce + poczta (Sonnet/Opus, 3) → 2.3 dwa magazyny → jedna projekcja (Opus, 3) → 2.4 onboarding i TRIAL (Sonnet, 1) → 2.5 wydajność ekranów flagowych (Sonnet, 1) → 2.6 Finanse wg decyzji (Codex, 5–8) → 2.7 przewodnik w aplikacji (Sonnet, 1) → 2.8 obserwowalność + limiter AI + eksport/usunięcie danych (Sonnet, 3) → 2.9 playbook wdrożenia klienta (właściciel + nadzorca, 1) → 2.10 pilotaż z nazwanym użytkownikiem i dziennikiem (2 tygodnie) → 2.11 zamrożenie „MVP klienta” tagiem.
+**Pozycje (kolejność):** 2.0 produkcja i cofnięcie przećwiczone (Opus + nadzorca, 2 sesje) → 2.1 przepływ „pusty stan → pierwsza wartość” per moduł (Sonnet ×2, 2 sesje) → 2.2 macierz cross-org + CSRF enforce + poczta (Sonnet/Opus, 3) → 2.3 dwa magazyny → jedna projekcja (Opus, 3) → 2.4 onboarding i TRIAL (Sonnet, 1) → 2.5 wydajność ekranów flagowych (Sonnet, 1) → 2.6 Finanse wg decyzji (Codex, 5–8) → 2.7 przewodnik w aplikacji (Sonnet, 1) → 2.8 obserwowalność + limiter AI + eksport/usunięcie danych (Sonnet, 3) → 2.9 playbook wdrożenia klienta (właściciel + nadzorca, 1) → 2.10 pilotaż Tomek/Kasia/Irina/Justyna na demo z dziennikiem i systemem reakcji (2 tygodnie) → 2.11 zamrożenie „MVP klienta” tagiem.
 ### 🍾 Lista kontrolna szampana — koniec pojemnika 2
 | # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
 |---|---|---|---|
-| S2.1 | Nazwany użytkownik (nie ja) założył organizację na produkcji i doszedł od wywiadu do wyniku bez pytania „gdzie to jest” | użytkownik pilotażu + nadzorca | dziennik pilotażu (Feedback) + nagranie sesji |
+| S2.1 | Tomek, Kasia, Irina i Justyna (każde z osobna) założyli organizację na demo i doszli od wywiadu do wyniku bez pytania „gdzie to jest” | czworo użytkowników pilotażu + nadzorca | dziennik pilotażu (Feedback) + 4 potwierdzenia |
 | S2.2 | Przepływ „pusty stan → pierwsza wartość” zielony w każdym module na świeżej organizacji | nadzorca | Playwright w CI, raport |
 | S2.3 | Bezpieczeństwo: macierz cross-org 2725 tras = 0 wycieków, CSRF enforce, MFA z karencją, 0×500 przez 7 dni | nadzorca | raport pomiaru + logi 7 dni |
-| S2.4 | Produkcja: promocja staging → demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA | nadzorca + właściciel | runbook z datami ćwiczeń, tag `prod-safe-<data>` |
+| S2.4 | Produkcja gotowa NA klienta zewnętrznego: promocja demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA (pilotaż sam idzie na demo) | nadzorca + właściciel | runbook z datami ćwiczeń, tag `prod-safe-<data>` |
 | S2.5 | Alert na 5xx/health dociera do nazwanej osoby; był sprawdzony sztucznym błędem | nadzorca | zrzut alertu |
 | S2.6 | Limiter AI z budżetem per organizacja działa i mówi po polsku, co się stało | nadzorca | test na wyczerpanie budżetu |
 | S2.7 | Eksport i usunięcie danych organizacji działają z UI; umowa powierzenia jako szablon | nadzorca + właściciel | plik eksportu, zrzut usunięcia, szablon umowy |
@@ -103,9 +103,9 @@ zakłada organizację, wchodzi bez asysty i dochodzi od wywiadu do wyniku bez py
 | S2.10 | Finanse wg decyzji: MINIMUM działa na CD PROJEKT albo moduł jawnie „wkrótce” | właściciel | jeden obraz, Tak |
 | S2.11 | Przewodnik „jak zacząć” w aplikacji po polsku | właściciel | jeden obraz, Tak |
 | S2.12 | Playbook wdrożenia klienta sprawdzony na pilotażu (godziny ludzi DBR77 policzone) | właściciel | jedna strona z liczbami |
-| S2.13 | 2 tygodnie pilotażu: 0 BLOKER, ≤ 3 WAŻNE otwarte | nadzorca + właściciel | dziennik z werdyktem |
+| S2.13 | 2 tygodnie pilotażu czterech osób na demo: 0 BLOKER, ≤ 3 WAŻNE otwarte; system reakcji właściciela działa (zgłoszenie → naprawa → zwrot) | nadzorca + właściciel | dziennik z werdyktem, czasy reakcji |
 | S2.14 | Zamrożenie „MVP klienta” + przekazanie dla fali 2 | nadzorca | tag `mvp-klient-<data>`, `PRZEKAZANIE_<data>.md` |
-**Komunikat po S2.1–S2.14:** „Klient pracuje sam na produkcji, a my wiemy, kiedy coś pęka.” Szampan nr 2.
+**Komunikat po S2.1–S2.14:** „Pierwsza linia pracuje sama na demo, produkcja czeka gotowa na klienta, a my wiemy, kiedy coś pęka.” Szampan nr 2.
 
 
 ---
