@@ -12,13 +12,31 @@ const actions = {
   children: <button type="button">Zwykła akcja</button>,
 };
 
-describe('ArtifactRightPanel Teresa entry', () => {
-  it('puts Teresa first in Actions', () => {
-    render(<ArtifactRightPanel sections={[actions]} teresaEntry={{ label: 'Zapytaj Teresę o obiekt', onOpen: vi.fn() }} />);
+/**
+ * DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk „Zapytaj
+ * Teresę o …" w sekcji Akcje USUNIĘTY — jedyne wejście do Teresy jest teraz
+ * w Menu 1 (DEC-404). Ten test pilnował ODWROTNEGO kontraktu (P8, do 06.09);
+ * teraz pilnuje, że `teresaEntry` NIE RENDERUJE SIĘ, nawet gdy wołający go
+ * jeszcze przekazuje (prop zostaje w typie jako deprecated, patrz
+ * ArtifactRightPanel.tsx).
+ *
+ * MUTACJA: przywróć render `<TeresaEntryButton>` w `ArtifactRightPanel` →
+ * ten test RED.
+ */
+describe('ArtifactRightPanel Teresa entry (DEC-419: usunięty)', () => {
+  it('nie renderuje przycisku Teresy, nawet gdy wołający przekazuje teresaEntry', () => {
+    render(
+      <ArtifactRightPanel
+        sections={[actions]}
+        teresaEntry={{ label: 'Zapytaj Teresę o obiekt', onOpen: vi.fn() }}
+      />
+    );
+    expect(screen.queryByTestId('teresa-entry')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Zapytaj Teresę o obiekt' })).not.toBeInTheDocument();
     const section = document.querySelector('[data-artifact-section="actions"]');
     expect(section).not.toBeNull();
-    expect(within(section as HTMLElement).getAllByRole('button')[1]).toHaveAttribute('data-testid', 'teresa-entry');
-    expect(within(section as HTMLElement).getAllByRole('button')[2]).toHaveTextContent('Zwykła akcja');
+    expect(within(section as HTMLElement).getAllByRole('button')).toHaveLength(1);
+    expect(within(section as HTMLElement).getByRole('button')).toHaveTextContent('Zwykła akcja');
   });
 
   it('leaves Actions unchanged without the prop', () => {

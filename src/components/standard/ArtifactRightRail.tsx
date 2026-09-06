@@ -31,11 +31,12 @@
  * ★ WYKONANE (dyżur 169): tryb ② NIE JEST JUŻ RENDEROWANY — ani jako ikona
  * na szynie, ani jako panel. `TeresaModePanel` i `ArtifactRailTeresaMode`
  * zostają w pliku jako MARTWY mechanizm (usunięte jest wołanie, nie kod).
- * Z całego trybu skutek ma dziś wyłącznie para `entryLabel` + `footerAction`:
- * powłoka renderuje z nich `TeresaEntryButton` jako pierwszy element sekcji
- * „Akcje" panelu artefaktu. Dotychczasowi wołający (`IdeaRightPanel`,
- * `NotebookRightRail`) nie musieli zmieniać kształtu propsa — zmieniło się
- * to, co powłoka z niego robi.
+ * ★ DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wejście
+ * w sekcji „Akcje" USUNIĘTY TAKŻE. Jedyne wejście do Teresy jest teraz
+ * w Menu 1 (DEC-404), karty mają już „Pracuj z AI" (DEC-407) — drugi
+ * przycisk był duplikatem. `teresa.entryLabel`/`teresa.footerAction` zostają
+ * w typie (dotychczasowi wołający — `IdeaRightPanel`, `NotebookRightRail` —
+ * jeszcze je przekazują), ale nie mają już żadnego skutku wizualnego.
  *
  * Ten komponent jest dla PRAWEGO PASA tym, czym `StandardTable` dla listy:
  * **moduł deklaruje TREŚĆ, komponent narzuca WYGLĄD.** Moduł nie ma tu
@@ -46,9 +47,9 @@
  * KONSTRUKCJA
  * ═══════════════════════════════════════════════════════════════════════
  *   ┌───────────────────────────┬────┐
- *   │  [Zapytaj Teresę o …]     │ ▣  │ ← ① Artefakt (akordeon 7 sekcji;
- *   │   PANEL (jeden naraz)     │ ⌸  │      pierwsza sekcja „Akcje" niesie
- *   │                           │    │      wejście do okna Teresy)
+ *   │                           │ ▣  │ ← ① Artefakt (akordeon 7 sekcji;
+ *   │   PANEL (jeden naraz)     │ ⌸  │      wejście do Teresy jest w Menu 1,
+ *   │                           │    │      DEC-419 — panel go nie niesie)
  *   └───────────────────────────┴────┘   ← ③ tryby zależne od typu
  *
  *   ② „Teresa" jako tryb szyny NIE ISTNIEJE od 2026-09-01 (patrz wyżej).
@@ -115,7 +116,6 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from './ArtifactRightPanel';
-import { TeresaEntryButton } from './TeresaEntryButton';
 
 /** Stałe id dwóch trybów, których moduł nie może przemianować ani przestawić. */
 export const ARTIFACT_RAIL_MODE_ARTIFACT = 'artefakt';
@@ -238,13 +238,11 @@ export interface ArtifactRailTeresaMode {
   badge?: string | number;
   dotTone?: RightRailToolDescriptor['dotTone'];
   /**
-   * ★ 2026-09-01 („jedna Teresa, w swoim oknie") — JEDYNE pole tego trybu,
-   * ktore ma dzis skutek wizualny. Etykieta przycisku-wejscia w sekcji
-   * „Akcje", per typ obiektu: „Zapytaj Terese o te notatke" / „…o te idee".
-   * Pominieta → fallback na `footerAction.label` (u dotychczasowych
-   * wolajacych jest to „Open Teresa"), zeby brak etykiety nie skasowal
-   * wejscia. Klikniecie wola `footerAction.onClick` — czyli TEN SAM realny
-   * handler, ktory otwieral glowne okno Teresy ze stopki trybu.
+   * @deprecated DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): do 06.09
+   * karmiła przycisk-wejście w sekcji „Akcje" („Zapytaj Teresę o tę notatkę" /
+   * „…o tę ideę"). Ten przycisk USUNIĘTY — jedyne wejście jest teraz w Menu 1
+   * (DEC-404). Pole zostaje w typie (dotychczasowi wołający jeszcze je
+   * przekazują), ale `ArtifactRightRail` go już nie czyta.
    */
   entryLabel?: string;
 }
@@ -603,41 +601,19 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
   );
 
   /*
-    ★ 2026-09-01 — WEJSCIE DO JEDNEGO OKNA TERESY W SEKCJI „AKCJE".
-    Kanon (`prawy-pas-jedna-formula.tsx`, zaakceptowany na zrzutach) stawia
-    `TeresaEntryButton` jako PIERWSZY element sekcji „Akcje", nad reszta
-    dzialan. Wstrzykujemy go tutaj, w powloce, a nie u wolajacego — inaczej
-    kazdy modul umiescilby go gdzie indziej i to jest dokladnie ten rozjazd,
-    ktory ten komponent ma likwidowac (moduł deklaruje TRESC, powloka narzuca
-    WYGLAD). Gdy modul nie deklaruje sekcji „Akcje" — nie dokladamy jej: pusta
-    sekcja z jednym przyciskiem to dziura, a nie panel.
+    ★ DEC-419 (właściciel, 06.09.2026, karta Inicjatywy) — WEJŚCIE Z SEKCJI
+    „AKCJE" USUNIĘTE. Do 06.09 powłoka wstrzykiwała tu `TeresaEntryButton`
+    jako pierwszy element sekcji „Akcje" (wzór `prawy-pas-jedna-formula.tsx`).
+    Jedyne wejście do Teresy jest teraz w Menu 1 (`data-testid="menu1-teresa"`,
+    DEC-404), karty mają już „Pracuj z AI" (DEC-407) — drugi przycisk był
+    duplikatem. `teresa.entryLabel`/`teresa.footerAction` zostają w typie
+    (wołający je jeszcze przekazują), ale NIE MAJĄ już skutku wizualnego.
   */
-  const sectionsWithTeresaEntry = useMemo<ArtifactRightPanelSection[]>(() => {
-    const entryClick = teresa?.footerAction?.onClick;
-    if (!entryClick) return normalizedSections;
-    const label = teresa?.entryLabel ?? teresa?.footerAction?.label ?? '';
-    if (!label) return normalizedSections;
-    return normalizedSections.map((section) =>
-      section.id === 'actions'
-        ? {
-            ...section,
-            isEmpty: false,
-            children: (
-              <div className="flex flex-col gap-2">
-                <TeresaEntryButton label={label} onClick={entryClick} />
-                {section.children}
-              </div>
-            ),
-          }
-        : section
-    );
-  }, [normalizedSections, teresa]);
-
   const panelBody = useMemo<React.ReactNode>(() => {
     if (currentId === ARTIFACT_RAIL_MODE_ARTIFACT && artifact) {
       return (
         <ArtifactRightPanel
-          sections={sectionsWithTeresaEntry}
+          sections={normalizedSections}
           statusBar={artifact.statusBar}
           width="100%"
           className="border-l-0"
@@ -652,7 +628,7 @@ export const ArtifactRightRail: React.FC<ArtifactRightRailProps> = ({
     const typeMode = (typeModes ?? []).find((mode) => mode.id === currentId);
     if (typeMode) return <TypeModePanel mode={typeMode} />;
     return null;
-  }, [ariaLabel, artifact, currentId, isPolish, sectionsWithTeresaEntry, t, typeModes]);
+  }, [ariaLabel, artifact, currentId, isPolish, normalizedSections, t, typeModes]);
 
   const panelContent =
     panelBody === null ? null : (

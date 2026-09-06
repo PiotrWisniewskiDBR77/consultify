@@ -115,7 +115,6 @@ import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeL
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { formatListDate } from '@/utils/listDateFormat';
 import { isAuditsReportChainEnabled } from '@/utils/auditsReportChainFlag';
 
@@ -531,7 +530,6 @@ function collectFindingLabels(sections: AuditReportDocumentSection[] | undefined
 
 export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = ({ reportId }) => {
   const navigate = useNavigate();
-  const openChatWithContext = useOpenChatWithContext();
   const isPolish = true; // treść dokumentu (reportRenderer.ts) jest ZAWSZE PL — chrom ekranu podąża za tym
 
   const [report, setReport] = useState<AuditReportSummary | null>(null);
@@ -1452,13 +1450,10 @@ export const AuditReportDocumentView: React.FC<AuditReportDocumentViewProps> = (
             onPresentationModeChange={() => {}}
             showModeSwitcher={false}
             rightPanel={
+              // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o ten raport audytu"
+              // usunięty z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
               <ArtifactRightPanel
                 sections={rightPanelSections}
-                teresaEntry={{
-                  label: isPolish ? 'Zapytaj Teresę o ten raport audytu' : 'Ask Teresa about this audit report',
-                  onOpen: () => void openChatWithContext({ entityType: 'audit-report', entityId: reportId || 'unavailable', entityName: report?.title || reportId || 'Raport audytu', pmoContext: reportId ? { reportId } : undefined, reuseActiveConversation: true }),
-                  disabled: !reportId,
-                }}
                 ariaLabel={isPolish ? 'Panel raportu' : 'Report panel'}
                 className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
               />

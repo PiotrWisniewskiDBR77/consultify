@@ -81,8 +81,6 @@ import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeHeaderPrimaryAction, NModeSection } from '@/components/shared/NModeLayout/types';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
-import { TeresaEntryButton } from '@/components/standard/TeresaEntryButton';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { StandardGridCard, type StandardGridCard as StandardGridCardData } from '@/components/standard/StandardGridCard';
 import { StatusChip } from '@/components/ui/primitives';
@@ -314,9 +312,6 @@ export const KpiToolPage: React.FC = () => {
   // identyfikator, tylko uczciwe „Nieznany użytkownik" (UUID w kolumnie
   // z człowiekiem był defektem rodziny zgłoszonym przez właściciela).
   const resolveMemberNameRaw = useOrganizationMemberNames();
-  /* Jedna Teresa, w swoim oknie (decyzja właściciela 01.09) — panel artefaktu
-     otwiera GŁÓWNE okno z kontekstem miernika, nie własny czat. */
-  const openChatWithContext = useOpenChatWithContext();
   const resolveMemberName = useCallback(
     (userId: string | null | undefined): string =>
       memberNameOrUnknown(resolveMemberNameRaw, userId, isPolish),
@@ -770,14 +765,12 @@ export const KpiToolPage: React.FC = () => {
    * i założenia · Komentarze · Historia. Zaakceptowany prototyp pokazuje
    * wszystkie sześć.
    *
-   * TERESA — RÓŻNICA WOBEC PROTOTYPU, ŚWIADOMA. Prototyp rysuje Teresę jako
-   * ZAKŁADKĘ obok „Szczegółów". Nowsza, jawna decyzja właściciela
-   * (`docs/program/grafika/KANON_Z_ODBIOROW.md`, 01.09: „JEDNA TERESA, W SWOIM
-   * OKNIE") mówi, że czat Teresy ZNIKA z prawych paneli, a zostaje w nich
-   * WYŁĄCZNIE przycisk otwierający główne okno Teresy z kontekstem obiektu
-   * (`TeresaEntryButton`). Zakładka z drugim czatem byłaby odbudową dokładnie
-   * tego, co właściciel kazał usunąć — dlatego panel dostaje przycisk, a
-   * różnica jest zgłoszona nadzorcy zamiast być cicho rozstrzygnięta.
+   * TERESA — DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk
+   * „Zapytaj Teresę o ten miernik" USUNIĘTY z sekcji Akcje — jedyne wejście
+   * do Teresy jest teraz w Menu 1 (DEC-404). Do 06.09 panel dostawał
+   * `TeresaEntryButton` jako zamiennik zdjętej zakładki-czatu (decyzja
+   * 01.09 „JEDNA TERESA, W SWOIM OKNIE"); ten zamiennik okazał się drugim
+   * wejściem do tej samej rozmowy i też poszedł.
    */
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
@@ -808,17 +801,6 @@ export const KpiToolPage: React.FC = () => {
               {t('Otwórz kartę działania', 'Open action card')}
             </button>
           ) : null}
-          <TeresaEntryButton
-            label={t('Zapytaj Teresę o ten miernik', 'Ask Teresa about this indicator')}
-            onClick={() =>
-              openChatWithContext({
-                entityType: 'kpi',
-                entityId: kpi.kpiId,
-                entityName: kpiTitle,
-                pmoContext: { kpiId: kpi.kpiId },
-              })
-            }
-          />
         </div>
       ),
     },

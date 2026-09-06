@@ -3019,109 +3019,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   };
 
-  // #56 (D17) — "AI Konsultant" na Insight NIE otwiera już drugiego czatu
-  // (dawny AIConsultantPanel). Zamiast tego otwiera JEDEN, docked panel Teresy
-  // (prawa strona) z kontekstem całego insightu i publikuje te same 5 akcji
-  // jako trwałe przyciski komend WEWNĄTRZ Teresy (uiSlice.chatContextActions,
-  // renderowane przez UnifiedChatPanel). 4 akcje zasiewają prompt przez
-  // kanoniczny kanał pending-prompt Teresy (sessionStorage + event, konsumowany
-  // przez EnhancedChatInput); "Odśwież" wywołuje realny handleRegenerate.
-  const seedTeresaPrompt = useCallback((prompt: string) => {
-    try {
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(
-          'consultify.teresa.pendingPrompt',
-          JSON.stringify({ prompt, ts: Date.now() })
-        );
-        window.dispatchEvent(new CustomEvent('consultify:teresa-pending-prompt'));
-      }
-    } catch (err) {
-      // Non-critical dla użytkownika, ale prompt Teresy się NIE zasieje —
-      // developer musi to zobaczyć zamiast zgadywać, czemu czat jest pusty.
-      warnInsightSilentFailure('seeding Teresa pending prompt (sessionStorage) failed', err);
-    }
-  }, []);
-
-  const openInsightConsultant = useCallback(() => {
-    if (!insight) return;
-
-    // Whole-insight context → docked Teresa system prompt (parytet z dawnym
-    // AIConsultantPanel.buildSystemPrompt).
-    const ctx = aiContextText && aiContextText.trim() ? `\n\n${aiContextText.trim()}` : '';
-    const systemPrompt = isPolish
-      ? `Jesteś konsultantem AI pracującym nad całym insightem${insight.title ? ` „${insight.title}”` : ''}. ` +
-        `Masz dostęp do pełnego kontekstu (wszystkie sekcje + metadane). ` +
-        `Pomagaj: uzupełniaj puste pola, syntetyzuj, kontroluj jakość, proponuj kolejne kroki. ` +
-        `Odpowiadaj zwięźle i konkretnie.${ctx}`
-      : `You are an AI consultant working on the whole insight${insight.title ? ` "${insight.title}"` : ''}. ` +
-        `You have access to the full context (all sections + metadata). ` +
-        `Help the user fill empty fields, synthesize, run quality checks, and propose next steps. ` +
-        `Answer concisely and concretely.${ctx}`;
-    setChatSystemPrompt(systemPrompt);
-
-    // Te same 5 akcji, teraz WEWNĄTRZ panelu Teresy.
-    setChatContextActions([
-      {
-        id: 'fill-empty',
-        label: t('interview.insightViewer.fillEmpty'),
-        icon: <Plus size={13} />,
-        onClick: () => seedTeresaPrompt(t('interview.insightViewer.fillInTheEmptyAnd')),
-      },
-      {
-        id: 'synthesize',
-        label: t('interview.insightViewer.synthesize'),
-        icon: <Layers size={13} />,
-        onClick: () =>
-          seedTeresaPrompt(t('interview.insightViewer.synthesizeThisInsightSurfaceThe')),
-      },
-      {
-        id: 'quality-check',
-        label: t('interview.insightViewer.qualityCheck'),
-        icon: <CheckCircle2 size={13} />,
-        onClick: () => seedTeresaPrompt(t('interview.insightViewer.doAQualityCheckOf')),
-      },
-      {
-        id: 'refresh',
-        label: t('interview.insightViewer.refresh'),
-        icon: <RefreshCw size={13} />,
-        busy: isRegenerating,
-        onClick: () => {
-          void handleRegenerate();
-        },
-      },
-      {
-        id: 'continue',
-        label: t('interview.insightViewer.continue'),
-        icon: <Send size={13} />,
-        onClick: () => seedTeresaPrompt(t('interview.insightViewer.continueWhereWeLeftOff')),
-      },
-    ]);
-
-    // Otwórz JEDEN docked panel Teresy z kontekstem insightu (prawa strona).
-    void openChatWithContext({
-      entityType: 'insight',
-      entityId: insight.id,
-      entityName: insight.title,
-    });
-  }, [
-    insight,
-    aiContextText,
-    isPolish,
-    isRegenerating,
-    handleRegenerate,
-    seedTeresaPrompt,
-    setChatSystemPrompt,
-    setChatContextActions,
-    openChatWithContext,
-    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
-  ]);
-
-  // Sprzątanie: akcje kontekstowe insightu nie mogą wyciekać do innych modułów.
-  useEffect(() => {
-    return () => {
-      setChatContextActions(null);
-    };
-  }, [setChatContextActions]);
+  // DEC-419 (06.09.2026): `openInsightConsultant`/`seedTeresaPrompt` (dawne
+  // zaplecze przycisku „Zapytaj Teresę o ten wniosek" w sekcji Akcje) USUNIĘTE
+  // — bez innego wołającego stały się martwym kodem po zdjęciu przycisku.
+  // Wejście do Teresy jest teraz wyłącznie w Menu 1 (DEC-404).
 
   // Pasek stanu karty AI-draft dla sekcji Insightu (wzorzec N §3.3). Wpina badge
   // stanu (AI-draft/Edytowane/Gotowe/Błąd) + akcje ✨Regeneruj · ✎Edytuj ·
@@ -9314,13 +9215,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           // ETAP 1.4 — bez klasy panel dziedziczyl `border-l` powloki, czyli
           // sidebar doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa:
           // jasna zaokraglona karta odsunieta od brzegu (wariant _DOCKED).
+          // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o ten wniosek" usunięty
+          // z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
           <ArtifactRightPanel
             sections={rightPanelSections}
-            teresaEntry={{
-              label: isPolish ? 'Zapytaj Teresę o ten wniosek' : 'Ask Teresa about this insight',
-              onOpen: openInsightConsultant,
-              disabled: !insight,
-            }}
             className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
             ariaLabel={t('interview.insightViewer.insightDetails')}
             statusBar={
@@ -10023,11 +9921,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       </NModeShell>
 
       {/* #56 (D17): dawny artifact-level AIConsultantPanel (drugi czat) został
-          scalony w JEDEN docked panel Teresy. „AI Konsultant" (toolbar + prawy
-          panel Akcje) wywołuje openInsightConsultant() — otwiera Teresę z
-          kontekstem insightu i publikuje 5 akcji jako przyciski komend wewnątrz
-          Teresy. Komponent AIConsultantPanel nie jest już renderowany (plik
-          zostaje do sprzątnięcia martwego kodu po odbiorze). */}
+          scalony w JEDEN docked panel Teresy. Komponent AIConsultantPanel nie
+          jest już renderowany (plik zostaje do sprzątnięcia martwego kodu po
+          odbiorze).
+          DEC-419 (06.09.2026): przycisk „AI Konsultant" w prawym panelu Akcje
+          (dawne `openInsightConsultant()`) USUNIĘTY — wejście do Teresy jest
+          teraz wyłącznie w Menu 1 (DEC-404). */}
 
       {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
           `writableFieldIds` zawiera DOKŁADNIE JEDNO pole — ręczną redakcję

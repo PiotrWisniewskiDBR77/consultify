@@ -26,7 +26,6 @@
 
 import {
   Activity,
-  Bot,
   ChevronDown,
   FileSearch,
   History,
@@ -470,17 +469,8 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         topBarHandlers.onHistory
       ),
       panelAction('share', L('Udostępnij', 'Share'), Share2, topBarHandlers.onShare),
-      /* ★ 2026-09-01 („jedna Teresa, w swoim oknie"): to jest WEJŚCIE do
-         głównego okna Teresy z kontekstem tej prezentacji, nie pstryczek
-         własnego czatu panelu. Dlatego etykieta nazywa OBIEKT (kanon
-         `TeresaEntryButton`: „…o tę notatkę" / „…o tę ideę"), a ikona to
-         `Bot` — ta sama co we wzorcu z `prawy-pas-jedna-formula`. */
-      panelAction(
-        'teresa',
-        L('Zapytaj Teresę o tę prezentację', 'Ask Teresa about this presentation'),
-        Bot,
-        topBarHandlers.onToggleAgent
-      ),
+      // DEC-419 (06.09.2026): wpis „Zapytaj Teresę o tę prezentację" usunięty
+      // z listy akcji — wejście do Teresy jest w Menu 1 (DEC-404).
     ].filter(Boolean);
 
     const propertyRows = artifactPanelMeta
@@ -599,12 +589,10 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
     if (sections.length === 0) return undefined;
 
     return (
+      // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o tę prezentację" usunięty
+      // z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
       <ArtifactRightPanel
         sections={sections}
-        teresaEntry={topBarHandlers.onToggleAgent ? {
-          label: L('Zapytaj Teresę o tę prezentację', 'Ask Teresa about this presentation'),
-          onOpen: topBarHandlers.onToggleAgent,
-        } : undefined}
         width="100%"
         ariaLabel={L('Panel prezentacji', 'Presentation panel')}
       />

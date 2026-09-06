@@ -18,12 +18,10 @@
  * decyzja, którą już podjęły dwie siostrzane karty Wyników, a nie nowy wyjątek.
  *
  * ── TERESA ────────────────────────────────────────────────────────────────
- * Werdykt K8 żąda „Teresy jako ZAKŁADKI" w prawym panelu; decyzja właściciela
- * z 01.09 („JEDNA TERESA, W SWOIM OKNIE", `docs/program/grafika/KANON_Z_ODBIOROW.md`)
- * zabrania osadzania DRUGIEGO czatu w prawym pasie. Obie rzeczy są spełnione
- * naraz: zakładka „Teresa" ISTNIEJE, a jej treścią jest kanoniczny
- * `TeresaEntryButton`, który otwiera JEDNO główne okno Teresy z kontekstem tej
- * analizy. Zero osadzonego czatu, zero brakującej zakładki.
+ * DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): sekcja „Teresa" (zakładka
+ * z `TeresaEntryButton`, dawna odpowiedź na werdykt K8) USUNIĘTA — jedyne
+ * wejście do Teresy jest teraz w Menu 1 (DEC-404). Drugie wejście z panelu
+ * artefaktu było duplikatem, nie dodatkową funkcją.
  *
  * ── DLACZEGO TA KARTA NIE ZASTĘPUJE PEŁNEGO NARZĘDZIA ─────────────────────
  * `RoiCaseFullTool` (`/results/roi/cases/:roiCaseId`) niesie 17 podwidoków
@@ -50,13 +48,11 @@ import {
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
-import { TeresaEntryButton } from '@/components/standard/TeresaEntryButton';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeSection } from '@/components/shared/NModeLayout/types';
 import { EmptyState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives';
 import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { ResultsVNextForbiddenState } from '../../ResultsVNextForbiddenState';
@@ -96,7 +92,6 @@ export const RoiCaseCardPage: React.FC = () => {
   const navigate = useNavigate();
   const { roiCaseId } = useParams<{ roiCaseId: string }>();
   const enabled = isResultsVNextFlagEnabled('roiRegistry');
-  const openChat = useOpenChatWithContext();
   // Hak zwraca RESOLVER (funkcję), nie obiekt z listą — destrukturyzacja
   // `{ members }` dawała `undefined`, a przez to każde nazwisko schodziło na
   // „Nieznany użytkownik". Złapane na zrzucie, nie w typach: `useCallback`
@@ -222,28 +217,9 @@ export const RoiCaseCardPage: React.FC = () => {
     ];
   }, [card, isPolish, tr]);
 
-  const openTeresa = useCallback(() => {
-    if (!card) return;
-    void openChat({
-      entityType: 'roi_case',
-      entityId: card.caseId,
-      entityName: card.title,
-      contextData: {
-        // Kontekst dla Teresy to LICZBY, KTÓRE ZAPISAŁ SILNIK, a nie nasza
-        // interpretacja — inaczej odpowiadałaby o modelu, którego nie ma.
-        subjectType: card.subjectType,
-        recommendation: card.recommendation,
-        phase: card.phase,
-        capex: card.indicators.capex,
-        annualNetBenefit: card.indicators.annualNetBenefit,
-        horizonYears: card.indicators.horizonYears,
-        roiPct: card.storedRun?.roiPct ?? null,
-        npv: card.storedRun?.npv ?? null,
-        irrPct: card.storedRun?.irrPct ?? null,
-      },
-    });
-  }, [card, openChat]);
-
+  // DEC-419 (06.09.2026): sekcja „Teresa" (przycisk „Zapytaj Teresę o tę
+  // analizę" + `openTeresa`) usunięta — jedyne wejście do Teresy jest teraz
+  // w Menu 1 (DEC-404).
   const rightPanelSections: ArtifactRightPanelSection[] = useMemo(() => {
     if (!card) return [];
     return [
@@ -270,26 +246,6 @@ export const RoiCaseCardPage: React.FC = () => {
               {t(
                 'Ta karta jest do czytania analizy. Wprowadzanie pozycji, przebiegi kalkulacji, wykonania i przegląd PIR robi się w pełnym narzędziu.',
                 'This card is for reading the analysis. Entering lines, running calculations, actuals and the PIR happen in the full tool.'
-              )}
-            </p>
-          </div>
-        ),
-      },
-      {
-        id: 'teresa',
-        label: 'Teresa',
-        icon: FileText,
-        defaultOpen: false,
-        children: (
-          <div className="flex flex-col gap-2">
-            <TeresaEntryButton
-              label={t('Zapytaj Teresę o tę analizę', 'Ask Teresa about this analysis')}
-              onClick={openTeresa}
-            />
-            <p className="text-[11px] leading-relaxed text-c-text-muted">
-              {t(
-                'Teresa objaśnia wrażliwość i wskazuje podwójne liczenie. Nie dopisuje liczb do modelu.',
-                'Teresa explains sensitivity and flags double counting. She does not add numbers to the model.'
               )}
             </p>
           </div>
@@ -347,7 +303,7 @@ export const RoiCaseCardPage: React.FC = () => {
         ),
       },
     ];
-  }, [card, propertyRows, t, navigate, openTeresa]);
+  }, [card, propertyRows, t, navigate]);
 
   if (!enabled) {
     return (

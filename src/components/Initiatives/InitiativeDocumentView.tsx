@@ -81,7 +81,6 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
-import { TeresaEntryButton } from '@/components/standard/TeresaEntryButton';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
@@ -164,9 +163,10 @@ import {
   docs/program/grafika/KANON_Z_ODBIOROW.md). `AIConsultantPanel` (Slot 9 =
   drugi czat w prawym pasie karty) NIE jest już importowany ani renderowany.
   Plik komponentu zostaje w repo (martwy eksport, tak jak po D17 w
-  InsightViewer) — usunięte jest WOŁANIE, nie zdolność. Jego miejsce zajmuje
-  `TeresaEntryButton` w sekcji „Akcje" prawego panelu, który otwiera JEDNO
-  główne okno Teresy z kontekstem tej inicjatywy.
+  InsightViewer) — usunięte jest WOŁANIE, nie zdolność.
+  ★ DEC-419 (właściciel, 06.09.2026, ta sama karta): jego następca —
+  `TeresaEntryButton` w sekcji „Akcje" — TAKŻE usunięty. Jedyne wejście do
+  Teresy jest teraz w Menu 1 (DEC-404).
 */
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
 import { PracujZAI } from '../standard/PracujZAI';
@@ -507,10 +507,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setCurrentView,
     setMyWorkIntent,
     currentUser,
-    // „Jedna Teresa" (2026-09-01): kontekst i komendy karty publikujemy do
-    // JEDNEGO dokowanego panelu Teresy zamiast renderować drugi czat w pasie.
-    setChatSystemPrompt,
-    setChatContextActions,
   } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
   const openChatWithContext = useOpenChatWithContext();
@@ -9961,110 +9957,12 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   }, [buildSectionBody, isPolish, orderedNModeSectionsWithContent, runSectionAi]);
 
-  // Kontekst CAŁEJ inicjatywy (tytuł + każda sekcja z treścią, w kolejności
-  // nawigacji) — ten sam builder co Smart Export, więc Teresa widzi dokładnie
-  // to samo SSOT co eksport. BYŁO `useMemo` bramkowane `aiPanelOpen`; po
-  // zdjęciu osadzonego czatu liczymy LENIWIE, dopiero przy otwarciu Teresy —
-  // memo bez bramki przeliczałoby cały markdown przy każdej edycji sekcji.
-  const buildTeresaContextText = useCallback(() => {
-    const allIds = new Set(exportableSections.map((s) => s.id));
-    return buildExportMarkdown(allIds);
-  }, [exportableSections, buildExportMarkdown]);
-
-  // ── „JEDNA TERESA, W SWOIM OKNIE" (decyzja właściciela 2026-09-01) ───────
-  // BYŁO: `aiConsultantActions` → 6 przycisków WEWNĄTRZ osadzonego czatu
-  // (`AIConsultantPanel`) w prawym pasie karty. Czat zniknął, ale ŻADNA
-  // z tych zdolności nie znika: te same wywołania (`runActiveSectionAi`,
-  // `handleGenerateAI`, `handleProposeNextStepsWithAI`) publikujemy jako
-  // komendy JEDNEGO dokowanego panelu Teresy (`uiSlice.chatContextActions`,
-  // renderowane przez `UnifiedChatPanel`). Wzór 1:1 z `InsightViewer`
-  // (#56 / D17) — ten sam ruch zrobiono tam wcześniej i przeszedł odbiór.
-  const openInitiativeTeresa = useCallback(() => {
-    const title = String(initiative?.title || initiative?.name || '');
-    const ctxText = buildTeresaContextText();
-    const ctx = ctxText && ctxText.trim() ? `\n\n${ctxText.trim()}` : '';
-    setChatSystemPrompt(
-      isPolish
-        ? `Jesteś konsultantem AI pracującym nad całą inicjatywą${title ? ` „${title}”` : ''}. ` +
-            `Masz dostęp do pełnego kontekstu (wszystkie sekcje + metadane). ` +
-            `Pomagaj: uzupełniaj puste pola, syntetyzuj, kontroluj jakość, proponuj kolejne kroki. ` +
-            `Odpowiadaj zwięźle i konkretnie.${ctx}`
-        : `You are an AI consultant working on the whole initiative${title ? ` "${title}"` : ''}. ` +
-            `You have access to the full context (all sections + metadata). ` +
-            `Help the user fill empty fields, synthesize, run quality checks, and propose next steps. ` +
-            `Answer concisely and concretely.${ctx}`
-    );
-
-    const sectionBusy = activeSectionAiBusy;
-    setChatContextActions([
-      {
-        id: 'next-steps',
-        label: isPolish ? 'Zaproponuj kolejne kroki' : 'Propose next steps',
-        icon: <ArrowRight size={13} />,
-        onClick: () => void handleProposeNextStepsWithAI(),
-      },
-      {
-        id: 'fill-empty',
-        label: isPolish ? 'Uzupełnij puste' : 'Fill empty',
-        icon: <Wand2 size={13} />,
-        onClick: () => void runWholeCardAi(),
-        busy: wholeCardAiBusy,
-      },
-      {
-        id: 'synthesize',
-        label: isPolish ? 'Synteza' : 'Synthesize',
-        icon: <Layers size={13} />,
-        onClick: () => void runActiveSectionAi(),
-        busy: sectionBusy,
-      },
-      {
-        id: 'quality-check',
-        label: isPolish ? 'Kontrola jakości' : 'Quality check',
-        icon: <ShieldCheck size={13} />,
-        onClick: () => void runActiveSectionAi(),
-        busy: sectionBusy,
-      },
-      {
-        id: 'refresh',
-        label: isPolish ? 'Odśwież' : 'Refresh',
-        icon: <RotateCcw size={13} />,
-        onClick: () => void handleGenerateAI(activeNSection),
-        busy: isGeneratingAI === activeNSection,
-      },
-    ]);
-
-    void openChatWithContext({
-      entityType: 'initiative',
-      entityId: String(initiative?.id ?? initiativeId),
-      entityName: title || undefined,
-      reuseActiveConversation: true,
-    });
-  }, [
-    activeNSection,
-    activeSectionAiBusy,
-    buildTeresaContextText,
-    handleGenerateAI,
-    handleProposeNextStepsWithAI,
-    initiative,
-    initiativeId,
-    isGeneratingAI,
-    isPolish,
-    openChatWithContext,
-    runActiveSectionAi,
-    runWholeCardAi,
-    setChatContextActions,
-    setChatSystemPrompt,
-    wholeCardAiBusy,
-  ]);
-
-  // Sprzątanie: komendy inicjatywy nie mogą wyciekać do innych modułów
-  // (parytet z InsightViewer — bez tego przyciski „Uzupełnij puste" zostają
-  // w Teresie po wyjściu z karty i działają na nieistniejącym kontekście).
-  useEffect(() => {
-    return () => {
-      setChatContextActions(null);
-    };
-  }, [setChatContextActions]);
+  // DEC-419 (06.09.2026): `buildTeresaContextText`/`openInitiativeTeresa`
+  // (dawne zaplecze przycisku „Zapytaj Teresę o tę inicjatywę" w sekcji Akcje
+  // — patrz karta Inicjatywy, słowa właściciela) USUNIĘTE wraz z nim: bez
+  // innego wołającego stały się martwym kodem. Wejście do Teresy jest teraz
+  // wyłącznie w Menu 1 (DEC-404); „Uzupełnij sekcję/dokument" żyje dalej pod
+  // „Pracuj z AI" (DEC-407, `runActiveSectionAi`/`runWholeCardAi` niżej).
 
   // A11y (SPEC-A, unconditional): Esc closes the artifact (calls onBack), but
   // ONLY when it would otherwise do nothing else — skip when focus is in an
@@ -10255,19 +10153,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         badge: readMode ? 0 : undefined,
         showZeroBadge: true,
         children: readMode ? (
-          // ★ 2026-09-01: także w Podglądzie sekcja niesie WEJŚCIE DO TERESY.
-          // „Zapytaj Teresę o tę inicjatywę" niczego nie zapisuje — to pytanie,
-          // nie edycja — więc zakaz działań w Podglądzie go nie obejmuje.
-          // Bez tego zdjęcie osadzonego czatu zostawiałoby w Podglądzie sekcję
-          // z samym zdaniem wyjaśniającym licznik, czyli dziurę po czacie.
+          // DEC-419 (właściciel, 06.09.2026, karta Inicjatywy — słowa właściciela
+          // wprost: „po prawej stronie jest »Zapytaj Teresę o tę inicjatywę« —
+          // to wyrzuć, skoro mamy już pracę z AI"): przycisk USUNIĘTY. Jedyne
+          // wejście do Teresy jest teraz w Menu 1 (DEC-404).
           <div className="flex flex-col gap-2">
-            <TeresaEntryButton
-              label={
-                isPolish ? 'Zapytaj Teresę o tę inicjatywę' : 'Ask Teresa about this initiative'
-              }
-              onClick={openInitiativeTeresa}
-              disabled={!canUseAi}
-            />
             <p className="text-xs leading-relaxed text-c-text-muted">
               {isPolish
                 ? 'W trybie Podglądu działania są niedostępne. Liczba 0 opisuje ten widok, nie inicjatywę — to ograniczenie podglądu, nie informacja, że działań nie ma. Przełącz na Edycję, żeby je zobaczyć.'
@@ -10276,16 +10166,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {/* ★ 2026-09-01 „jedna Teresa": wejście do JEDNEGO okna Teresy
-                z kontekstem tej inicjatywy — pierwsze w sekcji, wzór 1:1
-                z dev-render/screens/prawy-pas-jedna-formula.tsx. */}
-            <TeresaEntryButton
-              label={
-                isPolish ? 'Zapytaj Teresę o tę inicjatywę' : 'Ask Teresa about this initiative'
-              }
-              onClick={openInitiativeTeresa}
-              disabled={!canUseAi}
-            />
             <button type="button" onClick={() => void handleFork()} className={panelBtn}>
               <GitFork size={14} className="text-c-text-muted" />
               {/* Etykieta lokalna, NIE `initiatives.fork2` — tamten klucz niesie
@@ -10603,9 +10483,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   }, [
     isPolish,
     t,
-    // ★ 2026-09-01: sekcja „Akcje" renderuje `TeresaEntryButton` — bez tych
-    // dwóch zależności przycisk zamrażałby pierwszy kontekst inicjatywy.
-    openInitiativeTeresa,
     canUseAi,
     initiative,
     initiativeId,
@@ -12203,11 +12080,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       {/* Slot 9 (dawny `AIConsultantPanel` — czat całego artefaktu w prawym
           pasie ~360px) NIE JEST JUŻ RENDEROWANY. Decyzja właściciela
           2026-09-01 „JEDNA TERESA, W SWOIM OKNIE": jedno miejsce rozmowy
-          w całej aplikacji. Wejście: `TeresaEntryButton` w sekcji „Akcje"
-          prawego panelu + „Wypełnij z AI" w Menu 2 — oba wołają
-          `openInitiativeTeresa()`. Plik `AIConsultantPanel.tsx` zostaje
-          w repo jako martwy eksport (tak samo jak po D17 w InsightViewer);
-          usunięte jest wołanie, nie zdolność. */}
+          w całej aplikacji. Plik `AIConsultantPanel.tsx` zostaje w repo jako
+          martwy eksport (tak samo jak po D17 w InsightViewer); usunięte jest
+          wołanie, nie zdolność.
+          DEC-419 (06.09.2026): drugie wejście, `TeresaEntryButton` w sekcji
+          „Akcje" prawego panelu (dawne `openInitiativeTeresa()`), TAKŻE
+          USUNIĘTE — jedyne wejście jest teraz w Menu 1 (DEC-404). „Uzupełnij
+          sekcję/dokument" żyje dalej pod „Pracuj z AI" w Menu 2 (DEC-407). */}
 
       {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────
           Analiza AKTYWNEJ KARTY (poziom karty), obok konsultanta artefaktu
