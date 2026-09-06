@@ -8844,7 +8844,8 @@
     "emptyState": {
       "title": "No assessments yet",
       "createFirst": "Create First Assessment",
-      "description": "Create your first assessment to start the diagnosis."
+      "description": "Create your first assessment to start the diagnosis.",
+      "warningDescription": "Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers."
     },
     "team": {
       "addModal": {

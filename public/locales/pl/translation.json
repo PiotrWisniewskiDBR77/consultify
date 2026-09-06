@@ -8269,7 +8269,8 @@
     "emptyState": {
       "title": "Brak assessmentów",
       "createFirst": "Utwórz pierwszy assessment",
-      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę."
+      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę.",
+      "warningDescription": "Lista assessmentów jest chwilowo niedostępna. Spróbuj ponownie albo utwórz nowy assessment, w czasie gdy staging się regeneruje."
     },
     "team": {
       "addModal": {
