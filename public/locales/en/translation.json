@@ -6676,7 +6676,13 @@
         "maturity": "Maturity",
         "stakeholder_map": "Stakeholder Map",
         "between_the_lines": "Between the Lines",
-        "general": "General"
+        "general": "General",
+        "general_consulting_synthesis": "General consulting synthesis",
+        "focused_topic_synthesis": "Focused topic synthesis",
+        "contradiction_scan": "Contradiction scan",
+        "initiative_opportunity_scan": "Initiative opportunity scan",
+        "material_quality_scan": "Material quality scan",
+        "hypothesis_validation": "Hypothesis validation"
       },
       "insightStatusLabel": {
         "draft": "Draft",

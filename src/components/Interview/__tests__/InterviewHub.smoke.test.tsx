@@ -392,4 +392,44 @@ describe('InterviewHub smoke — tab rendering', () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  it('Znalezisko 1.1-Z1: Wnioski TYP chip shows the real analysis-mode label, not a silent "Executive Summary" fallback', async () => {
+    // Regression for a bug measured live on /interview?tab=insights: insights
+    // whose promptType comes from `InsightAnalysisMode` (contradiction_scan,
+    // material_quality_scan, …) had no entry in InterviewHub's
+    // `getInsightTypeConfig` configs map, so `configs[type] || configs.summary`
+    // silently fell back to the "Executive Summary" config for an unrelated
+    // insight — same misrender whether the UI language was en or pl (the pl
+    // case additionally showed English text, since the inline `t()` fallback
+    // was hardcoded to `.en`). Fixed by adding the missing config entries and
+    // by making the `t()` fallback language-aware.
+    listInsights.mockResolvedValue({
+      insights: [
+        {
+          id: 'seed_ri_insight_material_quality',
+          title: 'Material quality scan: evidence completeness',
+          promptType: 'material_quality_scan',
+          status: 'completed',
+          createdAt: '2026-08-23T00:00:00.000Z',
+        },
+        {
+          id: 'seed_ri_insight_generating',
+          title: 'Generating state sample: contradiction scan',
+          promptType: 'contradiction_scan',
+          status: 'generating',
+          createdAt: '2026-08-25T00:00:00.000Z',
+        },
+      ],
+    });
+
+    renderTab('my_assignments');
+    const insightsTab = await screen.findByRole('tab', { name: /Insights/i });
+    fireEvent.click(insightsTab);
+    await waitFor(() => expect(insightsTab).toHaveAttribute('aria-selected', 'true'));
+
+    expect(await screen.findByText('Material quality scan')).toBeInTheDocument();
+    expect(await screen.findByText('Contradiction scan')).toBeInTheDocument();
+    // The defect this guards against: both used to render as this instead.
+    expect(screen.queryByText('Executive Summary')).not.toBeInTheDocument();
+  });
 });

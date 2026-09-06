@@ -6054,7 +6054,13 @@
         "maturity": "Dojrzałość",
         "stakeholder_map": "Interesariusze",
         "between_the_lines": "Między Wierszami",
-        "general": "Ogólny"
+        "general": "Ogólny",
+        "general_consulting_synthesis": "Ogólna synteza konsultingowa",
+        "focused_topic_synthesis": "Synteza ukierunkowana",
+        "contradiction_scan": "Skan sprzeczności",
+        "initiative_opportunity_scan": "Skan inicjatyw i szans",
+        "material_quality_scan": "Ocena jakości materiału",
+        "hypothesis_validation": "Walidacja hipotezy"
       },
       "insightStatusLabel": {
         "draft": "Szkic",
