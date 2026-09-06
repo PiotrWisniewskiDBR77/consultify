@@ -80,6 +80,11 @@ export interface OneLookRisk {
   /** 0..25 (P × I) lub inna skala silnika. */
   score: number;
   ownerName?: string | null;
+  /** DEC-426 (1.1-E-1): id/nazwa inicjatywy, gdy silnik je zwraca (raid_items.initiative_id). */
+  initiativeId?: string | null;
+  initiativeName?: string | null;
+  /** raid_items.status: OPEN/MITIGATED/REALIZED/CLOSED — brak → „—". */
+  status?: string | null;
   dueDate?: string | null;
   mitigationStatus?: string | null;
 }
@@ -93,6 +98,11 @@ export interface OneLookDecision {
   ownerName?: string | null;
   /** Wiek pozycji w dniach (dla RAG). */
   ageDays?: number | null;
+  /** Rzeczywisty termin (decyzja: deadline; bloker: plannedEndDate inicjatywy, jeśli jest). */
+  dueDate?: string | null;
+  /** DEC-426 (1.1-E-1): id/nazwa powiązanej inicjatywy, gdy jest znana. */
+  initiativeId?: string | null;
+  initiativeName?: string | null;
   /** Czego blokuje / kontekst. */
   context?: string | null;
 }
@@ -105,6 +115,9 @@ export interface OneLookMilestone {
   status?: string | null;
 }
 
+/** DEC-426 (1.1-E-1): przełącznik Menu 3 — Ryzyka albo Rozstrzygnięcia, jedna tabela na raz. */
+export type OneLookView = 'ryzyka' | 'rozstrzygniecia';
+
 export interface ExecutionSummaryOneLookProps {
   health: OneLookHealth;
   onTime: OneLookOnTime;
@@ -116,6 +129,8 @@ export interface ExecutionSummaryOneLookProps {
   currency?: string;
   isPolish?: boolean;
   generatedAt?: string | null;
+  /** Aktywny widok tabeli pod Menu 3 (chip wybrany przez hosta — StandardModuleBar). */
+  activeView: OneLookView;
   /** Klik encji (ryzyko/decyzja/kamień) → panel/preview w hoście. */
   onOpenEntity?: (entityType: string, entityId: string) => void;
 }
@@ -164,6 +179,25 @@ const decisionBand = (
   if (kind === 'overdue') return { dot: 'bg-c-danger', text: 'text-danger-700 dark:text-c-danger' };
   if (ageDays != null && ageDays >= 5) return { dot: 'bg-c-warning', text: 'text-c-warning' };
   return { dot: 'bg-c-warning', text: 'text-c-warning' };
+};
+
+/** raid_items.status (migracja 063): OPEN/MITIGATED/REALIZED/CLOSED. Brak → „—". */
+const riskStatusLabel = (status: string | null | undefined, isPolish: boolean): string => {
+  const s = String(status || '').toUpperCase();
+  const pl: Record<string, string> = {
+    OPEN: 'Otwarte',
+    MITIGATED: 'Mitygowane',
+    REALIZED: 'Zmaterializowane',
+    CLOSED: 'Zamknięte',
+  };
+  const en: Record<string, string> = {
+    OPEN: 'Open',
+    MITIGATED: 'Mitigated',
+    REALIZED: 'Realized',
+    CLOSED: 'Closed',
+  };
+  const map = isPolish ? pl : en;
+  return map[s] || '—';
 };
 
 const Bar: React.FC<{ pct: number | null; barClass?: string }> = ({ pct, barClass }) => (
@@ -222,6 +256,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
   currency = 'PLN',
   isPolish = true,
   generatedAt,
+  activeView,
   onOpenEntity,
 }) => {
   const tr = (pl: string, en: string) => (isPolish ? pl : en);
@@ -232,70 +267,64 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
   const utilPct = clampPct(people.utilizationPercent);
   const coveragePct = value ? clampPct(value.coveragePercent) : null;
 
-  // ── TOP-3 ryzyka (StandardTable) ──
+  // ── TOP ryzyka (StandardTable) — DEC-426 (1.1-E-1): kolumny Ryzyko · Poziom
+  // (P×I) · Właściciel · Inicjatywa · Status; tabela jest teraz PEŁNA szerokość
+  // (zamiast karty ~500px), więc „Poziom"/„Wynik" łączą się w jedną kolumnę.
   const riskColumns: TableColumn[] = useMemo(
     () => [
       {
         id: 'title',
         label: tr('Ryzyko', 'Risk'),
-        width: '300px',
+        width: '280px',
         render: (row: any) => {
           const band = riskBand(row.score);
           return (
             <div className="flex items-center gap-2 min-w-0">
               <span className={`h-2 w-2 shrink-0 rounded-full ${band.dot}`} />
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-c-text">{row.title}</div>
-                {row.ownerName && (
-                  // axe `color-contrast`: text-c-text-muted (#64748b) na tle wiersza
-                  // #f0f0f1 dawał 4.17:1 zamiast 4,5:1 — slate-600 daje 6.65:1.
-                  <div className="truncate text-xs text-slate-600 dark:text-c-text-muted">
-                    {row.ownerName}
-                  </div>
-                )}
-              </div>
+              <div className="min-w-0 truncate text-sm font-medium text-c-text">{row.title}</div>
             </div>
           );
         },
       },
       {
         id: 'band',
-        label: tr('Poziom', 'Level'),
-        width: '120px',
+        label: tr('Poziom (P×I)', 'Level (P×I)'),
+        width: '160px',
         render: (row: any) => {
           const band = riskBand(row.score);
           return (
             <span className={`text-sm font-medium ${band.text}`}>
-              {isPolish ? band.pl : band.en}
+              {isPolish ? band.pl : band.en}{' '}
+              <span className="tabular-nums text-c-text-muted">({row.score})</span>
             </span>
           );
         },
       },
       {
-        id: 'score',
-        label: tr('Wynik', 'Score'),
-        width: '80px',
-        align: 'right',
+        id: 'owner',
+        label: tr('Właściciel', 'Owner'),
+        width: '160px',
         render: (row: any) => (
-          <span className="text-sm font-semibold tabular-nums text-c-text">{row.score}</span>
+          <span className="text-sm text-c-text-secondary">{row.ownerName || '—'}</span>
         ),
       },
       {
-        id: 'due',
-        label: tr('Termin', 'Due'),
-        width: '90px',
-        align: 'right',
+        id: 'initiative',
+        label: tr('Inicjatywa', 'Initiative'),
+        width: '220px',
         render: (row: any) => (
-          <span className="text-sm text-c-text-secondary">{fmtDate(row.dueDate, isPolish)}</span>
+          <span className="truncate text-sm text-c-text-secondary">
+            {row.initiativeName || '—'}
+          </span>
         ),
       },
       {
-        id: 'mitigation',
-        label: tr('Mitygacja', 'Mitigation'),
-        width: '140px',
+        id: 'status',
+        label: tr('Status', 'Status'),
+        width: '130px',
         render: (row: any) => (
           <span className="text-sm text-c-text-secondary">
-            {row.mitigationStatus || tr('brak planu', 'no plan')}
+            {riskStatusLabel(row.status, isPolish)}
           </span>
         ),
       },
@@ -303,7 +332,10 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
     [isPolish]
   );
 
-  // ── Decyzje-do-podjęcia (StandardTable) ──
+  // ── Rozstrzygnięcia (StandardTable) — DEC-426 (1.1-E-1): kolumny Pozycja ·
+  // Typ · Właściciel · Termin · Inicjatywa. „Wiek" (dni oczekiwania) zostaje
+  // wewnętrznie do koloru wiersza (decisionBand), ale przestaje być osobną
+  // kolumną — zastępuje ją realny „Termin" (deadline), którego brakowało.
   const decisionKindLabel = (kind: OneLookDecisionKind): string => {
     if (kind === 'blocker') return tr('Bloker', 'Blocker');
     if (kind === 'overdue') return tr('Przeterminowana', 'Overdue');
@@ -315,7 +347,7 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'title',
         label: tr('Pozycja', 'Item'),
-        width: '130px',
+        width: '220px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
           return (
@@ -338,31 +370,15 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'kind',
         label: tr('Typ', 'Type'),
-        width: '210px',
+        width: '160px',
         render: (row: any) => {
           const band = decisionBand(row.kind, row.ageDays);
           const label = decisionKindLabel(row.kind);
-          // Defekt „ucinany tekst" (2026-08-31, domknięcie): karta jest wąska
-          // (grid lg:grid-cols-2, kontener tabeli ~506px), a najdłuższa
-          // etykieta „Przeterminowana" (115px tekstu) nie mieściła się
-          // jednowierszowo — ani przycięta (`truncate`+`title`), ani przy
-          // umiarkowanym poszerzeniu (kolumna i tak lądowała na PODŁODZE
-          // dopasowania `FIT_MIN_COLUMN_WIDTH`=112px niezależnie od
-          // deklarowanej szerokości, bo `FilterableTable`/`columnFit`
-          // rozdaje budżet iteracyjnie: kolumny „Pozycja"/„Właściciel"/„Wiek"
-          // miały deklarowane szerokości POWYŻEJ własnej podłogi, więc same
-          // przyklamrowywały się do niej najpierw i to ONE zjadały budżet
-          // kosztem „Typ"). Naprawa: „Pozycja"/„Właściciel"/„Wiek" dostały
-          // deklaracje NA SWOJEJ podłodze (130/120/70 — „Właściciel" dostał
-          // 120, nie mniej, bo nazwisko „Wiśniewski"/nagłówek „Właściciel"
-          // same potrzebują ~75px i przy węższej kolumnie łamały się w
-          // POŁOWIE nazwiska, ten sam defekt piętro niżej) — więc
-          // przyklamrowują się do dokładnie tego, i CAŁA reszta budżetu
-          // kontenera trafia do „Typ" (deklaracja 210px, faktycznie renderuje
-          // ~186px — z zapasem nad potrzebnymi ~147px). `line-clamp-2`
-          // zostaje jako siatka bezpieczeństwa (nigdy „…", najwyżej 2 pełne
-          // linie przy jeszcze węższym viewport/dark-mode reflow), nie jako
-          // główny mechanizm.
+          // Defekt „ucinany tekst" (2026-08-31): tabela jest teraz pełnej
+          // szerokości (nie karta ~500px), ale `line-clamp-2` zostaje jako
+          // siatka bezpieczeństwa dla najdłuższej etykiety „Przeterminowana"
+          // przy wąskim viewport/dark-mode reflow — patrz historia w commitach
+          // sprzed DEC-426, nie główny mechanizm.
           return (
             <span
               className={`block line-clamp-2 leading-tight text-sm font-medium ${band.text}`}
@@ -375,21 +391,29 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
       {
         id: 'owner',
         label: tr('Właściciel', 'Owner'),
-        width: '120px',
+        width: '160px',
         render: (row: any) => (
           <span className="text-sm text-c-text-secondary">{row.ownerName || '—'}</span>
         ),
       },
       {
-        id: 'age',
-        label: tr('Wiek', 'Age'),
-        width: '70px',
+        id: 'due',
+        label: tr('Termin', 'Due'),
+        width: '110px',
         align: 'right',
         render: (row: any) => (
           <span className="text-sm tabular-nums text-c-text-secondary">
-            {row.ageDays != null
-              ? `${row.ageDays} ${tr(liczebnik(row.ageDays, ['dzień', 'dni', 'dni']), 'd')}`
-              : '—'}
+            {fmtDate(row.dueDate, isPolish)}
+          </span>
+        ),
+      },
+      {
+        id: 'initiative',
+        label: tr('Inicjatywa', 'Initiative'),
+        width: '220px',
+        render: (row: any) => (
+          <span className="truncate text-sm text-c-text-secondary">
+            {row.initiativeName || '—'}
           </span>
         ),
       },
@@ -561,20 +585,59 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
           </AnswerCard>
         </div>
 
-        {/* ── DÓŁ: TOP-3 ryzyka · Decyzje ── */}
-        <div className="grid gap-4 lg:grid-cols-2">
-          {/* TOP-3 ryzyka */}
-          <section className="rounded-2xl border border-c-border-subtle bg-c-surface/60 p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold text-c-text">
-                  {tr('Co nam grozi — TOP ryzyka', 'What threatens us — top risks')}
-                </h2>
-                <p className="mt-0.5 text-sm text-c-text-secondary">
-                  {tr('Ryzyka o najwyższym wyniku (P × I).', 'Highest-scoring risks (P × I).')}
-                </p>
-              </div>
-            </div>
+        {/* ── DÓŁ: Ryzyka albo Rozstrzygnięcia — DEC-426 (1.1-E-1). Menu 3
+            (chip „Ryzyka" / „Rozstrzygnięcia", host: StandardModuleBar w
+            ExecutionHub) przełącza `activeView`; JEDNA tabela pełnej
+            szerokości zastępuje dawne dwa panele obok siebie (właściciel:
+            „po prostu dwie tabele, które będą zmieniane tym przyciskiem"). ── */}
+        <section className="rounded-2xl border border-c-border-subtle bg-c-surface/60 p-4 sm:p-5">
+          <div className="mb-3">
+            <h2 className="text-base font-semibold text-c-text">
+              {activeView === 'rozstrzygniecia'
+                ? tr('Co muszę rozstrzygnąć', 'What I must resolve')
+                : tr('Co nam grozi — TOP ryzyka', 'What threatens us — top risks')}
+            </h2>
+            <p className="mt-0.5 text-sm text-c-text-secondary">
+              {activeView === 'rozstrzygniecia'
+                ? tr(
+                    'Decyzje, przeterminowania i blokery czekające na Ciebie.',
+                    'Decisions, overdue items and blockers waiting on you.'
+                  )
+                : tr('Ryzyka o najwyższym wyniku (P × I).', 'Highest-scoring risks (P × I).')}
+            </p>
+          </div>
+          {activeView === 'rozstrzygniecia' ? (
+            <StandardTable
+              columns={decisionColumns}
+              data={decisions as unknown as Array<Record<string, unknown> & { id: string }>}
+              onRowClick={
+                onOpenEntity
+                  ? (row) => {
+                      const kind = (row as any).kind as OneLookDecisionKind;
+                      const rawId = String((row as any).id);
+                      // Bloker = zablokowana inicjatywa (id `blk:<initiativeId>`) —
+                      // ma REALNĄ kartę (panel inicjatywy), w przeciwieństwie do
+                      // zwykłej decyzji/przeterminowania (patrz ZNALEZISKA w
+                      // meldunku 1.1-E-1: `openEntityById` obsługuje wyłącznie
+                      // `INITIATIVE`).
+                      if (kind === 'blocker') {
+                        onOpenEntity('initiative', rawId.replace(/^blk:/, ''));
+                        return;
+                      }
+                      onOpenEntity('decision', rawId);
+                    }
+                  : undefined
+              }
+              empty={{
+                title: tr('Skrzynka pusta', 'Inbox zero'),
+                description: tr(
+                  'Brak decyzji, przeterminowań i blokerów wymagających Ciebie.',
+                  'No decisions, overdue items or blockers require you.'
+                ),
+              }}
+              minTableWidth="auto"
+            />
+          ) : (
             <StandardTable
               columns={riskColumns}
               data={topRisks as unknown as Array<Record<string, unknown> & { id: string }>}
@@ -588,54 +651,10 @@ export const ExecutionSummaryOneLook: React.FC<ExecutionSummaryOneLookProps> = (
                   'Nothing crosses the manager attention threshold.'
                 ),
               }}
-            />
-          </section>
-
-          {/* Decyzje-do-podjęcia */}
-          <section className="rounded-2xl border border-c-border-subtle bg-c-surface/60 p-4 sm:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold text-c-text">
-                  {tr('Co muszę rozstrzygnąć', 'What I must resolve')}
-                </h2>
-                <p className="mt-0.5 text-sm text-c-text-secondary">
-                  {tr(
-                    'Decyzje, przeterminowania i blokery czekające na Ciebie.',
-                    'Decisions, overdue items and blockers waiting on you.'
-                  )}
-                </p>
-              </div>
-            </div>
-            <StandardTable
-              columns={decisionColumns}
-              data={decisions as unknown as Array<Record<string, unknown> & { id: string }>}
-              onRowClick={
-                onOpenEntity
-                  ? (row) => onOpenEntity('decision', String((row as any).id))
-                  : undefined
-              }
-              empty={{
-                title: tr('Skrzynka pusta', 'Inbox zero'),
-                description: tr(
-                  'Brak decyzji, przeterminowań i blokerów wymagających Ciebie.',
-                  'No decisions, overdue items or blockers require you.'
-                ),
-              }}
-              // Defekt „ucinany tekst" (2026-08-31): ta karta żyje w wąskim
-              // `lg:grid-cols-2` (~500px na tabelę), a `FilterableTable`
-              // domyślnie wymusza `min-width: 980px` na elemencie `table`
-              // (`DEFAULT_MIN_TABLE_WIDTH`). Sama kolumna renderowała się na
-              // pełnej (a nawet proporcjonalnie POWIĘKSZONEJ) szerokości, ale
-              // fizycznie POZA widocznym skrawkiem karty — `overflow-x-auto`
-              // ucinał tekst na krawędzi bez wielokropka, nie w komórce.
-              // `minTableWidth="auto"` (prop istnieje dokładnie po to, patrz
-              // `FilterableTable.tsx`) zdejmuje ten sztywny floor i włącza
-              // realne dopasowanie kolumn do kontenera (`columnFit`) — tabela
-              // mieści się w karcie bez ukrytego przewijania.
               minTableWidth="auto"
             />
-          </section>
-        </div>
+          )}
+        </section>
 
         {/* ── Najbliższe kamienie milowe ── */}
         <section className="rounded-2xl border border-c-border-subtle bg-c-surface/60 p-4 sm:p-5">
