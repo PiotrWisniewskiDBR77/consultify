@@ -1,0 +1,48 @@
+DEC-420 / 1.1-I3 — testy zastane PRZED zmianą (mierzone PO commitach, na plikach
+NIEDOTKNIĘTYCH przez to zadanie — potwierdzenie, że 4 czerwone testy w
+`vitest run src/components/Initiatives/__tests__` to baseline, nie regresja
+tego dyżuru).
+
+Plik dyżuru dotknął WYŁĄCZNIE:
+  - src/components/Initiatives/InitiativesHub.tsx
+  - src/components/Initiatives/Menu2PresetDropdown.tsx (NOWY)
+  - src/components/Initiatives/__tests__/InitiativesHub.smoke.test.tsx
+  - src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx (NOWY)
+  - public/locales/pl/translation.json, public/locales/en/translation.json (dopisek,
+    tylko initiatives.filters.{lifecycle,planState,capacityConstraint},
+    initiatives.menu3.more, initiatives.bridge.* — żaden istniejący klucz nie
+    zmienił wartości)
+
+`npx vitest run src/components/Initiatives/__tests__ --reporter=dot` (PO zmianie):
+  Test Files  4 failed | 15 passed (19)
+  Tests       4 failed | 190 passed | 8 skipped | 1 todo (203)
+
+4 czerwone pliki — ŻADEN nie importuje plików dotkniętych tym dyżurem:
+
+1. initiativeAttachments.persistence.realpg.test.ts
+   AssertionError: expected 'sqlite' to be 'postgres' (process.env.DB_TYPE)
+   — bramka środowiskowa (wymaga realnego Postgresa), nie kod produktu.
+
+2. initiativeSections.day136.pg.test.ts
+   AssertionError: expected undefined to be '1' (process.env.RUN_DB_TESTS)
+   — ta sama bramka środowiskowa (RUN_DB_TESTS=1 + MOCK_DB=false), nie kod produktu.
+
+3. a19-jedna-tabela-render.test.tsx (3 testy)
+   Error: useLocation() may be used only in the context of a <Router> component.
+     at useJedenPanel (src/components/shared/PreviewPane/useJedenPanel.ts:84)
+     at TableWithPreviewLayout (src/components/shared/TableWithPreviewLayout.tsx:138)
+   — test renderuje `CanonicalInitiativeRegister` BEZ <MemoryRouter> (import:
+     tylko `../CanonicalInitiativeRegister`, `@testing-library/react`, `vitest`).
+     Plik nietknięty tym dyżurem; przyczyna leży w `useJedenPanel`/
+     `TableWithPreviewLayout`, poza zakresem 1.1-I3.
+
+4. financialNarrativeBlocks.test.ts
+   AssertionError: expected string do contain 'Financial analysis (sizing + ROI)',
+   otrzymano surowy klucz i18n + 'EN-BODY'
+   — import: tylko `../financialNarrativeBlocks`, `vitest`. Zero związku z
+     Menu 2/Menu 3 Inicjatyw ani z dopisanymi kluczami i18n
+     (`initiatives.filters.*`, `initiatives.menu3.more`, `initiatives.bridge.*`).
+
+Wniosek: 4 czerwone testy = ZASTANE (baseline), nie regresja 1.1-I3. Pliki
+dotknięte tym dyżurem (InitiativesHub.smoke.test.tsx — 12/12,
+InitiativesHub.menu3Chips.test.tsx — 3/3 NOWE) — WSZYSTKIE zielone.
