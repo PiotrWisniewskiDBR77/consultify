@@ -71,7 +71,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     listProposals()
       .then((result) => setItems(result.items))
       .catch((e: any) =>
-        setError(e?.message || (isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Failed to load Proposal Drafts'))
+        setError(e?.message || (isPolish ? 'Nie udało się wczytać szkiców propozycji' : 'Failed to load Proposal drafts'))
       )
       .finally(() => setLoading(false));
   }, [isPolish]);
@@ -95,7 +95,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       } catch (e: any) {
         setTransitionError(
           e?.message ||
-            (isPolish ? 'Nie udało się zmienić statusu Proposal Draftu' : 'Failed to change the Proposal Draft status')
+            (isPolish ? 'Nie udało się zmienić statusu szkicu propozycji' : 'Failed to change the Proposal draft status')
         );
       } finally {
         setTransitioning(null);
@@ -214,16 +214,16 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
       universalHandlers: {
         preview: () => setSelectedId(row.id),
         editNote: isPolish
-          ? 'Proposal Draft powstaje z ustalenia — treść edytuje się w warsztacie kryterium, nie tutaj.'
-          : 'A Proposal Draft is generated from a finding — edit its content in the criterion workspace, not here.',
+          ? 'Szkic propozycji powstaje z ustalenia — treść edytuje się w warsztacie kryterium, nie tutaj.'
+          : 'A Proposal draft is generated from a finding — edit its content in the criterion workspace, not here.',
         archiveNote: isPolish
           ? 'Brak archiwizacji — użyj „Odłóż” albo „Odrzuć” do wycofania z aktywnej listy.'
           : 'No archive action — use "Defer" or "Dismiss" to take it off the active list.',
       },
       destructive: {
         note: isPolish
-          ? 'Proposal Drafty są nieusuwalne — ślad audytu.'
-          : 'Proposal Drafts cannot be deleted — immutable audit trail.',
+          ? 'Szkice propozycji są nieusuwalne — ślad audytu.'
+          : 'Proposal drafts cannot be deleted — immutable audit trail.',
       },
     };
   };
@@ -259,7 +259,7 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     return (
       <div className="p-4">
         <ErrorState
-          title={isPolish ? 'Nie udało się wczytać Proposal Draftów' : 'Could not load Proposal Drafts'}
+          title={isPolish ? 'Nie udało się wczytać szkiców propozycji' : 'Could not load Proposal drafts'}
           description={error}
           onRetry={load}
         />
@@ -271,8 +271,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
     <div className="flex h-full min-h-0 flex-col">
       <p className="px-4 pt-4 text-xs text-c-text-muted">
         {isPolish
-          ? 'To są lokalne szkice (Proposal Draft) z ustaleń audytu — NIE są to zarejestrowane Inicjatywy modułu Initiatives, dopóki ktoś jawnie ich nie zarejestruje.'
-          : 'These are local Proposal Drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.'}
+          ? 'To są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje.'
+          : 'These are local Proposal drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.'}
       </p>
       <div className="flex min-h-0 flex-1">
         <div className="flex-1 min-w-0 overflow-auto p-4">
@@ -291,10 +291,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
             persistKey="audits.method.initiatives"
             empty={{
               icon: Lightbulb,
-              title: isPolish ? 'Brak Proposal Draftów' : 'No Proposal Drafts yet',
+              title: isPolish ? 'Brak szkiców propozycji' : 'No Proposal drafts yet',
               description: isPolish
-                ? 'Proposal Draft powstaje z ustalenia audytu podczas przeglądu ustaleń. Żadne ustalenie nie wygenerowało jeszcze propozycji.'
-                : 'A Proposal Draft is created from an audit finding during findings review. No finding has produced a proposal yet.',
+                ? 'Szkic propozycji powstaje z ustalenia audytu podczas przeglądu ustaleń. Żadne ustalenie nie wygenerowało jeszcze propozycji.'
+                : 'A Proposal draft is created from an audit finding during findings review. No finding has produced a proposal yet.',
             }}
           />
         </div>

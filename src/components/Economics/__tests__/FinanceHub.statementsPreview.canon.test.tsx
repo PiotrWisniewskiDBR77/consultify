@@ -149,6 +149,7 @@ vi.mock('../hooks/useFinanceSelection', () => ({
     modelPreviewDetail: null,
     predictionValidations: null,
     analysisPreviewRatios: null,
+    analysisPreviewMeta: null,
     budgetPreviewScenarios: null,
     valuationPreviewResults: null,
     valuationPreviewDetail: null,

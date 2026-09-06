@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
-import { getAnalysisKpiValues } from '@/services/api/financeV2.api';
+import {
+  getAnalysisKpiValues,
+  getFinanceVersionLineage,
+  listStatementLines,
+} from '@/services/api/financeV2.api';
 import { valuationDisplayMultiplier, valuationDisplayValue } from '@/utils/valuationMonetaryUnit';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
@@ -603,6 +607,8 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     useState<PreviewDataState['modelPreviewDetail']>(null);
   const [analysisPreviewRatios, setAnalysisPreviewRatios] =
     useState<PreviewDataState['analysisPreviewRatios']>(null);
+  const [analysisPreviewMeta, setAnalysisPreviewMeta] =
+    useState<PreviewDataState['analysisPreviewMeta']>(null);
   const [budgetPreviewScenarios, setBudgetPreviewScenarios] =
     useState<PreviewDataState['budgetPreviewScenarios']>(null);
   const [valuationPreviewResults, setValuationPreviewResults] =
@@ -618,6 +624,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     setModelPreviewDetail(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
+    setAnalysisPreviewMeta(null);
     setBudgetPreviewScenarios(null);
     setValuationPreviewResults(null);
     setValuationPreviewDetail(null);
@@ -813,9 +820,15 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     async (analysisId: string, canonicalBusinessVersionId?: string | null) => {
       try {
         let ratios: any[] | null = null;
+        // Z1 (re-audyt B) — waluta/liczba okresów dla analiz WYŁĄCZNIE
+        // kanonicznych: rejestr artefaktów ich nie niesie, ale ten SAM wołacz
+        // (`kpi-values`) je zwraca per wskaźnik (`value.presentationCurrency`/
+        // `nativeCurrency`, `periodId`). Liczymy tu, nie zgadujemy w podglądzie.
+        let meta: { currency: string; periodCount: number } | null = null;
         if (canonicalBusinessVersionId) {
           const values = await getAnalysisKpiValues(canonicalBusinessVersionId);
-          ratios = (Array.isArray(values) ? values : [])
+          const valueRows = Array.isArray(values) ? values : [];
+          ratios = valueRows
             .filter((value) => value?.value?.valueDecimal != null)
             .map((value) => ({
               category: value.category,
@@ -823,6 +836,37 @@ export function useFinanceSelection(activeTab: ModuleTab) {
               ratio_name: value.kpiName,
               value: value.value.valueDecimal,
             }));
+          let currency = valueRows
+            .map((value) => value?.value?.presentationCurrency || value?.value?.nativeCurrency)
+            .find((code) => typeof code === 'string' && code.trim().length > 0);
+          const periodIds = new Set(
+            valueRows.map((value) => value?.periodId).filter((id) => id != null && id !== '')
+          );
+          // Zmierzone na CD PROJEKT (re-audyt B): kiedy WSZYSTKIE wskaźniki
+          // analizy są RATIO/PERCENT/DAYS (bez jednostki monetarnej — jak w
+          // tym rekordzie), `kpi-values` nie niesie żadnej waluty — to nie
+          // jest luka w `kpi-values`, po prostu te wskaźniki jej nie mają.
+          // Waluta analizy jako całości żyje w pakiecie sprawozdań, z którego
+          // ją policzono (lineage → `STATEMENT_PACK` przodek → jego linie).
+          if (!currency) {
+            try {
+              const lineage = await getFinanceVersionLineage(canonicalBusinessVersionId);
+              const statementAncestor = (lineage?.ancestors || []).find(
+                (edge) => edge.sourceArtifactType === 'STATEMENT_PACK'
+              );
+              if (statementAncestor) {
+                const lines = await listStatementLines(statementAncestor.sourceVersionId);
+                currency = (lines || [])
+                  .map((line) => line?.value?.presentationCurrency || line?.value?.nativeCurrency)
+                  .find((code) => typeof code === 'string' && code.trim().length > 0);
+              }
+            } catch {
+              // Honest dash beats a guess — brak lineage/linii nie ma zawalić podglądu.
+            }
+          }
+          if (currency || periodIds.size > 0) {
+            meta = { currency: currency || '', periodCount: periodIds.size };
+          }
         } else {
           try {
             const data = await V8FinanceApi.getAnalysisRatios(analysisId);
@@ -835,6 +879,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
             ratios = Array.isArray((data as any)?.ratios) ? (data as any).ratios : null;
           }
         }
+        setAnalysisPreviewMeta(meta);
         if (Array.isArray(ratios) && ratios.length > 0) {
           setAnalysisPreviewRatios(
             ratios.map((r: any) => ({
@@ -849,6 +894,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         }
       } catch {
         setAnalysisPreviewRatios(null);
+        setAnalysisPreviewMeta(null);
       }
     },
     []
@@ -897,6 +943,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     setModelPreviewDetail(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
+    setAnalysisPreviewMeta(null);
     setBudgetPreviewScenarios(null);
     setValuationPreviewResults(null);
     setValuationPreviewDetail(null);
@@ -911,6 +958,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         setModelPreviewDetail(null);
         setPredictionValidations(null);
         setAnalysisPreviewRatios(null);
+        setAnalysisPreviewMeta(null);
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
         setValuationPreviewDetail(null);
@@ -918,6 +966,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         setStatementPreviewDetail(null);
         setStatementPreviewRatios(null);
         setAnalysisPreviewRatios(null);
+        setAnalysisPreviewMeta(null);
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
         setValuationPreviewDetail(null);
@@ -931,6 +980,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           setModelPreviewDetail(null);
           setPredictionValidations(null);
           setAnalysisPreviewRatios(null);
+          setAnalysisPreviewMeta(null);
           setValuationPreviewResults(null);
           setValuationPreviewDetail(null);
           loadBudgetPreviewScenarios(getBudgetRawId(row.id));
@@ -940,6 +990,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           setModelPreviewDetail(null);
           loadPredictionPreview(row.id);
           setAnalysisPreviewRatios(null);
+          setAnalysisPreviewMeta(null);
           setBudgetPreviewScenarios(null);
           setValuationPreviewResults(null);
           setValuationPreviewDetail(null);
@@ -959,6 +1010,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         setModelPreviewDetail(null);
         setPredictionValidations(null);
         setAnalysisPreviewRatios(null);
+        setAnalysisPreviewMeta(null);
         setBudgetPreviewScenarios(null);
         loadValuationPreviewResults(row.id);
       } else {
@@ -993,6 +1045,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     modelPreviewDetail,
     predictionValidations,
     analysisPreviewRatios,
+    analysisPreviewMeta,
     budgetPreviewScenarios,
     valuationPreviewResults,
     valuationPreviewDetail,

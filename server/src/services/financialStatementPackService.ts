@@ -815,30 +815,82 @@ export async function detachStatementFromPack(statementId: string): Promise<void
   await recomputeStatementPack(currentPackId);
 }
 
+/**
+ * Z4 (re-audyt B, 2026-09-06): ta lista zasila kolumnę „Zmapowane linie" w
+ * Finance Hub (`useFinanceData.ts` czyta `s.mapped_line_count`/
+ * `s.total_line_count`) — PRZED tą naprawą zapytanie w ogóle nie joinowało
+ * `financial_statement_values` na poziomie PAKIETU (tylko na poziomie
+ * pojedynczego sprawozdania, `loadPackStatementsWithSchemaCompat` niżej),
+ * więc oba pola były zawsze `undefined` → klient renderował „0 / 0" dla
+ * KAŻDEGO pakietu, niezależnie od realnej liczby linii (zmierzone na CD
+ * PROJEKT: 292 wiersze w `financial_statement_values` przez 6 sprawozdań,
+ * 0/0 wyświetlane mimo tego). Naprawa 1:1 z istniejącym wzorcem
+ * `loadPackStatementsWithSchemaCompat` — dodaje ten sam
+ * `LEFT JOIN financial_statement_values` + `COUNT(...) FILTER` na poziomie
+ * pakietu, z tym samym schema-compat fallbackiem dla `is_non_financial`
+ * (kolumna z best-effort migracji `20260719_baseline_gap.sql`, nieobecna na
+ * bazie migrowanej wyłącznie z `server/migrations` od zera).
+ */
 export async function listStatementPacks(
   organizationId: string,
   readinessFilter?: string
 ): Promise<any[]> {
   const normalizedFilter = normalizeText(readinessFilter).toLowerCase();
-  const rows = await dbAll<any>(
-    `SELECT p.id, p.organization_id, p.entity_name, p.period_start, p.period_end, p.period_label, p.currency,
+  const fullSql = `SELECT p.id, p.organization_id, p.entity_name, p.period_start, p.period_end, p.period_label, p.currency,
             p.scaling, p.pack_status, p.pack_readiness_status, p.pack_readiness_score, p.pack_quality_summary,
             p.pack_quality_reason_codes, p.source_statement_count, p.missing_statement_types, p.created_at,
             p.updated_at,
-            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'P&L') AS pl_count,
-            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'BS') AS bs_count,
-            COUNT(fs.id) FILTER (WHERE fs.statement_type = 'CF') AS cf_count,
-            MAX(fs.updated_at) AS latest_statement_updated_at
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'P&L') AS pl_count,
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'BS') AS bs_count,
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'CF') AS cf_count,
+            MAX(fs.updated_at) AS latest_statement_updated_at,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count
      FROM financial_statement_packs p
      LEFT JOIN financial_statements fs ON fs.statement_pack_id = p.id
+     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
      WHERE p.organization_id = ?
        AND COALESCE(p.pack_status, 'draft') <> 'archived'
        AND (? = '' OR LOWER(COALESCE(p.pack_readiness_status, 'pending')) = ?)
      GROUP BY p.id
      ORDER BY p.period_end DESC, p.updated_at DESC
-     LIMIT 100`,
-    [organizationId, normalizedFilter, normalizedFilter]
-  );
+     LIMIT 100`;
+  let rows: any[];
+  try {
+    rows = await dbAll<any>(
+      fullSql,
+      [organizationId, normalizedFilter, normalizedFilter],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    const coreSql = `SELECT p.id, p.organization_id, p.entity_name, p.period_start, p.period_end, p.period_label, p.currency,
+            p.scaling, p.pack_status, p.pack_readiness_status, p.pack_readiness_score, p.pack_quality_summary,
+            p.pack_quality_reason_codes, p.source_statement_count, p.missing_statement_types, p.created_at,
+            p.updated_at,
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'P&L') AS pl_count,
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'BS') AS bs_count,
+            COUNT(DISTINCT fs.id) FILTER (WHERE fs.statement_type = 'CF') AS cf_count,
+            MAX(fs.updated_at) AS latest_statement_updated_at,
+            COUNT(fsv.id) AS total_line_count,
+            COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+            COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) AS unmapped_line_count
+     FROM financial_statement_packs p
+     LEFT JOIN financial_statements fs ON fs.statement_pack_id = p.id
+     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+     WHERE p.organization_id = ?
+       AND COALESCE(p.pack_status, 'draft') <> 'archived'
+       AND (? = '' OR LOWER(COALESCE(p.pack_readiness_status, 'pending')) = ?)
+     GROUP BY p.id
+     ORDER BY p.period_end DESC, p.updated_at DESC
+     LIMIT 100`;
+    rows = await dbAll<any>(
+      coreSql,
+      [organizationId, normalizedFilter, normalizedFilter],
+      { fallback: false }
+    );
+  }
   // Read boundary: `period_start`/`period_end` are Postgres DATE columns and
   // arrive as JS `Date` objects. Serialize them (and repair any label already
   // persisted as a raw Date string) so no client can render a raw Date.

@@ -387,14 +387,25 @@ export function useFinanceData(
         for (const statement of childStatements) {
           if (statement.statementType) presentTypes.add(statement.statementType);
         }
-        const mappedLineCount = childStatements.reduce(
+        // Z4 (re-audyt B) — `GET /statement-packs` (ten pakiet, tabela
+        // "Sprawozdania") NIGDY nie niesie `s.statements` (dowód: dopiero
+        // `GET /statement-packs/:id` je zwraca), więc `childStatements` jest
+        // tu zawsze puste i suma po nim zawsze dawała 0 — podgląd renderował
+        // „Zmapowane linie: 0 / 0" dla KAŻDEGO pakietu, nie tylko pustych.
+        // Serwer (`listStatementPacks`) liczy teraz te same agregaty na
+        // poziomie pakietu (`mapped_line_count`/`total_line_count`/
+        // `unmapped_line_count`) — preferuj je, z sumą po childStatements
+        // jako fallback dla odpowiedzi, które JEDNAK niosą `s.statements`.
+        const childMappedLineCount = childStatements.reduce(
           (sum: number, statement: any) => sum + Number(statement.mappedLineCount || 0),
           0
         );
-        const unmappedLineCount = childStatements.reduce(
+        const childUnmappedLineCount = childStatements.reduce(
           (sum: number, statement: any) => sum + Number(statement.unmappedLineCount || 0),
           0
         );
+        const mappedLineCount = Number(s.mapped_line_count ?? childMappedLineCount);
+        const unmappedLineCount = Number(s.unmapped_line_count ?? childUnmappedLineCount);
         const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
         const effectiveReadiness = String(readinessStatus || 'pending').toLowerCase();
         let readinessReasonCodes: string[] = [];

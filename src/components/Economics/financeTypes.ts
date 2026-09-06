@@ -464,6 +464,18 @@ export interface PreviewDataState {
   analysisPreviewRatios:
     | { category: string; ratio_code: string; ratio_name: string; value: number | null }[]
     | null;
+  /**
+   * Z1 (re-audyt B, 2026-09-06) — dla analiz WYŁĄCZNIE kanonicznych
+   * (`canonicalRegistryProjection`) `useFinanceData` świadomie zeruje
+   * `currency`/`periodCount`, bo rejestr artefaktów (`GET .../artifacts`) nie
+   * niesie pól domenowych. Te dane JEDNAK istnieją — w
+   * `GET /finance-v2/analysis/:businessVersionId/kpi-values` (ten sam wołacz,
+   * który zasila `analysisPreviewRatios`). `loadAnalysisPreviewRatios` liczy
+   * je stąd (waluta = pierwsza niepusta `presentationCurrency`/`nativeCurrency`,
+   * okresy = liczba unikalnych `periodId`) i podgląd ma je preferować nad
+   * `row.currency`/`row.periodCount`, zanim pokaże „—”.
+   */
+  analysisPreviewMeta: { currency: string; periodCount: number } | null;
   budgetPreviewScenarios:
     | {
         scenarioType: string;
