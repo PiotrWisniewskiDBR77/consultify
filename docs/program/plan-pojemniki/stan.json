@@ -1,6 +1,6 @@
 {
-  "zaktualizowano": "2026-09-06 20:35",
-  "sha_rejestru": "22f10763f6",
+  "zaktualizowano": "2026-09-06 23:35",
+  "sha_rejestru": "80fc9fcf61",
   "pojemniki": [
     {
       "id": 1,
@@ -17,8 +17,8 @@
           "galaz": "",
           "sha": "ad35c3c09e",
           "dowod": "staging health ad35c3c09e: paczki 7–9 na żywo (R1–R4, K4/K5, I4, M-1/M-2, A1/A2, P11 r1); karty 1–3 u właściciela",
-          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku | 19:57: karty N — inwentarz zmierzony: 72 typy, ≈140 egzemplarzy (liczba właściciela trafna); AI ma 11/72, kontrakt 9/72 → 8 partii kontraktów (Opus/Codex) po kontrakcie wspólnym (P10-S w toku) | 20:35: karty N — kontrakt K1–K30 (SSOT) + matryca 22 + partie B1/B4/B5/B6 scalone (B2 w toku; B3/B7/B8 do wydania); Codex P10 r2 9/22 na żywo",
-          "data": "06.09 20:35"
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku | 19:57: karty N — inwentarz zmierzony: 72 typy, ≈140 egzemplarzy (liczba właściciela trafna); AI ma 11/72, kontrakt 9/72 → 8 partii kontraktów (Opus/Codex) po kontrakcie wspólnym (P10-S w toku) | 20:35: karty N — kontrakt K1–K30 (SSOT) + matryca 22 + partie B1/B4/B5/B6 scalone (B2 w toku; B3/B7/B8 do wydania); Codex P10 r2 9/22 na żywo | NOC 06/07.09 (sesja #25): trzy paczki NA ZYWO, kazda potwierdzona odczytem health, nie slowem. Paczka 14b (7c5f57de48): odblokowanie builda + migracja statusow na Twoich danych — 173 wiersze przed = 173 po, 11 wartosci zwinelo sie w 6, zero strat. Paczka 15 (a05a749fcc): 29 bledow starego slownika (w tym CICHA awaria atrybucji KPI), naprawa Realizacji, dane startowe demo, migracja naprawcza bazy, karty N z obu paczek Codexa, raport sceptyka z 47 zrzutami. Paczka 16 (13f70a2a91): kamienie milowe z planem bazowym — kolumna Odchylenie liczy od planu bazowego, a nie dni pozostalych. SCEPTYK ODBIORU: 51 wytycznych -> 25 zrobionych, 13 czesciowo, 1 niezrobiona, 4 niemierzalne, 5 w toku. Jedyna niezrobiona (Realizacja pokazywala 12 wierszy Zatwierdzona zamiast inicjatyw w toku) zostala naprawiona i sprawdzona na obrazie. Galeria 20 pozycji odbiorczych i galeria 35 kart sa robione OD NOWA na finalnym kodzie — zrzutow sceptyka NIE pokaze, bo powstaly przed polowa dzisiejszych zmian.",
+          "data": "06.09 23:35"
         },
         {
           "nr": "1.2",
@@ -125,20 +125,20 @@
           "galaz": "mvp/demo-rozdzial-przygotowanie",
           "sha": "f21953eef4",
           "dowod": "przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie",
-          "uwagi": "ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.",
-          "data": "06.09 12:40"
+          "uwagi": "ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny. | NOC — ZMIERZONE, wprost dotyczy pilotazu: migracje wykonywane przy starcie serwera sa WYLACZONE na stagingu, produkcji i dev zmienna DB_MANAGED_SCHEMA=off, a na DEMO tej zmiennej NIE MA, wiec tam dzialaja. Skutek: demo jest JEDYNYM srodowiskiem, na ktorym swieza baza moglaby wstac cicho uszkodzona — z okrojona regula bazy, przez co pierwszy szablon zapisany w Studiu Dokumentow i pierwszy raport Oceny odbilyby sie o baze. Start bez bledu, awaria przy pierwszym klinieciu. Naprawa jest juz w kodzie i wykona sie na demo SAMA, przy pierwszym wdrozeniu, ktore ja przyniesie; demo stoi dzis na starszym kodzie niz staging. REKOMENDACJA: przed pilotazem wdrozyc na demo build z ta naprawa. RYZYKO DZIS: niskie, demo ma obecnie poprawna regule. OSOBNO DO DECYZJI: staging i produkcja melduja gotowosc, NIE sprawdziwszy schematu bazy — bezpiecznik jest zielony, bo nikt go nie uruchamia.",
+          "data": "06.09 23:35"
         },
         {
           "nr": "1.11",
           "nazwa": "Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie (kompletny system zarządzania inicjatywami w statusach)",
           "wykonawca": "Fable: SSOT statusów + prototyp tablicy przejść → akcept właściciela → Codex (wklejka)",
           "zalezy_od": "słowo właściciela na tablicę statusów i przejść",
-          "stan": "scalone",
+          "stan": "odebrane",
           "galaz": "codex/p12-statusy",
-          "sha": "587279a90e",
-          "dowod": "P12 scalony lokalnie: 7 statusów + on_hold/archived, silnik przejść, migracja danych (stanowisko przemapowane); tsc serwera 24 błędy → P12-int w toku",
-          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9. | 17:27: pomiar scalony (3fd393031d, 19 słowników, 2 automaty, 4 trasy omijają silnik); karta 4 (tablica 7 statusów) u właściciela. | 17:54: właściciel „Tak” na tablicę 7 statusów (DEC-424), pełny model ~12 w Fali 2 (3.19); paczka P12 dla Codexa pisze Opus.",
-          "data": "06.09 20:35"
+          "sha": "a05a749fcc",
+          "dowod": "NA ZYWO (paczka 15). Migracja Twoich danych wykonana i zweryfikowana pomiarem PO: DRAFT 88, IN_EXECUTION 36, REJECTED 17, APPROVED 11, PENDING_APPROVAL 11, CLOSED 10. 173 wiersze przed = 173 po, zero strat; rozklad zgodny co do wiersza z predykcja zapisana w rejestrze PRZED wdrozeniem.",
+          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9. | 17:27: pomiar scalony (3fd393031d, 19 słowników, 2 automaty, 4 trasy omijają silnik); karta 4 (tablica 7 statusów) u właściciela. | 17:54: właściciel „Tak” na tablicę 7 statusów (DEC-424), pełny model ~12 w Fali 2 (3.19); paczka P12 dla Codexa pisze Opus. | NOC: domkniete zapisy — 29 zywych bledow w 24 plikach. Najwazniejszy: funkcja liczaca wplyw inicjatyw na wskazniki ZAWSZE trafiala mnoznik domyslny, bo porownywala sie ze starymi kodami. Atrybucja KPI liczyla sie zle dla kazdej inicjatywy, cicho, bez sladu na ekranie. Dane startowe demo tez przepiete: PRZED naprawa seed padal na PIERWSZEJ inicjatywie i zostawial baze w stanie 2 organizacje / 19 uzytkownikow / 7 projektow / ZERO inicjatyw. Do rozwazenia: zaden stary status nie mapuje sie na wstrzymana — zablokowana trafia do w realizacji.",
+          "data": "06.09 23:35"
         },
         {
           "nr": "1.12",
@@ -147,10 +147,10 @@
           "zalezy_od": "akcept właściciela na plan",
           "stan": "w_toku",
           "galaz": "mvp/113-realizacja-plan",
-          "sha": "62bc593e55",
-          "dowod": "R1, R1b, R2, R4 NA ŻYWO (paczka 13b); R4b scalone; pliki: zdrowie-programu.pdf, sponsor-1-strona.pdf, tygodniowy-pakiet.docx",
-          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu). | Zostaje R4b (Menu 3 raportów, CTA) i R3 (kamienie milowe, baseline, re-baseline przez decyzję).",
-          "data": "06.09 20:35"
+          "sha": "13f70a2a91",
+          "dowod": "R1, R1b, R2, R4, R4b oraz R3 NA ZYWO (paczki 15-16). Realizacja pokazuje 23 inicjatywy w toku zamiast 12 zatwierdzonych; Zasoby 3 pigulki zamiast 10; kolumna Odchylenie liczy od planu bazowego: Legacy Decommission +40, ERP SAP Integration +65 czerwienia. CTO obejrzal oba zrzuty wlasnymi oczami.",
+          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu). | Zostaje R4b (Menu 3 raportów, CTA) i R3 (kamienie milowe, baseline, re-baseline przez decyzję). | NOC: naprawa Realizacji miala DWIE przyczyny — poprawka samego filtra zakladki dalaby ZERO wierszy zamiast 23. R3: plan bazowy jest zamrazany, a drugie i kazde kolejne przesuniecie terminu wymaga decyzji ze wskazanym zatwierdzajacym; odmowa siedzi w serwerze, wiec nie da sie jej obejsc wywolaniem API. NIEDOMKNIETE (uczciwie, robotnik sam odmowil zaliczenia): regula dla samego kamienia milowego to kod bez wolacza, bo trasa edycji kamieni jest dzis zablokowana dla wszystkich; trzeciej daty nie widac na zadnym ekranie; dwie inne sciezki zapisu terminu omijaja regule. PYTANIE DO WLASCICIELA: przy +40 dni poslizgu wskaznik RAG pokazuje na czas — czy ma uwzgledniac poslizg od planu bazowego? To zmiana metodyki, nie kodu.",
+          "data": "06.09 23:35"
         }
       ],
       "kryteria": [
