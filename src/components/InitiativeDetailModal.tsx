@@ -34,6 +34,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  InitiativeStatus as InitiativeStatusCodes,
+  INITIATIVE_STATUS_LABEL_KEYS,
+} from '../../packages/shared/src/constants/initiativeStatuses.generated';
 import { Api } from '../services/api';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import {
@@ -65,6 +69,19 @@ interface InitiativeDetailModalProps {
   currentUser?: User | null; // Added currentUser
   strategicGoals?: StrategicGoal[];
 }
+
+/**
+ * DEC-424 (P12): kroki cyklu życia pokazywane na osi zatwierdzeń — słownik 7 bez
+ * gałęzi odrzucenia (REJECTED nie jest krokiem naprzód, tylko wyjściem awaryjnym).
+ */
+const LIFECYCLE_STEPS = [
+  InitiativeStatusCodes.PROPOSED,
+  InitiativeStatusCodes.DRAFT,
+  InitiativeStatusCodes.PENDING_APPROVAL,
+  InitiativeStatusCodes.APPROVED,
+  InitiativeStatusCodes.IN_EXECUTION,
+  InitiativeStatusCodes.CLOSED,
+] as const;
 
 export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React.memo(
   ({
@@ -240,6 +257,19 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
     const readinessData = calculateReadiness();
     const readiness = readinessData.total;
     const isReady = readiness >= 80;
+
+    // DEC-424 (P12): status czytamy ze słownika 7, „wstrzymanie" i „archiwum" to
+    // FLAGI (`on_hold` / `archived`), nie osobne statusy. Etykieta PL z i18n przez
+    // klucz SSOT (`initiatives.status.<KOD>`) — koniec z `t('status.EXECUTING')`.
+    const currentStatusCode = (initiative.status ||
+      InitiativeStatusCodes.DRAFT) as keyof typeof INITIATIVE_STATUS_LABEL_KEYS;
+    const isOnHold = Boolean(
+      (initiative as { onHold?: boolean; on_hold?: boolean }).onHold ??
+        (initiative as { on_hold?: boolean }).on_hold
+    );
+    const statusLabel = t(
+      INITIATIVE_STATUS_LABEL_KEYS[currentStatusCode] ?? 'initiatives.status.unknown'
+    );
 
     // OPTIMIZED: Memoized callbacks to prevent unnecessary re-renders
     const generateSummary = useCallback(() => {
@@ -449,31 +479,48 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
             {/* Module Transition Indicator */}
             <div className="h-8 border-b border-c-border-subtle flex items-center px-6 gap-0">
               {[
+                // DEC-424 (P12): grupy modułów na słowniku 7 — stare kody
+                // (PLANNING/REVIEW/EXECUTING/BLOCKED/DONE) po migracji
+                // 20262103_p12 nie występują, więc żaden krok się nie podświetlał.
                 {
                   module: t('initiative.tabs.overview'),
-                  statuses: ['DRAFT'],
+                  statuses: [InitiativeStatusCodes.PROPOSED, InitiativeStatusCodes.DRAFT],
                   color: 'slate',
                   icon: '1',
                 },
                 {
                   module: t('initiative.charterTitle'),
-                  statuses: ['PLANNING', 'REVIEW', 'APPROVED'],
+                  statuses: [
+                    InitiativeStatusCodes.PENDING_APPROVAL,
+                    InitiativeStatusCodes.APPROVED,
+                  ],
                   color: 'amber',
                   icon: '2',
                 },
                 {
                   module: t('initiative.tabs.execution'),
-                  statuses: ['EXECUTING', 'BLOCKED', 'DONE'],
+                  statuses: [InitiativeStatusCodes.IN_EXECUTION, InitiativeStatusCodes.CLOSED],
                   color: 'blue',
                   icon: '3',
                 },
               ].map((mod, idx, arr) => {
-                const isActive = mod.statuses.includes(initiative.status || 'DRAFT');
+                const isActive = mod.statuses.includes(
+                  (initiative.status || InitiativeStatusCodes.DRAFT) as never
+                );
                 const isPassed =
                   arr
                     .slice(0, idx)
-                    .some((m) => m.statuses.includes(initiative.status || 'DRAFT')) ||
-                  idx < arr.findIndex((m) => m.statuses.includes(initiative.status || 'DRAFT'));
+                    .some((m) =>
+                      m.statuses.includes(
+                        (initiative.status || InitiativeStatusCodes.DRAFT) as never
+                      )
+                    ) ||
+                  idx <
+                    arr.findIndex((m) =>
+                      m.statuses.includes(
+                        (initiative.status || InitiativeStatusCodes.DRAFT) as never
+                      )
+                    );
                 return (
                   <React.Fragment key={mod.module}>
                     <div
@@ -508,10 +555,11 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
               })}
               <div className="flex-1" />
               <span className="text-[10px] text-c-text-secondary dark:text-c-text-muted">
-                {initiative.status === 'ARCHIVED'
-                  ? `📦 ${t('status.ARCHIVED')}`
-                  : initiative.status === 'CANCELLED'
-                    ? `❌ ${t('status.CANCELLED')}`
+                {/* DEC-424: archiwum to FLAGA `archived`, a anulowanie = REJECTED. */}
+                {(initiative as { archived?: boolean }).archived
+                  ? `📦 ${t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.CLOSED])}`
+                  : initiative.status === InitiativeStatusCodes.REJECTED
+                    ? `❌ ${t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.REJECTED])}`
                     : ''}
               </span>
             </div>
@@ -535,16 +583,16 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                     <span className="w-1 h-1 bg-c-surface-raised rounded-full"></span>
                     <span
                       className={`uppercase font-bold ${
-                        initiative.status === 'BLOCKED'
+                        isOnHold
                           ? 'text-danger-400'
-                          : initiative.status === 'DONE'
+                          : initiative.status === InitiativeStatusCodes.CLOSED
                             ? 'text-c-success'
-                            : initiative.status === 'EXECUTING'
+                            : initiative.status === InitiativeStatusCodes.IN_EXECUTION
                               ? 'text-c-info'
                               : 'text-c-warning'
                       }`}
                     >
-                      {t(`status.${initiative.status || 'DRAFT'}`).replace('_', ' ')}
+                      {statusLabel}
                     </span>
                     <span className="w-1 h-1 bg-c-surface-raised rounded-full"></span>
                     <div className="flex items-center gap-1 text-c-info">
@@ -2259,31 +2307,18 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
 
                   {/* Status Timeline */}
                   <div className="flex items-center justify-between mb-8">
-                    {[
-                      { status: 'DRAFT', label: t('status.DRAFT'), done: true },
-                      {
-                        status: 'PLANNING',
-                        label: t('status.PLANNING'),
-                        done: initiative.status !== 'DRAFT',
-                      },
-                      {
-                        status: 'REVIEW',
-                        label: t('status.REVIEW'),
-                        done: ['REVIEW', 'APPROVED', 'EXECUTING', 'DONE'].includes(
-                          initiative.status
+                    {/* DEC-424 (P12): stepper na słowniku 7. „done" liczone po
+                        kolejności cyklu (LIFECYCLE_ORDER), a nie po liście
+                        nieistniejących kodów PLANNING/REVIEW/EXECUTING/DONE. */}
+                    {LIFECYCLE_STEPS.map((status) => ({
+                      status,
+                      label: t(INITIATIVE_STATUS_LABEL_KEYS[status]),
+                      done:
+                        LIFECYCLE_STEPS.indexOf(status) <=
+                        LIFECYCLE_STEPS.indexOf(
+                          currentStatusCode as (typeof LIFECYCLE_STEPS)[number]
                         ),
-                      },
-                      {
-                        status: 'APPROVED',
-                        label: t('status.APPROVED'),
-                        done: ['APPROVED', 'EXECUTING', 'DONE'].includes(initiative.status),
-                      },
-                      {
-                        status: 'EXECUTING',
-                        label: t('status.EXECUTING'),
-                        done: ['EXECUTING', 'DONE'].includes(initiative.status),
-                      },
-                    ].map((step, idx, arr) => (
+                    })).map((step, idx, arr) => (
                       <React.Fragment key={step.status}>
                         <div className="flex flex-col items-center">
                           <div
@@ -2327,20 +2362,18 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-3 h-3 rounded-full ${
-                            initiative.status === 'BLOCKED'
+                            isOnHold
                               ? 'bg-danger-500'
-                              : initiative.status === 'DONE'
+                              : initiative.status === InitiativeStatusCodes.CLOSED
                                 ? 'bg-c-success'
-                                : initiative.status === 'EXECUTING'
+                                : initiative.status === InitiativeStatusCodes.IN_EXECUTION
                                   ? 'bg-c-info animate-pulse'
                                   : 'bg-c-warning'
                           }`}
                         />
-                        <span className="text-lg font-bold text-c-text">
-                          {initiative.status.replace('_', ' ')}
-                        </span>
+                        <span className="text-lg font-bold text-c-text">{statusLabel}</span>
                       </div>
-                      {initiative.status === 'BLOCKED' && (
+                      {isOnHold && (
                         <p className="text-xs text-danger-400 mt-2">
                           {t('common.reason')}:{' '}
                           {(initiative as any).blockedReason || t('common.notSpecified')}
@@ -2352,19 +2385,27 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                       <h4 className="text-xs font-bold text-c-text-muted uppercase mb-3">
                         {t('initiative.nextAction')}
                       </h4>
-                      {initiative.status === 'DRAFT' && (
+                      {/* DEC-424: „następny krok" = pierwsze legalne przejście ze
+                          słownika 7; nazwa docelowego statusu z i18n SSOT. */}
+                      {currentStatusCode === InitiativeStatusCodes.DRAFT && (
                         <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionDraft')}{' '}
-                          <span className="text-c-warning font-medium">{t('status.PLANNING')}</span>
+                          <span className="text-c-warning font-medium">
+                            {t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.PENDING_APPROVAL])}
+                          </span>
                         </p>
                       )}
-                      {initiative.status === 'PLANNING' && (
+                      {currentStatusCode === InitiativeStatusCodes.PROPOSED && (
                         <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionPlanning')}{' '}
-                          <span className="text-c-accent font-medium">{t('status.REVIEW')}</span>
+                          {/* kanon TRIADY: token akcentu = crimson (semantyka
+                              krytyczna); „następny krok" jest neutralny → c-info */}
+                          <span className="text-c-info font-medium">
+                            {t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.DRAFT])}
+                          </span>
                         </p>
                       )}
-                      {initiative.status === 'REVIEW' && (
+                      {currentStatusCode === InitiativeStatusCodes.PENDING_APPROVAL && (
                         <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionReview')}{' '}
                           <span className="text-c-info font-medium">
@@ -2372,19 +2413,23 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </span>
                         </p>
                       )}
-                      {initiative.status === 'APPROVED' && (
+                      {currentStatusCode === InitiativeStatusCodes.APPROVED && (
                         <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionApproved')}{' '}
-                          <span className="text-c-info font-medium">{t('status.EXECUTING')}</span>
+                          <span className="text-c-info font-medium">
+                            {t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.IN_EXECUTION])}
+                          </span>
                         </p>
                       )}
-                      {initiative.status === 'EXECUTING' && (
+                      {currentStatusCode === InitiativeStatusCodes.IN_EXECUTION && (
                         <p className="text-sm text-c-text-secondary">
                           {t('initiative.nextActionExecuting')}{' '}
-                          <span className="text-c-success font-medium">{t('status.DONE')}</span>
+                          <span className="text-c-success font-medium">
+                            {t(INITIATIVE_STATUS_LABEL_KEYS[InitiativeStatusCodes.CLOSED])}
+                          </span>
                         </p>
                       )}
-                      {initiative.status === 'DONE' && (
+                      {currentStatusCode === InitiativeStatusCodes.CLOSED && (
                         <p className="text-sm text-c-success font-medium">
                           ✓ {t('initiative.completedSuccessfully')}
                         </p>
@@ -2830,7 +2875,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                         ...initiative,
                         id: '',
                         name: `${initiative.name} (Copy)`,
-                        status: 'DRAFT' as const,
+                        status: InitiativeStatusCodes.DRAFT,
                         createdAt: new Date().toISOString(),
                         comments: [],
                         versions: [],
@@ -2871,7 +2916,7 @@ export const InitiativeDetailModal: React.FC<InitiativeDetailModalProps> = React
                           </span>
                         </div>
                         <p className="text-xs text-c-text-muted mt-1">
-                          {t('common.statusLabel')} {t(`status.${initiative.status}`)} • Last
+                          {t('common.statusLabel')} {statusLabel} • Last
                           updated:{' '}
                           {initiative.updatedAt
                             ? new Date(initiative.updatedAt).toLocaleString()

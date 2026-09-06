@@ -18,6 +18,8 @@ import {
   STATUS_METADATA,
   type StatusMeta,
 } from '@/services/initiativeLifecycle';
+import { InitiativeStatus as InitiativeStatusCodes } from '../../packages/shared/src/constants/initiativeStatuses.generated';
+
 import type { InitiativeStatus } from '@/types';
 
 // ==========================================
@@ -186,23 +188,24 @@ export function getHealthInfo(initiative: {
  *
  * EXECUTING + BLOCKED + TRACKING close the same class of defect a second
  * time (2026-08-29). The Initiatives data feed for scope 'active' filters
- * out ONLY the three terminal statuses below (InitiativesHub.tsx L526-535),
- * so an initiative in EXECUTING / BLOCKED / TRACKING *reached* the board but
- * had no column and was silently dropped by the grouping step — the module
- * filter chip read "W realizacji 1" over a board whose every column showed
- * 0. Owner decision 2026-08-29: the initiative lifecycle is the truth, the
- * Kanban columns must mirror it. Order follows ALL_STATUSES. */
+ * out ONLY the terminal statuses below, so an initiative in execution
+ * *reached* the board but had no column and was silently dropped by the
+ * grouping step — the module filter chip read "W realizacji 1" over a board
+ * whose every column showed 0. Owner decision 2026-08-29: the initiative
+ * lifecycle is the truth, the Kanban columns must mirror it.
+ *
+ * DEC-424 (P12): listy pochodzą teraz WYŁĄCZNIE ze słownika 7 (SSOT
+ * `packages/shared/.../initiativeStatuses.generated`). Poprzednia wersja
+ * rzutowała 13 nieistniejących kodów przez `as InitiativeStatus` — kolumny
+ * Kanbanu nazywały się PENDING_REVIEW/SCHEDULED/TRACKING, a wiersze przychodzą
+ * z bazy jako PENDING_APPROVAL/APPROVED/CLOSED, więc KAŻDY był „bezdomny".
+ * Order follows ALL_STATUSES. */
 export const ACTIVE_STATUSES: InitiativeStatus[] = [
-  'DRAFT' as InitiativeStatus,
-  'PENDING_REVIEW' as InitiativeStatus,
-  'REVIEW' as InitiativeStatus,
-  'PROMOTED' as InitiativeStatus,
-  'PLANNING' as InitiativeStatus,
-  'APPROVED' as InitiativeStatus,
-  'SCHEDULED' as InitiativeStatus,
-  'EXECUTING' as InitiativeStatus,
-  'BLOCKED' as InitiativeStatus,
-  'TRACKING' as InitiativeStatus,
+  InitiativeStatusCodes.PROPOSED,
+  InitiativeStatusCodes.DRAFT,
+  InitiativeStatusCodes.PENDING_APPROVAL,
+  InitiativeStatusCodes.APPROVED,
+  InitiativeStatusCodes.IN_EXECUTION,
 ];
 
 /** The only statuses deliberately absent from the "Active" board.
@@ -214,27 +217,13 @@ export const ACTIVE_STATUSES: InitiativeStatus[] = [
  * (no overlap, no gap) can be asserted by a test instead of rediscovered by
  * a user staring at an empty board. */
 export const ACTIVE_HIDDEN_STATUSES: InitiativeStatus[] = [
-  'DONE' as InitiativeStatus,
-  'CANCELLED' as InitiativeStatus,
-  'ARCHIVED' as InitiativeStatus,
+  InitiativeStatusCodes.CLOSED,
+  InitiativeStatusCodes.REJECTED,
 ];
 
-/** Full lifecycle order for "All" mode */
-export const ALL_STATUSES: InitiativeStatus[] = [
-  'DRAFT' as InitiativeStatus,
-  'PENDING_REVIEW' as InitiativeStatus,
-  'REVIEW' as InitiativeStatus,
-  'PROMOTED' as InitiativeStatus,
-  'PLANNING' as InitiativeStatus,
-  'APPROVED' as InitiativeStatus,
-  'SCHEDULED' as InitiativeStatus,
-  'EXECUTING' as InitiativeStatus,
-  'BLOCKED' as InitiativeStatus,
-  'DONE' as InitiativeStatus,
-  'TRACKING' as InitiativeStatus,
-  'CANCELLED' as InitiativeStatus,
-  'ARCHIVED' as InitiativeStatus,
-];
+/** Full lifecycle order for "All" mode — DEC-424: cały słownik 7 z SSOT,
+ * w kolejności deklaracji (PROPOSED → … → REJECTED). */
+export const ALL_STATUSES: InitiativeStatus[] = Object.values(InitiativeStatusCodes);
 
 // ==========================================
 // FORMAT HELPERS
