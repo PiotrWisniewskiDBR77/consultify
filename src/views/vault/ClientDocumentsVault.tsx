@@ -48,26 +48,39 @@
  * sejfu) to DWA NIEZALEŻNE komponenty, oba wołają `useHubBarSlot` (inaczej niż
  * `AgentHubShell`, gdzie jeden komponent warunkuje zawartość slotu wewnątrz
  * siebie) — `register()` w `HubBarSlotsContext` NADPISUJE cały slot („ostatni
- * zapis wygrywa"). Otwarcie sejfu samo się domyka poprawnie (efekt tej listy
- * ma STABILNĄ referencję `filterControlsNode`, więc nie odpala się ponownie w
- * tym samym committcie co montowanie `VaultDocumentsView` — brak wyścigu).
- * Zamknięcie WYMAGA jawnego wymuszenia: `handleBackToSafes` inkrementuje
- * `resyncTick` (dep. `filterControlsNode`), żeby efekt tej listy odpalił się
- * PO odmontowaniu `VaultDocumentsView` (które czyści slot) i przywrócił pole
- * szukania — bez tego zostawałoby puste do najbliższej niepowiązanej zmiany.
+ * zapis wygrywa"). Ta lista rejestruje TYLKO lupę (`filterControls`) — bez
+ * `primaryCta`/`openItems` (sejfy nie mają CTA tworzenia, patrz wyżej), więc
+ * gdy `VaultDocumentsView` się odmontowuje (powrót do listy), jego własny
+ * `clear()` (z `useHubBarSlot`) czyści slot i efekt TEJ listy (dep.
+ * `filterControlsNode`, stabilna referencja) odpala się ponownie samoczynnie —
+ * bez potrzeby jawnego licznika resync.
+ *
+ * ★ DEC-408b (06.09, słowo właściciela): pasek „Sejfy | Foldery" NAD tabelą
+ * zniknął CAŁKOWICIE — foldery to Fala 2 (pozycja 3.11), ta zakładka pokazuje
+ * WYŁĄCZNIE tabelę sejfów. Filtr zakresu (dawny `<select>`) zastąpiony
+ * rzędem Menu 3 (`Menu3Chip`, kanon `ModuleMenu3.tsx`) z licznikami: Wszystkie
+ * · Moje · Klientów · Z błędami indeksowania — renderowanym LOKALNIE nad
+ * tabelą (ten sam wzór co `filterBarNode`/`renderBulkBar` w
+ * `VaultDocumentsView.tsx`), bo `HubBarSlotValue` nie ma osobnego slotu na
+ * trzeci, dynamiczny rząd (poza mandatem tego zadania). `VaultFoldersTable`
+ * (przeglądarka WSZYSTKICH folderów) zostaje w kodzie nieużywana z tego
+ * ekranu — logika/backend folderów nietknięte, Fala 2 dokłada wejście.
  */
 
-import { Search } from 'lucide-react';
+import { AlertTriangle, Building2, Layers, Search, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { useHubBarSlot } from '../../components/shared/HubBarSlots';
+import { Menu3Badge, Menu3Chip, MENU_3_INNER_CLASS, MENU_3_LEFT_CLASS, MENU_3_ROW_CLASS } from '../../components/shared/ModuleMenu3';
 import { Api } from '../../services/api';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
-import { VaultFoldersTable } from './VaultFoldersTable';
 import { type OtwarcieSejfu, type VaultSafe, VaultSafesTable } from './VaultSafesTable';
+
+/** DEC-408b — filtr zakresu z Menu 3 (chipy zamiast dawnego `<select>`). */
+type SafesFilterMode = 'all' | 'mine' | 'clients' | 'errors';
 
 // RB-029/RV-010 (CB-02) — the opened safe is now canonical route state
 // (`?safeId=`), not just local component state, so direct entry, refresh,
@@ -89,12 +102,12 @@ export const ClientDocumentsVault: React.FC = () => {
   const [isResolvingSafe, setIsResolvingSafe] = useState(false);
   const [safeResolutionDenied, setSafeResolutionDenied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useState<'safes' | 'folders'>('safes');
-  const [scopeFilter, setScopeFilter] = useState<'all' | 'user' | 'organization' | 'project'>(
-    'all'
-  );
-  // Patrz „★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU" w nagłówku pliku.
-  const [resyncTick, setResyncTick] = useState(0);
+  const [filterMode, setFilterMode] = useState<SafesFilterMode>('all');
+  // DEC-408b — liczniki chipów Menu 3 (Wszystkie/Moje/Klientów/Błędy), dociągane
+  // z `VaultSafesTable` (jedyne miejsce, które realnie woła `Api.getVaultSafes()`
+  // — bez duplikowania fetcha tutaj).
+  const [safesForCounts, setSafesForCounts] = useState<VaultSafe[]>([]);
+  const handleSafesLoaded = useCallback((safes: VaultSafe[]) => setSafesForCounts(safes), []);
 
   const clearSafeIdParam = useCallback(() => {
     setSearchParams(
@@ -128,7 +141,6 @@ export const ClientDocumentsVault: React.FC = () => {
     setOpenSafe(null);
     setOtwarcieSejfu(null);
     setSafeResolutionDenied(false);
-    setResyncTick((v) => v + 1);
     clearSafeIdParam();
   }, [clearSafeIdParam]);
 
@@ -180,44 +192,102 @@ export const ClientDocumentsVault: React.FC = () => {
 
   const filterControlsNode = useMemo(
     () => (
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
-          />
-          {/* DEC-408 — aria-label aligned with the Menu 2 tab/breadcrumb
-              (`myWork.hub.vault`): "Sejfy"/"Vaults", not "Sejf klienta". */}
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t(
-              'vault.safes.searchPlaceholder',
-              isPolish ? 'Szukaj sejfu…' : 'Search safes…'
-            )}
-            aria-label={t('myWork.hub.vault', isPolish ? 'Sejfy' : 'Vaults')}
-            className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          />
-        </div>
-        <select
-          aria-label={isPolish ? 'Filtr zakresu' : 'Scope filter'}
-          value={scopeFilter}
-          onChange={(event) => setScopeFilter(event.target.value as typeof scopeFilter)}
-          className="h-9 rounded-lg border border-c-border bg-c-surface px-2 text-sm text-c-text"
-        >
-          <option value="all">{isPolish ? 'Wszystkie zakresy' : 'All scopes'}</option>
-          <option value="user">{isPolish ? 'Mój' : 'Mine'}</option>
-          <option value="organization">{isPolish ? 'Organizacji' : 'Organization'}</option>
-          <option value="project">{isPolish ? 'Projektu' : 'Project'}</option>
-        </select>
+      <div className="relative">
+        <Search
+          size={14}
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
+        />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t(
+            'vault.safes.searchPlaceholder',
+            isPolish ? 'Szukaj sejfu…' : 'Search safes…'
+          )}
+          aria-label={t('myWork.hub.vault', isPolish ? 'Sejfy' : 'Vaults')}
+          className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        />
       </div>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searchQuery, scopeFilter, t, isPolish, resyncTick]
+    [searchQuery, t, isPolish]
   );
 
   useHubBarSlot({ filterControls: filterControlsNode });
+
+  // ★ DEC-408b — Menu 3 lokalny (nie hub-slot, patrz nagłówek pliku): chipy
+  // zakresu z licznikami, zastępują dawny `<select>`. Klik aktywnego chipu
+  // (poza „Wszystkie") wraca do „Wszystkie" — wzór 1:1 `stagePresets` w
+  // `MyWorkHub.tsx` (Menu 3 Pomysłów).
+  const filterCounts = useMemo(
+    () => ({
+      all: safesForCounts.length,
+      mine: safesForCounts.filter((s) => s.type === 'user').length,
+      clients: safesForCounts.filter((s) => s.type !== 'user').length,
+      errors: safesForCounts.filter((s) => s.errorCount > 0).length,
+    }),
+    [safesForCounts]
+  );
+
+  const filterChipDefs: Array<{
+    id: SafesFilterMode;
+    label: string;
+    icon: React.ReactNode;
+    count: number;
+  }> = [
+    {
+      id: 'all',
+      label: t('vault.safes.filterAll', isPolish ? 'Wszystkie' : 'All'),
+      icon: <Layers size={14} />,
+      count: filterCounts.all,
+    },
+    {
+      id: 'mine',
+      label: t('vault.safes.filterMine', isPolish ? 'Moje' : 'Mine'),
+      icon: <User size={14} />,
+      count: filterCounts.mine,
+    },
+    {
+      id: 'clients',
+      label: t('vault.safes.filterClients', isPolish ? 'Klientów' : 'Clients'),
+      icon: <Building2 size={14} />,
+      count: filterCounts.clients,
+    },
+    {
+      id: 'errors',
+      label: t(
+        'vault.safes.filterErrors',
+        isPolish ? 'Z błędami indeksowania' : 'With indexing errors'
+      ),
+      icon: <AlertTriangle size={14} />,
+      count: filterCounts.errors,
+    },
+  ];
+
+  const commandRowNode = (
+    <div className={MENU_3_ROW_CLASS}>
+      <div className={MENU_3_INNER_CLASS}>
+        <div className={MENU_3_LEFT_CLASS}>
+          {filterChipDefs.map((chip) => {
+            const active = filterMode === chip.id;
+            return (
+              <Menu3Chip
+                key={chip.id}
+                active={active}
+                onClick={() => setFilterMode(active && chip.id !== 'all' ? 'all' : chip.id)}
+              >
+                {chip.icon}
+                <span>{chip.label}</span>
+                <Menu3Badge count={chip.count} active={active} />
+              </Menu3Chip>
+            );
+          })}
+        </div>
+        <div className="shrink-0" />
+      </div>
+    </div>
+  );
 
   if (!isClientVaultEnabled()) return null;
 
@@ -249,19 +319,6 @@ export const ClientDocumentsVault: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex gap-1 border-b border-c-border px-4 py-2" role="tablist">
-        {(['safes', 'folders'] as const).map((mode) => (
-          <button
-            key={mode}
-            role="tab"
-            aria-selected={listMode === mode}
-            onClick={() => setListMode(mode)}
-            className="rounded px-3 py-1.5 text-sm text-c-text hover:bg-c-surface-raised"
-          >
-            {mode === 'safes' ? (isPolish ? 'Sejfy' : 'Safes') : isPolish ? 'Foldery' : 'Folders'}
-          </button>
-        ))}
-      </div>
       {safeResolutionDenied && (
         <div className="mx-4 mt-4 rounded-lg border border-c-border bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary">
           {t(
@@ -272,34 +329,14 @@ export const ClientDocumentsVault: React.FC = () => {
           )}
         </div>
       )}
+      {commandRowNode}
       <div className="flex-1 min-h-0 overflow-auto">
-        {listMode === 'safes' ? (
-          <VaultSafesTable
-            onOpenSafe={handleOpenSafe}
-            searchQuery={searchQuery}
-            scopeFilter={scopeFilter}
-          />
-        ) : (
-          <VaultFoldersTable
-            onOpenFolder={async (folder) => {
-              const safes = await Api.getVaultSafes();
-              const safe = safes.find(
-                (candidate) =>
-                  candidate.type === folder.scope &&
-                  (folder.scope !== 'project' || candidate.projectId === folder.projectId)
-              );
-              if (!safe) return;
-              setSearchParams((prev) => {
-                const next = new URLSearchParams(prev);
-                next.set('folderId', folder.id);
-                next.set(SAFE_ID_PARAM, safe.id);
-                return next;
-              });
-              setOtwarcieSejfu(null);
-              setOpenSafe(safe);
-            }}
-          />
-        )}
+        <VaultSafesTable
+          onOpenSafe={handleOpenSafe}
+          searchQuery={searchQuery}
+          filterMode={filterMode}
+          onSafesLoaded={handleSafesLoaded}
+        />
       </div>
     </div>
   );

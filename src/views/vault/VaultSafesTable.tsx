@@ -108,7 +108,14 @@ export interface VaultSafesTableProps {
   onOpenSafe: (safe: VaultSafe, opcje?: OtwarcieSejfu) => void;
   /** Lupa Menu 2 (ClientDocumentsVault) — filtruje sejfy po nazwie. */
   searchQuery?: string;
-  scopeFilter?: VaultSafe['type'] | 'all';
+  /**
+   * DEC-408b — chipy Menu 3 (`all`/`mine`/`clients`/`errors`) zastępują dawny
+   * `scopeFilter` `<select>`. `clients` = organization + project (wszystko,
+   * co NIE jest „moim" sejfem); `errors` = sejfy z `errorCount > 0`.
+   */
+  filterMode?: 'all' | 'mine' | 'clients' | 'errors';
+  /** DEC-408b — dociąga załadowaną listę do liczników chipów w rodzicu. */
+  onSafesLoaded?: (safes: VaultSafe[]) => void;
 }
 
 /**
@@ -148,7 +155,8 @@ const formatDate = (value: unknown, isPolish: boolean): string => {
 export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
   onOpenSafe,
   searchQuery,
-  scopeFilter = 'all',
+  filterMode = 'all',
+  onSafesLoaded,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -187,6 +195,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
     try {
       const data = await Api.getVaultSafes();
       setSafes(data);
+      onSafesLoaded?.(data);
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -203,20 +212,32 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
     void load();
   }, [load]);
 
+  // DEC-408b — `clients` grupuje organization+project (wszystko poza „moim"
+  // sejfem); `errors` to szybki filtr sejfów z `errorCount > 0`.
+  const matchesFilterMode = useCallback(
+    (safe: VaultSafe): boolean => {
+      if (filterMode === 'mine') return safe.type === 'user';
+      if (filterMode === 'clients') return safe.type !== 'user';
+      if (filterMode === 'errors') return safe.errorCount > 0;
+      return true;
+    },
+    [filterMode]
+  );
+
   const filteredSafes = useMemo(() => {
     const q = (searchQuery ?? '').trim().toLowerCase();
-    if (!q && scopeFilter === 'all') return safes;
+    if (!q && filterMode === 'all') return safes;
     // Search what the user can actually read on screen (localized label for
     // system safes), not the server's neutral fallback — otherwise typing
     // "sejf" in a Polish UI would match nothing. Keep the raw name in the
     // haystack too, so a project safe still matches its own name.
     return safes.filter(
       (s) =>
-        (scopeFilter === 'all' || s.type === scopeFilter) &&
+        matchesFilterMode(s) &&
         (safeDisplayName(s, isPolish, t).toLowerCase().includes(q) ||
           s.name.toLowerCase().includes(q))
     );
-  }, [safes, searchQuery, isPolish, scopeFilter]);
+  }, [safes, searchQuery, isPolish, filterMode, matchesFilterMode]);
 
   const previewSafe = useMemo(
     () => filteredSafes.find((s) => s.id === previewSafeId) ?? null,
