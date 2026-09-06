@@ -36,11 +36,16 @@
  * `consultify-triada`.
  */
 
-import { Building2, FolderKanban, User } from 'lucide-react';
+import { AlertTriangle, Building2, FolderKanban, Plus, User } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PreviewDetailsSection, PreviewMetaCard } from '../../components/shared/PreviewPane';
+import {
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewWhatsNextCard,
+} from '../../components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '../../components/shared/TableWithPreviewLayout';
 import {
   type StandardRowMenu,
@@ -50,7 +55,18 @@ import {
 } from '../../components/standard';
 import { StatusChip } from '../../components/ui/primitives';
 import { Api } from '../../services/api';
-import { formatBytes, safeDisplayName, safeLevelLabel } from './vaultDocuments';
+import { useAppStore } from '../../store/useAppStore';
+import {
+  czytelnaNazwaPliku,
+  formatBytes,
+  ikonaTypuPliku,
+  indexStatusLabel,
+  indexStatusTone,
+  normalizeVaultDocuments,
+  safeDisplayName,
+  safeLevelLabel,
+  type VaultDocument,
+} from './vaultDocuments';
 
 export interface VaultSafe {
   id: string;
@@ -75,18 +91,34 @@ export interface VaultSafe {
   errorCount: number;
 }
 
+/**
+ * Otwarcie sejfu z INTENCJĄ — podgląd sejfu (blok 3/5/„Co dalej") musi umieć
+ * zaprowadzić dokładnie tam, co obiecuje pigułka: „Dodaj dokument" ma otworzyć
+ * panel dodawania, a klik w nazwę dokumentu — podgląd TEGO dokumentu wewnątrz
+ * sejfu. Bez tego pola przycisk byłby fasadą („otwiera sejf i zostawia").
+ */
+export interface OtwarcieSejfu {
+  /** `dodaj` → po otwarciu sejfu od razu panel boczny dodawania dokumentu. */
+  akcja?: 'dodaj';
+  /** Zaznacz ten dokument po otwarciu sejfu (podgląd dokumentu). */
+  dokumentId?: string;
+}
+
 export interface VaultSafesTableProps {
-  onOpenSafe: (safe: VaultSafe) => void;
+  onOpenSafe: (safe: VaultSafe, opcje?: OtwarcieSejfu) => void;
   /** Lupa Menu 2 (ClientDocumentsVault) — filtruje sejfy po nazwie. */
   searchQuery?: string;
   scopeFilter?: VaultSafe['type'] | 'all';
 }
 
-interface RecentDoc {
-  id: string;
-  filename: string;
-  created_at: string;
-}
+/**
+ * Chip „Co dalej" — klasy 1:1 z `StandardPreview.tsx` (blok whatsNext). Ten
+ * ekran komponuje stopkę z prymitywów przez `renderPreviewFooter`, więc nie ma
+ * gdzie osadzić gotowego chipu; ramkę bierze `PreviewWhatsNextCard`, a to jest
+ * jedyna rzecz, która musi być tu powtórzona — świadomie, z odsyłaczem.
+ */
+const WHATS_NEXT_CHIP =
+  'inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
 const SAFE_ICON: Record<VaultSafe['type'], typeof User> = {
   user: User,
@@ -125,8 +157,29 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const [previewSafeId, setPreviewSafeId] = useState<string | null>(null);
-  const [recentDocs, setRecentDocs] = useState<RecentDoc[] | null>(null);
+  const [recentDocs, setRecentDocs] = useState<VaultDocument[] | null>(null);
   const [recentDocsLoading, setRecentDocsLoading] = useState(false);
+  // Plakietka zakresu bloku 1 — dla sejfu organizacji pokazuje NAZWĘ KLIENTA,
+  // nie neutralne „Sejf organizacji" (zgłoszenie: podgląd nie mówi, czyj to sejf).
+  const organizationName = useAppStore((state) => state.currentOrganization?.name);
+
+  /**
+   * Plakietka zakresu bloku 1: „Mój" · „Klient: <organizacja>" · „Projekt: <nazwa>".
+   * Gdy nazwy organizacji nie ma w sesji, spada do neutralnej etykiety poziomu —
+   * nie zmyślamy nazwy klienta.
+   */
+  const plakietkaZakresu = useCallback(
+    (safe: VaultSafe): string => {
+      if (safe.type === 'user') return t('vault.safes.scopeMine', isPolish ? 'Mój' : 'Mine');
+      if (safe.type === 'organization') {
+        return organizationName
+          ? `${t('vault.safes.scopeClient', isPolish ? 'Klient' : 'Client')}: ${organizationName}`
+          : safeLevelLabel(safe.type, isPolish, t);
+      }
+      return `${t('vault.safes.levelProject', isPolish ? 'Sejf projektu' : 'Project safe')}: ${safe.name}`;
+    },
+    [organizationName, isPolish, t]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -183,9 +236,11 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
       scope: previewSafe.type === 'project' ? 'project' : previewSafe.type,
       projectId: previewSafe.projectId || undefined,
     })
-      .then((docs: RecentDoc[]) => {
+      .then((docs: unknown) => {
         if (cancelled) return;
-        const sorted = [...(docs || [])].sort(
+        // Ten sam normalizator co wnętrze sejfu (`VaultDocumentsView`) — podgląd
+        // potrzebuje statusu indeksowania i rozmiaru, nie tylko nazwy z datą.
+        const sorted = normalizeVaultDocuments(docs).sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         setRecentDocs(sorted.slice(0, 5));
@@ -389,12 +444,20 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
         // PODWÓJNY nagłówek. Treść składamy z tych samych prymitywów.
         return (
           <div className="space-y-4">
+            {/* Blok 1 (dopełnienie nagłówka powłoki): plakietka zakresu +
+                data ostatniej zmiany. Nazwa sejfu jest w nagłówku powłoki,
+                więc TU jej nie powtarzamy (kanon: jedno „Otwórz", jeden tytuł). */}
+            <div className="flex items-center justify-between gap-2">
+              <StatusChip label={plakietkaZakresu(previewSafe)} tone="neutral" />
+              <span className="text-[11px] text-c-text-secondary">
+                {t('vault.safes.lastModified', isPolish ? 'Ostatnia zmiana' : 'Last modified')}:{' '}
+                {formatDate(previewSafe.lastModified, isPolish)}
+              </span>
+            </div>
+
+            {/* Blok 2 — META (stan, nie treść). */}
             <PreviewMetaCard
               pills={[
-                {
-                  label: isPolish ? 'Poziom' : 'Level',
-                  value: safeLevelLabel(previewSafe.type, isPolish, t),
-                },
                 {
                   label: t('vault.safes.documents', isPolish ? 'Dokumenty' : 'Documents'),
                   value: previewSafe.documentCount,
@@ -413,24 +476,153 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({
                       ? `${previewSafe.indexedCount}/${previewSafe.documentCount}`
                       : '—',
                 },
+                {
+                  label: t(
+                    'vault.safes.indexingErrors',
+                    isPolish ? 'Błędy indeksowania' : 'Indexing errors'
+                  ),
+                  value: previewSafe.errorCount,
+                  // Kanon §3: crimson WYŁĄCZNIE semantyka krytyczna — zero
+                  // błędów zostaje neutralne, nie „zielone na zachętę".
+                  tone: previewSafe.errorCount > 0 ? 'danger' : 'neutral',
+                },
               ]}
             />
+
+            {/* Blok 3 — TREŚĆ: ostatnie 5 dokumentów, CZYTELNE nazwy. */}
             <PreviewDetailsSection
-              label={isPolish ? 'Ostatnie dokumenty' : 'Recent documents'}
+              label={t(
+                'vault.safes.previewRecentDocuments',
+                isPolish ? 'Ostatnie dokumenty' : 'Recent documents'
+              )}
               // PILNE-8: to jest LISTA PLIKÓW, nie proza — licznik słów
               // pokazywał tu „~30 words" nad pięcioma nazwami dokumentów.
               showWordCount={false}
               loading={recentDocsLoading}
-              text={
-                recentDocs && recentDocs.length > 0
-                  ? recentDocs
-                      .map((d) => `- ${d.filename} — ${formatDate(d.created_at, isPolish)}`)
-                      .join('\n')
-                  : isPolish
-                    ? 'Brak dokumentów w tym sejfie.'
-                    : 'No documents in this safe yet.'
-              }
+              onCopy={() => {
+                const tekst = (recentDocs ?? [])
+                  .map((d) => czytelnaNazwaPliku(d.filename).tytul)
+                  .join('\n');
+                void navigator.clipboard?.writeText(tekst);
+              }}
+            >
+              {recentDocs && recentDocs.length > 0 ? (
+                <ul className="space-y-1">
+                  {recentDocs.map((doc) => {
+                    const nazwa = czytelnaNazwaPliku(doc.filename);
+                    const Ikona = ikonaTypuPliku(nazwa.rozszerzenie);
+                    // Status NIE wchodzi do tej linii — niesie go chip po prawej.
+                    // Zrzut 01 pokazał go dwa razy w jednym wierszu, a data przez
+                    // to nie mieściła się w 376 px panelu („6…").
+                    const meta = [
+                      nazwa.rozszerzenie || null,
+                      formatBytes(doc.file_size_bytes),
+                      formatDate(doc.created_at, isPolish),
+                    ]
+                      .filter((part) => part && part !== '—')
+                      .join(' · ');
+                    return (
+                      <li key={doc.id}>
+                        <button
+                          type="button"
+                          // Klik → podgląd TEGO dokumentu na istniejącym ekranie
+                          // dokumentów sejfu (nie nowy ekran, nie martwy link).
+                          onClick={() => onOpenSafe(previewSafe, { dokumentId: doc.id })}
+                          title={nazwa.oryginal}
+                          className="flex w-full items-start gap-2 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        >
+                          <Ikona size={14} className="mt-0.5 shrink-0 text-c-text-muted" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm text-c-text">
+                              {nazwa.tytul}
+                            </span>
+                            <span className="block truncate text-[11px] text-c-text-muted">
+                              {meta}
+                            </span>
+                          </span>
+                          <StatusChip
+                            label={indexStatusLabel(doc.status, isPolish)}
+                            tone={indexStatusTone(doc.status)}
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="text-sm italic text-c-text-muted">
+                  {t(
+                    'vault.safes.previewNoDocuments',
+                    isPolish ? 'Brak dokumentów w tym sejfie.' : 'No documents in this safe yet.'
+                  )}
+                </div>
+              )}
+            </PreviewDetailsSection>
+          </div>
+        );
+      }}
+      renderPreviewFooter={() => {
+        if (!previewSafe) return null;
+        const safe = previewSafe;
+        return (
+          // Kanon §7.3 — karty stopki jedna pod drugą, bez separatorów.
+          <div className="space-y-2.5">
+            {/* Blok 6 — AKCJE (pill). „Otwórz" ŚWIADOMIE POMINIĘTE: renderuje
+                je nagłówek powłoki, a kanon zabrania drugiego „Otwórz" w
+                podglądzie (pułapka #36 / anty-duplikacja). */}
+            <PreviewActionBar
+              rows={[
+                {
+                  buttons: [
+                    {
+                      label: t(
+                        'vault.safes.previewAddDocument',
+                        isPolish ? 'Dodaj dokument' : 'Add document'
+                      ),
+                      icon: Plus,
+                      onClick: () => onOpenSafe(safe, { akcja: 'dodaj' }),
+                      colorScheme: 'neutral',
+                      flex: true,
+                    },
+                  ],
+                },
+              ]}
             />
+
+            {/* „Co dalej" — POZA numeracją, ZAWSZE PO bloku 6. Renderuje się
+                tylko wtedy, gdy sejf faktycznie czegoś potrzebuje. */}
+            {safe.errorCount > 0 || safe.documentCount === 0 ? (
+              <PreviewWhatsNextCard isPolish={isPolish}>
+                <div className="flex flex-wrap gap-1.5">
+                  {safe.errorCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenSafe(safe)}
+                      className={WHATS_NEXT_CHIP}
+                    >
+                      <AlertTriangle size={12} />
+                      {t(
+                        'vault.safes.whatsNextFixErrors',
+                        isPolish ? 'Pokaż błędy indeksowania' : 'Show indexing errors'
+                      )}
+                    </button>
+                  ) : null}
+                  {safe.documentCount === 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenSafe(safe, { akcja: 'dodaj' })}
+                      className={WHATS_NEXT_CHIP}
+                    >
+                      <Plus size={12} />
+                      {t(
+                        'vault.docs.emptyCta',
+                        isPolish ? 'Dodaj pierwszy dokument' : 'Add the first document'
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+              </PreviewWhatsNextCard>
+            ) : null}
           </div>
         );
       }}

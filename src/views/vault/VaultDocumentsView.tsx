@@ -120,9 +120,11 @@ import {
 } from './deleteVaultDocumentsWithReceipts';
 import {
   categoryLabel,
+  czytelnaNazwaPliku,
   DOCUMENT_CATEGORIES,
   formatBytes,
   formatDate,
+  ikonaTypuPliku,
   indexStatusLabel,
   indexStatusTone,
   normalizeVaultDocuments,
@@ -142,6 +144,15 @@ export interface VaultDocumentsViewProps {
   /** Powrót do tabeli sejfów (pierwszy człon breadcrumbu). */
   onBack: () => void;
   initialFolderId?: string | null;
+  /**
+   * Intencja z podglądu sejfu (`VaultSafesTable` → `ClientDocumentsVault`):
+   * `dodaj` otwiera od razu panel dodawania dokumentu. Bez tego pigułka
+   * „Dodaj dokument" w podglądzie tylko otwierałaby sejf i zostawiała
+   * użytkownika przed listą — obietnica bez pokrycia.
+   */
+  initialAction?: 'dodaj' | null;
+  /** Zaznacz ten dokument po wejściu (klik w „Ostatnie dokumenty" w podglądzie). */
+  initialDocumentId?: string | null;
 }
 
 type StatusChipId = 'all' | 'indexed' | 'processing' | 'failed';
@@ -166,6 +177,8 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   safe,
   onBack,
   initialFolderId = null,
+  initialAction = null,
+  initialDocumentId = null,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -193,7 +206,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   // ani Menu 2 (Kategoria), ani Menu 3 (status) — więc lejek nie dubluje niczego.
   const [tagFilters, setTagFilters] = useState<FilterChip[]>([]);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialDocumentId);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   // MYW-CV-REC-003 — dynamiczny kwit per element po akcji zbiorczej (usuń /
   // dodaj do wiedzy AI), zamiast wyłącznie zbiorczego toasta.
@@ -202,7 +215,9 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     items: VaultBulkReceipt[];
   } | null>(null);
 
-  const [panelMode, setPanelMode] = useState<'add' | 'edit' | null>(null);
+  const [panelMode, setPanelMode] = useState<'add' | 'edit' | null>(
+    initialAction === 'dodaj' ? 'add' : null
+  );
   const [editedDocument, setEditedDocument] = useState<VaultDocument | null>(null);
 
   const load = useCallback(
@@ -557,14 +572,22 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         // prawa (nagłówek/pigułka).
         width: '220px',
         sortable: true,
-        render: (row: TableRow) => (
-          <span className="flex min-w-0 items-center gap-2">
-            <FileText size={14} className="shrink-0 text-c-text-muted" />
-            <span className="truncate text-sm font-semibold text-c-text">
-              {String(row.filename || '—')}
+        // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — kolumna pokazywała surową
+        // nazwę z magazynu (`1786125362405-Tesco_2026_..._EN`). Nazwa idzie
+        // przez `czytelnaNazwaPliku`, oryginał zostaje w `title` (nic nie ginie),
+        // ikona odpowiada typowi pliku, a nie zawsze „dokument tekstowy".
+        render: (row: TableRow) => {
+          const nazwa = czytelnaNazwaPliku(String(row.filename || ''));
+          const Ikona = ikonaTypuPliku(nazwa.rozszerzenie);
+          return (
+            <span className="flex min-w-0 items-center gap-2" title={nazwa.oryginal}>
+              <Ikona size={14} className="shrink-0 text-c-text-muted" />
+              <span className="truncate text-sm font-semibold text-c-text">
+                {nazwa.tytul || '—'}
+              </span>
             </span>
-          </span>
-        ),
+          );
+        },
       },
       {
         id: 'category',
@@ -814,8 +837,30 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   // PreviewDetailsSection renderuje treść jako Markdown — pojedyncze `\n` by się
   // skleiły w jeden akapit, więc metadane idą listą punktowaną (czytelne pary
   // etykieta → wartość, jedna pod drugą).
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — tytuł podglądu = CZYTELNA nazwa
+  // (bez prefiksu znacznika czasu z uploadu); oryginał zostaje w metadanych.
+  const czytelnyTytulDokumentu = selectedDocument
+    ? czytelnaNazwaPliku(selectedDocument.filename).tytul
+    : '';
+
   const previewDetailsRows: Array<[string, string]> = selectedDocument
     ? [
+        [
+          t('vault.docs.detailStreszczenie', isPolish ? 'Streszczenie' : 'Summary'),
+          // UCZCIWE „—": `knowledge_docs` nie ma kolumny ze streszczeniem, a
+          // `GET /api/knowledge/documents/:id` go nie zwraca (sprawdzone w
+          // server/src/routes/knowledge.routes.ts). Nie zmyślamy treści —
+          // brak jest widoczny, zamiast być schowany.
+          '—',
+        ],
+        [
+          t('vault.docs.detailFileName', isPolish ? 'Nazwa pliku' : 'File name'),
+          // Zrzut 02: pełna nazwa pliku to jedno słowo bez spacji — wychodziła
+          // poza prawą krawędź panelu (376 px). Zero-width space po `-`/`_`
+          // daje przeglądarce miejsce na złamanie; kopiowanie i tak idzie z
+          // `previewDetailsRows`, więc wartość pozostaje pełna.
+          czytelnaNazwaPliku(selectedDocument.filename).oryginal.replace(/([-_.])/g, '$1\u200B'),
+        ],
         [
           t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category'),
           selectedDocument.category ? categoryLabel(selectedDocument.category, isPolish, t) : '—',
@@ -1260,7 +1305,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
 
         <JedenPrawyPanel rekord={selectedDocument ? (
             <StandardPreview
-              title={selectedDocument.filename}
+              title={czytelnyTytulDokumentu}
               onClose={() => setSelectedId(null)}
               meta={{
                 pills: [
@@ -1302,7 +1347,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
                   const plain = previewDetailsRows
                     .map(([label, value]) => `${label}: ${value}`)
                     .join('\n');
-                  void navigator.clipboard?.writeText(`${selectedDocument.filename}\n${plain}`);
+                  void navigator.clipboard?.writeText(`${czytelnyTytulDokumentu}\n${plain}`);
                 },
               }}
               ai={{

@@ -67,7 +67,7 @@ import { Api } from '../../services/api';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
 import { VaultFoldersTable } from './VaultFoldersTable';
-import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
+import { type OtwarcieSejfu, type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
 // RB-029/RV-010 (CB-02) — the opened safe is now canonical route state
 // (`?safeId=`), not just local component state, so direct entry, refresh,
@@ -82,6 +82,10 @@ export const ClientDocumentsVault: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const safeIdParam = searchParams.get(SAFE_ID_PARAM);
   const [openSafe, setOpenSafe] = useState<VaultSafe | null>(null);
+  // Intencja otwarcia z podglądu sejfu (pigułka „Dodaj dokument", klik w nazwę
+  // dokumentu w bloku „Ostatnie dokumenty") — przekazywana raz, przy montowaniu
+  // wnętrza sejfu; dalej stanem rządzi już `VaultDocumentsView`.
+  const [otwarcieSejfu, setOtwarcieSejfu] = useState<OtwarcieSejfu | null>(null);
   const [isResolvingSafe, setIsResolvingSafe] = useState(false);
   const [safeResolutionDenied, setSafeResolutionDenied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,8 +109,9 @@ export const ClientDocumentsVault: React.FC = () => {
   }, [setSearchParams]);
 
   const handleOpenSafe = useCallback(
-    (safe: VaultSafe) => {
+    (safe: VaultSafe, opcje?: OtwarcieSejfu) => {
       setOpenSafe(safe);
+      setOtwarcieSejfu(opcje ?? null);
       setSafeResolutionDenied(false);
       setSearchParams(
         (prev) => {
@@ -121,6 +126,7 @@ export const ClientDocumentsVault: React.FC = () => {
   );
   const handleBackToSafes = useCallback(() => {
     setOpenSafe(null);
+    setOtwarcieSejfu(null);
     setSafeResolutionDenied(false);
     setResyncTick((v) => v + 1);
     clearSafeIdParam();
@@ -223,6 +229,8 @@ export const ClientDocumentsVault: React.FC = () => {
         safe={openSafe}
         onBack={handleBackToSafes}
         initialFolderId={searchParams.get('folderId')}
+        initialAction={otwarcieSejfu?.akcja ?? null}
+        initialDocumentId={otwarcieSejfu?.dokumentId ?? null}
       />
     );
   }
@@ -285,6 +293,7 @@ export const ClientDocumentsVault: React.FC = () => {
                 next.set(SAFE_ID_PARAM, safe.id);
                 return next;
               });
+              setOtwarcieSejfu(null);
               setOpenSafe(safe);
             }}
           />

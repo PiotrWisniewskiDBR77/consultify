@@ -44972,7 +44972,13 @@
       "rowOpen": "Otwórz",
       "levelUser": "Mój sejf",
       "levelOrganization": "Sejf organizacji",
-      "levelProject": "Sejf projektu"
+      "levelProject": "Sejf projektu",
+      "scopeMine": "Mój",
+      "scopeClient": "Klient",
+      "previewAddDocument": "Dodaj dokument",
+      "whatsNextFixErrors": "Pokaż błędy indeksowania",
+      "previewRecentDocuments": "Ostatnie dokumenty",
+      "previewNoDocuments": "Brak dokumentów w tym sejfie."
     },
     "categories": {
       "bestPractices": "Najlepsze praktyki",
@@ -45015,6 +45021,11 @@
         "confirm": "Usuń",
         "cancel": "Anuluj"
       }
+    },
+    "docs": {
+      "emptyCta": "Dodaj pierwszy dokument",
+      "detailStreszczenie": "Streszczenie",
+      "detailFileName": "Nazwa pliku"
     }
   },
   "presentationState": {

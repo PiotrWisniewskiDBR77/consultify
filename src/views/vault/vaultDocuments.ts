@@ -12,7 +12,17 @@
  * created_at.
  */
 
-import { Building2, FolderKanban, type LucideIcon, User } from 'lucide-react';
+import {
+  Building2,
+  File,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FolderKanban,
+  type LucideIcon,
+  Presentation,
+  User,
+} from 'lucide-react';
 
 export type VaultScope = 'user' | 'project' | 'organization';
 
@@ -317,4 +327,63 @@ export const getUploadedDocumentInfo = (value: unknown) => {
         ? Number(payload.chunkCount)
         : 0,
   };
+};
+
+// ── Czytelna nazwa pliku [ODMROZENIE 07_MY_WORK_AGENT DEC-397] ──────────────
+
+/**
+ * czytelnaNazwaPliku — surowa nazwa pliku z magazynu → tytuł do POKAZANIA.
+ *
+ * Zgłoszenie właściciela (przejście Mojej Pracy 06.09, POWTÓRZONE): podgląd
+ * sejfu pokazywał w „OSTATNIE DOKUMENTY" literalnie
+ * `1786125362405-Tesco_2026_Annual_Report_and_Financial_Statements_EN` —
+ * czyli znacznik czasu z uploadu i podkreślniki zamiast spacji. Kanon
+ * podglądu (`.claude/skills/consultify-preview/SKILL.md`, blok 3) mówi
+ * „treść", nie „surowy rekord bazy".
+ *
+ * Kontrakt:
+ * - `tytul`   — bez prefiksu `^\d{10,}-`, bez rozszerzenia, `_` → spacja;
+ * - `rozszerzenie` — WIELKIMI, do meta/ikony (albo `''`, gdy plik go nie ma);
+ * - `oryginal` — pełna nazwa z bazy, do atrybutu `title` (nic nie ginie).
+ *
+ * Świadomie NIE ruszamy wartości zapisanej w bazie ani filtrowania — to samo
+ * rozdzielenie „zapis surowy / wyświetlenie zlokalizowane", które ma już
+ * `categoryLabel` i `safeLevelLabel` wyżej w tym pliku.
+ */
+export interface CzytelnaNazwaPliku {
+  tytul: string;
+  rozszerzenie: string;
+  oryginal: string;
+}
+
+/** Prefiks uploadu: `Date.now()` (13 cyfr) albo unix-sekundy (10) + separator. */
+const PREFIKS_ZNACZNIKA_CZASU = /^\d{10,}[-_ ]+/;
+
+export const czytelnaNazwaPliku = (filename: string | null | undefined): CzytelnaNazwaPliku => {
+  const oryginal = typeof filename === 'string' ? filename : '';
+  const bezSciezki = oryginal.split(/[\\/]/).pop() || '';
+  const bezPrefiksu = bezSciezki.replace(PREFIKS_ZNACZNIKA_CZASU, '');
+  const kropka = bezPrefiksu.lastIndexOf('.');
+  // Rozszerzenie = ostatni człon po kropce, o ile wygląda jak rozszerzenie
+  // (1-7 znaków alfanumerycznych) — inaczej „Raport 2026.wersja robocza"
+  // straciłby połowę tytułu.
+  const ogon = kropka > 0 ? bezPrefiksu.slice(kropka + 1) : '';
+  const maRozszerzenie = kropka > 0 && /^[A-Za-z0-9]{1,7}$/.test(ogon);
+  const rdzen = maRozszerzenie ? bezPrefiksu.slice(0, kropka) : bezPrefiksu;
+  const rozszerzenie = maRozszerzenie ? ogon.toUpperCase() : '';
+  const tytul = rdzen.replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
+  return { tytul: tytul || bezSciezki || oryginal, rozszerzenie, oryginal };
+};
+
+/**
+ * ikonaTypuPliku — ikona wg rozszerzenia (blok 3 kanonu: „z ikoną typu").
+ * Zwraca komponent lucide; nieznany typ → neutralny `File`.
+ */
+export const ikonaTypuPliku = (rozszerzenie: string): LucideIcon => {
+  const ext = (rozszerzenie || '').toUpperCase();
+  if (['XLS', 'XLSX', 'CSV', 'TSV'].includes(ext)) return FileSpreadsheet;
+  if (['PNG', 'JPG', 'JPEG', 'GIF', 'WEBP', 'SVG', 'HEIC'].includes(ext)) return FileImage;
+  if (['PPT', 'PPTX', 'KEY'].includes(ext)) return Presentation;
+  if (['PDF', 'DOC', 'DOCX', 'TXT', 'MD', 'RTF', 'ODT'].includes(ext)) return FileText;
+  return File;
 };
