@@ -4362,7 +4362,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   }
                   item={previewItem}
                   isPolish={isPolish}
-                  onClose={() => setPreviewItem(null)}
+                  // P1 DEC-397 BUGFIX (znalezione na żywo 06.09): NIE czyścić
+                  // `previewItem` tutaj — widocznością panelu steruje
+                  // WYŁĄCZNIE `JedenPrawyPanel`'s `panel.zamkniety` (lepkie
+                  // zamknięcie). Czyszczenie zaznaczenia tutaj psuło pigułkę
+                  // "Pokaż panel" z Menu 3: po X → zaznaczenie znika →
+                  // `rekord=null` → "Pokaż panel" nie ma czego pokazać.
+                  // Wzorzec 1:1 z rodziną A (`MyTasksListContent.tsx`:
+                  // `TableWithPreviewLayout selectedId={previewTaskId}` nigdy
+                  // nie jest czyszczone przez zamknięcie panelu).
+                  onClose={() => undefined}
                   onOpenFull={() => open(previewItem)}
                   onTriage={(action) => {
                     const isFromAI =

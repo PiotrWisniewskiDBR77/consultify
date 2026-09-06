@@ -8647,10 +8647,16 @@ Return ONLY the answer text (no markdown fences).`;
                 selectedRow ? (
                   <StandardPreview
                     title={getAssignmentTitle(selectedRow)}
-                    onClose={() => {
-                      setPreviewAssignmentId(null);
-                      setPreviewAssignmentOpen(false);
-                    }}
+                    // P1 DEC-397 BUGFIX (znalezione na żywo 06.09): NIE czyścić
+                    // `previewAssignmentId` tutaj — widocznością panelu steruje
+                    // WYŁĄCZNIE `JedenPrawyPanel`'s `panel.zamkniety` (lepkie
+                    // zamknięcie). Czyszczenie zaznaczenia tutaj psuło pigułkę
+                    // "Pokaż panel" z Menu 3: po X → zaznaczenie znika →
+                    // `rekord=null` → "Pokaż panel" nie ma czego pokazać.
+                    // Wzorzec 1:1 z rodziną A (`MyTasksListContent.tsx`:
+                    // `TableWithPreviewLayout selectedId={previewTaskId}` nigdy
+                    // nie jest czyszczone przez zamknięcie panelu).
+                    onClose={() => setPreviewAssignmentOpen(false)}
                     onOpenFull={() => void openInterviewAssignmentFull(selectedRow, false)}
                     meta={{
                       pills: [
