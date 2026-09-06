@@ -27283,7 +27283,8 @@
     "templates": {
       "legacySourceLine": "Older template registry — works unchanged",
       "legacyHint": "Template from the older registry — generation works unchanged.",
-      "ctaFrozen": "Template creation lands in wave 2"
+      "ctaFrozen": "Template creation lands in wave 2",
+      "viewToggle": "Template library view"
     }
   },
   "rbHub": {

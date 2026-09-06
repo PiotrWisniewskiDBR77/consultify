@@ -28813,7 +28813,8 @@
       "viewTable": "Tabela",
       "legacySourceLine": "Starszy rejestr wzorców — działa bez zmian",
       "legacyHint": "Wzorzec ze starszego rejestru wzorców — generacja działa bez zmian.",
-      "ctaFrozen": "Tworzenie wzorców w fali 2"
+      "ctaFrozen": "Tworzenie wzorców w fali 2",
+      "viewToggle": "Widok biblioteki wzorców"
     }
   },
   "rbHub": {

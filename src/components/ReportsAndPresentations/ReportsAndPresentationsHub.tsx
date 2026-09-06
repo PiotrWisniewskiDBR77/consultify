@@ -40,7 +40,7 @@ import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 // bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
 // (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
 // nowego komponentu, per instrukcję dyżuru 1.1-M-1.
-import { Menu2PresetDropdown } from '../Initiatives/Menu2PresetDropdown';
+import { Menu2PresetDropdown } from '../standard/Menu2PresetDropdown';
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -777,8 +777,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     // status-filter controls don't apply to them.
     if (activeTab === 'templates' && templatesView !== 'library') return null;
 
+    // `shrink-0 whitespace-nowrap` — P6_CZERWIEN_I_1440 §5 krok 4: bez tego
+    // przy 1440 px etykieta „Pochodzenie i prawa" łamie się na dwie linie i
+    // rozpycha cały pasek w pionie (zmierzone zrzutem 06.09).
     const chipBase =
-      'h-9 inline-flex items-center gap-2 rounded-full px-3 text-sm font-medium border transition-colors';
+      'h-9 inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-medium border transition-colors';
 
     /* D-06 (2026-07-27) segment „Arkusze | Źródła danych" stał TUTAJ.
        DEC-423d (właściciel, 06.09.2026): zakładka Arkuszy ma mieć ten sam
@@ -927,6 +930,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           </button>
         ) : null}
         <Menu2PresetDropdown
+          className="shrink-0"
+          compact
           label={t('rap.filters.statusLabel', 'Status')}
           options={statusDropdownOptions}
           value={statusDropdownValue}
@@ -948,6 +953,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         />
         {showVisibilityDropdown ? (
           <Menu2PresetDropdown
+            className="shrink-0"
+            compact
             label={t('rap.outputs.columns.visibility', 'Visibility')}
             options={visibilityDropdownOptions}
             value={visibilityDropdownValue}
@@ -966,9 +973,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             pstryczka lista/kafle (DEC-423d). Stał wcześniej we WŁASNYM rzędzie
             w treści zakładki, czyli jako czwarta warstwa nagłówkowa. */}
         {activeTab === 'templates' && templatesGalleryEnabled ? (
+          /* Kształt 1:1 z kanonicznym pstryczkiem widoku (`ModuleNavBar`,
+             lista/kafle): same ikony, bez etykiet. Pomiar 1440 px z 06.09:
+             wersja z podpisami („Galeria"/„Tabela", 170 px) wypychała CTA
+             „Nowy wzorzec" poza pasek (koniec 1450 px przy krawędzi 1392).
+             Nazwy zostają w `title`/`aria-label`. */
           <div
             data-testid="templates-gallery-view-toggle"
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
+            role="group"
+            aria-label={t('rap.templates.viewToggle', 'Widok biblioteki wzorców')}
+            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
           >
             {(
               [
@@ -982,14 +996,15 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 data-testid={`templates-gallery-view-toggle-${id}`}
                 onClick={() => setTemplatesInnerView(id)}
                 aria-pressed={templatesInnerView === id}
-                className={`inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                aria-label={label}
+                title={label}
+                className={`inline-flex items-center rounded-full p-1.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                   templatesInnerView === id
                     ? 'bg-state-selected text-c-text'
                     : 'text-c-text-secondary hover:bg-state-hover'
                 }`}
               >
-                <Icon size={13} />
-                {label}
+                <Icon size={16} />
               </button>
             ))}
           </div>
