@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3090/reports/management",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Automatyzacja"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRaporty\nRaporty zarządcze\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nRaporty\nSzablony\nHarmonogramy\nAutomatyzacja\nNowy raport\nAutomatyzacja raportów\n\nAutomatyczne cykliczne i wyzwalane zdarzeniami generowanie raportów\n\nBrak harmonogramów automatyzacji\n\nSkonfiguruj automatyczne generowanie raportów z harmonogramami czasowymi lub wyzwalaczy zdarzeń.\n\nEwaluuj wyzwalacze\nAutomatyzacja raportów\n\nSkonfiguruj automatyczne generowanie raportów z harmonogramami czasowymi lub wyzwalaczy zdarzeń.\n\nNowy harmonogram",
+ "kiedy": "2026-09-06T21:47:47.172Z"
+}

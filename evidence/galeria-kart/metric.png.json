@@ -1,0 +1,30 @@
+{
+ "url": "http://127.0.0.1:3090/results/kpi/b6262fda-9505-5b25-a744-8f6d510221b9?zbior=0a9a0f97-c029-5687-98a3-b94c7a8c6ec7",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=ŚREDNI CZAS ODPOWIEDZI NA REKLAM",
+  "text=Otwórz KPI",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3090/api/vnext/results/kpi/scorecards/0a9a0f97-c029-5687-98a3-b94c7a8c6ec7/review-snapshots/published"
+  }
+ ],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nLista\nKPI\nŚREDNI CZAS ODPOWIEDZI NA REKLAMACJE KLIENTA\nRejestr KPI\nKPI jakości — sierpień 2026\nŚREDNI CZAS ODPOWIEDZI NA REKLAMACJE KLIENTA\nŚREDNI CZAS ODPOWIEDZI NA REKLAMACJE KLIENTA\nAktywny\nZapisano\nZawieś\nSekcje\nPracuj z AI\nWyniki\nKontrakt\nPomiary\nOdchylenia\nKarty działania\nDziałania\nRaporty\nHistoria\n\nWYNIKI · OKRES 1 WRZ 2026 – 30 WRZ 2026\n\nCEL\n13\nRezultat\n13\nOdchylenie\n−4,5%\nYTD (rezultat / cel)\n108 / 106\nW celu\nSzacunkowy\nOtwórz pełną historię pomiarów\nAKCJE\nZawieś\nDodaj pomiar\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nWłaściciel\tAudyt Nocny\nProces\t—\nPolityka odpowiedzi\t—\nBieżąca wersja definicji\tŚREDNI CZAS ODPOWIEDZI NA REKLAMACJE KLIENTA (v1)\nWystępuje w raportach\t2\nUtworzono\t5 wrz 2026\nZaktualizowano\t5 wrz 2026\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\n\nTylko do odczytu: wersja definicji nie jest szkicem (serwer: NOT_A_DRAFT)",
+ "kiedy": "2026-09-06T21:34:04.657Z"
+}

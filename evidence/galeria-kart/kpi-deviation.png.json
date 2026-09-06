@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3090/results/kpi/ed531550-a7bc-54bb-bbfc-71f2daa14d7f/deviation-cases/78374416-2c54-4847-be1d-2b401349dd18",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\nAudyt Nocny\nAN\nSprawa odchylenia 78374416…\nZapisano\nPrzebieg sprawy\nOtwarta\nKrytyczna\n1\nWykrycie i potwierdzenie\n\nPomiar wywołujący: ee4a5251… · wykryto 6 wrz 2026, 22:27\n\nPotwierdź\n2\nAnaliza przyczyny źródłowej\nPODSUMOWANIE PRZYCZYNY\nKATEGORIA\nOCZEKIWANA DATA ODBUDOWY\nTo odchylenie się powtarza\nZapisz analizę\n3\nDziałania korygujące i plan\nDodaj działanieZłóż plan\n4\nZatwierdzenie planu\n\nPlan nie został jeszcze złożony.\n\nPlan zatwierdza ktoś inny niż osoba, która go złożyła, i niż osoba, która założyła sprawę — to zasada czterech oczu.\n\nZatwierdź plan\n5\nObserwacja odbudowy\n\nSprawa przechodzi z „Plan zatwierdzony\" w „W realizacji\" sama — w chwili, gdy pierwsze działanie ruszy.\n\nWybierz pomiar…\n2026-09-30 · 5920\n2026-08-31 · 6174\n2026-07-31 · 6259\n2026-06-30 · 6172\n2026-05-31 · 6608\n2026-04-30 · 6231\n2026-03-31 · 6697\n2026-02-28 · 6538\n2026-01-31 · 6701\nZapisz obserwację odbudowy\n6\nWeryfikacja skuteczności\nPOCZĄTEK OKNA\nKONIEC OKNA\nSkuteczna\nCzęściowo skuteczna\nNieskuteczna\nPowiązane pomiary (opcjonalnie)\n2026-09-30 · 5920\n2026-08-31 · 6174\n2026-07-31 · 6259\n2026-06-30 · 6172\n2026-05-31 · 6608\n2026-04-30 · 6231\n2026-03-31 · 6697\n2026-02-28 · 6538\n2026-01-31 · 6701\nZgłoś weryfikację\n7\nZamknięcie sprawy\n\nSprawę można zamknąć, gdy ostatnia weryfikacja skuteczności wypadła skutecznie albo częściowo skutecznie.\n\nZamknij sprawę\nAKCJE\nEskaluj\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nKPI\ted531550…\nDotkliwość\tKrytyczna\nWłaściciel\t76015d70…\nManager\t—\nWykryto\t6 wrz 2026, 22:27\nTermin reakcji\t8 wrz 2026, 22:27\nWersja\t1\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA",
+ "kiedy": "2026-09-06T21:34:48.156Z"
+}

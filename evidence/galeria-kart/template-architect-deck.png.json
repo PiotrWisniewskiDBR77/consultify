@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3090/presentations?tab=template_architect",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDane\nModel\n1\nAudyt Nocny\nAN\nWszystkie\nDokumenty\nPrezentacje\nArkusze\nBiblioteka wzorców\nWzorce\nKreator szablonów prezentacji\n\nZaprojektuj wielokrotnego użytku, zarządzany szablon prezentacji. Zatwierdzanie i wycofywanie odbywa się w rejestrze zarządzania SuperAdmin.\n\nUtwórz szkic nowego szablonu\nNazwa szablonu\nTyp prezentacji\nPrezentacja komitetu sterującego\nPrezentacja decyzyjna dla zarządu\nPrezentacja diagnostyczna DRD\nPrezentacja startowa inicjatywy\nPrezentacja podsumowująca transformację cyfrową\nCel (wymagane)\nOdbiorcy\nZarząd\nSponsor\nInwestor / VC\nZespół wewnętrzny\nIntencja\nInformuj\nDecyduj\nSprzedaj\nAlignuj\nJęzyk\nPolski\nAngielski\nMotyw\nKorporacyjny\nMinimalistyczny\nNowoczesny\nDopracuj z Kreatorem Szablonów AI (opcjonalnie)\nPozwala AI przeredagować tytuły slajdów i zaproponować dopracowaną nazwę/opis szablonu. W razie niedostępności AI po cichu wraca do deterministycznego konspektu. Intencje slajdów, kolejność i liczba nigdy nie są zmieniane przez AI.\nUtwórz szkic szablonu\nRejestr szablonów\nOdśwież\nSZABLON\n\t\nTYP\n\t\nSLAJDY\n\t\nSTATUS\n\n\nBrak szablonów.",
+ "kiedy": "2026-09-06T21:46:33.284Z"
+}
