@@ -182,12 +182,18 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           key={q.question.questionId}
           data-testid={`question-card-${q.question.questionId}`}
           data-answer-state={q.answerState ?? 'unanswered'}
-          className={`rounded-xl border p-4 space-y-4 transition-colors ${answerStateCardClass(q.answerState)}`}
+          className={`rounded-xl border p-5 space-y-5 transition-colors ${answerStateCardClass(q.answerState)}`}
         >
           <div>
-            <h2 className="text-base font-semibold text-c-text">{q.question.canonicalWording}</h2>
+            {/* ★ SKALA KARTY PYTANIA (DEC-415c, słowa właściciela 06.09:
+                „zważyłbym powiększenie czcionek. Jest bardzo dużo przestrzeni
+                na tej karcie"). Pytanie jest JEDYNYM elementem, który człowiek
+                czyta na głos przy kliencie — dostaje `text-xl`, a pomoc pod nim
+                nie schodzi poniżej `text-sm`. Układ zostaje bez zmian (nowy
+                układ karty to Fala 2, 3.13) — rośnie tylko czytelność. */}
+            <h2 className="text-xl font-semibold leading-snug text-c-text">{q.question.canonicalWording}</h2>
             {q.question.intent && (
-              <p className="text-xs text-c-text-muted mt-1">{q.question.intent}</p>
+              <p className="text-sm text-c-text-muted mt-1.5">{q.question.intent}</p>
             )}
           </div>
 
@@ -198,7 +204,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           />
 
           <div className="space-y-2">
-            <label className="text-xs font-medium text-c-text-secondary" htmlFor={`answer-${q.question.questionId}`}>
+            <label className="text-sm font-medium text-c-text-secondary" htmlFor={`answer-${q.question.questionId}`}>
               Twoja odpowiedź
             </label>
             <div className="flex items-start gap-2">
@@ -207,8 +213,8 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
                 value={q.answerText}
                 disabled={readOnly}
                 onChange={(e) => onAnswerChange(q.question.questionId, e.target.value)}
-                rows={3}
-                className="flex-1 rounded-lg border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                rows={6}
+                className="min-h-[9.5rem] flex-1 rounded-lg border border-c-border bg-c-surface p-3 text-base leading-relaxed text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 placeholder="Opisz sytuację własnymi słowami…"
               />
               <VoiceAnswerChannel
@@ -330,7 +336,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           type="button"
           onClick={onBack}
           disabled={!canGoBack}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border px-3.5 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <ArrowLeft size={14} />
           Wstecz
@@ -339,7 +345,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           type="button"
           onClick={onSave}
           disabled={readOnly}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border px-3.5 py-2 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Zapisz
         </button>
@@ -348,7 +354,7 @@ export const InterviewFocusPanel: React.FC<InterviewFocusPanelProps> = ({
           type="button"
           onClick={onNext}
           disabled={!canGoNext}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="inline-flex min-h-[2.5rem] items-center gap-1.5 rounded-lg border border-c-border bg-c-surface-raised px-3.5 py-2 text-sm font-semibold text-c-text disabled:opacity-40 disabled:cursor-not-allowed hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           Dalej
           <ArrowRight size={14} />

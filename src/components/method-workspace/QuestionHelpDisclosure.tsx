@@ -40,7 +40,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
     return (
       <div
         data-testid="question-help-unavailable"
-        className={`rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-muted ${className}`}
+        className={`rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 text-sm text-c-text-muted ${className}`}
       >
         Help content unavailable
       </div>
@@ -50,15 +50,18 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
   return (
     <div className={`space-y-2 ${className}`} data-testid="question-help-disclosure">
       {/* Level 1 — inline, always visible */}
-      <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 space-y-1.5">
+      {/* ★ CZYTELNOŚĆ POMOCY (DEC-415c): „Co to znaczy" i „Dlaczego pytamy"
+          to zdania czytane przy kliencie, nie metadane — nie schodzą poniżej
+          `text-sm`. */}
+      <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised px-4 py-3 space-y-2">
         {question.plainLanguageExplanation && (
-          <p className="text-xs text-c-text">
+          <p className="text-sm leading-relaxed text-c-text">
             <span className="font-medium text-c-text-secondary">Co to znaczy? </span>
             {question.plainLanguageExplanation}
           </p>
         )}
         {question.whyItMatters && (
-          <p className="text-xs text-c-text">
+          <p className="text-sm leading-relaxed text-c-text">
             <span className="font-medium text-c-text-secondary">Dlaczego pytamy? </span>
             {question.whyItMatters}
           </p>
@@ -71,13 +74,13 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           type="button"
           onClick={() => setExamplesOpen((v) => !v)}
           aria-expanded={examplesOpen}
-          className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
+          className="flex min-h-[2.75rem] w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
         >
           Przykład i dowody
           <ChevronDown size={14} className={examplesOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
         {examplesOpen && (
-          <div className="px-3 pb-3 space-y-1.5 text-xs text-c-text-secondary">
+          <div className="px-4 pb-4 space-y-2 text-sm leading-relaxed text-c-text-secondary">
             {question.positiveAnswerExample && (
               <p>
                 <span className="font-medium text-c-success">Potwierdzająca: </span>
@@ -123,7 +126,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
             type="button"
             onClick={() => setCompareOpen((v) => !v)}
             aria-expanded={compareOpen}
-            className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
+            className="flex min-h-[2.75rem] w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus rounded-lg"
           >
             Porównaj poziomy
             <ChevronDown size={14} className={compareOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
@@ -131,7 +134,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
           {compareOpen && (
             <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
               {help.levels.map((level) => (
-                <div key={level.level} className="rounded-md border border-c-border-subtle p-2 text-xs">
+                <div key={level.level} className="rounded-md border border-c-border-subtle p-3 text-sm">
                   <p className="font-semibold text-c-text">
                     Poziom {level.level} — {level.title}
                   </p>
@@ -148,7 +151,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
         <button
           type="button"
           onClick={() => onAskTeresa('explain')}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-c-info hover:bg-c-info/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Sparkles size={13} />
           Zapytaj Teresę
@@ -156,7 +159,7 @@ export const QuestionHelpDisclosure: React.FC<QuestionHelpDisclosureProps> = ({
         <button
           type="button"
           onClick={() => onAskTeresa('compare_levels')}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <MessageCircleQuestion size={13} />
           Pokaż różnicę L-1/L/L+1

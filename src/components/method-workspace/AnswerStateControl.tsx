@@ -59,10 +59,15 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
 
   return (
     <div className={`space-y-3 ${className}`} data-testid="answer-state-control">
+      {/* ★ WYSOKOŚĆ I SZEROKOŚĆ (DEC-415c). Przyciski stanu to najczęściej
+          klikany element karty — min. 44 px wysokości (cel dotykowy) i
+          etykieta `text-sm`. Na 1440 px sześć stanów mieści się w JEDNYM
+          rzędzie (`xl:grid-cols-6`), więc karta wykorzystuje szerokość
+          zamiast zostawiać pustkę po prawej. */}
       <div
         role="radiogroup"
         aria-label="Stan odpowiedzi"
-        className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6"
       >
         {OPTIONS.map((option) => {
           const selected = value === option.id;
@@ -76,7 +81,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
               disabled={disabled}
               onClick={() => handleSelect(option.id)}
               data-tone={ANSWER_STATE_TONE[option.id]}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+              className={`inline-flex min-h-[2.75rem] items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 selected
                   ? `font-semibold ${ANSWER_TONE_BUTTON_SELECTED[ANSWER_STATE_TONE[option.id]]}`
                   : 'border-c-border bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
@@ -91,7 +96,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
 
       {pendingNa && value !== 'not_applicable' && (
         <div className="space-y-2 rounded-lg border border-c-border bg-c-surface-raised p-3">
-          <label htmlFor="na-justification" className="text-xs font-medium text-c-text">
+          <label htmlFor="na-justification" className="text-sm font-medium text-c-text">
             Uzasadnij „Nie dotyczy" (wymagane)
           </label>
           <textarea
@@ -99,7 +104,7 @@ export const AnswerStateControl: React.FC<AnswerStateControlProps> = ({
             value={naJustification}
             onChange={(e) => setNaJustification(e.target.value)}
             rows={2}
-            className="w-full rounded-md border border-c-border bg-c-surface p-2 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            className="w-full rounded-md border border-c-border bg-c-surface p-2.5 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             placeholder="Dlaczego to pytanie nie ma zastosowania w tym przypadku?"
           />
           <div className="flex justify-end gap-2">
