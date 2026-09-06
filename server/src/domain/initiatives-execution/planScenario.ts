@@ -7,6 +7,7 @@ import {
   MaterialCommandValidationError,
 } from './materialCommand.js';
 import type { PortfolioScenario } from './portfolioScenario.js';
+import { solvePlanScenario } from './planSolver.js';
 
 export interface PlannedWindow {
   initiativeId: string;
@@ -35,8 +36,22 @@ export interface PlanScenario {
   updatedBy: string;
   publishedBy: string | null;
   publishedAt: string | null;
+  conflictPublicationConfirmation?: {
+    confirmedBy: string;
+    confirmedAt: string;
+    conflictCount: number;
+    statement: string;
+  } | null;
 }
-type Payload = { operation: 'CREATE' | 'UPDATE' | 'PUBLISH'; scenario: PlanScenario };
+export interface PlanPublicationConfirmation {
+  conflictCount: number;
+  statement: string;
+}
+type Payload = {
+  operation: 'CREATE' | 'UPDATE' | 'PUBLISH';
+  scenario: PlanScenario;
+  publishConfirmation?: PlanPublicationConfirmation;
+};
 const date = (v: string | null) => (v === null ? null : Date.parse(v));
 export function validatePlanScenario(s: PlanScenario) {
   if (!s.scenarioId.trim() || !s.portfolioScenarioId.trim() || s.portfolioScenarioVersion < 1)
@@ -130,6 +145,17 @@ export async function mutatePlanScenario(
       throw new MaterialCommandValidationError('Only a DRAFT Plan Scenario can be published');
     const input = envelope.payload.scenario;
     validatePlanScenario(input);
+    const publicationConflicts = op === 'PUBLISH' ? solvePlanScenario(input).conflicts : [];
+    const expectedStatement = `Publikuję mimo ${publicationConflicts.length} konfliktów`;
+    if (
+      publicationConflicts.length > 0 &&
+      (envelope.payload.publishConfirmation?.conflictCount !== publicationConflicts.length ||
+        envelope.payload.publishConfirmation.statement !== expectedStatement)
+    ) {
+      throw new MaterialCommandValidationError(
+        'Explicit conflict publication confirmation is required'
+      );
+    }
     const portfolio = await tx.getRelatedAggregateForUpdate<PortfolioScenario>(
       envelope.organizationId,
       'portfolio_scenario',
@@ -182,6 +208,15 @@ export async function mutatePlanScenario(
       updatedBy: envelope.actorId,
       publishedBy: op === 'PUBLISH' ? envelope.actorId : null,
       publishedAt: op === 'PUBLISH' ? new Date().toISOString() : null,
+      conflictPublicationConfirmation:
+        op === 'PUBLISH' && publicationConflicts.length > 0
+          ? {
+              confirmedBy: envelope.actorId,
+              confirmedAt: new Date().toISOString(),
+              conflictCount: publicationConflicts.length,
+              statement: expectedStatement,
+            }
+          : null,
     };
     if (existing) {
       const previousId = `${envelope.aggregateId}:v${existing.scenarioVersion}`;

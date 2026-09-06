@@ -444,6 +444,12 @@ const PlanScenarioSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
+  publishConfirmation: z
+    .object({
+      conflictCount: z.number().int().positive(),
+      statement: z.string().min(1),
+    })
+    .optional(),
   scenario: z.object({
     scenarioId: z.string().min(1),
     name: z.string().trim().min(1).nullable().optional(),
@@ -3008,6 +3014,7 @@ export function createInitiativesExecutionRuntimeRouter(
         createIfMissing: parsed.data.operation === 'CREATE',
         payload: {
           operation: parsed.data.operation,
+          publishConfirmation: parsed.data.publishConfirmation,
           scenario: {
             ...parsed.data.scenario,
             memberships: parsed.data.scenario.memberships.map((membership) => ({
@@ -4951,8 +4958,7 @@ export function createInitiativesExecutionRuntimeRouter(
         projectIds.length > 0
           ? await authorizeProjects(actor, projectIds, 'initiative.update')
           : await deps.authorize(actor, '', 'initiative.update');
-      if (!canUpdate)
-        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
       const { expectedVersion, clientRequestId, ...item } = parsed.data;
       const result = await createRaidItem(deps.unitOfWork, {
         organizationId: actor.organizationId,
@@ -4989,8 +4995,7 @@ export function createInitiativesExecutionRuntimeRouter(
         projectIds.length > 0
           ? await authorizeProjects(actor, projectIds, 'initiative.update')
           : await deps.authorize(actor, '', 'initiative.update');
-      if (!canUpdate)
-        return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
       const result = await deleteRaidItem(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,

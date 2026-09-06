@@ -252,6 +252,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [compareState, setCompareState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [analysisProposal, setAnalysisProposal] = useState<PlanAnalysisProposal | null>(null);
   const [analysisState, setAnalysisState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
+  const [publishConfirmationPending, setPublishConfirmationPending] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
   const [portfolioId, setPortfolioId] = useState('');
   const [portfolioVersion, setPortfolioVersion] = useState(1);
@@ -676,10 +677,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       await loadRegister();
       setSelectedId(result.response.scenarioId);
     } catch (error) {
-      setWriteState(error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR');
+      setWriteState(
+        error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR'
+      );
     }
   };
-  const write = async (operation: 'CREATE' | 'UPDATE' | 'PUBLISH') => {
+  const write = async (
+    operation: 'CREATE' | 'UPDATE' | 'PUBLISH',
+    publishConfirmation?: { conflictCount: number; statement: string }
+  ) => {
     if (!draft || !knownTimeBasis(draft) || writeState === 'SAVING') {
       if (draft && !knownTimeBasis(draft)) setWriteState('ERROR');
       return;
@@ -693,11 +699,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: aggregateVersion,
         clientRequestId,
         operation,
+        ...(publishConfirmation ? { publishConfirmation } : {}),
         scenario: draft,
       })) as { aggregateVersion: number; response: PlanScenario };
       setAggregateVersion(result.aggregateVersion);
       setDraft(result.response);
       setWriteState('IDLE');
+      setPublishConfirmationPending(null);
       await loadRegister();
       setSelectedId(result.response.scenarioId);
       await loadHistory(result.response.scenarioId);
@@ -789,6 +797,48 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           }
         : current
     );
+  const requestPublish = () => {
+    const conflicts = analysisProposal?.conflicts.length ?? 0;
+    if (conflicts) {
+      setPublishConfirmationPending(conflicts);
+      return;
+    }
+    void write('PUBLISH');
+  };
+  const publicationConfirmationDialog = publishConfirmationPending !== null && (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Potwierdzenie publikacji z konfliktami"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6"
+    >
+      <div className="w-full max-w-lg rounded-xl border border-c-border bg-c-surface p-6 shadow-xl">
+        <h2 className="text-lg font-semibold">Plan zawiera konflikty</h2>
+        <p className="mt-2 text-sm text-c-text-secondary">
+          Potwierdzenie zostanie zapisane w śladzie planu wraz z osobą, czasem i liczbą konfliktów.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            className="rounded-lg border border-c-border px-3 py-2"
+            onClick={() => setPublishConfirmationPending(null)}
+          >
+            Anuluj
+          </button>
+          <button
+            className="rounded-lg border border-c-border px-3 py-2 font-medium"
+            onClick={() =>
+              void write('PUBLISH', {
+                conflictCount: publishConfirmationPending,
+                statement: `Publikuję mimo ${publishConfirmationPending} konfliktów`,
+              })
+            }
+          >
+            Publikuję mimo {publishConfirmationPending} konfliktów
+          </button>
+        </div>
+      </div>
+    </div>
+  );
   const addWindow = (initiativeId: string) =>
     setDraft((current) =>
       !current || current.windows.some((window) => window.initiativeId === initiativeId)
@@ -912,8 +962,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     return (
       <div role="alert" className="m-4 flex items-center justify-between text-c-danger">
         <span>
-          <AlertTriangle size={16} className="inline" />{' '}
-          {t('initiatives.planScenario.unavailable')}
+          <AlertTriangle size={16} className="inline" /> {t('initiatives.planScenario.unavailable')}
         </span>
         <button type="button" className="btn-secondary" onClick={() => void loadRegister()}>
           {t('initiatives.planScenario.retry')}
@@ -922,20 +971,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     );
   if (workspaceOpen && draft) {
     return (
-      <PlanCard
-        scenario={draft}
-        initiatives={initiatives}
-        proposal={analysisProposal}
-        busy={analysisState === 'LOADING' || writeState === 'SAVING'}
-        onBack={() => setWorkspaceOpen(false)}
-        onAnalyze={(mode) => void analyzePlan(mode)}
-        onReview={(outcome) => void reviewAnalysis(outcome)}
-        onPublish={() => {
-          const conflicts = analysisProposal?.conflicts.length ?? 0;
-          if (conflicts && !window.confirm(`Publikuję mimo ${conflicts} konfliktów`)) return;
-          void write('PUBLISH');
-        }}
-      />
+      <>
+        <PlanCard
+          scenario={draft}
+          initiatives={initiatives}
+          proposal={analysisProposal}
+          busy={analysisState === 'LOADING' || writeState === 'SAVING'}
+          onBack={() => setWorkspaceOpen(false)}
+          onAnalyze={(mode) => void analyzePlan(mode)}
+          onReview={(outcome) => void reviewAnalysis(outcome)}
+          onPublish={requestPublish}
+        />
+        {publicationConfirmationDialog}
+      </>
     );
   }
   if (!workspaceOpen && !showCreate) {
@@ -950,7 +998,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     );
     const selectedPlan = visiblePlans.find((row) => row.id === selectedId) ?? null;
     return (
-      <section aria-label={t('initiatives.plan.listAria', 'Lista planów')} className="h-full min-h-0">
+      <section
+        aria-label={t('initiatives.plan.listAria', 'Lista planów')}
+        className="h-full min-h-0"
+      >
         <TableWithPreviewLayout<RegisterRow>
           selectedId={selectedId}
           selectedItem={selectedPlan}
@@ -965,13 +1016,33 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               title={row.title}
               onClose={() => setSelectedId(null)}
               onOpenFull={() => void open(row.id)}
-              meta={{ pills: [{ label: t(planStatusKey[row.state as PlanScenario['status']]), tone: 'neutral' }] }}
+              meta={{
+                pills: [
+                  { label: t(planStatusKey[row.state as PlanScenario['status']]), tone: 'neutral' },
+                ],
+              }}
               details={{
                 properties: [
-                  { id: 'portfolio', label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'), value: row.portfolio },
-                  { id: 'horizon', label: t('initiatives.plan.columns.horizon', 'Horyzont'), value: `${formatDate(row.earliest)} – ${formatDate(row.latest)}` },
-                  { id: 'initiatives', label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'), value: String(row.initiativeCount) },
-                  { id: 'conflicts', label: t('initiatives.plan.columns.conflicts', 'Konflikty'), value: row.conflicts ? String(row.conflicts) : t('common.none', 'Brak') },
+                  {
+                    id: 'portfolio',
+                    label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'),
+                    value: row.portfolio,
+                  },
+                  {
+                    id: 'horizon',
+                    label: t('initiatives.plan.columns.horizon', 'Horyzont'),
+                    value: `${formatDate(row.earliest)} – ${formatDate(row.latest)}`,
+                  },
+                  {
+                    id: 'initiatives',
+                    label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'),
+                    value: String(row.initiativeCount),
+                  },
+                  {
+                    id: 'conflicts',
+                    label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
+                    value: row.conflicts ? String(row.conflicts) : t('common.none', 'Brak'),
+                  },
                 ],
               }}
             />
@@ -980,12 +1051,36 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           <StandardTable
             columns={[
               { id: 'title', label: t('initiatives.plan.columns.name', 'Nazwa'), sortable: true },
-              { id: 'portfolio', label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'), sortable: true },
-              { id: 'earliest', label: t('initiatives.plan.columns.horizon', 'Horyzont'), render: (row) => `${formatDate(row.earliest)} – ${formatDate(row.latest)}` },
-              { id: 'state', label: t('common.status', 'Status'), render: (row) => t(planStatusKey[row.state as PlanScenario['status']]) },
-              { id: 'initiativeCount', label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'), sortable: true },
-              { id: 'conflicts', label: t('initiatives.plan.columns.conflicts', 'Konflikty'), render: (row) => row.conflicts ? row.conflicts : t('common.none', 'Brak') },
-              { id: 'updatedAt', label: t('initiatives.plan.columns.updatedAt', 'Zaktualizowano'), render: (row) => formatDate(row.updatedAt) },
+              {
+                id: 'portfolio',
+                label: t('initiatives.plan.columns.portfolio', 'Portfel / wersja'),
+                sortable: true,
+              },
+              {
+                id: 'earliest',
+                label: t('initiatives.plan.columns.horizon', 'Horyzont'),
+                render: (row) => `${formatDate(row.earliest)} – ${formatDate(row.latest)}`,
+              },
+              {
+                id: 'state',
+                label: t('common.status', 'Status'),
+                render: (row) => t(planStatusKey[row.state as PlanScenario['status']]),
+              },
+              {
+                id: 'initiativeCount',
+                label: t('initiatives.plan.columns.initiatives', 'Inicjatyw w planie'),
+                sortable: true,
+              },
+              {
+                id: 'conflicts',
+                label: t('initiatives.plan.columns.conflicts', 'Konflikty'),
+                render: (row) => (row.conflicts ? row.conflicts : t('common.none', 'Brak')),
+              },
+              {
+                id: 'updatedAt',
+                label: t('initiatives.plan.columns.updatedAt', 'Zaktualizowano'),
+                render: (row) => formatDate(row.updatedAt),
+              },
               { id: 'author', label: t('initiatives.plan.columns.author', 'Autor') },
             ]}
             data={visiblePlans}
@@ -998,13 +1093,14 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     );
   }
   return (
-    <section aria-label={t('initiatives.planScenario.sectionAria')} className="flex h-full min-h-0 flex-col">
+    <section
+      aria-label={t('initiatives.planScenario.sectionAria')}
+      className="flex h-full min-h-0 flex-col"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border p-3">
         <div>
           <h2 className="font-semibold">{t('initiatives.planScenario.heading')}</h2>
-          <p className="text-sm text-c-text-muted">
-            {t('initiatives.planScenario.subheading')}
-          </p>
+          <p className="text-sm text-c-text-muted">{t('initiatives.planScenario.subheading')}</p>
         </div>
         <button type="button" className="btn-secondary" onClick={() => setShowCreate(true)}>
           <Plus size={15} /> {t('initiatives.planScenario.newPlan')}
@@ -1152,213 +1248,230 @@ export const PlanScenarioSurface: React.FC<Props> = ({
        */}
       <div className="flex-1 min-h-0">
         <TableWithPreviewLayout<(typeof planWindowRows)[number]>
-        selectedId={selectedWindowId}
-        selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
-        onSelect={setSelectedWindowId}
-        onOpenFull={onOpenInitiative ? (id) => openInitiativeCard(id) : undefined}
-        openDisabledReason={openCardDisabledReason}
-        itemIds={visiblePlanWindows.map((row) => row.id)}
-        getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
-        previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
-        renderPreview={(row) => (
-          <StandardPreview
-            embedded
-            title={row.title}
-            onClose={() => setSelectedWindowId(null)}
-            onOpenFull={onOpenInitiative ? () => openInitiativeCard(row.id) : undefined}
-            openDisabledReason={openCardDisabledReason}
-            meta={{
-              pills: [
-                { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
-                { label: t(planConfidenceKey[row.confidence] ?? row.confidence), tone: 'neutral' },
-                { label: t(planStatusKey[row.published as PlanScenario['status']] ?? row.published), tone: 'neutral' },
-              ],
-              trailing: <span>{row.target}</span>,
-            }}
-            details={{
-              label: t('initiatives.planScenario.preview.windowLabel'),
-              text: t('initiatives.planScenario.preview.windowText'),
-              properties: [
+          selectedId={selectedWindowId}
+          selectedItem={visiblePlanWindows.find((row) => row.id === selectedWindowId) ?? null}
+          onSelect={setSelectedWindowId}
+          onOpenFull={onOpenInitiative ? (id) => openInitiativeCard(id) : undefined}
+          openDisabledReason={openCardDisabledReason}
+          itemIds={visiblePlanWindows.map((row) => row.id)}
+          getItemById={(id) => visiblePlanWindows.find((row) => row.id === id) ?? null}
+          previewOpen={!workspaceOpen && Boolean(selectedWindowId)}
+          renderPreview={(row) => (
+            <StandardPreview
+              embedded
+              title={row.title}
+              onClose={() => setSelectedWindowId(null)}
+              onOpenFull={onOpenInitiative ? () => openInitiativeCard(row.id) : undefined}
+              openDisabledReason={openCardDisabledReason}
+              meta={{
+                pills: [
+                  { label: t(planBandKey[row.band] ?? row.band), tone: 'neutral' },
+                  {
+                    label: t(planConfidenceKey[row.confidence] ?? row.confidence),
+                    tone: 'neutral',
+                  },
+                  {
+                    label: t(
+                      planStatusKey[row.published as PlanScenario['status']] ?? row.published
+                    ),
+                    tone: 'neutral',
+                  },
+                ],
+                trailing: <span>{row.target}</span>,
+              }}
+              details={{
+                label: t('initiatives.planScenario.preview.windowLabel'),
+                text: t('initiatives.planScenario.preview.windowText'),
+                properties: [
+                  {
+                    id: 'window',
+                    label: t('initiatives.planScenario.columns.window'),
+                    value: t(planBandKey[row.band] ?? row.band),
+                  },
+                  {
+                    id: 'target',
+                    label: t('initiatives.planScenario.columns.proposedTarget'),
+                    value: row.target,
+                  },
+                  {
+                    id: 'dependencies',
+                    label: t('initiatives.planScenario.columns.dependencies'),
+                    value: t(planReadinessStateKey[row.dependency] ?? row.dependency),
+                  },
+                  {
+                    id: 'capacity',
+                    label: t('initiatives.planScenario.columns.capacity'),
+                    value: t(planReadinessStateKey[row.capacity] ?? row.capacity),
+                  },
+                  {
+                    id: 'conflict',
+                    label: t('initiatives.planScenario.columns.conflict'),
+                    value: t(planConflictStateKey[row.conflict] ?? row.conflict),
+                  },
+                ],
+              }}
+              ai={{
+                hints: [
+                  t('initiatives.planScenario.preview.aiHintDependencies'),
+                  t('initiatives.planScenario.preview.aiHintSequencing'),
+                ],
+                disabled: true,
+                disabledTooltip: t('initiatives.planScenario.preview.aiDisabledTooltip'),
+              }}
+              relations={[
+                { id: row.id, label: row.id, type: 'initiative' },
                 {
-                  id: 'window',
-                  label: t('initiatives.planScenario.columns.window'),
-                  value: t(planBandKey[row.band] ?? row.band),
+                  id: draft?.portfolioScenarioId ?? 'UNKNOWN',
+                  label: `${t('initiatives.planScenario.portfolioLabel')} ${draft?.portfolioScenarioId ?? 'UNKNOWN'}:v${draft?.portfolioScenarioVersion ?? 'UNKNOWN'}`,
+                  type: 'portfolio',
                 },
-                {
-                  id: 'target',
-                  label: t('initiatives.planScenario.columns.proposedTarget'),
-                  value: row.target,
-                },
-                {
-                  id: 'dependencies',
-                  label: t('initiatives.planScenario.columns.dependencies'),
-                  value: t(planReadinessStateKey[row.dependency] ?? row.dependency),
-                },
-                {
-                  id: 'capacity',
-                  label: t('initiatives.planScenario.columns.capacity'),
-                  value: t(planReadinessStateKey[row.capacity] ?? row.capacity),
-                },
-                {
-                  id: 'conflict',
-                  label: t('initiatives.planScenario.columns.conflict'),
-                  value: t(planConflictStateKey[row.conflict] ?? row.conflict),
-                },
-              ],
-            }}
-            ai={{
-              hints: [
-                t('initiatives.planScenario.preview.aiHintDependencies'),
-                t('initiatives.planScenario.preview.aiHintSequencing'),
-              ],
-              disabled: true,
-              disabledTooltip: t('initiatives.planScenario.preview.aiDisabledTooltip'),
-            }}
-            relations={[
-              { id: row.id, label: row.id, type: 'initiative' },
+              ]}
+              /*
+               * Odbiór grafiki 174-domkniecie (2026-09-01): pastylka w stopce
+               * podglądu WIERSZA prowadziła do `showWorkspace`, czyli wsuwała
+               * warsztat planu POD tabelę. Właściciel: „narzędzie otwiera tę
+               * wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać
+               * konkretną kartę." Panel jest zakresu WIERSZA, więc jego akcja
+               * musi prowadzić do obiektu wiersza — karty inicjatywy. Warsztat
+               * planu (zakres PLANU) ma własny przycisk w pasku nad tabelą.
+               */
+              actions={{
+                informational: [
+                  {
+                    id: 'open-initiative-card',
+                    variant: 'neutral',
+                    label: t('initiatives.planScenario.openInitiativeCard'),
+                    icon: Eye,
+                    shortcut: 'O',
+                    onClick: () => openInitiativeCard(row.id),
+                    disabled: !onOpenInitiative,
+                  },
+                ],
+              }}
+            />
+          )}
+        >
+          <StandardTable
+            columns={[
               {
-                id: draft?.portfolioScenarioId ?? 'UNKNOWN',
-                label: `${t('initiatives.planScenario.portfolioLabel')} ${draft?.portfolioScenarioId ?? 'UNKNOWN'}:v${draft?.portfolioScenarioVersion ?? 'UNKNOWN'}`,
-                type: 'portfolio',
+                id: 'title',
+                label: t('initiatives.planScenario.columns.initiative'),
+                sortable: true,
+                width: '240px',
+              },
+              {
+                id: 'backlogState',
+                label: t('initiatives.planScenario.columns.backlogState'),
+                sortable: true,
+                filterable: true,
+                render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
+              },
+              {
+                id: 'earliest',
+                label: t('initiatives.planScenario.columns.earliest'),
+                sortable: true,
+              },
+              {
+                id: 'target',
+                label: t('initiatives.planScenario.columns.proposedTarget'),
+                sortable: true,
+              },
+              { id: 'latest', label: t('initiatives.planScenario.columns.latest'), sortable: true },
+              {
+                id: 'dependency',
+                label: t('initiatives.planScenario.columns.dependencyReadiness'),
+                sortable: true,
+                filterable: true,
+                render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
+              },
+              {
+                id: 'mandatoryDeadline',
+                label: t('initiatives.planScenario.columns.mandatoryDeadline'),
+                sortable: true,
+                render: (row) =>
+                  t(planReadinessStateKey[row.mandatoryDeadline] ?? row.mandatoryDeadline),
+              },
+              {
+                id: 'costOfDelay',
+                label: t('initiatives.planScenario.columns.costOfDelay'),
+                sortable: true,
+                render: (row) => t(planReadinessStateKey[row.costOfDelay] ?? row.costOfDelay),
+              },
+              {
+                id: 'roughDemand',
+                label: t('initiatives.planScenario.columns.roughDemand'),
+                sortable: true,
+                render: (row) => t(planReadinessStateKey[row.roughDemand] ?? row.roughDemand),
+              },
+              {
+                id: 'capacity',
+                label: t('initiatives.planScenario.columns.capacityState'),
+                sortable: true,
+                filterable: true,
+                render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
+              },
+              {
+                id: 'confidence',
+                label: t('initiatives.planScenario.columns.scheduleConfidence'),
+                sortable: true,
+                filterable: true,
+                render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
+              },
+              {
+                id: 'conflict',
+                label: t('initiatives.planScenario.columns.conflict'),
+                sortable: true,
+                filterable: true,
+                render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
+              },
+              {
+                id: 'nextAction',
+                label: t('initiatives.planScenario.columns.nextAction'),
+                sortable: true,
+                render: (row) => t(planNextActionKey[row.nextAction] ?? row.nextAction),
               },
             ]}
+            data={visiblePlanWindows}
+            selectedRowId={selectedWindowId}
+            onRowClick={(row) => setSelectedWindowId(String(row.id))}
+            onRowDoubleClick={
+              onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
+            }
             /*
-             * Odbiór grafiki 174-domkniecie (2026-09-01): pastylka w stopce
-             * podglądu WIERSZA prowadziła do `showWorkspace`, czyli wsuwała
-             * warsztat planu POD tabelę. Właściciel: „narzędzie otwiera tę
-             * wybraną linię jako tabelę poniżej tej tabeli. Ma ona otwierać
-             * konkretną kartę." Panel jest zakresu WIERSZA, więc jego akcja
-             * musi prowadzić do obiektu wiersza — karty inicjatywy. Warsztat
-             * planu (zakres PLANU) ma własny przycisk w pasku nad tabelą.
+             * Odbiór grafiki 174-domkniecie (2026-09-01): akcja GŁÓWNA kebaba
+             * wiersza (blok 1 kanonu = „akcja główna encji: View/Open") była
+             * podpięta pod `showWorkspace` — czyli jedyne „Otwórz" dostępne
+             * z wiersza wsuwało DRUGĄ TABELĘ pod pierwszą, a nie kartę encji.
+             * Właściciel nie mógł z tego ekranu dojść do inicjatywy w ogóle.
+             * Teraz blok 1 = karta inicjatywy (ta sama ścieżka co dwuklik
+             * i „Otwórz" w nagłówku podglądu); gdy host nie potrafi otworzyć
+             * karty, pozycja jest wyłączona z powodem, a nie podmieniona na
+             * akcję prowadzącą gdzie indziej niż napis.
              */
-            actions={{
-              informational: [
+            rowMenu={(row) => ({
+              primary: [
                 {
                   id: 'open-initiative-card',
-                  variant: 'neutral',
                   label: t('initiatives.planScenario.openInitiativeCard'),
                   icon: Eye,
-                  shortcut: 'O',
-                  onClick: () => openInitiativeCard(row.id),
+                  onClick: onOpenInitiative ? () => openInitiativeCard(String(row.id)) : undefined,
                   disabled: !onOpenInitiative,
+                  note: openCardDisabledReason,
                 },
               ],
+              universalHandlers: {
+                preview: () => setSelectedWindowId(String(row.id)),
+                edit: showWorkspace,
+                archiveNote: t('initiatives.planScenario.archiveNote'),
+              },
+              destructive: { note: t('initiatives.planScenario.destructiveNote') },
+            })}
+            persistKey="initiatives.plan-windows.v2"
+            empty={{
+              title: t('initiatives.planScenario.emptyTitle'),
+              description: t('initiatives.planScenario.emptyDescription'),
             }}
           />
-        )}
-      >
-        <StandardTable
-          columns={[
-            { id: 'title', label: t('initiatives.planScenario.columns.initiative'), sortable: true, width: '240px' },
-            {
-              id: 'backlogState',
-              label: t('initiatives.planScenario.columns.backlogState'),
-              sortable: true,
-              filterable: true,
-              render: (row) => t(planBacklogStateKey[row.backlogState] ?? row.backlogState),
-            },
-            { id: 'earliest', label: t('initiatives.planScenario.columns.earliest'), sortable: true },
-            {
-              id: 'target',
-              label: t('initiatives.planScenario.columns.proposedTarget'),
-              sortable: true,
-            },
-            { id: 'latest', label: t('initiatives.planScenario.columns.latest'), sortable: true },
-            {
-              id: 'dependency',
-              label: t('initiatives.planScenario.columns.dependencyReadiness'),
-              sortable: true,
-              filterable: true,
-              render: (row) => t(planReadinessStateKey[row.dependency] ?? row.dependency),
-            },
-            {
-              id: 'mandatoryDeadline',
-              label: t('initiatives.planScenario.columns.mandatoryDeadline'),
-              sortable: true,
-              render: (row) =>
-                t(planReadinessStateKey[row.mandatoryDeadline] ?? row.mandatoryDeadline),
-            },
-            {
-              id: 'costOfDelay',
-              label: t('initiatives.planScenario.columns.costOfDelay'),
-              sortable: true,
-              render: (row) => t(planReadinessStateKey[row.costOfDelay] ?? row.costOfDelay),
-            },
-            {
-              id: 'roughDemand',
-              label: t('initiatives.planScenario.columns.roughDemand'),
-              sortable: true,
-              render: (row) => t(planReadinessStateKey[row.roughDemand] ?? row.roughDemand),
-            },
-            {
-              id: 'capacity',
-              label: t('initiatives.planScenario.columns.capacityState'),
-              sortable: true,
-              filterable: true,
-              render: (row) => t(planReadinessStateKey[row.capacity] ?? row.capacity),
-            },
-            {
-              id: 'confidence',
-              label: t('initiatives.planScenario.columns.scheduleConfidence'),
-              sortable: true,
-              filterable: true,
-              render: (row) => t(planConfidenceKey[row.confidence] ?? row.confidence),
-            },
-            {
-              id: 'conflict',
-              label: t('initiatives.planScenario.columns.conflict'),
-              sortable: true,
-              filterable: true,
-              render: (row) => t(planConflictStateKey[row.conflict] ?? row.conflict),
-            },
-            {
-              id: 'nextAction',
-              label: t('initiatives.planScenario.columns.nextAction'),
-              sortable: true,
-              render: (row) => t(planNextActionKey[row.nextAction] ?? row.nextAction),
-            },
-          ]}
-          data={visiblePlanWindows}
-          selectedRowId={selectedWindowId}
-          onRowClick={(row) => setSelectedWindowId(String(row.id))}
-          onRowDoubleClick={
-            onOpenInitiative ? (row) => openInitiativeCard(String(row.id)) : undefined
-          }
-          /*
-           * Odbiór grafiki 174-domkniecie (2026-09-01): akcja GŁÓWNA kebaba
-           * wiersza (blok 1 kanonu = „akcja główna encji: View/Open") była
-           * podpięta pod `showWorkspace` — czyli jedyne „Otwórz" dostępne
-           * z wiersza wsuwało DRUGĄ TABELĘ pod pierwszą, a nie kartę encji.
-           * Właściciel nie mógł z tego ekranu dojść do inicjatywy w ogóle.
-           * Teraz blok 1 = karta inicjatywy (ta sama ścieżka co dwuklik
-           * i „Otwórz" w nagłówku podglądu); gdy host nie potrafi otworzyć
-           * karty, pozycja jest wyłączona z powodem, a nie podmieniona na
-           * akcję prowadzącą gdzie indziej niż napis.
-           */
-          rowMenu={(row) => ({
-            primary: [
-              {
-                id: 'open-initiative-card',
-                label: t('initiatives.planScenario.openInitiativeCard'),
-                icon: Eye,
-                onClick: onOpenInitiative ? () => openInitiativeCard(String(row.id)) : undefined,
-                disabled: !onOpenInitiative,
-                note: openCardDisabledReason,
-              },
-            ],
-            universalHandlers: {
-              preview: () => setSelectedWindowId(String(row.id)),
-              edit: showWorkspace,
-              archiveNote: t('initiatives.planScenario.archiveNote'),
-            },
-            destructive: { note: t('initiatives.planScenario.destructiveNote') },
-          })}
-          persistKey="initiatives.plan-windows.v2"
-          empty={{
-            title: t('initiatives.planScenario.emptyTitle'),
-            description: t('initiatives.planScenario.emptyDescription'),
-          }}
-        />
         </TableWithPreviewLayout>
       </div>
       {draft && workspaceOpen && (
@@ -1423,30 +1536,30 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                   !knownTimeBasis(draft) ||
                   writeState === 'SAVING'
                 }
-                onClick={() => void write('PUBLISH')}
+                onClick={requestPublish}
               >
                 <Send size={15} /> {t('initiatives.planScenario.workbench.publish')}
               </button>
             </div>
           </div>
           {/*
-            * Odbiór grafiki 174-domkniecie (2026-09-01) — USUNIĘTA DRUGA TABELA.
-            *
-            * Warsztat planu renderował tu `StandardTable` na tym SAMYM zbiorze
-            * `visiblePlanWindows` co tabela główna, tyle że z węższym zestawem
-            * kolumn. Efekt na ekranie: po kliknięciu „Otwórz narzędzia planu"
-            * pod pierwszą tabelą wysuwała się DRUGA tabela z tymi samymi
-            * wierszami. Dokładnie to zgłosił właściciel 2026-08-30:
-            * „narzędzie otwiera tę wybraną linię jako tabelę poniżej tej
-            * tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem,
-            * jak to działa."
-            *
-            * Duplikat nie niósł żadnej informacji, której nie ma tabela główna
-            * (te same wiersze, podzbiór kolumn, bez podglądu i bez kebaba),
-            * a warsztat i tak edytuje okna niżej — w „Osi czasu" i w edytorze
-            * kolejności. Warsztat zostaje NARZĘDZIEM (horyzont · zakres · oś
-            * czasu · kolejność), a nie powtórzoną listą.
-            */}
+           * Odbiór grafiki 174-domkniecie (2026-09-01) — USUNIĘTA DRUGA TABELA.
+           *
+           * Warsztat planu renderował tu `StandardTable` na tym SAMYM zbiorze
+           * `visiblePlanWindows` co tabela główna, tyle że z węższym zestawem
+           * kolumn. Efekt na ekranie: po kliknięciu „Otwórz narzędzia planu"
+           * pod pierwszą tabelą wysuwała się DRUGA tabela z tymi samymi
+           * wierszami. Dokładnie to zgłosił właściciel 2026-08-30:
+           * „narzędzie otwiera tę wybraną linię jako tabelę poniżej tej
+           * tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem,
+           * jak to działa."
+           *
+           * Duplikat nie niósł żadnej informacji, której nie ma tabela główna
+           * (te same wiersze, podzbiór kolumn, bez podglądu i bez kebaba),
+           * a warsztat i tak edytuje okna niżej — w „Osi czasu" i w edytorze
+           * kolejności. Warsztat zostaje NARZĘDZIEM (horyzont · zakres · oś
+           * czasu · kolejność), a nie powtórzoną listą.
+           */}
           <fieldset className="mb-4 rounded-md border border-c-border p-3">
             <legend className="px-1 text-sm font-medium">
               {t('initiatives.planScenario.workbench.horizon')}
@@ -1482,7 +1595,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
             </div>
-            <div className="space-y-2" aria-label={t('initiatives.planScenario.workbench.periodsAria')}>
+            <div
+              className="space-y-2"
+              aria-label={t('initiatives.planScenario.workbench.periodsAria')}
+            >
               {draft.periods.map((period, index) => (
                 <div
                   key={`${period.periodId}-${index}`}
@@ -1595,7 +1711,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{initiative.name}</span>
                       <span className="block text-xs text-c-text-muted">
-                        {initiative.lifecycle || t('initiatives.planScenario.workbench.statusUnknown')}
+                        {initiative.lifecycle ||
+                          t('initiatives.planScenario.workbench.statusUnknown')}
                       </span>
                     </span>
                   </label>
@@ -1779,9 +1896,12 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                           {initiatives.find((item) => item.id === window.initiativeId)?.name ??
                             window.initiativeId}
                           <input
-                            aria-label={t('initiatives.planScenario.workbench.initiativeVersionAria', {
-                              id: window.initiativeId,
-                            })}
+                            aria-label={t(
+                              'initiatives.planScenario.workbench.initiativeVersionAria',
+                              {
+                                id: window.initiativeId,
+                              }
+                            )}
                             className="mt-1 block w-20 bg-c-surface p-1"
                             type="number"
                             min={1}
@@ -1911,7 +2031,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                                   {
                                     constraintId: crypto.randomUUID(),
                                     state: 'UNKNOWN',
-                                    detail: t('initiatives.planScenario.workbench.defaultConstraintDetail'),
+                                    detail: t(
+                                      'initiatives.planScenario.workbench.defaultConstraintDetail'
+                                    ),
                                   },
                                 ],
                               })
@@ -1927,14 +2049,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               />
             </div>
             <aside className="space-y-3">
-              <h4 className="font-medium">{t('initiatives.planScenario.aside.assumptionsAndChanges')}</h4>
+              <h4 className="font-medium">
+                {t('initiatives.planScenario.aside.assumptionsAndChanges')}
+              </h4>
               {analysisProposal && (
                 <section
                   aria-label={t('initiatives.planScenario.aside.analysisProposalAria')}
                   className="rounded-md border border-c-border p-3 text-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-medium">{t('initiatives.planScenario.aside.analysisProposalTitle')}</h4>
+                    <h4 className="font-medium">
+                      {t('initiatives.planScenario.aside.analysisProposalTitle')}
+                    </h4>
                     <span>{analysisProposal.status}</span>
                   </div>
                   <p className="mt-2 text-c-text-muted">
@@ -2001,7 +2127,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                 />
               </label>
               <section aria-label={t('initiatives.planScenario.aside.diffAria')}>
-                <h4 className="font-medium">{t('initiatives.planScenario.aside.compareVersions')}</h4>
+                <h4 className="font-medium">
+                  {t('initiatives.planScenario.aside.compareVersions')}
+                </h4>
                 {history.length < 2 ? (
                   <p className="mt-1 text-xs text-c-text-muted">
                     {t('initiatives.planScenario.aside.compareUnavailable')}
@@ -2088,6 +2216,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           </div>
         </section>
       )}
+      {publicationConfirmationDialog}
     </section>
   );
 };
