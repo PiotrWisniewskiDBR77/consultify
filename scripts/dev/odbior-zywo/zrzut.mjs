@@ -12,6 +12,10 @@
  *   nikt nie jest zalogowany, i przekieruje na /login. Ciasteczka nie mają portu w domenie,
  *   więc wystarczy przepisać `origins`. Robimy to na KOPII w pamięci — plik sesji nietknięty.
  * --klik można podać wiele razy (kolejno). Selektor w składni Playwright (text=, css=, role=…).
+ * --zdarzenie=<nazwa>::<jsonDetail> (OPT-IN, 2026-09-06): wysyła `window.dispatchEvent(new CustomEvent(nazwa,{detail}))`.
+ *   Potrzebne dla ekranów osiągalnych WYŁĄCZNIE zdarzeniem (np. `mywork-open-item` — wejście do rekordu
+ *   z panelu powiązań w Mojej Pracy). Kroki --klik/--wpisz/--zdarzenie wykonują się w KOLEJNOŚCI Z WIERSZA POLECEŃ.
+ *   Przykład: --zdarzenie='mywork-open-item::{"type":"initiative","id":"abc","name":"X"}'
  * --wpisz=<selektor>::<tekst> (OPT-IN, 2026-09-06): wpisuje tekst w pole/edytor. Można podać wiele razy;
  *   kroki --klik i --wpisz wykonują się w KOLEJNOŚCI Z WIERSZA POLECEŃ. Pola formularza dostają `fill`,
  *   `contenteditable` (TipTap) — realne pisanie z klawiatury. Bez tego parametru zero zmiany zachowania.
@@ -55,19 +59,29 @@ const kliki = args.filter((x) => x.startsWith('--klik=')).map((x) => x.slice(7))
 // Pola formularza dostają `fill`, edytory `contenteditable` — realne pisanie
 // z klawiatury (TipTap i spółka ignorują podmianę wartości).
 const kroki = args
-  .filter((x) => x.startsWith('--klik=') || x.startsWith('--wpisz='))
-  .map((x) =>
-    x.startsWith('--klik=')
-      ? { rodzaj: 'klik', selektor: x.slice(7) }
-      : (() => {
-          const surowy = x.slice(8);
-          const i = surowy.indexOf('::');
-          return i < 0
-            ? { rodzaj: 'blad', selektor: surowy }
-            : { rodzaj: 'wpisz', selektor: surowy.slice(0, i), tekst: surowy.slice(i + 2) };
-        })()
-  );
+  .filter((x) => x.startsWith('--klik=') || x.startsWith('--wpisz=') || x.startsWith('--zdarzenie='))
+  .map((x) => {
+    if (x.startsWith('--klik=')) return { rodzaj: 'klik', selektor: x.slice(7) };
+    if (x.startsWith('--zdarzenie=')) {
+      // --zdarzenie=<nazwa>::<jsonDetail> (OPT-IN, 2026-09-06, zlecenie 1.1-L).
+      // Aplikacja ma powierzchnie osiagalne WYLACZNIE przez `window.dispatchEvent`
+      // (np. `mywork-open-item` — wejscie do rekordu z panelu powiazan). Bez tego
+      // kroku takiego ekranu nie da sie odtworzyc zrzutem, a dorabianie wlasnego
+      // skryptu obok kanonicznego juz raz dalo falszywy dowod. Krok jest opt-in:
+      // bez parametru zachowanie skryptu jest bajt w bajt jak dotad.
+      const surowy = x.slice(12);
+      const i = surowy.indexOf('::');
+      if (i < 0) return { rodzaj: 'blad', selektor: surowy };
+      return { rodzaj: 'zdarzenie', selektor: surowy.slice(0, i), tekst: surowy.slice(i + 2) };
+    }
+    const surowy = x.slice(8);
+    const i = surowy.indexOf('::');
+    return i < 0
+      ? { rodzaj: 'blad', selektor: surowy }
+      : { rodzaj: 'wpisz', selektor: surowy.slice(0, i), tekst: surowy.slice(i + 2) };
+  });
 const wpisy = kroki.filter((k) => k.rodzaj === 'wpisz').map((k) => k.selektor);
+const zdarzenia = kroki.filter((k) => k.rodzaj === 'zdarzenie').map((k) => `${k.selektor}::${k.tekst}`);
 const przewin = get('przewin', '');
 const url = get('url', '/chat'); const requestedOut = get('out'); const czekaj = Number(get('czekaj', '1200'));
 // --czekaj-po=<ms> (OPT-IN, re-audyt 0609): dodatkowe oczekiwanie PO wykonaniu wszystkich
@@ -149,6 +163,19 @@ for (const krok of kroki) {
     catch (e) { bledy.push(`klik nieudany: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
     continue;
   }
+  if (krok.rodzaj === 'zdarzenie') {
+    try {
+      const detal = JSON.parse(krok.tekst);
+      await page.evaluate(
+        ({ nazwa, detail }) => window.dispatchEvent(new CustomEvent(nazwa, { detail })),
+        { nazwa: krok.selektor, detail: detal }
+      );
+      await page.waitForTimeout(1200);
+    } catch (e) {
+      bledy.push(`zdarzenie nieudane: ${krok.selektor}: ${String(e.message).split('\n')[0].slice(0, 160)}`);
+    }
+    continue;
+  }
   try {
     const cel = page.locator(krok.selektor).first();
     await cel.waitFor({ state: 'visible', timeout: 8000 });
@@ -190,7 +217,7 @@ for (const sel of domSelektory) {
 // bezwarunkowo); to jest nadzbior zachowania opt-in z P3 (--dom=body), wiec zadnego wolacza
 // nie psuje — kazdy dostaje co najmniej to, co dostawal wczesniej.
 const tekst = await page.locator('body').innerText().catch(() => '');
-fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, wpisy, przewin: przewin || null, pelna, wysokosc, szerokosc, motyw, bledy, bledyKonsoli: bledy, odpowiedziHttp, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
+fs.writeFileSync(out + '.json', JSON.stringify({ url: page.url(), tytul: await page.title(), kliki, wpisy, zdarzenia, przewin: przewin || null, pelna, wysokosc, szerokosc, motyw, bledy, bledyKonsoli: bledy, odpowiedziHttp, tekst, ...(domSelektory.length ? { dom } : {}), kiedy: new Date().toISOString() }, null, 1));
 console.log('OK', out, page.url(), bledy.length ? `(${bledy.length} błędów konsoli/klików)` : '');
 // Sesja: token odswieza sie rotacyjnie, WIEC BYLOBY WYGODNIE zapisac zaktualizowany
 // stan z powrotem — ale TYLKO gdy jawnie o to poproszono (--zapisz-sesje) i tylko gdy

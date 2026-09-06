@@ -11,6 +11,8 @@
  * for both the runtime handler and the test.
  */
 
+import { UKRYTE_DEC406 } from './mojaPracaWidocznosc';
+
 export type OpenItemRoute = 'in-context' | 'navigate';
 
 /**
@@ -34,7 +36,12 @@ export const NAVIGATE_ITEM_TYPES = [
 /**
  * Light work items opened in-context via the document overlay
  * (handleOpenDocument / dynamic tab) or an in-place tab switch (notebook).
- * Per DP-2, `initiative` joins task/decision/idea/notebook/notification here.
+ *
+ * [ODMROZENIE 07_MY_WORK_AGENT DEC-397] DEC-406: `initiative` WYPADA z tej listy.
+ * Do 06.09 inicjatywa otwierala sie w Mojej Pracy jako `InitiativeFullView`
+ * (stary warsztat ze stepperem) — rownolegly, nieodebrany ekran obok
+ * zatwierdzonej kanonicznej karty inicjatywy. Teraz inicjatywa ZAWSZE nawiguje
+ * do modulu Inicjatywy (ta sama trasa, co lista -> wiersz -> Otworz).
  */
 export const IN_CONTEXT_ITEM_TYPES = [
   'task',
@@ -42,13 +49,16 @@ export const IN_CONTEXT_ITEM_TYPES = [
   'idea',
   'notification',
   'notebook',
-  'initiative',
 ] as const;
 
 /**
  * Resolve how a `mywork-open-item` type should be opened.
- * Heavy artifacts navigate; everything else (incl. initiative) opens in-context.
+ * Heavy artifacts navigate; everything else opens in-context.
+ *
+ * DEC-406: `initiative` navigates dopoki warsztat jest ukryty
+ * (`UKRYTE_DEC406.warsztatInicjatywy`) — jedno miejsce prawdy o ukryciu.
  */
 export function resolveOpenItemRoute(type: string): OpenItemRoute {
+  if (type === 'initiative' && UKRYTE_DEC406.warsztatInicjatywy) return 'navigate';
   return (NAVIGATE_ITEM_TYPES as readonly string[]).includes(type) ? 'navigate' : 'in-context';
 }
