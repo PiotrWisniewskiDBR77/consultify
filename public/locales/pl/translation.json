@@ -2391,6 +2391,7 @@
       "emptySubtitle": "Jesteś na bieżąco!",
       "empty": "Brak prezentacji."
     },
+    "taskCreatedFromChatToast": "Utworzono zadanie z czatu",
     "decisions": {
       "addDecision": "Dodaj decyzję",
       "emptyColumn": "Brak decyzji",
@@ -18226,7 +18227,7 @@
       },
       "community": {
         "title": "Społeczność",
-        "slack": "Partner Slack",
+        "slack": "Slack partnerów",
         "webinars": "Comiesięczne webinary",
         "successStories": "Historie sukcesu",
         "forum": "Forum partnerów"
@@ -20156,7 +20157,9 @@
     "citationNoAccess": "Źródło niedostępne dla Ciebie",
     "deepSearchSources": "Źródła głębokiego wyszukiwania",
     "citationExternalBadge": "Zewnętrzne",
+    "citationFragmentBadge": "Fragment {{index}}",
     "citationFragmentEmpty": "Brak dostępnego fragmentu.",
+    "citationFragmentOpenLabel": "Fragment {{index}}",
     "citationOpenSource": "Otwórz źródło"
   },
   "agentAudit": {
@@ -20510,6 +20513,8 @@
     "generatingQueries": "Generowanie zapytań badawczych...",
     "queriesReady": "Zapytania badawcze gotowe",
     "searching": "Wyszukiwanie źródeł...",
+    "searchingRound": "Wyszukiwanie (runda {{round}}/{{totalRounds}})...",
+    "round": "Runda {{round}}/{{totalRounds}}",
     "aggregating": "Agregowanie wyników...",
     "synthesizing": "Syntezowanie ustaleń...",
     "complete": "Badanie zakończone",

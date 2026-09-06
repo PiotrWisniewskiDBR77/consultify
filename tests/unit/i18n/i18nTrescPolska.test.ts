@@ -39,7 +39,10 @@ const readLocale = (language: 'pl' | 'en'): Record<string, Json> =>
   ) as Record<string, Json>;
 
 // Nazwy własne / skróty / zapożyczenia — identyczność pl===en jest tu OK.
-const IDENTITY_WHITELIST = [
+// UWAGA: lista surowa (oryginalna wielkość liter) — potrzebna niezmieniona dla
+// STRAŻNIKA BIAŁEJ LISTY poniżej (sprawdza wielkie litery), zanim zostanie
+// znormalizowana do małych liter dla właściwego porównania pl/en.
+const IDENTITY_WHITELIST_RAW = [
   'NPV', 'IRR', 'ROI', 'RAID', 'KPI', 'OKR', 'PDF', 'DOCX', 'XLSX', 'PPTX', 'CSV',
   'URL', 'API', 'ID', 'AI', 'Status', 'Import', 'Export', 'Sponsor', 'Portfolio',
   'Gantt', 'Webhook', 'Administrator', 'Partner', 'Teresa', 'Consultify', 'DBR77',
@@ -132,15 +135,76 @@ const IDENTITY_WHITELIST = [
   'TransformACE Consulting',
   'Bartosz Sotomski',
   'FAQ',
-  'Partner Slack',
   '45 min',
   '60 min',
   '30 min',
   'DBR77 Consultify',
   'JQL ({{optional}})',
   'Program',
-].map((entry) => entry.trim().toLowerCase());
+  // ZLECENIE i18n-2 (06.09.2026) — "fragment" to słowo identyczne po polsku
+  // (zapożyczenie z łaciny, ta sama pisownia); placeholder {{index}} sprawia,
+  // że wpis dodatkowo spełnia kryterium (b) STRAŻNIKA (symbol nawiasu klamr.).
+  'Fragment {{index}}',
+];
+const IDENTITY_WHITELIST = IDENTITY_WHITELIST_RAW.map((entry) => entry.trim().toLowerCase());
 const IDENTITY_WHITELIST_SET = new Set(IDENTITY_WHITELIST);
+
+// STRAŻNIK BIAŁEJ LISTY (zabezpieczenie) — ZLECENIE i18n-2 (06.09.2026):
+// POMIAR_NIEZALEZNY.md (evidence/i18n-dlug-1) pkt 5b wykazał ZNALEZISKO: bez
+// tego strażnika dowolne pospolite słowo (np. "Model") dopisane do
+// IDENTITY_WHITELIST + ustawione pl===en przechodziło test na zielono — lista
+// nie miała żadnej kontroli własnej zawartości. Każdy wpis musi spełniać
+// JEDNO z:
+//   (a) zawiera ≥2 wielkie litery (skrót typu "KPI"/"CEO" ALBO wielka litera
+//       w środku słowa złożonego typu "PowerPoint"/"WhatsApp"/"ClickUp"),
+//   (b) zawiera cyfrę lub symbol (np. "DBR77", "e-mail", "VaR (5%)"),
+//   (c) jest w ALLOWED_PROPER_NOUNS niżej (nazwa własna/marka/termin, która
+//       nie pasuje do (a)/(b) — jednosłowowa, bez cyfry/symbolu),
+//   (d) ma ≤3 znaki (np. "GO", "IP", "ID").
+// W przeciwnym razie to zwykłe słowo pospolite i NIE wolno go whitelistować
+// bez świadomego dopisania do (c) z uzasadnieniem.
+const ALLOWED_PROPER_NOUNS = [
+  // Loanwordy/terminy branżowe używane w polskim oprogramowaniu biznesowym
+  // identycznie jak w angielskim (nie tłumaczy się ich w praktyce rynkowej):
+  'Status', 'Import', 'Export', 'Menu', 'Program', 'Push', 'Blog', 'Euro',
+  'Email', 'Kanban', 'Backlog', 'Sprint', 'Baseline', 'Dashboard', 'Gantt',
+  'Webhook', 'Sponsor', 'Portfolio', 'Administrator', 'Partner',
+  // Marki/nazwy produktów (nie tłumaczy się nazw własnych produktów):
+  'Consultify', 'Teresa', 'Jira', 'Slack', 'Teams', 'Dropbox', 'Outlook',
+  'Trello', 'Excel', 'Word', 'Autopilot', 'Premium', 'Enterprise',
+  // Nazwy fontów (ustawienia dostępności — nazwy własne krojów pisma):
+  'Inter', 'Lato', 'Roboto', 'Poppins',
+  // Terminy medyczne identyczne po polsku (ustawienia dostępności):
+  'Deuteranopia', 'Protanopia', 'Tritanopia',
+  // Etykiety scenariuszy finansowych — konwencja modelowania finansowego,
+  // niezmienna w polskich raportach doradczych (Business Case/Wyniki):
+  'Conservative', 'Base', 'Upside', 'Expected', 'Actual', 'Payback', 'Hard',
+  'Avoided',
+].map((entry) => entry.trim().toLowerCase());
+const ALLOWED_PROPER_NOUNS_SET = new Set(ALLOWED_PROPER_NOUNS);
+
+const countUppercase = (value: string): number => (value.match(/\p{Lu}/gu) ?? []).length;
+const hasDigitOrSymbol = (value: string): boolean =>
+  /[0-9]/.test(value) || /[^\p{L}\p{N}\s]/u.test(value);
+
+type WhitelistGuardViolation = { entry: string; reason: string };
+
+const whitelistGuardViolations: WhitelistGuardViolation[] = [];
+for (const rawEntry of IDENTITY_WHITELIST_RAW) {
+  const entry = rawEntry.trim();
+  const normalized = entry.toLowerCase();
+  const isAcronymOrMidCap = countUppercase(entry) >= 2;
+  const isDigitOrSymbol = hasDigitOrSymbol(entry);
+  const isAllowedProperNoun = ALLOWED_PROPER_NOUNS_SET.has(normalized);
+  const isShort = entry.length <= 3;
+  if (!isAcronymOrMidCap && !isDigitOrSymbol && !isAllowedProperNoun && !isShort) {
+    whitelistGuardViolations.push({
+      entry,
+      reason:
+        'zwykłe słowo pospolite — brak ≥2 wielkich liter, cyfry/symbolu, wpisu w ALLOWED_PROPER_NOUNS i długości ≤3',
+    });
+  }
+}
 
 // ~60 najczęstszych angielskich słów UI bez polskiego odpowiednika — wartość pl
 // będąca jednym z nich jest naruszeniem NIEZALEŻNIE od wartości en (martwe
@@ -233,6 +297,16 @@ describe('i18n — strażnik TREŚCI pl≠en (ratchet)', () => {
     expect(
       newViolations.length,
       `${newViolations.length} NOWYCH naruszeń (dług zastany=${baseline.length} przechodzi bez zmian):\n${preview.join('\n')}`
+    ).toBe(0);
+  });
+
+  it('STRAŻNIK BIAŁEJ LISTY: każdy wpis IDENTITY_WHITELIST jest uzasadnioną nazwą własną/skrótem, nie zwykłym słowem pospolitym', () => {
+    const preview = whitelistGuardViolations
+      .map((v) => `"${v.entry}" — ${v.reason}`)
+      .join('\n');
+    expect(
+      whitelistGuardViolations.length,
+      `${whitelistGuardViolations.length} wpis(y) IDENTITY_WHITELIST bez uzasadnienia (dodaj do ALLOWED_PROPER_NOUNS z komentarzem albo usuń):\n${preview}`
     ).toBe(0);
   });
 });

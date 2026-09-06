@@ -260,10 +260,10 @@ export const CitationList: React.FC<CitationListProps> = ({
                       {hasFragment && (
                         <span className="flex shrink-0 items-center gap-0.5 rounded border border-slate-200 bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600 dark:border-navy-700 dark:bg-navy-900/50 dark:text-slate-500">
                           <Quote size={9} />
-                          {t(
-                            'aiChat.citationFragmentBadge',
-                            `Fragment ${(citation.fragmentIndex as number) + 1}`
-                          )}
+                          {t('aiChat.citationFragmentBadge', {
+                            index: (citation.fragmentIndex as number) + 1,
+                            defaultValue: 'Fragment {{index}}',
+                          })}
                         </span>
                       )}
                     </div>
@@ -310,10 +310,10 @@ export const CitationList: React.FC<CitationListProps> = ({
                   >
                     <div className="mb-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       <Quote size={10} />
-                      {t(
-                        'aiChat.citationFragmentOpenLabel',
-                        `Fragment ${(citation.fragmentIndex as number) + 1}`
-                      )}
+                      {t('aiChat.citationFragmentOpenLabel', {
+                        index: (citation.fragmentIndex as number) + 1,
+                        defaultValue: 'Fragment {{index}}',
+                      })}
                     </div>
                     <div className="whitespace-pre-wrap">
                       {view.excerpt || t('aiChat.citationFragmentEmpty', 'No excerpt available.')}
