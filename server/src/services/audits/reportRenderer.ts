@@ -501,7 +501,7 @@ export function renderAuditReport(
     },
     {
       id: 'traceability_matrix',
-      title: 'Macierz traceability',
+      title: 'Śledzenie powiązań',
       kind: 'table',
       content: buildTraceabilityMatrix(output),
     },

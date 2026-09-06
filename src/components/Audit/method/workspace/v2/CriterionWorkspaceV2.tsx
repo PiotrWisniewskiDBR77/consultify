@@ -23,7 +23,7 @@
  *
  * WHAT DID NOT CHANGE: the 18-link state machine (`chainLinks.ts`), every
  * API call, every capability gate, `EvidencePanel`/`FindingPanel`/
- * `RemediationPanel`/`TeresaProposalCard` internals. This file only composes
+ * `RemediationPanel` internals. This file only composes
  * them differently.
  */
 import {
@@ -71,7 +71,6 @@ import type {
 import { EvidencePanel } from '../EvidencePanel';
 import { FindingPanel, findingStatusLabel } from '../FindingPanel';
 import { RemediationPanel } from '../RemediationPanel';
-import { TeresaProposalCard } from '../TeresaProposalCard';
 import {
   AUDIT_CHAIN_PHASES,
   type AuditChainPhaseId,
@@ -578,8 +577,6 @@ export const CriterionWorkspaceV2: React.FC = () => {
   const canRespondAsAuditee = capabilities.has('criterion.respond_as_auditee');
   const canPerformTest = capabilities.has('criterion.perform_test');
   const canConclude = capabilities.has('criterion.conclude');
-  const canProposeAi = capabilities.has('ai.propose');
-  const canCommitAi = capabilities.has('ai.commit');
   const canSubmitEvidence = capabilities.has('evidence.submit');
   const canReviewEvidence = capabilities.has('evidence.review');
   const canDraftFinding = capabilities.has('finding.draft');
@@ -1217,18 +1214,6 @@ export const CriterionWorkspaceV2: React.FC = () => {
             initialCount={4}
             formatTimestamp={(ts) => formatDateTime(ts, isPolish)}
           />
-          {canProposeAi && (
-            <div className="mt-2 rounded-token-sm border border-c-focus-solid/30 bg-c-focus/5 p-2">
-              <p className="text-[11px] leading-snug text-c-text-secondary">
-                <Sparkles size={11} className="mr-1 inline text-c-focus-solid" aria-hidden />
-                <span className="font-semibold text-c-text">{t('Teresa — asystent metodyczny.', 'Teresa — methodology assistant.')}</span>{' '}
-                {t(
-                  'Może wyjaśnić kryterium i zaproponować redakcję ustalenia, zawsze ze źródłami. Nigdy nie zapisuje niczego bez decyzji człowieka.',
-                  'Can explain the criterion and draft a finding, always with sources. Never saves anything without a human decision.'
-                )}
-              </p>
-            </div>
-          )}
         </div>
       ),
     },
@@ -1275,21 +1260,6 @@ export const CriterionWorkspaceV2: React.FC = () => {
           </div>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {canProposeAi && (
-            <button
-              type="button"
-              // Gap pack 2026-08-26 (item 5a): this used to jump to
-              // 'planowanie', which has no Teresa card at all (see the
-              // `p.id === 'planowanie'` block above) — the only
-              // `TeresaProposalCard` instance lives in the 'ustalenia' phase
-              // (line ~1566, "Teresa: wyjaśnij kryterium").
-              onClick={() => scrollToPhase('ustalenia')}
-              className="inline-flex h-8 items-center gap-1.5 rounded-token-sm border border-c-border px-2.5 text-[11.5px] font-medium text-c-text-secondary hover:border-c-border-strong hover:text-c-text"
-            >
-              <Sparkles size={13} aria-hidden />
-              {t('Teresa', 'Teresa')}
-            </button>
-          )}
           <div className="relative" ref={kebabRef}>
             <button
               type="button"
@@ -1678,18 +1648,6 @@ export const CriterionWorkspaceV2: React.FC = () => {
                         </>
                       )}
                     </div>
-
-                    <TeresaProposalCard
-                      label={t('Teresa: wyjaśnij kryterium', 'Teresa: explain the criterion')}
-                      programId={programId}
-                      targetType="criterion"
-                      targetId={criterionId}
-                      intent="explain_criterion"
-                      canPropose={canProposeAi}
-                      canCommit={canCommitAi}
-                      isPolish={isPolish}
-                      onCommitted={load}
-                    />
 
                     <div>
                       <h3 className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-c-text-muted">{t('Ustalenie', 'Finding')}</h3>

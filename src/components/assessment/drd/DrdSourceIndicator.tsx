@@ -21,9 +21,9 @@ import React from 'react';
 export type DrdSourceKind = 'SERVER' | 'RECOVERY_DRAFT' | 'DEMO_LOCAL';
 
 const LABEL: Record<DrdSourceKind, string> = {
-  SERVER: 'SERVER',
-  RECOVERY_DRAFT: 'RECOVERY_DRAFT',
-  DEMO_LOCAL: 'DEMO_LOCAL',
+  SERVER: 'DANE Z SERWERA',
+  RECOVERY_DRAFT: 'SZKIC ODZYSKIWANIA',
+  DEMO_LOCAL: 'DANE LOKALNE',
 };
 
 const TONE: Record<DrdSourceKind, string> = {

@@ -174,7 +174,7 @@ export function getToolPhaseAiActions(
         // 1:1 z `label` angielskim (kopiuj-wklej przy autorstwie) — jedyne
         // dwa przyciski w tym słowniku bez realnego tłumaczenia, reszta
         // (np. 'Buduj analizę', 'Buduj portfolio') już ma wzorzec.
-        'Wyostrz z AI',
+        'Uzupełnij tę sekcję',
         'Sharpen the strategic question before analysis',
         'Wyostrz pytanie strategiczne przed analizą'
       ),
@@ -182,7 +182,7 @@ export function getToolPhaseAiActions(
         'draft-session',
         'wand',
         'AI Draft',
-        'Szkicuj z AI',
+        'Uzupełnij tę sekcję',
         'Generate a controlled first draft of the full tool session',
         'Wygeneruj kontrolowany pierwszy szkic całej sesji narzędzia'
       ),
