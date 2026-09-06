@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3107/finance?tab=valuation",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nWycena przedsiębiorstw\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowa wycena\nWszystkie\n0\nSzkic\n0\nPrzegląd\n0\nZatwierdzone\n0\nAnalizuj\nAI\nWartość bankowa\nPrognoza gotówkowa\nPlaner czynników\nDrzewo czynników\nWskaźniki rozszerzone\nPlaner zatrudnienia\nOcena inwestycji\nPrognoza krocząca\nWizualizacje wyceny\nAtrybucja wartości\nŚcieżka przechwytywania wartości\nRejestr wartości\nBiuro wartości\nMostek odchyleń\nKomentarz do odchyleń\nKoszyk EV\nSymulacja Monte Carlo NPV\nOpcje rzeczywiste\nGranica efektywna\nAnaliza wrażliwości (what-if)\nObliczenia scenariuszy\nSymulacja Monte Carlo NPV\n\nSymuluj wyniki NPV w zakresach niepewności czynników.\n\nCzynnik\nMin.\nModa\nMaks\nWaga\n×\nCzynnik\nMin.\nModa\nMaks\nWaga\n×\n+ czynnik\nIteracje\nZiarno (seed)\nLiczba przedziałów histogramu\nUruchom symulację\n\nUstaw czynniki i uruchom symulację, aby zobaczyć rozkład NPV.\n\n\t\nTYP\n\t\nNAZWA\n\t\nŹRÓDŁO\n\t\nMETODA\n\t\nHORYZONT\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\nBrak wycen. Utwórz pierwszą wycenę.",
+ "kiedy": "2026-09-06T18:46:39.558Z"
+}

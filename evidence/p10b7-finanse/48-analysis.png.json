@@ -1,0 +1,34 @@
+{
+ "url": "http://127.0.0.1:3107/finance/analyses/d7b0b5de-d43a-42db-9f8f-1edc57bef25f?tab=analysis",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nAnaliza\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowa analiza\nWszystkie\n1\nSzkic\n1\nPrzegląd\n0\nZatwierdzone\n0\nAnalizuj\nAI\n\t\nTYP\n\t\nNAZWA\n\t\nRODZAJ ANALIZY\n\t\nOKRESY\n\t\nWALUTA\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\t\nANL\n\t\nAnaliza wskaźnikowa 2024–2025 — CD PROJEKT\n\t\n\t\n—\n\t\n\t\nSzkic\n\t21 godzin temu\t",
+ "dom": {
+  "aside": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "table": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 97,
+     "y": 182,
+     "width": 1288,
+     "height": 112
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T18:44:15.468Z"
+}

@@ -1,0 +1,17 @@
+{
+ "url": "http://127.0.0.1:3107/finance?tab=prediction",
+ "tytul": "Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nFinanse\nPredykcja\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nSprawozdania\nAnaliza\nModele\nPredykcja\nWycena przedsiębiorstw\n+ Nowy scenariusz\nWszystkie\n0\nSzkic\n0\nPrzegląd\n0\nZatwierdzone\n0\nAnalizuj\nAI\n\t\nTYP\n\t\nPODTYP\n\t\nNAZWA\n\t\nSCENARIUSZ\n\t\nHORYZONT\n\t\nSTATUS\n\t\nAKTUALIZACJA\n\t\n\n\nBrak danych do predykcji. Najpierw utwórz model.",
+ "kiedy": "2026-09-06T18:46:33.918Z"
+}
