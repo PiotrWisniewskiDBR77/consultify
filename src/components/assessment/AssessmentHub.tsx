@@ -112,7 +112,8 @@ import {
 } from './assessmentPreviewDetails';
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
-import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
 import {
   AssessmentLibraryTab,
   METHODOLOGY_CATALOG,
@@ -2976,15 +2977,12 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab, framew
         </div>
       </StandardModuleBar>
 
-      <InitiativesGenerationWizardModal
+      {/* JEDEN generator inicjatyw (DEC-413) — adapter `assessment` sam czyta
+          liste ocen z `/assessments`, wiec Hub nie podaje jej propsem. */}
+      <GeneratorInicjatywModal
         isOpen={showInitiativesWizard}
         onClose={() => setShowInitiativesWizard(false)}
-        assessments={assessments.map((a) => ({
-          id: a.id,
-          name: a.name,
-          type: a.type,
-          status: a.status,
-        }))}
+        adaptery={[adapterAssessment]}
         onCompleted={() => refreshData()}
       />
 

@@ -27,7 +27,8 @@ import { AssessmentWorkbenchPanel } from '@/components/assessment/AssessmentWork
 import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/drdAnswersAdapter';
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
-import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
@@ -2678,10 +2679,12 @@ export const AssessmentSessionEditorView: React.FC = () => {
       />
 
       {/* Initiatives workflow overlay */}
-      <InitiativesGenerationWizardModal
+      {/* JEDEN generator inicjatyw (DEC-413). */}
+      <GeneratorInicjatywModal
         isOpen={isInitiativesWizardOpen}
         onClose={() => setIsInitiativesWizardOpen(false)}
-        initialAssessmentId={assessmentId}
+        adaptery={[adapterAssessment]}
+        wstepnyWybor={assessmentId ? [assessmentId] : undefined}
         onCompleted={() => {
           // Keep user in-place; Manage panel already shows initiatives table if open.
           toast.success('Initiatives generation completed');

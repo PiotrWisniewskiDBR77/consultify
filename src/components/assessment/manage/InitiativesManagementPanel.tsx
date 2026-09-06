@@ -36,10 +36,10 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { InitiativesGenerationWizardModal } from '@/components/assessment/InitiativesGenerationWizardModal';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
 import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
 import type { InitiativeRegisterRow } from '@/components/Initiatives/initiativeRegisterColumns.shared';
-import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { Api } from '@/services/api';
 import { getStatusActions, InitiativeStatus } from '@/types/initiative';
 import { cn } from '@/utils/cn';
@@ -98,11 +98,6 @@ export interface InitiativesManagementPanelProps {
   canManage: boolean;
   canGenerateInitiatives: boolean;
   onRefresh: () => Promise<void>;
-  onGenerateInitiatives?: (config: {
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-  }) => Promise<void>;
 }
 
 // ============================================
@@ -306,172 +301,6 @@ const formatInitiativeDate = (dateStr: string, language?: string): string => {
   });
 };
 
-// ============================================
-// Generate Modal Component
-// ============================================
-
-const GenerateInitiativesModal: FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  onGenerate: (config: {
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-  }) => Promise<void>;
-}> = ({ isOpen, onClose, onGenerate }) => {
-  const { t } = useTranslation();
-  const [methodologyId, setMethodologyId] = useState('impact-feasibility');
-  const [count, setCount] = useState(5);
-  const [includeChatContext, setIncludeChatContext] = useState(true);
-  const [generating, setGenerating] = useState(false);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      await onGenerate({ methodologyId, count, includeChatContext });
-      onClose();
-    } catch (err) {
-      toast.error(
-        t('assessment.initiativesPanel.toast.generateFailed', 'Failed to generate initiatives')
-      );
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-md mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl overflow-hidden"
-      >
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 bg-gradient-to-r from-slate-500/10 to-amber-500/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-navy-900 text-white rounded-lg">
-                <Sparkles size={18} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {t('assessment.initiativesPanel.generateModal.title', 'Generate Initiatives')}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {t(
-                    'assessment.initiativesPanel.generateModal.subtitle',
-                    'AI-powered initiative generation'
-                  )}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-            >
-              <X size={18} className="text-slate-500" />
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t(
-                'assessment.initiativesPanel.generateModal.methodology',
-                'Prioritization Methodology'
-              )}
-            </label>
-            <select
-              value={methodologyId}
-              onChange={(e) => setMethodologyId(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
-            >
-              {METHODOLOGY_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {t(`assessment.initiativesPanel.methodology.${opt.key}`, opt.label)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              {t('assessment.initiativesPanel.generateModal.count', 'Number of Initiatives')}
-            </label>
-            <select
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-sm text-slate-900 dark:text-white"
-            >
-              {[3, 4, 5, 6, 7].map((n) => (
-                <option key={n} value={n}>
-                  {t(
-                    'assessment.initiativesPanel.generateModal.countOption',
-                    '{{count}} initiatives',
-                    { count: n }
-                  )}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/50 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={includeChatContext}
-              onChange={(e) => setIncludeChatContext(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-c-focus"
-            />
-            <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                {t('assessment.initiativesPanel.generateModal.includeChat', 'Include chat context')}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t(
-                  'assessment.initiativesPanel.generateModal.includeChatHint',
-                  'Use conversation history for better suggestions'
-                )}
-              </div>
-            </div>
-          </label>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/50 flex items-center justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
-          >
-            {t('assessment.initiativesPanel.generateModal.cancel', 'Cancel')}
-          </button>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="px-5 py-2.5 rounded-xl bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold transition-colors flex items-center gap-2"
-          >
-            {generating ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                {t('assessment.initiativesPanel.generateModal.generating', 'Generating...')}
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                {t('assessment.initiativesPanel.generateModal.generate', 'Generate')}
-              </>
-            )}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
 
 // ============================================
 // Main Component
@@ -484,12 +313,9 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   canManage,
   canGenerateInitiatives,
   onRefresh,
-  onGenerateInitiatives,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { isEnabled } = useFeatureFlagsContext();
-  const wizardEnabled = isEnabled('assessmentInitiativesWizard');
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [batches, setBatches] = useState<InitiativeBatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -497,7 +323,6 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegisterRowId, setSelectedRegisterRowId] = useState<string | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showWizardModal, setShowWizardModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [manualTitle, setManualTitle] = useState('');
   const [manualDescription, setManualDescription] = useState('');
@@ -592,17 +417,6 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
       await onRefresh();
     } finally {
       setRefreshing(false);
-    }
-  };
-
-  const handleGenerate = async (config: {
-    methodologyId: string;
-    count: number;
-    includeChatContext: boolean;
-  }) => {
-    if (onGenerateInitiatives) {
-      await onGenerateInitiatives(config);
-      await fetchInitiatives();
     }
   };
 
@@ -871,51 +685,33 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
                   {t('assessment.initiativesPanel.actions.new', 'New')}
                 </button>
               )}
+              {/* DEC-413: dwa przyciski („Quick" + „Wizard (50+)" za flaga
+                  `assessmentInitiativesWizard`, defaultValue=false) zlaly sie
+                  w JEDEN generator. Doktryna gestosci zabrania zdublowanej
+                  akcji, a wersja chwalona przez wlasciciela byla domyslnie
+                  wylaczona — teraz jest jedyna i zawsze dostepna. */}
               {canManage && canGenerateInitiatives && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowGenerateModal(true)}
-                    disabled={!isApproved}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                      isApproved
-                        ? 'bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-700'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                    }`}
-                    title={
-                      !isApproved
-                        ? t(
-                            'assessment.initiativesPanel.actions.needsApprovalTooltip',
-                            'Assessment must be approved to generate initiatives'
-                          )
-                        : undefined
-                    }
-                  >
-                    <Sparkles size={16} />
-                    {t('assessment.initiativesPanel.actions.quick', 'Quick')}
-                  </button>
-                  {wizardEnabled && (
-                    <button
-                      onClick={() => setShowWizardModal(true)}
-                      disabled={!isApproved}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                        isApproved
-                          ? 'bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950'
-                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                      }`}
-                      title={
-                        !isApproved
-                          ? t(
-                              'assessment.initiativesPanel.actions.needsApprovalTooltip',
-                              'Assessment must be approved to generate initiatives'
-                            )
-                          : undefined
-                      }
-                    >
-                      <Sparkles size={16} />
-                      {t('assessment.initiativesPanel.actions.wizard', 'Wizard (50+)')}
-                    </button>
-                  )}
-                </div>
+                <button
+                  data-testid="assessment-generate-initiatives"
+                  onClick={() => setShowGenerateModal(true)}
+                  disabled={!isApproved}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    isApproved
+                      ? 'bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  }`}
+                  title={
+                    !isApproved
+                      ? t(
+                          'assessment.initiativesPanel.actions.needsApprovalTooltip',
+                          'Assessment must be approved to generate initiatives'
+                        )
+                      : undefined
+                  }
+                >
+                  <Sparkles size={16} />
+                  {t('assessment.initiativesPanel.actions.generate', 'Generuj inicjatywy')}
+                </button>
               )}
             </div>
           </div>
@@ -1497,28 +1293,16 @@ export const InitiativesManagementPanel: FC<InitiativesManagementPanelProps> = (
         )}
       </AnimatePresence>
 
-      {/* Generate Modal */}
-      <AnimatePresence>
-        {showGenerateModal && (
-          <GenerateInitiativesModal
-            isOpen={showGenerateModal}
-            onClose={() => setShowGenerateModal(false)}
-            onGenerate={handleGenerate}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Wizard Modal */}
-      <AnimatePresence>
-        {showWizardModal && (
-          <InitiativesGenerationWizardModal
-            isOpen={showWizardModal}
-            onClose={() => setShowWizardModal(false)}
-            initialAssessmentId={assessmentId}
-            onCompleted={() => handleRefresh()}
-          />
-        )}
-      </AnimatePresence>
+      {/* JEDEN generator inicjatyw (DEC-413) — ten sam modal, co w Wywiadzie,
+          Narzedziach i Audytach; adapter `assessment` odtwarza dotychczasowe
+          zachowanie 1:1 (trzy tryby zrodla, ocena, raport, template). */}
+      <GeneratorInicjatywModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        adaptery={[adapterAssessment]}
+        wstepnyWybor={assessmentId ? [assessmentId] : undefined}
+        onCompleted={() => handleRefresh()}
+      />
     </div>
   );
 };
