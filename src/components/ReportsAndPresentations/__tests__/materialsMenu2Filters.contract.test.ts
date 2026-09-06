@@ -41,7 +41,10 @@ describe('ReportsAndPresentationsHub — Menu 2 filtry (DEC-423)', () => {
   });
 
   it('używa istniejącego Menu2PresetDropdown (Inicjatywy DEC-420) — nie pisze nowego komponentu', () => {
-    expect(source).toContain("import { Menu2PresetDropdown } from '../Initiatives/Menu2PresetDropdown'");
+    // 1.1-M-2 (DEC-423b/c/d): komponent przeniesiony z `Initiatives/` do
+    // `standard/` — jest kanonicznym dropdownem Menu 2 dla wielu modułów, nie
+    // własnością Inicjatyw. Stara ścieżka żyje jako re-eksport zgodnościowy.
+    expect(source).toContain("import { Menu2PresetDropdown } from '../standard/Menu2PresetDropdown'");
     // Dwa wywołania komponentu w rightControls: Status + Widoczność.
     const usageHits = source.match(/<Menu2PresetDropdown/g) || [];
     expect(usageHits).toHaveLength(2);

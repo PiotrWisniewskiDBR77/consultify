@@ -24,19 +24,17 @@ import {
   Copy,
   FileSpreadsheet,
   FileText,
-  LayoutGrid,
   MessageSquare,
   Play,
   Presentation,
-  Table2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { EmptyState } from '@/components/shared/states';
 import PresentationBriefModal from '@/components/shared/PresentationBriefModal';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { EmptyState } from '@/components/shared/states';
 import {
   type MetaPill,
   StandardPreview,
@@ -56,7 +54,7 @@ import {
   resolveTemplateEditPath,
   resolveTemplateUsePath,
 } from './artifactNavigation';
-import { TemplatesGalleryView } from './TemplatesGalleryView';
+import { templateScopeLabel, TemplatesGalleryView } from './TemplatesGalleryView';
 import {
   TEMPLATE_CATEGORY_META,
   TEMPLATE_STATUS_META,
@@ -68,7 +66,6 @@ interface TemplatesTabContentProps {
   viewMode: ViewMode;
   searchQuery: string;
   activeFilters: FilterChip[];
-  onFilterChange: (filters: FilterChip[]) => void;
   templates: TemplateItem[];
   loading: boolean;
   error?: string | null;
@@ -77,19 +74,43 @@ interface TemplatesTabContentProps {
     startArtifactReview?: (artifactId: string) => Promise<boolean>;
   };
   initialArtifactId?: string | null;
+  /**
+   * DEC-423d: wybór Galeria|Tabela należy do Menu 2 hosta (dokładnie tak jak
+   * `subView` Arkuszy). Gdy host go poda, ten komponent NIE rysuje własnego
+   * rzędu przełącznika. Fallback na stan lokalny zostaje dla wywołań bez hosta
+   * (harness dev-render, testy).
+   */
+  innerView?: 'gallery' | 'table';
+}
+
+/**
+ * Filtr po samej wyszukiwarce — EKSPORTOWANY, bo liczniki fasetowe chipów
+ * Menu 3 (format · źródło) liczy dziś hub, a muszą liczyć DOKŁADNIE ten sam
+ * zbiór, co ta zakładka. Jedna funkcja zamiast dwóch kopii predykatu.
+ */
+export function filterTemplatesBySearch(
+  templates: TemplateItem[],
+  searchQuery: string
+): TemplateItem[] {
+  if (!searchQuery) return templates;
+  const q = searchQuery.toLowerCase();
+  return templates.filter(
+    (item) =>
+      item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
+  );
 }
 
 export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   viewMode,
   searchQuery,
   activeFilters,
-  onFilterChange,
   templates,
   loading,
   error,
   onRefresh,
   actions,
   initialArtifactId,
+  innerView: innerViewProp,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -111,20 +132,17 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   // query/localStorage/env — see templatesGalleryFlag.ts); OFF is the
   // untouched path below.
   const galleryEnabled = isTemplatesGalleryEnabled();
-  const [innerView, setInnerView] = useState<'gallery' | 'table'>('gallery');
+  const [innerViewLokalny] = useState<'gallery' | 'table'>('gallery');
+  const innerView = innerViewProp ?? innerViewLokalny;
 
   // Search-only filtered set — powers the gallery's faceted filter-chip
   // counters (how many templates WOULD match each format/scope), kept
   // independent from `activeFilters` so a chip's own count isn't distorted
   // by the very filter it represents.
-  const searchFilteredTemplates = useMemo(() => {
-    if (!searchQuery) return templates;
-    const q = searchQuery.toLowerCase();
-    return templates.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
-    );
-  }, [templates, searchQuery]);
+  const searchFilteredTemplates = useMemo(
+    () => filterTemplatesBySearch(templates, searchQuery),
+    [templates, searchQuery]
+  );
 
   const filteredData = useMemo(() => {
     let data = searchFilteredTemplates;
@@ -137,15 +155,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     return data;
   }, [searchFilteredTemplates, activeFilters]);
 
-  // Etykieta zakresu wg kanonu materials.ts (system|organization|personal|unknown).
-  // Legacy 'application' zostaje obsłużone dla wpisów sprzed migracji.
+  // Etykieta zakresu — jedno źródło z Menu 3 huba (`templateScopeLabel`).
   const scopeLabel = useCallback(
-    (scope: TemplateItem['scope']): string => {
-      if (scope === 'personal') return t('reports.personal');
-      if (scope === 'system' || scope === 'application') return t('reports.application');
-      if (scope === 'organization') return t('reports.organization');
-      return t('rap.templates.scopeUnknown', 'Nieznany');
-    },
+    (scope: TemplateItem['scope']): string => templateScopeLabel(t, scope),
     [t]
   );
 
@@ -284,10 +296,26 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         width: '160px',
         filterable: true,
         filterOptions: [
-          { value: 'R1', label: isPolish ? TEMPLATE_CATEGORY_META.R1.labelPl : TEMPLATE_CATEGORY_META.R1.label, color: 'bg-blue-400' },
-          { value: 'R2', label: isPolish ? TEMPLATE_CATEGORY_META.R2.labelPl : TEMPLATE_CATEGORY_META.R2.label, color: 'bg-blue-400' },
-          { value: 'R3', label: isPolish ? TEMPLATE_CATEGORY_META.R3.labelPl : TEMPLATE_CATEGORY_META.R3.label, color: 'bg-emerald-400' },
-          { value: 'R4', label: isPolish ? TEMPLATE_CATEGORY_META.R4.labelPl : TEMPLATE_CATEGORY_META.R4.label, color: 'bg-amber-400' },
+          {
+            value: 'R1',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R1.labelPl : TEMPLATE_CATEGORY_META.R1.label,
+            color: 'bg-blue-400',
+          },
+          {
+            value: 'R2',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R2.labelPl : TEMPLATE_CATEGORY_META.R2.label,
+            color: 'bg-blue-400',
+          },
+          {
+            value: 'R3',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R3.labelPl : TEMPLATE_CATEGORY_META.R3.label,
+            color: 'bg-emerald-400',
+          },
+          {
+            value: 'R4',
+            label: isPolish ? TEMPLATE_CATEGORY_META.R4.labelPl : TEMPLATE_CATEGORY_META.R4.label,
+            color: 'bg-amber-400',
+          },
           {
             value: 'executive_update',
             label: isPolish
@@ -770,9 +798,6 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   const galleryView = (
     <TemplatesGalleryView
       templates={filteredData}
-      searchFilteredTemplates={searchFilteredTemplates}
-      activeFilters={activeFilters}
-      onFilterChange={onFilterChange}
       scopeLabel={scopeLabel}
       resolveUsePath={resolveUsePath}
       onUse={(item) => handleUseTemplate(item)}
@@ -781,161 +806,137 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   );
 
   const previewAside = (
-    <JedenPrawyPanel rekord={selectedItem ? (
-      <StandardPreview
-        title={selectedItem.title}
-        onClose={() => setSelectedId(null)}
-        onOpenFull={() => handleUseTemplate(selectedItem)}
-        openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
-        meta={{
-          pills: [
-            ...(typeMeta
-              ? [
-                  {
-                    label: isPolish ? typeMeta.labelPl : typeMeta.label,
-                    tone: 'neutral' as const,
-                  },
-                ]
-              : []),
-            ...(statusMeta
-              ? [
-                  {
-                    label: isPolish ? statusMeta.labelPl : statusMeta.label,
-                    tone: statusMeta.tone,
-                  },
-                ]
-              : []),
-          ] as MetaPill[],
-          trailing: (
-            <span className="text-[11px] font-semibold text-c-text-secondary">
-              {selectedItem.updatedAt && !Number.isNaN(new Date(selectedItem.updatedAt).getTime())
-                ? new Date(selectedItem.updatedAt).toLocaleDateString(
-                    isPolish ? 'pl-PL' : 'en-US',
+    <JedenPrawyPanel
+      rekord={
+        selectedItem ? (
+          <StandardPreview
+            title={selectedItem.title}
+            onClose={() => setSelectedId(null)}
+            onOpenFull={() => handleUseTemplate(selectedItem)}
+            openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
+            meta={{
+              pills: [
+                ...(typeMeta
+                  ? [
+                      {
+                        label: isPolish ? typeMeta.labelPl : typeMeta.label,
+                        tone: 'neutral' as const,
+                      },
+                    ]
+                  : []),
+                ...(statusMeta
+                  ? [
+                      {
+                        label: isPolish ? statusMeta.labelPl : statusMeta.label,
+                        tone: statusMeta.tone,
+                      },
+                    ]
+                  : []),
+              ] as MetaPill[],
+              trailing: (
+                <span className="text-[11px] font-semibold text-c-text-secondary">
+                  {selectedItem.updatedAt &&
+                  !Number.isNaN(new Date(selectedItem.updatedAt).getTime())
+                    ? new Date(selectedItem.updatedAt).toLocaleDateString(
+                        isPolish ? 'pl-PL' : 'en-US',
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        }
+                      )
+                    : '—'}
+                </span>
+              ),
+            }}
+            details={{
+              text: [
+                `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+                // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
+                // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
+                // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
+                // rekord leży w bazie.
+                ...(selectedItem.source === 'legacy' || selectedItem.legacy
+                  ? [
+                      `${t('rap.preview.source', 'Źródło')}: ${t(
+                        'rap.templates.legacySourceLine',
+                        'Starszy rejestr wzorców — działa bez zmian'
+                      )}`,
+                    ]
+                  : []),
+                ...(selectedItem.orphaned
+                  ? [
+                      t(
+                        'rap.templates.orphanedHint',
+                        'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                      ),
+                    ]
+                  : []),
+                `${t('rap.preview.category', 'Kategoria')}: ${
+                  TEMPLATE_CATEGORY_META[selectedItem.category]
+                    ? isPolish
+                      ? TEMPLATE_CATEGORY_META[selectedItem.category].labelPl
+                      : TEMPLATE_CATEGORY_META[selectedItem.category].label
+                    : selectedItem.category
+                }`,
+                ...(selectedItem.sectionCount != null
+                  ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
+                  : []),
+                ...(selectedItem.slideCount != null
+                  ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
+                  : []),
+                '',
+                selectedItem.description?.trim() || t('common.noDescription', 'No description'),
+              ].join('\n'),
+              onCopy: () => {
+                const categoryMeta = TEMPLATE_CATEGORY_META[selectedItem.category];
+                const categoryText = categoryMeta
+                  ? isPolish
+                    ? categoryMeta.labelPl
+                    : categoryMeta.label
+                  : selectedItem.category;
+                void navigator.clipboard?.writeText(
+                  `${selectedItem.title} — ${categoryText} (${selectedItem.status})`
+                );
+              },
+            }}
+            ai={{
+              hints: [
+                t('rap.preview.ai.improve', 'Suggest improvements'),
+                t('rap.preview.ai.summary', 'Summarize sections'),
+              ],
+              disabled: true,
+              disabledTooltip: t('common.comingSoon', 'Coming soon'),
+            }}
+            relations={
+              selectedItem.replacedByArtifactId
+                ? [
                     {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    }
-                  )
-                : '—'}
-            </span>
-          ),
-        }}
-        details={{
-          text: [
-            `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
-            // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
-            // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
-            // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
-            // rekord leży w bazie.
-            ...(selectedItem.source === 'legacy' || selectedItem.legacy
-              ? [
-                  `${t('rap.preview.source', 'Źródło')}: ${t(
-                    'rap.templates.legacySourceLine',
-                    'Starszy rejestr wzorców — działa bez zmian'
-                  )}`,
-                ]
-              : []),
-            ...(selectedItem.orphaned
-              ? [
-                  t(
-                    'rap.templates.orphanedHint',
-                    'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
-                  ),
-                ]
-              : []),
-            `${t('rap.preview.category', 'Kategoria')}: ${
-              TEMPLATE_CATEGORY_META[selectedItem.category]
-                ? isPolish
-                  ? TEMPLATE_CATEGORY_META[selectedItem.category].labelPl
-                  : TEMPLATE_CATEGORY_META[selectedItem.category].label
-                : selectedItem.category
-            }`,
-            ...(selectedItem.sectionCount != null
-              ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
-              : []),
-            ...(selectedItem.slideCount != null
-              ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
-              : []),
-            '',
-            selectedItem.description?.trim() || t('common.noDescription', 'No description'),
-          ].join('\n'),
-          onCopy: () => {
-            const categoryMeta = TEMPLATE_CATEGORY_META[selectedItem.category];
-            const categoryText = categoryMeta
-              ? isPolish
-                ? categoryMeta.labelPl
-                : categoryMeta.label
-              : selectedItem.category;
-            void navigator.clipboard?.writeText(
-              `${selectedItem.title} — ${categoryText} (${selectedItem.status})`
-            );
-          },
-        }}
-        ai={{
-          hints: [
-            t('rap.preview.ai.improve', 'Suggest improvements'),
-            t('rap.preview.ai.summary', 'Summarize sections'),
-          ],
-          disabled: true,
-          disabledTooltip: t('common.comingSoon', 'Coming soon'),
-        }}
-        relations={
-          selectedItem.replacedByArtifactId
-            ? [
-                {
-                  label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
-                },
-              ]
-            : []
-        }
-        actions={previewActions}
-      />
-    ) : null} />
+                      label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
+                    },
+                  ]
+                : []
+            }
+            actions={previewActions}
+          />
+        ) : null
+      }
+    />
   );
 
-  // ── Galeria ↔ Tabela (flag ON only) ──────────────────────────────────
+  // ── Galeria ↔ Tabela ─────────────────────────────────────────────────
+  // DEC-423d (właściciel, 06.09.2026): przełącznik przeniesiony do Menu 2 huba
+  // (`ReportsAndPresentationsHub.rightControls`) — stał tutaj we WŁASNYM rzędzie,
+  // czyli jako czwarta warstwa nagłówkowa nad tabelą (Menu 1 + 2 + 3 + on),
+  // dokładnie ten sam błąd, co pasek „Arkusze | Źródła danych" naprawiony w D-06.
+  // Ten komponent tylko czyta wybór (`innerView`).
   if (galleryEnabled) {
     return (
-      <div className="h-full flex flex-col overflow-hidden">
-        <div
-          data-testid="templates-gallery-toolbar"
-          className="shrink-0 flex flex-wrap items-center justify-end gap-2 border-b border-c-border-subtle bg-c-surface px-4 py-2"
-        >
-          <div
-            data-testid="templates-gallery-view-toggle"
-            className="flex shrink-0 items-center gap-1 rounded-token-sm border border-c-border bg-c-surface p-0.5"
-          >
-            {(
-              [
-                ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
-                ['table', Table2, t('rap.templates.viewTable', 'Tabela')],
-              ] as const
-            ).map(([id, Icon, label]) => (
-              <button
-                key={id}
-                type="button"
-                data-testid={`templates-gallery-view-toggle-${id}`}
-                onClick={() => setInnerView(id)}
-                aria-pressed={innerView === id}
-                className={`inline-flex h-7 items-center gap-1.5 rounded-token-xs px-2.5 text-[11px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                  innerView === id
-                    ? 'bg-c-surface-raised text-c-text shadow-token-card'
-                    : 'text-c-text-muted hover:text-c-text'
-                }`}
-              >
-                <Icon size={13} />
-                {label}
-              </button>
-            ))}
-          </div>
+      <div className="h-full flex overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+          {innerView === 'gallery' ? galleryView : tableView}
         </div>
-        <div className="flex-1 min-w-0 flex overflow-hidden">
-          <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-            {innerView === 'gallery' ? galleryView : tableView}
-          </div>
-          {previewAside}
-        </div>
+        {previewAside}
         {briefModal}
       </div>
     );

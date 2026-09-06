@@ -34,7 +34,13 @@ import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
+import { isTemplatesGalleryEnabled } from '@/utils/templatesGalleryFlag';
 
+// DEC-423 (właściciel, 06.09.2026): dwa kanoniczne dropdowny Menu 2 zamiast
+// bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
+// (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
+// nowego komponentu, per instrukcję dyżuru 1.1-M-1.
+import { Menu2PresetDropdown } from '../standard/Menu2PresetDropdown';
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -46,24 +52,27 @@ import {
   MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
+  Menu3Badge,
+  Menu3Chip,
 } from '../shared/ModuleMenu3';
-import { resolveTemplatesDeepLink } from './artifactNavigation';
-import { countRowsByStatus } from './statusCounts';
-// DEC-423 (właściciel, 06.09.2026): dwa kanoniczne dropdowny Menu 2 zamiast
-// bespoke popovera „Filters". Ten sam generyczny komponent, co Inicjatywy
-// (Menu2PresetDropdown, DEC-420) i Ocena (StatusDropdown, DEC-414) — zero
-// nowego komponentu, per instrukcję dyżuru 1.1-M-1.
-import { Menu2PresetDropdown } from '../Initiatives/Menu2PresetDropdown';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
+import { resolveTemplatesDeepLink } from './artifactNavigation';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { type SheetsSubView, SheetsTabContent } from './SheetsTabContent';
-import { TemplatesTabContent } from './TemplatesTabContent';
+import { countRowsByStatus, type MaterialsStatusCountScope } from './statusCounts';
 import { TemplateProvenanceApprovalDialog } from './TemplateProvenanceApprovalDialog';
-import type { RapTab } from './types';
+import {
+  TEMPLATE_SCOPE_ORDER,
+  TEMPLATE_TYPE_LABEL_PLURAL,
+  TEMPLATE_TYPE_ORDER,
+  templateScopeLabel,
+} from './TemplatesGalleryView';
+import { filterTemplatesBySearch, TemplatesTabContent } from './TemplatesTabContent';
+import type { RapTab, TemplateScope, TemplateType } from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, TEMPLATE_STATUS_META } from './types';
 import {
   useArtifactOutputsList,
@@ -195,41 +204,41 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     initialWorkbookTemplateId,
     initialOpenProvenance,
   } = useMemo(() => {
-      const params = new URLSearchParams(location.search || '');
-      const fromQuery = parseRapTabFromQuery(params.get('tab'));
-      // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały, obserwacja „martwy
-      // przewód"): kebab → „Edytuj" przy wzorcu Arkusza produkuje
-      // `?tab=templates&editWorkbookTemplateId=<kanoniczne id>`
-      // (`artifactNavigation.ts` `resolveTemplateEditPath`), ale w całym `src/`
-      // NIE BYŁO ani jednego czytelnika tego parametru — jedynie producent i
-      // jego test kontraktowy. Użytkownik klikał „Edytuj", adres się zmieniał,
-      // a builder nigdy się nie otwierał: zostawał na liście. Czytelnik
-      // (`resolveTemplatesDeepLink`) leży dziś OBOK producenta, w tym samym
-      // pliku i pod tym samym testem, żeby oba końce przewodu nie mogły znowu
-      // się rozjechać.
-      const deepLink = resolveTemplatesDeepLink(params);
-      let tab: RapTab;
-      const templatesView: TemplatesLibraryView = deepLink.templatesView;
-      if (deepLink.forcesTemplatesTab) {
-        tab = 'templates';
-      } else if (fromQuery) {
-        tab = fromQuery;
-      } else if (location.pathname.startsWith('/reports')) {
-        tab = 'outputs_documents';
-      } else if (location.pathname.startsWith('/presentations')) {
-        tab = 'presentations';
-      } else {
-        tab = 'outputs_all';
-      }
-      return {
-        initialTab: tab,
-        // Keep backward compatibility with older deep links using ?deck=<id>.
-        initialArtifactId: params.get('artifactId') || params.get('deck') || null,
-        initialTemplatesView: templatesView,
-        initialWorkbookTemplateId: deepLink.workbookTemplateId,
-        initialOpenProvenance: deepLink.openProvenance,
-      };
-    }, [location.pathname, location.search]);
+    const params = new URLSearchParams(location.search || '');
+    const fromQuery = parseRapTabFromQuery(params.get('tab'));
+    // ODBIÓR NA ŻYWO 05.09 (pakiet 10 · Materiały, obserwacja „martwy
+    // przewód"): kebab → „Edytuj" przy wzorcu Arkusza produkuje
+    // `?tab=templates&editWorkbookTemplateId=<kanoniczne id>`
+    // (`artifactNavigation.ts` `resolveTemplateEditPath`), ale w całym `src/`
+    // NIE BYŁO ani jednego czytelnika tego parametru — jedynie producent i
+    // jego test kontraktowy. Użytkownik klikał „Edytuj", adres się zmieniał,
+    // a builder nigdy się nie otwierał: zostawał na liście. Czytelnik
+    // (`resolveTemplatesDeepLink`) leży dziś OBOK producenta, w tym samym
+    // pliku i pod tym samym testem, żeby oba końce przewodu nie mogły znowu
+    // się rozjechać.
+    const deepLink = resolveTemplatesDeepLink(params);
+    let tab: RapTab;
+    const templatesView: TemplatesLibraryView = deepLink.templatesView;
+    if (deepLink.forcesTemplatesTab) {
+      tab = 'templates';
+    } else if (fromQuery) {
+      tab = fromQuery;
+    } else if (location.pathname.startsWith('/reports')) {
+      tab = 'outputs_documents';
+    } else if (location.pathname.startsWith('/presentations')) {
+      tab = 'presentations';
+    } else {
+      tab = 'outputs_all';
+    }
+    return {
+      initialTab: tab,
+      // Keep backward compatibility with older deep links using ?deck=<id>.
+      initialArtifactId: params.get('artifactId') || params.get('deck') || null,
+      initialTemplatesView: templatesView,
+      initialWorkbookTemplateId: deepLink.workbookTemplateId,
+      initialOpenProvenance: deepLink.openProvenance,
+    };
+  }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
   // Internal sub-view of the 'templates' tab — see kanon note above initialTab.
@@ -244,8 +253,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // outputs (server excludes drafts + dedupes). Toggle surfaces the "Robocze" set.
   const [showDrafts, setShowDrafts] = useState(false);
   /* D-06: wybor zbioru danych zakladki Sheets — podniesiony z wlasnego paska
-     SheetsTabContent do Menu 2 (patrz `rightControls`). */
-  const [sheetsSubView, setSheetsSubView] = useState<SheetsSubView>('list');
+     SheetsTabContent do Menu 2 (patrz `rightControls`). DEC-423d: segment jest
+     dzis UKRYTY (wraca w Fali 2 · 3.17), wiec stan trzyma sie na 'list'. */
+  const [sheetsSubView] = useState<SheetsSubView>('list');
+  /* Biblioteka wzorcow: Galeria | Tabela — podniesione z wlasnego rzedu w
+     tresci zakladki do Menu 2 (DEC-423d). */
+  const templatesGalleryEnabled = isTemplatesGalleryEnabled();
+  const [templatesInnerView, setTemplatesInnerView] = useState<'gallery' | 'table'>('gallery');
 
   useEffect(() => {
     const params = new URLSearchParams(location.search || '');
@@ -261,7 +275,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');
 
-  const { reports, loading: reportsLoading, error: reportsError, fetchReports } = useReports();
+  /* `useReports` zostaje wyłącznie dla `fetchReports` (pociąga listę przy
+     przełączeniu „Robocze"); sama lista raportów nie jest już czytana w hubie —
+     zakładka Dokumenty rysuje `artifactOutputRows`. */
+  const { fetchReports } = useReports();
   const {
     presentations,
     loading: presLoading,
@@ -659,195 +676,244 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     []
   );
 
+  /**
+   * ── Jedno źródło wierszy zakładki ─────────────────────────────────────────
+   * Liczniki dropdownów Menu 2 i chipów Menu 3 czytają DOKŁADNIE ten sam
+   * zbiór, co tabela zakładki. Regres 05.09 (licznik czytał `status`, tabela
+   * `statusKey`) wziął się z dwóch osobnych ścieżek — tutaj jest jedna.
+   */
+  const tabRows = useMemo<ReadonlyArray<Record<string, unknown>>>(() => {
+    const asRows = (rows: unknown[]) => rows as ReadonlyArray<Record<string, unknown>>;
+    if (activeTab === 'templates') return asRows(templates);
+    if (activeTab === 'presentations') return asRows(presentations);
+    if (activeTab === 'outputs_sheets') return asRows(sheetRows);
+    if (activeTab === 'outputs_documents')
+      return asRows(artifactOutputRows.filter((row) => row.kind === 'document'));
+    return asRows(artifactOutputRows);
+  }, [activeTab, artifactOutputRows, presentations, sheetRows, templates]);
+
+  const statusCountScope: MaterialsStatusCountScope =
+    activeTab === 'templates'
+      ? 'templates'
+      : activeTab === 'presentations'
+        ? 'presentations'
+        : activeTab === 'outputs_sheets'
+          ? 'outputs_sheets'
+          : activeTab === 'outputs_documents'
+            ? 'outputs_documents'
+            : 'outputs_all';
+
+  const tabStatusCounts = useMemo(
+    () => countRowsByStatus(tabRows, statusCountScope),
+    [tabRows, statusCountScope]
+  );
+
+  /**
+   * Pełna lista statusów zakładki — JEDNO źródło dla dropdownu Status (Menu 2)
+   * i chipów Menu 3, żeby etykieta tego samego statusu nie rozjechała się
+   * między dwoma menu.
+   */
+  const tabStatusOptions = useMemo(() => {
+    type StatusMetaEntry = { label: string; labelPl: string; dotColor: string };
+    const fromMeta = <K extends string>(meta: Record<K, StatusMetaEntry>) =>
+      (Object.entries(meta) as Array<[string, StatusMetaEntry]>).map(([value, m]) => ({
+        value,
+        label: isPolish ? m.labelPl || m.label : m.label,
+        dotColor: m.dotColor,
+      }));
+
+    if (activeTab === 'templates') return fromMeta(TEMPLATE_STATUS_META);
+    if (activeTab === 'presentations') return fromMeta(PRESENTATION_STATUS_META);
+    // Wszystkie / Dokumenty / Arkusze — wiersze `UnifiedOutputRow` niosą
+    // `statusKey` z pełnej siedmiostanowej ścieżki dostarczenia; REPORT_STATUS_META
+    // pokrywa tylko 4 z nich, więc lista jest budowana wprost.
+    return [
+      { value: 'draft', label: t('rap.filters.status.draft', 'Draft'), dotColor: 'bg-slate-400' },
+      {
+        value: 'generated',
+        label: t('rap.filters.status.generated', 'Generated'),
+        dotColor: 'bg-blue-400',
+      },
+      {
+        value: 'editing',
+        label: t('rap.filters.status.editing', 'Editing'),
+        dotColor: 'bg-amber-400',
+      },
+      {
+        value: 'ready',
+        label: isPolish
+          ? REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label
+          : REPORT_STATUS_META.ready.label,
+        dotColor: 'bg-emerald-400',
+      },
+      {
+        value: 'exported',
+        label: t('rap.filters.status.exported', 'Exported'),
+        dotColor: 'bg-blue-400',
+      },
+      {
+        value: 'shared',
+        label: t('rap.filters.status.shared', 'Shared'),
+        dotColor: 'bg-blue-400',
+      },
+      {
+        value: 'archived',
+        label: t('rap.filters.status.archived', 'Archived'),
+        dotColor: 'bg-slate-500',
+      },
+    ];
+  }, [activeTab, isPolish, t]);
+
+  /* Biblioteka wzorców — zbiór po samej wyszukiwarce; liczniki fasetowe chipów
+     Menu 3 (format/źródło) muszą być liczone na TYM zbiorze, nie na zbiorze po
+     filtrach, żeby licznik chipa nie zależał od filtra, który sam reprezentuje. */
+  const templatesAfterSearch = useMemo(
+    () => filterTemplatesBySearch(templates, searchQuery),
+    [templates, searchQuery]
+  );
+
   const rightControls = useMemo(() => {
     // Embedded architect views own their own chrome — the Template Library's
-    // drafts-toggle/status-filter controls don't apply to them.
+    // status-filter controls don't apply to them.
     if (activeTab === 'templates' && templatesView !== 'library') return null;
 
+    // `shrink-0 whitespace-nowrap` — P6_CZERWIEN_I_1440 §5 krok 4: bez tego
+    // przy 1440 px etykieta „Pochodzenie i prawa" łamie się na dwie linie i
+    // rozpycha cały pasek w pionie (zmierzone zrzutem 06.09).
     const chipBase =
-      'h-9 inline-flex items-center gap-2 rounded-full px-3 text-sm font-medium border transition-colors';
+      'h-9 inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-medium border transition-colors';
 
-    const draftsToggle = (
-      <button
-        type="button"
-        onClick={() => setShowDrafts((v) => !v)}
-        className={`${chipBase} ${
-          showDrafts
-            ? 'bg-c-accent-soft text-c-text border-c-border'
-            : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-        title={t('rap.filters.showDrafts', 'Pokaż robocze')}
-        aria-pressed={showDrafts}
-      >
-        <span>{t('rap.filters.showDrafts', 'Pokaż robocze')}</span>
-      </button>
-    );
+    /* D-06 (2026-07-27) segment „Arkusze | Źródła danych" stał TUTAJ.
+       DEC-423d (właściciel, 06.09.2026): zakładka Arkuszy ma mieć ten sam
+       układ Menu 2, co pozostałe — wybór zbioru „Źródła danych" wraca w Fali 2
+       (3.17). Kod przełącznika i `sheetsSubView` ZOSTAJĄ (SheetsTabContent
+       czyta `subView`), po prostu nic go dziś nie renderuje; `sheetsSubView`
+       trzyma się na 'list'. */
 
-    if (activeTab === 'outputs_sheets') {
-      /**
-       * D-06 (Piotr, P-28, 2026-07-27): „Mamy przycisk Sheets albo Data sources.
-       * Wrzuciłbym wybór — czy oglądamy arkusze, czy źródła danych — do drugiego
-       * menu po prawej stronie. Dzięki temu podniesiemy całą tabelę."
-       *
-       * Przełącznik stał wcześniej we WŁASNYM pasku wewnątrz `SheetsTabContent`,
-       * czyli jako czwarta warstwa nagłówkowa (Menu 1 + Menu 2 + Menu 3 + on).
-       * Kanon zna wyłącznie Menu 1/2/3, a wybór zbioru danych to filtr — więc
-       * jego miejsce jest tutaj, obok pozostałych kontrolek Menu 2.
-       */
-      const zakresy: Array<{ id: SheetsSubView; label: string }> = [
-        { id: 'list', label: t('rap.outputs.tabs.sheets', 'Sheets') },
-        { id: 'data', label: t('rap.sheets.subtabs.data', 'Data sources') },
-      ];
-      return (
-        <div className="relative flex items-center gap-2">
-          <div
-            role="tablist"
-            aria-label={t('rap.sheets.subtabs.label', 'Sheets sections')}
-            data-testid="rap-sheets-subtabs"
-            className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle p-1"
-          >
-            {zakresy.map((z) => (
-              <button
-                key={z.id}
-                type="button"
-                role="tab"
-                aria-selected={sheetsSubView === z.id}
-                onClick={() => setSheetsSubView(z.id)}
-                data-testid={`rap-sheets-subtab-${z.id}`}
-                className={`h-7 rounded-full px-3 text-xs font-medium transition-colors ${
-                  sheetsSubView === z.id
-                    ? 'bg-c-accent-soft text-c-text'
-                    : 'text-c-text-secondary hover:bg-c-surface-raised'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
-              >
-                {z.label}
-              </button>
-            ))}
-          </div>
-          {draftsToggle}
-        </div>
-      );
-    }
-
-    const isAggregateTab =
-      activeTab === 'outputs_all' || activeTab === 'outputs_mine' || activeTab === 'outputs_review';
-
-    // DEC-423: „Typ outputu" (kindOptions) usunięty — zerowa wartość dodana
-    // ponad chipy Menu 3 (Wszystkie/Dokument/Prezentacja/Tabela), obie ścieżki
-    // pisały do tej samej kolumny `outputKind`. Status i Widoczność dla
-    // zakładek Wszystkie/Moje/Do przeglądu były JEDYNYM miejscem filtrowania
-    // (Menu 3 dla tych zakładek pokazuje Kind, nie Status) — stąd survive
-    // jako 2 kanoniczne dropdowny Menu 2. Dla Szablonów/Dokumentów/Prezentacji
-    // status filtruje już Menu 3 (`commandRowLeftSlot` niżej) — bez duplikatu.
-    const statusOptions = isAggregateTab
-      ? ([
-          {
-            value: 'draft',
-            label: t('rap.filters.status.draft', 'Draft'),
-            dotColor: 'bg-slate-400',
-          },
-          {
-            value: 'generated',
-            label: t('rap.filters.status.generated', 'Generated'),
-            dotColor: 'bg-blue-400',
-          },
-          {
-            value: 'editing',
-            label: t('rap.filters.status.editing', 'Editing'),
-            dotColor: 'bg-amber-400',
-          },
-          {
-            value: 'ready',
-            label: isPolish
-              ? REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label
-              : REPORT_STATUS_META.ready.label,
-            dotColor: 'bg-emerald-400',
-          },
-          {
-            value: 'exported',
-            label: t('rap.filters.status.exported', 'Exported'),
-            dotColor: 'bg-blue-400',
-          },
-          {
-            value: 'shared',
-            label: t('rap.filters.status.shared', 'Shared'),
-            dotColor: 'bg-blue-400',
-          },
-          {
-            value: 'archived',
-            label: t('rap.filters.status.archived', 'Archived'),
-            dotColor: 'bg-slate-500',
-          },
-        ] as Array<{ value: string; label: string; dotColor: string }>)
-      : [];
-
-    const visibilityOptions = isAggregateTab
-      ? ([
-          {
-            value: 'private',
-            label: t('rap.outputs.visibility.private', 'Private'),
-          },
-          {
-            value: 'review_shared',
-            label: t('rap.outputs.visibility.reviewShared', 'Review shared'),
-          },
-          {
-            value: 'project',
-            label: t('rap.outputs.visibility.project', 'Project'),
-          },
-          {
-            value: 'organization',
-            label: t('rap.outputs.visibility.organization', 'Organization'),
-          },
-          {
-            value: 'demo',
-            label: t('rap.outputs.visibility.demo', 'Demo'),
-          },
-        ] as Array<{ value: string; label: string }>)
-      : [];
-
-    // Documents are document artifacts. Historical R1-R4 management-report
-    // presets belong to reporting, not to the Materials document library.
-    const reportCanon = null;
-
+    /**
+     * DEC-423 (właściciel, 06.09.2026): „to filtrowanie w prawym górnym rogu
+     * trzeba doprowadzić do standardu, czyli rozwijanej listy. Zostają dwa
+     * rozwijane filtry, a to dziwne coś usuń." + DEC-423b/c/d (16:25–16:41):
+     * ten SAM układ Menu 2 w każdej zakładce.
+     *
+     * WYMIARY (rozstrzygnięcie 1.1-M-2, patrz meldunek):
+     *  · Status  = stan dokumentu (`status`/`statusKey`) + pozycja „Robocze",
+     *    która przejęła rolę pstryczka „Pokaż robocze" (zakres POBRANIA:
+     *    `?include=drafts`, serwerowy filtr śmieci M17 — NIE jest to status
+     *    „Szkic", patrz `isDraftHeuristicTitle` w artifactRegistryService.ts).
+     *  · Widoczność = kto i na jakim etapie obiegu widzi artefakt: kolumna
+     *    `visibilityScope` ORAZ `publishState` (dawne „Review" z popovera).
+     *    To jeden wymiar udostępniania, więc jeden dropdown; oba zestawy
+     *    opcji filtruje `OutputsAggregateTabContent`.
+     */
     const activeStatusFilter = activeFilters.find((f) => f.column === 'status');
-    const activeVisibilityFilter = activeFilters.find((f) => f.column === 'visibilityScope');
-
-    // Liczniki per opcja — z tego samego źródła co Menu 3 (kindChips niżej),
-    // czyli `artifactOutputRows` już przefiltrowane pod libraryView (all/mine/review).
-    const statusCountsByKey = artifactOutputRows.reduce(
-      (acc, r) => {
-        const key = r.statusKey;
-        if (key) acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-    const visibilityCountsByKey = artifactOutputRows.reduce(
-      (acc, r) => {
-        const key = r.governance?.visibilityScope;
-        if (key) acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
+    const activeVisibilityFilter = activeFilters.find(
+      (f) => f.column === 'visibilityScope' || f.column === 'publishState'
     );
 
+    const statusDropdownValue = showDrafts
+      ? '__drafts__'
+      : activeStatusFilter
+        ? String(activeStatusFilter.value)
+        : '__all__';
+
+    // Martwe opcje (0 wierszy) nie wchodzą do listy — chyba że są aktualnie
+    // wybrane, żeby wybór nie zniknął spod kursora.
     const statusDropdownOptions = [
-      { id: '__all__', label: t('common.all', 'All'), count: artifactOutputRows.length },
-      ...statusOptions.map((o) => ({
-        id: o.value,
-        label: o.label,
-        count: statusCountsByKey[o.value] || 0,
-      })),
+      { id: '__all__', label: t('common.all', 'All'), count: tabRows.length },
+      { id: '__drafts__', label: t('rap.filters.drafts', 'Robocze') },
+      ...tabStatusOptions
+        .map((o) => ({
+          id: o.value,
+          label: o.label,
+          count: tabStatusCounts[String(o.value).toLowerCase()] || 0,
+        }))
+        .filter((o) => o.count > 0 || o.id === statusDropdownValue),
     ];
+
+    const visibilityOptions = [
+      {
+        column: 'visibilityScope',
+        value: 'private',
+        label: t('rap.outputs.visibility.private', 'Private'),
+      },
+      {
+        column: 'visibilityScope',
+        value: 'review_shared',
+        label: t('rap.outputs.visibility.reviewShared', 'Review shared'),
+      },
+      {
+        column: 'visibilityScope',
+        value: 'project',
+        label: t('rap.outputs.visibility.project', 'Project'),
+      },
+      {
+        column: 'visibilityScope',
+        value: 'organization',
+        label: t('rap.outputs.visibility.organization', 'Organization'),
+      },
+      { column: 'visibilityScope', value: 'demo', label: t('rap.outputs.visibility.demo', 'Demo') },
+      // Dawne „Review" z popovera (DEC-423, przywrócone jako część wymiaru
+      // widoczności — nie jako trzeci dropdown).
+      {
+        column: 'publishState',
+        value: 'private_draft',
+        label: t('rap.outputs.review.privateDraft', 'Private draft'),
+      },
+      {
+        column: 'publishState',
+        value: 'reviewable_share',
+        label: t('rap.outputs.review.reviewableShare', 'Reviewable share'),
+      },
+      {
+        column: 'publishState',
+        value: 'in_review',
+        label: t('rap.outputs.review.inReview', 'In review'),
+      },
+      {
+        column: 'publishState',
+        value: 'approved',
+        label: t('rap.outputs.review.approved', 'Approved'),
+      },
+      {
+        column: 'publishState',
+        value: 'published',
+        label: t('rap.outputs.review.published', 'Published'),
+      },
+      {
+        column: 'publishState',
+        value: 'archived',
+        label: t('rap.outputs.review.archived', 'Archived'),
+      },
+    ] as const;
+
+    const governanceCount = (column: string, value: string) =>
+      tabRows.filter((row) => {
+        const governance = (row as { governance?: Record<string, unknown> }).governance;
+        return String(governance?.[column] ?? '') === value;
+      }).length;
+
+    const visibilityDropdownValue = activeVisibilityFilter
+      ? `${activeVisibilityFilter.column}:${activeVisibilityFilter.value}`
+      : '__all__';
+
     const visibilityDropdownOptions = [
-      { id: '__all__', label: t('common.all', 'All'), count: artifactOutputRows.length },
-      ...visibilityOptions.map((o) => ({
-        id: o.value,
-        label: o.label,
-        count: visibilityCountsByKey[o.value] || 0,
-      })),
+      { id: '__all__', label: t('common.all', 'All'), count: tabRows.length },
+      ...visibilityOptions
+        .map((o) => ({
+          id: `${o.column}:${o.value}`,
+          label: o.label,
+          count: governanceCount(o.column, o.value),
+        }))
+        .filter((o) => o.count > 0 || o.id === visibilityDropdownValue),
     ];
+
+    /* Biblioteka wzorców NIE dostaje dropdownu „Widoczność": jej wymiar
+       widoczności to `scope` (Osobisty/System/Organizacja/Nieznany), a ten —
+       decyzją właściciela z 06.09 („ten cały pasek powinien wjechać do menu
+       trzeciego") — mieszka w Menu 3 razem z formatami. Drugi, równoległy
+       dropdown o tym samym znaczeniu byłby dubletem. */
+    const showVisibilityDropdown = activeTab !== 'templates';
 
     return (
       <div className="relative flex items-center gap-2">
@@ -857,77 +923,135 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onClick={() => setTemplateProvenanceOpen(true)}
             className={`${chipBase} bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
             title={t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}
+            data-testid="materials-provenance-btn"
           >
             <ShieldCheck size={16} />
             <span>{t('rap.templates.provenanceQueue', 'Pochodzenie i prawa')}</span>
           </button>
         ) : null}
-        {draftsToggle}
-        {reportCanon}
-        {/* DEC-423 (właściciel, 06.09.2026): „to filtrowanie w prawym górnym
-            rogu trzeba doprowadzić do standardu, czyli rozwijanej listy.
-            Zostają dwa rozwijane filtry, a to dziwne coś usuń." — bespoke
-            popover „Filters" zastąpiony dwoma kanonicznymi dropdownami
-            (Menu2PresetDropdown, ten sam wzorzec co Inicjatywy/Ocena). */}
-        {statusOptions.length > 0 ? (
+        <Menu2PresetDropdown
+          className="shrink-0"
+          compact
+          label={t('rap.filters.statusLabel', 'Status')}
+          options={statusDropdownOptions}
+          value={statusDropdownValue}
+          onChange={(id) => {
+            if (id === '__drafts__') {
+              setShowDrafts(true);
+              setSinglePreset('status', null);
+              return;
+            }
+            setShowDrafts(false);
+            if (id === '__all__') {
+              setSinglePreset('status', null);
+              return;
+            }
+            const opt = tabStatusOptions.find((o) => o.value === id);
+            setSinglePreset('status', id, opt?.label, opt?.dotColor);
+          }}
+          data-testid="materials-status-dropdown"
+        />
+        {showVisibilityDropdown ? (
           <Menu2PresetDropdown
-            label={t('rap.filters.statusLabel', 'Status')}
-            options={statusDropdownOptions}
-            value={activeStatusFilter ? String(activeStatusFilter.value) : '__all__'}
-            onChange={(id) => {
-              if (id === '__all__') {
-                setSinglePreset('status', null);
-                return;
-              }
-              const opt = statusOptions.find((o) => o.value === id);
-              setSinglePreset('status', id, opt?.label, opt?.dotColor);
-            }}
-            data-testid="materials-status-dropdown"
-          />
-        ) : null}
-        {visibilityOptions.length > 0 ? (
-          <Menu2PresetDropdown
+            className="shrink-0"
+            compact
             label={t('rap.outputs.columns.visibility', 'Visibility')}
             options={visibilityDropdownOptions}
-            value={activeVisibilityFilter ? String(activeVisibilityFilter.value) : '__all__'}
+            value={visibilityDropdownValue}
             onChange={(id) => {
-              if (id === '__all__') {
-                setSinglePreset('visibilityScope', null);
-                return;
-              }
-              const opt = visibilityOptions.find((o) => o.value === id);
-              setSinglePreset('visibilityScope', id, opt?.label, 'bg-slate-400');
+              setSinglePreset('visibilityScope', null);
+              setSinglePreset('publishState', null);
+              if (id === '__all__') return;
+              const opt = visibilityOptions.find((o) => `${o.column}:${o.value}` === id);
+              if (!opt) return;
+              setSinglePreset(opt.column, opt.value, opt.label, 'bg-slate-400');
             }}
             data-testid="materials-visibility-dropdown"
           />
+        ) : null}
+        {/* Biblioteka wzorców — pstryczek Galeria|Tabela zamiast standardowego
+            pstryczka lista/kafle (DEC-423d). Stał wcześniej we WŁASNYM rzędzie
+            w treści zakładki, czyli jako czwarta warstwa nagłówkowa. */}
+        {activeTab === 'templates' && templatesGalleryEnabled ? (
+          /* Kształt 1:1 z kanonicznym pstryczkiem widoku (`ModuleNavBar`,
+             lista/kafle): same ikony, bez etykiet. Pomiar 1440 px z 06.09:
+             wersja z podpisami („Galeria"/„Tabela", 170 px) wypychała CTA
+             „Nowy wzorzec" poza pasek (koniec 1450 px przy krawędzi 1392).
+             Nazwy zostają w `title`/`aria-label`. */
+          <div
+            data-testid="templates-gallery-view-toggle"
+            role="group"
+            aria-label={t('rap.templates.viewToggle', 'Widok biblioteki wzorców')}
+            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-c-border-subtle p-1"
+          >
+            {(
+              [
+                ['gallery', LayoutGrid, t('rap.templates.viewGallery', 'Galeria')],
+                ['table', Table2, t('rap.templates.viewTable', 'Tabela')],
+              ] as const
+            ).map(([id, Icon, label]) => (
+              <button
+                key={id}
+                type="button"
+                data-testid={`templates-gallery-view-toggle-${id}`}
+                onClick={() => setTemplatesInnerView(id)}
+                aria-pressed={templatesInnerView === id}
+                aria-label={label}
+                title={label}
+                className={`inline-flex items-center rounded-full p-1.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+                  templatesInnerView === id
+                    ? 'bg-state-selected text-c-text'
+                    : 'text-c-text-secondary hover:bg-state-hover'
+                }`}
+              >
+                <Icon size={16} />
+              </button>
+            ))}
+          </div>
         ) : null}
       </div>
     );
   }, [
     activeFilters,
     activeTab,
-    artifactOutputRows,
-    isPolish,
     setSinglePreset,
-    sheetsSubView,
     showDrafts,
     t,
+    tabRows,
+    tabStatusCounts,
+    tabStatusOptions,
+    templatesGalleryEnabled,
+    templatesInnerView,
     templatesView,
     setTemplateProvenanceOpen,
   ]);
 
   const commandRowLeftSlot = useMemo(() => {
     // Same rationale as rightControls above — embedded architect views have
-    // no filterable list, so Menu 3 status chips would apply to nothing.
+    // no filterable list, so Menu 3 chips would apply to nothing.
     if (activeTab === 'templates' && templatesView !== 'library') return null;
 
-    const chipBase = '';
     const chipActive = MENU_3_CHIP_ACTIVE;
     const chipInactive = MENU_3_CHIP_INACTIVE;
-    const badgeBase = '';
     const badgeActive = MENU_3_BADGE_ACTIVE;
     const badgeInactive = MENU_3_BADGE_INACTIVE;
 
+    const allChip = (active: boolean, count: number, onClick: () => void) => (
+      <button
+        type="button"
+        onClick={onClick}
+        className={active ? chipActive : chipInactive}
+        title={t('common.all', 'All')}
+        data-testid="materials-menu3-chip-all"
+      >
+        <span className={MENU_3_ALL_DOT_CLASS} />
+        <span>{t('common.all', 'All')}</span>
+        <span className={active ? badgeActive : badgeInactive}>{count}</span>
+      </button>
+    );
+
+    /* Wszystkie — chipy TYPU materiału (Dokument/Prezentacja/Tabela).
+       Właściciel ich nie kwestionował, zostają bez zmian. */
     if (
       activeTab === 'outputs_all' ||
       activeTab === 'outputs_mine' ||
@@ -951,38 +1075,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           label: t('rap.outputs.kind.presentation', 'Presentation'),
           dot: 'bg-blue-400',
         },
-        {
-          value: 'sheet',
-          label: t('rap.outputs.kind.sheet', 'Sheet'),
-          dot: 'bg-emerald-400',
-        },
+        { value: 'sheet', label: t('rap.outputs.kind.sheet', 'Sheet'), dot: 'bg-emerald-400' },
       ];
       const kindActive = (v: string) =>
         activeFilters.some((f) => f.column === 'outputKind' && f.value === v);
 
       return (
-        <div className={MENU_3_LEFT_CLASS}>
-          <button
-            type="button"
-            onClick={() => setSinglePreset('outputKind', null)}
-            className={`${chipBase} ${
-              !activeFilters.some((f) => f.column === 'outputKind') ? chipActive : chipInactive
-            }`}
-            title={t('common.all', 'All')}
-          >
-            <span className={MENU_3_ALL_DOT_CLASS} />
-            <span>{t('common.all', 'All')}</span>
-            <span
-              className={`${badgeBase} ${
-                !activeFilters.some((f) => f.column === 'outputKind') ? badgeActive : badgeInactive
-              }`}
-            >
-              {artifactOutputRows.length}
-            </span>
-          </button>
+        <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
+          {allChip(
+            !activeFilters.some((f) => f.column === 'outputKind'),
+            artifactOutputRows.length,
+            () => setSinglePreset('outputKind', null)
+          )}
           {kindChips.map((c) => {
             const active = kindActive(c.value);
-            const count = kindCounts[c.value] || 0;
             return (
               <button
                 key={c.value}
@@ -990,13 +1096,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 onClick={() =>
                   setSinglePreset('outputKind', active ? null : c.value, c.label, c.dot)
                 }
-                className={`${chipBase} ${active ? chipActive : chipInactive}`}
+                className={active ? chipActive : chipInactive}
                 title={c.label}
+                data-testid={`materials-menu3-chip-${c.value}`}
               >
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span>{c.label}</span>
-                <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
-                  {count}
+                <span className={active ? badgeActive : badgeInactive}>
+                  {kindCounts[c.value] || 0}
                 </span>
               </button>
             );
@@ -1005,102 +1112,128 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       );
     }
 
-    if (activeTab === 'outputs_sheets') {
+    /**
+     * Biblioteka wzorców — DEC-423d (właściciel, 06.09.2026): „ten cały pasek
+     * powinien wjechać do menu trzeciego; w Menu 2 zostawić tylko Pochodzenie
+     * i prawa". Pasek formatów i źródeł stał w OSOBNYM rzędzie w treści
+     * zakładki (wewnątrz `TemplatesGalleryView`) — czyli poza kanonem Menu 1/2/3
+     * i tylko w widoku Galerii, mimo że filtruje oba widoki. Tutaj jest jeden
+     * rząd Menu 3, wspólny dla Galerii i Tabeli. Osiem chipów STATUSU, które
+     * stały w tym miejscu, przeniosło się do dropdownu Status w Menu 2.
+     */
+    if (activeTab === 'templates') {
+      const currentType = activeFilters.find((f) => f.column === 'type')?.value as
+        | TemplateType
+        | undefined;
+      const currentScope = activeFilters.find((f) => f.column === 'scope')?.value as
+        | TemplateScope
+        | undefined;
+
+      const typeCount = (type: TemplateType | null) =>
+        templatesAfterSearch.filter(
+          (item) =>
+            (type === null || item.type === type) &&
+            (currentScope === undefined || item.scope === currentScope)
+        ).length;
+      const scopeCount = (scope: TemplateScope | null) =>
+        templatesAfterSearch.filter(
+          (item) =>
+            (scope === null || item.scope === scope) &&
+            (currentType === undefined || item.type === currentType)
+        ).length;
+
       return (
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className={MENU_3_CHIP_ACTIVE}>
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>{t('rap.outputs.kind.sheet', 'Sheets')}</span>
-            <span className={MENU_3_BADGE_ACTIVE}>{sheetRows.length}</span>
-          </span>
+        <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
+          <Menu3Chip
+            active={!currentType}
+            onClick={() => setSinglePreset('type', null)}
+            data-testid="materials-menu3-chip-all"
+          >
+            {t('rap.templates.allFormats', 'Wszystkie formaty')}
+            <Menu3Badge count={typeCount(null)} active={!currentType} />
+          </Menu3Chip>
+          {TEMPLATE_TYPE_ORDER.map((type) => (
+            <Menu3Chip
+              key={type}
+              active={currentType === type}
+              onClick={() =>
+                setSinglePreset(
+                  'type',
+                  currentType === type ? null : type,
+                  TEMPLATE_TYPE_LABEL_PLURAL[type]
+                )
+              }
+              data-testid={`materials-menu3-chip-type-${type}`}
+            >
+              {TEMPLATE_TYPE_LABEL_PLURAL[type]}
+              <Menu3Badge count={typeCount(type)} active={currentType === type} />
+            </Menu3Chip>
+          ))}
+          <span className="mx-1.5 h-4 w-px bg-c-border" aria-hidden="true" />
+          <Menu3Chip
+            active={!currentScope}
+            onClick={() => setSinglePreset('scope', null)}
+            data-testid="materials-menu3-chip-all-scopes"
+          >
+            {t('rap.templates.allScopes', 'Wszystkie źródła')}
+            <Menu3Badge count={scopeCount(null)} active={!currentScope} />
+          </Menu3Chip>
+          {TEMPLATE_SCOPE_ORDER.map((scope) => (
+            <Menu3Chip
+              key={scope}
+              active={currentScope === scope}
+              onClick={() =>
+                setSinglePreset(
+                  'scope',
+                  currentScope === scope ? null : scope,
+                  templateScopeLabel(t, scope)
+                )
+              }
+              data-testid={`materials-menu3-chip-scope-${scope}`}
+            >
+              {templateScopeLabel(t, scope)}
+              <Menu3Badge count={scopeCount(scope)} active={currentScope === scope} />
+            </Menu3Chip>
+          ))}
         </div>
       );
     }
 
-    const items =
-      activeTab === 'templates'
-        ? templates
-        : activeTab === 'outputs_documents'
-          ? artifactOutputRows.filter((row) => row.kind === 'document')
-          : presentations;
-
-    // Liczniki statusów — patrz `statusCounts.ts` (pomiar 05.09: licznik czytał
-    // `status`, a wiersze „Dokumentów" trzymają status w `statusKey`, więc każdy
-    // chip pokazywał 0 przy 79 rekordach).
-    const counts = countRowsByStatus(
-      items as unknown as ReadonlyArray<Record<string, unknown>>,
-      activeTab === 'outputs_documents'
-        ? 'outputs_documents'
-        : activeTab === 'templates'
-          ? 'templates'
-          : 'presentations'
-    );
-
-    // ★ Chipy dla 'templates' MUSZĄ pokrywać wszystkie statusy realnie zapisywane
-    // przez `mapTemplateStatus` (useRapData.ts): approved/published/draft/deprecated/unknown.
-    // Zahardkodowana lista active/draft/deprecated/archived była ślepa na
-    // published/approved — większość szablonów typu Report (report_builder_templates)
-    // ma status 'published', więc chipy pokazywały 0/0/0/0 mimo realnej zawartości.
-    // Wzorzec identyczny jak outputs_documents/outputs_presentations poniżej.
-    const statusChips =
-      activeTab === 'templates'
-        ? (Object.entries(TEMPLATE_STATUS_META).map(([value, meta]) => ({
-            value,
-            label: isPolish ? meta.labelPl || meta.label : meta.label,
-            dot: meta.dotColor,
-          })) as Array<{ value: string; label: string; dot: string }>)
-        : activeTab === 'outputs_documents'
-          ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
-              value,
-              label: isPolish ? meta.labelPl || meta.label : meta.label,
-              dot: meta.dotColor,
-            })) as Array<{ value: string; label: string; dot: string }>)
-          : (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
-              value,
-              label: isPolish ? meta.labelPl || meta.label : meta.label,
-              dot: meta.dotColor,
-            })) as Array<{ value: string; label: string; dot: string }>);
-
-    const isActive = (value: string) =>
+    /**
+     * Dokumenty · Prezentacje · Arkusze — DEC-423c (właściciel, 06.09.2026):
+     * „tak jak w Dokumentach", czyli JEDEN rząd o tym samym kształcie, ≤3
+     * chipy (Menu 2 ma nad nim dropdown z pełną listą statusów). Wcześniej:
+     * Dokumenty 5 chipów, Prezentacje 7, Arkusze martwy chip „Tabela 26"
+     * (nieklikalny licznik, który niczego nie filtrował).
+     */
+    const MENU_3_STATUSES = ['draft', 'ready'];
+    const statusActive = (value: string) =>
       activeFilters.some((f) => f.column === 'status' && String(f.value).toLowerCase() === value);
 
     return (
-      <div className={MENU_3_LEFT_CLASS}>
-        <button
-          type="button"
-          onClick={() => setSinglePreset('status', null)}
-          className={`${chipBase} ${
-            !activeFilters.some((f) => f.column === 'status') ? chipActive : chipInactive
-          }`}
-          title={t('common.all', 'All')}
-        >
-          <span className={MENU_3_ALL_DOT_CLASS} />
-          <span>{t('common.all', 'All')}</span>
-          <span
-            className={`${badgeBase} ${
-              !activeFilters.some((f) => f.column === 'status') ? badgeActive : badgeInactive
-            }`}
-          >
-            {items.length}
-          </span>
-        </button>
-
-        {statusChips.map((c) => {
-          const active = isActive(String(c.value).toLowerCase());
-          const key = String(c.value);
-          const count = counts[String(c.value).toLowerCase()] || 0;
+      <div className={MENU_3_LEFT_CLASS} data-testid="materials-menu3-row">
+        {allChip(!activeFilters.some((f) => f.column === 'status'), tabRows.length, () =>
+          setSinglePreset('status', null)
+        )}
+        {MENU_3_STATUSES.map((value) => {
+          const option = tabStatusOptions.find((o) => o.value === value);
+          if (!option) return null;
+          const active = statusActive(value);
           return (
             <button
-              key={key}
+              key={value}
               type="button"
-              onClick={() => setSinglePreset('status', active ? null : key, c.label, c.dot)}
-              className={`${chipBase} ${active ? chipActive : chipInactive}`}
-              title={c.label}
+              onClick={() =>
+                setSinglePreset('status', active ? null : value, option.label, option.dotColor)
+              }
+              className={active ? chipActive : chipInactive}
+              title={option.label}
+              data-testid={`materials-menu3-chip-${value}`}
             >
-              <span className={`w-2 h-2 rounded-full ${c.dot}`} />
-              <span>{c.label}</span>
-              <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
-                {count}
+              <span className={`w-2 h-2 rounded-full ${option.dotColor}`} />
+              <span>{option.label}</span>
+              <span className={active ? badgeActive : badgeInactive}>
+                {tabStatusCounts[value] || 0}
               </span>
             </button>
           );
@@ -1111,11 +1244,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     activeFilters,
     activeTab,
     artifactOutputRows,
-    presentations,
-    reports,
     setSinglePreset,
     t,
-    templates,
+    tabRows,
+    tabStatusCounts,
+    tabStatusOptions,
+    templatesAfterSearch,
     templatesView,
   ]);
 
@@ -1224,10 +1358,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         }
         return (
           <TemplatesTabContent
-            viewMode={viewMode}
+            viewMode="table"
+            innerView={templatesInnerView}
             searchQuery={searchQuery}
             activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
             templates={templates}
             loading={templatesLoading}
             error={templatesError}
@@ -1297,8 +1431,19 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // `onNewItem` button.
   // 2026-09-02: dropped the "Generator szablonów (Arkusz)" entry — see the
   // kanon note above `tabs` for why (owner decyzja „nie" on gen-excel-templates-tab).
+  /**
+   * DEC-423d (właściciel, 06.09.2026): „Nowy wzorzec" jest ZAMROŻONY do Fali 2 —
+   * dokładnie tak, jak „Nowy audyt" (DEC-417): natywnie `disabled` + powód w
+   * tooltipie (`StandardPrimaryCta.disabled`/`disabledReason`), nie znika i nie
+   * udaje działającego. Split-button z wejściem do Architekta szablonów ZOSTAJE
+   * w kodzie (nie kasujemy) — po prostu nic go dziś nie renderuje. Typ `boolean`
+   * (nie literal `true`) świadomie: to jeden przełącznik do odmrożenia w Fali 2.
+   */
+  const TEMPLATES_CTA_FROZEN: boolean = true;
+  const TEMPLATES_CTA_FROZEN_REASON = t('rap.templates.ctaFrozen', 'Tworzenie wzorców w fali 2');
+
   const templatesLibraryCta =
-    activeTab === 'templates' && templatesView === 'library'
+    !TEMPLATES_CTA_FROZEN && activeTab === 'templates' && templatesView === 'library'
       ? (() => {
           const showDeckArchitect = isDeckArchitectEnabled();
           if (!showDeckArchitect) return undefined;
@@ -1338,17 +1483,31 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={
+        primaryCta={
           // Sheets odblokowane 2026-07-24 (item 3) — dostaje tablicę jak
           // Documents/Presentations/All. Embedded architect views (templatesView
           // !== 'library') to NARZĘDZIA bez semantyki „nowy" — CTA ukryte, tak
           // jak wcześniej dla osobnych zakładek template_architect/workbook_templates.
-          activeTab === 'templates' && templatesView !== 'library' ? undefined : handleNewItem
+          // DEC-423d: kanoniczny `primaryCta` (zamiast `onNewItem`) — tylko on
+          // umie stan ZAMROŻONY („Nowy wzorzec", jak „Nowy audyt" w Audytach).
+          activeTab === 'templates' && templatesView !== 'library'
+            ? undefined
+            : {
+                label: ctaLabels[activeTab],
+                onClick: handleNewItem,
+                testId: 'outputs-new-btn',
+                disabled: activeTab === 'templates' && TEMPLATES_CTA_FROZEN,
+                disabledReason:
+                  activeTab === 'templates' && TEMPLATES_CTA_FROZEN
+                    ? TEMPLATES_CTA_FROZEN_REASON
+                    : undefined,
+              }
         }
-        newItemLabel={ctaLabels[activeTab]}
-        newItemTestId="outputs-new-btn"
         primaryCtaContent={templatesLibraryCta}
-        viewModes={['table', 'grid']}
+        /* Biblioteka wzorców steruje widokiem własnym pstryczkiem Galeria|Tabela
+           w Menu 2 (DEC-423d), więc standardowy segment lista/kafle jest tam
+           ukryty (jeden tryb ⇒ ModuleNavBar go nie rysuje). */
+        viewModes={activeTab === 'templates' ? ['table'] : ['table', 'grid']}
         filterControls={rightControls}
         commandRowContent={commandRowContent}
       >

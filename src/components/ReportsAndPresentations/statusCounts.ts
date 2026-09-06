@@ -15,11 +15,27 @@
  * Szablony i prezentacje mają realne pole `status`, więc pole źródłowe jest
  * wybierane jawnie, zamiast zgadywane jedno dla wszystkich.
  */
-export type MaterialsStatusCountScope = 'outputs_documents' | 'templates' | 'presentations';
+/**
+ * DEC-423b/c (06.09.2026): dropdown Status i chipy Menu 3 stoją nad KAŻDĄ
+ * zakładką Materiałów, więc lista zakresów objęła też Wszystkie i Arkusze —
+ * oba to `UnifiedOutputRow`, czyli status w `statusKey` (tak jak Dokumenty).
+ */
+export type MaterialsStatusCountScope =
+  | 'outputs_all'
+  | 'outputs_documents'
+  | 'outputs_sheets'
+  | 'templates'
+  | 'presentations';
+
+const STATUS_KEY_SCOPES: ReadonlySet<MaterialsStatusCountScope> = new Set([
+  'outputs_all',
+  'outputs_documents',
+  'outputs_sheets',
+]);
 
 /** Które pole niesie status w danym zbiorze wierszy. */
 export function statusFieldForScope(scope: MaterialsStatusCountScope): 'statusKey' | 'status' {
-  return scope === 'outputs_documents' ? 'statusKey' : 'status';
+  return STATUS_KEY_SCOPES.has(scope) ? 'statusKey' : 'status';
 }
 
 export function countRowsByStatus(
