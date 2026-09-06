@@ -1,6 +1,6 @@
 ---
 doc_id: sterowanie-kart-n-i-ai
-status: draft-to-confirm (DEC-407, 06.09.2026, słowo właściciela przy przejściu Mojej Pracy)
+status: CONFIRMED (DEC-407 potwierdzona słowem właściciela 06.09.2026 13:47 przy karcie sesji narzędzia: „tutaj też powinniśmy mieć WorkWithAI, który będzie rozwijał listę analogicznie jak wcześniej — uzupełnienie całości, uzupełnienie karty i analizę, czyli propozycję; teraz jest jakaś archaiczna formuła”; wdrożenie w pojemniku 1 jako część S1.13)
 truth_type: ui-standard (uzupełnienie SPEC-A / SPEC-N)
 author: CTO (Fable) ze słów właściciela
 ---
