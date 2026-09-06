@@ -241,8 +241,8 @@
           "tresc": "Strażniki zielone, dług nie rośnie, tsc serwera OK, 0 zmodyfikowanych migracji",
           "kto": "nadzorca",
           "artefakt": "wynik komend w rejestrze",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "tak",
+          "dowod": "06.09 10:03 na 15c7fffb87: check-list-canon 361/364 (dług spadł, baseline zatwierdzony 6a47d23bf5), check-artefakt 8/8, Teresa 13/3/0, i18n ratchet 261 (cel ≤300), 0 zmodyfikowanych migracji od 8e2d116d1f, tsc serwera OK; powtórzyć przed tagiem w 1.9"
         },
         {
           "nr": "S1.9",
