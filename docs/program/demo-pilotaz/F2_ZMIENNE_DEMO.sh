@@ -91,11 +91,7 @@ railway variables --set "VITE_IDEA_FINANCIAL_CASE=true" --skip-deploys --environ
 railway variables --set "VITE_INITIATIVE_BRIDGE=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
 # odczyt: … | jq '.VITE_INITIATIVE_BRIDGE'
 
-railway variables --set "VITE_INTERVIEW_PENDING_REVIEW_TAB=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
-# odczyt: … | jq '.VITE_INTERVIEW_PENDING_REVIEW_TAB'
 
-railway variables --set "VITE_INTERVIEW_PIPELINE_STEPPER=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
-# odczyt: … | jq '.VITE_INTERVIEW_PIPELINE_STEPPER'
 
 railway variables --set "VITE_MELS_PREZENTACJE=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
 # odczyt: … | jq '.VITE_MELS_PREZENTACJE'
