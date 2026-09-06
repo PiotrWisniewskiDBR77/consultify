@@ -764,6 +764,54 @@
           "dowod": "",
           "uwagi": "Szacunek 1–2 sesje. IV dokończone (E_TRYB_CIEMNY, klawiatura), bramka w CI.",
           "data": ""
+        },
+        {
+          "nr": "3.9",
+          "nazwa": "Propozycje Teresy — prostszy przepływ wykonania planu",
+          "wykonawca": "",
+          "zalezy_od": "1.1-A domknięte",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Słowo właściciela 06.09 (Czat): mniej kart, mniej ceremonii, jedna decyzja użytkownika. 1–2 sesje.",
+          "data": "06.09"
+        },
+        {
+          "nr": "3.10",
+          "nazwa": "Dyktowanie notatek głosem",
+          "wykonawca": "",
+          "zalezy_od": "głos Teresy stabilny",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 (Notatnik): „ja sobie coś gadam, a tu notatki się tworzą”. 1–2 sesje.",
+          "data": "06.09"
+        },
+        {
+          "nr": "3.11",
+          "nazwa": "Foldery w Sejfach",
+          "wykonawca": "",
+          "zalezy_od": "SSOT Sejfów",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Zakładka „Foldery” zdjęta z MVP (DEC-408). 1 sesja.",
+          "data": "06.09"
+        },
+        {
+          "nr": "3.12",
+          "nazwa": "Wywiad: zatwierdzanie i dopuszczanie odpowiedzi",
+          "wykonawca": "",
+          "zalezy_od": "SSOT Wywiadu, decyzja właściciela o krokach",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 (Wywiad): menedżer zwracający przyjmuje albo nie przyjmuje udzielonych odpowiedzi. Punkt wyjścia = „zatwierdź / odeślij” w Przydzielone. Zakładka „Dopuszczenie” usunięta (DEC-410b). 2–3 sesje.",
+          "data": "06.09"
         }
       ],
       "kryteria": [
