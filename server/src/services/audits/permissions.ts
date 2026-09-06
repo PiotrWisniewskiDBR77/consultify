@@ -101,14 +101,20 @@ const ROLE_CAPABILITIES: Record<AuditRole, AuditCapability[]> = {
     'program.close',
     'evidence_request.create',
     'finding.accept_residual_risk',
-    // DEC-428 (1.1-A5): w MVP właściciel programu audytu prowadzi audyt SAM —
-    // segregacja obowiązków (osobny lead_auditor) jest Falą 2 dla audytów
-    // zewnętrznych. Bez tych trzech capability program_owner urywał łańcuch
-    // sesja → wynik → raport → wniosek DOKŁADNIE w tym miejscu: mógł założyć
-    // program i zaakceptować raport (`report.approve` niżej), ale nie mógł go
-    // sam sfinalizować (`output.finalize`), sam wytworzyć (`report.draft` —
-    // ten sam strażnik pilnuje też `POST /reports/:id/conclusion`, patrz
-    // `routes/audits/reports.routes.ts`) ani sam opublikować (`report.publish`).
+    // DEC-428 (1.1-A5b, dokończenie): ZNALEZISKO A5 — program_owner miał już
+    // output.finalize/report.draft/report.publish (łańcuch WYNIK → RAPORT →
+    // WNIOSEK), ale nadal nie miał uprawnień do samej SESJI audytu: bez tych
+    // trzech capability solo-właściciel programu mógł zaplanować kryteria
+    // (`program.create`/`.update`), ale nie mógł nikomu (w tym samemu sobie)
+    // przypisać kryterium (`criterion.assign`), wykonać procedury testowej
+    // (`criterion.perform_test`) ani wyciągnąć wniosku o zgodności
+    // (`criterion.conclude`) — łańcuch urywał się PRZED `output.finalize`,
+    // które wymaga wcześniej przeprowadzonej pracy merytorycznej w programie.
+    // W MVP program_owner prowadzi CAŁY audyt sam (segregacja obowiązków
+    // przez osobnego lead_auditor jest Falą 2 dla audytów zewnętrznych).
+    'criterion.assign',
+    'criterion.perform_test',
+    'criterion.conclude',
     'output.finalize',
     'report.draft',
     'report.publish',
