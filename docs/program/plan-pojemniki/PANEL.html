@@ -137,8 +137,8 @@ a{color:var(--accent);}
       <div class="kafel-nazwa">Pojemnik 1 <span class="kafel-nazwa-pelna">— MVP rękami właściciela</span></div>
       <div class="kafel-termin">10 dni, do ~16.09</div>
       <div class="kafel-progress">
-        <div class="progress-track"><div class="progress-fill" style="width:70%"></div></div>
-        <span class="mono progress-label">7/10 pozycji</span>
+        <div class="progress-track"><div class="progress-fill" style="width:64%"></div></div>
+        <span class="mono progress-label">7/11 pozycji</span>
       </div>
       <div class="kafel-liczniki">
         <span class="mono">0/8 kryteriów</span>
@@ -162,7 +162,7 @@ a{color:var(--accent);}
       <div class="kafel-termin">po pilotażu (decyzje właściciela z 05.09, MVP_BACKLOG_20260905.md §E–K)</div>
       <div class="kafel-progress">
         <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
-        <span class="mono progress-label">0/15 pozycji</span>
+        <span class="mono progress-label">0/18 pozycji</span>
       </div>
       <div class="kafel-liczniki">
         <span class="mono">0/2 kryteriów</span>
@@ -188,9 +188,9 @@ a{color:var(--accent);}
       <td>Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)</td>
       <td class="nowrap">Sonnet/Opus</td>
       <td><span class="chip chip-amber">W TOKU</span></td>
-      <td class="mono nowrap"> <span class="muted">·</span> 7dac4d5440</td>
-      <td>staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”<div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte</div></td>
-      <td class="mono nowrap">06.09 14:06</td>
+      <td class="mono nowrap"> <span class="muted">·</span> 5bf9988581</td>
+      <td>paczka 7 na żywo ff60b6f831 (R3, K4, R1, I4); paczka 8 wypchnięta 17:06: R2, M-1, K5, R4 (+ search→reports)<div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3</div></td>
+      <td class="mono nowrap">06.09 17:11</td>
     </tr>
 <tr class="">
       <td class="mono nowrap">1.2</td>
@@ -272,6 +272,15 @@ a{color:var(--accent);}
       <td class="mono nowrap">mvp/demo-rozdzial-przygotowanie <span class="muted">·</span> f21953eef4</td>
       <td>przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie<div class="uwagi">ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.</div></td>
       <td class="mono nowrap">06.09 12:40</td>
+    </tr>
+<tr class="row-w-toku">
+      <td class="mono nowrap">1.11</td>
+      <td>Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie (kompletny system zarządzania inicjatywami w statusach)</td>
+      <td class="nowrap">Fable: SSOT statusów + prototyp tablicy przejść → akcept właściciela → Codex (wklejka)</td>
+      <td><span class="chip chip-amber">W TOKU</span></td>
+      <td class="mono nowrap">mvp/111-statusy-inicjatyw</td>
+      <td><div class="uwagi">Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9.</div></td>
+      <td class="mono nowrap">06.09 17:11</td>
     </tr></tbody>
     </table>
   </div>
@@ -284,11 +293,11 @@ a{color:var(--accent);}
       <div class="pozycja-card-meta">
         <span>Sonnet/Opus</span>
         <span class="muted">zależy: przejście właściciela</span>
-        <span class="mono muted">06.09 14:06</span>
+        <span class="mono muted">06.09 17:11</span>
       </div>
-      <div class="mono pozycja-card-galaz"> · 7dac4d5440</div>
-      <div class="pozycja-card-dowod">staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”</div>
-      <div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte</div>
+      <div class="mono pozycja-card-galaz"> · 5bf9988581</div>
+      <div class="pozycja-card-dowod">paczka 7 na żywo ff60b6f831 (R3, K4, R1, I4); paczka 8 wypchnięta 17:06: R2, M-1, K5, R4 (+ search→reports)</div>
+      <div class="uwagi">Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3</div>
     </div>
 <div class="pozycja-card ">
       <div class="pozycja-card-top">
@@ -424,6 +433,21 @@ a{color:var(--accent);}
       <div class="mono pozycja-card-galaz">mvp/demo-rozdzial-przygotowanie · f21953eef4</div>
       <div class="pozycja-card-dowod">przygotowanie scalone: runbook 5 faz, lista kontrolna promocji, skrypty kopia/przywróć/sprawdź/porównaj-flagi/seed organizacji pilotażowej, próba na sucho 12 kroków na lokalnej bazie</div>
       <div class="uwagi">ZAŁOŻENIE OBALONE: demo (trolley) i staging (thomas) mają już osobne bazy. Realne braki demo: 27 flag stagingu, brak CSRF_MODE, budżet AI, furtki testowe ON. DEC-401: demo zostaje na swojej bazie, porządek + organizacja „DBR77 Pilotaż” + aliasy kont + budżet AI 50 USD. Wykonanie na demo po 1.9 (procedura promocji). Pytanie do właściciela: e-mail Iriny.</div>
+    </div>
+<div class="pozycja-card card-w-toku">
+      <div class="pozycja-card-top">
+        <span class="mono">1.11</span>
+        <span class="chip chip-amber">W TOKU</span>
+      </div>
+      <div class="pozycja-card-nazwa">Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie (kompletny system zarządzania inicjatywami w statusach)</div>
+      <div class="pozycja-card-meta">
+        <span>Fable: SSOT statusów + prototyp tablicy przejść → akcept właściciela → Codex (wklejka)</span>
+        <span class="muted">zależy: słowo właściciela na tablicę statusów i przejść</span>
+        <span class="mono muted">06.09 17:11</span>
+      </div>
+      <div class="mono pozycja-card-galaz">mvp/111-statusy-inicjatyw</div>
+      
+      <div class="uwagi">Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9.</div>
     </div></div>
 
     <h3 class="section-title">Kryteria gotowe</h3>
@@ -702,44 +726,44 @@ a{color:var(--accent);}
     <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Czat</span>
-        <span class="chip chip-neutral">BRAK</span>
+        <span class="chip chip-green">TAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE. Ścieżka pokazu: „Podsumuj co tu widzisz” → odpowiedź po polsku ze „Źródła: 12”. Przejście właściciela na stagingu jeszcze się nie odbyło.</div>
+      <div class="modul-zdanie">06.09 12:20 — 8 kart odebranych, paczka na stagingu be5dfe691d.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Moja Praca</span>
-        <span class="chip chip-neutral">BRAK</span>
+        <span class="chip chip-green">TAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Ścieżka: Skrzynka → Zadania → wiersz → podgląd → Otwórz kartę zadania. Skrzynka nadal ma własny panel bez wzorca P1 (InboxContent.tsx:4324).</div>
+      <div class="modul-zdanie">06.09 13:19 — „tym zamykamy przegląd mywork, uznamy za wystarczające jako MVP właściciela”; na stagingu 7dac4d5440.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Wywiad</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE. Ścieżka: lista sesji (nazwy z datą) → sesja → Przydzielone. Panel Wywiadu nadal bez wzorca P1 (InterviewHub.tsx:8620).</div>
+      <div class="modul-zdanie">06.09: stepper i Dopuszczenie usunięte (na stagingu), generator inicjatyw z Oceny (na stagingu); Fala 2 3.12 zatwierdzanie odpowiedzi.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Narzędzia</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Dynamiczny SWOT to jedyne pełne narzędzie; 35/36 pozostałych to „już wkrótce” (dane biblioteki, nie kod) — decyzja właściciela w kolejce.</div>
+      <div class="modul-zdanie">06.09: Insighty≠Raporty, producent insightów, CTA per zakładka (staging c2430433b0); odbiór właściciela jeszcze nie.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Ocena</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Lista Outputów → raport oceny (sekcje + macierz DRD). Oceny właściciela wypełnione tylko 0–8%, raport będzie chudy przez dane.</div>
+      <div class="modul-zdanie">06.09: DRD hotfix ✔ („tak działa”), chipy Menu 3 usunięte (staging), kolory stanów + Zapytaj Teresę + Podyktuj (D1 scalone), w toku: nagłówek+czcionki (D2), generator wniosków (O3), modal szablonów (O4).</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Inicjatywy</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (A3): GOTOWE (67 wierszy po scaleniu dwóch rejestrów). Ścieżka: lista → wiersz → podgląd → karta.</div>
+      <div class="modul-zdanie">06.09 17:11: „nie mam większych uwag” do karty; I3/I4 na żywo; K5 (podgląd wraca na klik) w paczce 8; Plan/Obciążenie → P11 Codex (8 commitów, pisze); 1.11 statusy — pomiar u Opusa.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
@@ -753,7 +777,7 @@ a{color:var(--accent);}
         <span class="modul-nazwa">Wyniki</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (B3): blisko, 3 blokery — dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku, częściowo naprawione w MVP-NAPRAWY-6), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2.</div>
+      <div class="modul-zdanie">06.09 17:11: R1+R3 na żywo; R2 (zakładka Raporty zarządcze) i R4 (karty KPI/OKR/ROI z „Pracuj z AI”, pigułka w pasku, sticky) scalone i wypchnięte w paczce 8 (5bf9988581, budowa trwa) — karta do odbioru po zdrowiu stagingu.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
@@ -767,14 +791,14 @@ a{color:var(--accent);}
         <span class="modul-nazwa">Materiały</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Re-audyt lokalny (B3): NOWY BLOKER w chwili raportu — Dokumenty „Czysto” utykały na „Brak wczytanego dokumentu”; naprawione falą 6 (e6b0a152e3, Document Studio działa end-to-end), ale bez potwierdzenia żywym przejściem właściciela.</div>
+      <div class="modul-zdanie">06.09 17:11: „zachwycony”; M-1 (2 dropdowny zamiast popovera) w paczce 8; M-2 (standard Menu 1–3, Biblioteka Galeria/Tabela, Nowy wzorzec zamrożony) kończy się — paczka 9.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Audyty</span>
         <span class="chip chip-neutral">BRAK</span>
       </div>
-      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Nagłówek ZAKTUALIZOWANO naprawiony (MVP-NAPRAWY-3), rodzina uciętych nagłówków dat naprawiona na 7 ekranach 1440 (MVP-NAPRAWY-4).</div>
+      <div class="modul-zdanie">06.09 17:11: A1 na żywo; A2 scalone lokalnie (Menu 3 jeden wzór, bez Ustaleń, CTA Nowy wynik/raport/inicjatywa) — paczka 9; A3 (bez flagi ff_auditsReportChain) i K6 u robotnika.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
@@ -793,16 +817,16 @@ a{color:var(--accent);}
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Ustawienia</span>
-        <span class="chip chip-neutral">BRAK</span>
+        <span class="chip chip-green">TAK</span>
       </div>
-      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe, Szablony ustawień po polsku (4 klucze naprawione w MVP-NAPRAWY-6, wcześniej po angielsku wg B3).</div>
+      <div class="modul-zdanie">06.09 15:40 — zaakceptowane bez uwag.</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
         <span class="modul-nazwa">Organizacja</span>
-        <span class="chip chip-neutral">BRAK</span>
+        <span class="chip chip-green">TAK</span>
       </div>
-      <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. „PL · Silesia” częściowo naprawione (napraw-region-silesia.ts), ale higiena całości danych (pozycja 1.7) jeszcze niewykonana.</div>
+      <div class="modul-zdanie">06.09 15:40 — „zaakceptuj przejście przez organizację” (bez uwag).</div>
     </div>
 <div class="modul-card">
       <div class="modul-card-top">
@@ -810,6 +834,20 @@ a{color:var(--accent);}
         <span class="chip chip-neutral">BRAK</span>
       </div>
       <div class="modul-zdanie">Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji.</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Panel administratora</span>
+        <span class="chip chip-green">TAK</span>
+      </div>
+      <div class="modul-zdanie">06.09 15:40 — zaakceptowany; etykieta en „Admin”, pl „Panel administratora” (P-1).</div>
+    </div>
+<div class="modul-card">
+      <div class="modul-card-top">
+        <span class="modul-nazwa">Partnerzy</span>
+        <span class="chip chip-neutral">BRAK</span>
+      </div>
+      <div class="modul-zdanie">06.09 16:20: podłączeni (P-1 na żywo dbc1a03e19) — czeka na odbiór właściciela.</div>
     </div>
   </div>
   </section>
@@ -1583,6 +1621,33 @@ a{color:var(--accent);}
       <td class="mono nowrap"></td>
       <td><div class="uwagi">Właściciel 06.09 15:28: „pod Nowy audyt procedura wgrywania założeń — normę/formatkę się wgrywa — i generator pytań audytowych; na razie przycisk zamrozić”. 3–4 sesje.</div></td>
       <td class="mono nowrap">06.09</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.16</td>
+      <td>Automatyzacja tworzenia raportów zarządczych (zbieranie informacji z organizacji, harmonogramy, wyzwalacze)</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Właściciel 06.09 16:10: „wrzuć do fali drugiej całą formułę budowania automatyzacji tworzenia tych raportów — to duże zadanie, żeby z organizacji zbierać te informacje”. Dziś istnieje szkielet Raporty › Harmonogramy/Automatyzacja (pusty).</div></td>
+      <td class="mono nowrap">06.09</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.17</td>
+      <td>Arkusze: źródła danych (podpięcie i rozwinięcie tabeli Źródła danych)</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Właściciel 06.09 16:27: „w arkuszach ukryj na razie tabelę źródeł danych i zapisz do drugiej fali rozwinięcie źródeł danych do arkuszy”. W MVP segment „Arkusze | Źródła danych” ukryty (M-2).</div></td>
+      <td class="mono nowrap">06.09</td>
+    </tr>
+<tr class="">
+      <td class="mono nowrap">3.18</td>
+      <td>Biblioteka wzorców: tworzenie nowych wzorców (generator „Nowy wzorzec”)</td>
+      <td class="nowrap"></td>
+      <td><span class="chip chip-neutral">CZEKA</span></td>
+      <td class="mono nowrap"></td>
+      <td><div class="uwagi">Właściciel 06.09 16:41: „na razie nie zachęca; na etapie MVP wyłączyłbym w ogóle przycisk Nowy wzorzec” — w MVP przycisk zamrożony (M-2).</div></td>
+      <td class="mono nowrap">06.09</td>
     </tr></tbody>
     </table>
   </div>
@@ -1810,6 +1875,51 @@ a{color:var(--accent);}
       
       
       <div class="uwagi">Właściciel 06.09 15:28: „pod Nowy audyt procedura wgrywania założeń — normę/formatkę się wgrywa — i generator pytań audytowych; na razie przycisk zamrozić”. 3–4 sesje.</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.16</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Automatyzacja tworzenia raportów zarządczych (zbieranie informacji z organizacji, harmonogramy, wyzwalacze)</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: R2 (zakładka Raporty zarządcze w Wynikach) + szablony 1.6</span>
+        <span class="mono muted">06.09</span>
+      </div>
+      
+      
+      <div class="uwagi">Właściciel 06.09 16:10: „wrzuć do fali drugiej całą formułę budowania automatyzacji tworzenia tych raportów — to duże zadanie, żeby z organizacji zbierać te informacje”. Dziś istnieje szkielet Raporty › Harmonogramy/Automatyzacja (pusty).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.17</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Arkusze: źródła danych (podpięcie i rozwinięcie tabeli Źródła danych)</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: SSOT Materiałów</span>
+        <span class="mono muted">06.09</span>
+      </div>
+      
+      
+      <div class="uwagi">Właściciel 06.09 16:27: „w arkuszach ukryj na razie tabelę źródeł danych i zapisz do drugiej fali rozwinięcie źródeł danych do arkuszy”. W MVP segment „Arkusze | Źródła danych” ukryty (M-2).</div>
+    </div>
+<div class="pozycja-card ">
+      <div class="pozycja-card-top">
+        <span class="mono">3.18</span>
+        <span class="chip chip-neutral">CZEKA</span>
+      </div>
+      <div class="pozycja-card-nazwa">Biblioteka wzorców: tworzenie nowych wzorców (generator „Nowy wzorzec”)</div>
+      <div class="pozycja-card-meta">
+        <span></span>
+        <span class="muted">zależy: szablony 1.6 + SSOT Materiałów</span>
+        <span class="mono muted">06.09</span>
+      </div>
+      
+      
+      <div class="uwagi">Właściciel 06.09 16:41: „na razie nie zachęca; na etapie MVP wyłączyłbym w ogóle przycisk Nowy wzorzec” — w MVP przycisk zamrożony (M-2).</div>
     </div></div>
 
     <h3 class="section-title">Kryteria gotowe</h3>
@@ -1917,7 +2027,7 @@ a{color:var(--accent);}
     
   </section>
 
-  <div class="footer">Stan z: <span class="mono">2026-09-06 14:10</span> · rejestr <span class="mono">74d48a0c41</span> · źródło: <span class="mono">docs/program/plan-pojemniki/stan.json</span></div>
+  <div class="footer">Stan z: <span class="mono">2026-09-06 17:11</span> · rejestr <span class="mono">22f10763f6</span> · źródło: <span class="mono">docs/program/plan-pojemniki/stan.json</span></div>
 </div>
 <script>
 (function(){

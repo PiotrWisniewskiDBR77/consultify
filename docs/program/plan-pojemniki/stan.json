@@ -997,22 +997,22 @@
     },
     {
       "modul": "Wywiad",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09: stepper i Dopuszczenie usunięte (na stagingu), generator inicjatyw z Oceny (na stagingu); Fala 2 3.12 zatwierdzanie odpowiedzi."
     },
     {
       "modul": "Narzędzia",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09: Insighty≠Raporty, producent insightów, CTA per zakładka (staging c2430433b0); odbiór właściciela jeszcze nie."
     },
     {
       "modul": "Ocena",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09: DRD hotfix ✔ („tak działa”), chipy Menu 3 usunięte (staging), kolory stanów + Zapytaj Teresę + Podyktuj (D1 scalone), w toku: nagłówek+czcionki (D2), generator wniosków (O3), modal szablonów (O4)."
     },
     {
       "modul": "Inicjatywy",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09 17:11: „nie mam większych uwag” do karty; I3/I4 na żywo; K5 (podgląd wraca na klik) w paczce 8; Plan/Obciążenie → P11 Codex (8 commitów, pisze); 1.11 statusy — pomiar u Opusa."
     },
     {
@@ -1022,7 +1022,7 @@
     },
     {
       "modul": "Wyniki",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09 17:11: R1+R3 na żywo; R2 (zakładka Raporty zarządcze) i R4 (karty KPI/OKR/ROI z „Pracuj z AI”, pigułka w pasku, sticky) scalone i wypchnięte w paczce 8 (5bf9988581, budowa trwa) — karta do odbioru po zdrowiu stagingu."
     },
     {
@@ -1032,12 +1032,12 @@
     },
     {
       "modul": "Materiały",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09 17:11: „zachwycony”; M-1 (2 dropdowny zamiast popovera) w paczce 8; M-2 (standard Menu 1–3, Biblioteka Galeria/Tabela, Nowy wzorzec zamrożony) kończy się — paczka 9."
     },
     {
       "modul": "Audyty",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09 17:11: A1 na żywo; A2 scalone lokalnie (Menu 3 jeden wzór, bez Ustaleń, CTA Nowy wynik/raport/inicjatywa) — paczka 9; A3 (bez flagi ff_auditsReportChain) i K6 u robotnika."
     },
     {
@@ -1072,7 +1072,7 @@
     },
     {
       "modul": "Partnerzy",
-      "werdykt": "w_toku",
+      "werdykt": "brak",
       "zdanie": "06.09 16:20: podłączeni (P-1 na żywo dbc1a03e19) — czeka na odbiór właściciela."
     }
   ]
