@@ -154,6 +154,8 @@ export interface EntityStatusChipProps {
   hideDot?: boolean;
   className?: string;
   title?: string;
+  /** Optional domain-specific override (for example DEC-424 initiative flags). */
+  tone?: StatusTone;
 }
 
 /**
@@ -168,6 +170,7 @@ export const EntityStatusChip: React.FC<EntityStatusChipProps> = ({
   hideDot = false,
   className,
   title,
+  tone,
 }) => {
   const { t } = useTranslation();
   // Translated label when a dictionary entry exists for this normalized
@@ -176,7 +179,7 @@ export const EntityStatusChip: React.FC<EntityStatusChipProps> = ({
   const resolvedLabel = label ?? statusChipLabel(status, t);
   return (
     <StatusChip
-      tone={statusChipTone(status)}
+      tone={tone ?? statusChipTone(status)}
       label={resolvedLabel}
       size={size}
       hideDot={hideDot}

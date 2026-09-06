@@ -49,7 +49,6 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
@@ -60,7 +59,7 @@ import {
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
-import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
+import { getStatusesForModule } from '@/services/initiativeLifecycle';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -171,21 +170,7 @@ export const readV8InitiativeId = (response: unknown): string => {
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
     ? MODULE_STATUSES
-    : [
-        InitiativeStatus.DRAFT,
-        InitiativeStatus.PENDING_REVIEW,
-        InitiativeStatus.REVIEW,
-        InitiativeStatus.PROMOTED,
-        InitiativeStatus.PLANNING,
-        InitiativeStatus.APPROVED,
-        InitiativeStatus.SCHEDULED,
-        InitiativeStatus.EXECUTING,
-        InitiativeStatus.BLOCKED,
-        InitiativeStatus.DONE,
-        InitiativeStatus.TRACKING,
-        InitiativeStatus.CANCELLED,
-        InitiativeStatus.ARCHIVED,
-      ];
+    : Object.values(InitiativeStatus);
 
 // Subtle "coming soon" badge (task #11) for non-functional CTAs. Neutral, app-consistent.
 const COMING_SOON_BADGE =
@@ -550,11 +535,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             }
             if (
               scope === 'active' &&
-              [
-                InitiativeStatus.DONE,
-                InitiativeStatus.CANCELLED,
-                InitiativeStatus.ARCHIVED,
-              ].includes(initiative.status as InitiativeStatus)
+              [InitiativeStatus.CLOSED, InitiativeStatus.REJECTED].includes(
+                initiative.status as InitiativeStatus
+              )
             ) {
               return false;
             }
@@ -2234,7 +2217,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             const eligible = initiatives.filter(
               (i) =>
                 selectedIds.has(i.id) &&
-                (i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.CANCELLED)
+                (i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.REJECTED)
             );
             if (eligible.length === 0) {
               toast.error(

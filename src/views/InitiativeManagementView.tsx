@@ -132,12 +132,12 @@ export const InitiativeManagementView: React.FC = () => {
   const handleStatusChange = useCallback(
     (initiativeId: string, newStatus: InitiativeStatus, moduleTransition?: any) => {
       // Remove from current list if status moves to different module
-      if (newStatus === InitiativeStatus.EXECUTING || newStatus === InitiativeStatus.CANCELLED) {
+      if (newStatus === InitiativeStatus.IN_EXECUTION || newStatus === InitiativeStatus.REJECTED) {
         setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
       } else if (activeTab === 'review' && newStatus === InitiativeStatus.APPROVED) {
         // Move to approved tab
         setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
-      } else if (activeTab === 'approved' && newStatus === InitiativeStatus.REVIEW) {
+      } else if (activeTab === 'approved' && newStatus === InitiativeStatus.PENDING_APPROVAL) {
         // Move back to review tab
         setInitiatives((prev) => prev.filter((i) => i.id !== initiativeId));
       } else {
@@ -158,8 +158,8 @@ export const InitiativeManagementView: React.FC = () => {
         reviewAction === 'approve'
           ? InitiativeStatus.APPROVED
           : reviewAction === 'changes'
-            ? InitiativeStatus.PLANNING
-            : InitiativeStatus.CANCELLED;
+            ? InitiativeStatus.PENDING_APPROVAL
+            : InitiativeStatus.REJECTED;
 
       await Api.patch(`/initiatives/${selectedInitiative.id}/status`, {
         status: newStatus,
@@ -188,10 +188,10 @@ export const InitiativeManagementView: React.FC = () => {
     // TODO: Show quarter selection modal
     try {
       await Api.patch(`/initiatives/${initiative.id}/status`, {
-        status: InitiativeStatus.EXECUTING,
+        status: InitiativeStatus.IN_EXECUTION,
       });
       toast.success('Initiative transferred to execution');
-      handleStatusChange(initiative.id, InitiativeStatus.EXECUTING);
+      handleStatusChange(initiative.id, InitiativeStatus.IN_EXECUTION);
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Transfer failed');
     }
@@ -221,7 +221,7 @@ export const InitiativeManagementView: React.FC = () => {
   };
 
   // Stats
-  const reviewCount = initiatives.filter((i) => i.status === InitiativeStatus.REVIEW).length;
+  const reviewCount = initiatives.filter((i) => i.status === InitiativeStatus.PENDING_APPROVAL).length;
   const approvedCount = initiatives.filter((i) => i.status === InitiativeStatus.APPROVED).length;
 
   return (

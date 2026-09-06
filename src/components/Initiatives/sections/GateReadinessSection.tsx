@@ -64,7 +64,7 @@ type AIGatesProposal = {
       taskId: string;
       assigneeId?: string;
       dueDate?: string; // YYYY-MM-DD
-      status?: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE';
+      status?: 'TODO' | 'IN_PROGRESS' | "BLOCKED" | 'DONE';
       reason: string;
     }>;
   };
@@ -133,7 +133,7 @@ const GATE_DECISION_TYPES = [
 ] as const;
 
 const ALLOWED_PRIORITIES = ['critical', 'high', 'medium', 'low'] as const;
-const ALLOWED_TASK_STATUSES = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'] as const;
+const ALLOWED_TASK_STATUSES = ['TODO', 'IN_PROGRESS', "BLOCKED", 'DONE'] as const;
 
 const normalizeTaskStatus = (
   value?: string
@@ -161,7 +161,7 @@ const normalizeRaidStatus = (value?: string): string | undefined => {
   if (!raw) return undefined;
   const up = raw.toUpperCase();
   // keep a small canonical set, but allow pass-through for backend flexibility
-  if (up === 'OPEN' || up === 'IN_PROGRESS' || up === 'BLOCKED' || up === 'RESOLVED') return up;
+  if (up === 'OPEN' || up === 'IN_PROGRESS' || up === "BLOCKED" || up === 'RESOLVED') return up;
   return up;
 };
 

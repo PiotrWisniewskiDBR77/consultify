@@ -68,14 +68,14 @@ describe('EXECUTING initiative is visible on the board', () => {
     'lands in a column and is counted in scope "%s"',
     (scope) => {
       const columns = getColumnsForScope(scope);
-      const executing = makeInitiative(InitiativeStatus.EXECUTING);
+      const executing = makeInitiative(InitiativeStatus.IN_EXECUTION);
       const { grouped, homelessStatuses } = groupInitiativesByColumn([executing], columns);
 
       expect(homelessStatuses).toEqual([]);
       const total = Object.values(grouped).reduce((sum, list) => sum + list.length, 0);
       expect(total).toBe(1);
-      expect(grouped[InitiativeStatus.EXECUTING]).toHaveLength(1);
-      expect(grouped[InitiativeStatus.EXECUTING][0].id).toBe(executing.id);
+      expect(grouped[InitiativeStatus.IN_EXECUTION]).toHaveLength(1);
+      expect(grouped[InitiativeStatus.IN_EXECUTION][0].id).toBe(executing.id);
     }
   );
 
@@ -115,10 +115,10 @@ describe('anti-regression guard: a homeless status is never swallowed in silence
     // A column set that deliberately omits EXECUTING — i.e. the exact shape
     // of the shipped defect. The grouping must SAY SO.
     const truncatedColumns = getColumnsForScope('active').filter(
-      (c) => c.id !== InitiativeStatus.EXECUTING
+      (c) => c.id !== InitiativeStatus.IN_EXECUTION
     );
     const { grouped, homelessStatuses } = groupInitiativesByColumn(
-      [makeInitiative(InitiativeStatus.EXECUTING)],
+      [makeInitiative(InitiativeStatus.IN_EXECUTION)],
       truncatedColumns
     );
 

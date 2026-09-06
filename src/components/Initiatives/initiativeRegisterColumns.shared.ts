@@ -4,7 +4,8 @@ import React from 'react';
 import i18n from '@/i18n';
 import { executionTypeLabel, UNKNOWN_EXECUTION_TYPE_LABEL } from '@/labels/executionTypeLabels';
 import type { StandardRowMenu, TableColumn } from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
+import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
+import { InitiativeStatus } from '@/types';
 import type { PortfolioInitiative } from '@/types';
 import { formatListDate, formatRelativeHint } from '@/utils/listDateFormat';
 import { mapInitiativeStatus } from '@/contracts/initiatives-execution/statusMapping';
@@ -108,8 +109,8 @@ export const formatPlannedWindow = (raw: unknown): string => {
   return `${startLabel} — ${endLabel}`;
 };
 
-const statusDotClass = (status: string): string => {
-  const tone = statusChipTone(status);
+const statusDotClass = (status: string, onHold?: boolean): string => {
+  const tone = getInitiativeStatusChipTone(status as InitiativeStatus, { onHold });
   return tone === 'info'
     ? 'bg-c-info'
     : tone === 'warning'
@@ -192,25 +193,25 @@ export const createInitiativeRegisterColumns = (
     },
     {
       id: 'status',
-      label: 'Cykl życia',
+      label: 'Status',
       width: '170px',
       filterable: true,
-      filterOptions: Object.entries(INITIATIVE_LIFECYCLE_LABELS).map(([value, label]) => ({
+      filterOptions: Object.values(InitiativeStatus).map((value) => ({
         value,
-        label,
+        label: getLocalizedStatusLabel(value, t ?? ((key) => key)),
       })),
       render: (raw) => {
         const row = raw as InitiativeRegisterRow;
-        const lifecycle = resolveInitiativeRegisterLifecycle(row) || 'UNKNOWN';
+        const status = row.status as InitiativeStatus;
         return h(
           'span',
           {
             className: 'inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary',
           },
           h('span', {
-            className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status))}`,
+            className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status), row.onHold)}`,
           }),
-          INITIATIVE_LIFECYCLE_LABELS[lifecycle] || lifecycle.replaceAll('_', ' ')
+          getLocalizedStatusLabel(status, t ?? ((key) => key))
         );
       },
     },

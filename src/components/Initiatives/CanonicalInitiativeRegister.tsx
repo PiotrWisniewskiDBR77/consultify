@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
-import { statusChipTone } from '@/components/ui/primitives/chips';
+import { getInitiativeStatusChipTone } from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -95,7 +95,7 @@ export const CanonicalInitiativeRegister = ({
         pills: [
           {
             label: INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] || 'Nieznany',
-            tone: statusChipTone(initiative.status),
+            tone: getInitiativeStatusChipTone(initiative.status, { onHold: initiative.onHold }),
           },
           {
             label:
@@ -204,6 +204,7 @@ export const CanonicalInitiativeRegister = ({
         onRowClick={(raw) => onSelect(raw as CanonicalInitiativeRow)}
         onRowDoubleClick={(raw) => onOpen(raw as CanonicalInitiativeRow)}
         rowDescription={(raw) => (raw as CanonicalInitiativeRow).summary || null}
+        rowClassName={(raw) => (raw as CanonicalInitiativeRow).archived ? 'opacity-60' : ''}
         defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
         persistKey={persistKey}
         empty={{

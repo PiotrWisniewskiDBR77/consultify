@@ -157,8 +157,8 @@ const STATUS_META: Record<
 
 // Lifecycle phases for progress indicator
 const LIFECYCLE_PHASES = [
-  { id: 'source', labelKey: 'initiatives.fullView.lifecycle.source', statuses: ['DRAFT', 'PENDING_REVIEW'], color: 'slate' },
-  { id: 'review', labelKey: 'initiatives.fullView.lifecycle.review', statuses: ['REVIEW', 'PROMOTED'], color: 'amber' },
+  { id: 'source', labelKey: 'initiatives.fullView.lifecycle.source', statuses: ['DRAFT', 'PENDING_APPROVAL'], color: 'slate' },
+  { id: 'review', labelKey: 'initiatives.fullView.lifecycle.review', statuses: ['REVIEW', 'PENDING_APPROVAL'], color: 'amber' },
   {
     id: 'planning',
     labelKey: 'initiatives.fullView.lifecycle.planning',
@@ -168,17 +168,17 @@ const LIFECYCLE_PHASES = [
   {
     id: 'execution',
     labelKey: 'initiatives.fullView.lifecycle.execution',
-    statuses: ['EXECUTING', 'BLOCKED', 'DONE'],
+    statuses: ['IN_EXECUTION', 'IN_EXECUTION', 'DONE'],
     color: 'cyan',
   },
-  { id: 'benefits', labelKey: 'initiatives.fullView.lifecycle.benefits', statuses: ['TRACKING'], color: 'teal' },
+  { id: 'benefits', labelKey: 'initiatives.fullView.lifecycle.benefits', statuses: ['CLOSED'], color: 'teal' },
 ];
 
 // Task interface
 interface InitiativeTask {
   id: string;
   title: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'DONE';
+  status: 'TODO' | 'IN_PROGRESS' | "BLOCKED" | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   assigneeId?: string;
   assigneeName?: string;
@@ -382,6 +382,9 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
     }[] = [];
 
     switch (status) {
+      case 'PROPOSED':
+        actions.push({ id: 'draft', label: t('initiatives.transition.createDraft'), gate: 'CREATE_DRAFT', color: 'bg-c-surface-2', icon: <ListTodo size={16} /> });
+        break;
       case 'DRAFT':
         actions.push({
           id: 'submit',
@@ -391,7 +394,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           icon: <Send size={16} />,
         });
         break;
-      case 'PENDING_REVIEW':
+      case 'PENDING_APPROVAL':
         actions.push({
           id: 'approve',
           label: t('initiatives.transition.approveToInitiatives'),
@@ -407,51 +410,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           icon: <ArrowLeft size={16} />,
         });
         break;
-      case 'REVIEW':
-        actions.push({
-          id: 'accept',
-          label: t('initiatives.transition.acceptPromote'),
-          gate: 'ACCEPT',
-          color: 'bg-blue-600 hover:bg-blue-500',
-          icon: <TrendingUp size={16} />,
-        });
-        actions.push({
-          id: 'reject',
-          label: t('initiatives.transition.reject'),
-          gate: 'REJECT',
-          color: 'bg-danger-600 hover:bg-danger-500',
-          icon: <XCircle size={16} />,
-        });
-        break;
-      case 'PROMOTED':
-        actions.push({
-          id: 'startplanning',
-          label: t('initiatives.transition.startPlanning'),
-          gate: 'START_PLANNING',
-          color: 'bg-indigo-600 hover:bg-indigo-500',
-          icon: <ListTodo size={16} />,
-        });
-        break;
-      case 'PLANNING':
-        actions.push({
-          id: 'approve',
-          label: t('initiatives.transition.approve'),
-          gate: 'APPROVE',
-          color: 'bg-emerald-600 hover:bg-emerald-500',
-          icon: <CheckCircle size={16} />,
-        });
-        break;
       case 'APPROVED':
-        actions.push({
-          id: 'schedule',
-          label: t('initiatives.transition.schedule'),
-          gate: 'SCHEDULE',
-          color:
-            'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]',
-          icon: <Calendar size={16} />,
-        });
-        break;
-      case 'SCHEDULED':
         actions.push({
           id: 'start',
           label: t('initiatives.transition.startExecution'),
@@ -460,7 +419,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           icon: <Play size={16} />,
         });
         break;
-      case 'EXECUTING':
+      case 'IN_EXECUTION':
         actions.push({
           id: 'complete',
           label: t('initiatives.transition.markComplete'),
@@ -468,36 +427,11 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
           color: 'bg-green-600 hover:bg-green-500',
           icon: <CheckCircle2 size={16} />,
         });
-        actions.push({
-          id: 'block',
-          label: t('initiatives.transition.markBlocked'),
-          gate: 'BLOCK',
-          color: 'bg-danger-600 hover:bg-danger-500',
-          icon: <AlertTriangle size={16} />,
-        });
-        break;
-      case 'BLOCKED':
-        actions.push({
-          id: 'unblock',
-          label: t('initiatives.transition.unblock'),
-          gate: 'UNBLOCK',
-          color: 'bg-blue-600 hover:bg-blue-500',
-          icon: <Play size={16} />,
-        });
-        break;
-      case 'DONE':
-        actions.push({
-          id: 'starttracking',
-          label: t('initiatives.transition.startTracking'),
-          gate: 'START_TRACKING',
-          color: 'bg-blue-600 hover:bg-blue-500',
-          icon: <BarChart size={16} />,
-        });
         break;
     }
 
     // Cancel is always available (except terminal states)
-    if (!['TRACKING', 'CANCELLED'].includes(status)) {
+    if (!['CLOSED', 'REJECTED'].includes(status)) {
       actions.push({
         id: 'cancel',
         label: t('initiatives.transition.cancel'),
@@ -564,7 +498,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
         return 'bg-green-500/20 text-green-400';
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
-      case 'BLOCKED':
+      case 'IN_EXECUTION':
         return 'bg-danger-500/20 text-danger-400';
       default:
         return 'bg-slate-500/20 text-slate-500 dark:text-slate-400';
@@ -590,7 +524,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
       total: tasks.length,
       done: tasks.filter((t) => t.status === 'DONE').length,
       inProgress: tasks.filter((t) => t.status === 'IN_PROGRESS').length,
-      blocked: tasks.filter((t) => t.status === 'BLOCKED').length,
+      blocked: tasks.filter((t) => t.status === 'IN_EXECUTION').length,
     }),
     [tasks]
   );
@@ -875,7 +809,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                               ? 'bg-green-400'
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
-                                : task.status === 'BLOCKED'
+                                : task.status === "BLOCKED"
                                   ? 'bg-danger-400'
                                   : 'bg-slate-400'
                           }`}
@@ -1046,7 +980,7 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                         ? 'bg-green-400'
                         : task.status === 'IN_PROGRESS'
                           ? 'bg-blue-400'
-                          : task.status === 'BLOCKED'
+                          : task.status === "BLOCKED"
                             ? 'bg-danger-400'
                             : 'bg-slate-400'
                     }`}

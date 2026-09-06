@@ -1005,7 +1005,7 @@ const TasksTab: React.FC<{ tasks: TaskItem[]; milestones: TaskItem[] }> = ({
   const byStatus = {
     active: tasks.filter((t) => ['in_progress', 'IN_PROGRESS', 'todo', 'TODO'].includes(t.status)),
     done: tasks.filter((t) => ['done', 'DONE'].includes(t.status)),
-    blocked: tasks.filter((t) => ['blocked', 'BLOCKED'].includes(t.status)),
+    blocked: tasks.filter((t) => ['blocked', "BLOCKED"].includes(t.status)),
   };
 
   const visibleBlocked = showAllBlocked

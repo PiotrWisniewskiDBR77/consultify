@@ -68,7 +68,7 @@ interface PlanAnalysisProposal {
   proposalId: string;
   inputAggregateVersion: number;
   inputScenarioVersion: number;
-  status: 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED';
+  status: "PENDING_REVIEW" | 'ACCEPTED' | 'REJECTED';
   assumptions: string[];
   rationale: string;
   conflicts: string[];
@@ -1827,7 +1827,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                       {conflict}
                     </p>
                   ))}
-                  {analysisProposal.status === 'PENDING_REVIEW' && (
+                  {analysisProposal.status === "PENDING_REVIEW" && (
                     <div className="mt-3 flex gap-2">
                       <button
                         type="button"

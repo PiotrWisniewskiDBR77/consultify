@@ -109,16 +109,16 @@ const splitName = (fullName?: string) => {
 const getStatusTimeline = (status: InitiativeStatus) => {
   const ordered: InitiativeStatus[] = [
     InitiativeStatus.DRAFT,
-    InitiativeStatus.PENDING_REVIEW,
-    InitiativeStatus.REVIEW,
-    InitiativeStatus.PROMOTED,
-    InitiativeStatus.PLANNING,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.PENDING_APPROVAL,
+    InitiativeStatus.PENDING_APPROVAL,
     InitiativeStatus.APPROVED,
-    InitiativeStatus.SCHEDULED,
-    InitiativeStatus.EXECUTING,
-    InitiativeStatus.BLOCKED,
-    InitiativeStatus.DONE,
-    InitiativeStatus.TRACKING,
+    InitiativeStatus.APPROVED,
+    InitiativeStatus.IN_EXECUTION,
+    InitiativeStatus.IN_EXECUTION,
+    InitiativeStatus.CLOSED,
+    InitiativeStatus.CLOSED,
   ];
   const currentIndex = Math.max(ordered.indexOf(status), 0);
   return ordered.slice(0, currentIndex + 1);
@@ -128,27 +128,27 @@ const lifecycleForDemoStatus = (status: InitiativeStatus): string => {
   switch (status) {
     case InitiativeStatus.DRAFT:
       return 'REGISTERED_DRAFT';
-    case InitiativeStatus.PENDING_REVIEW:
+    case InitiativeStatus.PENDING_APPROVAL:
       return 'DEFINING';
-    case InitiativeStatus.REVIEW:
+    case InitiativeStatus.PENDING_APPROVAL:
       return 'ANALYZING';
-    case InitiativeStatus.PROMOTED:
+    case InitiativeStatus.PENDING_APPROVAL:
       return 'READY_FOR_DECISION';
-    case InitiativeStatus.PLANNING:
+    case InitiativeStatus.PENDING_APPROVAL:
     case InitiativeStatus.APPROVED:
       return 'APPROVED_BACKLOG';
-    case InitiativeStatus.SCHEDULED:
+    case InitiativeStatus.APPROVED:
       return 'SCHEDULED';
-    case InitiativeStatus.EXECUTING:
-    case InitiativeStatus.BLOCKED:
+    case InitiativeStatus.IN_EXECUTION:
+    case InitiativeStatus.IN_EXECUTION:
       return 'IN_EXECUTION';
-    case InitiativeStatus.DONE:
+    case InitiativeStatus.CLOSED:
       return 'DELIVERED';
-    case InitiativeStatus.TRACKING:
+    case InitiativeStatus.CLOSED:
       return 'BENEFITS_TRACKING';
-    case InitiativeStatus.CANCELLED:
+    case InitiativeStatus.REJECTED:
       return 'CANCELLED';
-    case InitiativeStatus.ARCHIVED:
+    case InitiativeStatus.CLOSED:
       return 'ARCHIVED';
     default:
       return 'REGISTERED_DRAFT';
@@ -265,7 +265,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'supplier-onboarding-portal',
       name: 'Supplier Onboarding Portal',
       axis: 'operational',
-      status: InitiativeStatus.PENDING_REVIEW,
+      status: InitiativeStatus.PENDING_APPROVAL,
       priority: 'HIGH',
       progress: 12,
       budget: 140000,
@@ -315,7 +315,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'warehouse-automation-pilot',
       name: 'Warehouse Automation Pilot',
       axis: 'operational',
-      status: InitiativeStatus.REVIEW,
+      status: InitiativeStatus.PENDING_APPROVAL,
       priority: 'HIGH',
       progress: 22,
       budget: 240000,
@@ -366,7 +366,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'margin-leakage-recovery',
       name: 'Margin Leakage Recovery Sprint',
       axis: 'strategic',
-      status: InitiativeStatus.PROMOTED,
+      status: InitiativeStatus.PENDING_APPROVAL,
       priority: 'CRITICAL',
       progress: 31,
       budget: 95000,
@@ -412,7 +412,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'field-service-dispatch-redesign',
       name: 'Field Service Dispatch Redesign',
       axis: 'transformational',
-      status: InitiativeStatus.PLANNING,
+      status: InitiativeStatus.PENDING_APPROVAL,
       priority: 'HIGH',
       progress: 38,
       budget: 320000,
@@ -519,7 +519,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'supply-chain-optimization',
       name: 'Supply Chain Optimization Wave 1',
       axis: 'operational',
-      status: InitiativeStatus.SCHEDULED,
+      status: InitiativeStatus.APPROVED,
       priority: 'MEDIUM',
       progress: 56,
       budget: 270000,
@@ -569,7 +569,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'procurement-ai-copilot',
       name: 'Procurement AI Copilot',
       axis: 'transformational',
-      status: InitiativeStatus.EXECUTING,
+      status: InitiativeStatus.IN_EXECUTION,
       priority: 'HIGH',
       progress: 68,
       budget: 190000,
@@ -620,7 +620,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'master-data-foundation',
       name: 'Master Data Foundation',
       axis: 'strategic',
-      status: InitiativeStatus.BLOCKED,
+      status: InitiativeStatus.IN_EXECUTION,
       priority: 'CRITICAL',
       progress: 43,
       budget: 460000,
@@ -670,7 +670,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'digital-onboarding-simplification',
       name: 'Digital Onboarding Simplification',
       axis: 'operational',
-      status: InitiativeStatus.DONE,
+      status: InitiativeStatus.CLOSED,
       priority: 'MEDIUM',
       progress: 100,
       budget: 70000,
@@ -716,7 +716,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       key: 'post-merger-kpi-harmonization',
       name: 'Post-Merger KPI Harmonization',
       axis: 'strategic',
-      status: InitiativeStatus.TRACKING,
+      status: InitiativeStatus.CLOSED,
       priority: 'HIGH',
       progress: 100,
       budget: 160000,
@@ -771,7 +771,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
     const dependencies = (blueprint.dependencyKeys || []).map((key) => makeId(key));
     const displayStatus = lifecycleForDemoStatus(blueprint.status);
     const nextStep = nextStepForLifecycle(displayStatus);
-    const isBlocked = blueprint.status === InitiativeStatus.BLOCKED;
+    const isBlocked = blueprint.status === InitiativeStatus.IN_EXECUTION;
 
     return {
       id: initiativeId,
@@ -785,7 +785,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       lifecycle: displayStatus,
       gateName: nextStep.gate,
       gateReadiness: isBlocked
-        ? 'BLOCKED'
+        ? "BLOCKED"
         : blueprint.progress >= 70
           ? 'READY'
           : blueprint.progress >= 30
@@ -867,22 +867,22 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
       });
       const timeline = getStatusTimeline(blueprint.status);
       const transitionTarget =
-        blueprint.status === InitiativeStatus.BLOCKED
-          ? InitiativeStatus.EXECUTING
+        blueprint.status === InitiativeStatus.IN_EXECUTION
+          ? InitiativeStatus.IN_EXECUTION
           : timeline.length < 11
             ? [
                 InitiativeStatus.DRAFT,
-                InitiativeStatus.PENDING_REVIEW,
-                InitiativeStatus.REVIEW,
-                InitiativeStatus.PROMOTED,
-                InitiativeStatus.PLANNING,
+                InitiativeStatus.PENDING_APPROVAL,
+                InitiativeStatus.PENDING_APPROVAL,
+                InitiativeStatus.PENDING_APPROVAL,
+                InitiativeStatus.PENDING_APPROVAL,
                 InitiativeStatus.APPROVED,
-                InitiativeStatus.SCHEDULED,
-                InitiativeStatus.EXECUTING,
-                InitiativeStatus.DONE,
-                InitiativeStatus.TRACKING,
-              ].find((status) => !timeline.includes(status)) || InitiativeStatus.TRACKING
-            : InitiativeStatus.TRACKING;
+                InitiativeStatus.APPROVED,
+                InitiativeStatus.IN_EXECUTION,
+                InitiativeStatus.CLOSED,
+                InitiativeStatus.CLOSED,
+              ].find((status) => !timeline.includes(status)) || InitiativeStatus.CLOSED
+            : InitiativeStatus.CLOSED;
 
       const taskIds = blueprint.deliverables.map(
         (_deliverable, index) => `${SHOWCASE_TASK_PREFIX}${blueprint.key}-${index + 1}`
@@ -1010,10 +1010,10 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             description: 'Validates the order of delivery and the first dependency assumptions.',
             type: 'GENERAL',
             status:
-              blueprint.status === InitiativeStatus.BLOCKED
+              blueprint.status === InitiativeStatus.IN_EXECUTION
                 ? 'ESCALATED'
-                : blueprint.status === InitiativeStatus.DONE ||
-                    blueprint.status === InitiativeStatus.TRACKING
+                : blueprint.status === InitiativeStatus.CLOSED ||
+                    blueprint.status === InitiativeStatus.CLOSED
                   ? 'APPROVED'
                   : 'PENDING',
             priority: blueprint.priority === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
@@ -1032,7 +1032,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             description: blueprint.rootCause,
             severity:
               blueprint.riskScore > 75 ? 'CRITICAL' : blueprint.riskScore > 55 ? 'HIGH' : 'MEDIUM',
-            status: blueprint.status === InitiativeStatus.BLOCKED ? 'open' : 'tracked',
+            status: blueprint.status === InitiativeStatus.IN_EXECUTION ? 'open' : 'tracked',
             owner: ownerBusiness.name,
             mitigationPlan:
               'Assign explicit owner decision rights before the next governance review.',
@@ -1042,8 +1042,8 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             type: 'issue',
             title: `Data quality friction is slowing ${blueprint.name}`,
             description: blueprint.symptom,
-            severity: blueprint.status === InitiativeStatus.BLOCKED ? 'HIGH' : 'MEDIUM',
-            status: blueprint.status === InitiativeStatus.DONE ? 'closed' : 'open',
+            severity: blueprint.status === InitiativeStatus.IN_EXECUTION ? 'HIGH' : 'MEDIUM',
+            status: blueprint.status === InitiativeStatus.CLOSED ? 'closed' : 'open',
             owner: ownerExecution.name,
             mitigationPlan: 'Use one issue log with weekly triage and named actions.',
           },
@@ -1132,7 +1132,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           sourceTaskId: taskIds[0],
           taskId: `${SHOWCASE_TASK_PREFIX}${blueprint.key}-dependency-${index + 1}`,
           taskTitle: `Readiness checkpoint: ${title}`,
-          taskStatus: blueprint.status === InitiativeStatus.BLOCKED ? 'BLOCKED' : 'IN_PROGRESS',
+          taskStatus: blueprint.status === InitiativeStatus.IN_EXECUTION ? "BLOCKED" : 'IN_PROGRESS',
           taskPriority: 'HIGH',
           taskIndexCode: `D-${index + 1}`,
           dependencyType: 'FS',
@@ -1186,7 +1186,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           },
         ],
         pendingApprovals:
-          blueprint.status === InitiativeStatus.REVIEW ||
+          blueprint.status === InitiativeStatus.PENDING_APPROVAL ||
           blueprint.status === InitiativeStatus.APPROVED
             ? [
                 {
@@ -1269,7 +1269,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
           availableTransitions: [
             {
               targetStatus: transitionTarget,
-              gate: blueprint.status === InitiativeStatus.BLOCKED ? 'RECOVERY_GATE' : 'NEXT_GATE',
+              gate: blueprint.status === InitiativeStatus.IN_EXECUTION ? 'RECOVERY_GATE' : 'NEXT_GATE',
               requiredRoles: ['SPONSOR'],
               assignedApprovers: [{ gateRole: 'SPONSOR', userId: sponsor.id }],
               canCurrentUserExecute: true,
@@ -1294,7 +1294,7 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
                 {
                   targetStatus: transitionTarget,
                   gate:
-                    blueprint.status === InitiativeStatus.BLOCKED ? 'RECOVERY_GATE' : 'NEXT_GATE',
+                    blueprint.status === InitiativeStatus.IN_EXECUTION ? 'RECOVERY_GATE' : 'NEXT_GATE',
                 },
               ],
               contextCreateActions: ['task', 'decision', 'risk'],
@@ -1317,12 +1317,12 @@ export function createInitiativesDemoDataset(context: DemoInitiativeContext = {}
             {
               key: 'dependency_health',
               label: 'Critical dependency health acceptable',
-              pass: blueprint.status !== InitiativeStatus.BLOCKED,
-              severity: blueprint.status === InitiativeStatus.BLOCKED ? 'blocking' : 'warning',
+              pass: blueprint.status !== InitiativeStatus.IN_EXECUTION,
+              severity: blueprint.status === InitiativeStatus.IN_EXECUTION ? 'blocking' : 'warning',
             },
           ],
-          allBlocking: blueprint.status === InitiativeStatus.BLOCKED,
-          allWarnings: blueprint.status !== InitiativeStatus.BLOCKED,
+          allBlocking: blueprint.status === InitiativeStatus.IN_EXECUTION,
+          allWarnings: blueprint.status !== InitiativeStatus.IN_EXECUTION,
         },
         statusHistory: timeline.map((status, index) => ({
           id: `${initiativeId}-status-${index + 1}`,

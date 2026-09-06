@@ -861,6 +861,8 @@ export interface PortfolioInitiative {
   registerAxisRaw?: string | null;
   registerCategory?: string | null;
   status: InitiativeStatus;
+  onHold?: boolean;
+  archived?: boolean;
   /** V8 planning read: normalized PMO status when raw DB value needed coercion */
   displayStatus?: string;
   p11LifecycleState?: string;

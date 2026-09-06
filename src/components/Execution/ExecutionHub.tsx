@@ -89,6 +89,7 @@ import {
 import { refreshExecutionWriteTruth } from '@/services/executionWriteTruth';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import {
+  getInitiativeStatusChipTone,
   getLocalizedStatusLabel,
   getStatusesForModule,
   STATUS_METADATA,
@@ -483,11 +484,10 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 
 const MODULE_STATUSES = getStatusesForModule('execution');
 const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
-  InitiativeStatus.DONE,
-  InitiativeStatus.CANCELLED,
-  InitiativeStatus.ARCHIVED,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.REJECTED,
 ];
 const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
   new Set([...MODULE_STATUSES, ...EXECUTION_STATUS_FALLBACK])
@@ -495,9 +495,8 @@ const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
 
 // Execution "Active" scope = ongoing work only (hide terminal-ish outcomes)
 const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.BLOCKED,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.IN_EXECUTION,
 ];
 
 // NAPRAWA MVP 06.09 (poz. 7.2, BLOKER): `getTypeCode()` renderowała surowy
@@ -1094,11 +1093,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         : 0;
 
     const execCount = initiatives.filter(
-      (i: any) => String(i.status || '').toUpperCase() === 'EXECUTING'
+      (i: any) => String(i.status || '').toUpperCase() === 'IN_EXECUTION'
     ).length;
-    const blockedCount = initiatives.filter(
-      (i: any) => String(i.status || '').toUpperCase() === 'BLOCKED'
-    ).length;
+    const blockedCount = initiatives.filter((i: any) => i.onHold === true).length;
 
     const overdueTasks = tasks.filter((t: any) => {
       const due = t?.dueDate || t?.due_date || t?.due_date_iso || t?.due_date_at;
@@ -1297,7 +1294,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           .map((initiative: FullInitiative) =>
             activeExecutionInitiativeIds.has(String(initiative.id)) &&
             !EXECUTION_STATUSES.includes(initiative.status)
-              ? { ...initiative, status: InitiativeStatus.EXECUTING }
+              ? { ...initiative, status: InitiativeStatus.IN_EXECUTION }
               : initiative
           );
         const canonicalIds = new Set(
@@ -1768,10 +1765,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
     const executing =
       byId.get('derived_initiatives_executing') ??
-      initiatives.filter((i: any) => String(i.status || '').toUpperCase() === 'EXECUTING').length;
+      initiatives.filter((i: any) => i.onHold === true).length;
     const blocked =
       byId.get('derived_initiatives_blocked') ??
-      initiatives.filter((i: any) => String(i.status || '').toUpperCase() === 'BLOCKED').length;
+      initiatives.filter((i: any) => String(i.status || '').toUpperCase() === 'IN_EXECUTION').length;
     const pendingDecisions =
       byId.get('derived_decisions_pending') ??
       decisions.filter((d: any) => {
@@ -1835,10 +1832,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
 
   const stats = useMemo(
     () => ({
-      executing: statusCounts[InitiativeStatus.EXECUTING] ?? 0,
-      blocked: statusCounts[InitiativeStatus.BLOCKED] ?? 0,
+      executing: statusCounts[InitiativeStatus.IN_EXECUTION] ?? 0,
+      blocked: initiatives.filter((initiative) => initiative.onHold === true).length,
     }),
-    [statusCounts]
+    [initiatives, statusCounts]
   );
 
   const tasksByInitiative = useMemo(() => {
@@ -1866,7 +1863,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       attention: 'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
     ) => {
       if (attention === 'blocked') {
-        return initiative.status === InitiativeStatus.BLOCKED;
+        return initiative.onHold === true;
       }
       if (attention === 'missing_dates') {
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
@@ -1875,9 +1872,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         if (!initiative.plannedEndDate && !initiative.slaDeadline) return false;
         const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
         const isOverdue = new Date(deadline) < new Date();
-        const terminal =
-          initiative.status === InitiativeStatus.DONE ||
-          initiative.status === InitiativeStatus.ARCHIVED;
+        const terminal = initiative.status === InitiativeStatus.CLOSED;
         return isOverdue && !terminal;
       }
       if (attention === 'overdue_decisions') {
@@ -2326,6 +2321,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             <EntityStatusChip
               status={String(row.status)}
               label={getLocalizedStatusLabel(status, t)}
+              tone={getInitiativeStatusChipTone(status, { onHold: row.onHold })}
             />
           );
         },
@@ -2364,7 +2360,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const isOverdue =
             row.plannedEndDate &&
             new Date(row.plannedEndDate) < new Date() &&
-            row.status !== InitiativeStatus.DONE;
+            row.status !== InitiativeStatus.CLOSED;
           const color = isOverdue
             ? 'bg-amber-500'
             : progress >= 100
@@ -2395,7 +2391,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           if (!deadline) {
             return <span className="text-xs text-c-text-muted">—</span>;
           }
-          const terminal = row.status === InitiativeStatus.DONE;
+          const terminal = row.status === InitiativeStatus.CLOSED;
           return (
             <DueChip
               label={new Date(deadline).toLocaleDateString()}
@@ -2430,7 +2426,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // — patrz ten sam fix w ExecutionSummaryOneLook.tsx i
           // WorkIntelligenceReport.tsx). danger-700 w light (7.69:1 na tym tle),
           // dark: token zostaje (juz przechodzi).
-          if (row.status === InitiativeStatus.BLOCKED) {
+          if (row.status === InitiativeStatus.IN_EXECUTION) {
             badges.push(
               <span
                 key="blocked"
@@ -2753,9 +2749,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         subType: executionTypeLabel(row.axis, isPolish),
         name: row.name,
         status:
-          row.status === InitiativeStatus.BLOCKED
-            ? 'BLOCKED'
-            : row.status === InitiativeStatus.DONE
+          row.status === InitiativeStatus.IN_EXECUTION
+            ? 'IN_EXECUTION'
+            : row.status === InitiativeStatus.CLOSED
               ? 'DONE'
               : 'DRAFT',
       };
@@ -2795,8 +2791,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       subType: row.kind,
       name: row.title,
       status:
-        row.status === 'BLOCKED'
-          ? 'BLOCKED'
+        row.status === 'IN_EXECUTION'
+          ? 'IN_EXECUTION'
           : ['COMPLETED', 'DECIDED', 'APPROVED'].includes(row.status)
             ? 'DONE'
             : 'DRAFT',
@@ -3455,7 +3451,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
-    const blocked = dashboardBaseInitiatives.filter((i) => i.status === InitiativeStatus.BLOCKED);
+    const blocked = dashboardBaseInitiatives.filter((i) => i.status === InitiativeStatus.IN_EXECUTION);
     const missingDates = dashboardBaseInitiatives.filter(
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
@@ -3983,7 +3979,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setActiveDocumentId(null);
       setIsSidePanelOpen(false);
       if (attention === 'blocked') {
-        setActiveStatusFilter(InitiativeStatus.BLOCKED);
+        setActiveStatusFilter(InitiativeStatus.IN_EXECUTION);
         setActiveFilters([]);
         return;
       }
@@ -4095,11 +4091,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         id: 'blocked',
         label: t('execution.attention.blocked', 'Blocked'),
         count: blockedCount,
-        active: activeStatusFilter === InitiativeStatus.BLOCKED,
+        active: activeStatusFilter === InitiativeStatus.IN_EXECUTION,
         disabled: blockedCount === 0,
         icon: <AlertTriangle size={14} className="text-danger-400" />,
         onClick: () => {
-          if (activeStatusFilter === InitiativeStatus.BLOCKED) {
+          if (activeStatusFilter === InitiativeStatus.IN_EXECUTION) {
             resetExecutionCommandRow();
             return;
           }

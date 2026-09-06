@@ -28,6 +28,8 @@ import {
   PriorityChip,
   type PriorityLevel,
 } from '@/components/ui/primitives/chips';
+import { getInitiativeStatusChipTone } from '@/services/initiativeLifecycle';
+import type { InitiativeStatus } from '@/types/initiative';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewInitiativePreviewBody
@@ -123,7 +125,7 @@ export const InterviewInitiativePreviewBody: React.FC<InterviewInitiativePreview
     <div className="space-y-4">
       {/* canon §4.1: status via EntityStatusChip (statusChipTone → c.*) */}
       <div className="flex flex-wrap items-center gap-2">
-        <EntityStatusChip status={initiative.status} label={statusLabel} />
+        <EntityStatusChip status={initiative.status} label={statusLabel} tone={getInitiativeStatusChipTone(initiative.status as InitiativeStatus)} />
         {priorityLevel ? (
           <PriorityChip level={priorityLevel} label={String(initiative.priority).toLowerCase()} />
         ) : null}
@@ -155,7 +157,7 @@ export const InterviewInitiativePreviewBody: React.FC<InterviewInitiativePreview
 
 export interface InterviewInitiativePreviewFooterProps {
   isPolish: boolean;
-  /** 'DRAFT' | 'PENDING_REVIEW' | 'REVIEW'(moved-forward) … (raw status). */
+  /** 'DRAFT' | 'PENDING_APPROVAL' | 'REVIEW'(moved-forward) … (raw status). */
   status: string;
   /** Whether the current user may approve/move initiatives forward. */
   canReview: boolean;
@@ -186,7 +188,7 @@ export const InterviewInitiativePreviewFooter: React.FC<InterviewInitiativePrevi
 
   const normalized = String(status || '').toUpperCase();
   const isDraft = normalized === 'DRAFT';
-  const isPending = normalized === 'PENDING_REVIEW';
+  const isPending = normalized === 'PENDING_APPROVAL';
 
   // NOTE: "Open" lives exclusively in PreviewPaneShell header (canon §7.3 anty-duplikacja).
   const contextButtons = [

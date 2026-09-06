@@ -66,7 +66,7 @@ export const FullStep2Workspace: React.FC<FullStep2WorkspaceProps> = ({
       axis: filterAxis !== 'ALL' ? filterAxis : 'processes',
       priority: 'Medium',
       complexity: 'Medium',
-      status: InitiativeStatus.PLANNING,
+      status: InitiativeStatus.PENDING_APPROVAL,
       businessValue: 'Medium',
       costCapex: 0,
       costOpex: 0,

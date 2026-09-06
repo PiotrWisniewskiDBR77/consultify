@@ -17,9 +17,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   InitiativeStatus as InitiativeStatusCodes,
-  INITIATIVE_STATUS_LABEL_KEYS,
   type InitiativeStatus,
 } from '../../../../packages/shared/src/constants/initiativeStatuses.generated';
+import { getStatusMeta } from '../../../services/initiativeLifecycle';
 
 // ============================================
 // TYPES
@@ -44,8 +44,8 @@ export type ReportStatus =
 
 export interface StatusOption {
   id: string;
-  label: string;
-  labelPL: string;
+  label?: string;
+  labelPL?: string;
   /** i18n key (public/locales/*\/translation.json) — canonical source of truth for the label. */
   labelKey: string;
   color: string;
@@ -69,31 +69,10 @@ export type ModuleContext =
 // ============================================
 
 // --- Initiative statuses (generated from the server SSOT) ---
-const ALL_STATUSES: Record<InitiativeStatus, StatusOption> = {
-  PROPOSED: { id: InitiativeStatusCodes.PROPOSED, label: 'Proposal', labelPL: 'Propozycja', labelKey: INITIATIVE_STATUS_LABEL_KEYS.PROPOSED, color: 'text-slate-600', bgColor: 'bg-slate-400', order: 1 },
-  DRAFT: { id: InitiativeStatusCodes.DRAFT, label: 'Draft', labelPL: 'Szkic', labelKey: INITIATIVE_STATUS_LABEL_KEYS.DRAFT, color: 'text-slate-600', bgColor: 'bg-slate-400', order: 2 },
-  PENDING_APPROVAL: { id: InitiativeStatusCodes.PENDING_APPROVAL, label: 'Pending approval', labelPL: 'Do zatwierdzenia', labelKey: INITIATIVE_STATUS_LABEL_KEYS.PENDING_APPROVAL, color: 'text-slate-600', bgColor: 'bg-slate-400', order: 3 },
-  APPROVED: {
-    id: InitiativeStatusCodes.APPROVED,
-    label: 'Approved',
-    labelPL: 'Zatwierdzona',
-    labelKey: INITIATIVE_STATUS_LABEL_KEYS.APPROVED,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
-    order: 4,
-  },
-  IN_EXECUTION: {
-    id: InitiativeStatusCodes.IN_EXECUTION,
-    label: 'In execution',
-    labelPL: 'W realizacji',
-    labelKey: INITIATIVE_STATUS_LABEL_KEYS.IN_EXECUTION,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-400',
-    order: 5,
-  },
-  CLOSED: { id: InitiativeStatusCodes.CLOSED, label: 'Closed', labelPL: 'Zamknięta', labelKey: INITIATIVE_STATUS_LABEL_KEYS.CLOSED, color: 'text-slate-600', bgColor: 'bg-slate-400', order: 6 },
-  REJECTED: { id: InitiativeStatusCodes.REJECTED, label: 'Rejected', labelPL: 'Odrzucona', labelKey: INITIATIVE_STATUS_LABEL_KEYS.REJECTED, color: 'text-slate-600', bgColor: 'bg-slate-400', order: 7 },
-};
+const ALL_STATUSES = Object.fromEntries(Object.values(InitiativeStatusCodes).map((id, index) => {
+  const meta = getStatusMeta(id);
+  return [id, { id, labelKey: meta.labelKey, color: meta.color, bgColor: meta.bgColor, order: index + 1 }];
+})) as Record<InitiativeStatus, StatusOption>;
 
 // --- Assessment statuses ---
 const ASSESSMENT_STATUSES: Record<AssessmentStatus, StatusOption> = {
@@ -375,7 +354,7 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const getLabel = (option: StatusOption) =>
     t(option.labelKey, {
       lng: effectiveLanguage,
-      defaultValue: effectiveLanguage === 'pl' ? option.labelPL : option.label,
+      defaultValue: (effectiveLanguage === 'pl' ? option.labelPL : option.label) ?? option.id,
     });
 
   return (

@@ -289,7 +289,7 @@ export type TimelineMode =
   | 'PLANNING'
   | 'READY_TO_LOCK'
   | 'BASELINED'
-  | 'TRACKING'
+  | 'CLOSED'
   | 'COMPLETED';
 
 export interface TimelineMilestone {
@@ -446,8 +446,8 @@ export function getTimelineMode(status: string): TimelineMode {
     PLANNING: 'PLANNING',
     APPROVED: 'READY_TO_LOCK',
     SCHEDULED: 'BASELINED',
-    EXECUTING: 'TRACKING',
-    BLOCKED: 'TRACKING',
+    EXECUTING: 'CLOSED',
+    BLOCKED: 'CLOSED',
     DONE: 'COMPLETED',
     TRACKING: 'COMPLETED',
     CANCELLED: 'COMPLETED',
@@ -515,7 +515,7 @@ export const GATE_DEFINITIONS = [
   {
     id: 'RESOURCES_COMMIT',
     label: 'Resources Commit',
-    forStatus: 'PROMOTED',
+    forStatus: 'PENDING_APPROVAL',
     pmoDomain: 'RESOURCE_RESPONSIBILITY',
   },
   {
@@ -543,7 +543,7 @@ export const GATE_CONFIG: Record<
     name: 'Promote to Initiatives',
     namePl: 'Promocja do Inicjatyw',
     fromStatus: 'REVIEW',
-    toStatus: 'PROMOTED',
+    toStatus: 'PENDING_APPROVAL',
     requiredRole: 'sponsor',
     description: 'Sponsor approves initiative promotion from discovery phase',
     descriptionPl: 'Sponsor zatwierdza promocję inicjatywy z fazy odkrywania',
@@ -572,7 +572,7 @@ export const GATE_CONFIG: Record<
   COMPLETE: {
     name: 'Complete Execution',
     namePl: 'Zakończenie realizacji',
-    fromStatus: 'EXECUTING',
+    fromStatus: 'IN_EXECUTION',
     toStatus: 'DONE',
     requiredRole: 'pmo',
     description: 'PMO confirms all tasks completed and delivery accepted',
@@ -583,7 +583,7 @@ export const GATE_CONFIG: Record<
     name: 'Start Benefits Tracking',
     namePl: 'Rozpoczęcie śledzenia korzyści',
     fromStatus: 'DONE',
-    toStatus: 'TRACKING',
+    toStatus: 'CLOSED',
     requiredRole: 'owner',
     description: 'Business Owner starts benefits tracking period',
     descriptionPl: 'Właściciel biznesowy rozpoczyna okres śledzenia korzyści',
@@ -592,8 +592,8 @@ export const GATE_CONFIG: Record<
   BLOCK: {
     name: 'Block Initiative',
     namePl: 'Zablokowanie inicjatywy',
-    fromStatus: 'EXECUTING',
-    toStatus: 'BLOCKED',
+    fromStatus: 'IN_EXECUTION',
+    toStatus: 'IN_EXECUTION',
     requiredRole: 'sponsor',
     description: 'Sponsor approves blocking due to impediment',
     descriptionPl: 'Sponsor zatwierdza zablokowanie z powodu przeszkody',
@@ -602,8 +602,8 @@ export const GATE_CONFIG: Record<
   UNBLOCK: {
     name: 'Unblock Initiative',
     namePl: 'Odblokowanie inicjatywy',
-    fromStatus: 'BLOCKED',
-    toStatus: 'EXECUTING',
+    fromStatus: 'IN_EXECUTION',
+    toStatus: 'IN_EXECUTION',
     requiredRole: 'sponsor',
     description: 'Sponsor approves unblocking after resolution',
     descriptionPl: 'Sponsor zatwierdza odblokowanie po rozwiązaniu problemu',
@@ -721,15 +721,15 @@ export const SEVERITY_CONFIG = {
 // ==========================================
 
 export const getModuleFromStatus = (status: string): keyof typeof MODULE_CONFIG => {
-  if (['DRAFT', 'PENDING_REVIEW'].includes(status)) return 'TOOLS';
+  if (['DRAFT', 'PENDING_APPROVAL'].includes(status)) return 'TOOLS';
   if (
-    ['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED', 'SCHEDULED', 'CANCELLED', 'ARCHIVED'].includes(
+    ['REVIEW', 'PENDING_APPROVAL', 'PLANNING', 'APPROVED', 'SCHEDULED', 'CANCELLED', 'ARCHIVED'].includes(
       status
     )
   )
     return 'INITIATIVES';
-  if (['EXECUTING', 'BLOCKED', 'DONE'].includes(status)) return 'EXECUTION';
-  if (['TRACKING'].includes(status)) return 'BENEFITS';
+  if (['IN_EXECUTION', 'IN_EXECUTION', 'DONE'].includes(status)) return 'EXECUTION';
+  if (['CLOSED'].includes(status)) return 'BENEFITS';
   return 'TOOLS';
 };
 

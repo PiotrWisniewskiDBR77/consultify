@@ -37,14 +37,14 @@ import { GATE_CONFIG, getNextGateForStatus, getRoleLabel } from './types';
  *  (PENDING_REVIEW / BLOCKED / CANCELLED / ARCHIVED) are surfaced separately. */
 const HAPPY_PATH: InitiativeStatus[] = [
   InitiativeStatus.DRAFT,
-  InitiativeStatus.REVIEW,
-  InitiativeStatus.PROMOTED,
-  InitiativeStatus.PLANNING,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.PENDING_APPROVAL,
+  InitiativeStatus.PENDING_APPROVAL,
   InitiativeStatus.APPROVED,
-  InitiativeStatus.SCHEDULED,
-  InitiativeStatus.EXECUTING,
-  InitiativeStatus.DONE,
-  InitiativeStatus.TRACKING,
+  InitiativeStatus.APPROVED,
+  InitiativeStatus.IN_EXECUTION,
+  InitiativeStatus.CLOSED,
+  InitiativeStatus.CLOSED,
 ];
 
 type ReadinessVerdict = 'ready' | 'warning' | 'blocking' | 'unknown';
@@ -102,13 +102,13 @@ export const InitiativeStatusPipeline: React.FC = () => {
 
   const offPathLabel = (() => {
     switch (status) {
-      case InitiativeStatus.PENDING_REVIEW:
+      case InitiativeStatus.PENDING_APPROVAL:
         return t('initiatives.initiativeStatusPipeline.pendingReview');
-      case InitiativeStatus.BLOCKED:
+      case InitiativeStatus.IN_EXECUTION:
         return t('initiatives.initiativeStatusPipeline.blocked');
-      case InitiativeStatus.CANCELLED:
+      case InitiativeStatus.REJECTED:
         return t('initiatives.initiativeStatusPipeline.cancelled');
-      case InitiativeStatus.ARCHIVED:
+      case InitiativeStatus.CLOSED:
         return t('initiatives.initiativeStatusPipeline.archived');
       default:
         return null;

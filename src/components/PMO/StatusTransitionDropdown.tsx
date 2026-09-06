@@ -48,14 +48,14 @@ const STATUS_CONFIG: Partial<
     icon: <Clock size={14} />,
     label: 'Draft',
   },
-  [InitiativeStatus.PLANNING]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100',
     darkBgColor: 'dark:bg-blue-900/30',
     icon: <FileCheck size={14} />,
     label: 'Planning',
   },
-  [InitiativeStatus.REVIEW]: {
+  [InitiativeStatus.PENDING_APPROVAL]: {
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-100',
     darkBgColor: 'dark:bg-amber-900/30',
@@ -69,35 +69,35 @@ const STATUS_CONFIG: Partial<
     icon: <Check size={14} />,
     label: 'Approved',
   },
-  [InitiativeStatus.EXECUTING]: {
+  [InitiativeStatus.IN_EXECUTION]: {
     color: 'text-primary-600 dark:text-primary-400',
     bgColor: 'bg-primary-100',
     darkBgColor: 'dark:bg-primary-900/30',
     icon: <Rocket size={14} />,
     label: 'Executing',
   },
-  [InitiativeStatus.BLOCKED]: {
+  [InitiativeStatus.IN_EXECUTION]: {
     color: 'text-danger-600 dark:text-danger-400',
     bgColor: 'bg-danger-100',
     darkBgColor: 'dark:bg-danger-900/30',
     icon: <Pause size={14} />,
     label: 'Blocked',
   },
-  [InitiativeStatus.DONE]: {
+  [InitiativeStatus.CLOSED]: {
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100',
     darkBgColor: 'dark:bg-green-900/30',
     icon: <Check size={14} />,
     label: 'Done',
   },
-  [InitiativeStatus.CANCELLED]: {
+  [InitiativeStatus.REJECTED]: {
     color: 'text-gray-600 dark:text-gray-400',
     bgColor: 'bg-gray-100 dark:bg-navy-800',
     darkBgColor: 'dark:bg-gray-800',
     icon: <Ban size={14} />,
     label: 'Cancelled',
   },
-  [InitiativeStatus.ARCHIVED]: {
+  [InitiativeStatus.CLOSED]: {
     color: 'text-gray-500 dark:text-gray-500',
     bgColor: 'bg-gray-50 dark:bg-navy-800',
     darkBgColor: 'dark:bg-gray-900',
@@ -301,16 +301,16 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
             <h3 className="text-lg font-bold text-navy-900 dark:text-white mb-2">
-              {pendingStatus === InitiativeStatus.BLOCKED
+              {pendingStatus === InitiativeStatus.IN_EXECUTION
                 ? 'Block Initiative'
-                : pendingStatus === InitiativeStatus.CANCELLED
+                : pendingStatus === InitiativeStatus.REJECTED
                   ? 'Cancel Initiative'
                   : 'Provide Reason'}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              {pendingStatus === InitiativeStatus.BLOCKED
+              {pendingStatus === InitiativeStatus.IN_EXECUTION
                 ? 'Please provide a reason for blocking this initiative.'
-                : pendingStatus === InitiativeStatus.CANCELLED
+                : pendingStatus === InitiativeStatus.REJECTED
                   ? 'Please provide a reason for cancelling this initiative.'
                   : 'Please provide additional information for this status change.'}
             </p>
@@ -350,11 +350,11 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
         <div className="fixed inset-0 z-toast flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-navy-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center gap-3 mb-4">
-              {pendingStatus === InitiativeStatus.DONE ? (
+              {pendingStatus === InitiativeStatus.CLOSED ? (
                 <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                   <Check className="text-green-600 dark:text-green-400" size={24} />
                 </div>
-              ) : pendingStatus === InitiativeStatus.ARCHIVED ? (
+              ) : pendingStatus === InitiativeStatus.CLOSED ? (
                 <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <Archive className="text-gray-600 dark:text-gray-400" size={24} />
                 </div>
@@ -365,16 +365,16 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
               )}
               <div>
                 <h3 className="text-lg font-bold text-navy-900 dark:text-white">
-                  {pendingStatus === InitiativeStatus.DONE
+                  {pendingStatus === InitiativeStatus.CLOSED
                     ? 'Complete Initiative'
-                    : pendingStatus === InitiativeStatus.ARCHIVED
+                    : pendingStatus === InitiativeStatus.CLOSED
                       ? 'Archive Initiative'
                       : 'Confirm Status Change'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {pendingStatus === InitiativeStatus.DONE
+                  {pendingStatus === InitiativeStatus.CLOSED
                     ? 'Mark this initiative as completed?'
-                    : pendingStatus === InitiativeStatus.ARCHIVED
+                    : pendingStatus === InitiativeStatus.CLOSED
                       ? 'Move this initiative to archive?'
                       : t('initiatives.confirmStatusChangeTo', {
                           status: getLocalizedStatusLabel(pendingStatus, t),
@@ -397,7 +397,7 @@ export const StatusTransitionDropdown: React.FC<StatusTransitionDropdownProps> =
                 onClick={() => executeTransition(pendingStatus)}
                 disabled={isLoading}
                 className={`px-4 py-2 text-white text-sm font-medium rounded-lg disabled:opacity-50 ${
-                  pendingStatus === InitiativeStatus.DONE
+                  pendingStatus === InitiativeStatus.CLOSED
                     ? 'bg-green-600 hover:bg-green-500'
                     : 'bg-navy-900 hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF]'
                 }`}

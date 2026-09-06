@@ -49,8 +49,8 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const terminal =
-    initiative.status === InitiativeStatus.CANCELLED ||
-    initiative.status === InitiativeStatus.ARCHIVED;
+    initiative.status === InitiativeStatus.REJECTED ||
+    initiative.status === InitiativeStatus.CLOSED;
   const priorityLevel = PRIORITY_LEVEL[initiative.priority];
   const health = getHealthInfo(initiative);
   const nextStep = getNextStep(initiative.status);
@@ -58,7 +58,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
   const sponsor = initiative.ownerExecution;
   const description = initiative.summary || initiative.description;
 
-  const archiveable = ([InitiativeStatus.DONE, InitiativeStatus.CANCELLED] as string[]).includes(
+  const archiveable = ([InitiativeStatus.CLOSED, InitiativeStatus.REJECTED] as string[]).includes(
     initiative.status
   );
 
@@ -92,7 +92,7 @@ export const InitiativeGridCard: React.FC<InitiativeGridCardProps> = ({
           icon: Edit2,
           onClick,
         },
-        initiative.status === InitiativeStatus.ARCHIVED
+        initiative.status === InitiativeStatus.CLOSED
           ? {
               id: 'restore',
               label: isPolish ? 'Przywróć' : 'Restore',

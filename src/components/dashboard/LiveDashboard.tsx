@@ -42,7 +42,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
     const initiatives = session.initiatives || [];
     const totalInit = initiatives.length;
     const completedInit = initiatives.filter(
-      (i) => i.status === InitiativeStatus.DONE || i.status === InitiativeStatus.ARCHIVED
+      (i) => i.status === InitiativeStatus.CLOSED || i.status === InitiativeStatus.CLOSED
     ).length;
     const executionScore = totalInit > 0 ? (completedInit / totalInit) * 20 : 0;
 
@@ -60,16 +60,16 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
   const initiativeStats = useMemo(() => {
     const inits = session.initiatives || [];
     const onTrack = inits.filter((i) =>
-      [InitiativeStatus.EXECUTING, InitiativeStatus.DONE, InitiativeStatus.ARCHIVED].includes(
+      [InitiativeStatus.IN_EXECUTION, InitiativeStatus.CLOSED, InitiativeStatus.CLOSED].includes(
         i.status as InitiativeStatus
       )
     ).length;
     const atRisk = inits.filter(
       (i) =>
-        i.priority === 'High' && [InitiativeStatus.BLOCKED].includes(i.status as InitiativeStatus)
+        i.priority === 'High' && [InitiativeStatus.IN_EXECUTION].includes(i.status as InitiativeStatus)
     ).length;
-    const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length; // Simplified logic
-    const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length; // Simplified logic
+    const delayed = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length; // Simplified logic
+    const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length; // Simplified logic
 
     return { total: inits.length, onTrack, atRisk, delayed, done };
   }, [session]);
@@ -83,9 +83,9 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
   const aiInsights = useMemo(() => {
     const inits = session.initiatives || [];
     const total = inits.length;
-    const blocked = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
-    const executing = inits.filter((i) => i.status === InitiativeStatus.EXECUTING).length;
-    const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
+    const blocked = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
+    const executing = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
+    const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length;
 
     if (total === 0) {
       return {
@@ -169,9 +169,9 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ session, onNavigat
       // Derive KPIs from session data
       const inits = session.initiatives || [];
       const total = inits.length;
-      const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
-      const blocked = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
-      const executing = inits.filter((i) => i.status === InitiativeStatus.EXECUTING).length;
+      const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length;
+      const blocked = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
+      const executing = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
 
       setKpis([
         {

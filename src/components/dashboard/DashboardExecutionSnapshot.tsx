@@ -54,12 +54,12 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   const initiativeStats = useMemo(() => {
     const inits = safeSession.initiatives || [];
     const inProgress = inits.filter(
-      (i) => i.status === InitiativeStatus.EXECUTING || i.status === InitiativeStatus.PLANNING
+      (i) => i.status === InitiativeStatus.IN_EXECUTION || i.status === InitiativeStatus.PENDING_APPROVAL
     ).length;
-    const done = inits.filter((i) => i.status === InitiativeStatus.DONE).length;
-    const delayed = inits.filter((i) => i.status === InitiativeStatus.BLOCKED).length;
+    const done = inits.filter((i) => i.status === InitiativeStatus.CLOSED).length;
+    const delayed = inits.filter((i) => i.status === InitiativeStatus.IN_EXECUTION).length;
     const todo = inits.filter(
-      (i) => i.status === InitiativeStatus.DRAFT || i.status === InitiativeStatus.REVIEW
+      (i) => i.status === InitiativeStatus.DRAFT || i.status === InitiativeStatus.PENDING_APPROVAL
     ).length;
 
     return { total: inits.length, inProgress, done, delayed, todo };
@@ -68,7 +68,7 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
   // Active initiatives (not done, not archived)
   const activeInitiatives = useMemo(() => {
     return (safeSession.initiatives || []).filter(
-      (i) => i.status !== InitiativeStatus.DONE && i.status !== InitiativeStatus.ARCHIVED
+      (i) => i.status !== InitiativeStatus.CLOSED && i.status !== InitiativeStatus.CLOSED
     );
   }, [safeSession]);
 
@@ -213,10 +213,10 @@ export const DashboardExecutionSnapshot: React.FC<DashboardExecutionSnapshotProp
                     <div className="flex items-center gap-4 mt-2">
                       <span
                         className={`text-xs px-2 py-1 rounded ${
-                          initiative.status === InitiativeStatus.EXECUTING ||
-                          initiative.status === InitiativeStatus.PLANNING
+                          initiative.status === InitiativeStatus.IN_EXECUTION ||
+                          initiative.status === InitiativeStatus.PENDING_APPROVAL
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : initiative.status === InitiativeStatus.BLOCKED
+                            : initiative.status === InitiativeStatus.IN_EXECUTION
                               ? 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
                               : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                         }`}
