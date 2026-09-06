@@ -2,7 +2,7 @@
 doc_id: przekazanie-20260906-rano
 status: canonical
 truth_type: program-status
-established: 2026-09-06 (rano, ~03:35)
+established: 2026-09-06 (rano, ~04:30) — wersja końcowa
 author: CTO (Fable), sesja d26477da
 poprzednie: PRZEKAZANIE_20260905_NOC.md
 ---
@@ -10,7 +10,7 @@ poprzednie: PRZEKAZANIE_20260905_NOC.md
 # Meldunek poranny 06.09 — noc przed ogłoszeniem MVP
 
 ## 1. Co jest na stagingu (`origin/staging` = `codex/m03-admin-20260824`)
-~165 commitów i 29 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+166 commitów i 27 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
 
 **Zbudowane od zera tej nocy**
 - **Wyniki KPI · OKR · ROI** — trzy poziomy wg SSOT i zaakceptowanego prototypu, na realnych danych DBR77 (138 mierników z Twojego arkusza, 3 zestawy OKR z check-inem end-to-end, 3 analizy ROI z NPV/IRR/wrażliwością/PIR). Trzy migracje addytywne. Pierwsze uruchomienie zapytań KPI na Postgresie złapało i naprawiło błąd 500.
@@ -56,3 +56,16 @@ Health stagingu przybity zmienną; edycja historycznej migracji odrzucona przez 
 
 ## 7. Infrastruktura
 Lokalne stanowisko: `scripts/dev/stanowisko-lokalne/` (PG 54400, API 4100, vite 3090, konto `audyt@dbr77.local`, sesja odświeżana `zaloguj-api.mjs`). Staging: Railway auto-deploy z gałęzi; dowód = `railway deployment list` + health (teraz prawdziwy SHA).
+
+## 8. Pierwsze kroki następnego agenta (nadzorca, model Fable/Opus)
+1. Przeczytaj: ten plik → `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md` §„Rejestr odbioru” (każda pozycja z SHA i dowodem) → pamięć `przekazanie-sesja-fable-22` (lekcje nocy).
+2. Stan: `git -C /private/tmp/m03 log -1` = `8e2d116d1f`; `curl -s https://staging.consultify.ai/api/health` musi podać ten sam `gitSha` (health jest już prawdziwy). Lokalne stanowisko: `scripts/dev/stanowisko-lokalne/start.sh`, konto `audyt@dbr77.local`, sesja `zaloguj-api.mjs`, kopia sesji per robotnik.
+3. Higiena zleceń (obowiązkowa, z nocy): worktree z repo bare `git -C /Users/piotrwisniewski/Developer/consultify-recovery-vault-20260820.git worktree add -b <gałąź> <dir> codex/m03-admin-20260824`; `ln -s /private/tmp/m03/node_modules`; ZAKAZ `git sparse-checkout`, `git stash`, `worktree remove/prune` w zleceniach; jeden robotnik w m03 naraz; po scaleniu `worktree remove` (3,2 GB każdy); przed pushem `git diff --diff-filter=M -- server/migrations` = 0 i `cd server && npx tsc --build tsconfig.build.json`; nowe SQL uruchomić raz na lokalnym Postgresie przed wdrożeniem.
+4. Kolejka po przejściu właściciela (w tej kolejności):
+   - defekty z jego przejścia (jeden obraz, Tak/Nie) → naprawy Sonnetami tym samym rytmem;
+   - P1 dokończenie: Skrzynka (`InboxContent.tsx:4324`) i Wywiad (`InterviewHub.tsx:8620`) na wzorzec Rekord|Teresa;
+   - P9 karta działania (Codex, 35 % → reszta: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka) → potem P7K część B (odchylenie → Skrzynka → karta);
+   - P8 Teresa kontrakty (Codex, 32 niecommitowane pliki w `/private/tmp/codex-p8-teresa`), F‑M3/M4 (Codex, `/private/tmp/f-m3-m4`);
+   - decyzje właściciela: Finanse MINIMUM (F1 §0), grupowanie inicjatyw, kropka „Model”;
+   - dług: 484 klucze pl==en (ratchet), 141 kluczy Czatu (374), 16 testów z mockiem react-router bez `useLocation`, 7 zastanych czerwonych, dwa rejestry inicjatyw/ocen/analiz (wzorzec „dwa magazyny”), Narzędzia 35/36 „już wkrótce” (decyzja), Baseline 409, dane: oceny 0–8 %, legacy DBR77 2024.
+5. Nie ruszać: produkcja `consultify.ai` (osobna baza), demo; `FORCE_SUPERADMIN_EMAILS`; `APP_BUILD_SHA` na stagingu (usunięte celowo — Dockerfile ma fallback).
