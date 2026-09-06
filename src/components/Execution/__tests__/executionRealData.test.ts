@@ -60,9 +60,58 @@ describe('RAG inicjatywy', () => {
     expect(initiativeRag({ plannedEndDate: dayShift(40) }, NOW)).toBe('green');
   });
 
-  it('odchylenie w dniach jest dodatnie po terminie i ujemne przed', () => {
-    expect(initiativeDeviationDays({ plannedEndDate: dayShift(-10) }, NOW)).toBe(10);
-    expect(initiativeDeviationDays({ plannedEndDate: dayShift(4) }, NOW)).toBe(-4);
+  /*
+   * 1.12-R3 — TEN TEST ZMIENIŁ TREŚĆ ŚWIADOMIE.
+   * Do 06.09 sprawdzał, że odchylenie liczy się od `plannedEndDate` („−4"
+   * znaczyło „zostały 4 dni"). To była zła miara: wystarczyło przesunąć
+   * `plannedEndDate`, żeby opóźnienie zniknęło. R3 przenosi punkt odniesienia
+   * na plan ZAMROŻONY (`baselineEndDate`), którego serwer nie pozwala ruszyć
+   * drugi raz bez decyzji z zatwierdzającym.
+   */
+  it('bez baseline’u odchylenia NIE MA — „—", nie zero i nie liczba z planu', () => {
+    expect(initiativeDeviationDays({ plannedEndDate: dayShift(-10) }, NOW)).toBeNull();
+    expect(initiativeDeviationDays({ plannedEndDate: dayShift(4) }, NOW)).toBeNull();
+  });
+
+  it('plan zgodny z baseline’em = 0 (zobowiązanie dotrzymane), nie liczba ujemna', () => {
+    expect(
+      initiativeDeviationDays(
+        { baselineEndDate: dayShift(40), plannedEndDate: dayShift(40) },
+        NOW
+      )
+    ).toBe(0);
+  });
+
+  it('przesunięty termin = DODATNIE odchylenie, choć plan wciąż jest w przyszłości', () => {
+    // Dokładnie przypadek z planu R3: „Legacy Decommission", +40 dni.
+    expect(
+      initiativeDeviationDays(
+        { baselineEndDate: dayShift(49), plannedEndDate: dayShift(89) },
+        NOW
+      )
+    ).toBe(40);
+  });
+
+  it('termin minął, a rzeczy nie ma → odchylenie ROŚNIE (liczy się od dziś)', () => {
+    expect(
+      initiativeDeviationDays(
+        { baselineEndDate: dayShift(-30), plannedEndDate: dayShift(-10) },
+        NOW
+      )
+    ).toBe(30);
+  });
+
+  it('jest FAKT → odchylenie zamknięte na fakcie, przestaje rosnąć', () => {
+    expect(
+      initiativeDeviationDays(
+        {
+          baselineEndDate: dayShift(-30),
+          plannedEndDate: dayShift(-10),
+          actualEndDate: dayShift(-12),
+        },
+        NOW
+      )
+    ).toBe(18);
   });
 
   it('poziom L0–L5: `currentStage` jest NULL na wszystkich 72 inicjatywach → „—"', () => {

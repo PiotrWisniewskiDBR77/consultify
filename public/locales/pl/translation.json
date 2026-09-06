@@ -12586,7 +12586,10 @@
       "plan": "Start / koniec planu",
       "deviation": "Odchylenie (dni)",
       "rag": "RAG",
-      "noPlanDates": "brak dat planu"
+      "noPlanDates": "brak dat planu",
+      "deviationNoBaseline": "Brak planu bazowego — nie ma od czego liczyć odchylenia",
+      "deviationBaseline": "Plan bazowy",
+      "deviationCurrent": "plan aktualny"
     },
     "badges": {
       "done": "Ukończone",

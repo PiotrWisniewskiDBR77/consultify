@@ -378,6 +378,14 @@ export async function getInitiativeDetailRead(
     plannedEndDate: (row as any).planned_end_date ?? (row as any).end_date ?? null,
     baselineVersion: (row as any).baseline_version ? Number((row as any).baseline_version) : null,
     scheduleBaselineId: (row as any).schedule_baseline_id ?? null,
+    // R3 (plan 1.12 §C4) — plan ZAMROŻONY. Ten sam zestaw pól, co w liście
+    // `/api/initiatives`: bez tego szczegół inicjatywy pokazywałby
+    // `baselineEndDate: null` przy wypełnionej kolumnie w bazie i dwa widoki
+    // tej samej inicjatywy liczyłyby odchylenie inaczej.
+    baselineStartDate: (row as any).baseline_start_date ?? null,
+    baselineEndDate: (row as any).baseline_end_date ?? null,
+    baselineSetAt: (row as any).baseline_set_at ?? null,
+    scheduleShiftCount: Number((row as any).schedule_shift_count ?? 0) || 0,
     targetState: charter,
     problemStructured: charter.problemStructured,
     structuredSuccessCriteria: charter.structuredSuccessCriteria,

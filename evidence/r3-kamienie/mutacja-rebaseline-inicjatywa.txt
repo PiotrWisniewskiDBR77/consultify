@@ -1,0 +1,48 @@
+MUTACJA CELUJACA W REGULE RE-BASELINE — inicjatywa ERP SAP Integration (4d991c47-07cb-4b09-a108-8a61d85718a0)
+Baza wlasna 127.0.0.1:55611, API wlasne 127.0.0.1:4141. Data: 2026-09-06T21:09:29Z
+
+### 0. STAN WYJSCIOWY
+{
+  "name": "ERP SAP Integration",
+  "plannedEndDate": "2026-10-25T21:09:17.839Z",
+  "baselineEndDate": null,
+  "scheduleShiftCount": null
+}
+
+### 1. PRZESUNIECIE PIERWSZE, BEZ DECYZJI  (2026-10-25 -> 2026-11-25)  => ma PRZEJSC
+HTTP 200
+{"planned_end_date": "2026-11-25T00:00:00.000Z", "baseline_end_date": "2026-10-25T21:09:17.839Z", "schedule_shift_count": 1}
+
+### 2. PRZESUNIECIE DRUGIE, BEZ DECYZJI (2026-11-25 -> 2026-12-30)  => ma BYC ODRZUCONE
+HTTP 409
+{
+    "error": "Second and further schedule shifts require a re-baseline decision with a named approver.",
+    "code": "REBASELINE_DECISION_REQUIRED",
+    "rule": "SCHEDULE_REBASELINE_REQUIRES_DECISION",
+    "field": "plannedEndDate",
+    "shiftIndex": 2,
+    "shiftsAlreadyUsed": 1,
+    "baselineEndDate": "2026-10-25T21:09:17.839Z",
+    "currentEndDate": "2026-11-25T00:00:00.000Z",
+    "requestedEndDate": "2026-12-30T00:00:00.000Z",
+    "deviationDaysFromBaseline": 65
+}
+
+### 2b. TA SAMA PROBA Z DECYZJA BEZ ZATWIERDZAJACEGO => tez ODRZUCONA
+HTTP 409
+{
+    "error": "Re-baseline decision must name the approver (approvedBy).",
+    "code": "REBASELINE_APPROVER_REQUIRED",
+    "rule": "SCHEDULE_REBASELINE_REQUIRES_DECISION",
+    "field": "plannedEndDate",
+    "shiftIndex": 2,
+    "shiftsAlreadyUsed": 1,
+    "baselineEndDate": "2026-10-25T21:09:17.839Z",
+    "currentEndDate": "2026-11-25T00:00:00.000Z",
+    "requestedEndDate": "2026-12-30T00:00:00.000Z",
+    "deviationDaysFromBaseline": 65
+}
+
+### 3. TA SAMA ZMIANA Z DECYZJA I ZATWIERDZAJACYM => ma PRZEJSC
+HTTP 200
+{"planned_end_date": "2026-12-30T00:00:00.000Z", "baseline_end_date": "2026-10-25T21:09:17.839Z", "schedule_shift_count": 2, "baseline_version": 0}

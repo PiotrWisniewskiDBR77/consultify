@@ -131,6 +131,21 @@ export const UpdateInitiativeSchema = InitiativePayloadBaseSchema.omit({
     // Mark Complete (AI signal) — map of sectionId → completed. Persisted as a
     // JSON string in the lazy-ALTER'd `section_completions` TEXT column.
     sectionCompletions: z.record(z.string(), z.boolean()).optional(),
+    /**
+     * R3 (plan 1.12 §C4) — decyzja „re-baseline" ze wskazanym zatwierdzającym.
+     * MUSI być w schemacie: `validateBody` podmienia `req.body` na obiekt PO
+     * parsowaniu, więc pole spoza schematu jest po cichu WYCINANE i nigdy nie
+     * dociera do kontrolera — reguła byłaby wtedy nie do przejścia (dokładnie
+     * ta pułapka, którą opisuje komentarz przy `overrideReason` niżej).
+     */
+    rebaselineDecision: z
+      .object({
+        decisionId: z.string().max(255).optional().nullable(),
+        approvedBy: z.string().max(255).optional().nullable(),
+        reason: z.string().max(2000).optional().nullable(),
+        resetBaseline: z.boolean().optional(),
+      })
+      .optional(),
     // Canon sections persisted via dedicated lazy-ALTER'd columns. `hypothesisStatement`
     // is intentionally separate from the legacy `hypothesis` column (which stores the
     // Initiative Scope narrative via the `description` alias).
