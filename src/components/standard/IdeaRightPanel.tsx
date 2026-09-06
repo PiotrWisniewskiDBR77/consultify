@@ -158,10 +158,10 @@ export interface IdeaRightPanelProps {
   /** Nazwa idei/mapy — nagłówek szyny + kontekst trybu Teresa. Bez tego — brak nagłówka (jak dziś). */
   title?: string;
   /**
-   * Otwiera JEDNĄ dokowaną Teresę z kontekstem idei (workspace
-   * `handleDiscussWithTeresa`). Zasila zarówno CTA stopki trybu Teresa, jak
-   * i `onClick` każdej z `teresaCommands` u wołającego. Pominięte → CTA się
-   * nie renderuje (nigdy stub).
+   * @deprecated DEC-419 (06.09.2026): karmił przycisk-wejście „Zapytaj Teresę
+   * o tę ideę" w sekcji Akcje (usunięty — wejście jest teraz w Menu 1,
+   * DEC-404). Prop zostaje deklarowany, żeby nie wywrócić wołającego
+   * (`IdeaMapWorkspace`), ale ten komponent go już nie czyta.
    */
   onDiscussWithTeresa?: () => void;
   /**
@@ -363,24 +363,16 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
         ? 'Pisanie wprost w pasie będzie możliwe, gdy idea dostanie własny wątek rozmowy.'
         : 'Typing directly in the rail will be possible once the idea has its own conversation thread.',
       /*
-        ★ 2026-09-01 („jedna Teresa, w swoim oknie"): z całego trybu Teresy
-        powłoka renderuje dziś WYŁĄCZNIE `entryLabel` + `footerAction` — jako
-        przycisk-wejście w sekcji „Akcje". Etykieta nazywa OBIEKT (kanon
-        `TeresaEntryButton`, wzór `prawy-pas-jedna-formula.tsx`), bo
-        „Rozmawiaj z Teresą" nie mówiło, O CZYM będzie rozmowa. Pola wyżej
+        ★ DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wejście
+        do Teresy w sekcji „Akcje" USUNIĘTY — jedyne wejście jest teraz w
+        Menu 1 (DEC-404). Do 06.09 z całego trybu Teresy skutek miała para
+        `entryLabel` + `footerAction`; obie pola zniknęły stąd, bo
+        `ArtifactRightRail` już ich nie czyta. Pola wyżej
         (`commands`/`messages`/`composeDisabledReason`) zostają w deklaracji,
-        ale nie mają już skutku wizualnego — czatu na szynie nie ma.
+        bez skutku wizualnego — czatu na szynie nie ma od 2026-09-01.
       */
-      entryLabel: isPolish ? 'Zapytaj Teresę o tę ideę' : 'Ask Teresa about this idea',
-      footerAction: onDiscussWithTeresa
-        ? {
-            label: isPolish ? 'Rozmawiaj z Teresą' : 'Discuss with Teresa',
-            icon: Sparkles,
-            onClick: onDiscussWithTeresa,
-          }
-        : undefined,
     }),
-    [title, isPolish, teresaCommands, onDiscussWithTeresa]
+    [title, isPolish, teresaCommands]
   );
 
   if (artifactRailEnabled) {
@@ -410,17 +402,11 @@ export const IdeaRightPanel: React.FC<IdeaRightPanelProps> = ({
     );
   }
 
+  // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o tę ideę" usunięty z
+  // sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
   const currentPanel = (
     <ArtifactRightPanel
       sections={sections}
-      teresaEntry={
-        onDiscussWithTeresa
-          ? {
-              label: isPolish ? 'Zapytaj Teresę o tę ideę' : 'Ask Teresa about this idea',
-              onOpen: onDiscussWithTeresa,
-            }
-          : undefined
-      }
       width={width}
       ariaLabel={isPolish ? 'Panel narzędzi idei' : 'Idea tools panel'}
     />

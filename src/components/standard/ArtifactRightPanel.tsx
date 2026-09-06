@@ -57,8 +57,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { TeresaEntryButton } from './TeresaEntryButton';
-
 /**
  * KANONICZNA kolejność sekcji prawego panelu (standard n-Type ETAP 1.3).
  * Wzorzec = karta Inicjatywy. Karta może POMINĄĆ sekcję (brak zastosowania),
@@ -240,7 +238,14 @@ export interface ArtifactRightPanelProps {
    * ten prop tylko udostępnia miejsce w powłoce.
    */
   statusBar?: React.ReactNode;
-  /** Jedyne wejście do wspólnej rozmowy Teresy, na czele sekcji „Akcje". */
+  /**
+   * @deprecated DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): wejście do
+   * Teresy z panelu artefaktu zostało usunięte — jedyne wejście jest teraz
+   * w Menu 1 (`data-testid="menu1-teresa"`, DEC-404), a karty mają już
+   * „Pracuj z AI" (DEC-407). Prop zostaje w typie przez jeden krok, żeby nie
+   * wywrócić wołających, którzy jeszcze go przekazują — komponent go IGNORUJE
+   * i NIC nie renderuje. Nowi wołający nie powinni go ustawiać.
+   */
   teresaEntry?: {
     label: string;
     onOpen: () => void;
@@ -354,7 +359,7 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
   className,
   ariaLabel,
   statusBar,
-  teresaEntry,
+  // DEC-419: `teresaEntry` nie jest już czytany — patrz komentarz przy propie.
   renderAs = 'aside',
 }) => {
   const { t, i18n } = useTranslation();
@@ -385,36 +390,13 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
    * widzi użytkownik, nie miała jej wcale.
    */
   const sections = useMemo<ArtifactRightPanelSection[]>(() => {
-    const withTeresaEntry = (
-      sourceSections: ArtifactRightPanelSection[]
-    ): ArtifactRightPanelSection[] => {
-      if (!teresaEntry) return sourceSections;
-      return sourceSections.map((section) =>
-        section.id === 'actions'
-          ? {
-              ...section,
-              isEmpty: false,
-              children: (
-                <>
-                  <TeresaEntryButton
-                    label={teresaEntry.label}
-                    onClick={teresaEntry.onOpen}
-                    disabled={teresaEntry.disabled}
-                    title={teresaEntry.disabledReason || teresaEntry.label}
-                    className="mb-2"
-                  />
-                  {section.isEmpty ? null : section.children}
-                </>
-              ),
-            }
-          : section
-      );
-    };
+    // DEC-419: `teresaEntry` NIE renderuje się już tutaj (patrz komentarz przy
+    // propie w interfejsie). Panel przechodzi 1:1 bez wstrzykiwania przycisku.
     const declaredCanonical = declaredSections.filter((section) =>
       CANONICAL_SECTION_IDS.has(section.id)
     );
     if (declaredCanonical.length < CANONICAL_SHELL_THRESHOLD) {
-      return withTeresaEntry(declaredSections);
+      return declaredSections;
     }
 
     const label = (id: ArtifactPanelSectionId): string => {
@@ -475,8 +457,8 @@ export const ArtifactRightPanel: React.FC<ArtifactRightPanelProps> = ({
     });
 
     ranked.sort((a, b) => (a.rank === b.rank ? a.seq - b.seq : a.rank - b.rank));
-    return withTeresaEntry(ranked.map((entry) => entry.section));
-  }, [declaredSections, isPolish, t, teresaEntry]);
+    return ranked.map((entry) => entry.section);
+  }, [declaredSections, isPolish, t]);
   const [openIds, setOpenIds] = useState<Set<string>>(
     () => new Set(sections.filter((s) => s.defaultOpen ?? true).map((s) => s.id))
   );

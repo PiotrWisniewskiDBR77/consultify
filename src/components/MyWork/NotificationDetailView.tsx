@@ -54,7 +54,6 @@ import { Callout } from '@/components/shared/NModeBlocks';
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
@@ -307,7 +306,6 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   const isPolish = i18n.language === 'pl';
   const { isChatCollapsed, toggleChatCollapse } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
-  const openChatWithContext = useOpenChatWithContext();
 
   // ── Presentation Mode (N = page-first / C = legacy accordion) ────────────
   const { mode: presentationMode, setMode: setPresentationMode } = usePresentationMode({
@@ -4045,12 +4043,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   'myWork.notificationDetail.rightPanelAria',
                   'Notification details panel'
                 )}
+                // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o to powiadomienie"
+                // usunięty z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
                 className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
                 sections={rightPanelSections}
-                teresaEntry={{
-                  label: isPolish ? 'Zapytaj Teresę o to powiadomienie' : 'Ask Teresa about this notification',
-                  onOpen: () => void openChatWithContext({ entityType: 'notification', entityId: notificationId, entityName: notification?.title || (isPolish ? 'Powiadomienie' : 'Notification'), contextData: { notificationId }, reuseActiveConversation: true }),
-                }}
               />
             </div>
           )}

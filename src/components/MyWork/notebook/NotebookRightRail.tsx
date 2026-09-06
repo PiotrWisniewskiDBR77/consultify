@@ -175,6 +175,13 @@ interface NotebookRightRailProps {
   onMarkReviewed?: () => void;
   getRelativeTime?: (iso: string) => string;
   onFocusAICommand?: () => void;
+  /**
+   * @deprecated DEC-419 (06.09.2026): karmił trzy przyciski „otwórz Teresę"
+   * w tym pliku (`teresa.footerAction`, `ArtifactRightPanel.teresaEntry`,
+   * legacy `rail:open-teresa`) — wszystkie usunięte, wejście jest teraz
+   * wyłącznie w Menu 1. Prop zostaje deklarowany, żeby nie wywrócić wołającego
+   * (`NotebookContent`), ale ten komponent go już nie czyta.
+   */
   onOpenAIChat?: () => void;
   onConvert?: (target: ConvertTarget) => void;
   canConvertDeliverable?: boolean;
@@ -1105,23 +1112,11 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
                 )}
               </p>
             )}
-            {/* Przycisk-wyjście „Open Teresa" znika przy fladze ON — wspólna
-                szyna ma WŁASNE, kanoniczne wejście („Zapytaj Teresę o tę
-                notatkę" w sekcji Akcje), a dwa wejścia do tej samej rozmowy
-                w jednym pasie to dokładnie ten rozjazd, który likwidujemy.
-                Przy fladze OFF przycisk zostaje bez zmian — to jedyne wejście
-                starej szyny i nie wolno go zabrać razem z niczym innym. */}
-            {onOpenAIChat && !artifactRailEnabled && !teresaContent ? (
-              <button
-                type="button"
-                data-notebook-action-id="rail:open-teresa"
-                onClick={onOpenAIChat}
-                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-c-ai/30 bg-c-ai/[0.06] px-3 py-2 text-sm font-semibold text-c-ai"
-              >
-                <Sparkles size={14} aria-hidden="true" />
-                {t('notebook.rightRail.openTeresa', 'Open Teresa')}
-              </button>
-            ) : null}
+            {/* DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wyjście
+                „Open Teresa" USUNIĘTY. `onOpenAIChat` w tej ścieżce tylko wysuwał
+                TEN SAM współdzielony dok co ikona Menu 1 (`setChatOpen` →
+                `toggleChatCollapse`, DEC-404) — drugie drzwi do tego samego
+                pokoju. Jedyne wejście jest teraz w Menu 1. */}
           </div>
         )}
       </div>
@@ -1213,24 +1208,14 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             'Pisanie wprost w pasie będzie możliwe, gdy notatka dostanie własny wątek rozmowy.'
           ),
           /*
-            ★ 2026-09-01 („jedna Teresa, w swoim oknie"): z całego trybu
-            Teresy powłoka renderuje dziś WYŁĄCZNIE te dwa pola — jako
-            przycisk-wejście w sekcji „Akcje". Etykieta nazywa OBIEKT
-            (kanon `TeresaEntryButton`), nie funkcję: „Open Teresa" mówiło
-            czym jest cel, a nie o czym będzie rozmowa. Pola wyżej
-            (`commands`/`messages`/`composeDisabledReason`) zostają
-            zadeklarowane, ale NIE MAJĄ JUŻ SKUTKU WIZUALNEGO — czatu na
-            szynie nie ma. Zostawiamy je, bo kontrakt propsa się nie zmienił,
-            a skasowanie ich sugerowałoby, że komend nigdy nie było.
+            ★ DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wejście
+            w sekcji „Akcje" USUNIĘTY. Jedyne wejście do Teresy jest teraz
+            w Menu 1 (DEC-404). Do 06.09 skutek miała para `entryLabel` +
+            `footerAction`; obie pola zniknęły stąd, bo `ArtifactRightRail`
+            już ich nie czyta. Pola wyżej (`commands`/`messages`/
+            `composeDisabledReason`) zostają zadeklarowane, bez skutku
+            wizualnego — czatu na szynie nie ma od 2026-09-01.
           */
-          entryLabel: t('notebook.rightRail.askTeresaAboutNote', 'Zapytaj Teresę o tę notatkę'),
-          footerAction: onOpenAIChat
-            ? {
-                label: t('notebook.rightRail.openTeresa', 'Open Teresa'),
-                icon: Sparkles,
-                onClick: onOpenAIChat,
-              }
-            : undefined,
         }}
         typeModes={typeModes}
         defaultModeId={defaultRailModeId}
@@ -1339,14 +1324,8 @@ export const NotebookRightRail: React.FC<NotebookRightRailProps> = ({
             renderAs="div"
             ariaLabel={t('notebook.rightRail.label', 'Document details and context')}
             sections={specASections}
-            teresaEntry={
-              onOpenAIChat
-                ? {
-                    label: isPolishRail ? 'Zapytaj Teresę o tę notatkę' : 'Ask Teresa about this note',
-                    onOpen: onOpenAIChat,
-                  }
-                : undefined
-            }
+            // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o tę notatkę"
+            // usunięty z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
             width="100%"
             className="min-h-0 flex-1 border-l-0"
           />

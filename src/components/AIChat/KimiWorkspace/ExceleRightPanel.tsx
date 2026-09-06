@@ -347,10 +347,11 @@ export const ExceleRightPanel: React.FC<ExceleRightPanelProps> = (props) => {
   }
 
   return (
+    // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o ten arkusz" usunięty
+    // z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
     <ArtifactRightPanel
       ariaLabel={t('excele.rightPanel.ariaLabel', 'Szczegóły arkusza')}
       sections={sections}
-      teresaEntry={props.onOpenTeresa ? { label: t('excele.rightPanel.askTeresa', 'Zapytaj Teresę o ten arkusz'), onOpen: props.onOpenTeresa } : undefined}
     />
   );
 };

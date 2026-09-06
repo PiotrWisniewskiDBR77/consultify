@@ -3631,14 +3631,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         showModeSwitcher={true}
         buildArtifactCode={(type, id) => buildArtifactCode(type as any, id)}
         rightPanel={
+          // DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o ten wywiad" usunięty
+          // z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404).
           <ArtifactRightPanel
             sections={rightPanelSections}
-            teresaEntry={{
-              label: isPolish ? 'Zapytaj Teresę o ten wywiad' : 'Ask Teresa about this interview',
-              onOpen: handleOpenChat,
-              disabled: !session,
-              disabledReason: isPolish ? 'Najpierw otwórz sesję wywiadu' : 'Open an interview session first',
-            }}
             className="h-full border-l border-c-border-subtle"
             ariaLabel={t('interview.workspace.sessionDetails', 'Session details')}
           />

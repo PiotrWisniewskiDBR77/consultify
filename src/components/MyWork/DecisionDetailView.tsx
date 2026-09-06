@@ -9826,14 +9826,11 @@ Use userId only from this list:
               Komentarze/Historię. Regresja funkcji pod pretekstem
               geometrii, nie estetyka. */}
           <div className="shrink-0 sticky top-4 self-start">
+            {/* DEC-419 (06.09.2026): przycisk „Zapytaj Teresę o tę decyzję" usunięty
+                z sekcji Akcje — wejście do Teresy jest w Menu 1 (DEC-404), karta
+                ma już „Pracuj z AI" (DEC-407). */}
             <ArtifactRightPanel
               sections={rightPanelSections}
-              teresaEntry={{
-                label: isPolish ? 'Zapytaj Teresę o tę decyzję' : 'Ask Teresa about this decision',
-                onOpen: () => void openChatWithContext({ entityType: 'decision', entityId: decisionId || 'new', entityName: title || (isPolish ? 'Decyzja' : 'Decision'), pmoContext: decisionId ? { decisionId } : undefined, reuseActiveConversation: true }),
-                disabled: !decisionId,
-                disabledReason: isPolish ? 'Najpierw zapisz decyzję' : 'Save the decision first',
-              }}
               className={ARTIFACT_PANEL_CARD_CLASS_STICKY}
               ariaLabel={t('myWork.decisionDetail.ariaLabel', 'Decision details')}
               statusBar={

@@ -105,14 +105,20 @@ vi.mock('../../components/ui/composed/CommandPalette', () => ({
   CommandPaletteProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+/**
+ * DEC-419 (właściciel, 06.09.2026, karta Inicjatywy): przycisk-wejście w
+ * sekcji Akcje panelu artefaktu (`ArtifactRightPanel.teresaEntry`) USUNIĘTY —
+ * jedyne wejście do Teresy jest teraz ikona Menu 1 (`data-testid=
+ * "menu1-teresa"`, DEC-404). Ten harness renderuje panel artefaktu BEZ
+ * `teresaEntry` (prop jest deprecated/nieczytany — patrz ArtifactRightPanel),
+ * a niezmiennik P8 (dokładnie jedna instancja `UnifiedChatPanel` po kliknięciu
+ * wejścia) pilnujemy teraz na JEDYNYM realnym wejściu: ikonie Menu 1.
+ */
 function Harness() {
-  const openSharedChat = vi.fn();
-
   return (
     <MainLayout breadcrumbs={['P8']}>
       <ArtifactRightPanel
         sections={[{ id: 'actions', label: 'Akcje', children: <button type="button">Inna akcja</button> }]}
-        teresaEntry={{ label: 'Zapytaj Teresę o ten obiekt', onOpen: openSharedChat }}
       />
     </MainLayout>
   );
@@ -127,7 +133,7 @@ describe('P8 — pojedynczy wspólny panel Teresy', () => {
     appState.isChatCollapsed = false;
   });
 
-  it('po kliknięciu wejścia montuje dokładnie jedną instancję UnifiedChatPanel', async () => {
+  it('po kliknięciu wejścia Menu 1 montuje dokładnie jedną instancję UnifiedChatPanel', async () => {
     render(
       <MemoryRouter>
         <Harness />
@@ -137,7 +143,10 @@ describe('P8 — pojedynczy wspólny panel Teresy', () => {
     await waitFor(() => {
       expect(screen.getAllByTestId('unified-chat-panel')).toHaveLength(1);
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Zapytaj Teresę o ten obiekt' }));
+    // Panel artefaktu nie ma już własnego przycisku Teresy (DEC-419) —
+    // jedyne wejście jest w Menu 1.
+    expect(screen.queryByTestId('teresa-entry')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('menu1-teresa'));
     expect(screen.getAllByTestId('unified-chat-panel')).toHaveLength(1);
   });
 });
