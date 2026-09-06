@@ -8951,6 +8951,71 @@
         "deleted": "Raport usunięty",
         "deleteFailed": "Nie udało się usunąć raportu"
       }
+    },
+    "templatePicker": {
+      "title": "Wybierz szablon raportu",
+      "availableTemplates": "{{count}} dostępnych szablonów",
+      "close": "Zamknij",
+      "tabs": {
+        "all": "Wszystkie",
+        "application": "Aplikacji",
+        "organization": "Organizacji"
+      },
+      "filters": {
+        "recipient": "Odbiorca",
+        "recipientBoard": "Zarząd",
+        "recipientBank": "Bank",
+        "recipientTeam": "Zespół",
+        "framework": "Framework",
+        "clear": "Wyczyść"
+      },
+      "gridView": "Widok siatki",
+      "tableView": "Widok tabeli",
+      "newTemplate": "Nowy szablon",
+      "newTemplateTitle": "Utwórz nowy szablon",
+      "loading": "Ładowanie szablonów…",
+      "loadError": "Nie udało się załadować szablonów",
+      "startError": "Nie udało się rozpocząć raportu",
+      "newTemplateError": "Nie udało się otworzyć generatora szablonów",
+      "empty": "Brak szablonów w tej kategorii.",
+      "noDescription": "Brak opisu",
+      "chipApp": "aplikacji",
+      "chipOrg": "organizacji",
+      "columns": {
+        "name": "Nazwa",
+        "source": "Źródło"
+      },
+      "footerHint": "Kliknij dwukrotnie albo zaznacz i wybierz „Generuj”",
+      "selectedPrefix": "Zaznaczono: ",
+      "cancel": "Anuluj",
+      "generateReport": "Generuj raport",
+      "generating": "Generowanie…",
+      "metaModal": {
+        "title": "Nowy szablon",
+        "subtitle": "Nazwa + moduł + krótki opis (kontekst dla generatora)",
+        "closeAria": "Zamknij okno nowego szablonu",
+        "fields": {
+          "name": "Nazwa szablonu*",
+          "namePlaceholder": "np. DRD Podsumowanie zarządcze v2",
+          "module": "Moduł",
+          "frameworkOptional": "Framework (opcjonalnie)",
+          "frameworkNone": "Brak",
+          "recipientOptional": "Odbiorca (opcjonalnie)",
+          "recipientNotSet": "Nie ustawiono",
+          "recipientBoard": "Zarząd / Kierownictwo",
+          "recipientBank": "Bank / Finanse",
+          "recipientTeam": "Zespół",
+          "descriptionOptional": "Opis (opcjonalnie)",
+          "descriptionPlaceholder": "Dla kogo, co uwzględnić, styl itd."
+        },
+        "moduleOptions": {
+          "assessment": "Ocena",
+          "interview": "Wywiad",
+          "tool": "Narzędzie",
+          "initiative": "Inicjatywa"
+        },
+        "openGenerator": "Otwórz generator"
+      }
     }
   },
   "initiatives": {

@@ -9510,6 +9510,71 @@
         "deleted": "Report deleted",
         "deleteFailed": "Failed to delete report"
       }
+    },
+    "templatePicker": {
+      "title": "Select Report Template",
+      "availableTemplates": "{{count}} available templates",
+      "close": "Close",
+      "tabs": {
+        "all": "All",
+        "application": "Application",
+        "organization": "Organization"
+      },
+      "filters": {
+        "recipient": "Recipient",
+        "recipientBoard": "Board",
+        "recipientBank": "Bank",
+        "recipientTeam": "Team",
+        "framework": "Framework",
+        "clear": "Clear"
+      },
+      "gridView": "Grid view",
+      "tableView": "Table view",
+      "newTemplate": "New Template",
+      "newTemplateTitle": "Create new template",
+      "loading": "Loading templates…",
+      "loadError": "Failed to load templates",
+      "startError": "Failed to start report",
+      "newTemplateError": "Failed to open template generator",
+      "empty": "No templates in this category.",
+      "noDescription": "No description",
+      "chipApp": "app",
+      "chipOrg": "org",
+      "columns": {
+        "name": "Name",
+        "source": "Source"
+      },
+      "footerHint": "Double-click or select and click \"Generate\"",
+      "selectedPrefix": "Selected: ",
+      "cancel": "Cancel",
+      "generateReport": "Generate Report",
+      "generating": "Generating…",
+      "metaModal": {
+        "title": "New template",
+        "subtitle": "Name + module + short description (gives generator context)",
+        "closeAria": "Close new template meta",
+        "fields": {
+          "name": "Template name*",
+          "namePlaceholder": "e.g. DRD Exec Summary v2",
+          "module": "Module",
+          "frameworkOptional": "Framework (optional)",
+          "frameworkNone": "None",
+          "recipientOptional": "Recipient (optional)",
+          "recipientNotSet": "Not set",
+          "recipientBoard": "Board / Executive",
+          "recipientBank": "Bank / Financial",
+          "recipientTeam": "Team",
+          "descriptionOptional": "Description (optional)",
+          "descriptionPlaceholder": "For whom, what to include, style, etc."
+        },
+        "moduleOptions": {
+          "assessment": "Assessment",
+          "interview": "Interview",
+          "tool": "Tool",
+          "initiative": "Initiative"
+        },
+        "openGenerator": "Open generator"
+      }
     }
   },
   "initiatives": {

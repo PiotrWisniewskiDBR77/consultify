@@ -1,5 +1,6 @@
 import { ChevronDown, FileText, Grid3X3, List, Loader2, Plus, Sparkles, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ReportEditor } from '@/components/ReportBuilder/ReportEditor';
 import { Api } from '@/services/api';
@@ -57,6 +58,8 @@ export function ReportTemplatePickerModal(props: {
     framework,
     lockFramework = false,
   } = props;
+
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +120,7 @@ export function ReportTemplatePickerModal(props: {
       })
       .catch((e: any) => {
         if (cancelled) return;
-        setError(e?.message || 'Failed to load templates');
+        setError(e?.message || t('assessment.templatePicker.loadError', 'Failed to load templates'));
       })
       .finally(() => {
         if (cancelled) return;
@@ -134,19 +137,19 @@ export function ReportTemplatePickerModal(props: {
 
     // Source filter
     if (sourceFilter === 'application') {
-      result = result.filter((t) => t.isSystem);
+      result = result.filter((tp) => tp.isSystem);
     } else if (sourceFilter === 'organization') {
-      result = result.filter((t) => !t.isSystem);
+      result = result.filter((tp) => !tp.isSystem);
     }
 
     // Recipient filter
     if (recipientFilter !== 'all') {
-      result = result.filter((t) => detectRecipient(t) === recipientFilter);
+      result = result.filter((tp) => detectRecipient(tp) === recipientFilter);
     }
 
     // Framework filter
     if (frameworkFilter !== 'all') {
-      result = result.filter((t) => detectFramework(t) === frameworkFilter);
+      result = result.filter((tp) => detectFramework(tp) === frameworkFilter);
     }
 
     return result;
@@ -160,7 +163,20 @@ export function ReportTemplatePickerModal(props: {
     if (!lockFramework) setFrameworkFilter('all');
   };
 
-  const selectedTemplate = selectedId ? templates.find((t) => t.id === selectedId) : null;
+  const recipientLabel = (r: RecipientFilter): string => {
+    switch (r) {
+      case 'board':
+        return t('assessment.templatePicker.filters.recipientBoard', 'Board');
+      case 'bank':
+        return t('assessment.templatePicker.filters.recipientBank', 'Bank');
+      case 'team':
+        return t('assessment.templatePicker.filters.recipientTeam', 'Team');
+      default:
+        return r;
+    }
+  };
+
+  const selectedTemplate = selectedId ? templates.find((tp) => tp.id === selectedId) : null;
 
   const handleSelect = async (tpl: ReportTemplate) => {
     if (submitting) return;
@@ -169,7 +185,7 @@ export function ReportTemplatePickerModal(props: {
       await onSelect(tpl);
       onClose();
     } catch (e: any) {
-      setError(e?.message || 'Failed to start report');
+      setError(e?.message || t('assessment.templatePicker.startError', 'Failed to start report'));
     } finally {
       setSubmitting(false);
     }
@@ -183,7 +199,7 @@ export function ReportTemplatePickerModal(props: {
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => !submitting && onClose()}
-        aria-label="Close"
+        aria-label={t('assessment.templatePicker.close', 'Close')}
       />
 
       <div
@@ -196,15 +212,17 @@ export function ReportTemplatePickerModal(props: {
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400">
+            <div className="p-2 rounded-xl bg-c-surface-raised text-c-text-secondary">
               <FileText className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Select Report Template
+                {t('assessment.templatePicker.title', 'Select Report Template')}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {filtered.length} available templates
+                {t('assessment.templatePicker.availableTemplates', '{{count}} available templates', {
+                  count: filtered.length,
+                })}
               </p>
             </div>
           </div>
@@ -223,9 +241,15 @@ export function ReportTemplatePickerModal(props: {
           {/* Source filter tabs */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-navy-800">
             {[
-              { id: 'all' as const, label: 'All' },
-              { id: 'application' as const, label: 'Application' },
-              { id: 'organization' as const, label: 'Organization' },
+              { id: 'all' as const, label: t('assessment.templatePicker.tabs.all', 'All') },
+              {
+                id: 'application' as const,
+                label: t('assessment.templatePicker.tabs.application', 'Application'),
+              },
+              {
+                id: 'organization' as const,
+                label: t('assessment.templatePicker.tabs.organization', 'Organization'),
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -254,14 +278,20 @@ export function ReportTemplatePickerModal(props: {
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
                   'bg-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus',
                   recipientFilter !== 'all'
-                    ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                    ? 'border-c-focus text-c-focus-solid'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                 )}
               >
-                <option value="all">Recipient</option>
-                <option value="board">Board</option>
-                <option value="bank">Bank</option>
-                <option value="team">Team</option>
+                <option value="all">{t('assessment.templatePicker.filters.recipient', 'Recipient')}</option>
+                <option value="board">
+                  {t('assessment.templatePicker.filters.recipientBoard', 'Board')}
+                </option>
+                <option value="bank">
+                  {t('assessment.templatePicker.filters.recipientBank', 'Bank')}
+                </option>
+                <option value="team">
+                  {t('assessment.templatePicker.filters.recipientTeam', 'Team')}
+                </option>
               </select>
               <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
             </div>
@@ -276,11 +306,11 @@ export function ReportTemplatePickerModal(props: {
                   'appearance-none text-xs pl-2 pr-6 py-1 rounded-md border cursor-pointer transition-colors',
                   'bg-transparent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-c-focus',
                   frameworkFilter !== 'all'
-                    ? 'border-primary-300 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                    ? 'border-c-focus text-c-focus-solid'
                     : 'border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400'
                 )}
               >
-                <option value="all">Framework</option>
+                <option value="all">{t('assessment.templatePicker.filters.framework', 'Framework')}</option>
                 <option value="drd">DRD</option>
                 <option value="siri">SIRI</option>
                 <option value="adma">ADMA</option>
@@ -295,7 +325,7 @@ export function ReportTemplatePickerModal(props: {
                 onClick={clearFilters}
                 className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
-                Clear
+                {t('assessment.templatePicker.filters.clear', 'Clear')}
               </button>
             )}
 
@@ -310,10 +340,10 @@ export function ReportTemplatePickerModal(props: {
                 className={cn(
                   'p-1 rounded transition-colors',
                   viewMode === 'grid'
-                    ? 'bg-white dark:bg-navy-700 text-primary-600 shadow-sm'
+                    ? 'bg-white dark:bg-navy-700 text-c-focus-solid shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
-                title="Grid view"
+                title={t('assessment.templatePicker.gridView', 'Grid view')}
               >
                 <Grid3X3 className="w-3.5 h-3.5" />
               </button>
@@ -323,10 +353,10 @@ export function ReportTemplatePickerModal(props: {
                 className={cn(
                   'p-1 rounded transition-colors',
                   viewMode === 'table'
-                    ? 'bg-white dark:bg-navy-700 text-primary-600 shadow-sm'
+                    ? 'bg-white dark:bg-navy-700 text-c-focus-solid shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
-                title="Table view"
+                title={t('assessment.templatePicker.tableView', 'Table view')}
               >
                 <List className="w-3.5 h-3.5" />
               </button>
@@ -352,14 +382,17 @@ export function ReportTemplatePickerModal(props: {
                   setNewTemplateFramework('DRD');
                   setIsNewTemplateMetaOpen(true);
                 } catch (e: any) {
-                  setError(e?.message || 'Failed to open template generator');
+                  setError(
+                    e?.message ||
+                      t('assessment.templatePicker.newTemplateError', 'Failed to open template generator')
+                  );
                 }
               }}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 disabled:cursor-not-allowed text-white dark:text-navy-950 text-xs font-medium transition-colors"
-              title="Create new template"
+              title={t('assessment.templatePicker.newTemplateTitle', 'Create new template')}
             >
               <Plus className="w-3.5 h-3.5" />
-              New Template
+              {t('assessment.templatePicker.newTemplate', 'New Template')}
             </button>
           </div>
         </div>
@@ -369,7 +402,7 @@ export function ReportTemplatePickerModal(props: {
           {loading ? (
             <div className="py-12 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Loading templates…</span>
+              <span>{t('assessment.templatePicker.loading', 'Loading templates…')}</span>
             </div>
           ) : error ? (
             <div className="p-4 rounded-xl bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 text-danger-700 dark:text-danger-300 text-sm">
@@ -377,7 +410,7 @@ export function ReportTemplatePickerModal(props: {
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-              No templates in this category.
+              {t('assessment.templatePicker.empty', 'No templates in this category.')}
             </div>
           ) : viewMode === 'grid' ? (
             /* Grid View */
@@ -397,8 +430,8 @@ export function ReportTemplatePickerModal(props: {
                       'text-left p-3.5 rounded-xl border transition-all',
                       'hover:shadow-md',
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-primary-300 dark:hover:border-primary-700'
+                        ? 'border-c-focus bg-c-surface-raised'
+                        : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 hover:border-c-focus/50'
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -408,17 +441,17 @@ export function ReportTemplatePickerModal(props: {
                       <div className="flex items-center gap-1 shrink-0">
                         {tpl.isSystem ? (
                           <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
-                            app
+                            {t('assessment.templatePicker.chipApp', 'app')}
                           </span>
                         ) : (
-                          <span className="text-[9px] px-1 py-0.5 rounded bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
-                            org
+                          <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                            {t('assessment.templatePicker.chipOrg', 'org')}
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
-                      {tpl.description || 'No description'}
+                      {tpl.description || t('assessment.templatePicker.noDescription', 'No description')}
                     </div>
                     {/* Subtle metadata row */}
                     <div className="mt-2 pt-2 border-t border-slate-200 dark:border-navy-800 flex items-center gap-2">
@@ -435,8 +468,8 @@ export function ReportTemplatePickerModal(props: {
                       >
                         {framework.toUpperCase()}
                       </span>
-                      <span className="text-[9px] text-slate-500 dark:text-slate-400 capitalize">
-                        {recipient}
+                      <span className="text-[9px] text-slate-500 dark:text-slate-400">
+                        {recipientLabel(recipient)}
                       </span>
                     </div>
                   </button>
@@ -452,7 +485,7 @@ export function ReportTemplatePickerModal(props: {
                 <thead>
                   <tr className="bg-slate-50 dark:bg-navy-800 text-left">
                     <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400">
-                      <span className="text-xs">Name</span>
+                      <span className="text-xs">{t('assessment.templatePicker.columns.name', 'Name')}</span>
                     </th>
                     <th className="px-4 py-2 font-medium hidden sm:table-cell">
                       <div className="relative inline-flex items-center gap-1">
@@ -463,11 +496,13 @@ export function ReportTemplatePickerModal(props: {
                             'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
                             'bg-transparent border-0 focus:outline-none focus:ring-0',
                             frameworkFilter !== 'all'
-                              ? 'text-primary-600 dark:text-primary-400 font-medium'
+                              ? 'text-c-focus-solid font-medium'
                               : 'text-slate-500 dark:text-slate-400'
                           )}
                         >
-                          <option value="all">Framework</option>
+                          <option value="all">
+                            {t('assessment.templatePicker.filters.framework', 'Framework')}
+                          </option>
                           <option value="drd">DRD</option>
                           <option value="siri">SIRI</option>
                           <option value="adma">ADMA</option>
@@ -484,20 +519,28 @@ export function ReportTemplatePickerModal(props: {
                             'appearance-none text-xs pl-1 pr-4 py-0.5 rounded cursor-pointer transition-colors',
                             'bg-transparent border-0 focus:outline-none focus:ring-0',
                             recipientFilter !== 'all'
-                              ? 'text-primary-600 dark:text-primary-400 font-medium'
+                              ? 'text-c-focus-solid font-medium'
                               : 'text-slate-500 dark:text-slate-400'
                           )}
                         >
-                          <option value="all">Recipient</option>
-                          <option value="board">Board</option>
-                          <option value="bank">Bank</option>
-                          <option value="team">Team</option>
+                          <option value="all">
+                            {t('assessment.templatePicker.filters.recipient', 'Recipient')}
+                          </option>
+                          <option value="board">
+                            {t('assessment.templatePicker.filters.recipientBoard', 'Board')}
+                          </option>
+                          <option value="bank">
+                            {t('assessment.templatePicker.filters.recipientBank', 'Bank')}
+                          </option>
+                          <option value="team">
+                            {t('assessment.templatePicker.filters.recipientTeam', 'Team')}
+                          </option>
                         </select>
                         <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 dark:text-slate-400 pointer-events-none" />
                       </div>
                     </th>
                     <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 w-20">
-                      <span className="text-xs">Source</span>
+                      <span className="text-xs">{t('assessment.templatePicker.columns.source', 'Source')}</span>
                     </th>
                   </tr>
                 </thead>
@@ -514,7 +557,7 @@ export function ReportTemplatePickerModal(props: {
                         className={cn(
                           'cursor-pointer transition-colors',
                           isSelected
-                            ? 'bg-primary-50 dark:bg-primary-900/20'
+                            ? 'bg-c-surface-raised'
                             : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                         )}
                       >
@@ -523,7 +566,7 @@ export function ReportTemplatePickerModal(props: {
                             {tpl.name}
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                            {tpl.description || 'No description'}
+                            {tpl.description || t('assessment.templatePicker.noDescription', 'No description')}
                           </div>
                         </td>
                         <td className="px-4 py-2.5 hidden sm:table-cell">
@@ -542,18 +585,18 @@ export function ReportTemplatePickerModal(props: {
                           </span>
                         </td>
                         <td className="px-4 py-2.5 hidden md:table-cell">
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
-                            {recipient}
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {recipientLabel(recipient)}
                           </span>
                         </td>
                         <td className="px-4 py-2.5">
                           {tpl.isSystem ? (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
-                              app
+                              {t('assessment.templatePicker.chipApp', 'app')}
                             </span>
                           ) : (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
-                              org
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400">
+                              {t('assessment.templatePicker.chipOrg', 'org')}
                             </span>
                           )}
                         </td>
@@ -571,13 +614,13 @@ export function ReportTemplatePickerModal(props: {
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {selectedTemplate ? (
               <>
-                Selected:{' '}
+                {t('assessment.templatePicker.selectedPrefix', 'Selected: ')}
                 <span className="font-medium text-slate-700 dark:text-slate-200">
                   {selectedTemplate.name}
                 </span>
               </>
             ) : (
-              'Double-click or select and click "Generate"'
+              t('assessment.templatePicker.footerHint', 'Double-click or select and click "Generate"')
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -587,7 +630,7 @@ export function ReportTemplatePickerModal(props: {
               disabled={submitting}
               className="px-4 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors disabled:opacity-50"
             >
-              Cancel
+              {t('assessment.templatePicker.cancel', 'Cancel')}
             </button>
             <button
               type="button"
@@ -596,18 +639,18 @@ export function ReportTemplatePickerModal(props: {
               className={
                 !selectedTemplate || submitting
                   ? 'px-5 py-2.5 rounded-lg bg-slate-300 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed inline-flex items-center gap-2'
-                  : 'px-5 py-2.5 rounded-lg bg-gradient-to-r from-primary-500 to-crimson-500 hover:from-primary-600 hover:to-crimson-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
+                  : 'px-5 py-2.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] text-white dark:text-navy-950 text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2'
               }
             >
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating…
+                  {t('assessment.templatePicker.generating', 'Generating…')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  Generate Report
+                  {t('assessment.templatePicker.generateReport', 'Generate Report')}
                 </>
               )}
             </button>
@@ -622,23 +665,26 @@ export function ReportTemplatePickerModal(props: {
             type="button"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsNewTemplateMetaOpen(false)}
-            aria-label="Close new template meta"
+            aria-label={t('assessment.templatePicker.metaModal.closeAria', 'Close new template meta')}
           />
           <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 shadow-2xl">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
               <div>
                 <div className="text-base font-semibold text-slate-900 dark:text-white">
-                  New template
+                  {t('assessment.templatePicker.metaModal.title', 'New template')}
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  Name + module + short description (gives generator context)
+                  {t(
+                    'assessment.templatePicker.metaModal.subtitle',
+                    'Name + module + short description (gives generator context)'
+                  )}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewTemplateMetaOpen(false)}
                 className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-500 transition-colors"
-                aria-label="Close"
+                aria-label={t('assessment.templatePicker.close', 'Close')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -647,20 +693,23 @@ export function ReportTemplatePickerModal(props: {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  Template name*
+                  {t('assessment.templatePicker.metaModal.fields.name', 'Template name*')}
                 </label>
                 <input
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
-                  placeholder="e.g. DRD Exec Summary v2"
+                  placeholder={t(
+                    'assessment.templatePicker.metaModal.fields.namePlaceholder',
+                    'e.g. DRD Exec Summary v2'
+                  )}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                    Module
+                    {t('assessment.templatePicker.metaModal.fields.module', 'Module')}
                   </label>
                   <select
                     value={newTemplateSourceType}
@@ -676,15 +725,23 @@ export function ReportTemplatePickerModal(props: {
                     }
                     className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                   >
-                    <option value="ASSESSMENT">Assessment</option>
-                    <option value="INTERVIEW">Interview</option>
-                    <option value="TOOL">Tool</option>
-                    <option value="INITIATIVE">Initiative</option>
+                    <option value="ASSESSMENT">
+                      {t('assessment.templatePicker.metaModal.moduleOptions.assessment', 'Assessment')}
+                    </option>
+                    <option value="INTERVIEW">
+                      {t('assessment.templatePicker.metaModal.moduleOptions.interview', 'Interview')}
+                    </option>
+                    <option value="TOOL">
+                      {t('assessment.templatePicker.metaModal.moduleOptions.tool', 'Tool')}
+                    </option>
+                    <option value="INITIATIVE">
+                      {t('assessment.templatePicker.metaModal.moduleOptions.initiative', 'Initiative')}
+                    </option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                    Framework (optional)
+                    {t('assessment.templatePicker.metaModal.fields.frameworkOptional', 'Framework (optional)')}
                   </label>
                   <select
                     value={newTemplateFramework}
@@ -697,14 +754,16 @@ export function ReportTemplatePickerModal(props: {
                     <option value="DRD">DRD</option>
                     <option value="SIRI">SIRI</option>
                     <option value="ADMA">ADMA</option>
-                    <option value="NONE">None</option>
+                    <option value="NONE">
+                      {t('assessment.templatePicker.metaModal.fields.frameworkNone', 'None')}
+                    </option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  Recipient (optional)
+                  {t('assessment.templatePicker.metaModal.fields.recipientOptional', 'Recipient (optional)')}
                 </label>
                 <select
                   value={newTemplateRecipient}
@@ -713,23 +772,34 @@ export function ReportTemplatePickerModal(props: {
                   }
                   className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
                 >
-                  <option value="">Not set</option>
-                  <option value="board">Board / Executive</option>
-                  <option value="bank">Bank / Financial</option>
-                  <option value="team">Team</option>
+                  <option value="">
+                    {t('assessment.templatePicker.metaModal.fields.recipientNotSet', 'Not set')}
+                  </option>
+                  <option value="board">
+                    {t('assessment.templatePicker.metaModal.fields.recipientBoard', 'Board / Executive')}
+                  </option>
+                  <option value="bank">
+                    {t('assessment.templatePicker.metaModal.fields.recipientBank', 'Bank / Financial')}
+                  </option>
+                  <option value="team">
+                    {t('assessment.templatePicker.metaModal.fields.recipientTeam', 'Team')}
+                  </option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                  Description (optional)
+                  {t('assessment.templatePicker.metaModal.fields.descriptionOptional', 'Description (optional)')}
                 </label>
                 <textarea
                   value={newTemplateDescription}
                   onChange={(e) => setNewTemplateDescription(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm text-slate-900 dark:text-white"
-                  placeholder="For whom, what to include, style, etc."
+                  placeholder={t(
+                    'assessment.templatePicker.metaModal.fields.descriptionPlaceholder',
+                    'For whom, what to include, style, etc.'
+                  )}
                 />
               </div>
             </div>
@@ -740,7 +810,7 @@ export function ReportTemplatePickerModal(props: {
                 onClick={() => setIsNewTemplateMetaOpen(false)}
                 className="h-10 px-4 rounded-lg border border-slate-200 dark:border-navy-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800"
               >
-                Cancel
+                {t('assessment.templatePicker.cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -750,7 +820,7 @@ export function ReportTemplatePickerModal(props: {
                 }}
                 className="h-10 px-4 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:bg-navy-900/40 dark:disabled:bg-[#F4F7FB]/50 text-white dark:text-navy-950 text-sm font-semibold"
               >
-                Open generator
+                {t('assessment.templatePicker.metaModal.openGenerator', 'Open generator')}
               </button>
             </div>
           </div>
