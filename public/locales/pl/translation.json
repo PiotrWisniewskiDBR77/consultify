@@ -9552,19 +9552,24 @@
       "destructiveNote": "Warianty obciążenia są zastępowane, nie usuwane",
       "resourceOwnerFallback": "Właściciel zasobów"
     },
-    "plan": {
-      "newPlan": "Nowy plan",
-      "unnamed": "Plan bez nazwy",
-      "portfolioFallback": "Portfel źródłowy",
-      "filters": { "drafts": "Szkice", "published": "Opublikowane", "conflicted": "Z konfliktami" },
-      "columns": { "name": "Nazwa", "portfolio": "Portfel / wersja", "horizon": "Horyzont", "initiatives": "Inicjatyw w planie", "conflicts": "Konflikty", "updatedAt": "Zaktualizowano", "author": "Autor" }
-    },
+    "plan": "Plan działania",
     "capacityAnalysis": {
       "newAnalysis": "Nowa analiza",
       "unnamed": "Analiza bez nazwy",
       "sourcePlanFallback": "Plan źródłowy",
-      "filters": { "drafts": "Szkice", "published": "Opublikowane", "gaps": "Z lukami" },
-      "columns": { "name": "Nazwa", "sourcePlan": "Plan źródłowy", "periods": "Okresy", "roles": "Role", "gaps": "Luki", "updatedAt": "Zaktualizowano" }
+      "filters": {
+        "drafts": "Szkice",
+        "published": "Opublikowane",
+        "gaps": "Z lukami"
+      },
+      "columns": {
+        "name": "Nazwa",
+        "sourcePlan": "Plan źródłowy",
+        "periods": "Okresy",
+        "roles": "Role",
+        "gaps": "Luki",
+        "updatedAt": "Zaktualizowano"
+      }
     },
     "planScenario": {
       "status": {
@@ -10119,7 +10124,6 @@
     "toAdd": "Do dodania",
     "noAdditionsProposed": "Brak propozycji do dodania.",
     "ifTheThreadIsCompleteAi": "Jeśli wątek jest kompletny, AI może nie dodawać komentarzy.",
-    "plan": "Plan działania",
     "cancel": "Anuluj",
     "apply": "Zastosuj",
     "kpisBenefits": "KPI i korzyści",
@@ -12185,7 +12189,8 @@
         "work": "Praca",
         "resources": "Zasoby",
         "control": "Sterowanie",
-        "reports": "Raporty"
+        "reports": "Raporty",
+        "decisionsRisks": "Decyzje i ryzyka"
       }
     },
     "manager": {
@@ -12701,7 +12706,7 @@
         "tasks": "Zadania",
         "decisions": "Decyzje",
         "blocked": "Zablokowane",
-        "overdue": "Przeterminowane",
+        "overdue": "Po terminie",
         "dueSoon": "Wkrótce termin",
         "missingOwner": "Brak właściciela",
         "missingEvidence": "Brak DoD/dowodów",
@@ -12745,6 +12750,11 @@
         "published": "Opublikowane",
         "failed": "Nieudane",
         "recent": "Ostatnie uruchomienia"
+      },
+      "governance": {
+        "decisions": "Decyzje",
+        "risks": "Ryzyka",
+        "overdue": "Po terminie"
       }
     },
     "scope": {
@@ -13176,11 +13186,15 @@
     },
     "work": {
       "columns": {
-        "title": "Element pracy",
+        "title": "Zadanie",
         "kind": "Rodzaj",
         "status": "Status",
         "owner": "Właściciel / osoba decyzyjna",
-        "dueAt": "Termin / SLA"
+        "dueAt": "Termin / SLA",
+        "initiative": "Inicjatywa",
+        "person": "Osoba",
+        "due": "Termin",
+        "slip": "Poślizg (dni)"
       },
       "degraded": "Niepełne dane: {{count}} {{unit}} bez odpowiedzi"
     },
@@ -13201,6 +13215,19 @@
       },
       "actions": {
         "proposeAllocation": "Zaproponuj przydział"
+      }
+    },
+    "governance": {
+      "columns": {
+        "title": "Tytuł",
+        "type": "Typ",
+        "owner": "Właściciel",
+        "due": "Termin",
+        "daysOverdue": "Dni po terminie",
+        "escalation": "Eskalacja"
+      },
+      "actions": {
+        "newDecision": "Nowa decyzja"
       }
     }
   },

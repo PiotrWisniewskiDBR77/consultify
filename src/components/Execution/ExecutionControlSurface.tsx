@@ -8,6 +8,8 @@ import {
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
+import { Api } from '@/services/api';
+
 import {
   createMaterialChange,
   draftIntervention,
@@ -19,6 +21,11 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  decisionDaysOverdue,
+  isDecisionOverdue,
+  isOpenDecision,
+} from './executionRealData';
 import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
@@ -266,20 +273,140 @@ const signalFieldLabels: Record<string, string> = {
   severity: 'Ważność',
   occurredAt: 'Czas wystąpienia',
 };
-const controlPresets = [
-  'needs-action',
-  'critical',
-  'decisions',
-  'schedule',
-  'resources',
-  'cost',
-  'risk',
-  'dependencies',
-  'adoption',
-  'outcome-risk',
-  'verification-overdue',
-  'resolved',
-] as const;
+/**
+ * 1.12-R1 (C): zakładka „Sterowanie" staje się „Decyzje i ryzyka".
+ *
+ * POMIAR 06.09 (DBR77): `runtime-v1/management-signals` → 0,
+ * `runtime-v1/interventions` → 0. Zakładka miała 12 chipów Menu 3 filtrujących
+ * PUSTY zbiór (część z nich regexem po `JSON.stringify` całego wiersza).
+ * Obok, nieczytane: `/api/decisions` → 35 (25 otwartych, 12 po terminie,
+ * `isOverdue`/`daysOverdue`/`escalationLevel` policzone przez serwer),
+ * `/api/raid` → 16 pozycji. Trzy chipy, dwa realne rejestry.
+ *
+ * Sygnały i interwencje NIE ZNIKAJĄ z kodu — pokazują się w sekcji warsztatu
+ * wtedy i tylko wtedy, gdy mają choć jeden rekord (zero pustych ekranów).
+ */
+const controlPresets = ['decyzje', 'ryzyka', 'po-terminie'] as const;
+
+/** Wiersz rejestru decyzji albo RAID — wspólny kształt tabeli (plan C2, wiersz 5). */
+interface GovernanceRow extends TableRow {
+  id: string;
+  title: string;
+  kindLabel: string;
+  kind: 'DECISION' | 'RAID';
+  owner: string;
+  dueAt: string;
+  rawDueAt: string | null;
+  daysOverdue: number | null;
+  escalation: string;
+  isOverdue: boolean;
+  source: any;
+}
+
+const raidTypeLabel = (value: unknown): string =>
+  ({
+    RISK: 'Ryzyko',
+    ISSUE: 'Problem',
+    DEPENDENCY: 'Zależność',
+    ASSUMPTION: 'Założenie',
+    ACTION: 'Działanie',
+  })[String(value ?? '').toUpperCase()] ?? String(value ?? '—');
+
+const decisionStatusLabel = (value: unknown): string =>
+  ({
+    PENDING: 'Oczekuje',
+    ESCALATED: 'Eskalowana',
+    APPROVED: 'Zatwierdzona',
+    REJECTED: 'Odrzucona',
+    DEFERRED: 'Odroczona',
+  })[String(value ?? '').toUpperCase()] ?? String(value ?? '—');
+
+/**
+ * Poziom eskalacji — serwer liczy go sam (`escalationLevel` 0/1/2 +
+ * `escalationLevelName` none/amber/red w `DecisionController.getDecisions`),
+ * więc tu tylko nazywamy go po polsku. Zero własnej arytmetyki obok silnika.
+ */
+const escalationLabel = (decision: any): string => {
+  const name = String(decision?.escalationLevelName ?? '').toLowerCase();
+  if (name === 'red') return 'Czerwona';
+  if (name === 'amber') return 'Bursztynowa';
+  if (name === 'none') return 'Brak';
+  const level = Number(decision?.escalationLevel ?? 0);
+  return level >= 2 ? 'Czerwona' : level === 1 ? 'Bursztynowa' : 'Brak';
+};
+
+const severityToEscalation = (value: unknown): string =>
+  ({ CRITICAL: 'Czerwona', HIGH: 'Czerwona', MEDIUM: 'Bursztynowa', LOW: 'Brak' })[
+    String(value ?? '').toUpperCase()
+  ] ?? 'Brak';
+
+const formatDay = (value: string | null | undefined) => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsed);
+};
+
+/** Kolumny wg planu C2 (wiersz 5): Tytuł · Typ · Właściciel · Termin · Dni po terminie · Eskalacja. */
+const buildGovernanceColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  {
+    id: 'title',
+    label: t('execution.governance.columns.title', 'Tytuł'),
+    sortable: true,
+    width: '300px',
+  },
+  {
+    id: 'kindLabel',
+    label: t('execution.governance.columns.type', 'Typ'),
+    sortable: true,
+    filterable: true,
+    width: '130px',
+  },
+  {
+    id: 'owner',
+    label: t('execution.governance.columns.owner', 'Właściciel'),
+    sortable: true,
+    width: '170px',
+  },
+  {
+    id: 'dueAt',
+    label: t('execution.governance.columns.due', 'Termin'),
+    sortable: true,
+    width: '140px',
+  },
+  {
+    id: 'daysOverdue',
+    label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+    sortable: true,
+    width: '130px',
+    render: (row) => {
+      const days = row.daysOverdue as number | null;
+      if (days == null) return <span className="text-c-text-muted">—</span>;
+      return <span className="font-semibold tabular-nums text-c-danger">+{days}</span>;
+    },
+  },
+  {
+    id: 'escalation',
+    label: t('execution.governance.columns.escalation', 'Eskalacja'),
+    sortable: true,
+    filterable: true,
+    width: '130px',
+    render: (row) => {
+      const value = String(row.escalation ?? '');
+      const tone =
+        value === 'Czerwona'
+          ? 'text-c-danger'
+          : value === 'Bursztynowa'
+            ? 'text-c-warning'
+            : 'text-c-text-muted';
+      return <span className={`font-medium ${tone}`}>{value}</span>;
+    },
+  },
+];
 export const ExecutionControlSurface = ({
   activePreset,
   onCountsChange,
@@ -297,7 +424,14 @@ export const ExecutionControlSurface = ({
   const { t } = useTranslation();
   const columns = useMemo(() => buildColumns(t), [t]);
   const signalColumns = useMemo(() => buildSignalColumns(t), [t]);
+  const governanceColumns = useMemo(() => buildGovernanceColumns(t), [t]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
+    // 1.12-R1 (C): realne rejestry — decyzje (/api/decisions) i RAID (/api/raid).
+    [governanceRows, setGovernanceRows] = useState<GovernanceRow[]>([]),
+    [selectedGovernanceId, setSelectedGovernanceId] = useState<string | null>(null),
+    [newDecisionOpen, setNewDecisionOpen] = useState(false),
+    [newDecision, setNewDecision] = useState({ title: '', dueDate: '' }),
+    [newDecisionError, setNewDecisionError] = useState<string | null>(null),
     [rows, setRows] = useState<Row[]>([]),
     [signalRows, setSignalRows] = useState<SignalRow[]>([]),
     [selectedSignalId, setSelectedSignalId] = useState<string | null>(null),
@@ -370,8 +504,69 @@ export const ExecutionControlSurface = ({
     [receipt, setReceipt] = useState<any | null>(null),
     [write, setWrite] = useState<'IDLE' | 'FAILED'>('IDLE');
   const ids = useRef(new Map<string, string>());
+  /**
+   * 1.12-R1 (C): rejestr decyzji + RAID. Pobierany NIEZALEŻNIE od
+   * `runtime-v1` — jedna padnięta rura nie może zabrać drugiej (to jest
+   * dokładnie ten defekt, przez który cała zakładka była pusta).
+   */
+  const loadGovernance = useCallback(async () => {
+    const [decyzje, raid] = await Promise.allSettled([Api.get('/decisions'), Api.raidList()]);
+
+    const decisionItems: any[] =
+      decyzje.status === 'fulfilled'
+        ? Array.isArray(decyzje.value)
+          ? decyzje.value
+          : ((decyzje.value as any)?.decisions ?? [])
+        : [];
+    const raidItems: any[] =
+      raid.status === 'fulfilled'
+        ? Array.isArray(raid.value)
+          ? raid.value
+          : ((raid.value as any)?.items ?? (raid.value as any)?.raid ?? [])
+        : [];
+
+    const decisionRows: GovernanceRow[] = decisionItems
+      // Rozstrzygnięte decyzje nie są „do rozstrzygnięcia" — rejestr pokazuje
+      // to, co jeszcze czeka (25 z 35 na pomiarze DBR77).
+      .filter((decision) => isOpenDecision(decision))
+      .map((decision) => ({
+        id: `decision:${decision.id}`,
+        title: decision.title ?? 'Decyzja bez tytułu',
+        kind: 'DECISION' as const,
+        kindLabel: decisionStatusLabel(decision.status),
+        owner: decision.ownerName || decision.requestedByName || 'Nieprzypisana',
+        dueAt: formatDay(decision.dueDate),
+        rawDueAt: decision.dueDate ?? null,
+        daysOverdue: isDecisionOverdue(decision) ? decisionDaysOverdue(decision) : null,
+        escalation: escalationLabel(decision),
+        isOverdue: isDecisionOverdue(decision),
+        source: decision,
+      }));
+
+    const raidRows: GovernanceRow[] = raidItems.map((item) => ({
+      id: `raid:${item.id}`,
+      title: item.title ?? 'Pozycja RAID bez tytułu',
+      kind: 'RAID' as const,
+      kindLabel: raidTypeLabel(item.type),
+      owner: item.ownerName || item.ownerId || 'Nieprzypisana',
+      // POMIAR: 0 z 16 pozycji RAID ma termin — kolumna pokaże „—",
+      // a nie zmyśloną datę (dobudowa terminów to R3, plan C2 wiersz 5).
+      dueAt: formatDay(item.dueDate),
+      rawDueAt: item.dueDate ?? null,
+      daysOverdue: item.dueDate && Date.parse(item.dueDate) < Date.now()
+        ? Math.floor((Date.now() - Date.parse(item.dueDate)) / 86_400_000)
+        : null,
+      escalation: severityToEscalation(item.severity),
+      isOverdue: Boolean(item.dueDate) && Date.parse(item.dueDate) < Date.now(),
+      source: item,
+    }));
+
+    setGovernanceRows([...decisionRows, ...raidRows]);
+  }, []);
+
   const load = useCallback(async () => {
     setState('LOADING');
+    void loadGovernance();
     try {
       const [b, s, capacity] = (await Promise.all([
         listInterventions(),
@@ -465,7 +660,7 @@ export const ExecutionControlSurface = ({
       );
       setState('READY');
     }
-  }, []);
+  }, [loadGovernance]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -474,51 +669,64 @@ export const ExecutionControlSurface = ({
     () => signalRows.find((row) => row.id === selectedSignalId) ?? null,
     [selectedSignalId, signalRows]
   );
-  const controlItems = useMemo(
-    () => [
-      ...signalRows.map((row) => ({ kind: 'SIGNAL' as const, row })),
-      ...rows.map((row) => ({ kind: 'INTERVENTION' as const, row })),
-    ],
-    [rows, signalRows]
+  // 1.12-R1 (C): trzy presety liczone z POLA, nie z regexa po
+  // `JSON.stringify(wiersz)`. Stary filtr „decisions" łapał każdy wiersz,
+  // w którym gdziekolwiek padło słowo DECISION — także w nazwie pola.
+  const matches = useCallback(
+    (row: GovernanceRow, preset: string) => {
+      if (preset === 'decyzje') return row.kind === 'DECISION';
+      if (preset === 'ryzyka') return row.kind === 'RAID';
+      if (preset === 'po-terminie') return row.isOverdue;
+      return false;
+    },
+    []
   );
-  const matches = useCallback((item: (typeof controlItems)[number], preset: string) => {
-    const raw = JSON.stringify(item.row).toUpperCase();
-    const status = String(
-      (item.row as any).rawStatus ?? (item.row as any).status ?? ''
-    ).toUpperCase();
-    if (preset === 'needs-action') return !['RESOLVED', 'CLOSED', 'EFFECTIVE'].includes(status);
-    if (preset === 'critical')
-      return (
-        String((item.row as any).rawSeverity ?? (item.row as any).severity ?? '').toUpperCase() ===
-        'CRITICAL'
-      );
-    if (preset === 'decisions') return /DECISION|APPROV/.test(raw);
-    if (preset === 'schedule') return /SCHEDULE|MILESTONE|RESEQUENCE/.test(raw);
-    if (preset === 'resources') return /RESOURCE|CAPACITY|ALLOCATION/.test(raw);
-    if (preset === 'cost') return /COST|BUDGET|FINANCE/.test(raw);
-    if (preset === 'risk') return /RISK/.test(raw);
-    if (preset === 'dependencies') return /DEPENDENC/.test(raw);
-    if (preset === 'adoption') return /ADOPTION|CHANGE/.test(raw);
-    if (preset === 'outcome-risk') return /OUTCOME/.test(raw) && /RISK/.test(raw);
-    if (preset === 'verification-overdue')
-      return (
-        Boolean((item.row as any).rawSlaAt) &&
-        Date.parse((item.row as any).rawSlaAt) < Date.now() &&
-        !['RESOLVED', 'CLOSED', 'EFFECTIVE'].includes(status)
-      );
-    if (preset === 'resolved') return ['RESOLVED', 'CLOSED', 'EFFECTIVE'].includes(status);
-    return false;
-  }, []);
-  const visibleSignals = signalRows.filter((row) =>
-    matches({ kind: 'SIGNAL', row }, activePreset ?? 'needs-action')
+  const activeGovernancePreset = activePreset ?? 'decyzje';
+  const visibleGovernanceRows = useMemo(
+    () => governanceRows.filter((row) => matches(row, activeGovernancePreset)),
+    [governanceRows, matches, activeGovernancePreset]
   );
-  const visibleInterventions = rows.filter((row) =>
-    matches({ kind: 'INTERVENTION', row }, activePreset ?? 'needs-action')
+  const selectedGovernance = useMemo(
+    () => governanceRows.find((row) => row.id === selectedGovernanceId) ?? null,
+    [governanceRows, selectedGovernanceId]
   );
   useEffect(
-    () => onCountsChange?.(countExecutionPresets(controlItems, controlPresets, matches)),
-    [controlItems, matches, onCountsChange]
+    () => onCountsChange?.(countExecutionPresets(governanceRows, controlPresets, matches)),
+    [governanceRows, matches, onCountsChange]
   );
+  /**
+   * Warsztat sygnałów/interwencji `runtime-v1` zostaje w kodzie, ale nie
+   * rysuje pustej tabeli: na DBR77 oba rejestry mają 0 rekordów, więc bez tej
+   * bramki zakładka pokazywałaby pusty stan pod realnym rejestrem decyzji.
+   */
+  const hasRuntimeControlData = signalRows.length > 0 || rows.length > 0;
+  /**
+   * 1.12-R1 (C): „Nowa decyzja" na ISTNIEJĄCYM POST `/api/decisions`
+   * (`Api.createDecision`, walidator `CreateDecisionSchema` — pola `title`
+   * wymagane, `dueDate` opcjonalne). Ten sam wzorzec, którego używa Moja Praca
+   * (`NotebookContent.handleCreateDecision`) — zero nowego backendu.
+   */
+  const createDecision = async () => {
+    const title = newDecision.title.trim();
+    if (!title) return;
+    setNewDecisionError(null);
+    try {
+      await Api.createDecision({
+        title,
+        ...(newDecision.dueDate
+          ? { dueDate: new Date(newDecision.dueDate).toISOString() }
+          : {}),
+        sourceType: 'execution',
+      });
+      setNewDecision({ title: '', dueDate: '' });
+      setNewDecisionOpen(false);
+      await loadGovernance();
+    } catch (error) {
+      setNewDecisionError(
+        error instanceof Error ? error.message : 'Nie udało się zapisać decyzji.'
+      );
+    }
+  };
   const cid = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
     ids.current.set(key, value);
@@ -721,6 +929,14 @@ export const ExecutionControlSurface = ({
     if (!onRegisterFilterControl) return;
     onRegisterFilterControl(
       <div className="flex flex-wrap gap-2">
+        {/* 1.12-R1 (C): CTA Menu 2 zakładki „Decyzje i ryzyka". */}
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setNewDecisionOpen(true)}
+        >
+          {t('execution.governance.actions.newDecision', 'Nowa decyzja')}
+        </button>
         <button
           type="button"
           className="btn-secondary"
@@ -758,8 +974,135 @@ export const ExecutionControlSurface = ({
       </div>
     );
   return (
-    <section aria-label="Execution Control" className="flex h-full min-h-0 flex-col p-4">
-      {state === 'LOADING' && <p role="status">Ładowanie interwencji…</p>}
+    <section aria-label="Decyzje i ryzyka" className="flex h-full min-h-0 flex-col p-4">
+      {state === 'LOADING' && <p role="status">Ładowanie rejestru decyzji i ryzyk…</p>}
+      {/*
+        1.12-R1 (C): GŁÓWNA treść zakładki — rejestr decyzji i pozycji RAID
+        z realnych tabel. Stoi PRZED warsztatem `runtime-v1`, bo to jest to,
+        po co menedżer tu wchodzi (25 otwartych decyzji, 12 po terminie,
+        16 pozycji RAID na pomiarze 06.09).
+      */}
+      {newDecisionOpen && (
+        <div className="mb-3 rounded-lg border border-c-border p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <strong>Nowa decyzja</strong>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setNewDecisionOpen(false)}
+            >
+              Zamknij
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className="text-xs">
+              Tytuł decyzji
+              <input
+                aria-label="Tytuł nowej decyzji"
+                value={newDecision.title}
+                onChange={(event) =>
+                  setNewDecision((current) => ({ ...current, title: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2"
+              />
+            </label>
+            <label className="text-xs">
+              Termin rozstrzygnięcia
+              <input
+                aria-label="Termin nowej decyzji"
+                type="date"
+                value={newDecision.dueDate}
+                onChange={(event) =>
+                  setNewDecision((current) => ({ ...current, dueDate: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2"
+              />
+            </label>
+          </div>
+          {newDecisionError && (
+            <p role="alert" className="mt-2 text-xs text-c-danger">
+              {newDecisionError}
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-secondary mt-3"
+            disabled={!newDecision.title.trim()}
+            onClick={() => void createDecision()}
+          >
+            Zapisz decyzję
+          </button>
+        </div>
+      )}
+      <div className="mb-3 flex min-h-0 flex-1 flex-col">
+        <TableWithPreviewLayout<GovernanceRow>
+          selectedId={selectedGovernanceId}
+          selectedItem={selectedGovernance}
+          onSelect={setSelectedGovernanceId}
+          itemIds={visibleGovernanceRows.map((row) => row.id)}
+          getItemById={(id) => governanceRows.find((row) => row.id === id) ?? null}
+          previewOpen={Boolean(selectedGovernanceId)}
+          renderPreview={(row) => (
+            <StandardPreview
+              embedded
+              title={row.title}
+              onClose={() => setSelectedGovernanceId(null)}
+              meta={{
+                pills: [
+                  { label: row.kindLabel, tone: 'neutral' },
+                  {
+                    label: row.escalation,
+                    tone:
+                      row.escalation === 'Czerwona'
+                        ? 'danger'
+                        : row.escalation === 'Bursztynowa'
+                          ? 'warning'
+                          : 'neutral',
+                  },
+                ],
+                recommendation:
+                  row.daysOverdue != null
+                    ? `Po terminie o ${row.daysOverdue} dni — rozstrzygnij albo eskaluj.`
+                    : 'Termin jeszcze nie minął.',
+              }}
+              details={{
+                label: row.kind === 'DECISION' ? 'Decyzja' : 'Pozycja RAID',
+                text:
+                  row.source?.description ||
+                  row.source?.recommendation ||
+                  'Brak dodatkowego opisu.',
+                properties: [
+                  { id: 'owner', label: 'Właściciel', value: row.owner },
+                  { id: 'due', label: 'Termin', value: row.dueAt },
+                  {
+                    id: 'overdue',
+                    label: 'Dni po terminie',
+                    value: row.daysOverdue == null ? 'Brak' : String(row.daysOverdue),
+                  },
+                  { id: 'escalation', label: 'Eskalacja', value: row.escalation },
+                ],
+              }}
+              relationsEmptyLabel="Brak powiązań"
+            />
+          )}
+        >
+          <StandardTable
+            columns={governanceColumns}
+            data={visibleGovernanceRows}
+            selectedRowId={selectedGovernanceId}
+            onRowClick={(row) => setSelectedGovernanceId(row.id)}
+            persistKey="execution.governance.v1"
+            empty={{
+              title:
+                activeGovernancePreset === 'ryzyka'
+                  ? 'Brak pozycji w rejestrze RAID'
+                  : 'Brak decyzji do rozstrzygnięcia',
+              description:
+                'Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka.',
+            }}
+          />
+        </TableWithPreviewLayout>
+      </div>
       {showInterventionForm && (
         <section
           aria-label="Intervention Signal Workbench"
@@ -931,7 +1274,7 @@ export const ExecutionControlSurface = ({
             >
               <StandardTable
                 columns={signalColumns}
-                data={visibleSignals}
+                data={signalRows}
                 selectedRowId={selectedSignalId}
                 onRowClick={(row) => setSelectedSignalId(row.id)}
                 onRowDoubleClick={(row) => {
@@ -968,6 +1311,9 @@ export const ExecutionControlSurface = ({
           </div>
         </section>
       )}
+      {/* 1.12-R1 (C): warsztat `runtime-v1` tylko gdy ma rekordy — inaczej pod
+          realnym rejestrem decyzji rysowała się druga, pusta tabela. */}
+      {hasRuntimeControlData && (
       <TableWithPreviewLayout<Row>
         selectedId={selectedId}
         selectedItem={selected}
@@ -1039,7 +1385,7 @@ export const ExecutionControlSurface = ({
       >
         <StandardTable
           columns={columns}
-          data={visibleInterventions}
+          data={rows}
           selectedRowId={selectedId}
           onRowClick={(r) => setSelectedId(r.id)}
           onRowDoubleClick={(r) => {
@@ -1069,6 +1415,7 @@ export const ExecutionControlSurface = ({
           }}
         />
       </TableWithPreviewLayout>
+      )}
       {interventionComposerOpen && (
         <section
           aria-label="Intervention Workbench"

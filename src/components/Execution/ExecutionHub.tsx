@@ -135,6 +135,7 @@ import { ExecutionManagementView } from './ExecutionManagementView';
 import {
   executionModuleTabIds,
   isExecutionDeepLinkTabAllowed,
+  resolveExecutionDeepLinkTab,
 } from './executionModuleTabs';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { buildExecutionSourceRelations } from './executionSourceRelations';
@@ -740,22 +741,14 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['team', t('execution.menu3.resources.team', 'By team')],
       ['initiative', t('execution.menu3.resources.initiative', 'By Initiative')],
     ].map(([id, label]) => ({ id, label })),
+    // 1.12-R1 (C): 12 chipów → 3. Osiem z dwunastu filtrowało regexem po
+    // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który
+    // ma na DBR77 zero rekordów. Zgodne z `controlPresets`
+    // w ExecutionControlSurface.tsx.
     control: [
-      ['needs-action', t('execution.menu3.control.needsAction', 'Needs action')],
-      ['critical', t('execution.menu3.control.critical', 'Critical')],
-      ['decisions', t('execution.menu3.control.decisions', 'Decisions')],
-      ['schedule', t('execution.menu3.control.schedule', 'Schedule')],
-      ['resources', t('execution.menu3.control.resources', 'Resources')],
-      ['cost', t('execution.menu3.control.cost', 'Cost')],
-      ['risk', t('execution.menu3.control.risk', 'Risk')],
-      ['dependencies', t('execution.menu3.control.dependencies', 'Dependencies')],
-      ['adoption', t('execution.menu3.control.adoption', 'Adoption')],
-      ['outcome-risk', t('execution.menu3.control.outcomeRisk', 'Outcome risk')],
-      [
-        'verification-overdue',
-        t('execution.menu3.control.verificationOverdue', 'Verification overdue'),
-      ],
-      ['resolved', t('execution.menu3.control.resolved', 'Resolved')],
+      ['decyzje', t('execution.menu3.governance.decisions', 'Decyzje')],
+      ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
+      ['po-terminie', t('execution.menu3.governance.overdue', 'Po terminie')],
     ].map(([id, label]) => ({ id, label })),
     reports: [
       ['all', t('common.all', 'All')],
@@ -817,7 +810,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     list: 'active',
     work: 'all',
     resources: 'all',
-    control: 'needs-action',
+    control: 'decyzje',
     reports: 'all',
     // DEC-426 (1.1-E-1): domyślnie aktywne „Ryzyka" (KROK 3, test a).
     summary: 'ryzyka',
@@ -1059,7 +1052,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     // (domyślnie wszędzie, reguła #7) deep-link nadal degraduje się do listy,
     // zamiast pokazywać pustą powierzchnię.
     if (isExecutionDeepLinkTabAllowed(targetTab, { summaryOneLookEnabled })) {
-      setActiveTab(targetTab as ModuleTab);
+      // 1.12-R1 (C): alias starych linków „Sterowania" → `control`.
+      setActiveTab(resolveExecutionDeepLinkTab(targetTab) as ModuleTab);
       setViewMode(targetView === 'grid' ? 'grid' : 'table');
       setDeepLinkHandled(true);
       return;
@@ -2311,8 +2305,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         label: t('execution.tabs.moduleBar.resources', 'Resources'),
         icon: <Users size={16} />,
       },
+      // 1.12-R1 (C): „Sterowanie" → „Decyzje i ryzyka". Zakładka przestała
+      // być rejestrem pustych sygnałów `runtime-v1` (0 rekordów), a stała się
+      // rejestrem decyzji (25 otwartych) i RAID (16) — nazwa mówi, co jest
+      // w środku. Identyfikator zakładki (`control`) NIE zmienia się, więc
+      // stare linki `?tab=control` działają dalej.
       control: {
-        label: t('execution.tabs.moduleBar.control', 'Control'),
+        label: t('execution.tabs.moduleBar.decisionsRisks', 'Decisions & risks'),
         icon: <Target size={16} />,
       },
       reports: {
