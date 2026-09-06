@@ -1,0 +1,19 @@
+--- MUTACJA 1: przywrocona Wyszukiwarka ---
+ × src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > Menu 2 ma dokładnie 4 zakładki: KPI · OKR · ROI · Raporty zarządcze (zero „Wyszukiwarki") 6ms
+ ✓ src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > zakładka pokazuje tabelę realnych raportów zarządczych z /history 72ms
+ ✓ src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > CTA „Nowy raport" otwiera generator na kroku ŹRÓDŁA z realnymi projektami 154ms
+     × Menu 2 ma dokładnie 4 zakładki: KPI · OKR · ROI · Raporty zarządcze (zero „Wyszukiwarki") 6ms
+     ✓ zakładka pokazuje tabelę realnych raportów zarządczych z /history 72ms
+     ✓ CTA „Nowy raport" otwiera generator na kroku ŹRÓDŁA z realnymi projektami 154ms
+ FAIL  src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > Menu 2 ma dokładnie 4 zakładki: KPI · OKR · ROI · Raporty zarządcze (zero „Wyszukiwarki")
+      Tests  1 failed | 2 passed (3)
+
+--- MUTACJA 2: usuniety onClick CTA 'Nowy raport' ---
+ ✓ src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > Menu 2 ma dokładnie 4 zakładki: KPI · OKR · ROI · Raporty zarządcze (zero „Wyszukiwarki") 3ms
+ ✓ src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > zakładka pokazuje tabelę realnych raportów zarządczych z /history 73ms
+ × src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > CTA „Nowy raport" otwiera generator na kroku ŹRÓDŁA z realnymi projektami 1092ms
+     ✓ Menu 2 ma dokładnie 4 zakładki: KPI · OKR · ROI · Raporty zarządcze (zero „Wyszukiwarki") 3ms
+     ✓ zakładka pokazuje tabelę realnych raportów zarządczych z /history 73ms
+     × CTA „Nowy raport" otwiera generator na kroku ŹRÓDŁA z realnymi projektami 1092ms
+ FAIL  src/components/ResultsVNext/__tests__/resultsManagementReportsTab.test.tsx > Wyniki — Menu 2 po DEC-422b/e > CTA „Nowy raport" otwiera generator na kroku ŹRÓDŁA z realnymi projektami
+      Tests  1 failed | 2 passed (3)

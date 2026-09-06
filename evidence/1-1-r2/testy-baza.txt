@@ -1,0 +1,918 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11r2
+
+
+ RUN  v4.1.8 /private/tmp/wt-11r2
+
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.envStaticRead.test.ts > resultsVNextFeatureFlags — readEnv() musi czytać import.meta.env w jednym wyrażeniu > readEnv() ma .env w TYM SAMYM wyrażeniu co cast import.meta 80ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.envStaticRead.test.ts > resultsVNextFeatureFlags — readEnv() musi czytać import.meta.env w jednym wyrażeniu > kod wykonywalny NIE deklaruje osobnej zmiennej trzymającej samo import.meta (bez .env w tej samej instrukcji) 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.envStaticRead.test.ts (2 tests) 84ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveCardPage.checkinStatusLabel.test.ts > OKR Check-iny (L3) — status check-inu bez surowego enumu > okrCheckInStatusLabel nigdy nie zwraca surowej wartości technicznej (PL) 64ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveCardPage.checkinStatusLabel.test.ts > OKR Check-iny (L3) — status check-inu bez surowego enumu > on_track → "Zgodnie z planem", at_risk → "Zagrożony" (PL) — te same etykiety co L2 0ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveCardPage.checkinStatusLabel.test.ts > OKR Check-iny (L3) — status check-inu bez surowego enumu > OKR_CHECKIN_STATUS_TONE pokrywa każdy znany stan check-inu 1ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveCardPage.checkinStatusLabel.test.ts > OKR Check-iny (L3) — status check-inu bez surowego enumu > OkrObjectiveCardPage.tsx — sekcja Check-iny NIE renderuje surowego entry.ownerDeclaredStatus 1ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveCardPage.checkinStatusLabel.test.ts (4 tests) 68ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts > KPI deviation case — child reads > hits the real corrective-actions route and unwraps { actions } 75ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts > KPI deviation case — child reads > hits the real effectiveness-verifications route and unwraps { verifications } 1ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts > KPI deviation case — child reads > sends only query params the server validators accept 1ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts > KPI deviation case — child reads > encodes the caseId rather than interpolating it raw 0ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts > KPI deviation case — child reads > treats a missing envelope key as an empty list, never undefined 0ms
+ ✓ src/components/ResultsVNext/kpiTool/__tests__/kpiDeviationChildren.api.test.ts (5 tests) 79ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveMappers.technicalValues.test.ts > OKR edit lock copy > keeps the user message in Polish and the diagnostic code in the tooltip 57ms
+ ✓ src/components/ResultsVNext/okr/__tests__/okrObjectiveMappers.technicalValues.test.ts (1 test) 60ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > defaults ON on a non-production host (e.g. localhost/demo/stage/dev) 68ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > defaults OFF on public production (consultify.ai) 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > defaults OFF on www.consultify.ai too 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > localStorage "0" still disables it despite the ON default 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > URL query "0" still disables it despite the ON default, and persists to localStorage 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > URL query "1" keeps it enabled on production too (explicit opt-in beats the host guard) 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > kpiRegistry (flip po akcepcie właściciela 27.08) > env override "1" keeps it enabled regardless of host 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on > roiRegistry defaults ON off public production, OFF on it 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on > okrRegistry defaults ON off public production, OFF on it 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on > resultsSearch defaults ON off public production, OFF on it 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on > roiRegistry/okrRegistry still honour explicit query/localStorage "0" overrides despite the ON default 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > DEC-422 (06.09) — removed flags stay gone > attentionEntry / managementReportEntry no longer exist in the flag table 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts > isResultsVNextFlagEnabled > resultsVNextHostAllowsDefaultOn > is true off public production and false on it — the guard kpiRegistry now uses 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextFeatureFlags.test.ts (13 tests) 76ms
+stderr | src/components/Reports/Management/__tests__/ReportGeneratorDrawer.projects.test.tsx > ReportGeneratorDrawer project loading > shows a visible error for a malformed project response
+Failed to load projects: Error: Invalid projects response
+    at normalizeProjects (/private/tmp/wt-11r2/src/components/Reports/Management/ReportGeneratorDrawer.tsx:37:20)
+    at loadProjects (/private/tmp/wt-11r2/src/components/Reports/Management/ReportGeneratorDrawer.tsx:120:21)
+
+stderr | src/components/Reports/Management/__tests__/ReportGeneratorDrawer.projects.test.tsx > ReportGeneratorDrawer project loading > shows a visible error for a malformed project response
+Failed to load projects: Error: Invalid projects response
+    at normalizeProjects (/private/tmp/wt-11r2/src/components/Reports/Management/ReportGeneratorDrawer.tsx:37:20)
+    at loadProjects (/private/tmp/wt-11r2/src/components/Reports/Management/ReportGeneratorDrawer.tsx:120:21)
+
+ ✓ src/components/Reports/Management/__tests__/ReportGeneratorDrawer.projects.test.tsx > ReportGeneratorDrawer project loading > shows a direct-array project and enables Generate only after selection 391ms
+ ✓ src/components/Reports/Management/__tests__/ReportGeneratorDrawer.projects.test.tsx > ReportGeneratorDrawer project loading > shows a visible error for a malformed project response 116ms
+ ✓ src/components/Reports/Management/__tests__/ReportGeneratorDrawer.projects.test.tsx (2 tests) 510ms
+     ✓ shows a direct-array project and enables Generate only after selection  391ms
+ ✓ src/components/Reports/Management/__tests__/ManagementReportsView.projects.test.ts > normalizeManagementReportProjects > normalizes direct and canonical project envelopes 47ms
+ ✓ src/components/Reports/Management/__tests__/ManagementReportsView.projects.test.ts > normalizeManagementReportProjects > normalizes direct and canonical project envelopes 0ms
+ ✓ src/components/Reports/Management/__tests__/ManagementReportsView.projects.test.ts > normalizeManagementReportProjects > normalizes direct and canonical project envelopes 0ms
+ ✓ src/components/Reports/Management/__tests__/ManagementReportsView.projects.test.ts > normalizeManagementReportProjects > fails closed for a malformed project response 1ms
+ ✓ src/components/Reports/Management/__tests__/ManagementReportsView.projects.test.ts (4 tests) 51ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/kpiScorecardPresenters.technicalValues.test.tsx > KPI Scorecard presenters hide technical identifiers > uses member and scope resolvers in the scorecard preview 77ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/kpiScorecardPresenters.technicalValues.test.tsx > KPI Scorecard presenters hide technical identifiers > uses names or localized fallbacks for item and snapshot people 6ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/kpiScorecardPresenters.technicalValues.test.tsx (2 tests) 86ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > kolumny domyślne stoją w kolejności z werdyktu, a NPV i IRR są schowane 2ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > ROI jest ZAWSZE z horyzontem (metodyka §17), nie nagim procentem 39ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > lata odmieniają się po polsku — „2 lata", nie „2 roku" (klasa błędu „8dni") 1ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > brak liczby to „—", nigdy 0 (SSOT §6) 5ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > rekomendacja jest pigułką NEUTRALNĄ, nie crimsonową (K1/K4) 4ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L1 — tabela analiz ROI (werdykt K4) > podgląd niesie Executive Summary i NAZWISKO właściciela, nie identyfikator 6ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Założenia to UPORZĄDKOWANE SEKCJE, nie jeden akapit 36ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > korzyść niemonetyzowana ma klasę i NIE ma kwoty (metodyka §35) 25ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > ΔNWC pokazuje się osobno i mówi, że pochodzi z założeń 22ms
+ × src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Wyliczenia mają kafle wskaźników, cash flow, scenariusze i wrażliwość 29ms
+   → Unable to find an element with the text: Discounted Payback. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+      [33mdata-testid[39m=[32m"roi-card-part-calculations"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-2xl border border-c-border-subtle bg-c-surface p-4 md:p-5"[39m
+        [33mdata-testid[39m=[32m"roi-card-indicators"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"mb-3"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-c-text"[39m
+          [36m>[39m
+            [0mWskaźniki inwestycyjne[0m
+          [36m</h3>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-0.5 text-xs text-c-text-muted"[39m
+          [36m>[39m
+            [0mLiczby z przebiegu silnika (seed-wyniki-dbr77-v1, 5 wrz 2026). PI liczone z tej samej serii przepływów.[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mCAPEX[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1 000 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mRoczna korzyść netto[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m400 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mROI 5Y[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m100 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,5 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback zdyskontowany[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m3,02 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mNPV[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m516 315 zł[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-0.5 text-[11px] text-c-text-muted"[39m
+            [36m>[39m
+              [0mstopa 10 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mIRR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m28,7 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1,52[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mBCR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+      ...
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > scenariusz bez własnego przebiegu NIE dostaje liczb wariantu bazowego 10ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Realizacja: wariancja NIEKORZYSTNA jest czerwona, KORZYSTNA nie 8ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Realizacja niesie prawdziwość założeń i ROI po realizacji 8ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > pusta część mówi CZEGO brakuje, zamiast pokazać zero 2ms
+ ✓ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > w całej karcie nie ma ani jednego identyfikatora technicznego (UUID/klucz) 22ms
+ ❯ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx (15 tests | 1 failed) 223ms
+     ✓ kolumny domyślne stoją w kolejności z werdyktu, a NPV i IRR są schowane 2ms
+     ✓ ROI jest ZAWSZE z horyzontem (metodyka §17), nie nagim procentem 39ms
+     ✓ lata odmieniają się po polsku — „2 lata", nie „2 roku" (klasa błędu „8dni") 1ms
+     ✓ brak liczby to „—", nigdy 0 (SSOT §6) 5ms
+     ✓ rekomendacja jest pigułką NEUTRALNĄ, nie crimsonową (K1/K4) 4ms
+     ✓ podgląd niesie Executive Summary i NAZWISKO właściciela, nie identyfikator 6ms
+     ✓ Założenia to UPORZĄDKOWANE SEKCJE, nie jeden akapit 36ms
+     ✓ korzyść niemonetyzowana ma klasę i NIE ma kwoty (metodyka §35) 25ms
+     ✓ ΔNWC pokazuje się osobno i mówi, że pochodzi z założeń 22ms
+     × Wyliczenia mają kafle wskaźników, cash flow, scenariusze i wrażliwość 29ms
+     ✓ scenariusz bez własnego przebiegu NIE dostaje liczb wariantu bazowego 10ms
+     ✓ Realizacja: wariancja NIEKORZYSTNA jest czerwona, KORZYSTNA nie 8ms
+     ✓ Realizacja niesie prawdziwość założeń i ROI po realizacji 8ms
+     ✓ pusta część mówi CZEGO brakuje, zamiast pokazać zero 2ms
+     ✓ w całej karcie nie ma ani jednego identyfikatora technicznego (UUID/klucz) 22ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextRegistryShell.noOrphanEntryButtons.test.tsx > ResultsVNextRegistryShell — brak sierocych wejść nad tabelą > nie renderuje "Uwaga"/"Attention" ani "Raport zarządczy"/"Management report" 29ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextRegistryShell.noOrphanEntryButtons.test.tsx (1 test) 31ms
+ ✓ src/components/ResultsVNext/__tests__/resultsKpiScorecardsEntry.test.tsx > poziom 1 — tabela RAPORTÓW jako jedyny widok /results/kpi > domyślną tabelą /results/kpi są RAPORTY (bez żadnego kliknięcia) 85ms
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > ROI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:189:18)
+    at listRoiCases (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:276:27)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 0) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > ROI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:189:18)
+    at listRoiCases (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:276:27)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 0) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > OKR: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/okrReportApi.ts:40:18)
+    at listOkrReportSummaries (/private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/okrReportApi.ts:87:31)
+    at /private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/OkrReportRegistryPage.tsx:103:9
+    at /private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/OkrReportRegistryPage.tsx:123:10
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+An update to OkrReportRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OkrReportRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > OKR: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/okrReportApi.ts:40:18)
+    at listOkrReportSummaries (/private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/okrReportApi.ts:87:31)
+    at /private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/OkrReportRegistryPage.tsx:103:9
+    at /private/tmp/wt-11r2/src/components/ResultsVNext/okr/p7k/OkrReportRegistryPage.tsx:123:10
+    at Object.react_stack_bottom_frame (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25989:20)
+    at runWithFiberInDEV (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at commitHookEffectListMount (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13249:29)
+    at commitHookPassiveMountEffects (/Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:13336:11) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+An update to OkrReportRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to OkrReportRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/KpiScorecardItemDialogs.addItem.test.tsx > AddKpiScorecardItemModal — droga A: wybór istniejącego miernika > wysyła kpiId WYBRANEGO rekordu, a użytkownik nigdy nie widzi UUID 549ms
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > KPI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > KPI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ResultsKpiRegistryPage inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > brak zakładki "legacy" w getResultsDomainTabs() 3ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > ROI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL 65ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > OKR: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL 19ms
+ ✓ src/components/ResultsVNext/__tests__/resultsKpiScorecardsEntry.test.tsx > poziom 1 — tabela RAPORTÓW jako jedyny widok /results/kpi > Menu 3 ma DOKŁADNIE jedną akcję („Nowy raport") i ZERO pigułek nawigacyjnych 46ms
+ ✓ src/components/ResultsVNext/__tests__/resultsKpiScorecardsEntry.test.tsx > poziom 1 — tabela RAPORTÓW jako jedyny widok /results/kpi > rejestr pojedynczych wskaźników nie został skasowany — otwiera go ?kpiView=wskazniki 31ms
+ ✓ src/components/ResultsVNext/__tests__/resultsKpiScorecardsEntry.test.tsx > poziom 1 — tabela RAPORTÓW jako jedyny widok /results/kpi > deep-link ?kpiView=scorecards otwiera ten sam poziom 1 43ms
+ ✓ src/components/ResultsVNext/__tests__/resultsKpiScorecardsEntry.test.tsx (4 tests) 207ms
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > ROI: BEZ ?resultsView=legacy w URL panel NIE jest montowany mimo włączonej flagi
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:189:18)
+    at listRoiCases (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:276:27)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 0) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+stderr | src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > ROI: BEZ ?resultsView=legacy w URL panel NIE jest montowany mimo włączonej flagi
+[ResultsVNext] request failed: Error: [vitest] No "API_URL" export is defined on the "@/services/api" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+    at VitestMocker.createError (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:62:17)
+    at Object.get (file:///Users/piotrwisniewski/Developer/Consultify/node_modules/vitest/dist/chunks/startVitestModuleRunner.bRl2_oI_.js:324:16)
+    at getJson (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:189:18)
+    at listRoiCases (/private/tmp/wt-11r2/src/components/ResultsVNext/roi/roiApi.ts:276:27)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 0) {
+  codeFrame: 'vi.mock(import("@/services/api"), async (importOriginal) => {\n' +
+    '  const actual = await importOriginal()\n' +
+    '  return {\n' +
+    '    ...actual,\n' +
+    '    // your mocked methods\n' +
+    '  }\n' +
+    '})'
+}
+
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga OFF (domyślnie) — zero zmiany zachowania > KPI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL 27ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > zakładka "legacy" pojawia się w getResultsDomainTabs() 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > ROI: montuje ResultsVNextLegacyArchivePanel z domain="roi" 6ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > OKR: montuje ResultsVNextLegacyArchivePanel z domain="okr" 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > KPI: montuje ResultsVNextLegacyArchivePanel z domain="kpi" 1ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum (resultsLegacyArchive) — wołacz wiring > flaga ON (localStorage ff.results_vnext_legacy_archive=1) + ?resultsView=legacy > ROI: BEZ ?resultsView=legacy w URL panel NIE jest montowany mimo włączonej flagi 27ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx > Archiwum — profil demo NIE włącza zakładki przed akceptem > VITE_DEMO_ACCEPTANCE=1 włącza inne flagi Wyników, ale NIE resultsLegacyArchive 0ms
+ ✓ src/components/ResultsVNext/__tests__/resultsVNextLegacyArchiveWiring.test.tsx (10 tests) 152ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/KpiScorecardItemDialogs.addItem.test.tsx > AddKpiScorecardItemModal — droga B: nowy miernik > bez opisu pokazuje walidację i NIE woła tworzenia KPI 119ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/KpiScorecardItemDialogs.addItem.test.tsx > AddKpiScorecardItemModal — droga B: nowy miernik > z opisem tworzy KPI i oddaje jego kpiId do dodania na kartę 258ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/KpiScorecardItemDialogs.addItem.test.tsx > AddKpiScorecardItemModal — „Zaproponuj z AI" > wypełnia pola propozycją i nie zapisuje NICZEGO do kliknięcia „Dodaj" 105ms
+ ✓ src/components/ResultsVNext/kpiScorecards/__tests__/KpiScorecardItemDialogs.addItem.test.tsx (4 tests) 1033ms
+     ✓ wysyła kpiId WYBRANEGO rekordu, a użytkownik nigdy nie widzi UUID  549ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Wyliczenia mają kafle wskaźników, cash flow, scenariusze i wrażliwość
+TestingLibraryElementError: Unable to find an element with the text: Discounted Payback. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+      [33mdata-testid[39m=[32m"roi-card-part-calculations"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-2xl border border-c-border-subtle bg-c-surface p-4 md:p-5"[39m
+        [33mdata-testid[39m=[32m"roi-card-indicators"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"mb-3"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-c-text"[39m
+          [36m>[39m
+            [0mWskaźniki inwestycyjne[0m
+          [36m</h3>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-0.5 text-xs text-c-text-muted"[39m
+          [36m>[39m
+            [0mLiczby z przebiegu silnika (seed-wyniki-dbr77-v1, 5 wrz 2026). PI liczone z tej samej serii przepływów.[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mCAPEX[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1 000 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mRoczna korzyść netto[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m400 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mROI 5Y[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m100 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,5 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback zdyskontowany[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m3,02 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mNPV[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m516 315 zł[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-0.5 text-[11px] text-c-text-muted"[39m
+            [36m>[39m
+              [0mstopa 10 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mIRR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m28,7 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1,52[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mBCR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+      ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx:371:19
+    369|     expect(screen.getByText('PI')).toBeInTheDocument();
+    370|     expect(screen.getByText('BCR')).toBeInTheDocument();
+    371|     expect(screen.getByText('Discounted Payback')).toBeInTheDocument();
+       |                   ^
+    372|   });
+    373|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 66 passed (67)
+   Start at  16:25:54
+   Duration  3.56s (transform 6.41s, setup 3.34s, import 9.53s, tests 2.66s, environment 13.59s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx > L2 — karta N w trzech częściach (SSOT §4) > Wyliczenia mają kafle wskaźników, cash flow, scenariusze i wrażliwość
+TestingLibraryElementError: Unable to find an element with the text: Discounted Payback. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"space-y-4"[39m
+      [33mdata-testid[39m=[32m"roi-card-part-calculations"[39m
+    [36m>[39m
+      [36m<section[39m
+        [33mclass[39m=[32m"rounded-2xl border border-c-border-subtle bg-c-surface p-4 md:p-5"[39m
+        [33mdata-testid[39m=[32m"roi-card-indicators"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"mb-3"[39m
+        [36m>[39m
+          [36m<h3[39m
+            [33mclass[39m=[32m"text-sm font-semibold text-c-text"[39m
+          [36m>[39m
+            [0mWskaźniki inwestycyjne[0m
+          [36m</h3>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"mt-0.5 text-xs text-c-text-muted"[39m
+          [36m>[39m
+            [0mLiczby z przebiegu silnika (seed-wyniki-dbr77-v1, 5 wrz 2026). PI liczone z tej samej serii przepływów.[0m
+          [36m</p>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mCAPEX[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1 000 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mRoczna korzyść netto[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m400 000 zł[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mROI 5Y[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m100 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,5 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPayback zdyskontowany[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m3,02 roku[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mNPV[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m516 315 zł[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-0.5 text-[11px] text-c-text-muted"[39m
+            [36m>[39m
+              [0mstopa 10 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mIRR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m28,7 %[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mPI[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m1,52[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-2.5"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-[11px] font-medium uppercase tracking-wider text-c-text-muted"[39m
+            [36m>[39m
+              [0mBCR[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-1 whitespace-nowrap text-base font-semibold tabular-nums text-c-text"[39m
+            [36m>[39m
+              [0m2,00[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+      ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/ResultsVNext/roi/card/__tests__/roiCard.test.tsx:371:19
+    369|     expect(screen.getByText('PI')).toBeInTheDocument();
+    370|     expect(screen.getByText('BCR')).toBeInTheDocument();
+    371|     expect(screen.getByText('Discounted Payback')).toBeInTheDocument();
+       |                   ^
+    372|   });
+    373|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 66 passed (67)
+   Start at  16:25:54
+   Duration  3.57s (transform 6.41s, setup 3.34s, import 9.53s, tests 2.66s, environment 13.59s)
+
+JSON report written to /private/tmp/wt-11r2/junit.xml
+JUNIT report written to /private/tmp/wt-11r2/junit.xml

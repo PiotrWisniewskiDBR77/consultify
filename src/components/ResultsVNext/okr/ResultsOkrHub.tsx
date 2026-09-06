@@ -559,7 +559,7 @@ export const ResultsOkrHub: React.FC = () => {
         tabs: getResultsDomainTabs(),
         activeTab: 'okr',
         onTabChange: (id) => {
-          if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+          if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
         },
         showTabCounts: false,
         viewModes: ['table'],

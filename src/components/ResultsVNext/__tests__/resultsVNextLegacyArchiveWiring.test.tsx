@@ -96,12 +96,11 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
   describe('flaga OFF (domyślnie) — zero zmiany zachowania', () => {
     it('brak zakładki "legacy" w getResultsDomainTabs()', () => {
       const ids = getResultsDomainTabs().map((t) => t.id);
-      // `resultsSearch` jest dziś default-ON wszędzie (DEC 03.09 wieczór,
-      // A1 — patrz resultsVNextFeatureFlags.ts:185+224) — zakładka "search"
-      // jest więc obecna niezależnie od `resultsLegacyArchive`. Test pisany
-      // przed tą decyzją; asercja aktualizowana do realnego, zaakceptowanego
-      // stanu, nie rozluźniana (dalej zero "legacy" przy fladze OFF).
-      expect(ids).toEqual(['kpi', 'okr', 'roi', 'search']);
+      // DEC-422b/e (06.09): zakładka "search" zastąpiona przez "reports"
+      // („Raporty zarządcze"), która NIE stoi za flagą — jest stałym,
+      // czwartym elementem Menu 2. Asercja aktualizowana do realnego,
+      // zaakceptowanego stanu (dalej zero "legacy" przy fladze OFF).
+      expect(ids).toEqual(['kpi', 'okr', 'roi', 'reports']);
       expect(ids).not.toContain('legacy');
     });
 
@@ -155,7 +154,7 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
       const ids = getResultsDomainTabs().map((t) => t.id);
       // "search" (default-ON, DEC 03.09) poprzedza "legacy" w
       // resultsDomainNavigation.ts — patrz komentarz wyżej w tym pliku.
-      expect(ids).toEqual(['kpi', 'okr', 'roi', 'search', 'legacy']);
+      expect(ids).toEqual(['kpi', 'okr', 'roi', 'reports', 'legacy']);
     });
 
     it('ROI: montuje ResultsVNextLegacyArchivePanel z domain="roi"', () => {
@@ -218,7 +217,7 @@ describe('Archiwum — profil demo NIE włącza zakładki przed akceptem', () =>
   it('VITE_DEMO_ACCEPTANCE=1 włącza inne flagi Wyników, ale NIE resultsLegacyArchive', async () => {
     const mod = await import('../resultsVNextFeatureFlags');
     const demo = { env: { VITE_DEMO_ACCEPTANCE: '1' }, hostname: 'demo.consultify.ai' };
-    expect(mod.isResultsVNextFlagEnabled('resultsSearch', demo)).toBe(true);
+    expect(mod.isResultsVNextFlagEnabled('kpiRegistry', demo)).toBe(true);
     expect(mod.isResultsVNextFlagEnabled('resultsLegacyArchive', demo)).toBe(false);
   });
 });

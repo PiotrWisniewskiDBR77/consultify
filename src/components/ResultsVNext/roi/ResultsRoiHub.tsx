@@ -628,7 +628,7 @@ export const ResultsRoiHub: React.FC = () => {
             tabs: getResultsDomainTabs(),
             activeTab: 'roi',
             onTabChange: (id) => {
-              if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+              if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
             },
             showTabCounts: false,
             viewModes: ['table'],
@@ -709,7 +709,7 @@ export const ResultsRoiHub: React.FC = () => {
           tabs: getResultsDomainTabs(),
           activeTab: 'roi',
           onTabChange: (id) => {
-            if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+            if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
           },
           showTabCounts: false,
           viewModes: ['table'],

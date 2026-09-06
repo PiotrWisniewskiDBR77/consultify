@@ -340,7 +340,7 @@ export const OkrReportRegistryPage: React.FC = () => {
         tabs: getResultsDomainTabs(),
         activeTab: 'okr',
         onTabChange: (id) => {
-          if (id === 'search' || id === 'legacy' || isResultsDomain(id)) {
+          if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) {
             navigate(getResultsDomainPath(id));
           }
         },

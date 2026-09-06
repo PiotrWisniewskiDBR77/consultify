@@ -48,11 +48,14 @@ const FLAGS = {
     localStorage: 'ff.results_vnext_okr_registry',
     env: 'VITE_RESULTS_VNEXT_OKR_ENABLED',
   },
-  resultsSearch: {
-    query: 'ff_resultsVNextSearch',
-    localStorage: 'ff.results_vnext_search',
-    env: 'VITE_RESULTS_VNEXT_SEARCH_ENABLED',
-  },
+  /**
+   * DEC-422b/e (06.09) — `resultsSearch` ("Wyszukiwarka" w Menu 2 Wyników)
+   * USUNIĘTA z tablicy flag, nie tylko wyłączona: właściciel kazał zakładkę
+   * wywalić i postawić w jej miejsce „Raporty zarządcze" („Ten wyszukiwak
+   * wywalamy, tutaj robimy raporty zarządcze"). Razem z flagą skasowane
+   * `ResultsSearchRegistry.tsx` i `resultsSearchApi.ts` — nie miały innego
+   * konsumenta. Nowa zakładka NIE stoi za flagą (stały element Menu 2).
+   */
   /**
    * DEC-422 (06.09) — both `managementReportEntry` ("Raport zarządczy" link
    * to `ROUTES.REPORTS.MANAGEMENT`) and `attentionEntry` ("Uwaga" link to
@@ -152,7 +155,7 @@ function writeLocalStorage(key: string, value: boolean): void {
  * (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md wiersz A1;
  * "14 ekranów Wyników — KPI, OKR, ROI, wyszukiwarka, uwaga" — zatwierdzone
  * 02.09, potwierdzone 03.09 wieczór): kpiRegistry/roiRegistry/okrRegistry/
- * resultsSearch są teraz WSZYSTKIE w D-D default-on — ta sama konwencja co
+ * (bez usuniętej `resultsSearch`) są teraz WSZYSTKIE w D-D default-on — ta sama konwencja co
  * `threePairs`/`deviationDiagnostics` w `resultsFeatureFlags.ts`: ON na
  * demo/stage/dev, OFF na publicznej produkcji (`resultsVNextHostAllowsDefaultOn`
  * / `isPublicProductionHost`). Uwaga: moduł Wyników i tak nie jest w rdzeniu
@@ -191,16 +194,11 @@ export function isResultsVNextFlagEnabled(
   const fromLs = readLocalStorage(keys.localStorage);
   if (fromLs !== null) return fromLs;
   if (readEnv(keys.env)) return true;
-  // DEC 03.09 wieczór (A1): kpiRegistry/roiRegistry/okrRegistry/resultsSearch
-  // — cztery z pięciu nazwanych domen "14 ekranów Wyników" (piąta, "uwaga",
-  // usunięta DEC-422 06.09) — dołączone do D-D default-on (demo/stage/dev ON,
-  // public production OFF). Opt-out per flaga: ?ff_resultsVNext<Flag>=0.
-  if (
-    flag === 'kpiRegistry' ||
-    flag === 'roiRegistry' ||
-    flag === 'okrRegistry' ||
-    flag === 'resultsSearch'
-  ) {
+  // DEC 03.09 wieczór (A1): kpiRegistry/roiRegistry/okrRegistry — trzy z
+  // pięciu nazwanych domen "14 ekranów Wyników" ("uwaga" usunięta DEC-422
+  // 06.09, "wyszukiwarka" DEC-422b/e tego samego dnia) — w D-D default-on
+  // (demo/stage/dev ON, public production OFF). Opt-out: ?ff_resultsVNext<Flag>=0.
+  if (flag === 'kpiRegistry' || flag === 'roiRegistry' || flag === 'okrRegistry') {
     return resultsVNextHostAllowsDefaultOn(
       typeof window !== 'undefined' ? (window.location?.hostname ?? '') : ''
     );

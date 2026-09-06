@@ -14,23 +14,31 @@ export const RESULTS_DOMAIN_TABS: StandardModuleTab[] = [
 
 export function getResultsDomainTabs(): StandardModuleTab[] {
   /**
-   * SSOT §6: „Menu 2 modułu Wyniki: KPI · OKR · ROI (trzy funkcje)
-   * + wyszukiwarka". Do 2026-09-05 wyszukiwarka stała PRZED trzema funkcjami
-   * i miała angielską etykietę „Search" — na polskim koncie, w module, w
-   * którym każdy inny napis jest po polsku. Dwie naprawy naraz: słowo po
-   * polsku i miejsce ZA trzema funkcjami, żeby Menu 2 czytało się jako
-   * „KPI · OKR · ROI", a wyszukiwarka była dodatkiem, którym jest.
+   * DEC-422b/e (06.09, słowa właściciela): „Raporty zarządcze przenieś do menu
+   * drugiego — we WSZYSTKICH miejscach menu drugiego. […] Ten wyszukiwak
+   * wywalamy, tutaj robimy raporty zarządcze."
+   *
+   * Menu 2 modułu Wyniki = KPI · OKR · ROI · Raporty zarządcze. Zakładka
+   * „Wyszukiwarka" (`search`) została usunięta razem z komponentem
+   * `ResultsSearchRegistry`, `resultsSearchApi` i flagą `resultsSearch` —
+   * nie miały innego konsumenta. „Raporty zarządcze" NIE stoją za flagą:
+   * są stałym elementem Menu 2, tak samo jak trzy domeny obok.
+   *
+   * Ta funkcja jest jedynym źródłem zakładek Menu 2 dla WSZYSTKICH ekranów
+   * Wyników (KPI/OKR/ROI hub, raporty P7K, karta scorecardu) — dlatego jedna
+   * zmiana tutaj realizuje „we wszystkich miejscach menu drugiego".
    */
-  const withSearch = isResultsVNextFlagEnabled('resultsSearch')
-    ? [...RESULTS_DOMAIN_TABS, { id: 'search', label: i18n.t('results.searchTab', 'Wyszukiwarka') }]
-    : [...RESULTS_DOMAIN_TABS];
+  const withReports: StandardModuleTab[] = [
+    ...RESULTS_DOMAIN_TABS,
+    { id: 'reports', label: i18n.t('results.managementReportsTab', 'Raporty zarządcze') },
+  ];
   // 2026-09-02 (wołacze duty) — "Archiwum"/"Archive" tab, default OFF
   // (`resultsLegacyArchive`, see resultsVNextFeatureFlags.ts). Appended
-  // last, same additive shape as `search` above: when the flag is OFF this
-  // returns byte-for-byte the same array as before this change.
+  // last, same additive shape as before: when the flag is OFF this returns
+  // byte-for-byte the same array as `withReports`.
   return isResultsVNextFlagEnabled('resultsLegacyArchive')
-    ? [...withSearch, { id: 'legacy', label: i18n.t('results.legacyArchiveTab', 'Archive') }]
-    : withSearch;
+    ? [...withReports, { id: 'legacy', label: i18n.t('results.legacyArchiveTab', 'Archive') }]
+    : withReports;
 }
 
 export function getResultsDomainPath(domain: string): string {
@@ -38,13 +46,13 @@ export function getResultsDomainPath(domain: string): string {
     typeof window === 'undefined'
       ? new URLSearchParams()
       : new URLSearchParams(window.location.search);
-  if (domain === 'search') params.set('resultsView', 'search');
+  if (domain === 'reports') params.set('resultsView', 'reports');
   else if (domain === 'legacy') params.set('resultsView', 'legacy');
   else params.delete('resultsView');
   const pathname =
     domain === 'legacy'
       ? // Legacy archive stays on whichever domain route the user is
-        // currently on (kpi/roi/okr) — unlike `search`, which always routes
+        // currently on (kpi/roi/okr) — unlike `reports`, which always routes
         // to the KPI page regardless of origin. Falls back to the KPI route
         // when `window` is unavailable (SSR/tests).
         typeof window === 'undefined' || !window.location?.pathname

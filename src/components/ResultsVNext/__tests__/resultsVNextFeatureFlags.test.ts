@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  *
  * Unit tests for `isResultsVNextFlagEnabled` (RN-G2 registry flags:
- * kpiRegistry / roiRegistry / okrRegistry / resultsSearch).
+ * kpiRegistry / roiRegistry / okrRegistry; `resultsSearch` usunięta DEC-422b/e).
  *
  * kpiRegistry flipped OFF -> ON (demo/stage/dev; public production stays
  * OFF) on 2026-08-27 — Piotr accepted the KPI registry on dev-render
@@ -11,7 +11,7 @@
  *
  * DEC 03.09 wieczór (A1, docs/program/DECYZJE_WLASCICIELA_DO_PODJECIA_20260904.md
  * wiersz A1 — "14 ekranów Wyników: KPI, OKR, ROI, wyszukiwarka, uwaga"):
- * roiRegistry/okrRegistry/resultsSearch join kpiRegistry in the same D-D
+ * roiRegistry/okrRegistry join kpiRegistry in the same D-D
  * default-on shape (ON off public production, OFF on it).
  * resultsLegacyArchive is NOT part of this decision — stays default OFF
  * everywhere. `attentionEntry` (the fifth named domain, "uwaga") and
@@ -99,7 +99,7 @@ describe('isResultsVNextFlagEnabled', () => {
     });
   });
 
-  describe('roiRegistry / okrRegistry / resultsSearch — DEC 03.09 wieczór A1 default-on', () => {
+  describe('roiRegistry / okrRegistry — DEC 03.09 wieczór A1 default-on', () => {
     it('roiRegistry defaults ON off public production, OFF on it', () => {
       expect(isResultsVNextFlagEnabled('roiRegistry')).toBe(true);
       setLocation({ hostname: 'consultify.ai' });
@@ -110,12 +110,6 @@ describe('isResultsVNextFlagEnabled', () => {
       expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(true);
       setLocation({ hostname: 'consultify.ai' });
       expect(isResultsVNextFlagEnabled('okrRegistry')).toBe(false);
-    });
-
-    it('resultsSearch defaults ON off public production, OFF on it', () => {
-      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(true);
-      setLocation({ hostname: 'consultify.ai' });
-      expect(isResultsVNextFlagEnabled('resultsSearch')).toBe(false);
     });
 
     it('roiRegistry/okrRegistry still honour explicit query/localStorage "0" overrides despite the ON default', () => {

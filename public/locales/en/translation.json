@@ -26305,6 +26305,7 @@
       "banner": "Sample data — not from the database"
     },
     "legacyArchiveTab": "Archive",
+    "managementReportsTab": "Management reports",
     "moduleName": "Results",
     "hub": {
       "failedToLoadKpis": "Failed to load KPI catalog.",
