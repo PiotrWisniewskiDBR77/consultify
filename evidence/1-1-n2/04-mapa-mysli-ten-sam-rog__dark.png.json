@@ -1,0 +1,46 @@
+{
+ "url": "http://127.0.0.1:3133/my-work/ideas/seed_idea_map_8ae01e47_ai_quality/workspace/mindmap",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nMapa myśli\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nNowy pomysł\nMapa myśli\nPomysł\nPanel\nAI\n56%\nAI monitoring jakości\nProblem\n2 węzły\nPóźne wykrywanie defektów\nPAIN POINT\nL2\nBrak wspólnej definicji jakości\nPAIN POINT\nL2\nCel / KPI\n2 węzły\nReklamacje: -20%\nKPI\nL2\nMTTR: -30%\nKPI\nL2\nOpcje\n2 węzły\nAnomaly detection na sygnałach procesowych\nOPTION\nL2\nComputer vision na stanowisku kontroli\nOPTION\nL2\nDowody\n1 węzeł\nBaseline danych i definicje metryk jakości\nEVIDENCE\nL2\nRyzyka\n1 węzeł\nDrift modelu + false positives\nRISK\nL2\nEksperymenty\n1 węzeł\nPilot: 1 linia / 1 usługa, 2 tygodnie\nEXPERIMENT\nL2\nSkładnik\nTeresa\nAI monitoring jakości\nIskra\nMapa myśli\n\nKliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola\n\nZaznacz element, aby zobaczyć właściwości\n\nAKCJE\nANALIZA PŁÓTNA\nMapa wygląda kompletnie — gotowa do konwersji na inicjatywę?\nZastosuj\nPrzejrzyj kandydaturę\nWŁAŚCIWOŚCI\nEtykieta\nAI monitoring jakości\nEtap\nIskra\nWłaściciel\nAudyt Nocny\nUtworzono\n31.08.2026 21:06\nZaktualizowano\n5.09.2026 21:06\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\n0\nKOMENTARZE\n0\nHISTORIA\n0\nZAZNACZANIE",
+ "dom": {
+  "[data-testid=\"mels-topbar-merged\"] button": {
+   "liczba": 3,
+   "boxy": [
+    {
+     "x": 1222.46875,
+     "y": 117,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1258.46875,
+     "y": 117,
+     "width": 73.75,
+     "height": 32
+    },
+    {
+     "x": 1338.21875,
+     "y": 117,
+     "width": 53.78125,
+     "height": 32
+    }
+   ]
+  },
+  "[data-testid=\"idea-menu1-status-chip\"]": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-06T11:51:48.368Z"
+}

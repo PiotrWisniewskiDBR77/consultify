@@ -1,0 +1,80 @@
+{
+ "url": "http://127.0.0.1:3133/my-work/ideas/seed_idea_map_8ae01e47_erp/workspace/process-flow",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=[data-testid=\"mels-topbar-overflow\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nProcess Flow\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nNowy pomysł\nProcess Flow\nPomysł\nPanel\nAI\nKlasyczny przepływ\nAutomatyzacja\nStrumień wartości\nKroki 20\nŚcieżki 1\nBrak ostrzeżeń\n\nMapuj bieżący proces, decyzje i odpowiedzialność zanim zaczniesz optymalizację.\n\nKoniec\nWstaw\nRozdziel\nWięcej\nMain Process\nWdrożenie ERP (end-to-end)\nProblem\nRozproszone źródła danych i niespójne raportowanie\nDługi cykl zamknięcia miesiąca\nCel / KPI\nZamknięcie miesiąca: -40%\nJakość danych: mniej korekt i ręcznych obejść\nOpcje\nGreenfield vs rollout modułami (phased)\nIntegracje: API-first + ESB\nData governance: master data + ownership\nDowody\nMapa procesów + KPI baseline\nAudyt danych (quality + lineage)\nRyzyka\nAdopcja: opór użytkowników i shadow IT\nMigracja danych: braki i duplikaty\nEksperymenty\nPilot: 1 proces + 1 zespół (4 tygodnie)\nDry-run migracji na próbce danych\n49%\nSkładnik\nTeresa\nWdrożenie ERP (end-to-end)\nIskra\nProcess Flow\n\nKliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola\n\nZaznacz element, aby zobaczyć właściwości\n\nAKCJE\nANALIZA PŁÓTNA\nDiagram wygląda kompletnie — gotowy do konwersji na inicjatywę?\nZastosuj\nPrzejrzyj kandydaturę\nWŁAŚCIWOŚCI\nEtykieta\nWdrożenie ERP (end-to-end)\nEtap\nIskra\nWłaściciel\nAudyt Nocny\nUtworzono\n31.08.2026 21:06\nZaktualizowano\n5.09.2026 21:06\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\n0\nKOMENTARZE\n0\nHISTORIA\n0\nZAZNACZANIE\nKONWERTUJ NA…\nInicjatywa\nTaski\nRaport\nORGANIZACJA\nDuplikuj pomysł\nUDOSTĘPNIANIE\nEksportuj\nWERSJE\nHistoria\nWIĘCEJ\nSzukaj\nSkróty\nSTREFA NIEBEZPIECZNA\nUsuń pomysł",
+ "dom": {
+  "[data-testid=\"mels-topbar-overflow-menu\"] button": {
+   "liczba": 9,
+   "boxy": [
+    {
+     "x": 1227.46875,
+     "y": 179,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 215,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 251,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 317,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 383,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 449,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 515,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 551,
+     "width": 190,
+     "height": 36
+    },
+    {
+     "x": 1227.46875,
+     "y": 617,
+     "width": 190,
+     "height": 36
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T11:51:30.493Z"
+}
