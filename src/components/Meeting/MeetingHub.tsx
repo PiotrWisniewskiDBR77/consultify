@@ -1572,19 +1572,19 @@ const MeetingCalendarView: React.FC<{
     <div className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm font-semibold capitalize text-c-text">{monthLabel}</div>
-        <div className="flex items-center gap-1.5">
+        <div className="inline-flex h-9 items-center overflow-hidden rounded-lg border border-c-border-subtle bg-c-surface shadow-sm">
           <button
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
             aria-label={t('meeting.previousMonth')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-c-border text-c-text-muted hover:bg-c-surface-raised"
+            className="flex h-full w-9 items-center justify-center text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             type="button"
             onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}
-            className="h-8 rounded-full border border-c-border px-3 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised"
+            className="h-full border-x border-c-border-subtle px-3.5 text-xs font-semibold text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
           >
             {t('meeting.today')}
           </button>
@@ -1592,7 +1592,7 @@ const MeetingCalendarView: React.FC<{
             type="button"
             onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
             aria-label={t('meeting.nextMonth')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-c-border text-c-text-muted hover:bg-c-surface-raised"
+            className="flex h-full w-9 items-center justify-center text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-c-focus"
           >
             <ChevronRight size={16} />
           </button>
