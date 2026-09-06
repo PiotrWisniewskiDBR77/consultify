@@ -1,0 +1,1442 @@
+
+ RUN  v4.1.8 /private/tmp/wt-12r1-dane-realne
+
+
+ RUN  v4.1.8 /private/tmp/wt-12r1-dane-realne
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a 1012ms
+   → Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator 1004ms
+   → Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx (2 tests | 2 failed) 2018ms
+     × pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a 1012ms
+     × gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator 1004ms
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 24ms
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 1004ms
+   → Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 20004ms
+   → Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera 1006ms
+   → expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 1004ms
+   → Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status 1004ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 1003ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 1004ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx (9 tests | 7 failed) 26061ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 24ms
+     × pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 1004ms
+     × nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 20004ms
+     × liczniki Menu 3 dostają realne liczby, a nie zera 1006ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+     × pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 1004ms
+     × tłumaczy IN_PROGRESS zamiast pokazywać surowy status 1004ms
+     × nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 1003ms
+     × nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 1004ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > names the transparent status select with the initiative name 225ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > is focusable via the accessible name 12ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > calls onChange with the chosen target status 10ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > does not render a mutation control when disabled 3ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > names the transparent status select in real Polish, not English fallback 22ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > calls onChange with the chosen target status under real Polish 8ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx (6 tests) 283ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > renders the KPI empty state after loading 26ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > DEC-120/A4: never offers the fake "Load Atelier Toys example" seed button on an empty KPI register 6ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > add KPI POSTs to /rollout/kpis and shows the returned row as read-only text 25ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > edit KPI opens the modal and PATCHes the minimal diff to /rollout/kpis/:id 62ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > delete KPI goes kebab → confirm dialog → DELETE /rollout/kpis/:id 111ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > surfaces the load-error retry state when the fetch fails 3ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx (6 tests) 236ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > renders the Save button disabled with a visible reason 84ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > never calls the retired legacy writer since the control cannot be activated 10ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx (2 tests) 95ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > approving a decision calls decideDecision and renders the confirmed badge 64ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > DEC-120/A11: a non-decision lane action never round-trips through the retired 409 writer 25ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx (2 tests) 91ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Decyzje" pokazuje 25 OTWARTYCH decyzji (nie 13 PENDING, nie 35) 142ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > 12 decyzji ma czerwoną liczbę „dni po terminie" 49ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > kolumna Eskalacja nazywa poziom po polsku (3 czerwone, 9 bursztynowych) 53ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Ryzyka" pokazuje 16 pozycji RAID, z terminem „—" (0 z 16 ma datę) 42ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > preset „Po terminie" łączy oba rejestry i pokazuje 12 pozycji 40ms
+stderr | src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > podgląd otwiera się na klik i pokazuje dni po terminie
+An update to ExecutionControlSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > podgląd otwiera się na klik i pokazuje dni po terminie
+An update to ExecutionControlSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > liczniki Menu 3 to dokładnie trzy presety z realnymi liczbami 59ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > nie rysuje pustej tabeli interwencji, gdy runtime-v1 ma 0 rekordów 42ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx > 1.12-R1 (C) — rejestr decyzji i ryzyk > podgląd otwiera się na klik i pokazuje dni po terminie 118ms
+ ✓ src/components/Execution/__tests__/ExecutionControlSurface.daneRealne.test.tsx (8 tests) 546ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > tabela ma tyle wierszy, ile zadań zwróciło /api/tasks (24), mimo 0 realizacji runtime 132ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > pokazuje nazwę inicjatywy w osobnej kolumnie 48ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > NIE ma kolumny „Termin / SLA" ani napisu „SLA" w wierszach 52ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > kolumna „Poślizg (dni)" liczy dni po terminie dla zadań przeterminowanych 59ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > preset „Po terminie" zawęża tabelę do 8 zadań, a nie do wszystkich 26ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > preset „Zablokowane" zawęża do zadań ze statusem BLOCKED (6) 18ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > liczniki Menu 3 dostają TRZY presety z realnymi liczbami 41ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx > 1.12-R1 (B) — źródło danych zakładki Praca > gdy runtime-v1 padnie, realne zadania ZOSTAJĄ na ekranie (nie ekran błędu) 27ms
+ ✓ src/components/Execution/__tests__/ExecutionWorkSurface.daneRealne.test.tsx (8 tests) 405ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="ryzyka": renderuje TYLKO tabelę ryzyk 37ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="rozstrzygniecia": renderuje TYLKO tabelę rozstrzygnięć 23ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > klik wiersza blokera otwiera inicjatywę (nie „decision" z prefiksem blk:) 12ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx (3 tests) 73ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > zwraca wiersze pozostałych realizacji, gdy jedna nie odpowiada NIGDY 71ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > przerywa wiszące żądanie sygnałem abort (nie zostawia wiszącego fetcha) 42ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > niesie identyfikatory realizacji, których nie udało się pobrać 1ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > nie zgłasza nikogo, gdy wszystkie realizacje odpowiadają 0ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts (4 tests) 116ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (a) shows a human source label plus the framework, never the raw sourceType 25ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (b) shows the label alone when there is no source framework 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (c) leaves the relations section empty when there is no sourceType 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx (3 tests) 32ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > bez pomiarów mówi po polsku, że trend pojawi się po dwóch 15ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy JEDNYM pomiarze nie kłamie, że historii nie ma 1ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy dwóch pomiarach rysuje słupki, nie komunikat 5ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx (3 tests) 24ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > inicjatywy w toku > bierze EXECUTING, BLOCKED i TRACKING — a odrzuca DRAFT/SCHEDULED/DONE 30ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > brak plannedEndDate = SZARY, nigdy zielony (luka danych ≠ zdrowie) 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > po terminie = czerwony, ≤7 dni = amber, dalej = zielony 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > odchylenie w dniach jest dodatnie po terminie i ujemne przed 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > RAG inicjatywy > poziom L0–L5: `currentStage` jest NULL na wszystkich 72 inicjatywach → „—" 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > kafel „Na czas" z realnych dat > mianownik to inicjatywy Z DATĄ; bez daty liczone osobno, nie jako on-track 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > kafel „Na czas" z realnych dat > portfel bez ani jednej daty daje null, nie 100% 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > ESCALATED liczy się jako otwarta — 25, nie 13 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > po terminie = 12 (stary filtr „PENDING && po terminie" dawał 0) 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > rozstrzygnięta decyzja po terminie nie wchodzi do „do rozstrzygnięcia" 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > decyzje — otwarte i po terminie > ufa liczbie serwera, a przelicza z daty tylko gdy pola brak 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > liczy dni po terminie dla otwartego zadania 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > zamknięte zadanie po terminie NIE jest poślizgiem 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > brak terminu = brak poślizgu, nie zero 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts > zadania — poślizg zamiast pustej kolumny SLA > rozpoznaje zablokowane 0ms
+ ✓ src/components/Execution/__tests__/executionRealData.test.ts (15 tests) 34ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy włączonej fladze kokpitu ma pozycję „summary" jako pierwszą 30ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy fladze OFF wygląda 1:1 jak przed zmianą (zero zmiany na żywo) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > wpuszcza summary, gdy flaga kokpitu jest włączona 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > NIE wpuszcza summary przy fladze OFF (deep-link degraduje się do listy) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > nigdy nie gubi zakładek, które działały wcześniej 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > lista deep-linku i kolejność Menu 2 to JEDNO źródło (nie da się ich rozjechać) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > woła obie funkcje zamiast trzymać własne listy zakładek 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > nie ma już zaszytej listy dozwolonych wartości ?tab= 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > renderuje kokpit dla activeTab === summary 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts (9 tests) 33ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > zadania pobiera dla całej organizacji, bez projectId i bez bramki wyjścia 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > decyzje pobiera dla całej organizacji, bez projectId i bez bramki wyjścia 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — zdjęty filtr po projekcie > inicjatywy pobiera bez projectId (43 z 72 nie mają projektu) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > „Do rozstrzygnięcia" bierze KAŻDĄ otwartą decyzję po terminie, nie tylko PENDING 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > lista „do rozstrzygnięcia" nie jest obcinana do sześciu pozycji 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > „Na czas" liczy się z plannedEndDate, a nie „wszystko poza zablokowanym" 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (D) — kafle liczą z realnych danych > kondycja portfela liczy decyzje tą samą definicją co kafel 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakres „w toku" > TRACKING jest wczytywane i mieści się w zakresie aktywnym 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > kolumny to Inicjatywa · Poziom · Status · Właściciel · Start/koniec · Odchylenie · RAG 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > RAG ma cztery stany, w tym SZARY „brak dat planu" (nie zieleń) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts > 1.12-R1 (A) — zakładka Realizacje > Menu 3 „Realizacji" ma trzy chipy i FILTRUJE tabelę (dawniej: dekoracja) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.daneRealne.source.test.ts (11 tests) 4ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > getExecutionMenu3 deklaruje dokładnie dwa chipy dla zakładki summary 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > domyślnie aktywny chip to "ryzyka" (KROK 3, test a) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > deep-link czyta ?kokpit= i akceptuje TYLKO ryzyka|rozstrzygniecia 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > stan → URL: ?kokpit= odzwierciedla chip TYLKO na zakładce summary 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > ExecutionSummaryOneLook dostaje activeView pochodzący z tego samego stanu (nie osobny) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts (5 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts the initiative register as the primary Execution list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > uses the same initiative identities and full initiative document in Execution 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > does not mount the rejected Execution Case register in the primary list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts and resolves the canonical execution-case deep link 2ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts (4 tests) 6ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > declares one context Open full and delegates the only preview to the manage block 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > passes that single contract to StandardTable for both row-menu entry points 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx (2 tests) 4ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > no longer fabricates a fake initiative from a raw id 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > defines a real openEntityById lookup that both onOpenEntity call sites use 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > openEntityById looks up the real initiative by id and never opens an unsupported type 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx (3 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > never silently clears the load error when substituting demo data after a failure 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > tags every demo-derived initiative row with isDemoSample 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > resets the stale banner once a real load succeeds 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > renders a visible "Sample" badge on the initiative-name cell for demo rows 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > shows a dedicated banner (not the full-page error blocker) while demo fallback is active 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx (5 tests) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:156:11
+    154|     );
+    155|
+    156|     await waitFor(() =>
+       |           ^
+    157|       expect(screen.getByText('Walidacja danych dostawców')).toBeInThe…
+    158|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:180:11
+    178|
+    179|     // Domyślny limit wachlarza to 12 s (EXECUTION_CASE_FANOUT_TIMEOUT…
+    180|     await waitFor(
+       |           ^
+    181|       () => expect(screen.getByText('Walidacja danych dostawców')).toB…
+    182|       { timeout: 20000 }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+AssertionError: expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:198:25
+    196|     await waitFor(() => {
+    197|       const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<str…
+    198|       expect(last?.all).toBe(1);
+       |                         ^
+    199|     });
+    200|     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<strin…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:235:11
+    233|     render(<ExecutionResourcesSurface activePreset="all" />);
+    234|
+    235|     await waitFor(() =>
+       |           ^
+    236|       expect(
+    237|         screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:281:11
+    279|   it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () …
+    280|     render(<ExecutionWorkSurface activePreset="all" />);
+    281|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    282|     expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:287:11
+    285|   it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async (…
+    286|     render(<ExecutionWorkSurface activePreset="all" />);
+    287|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    288|     expect(document.body.textContent).not.toContain('UNKNOWN');
+    289|     expect(document.body.textContent).toContain('SLA brak');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:307:11
+    305|   it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerob…
+    306|     render(<ExecutionWorkSurface activePreset="all" />);
+    307|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    308|     expect(document.body.textContent).not.toContain('d2b6a316-08c5-47c…
+    309|     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:117:11
+    115|     render(<ExecutionWorkSurface activePreset="all" />);
+    116|
+    117|     await waitFor(() =>
+       |           ^
+    118|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    119|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:129:11
+    127|     render(<ExecutionWorkSurface activePreset="all" />);
+    128|
+    129|     await waitFor(() =>
+       |           ^
+    130|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    131|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 9 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "liczniki Menu 3 dostają realne liczby, a nie zera". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "tłumaczy IN_PROGRESS zamiast pokazywać surowy status". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 18 passed (20)
+      Tests  9 failed | 101 passed (110)
+     Errors  9 errors
+   Start at  18:53:14
+   Duration  39.44s (transform 1.14s, setup 760ms, import 3.62s, tests 30.07s, environment 3.44s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:156:11
+    154|     );
+    155|
+    156|     await waitFor(() =>
+       |           ^
+    157|       expect(screen.getByText('Walidacja danych dostawców')).toBeInThe…
+    158|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:180:11
+    178|
+    179|     // Domyślny limit wachlarza to 12 s (EXECUTION_CASE_FANOUT_TIMEOUT…
+    180|     await waitFor(
+       |           ^
+    181|       () => expect(screen.getByText('Walidacja danych dostawców')).toB…
+    182|       { timeout: 20000 }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+AssertionError: expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:198:25
+    196|     await waitFor(() => {
+    197|       const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<str…
+    198|       expect(last?.all).toBe(1);
+       |                         ^
+    199|     });
+    200|     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<strin…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:235:11
+    233|     render(<ExecutionResourcesSurface activePreset="all" />);
+    234|
+    235|     await waitFor(() =>
+       |           ^
+    236|       expect(
+    237|         screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:281:11
+    279|   it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () …
+    280|     render(<ExecutionWorkSurface activePreset="all" />);
+    281|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    282|     expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:287:11
+    285|   it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async (…
+    286|     render(<ExecutionWorkSurface activePreset="all" />);
+    287|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    288|     expect(document.body.textContent).not.toContain('UNKNOWN');
+    289|     expect(document.body.textContent).toContain('SLA brak');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:307:11
+    305|   it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerob…
+    306|     render(<ExecutionWorkSurface activePreset="all" />);
+    307|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    308|     expect(document.body.textContent).not.toContain('d2b6a316-08c5-47c…
+    309|     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:117:11
+    115|     render(<ExecutionWorkSurface activePreset="all" />);
+    116|
+    117|     await waitFor(() =>
+       |           ^
+    118|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    119|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:129:11
+    127|     render(<ExecutionWorkSurface activePreset="all" />);
+    128|
+    129|     await waitFor(() =>
+       |           ^
+    130|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    131|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 9 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "liczniki Menu 3 dostają realne liczby, a nie zera". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "tłumaczy IN_PROGRESS zamiast pokazywać surowy status". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 18 passed (20)
+      Tests  9 failed | 101 passed (110)
+     Errors  9 errors
+   Start at  18:53:14
+   Duration  39.46s (transform 1.14s, setup 760ms, import 3.62s, tests 30.07s, environment 3.44s)
+
+JSON report written to /private/tmp/wt-12r1-dane-realne/junit.xml
+JUNIT report written to /private/tmp/wt-12r1-dane-realne/junit.xml
+EXIT=1

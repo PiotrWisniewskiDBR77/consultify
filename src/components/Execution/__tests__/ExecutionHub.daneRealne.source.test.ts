@@ -97,3 +97,35 @@ describe('1.12-R1 (A) — zakres „w toku"', () => {
     );
   });
 });
+
+describe('1.12-R1 (A) — zakładka Realizacje', () => {
+  it('kolumny to Inicjatywa · Poziom · Status · Właściciel · Start/koniec · Odchylenie · RAG', () => {
+    const blokKolumn = blok('const columns: TableColumn[] = useMemo(', '  const scopeToggle =');
+    for (const id of ["id: 'name'", "id: 'level'", "id: 'status'", "id: 'assignee'", "id: 'plan'", "id: 'deviation'", "id: 'rag'"]) {
+      expect(blokKolumn, `brak kolumny ${id}`).toContain(id);
+    }
+    // Usunięte: kod typu, pasek postępu, plakietki alertów, licznik zadań —
+    // siedem kolumn w 1440 px to był powód ucinania (pomiar B2).
+    expect(blokKolumn).not.toContain("id: 'progress'");
+    expect(blokKolumn).not.toContain("id: 'alerts'");
+    expect(blokKolumn).not.toContain("id: 'tasks'");
+  });
+
+  it('RAG ma cztery stany, w tym SZARY „brak dat planu" (nie zieleń)', () => {
+    const blokRag = blok("        id: 'rag',", "    ],\n    [t]\n  );");
+    expect(blokRag).toContain('initiativeRag(row as any)');
+    expect(blokRag).toContain('execution.rag.noDates');
+    expect(blokRag).toContain('bg-c-text-muted');
+    // Zablokowana = czerwona niezależnie od dat.
+    expect(blokRag).toContain('InitiativeStatus.BLOCKED');
+  });
+
+  it('Menu 3 „Realizacji" ma trzy chipy i FILTRUJE tabelę (dawniej: dekoracja)', () => {
+    const chipy = blok('    list: [\n      [\'wszystkie\'', '].map(([id, label]) => ({ id, label })),');
+    expect(chipy).toContain("'zagrozone'");
+    expect(chipy).toContain("'po-terminie'");
+    expect(chipy).not.toContain("'missing-baseline'");
+    const lista = blok('const summaryInitiatives = useMemo(() => {', '// Liczniki chipów Menu 3');
+    expect(lista).toContain('matchesListPreset(initiative, canonicalMenu3Preset.list');
+  });
+});

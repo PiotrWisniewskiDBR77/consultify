@@ -13119,7 +13119,12 @@
       "selectedCount": "{{count}} selected",
       "changeStatusFor": "Change status for {{name}}",
       "demoSampleBadge": "Sample",
-      "demoSampleTitle": "Sample data, not real"
+      "demoSampleTitle": "Sample data, not real",
+      "level": "Level",
+      "plan": "Planned start / end",
+      "deviation": "Variance (days)",
+      "rag": "RAG",
+      "noPlanDates": "no plan dates"
     },
     "badges": {
       "done": "Done",
@@ -13241,7 +13246,8 @@
         "missingForecast": "Missing forecast",
         "closing": "Closing",
         "delivered": "Recently delivered",
-        "unknown": "Unknown data"
+        "unknown": "Unknown data",
+        "overdue": "Overdue"
       },
       "work": {
         "tasks": "Tasks",
@@ -13743,6 +13749,13 @@
       "actions": {
         "newDecision": "New decision"
       }
+    },
+    "rag": {
+      "blocked": "Blocked",
+      "late": "Overdue",
+      "atRisk": "At risk",
+      "onTrack": "On track",
+      "noDates": "No plan dates"
     }
   },
   "benefits": {
