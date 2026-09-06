@@ -1266,7 +1266,7 @@ export const FeedbackSidePanel: React.FC = () => {
     </div>
   );
 
-  const clientEnv = ((import.meta as any)?.env?.VITE_APP_ENV as string | undefined) || '';
+  const clientEnv = ((import.meta.env as any)?.VITE_APP_ENV as string | undefined) || '';
 
   const renderQuickPulseHeader = () => (
     <div className="flex items-center gap-1.5">

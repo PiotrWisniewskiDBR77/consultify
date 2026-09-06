@@ -8,6 +8,12 @@
  * `vite build` nigdy nie podstawia obiektu `import.meta.env` (patrz
  * `assessmentDocxFlag.envStaticRead.test.ts` po pelne wyjasnienie).
  *
+ * SKORYGOWANE 2026-09-06 (zlecenie Z5 — pomiar empiryczny): zmierzone, że
+ * nawet ten "juz poprawny" ksztalt (cast NA `import.meta` przed `.env`)
+ * zwraca `undefined` w Vitest z `vi.stubEnv` (dziala tylko w build/dev —
+ * patrz `assessmentDocxFlag.envStaticRead.test.ts` naglowek po pelne
+ * wyjasnienie). Naprawa Z5: cast przeniesiony na WYNIK `.env`.
+ *
  * DOWOD MUTACYJNY (wykonany recznie przy pisaniu tego testu): zamiana
  * `const env = (import.meta as unknown as {...}).env;` na
  * `const meta = import.meta as unknown as {...}; const env = meta?.env;`
@@ -29,10 +35,10 @@ function executableSource(relativePath: string): string {
 describe('assessmentOutputArtifactsFlag — odczyt env musi być jednym wyrażeniem', () => {
   const source = executableSource('../assessmentOutputArtifactsFlag.ts');
 
-  it(`readEnv() odczytuje ${ASSESSMENT_OUTPUT_ARTIFACTS_FLAG_KEYS.env} — .env jest w TYM SAMYM wyrażeniu co cast import.meta`, () => {
-    // `).env` bezpośrednio po zamknięciu castu = import.meta i .env w JEDNYM
-    // MemberExpression (dokładnie to, co Vite/esbuild podstawiają).
-    expect(source).toMatch(/\(import\.meta as unknown as \{[^}]*\}\)\.env\b/);
+  it(`readEnv() odczytuje ${ASSESSMENT_OUTPUT_ARTIFACTS_FLAG_KEYS.env} — cast jest na WYNIKU import.meta.env (nie na import.meta przed .env)`, () => {
+    // Token `import.meta.env` musi zostać SPÓJNY w źródle — cast dopiero
+    // OWIJA jego wynik, nie wstawia się między "import.meta" a ".env".
+    expect(source).toMatch(/\(import\.meta\.env as unknown as Record<string, string>\)/);
   });
 
   it('kod wykonywalny NIE deklaruje osobnej zmiennej trzymającej samo import.meta (bez .env w tej samej instrukcji)', () => {

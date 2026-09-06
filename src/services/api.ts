@@ -126,7 +126,7 @@ export interface I18nMessageDto {
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
-const _envApiUrl = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+const _envApiUrl = (import.meta.env as any)?.VITE_API_URL as string | undefined;
 const _normalizedEnvApiUrl =
   _envApiUrl && String(_envApiUrl).trim().length > 0
     ? (() => {

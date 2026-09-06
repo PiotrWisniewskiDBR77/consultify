@@ -22,8 +22,8 @@ declare global {
 try {
   installFeedbackCollector({
     appEnv:
-      (import.meta as { env?: Record<string, string> }).env?.VITE_APP_ENV ||
-      (import.meta as { env?: Record<string, string> }).env?.MODE ||
+      (import.meta.env as Record<string, string>)?.VITE_APP_ENV ||
+      (import.meta.env as Record<string, string>)?.MODE ||
       null,
     attachGlobalErrorHandlers: true,
   });

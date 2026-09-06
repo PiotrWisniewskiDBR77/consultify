@@ -472,7 +472,7 @@ export function getEvidencePrompts(
 // API-backed functions (fall back to in-memory when backend unavailable)
 // ---------------------------------------------------------------------------
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || '/api';
+const API_URL = (import.meta.env as any)?.VITE_API_URL || '/api';
 
 async function fetchFromApi<T>(url: string, options?: RequestInit): Promise<T | null> {
   try {

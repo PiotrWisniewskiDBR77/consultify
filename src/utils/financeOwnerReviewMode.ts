@@ -29,7 +29,7 @@ export function isFinanceOwnerReviewModeEnabled(): boolean {
     }
   }
   try {
-    const env = (import.meta as unknown as { env?: Record<string, string> }).env;
+    const env = (import.meta.env as unknown as Record<string, string>);
     return enabled(env?.[ENV_KEY]) === true;
   } catch {
     return false;

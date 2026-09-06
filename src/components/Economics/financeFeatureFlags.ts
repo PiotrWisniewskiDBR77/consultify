@@ -109,7 +109,7 @@ function readLocalStorage(key: string): boolean | null {
 
 function readEnv(key: string): boolean | null {
   try {
-    const env = (import.meta as unknown as { env?: Record<string, string> }).env;
+    const env = (import.meta.env as unknown as Record<string, string>);
     return parseFlag(env?.[key]);
   } catch {
     return null;

@@ -39,7 +39,7 @@ export function isChatSignalsFeedEnabled(): boolean {
       }
     }
     const env = parseFlag(
-      (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+      (import.meta.env as unknown as Record<string, string | undefined>)?.[ENV_KEY]
     );
     // Default ON since 2026-08-27 owner accept (DEC-143) — only the bottom
     // of the query > localStorage > env > default chain changed; the catch

@@ -27,7 +27,7 @@ export function isInitiativeBridgeEnabled(): boolean {
       query ??
       local ??
       parseFlag(
-        (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[ENV_KEY]
+        (import.meta.env as unknown as Record<string, string | undefined>)?.[ENV_KEY]
       ) ??
       false;
   } catch {

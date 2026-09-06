@@ -33,7 +33,7 @@ export function isResultsOwnerReviewModeEnabled(): boolean {
     }
   }
   try {
-    const env = (import.meta as unknown as { env?: Record<string, string> }).env;
+    const env = (import.meta.env as unknown as Record<string, string>);
     return parseEnabled(env?.[ENV_KEY]) === true;
   } catch {
     return false;

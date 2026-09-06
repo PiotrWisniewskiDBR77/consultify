@@ -222,7 +222,7 @@ function useInsightCardContractEnabled(): boolean {
     }
     try {
       const env = parseInsightCardContractFlag(
-        (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+        (import.meta.env as unknown as Record<string, string | undefined>)
           ?.VITE_VF1_INSIGHT_CARD_CONTRACT
       );
       if (env !== null) return env;
