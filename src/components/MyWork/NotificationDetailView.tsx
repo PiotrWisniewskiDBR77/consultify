@@ -2831,7 +2831,12 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     },
   ];
 
-  const rightPanelSections: ArtifactRightPanelSection[] = [
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-411] Decyzja CTO P10, runda 2:
+  // powiadomienie ma w prawym panelu wyłącznie akcje rekordu i historię.
+  // Implementacje pozostałych sekcji zostają poniżej (bez kasowania kodu), ale
+  // nie są częścią widocznego kontraktu powiadomienia.
+  const notificationRightPanelContract = new Set(['actions', 'history']);
+  const allRightPanelSections: ArtifactRightPanelSection[] = [
     // KOLEJNOSC KANONICZNA (standard n-Type §7.2): Akcje → Wlasciwosci →
     // Powiazania → Zrodla i zalozenia → Rezultaty → [Komentarze] → Historia.
     // Domyslnie rozwiniete TYLKO Akcje i Wlasciwosci (§8).
@@ -3102,6 +3107,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       ),
     },
   ];
+  const rightPanelSections = allRightPanelSections.filter((section) =>
+    notificationRightPanelContract.has(section.id)
+  );
 
   // ── Menu 1 status pill (D-B) — etykieta z tekstem, nie naga kropka ──────────
   // Stan-domenowy powiadomienia w naglowku = jego cykl zycia odbioru
