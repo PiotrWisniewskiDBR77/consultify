@@ -12,7 +12,6 @@ import {
   GitBranch,
   Keyboard,
   LayoutTemplate,
-  PanelRight,
   RefreshCw,
   Search,
   StickyNote,
@@ -68,7 +67,7 @@ import {
   buildIdeaMenu3Actions,
 } from './ideaCanvasMelsChips';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
-import { IdeaStatusChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
+import { IdeaCornerActions, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
@@ -79,7 +78,6 @@ import {
 } from './panel/IdeaElementInspector';
 import { setCanvasAnalysisHost, useCanvasAnalysisSlot } from './panel/canvasAnalysisSlot';
 import { ConversionPreviewDialog, type ConversionPreviewData } from './ConversionPreviewDialog';
-import { IdeaConvertMenu } from './IdeaConvertMenu';
 import {
   getConvertTargetMeta,
   IDEA_CONVERT_TARGETS,
@@ -819,6 +817,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [ideaId, isPolish]
   );
 
+  /**
+   * ★ 1.1-N2 (DEC-409): błąd zapisu = TOAST. Do 06.09 nieudany zapis (inny niż
+   * 409) był widoczny wyłącznie jako słowo w chipie statusu w rogu — a chip
+   * właściciel kazał usunąć („usunąć iskra i zapisano przed chwilą"). Zwykłe
+   * „zapisano" nie pokazuje się już nigdzie, więc BŁĄD musi mieć własne, głośne
+   * wyjście; bez tego zniknięcie chipa byłoby cichą utratą sygnału o
+   * niezapisanej pracy. Stały `id` = jeden toast zamiast stosu przy ponowieniach.
+   */
+  const handleGraphSaveError = useCallback(
+    (_error: unknown, state: 'offline' | 'queued') => {
+      toast.error(
+        state === 'offline'
+          ? isPolish
+            ? 'Brak połączenia — zmiany czekają na zapis'
+            : 'You are offline — changes are waiting to be saved'
+          : isPolish
+            ? 'Nie udało się zapisać zmian — spróbuję ponownie'
+            : 'Could not save your changes — retrying',
+        { id: `graph-save-error-${ideaId}` }
+      );
+    },
+    [ideaId, isPolish]
+  );
+
   const graphRuntime = useWorkspaceGraphRuntime({
     ideaId: realId,
     open: Boolean(realId && (!isNewInitial || realId !== ideaId)),
@@ -835,6 +857,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       : zaladowaneNarzedzieRef.current || activeTool,
     language: i18n.language || 'en',
     onConflict: handleGraphConflict,
+    onSaveError: handleGraphSaveError,
   });
   const graphHydrating = loading || graphRuntime.loading;
   const loadingPhase = useDeferredLoading(graphHydrating);
@@ -4108,11 +4131,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onDelete: handleDeleteIdea,
               onSearch: () => setSearchOpen(true),
               onShowHelp: () => setShortcutsHelpOpen(true),
+              // ★ 1.1-N2 (DEC-409): trzy funkcje zdjętego przycisku
+              // „Konwertuj ▾" — ta sama mechanika (`handleConvert`), nowe
+              // miejsce: sekcja „Konwertuj na…" w kebabie Menu 1.
+              onConvert: (target) => handleConvert(target),
+              convertDisabled: !mapHasNodes,
             },
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [melsCanvasEnabled, isPolish, handleDuplicateIdea, handleDeleteIdea, activeTool]
+    [
+      melsCanvasEnabled,
+      isPolish,
+      handleDuplicateIdea,
+      handleDeleteIdea,
+      handleConvert,
+      mapHasNodes,
+      activeTool,
+    ]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
   // PRZEPIĘTE NA RENDER Z REJESTRU AKCJI (pierwsza powierzchnia, wzorzec dla
@@ -4595,44 +4631,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             moduleLabel={t('mindmap.ideas')}
             topBarChips={melsCanvasChips}
             titleIconSlot={<IdeaToolIcon tool={activeTool} label={activeToolLabel} />}
-            titleTrailingSlot={
-              <>
-                {/* ★ NAPRAWA (1.1-N): Iskra + Zapisano scalone w JEDEN wyciszony
-                    status (jedna kropka) — patrz komentarz przy `IdeaStatusChip`
-                    w `IdeaCanvasMenu1Bits.tsx`. */}
-                <IdeaStatusChip
-                  stage={stage}
-                  isPolish={Boolean(isPolish)}
-                  saveState={graphRuntime.syncState}
-                  saveLabel={graphRuntime.syncLabel}
-                />
-                {/* ★ Powrót do zamkniętego panelu — ten sam wzorzec „pigułki",
-                    który ma tabela Pomysłów (`IdeasTableContent.tsx`). Siedzi w
-                    CHROME (górny pasek), nie nad płótnem: decyzja CTO mówi, że
-                    nad płótnem nie pływa nic poza menu kontekstowym węzła. */}
-                {panelZamkniety ? (
-                  <button
-                    type="button"
-                    data-testid="idea-show-panel"
-                    onClick={() => {
-                      setPanelZamkniety(false);
-                      zapiszPanelZamkniety(false);
-                    }}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium text-c-text-muted transition-colors hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
-                    aria-label={t('mindmap.showPanel', 'Pokaż panel')}
-                    title={t('mindmap.showPanel', 'Pokaż panel')}
-                  >
-                    <PanelRight size={14} />
-                    <span>{t('mindmap.showPanel', 'Pokaż panel')}</span>
-                  </button>
-                ) : null}
-              </>
-            }
+            /* ★ 1.1-N2 (DEC-409, słowa właściciela 06.09): róg warsztatu niesie
+               WYŁĄCZNIE dwa przyciski — „Panel" i „AI" (`primaryActionSlot`).
+               `titleTrailingSlot` zniknął w całości razem z chipem statusu
+               („● Kształtuje się · Zapisano przed chwilą") i pigułką „Pokaż
+               panel": zwykłe „zapisano" nie pokazuje się nigdzie, a stan
+               zapisu żyje tylko w stanie krytycznym (konflikt → alert
+               `handleGraphConflict`, błąd zapisu → toast `handleGraphSaveError`). */
             primaryActionSlot={
-              <IdeaConvertMenu
-                onConvert={(target) => handleConvert(target)}
-                isPolish={Boolean(isPolish)}
-                disabled={!mapHasNodes}
+              <IdeaCornerActions
+                panelOpen={!panelZamkniety}
+                onTogglePanel={() => {
+                  const nastepny = !panelZamkniety;
+                  setPanelZamkniety(nastepny);
+                  zapiszPanelZamkniety(nastepny);
+                  // Zamknięcie panelu zamyka też rozmowę — inaczej globalny
+                  // sygnał czatu natychmiast otwierałby panel z powrotem
+                  // (ten sam warunek co „X" w `IdeaElementInspector`).
+                  if (nastepny && !isChatCollapsed) toggleChatCollapse();
+                }}
+                onOpenAi={() => ustawZakladkePanelu('teresa')}
+                panelLabel={t('mindmap.cornerPanel', 'Panel')}
+                aiLabel={t('mindmap.cornerAi', 'AI')}
               />
             }
             secondBar={
@@ -4883,11 +4903,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         </div>
 
         {/* E11 (2026-08-10) — same mandatory-preview gate as the legacy shell
-            below. Without this, the mels shell's `IdeaConvertMenu` above sets
-            `conversionPreviewOpen` with nothing to render it — a dead click
-            (the mels branch returns early and skips the legacy branch's
-            modal block entirely, confirmed by reading both return paths
-            before adding this). */}
+            below. Without this, the convert entry point in Menu 1 (do 06.09
+            primary CTA „Konwertuj ▾", od 1.1-N2 sekcja „Konwertuj na…" w
+            kebabie) ustawiałby `conversionPreviewOpen` bez niczego, co go
+            narysuje — martwy klik (gałąź mels wraca wcześniej i pomija blok
+            modali gałęzi legacy, sprawdzone w obu ścieżkach return). */}
         <ConversionPreviewDialog
           open={conversionPreviewOpen}
           isPolish={Boolean(isPolish)}

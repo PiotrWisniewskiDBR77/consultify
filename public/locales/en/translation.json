@@ -32078,6 +32078,8 @@
       "noEdges": "This branch has no connections"
     },
     "showPanel": "Show panel",
+    "cornerAi": "AI",
+    "cornerPanel": "Panel",
     "ideaStatusAriaLabel": "Stage and save status"
   },
   "ideas": {

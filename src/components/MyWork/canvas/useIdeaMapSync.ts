@@ -39,6 +39,16 @@ interface UseIdeaMapSyncOpts {
   idleMs?: number;
   draftMs?: number;
   onConflict?: (serverVersion: number, serverMap?: IdeaMapHydrationPayload | null) => void;
+  /**
+   * ★ 1.1-N2 (DEC-409): zapis, który NIE doszedł do serwera z powodu innego niż
+   * 409, do 06.09 zmieniał tylko `syncState` na `queued`/`offline` — czyli był
+   * widoczny WYŁĄCZNIE w chipie statusu w rogu warsztatu. Chip został zdjęty na
+   * życzenie właściciela („usunąć iskra i zapisano przed chwilą"), a stan zapisu
+   * ma żyć tylko w stanie krytycznym — dlatego błąd zapisu musi mieć własne
+   * wyjście (toast po stronie hosta). Bez tego wywołania zniknięcie chipa
+   * oznaczałoby CICHĄ utratę sygnału o niezapisanej pracy.
+   */
+  onSaveError?: (error: unknown, state: 'offline' | 'queued') => void;
 }
 
 interface QueueSyncOpts {
@@ -228,6 +238,7 @@ export function useIdeaMapSync({
   idleMs = DEFAULT_IDLE_MS,
   draftMs = DEFAULT_DRAFT_MS,
   onConflict,
+  onSaveError,
 }: UseIdeaMapSyncOpts) {
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAtState] = useState<number | null>(null);
@@ -405,8 +416,10 @@ export function useIdeaMapSync({
           }
         } else if (typeof navigator !== 'undefined' && navigator.onLine === false) {
           setSyncState('offline');
+          onSaveError?.(err, 'offline');
         } else {
           setSyncState('queued');
+          onSaveError?.(err, 'queued');
         }
         persistDraft(payload, true);
         throw err;
@@ -425,7 +438,7 @@ export function useIdeaMapSync({
         }
       }
     },
-    [ideaId, locked, onConflict, open, persistDraft, tool]
+    [ideaId, locked, onConflict, onSaveError, open, persistDraft, tool]
   );
   flushNowRef.current = flushNow;
 

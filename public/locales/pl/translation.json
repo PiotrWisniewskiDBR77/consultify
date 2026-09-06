@@ -34632,6 +34632,8 @@
       "noEdges": "Ta gałąź nie ma połączeń"
     },
     "showPanel": "Pokaż panel",
+    "cornerAi": "AI",
+    "cornerPanel": "Panel",
     "ideaStatusAriaLabel": "Etap i zapis"
   },
   "ideas": {

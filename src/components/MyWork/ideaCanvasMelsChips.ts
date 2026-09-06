@@ -24,6 +24,7 @@
 import {
   Copy,
   Download,
+  FileText,
   GitBranch,
   GitMerge,
   HelpCircle,
@@ -33,6 +34,7 @@ import {
   LayoutTemplate,
   Lightbulb,
   Link2,
+  ListChecks,
   type LucideIcon,
   MessageSquare,
   MessagesSquare,
@@ -55,6 +57,7 @@ import type {
   TopBarChipDescriptor,
 } from '@/components/shared/ExecutiveModuleShell';
 
+import { getConvertTargetMeta, type IdeaConvertTarget } from './ideaConvertTargets';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 
 // ── Per-tool identity icon (SSOT: superCanvasTypes.OBJECT_FAMILY_ICONS) ──────
@@ -81,7 +84,33 @@ export interface IdeaMenu1Handlers {
   onSearch?: () => void;
   /** Keyboard-shortcuts help (folded under "Więcej"). */
   onShowHelp?: () => void;
+  /**
+   * ★ 1.1-N2 (DEC-409): konwersja przeniesiona z primary CTA „Konwertuj ▾" do
+   * kebaba. Trzy pozycje = te same trzy cele, które niósł tamten przycisk
+   * (`QUICK_CONVERT_TARGETS` z usuniętego `IdeaConvertMenu`): Inicjatywa ·
+   * Taski · Raport. Bez handlera sekcja nie powstaje.
+   */
+  onConvert?: (target: IdeaConvertTarget) => void;
+  /** Puste płótno — konwersja niedostępna (parytet z `disabled` starego CTA). */
+  convertDisabled?: boolean;
 }
+
+/**
+ * Cele szybkiej konwersji w kebabie — 1:1 z listą, którą do 06.09 renderował
+ * `IdeaConvertMenu` (primary CTA w rogu). Pełna lista celów (z `soon`) żyje
+ * dalej w rejestrze SSOT `ideaConvertTargets.ts`.
+ */
+export const IDEA_KEBAB_CONVERT_TARGETS: IdeaConvertTarget[] = [
+  'initiative',
+  'task_set',
+  'report',
+];
+
+const CONVERT_TARGET_ICON: Partial<Record<IdeaConvertTarget, LucideIcon>> = {
+  initiative: Target,
+  task_set: ListChecks,
+  report: FileText,
+};
 
 /**
  * Menu 1 chip strip = ghost Teresa (secondary) + kebab `⋯` (overflow).
@@ -112,6 +141,30 @@ export function buildIdeaMenu1Chips(args: {
       tooltip: isPolish ? 'Omów z Teresą' : 'Discuss with Teresa',
       testId: 'idea-menu1-teresa',
     });
+  }
+
+  // ★ 1.1-N2 (DEC-409): sekcja „Konwertuj na…" — trzy funkcje zdjętego
+  // przycisku „Konwertuj ▾" wchodzą do TEGO SAMEGO kebaba, w którym siedzą
+  // Duplikuj/Eksportuj/Historia/Szukaj/Skróty/Usuń. Cel bez wpisu w rejestrze
+  // SSOT (`getConvertTargetMeta` → undefined) nie renderuje się wcale — ta sama
+  // zasada, którą miał stary dropdown.
+  if (handlers.onConvert) {
+    const konwertuj = handlers.onConvert;
+    for (const target of IDEA_KEBAB_CONVERT_TARGETS) {
+      const meta = getConvertTargetMeta(target);
+      if (!meta) continue;
+      chips.push({
+        id: `idea-convert-${target}`,
+        label: isPolish ? meta.labelPl : meta.labelEn,
+        icon: CONVERT_TARGET_ICON[target] ?? GitMerge,
+        group: 'overflow',
+        overflowSection: isPolish ? 'Konwertuj na…' : 'Convert to…',
+        disabled: Boolean(handlers.convertDisabled) || meta.status === 'soon',
+        onClick: () => konwertuj(target),
+        tooltip: meta.status === 'soon' ? soon : isPolish ? meta.descPl : meta.descEn,
+        testId: `idea-convert-target-${target}`,
+      });
+    }
   }
 
   // Kebab `⋯` — document-level actions grouped by user outcome.

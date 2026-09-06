@@ -1,0 +1,51 @@
+{
+ "url": "http://127.0.0.1:3133/my-work/ideas/seed_idea_map_8ae01e47_ai_quality/workspace/whiteboard",
+ "tytul": "My Work — Consultify",
+ "kliki": [],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 409 (Conflict)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 409,
+   "url": "http://127.0.0.1:3133/api/my-work/my-ideas/seed_idea_map_8ae01e47_ai_quality/map/sync"
+  }
+ ],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nPomysły\nPomysł\nWhiteboard\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nNowy pomysł\nWhiteboard\nPomysł\nPanel\nAI\nTablica\nWstaw\nAI monitoring jakości\nProblem\nPóźne wykrywanie defektów\nBrak wspólnej definicji jakości\nCel / KPI\nReklamacje: -20%\nMTTR: -30%\nOpcje\nAnomaly detection na sygnałach procesowych\nComputer vision na stanowisku kontroli\nDowody\nBaseline danych i definicje metryk jakości\nRyzyka\nDrift modelu + false positives\nEksperymenty\nPilot: 1 linia / 1 usługa, 2 tygodnie\n54%\nSkładnik\nTeresa\nAI monitoring jakości\nIskra\nWhiteboard\n\nKliknij węzeł, wiersz, kartkę albo krawędź, aby zobaczyć jego pola\n\nZaznacz element, aby zobaczyć właściwości\n\nAKCJE\nPrzejrzyj kandydaturę\nANALIZA PŁÓTNA\nTablica wygląda kompletnie — gotowa do konwersji na inicjatywę?\nZastosuj\nWŁAŚCIWOŚCI\nEtykieta\nAI monitoring jakości\nEtap\nIskra\nWłaściciel\nAudyt Nocny\nUtworzono\n31.08.2026 21:06\nZaktualizowano\n5.09.2026 21:06\nPOWIĄZANIA\n0\nŹRÓDŁA I ZAŁOŻENIA\n0\nKOMENTARZE\n0\nHISTORIA\n0\nZAZNACZANIE",
+ "dom": {
+  "[data-testid=\"mels-topbar-merged\"] button": {
+   "liczba": 3,
+   "boxy": [
+    {
+     "x": 1222.46875,
+     "y": 117,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1258.46875,
+     "y": 117,
+     "width": 73.75,
+     "height": 32
+    },
+    {
+     "x": 1338.21875,
+     "y": 117,
+     "width": 53.78125,
+     "height": 32
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T11:52:40.322Z"
+}

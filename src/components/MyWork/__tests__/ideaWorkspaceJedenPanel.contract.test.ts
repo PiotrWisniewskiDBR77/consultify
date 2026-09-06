@@ -82,7 +82,10 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
     expect(workspace).toContain('const poprzedniStanCzatu = useRef<boolean>(isChatCollapsed);');
     // „Omów z Teresą" przełącza zakładkę JAWNIE — inaczej przy już otwartym
     // czacie żadne przejście stanu by nie zaszło i przycisk byłby martwy.
-    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(2);
+    // 1.1-N2 (DEC-409): trzecie wywołanie to przycisk „AI" w rogu warsztatu
+    // (`IdeaCornerActions`) — jedyne wejście AI w rogu po zdjęciu pigułki
+    // „Teresa" (krok 1) i chipa statusu (krok 2).
+    expect(workspace.match(/ustawZakladkePanelu\('teresa'\)/g)).toHaveLength(3);
   });
 
   it('nad płótnem nie pływają karty analizy, a paleta stoi po lewej', () => {
@@ -105,7 +108,10 @@ describe('Warsztat Pomysłów — jeden prawy panel na KAŻDYM płótnie', () =>
 
   it('panel da się zamknąć, a zamknięcie jest zapamiętane', () => {
     expect(workspace).toContain("'myWork.ideaWorkspace.rightPanelClosed'");
-    expect(workspace).toContain('data-testid="idea-show-panel"');
+    // 1.1-N2 (DEC-409): pigułka „Pokaż panel" (`idea-show-panel`) zastąpiona
+    // przyciskiem „Panel" w rogu — ten sam pstryczek, ta sama pamięć.
+    expect(workspace).toContain('<IdeaCornerActions');
+    expect(workspace).toContain('zapiszPanelZamkniety(nastepny);');
     expect(inspektor).toContain('data-testid="idea-panel-close"');
     // Zaznaczenie węzła NIE otwiera panelu wbrew użytkownikowi.
     expect(workspace).toContain('panelZamkniety ? undefined :');

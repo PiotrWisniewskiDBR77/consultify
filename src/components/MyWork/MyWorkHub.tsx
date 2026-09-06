@@ -4674,13 +4674,14 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
               {/* Tools */}
 
-              {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
-              {activeTab === 'ideas' && activeDocumentId && (
-                <WorkspacePanelStrip
-                  value={activeIdeaWorkspaceState?.activePanel || ideaActivePanel}
-                  onChange={handleIdeaPanelChange}
-                />
-              )}
+              {/* ★ 1.1-N2 (DEC-409, słowa właściciela 06.09 o prawym rogu
+                  warsztatu Pomysłów): „To co jest w menu 2 to pozostałość,
+                  możesz ją wywalić". Segment trzech ikon (Narzędzia · Kontekst ·
+                  Sugestie AI) w Menu 2 otwierał TRZECI panel dublujący kanoniczny
+                  prawy panel warsztatu — USUNIĘTY. Wejście do panelu jest jedno:
+                  przyciski „Panel" i „AI" w rogu Menu 1 (`IdeaCornerActions`).
+                  `handleIdeaPanelChange`/`ideaActivePanel` zostają — niosą stan
+                  sekcji do `IdeaMapWorkspace`, który sam decyduje, co pokazać. */}
 
               {/* Ideas: canonical view mode switcher — table / grid */}
               {activeTab === 'ideas' && !activeDocumentId && (
