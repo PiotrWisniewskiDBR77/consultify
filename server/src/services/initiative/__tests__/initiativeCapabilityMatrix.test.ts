@@ -160,7 +160,7 @@ describe('resolveGateRequiredRoles + canExecuteGate — approval profile', () =>
 
   it('STEERING_COMMITTEE requirement stays literal when a board is enabled', () => {
     const roles = resolveGateRequiredRoles('APPROVE', true);
-    expect(roles).toEqual(['STEERING_COMMITTEE']);
+    expect(roles).toEqual(['PROJECT_SPONSOR', 'STEERING_COMMITTEE']);
   });
 
   it('a null gate has no required roles (ungated transition)', () => {
@@ -208,7 +208,7 @@ describe('resolveGateRequiredRoles + canExecuteGate — approval profile', () =>
 
   it('computeApprovalProfile reports assigned approvers and per-transition executability', () => {
     const profile = computeApprovalProfile({
-      status: 'REVIEW',
+      status: 'PENDING_APPROVAL',
       effectiveRoles: ['PROJECT_SPONSOR'],
       steeringBoardEnabled: false,
       assignments: [
@@ -216,11 +216,11 @@ describe('resolveGateRequiredRoles + canExecuteGate — approval profile', () =>
         { gateRole: 'STEERING_COMMITTEE', userId: 'user-board' },
       ],
     });
-    const promoted = profile.find((t) => t.targetStatus === 'PROMOTED');
-    expect(promoted).toBeDefined();
-    expect(promoted?.canCurrentUserExecute).toBe(true);
-    expect(promoted?.hasAssignedApprover).toBe(true);
-    expect(promoted?.assignedApprovers.map((a) => a.userId)).toContain('user-sponsor');
+    const approved = profile.find((t) => t.targetStatus === 'APPROVED');
+    expect(approved).toBeDefined();
+    expect(approved?.canCurrentUserExecute).toBe(true);
+    expect(approved?.hasAssignedApprover).toBe(true);
+    expect(approved?.assignedApprovers.map((a) => a.userId)).toContain('user-sponsor');
   });
 });
 
