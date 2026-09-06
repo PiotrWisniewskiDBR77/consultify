@@ -706,6 +706,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'ZLECENIE 1.1-J — REALNY <NotebookPageListRow> (lewa lista „Moje notatki"), 11 wierszy jednoliniowych, kebab pionowy. Kliknij ⋮ na dowolnym wierszu, żeby zobaczyć menu (Konwertuj/Przypnij/Archiwizuj).',
     render: () => <NotatnikListaScreen />,
+  },
   'mojapraca-notatnik-toggle-empty': {
     label:
       'H2 (1.1-H) — REALNY edytor Tiptap (extensions.ts + EDITOR_STYLES z NotebookContent.tsx) z pustym blokiem toggle. &case=empty-toggle|text &lang=pl|en',
