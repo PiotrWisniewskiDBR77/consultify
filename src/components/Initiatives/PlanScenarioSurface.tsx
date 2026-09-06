@@ -576,7 +576,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     onCountsChange?.({
       drafts: rows.filter((row) => row.state === 'DRAFT').length,
       published: rows.filter((row) => row.state === 'PUBLISHED').length,
-      conflicted: 0,
+      conflicted: rows.filter((row) => row.conflicts > 0).length,
     });
   }, [rows, onCountsChange]);
 
