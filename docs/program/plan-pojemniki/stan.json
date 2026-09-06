@@ -73,11 +73,11 @@
           "nazwa": "Dokument i prezentacja z szablonu jako plik (prototyp → akcept właściciela → generator)",
           "wykonawca": "Opus",
           "zalezy_od": "—",
-          "stan": "do_odbioru",
+          "stan": "odebrane",
           "galaz": "mvp/dokument-prezentacja-plik",
           "sha": "9fb2858bca",
           "dowod": "scalone na staging; pliki: evidence/dokument-plik-20260906/ (DOCX 26 stron, PPTX 14 slajdów, PDF); 3 przyciski „Pobierz” na ekranie raportu oceny; CTO obejrzał strony i slajdy",
-          "uwagi": "Czeka na słowo właściciela na PLIKU (S1.4). Samoocena Opusa 7,5/10: 39 powtarzalnych zdań „brak treści” (magazyn zastany nie ma rekomendacji), 4 angielskie etykiety poziomów DRD w raporcie, spis treści buduje się dopiero w Wordzie. Dane: ocena testowa z lokalnych seedów, nie z stagingu właściciela.",
+          "uwagi": "Właściciel 06.09 na plikach: „3,5 w skali do 6, ale na MVP wystarcza” = Tak (S1.4). Samoocena Opusa 7,5/10: 39 powtarzalnych zdań „brak treści” (magazyn zastany nie ma rekomendacji), 4 angielskie etykiety poziomów DRD w raporcie, spis treści buduje się dopiero w Wordzie. Dane: ocena testowa z lokalnych seedów, nie z stagingu właściciela.",
           "data": "06.09 09:40"
         },
         {
@@ -209,8 +209,8 @@
           "tresc": "Trzymam w ręku jeden dokument i jedną prezentację z szablonu na danych DBR77 i nie wstydzę się ich",
           "kto": "właściciel",
           "artefakt": "pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "tak",
+          "dowod": "06.09: evidence/dokument-plik-20260906/ (DOCX, PPTX, PDF); słowo właściciela: „3,5 w skali do 6, ale na MVP wystarcza”"
         },
         {
           "nr": "S1.5",
