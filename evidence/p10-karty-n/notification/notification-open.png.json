@@ -1,0 +1,32 @@
+{
+ "url": "http://127.0.0.1:4178/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=Audyt: gotowość do deploymentu",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nSkrzynka\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nNotification\nAudyt: gotowość do deploymentu · System · DBR77\nPrzeczytane\nZapisano\nOtwórz dokument\nEdycja\nPodgląd\nAnalizuj z AI\nCo się dzieje\nOczekiwana akcja\nCo się dzieje\nOPIS\nDLACZEGO TO WAŻNE\nCO JEST BLOKOWANE\nAKCJE\nZapytaj Teresę o to powiadomienie\nOznacz przeczytane\nM\nOdłóż\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\t\nPrzeczytane\n\nPriorytet\t\nInformacja\n\nŹródło\t\nUżytkownik\n\nTyp powiadomienia\t\nZadanie zablokowane\n\nKategoria\tZadania\nData\t16 godz. temu\nPOWIĄZANIA\n1\nŹRÓDŁA I ZAŁOŻENIA\nREZULTATY\nKOMENTARZE\n0\nHISTORIA\n2",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 1000
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T11:59:55.085Z"
+}

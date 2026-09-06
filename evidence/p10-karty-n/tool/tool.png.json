@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:4178/tools",
+ "tytul": "Consultify — Transformation AI Consulting Platform",
+ "kliki": [],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 0
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T12:01:57.176Z"
+}

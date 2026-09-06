@@ -1,0 +1,33 @@
+{
+ "url": "http://127.0.0.1:4178/my-work",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "text=Decyzje",
+  "text=DBR77: Czy włączamy publiczne linki do raportów?",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": true,
+ "wysokosc": 1000,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nDecyzje\nDane\nModel\n1\n14\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejf klienta\nLista\nDBR77: Czy włączamy publiczne linki do raportów?\nŁadowanie…",
+ "dom": {
+  "body": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 0,
+     "y": 0,
+     "width": 1440,
+     "height": 1000
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T12:01:10.678Z"
+}
