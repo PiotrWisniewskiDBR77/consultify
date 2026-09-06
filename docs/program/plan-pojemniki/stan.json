@@ -49,12 +49,12 @@
           "nazwa": "P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)",
           "wykonawca": "Opus",
           "zalezy_od": "1.3",
-          "stan": "w_toku",
+          "stan": "do_odbioru",
           "galaz": "mvp/p7k-b-odchylenie",
-          "sha": "",
-          "dowod": "worktree /private/tmp/wt-p7k-b (Opus, serwer 4103 / vite 3105); cel: e2e rezultat poza limitem → czerwony wiersz → Skrzynka → karta → zadanie (S1.3)",
-          "uwagi": "Obejmuje też dokończenie K2 (sekcja „Do akceptacji” w Skrzynce) i naprawę testu Codexa zależnego od rg.",
-          "data": "06.09 12:50"
+          "sha": "0bfeed97bb",
+          "dowod": "scalone na staging; e2e 2/2 na realnym mierniku (poza limitem → czerwony wiersz → Skrzynka → karta z nazwiskiem → zadanie → zamknięcie; w limicie → nic); PG 3/3 z 3 mutacjami; zrzuty evidence/p7k-b/; CTO obejrzał Skrzynkę i kartę",
+          "uwagi": "Czeka na słowo właściciela na żywo (karta 6). Po drodze 3 defekty zastane naprawione (401 kart, daty, pusta odpowiedź wywracała Skrzynkę).",
+          "data": "06.09 14:40"
         },
         {
           "nr": "1.5",
@@ -201,8 +201,8 @@
           "tresc": "Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby",
           "kto": "właściciel + Playwright",
           "artefakt": "nagranie/zrzuty przepływu + bledyKonsoli=0",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "06.09: Playwright 2/2 na lokalnym stanowisku (0bfeed97bb), zrzuty evidence/p7k-b/ (L2 czerwony wiersz, Skrzynka, karta); czeka: właściciel widzi na żywo na stagingu (karta 6)"
         },
         {
           "nr": "S1.4",
