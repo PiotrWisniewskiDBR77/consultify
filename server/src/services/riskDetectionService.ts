@@ -85,6 +85,7 @@ interface InitiativeRow {
   sla_deadline: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  on_hold: boolean | null;
   progress: number | null;
   owner_business_id: string | null;
   owner_execution_id: string | null;
@@ -133,13 +134,18 @@ export async function detectRiskSignals(
     const initiativeSelect = (column: string) =>
       initiativeColumns.has(column) ? column : `NULL as ${column}`;
 
+    // DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED; ARCHIVED is a flag.
+    const archivedFilter = initiativeColumns.has('archived')
+      ? `AND NOT COALESCE(archived, FALSE)`
+      : '';
     let initQuery = `
       SELECT id, name, status, ${initiativeSelect('priority')}, ${initiativeSelect('planned_end_date')}, ${initiativeSelect('planned_start_date')},
-             ${initiativeSelect('start_date')}, ${initiativeSelect('sla_deadline')}, ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('progress')},
+             ${initiativeSelect('start_date')}, ${initiativeSelect('sla_deadline')}, ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('on_hold')}, ${initiativeSelect('progress')},
              ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}
       FROM initiatives
       WHERE organization_id = ?
-        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')
+        AND status NOT IN ('CLOSED', 'REJECTED')
+        ${archivedFilter}
     `;
     const initParams: unknown[] = [organizationId];
     if (projectId) {
@@ -152,7 +158,7 @@ export async function detectRiskSignals(
     initiatives.forEach((i) => initMap.set(i.id, i));
 
     for (const init of initiatives) {
-      if (init.status === 'DONE' || init.status === 'CANCELLED') continue;
+      if (init.status === 'CLOSED' || init.status === 'REJECTED') continue; // DEC-424 (P12-int-c)
 
       const endDate = init.planned_end_date || init.sla_deadline;
       if (endDate && new Date(endDate) < now) {
@@ -180,7 +186,7 @@ export async function detectRiskSignals(
     }
 
     for (const init of initiatives) {
-      if (init.status !== 'BLOCKED' || !init.blocked_at) continue;
+      if (!init.on_hold || !init.blocked_at) continue; // DEC-424 (P12-int-c): BLOCKED -> on_hold flag
 
       const blockedDays = Math.floor(
         (now.getTime() - new Date(init.blocked_at).getTime()) / (1000 * 60 * 60 * 24)
@@ -204,7 +210,7 @@ export async function detectRiskSignals(
     }
 
     for (const init of initiatives) {
-      if (init.status === 'DONE' || init.status === 'CANCELLED') continue;
+      if (init.status === 'CLOSED' || init.status === 'REJECTED') continue; // DEC-424 (P12-int-c)
       if (!init.sla_deadline) continue;
 
       const daysUntilSla = Math.floor(

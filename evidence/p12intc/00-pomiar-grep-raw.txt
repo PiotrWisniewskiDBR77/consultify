@@ -1,0 +1,266 @@
+ugrep: warning: server/src/services/initiativeTransitionService.ts: No such file or directory
+server/src/services/aiActionExecutor.ts:47:  EXECUTING: 'EXECUTING',
+server/src/services/aiActionExecutor.ts:886:    await dbRun(`UPDATE ai_actions SET status = 'EXECUTING' WHERE id = ? AND status = 'APPROVED'`, [
+server/src/services/aiContextBuilder.ts:813:    let taskSql = `SELECT id, title, status, due_date FROM tasks WHERE assignee_id = ? AND status NOT IN ('done', 'DONE')`;
+server/src/services/aiContextBuilder.ts:822:    let initiativeSql = `SELECT id, name, status FROM initiatives WHERE owner_business_id = ? AND status NOT IN ('COMPLETED', 'CANCELLED')`;
+server/src/services/aiContextBuilder.ts:841:                   WHERE assignee_id = ? AND status IN ('blocked', 'BLOCKED')`;
+server/src/services/aiContextBuilder.ts:1434:           WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
+server/src/services/aiContextBuilder.ts:1559:             SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
+server/src/services/aiOperatorService.ts:264:             SUM(CASE WHEN status IN ('ACTIVE', 'IN_PROGRESS', 'AT_RISK', 'BLOCKED', 'PLANNING') THEN 1 ELSE 0 END) as active_count
+server/src/services/aiOperatorService.ts:1012:           SUM(CASE WHEN status IN ('AT_RISK', 'BLOCKED') THEN 1 ELSE 0 END) as at_risk_count
+server/src/services/aiRiskChangeControl.ts:189:                AND t.status != 'DONE'
+server/src/services/aiRiskChangeControl.ts:223:                AND status IN ('EXECUTING', 'APPROVED')
+server/src/services/aiRiskChangeControl.ts:262:                AND t.status != 'DONE'
+server/src/services/aiRiskChangeControl.ts:297:                AND status = 'BLOCKED'
+server/src/services/aiRiskChangeControl.ts:327:                AND ti.status IN ('EXECUTING', 'APPROVED')
+server/src/services/aiRiskChangeControl.ts:400:                AND status IN ('EXECUTING', 'APPROVED')
+server/src/services/aiRunLedgerService.ts:73:    case 'EXECUTING':
+server/src/services/artifactApprovalService.ts:51:  DONE: 'DONE',
+server/src/services/artifactApprovalService.ts:340:    `UPDATE approval_assignments SET status = 'DONE', completed_at = CURRENT_TIMESTAMP WHERE id = ?`,
+server/src/services/assessmentInitiativeGenerationRunService.ts:28:  | 'CANCELLED';
+server/src/services/assessmentPermissionService.ts:69:  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+server/src/services/assessmentPermissionService.ts:838:  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+server/src/services/assessmentPermissionService.ts:872:    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+server/src/services/assessmentPermissionService.ts:1055:     SET status = 'CANCELLED', updated_at = ?
+server/src/services/assessmentReportBuilderLinkService.ts:14:  | 'ARCHIVED';
+server/src/services/budgetingService.ts:231:    `SELECT * FROM budgets WHERE id=? AND organization_id=? AND status<>'ARCHIVED'`,
+server/src/services/budgetingService.ts:239:      `SELECT * FROM budgets WHERE organization_id=? AND status<>'ARCHIVED' ORDER BY created_at DESC`,
+server/src/services/closureDeliveryReceiptService.ts:176: * `currentStatus !== 'DONE' && nextStatus === 'DONE'`, mirroring
+server/src/services/closureDeliveryReceiptService.ts:214:       FROM initiatives i WHERE i.id=? AND i.organization_id=? AND UPPER(i.status)='DONE'
+server/src/services/delayDetectionService.ts:16:  | 'BLOCKED'
+server/src/services/delayDetectionService.ts:110:  if (init.status === 'BLOCKED') {
+server/src/services/delayDetectionService.ts:115:      reason: 'BLOCKED',
+server/src/services/delayDetectionService.ts:126:         AND i.status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')`,
+server/src/services/delayDetectionService.ts:195:        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+server/src/services/delayDetectionService.ts:239:      if (endDate && new Date(endDate) < now && init.status !== 'DONE') {
+server/src/services/delayDetectionService.ts:263:      if (init.planned_end_date && init.status !== 'DONE') {
+server/src/services/delayDetectionService.ts:306:      if (init.sla_deadline && init.status !== 'DONE') {
+server/src/services/delayDetectionService.ts:338:        AND t.status NOT IN ('DONE', 'CANCELLED')
+server/src/services/executionControlReadService.ts:43:        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+server/src/services/executionControlReadService.ts:56:    if (row.planned_end_date && new Date(row.planned_end_date) < now && row.status !== 'DONE') {
+server/src/services/executionControlReadService.ts:70:    if (row.status === 'BLOCKED') {
+server/src/services/executionBudgetService.ts:396:      AND i.status NOT IN ('DRAFT', 'CANCELLED', 'ARCHIVED')
+server/src/services/executiveAggregateService.ts:185:        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'EXECUTING'`,
+server/src/services/executiveAggregateService.ts:190:        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'BLOCKED'`,
+server/src/services/executiveAggregateService.ts:710:        AND COALESCE(m.status, 'PENDING') NOT IN ('COMPLETED', 'DONE')
+server/src/services/executiveAggregateService.ts:735:        AND UPPER(COALESCE(status, '')) NOT IN ('COMPLETED', 'DONE')
+server/src/services/executiveAggregateService.ts:819:        else if (riskByInitiative.get(id) || String(it.status || '').toUpperCase() === 'BLOCKED')
+server/src/services/executionIntelligenceService.ts:64:const SCORABLE_STATUSES = new Set(['EXECUTING', 'BLOCKED']);
+server/src/services/feedbackDigest.ts:124:      WHERE UPPER(COALESCE(NULLIF(f.status, ''), 'NEW')) NOT IN ('RESOLVED', 'ARCHIVED')
+server/src/services/financialAnalysisService.ts:452:    sql += ` AND UPPER(COALESCE(status, '')) <> 'ARCHIVED'
+server/src/services/financialAnalysisService.ts:960:  await dbRun(`UPDATE financial_analyses SET status='REVIEW',updated_at=? WHERE id=?`, [
+server/src/services/inboxService.ts:291:    } else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) {
+server/src/services/initiativeGenerationService.ts:1122:               WHERE organization_id = ? AND id != ? AND status NOT IN ('ARCHIVED','CANCELLED')
+server/src/services/kpiAttributionService.ts:250:  if (['DONE', 'TRACKING'].includes(mapping.status)) score += 1;
+server/src/services/notificationService.ts:177:    if (t.includes('BLOCKED') && data?.blocking_count && Number(data.blocking_count) > 0)
+server/src/services/notificationService.ts:208:      if (t.includes('OVERDUE') || t.includes('ESCALAT') || t.includes('BLOCKED')) return 'urgent';
+server/src/services/notificationService.ts:384:        const urgent = severity === 'CRITICAL' || t.includes('BLOCKED');
+server/src/services/partnerConfigService.ts:446:             SET status = 'CANCELLED', updated_at = datetime('now')
+server/src/services/partnerCommissionService.ts:45:  CANCELLED: 'CANCELLED',
+server/src/services/partnerCommissionService.ts:56:  CANCELLED: 'CANCELLED',
+server/src/services/partnerCommissionService.ts:591:             SET status = 'CANCELLED', notes = COALESCE(notes, '') || '. Cancelled: ' || ?, updated_at = NOW()
+server/src/services/partnerCommissionService.ts:638:                COALESCE(SUM(commission_amount) FILTER (WHERE transaction_date >= ? AND status != 'CANCELLED'), 0) as this_month,
+server/src/services/partnerCommissionService.ts:639:                COUNT(*) FILTER (WHERE transaction_date >= ? AND status != 'CANCELLED') as this_month_count,
+server/src/services/partnerCommissionService.ts:640:                COALESCE(SUM(commission_amount) FILTER (WHERE transaction_date >= ? AND transaction_date <= ? AND status != 'CANCELLED'), 0) as last_month
+server/src/services/partnerReferralService.ts:1549:       WHERE COALESCE(p.status, '') NOT IN ('deleted', 'DELETED', 'completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')
+server/src/services/pmoHealthService.ts:216:                SUM(CASE WHEN due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "overdueCount",
+server/src/services/pmoHealthService.ts:217:                SUM(CASE WHEN due_date >= ? AND due_date <= ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "dueSoonCount",
+server/src/services/pmoHealthService.ts:218:                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as "blockedCount"
+server/src/services/pmoHealthService.ts:271:                SUM(CASE WHEN status IN ('blocked', 'BLOCKED') THEN 1 ELSE 0 END) as "blockedCount"
+server/src/services/pmoHealthService.ts:300:             WHERE project_id = ? AND due_date < ? AND status NOT IN ('done', 'DONE', 'cancelled', 'CANCELLED')
+server/src/services/presentationBenchmarkTrendService.ts:53:export type OverallTrendVerdict = 'TRACKING' | 'AT_RISK' | 'AHEAD_OF_TARGET' | 'INCONCLUSIVE';
+server/src/services/presentationBenchmarkTrendService.ts:295:  if (hasImproving && conclusiveCount > 0) return 'TRACKING';
+server/src/services/presentationGeneratorService.ts:1323:            `SELECT id, name, status, priority, axis, progress, expected_roi FROM initiatives WHERE organization_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED') ORDER BY priority DESC LIMIT 20`,
+server/src/services/presentationGovernanceCardService.ts:56:    result?: 'PASS' | 'WARN' | 'BLOCKED' | 'INCONCLUSIVE';
+server/src/services/presentationGovernanceCardService.ts:123:      : gates.filter((g) => g?.priority === 'P0' && g?.result === 'BLOCKED').length;
+server/src/services/presentationGovernanceCardService.ts:127:      : gates.filter((g) => g?.priority === 'P1' && g?.result === 'BLOCKED').length;
+server/src/services/presentationKnowledgeOutlineService.ts:176:                  status: 'BLOCKED',
+server/src/services/presentationStudioSourceArtifactsService.ts:87:const STATUS_COMPLETED = new Set(['COMPLETED', 'completed', 'DONE', 'done', 'FINAL', 'final']);
+server/src/services/reportCadenceService.ts:131:  // across the codebase ('EXECUTING' vs 'executing').
+server/src/services/reportCadenceService.ts:148:      AND UPPER(i.status) = 'EXECUTING'
+server/src/services/reportImportService.ts:1534:              status: 'PENDING_REVIEW',
+server/src/services/reportImportService.ts:1566:        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_REVIEW', 'pdf_import', ?, ?, 'assessment', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+server/src/services/reportBuilderService.ts:2166:  await logActivity(reportId, 'ARCHIVED', userId);
+server/src/services/riskDetectionService.ts:142:        AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')
+server/src/services/riskDetectionService.ts:155:      if (init.status === 'DONE' || init.status === 'CANCELLED') continue;
+server/src/services/riskDetectionService.ts:183:      if (init.status !== 'BLOCKED' || !init.blocked_at) continue;
+server/src/services/riskDetectionService.ts:207:      if (init.status === 'DONE' || init.status === 'CANCELLED') continue;
+server/src/services/slaService.ts:277:            SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
+server/src/services/sponsorReportService.ts:380:    'ARCHIVED',
+server/src/services/stageGateService.ts:339:      `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('DONE', 'CANCELLED')`,
+server/src/services/stabilizationService.ts:48:             WHERE project_id = ? AND is_critical_path = 1 AND status NOT IN ('COMPLETED', 'CANCELLED')`,
+server/src/services/stabilizationService.ts:83:                SUM(CASE WHEN status IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) as closed
+server/src/services/stabilizationService.ts:231:                SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
+server/src/services/stakeholderCommService.ts:959:          .filter((m: any) => m.status !== 'COMPLETED' && m.status !== 'DONE')
+server/src/services/statusMachine.ts:24:  BLOCKED: 'BLOCKED',
+server/src/services/statusMachine.ts:25:  DONE: 'DONE',
+server/src/services/statusMachine.ts:37:  REVIEW: 'REVIEW',
+server/src/services/statusReportService.ts:287:                SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as completed,
+server/src/services/statusReportService.ts:289:                SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
+server/src/services/statusReportService.ts:302:              AND status = 'DONE'
+server/src/services/statusReportService.ts:464:      status: data.status === 'BLOCKED' ? 'RED' : 'GREEN',
+server/src/services/statusReportService.ts:466:        data.status === 'BLOCKED'
+server/src/services/statusReportService.ts:470:      issues: data.status === 'BLOCKED' ? ['Initiative is blocked'] : [],
+server/src/services/statusReportService.ts:518:    if (data.status === 'BLOCKED') {
+server/src/services/v8ExecutionControlTowerService.ts:59:const INIT_TERMINAL = new Set(['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT']);
+server/src/services/v8ExecutionControlTowerService.ts:60:const TASK_TERMINAL = new Set(['DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED']);
+server/src/services/v8ExecutionControlTowerService.ts:74:  return TASK_TERMINAL.has(u) || u === 'CANCELLED';
+server/src/services/v8ExecutionControlTowerService.ts:162:        : w.reason === 'DEPENDENCY_NOT_DONE' || w.reason === 'BLOCKED'
+server/src/services/v8ExecutionControlTowerService.ts:225:      AND UPPER(COALESCE(status,'')) NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+server/src/services/v8ExecutionControlTowerService.ts:242:      AND UPPER(COALESCE(t.status,'')) NOT IN ('DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED')
+server/src/services/v8ExecutionControlTowerService.ts:329:      AND pi.status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')
+server/src/services/v8ExecutionControlTowerService.ts:505:  const statusBlockedInits = initiatives.filter((i) => normStatus(i.status) === 'BLOCKED');
+server/src/services/v8ExecutionControlTowerService.ts:551:    if (normStatus(task.status) === 'BLOCKED' || task.blocked_reason) {
+server/src/services/valuationService.ts:16:export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED' | 'ARCHIVED';
+server/src/services/valuationService.ts:115:  if (s === 'REVIEW') return 'REVIEW';
+server/src/services/valuationService.ts:117:  if (s === 'ARCHIVED') return 'ARCHIVED';
+server/src/services/valuationService.ts:121:function normalizeAnalysisStatus(raw: any): 'DRAFT' | 'REVIEW' | 'APPROVED' {
+server/src/services/valuationService.ts:126:  if (s === 'REVIEW' || s === 'IN_PROGRESS') return 'REVIEW';
+server/src/services/valuationService.ts:308:     FROM valuations WHERE organization_id = ? AND status <> 'ARCHIVED' ORDER BY updated_at DESC`,
+server/src/services/valuationService.ts:326:  const row = await dbGet<any>(`SELECT * FROM valuations WHERE id = ? AND organization_id = ? AND status <> 'ARCHIVED'`, [
+server/src/services/taskAssignmentService.ts:43:  BLOCKED: 'BLOCKED',
+server/src/services/taskAssignmentService.ts:443:         AND status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
+server/src/services/taskAssignmentService.ts:499:        AND t.status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
+server/src/services/taskAssignmentService.ts:534:         AND t.status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
+server/src/services/taskAssignmentService.ts:610:        AND t.status NOT IN ('DONE', 'COMPLETED', 'CANCELLED')
+server/src/services/triggerEvaluationService.ts:153:         AND status NOT IN ('completed', 'cancelled', 'COMPLETED', 'CANCELLED')
+server/src/services/workqueueService.ts:27:  DONE: 'DONE',
+server/src/services/workqueueService.ts:149:                 SET status = 'DONE', completed_at = CURRENT_TIMESTAMP
+server/src/controllers/AssessmentController.ts:39:  | 'ARCHIVED';
+server/src/controllers/AssessmentController.ts:40:type SimplifiedStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
+server/src/controllers/AssessmentController.ts:83:  if (s === 'IN_REVIEW' || s === 'AWAITING_APPROVAL') return 'REVIEW';
+server/src/controllers/AssessmentController.ts:93:  if (simplified === 'REVIEW') {
+server/src/controllers/AssessmentController.ts:961:      res.json({ id: assessmentId, status: 'REVIEW', backendStatus: 'IN_REVIEW' });
+server/src/controllers/AssessmentController.ts:993:      if (normalizeStatus(assessment.status) !== 'REVIEW') {
+server/src/controllers/AssessmentController.ts:1072:        status: 'REVIEW',
+server/src/controllers/ExecutionController.ts:34:// Zastąpiło ['EXECUTING','BLOCKED','DONE','CANCELLED','ARCHIVED'] — po migracji
+server/src/controllers/ExecutionController.ts:177:        (t: any) => t.status !== 'BLOCKED' && (!t.due_date || new Date(t.due_date).getTime() > now)
+server/src/controllers/ExecutionController.ts:184:        return daysUntilDue > 0 && daysUntilDue <= 3 && t.status !== 'DONE';
+server/src/controllers/ExecutionController.ts:186:      const blockedTasks = tasks.filter((t: any) => t.status === 'BLOCKED').length;
+server/src/controllers/ExecutionController.ts:247:          AND t.status = 'BLOCKED'
+server/src/controllers/ExecutionController.ts:319:      // klienta normalizujemy przez SSOT, żeby stary kod ('DONE') też trafiał.
+server/src/controllers/ExecutionController.ts:353:          WHERE initiative_id = ? AND organization_id = ? AND status = 'BLOCKED'
+server/src/controllers/ExecutionController.ts:468:      const completedTasks = tasks.filter((t: any) => t.status === 'DONE').length;
+server/src/controllers/ExecutionController.ts:494:          (t) => t.initiative_id === initiativeId && String(t.status).toUpperCase() === 'BLOCKED'
+server/src/controllers/ExecutionController.ts:498:          if (String(t.status).toUpperCase() === 'DONE') return false;
+server/src/controllers/ExecutionController.ts:539:              whyRed.tasks.push({ id: t.id, title: t.title || t.id, status: 'BLOCKED' })
+server/src/controllers/ExecutionController.ts:980:          AND t.status NOT IN ('DONE', 'CANCELLED')
+server/src/services/wave9OutcomeRuntimeService.ts:10:export type Wave9GateDecision = 'PASS' | 'PASS_WITH_LIMITATIONS' | 'BLOCKED' | 'ROLLBACK';
+server/src/services/wave9OutcomeRuntimeService.ts:289:    latestGate: gateBlocked ? 'BLOCKED' : runs.length > 0 ? 'PASS' : 'BLOCKED',
+server/src/services/wave9OutcomeRuntimeService.ts:1238:    blockers.length > 0 ? 'BLOCKED' : input.openP1 > 0 ? 'PASS_WITH_LIMITATIONS' : 'PASS';
+server/src/controllers/InitiativeController.ts:2165:   *     -> status='PROMOTED' (canonical). PMO alone can no longer call this
+server/src/controllers/InitiativeController.ts:2210:        // Stare 'PROMOTED' normalizowało się do PENDING_APPROVAL, więc silnik
+server/src/controllers/InitiativeController.ts:2277:   *     status='EXECUTING', no role check, no decision check, no audit row.
+server/src/controllers/InitiativeController.ts:2420:   * `expectedCurrentStatus: 'BLOCKED'` is passed explicitly because EXECUTING
+server/src/controllers/InitiativeController.ts:2444:   *     'EXECUTING' (was lowercase 'executing'). execution_started_at is
+server/src/controllers/InitiativeController.ts:2763:  // goes straight to 'ARCHIVED' via queryRun below. Out of scope for EXE-08
+server/src/controllers/InitiativeController.ts:2874:      // (dawne 'CANCELLED' zmapowało się na REJECTED; literał był martwy,
+server/src/controllers/InitiativeController.ts:2958:        if (status === 'DONE') {
+server/src/controllers/InitiativeController.ts:2959:          statusSet.add('DONE');
+server/src/controllers/InitiativeController.ts:2965:          statusSet.add('DONE');
+server/src/controllers/InitiativeController.ts:3003:        status: (i.status as string)?.toUpperCase() === 'COMPLETED' ? 'DONE' : i.status,
+server/src/controllers/InitiativeController.ts:5890:      if (['PLANNING', 'APPROVED'].includes(currentStatus)) {
+server/src/controllers/InitiativeController.ts:5935:      if (currentStatus === 'DONE') {
+server/src/controllers/DecisionController.ts:350: * UNCONDITIONAL raw `UPDATE initiatives SET status = ... 'EXECUTING' ...`,
+server/src/controllers/DecisionController.ts:401:  // Stary warunek `status === 'BLOCKED'` po migracji 20262103_p12 nie trafiał w
+server/src/controllers/TaskController.ts:49:  BLOCKED: 'BLOCKED',
+server/src/controllers/TaskController.ts:852:            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+server/src/controllers/TaskController.ts:869:            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+server/src/controllers/TaskController.ts:886:            SUM(CASE WHEN UPPER(COALESCE(t.status, '')) = 'DONE' THEN 1 ELSE 0 END) as done_count,
+server/src/controllers/ToolController.ts:1190:        readyForApproval: passed && normalizeStatus(session.status) === 'REVIEW',
+server/src/controllers/ToolController.ts:1334:        IN_PROGRESS: ['DRAFT', 'REVIEW', 'FINALIZED', 'FAILED'],
+server/src/controllers/ToolController.ts:1640:        `UPDATE tool_sessions SET status = 'REVIEW', review_requested_at = ?, updated_at = ? WHERE id = ?`,
+server/src/controllers/ToolController.ts:1648:      res.json({ id: toolId, status: 'REVIEW' });
+server/src/controllers/ToolController.ts:1677:      if (normalizeStatus(session.status) !== 'REVIEW') {
+server/src/controllers/ToolController.ts:1922:      if (normalizeStatus(session.status) !== 'REVIEW') {
+server/src/routes/__tests__/day142.initiative-kpi-survival.pg.test.ts:50:       VALUES ($1,$2,$3,'EXECUTING',$4,$4,$4,'2026-01-01','2026-12-31')`,
+server/src/routes/__tests__/day142.initiative-kpi-survival.pg.test.ts:119:      .send({ status: 'DONE', reason: 'Day 142 canonical closure survival measurement' });
+server/src/routes/__tests__/day142.initiative-kpi-survival.pg.test.ts:122:    expect(response.body.status).toBe('DONE');
+server/src/routes/__tests__/day142.initiative-kpi-survival.pg.test.ts:136:      initiative_status: 'DONE',
+server/src/routes/__tests__/cross-org-idor.test.ts:1664:    body: { status: 'DONE' },
+server/src/routes/__tests__/cross-org-idor.test.ts:1887:        .send({ status: 'DONE' });
+server/src/routes/__tests__/day144.kpi-physical-delete-survival.pg.test.ts:37:       VALUES ($1,$2,$3,'EXECUTING',$4,$4,$4,'2026-01-01','2026-12-31')`,
+server/src/routes/__tests__/day158.results-source-unchanged.pg.test.ts:50:       VALUES ($1, $2, 'Day 158 initiative', 'EXECUTING', $3, $3, $3,
+server/src/routes/__tests__/day172.initiative-status.pg.test.ts:96:       VALUES ($1,$2,$3,'DRAFT',$4,$4,$4),($5,$2,$6,'PLANNING',$4,$4,$4)`,
+server/src/routes/__tests__/day172.initiative-status.pg.test.ts:134:      .send({ status: 'PENDING_REVIEW', reason: 'Day 172 self-service proof' });
+server/src/routes/__tests__/day172.initiative-status.pg.test.ts:137:      targetStatus: 'PENDING_REVIEW',
+server/src/routes/__tests__/day172.initiative-status.pg.test.ts:147:    expect(after.initiative).toEqual([{ id: selfServiceInitiativeId, status: 'PENDING_REVIEW' }]);
+server/src/routes/__tests__/day172.initiative-status.pg.test.ts:170:    expect(response.body).toMatchObject({ gate: 'APPROVE', from: 'PLANNING', to: 'APPROVED' });
+server/src/routes/__tests__/m11-tools-cross-org-idor.test.ts:214:      .send({ answers: {}, completionPercent: 100, confidenceAvg: 5, status: 'REVIEW' });
+server/src/routes/admin-data.routes.ts:696:      whereClause += ` AND se.status != 'COMPLETED' AND se.status != 'CANCELLED'`;
+server/src/routes/admin-data.routes.ts:788:            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'SCHEDULED', ?, ?, ?, datetime('now'))
+server/src/routes/admin-data.routes.ts:819:      status: 'SCHEDULED',
+server/src/routes/__tests__/workbook-commands.routes.test.ts:103:    status: 'DONE',
+server/src/routes/ai.routes.ts:5148:                      status: 'BLOCKED',
+server/src/routes/assessment-workflow-v2.routes.ts:732:      | 'CANCELLED'
+server/src/routes/assessment-workflow-v2.routes.ts:850:         SET status = 'CANCELLED',
+server/src/routes/assessment/assessment-workflow.routes.ts:44:  | 'ARCHIVED';
+server/src/routes/assessment/assessment-workflow.routes.ts:1890:      | 'CANCELLED'
+server/src/routes/assessment-reports.routes.ts:77:  | 'ARCHIVED';
+server/src/routes/caseWorkspace/__tests__/contract/errorAndAuthz.contract.pg.test.ts:148:        .send({ targetStatus: 'CANCELLED', reason: 'hostile' });
+server/src/routes/caseWorkspace/actionProposals.routes.ts:44:  'PENDING_REVIEW',
+server/src/routes/caseWorkspace/actionProposals.routes.ts:46:  'EXECUTING',
+server/src/routes/caseWorkspace/cases.routes.ts:40:const caseStatusEnum = z.enum(['DRAFT', 'ACTIVE', 'BLOCKED', 'CLOSED', 'FAILED', 'CANCELLED']);
+server/src/routes/caseWorkspace/cases.routes.ts:157:    if (body.targetStatus === 'CLOSED' || body.targetStatus === 'CANCELLED') {
+server/src/routes/caseWorkspace/waitSubscriptions.routes.ts:34:const waitStatusEnum = z.enum(['ACTIVE', 'SATISFIED', 'EXPIRED', 'CANCELLED']);
+server/src/routes/caseWorkspace/runLifecycle.routes.ts:212:    'PENDING_REVIEW',
+server/src/routes/dataExport.routes.ts:291:      SET status = 'CANCELLED'
+server/src/routes/dataExport.routes.ts:292:      WHERE id = ? AND user_id = ? AND request_type = 'DELETE' AND status = 'SCHEDULED'
+server/src/routes/dataExport.routes.ts:306:        after: { status: 'CANCELLED' },
+server/src/routes/economics.routes.ts:154:  if (['DRAFT', 'REVIEW', 'APPROVED'].includes(upper)) {
+server/src/routes/economics.routes.ts:157:  if (upper === 'IN_PROGRESS') return 'REVIEW';
+server/src/routes/economics.routes.ts:164:  if (upper === 'REVIEW') return 'in_progress';
+server/src/routes/economics.routes.ts:665:        `SELECT COUNT(*) as count FROM digitization_analyses WHERE organization_id = ? AND archived_at IS NULL AND UPPER(status) = 'REVIEW'`,
+server/src/routes/executionControl.routes.ts:198:// `{field:'status', value:'EXECUTING'}` was a legal request that did a raw
+server/src/routes/executionAnalytics.routes.ts:262:        AND UPPER(COALESCE(status, '')) = 'BLOCKED'
+server/src/routes/feedback.routes.ts:168:type TicketStatus = 'NEW' | 'PENDING' | 'IN_PROGRESS' | 'REVIEWED' | 'RESOLVED' | 'ARCHIVED';
+server/src/routes/feedback.routes.ts:1721:    const validStatuses = ['NEW', 'PENDING', 'IN_PROGRESS', 'REVIEWED', 'RESOLVED', 'ARCHIVED'];
+server/src/routes/feedback.routes.ts:2512:      .filter(([k]) => k !== 'RESOLVED' && k !== 'ARCHIVED')
+server/src/routes/initiatives-additive.routes.ts:409:            AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+server/src/routes/initiatives-additive.routes.ts:429:              AND UPPER(COALESCE(status, '')) NOT IN ('CANCELLED', 'ARCHIVED')
+server/src/routes/multi-framework-assessment.routes.ts:22:// CHECK (status IN ('DRAFT','IN_PROGRESS','COMPLETED','ARCHIVED')) — uppercase only.
+server/src/routes/my-work.routes.ts:496:  if (t.includes('REVIEW') || t.includes('APPROVAL')) return 'review_request';
+server/src/routes/my-work.routes.ts:9002:             SUM(CASE WHEN UPPER(status) IN ('EXECUTING','ACTIVE','IN_PROGRESS') THEN 1 ELSE 0 END) as executing,
+server/src/routes/my-work.routes.ts:9003:             SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
+server/src/routes/my-work.routes.ts:9088:           SUM(CASE WHEN UPPER(status) = 'EXECUTING' THEN 1 ELSE 0 END) as executing,
+server/src/routes/my-work.routes.ts:9089:           SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
+server/src/routes/pmo/initiatives.routes.ts:2702:      taskDone = taskRows.filter((t: any) => ['done', 'DONE'].includes(t.status)).length;
+server/src/routes/pmo/initiatives.routes.ts:3796:  targetStatus: z.enum(['PROMOTED', 'PLANNING', 'SCHEDULED', 'EXECUTING', 'DONE']),
+server/src/routes/organization/partner-code.routes.ts:278:             SET status = 'CANCELLED', updated_at = datetime('now')
+server/src/routes/pmo/__tests__/day31.canonical-writer-contract.pg.test.ts:641:        { executionCaseId: caseId, status: 'BLOCKED', dueAt: '2026-08-27T12:00:00.000Z' },
+server/src/routes/pmo/workstreams.routes.ts:42:  status: z.enum(['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED']).optional(),
+server/src/routes/pmo/workstreams.routes.ts:122:          SUM(CASE WHEN i.status IN ('DONE','COMPLETED') THEN 1 ELSE 0 END) as completed_count
+server/src/routes/pmo/workstreams.routes.ts:379:      ['DONE', 'COMPLETED'].includes(String(i.status))
+server/src/routes/reports.routes.ts:55:            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED')) as "activeProjects",
+server/src/routes/reports.routes.ts:56:            (SELECT COUNT(*) FROM projects WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as "completedProjects",
+server/src/routes/reports.routes.ts:59:            (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) as "completedTasks",
+server/src/routes/reports.routes.ts:141:                  (SELECT COUNT(*) FROM tasks WHERE organization_id = ? AND COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE')) * 100.0
+server/src/routes/reports.routes.ts:204:            SUM(CASE WHEN COALESCE(status, '') IN ('completed', 'COMPLETED', 'done', 'DONE') THEN 1 ELSE 0 END) as "tasksCompleted",
+server/src/routes/reports.routes.ts:205:            SUM(CASE WHEN COALESCE(status, '') NOT IN ('completed', 'COMPLETED', 'done', 'DONE', 'cancelled', 'CANCELLED') THEN 1 ELSE 0 END) as "openTasks"
+server/src/routes/rollout.routes.ts:562:    const isDone = b.status && b.status.toUpperCase() === 'DONE';
+server/src/routes/resultsVnext/kpiRecoveryChildren.routes.ts:55:  status: z.enum(['OPEN', 'DONE', 'CANCELLED']).optional(),
+server/src/routes/resultsVnext/kpiRecoveryChildren.routes.ts:69:  status: z.enum(['MET', 'MISSED', 'CANCELLED']),
+server/src/routes/v8/__tests__/assessment.routes.test.ts:25:    if (value === 'IN_REVIEW' || value === 'AWAITING_APPROVAL') return 'REVIEW';
+server/src/routes/v8/__tests__/assessment.routes.test.ts:177:    expect(res.body.data?.items?.[0]?.status).toBe('REVIEW');
+server/src/routes/v8/__tests__/execution-realization.contract.test.ts:120:          status: init?.status ?? 'EXECUTING',
+server/src/routes/v8/__tests__/execution-realization.contract.test.ts:232:      status: 'EXECUTING',
+server/src/routes/v8/__tests__/execution-realization.contract.test.ts:280:      status: 'EXECUTING',
+server/src/routes/v8/__tests__/execution-realization.contract.test.ts:302:      status: 'EXECUTING',
+server/src/routes/v8/__tests__/execution-realization.contract.test.ts:323:      status: 'EXECUTING',
+server/src/routes/v8/__tests__/financeValue.membershipGate.pg.test.ts:308:      `INSERT INTO initiatives(id, organization_id, name, status) VALUES ($1,$2,$3,'EXECUTING')`,
+server/src/routes/v8/__tests__/finance.routes.test.ts:683:      status: 'ARCHIVED',
+server/src/routes/v8/__tests__/finance.routes.test.ts:691:      status: 'ARCHIVED',
+server/src/routes/v8/__tests__/finance.routes.test.ts:2334:    expect(response.body.data).toMatchObject({ status: 'ARCHIVED', version: 2, replay: false });
+server/src/routes/v8/__tests__/m07-golden-flows.pg.test.ts:58:      [INIT_A, 'Automatyzacja linii pakowania', ORG_A, 'EXECUTING']
+server/src/routes/v8/__tests__/planning.routes.test.ts:160:      currentStatus: 'PLANNING',
+server/src/routes/v8/__tests__/planning.routes.test.ts:284:      { id: 'hist-1', fromStatus: 'DRAFT', toStatus: 'REVIEW' },
+server/src/routes/v8/__tests__/planning.routes.test.ts:322:      currentStatus: 'PLANNING',
+server/src/routes/v8/__tests__/planning.routes.test.ts:335:    expect(res.body.data?.readiness?.currentStatus).toBe('PLANNING');
+server/src/routes/v8/__tests__/planning.handoff.p11.test.ts:116:          status: 'PLANNING',
+server/src/routes/v8/__tests__/results.routes.test.ts:1003:        status: 'DONE',
+server/src/routes/v8/__tests__/results.routes.test.ts:1016:      [null, null, null, 'DONE', 'action-1', 'case-1', ORG]
+server/src/routes/v8/execution-control.routes.ts:85:// `{field:'status', value:'EXECUTING'}` was a legal request that did a raw
+server/src/routes/v8/finance.routes.ts:3898:      data: { success: true, analysisId, status: 'ARCHIVED' },
+server/src/routes/v8/finance.routes.ts:4271:       WHERE organization_id = ? AND source_statement_pack_id = ? AND COALESCE(status, '') <> 'ARCHIVED'
+server/src/routes/wave9-outcomes.routes.ts:262:    return res.status(result.decision === 'BLOCKED' ? 409 : 201).json({ success: true, ...result });
+server/src/routes/v8/results.routes.ts:2035:    const validStatuses = ['OPEN', 'DONE', 'CANCELLED'];

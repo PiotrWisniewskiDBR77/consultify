@@ -1938,22 +1938,29 @@ export const DECISION_BLOCK_SYSTEM_ACTOR_ID = 'system:decision-driven-block';
 
 /**
  * NARROW canonical entry point for exactly ONE mutation: "a Decision impact
- * marks an Initiative as a blocker" -> the Initiative moves to BLOCKED.
+ * marks an Initiative as a blocker" -> the Initiative's `on_hold` flag flips
+ * true (DEC-424/P12: blocking is a FLAG on IN_EXECUTION, never a separate
+ * status — see `INITIATIVE_FLAG_RULES.HOLD` in `constants/initiativeStatuses.ts`
+ * and the SSOT doc's "on_hold ustawia i zdejmuje ta sama ścieżka co dziś
+ * BLOCK/UNBLOCK").
  *
- * WHY NOT `executeInitiativeTransition`'s general BLOCK gate: that gate only
- * permits EXECUTING->BLOCKED (`GATE_TRANSITIONS[GateType.BLOCK]`), matching
- * ordinary human blocking via `InitiativeController.blockInitiative`
- * (requires `GATE_PERMISSIONS[GateType.BLOCK]` =
- * `[Role.INITIATIVE_OWNER, Role.PMO]`). A Decision-driven block legitimately
- * needs to block an initiative from ANY non-terminal, non-DONE status (a
- * decision can be created against an initiative in DRAFT, REVIEW, PLANNING,
- * SCHEDULED, ... not just EXECUTING) — widening the general BLOCK gate's
- * preconditions to accept every one of those source statuses would make
- * ordinary HUMAN block permissions correspondingly more permissive for
- * everyone, not just this one automated cascade. That is out of scope here:
+ * WHY NOT `executeInitiativeTransition`'s general `flagOperation: 'HOLD'`
+ * path: that path enforces normal human RBAC
+ * (`GATE_PERMISSIONS`/`INITIATIVE_FLAG_RULES.HOLD.roles` =
+ * `[Role.INITIATIVE_OWNER, Role.PMO]`). This is a SYSTEM-actor cascade
+ * (`DECISION_BLOCK_SYSTEM_ACTOR_ID`) triggered by a Decision's own
+ * `is_blocker` impact, not a human clicking "Block" — widening the human
+ * gate's RBAC to also accept a decision-driven system caller would make
+ * ordinary HUMAN block permissions correspondingly different for everyone,
+ * not just this one automated cascade. That is out of scope here:
  * `GATE_PERMISSIONS`, `VALID_TRANSITIONS`/`GATE_TRANSITIONS[GateType.BLOCK]`,
  * and `InitiativeController.blockInitiative` are all untouched by this
- * function.
+ * function. Like the human path, this ONLY applies at `IN_EXECUTION` — a
+ * decision created against an initiative that hasn't started execution yet
+ * (PROPOSED/DRAFT/PENDING_APPROVAL/APPROVED) is still recorded, it just does
+ * not flip this execution-phase flag (see `INITIATIVE_FLAG_INVALID_STATE`
+ * below; `DecisionController.ts`'s caller treats that refusal as an
+ * expected, non-fatal outcome — the decision itself is not rolled back).
  *
  * Instead, this is ONE MORE narrowly-scoped canonical entry point living in
  * the same canonical file as `executeInitiativeTransition` — not a second,
@@ -2075,6 +2082,29 @@ export async function applyDecisionBlockTransitionOnClient(
       previousStatus: currentStatus,
       alreadyBlocked: true,
       correlationId: null,
+    };
+  }
+
+  // DEC-424 (P12-int-c, znalezisko 6): INITIATIVE_FLAG_RULES.HOLD only ever
+  // applies at IN_EXECUTION (initiativeStatuses.ts's own flagOperation guard
+  // in executeInitiativeTransition enforces exactly this for the human BLOCK
+  // gate — see `allowedState = currentStatus === 'IN_EXECUTION'` above).
+  // `on_hold` never replaces status (§4 SSOT doc: "inicjatywa wstrzymana ma
+  // status IN_EXECUTION i flagę on_hold=true") — a decision blocking an
+  // initiative that hasn't started execution yet (PROPOSED/DRAFT/
+  // PENDING_APPROVAL/APPROVED) has nothing to put "on hold": the decision is
+  // still created and audited (see DecisionController's caller, which treats
+  // this refusal as an expected, non-fatal outcome), it just does not flip
+  // this execution-phase flag on a status where the flag has no meaning.
+  if (currentStatus !== InitiativeStatus.IN_EXECUTION) {
+    return {
+      ok: false,
+      statusCode: 400,
+      body: {
+        error: `Cannot put an initiative on hold from ${currentStatus} (only ${InitiativeStatus.IN_EXECUTION} supports on_hold)`,
+        rule: 'INITIATIVE_FLAG_INVALID_STATE',
+        from: currentStatus,
+      },
     };
   }
 

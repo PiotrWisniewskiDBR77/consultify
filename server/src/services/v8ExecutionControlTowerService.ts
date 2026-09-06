@@ -56,7 +56,8 @@ export interface ControlTowerQueuesResult {
   counts: Record<ControlTowerQueue, number>;
 }
 
-const INIT_TERMINAL = new Set(['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT']);
+// DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED; ARCHIVED is now a flag, not a status.
+const INIT_TERMINAL = new Set(['CLOSED', 'REJECTED', 'DRAFT']);
 const TASK_TERMINAL = new Set(['DONE', 'CANCELLED', 'COMPLETED', 'VALIDATED']);
 
 function normStatus(s: string | null | undefined): string {
@@ -196,6 +197,7 @@ interface InitRow {
   updated_at: string | null;
   blocked_reason: string | null;
   blocked_at: string | null;
+  on_hold: boolean | null;
   end_date: string | null;
 }
 
@@ -219,10 +221,11 @@ async function loadActiveInitiatives(
   let q = `
     SELECT id, name, status, project_id, planned_end_date, forecast_end_date,
            end_date as sla_deadline, updated_at,
-           NULL as blocked_reason, NULL as blocked_at
+           NULL as blocked_reason, NULL as blocked_at, on_hold
     FROM initiatives
     WHERE organization_id = ?
-      AND UPPER(COALESCE(status,'')) NOT IN ('DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT')
+      -- DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED; ARCHIVED is now a flag.
+      AND UPPER(COALESCE(status,'')) NOT IN ('CLOSED', 'REJECTED', 'DRAFT')
   `;
   const p: unknown[] = [organizationId];
   if (projectId) {
@@ -326,7 +329,7 @@ async function initiativesWithIncompletePred(
     JOIN initiatives ci ON ci.id = id.to_initiative_id
     WHERE id.organization_id = ?
       AND id.to_initiative_id IN (${ph})
-      AND pi.status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')
+      AND pi.status NOT IN ('CLOSED', 'REJECTED')  -- DEC-424 (P12-int-c)
   `;
   const p: unknown[] = [organizationId, ...initiativeIds];
   if (projectId) {
@@ -502,7 +505,8 @@ export async function getExecutionControlTowerQueues(
     }
   }
 
-  const statusBlockedInits = initiatives.filter((i) => normStatus(i.status) === 'BLOCKED');
+  // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
+  const statusBlockedInits = initiatives.filter((i) => Boolean(i.on_hold));
   for (const init of statusBlockedInits) {
     mergeItem(blocked, {
       entityType: 'INITIATIVE',

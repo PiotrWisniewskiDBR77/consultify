@@ -220,7 +220,7 @@ const AIRiskChangeControl = {
       `
                 SELECT * FROM initiatives
                 WHERE project_id = ?
-                AND status IN ('EXECUTING', 'APPROVED')
+                AND status IN ('IN_EXECUTION', 'APPROVED')  -- DEC-424 (P12-int-c): EXECUTING -> IN_EXECUTION
                 AND updated_at < datetime('now', '-14 days')
             `,
       [projectId]
@@ -324,7 +324,7 @@ const AIRiskChangeControl = {
                 JOIN initiatives ti ON id.to_initiative_id = ti.id
                 WHERE ti.project_id = ?
                 AND id.is_satisfied = 0
-                AND ti.status IN ('EXECUTING', 'APPROVED')
+                AND ti.status IN ('IN_EXECUTION', 'APPROVED')  -- DEC-424 (P12-int-c): EXECUTING -> IN_EXECUTION
             `,
       [projectId]
     );
@@ -397,7 +397,7 @@ const AIRiskChangeControl = {
       `
                 SELECT COUNT(*) as count FROM initiatives
                 WHERE project_id = ?
-                AND status IN ('EXECUTING', 'APPROVED')
+                AND status IN ('IN_EXECUTION', 'APPROVED')  -- DEC-424 (P12-int-c): EXECUTING -> IN_EXECUTION
             `,
       [projectId]
     );

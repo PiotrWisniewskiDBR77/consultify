@@ -182,12 +182,14 @@ export class ExecutiveAggregateService {
     const [executing, blocked, overdueTasks, pendingDecisions] = await Promise.all([
       DbPromise.get<{ c: number }>(
         this.db,
-        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'EXECUTING'`,
+        // DEC-424 (P12-int-c): EXECUTING -> IN_EXECUTION.
+        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'IN_EXECUTION'`,
         [organizationId, projectId]
       ).catch(() => ({ c: 0 })),
       DbPromise.get<{ c: number }>(
         this.db,
-        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'BLOCKED'`,
+        // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
+        `SELECT COUNT(*)::int as c FROM initiatives WHERE organization_id = ? AND project_id = ? AND UPPER(status) = 'IN_EXECUTION' AND on_hold`,
         [organizationId, projectId]
       ).catch(() => ({ c: 0 })),
       DbPromise.get<{ c: number }>(
@@ -732,7 +734,8 @@ export class ExecutiveAggregateService {
       FROM initiatives
       WHERE organization_id = ?
         AND project_id = ?
-        AND UPPER(COALESCE(status, '')) NOT IN ('COMPLETED', 'DONE')
+        -- DEC-424 (P12-int-c): 'COMPLETED' never existed for initiatives; DONE/TRACKING -> CLOSED.
+        AND UPPER(COALESCE(status, '')) NOT IN ('CLOSED', 'REJECTED')
         AND (planned_end_date IS NOT NULL OR end_date IS NOT NULL)
       ORDER BY COALESCE(planned_end_date, end_date) ASC NULLS LAST
       LIMIT 6
@@ -793,7 +796,7 @@ export class ExecutiveAggregateService {
 
     const initiatives = await DbPromise.all<any>(
       this.db,
-      `SELECT id, workstream_id, status, progress FROM initiatives WHERE project_id = ? AND organization_id = ?`,
+      `SELECT id, workstream_id, status, on_hold, progress FROM initiatives WHERE project_id = ? AND organization_id = ?`,
       [params.projectId, params.organizationId]
     ).catch(() => []);
 
@@ -816,8 +819,8 @@ export class ExecutiveAggregateService {
       for (const it of items) {
         const id = String(it.id);
         if (delayByInitiative.get(id)) delayed += 1;
-        else if (riskByInitiative.get(id) || String(it.status || '').toUpperCase() === 'BLOCKED')
-          atRisk += 1;
+        // DEC-424 (P12-int-c): BLOCKED -> IN_EXECUTION + flaga on_hold.
+        else if (riskByInitiative.get(id) || Boolean(it.on_hold)) atRisk += 1;
         else onTrack += 1;
       }
 

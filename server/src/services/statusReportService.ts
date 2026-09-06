@@ -272,7 +272,7 @@ export class StatusReportService {
     const initiative = await DbPromise.get<any>(
       this.db,
       `
-            SELECT progress, status, business_value, blocked_reason
+            SELECT progress, status, business_value, blocked_reason, on_hold
             FROM initiatives WHERE id = ?
         `,
       [initiativeId]
@@ -367,6 +367,7 @@ export class StatusReportService {
     return {
       progress: initiative?.progress || 0,
       status: initiative?.status,
+      onHold: Boolean(initiative?.on_hold), // DEC-424 (P12-int-c): BLOCKED -> on_hold flag
       blockedReason: initiative?.blocked_reason,
       tasksTotal: taskStats.total || 0,
       tasksCompleted: taskStats.completed || 0,
@@ -461,13 +462,13 @@ export class StatusReportService {
 
     // Resources section
     sections[SECTION_NAMES.RESOURCES] = {
-      status: data.status === 'BLOCKED' ? 'RED' : 'GREEN',
+      status: data.onHold ? 'RED' : 'GREEN',
       content:
-        data.status === 'BLOCKED'
+        data.onHold
           ? `Initiative blocked: ${data.blockedReason || 'Reason not specified'}`
           : 'Resources allocated as planned',
       highlights: [],
-      issues: data.status === 'BLOCKED' ? ['Initiative is blocked'] : [],
+      issues: data.onHold ? ['Initiative is blocked'] : [],
     };
 
     return sections;
@@ -515,7 +516,7 @@ export class StatusReportService {
     }
 
     // Generate escalations
-    if (data.status === 'BLOCKED') {
+    if (data.onHold) {
       escalations.push({
         type: 'BLOCKER',
         message: `Initiative blocked: ${data.blockedReason || 'Reason not specified'}`,

@@ -336,7 +336,8 @@ async function checkAllInitiativesClosed(projectId: string): Promise<boolean> {
   try {
     const row = await DbPromise.get<{ cnt: number }>(
       db,
-      `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('DONE', 'CANCELLED')`,
+      // DEC-424 (P12-int-c): DONE -> CLOSED, CANCELLED -> REJECTED.
+      `SELECT COUNT(*) as cnt FROM initiatives WHERE project_id = ? AND status NOT IN ('CLOSED', 'REJECTED')`,
       [projectId]
     );
     return row ? row.cnt === 0 : false;

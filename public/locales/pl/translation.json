@@ -9144,6 +9144,13 @@
       "unknown": "Nieznany status"
     },
     "statusDescription": {
+      "PROPOSED": "Zgłoszona propozycja, czeka na przekształcenie w szkic",
+      "DRAFT": "Początkowy szkic, wymaga uzupełnienia przed przesłaniem do zatwierdzenia",
+      "PENDING_APPROVAL": "Oczekuje na decyzję sponsora lub komitetu sterującego",
+      "APPROVED": "Zatwierdzona i gotowa do przekazania do realizacji",
+      "IN_EXECUTION": "Obecnie realizowana; flaga „wstrzymana” oznacza chwilową blokadę",
+      "CLOSED": "Zamknięta — realizacja zakończona lub inicjatywa zarchiwizowana",
+      "REJECTED": "Odrzucona i nie będzie kontynuowana",
       "draft": "Początkowy szkic, wymaga przeglądu",
       "pendingReview": "Oczekuje na przegląd kierownika lub lidera",
       "review": "Przegląd biznesowy i decyzja o kontynuacji",

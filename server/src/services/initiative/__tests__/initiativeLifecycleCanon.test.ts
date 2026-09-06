@@ -39,10 +39,25 @@ describe('initiativeLifecycleCanon (P11)', () => {
     }
   });
 
-  it('normalizes legacy step labels to PMO statuses (read coherence)', () => {
-    expect(normalizeInitiativeDbStatusForRead('STEP3_REVIEW')).toBe('REVIEW');
-    expect(normalizeInitiativeDbStatusForRead('STEP4_PILOT')).toBe('APPROVED');
-    expect(normalizeInitiativeDbStatusForRead('STEP5_FULL')).toBe('EXECUTING');
+  it('normalizes legacy step labels to słownik-7 PMO statuses (read coherence, DEC-424)', () => {
+    // P12-int-c: this function must only ever return one of the 7 SSOT codes
+    // (InitiativeStatus.*) — it used to return the OLD 13-value dictionary's
+    // 'REVIEW'/'EXECUTING' literals, which are not valid InitiativeStatus
+    // values and would silently never match `VALID_TRANSITIONS`/
+    // `isValidTransition` for any caller comparing against the real SSOT.
+    expect(normalizeInitiativeDbStatusForRead('STEP3_REVIEW')).toBe(InitiativeStatus.PENDING_APPROVAL);
+    expect(normalizeInitiativeDbStatusForRead('STEP4_PILOT')).toBe(InitiativeStatus.APPROVED);
+    expect(normalizeInitiativeDbStatusForRead('STEP5_FULL')).toBe(InitiativeStatus.IN_EXECUTION);
+    expect(normalizeInitiativeDbStatusForRead('DONE')).toBe(InitiativeStatus.CLOSED);
+    expect(normalizeInitiativeDbStatusForRead('COMPLETED')).toBe(InitiativeStatus.CLOSED);
+    expect(normalizeInitiativeDbStatusForRead('TRACKING')).toBe(InitiativeStatus.CLOSED);
+    expect(normalizeInitiativeDbStatusForRead('ARCHIVED')).toBe(InitiativeStatus.CLOSED);
+    expect(normalizeInitiativeDbStatusForRead('CANCELLED')).toBe(InitiativeStatus.REJECTED);
+    // Every legacy-mapped result must itself be a real SSOT value — the whole
+    // point of the fix — never a phantom literal from the old dictionary.
+    for (const legacy of ['STEP3_REVIEW', 'STEP4_PILOT', 'STEP5_FULL', 'DONE', 'ARCHIVED', 'CANCELLED']) {
+      expect(Object.values(InitiativeStatus)).toContain(normalizeInitiativeDbStatusForRead(legacy));
+    }
   });
 
   it('flags unknown DB status as schema drift while avoiding silent corruption on read', () => {

@@ -16,6 +16,7 @@ import {
   getGateForTransition,
   InitiativeStatus,
   isScheduledOnward,
+  normalizeInitiativeStatus,
   VALID_TRANSITIONS,
 } from '../constants/initiativeStatuses.js';
 import activityService from '../services/ActivityService.js';
@@ -2948,24 +2949,22 @@ export class InitiativeController {
         return;
       }
 
-      // Parse comma-separated statuses and support DONE/COMPLETED interchangeably
+      // Parse comma-separated statuses. DEC-424 (P12-int-c): wołacze (np.
+      // DiscoveryToolsHub.tsx) wciąż wysyłają zastałe kody (DONE, REVIEW,
+      // PLANNING, SCHEDULED, BLOCKED, CANCELLED…) — normalizuj przez granicę
+      // zgodności SSOT, inaczej `UPPER(i.status) IN (...)` nigdy nie trafia w
+      // zmigrowane wiersze (baza zna wyłącznie 7 wartości docelowych).
       const rawStatuses = statuses
         .split(',')
         .map((s: string) => s.trim().toUpperCase())
         .filter(Boolean);
       const statusSet = new Set<string>();
       rawStatuses.forEach((status) => {
-        if (status === 'DONE') {
-          statusSet.add('DONE');
-          statusSet.add('COMPLETED');
-          return;
-        }
         if (status === 'COMPLETED') {
-          statusSet.add('COMPLETED');
-          statusSet.add('DONE');
+          statusSet.add(InitiativeStatus.CLOSED);
           return;
         }
-        statusSet.add(status);
+        statusSet.add(normalizeInitiativeStatus(status) ?? status);
       });
       const statusList = Array.from(statusSet);
 
@@ -3000,7 +2999,8 @@ export class InitiativeController {
         keyRisks: safeJsonParse(i.key_risks as string, []),
         axis: i.axis,
         priority: i.priority,
-        status: (i.status as string)?.toUpperCase() === 'COMPLETED' ? 'DONE' : i.status,
+        // DEC-424 (P12-int-c): 'COMPLETED' never existed for initiatives; DONE/TRACKING -> CLOSED.
+        status: i.status,
         sourceId: i.source_id,
         sourceType: i.source_type,
         progress: i.progress || 0,
@@ -5887,7 +5887,15 @@ export class InitiativeController {
         );
       }
 
-      if (['PLANNING', 'APPROVED'].includes(currentStatus)) {
+      // DEC-424 (P12-int-c): PLANNING -> PENDING_APPROVAL, APPROVED bez zmian —
+      // literał 'PLANNING' był martwy (nie istnieje w słowniku 7), więc ta
+      // sekcja (scope/risks/tasks) nigdy nie renderowała się dla statusu
+      // Do zatwierdzenia, tylko dla Zatwierdzona.
+      if (
+        [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.APPROVED].includes(
+          currentStatus as any
+        )
+      ) {
         addCheck(
           'scope',
           'Scope defined',
@@ -5932,7 +5940,9 @@ export class InitiativeController {
         }
       }
 
-      if (currentStatus === 'DONE') {
+      // DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED — literał 'DONE' był
+      // martwy, ta sekcja (benefits owner/KPI) nigdy nie renderowała się.
+      if (currentStatus === InitiativeStatus.CLOSED) {
         addCheck(
           'benefits_owner',
           'Business Owner assigned (benefits owner)',

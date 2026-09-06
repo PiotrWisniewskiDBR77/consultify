@@ -45,7 +45,8 @@ const StabilizationService = {
 
     const criticalIncomplete = await DbPromise.get<{ count?: number }>(
       `SELECT COUNT(*) as count FROM initiatives 
-             WHERE project_id = ? AND is_critical_path = 1 AND status NOT IN ('COMPLETED', 'CANCELLED')`,
+             -- DEC-424 (P12-int-c): 'COMPLETED'/'CANCELLED' never valid for initiatives; słownik 7 terminal = CLOSED/REJECTED.
+             WHERE project_id = ? AND is_critical_path = 1 AND status NOT IN ('CLOSED', 'REJECTED')`,
       [projectId]
     );
     const criticalCount = criticalIncomplete?.count || 0;
@@ -80,7 +81,7 @@ const StabilizationService = {
     const initiativeStats = await DbPromise.get<InitiativeStats>(
       `SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN status IN ('COMPLETED', 'CANCELLED') THEN 1 ELSE 0 END) as closed
+                SUM(CASE WHEN status IN ('CLOSED', 'REJECTED') THEN 1 ELSE 0 END) as closed
              FROM initiatives WHERE project_id = ?`,
       [projectId]
     );
@@ -227,8 +228,8 @@ const StabilizationService = {
     const stats = await DbPromise.get<{ total?: number; completed?: number; cancelled?: number }>(
       `SELECT 
                 COUNT(*) as total,
-                SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-                SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
+                SUM(CASE WHEN status = 'CLOSED' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = 'REJECTED' THEN 1 ELSE 0 END) as cancelled
              FROM initiatives WHERE project_id = ?`,
       [projectId]
     );

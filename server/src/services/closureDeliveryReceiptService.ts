@@ -63,6 +63,7 @@
  *   packet — do not add one without a Piotr/Codex decision.
  */
 
+import { InitiativeStatus } from '../constants/initiativeStatuses.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
@@ -202,7 +203,11 @@ export async function createReceiptOnClosure(
 
 /** Durable repair seam for deterministic demo/materialized DONE rows that do
  * not pass through the transition transaction. The deterministic id makes
- * repeated seeding a replay, never a second closure event. */
+ * repeated seeding a replay, never a second closure event.
+ * DEC-424 (P12-int-c): guard compared against the legacy literal `'DONE'`,
+ * which the słownik 7 migration folded into `CLOSED` — the `WHERE` never
+ * matched a migrated row, so this INSERT ... SELECT silently affected 0 rows
+ * and the caller's `getReceiptById` always threw. */
 export async function ensureReceiptForMaterializedDone(
   organizationId:string,initiativeId:string,actorId:string|null
 ):Promise<string>{
@@ -211,9 +216,9 @@ export async function ensureReceiptForMaterializedDone(
     `INSERT INTO closure_delivery_receipts
       (id,organization_id,initiative_id,transition_audit_ref,actor_id,actor_label)
      SELECT ?,i.organization_id,i.id,?,?,?
-       FROM initiatives i WHERE i.id=? AND i.organization_id=? AND UPPER(i.status)='DONE'
+       FROM initiatives i WHERE i.id=? AND i.organization_id=? AND UPPER(i.status)=?
      ON CONFLICT (id) DO NOTHING`,
-    [receiptId,receiptId,actorId,SYSTEM_ACTOR_LABEL,initiativeId,organizationId]
+    [receiptId,receiptId,actorId,SYSTEM_ACTOR_LABEL,initiativeId,organizationId,InitiativeStatus.CLOSED]
   );
   const receipt=await getReceiptById(receiptId,organizationId);
   if(!receipt) throw new Error(`${LOG_PREFIX} materialized DONE receipt was not persisted`);

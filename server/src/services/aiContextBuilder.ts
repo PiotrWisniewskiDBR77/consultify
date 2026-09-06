@@ -819,7 +819,8 @@ export const AIContextBuilder = {
     taskSql += ` ORDER BY due_date ASC LIMIT 10`;
     const tasks = await all(taskSql, taskParams);
 
-    let initiativeSql = `SELECT id, name, status FROM initiatives WHERE owner_business_id = ? AND status NOT IN ('COMPLETED', 'CANCELLED')`;
+    // DEC-424 (P12-int-c): DONE/TRACKING/ARCHIVED -> CLOSED, CANCELLED -> REJECTED (słownik 7).
+    let initiativeSql = `SELECT id, name, status FROM initiatives WHERE owner_business_id = ? AND status NOT IN ('CLOSED', 'REJECTED')`;
     const initiativeParams = [userId];
     if (projectId) {
       initiativeSql += ` AND project_id = ?`;
@@ -1431,7 +1432,8 @@ export const AIContextBuilder = {
              SUM(COALESCE(cost_opex, 0)) as total_opex,
              AVG(COALESCE(expected_roi, 0)) as avg_roi
            FROM initiatives
-           WHERE project_id = ? AND status NOT IN ('CANCELLED', 'ARCHIVED')`,
+           -- DEC-424 (P12-int-c): CANCELLED -> REJECTED; ARCHIVED is now a flag, not a status.
+           WHERE project_id = ? AND status <> 'REJECTED' AND NOT COALESCE(archived, FALSE)`,
           [projectId]
         );
 
@@ -1553,10 +1555,11 @@ export const AIContextBuilder = {
           ? `AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks`
           : `NULL::numeric as avg_duration_weeks`;
         const stats: any = await get(
-          `SELECT 
+          `SELECT
              COUNT(*) as total,
-             SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-             SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
+             -- DEC-424 (P12-int-c): DONE/TRACKING -> CLOSED, CANCELLED -> REJECTED.
+             SUM(CASE WHEN i.status = 'CLOSED' THEN 1 ELSE 0 END) as completed,
+             SUM(CASE WHEN i.status = 'REJECTED' THEN 1 ELSE 0 END) as cancelled,
              ${avgDurationSql}
            FROM initiatives i
            JOIN projects p ON i.project_id = p.id
