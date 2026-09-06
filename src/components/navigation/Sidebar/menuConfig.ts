@@ -89,6 +89,26 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
       icon: React.createElement(CheckCircle2, { size: 20 }),
       viewId: AppView.ASSESSMENT_OVERVIEW,
     },
+    // 4.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
+    // The functional hub lives at /audit-programs (AppRoutes), reached via the
+    // canonical audits AppView so it inherits the authenticated app shell.
+    // DEC-417 (06.09, uwaga właściciela 15:27): przeniesione tuż pod Ocenę
+    // (poprzednio pod Materiałami, decyzja #85) — kolejność menu ma być
+    // …Ocena · Audyty · Inicjatywy · Realizacja · Wyniki · Materiały · Spotkania.
+    // H6.8 (2026-07-18): betaAccess.ts flipped MODULE_AUDITS 'closed' -> 'open' on
+    // 07-16 (Piotr's own acceptance commit dfb83212dc — "816 linii + backend,
+    // demo-ready"), but this badge was left at 'soon' ("Wkrótce"), which lies to
+    // users: the module is fully clickable and functional, not upcoming. Badge
+    // corrected to 'beta' to match the other GA-per-D-A modules (Results/Finance/
+    // Materials) that are also 'open' in BETA_MENU_STATUS yet still carry a beta
+    // badge (access is unrestricted; badge is informational only).
+    {
+      id: 'MODULE_AUDITS',
+      label: t('sidebar.audits', 'Audits'),
+      icon: React.createElement(ClipboardCheck, { size: 20 }),
+      viewId: AppView.ASSESSMENT_AUDITS,
+      badge: 'beta',
+    },
     // 5. Inicjatywy - zarządzanie inicjatywami
     {
       id: 'MODULE_INITIATIVES',
@@ -154,24 +174,6 @@ export function getMenuStructure(t: TranslationFn, _journeyState?: string): Menu
     // Trasa /excele (AppView.EXCELE) zostaje w routingu (AppRoutes.tsx) dla
     // zgodności wstecznej z deep linkami — usunięty jest TYLKO klikalny wpis
     // menu, nie sama trasa/funkcja.
-    // 9.5 Audyty - Audit Orchestrator hub (DRD/SIRI/ADMA/Lean program runner).
-    // The functional hub lives at /audit-programs (AppRoutes), reached via the
-    // canonical audits AppView so it inherits the authenticated app shell.
-    // Positioned under Materials (Reports/Materials group) per owner instruction (#85).
-    // H6.8 (2026-07-18): betaAccess.ts flipped MODULE_AUDITS 'closed' -> 'open' on
-    // 07-16 (Piotr's own acceptance commit dfb83212dc — "816 linii + backend,
-    // demo-ready"), but this badge was left at 'soon' ("Wkrótce"), which lies to
-    // users: the module is fully clickable and functional, not upcoming. Badge
-    // corrected to 'beta' to match the other GA-per-D-A modules (Results/Finance/
-    // Materials) that are also 'open' in BETA_MENU_STATUS yet still carry a beta
-    // badge (access is unrestricted; badge is informational only).
-    {
-      id: 'MODULE_AUDITS',
-      label: t('sidebar.audits', 'Audits'),
-      icon: React.createElement(ClipboardCheck, { size: 20 }),
-      viewId: AppView.ASSESSMENT_AUDITS,
-      badge: 'beta',
-    },
     {
       id: 'MODULE_MEETING',
       label: t('sidebar.meeting', 'Meeting'),
