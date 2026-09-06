@@ -63,9 +63,6 @@ railway variables --set "VITE_ASSESSMENT_DOCX_ENABLED=true" --skip-deploys --env
 railway variables --set "VITE_ASSESSMENT_OUTPUT_ARTIFACTS_ENABLED=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
 # odczyt: … | jq '.VITE_ASSESSMENT_OUTPUT_ARTIFACTS_ENABLED'
 
-railway variables --set "VITE_DRD_REPORT_ENABLED=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
-# odczyt: … | jq '.VITE_DRD_REPORT_ENABLED'
-
 railway variables --set "VITE_FINANCE_VALUE_PANELS=true" --skip-deploys --environment "$ENV" --service "$USLUGA" --project "$PROJEKT"
 # odczyt: … | jq '.VITE_FINANCE_VALUE_PANELS'
 

@@ -34,7 +34,6 @@ import { AppView, AuthStep, SessionMode, User } from '@/types';
 import { isAssessmentOutputArtifactsEnabled } from '@/utils/assessmentOutputArtifactsFlag';
 import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
-import { isDrdReportEnabled } from '@/utils/drdReportFlag';
 import { isExceleEngineEnabled } from '@/utils/exceleFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -587,18 +586,19 @@ const AuditsMethodHub = lazyWithRetry(() => import('@/components/Audit/method/Au
 const CriterionWorkspace = lazyWithRetry(
   () => import('@/components/Audit/method/workspace/CriterionWorkspaceGate')
 );
-// DRD Audit Report engine — full editor (AI chat, per-section AI actions, PDF
-// export, publishing-grade "Raport DRD" client report) wired to a live backend
-// but previously reachable by ZERO routes (audyt 2026-07-26). Flag-gated entry
-// under the Audits module — see src/utils/drdReportFlag.ts (default OFF).
-const DRDAuditReportView = lazyWithRetry(() =>
-  import('@/views/DRDAuditReportView').then((m) => ({ default: m.DRDAuditReportView }))
-);
 // NAPRAWA 2 (panel ekspercki 2026-08-26): pełny widok treści raportu
-// (`GET /audits/reports/:id/presentation`, U5) — DIFFERENT engine from
-// DRDAuditReportView above (that one reads `/assessment-reports/:id/full`,
-// an unrelated legacy contract). Flag-gated (`ff_auditsFindingsAndReportView`,
-// default OFF) — see `AuditReportDocumentRoute` below.
+// (`GET /audits/reports/:id/presentation`, U5). Flag-gated
+// (`ff_auditsFindingsAndReportView`, default OFF) — see
+// `AuditReportDocumentRoute` below.
+//
+// DEC-417 (06.09, uwaga właściciela 15:28 „nie wiem, skąd one się tutaj
+// wzięły"): usunięto stąd zakładkę „Raporty DRD"/`AuditDrdReportsTab` (jedyne
+// wejście do `/audit-programs/drd-report/:reportId`) razem z tą trasą,
+// `DRDAuditReportRoute` i flagą `isDrdReportEnabled` (`src/utils/drdReportFlag.ts`,
+// usunięta) — kod, nie tylko flaga. `DRDAuditReportView`
+// (src/views/DRDAuditReportView.tsx) zostaje w repo nieużywany (dawny stan
+// sprzed 2026-07-26 — dokumentacja modułu wskazuje, że logicznie należy do
+// Assessment, nie do Audits; do decyzji przy ewentualnym podłączeniu tam).
 const AuditReportDocumentView = lazyWithRetry(
   () => import('@/components/Audit/method/AuditReportDocumentView')
 );
@@ -839,29 +839,11 @@ const PresentationStudioRedirect: React.FC = () => {
 };
 
 /**
- * Audits module entry for the DRD audit report engine (audyt 2026-07-26).
- * Reads `:reportId` from the URL and mounts `DRDAuditReportView`, which
- * fetches the report itself via `GET /assessment-reports/:reportId/full`
- * (contract: src/views/DRDAuditReportView.tsx — `api.getFullReport`).
- * Flag-gated (`isDrdReportEnabled`, default OFF): OFF → redirects to
- * /audit-programs so the route is a no-op for every user until Piotr
- * accepts the visual on a dev-render screenshot (canon: "Piotr nigdy nie
- * jest pierwszym testerem wizualnym").
- */
-const DRDAuditReportRoute: React.FC = () => {
-  const params = useParams<{ reportId: string }>();
-  if (!isDrdReportEnabled()) {
-    return <Navigate to="/audit-programs" replace />;
-  }
-  return <DRDAuditReportView reportId={params.reportId} />;
-};
-
-/**
  * Audits module entry for the full report content view (NAPRAWA 2,
  * 2026-08-26 — `AuditReportDocumentView`, `GET /audits/reports/:id/presentation`).
  * Flag-gated (`isAuditsFindingsAndReportViewEnabled`, default ON since 2026-08-27 owner accept, fail-closed
- * — CLAUDE.md #7): OFF → redirects to the Reports tab, exactly the same
- * no-op-until-accepted contract as `DRDAuditReportRoute` above.
+ * — CLAUDE.md #7): OFF → redirects to the Reports tab (no-op-until-accepted
+ * contract, canon: "Piotr nigdy nie jest pierwszym testerem wizualnym").
  */
 const AuditReportDocumentRoute: React.FC = () => {
   const params = useParams<{ reportId: string }>();
@@ -1735,29 +1717,11 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
-        {/* DRD Audit Report engine (audyt 2026-07-26) — reconnects the
-            previously orphaned DRDAuditReportView (zero importers, live
-            backend) onto the Audits module. Flag-gated (isDrdReportEnabled,
-            default OFF, ?ff_drd_report=1 to preview) — see
-            DRDAuditReportRoute above for the OFF→redirect behavior. */}
-        <Route
-          path="/audit-programs/drd-report/:reportId"
-          element={
-            <ProtectedRoute requireAuth={true}>
-              <BetaGate moduleId="MODULE_AUDITS">
-                <MainLayout breadcrumbs={breadcrumbs || [t('layout.breadcrumb.module.audits'), t('layout.breadcrumb.page.drdReport')]}>
-                  <RouteErrorBoundary>
-                    <AnimationWrapper variant="slideUp">
-                      <Suspense fallback={<LoadingScreen message={t('layout.loading.drdReport')} />}>
-                        <DRDAuditReportRoute />
-                      </Suspense>
-                    </AnimationWrapper>
-                  </RouteErrorBoundary>
-                </MainLayout>
-              </BetaGate>
-            </ProtectedRoute>
-          }
-        />
+        {/* DEC-417 (06.09): trasa `/audit-programs/drd-report/:reportId`
+            (DRDAuditReportRoute + flaga isDrdReportEnabled) usunięta razem
+            z zakładką „Raporty DRD" w AuditsMethodHub — to był jej jedyny
+            wołacz. Patrz komentarz przy DRDAuditReportView wyżej w tym
+            pliku. */}
 
         {/* NAPRAWA 2 (2026-08-26) — pełny widok treści raportu, SPEC-A Dokument,
             otwierany z listy Raportów (AuditReportsTab). Flag-gated — patrz

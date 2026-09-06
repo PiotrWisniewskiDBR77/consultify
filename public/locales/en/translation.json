@@ -350,7 +350,6 @@
         "admin": "Administration"
       },
       "page": {
-        "drdReport": "DRD report",
         "reports": "Reports",
         "statement": "Statement",
         "model": "Model",
@@ -361,7 +360,6 @@
     },
     "loading": {
       "audits": "Loading audits…",
-      "drdReport": "Loading DRD report…",
       "report": "Loading report…",
       "module": "Loading…"
     },
@@ -28683,9 +28681,7 @@
     "confirmDeleteBulk_other": "Delete {{count}} audit programs?",
     "aiHintSummarize": "Summarize audit",
     "aiHintNextSteps": "Next steps",
-    "noSuggestedPlan": "No suggested plan",
-    "drdReportsLoadFailed": "Could not load DRD reports",
-    "drdSourceAssessment": "Assessment"
+    "noSuggestedPlan": "No suggested plan"
   },
   "audits": {
     "method": {
@@ -28695,8 +28691,7 @@
         "outputs": "Outputs",
         "reports": "Reports",
         "findings": "Findings",
-        "initiatives": "Initiatives",
-        "drdReports": "DRD reports"
+        "initiatives": "Initiatives"
       }
     }
   },
