@@ -1,5 +1,5 @@
 {
-  "zaktualizowano": "2026-09-06 17:11",
+  "zaktualizowano": "2026-09-06 17:27",
   "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
@@ -15,10 +15,10 @@
           "zalezy_od": "przejście właściciela",
           "stan": "w_toku",
           "galaz": "",
-          "sha": "5bf9988581",
-          "dowod": "paczka 7 na żywo ff60b6f831 (R3, K4, R1, I4); paczka 8 wypchnięta 17:06: R2, M-1, K5, R4 (+ search→reports)",
+          "sha": "ad35c3c09e",
+          "dowod": "staging health ad35c3c09e: paczki 7–9 na żywo (R1–R4, K4/K5, I4, M-1/M-2, A1/A2, P11 r1); karty 1–3 u właściciela",
           "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3",
-          "data": "06.09 17:11"
+          "data": "06.09 17:27"
         },
         {
           "nr": "1.2",
@@ -137,8 +137,8 @@
           "galaz": "mvp/111-statusy-inicjatyw",
           "sha": "",
           "dowod": "",
-          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9.",
-          "data": "06.09 17:11"
+          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9. | 17:27: pomiar scalony (3fd393031d, 19 słowników, 2 automaty, 4 trasy omijają silnik); karta 4 (tablica 7 statusów) u właściciela.",
+          "data": "06.09 17:27"
         }
       ],
       "kryteria": [
@@ -1013,7 +1013,7 @@
     {
       "modul": "Inicjatywy",
       "werdykt": "brak",
-      "zdanie": "06.09 17:11: „nie mam większych uwag” do karty; I3/I4 na żywo; K5 (podgląd wraca na klik) w paczce 8; Plan/Obciążenie → P11 Codex (8 commitów, pisze); 1.11 statusy — pomiar u Opusa."
+      "zdanie": "06.09 17:27: I3/I4/K5 na żywo; P11 Plan/Obciążenie runda 1 na żywo (Codex: częściowo, runda 2 wydana — wklejka 9a); 1.11: pomiar gotowy (19 słowników, 2 automaty), tablica 7 statusów u właściciela do akceptu (karta 4)."
     },
     {
       "modul": "Realizacja",
@@ -1023,7 +1023,7 @@
     {
       "modul": "Wyniki",
       "werdykt": "brak",
-      "zdanie": "06.09 17:11: R1+R3 na żywo; R2 (zakładka Raporty zarządcze) i R4 (karty KPI/OKR/ROI z „Pracuj z AI”, pigułka w pasku, sticky) scalone i wypchnięte w paczce 8 (5bf9988581, budowa trwa) — karta do odbioru po zdrowiu stagingu."
+      "zdanie": "06.09 17:27: R1–R4 NA ŻYWO (karty KPI/OKR/ROI z „Pracuj z AI”, Raporty zarządcze, KPI bez UUID) — karta 1 u właściciela."
     },
     {
       "modul": "Finanse",
@@ -1033,12 +1033,12 @@
     {
       "modul": "Materiały",
       "werdykt": "brak",
-      "zdanie": "06.09 17:11: „zachwycony”; M-1 (2 dropdowny zamiast popovera) w paczce 8; M-2 (standard Menu 1–3, Biblioteka Galeria/Tabela, Nowy wzorzec zamrożony) kończy się — paczka 9."
+      "zdanie": "06.09 17:27: „zachwycony”; M-1 i M-2 (standard Menu 1–3, Biblioteka Galeria/Tabela, Nowy wzorzec zamrożony) NA ŻYWO (ad35c3c09e) — karta 2 u właściciela."
     },
     {
       "modul": "Audyty",
       "werdykt": "brak",
-      "zdanie": "06.09 17:11: A1 na żywo; A2 scalone lokalnie (Menu 3 jeden wzór, bez Ustaleń, CTA Nowy wynik/raport/inicjatywa) — paczka 9; A3 (bez flagi ff_auditsReportChain) i K6 u robotnika."
+      "zdanie": "06.09 17:27: A1 i A2 (Menu 3 jeden wzór, bez Ustaleń, CTA Nowy wynik/raport/inicjatywa) NA ŻYWO — karta 3 u właściciela; A3 (bez flagi) + K6 u robotnika."
     },
     {
       "modul": "Spotkania",
