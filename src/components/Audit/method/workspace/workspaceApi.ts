@@ -70,7 +70,18 @@ export type WorkspaceCapability = (typeof WORKSPACE_CAPABILITIES)[number];
 
 /** Mirror `ROLE_CAPABILITIES` z `permissions.ts`, zawężony do capability powyżej. */
 const ROLE_CAPABILITIES: Record<AuditRole, WorkspaceCapability[]> = {
-  program_owner: ['finding.accept_residual_risk', 'ai.propose'],
+  // DEC-428 (1.1-A5b): mirror serwera — program_owner prowadzi CAŁĄ sesję
+  // audytu sam (przypisanie kryterium, procedura testowa, wniosek), nie tylko
+  // wynik/raport. Bez tego front chował przyciski, które serwer i tak by
+  // przepuścił (przycisk martwy zamiast prowadzącej do 403 akcji, ale UI
+  // kłamał, że program_owner nie może pracować w sesji).
+  program_owner: [
+    'criterion.assign',
+    'criterion.perform_test',
+    'criterion.conclude',
+    'finding.accept_residual_risk',
+    'ai.propose',
+  ],
   lead_auditor: [
     'criterion.assign',
     'criterion.perform_test',

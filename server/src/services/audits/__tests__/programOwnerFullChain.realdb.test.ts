@@ -17,15 +17,26 @@
  * lead_auditor/auditor to Fala 2, audyty zewnętrzne). Ten test dowodzi, że
  * pojedynczy aktor z JEDNĄ rolą `program_owner` przechodzi cały łańcuch przez
  * prawdziwe serwisy (nie mocki) na prawdziwej Postgres:
- *   program (fixture) → finalizeOutput → generateReport → approveReport
- *   → publishReport → wniosek (buildAuditReportConclusion +
- *   safePersistAuditReportConclusion, dokładnie to, co woła
- *   `POST /reports/:id/conclusion`).
+ *   program (fixture) → assignCriterion → recordTest → concludeCriterion
+ *   → finalizeOutput → generateReport → approveReport → publishReport
+ *   → wniosek (buildAuditReportConclusion + safePersistAuditReportConclusion,
+ *   dokładnie to, co woła `POST /reports/:id/conclusion`).
+ *
+ * DOPISKA 1.1-A5b: ZNALEZISKO A5 — program_owner miał już output.finalize/
+ * report.draft/report.publish, ale nie miał capability do samej SESJI
+ * audytu (`criterion.assign`/`.perform_test`/`.conclude`), więc solo-
+ * właściciel programu nie mógł nikomu przypisać kryterium, wykonać
+ * procedury testowej ani wyciągnąć wniosku — łańcuch urywał się PRZED
+ * `output.finalize`. Kroki 1-3 poniżej dowodzą, że praca merytoryczna w
+ * sesji przechodzi teraz przez tego samego aktora.
  *
  * Celowo NIE tworzymy żadnego ustalenia (`audit_program_findings`) — fixture
  * ma tylko jedno kryterium i jeden dowód, zero findingów w draft/in_review —
  * dzięki temu test mierzy WYŁĄCZNIE bramkę uprawnień, a nie inne reguły stanu
- * (TWARDA REGUŁA 1 w `outputService.finalizeOutput`).
+ * (TWARDA REGUŁA 1 w `outputService.finalizeOutput`). Wniosek kryterium
+ * używa `conformityStatus: 'nonconforming'` (nie `conforming`), żeby nie
+ * zależeć dodatkowo od akceptacji dowodu (TWARDA REGUŁA 2 w
+ * `concludeCriterion`) — to osobna reguła stanu, nie przedmiot tego testu.
  *
  * RUN:
  *   NODE_ENV=test DB_TYPE=postgres RUN_DB_TESTS=1 MOCK_DB=false \
@@ -33,14 +44,21 @@
  *   npx vitest run server/src/services/audits/__tests__/programOwnerFullChain.realdb.test.ts \
  *     --maxWorkers=1 --no-file-parallelism
  *
- * DOWÓD MUTACYJNY (ręczny, patrz meldunek): z `permissions.ts` usunięto
- * chwilowo `output.finalize`/`report.draft`/`report.publish` z `program_owner`
- * — ten sam test poszedł RED na pierwszym kroku (`finalizeOutput` rzuciło
- * `AuditPermissionError`), po przywróceniu wrócił GREEN.
+ * DOWÓD MUTACYJNY 1 (A5, zachowany): z `permissions.ts` usunięto chwilowo
+ * `output.finalize`/`report.draft`/`report.publish` z `program_owner` — ten
+ * sam test poszedł RED na `finalizeOutput` (`AuditPermissionError`), po
+ * przywróceniu wrócił GREEN.
+ *
+ * DOWÓD MUTACYJNY 2 (A5b, ten dyżur): z `permissions.ts` usunięto chwilowo
+ * `criterion.perform_test` z `program_owner` — test poszedł RED na kroku
+ * `recordTest` (`AuditPermissionError: Ta czynność (criterion.perform_test)
+ * wymaga roli audytowej, której nie masz w tym programie`), po przywróceniu
+ * wrócił GREEN. Patrz meldunek robotnika 1.1-A5b.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { auditGet, auditRun } from '../auditsDb.js';
+import { assignCriterion, concludeCriterion, recordTest } from '../criterionService.js';
 import { finalizeOutput } from '../outputService.js';
 import { requireCapability } from '../permissions.js';
 import { approveReport, generateReport, publishReport } from '../reportService.js';
@@ -122,14 +140,42 @@ suite('program_owner — pełny łańcuch sesja → wynik → raport → wniosek
     const access = await requireCapability(owner, fixture.programId, 'program.read');
     expect(access.roles).toEqual(['program_owner']);
 
-    // 1) SESJA → WYNIK: finalizacja Outputu (`output.finalize`).
+    // 1) SESJA — praca merytoryczna na kryterium, JEDNYM aktorem:
+    //    przypisanie (`criterion.assign`) → procedura testowa
+    //    (`criterion.perform_test`) → wniosek o zgodności
+    //    (`criterion.conclude`). To dokładnie ZNALEZISKO A5b: bez tych
+    //    trzech capability solo program_owner nie mógł ruszyć pracy w
+    //    sesji, mimo że miał już capability do wyniku/raportu.
+    const assigned = await assignCriterion(organizationId, owner, fixture.criterionId, {
+      auditorId: ownerUserId,
+      auditeeId: null,
+    });
+    expect(assigned.assignedAuditorId).toBe(ownerUserId);
+
+    const tested = await recordTest(organizationId, owner, fixture.criterionId, {
+      procedurePerformed: 'Przegląd próbki dokumentów A5b',
+      sampleDescription: '1 z 1',
+      testPerformed: 'Porównanie zapisu z wymaganiem',
+      testResult: 'fail',
+      auditorNote: 'Test A5b',
+    });
+    expect(tested.workStatus).toBe('tested');
+
+    const concluded = await concludeCriterion(organizationId, owner, fixture.criterionId, {
+      auditorConclusion: 'Wniosek A5b — niezgodność bez wymogu akceptacji dowodu',
+      conformityStatus: 'nonconforming',
+    });
+    expect(concluded.workStatus).toBe('concluded');
+    expect(concluded.conformityStatus).toBe('nonconforming');
+
+    // 2) SESJA → WYNIK: finalizacja Outputu (`output.finalize`).
     const output = await finalizeOutput(organizationId, owner, fixture.programId, {
       title: 'Wynik testowy A5',
     });
     expect(output.version).toBe(1);
     expect((output.payload as { findings?: unknown[] }).findings ?? []).toHaveLength(0);
 
-    // 2) WYNIK → RAPORT (szkic): `report.draft`.
+    // 3) WYNIK → RAPORT (szkic): `report.draft`.
     const report = await generateReport(organizationId, owner, {
       programId: fixture.programId,
       outputId: output.id,
@@ -138,16 +184,16 @@ suite('program_owner — pełny łańcuch sesja → wynik → raport → wniosek
     });
     expect(report.status).toBe('draft');
 
-    // 3) Zatwierdzenie: `report.approve` (program_owner miał to już PRZED A5 —
+    // 4) Zatwierdzenie: `report.approve` (program_owner miał to już PRZED A5 —
     // sanity check, że nic tu nie zepsuliśmy).
     const approved = await approveReport(organizationId, owner, report.id);
     expect(approved.status).toBe('approved');
 
-    // 4) RAPORT → PUBLIKACJA: `report.publish`.
+    // 5) RAPORT → PUBLIKACJA: `report.publish`.
     const published = await publishReport(organizationId, owner, report.id);
     expect(published.status).toBe('published');
 
-    // 5) RAPORT → WNIOSEK: dokładnie ta sama para kroków, co
+    // 6) RAPORT → WNIOSEK: dokładnie ta sama para kroków, co
     // `POST /reports/:id/conclusion` w reports.routes.ts — ten sam strażnik
     // (`report.draft`), ten sam most (`buildAuditReportConclusion` +
     // `safePersistAuditReportConclusion`).
