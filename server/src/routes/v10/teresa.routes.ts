@@ -41,6 +41,11 @@ const TeresaVoiceEventSchema = z.object({
   ]),
   status: z.enum(['idle', 'connecting', 'live', 'error']).optional(),
   unavailableReason: z.string().max(160).optional(),
+  // [ODMROZENIE 13_CHAT DEC-397] Why a `voice_stopped`/`voice_error` event
+  // happened — e.g. `user_stopped` or `ws_close_<code>:<text>` from an
+  // unexpected transport drop. Closed-shape-free (free text, capped) by
+  // design: new causes must not require a schema change to be observable.
+  reason: z.string().max(160).optional(),
   durationSeconds: z
     .number()
     .min(0)
