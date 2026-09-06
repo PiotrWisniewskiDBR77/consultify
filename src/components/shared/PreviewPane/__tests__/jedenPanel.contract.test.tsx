@@ -21,6 +21,24 @@ vi.mock('@/hooks/useDeviceType', () => ({
   useDeviceType: () => ({ isMobile: false, safeAreaInsets: { top: 0, bottom: 0 } }),
 }));
 
+// T4 zamyka i otwiera `TableWithPreviewLayout`'owy panel przez `AnimatePresence`
+// (`mode="wait"`) — bez tej atrapy jsdom nigdy nie kończy animacji `exit`, więc
+// zamknięty panel zostaje uwięziony w DOM ze starą treścią (fałszywy PASS/FAIL
+// niezależny od realnego kontraktu, który to `AnimatePresence` steruje).
+vi.mock('framer-motion', () => ({
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  motion: {
+    div: ({
+      children,
+      initial: _i,
+      animate: _a,
+      exit: _e,
+      transition: _t,
+      ...props
+    }: Record<string, unknown> & { children?: React.ReactNode }) => <div {...props}>{children}</div>,
+  },
+}));
+
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
@@ -62,6 +80,40 @@ function TableSurface() {
   );
 }
 
+/**
+ * Odwzorowanie realnego wzorca `MyTasksListContent.tsx`/`ExecutionHub.tsx`:
+ * `previewOpen={Boolean(previewTaskId)}` kontrolowany z zewnątrz, a wiersz
+ * ustawia nowe zaznaczenie BEZPOŚREDNIO (`onRowClick={(row) => setPreviewTaskId(...)}`),
+ * z pominięciem `TableWithPreviewLayout`'owego `handleSelect`. Regresja P1
+ * (DEC-397, uwaga właściciela „panel wraca po X") żyła dokładnie w tym
+ * kontrolowanym przejściu `previewOpen` false→true.
+ */
+const CONTROLLED_ITEMS: Record<string, { id: string; title: string }> = {
+  '1': { id: '1', title: 'Zadanie pierwsze' },
+  '2': { id: '2', title: 'Zadanie drugie' },
+};
+
+function ControlledRowsSurface() {
+  const [selectedId, setSelectedId] = React.useState<string | null>('1');
+  const selectedItem = selectedId ? CONTROLLED_ITEMS[selectedId] : null;
+  return (
+    <>
+      <StandardModuleBar />
+      <TableWithPreviewLayout
+        selectedId={selectedId}
+        selectedItem={selectedItem}
+        onSelect={setSelectedId}
+        previewOpen={Boolean(selectedId)}
+        renderPreview={(item) => <div>{item.title}</div>}
+      >
+        <button type="button" data-testid="row-2" onClick={() => setSelectedId('2')}>
+          Zadanie drugie
+        </button>
+      </TableWithPreviewLayout>
+    </>
+  );
+}
+
 describe('jeden prawy panel — kontrakt', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -98,6 +150,24 @@ describe('jeden prawy panel — kontrakt', () => {
     fireEvent.click(screen.getByTestId('show-list-panel'));
     expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
     expect(screen.getAllByText('Drugi rekord').length).toBeGreaterThan(0);
+  });
+
+  it('T4 regresja Zadania/Realizacja: previewOpen kontrolowany, klik w inny wiersz po X nie otwiera panelu', () => {
+    const view = render(<ControlledRowsSurface />, { wrapper: Wrapper });
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    expect(view.container.querySelector('[data-right-panel]')).toBeNull();
+
+    // Klik w drugi wiersz: konsument ustawia nowe zaznaczenie wprost
+    // (`setPreviewTaskId`), `previewOpen` wraca na `true` — panel MUSI
+    // zostać zamknięty (lepkość), dopóki nikt nie kliknie „Pokaż panel".
+    fireEvent.click(screen.getByTestId('row-2'));
+    expect(view.container.querySelector('[data-right-panel]')).toBeNull();
+
+    fireEvent.click(screen.getByTestId('show-list-panel'));
+    expect(view.container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    expect(screen.getAllByText('Zadanie drugie').length).toBeGreaterThan(0);
   });
 
   it('T7 nie wprowadza zakazanych rodzin tokenów', () => {

@@ -141,7 +141,6 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const containerRef = useRef<HTMLDivElement>(null);
   const mobileDialogRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const poprzednieKontrolowaneOtwarcie = useRef(controlledPreviewOpen);
   const poprzednieZaznaczenie = useRef<string | null>(selectedId);
   const jedenPanel = useJedenPanel();
   const teresaWlaczona = teresa?.wylacz !== true;
@@ -193,12 +192,23 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     poprzednieZaznaczenie.current = selectedId;
   }, [jedenPanel.zamkniety, selectedId, ustawZakladke, zakladka]);
 
-  useEffect(() => {
-    if (controlledPreviewOpen === true && poprzednieKontrolowaneOtwarcie.current === false) {
-      jedenPanel.pokazPanel();
-    }
-    poprzednieKontrolowaneOtwarcie.current = controlledPreviewOpen;
-  }, [controlledPreviewOpen, jedenPanel]);
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] USUNIĘTE: efekt wołał
+  // `jedenPanel.pokazPanel()` na KAŻDE przejście `controlledPreviewOpen`
+  // false→true — czyli też na zwykły klik w kolejny wiersz po świadomym
+  // zamknięciu (X), bo konsumenci kontrolowani (np. `MyTasksListContent`,
+  // `ExecutionHub`) czyszczą swój lokalny stan na `null` przy zamknięciu i
+  // ustawiają go ponownie na klik wiersza — co jest DOKŁADNIE tym samym
+  // false→true przejściem. Efekt bezwarunkowo kasował `zamkniety`, więc
+  // panel wracał mimo X (regresja uwagi właściciela „nie mogę go zamknąć").
+  // `panelWidoczny` niżej już poprawnie liczy widoczność z
+  // `!jedenPanel.zamkniety && isPreviewOpen && !!selectedItem` — nie
+  // potrzebuje tego efektu, żeby otworzyć panel przy PIERWSZYM zaznaczeniu
+  // (zamkniety zaczyna jako `false`, dopóki nikt świadomie nie zamknie).
+  // Jawne przywrócenie panelu idzie wyłącznie przez pigułkę „Pokaż panel"/
+  // „Teresa" w Menu 3 (`StandardModuleBar.tsx`, `jedenPanel.pokazPanel`/
+  // `otworzTerese` wprost), zgodnie z kanonem P1 §4.1 (dok
+  // `docs/program/PROGRAM_NAPRAWCZY_20260905/P1_JEDEN_PANEL_ZWIJANY.md`).
+  // Test: `jedenPanel.contract.test.tsx` T4 (mutacja: przywróć efekt → pada).
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
