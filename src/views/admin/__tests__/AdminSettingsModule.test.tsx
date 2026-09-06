@@ -321,7 +321,10 @@ describe('AdminSettingsModule section routing', () => {
 
   it('keeps the real seven-domain navigation keyboard reachable in a scroll container', () => {
     const { container } = renderAt('/admin/people');
-    const navigation = container.querySelector('nav');
+    // [ODMROZENIE 15_SETTINGS DEC-397] Korzeń nawigacji sekcji to teraz `<nav>`
+    // (był `<aside>` z zagnieżdżonym `<nav>` dla listy) — scrollowalny kontener
+    // z listą domen jest wewnętrznym `<div>`, nie osobnym `<nav>`.
+    const navigation = container.querySelector('nav > div.overflow-y-auto');
     expect(navigation).toHaveClass('min-h-0', 'overflow-y-auto');
 
     const billing = screen.getByRole('button', { name: /Rozliczenia i plany|Billing & Plans/i });

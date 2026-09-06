@@ -22,9 +22,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type DomainNavigationModule } from '../settings/shared/DomainNavigation';
-
-import { OrganizationDomainNav } from './OrganizationDomainNav';
+import { DomainNavigation, type DomainNavigationModule } from '../settings/shared/DomainNavigation';
 
 export type OrganizationModule =
   | 'profile'
@@ -209,13 +207,14 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
   const isPolish = language.toLowerCase().startsWith('pl');
   return (
-    // [ODMROZENIE 01_ORGANIZATION DEC-397] `OrganizationDomainNav` (nowy plik,
-    // fork z korzeniem <nav>) zamiast współdzielonego `DomainNavigation`
-    // (<aside>, moduł 15_SETTINGS — zamrożony, nie dotykamy). Ekran mountuje tę
-    // nawigację dwa razy naraz (desktop + szuflada mobile) — z <aside> dawało to
-    // 2 elementy tylko z nawigacji + 1 z prawego panelu stanu = 3 łącznie, łamiąc
-    // SPEC-A P1 („prawa krawędź = JEDEN panel"). Zero zmiany wyglądu/funkcji.
-    <OrganizationDomainNav
+    // [ODMROZENIE 01_ORGANIZATION DEC-397] Współdzielony `DomainNavigation` ma
+    // korzeń `<nav>` (naprawione u źródła — dawny osobny plik-fork był
+    // identyczny poza tagiem korzenia, więc usunięty). Ekran mountuje tę
+    // nawigację dwa razy naraz (desktop + szuflada mobile); z korzeniem `<nav>`
+    // to nawigacja (nie dodatkowy `<aside>`), więc jedynym `<aside>` na ekranie
+    // zostaje prawy panel stanu — zgodnie z SPEC-A P1 („prawa krawędź = JEDEN
+    // panel"). Zero zmiany wyglądu/funkcji.
+    <DomainNavigation
       title={t('organization.sidebar.title', isPolish ? 'ORGANIZACJA' : 'ORGANIZATION')}
       description={t(
         'organization.sidebar.description',
