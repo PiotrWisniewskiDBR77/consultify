@@ -2895,4 +2895,130 @@ router.get('/:reportId/export/deck', async (req: AuthRequest, res: Response) => 
   }
 });
 
+// =============================================================================
+// EKSPORT RAPORTU I PREZENTACJI Z OCENY (magazyn ZASTANY) — DOCX · PPTX · PDF
+// =============================================================================
+/**
+ * Trzy trasy, jedno źródło. Wszystkie trzy budują TEN SAM kontrakt raportu
+ * (`assessment-report-contract-v1`) z oceny w magazynie zastanym
+ * (`assessments.answers_json`) i dopiero potem rozchodzą się na trzy rendery:
+ *
+ *   .docx → buildAssessmentDrdReportSchema → renderDocumentSchemaToDocxBuffer
+ *           (ten sam silnik, którym raport DOCX renderuje jądro metodyczne —
+ *            14 nazwanych stylów Word, natywny spis treści, radar, stopka)
+ *   .pptx → buildAssessmentDeckModel → renderAssessmentDeckPptx
+ *   .pdf  → buildAssessmentDeckModel → renderAssessmentDeckPdf
+ *
+ * PPTX i PDF czytają JEDEN model prezentacji, więc nie mogą się rozjechać.
+ *
+ * PO CO OSOBNE TRASY OD `/api/method/sessions/:id/assessment-report.docx`:
+ * tamta czyta wyłącznie jądro (`method_sessions`), a pomiar z 2026-09-06
+ * pokazał, że 10 z 11 realnych ocen właściciela leży w magazynie zastanym
+ * (stanowisko lokalne: `method_sessions` = 0). Bez tych tras ekran raportu
+ * oceny zastanej nie ma z czego pobrać pliku.
+ */
+const eksportOceny = (
+  format: 'docx' | 'pptx' | 'pdf',
+  mime: string
+): ((req: AuthRequest, res: Response) => Promise<void>) =>
+  async function handler(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const organizationId = requireRequestOrganizationId(req, res);
+      if (!organizationId) return;
+      const { assessmentId } = req.params;
+
+      const { assessmentLegacyReportContractService } = await import(
+        '../services/assessment/assessmentLegacyReportContractService.js'
+      );
+      const { contract, organizationName } = await assessmentLegacyReportContractService.build(
+        organizationId,
+        assessmentId
+      );
+
+      let buffer: Buffer;
+      if (format === 'docx') {
+        const { buildAssessmentDrdReportSchema } = await import(
+          '../services/assessment/assessmentDrdReportSchemaService.js'
+        );
+        const { renderDocumentSchemaToDocxBuffer } = await import(
+          '../services/documentStudio/documentDocxRenderer.js'
+        );
+        buffer = await renderDocumentSchemaToDocxBuffer(buildAssessmentDrdReportSchema(contract));
+      } else {
+        const { buildAssessmentDeckModel } = await import(
+          '../services/assessment/assessmentDeckModel.js'
+        );
+        const model = buildAssessmentDeckModel(contract, organizationName);
+        if (format === 'pptx') {
+          const { renderAssessmentDeckPptx } = await import(
+            '../services/assessment/assessmentDeckPptxRenderer.js'
+          );
+          buffer = await renderAssessmentDeckPptx(model);
+        } else {
+          const { renderAssessmentDeckPdf } = await import(
+            '../services/assessment/assessmentDeckPdfRenderer.js'
+          );
+          buffer = await renderAssessmentDeckPdf(model);
+        }
+      }
+
+      const label = contract.sessionLabel.displayName ?? contract.sessionId;
+      const rdzen = format === 'docx' ? 'Raport_z_oceny' : 'Prezentacja_z_oceny';
+      const safeLabel = label
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{N}._-]+/gu, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80);
+      const date = new Date(contract.generatedAt).toISOString().slice(0, 10).replaceAll('-', '');
+      const filename = `${rdzen}_${safeLabel || contract.sessionId}_${date}.${format}`;
+      const asciiFilename = filename
+        .replace(/[Łł]/g, (character) => (character === 'Ł' ? 'L' : 'l'))
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9._-]/g, '_');
+      res
+        .status(200)
+        .set({
+          'Content-Type': mime,
+          'Content-Disposition': `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': String(buffer.length),
+        })
+        .send(buffer);
+    } catch (err: unknown) {
+      const status = (err as { statusCode?: number })?.statusCode;
+      if (status === 404) {
+        res.status(404).json({ error: 'Nie znaleziono oceny', code: 'ASSESSMENT_NOT_FOUND' });
+        return;
+      }
+      logger.error('[AssessmentReports] Error exporting assessment deliverable', {
+        err,
+        format,
+        correlationId: (res.req as { correlationId?: string } | undefined)?.correlationId,
+      });
+      res.status(500).json({
+        error: 'Nie udało się wygenerować pliku z oceny',
+        code: 'ASSESSMENT_EXPORT_FAILED',
+      });
+    }
+  };
+
+router.get(
+  '/assessment/:assessmentId/export/report.docx',
+  eksportOceny(
+    'docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  )
+);
+router.get(
+  '/assessment/:assessmentId/export/deck.pptx',
+  eksportOceny(
+    'pptx',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  )
+);
+router.get(
+  '/assessment/:assessmentId/export/deck.pdf',
+  eksportOceny('pdf', 'application/pdf')
+);
+
 export default router;
