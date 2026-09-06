@@ -108,7 +108,8 @@ function renderTab(presentations: any[]) {
   );
 }
 
-describe('PresentationsTabContent quality badge', () => {
+// DEC-402: kolumna jakości poza MVP; przywrócić przy pojemniku 2 (dokumentacja klienta)
+describe.skip('PresentationsTabContent quality badge', () => {
   it('renders a "Validated" badge when governance.validationState is validated', () => {
     renderTab([makeDeck({ governance: { validationState: 'validated' } })]);
     const cell = screen.getByTestId('cell-deck-1-quality');
