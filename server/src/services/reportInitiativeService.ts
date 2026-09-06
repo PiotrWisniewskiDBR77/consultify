@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import type { InitiativeStatusType } from '../constants/initiativeStatuses.js';
 import logger from '../utils/Logger.js';
 import { createInitiative as funnelCreateInitiative } from './initiative/createInitiativeService.js';
 
@@ -18,7 +19,7 @@ import { createInitiative as funnelCreateInitiative } from './initiative/createI
 export type SupportedFramework = 'DRD' | 'SIRI' | 'ADMA';
 export type InitiativePriority = 'critical' | 'high' | 'medium' | 'low';
 export type InitiativeType = 'quick_win' | 'strategic' | 'foundational' | 'transformational';
-export type InitiativeStatus = 'draft' | 'proposed' | 'approved' | 'in_progress' | 'completed';
+export type InitiativeStatus = InitiativeStatusType;
 
 export interface DimensionScore {
   dimensionId: string;

@@ -5,22 +5,9 @@ import type {
   InitiativeDisposition,
   InitiativeLifecycleStatus,
 } from './foundation';
+import { LEGACY_INITIATIVE_STATUS_CODES } from '../../../packages/shared/src/constants/initiativeStatuses.generated';
 
-export const LEGACY_INITIATIVE_STATUSES = [
-  'DRAFT',
-  'PENDING_REVIEW',
-  'REVIEW',
-  'PROMOTED',
-  'PLANNING',
-  'APPROVED',
-  'SCHEDULED',
-  'EXECUTING',
-  'BLOCKED',
-  'DONE',
-  'TRACKING',
-  'CANCELLED',
-  'ARCHIVED',
-] as const;
+export const LEGACY_INITIATIVE_STATUSES = LEGACY_INITIATIVE_STATUS_CODES;
 
 export type LegacyInitiativeStatus = (typeof LEGACY_INITIATIVE_STATUSES)[number];
 

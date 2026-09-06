@@ -729,30 +729,14 @@ export interface GovernancePolicy {
  * - APPROVED → SCHEDULED: Initiatives → Execution (Gate: SCHEDULE)
  * - DONE → TRACKING: Execution → Benefits (Gate: START_TRACKING)
  */
-export enum InitiativeStatus {
-  // Source modules (Tools/Assessment) - Draft phase
-  DRAFT = 'DRAFT',
-  PENDING_REVIEW = 'PENDING_REVIEW',
-
-  // Initiative Management Module - Review & Planning phase
-  REVIEW = 'REVIEW',
-  PROMOTED = 'PROMOTED',
-  PLANNING = 'PLANNING',
-  APPROVED = 'APPROVED',
-  SCHEDULED = 'SCHEDULED',
-
-  // Execution Module - Active work
-  EXECUTING = 'EXECUTING',
-  BLOCKED = 'BLOCKED',
-  DONE = 'DONE',
-
-  // Benefits Module - Tracking phase
-  TRACKING = 'TRACKING',
-
-  // Terminal State
-  CANCELLED = 'CANCELLED',
-  ARCHIVED = 'ARCHIVED',
-}
+export {
+  InitiativeStatus,
+  INITIATIVE_FLAGS,
+  INITIATIVE_STATUS_LABEL_KEYS,
+  type InitiativeFlag,
+} from '../../packages/shared/src/constants/initiativeStatuses.generated';
+import type { InitiativeStatus as InitiativeStatusCode } from '../../packages/shared/src/constants/initiativeStatuses.generated';
+import { InitiativeStatus } from '../../packages/shared/src/constants/initiativeStatuses.generated';
 
 /** Task Status Lifecycle (ENFORCED) */
 export enum TaskStatus {
@@ -3272,7 +3256,7 @@ export interface AssessmentComment {
 export type InitiativeRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
 /** Status of generated initiative */
-export type GeneratedInitiativeStatus = 'DRAFT' | 'APPROVED' | 'TRANSFERRED';
+export type GeneratedInitiativeStatus = InitiativeStatusCode;
 
 /** Initiative generated from assessment gaps */
 export interface GeneratedInitiative {
