@@ -83,12 +83,14 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
+import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 import {
   AUDIT_LIFECYCLE_STATES,
   AUDIT_PROPOSAL_STATUSES,
   AUDIT_REPORT_STATUSES,
   AUDIT_VERIFICATION_STATES,
+  approvePackByExpert,
   type AuditLifecycleState,
   type AuditPackSummary,
   type AuditProgramSummary,
@@ -97,6 +99,7 @@ import {
   getProgram,
   listPacks,
   listPrograms,
+  publishPack,
 } from './auditsMethodApi';
 import {
   packVerificationLabel,
@@ -214,6 +217,17 @@ export const AuditsMethodHub: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentUserId = useAppStore((state) => state.currentUser?.id ?? null);
   const currentOrganizationId = useAppStore((state) => state.currentOrganization?.id ?? null);
+  const currentUserRole = useAppStore((state) => state.currentUser?.role ?? null);
+  // 1.1-A5 (DEC-428): `POST /packs/:id/approve-expert` i `POST /packs/:id/publish`
+  // są bramkowane `isPlatformAdmin(actor)` na backendzie (`packs.routes.ts`,
+  // PLATFORM_ADMIN_ROLES = admin/administrator/owner/superadmin) — pakiety
+  // nie mają programu audytowego, po którym dałoby się sprawdzić rolę
+  // audytową, więc bramka jest platformowa. `isAdminOwnerOrSuperAdminRole`
+  // (`utils/roleGuards.ts`) jest ten sam zestaw ról po stronie frontendu.
+  const canManagePackLibrary = useMemo(
+    () => isAdminOwnerOrSuperAdminRole(currentUserRole),
+    [currentUserRole]
+  );
 
   const [activeTab, setActiveTabState] = useState<AuditsMethodTabId>(() =>
     resolveTabFromUrl(searchParams.get('tab'))
@@ -554,6 +568,80 @@ export const AuditsMethodHub: React.FC = () => {
     [currentOrganizationId, currentUserId, isPolish, search, setActiveTab]
   );
 
+  // 1.1-A5 (DEC-428): kebab Biblioteki nie miał ŻADNEJ trasy do
+  // `POST /packs/:id/approve-expert` / `POST /packs/:id/publish` — pakiet
+  // zostawał w szkicu na zawsze, bo `createProgramFromPack` odmawia
+  // (409 `AUDIT_INVALID_STATE`) dopóki `publication_status !== 'published'`,
+  // a `publishPack` z kolei odmawia (422 `AUDIT_PACK_NOT_PUBLISHABLE`) bez
+  // wcześniejszego zatwierdzenia eksperckiego. Wzór identyczny jak
+  // `handleStartAudit` powyżej: optymistyczna podmiana wiersza w `packsAll`
+  // z API, `loadPacks()` jako honest fallback gdy odpowiedź jest pusta.
+  const [pendingPackActionKey, setPendingPackActionKey] = useState<string | null>(null);
+
+  const handleApprovePackExpert = useCallback(
+    async (pack: AuditPackSummary) => {
+      const key = `${pack.id}:approve-expert`;
+      setPendingPackActionKey(key);
+      const toastId = toast.loading(
+        isPolish ? `Zatwierdzanie „${pack.title}"…` : `Approving "${pack.title}"…`
+      );
+      try {
+        const updated = await approvePackByExpert(pack.id);
+        if (updated) {
+          setPacksAll((prev) => prev.map((p) => (p.id === pack.id ? updated : p)));
+        } else {
+          loadPacks();
+        }
+        toast.success(isPolish ? 'Pakiet zatwierdzony przez eksperta' : 'Pack expert-approved', {
+          id: toastId,
+        });
+      } catch (e: any) {
+        toast.error(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się zatwierdzić pakietu' : 'Failed to approve the pack'
+          ),
+          { id: toastId }
+        );
+      } finally {
+        setPendingPackActionKey(null);
+      }
+    },
+    [isPolish, loadPacks]
+  );
+
+  const handlePublishPack = useCallback(
+    async (pack: AuditPackSummary) => {
+      const key = `${pack.id}:publish`;
+      setPendingPackActionKey(key);
+      const toastId = toast.loading(
+        isPolish ? `Publikowanie „${pack.title}"…` : `Publishing "${pack.title}"…`
+      );
+      try {
+        const updated = await publishPack(pack.id);
+        if (updated) {
+          setPacksAll((prev) => prev.map((p) => (p.id === pack.id ? updated : p)));
+        } else {
+          loadPacks();
+        }
+        toast.success(isPolish ? 'Pakiet opublikowany' : 'Pack published', { id: toastId });
+      } catch (e: any) {
+        toast.error(
+          permissionAwareMessage(
+            e,
+            isPolish,
+            isPolish ? 'Nie udało się opublikować pakietu' : 'Failed to publish the pack'
+          ),
+          { id: toastId }
+        );
+      } finally {
+        setPendingPackActionKey(null);
+      }
+    },
+    [isPolish, loadPacks]
+  );
+
   const tabs: StandardModuleTab[] = useMemo(
     () => [
       {
@@ -780,6 +868,10 @@ export const AuditsMethodHub: React.FC = () => {
             isPolish={isPolish}
             onStartAudit={handleStartAudit}
             startingPackId={startingPackId}
+            canManagePackLibrary={canManagePackLibrary}
+            onApprovePackExpert={handleApprovePackExpert}
+            onPublishPack={handlePublishPack}
+            pendingPackActionKey={pendingPackActionKey}
           />
         ) : activeTab === 'processes' ? (
           <AuditProcessesTab

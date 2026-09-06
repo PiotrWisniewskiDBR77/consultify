@@ -198,6 +198,14 @@ export interface AuditPackSummary {
   requiredRoles: string[];
   criteriaCount: number;
   updatedAt: string;
+  /**
+   * 1.1-A5: zatwierdzenie eksperckie PRZED publikacją (`packService.approveByExpert`).
+   * `null` dopóki nikt nie zatwierdził — `publishPack` (poniżej) odmawia
+   * (422 `AUDIT_PACK_NOT_PUBLISHABLE`) dopóki to pole jest puste
+   * (`packValidator.assertPublishable`). Backend zawsze wysyła to pole
+   * (`packService.mapPackRow`) — nie jest to opcjonalne poszerzenie kontraktu.
+   */
+  expertApprovedBy: string | null;
 }
 
 export interface AuditPackCriterionSummary {
@@ -485,6 +493,38 @@ export async function seedDemoPack(): Promise<AuditPackSummary | null> {
   const payload = unwrapEnvelope(res) as Record<string, unknown> | undefined;
   const pack = (payload?.pack ?? payload) as AuditPackSummary | undefined;
   return pack && pack.id ? pack : null;
+}
+
+/**
+ * `POST /audits/packs/:id/approve-expert` — 1.1-A5. Zatwierdzenie eksperckie
+ * PRZED publikacją (real backend gate, `packService.approveByExpert`).
+ * Trasa jest bramkowana `isPlatformAdmin(actor)` w `packs.routes.ts` (pakiety
+ * nie mają programu audytowego, po którym dałoby się sprawdzić rolę audytową
+ * — patrz komentarz na górze tego pliku routingu), NIE `requireCapability`.
+ */
+export async function approvePackByExpert(
+  id: string,
+  note?: string | null
+): Promise<AuditPackSummary | null> {
+  const res = await Api.post(
+    `/audits/packs/${encodeURIComponent(id)}/approve-expert`,
+    note ? { note } : {}
+  );
+  const payload = unwrapEnvelope(res) as AuditPackSummary | undefined;
+  return payload && payload.id ? payload : null;
+}
+
+/**
+ * `POST /audits/packs/:id/publish` — 1.1-A5. `draft`/`in_review` → `published`
+ * (real backend gate, `packService.publishPack`; wymaga wcześniejszego
+ * zatwierdzenia eksperckiego — `expertApprovedBy` — inaczej 422
+ * `AUDIT_PACK_NOT_PUBLISHABLE`). Ta sama bramka `isPlatformAdmin(actor)` co
+ * `approvePackByExpert` powyżej.
+ */
+export async function publishPack(id: string): Promise<AuditPackSummary | null> {
+  const res = await Api.post(`/audits/packs/${encodeURIComponent(id)}/publish`, {});
+  const payload = unwrapEnvelope(res) as AuditPackSummary | undefined;
+  return payload && payload.id ? payload : null;
 }
 
 // ---------------------------------------------------------------------------

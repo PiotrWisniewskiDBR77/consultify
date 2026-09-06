@@ -1,0 +1,65 @@
+ ✓ server/src/services/audits/__tests__/programOwnerFullChain.realdb.test.ts > program_owner — pełny łańcuch sesja → wynik → raport → wniosek (real Postgres) > program_owner SAM (bez lead_auditor/auditor) finalizuje wynik, tworzy, zatwierdza i publikuje raport, po czym rejestruje wniosek 118ms
+ ✓ server/src/services/audits/__tests__/programOwnerFullChain.realdb.test.ts > program_owner — pełny łańcuch sesja → wynik → raport → wniosek (real Postgres) > sanity: bez roli program_owner w OGÓLE (brak wpisu w audit_program_members) łańcuch jest zablokowany od pierwszego kroku 31ms
+ ✓ server/src/services/audits/__tests__/programOwnerFullChain.realdb.test.ts (2 tests) 171ms
+ ✓ server/src/routes/audits/__tests__/day41.reportChainReachability.pg.test.ts > Day 41 report-chain reachability on real PostgreSQL > finalizes an Output and creates the ordered, sealed 13-section report through HTTP 97ms
+ ✓ server/src/routes/audits/__tests__/day41.reportChainReachability.pg.test.ts > Day 41 report-chain reachability on real PostgreSQL > reaching closure through lifecycle transitions does not create an Output 79ms
+ ✓ server/src/routes/audits/__tests__/day41.reportChainReachability.pg.test.ts (2 tests) 15635ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > zapisuje wniosek i zwraca conclusionId odczytany po rodowodzie 203ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > pyta o TO SAMO uprawnienie, co powstanie raportu (report.draft na programie) 2ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > odmawia (403) bez roli audytowej i NIE zapisuje wniosku 4ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > zwraca 404 dla nieistniejącego raportu 1ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > zwraca 422 (nie 500) dla raportu bez treści wniosku 2ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts > POST /api/audits/reports/:id/conclusion > woli 500 z jawnym kodem niż udawany sukces, gdy zapis nie ma rodowodu 1ms
+ ✓ server/src/routes/audits/__tests__/reportConclusion.route.test.ts (6 tests) 216ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > draft powstaje TYLKO z ustaleń w statusie confirmed lub późniejszym — odrzuca draft/in_review/rejected 63ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > jedna propozycja może wynikać z KILKU ustaleń (domyślnie scala wskazane) 18ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > draft NIE powstaje automatycznie z każdej niezgodności — tylko z jawnie wskazanych ustaleń 17ms
+2026-09-06 19:00:06:06 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO audit_events ([39m
+2026-09-06 19:00:06:06 [31merror[39m: [31m[Postgres] Failed SQL: INSERT INTO audit_events ([39m
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > draft z filtrem: część ustaleń jest eligible a część nie — tylko eligible trafiają do propozycji 17ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > suggestSystemicProposals grupuje po potwierdzonej przyczynie źródłowej i NIE zapisuje niczego 12ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > rejestracja jako inicjatywa woła kanoniczny kreator i zapisuje lineage (registered_initiative_id, registered_at) 46ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > izolacja organizacji — propozycje z org A są niewidoczne dla org B 11ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts > proposalService (real Postgres) > draft wymaga co najmniej jednego wskazanego findingId 3ms
+ ✓ server/src/services/audits/__tests__/proposalService.test.ts (8 tests) 354ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 1. właściciel ustalenia nie może sam go zamknąć — nawet mając rolę lead_auditor 118ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 2. autor ustalenia nie może być jego recenzentem — nawet mając rolę reviewer 58ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 3. wykonawca działania nie weryfikuje sam skuteczności — nawet mając rolę auditor 42ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 4. członek organizacji bez roli audytowej w programie nie może zmienić ustalenia 13ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 5. akceptacja ryzyka rezydualnego wymaga roli program_owner (domyślna reguła pakietu) 21ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 5b. reguła decyzyjna pakietu może rozszerzyć akceptację ryzyka o dodatkową rolę 18ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts > segregationOfDuties — U4 > 6. nie można zamknąć ustalenia, jeśli jego działanie korygujące nie ma weryfikacji skuteczności 38ms
+ ✓ server/src/services/audits/__tests__/segregationOfDuties.test.ts (7 tests) 310ms
+ ✓ server/src/services/audits/__tests__/goldenFlow.e2e.test.ts > GOLDEN FLOW — audyt od pakietu do zamkniętego ustalenia > przechodzi pełny łańcuch i zachowuje traceability 206ms
+ ✓ server/src/services/audits/__tests__/goldenFlow.e2e.test.ts (1 test) 269ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > odrzuca ustalenie niezgodności bez wskazanego kryterium 86ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > odrzuca ustalenie niezgodności bez dowodu obiektywnego 25ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > przyjmuje ustalenie niezgodności z kryterium i dowodem 33ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > brak dowodu daje wyłącznie evidence_insufficient lub observation, nigdy niezgodność automatem 23ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > evidence_insufficient wciąż wymaga wskazanego kryterium 10ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > nadaje reference_code kolejno (F-1, F-2, F-3), nie losowo 18ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > blokuje zmianę klasyfikacji i istotności po zamknięciu ustalenia 27ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > przechodzi pełny cykl: confirm -> odpowiedź właściciela -> przegląd odpowiedzi 33ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > send_back i reject wymagają podania powodu 18ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > akceptacja ryzyka rezydualnego wymaga notatki i ustawia risk_accepted 22ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > getFindingStatistics agreguje po klasyfikacji, istotności i statusie jednym zapytaniem 17ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > detectSystemicFindings grupuje potwierdzone ustalenia po znormalizowanej przyczynie 40ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts > findingService > izoluje ustalenia między organizacjami 23ms
+ ✓ server/src/services/audits/__tests__/findingService.test.ts (13 tests) 377ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > blokuje finalizację, gdy program ma ustalenie w statusie draft 82ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > blokuje finalizację, gdy program ma ustalenie w statusie in_review 13ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > finalizeOutput odmawia dostępu aktorowi bez roli audytowej w programie (segregacja obowiązków) 8ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > Output jest niezmienny — moduł nie eksportuje żadnej funkcji update/edit/patch 0ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > izolacja organizacji — program bez outputów w org B nie widzi outputów org A; wiersz org A jest niewidoczny pod org B 44ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts > outputService (real Postgres) > cykl życia Outputu: finalizacja → wersja rośnie → hash deterministyczny → payload z provenance dowodu → diff wykrywa zmianę zgodności → supersede nie kasuje starej wersji 39ms
+ ✓ server/src/services/audits/__tests__/outputService.test.ts (6 tests) 256ms
+ ✓ server/src/services/audits/__tests__/lifecycleGates.test.ts > lifecycle gates — transitionLifecycle → fieldwork (Postgres realny — U3) > E.8 — blokuje 'fieldwork' bez snapshotu kryteriów i bez lead auditora, przepuszcza gdy oba są 109ms
+ ✓ server/src/services/audits/__tests__/lifecycleGates.test.ts (1 test) 232ms
+ ✓ server/src/services/audits/__tests__/programService.test.ts > programService (Postgres realny — U3) > E.1 — createProgramFromPack robi snapshot kryteriów i zachowuje hierarchię parent → child 71ms
+ ✓ server/src/services/audits/__tests__/programService.test.ts > programService (Postgres realny — U3) > E.2 — zmiana pakietu PO utworzeniu programu NIE zmienia kryteriów programu (immutability snapshotu) 33ms
+ ✓ server/src/services/audits/__tests__/programService.test.ts > programService (Postgres realny — U3) > E.7 — izolacja organizacji: program org A niewidoczny i niemodyfikowalny z org B 16ms
+ ✓ server/src/services/audits/__tests__/programService.test.ts (3 tests) 230ms
+ Test Files  10 passed (10)
+      Tests  49 passed (49)
+ Test Files  10 passed (10)
+      Tests  49 passed (49)

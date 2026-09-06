@@ -1,0 +1,81 @@
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > synchronously rejects a duplicate Start dispatch for the same pack 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > retains the Start key across remount/reload and rotates only after confirmed success 1ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes" 223ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > defaults to Library when ?tab= is absent 47ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens Conclusions when ?tab=conclusions is in the URL 30ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > redirects the legacy ?tab=outputs link to Conclusions 40ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > falls back to Processes for an unknown ?tab= value 40ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > writes the active tab into the URL when a tab is clicked 85ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the default Library tab 16ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > renders a real StandardTable element on the Sessions tab — `?tab=processes` still works, only the label changed 26ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > opens a canonical criterion workspace from the selected program 79ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > keeps the program preview mounted when canonical detail omits optional members 37ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > cold-opens the program preview from the canonical programId query deep link 22ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows an ErrorState with retry when the Library API call fails 48ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > shows the honest Conclusions EmptyState explaining where a conclusion comes from 20ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > renders exactly one chip row (verification), with visible zero counts, and no source-type chips 24ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > selecting a verification chip narrows the list to that single axis 31ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx > AuditsMethodHub > Library — single-axis Menu 3 (DEC-2026-08-25-66) > the Library verification chip row does not appear on the Sessions (processes) tab 21ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.test.tsx (18 tests) 791ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417c: Menu 2 ma dokładnie pięć zakładek, bez „Ustalenia” 155ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417c: stary deep link ?tab=findings nie wskrzesza zakładki — spada na Sesje 74ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Biblioteka' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 26ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Sesje' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 28ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Wnioski' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 24ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Raporty' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 33ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b/d: zakładka 'Inicjatywy' ma ≤3 chipy Menu 3, dropdown filtra w Menu 2 i własne CTA 22ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b: pełna lista etapów Sesji żyje w dropdownie Menu 2, nie w Menu 3 67ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417d: CTA „Nowa inicjatywa” otwiera generator inicjatyw (adapter audit) 40ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417e: CTA „Nowy wniosek” otwiera generator wniosku z raportu audytu 32ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417e: stary deep link ?tab=outputs prowadzi na Wnioski 46ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx > Audyty 1.1-A2 — jeden wzór Menu 3 i generatory per zakładka > DEC-417b: zakładka Inicjatywy nie renderuje już linijki disclaimera nad tabelą 23ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.menu3Generatory.test.tsx (12 tests) 573ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > renders a real StandardTable element, not a bespoke grid 44ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows a source-type chip AND a separate verification chip for every pack row (two axes, two columns) 28ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders a "norm…" label for the verified internal procedure — the exact bug this model fixes 17ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never gives the DEMONSTRATION source-type chip a success (emerald) shell 17ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > LEGACY chip never looks current — no emerald/blue/amber vivid fill (neutral shell) 15ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > VERIFIED gets the success (emerald) shell on the verification axis 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > changing verificationStatus never changes the rendered source-type label — same pack, four verification states 42ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > a pack with no source can never count as "published" in the UI — Start audit stays disabled with a visible reason 131ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows the "compliance-audit basis" pill as No for DEMONSTRATION, keeping it visibly distinct from a compliance audit 47ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > opens the docked preview on row click and disables "Start audit" for a draft pack with a visible reason 61ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > enables "Start audit" for a published pack that HAS a source, and calls onStartAudit 71ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows ErrorState with a working retry when the pack list failed to load 9ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > shows an explanatory EmptyState when there are no packs at all 11ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > never renders the raw technical packKey under the title (RAPORT_B #8) 13ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > kebab pakietu w statusie szkicu pokazuje OBIE pozycje, włączone, gdy actor może zarządzać biblioteką 18ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > klik „Zatwierdź (ekspert)" woła onApprovePackExpert z tym pakietem 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > po zatwierdzeniu eksperckim „Publikuj" jest włączony i woła onPublishPack 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > bez uprawnień administratora organizacji OBIE pozycje są widoczne, ale wyłączone z uczciwym powodem — nigdy ukryte 16ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > dla pakietu już opublikowanego obie pozycje kebaba są wyłączone 14ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluateApproveExpertGate: odmawia bez uprawnień, potem bez statusu przedpublikacyjnego, potem gdy już zatwierdzony, przepuszcza w przeciwnym razie 1ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx > AuditLibraryTab > 1.1-A5 — Zatwierdź (ekspert) / Publikuj w kebabie > evaluatePublishPackGate: odmawia bez uprawnień, gdy już opublikowany/wycofany, i gdy brak zatwierdzenia eksperckiego 0ms
+ ✓ src/components/Audit/method/__tests__/AuditLibraryTab.test.tsx (21 tests) 604ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.processesLabel.test.tsx > AuditsMethodHub — Sesje/Sessions label follows account language > shows "Sesje" for a Polish account, and `?tab=processes` still resolves to that tab 154ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.processesLabel.test.tsx (1 test) 155ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx > AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish) > does not render the CTA when the flag is OFF (localStorage override) 71ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx > AuditsMethodHub — "Nowy audyt" CTA (ff_auditsScaleAndPolish) > renders the CTA frozen (DEC-417) when the flag is ON (default): disabled, tooltip, no modal on click 44ms
+ ✓ src/components/Audit/method/__tests__/AuditsMethodHub.newAuditCta.test.tsx (2 tests) 116ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > reads an array and sibling total from the canonical packs envelope 31ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > reads the canonical programs list result and maps the service counters onto the UI-facing field names 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects a programs list row missing the service counters instead of rendering "/" and blank cells 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > maps the criterion-service coverage totals without silently rendering 0/0 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects coverage contract drift instead of substituting zeroes 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: missing success 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: unsuccessful envelope 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: missing data 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi canonical response contract > rejects malformed 200 instead of rendering a false empty state: wrong list shape 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > finalizes an Output through the canonical endpoint and returns its id 1ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a malformed finalize envelope 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a finalize response without an id 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > generates an audit report without silently adding product fields 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > passes the explicit remediation snapshot date 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts > auditsMethodApi report-chain commands > rejects a generated report response without an id 0ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.contract.test.ts (15 tests) 36ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.reportChainSourceGuard.test.ts > auditsMethodApi report-chain source guard > keeps both commands that make the server chain reachable from the client 29ms
+ ✓ src/components/Audit/method/__tests__/auditsMethodApi.reportChainSourceGuard.test.ts (1 test) 30ms
+ Test Files  7 passed (7)
+      Tests  70 passed (70)
+ Test Files  7 passed (7)
+      Tests  70 passed (70)
