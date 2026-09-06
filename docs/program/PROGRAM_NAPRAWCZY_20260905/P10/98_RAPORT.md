@@ -7,7 +7,7 @@
 ## Liczniki
 
 - Inwentarz: 19 pozycji = 8 rejestr + 11 poza rejestrem.
-- Karty z pełnym zrzutem otwartego realnego szczegółu: **1/19 (5,26%)** — notification.
+- Otwarte realne szczegóły: **1/19 (5,26%)** — notification. Karty spełniające cały próg zrzutu (wszystkie sekcje rozwinięte): **0/19 (0%)**.
 - Karty z kontraktem sekcji: 8 (7 kontraktów `KanonicznaKarta` + lokalny kontrakt raportu oceny).
 - Karty bez kontraktu sekcji: 11; każda ma propozycję, nie wdrożenie.
 - Sekcje widoczne na udanym zrzucie notification bez wiersza tabeli: 0.
@@ -37,13 +37,15 @@
 - Testy MyWork: 22/22 GREEN, 0 failed, 0 skipped (`/private/tmp/p10/notification.json`).
 - `esbuild MyWorkHub.tsx`: exit 0.
 - `check-list-canon`, `check-artefakt`, `check-teresa-kontrakty`: exit 0.
-- Pełny baseline Vitest uruchomiono przed pierwszą zmianą do `/private/tmp/p10/baza.json`; wynik końcowy należy odczytać po zakończeniu procesu — brak wyniku nie jest PASS.
+- Pełny baseline Vitest uruchomiono przed pierwszą zmianą z `--retry=0 --reporter=json --outputFile=/private/tmp/p10/baza.json`. Po około 29 minutach proces zakończył się OOM (`Ineffective mark-compacts near heap limit`, limit około 4 GB) i nie zapisał JSON-u. Status: **EVIDENCE_MISSING**, nie PASS i nie policzony czerwony test produktu.
 
 ## Commity
 
 - `4a291201af` — inwentarz i test kompletności rejestru.
 - `6a42c01427` — polska etykieta typu powiadomienia + dowód przed/po.
 - `e812df7e82` — zgodna etykieta Historia aktywności PL/EN.
+- `1552bb7bfd` — tabele 19 kart, raport, pytania i zrzuty (w tym jawne spinnery/listy).
+- `b46c3cefd6` — korekta formatowania tabeli decyzji.
 
 ## Niezmierzone i dlaczego
 
