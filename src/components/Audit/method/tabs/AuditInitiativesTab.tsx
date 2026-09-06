@@ -24,6 +24,9 @@ import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
 import { formatListDate } from '@/utils/listDateFormat';
 
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterAudit } from '@/components/Initiatives/Generator/adapters/audit';
+
 import { proposalStatusLabel, proposalStatusTone } from '../auditStatusTones';
 import {
   AUDIT_PROPOSAL_STATUSES,
@@ -64,6 +67,8 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transitioning, setTransitioning] = useState<string | null>(null);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  // DEC-413 — ten sam generator, co w Ocenie, Wywiadzie i Narzedziach.
+  const [generatorOtwarty, setGeneratorOtwarty] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -269,11 +274,21 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <p className="px-4 pt-4 text-xs text-c-text-muted">
-        {isPolish
-          ? 'To są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje.'
-          : 'These are local Proposal drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.'}
-      </p>
+      <div className="flex items-start justify-between gap-4 px-4 pt-4">
+        <p className="text-xs text-c-text-muted">
+          {isPolish
+            ? 'To są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje.'
+            : 'These are local Proposal drafts derived from audit findings — they are NOT registered Initiatives module items until someone explicitly registers them.'}
+        </p>
+        <button
+          type="button"
+          data-testid="audit-generate-initiatives"
+          onClick={() => setGeneratorOtwarty(true)}
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-navy-900 px-4 text-sm font-medium text-white transition-colors hover:bg-navy-800 dark:bg-[#F4F7FB] dark:text-navy-950 dark:hover:bg-[#DDE5EF] focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          {isPolish ? 'Generuj inicjatywy' : 'Generate initiatives'}
+        </button>
+      </div>
       <div className="flex min-h-0 flex-1">
         <div className="flex-1 min-w-0 overflow-auto p-4">
           {transitionError ? (
@@ -323,6 +338,18 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
           ) : null}
         />
       </div>
+
+      {/* JEDEN generator inicjatyw (DEC-413) — adapter `audit` wola istniejacy
+          POST /audits/proposals { programId, findingIds[] }
+          (`proposalService.draftProposalsFromFindings`). Konczy sie na
+          szkicach propozycji, bo promocja do realnej inicjatywy to osobne,
+          istniejace przejscie POST /audits/proposals/:id/register w kebabie. */}
+      <GeneratorInicjatywModal
+        isOpen={generatorOtwarty}
+        onClose={() => setGeneratorOtwarty(false)}
+        adaptery={[adapterAudit]}
+        onCompleted={() => load()}
+      />
     </div>
   );
 };

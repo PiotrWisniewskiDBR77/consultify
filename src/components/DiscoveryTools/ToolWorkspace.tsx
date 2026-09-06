@@ -21,7 +21,7 @@ import { formatListDate } from '@/utils/listDateFormat';
 
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterTool } from '@/components/Initiatives/Generator/adapters';
+import { adapterTool } from '@/components/Initiatives/Generator/adapters/tool';
 import ToolOutputsPanel from './report/ToolOutputsPanel';
 import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';

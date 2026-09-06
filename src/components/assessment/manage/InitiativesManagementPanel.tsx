@@ -37,7 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters/assessment';
 import { CanonicalInitiativeRegister } from '@/components/Initiatives/CanonicalInitiativeRegister';
 import type { InitiativeRegisterRow } from '@/components/Initiatives/initiativeRegisterColumns.shared';
 import { Api } from '@/services/api';

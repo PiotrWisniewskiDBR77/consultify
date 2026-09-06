@@ -113,7 +113,7 @@ import {
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters/assessment';
 import {
   AssessmentLibraryTab,
   METHODOLOGY_CATALOG,

@@ -88,7 +88,7 @@ import {
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
 import { hasDedicatedToolDocumentView } from '../DiscoveryTools/dedicatedToolTypes';
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterTool } from '@/components/Initiatives/Generator/adapters';
+import { adapterTool } from '@/components/Initiatives/Generator/adapters/tool';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { MyWorkTraceDocumentView } from '../DiscoveryTools/MyWorkTraceDocumentView';
 import {

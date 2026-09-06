@@ -70,7 +70,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { utworzAdapterInterview } from '@/components/Initiatives/Generator/adapters';
+import { utworzAdapterInterview } from '@/components/Initiatives/Generator/adapters/interview';
 import {
   InterviewCapabilityError,
   isInterviewCapabilityForbidden,

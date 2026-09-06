@@ -28,7 +28,7 @@ import { areasToFormData, formDataToAreas } from '@/components/assessment/drd/dr
 import { DRDAssessmentEditor } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
 import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
-import { adapterAssessment } from '@/components/Initiatives/Generator/adapters';
+import { adapterAssessment } from '@/components/Initiatives/Generator/adapters/assessment';
 import { AssessmentManagePanel } from '@/components/assessment/manage/AssessmentManagePanel';
 import { ReportTemplatePickerModal } from '@/components/assessment/modals/ReportTemplatePickerModal';
 import { RequestAccessModal, useAssessmentPermissions } from '@/components/assessment/permissions';
