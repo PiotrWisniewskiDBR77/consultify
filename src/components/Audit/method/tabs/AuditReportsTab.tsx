@@ -27,6 +27,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { StatusChip } from '@/components/ui/primitives/chips';
@@ -76,6 +77,9 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   onCountsChange,
 }) => {
   const navigate = useNavigate();
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [items, setItems] = useState<AuditReportSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -388,7 +392,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(row.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setSelectedId(row.id);
+        },
         editNote: isPolish
           ? 'Raport jest renderem Outputu — poprawka to nowa wersja, nie edycja tego wiersza.'
           : 'A report is a render of an Output — a correction is a new version, not an edit of this row.',
@@ -481,7 +488,10 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
           data={visibleItems}
           loading={loading}
           rowMenu={rowMenu}
-          onRowClick={(row) => setSelectedId(String(row.id))}
+          onRowClick={(row) => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          }}
           selectedRowId={selectedId}
           persistKey="audits.method.reports"
           // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy

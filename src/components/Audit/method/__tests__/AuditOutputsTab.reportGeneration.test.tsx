@@ -3,11 +3,17 @@
  *
  * DEC-417 (1.1-A3): flaga `ff_auditsReportChain` usunięta — akcje generowania
  * raportu są teraz widoczne zawsze, bez warunku.
+ *
+ * DEC-397b (1.1-K6): drugi opisany blok niżej — klik wiersza po zamknięciu
+ * panelu (X) ma go ponownie otworzyć (`jedenPanel.otworz()` w `onRowClick`/
+ * kebab „Podgląd", ten sam wzorzec co `InboxContent.tsx`, K5 2f5161f3b4).
  */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { resetJedenPanelForTests } from '@/components/shared/PreviewPane/useJedenPanel';
 
 vi.mock('../auditsMethodApi', async () => {
   const actual = await vi.importActual<typeof import('../auditsMethodApi')>('../auditsMethodApi');
@@ -150,5 +156,38 @@ describe('AuditOutputsTab report generation', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Output out-1 has already been superseded'
     );
+  });
+});
+
+describe('AuditOutputsTab — jeden prawy panel (DEC-397b, 1.1-K6)', () => {
+  beforeEach(() => {
+    vi.mocked(listOutputs).mockResolvedValue({ items: [output], total: 1 });
+    vi.mocked(generateReport).mockReset();
+    resetJedenPanelForTests();
+    localStorage.clear();
+  });
+
+  it('zamknij X → klik wiersza PONOWNIE otwiera panel (MUTACJA: usuń jedenPanel.otworz() w onRowClick → RED)', async () => {
+    const { container } = renderTab();
+
+    fireEvent.click(await screen.findByText('Audit 41 Output'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
+
+    const closeButton = within(
+      container.querySelector('[data-right-panel]') as HTMLElement
+    ).getByRole('button', { name: /close/i });
+    fireEvent.click(closeButton);
+    await waitFor(() => {
+      expect(container.querySelector('[data-right-panel]')).toBeNull();
+    });
+
+    // DEC-397b: pojedynczy klik wiersza — realna zmiana zaznaczenia z punktu
+    // widzenia użytkownika — ma PONOWNIE otworzyć panel, mimo wcześniejszego X.
+    fireEvent.click(await screen.findByText('Audit 41 Output'));
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
+    });
   });
 });

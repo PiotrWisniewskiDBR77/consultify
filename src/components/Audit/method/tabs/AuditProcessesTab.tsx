@@ -25,6 +25,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { DueChip, StatusChip } from '@/components/ui/primitives/chips';
@@ -84,6 +85,9 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   packTitleById = EMPTY_MAP,
   userNameById = EMPTY_MAP,
 }) => {
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId);
   const [detail, setDetail] = useState<AuditProgramDetail | null>(null);
   const [coverage, setCoverage] = useState<AuditProgramCoverage | null>(null);
@@ -347,7 +351,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
   // `programs` — zawężenie w jednym miejscu zamiast rzutowania w każdej akcji.
   const rowMenu = (rawRow: TableRow): StandardRowMenu => ({
     universalHandlers: {
-      preview: () => setSelectedId(String(rawRow.id)),
+      preview: () => {
+        jedenPanel.otworz();
+        setSelectedId(String(rawRow.id));
+      },
     },
   });
 
@@ -420,7 +427,10 @@ export const AuditProcessesTab: React.FC<AuditProcessesTabProps> = ({
           data={programs}
           loading={loading}
           rowMenu={rowMenu}
-          onRowClick={(row) => setSelectedId(String(row.id))}
+          onRowClick={(row) => {
+            jedenPanel.otworz();
+            setSelectedId(String(row.id));
+          }}
           selectedRowId={selectedId}
           persistKey="audits.method.processes"
           empty={{

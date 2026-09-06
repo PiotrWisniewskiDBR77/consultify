@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type StandardRowMenu, StandardPreview, StandardTable, type TableColumn, type TableRow } from '@/components/standard';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import type { ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ErrorState } from '@/components/shared/states';
 import { PriorityChip, type PriorityLevel, StatusChip } from '@/components/ui/primitives/chips';
@@ -70,6 +71,9 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
   onCountsChange,
   reloadToken = 0,
 }) => {
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [items, setItems] = useState<AuditProposalSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -238,7 +242,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
         },
       ],
       universalHandlers: {
-        preview: () => setSelectedId(row.id),
+        preview: () => {
+          jedenPanel.otworz();
+          setSelectedId(row.id);
+        },
         editNote: isPolish
           ? 'Szkic propozycji powstaje z ustalenia — treść edytuje się w warsztacie kryterium, nie tutaj.'
           : 'A Proposal draft is generated from a finding — edit its content in the criterion workspace, not here.',
@@ -312,7 +319,10 @@ export const AuditInitiativesTab: React.FC<AuditInitiativesTabProps> = ({
             data={visibleItems}
             loading={loading}
             rowMenu={rowMenu}
-            onRowClick={(row) => setSelectedId(String(row.id))}
+            onRowClick={(row) => {
+              jedenPanel.otworz();
+              setSelectedId(String(row.id));
+            }}
             selectedRowId={selectedId}
             persistKey="audits.method.initiatives"
             empty={{
