@@ -43,7 +43,7 @@ export const NotebookHeaderActions: React.FC<NotebookHeaderActionsProps> = ({
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>{t('notebook.notebookContent.label26', 'All notebooks')}</TooltipContent>
+          <TooltipContent side="bottom">{t('notebook.notebookContent.label26', 'All notebooks')}</TooltipContent>
         </Tooltip>
       ) : (
         <div className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised flex items-center justify-center">
@@ -62,7 +62,7 @@ export const NotebookHeaderActions: React.FC<NotebookHeaderActionsProps> = ({
             <Plus size={16} aria-hidden="true" />
           </button>
         </TooltipTrigger>
-        <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
+        <TooltipContent side="bottom">{t('myWork.notebook.new', 'New page')}</TooltipContent>
       </Tooltip>
       {onSearchAllNotebooks ? (
         <Tooltip>
@@ -71,14 +71,14 @@ export const NotebookHeaderActions: React.FC<NotebookHeaderActionsProps> = ({
               type="button"
               onClick={onSearchAllNotebooks}
               data-testid="notebook-search-all-button"
-              aria-label={t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}
+              aria-label={t('notebook.notebookContent.searchNotesButtonTooltip', 'Search notes')}
               className="p-1.5 rounded-lg bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised hover:brightness-110 transition-colors"
             >
               <Search size={16} aria-hidden="true" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>
-            {t('notebook.notebookContent.searchAllNotebooks', 'Search all notebooks')}
+          <TooltipContent side="bottom">
+            {t('notebook.notebookContent.searchNotesButtonTooltip', 'Search notes')}
           </TooltipContent>
         </Tooltip>
       ) : null}
