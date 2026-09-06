@@ -1,0 +1,110 @@
+{
+ "url": "http://127.0.0.1:3141/interview?tab=initiatives",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "[data-testid='interview-add-initiatives-cta']"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nInicjatywy\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nDodaj inicjatywy\nWszystkie\n13\nSzkice\n1\nDo przeglądu\n2\nPrzekazane dalej\n3\n\t\nINICJATYWA\n\t\nSTATUS\n\t\nPRIORYTET\n\t\nŹRÓDŁO\n\t\nDATA\n\t\n\n\t\nLegacy reporting cleanup initiative\n\t\nSzkic\n\t\nLow\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nContradiction clarification interviews\n\t\nSzkic\n\t\nLow\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nBenefits tracking model\n\t\nSzkic\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nException management board\n\t\nSzkic\n\t\nMedium\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nChange adoption champions network\n\t\nSzkic\n\t\nMedium\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nIT capacity buffer and sequencing\n\t\nSzkic\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nData lineage for critical KPI set\n\t\nSzkic\n\t\nMedium\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nWeekly transformation portfolio board\n\t\nPrzekazane dalej\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nDecision rights redesign for exceptions\n\t\nPrzekazane dalej\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nSMED pilot on Line 3\n\t\nPrzekazane dalej\n\t\nMedium\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nPlanning-to-execution handoff automation\n\t\nPrzekazane dalej\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nKPI contract and metric ownership\n\t\nDo przeglądu\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\n\n\t\nApproval SLA and escalation governance\n\t\nSzkic\n\t\nHigh\n\t\nWniosek\n\t\n5.09.2026\n\t\nGeneruj inicjatywy\n\nWybierz źródło i uruchom generator\n\n1. Źródło danych\nWnioski z wywiadu\nNa podstawie wybranych wniosków\n2. Wybierz wnioski\nExample: failed insight (for UI states)\nfailed\nRisk assessment: IT capacity constraint\ncompleted\nCross-session trends: data trust + manual work\ncompleted\nApprovals are the main bottleneck\ncompleted\nGenerating state sample: contradiction scan\ngenerating\nFailure state sample: provider timeout\nfailed\nMaterial quality scan: evidence completeness and confidence\ncompleted\nCross-interview comparison: role-based perspective gaps\ncompleted\nMaturity assessment: decision system and delivery reliability\ncompleted\nBetween the lines: hidden tensions in accountability model\ncompleted\nOpportunity scan: quick wins under 90 days\ncompleted\nRisk scan: dependency and readiness hotspots\ncompleted\nTrend map: recurring friction points in planning-to-execution\ncompleted\nExecutive synthesis: throughput, margin, and governance gaps\ncompleted\nLiczba inicjatyw\n−\n+\nOpcje zaawansowane\nAnuluj\nGeneruj inicjatywy",
+ "dom": {
+  "[data-testid='generator-krok-glowny'] input[type=checkbox]": {
+   "liczba": 14,
+   "boxy": [
+    {
+     "x": 374,
+     "y": 417,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 474,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 531,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 588,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 645,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 702,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 759,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 816,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 873,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 930,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 987,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 1044,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 1101,
+     "width": 16,
+     "height": 16
+    },
+    {
+     "x": 374,
+     "y": 1158,
+     "width": 16,
+     "height": 16
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T13:02:38.161Z"
+}

@@ -1,0 +1,28 @@
+{
+ "url": "http://127.0.0.1:3141/audit-programs?tab=initiatives",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Inicjatywy",
+  "[data-testid='audit-generate-initiatives']"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nAudyty\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nBiblioteka\nSesje\nWyniki\nRaporty\nUstalenia\nInicjatywy\nNowy audyt\n\nTo są lokalne szkice propozycji z ustaleń audytu — NIE są to zarejestrowane inicjatywy modułu Inicjatywy, dopóki ktoś jawnie ich nie zarejestruje.\n\nGeneruj inicjatywy\nTYTUŁ\n\t\nUSTALENIA ŹRÓDŁOWE\n\t\nPRIORYTET\n\t\nSTATUS\n\t\nZAKTUALIZOWANO\n\t\n\n\nBrak szkiców propozycji\n\nSzkic propozycji powstaje z ustalenia audytu podczas przeglądu ustaleń. Żadne ustalenie nie wygenerowało jeszcze propozycji.\n\nGeneruj inicjatywy\n\nWybierz źródło i uruchom generator\n\n1. Źródło danych\nUstalenia audytu\nNa podstawie potwierdzonych ustaleń\n2. Wybierz program audytu\n— wybierz program —\n3. Wybierz ustalenia\nNajpierw wybierz program audytu.\nLiczba inicjatyw\n−\n+\nOpcje zaawansowane\nAnuluj\nGeneruj inicjatywy",
+ "dom": {
+  "[data-testid='generator-krok-glowny'] option": {
+   "liczba": 1,
+   "boxy": [
+    null
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T13:03:47.243Z"
+}

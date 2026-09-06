@@ -1,0 +1,31 @@
+{
+ "url": "http://127.0.0.1:3141/discovery-tools?tab=initiatives",
+ "tytul": "Discovery Tools — Consultify",
+ "kliki": [
+  "[data-testid='tools-primary-cta']",
+  "text=SWOT — portfel produktowy robotyki"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nNarzędzia\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nBiblioteka\nSesje\nInsighty\nRaporty\nInicjatywy\nStatus: Wszystkie\nNowa inicjatywa\nWszystkie\n36\nSzkic\n7\nZaproponowane\n0\nZaplanowane\n0\nW trakcie\n0\nZakończony\n0\nAnulowane\n2\nINICJATYWA\n\t\nOŚ\n\t\nPRIORYTET\n\t\nSTATUS\n\t\nROI\n\t\nZADANIA\n\t\nAKTUALIZACJA\n\t\n\n\nDemand Forecasting ML Enhancement\n\t\nStrategiczna\n\t\nŚredni\n\t\nPrzegląd\n\t\n-\n\t\n0\n\t15 godzin temu\t\n\n\nAI Predictive Quality System\n\t\nStrategiczna\n\t\nWysoki\n\t\nZatwierdzone\n\t\n-\n\t\n0\n\t15 godzin temu\t\n\n\nProduct Data Platform (PDP) — Greenfield\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nSzkic\n\t\n-\n\t\n0\n\t1 dzień temu\t\n\n\nSOC Enhancement — SIEM Full Deployment\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nSzkic\n\t\n-\n\t\n0\n\t1 dzień temu\t\n\n\nDigital Skills Academy — Phase 1\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t1 dzień temu\t\n\n\nAutomated Changeover Optimization\n\t\nStrategiczna\n\t\nNiski\n\t\nSzkic\n\t\n-\n\t\n0\n\t2 dni temu\t\n\n\nMaster Data Management — Product Data\n\t\nStrategiczna\n\t\nWysoki\n\t\nZakończone\n\t\n-\n\t\n0\n\t2 dni temu\t\n\n\nOperator Upskilling Program — 50 Pilot\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t3 dni temu\t\n\n\nSupply Chain Visibility Dashboard\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t3 dni temu\t\n\n\nIoT Sensor Expansion — Remaining Assets\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t3 dni temu\t\n\n\nData Governance Framework\n\t\nStrategiczna\n\t\nWysoki\n\t\nSzkic\n\t\n-\n\t\n0\n\t3 dni temu\t\n\n\nReal-time Analytics Platform (BI Upgrade)\n\t\nStrategiczna\n\t\nWysoki\n\t\nSzkic\n\t\n-\n\t\n0\n\t4 dni temu\t\n\n\nOPC-UA Migration & Edge Gateway\n\t\nStrategiczna\n\t\nWysoki\n\t\nPrzegląd\n\t\n-\n\t\n0\n\t5 dni temu\t\n\n\nDigital Leadership KPI Dashboard\n\t\nStrategiczna\n\t\nNiski\n\t\nZakończone\n\t\n-\n\t\n0\n\t5 dni temu\t\n\n\nPredictive Maintenance — CNC Machines\n\t\nStrategiczna\n\t\nWysoki\n\t\nZatwierdzone\n\t\n-\n\t\n0\n\t5 dni temu\t\n\n\nMLOps Pipeline Setup\n\t\nStrategiczna\n\t\nŚredni\n\t\nAnulowane\n\t\n-\n\t\n0\n\t5 dni temu\t\n\n\nMES Full Rollout — Line 3 Deployment & Integration\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nW trakcie\n\t\n-\n\t\n0\n\t5 dni temu\t\n\n\nShop Floor Analytics Dashboard\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t6 dni temu\t\n\n\nIndustrial WiFi 6 Network Upgrade\n\t\nStrategiczna\n\t\nNiski\n\t\nAnulowane\n\t\n-\n\t\n0\n\t6 dni temu\t\n\n\nOT/IT Network Segmentation & Hardening\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nPrzegląd\n\t\n-\n\t\n0\n\t6 dni temu\t\n\n\nB2B Marketplace International Expansion\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t29.08.2026\t\n\n\nCustomer 360 & CRM Enhancement\n\t\nStrategiczna\n\t\nWysoki\n\t\nSzkic\n\t\n-\n\t\n0\n\t29.08.2026\t\n\n\nPLM-MES Integration for Recipe Management\n\t\nStrategiczna\n\t\nŚredni\n\t\nZablokowane\n\t\n-\n\t\n0\n\t28.08.2026\t\n\n\nEnergy Management & Carbon Tracking\n\t\nStrategiczna\n\t\nNiski\n\t\nZakończone\n\t\n-\n\t\n0\n\t28.08.2026\t\n\n\nEdge Computing Deployment — Plant A\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t27.08.2026\t\n\n\nProcess Mining — Finance & Procurement\n\t\nStrategiczna\n\t\nNiski\n\t\nSzkic\n\t\n-\n\t\n0\n\t27.08.2026\t\n\n\nChange Management & Digital Culture Program\n\t\nStrategiczna\n\t\nWysoki\n\t\nZatwierdzone\n\t\n-\n\t\n0\n\t26.08.2026\t\n\n\nOPC-UA Migration & Industrial Connectivity Standard\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nW trakcie\n\t\n-\n\t\n0\n\t26.08.2026\t\n\n\nDigital Academy — Enterprise-wide Program\n\t\nStrategiczna\n\t\nŚredni\n\t\nZablokowane\n\t\n-\n\t\n0\n\t26.08.2026\t\n\n\nDynamic Production Scheduling Pilot\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t25.08.2026\t\n\n\nERP-MES Real-time Integration\n\t\nStrategiczna\n\t\nWysoki\n\t\nSzkic\n\t\n-\n\t\n0\n\t25.08.2026\t\n\n\nAI Governance & Ethics Framework\n\t\nStrategiczna\n\t\nWysoki\n\t\nZatwierdzone\n\t\n-\n\t\n0\n\t25.08.2026\t\n\n\nEnterprise Data Platform Modernization\n\t\nStrategiczna\n\t\nKrytyczny\n\t\nW trakcie\n\t\n-\n\t\n0\n\t25.08.2026\t\n\n\nDigital Strategy Cascading Workshops\n\t\nStrategiczna\n\t\nŚredni\n\t\nZakończone\n\t\n-\n\t\n0\n\t24.08.2026\t\n\n\nIoT Product Enhancement — Remote Monitoring\n\t\nStrategiczna\n\t\nŚredni\n\t\nSzkic\n\t\n-\n\t\n0\n\t24.08.2026\t\n\n\nSupplier Portal & EDI Integration\n\t\nStrategiczna\n\t\nŚredni\n\t\nPrzegląd\n\t\n-\n\t\n0\n\t23.08.2026\t\nGeneruj inicjatywy\n\nWybierz źródło i uruchom generator\n\n1. Źródło danych\nSesja narzędzia\nNa podstawie zatwierdzonej sesji\n2. Wybierz sesję narzędzia\n— wybierz sesję —\nSWOT — portfel produktowy robotyki (dynamic-swot · APPROVED)\nSWOT — model serwisowy po wdrożeniu (dynamic-swot · APPROVED)\nSWOT — ekspansja DACH 2026 (dynamic-swot · APPROVED)\n3. Metodologia\nImpact × Feasibility\nMoSCoW\nRICE\nValue × Effort\nStrategic Fit\nLiczba inicjatyw\n−\n+\nOpcje zaawansowane\nAnuluj\nGeneruj inicjatywy",
+ "dom": {
+  "[data-testid='generator-krok-glowny'] option": {
+   "liczba": 4,
+   "boxy": [
+    null,
+    null,
+    null,
+    null
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T13:03:20.239Z"
+}
