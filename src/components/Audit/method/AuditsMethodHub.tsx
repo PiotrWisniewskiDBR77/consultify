@@ -1,27 +1,46 @@
 /**
  * AuditsMethodHub — kanoniczne pięć powierzchni kernela Audits
- * (Library · Processes · Outputs · Reports · Initiatives), montowane jako
+ * (Biblioteka · Sesje · Wyniki · Raporty · Inicjatywy), montowane jako
  * produkt pod `/audit-programs` nad jednym kontraktem `/api/audits`.
  *
  * Wzorzec 1:1 z `src/components/assessment/AssessmentHub.tsx`
  * (`FIVE_SURFACES_TAB_IDS`/`resolveFiveSurfacesTabFromUrl`/`setActiveTab`):
  * `?tab=` jest źródłem prawdy (przetrwa odświeżenie, wstecz/dalej, deep
  * link), domyślna zakładka to `library`, nieznana wartość → `processes`.
- * Dawny równoległy `AuditsHub` nad `/api/audit` nie jest już mounted; jego
- * write endpoints pozostają wycofane po stronie serwera.
  *
- * Menu 2 (StandardModuleBar): lupa (jedyny slot wyszukiwania w fasadzie) +
- * pięć pigułek zakładek — druga nazywa się „Sesje"/„Sessions" (Piotr,
- * P0 2026-08-13: „Processes" mylące dla klienta; id `?tab=processes`
- * ZOSTAJE dla zgodności istniejących linków — zmienia się WYŁĄCZNIE etykieta
- * widoczna). Menu 3: JEDEN tor chipów z licznikami — weryfikacja (Library) /
- * etap lifecycle (Processes) — na wbudowanym `chips`/`activeChip`/
- * `onChipChange` StandardModuleBar (kanon A3, DEC-2026-08-25-66: dwa stacked
- * rzędy chipów — typ źródła + weryfikacja — czytały się jako „czwarte menu";
- * `sourceType` zostaje filtrowalny przez lejek kolumny w `AuditLibraryTab`,
- * patrz `auditStatusTones.ts` dla obu osi danych). Bez liczników na
- * pigułkach zakładek (kanon: „bez liczników w Menu 2"; `StandardModuleTab`
- * nawet nie ma pola `count`, więc naruszenie nie jest tu fizycznie możliwe).
+ * ★ DEC-417b/c/d (właściciel, 06.09.2026, 7 zrzutów Audytów — 1.1-A2):
+ *
+ *  b) JEDEN WZÓR MENU 3 WE WSZYSTKICH ZAKŁADKACH. Słowa właściciela:
+ *     „Straszny bałagan w menu trzecim. Poukładaj, żeby było we wszystkich
+ *     zakładkach i funkcjonowało tak, jak powinno." Sesje miały 12 chipów
+ *     etapów wychodzących poza ekran, Biblioteka 5, Wyniki/Raporty ZERO,
+ *     Inicjatywy linijkę disclaimera zamiast Menu 3. Teraz KAŻDA zakładka ma
+ *     dokładnie ten sam kształt: dropdown z PEŁNĄ listą w Menu 2
+ *     (`Menu2PresetDropdown`, ten sam komponent co Inicjatywy/DEC-420 i
+ *     Wyniki/DEC-422) + Menu 3 z ≤3 chipami o największej wartości
+ *     decyzyjnej. Filtry kolumnowe w nagłówkach tabel zostają bez zmian.
+ *
+ *  c) ZAKŁADKA „USTALENIA" USUNIĘTA. Słowa właściciela: „Wywal Ustalenia z
+ *     tej zakładki — nie wiem, po co to jest." Ustalenia są i zostają
+ *     osiągalne tam, gdzie powstają: w warsztacie kryterium
+ *     (`workspace/FindingPanel.tsx`, wołacz `listFindings`). Serwer
+ *     (`/api/audits/findings`) i `listFindings` NIE są ruszane — czyta je
+ *     m.in. adapter `audit` generatora inicjatyw.
+ *
+ *  d) GENERATORY JAK W NARZĘDZIACH I OCENIE. Słowa właściciela: „Podpiąć
+ *     generator raportów, inicjatyw i insightów jak w pozostałych modułach.
+ *     Nic tu nie działa, ma działać dokładnie tak samo jak w Tools albo
+ *     Assessment." CTA jest teraz PER ZAKŁADKA i każde woła powierzchnię,
+ *     która ISTNIAŁA na serwerze przed tym zadaniem:
+ *       Biblioteka/Sesje → „Nowy audyt" (ZAMROŻONY, DEC-417 — bez zmian)
+ *       Wyniki           → „Nowy wynik"      → POST /audits/outputs/finalize
+ *       Raporty          → „Nowy raport"     → POST /audits/reports
+ *       Inicjatywy       → „Nowa inicjatywa" → GeneratorInicjatywModal
+ *                                              (adapter `audit`, DEC-413)
+ *     WNIOSKI (insighty): pojęcia „wniosek audytu" NIE MA w kodzie — brak
+ *     endpointu, brak producenta, żaden kod nie pisze do CONCLUSION_LAYER z
+ *     `sourceModule='audit'`. Zakładki „Wnioski" świadomie NIE budujemy
+ *     (zakaz atrap) — to zadanie na osobny dyżur, gdy silnik powstanie.
  */
 import {
   ClipboardList,
@@ -30,7 +49,6 @@ import {
   Lightbulb,
   Package,
   Plus,
-  ShieldCheck,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -42,6 +60,9 @@ import {
   StandardModuleBar,
   type StandardModuleTab,
 } from '@/components/standard';
+import { Menu2PresetDropdown, type Menu2PresetOption } from '@/components/Initiatives/Menu2PresetDropdown';
+import { GeneratorInicjatywModal } from '@/components/Initiatives/Generator/GeneratorInicjatywModal';
+import { adapterAudit } from '@/components/Initiatives/Generator/adapters/audit';
 import type { StatusTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import {
@@ -49,16 +70,21 @@ import {
   persistentCommandId,
 } from '@/services/initiatives-execution/persistentCommandId';
 import { useAppStore } from '@/store/useAppStore';
-import { isAuditsFindingsAndReportViewEnabled } from '@/utils/auditsFindingsAndReportViewFlag';
 import { isAuditsScaleAndPolishEnabled } from '@/utils/auditsScaleAndPolishFlag';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { NewAuditModal } from './NewAuditModal';
+import { NewAuditOutputModal } from './NewAuditOutputModal';
+import { NewAuditReportModal } from './NewAuditReportModal';
 import {
   packVerificationLabel,
   packVerificationTone,
   programLifecycleLabel,
   programLifecycleTone,
+  proposalStatusLabel,
+  proposalStatusTone,
+  reportStatusLabel,
+  reportStatusTone,
 } from './auditStatusTones';
 import {
   createProgram,
@@ -67,12 +93,13 @@ import {
   listPrograms,
   AUDIT_VERIFICATION_STATES,
   AUDIT_LIFECYCLE_STATES,
+  AUDIT_PROPOSAL_STATUSES,
+  AUDIT_REPORT_STATUSES,
   type AuditPackSummary,
   type AuditProgramSummary,
   type AuditVerificationState,
   type AuditLifecycleState,
 } from './auditsMethodApi';
-import { AuditFindingsTab } from './tabs/AuditFindingsTab';
 import { AuditInitiativesTab } from './tabs/AuditInitiativesTab';
 import { AuditLibraryTab } from './tabs/AuditLibraryTab';
 import { AuditOutputsTab } from './tabs/AuditOutputsTab';
@@ -84,7 +111,6 @@ export type AuditsMethodTabId =
   | 'processes'
   | 'outputs'
   | 'reports'
-  | 'findings'
   | 'initiatives';
 
 export function claimAuditStart(inFlight: Set<string>, packId: string): boolean {
@@ -103,27 +129,30 @@ export function auditStartFingerprint(
   return `${organizationId}:${userId}:${packId}`;
 }
 
-// `findings` (U4 rejestr niezgodności/CAPA) is flag-gated
-// (`ff_auditsFindingsAndReportView`, default ON since 2026-08-27 owner
-// accept — CLAUDE.md #7). Included in the valid-id set only when the flag
-// resolves ON, so a stale `?tab=findings` link from a session predating the
-// flip still resolves correctly (and would fall back to `processes` if the
-// flag were ever forced OFF via localStorage/query), exactly like any other
-// unknown tab id.
-const BASE_TAB_IDS: AuditsMethodTabId[] = [
+const TAB_IDS: AuditsMethodTabId[] = [
   'library',
   'processes',
   'outputs',
   'reports',
   'initiatives',
 ];
-const TAB_IDS: AuditsMethodTabId[] = isAuditsFindingsAndReportViewEnabled()
-  ? (['library', 'processes', 'outputs', 'reports', 'findings', 'initiatives'] as AuditsMethodTabId[])
-  : BASE_TAB_IDS;
 const TAB_ID_SET = new Set<string>(TAB_IDS);
 
-/** Nieznana/legacy wartość `?tab=` → `processes` (nigdy `library`, żeby nie
- * ukrywać błędnego linku pod domyślnym stanem). Brak parametru → `library`. */
+/**
+ * Menu 3 niesie ≤3 chipy NA KAŻDEJ zakładce (DEC-417b). To są te trzy — jeden
+ * wzór, jedna lista, żadnej zakładki-wyjątku. Pełna lista wartości mieszka w
+ * dropdownie Menu 2 obok (`Menu2PresetDropdown`), więc nic nie znika z
+ * produktu — zmienia się tylko miejsce, w którym się je wybiera.
+ */
+const MENU3_LIBRARY: AuditVerificationState[] = ['VERIFIED', 'PENDING_REVIEW'];
+const MENU3_PROCESSES: AuditLifecycleState[] = ['planning', 'fieldwork'];
+const MENU3_OUTPUTS = ['current', 'superseded'] as const;
+const MENU3_REPORTS = ['draft', 'published'] as const;
+const MENU3_INITIATIVES = ['draft', 'registered'] as const;
+
+/** Nieznana/legacy wartość `?tab=` (w tym `findings` sprzed DEC-417c) →
+ * `processes` (nigdy `library`, żeby nie ukrywać błędnego linku pod
+ * domyślnym stanem). Brak parametru → `library`. */
 function resolveTabFromUrl(raw: string | null): AuditsMethodTabId {
   if (!raw) return 'library';
   return TAB_ID_SET.has(raw) ? (raw as AuditsMethodTabId) : 'processes';
@@ -185,18 +214,27 @@ export const AuditsMethodHub: React.FC = () => {
   }, [searchParams]);
 
   const [search, setSearch] = useState('');
-  // Library ma DWIE osie w danych (`sourceType` + `verificationStatus`, patrz
-  // nagłówek pliku i `auditStatusTones.ts`), ale Menu 3 kanonicznie niesie
-  // TYLKO JEDNĄ (DEC-2026-08-25-66 — dwa stacked rzędy chipów czytały się jako
-  // "czwarte menu"; ten sam wzorzec co Processes' `processesChips` — jeden
-  // tor). `sourceType` zostaje filtrowalny przez lejek w nagłówku kolumny
-  // tabeli (`AuditLibraryTab` → `filterable`/`filterOptions` na kolumnie
-  // „Typ źródła") — mechanika kolumnowa działa niezależnie od stanu tutaj.
+  // JEDEN stan filtra na zakładkę — ten sam obsługuje chip Menu 3 i dropdown
+  // Menu 2 (wzorzec `activeLifecyclePreset` z InitiativesHub). Wybór wartości
+  // spoza trójki Menu 3 po prostu nie podświetla żadnego chipa.
   const [libraryVerification, setLibraryVerification] = useState<'all' | AuditVerificationState>(
     'all'
   );
   const [processesLifecycle, setProcessesLifecycle] = useState<'all' | AuditLifecycleState>('all');
+  const [outputsStatus, setOutputsStatus] = useState<'all' | 'current' | 'superseded'>('all');
+  const [reportsStatus, setReportsStatus] = useState<string>('all');
+  const [initiativesStatus, setInitiativesStatus] = useState<string>('all');
+
   const [reportsReloadToken, setReportsReloadToken] = useState(0);
+  const [outputsReloadToken, setOutputsReloadToken] = useState(0);
+  const [initiativesReloadToken, setInitiativesReloadToken] = useState(0);
+
+  // Liczniki dla zakładek, których dane wczytuje sam tab (Wyniki/Raporty/
+  // Inicjatywy). Tab raportuje rozkład statusów, Hub rysuje z tego chipy i
+  // dropdown — bez drugiego pobrania tej samej listy.
+  const [outputsCounts, setOutputsCounts] = useState<Record<string, number>>({});
+  const [reportsCounts, setReportsCounts] = useState<Record<string, number>>({});
+  const [initiativesCounts, setInitiativesCounts] = useState<Record<string, number>>({});
 
   const [packsAll, setPacksAll] = useState<AuditPackSummary[]>([]);
   const [packsLoading, setPacksLoading] = useState(true);
@@ -266,33 +304,150 @@ export const AuditsMethodHub: React.FC = () => {
     [programsAll, processesLifecycle]
   );
 
-  const verificationChips: StandardCounterChip[] = useMemo(
+  const allLabel = isPolish ? 'Wszystkie' : 'All';
+
+  // ── Menu 3: ≤3 chipy · Menu 2: pełna lista w dropdownie ───────────────────
+  const libraryChips: StandardCounterChip[] = useMemo(
     () => [
-      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: packsAll.length },
-      ...AUDIT_VERIFICATION_STATES.map((value) => ({
+      { id: 'all', label: allLabel, count: packsAll.length },
+      ...MENU3_LIBRARY.map((value) => ({
         id: value,
         label: packVerificationLabel(value, isPolish),
         count: packsAll.filter((p) => p.verificationStatus === value).length,
         dot: TONE_DOT_CLASS[packVerificationTone(value)],
       })),
     ],
-    [packsAll, isPolish]
+    [packsAll, isPolish, allLabel]
+  );
+
+  const libraryOptions: Menu2PresetOption[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: packsAll.length },
+      ...AUDIT_VERIFICATION_STATES.map((value) => ({
+        id: value,
+        label: packVerificationLabel(value, isPolish),
+        count: packsAll.filter((p) => p.verificationStatus === value).length,
+      })),
+    ],
+    [packsAll, isPolish, allLabel]
   );
 
   const processesChips: StandardCounterChip[] = useMemo(
     () => [
-      { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: programsAll.length },
-      ...AUDIT_LIFECYCLE_STATES.map((value) => ({
+      { id: 'all', label: allLabel, count: programsAll.length },
+      ...MENU3_PROCESSES.map((value) => ({
         id: value,
         label: programLifecycleLabel(value, isPolish),
         count: programsAll.filter((p) => p.lifecycleState === value).length,
         dot: TONE_DOT_CLASS[programLifecycleTone(value)],
       })),
     ],
-    [programsAll, isPolish]
+    [programsAll, isPolish, allLabel]
+  );
+
+  const processesOptions: Menu2PresetOption[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: programsAll.length },
+      ...AUDIT_LIFECYCLE_STATES.map((value) => ({
+        id: value,
+        label: programLifecycleLabel(value, isPolish),
+        count: programsAll.filter((p) => p.lifecycleState === value).length,
+      })),
+    ],
+    [programsAll, isPolish, allLabel]
+  );
+
+  const outputStatusLabel = useCallback(
+    (id: string) =>
+      id === 'current'
+        ? isPolish
+          ? 'Aktualne'
+          : 'Current'
+        : isPolish
+          ? 'Zastąpione'
+          : 'Superseded',
+    [isPolish]
+  );
+
+  const outputsChips: StandardCounterChip[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: outputsCounts.all ?? 0 },
+      ...MENU3_OUTPUTS.map((value) => ({
+        id: value,
+        label: outputStatusLabel(value),
+        count: outputsCounts[value] ?? 0,
+        dot: TONE_DOT_CLASS[value === 'current' ? 'success' : 'neutral'],
+      })),
+    ],
+    [outputsCounts, outputStatusLabel, allLabel]
+  );
+
+  const outputsOptions: Menu2PresetOption[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: outputsCounts.all ?? 0 },
+      ...MENU3_OUTPUTS.map((value) => ({
+        id: value,
+        label: outputStatusLabel(value),
+        count: outputsCounts[value] ?? 0,
+      })),
+    ],
+    [outputsCounts, outputStatusLabel, allLabel]
+  );
+
+  const reportsChips: StandardCounterChip[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: reportsCounts.all ?? 0 },
+      ...MENU3_REPORTS.map((value) => ({
+        id: value,
+        label: reportStatusLabel(value, isPolish),
+        count: reportsCounts[value] ?? 0,
+        dot: TONE_DOT_CLASS[reportStatusTone(value)],
+      })),
+    ],
+    [reportsCounts, isPolish, allLabel]
+  );
+
+  const reportsOptions: Menu2PresetOption[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: reportsCounts.all ?? 0 },
+      ...AUDIT_REPORT_STATUSES.map((value) => ({
+        id: value,
+        label: reportStatusLabel(value, isPolish),
+        count: reportsCounts[value] ?? 0,
+      })),
+    ],
+    [reportsCounts, isPolish, allLabel]
+  );
+
+  const initiativesChips: StandardCounterChip[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: initiativesCounts.all ?? 0 },
+      ...MENU3_INITIATIVES.map((value) => ({
+        id: value,
+        label: proposalStatusLabel(value, isPolish),
+        count: initiativesCounts[value] ?? 0,
+        dot: TONE_DOT_CLASS[proposalStatusTone(value)],
+      })),
+    ],
+    [initiativesCounts, isPolish, allLabel]
+  );
+
+  const initiativesOptions: Menu2PresetOption[] = useMemo(
+    () => [
+      { id: 'all', label: allLabel, count: initiativesCounts.all ?? 0 },
+      ...AUDIT_PROPOSAL_STATUSES.map((value) => ({
+        id: value,
+        label: proposalStatusLabel(value, isPolish),
+        count: initiativesCounts[value] ?? 0,
+      })),
+    ],
+    [initiativesCounts, isPolish, allLabel]
   );
 
   const [newAuditModalOpen, setNewAuditModalOpen] = useState(false);
+  const [newOutputModalOpen, setNewOutputModalOpen] = useState(false);
+  const [newReportModalOpen, setNewReportModalOpen] = useState(false);
+  const [generatorInicjatywOpen, setGeneratorInicjatywOpen] = useState(false);
   const scaleAndPolishEnabled = useMemo(() => isAuditsScaleAndPolishEnabled(), []);
 
   const [startingPackId, setStartingPackId] = useState<string | null>(null);
@@ -367,80 +522,115 @@ export const AuditsMethodHub: React.FC = () => {
     [currentOrganizationId, currentUserId, isPolish, search, setActiveTab]
   );
 
-  const tabs: StandardModuleTab[] = useMemo(() => {
-    const base: StandardModuleTab[] = [
+  const tabs: StandardModuleTab[] = useMemo(
+    () => [
       {
         id: 'library',
-        label: t('audits.method.tabs.library', 'Library'),
+        label: t('audits.method.tabs.library', isPolish ? 'Biblioteka' : 'Library'),
         icon: <Library size={16} />,
       },
       {
         id: 'processes',
         // Id URL zostaje `processes` (linki/deep-linki nie mogą się zepsuć) —
-        // zmienia się WYŁĄCZNIE etykieta widoczna. Etykieta jest teraz w
-        // `audits.method.tabs.processes` (PL „Sesje” / EN „Sessions”) —
-        // dodane do `public/locales/*/translation.json` 2026-08-17.
+        // zmienia się WYŁĄCZNIE etykieta widoczna (PL „Sesje" / EN „Sessions").
         label: t('audits.method.tabs.processes', isPolish ? 'Sesje' : 'Sessions'),
         icon: <ClipboardList size={16} />,
       },
       {
         id: 'outputs',
-        label: t('audits.method.tabs.outputs', 'Outputs'),
+        label: t('audits.method.tabs.outputs', isPolish ? 'Wyniki' : 'Outputs'),
         icon: <Package size={16} />,
       },
       {
         id: 'reports',
-        label: t('audits.method.tabs.reports', 'Reports'),
+        label: t('audits.method.tabs.reports', isPolish ? 'Raporty' : 'Reports'),
         icon: <FileText size={16} />,
       },
-    ];
-    if (isAuditsFindingsAndReportViewEnabled()) {
-      base.push({
-        id: 'findings',
-        label: t('audits.method.tabs.findings', isPolish ? 'Ustalenia' : 'Findings'),
-        icon: <ShieldCheck size={16} />,
-      });
-    }
-    base.push({
-      id: 'initiatives',
-      label: t('audits.method.tabs.initiatives', 'Initiatives'),
-      icon: <Lightbulb size={16} />,
-    });
-    return base;
-  }, [t, isPolish]);
+      {
+        id: 'initiatives',
+        label: t('audits.method.tabs.initiatives', isPolish ? 'Inicjatywy' : 'Initiatives'),
+        icon: <Lightbulb size={16} />,
+      },
+    ],
+    [t, isPolish]
+  );
 
-  // Menu 3 = JEDEN tor (kanon A3/DEC-2026-08-25-66) — Library i Processes
-  // dzielą dokładnie ten sam wbudowany `chips`/`activeChip`/`onChipChange`
-  // mechanizm StandardModuleBar, zero escape-hatchu `commandRowContent`.
-  const chips =
-    activeTab === 'library'
-      ? verificationChips
-      : activeTab === 'processes'
-        ? processesChips
-        : undefined;
-  const activeChip =
-    activeTab === 'library'
-      ? libraryVerification
-      : activeTab === 'processes'
-        ? processesLifecycle
-        : null;
-  const onChipChange =
-    activeTab === 'library'
-      ? (id: string) => setLibraryVerification(id as 'all' | AuditVerificationState)
-      : activeTab === 'processes'
-        ? (id: string) => setProcessesLifecycle(id as 'all' | AuditLifecycleState)
-        : undefined;
+  // JEDEN wzór Menu 3 / Menu 2 dla wszystkich pięciu zakładek (DEC-417b).
+  const menu3: Record<
+    AuditsMethodTabId,
+    {
+      chips: StandardCounterChip[];
+      options: Menu2PresetOption[];
+      value: string;
+      onChange: (id: string) => void;
+      dropdownLabel: string;
+      testId: string;
+    }
+  > = {
+    library: {
+      chips: libraryChips,
+      options: libraryOptions,
+      value: libraryVerification,
+      onChange: (id) => setLibraryVerification(id as 'all' | AuditVerificationState),
+      dropdownLabel: t('audits.method.filters.verification', isPolish ? 'Weryfikacja' : 'Verification'),
+      testId: 'audits-library-verification-dropdown',
+    },
+    processes: {
+      chips: processesChips,
+      options: processesOptions,
+      value: processesLifecycle,
+      onChange: (id) => setProcessesLifecycle(id as 'all' | AuditLifecycleState),
+      dropdownLabel: t('audits.method.filters.stage', isPolish ? 'Etap' : 'Stage'),
+      testId: 'audits-processes-stage-dropdown',
+    },
+    outputs: {
+      chips: outputsChips,
+      options: outputsOptions,
+      value: outputsStatus,
+      onChange: (id) => setOutputsStatus(id as 'all' | 'current' | 'superseded'),
+      dropdownLabel: t('audits.method.filters.status', 'Status'),
+      testId: 'audits-outputs-status-dropdown',
+    },
+    reports: {
+      chips: reportsChips,
+      options: reportsOptions,
+      value: reportsStatus,
+      onChange: setReportsStatus,
+      dropdownLabel: t('audits.method.filters.status', 'Status'),
+      testId: 'audits-reports-status-dropdown',
+    },
+    initiatives: {
+      chips: initiativesChips,
+      options: initiativesOptions,
+      value: initiativesStatus,
+      onChange: setInitiativesStatus,
+      dropdownLabel: t('audits.method.filters.status', 'Status'),
+      testId: 'audits-initiatives-status-dropdown',
+    },
+  };
+
+  const activeMenu3 = menu3[activeTab];
+
+  const filterControls = (
+    <Menu2PresetDropdown
+      label={activeMenu3.dropdownLabel}
+      options={activeMenu3.options}
+      value={activeMenu3.value}
+      onChange={activeMenu3.onChange}
+      data-testid={activeMenu3.testId}
+    />
+  );
 
   // Rozwiązywanie ID → nazwa dla kolumn/podglądu w Reports/Outputs/
   // Initiatives/Processes. `/api/audits/{reports,outputs,proposals}` NIE
   // dołącza `programName`/`finalizedByName`/`leadAuditorName` (zweryfikowano
   // w `server/src/services/audits/{reportService,outputService,programService}.ts`
   // — te pola nie istnieją w wierszu, tylko `*Id`); frontendowy typ je
-  // deklarował, ale zawsze renderowały się jako „—”. Zamiast dotykać
-  // backendu (poza zakresem DEC-2026-08-25-66, czysto UI), rozwiązujemy je
-  // tutaj z danych, które Hub już wczytuje (`programsAll`, `packsAll`) plus
-  // jedno dodatkowe pobranie listy użytkowników organizacji — dokładnie wzór
-  // `authorNameById` z `DiscoveryToolsHub.tsx`.
+  // deklarował, ale zawsze renderowały się jako „—". Zamiast dotykać
+  // backendu, rozwiązujemy je tutaj z danych, które Hub już wczytuje
+  // (`programsAll`, `packsAll`) plus jedno dodatkowe pobranie listy
+  // użytkowników organizacji — dokładnie wzór `authorNameById` z
+  // `DiscoveryToolsHub.tsx`.
   const programNameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of programsAll) map.set(p.id, p.name);
@@ -476,6 +666,57 @@ export const AuditsMethodHub: React.FC = () => {
     return map;
   }, [orgUsers]);
 
+  // CTA per zakładka (DEC-417d). Biblioteka i Sesje dzielą ten sam,
+  // ZAMROŻONY „Nowy audyt" (DEC-417) — reszta woła realny generator.
+  const frozenNewAuditCta = {
+    label: t('audits.method.newAudit.cta', isPolish ? 'Nowy audyt' : 'New audit'),
+    icon: Plus,
+    // DEC-417 (06.09, uwaga właściciela 15:29): "Nowy audyt" zamrożony
+    // do fali 2 — procedura wgrywania założeń (norma/formatka) i
+    // generator pytań audytowych jeszcze nie istnieją. Przycisk
+    // zostaje w Menu 2, ale natywnie `disabled` (bez toastu, bez
+    // modalu) — `onClick` jest tu tylko dla zgodności typu, nigdy
+    // się nie wywoła (patrz `disabled` w StandardModuleBar).
+    onClick: () => setNewAuditModalOpen(true),
+    disabled: true,
+    disabledReason: t(
+      'audits.method.newAudit.frozenReason',
+      isPolish
+        ? 'Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.'
+        : 'Frozen until wave 2: uploading audit assumptions and the question generator.'
+    ),
+    testId: 'audits-method-new-audit-cta',
+  };
+
+  const primaryCta =
+    activeTab === 'library' || activeTab === 'processes'
+      ? scaleAndPolishEnabled
+        ? frozenNewAuditCta
+        : undefined
+      : activeTab === 'outputs'
+        ? {
+            label: t('audits.method.newOutput.cta', isPolish ? 'Nowy wynik' : 'New output'),
+            icon: Plus,
+            onClick: () => setNewOutputModalOpen(true),
+            testId: 'audits-method-new-output-cta',
+          }
+        : activeTab === 'reports'
+          ? {
+              label: t('audits.method.newReport.cta', isPolish ? 'Nowy raport' : 'New report'),
+              icon: Plus,
+              onClick: () => setNewReportModalOpen(true),
+              testId: 'audits-method-new-report-cta',
+            }
+          : {
+              label: t(
+                'audits.method.newInitiative.cta',
+                isPolish ? 'Nowa inicjatywa' : 'New initiative'
+              ),
+              icon: Plus,
+              onClick: () => setGeneratorInicjatywOpen(true),
+              testId: 'audits-method-new-initiative-cta',
+            };
+
   return (
     <StandardModuleBar
       tabs={tabs}
@@ -483,32 +724,11 @@ export const AuditsMethodHub: React.FC = () => {
       onTabChange={setActiveTab}
       onSearch={setSearch}
       searchValue={search}
-      chips={chips}
-      activeChip={activeChip}
-      onChipChange={onChipChange}
-      primaryCta={
-        scaleAndPolishEnabled
-          ? {
-              label: t('audits.method.newAudit.cta', isPolish ? 'Nowy audyt' : 'New audit'),
-              icon: Plus,
-              // DEC-417 (06.09, uwaga właściciela 15:29): "Nowy audyt" zamrożony
-              // do fali 2 — procedura wgrywania założeń (norma/formatka) i
-              // generator pytań audytowych jeszcze nie istnieją. Przycisk
-              // zostaje w Menu 2, ale natywnie `disabled` (bez toastu, bez
-              // modalu) — `onClick` jest tu tylko dla zgodności typu, nigdy
-              // się nie wywoła (patrz `disabled` w StandardModuleBar).
-              onClick: () => setNewAuditModalOpen(true),
-              disabled: true,
-              disabledReason: t(
-                'audits.method.newAudit.frozenReason',
-                isPolish
-                  ? 'Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.'
-                  : 'Frozen until wave 2: uploading audit assumptions and the question generator.'
-              ),
-              testId: 'audits-method-new-audit-cta',
-            }
-          : undefined
-      }
+      chips={activeMenu3.chips}
+      activeChip={activeMenu3.value}
+      onChipChange={activeMenu3.onChange}
+      filterControls={filterControls}
+      primaryCta={primaryCta}
     >
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab === 'library' ? (
@@ -538,22 +758,27 @@ export const AuditsMethodHub: React.FC = () => {
             isPolish={isPolish}
             programNameById={programNameById}
             userNameById={userNameById}
+            statusFilter={outputsStatus}
+            onCountsChange={setOutputsCounts}
+            reloadToken={outputsReloadToken}
             onReportCreated={() => setReportsReloadToken((value) => value + 1)}
           />
         ) : activeTab === 'reports' ? (
           <AuditReportsTab
             isPolish={isPolish}
             programNameById={programNameById}
+            statusFilter={reportsStatus}
+            onCountsChange={setReportsCounts}
             reloadToken={reportsReloadToken}
           />
-        ) : activeTab === 'findings' ? (
-          <AuditFindingsTab
-            isPolish={isPolish}
-            programs={programsAll}
-            userNameById={userNameById}
-          />
         ) : (
-          <AuditInitiativesTab isPolish={isPolish} programNameById={programNameById} />
+          <AuditInitiativesTab
+            isPolish={isPolish}
+            programNameById={programNameById}
+            statusFilter={initiativesStatus}
+            onCountsChange={setInitiativesCounts}
+            reloadToken={initiativesReloadToken}
+          />
         )}
       </div>
       {scaleAndPolishEnabled ? (
@@ -566,6 +791,36 @@ export const AuditsMethodHub: React.FC = () => {
           starting={startingPackId !== null}
         />
       ) : null}
+      <NewAuditOutputModal
+        open={newOutputModalOpen}
+        onClose={() => setNewOutputModalOpen(false)}
+        programs={programsAll}
+        isPolish={isPolish}
+        onGoToSessions={() => setActiveTab('processes')}
+        onFinalized={() => {
+          setOutputsReloadToken((value) => value + 1);
+          void loadPrograms();
+        }}
+      />
+      <NewAuditReportModal
+        open={newReportModalOpen}
+        onClose={() => setNewReportModalOpen(false)}
+        isPolish={isPolish}
+        programNameById={programNameById}
+        onGoToOutputs={() => setActiveTab('outputs')}
+        onGenerated={() => setReportsReloadToken((value) => value + 1)}
+      />
+      {/* JEDEN generator inicjatyw (DEC-413) — adapter `audit` woła istniejący
+          POST /audits/proposals { programId, findingIds[] }
+          (`proposalService.draftProposalsFromFindings`). DEC-417d: wołanie
+          przeniesione z przycisku wewnątrz zakładki do CTA Menu 2 — JEDNO
+          wejście, dokładnie jak w Narzędziach i Ocenie. */}
+      <GeneratorInicjatywModal
+        isOpen={generatorInicjatywOpen}
+        onClose={() => setGeneratorInicjatywOpen(false)}
+        adaptery={[adapterAudit]}
+        onCompleted={() => setInitiativesReloadToken((value) => value + 1)}
+      />
     </StandardModuleBar>
   );
 };

@@ -16,7 +16,7 @@
  * pojedynczego wiersza tej listy).
  */
 import { CheckCircle2, FileText, Send } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -53,6 +53,13 @@ export interface AuditReportsTabProps {
    */
   programNameById?: Map<string, string>;
   reloadToken?: number;
+  /**
+   * DEC-417b (1.1-A2): filtr statusu wybrany w Menu 3 / dropdownie Menu 2
+   * Huba (`all` albo jedna z `AUDIT_REPORT_STATUSES`).
+   */
+  statusFilter?: string;
+  /** Rozkład statusów dla liczników chipów/dropdownu Menu 2 (Hub rysuje). */
+  onCountsChange?: (counts: Record<string, number>) => void;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -66,6 +73,8 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   isPolish,
   programNameById = EMPTY_MAP,
   reloadToken = 0,
+  statusFilter = 'all',
+  onCountsChange,
 }) => {
   const reportChainEnabled = isAuditsReportChainEnabled();
   const navigate = useNavigate();
@@ -95,6 +104,20 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
   useEffect(() => {
     load();
   }, [load, reloadToken]);
+
+  // Liczniki dla Menu 3/Menu 2 — z TEJ SAMEJ listy, którą widać w tabeli.
+  useEffect(() => {
+    const counts: Record<string, number> = { all: items.length };
+    for (const status of AUDIT_REPORT_STATUSES) {
+      counts[status] = items.filter((r) => r.status === status).length;
+    }
+    onCountsChange?.(counts);
+  }, [items, onCountsChange]);
+
+  const visibleItems = useMemo(
+    () => (statusFilter === 'all' ? items : items.filter((r) => r.status === statusFilter)),
+    [items, statusFilter]
+  );
 
   const runTransition = useCallback(
     async (id: string, action: 'approve' | 'publish') => {
@@ -457,25 +480,22 @@ export const AuditReportsTab: React.FC<AuditReportsTabProps> = ({
         ) : null}
         <StandardTable
           columns={columns}
-          data={items}
+          data={visibleItems}
           loading={loading}
           rowMenu={rowMenu}
           onRowClick={(row) => setSelectedId(String(row.id))}
           selectedRowId={selectedId}
           persistKey="audits.method.reports"
+          // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
+          // raport" w Menu 2 (wynik → typ → Generuj) istnieje niezależnie od
+          // `ff_auditsReportChain`, więc wariant „ścieżka nie jest dostępna z
+          // ekranu" stał się nieprawdą w momencie podpięcia generatora.
           empty={{
             icon: FileText,
             title: isPolish ? 'Brak raportów' : 'No reports yet',
             description: isPolish
-              ? reportChainEnabled
-                ? // FIX-4 (dyżur 41, odbiór): pusty stan wskazywał nieistniejącą
-                  // etykietę „Wystaw raport” — realny kebab Outputów (AuditOutputsTab.tsx)
-                  // ma dwie osobne pozycje: „Generuj raport audytu” / „Generuj raport naprawczy”.
-                  'Raport powstaje z Outputu programu audytowego. Otwórz zakładkę Outputy i użyj akcji „Generuj raport audytu” lub „Generuj raport naprawczy”.'
-                : 'Raport powstaje z Outputu programu audytowego. W tej wersji interfejsu ścieżka wystawienia raportu nie jest dostępna z ekranu.'
-              : reportChainEnabled
-                ? 'A report is issued from a program Output. Open Outputs and use “Generate audit report” or “Generate remediation report”.'
-                : 'A report is issued from a program Output. The report-issuance path is not available from the screen in this interface version.',
+              ? 'Raport poaudytowy powstaje z zatwierdzonego wyniku audytu. Zacznij od przycisku „Nowy raport” w pasku modułu.'
+              : 'A post-audit report is generated from an approved audit output. Start with “New report” in the module bar.',
           }}
         />
       </div>

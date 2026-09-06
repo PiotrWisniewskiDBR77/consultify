@@ -11,7 +11,7 @@
  * Żyje wyłącznie w panelu podglądu (klik wiersza / kebab „Podgląd").
  */
 import { FileText, Package, Wrench } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -49,6 +49,16 @@ export interface AuditOutputsTabProps {
   programNameById?: Map<string, string>;
   userNameById?: Map<string, string>;
   onReportCreated?: (report: AuditReportSummary) => void;
+  /**
+   * DEC-417b (1.1-A2): filtr statusu wybrany w Menu 3 / dropdownie Menu 2
+   * Huba. `all` = bez filtra; `current`/`superseded` = oś `supersededBy`,
+   * ta sama, którą pokazuje kolumna „Status".
+   */
+  statusFilter?: 'all' | 'current' | 'superseded';
+  /** Rozkład statusów dla liczników chipów/dropdownu Menu 2 (Hub rysuje). */
+  onCountsChange?: (counts: Record<string, number>) => void;
+  /** Wymuszone przeładowanie po wygenerowaniu wyniku z CTA Menu 2. */
+  reloadToken?: number;
 }
 
 const EMPTY_MAP = new Map<string, string>();
@@ -58,6 +68,9 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
   programNameById = EMPTY_MAP,
   userNameById = EMPTY_MAP,
   onReportCreated,
+  statusFilter = 'all',
+  onCountsChange,
+  reloadToken = 0,
 }) => {
   const reportChainEnabled = isAuditsReportChainEnabled();
   const [items, setItems] = useState<AuditOutputSummary[]>([]);
@@ -85,7 +98,25 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, reloadToken]);
+
+  // Liczniki dla Menu 3/Menu 2 — liczone z TEJ SAMEJ listy, którą widać
+  // w tabeli (żadnego drugiego pobrania).
+  useEffect(() => {
+    onCountsChange?.({
+      all: items.length,
+      current: items.filter((o) => !o.supersededBy).length,
+      superseded: items.filter((o) => !!o.supersededBy).length,
+    });
+  }, [items, onCountsChange]);
+
+  const visibleItems = useMemo(
+    () =>
+      statusFilter === 'all'
+        ? items
+        : items.filter((o) => (statusFilter === 'superseded' ? !!o.supersededBy : !o.supersededBy)),
+    [items, statusFilter]
+  );
 
   const createReport = useCallback(
     async (
@@ -314,22 +345,23 @@ export const AuditOutputsTab: React.FC<AuditOutputsTabProps> = ({
         ) : null}
         <StandardTable
           columns={columns}
-          data={items}
+          data={visibleItems}
           loading={loading}
           rowMenu={rowMenu}
           onRowClick={(row) => setSelectedId(String(row.id))}
           selectedRowId={selectedId}
           persistKey="audits.method.outputs"
+          // DEC-417d: opis mówi PRAWDĘ o dzisiejszej drodze — CTA „Nowy
+          // wynik" w Menu 2 istnieje niezależnie od `ff_auditsReportChain`
+          // (ta flaga bramkuje kebab raportów, nie finalizację), więc stary
+          // wariant „ta czynność nie jest dostępna z ekranu" stał się
+          // nieprawdą w momencie podpięcia generatora.
           empty={{
             icon: Package,
-            title: isPolish ? 'Brak Outputów' : 'No Outputs yet',
+            title: isPolish ? 'Brak wyników' : 'No outputs yet',
             description: isPolish
-              ? reportChainEnabled
-                ? 'Output powstaje przez osobną, jawną finalizację programu audytowego. Otwórz sesję na zakładce Sesje i użyj „Sfinalizuj Output”.'
-                : 'Output powstaje przez osobną, jawną finalizację programu audytowego. W tej wersji interfejsu ta czynność nie jest dostępna z ekranu.'
-              : reportChainEnabled
-                ? 'An Output is created by a separate, explicit audit-program finalization. Open the session on Sessions and use “Finalize Output”.'
-                : 'An Output is created by a separate, explicit audit-program finalization. This action is not available from the screen in this interface version.',
+              ? 'Wynik audytu powstaje przez osobną, jawną finalizację sesji audytowej. Zacznij od przycisku „Nowy wynik” w pasku modułu.'
+              : 'An audit output is created by a separate, explicit audit-session finalization. Start with “New output” in the module bar.',
           }}
         />
       </div>

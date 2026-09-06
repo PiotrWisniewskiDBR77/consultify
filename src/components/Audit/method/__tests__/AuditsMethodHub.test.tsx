@@ -233,27 +233,25 @@ describe('AuditsMethodHub', () => {
 
   // flip po akcepcie właściciela 27.08: ff_auditsFindingsAndReportView now
   // defaults ON (was OFF), so the 6th "Findings" tab is present by default.
-  it('renders exactly six tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
+  // DEC-417c (właściciel, 06.09.2026): „Wywal Ustalenia z tej zakładki — nie
+  // wiem, po co to jest." Menu 2 ma DOKŁADNIE pięć zakładek.
+  it('renders exactly five tabs in the required order — second tab reads "Sessions", not "Processes"', async () => {
     setupApiMocks();
     renderHub();
     await waitFor(() => expect(mockedListPacks).toHaveBeenCalled());
 
-    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Findings', 'Initiatives'].map(
-      (label) => screen.getByRole('tab', { name: label })
+    const tabButtons = ['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives'].map((label) =>
+      screen.getByRole('tab', { name: label })
     );
-    expect(tabButtons).toHaveLength(6);
-    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Findings·Initiatives order.
+    expect(tabButtons).toHaveLength(5);
+    // Order in the DOM must match the required Library·Sessions·Outputs·Reports·Initiatives order.
     const allTabs = screen.getAllByRole('tab').map((b) => b.textContent);
-    expect(allTabs).toEqual([
-      'Library',
-      'Sessions',
-      'Outputs',
-      'Reports',
-      'Findings',
-      'Initiatives',
-    ]);
+    expect(allTabs).toEqual(['Library', 'Sessions', 'Outputs', 'Reports', 'Initiatives']);
     // "Processes" must not leak anywhere as a tab label.
     expect(screen.queryByRole('tab', { name: 'Processes' })).toBeNull();
+    // "Findings"/„Ustalenia" must not come back as a tab.
+    expect(screen.queryByRole('tab', { name: 'Findings' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: 'Ustalenia' })).toBeNull();
   });
 
   it('defaults to Library when ?tab= is absent', async () => {
@@ -269,7 +267,7 @@ describe('AuditsMethodHub', () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
     await waitFor(() => expect(mockedListOutputs).toHaveBeenCalled());
-    expect(screen.getByText('No Outputs yet')).toBeInTheDocument();
+    expect(screen.getByText('No outputs yet')).toBeInTheDocument();
   });
 
   it('falls back to Processes for an unknown ?tab= value', async () => {
@@ -359,9 +357,11 @@ describe('AuditsMethodHub', () => {
   it('shows the honest Outputs EmptyState explaining why the list is empty', async () => {
     setupApiMocks();
     renderHub(['/audit-programs/method?tab=outputs']);
-    await waitFor(() => expect(screen.getByText('No Outputs yet')).toBeInTheDocument());
-    expect(screen.getByText(/separate, explicit audit-program finalization/i)).toBeInTheDocument();
-    expect(screen.queryByText(/use “Finalize Output”/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('No outputs yet')).toBeInTheDocument());
+    expect(screen.getByText(/separate, explicit audit-session finalization/i)).toBeInTheDocument();
+    // DEC-417d: pusty stan kieruje do REALNEGO wejścia (CTA Menu 2), a nie do
+    // kontrolki, która przy `ff_auditsReportChain` OFF w ogóle się nie renderuje.
+    expect(screen.getByText(/“New output” in the module bar/i)).toBeInTheDocument();
   });
 
   describe('Library — single-axis Menu 3 (DEC-2026-08-25-66)', () => {
@@ -372,6 +372,9 @@ describe('AuditsMethodHub', () => {
     // `sourceType` remains filterable through the table's own column-header
     // filter (`AuditLibraryTab`'s `filterable`/`filterOptions` on that
     // column) — unaffected by this change.
+    // DEC-417b (1.1-A2): Menu 3 niesie ≤3 chipy; PEŁNA lista wartości
+    // weryfikacji przeniosła się do dropdownu „Weryfikacja" w Menu 2, więc
+    // z produktu nic nie zniknęło — zmieniło się miejsce wyboru.
     it('renders exactly one chip row (verification), with visible zero counts, and no source-type chips', async () => {
       setupApiMocks();
       renderHub();
@@ -379,8 +382,14 @@ describe('AuditsMethodHub', () => {
 
       expect(screen.getByTestId('standard-chip-VERIFIED')).toBeInTheDocument();
       // A value with zero packs still shows its chip with a "0".
-      const evidenceMissingChip = screen.getByTestId('standard-chip-EVIDENCE_MISSING');
-      expect(within(evidenceMissingChip).getByText('0')).toBeInTheDocument();
+      const pendingChip = screen.getByTestId('standard-chip-PENDING_REVIEW');
+      expect(within(pendingChip).getByText('0')).toBeInTheDocument();
+
+      // ≤3 chips in Menu 3 — the rest of the verification axis lives in the
+      // Menu 2 dropdown, not as a fourth/fifth chip.
+      expect(screen.queryByTestId('standard-chip-EVIDENCE_MISSING')).toBeNull();
+      expect(screen.queryByTestId('standard-chip-UNVERIFIED')).toBeNull();
+      expect(screen.getByTestId('audits-library-verification-dropdown')).toBeInTheDocument();
 
       // The old source-type chip row is gone — no chip for a source-type
       // value exists anywhere in Menu 3.
@@ -410,7 +419,7 @@ describe('AuditsMethodHub', () => {
       renderHub(['/audit-programs/method?tab=processes']);
       await waitFor(() => expect(screen.getByText('Q3 Compliance Audit')).toBeInTheDocument());
       expect(screen.queryByTestId('standard-chip-VERIFIED')).toBeNull();
-      expect(screen.queryByTestId('standard-chip-EVIDENCE_MISSING')).toBeNull();
+      expect(screen.queryByTestId('standard-chip-PENDING_REVIEW')).toBeNull();
       // Sessions keeps its own single-axis lifecycle chip row, unaffected.
       expect(screen.getByTestId('standard-chip-fieldwork')).toBeInTheDocument();
     });

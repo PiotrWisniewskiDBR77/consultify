@@ -31066,8 +31066,26 @@
         "processes": "Sesje",
         "outputs": "Wyniki",
         "reports": "Raporty",
-        "findings": "Ustalenia",
         "initiatives": "Inicjatywy"
+      },
+      "filters": {
+        "verification": "Weryfikacja",
+        "stage": "Etap",
+        "status": "Status"
+      },
+      "newAudit": {
+        "cta": "Nowy audyt",
+        "frozenReason": "Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.",
+        "title": "Nowy audyt"
+      },
+      "newOutput": {
+        "cta": "Nowy wynik"
+      },
+      "newReport": {
+        "cta": "Nowy raport"
+      },
+      "newInitiative": {
+        "cta": "Nowa inicjatywa"
       }
     }
   },
