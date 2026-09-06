@@ -55,6 +55,7 @@ import {
   type DrdSkipReasonCode,
 } from '@/components/method-workspace/skipReasonCodes';
 import { useAssessmentSaveIndicator } from '@/hooks/useAssessmentSaveIndicator';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { DRD_METHOD_PACK_ID } from '@/method-core/methods/drd/compileDrdPack';
 import {
   isOfflineError,
@@ -577,7 +578,11 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     return {
       question: q,
       answerState,
-      answerText: text,
+      // ★ Pole „Twoja odpowiedź" jest kontrolowane. Bez `draftAnswerText`
+      // pierwszeństwa wpisany (albo podyktowany) tekst znikał do czasu, aż
+      // autozapis wróci ze zdarzeniem — wyglądało to jak „mikrofon nie tworzy
+      // notatki" (uwaga właściciela 06.09 15:10).
+      answerText: draftAnswerText[q.questionId] ?? text,
       evidenceState: evidenceStateFor(events, activeArea.id, activeProgression.blockedAtLevel),
       evidenceCount: evidenceCountForUnit,
       evidenceStrength: evidenceStrengthForUnit,
@@ -676,49 +681,80 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
     [runtime, canWrite, activeArea.id, focusLevelFallback]
   );
 
+  // ★ „Zapytaj Teresę" (uwaga właściciela 06.09 15:10: „on w ogóle nie jest
+  // aktywny"). PRZYCZYNA: wołacz istniał i wołał `runtime.createTeresaPreview`,
+  // ale panel, który jako JEDYNY rysował te propozycje, został wyjęty z
+  // powłoki hotfixem 30eb0a1140 — wynik nie miał gdzie się pokazać. Zamiast
+  // wracać z panelem do nagłówka, kierujemy pytanie tam, gdzie wg DEC-404
+  // mieszka wejście do Teresy: globalny dok czatu (Menu 1), z kontekstem
+  // pytania. Żadnego drugiego czatu nie budujemy.
+  //
+  // Brak `canWrite` w warunku jest celowy: pytanie do Teresy to akcja
+  // CZYTAJĄCA — sesja tylko do odczytu nie może odbierać prawa do pomocy.
+  const openChatWithContext = useOpenChatWithContext();
+
   const handleAskTeresa = useCallback(
-    async (questionId: string) => {
-      if (!runtime || !canWrite) return;
-      const evidence = evidenceEventsFor(events, activeArea.id);
-      await runtime.createTeresaPreview({
-        capabilityId: 'draft_score_proposal',
-        unitId: activeArea.id,
-        level: focusLevelFallback,
-        questionId,
-        invokedBy: 'local_action',
-        statements: [
-          evidence.length > 0
-            ? {
-                kind: 'confirmed_fact' as const,
-                text: `Zebrano ${evidence.length} dowód/-ody dla tej jednostki.`,
-                sourceRefs: evidence.map((e) => e.id),
-              }
-            : {
-                kind: 'missing_evidence' as const,
-                text: 'Brak dowodu dla tej jednostki na tym poziomie.',
-                sourceRefs: [],
-              },
-          {
-            kind: 'proposal' as const,
-            text: `Proponowany poziom: ${focusLevelFallback} na podstawie odpowiedzi respondenta.`,
-            sourceRefs: [],
-          },
-        ],
-        proposedChanges: [
-          {
-            target: 'score_proposal',
-            targetId: activeArea.id,
-            before: null,
-            after: focusLevelFallback,
-          },
-        ],
-        quality: {
-          verdict: evidence.length > 0 ? 'valid' : 'needs_human_review',
-          failedChecks: evidence.length > 0 ? [] : ['lists_supporting_evidence'],
+    async (
+      questionId: string,
+      topic: 'explain' | 'compare_levels' | 'examples' = 'explain'
+    ) => {
+      const question =
+        focusQuestions.find((q) => q.questionId === questionId) ?? focusQuestions[0] ?? null;
+      const unitName = activeArea.namePL || activeArea.name;
+      const axisName = activeAxis.namePL || activeAxis.name;
+      const currentAnswer = (draftAnswerText[questionId] ?? questionAnswerState(events, questionId).text ?? '').trim();
+      const wording = question?.canonicalWording ?? '(treść pytania niedostępna)';
+      const ask =
+        topic === 'compare_levels'
+          ? `Wytłumacz różnicę między poziomem ${focusLevelFallback - 1}, ${focusLevelFallback} i ${focusLevelFallback + 1} dla tej jednostki.`
+          : topic === 'examples'
+            ? 'Podaj konkretne przykłady i dowody, jakich mam szukać przy tym pytaniu.'
+            : 'Wytłumacz to pytanie i podpowiedz, jak na nie rzetelnie odpowiedzieć.';
+
+      const teresaPrompt = [
+        `Metoda: DRD (Digital Readiness Diagnostic), oś: ${axisName}.`,
+        `Jednostka: ${unitName} (${activeArea.id}), poziom: ${focusLevelFallback}.`,
+        `Pytanie: ${wording}`,
+        currentAnswer
+          ? `Moja obecna odpowiedź: ${currentAnswer}`
+          : 'Moja obecna odpowiedź: (jeszcze pusta)',
+        ask,
+      ].join('\n');
+
+      await openChatWithContext({
+        entityType: 'assessment',
+        entityId: state?.session?.id ?? activeArea.id,
+        entityName: `Ocena DRD — ${unitName}`,
+        pmoContext: state?.session?.id ? { assessmentId: state.session.id } : undefined,
+        reuseActiveConversation: true,
+        contextData: {
+          methodPackId: DRD_METHOD_PACK_ID,
+          methodName: 'DRD — Digital Readiness Diagnostic',
+          axisName,
+          unitId: activeArea.id,
+          unitName,
+          level: focusLevelFallback,
+          questionId,
+          questionWording: wording,
+          currentAnswer,
+          topic,
+          teresaPrompt,
         },
       });
     },
-    [runtime, canWrite, events, activeArea.id, focusLevelFallback]
+    [
+      openChatWithContext,
+      focusQuestions,
+      activeArea.id,
+      activeArea.name,
+      activeArea.namePL,
+      activeAxis.name,
+      activeAxis.namePL,
+      focusLevelFallback,
+      draftAnswerText,
+      events,
+      state?.session?.id,
+    ]
   );
 
   const handleUnitNav = useCallback(
@@ -1120,7 +1156,7 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             onSave: () => void saveNow(),
             onNext: () => handleUnitNav(1),
             onSkip: (reasonCode) => void handleSkip(reasonCode),
-            onAskTeresa: (questionId) => void handleAskTeresa(questionId),
+            onAskTeresa: (questionId, topic) => void handleAskTeresa(questionId, topic),
             canGoBack: true,
             canGoNext: true,
           }}
