@@ -26,7 +26,6 @@ kolejny agent rozlicza się tym samym arkuszem postępu”. Ten plik = jedyny pu
 ## 2. Robotnicy W TOKU (worktree · gałąź · co · co zrobić z meldunkiem)
 | worktree | gałąź | zadanie | po meldunku |
 |---|---|---|---|
-| `/private/tmp/wt-11k5` | `mvp/1-1-k5-podglad-wraca-na-klik` | DEC-397b: po zamknięciu X klik wiersza otwiera podgląd (useJedenPanel, wszystkie listy) | obejrzyj 2 zrzuty → merge (§4) → wiersz w rejestrze |
 | `/private/tmp/wt-11r4` | `mvp/1-1-r4-karty-wynikow` | DEC-422d: karty KPI/OKR/ROI = karty N (pigułka w pasku modułu, Menu 5 Pracuj z AI, sticky, rejestr `metric/objective/roi_case`) | zrzuty 3 kart + sticky → merge → wiersz; sprawdź `ResultsKpiScorecardDetailPage.tsx:609` `'search'→'reports'` (R2 znalezisko) |
 | `/private/tmp/wt-11m2b` | `mvp/1-1-m2-materialy-standard-menu` | DEC-423b/c/d: Materiały standard Menu 2 (Status z „Robocze”, Widoczność, widok, CTA; bez „Pokaż robocze”/„Filtry”), Menu 3 ≤3, Arkusze bez „Źródeł danych”, Biblioteka: Galeria/Tabela w Menu 2, formaty+źródła = Menu 3, „Nowy wzorzec” zamrożony | 7 zrzutów → merge → wiersz; potem właściciel dostaje kartę Materiałów |
 | `/private/tmp/wt-11a2` | `mvp/1-1-a2-audyty-menu3-generatory` | DEC-417b/c/d: Audyty Menu 3 jeden wzór, bez „Ustaleń”, CTA per zakładka na istniejących silnikach | zrzuty 5 zakładek → merge → wiersz |
@@ -40,15 +39,16 @@ Robotnicy piszą meldunki jako wynik Agenta (task-notification). SendMessage do 
    (status · kto zmienia · z→na · gdzie widać · co blokuje · kto nadaje priorytet) dla Inicjatyw, Wywiadu→inicjatywy,
    Oceny→inicjatywy, Narzędzi→inicjatywy, Audytów→propozycje, Realizacji→handoff; do akceptu właściciela; potem Codex (wklejka 9).
    Wejście: R3 znalezisko (draft KPI omija maker-checker), I2 (6 słowników statusów).
-3. **Znaleziska do rozliczenia** (małe Sonnet): `OrgContextSummaryBanner.tsx:246` „Zapytaj Teresę o kontekst organizacji” (K4 nie ruszył);
+3. **K6 (Sonnet)**: DEC-397b w 23 ekranach osadzających `JedenPrawyPanel` bezpośrednio (InterviewHub, MyProjects, taby Audytów/Oceny, MeetingHub) — ten sam `otworz()` w ich click-handlerach + aktualizacja `InterviewHub.jedenPanel.test.tsx`.
+4. **Znaleziska do rozliczenia** (małe Sonnet): `OrgContextSummaryBanner.tsx:246` „Zapytaj Teresę o kontekst organizacji” (K4 nie ruszył);
    sekcja AKCJE w Podglądzie inicjatywy „0” z 3-zdaniowym tłumaczeniem; `TaskDetailView`/`DecisionDetailView` auto-zapis AI bez propozycji (K3);
    `PORTFOLIO_HEALTH` raport → DATABASE_ERROR; tytuły raportów zarządczych po angielsku (serwis); `ReportBuilder/TemplatePickerModal.tsx` EN+crimson;
    chipy TYP wniosków po angielsku (Wywiad); `dev-render/screens/audyty-drd-report.tsx` + e2e `aud-g4.spec.ts` wskazują usuniętą trasę;
    `playwright.config.ts:58` martwa zmienna PARTNER_SELF_CONNECT; 11 zastanych czerwonych `assessment/drd` po hotfixie Teresy;
    `GET /api/conclusions` synchronizuje całą org przy odczycie (O3); `InitiativesHub.smoke.test.tsx` fałszywy PASS (sessionStorage).
-4. **Po pushu**: `railway variable delete` ×3 na stagingu (`VITE_INTERVIEW_PIPELINE_STEPPER`, `VITE_INTERVIEW_PENDING_REVIEW_TAB`,
+5. **Po pushu**: `railway variable delete` ×3 na stagingu (`VITE_INTERVIEW_PIPELINE_STEPPER`, `VITE_INTERVIEW_PENDING_REVIEW_TAB`,
    `VITE_TOOLS_INSIGHTS_WIRING`; kod usunięty) — TYLKO gdy nic się nie buduje (zmiana zmiennej = redeploy).
-5. Pozostałe z planu: 1.9 re-audyt na danych właściciela, S1.11 zamrożenie tagami, S1.12 przekazanie do pojemnika 2,
+6. Pozostałe z planu: 1.9 re-audyt na danych właściciela, S1.11 zamrożenie tagami, S1.12 przekazanie do pojemnika 2,
    demo F1–F5 (runbook `docs/program/demo-pilotaz/`).
 
 ## 4. Procedura odbioru meldunku (obowiązkowa, w tej kolejności)
