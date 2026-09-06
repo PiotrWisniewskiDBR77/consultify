@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import {
@@ -39,14 +40,18 @@ interface Row extends TableRow {
   dueAt: string;
   source: D;
 }
-const cols: TableColumn[] = [
-  { id: 'title', label: 'Handoff', sortable: true },
-  { id: 'initiativeId', label: 'Initiative', sortable: true },
-  { id: 'pack', label: 'Frozen package', sortable: true },
-  { id: 'caseId', label: 'Execution Case', sortable: true },
-  { id: 'dueAt', label: 'Due', sortable: true },
-];
 export const HandoffAcceptanceQueue = () => {
+  /* Kolejka jest częścią Skrzynki, a Skrzynka mówi po polsku — etykiety idą
+     przez i18n (klucze `p9Handoff.*`), nie przez wpisane na sztywno angielskie
+     napisy [ODMROZENIE 07_MY_WORK_AGENT DEC-397]. */
+  const { t } = useTranslation();
+  const cols: TableColumn[] = [
+    { id: 'title', label: t('p9Handoff.colHandoff', 'Przekazanie'), sortable: true },
+    { id: 'initiativeId', label: t('p9Handoff.colInitiative', 'Inicjatywa'), sortable: true },
+    { id: 'pack', label: t('p9Handoff.colPackage', 'Zamrożony pakiet'), sortable: true },
+    { id: 'caseId', label: t('p9Handoff.colCase', 'Sprawa realizacji'), sortable: true },
+    { id: 'dueAt', label: t('p9Handoff.colDue', 'Termin'), sortable: true },
+  ];
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING'),
     [items, setItems] = useState<D[]>([]),
     [selectedId, setSelectedId] = useState<string | null>(null),
@@ -127,24 +132,26 @@ export const HandoffAcceptanceQueue = () => {
   if (state === 'LOADING')
     return (
       <section aria-label="Handoff acceptances" className="p-4" role="status">
-        Loading Handoff acceptances
+        {t('p9Handoff.loading', 'Wczytywanie przekazań…')}
       </section>
     );
   if (state === 'ERROR')
     return (
       <section aria-label="Handoff acceptances" className="p-4" role="alert">
-        Handoff queue unavailable.{' '}
+        {t('p9Handoff.unavailable', 'Kolejka przekazań niedostępna.')}{' '}
         <button className="btn-secondary" onClick={() => void load()}>
-          Retry
+          {t('p9Handoff.retry', 'Spróbuj ponownie')}
         </button>
       </section>
     );
   if (!rows.length && !receipt) return null;
   return (
     <section aria-label="Handoff acceptances" className="border-b border-c-border p-4">
-      <h3 className="font-semibold">Handoff acceptances waiting on you</h3>
+      <h3 className="font-semibold text-c-text">
+        {t('p9Handoff.acceptanceHeading', 'Do akceptacji — przekazania czekające na Ciebie')}
+      </h3>
       <p className="text-xs text-c-text-muted">
-        Exact frozen package only. Acceptance creates the canonical Execution Case.
+        {t('p9Handoff.acceptanceSubtitle', 'Wyłącznie zamrożony pakiet. Akceptacja tworzy kanoniczną sprawę realizacji.')}
       </p>
       {receipt && (
         <p role="status" className="rounded border border-c-success/40 p-3">

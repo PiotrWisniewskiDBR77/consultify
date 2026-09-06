@@ -316,6 +316,12 @@ export async function materializeInboxItems(
     ];
   });
 
+  /* P7K część B [ODMROZENIE 07_MY_WORK_AGENT DEC-397]: TYTUŁEM wpisu jest
+     OPIS PROBLEMU („Odchylenie: <miernik> <okres> — …"), a opisem OPIS
+     DZIAŁANIA. Karta otwarta automatycznie z odchylenia KPI nie ma jeszcze
+     opisu działania (§2.4: wypełnia go człowiek), więc poprzednia kolejność
+     dawała w Skrzynce wiersz BEZ TYTUŁU. Dla kart wypełnionych ręcznie oba
+     pola nadal są widoczne — zamieniona jest tylko rola. */
   const actionCardRows = actionCards.map((card) => [
     uuidv4(),
     userId,
@@ -323,8 +329,8 @@ export async function materializeInboxItems(
     'task',
     'action_card',
     card.id,
-    card.action_text,
-    card.problem || null,
+    card.problem || card.action_text || 'Karta działania',
+    card.action_text || null,
     'high',
     'assigned_tasks',
     card.due_date || null,

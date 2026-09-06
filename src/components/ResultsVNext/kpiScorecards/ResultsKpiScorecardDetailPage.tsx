@@ -97,9 +97,13 @@ import {
   KpiReportSummary,
   renderKpiReportGroupRow,
   resolveKpiReportPeriodLabel,
+  kpiReportItemRowClassName,
   KPI_PERIOD_COLUMN_WIDTH_PX,
   type KpiReportItemRowVm,
 } from './kpiReportPresenters';
+import { KpiMeasurementRecordModal, type KpiMeasurementRecordFormValues } from '../kpiMeasurements/KpiMeasurementRecordModal';
+import { recordKpiMeasurement } from '../kpiApi';
+import { listActionCards } from '@/services/actionCards';
 import {
   buildKpiScorecardItemColumns,
   buildKpiScorecardItemPreview,
@@ -180,6 +184,19 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   /** Okres, którego raport dotyczy — ta sama reguła co na poziomie 1. */
   const [reportPeriodLabel, setReportPeriodLabel] = useState<string | null>(null);
 
+  /**
+   * P7K część B — OTWARTE KARTY DZIAŁANIA per miernik. Liczymy je we froncie
+   * z `GET /api/action-cards?sourceKind=kpi_deviation` (klucz źródła zaczyna
+   * się od `<kpiId>:`), bo matryca okresów zna tylko SPRAWY odchylenia. To
+   * jedno dodatkowe żądanie na raport — nie 138, jak przy pytaniu per miernik.
+   */
+  const [openActionCardsByKpiId, setOpenActionCardsByKpiId] = useState<Record<string, number>>({});
+
+  /** „Wpisz rezultat" z kebaba wiersza — okno pomiaru jest istniejące, wspólne z L3. */
+  const [recordTarget, setRecordTarget] = useState<KpiReportItemRowVm | null>(null);
+  const [recordBusy, setRecordBusy] = useState(false);
+  const [recordError, setRecordError] = useState<string | null>(null);
+
   const [snapshots, setSnapshots] = useState<KpiScorecardReviewSnapshotDto[] | null>(null);
   const [snapshotsLoading, setSnapshotsLoading] = useState(false);
   const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
@@ -235,6 +252,20 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       .finally(() => setPeriodMatrixLoading(false));
   }, [scorecardId]);
 
+  const loadOpenActionCards = useCallback(() => {
+    listActionCards({ status: 'OPEN', sourceKind: 'kpi_deviation' })
+      .then((cards) => {
+        const licznik: Record<string, number> = {};
+        for (const card of cards) {
+          const kpiId = card.sourceId.split(':')[0];
+          if (!kpiId) continue;
+          licznik[kpiId] = (licznik[kpiId] ?? 0) + 1;
+        }
+        setOpenActionCardsByKpiId(licznik);
+      })
+      .catch(() => setOpenActionCardsByKpiId({}));
+  }, []);
+
   const loadSnapshots = useCallback(() => {
     if (!scorecardId) return;
     setSnapshotsLoading(true);
@@ -248,7 +279,10 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
   useEffect(() => {
     if (!enabled || !scorecard) return;
     if (tab === 'items' && items === null && !itemsLoading) loadItems();
-    if (tab === 'items' && periodMatrix === null && !periodMatrixLoading) loadPeriodMatrix();
+    if (tab === 'items' && periodMatrix === null && !periodMatrixLoading) {
+      loadPeriodMatrix();
+      loadOpenActionCards();
+    }
     if (tab === 'snapshots' && snapshots === null && !snapshotsLoading) loadSnapshots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, scorecard, tab]);
@@ -494,16 +528,31 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
       buildKpiReportItemRows({
         items: filteredItems,
         matrixItems: periodMatrix?.items ?? [],
+        openActionCardsByKpiId,
         isPolish,
         resolveOwnerName: (userId) =>
           userId ? memberNameOrUnknown(resolveMemberName, userId, isPolish) : null,
       }),
-    [filteredItems, periodMatrix, isPolish, resolveMemberName]
+    [filteredItems, periodMatrix, isPolish, resolveMemberName, openActionCardsByKpiId]
   );
 
   const reportItemColumns = useMemo(
-    () => buildKpiReportItemColumns({ isPolish, periods: periodMatrix?.periods ?? [] }),
-    [isPolish, periodMatrix]
+    () =>
+      buildKpiReportItemColumns({
+        isPolish,
+        periods: periodMatrix?.periods ?? [],
+        /* Ikona przy wierszu prowadzi WPROST do sekcji „Karty działania" karty
+           miernika (poziom 3) — nie na jej środek i nie do listy odchyleń. */
+        onOpenActionCards: (row) => {
+          if (!row.kpiId) return;
+          navigate(
+            `${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', row.kpiId)}?zbior=${encodeURIComponent(
+              scorecardId ?? ''
+            )}&sekcja=actionCards`
+          );
+        },
+      }),
+    [isPolish, periodMatrix, navigate, scorecardId]
   );
 
   /* HAKI MUSZĄ BYĆ PRZED wcześniejszymi `return` tego komponentu (stany
@@ -782,6 +831,43 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
     ? 'Raport zarchiwizowany — nie można dodawać mierników.'
     : 'Report archived — indicators cannot be added.';
 
+  /**
+   * P7K część B — WPISANIE REZULTATU OKRESU wprost z raportu (poziom 2).
+   *
+   * DLACZEGO KEBAB WIERSZA, A NIE NOWY PRZYCISK NA KOMÓRCE: kebab jest
+   * kanonicznym miejscem akcji wiersza (triada), więc raport nie dostaje
+   * ani jednego nowego elementu wizualnego, a ekran nie łamie zamrożonego
+   * kanonu tabel. Okno pomiaru to ISTNIEJĄCY, wspólny `KpiMeasurementRecordModal`
+   * z poziomu 3 — ten ekran go osadza, nie buduje własnego formularza.
+   *
+   * Po zapisie odświeżamy matrycę okresów (kolor wiersza) I liczbę kart
+   * działania (ikona przy wierszu) — obie liczby pochodzą z serwera.
+   */
+  const handleRecordMeasurement = async (values: KpiMeasurementRecordFormValues) => {
+    const target = recordTarget;
+    if (!target?.kpiId) return;
+    setRecordBusy(true);
+    setRecordError(null);
+    try {
+      await recordKpiMeasurement(target.kpiId, {
+        periodStart: values.periodStart,
+        periodEnd: values.periodEnd,
+        actualValue: values.actualValue,
+        source: values.source,
+        notes: values.notes,
+        reason: values.reason,
+      });
+      setRecordTarget(null);
+      loadPeriodMatrix();
+      loadOpenActionCards();
+      toast.success(isPolish ? 'Rezultat zapisany.' : 'Result recorded.');
+    } catch (err) {
+      setRecordError(toUserFacingErrorMessage(err, isPolish));
+    } finally {
+      setRecordBusy(false);
+    }
+  };
+
   /** Otwarcie karty miernika (poziom 3) z pamięcią raportu, z którego przyszedł. */
   const openKpiCard = (kpiId: string) =>
     navigate(
@@ -850,6 +936,9 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
           scrollToColumnId: periodMatrix?.periods.find((p) => p.isCurrent)
             ? `period:${periodMatrix.periods.find((p) => p.isCurrent)!.key}`
             : null,
+          /* Wiersz poza limitem jest CZERWONY — jedyne miejsce czerwieni na
+             całym wierszu raportu (P7K część B §15). */
+          rowClassName: (row) => kpiReportItemRowClassName(row as unknown as KpiReportItemRowVm),
           isGroupRow: (row) => !!(row as unknown as KpiReportItemRowVm).group,
           renderGroupRow: (row) =>
             renderKpiReportGroupRow(row as unknown as KpiReportItemRowVm, isPolish),
@@ -878,6 +967,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
             return buildKpiScorecardItemRowMenu(vm.item, isPolish, {
               onPreview: (r) => setSelectedItemId(r.itemId),
               onOpenKpi: openKpiCard,
+              onRecordMeasurement: () => setRecordTarget(vm),
               onMoveUp: (r) => void moveItem(r, 'up'),
               onMoveDown: (r) => void moveItem(r, 'down'),
               onRemove: (r) => setRemoveItemTarget(r),
@@ -915,6 +1005,15 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
         busy={addItemBusy}
         errorMessage={addItemError}
         isConflict={addItemConflict}
+      />
+      <KpiMeasurementRecordModal
+        open={!!recordTarget}
+        onClose={() => (recordBusy ? undefined : setRecordTarget(null))}
+        onSubmit={(values) => void handleRecordMeasurement(values)}
+        isPolish={isPolish}
+        kpiCode={recordTarget?.name ?? ''}
+        busy={recordBusy}
+        errorMessage={recordError}
       />
       <RemoveKpiScorecardItemDialog
         open={!!removeItemTarget}

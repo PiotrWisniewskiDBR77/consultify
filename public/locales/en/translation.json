@@ -14,7 +14,18 @@
       "comment": "Comment",
       "status": "Status"
     },
-    "status": { "open": "OPEN", "closed": "CLOSED" }
+    "status": {
+      "open": "OPEN",
+      "closed": "CLOSED"
+    },
+    "createTask": "Create task",
+    "close": "Close card",
+    "closed": "Action card closed.",
+    "closeFailed": "Could not close the card.",
+    "taskCreated": "Task created: {{title}}",
+    "taskFailed": "Could not create the task.",
+    "inboxSection": "Action cards ({{count}})",
+    "inboxSectionAria": "Action cards in Inbox"
   },
   "meetingActionItemsP9": {
     "createTask": "Create task",
@@ -26,7 +37,17 @@
     "requested": "The handoff is awaiting acceptance in Inbox.",
     "notReady": "Complete the handoff package and execution manager first.",
     "failed": "The initiative could not be handed over to execution.",
-    "acceptanceSection": "For acceptance"
+    "acceptanceSection": "For acceptance",
+    "acceptanceHeading": "For acceptance — handoffs waiting on you",
+    "acceptanceSubtitle": "Exact frozen package only. Acceptance creates the canonical Execution Case.",
+    "colHandoff": "Handoff",
+    "colInitiative": "Initiative",
+    "colPackage": "Frozen package",
+    "colCase": "Execution Case",
+    "colDue": "Due",
+    "loading": "Loading handoff acceptances…",
+    "unavailable": "Handoff queue unavailable.",
+    "retry": "Retry"
   },
   "notFoundPage": {
     "title": "Page not found",

@@ -4240,10 +4240,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       <div className="relative flex-1 flex min-h-0 gap-1.5" ref={prawyPanelContainerRef}>
         {/* Table content */}
         <div className="flex-1 min-w-0 overflow-y-auto pl-4 pr-1.5 pt-3 pb-4 transition-all duration-200">
-          <section aria-label={t('p9Handoff.acceptanceSection', 'Do akceptacji')}>
-            <h2 className="px-4 pt-3 text-sm font-semibold text-c-text">{t('p9Handoff.acceptanceSection', 'Do akceptacji')}</h2>
-            <HandoffAcceptanceQueue />
-          </section>
+          {/* K2 (P9/DEC-397): kolejka akceptacji przekazań. Nagłówek NALEŻY DO
+              KOMPONENTU — poprzednio Skrzynka rysowała własny „Do akceptacji"
+              nad komponentem, który przy pustej kolejce zwraca `null`, więc
+              nad tabelą wisiał NAGŁÓWEK BEZ TREŚCI (widoczne na zrzucie
+              02-skrzynka-wpis.png). [ODMROZENIE 07_MY_WORK_AGENT DEC-397] */}
+          <HandoffAcceptanceQueue />
           <InboxActionCards />
           {loading ? (
             <SharedLoadingState template="list" rows={6} />

@@ -110,6 +110,7 @@ import {
   toKpiDefinitionVersion,
 } from '../../services/resultsVnext/kpi/kpiTypes.js';
 import { evaluatePerformanceStatus } from '../../services/resultsVnext/kpi/targetGeometryEvaluator.js';
+import { ensureActionCardForKpiDeviation } from '../../services/actionCard/kpiDeviationActionCard.js';
 import {
   AtomicWriteAggregateNotFoundError,
   AtomicWriteConflictError,
@@ -976,6 +977,38 @@ router.post(
         correlationId: getCorrelationId(req),
         reason: body.reason ?? null,
       });
+      /* P7K część B (§15) — REZULTAT POZA LIMITEM OTWIERA KARTĘ DZIAŁANIA.
+         Stan bierzemy z ZAPISANEGO pomiaru (`outcome.result`), nie ze zmiennej
+         policzonej przed zapisem: przy powtórzeniu idempotentnym zapis mógł
+         zostać wykonany wcześniej i to on jest faktem. Osobne wywołanie po
+         zatwierdzeniu transakcji pomiaru, bo karta idzie JEDNĄ drogą —
+         `createActionCard` → `notificationService` → Skrzynka (KRĘGOSŁUP §3.3);
+         wciągnięcie tej drogi do transakcji pomiaru wysłałoby powiadomienie
+         przed jej zatwierdzeniem. Błąd tworzenia karty NIE wywraca zapisanego
+         pomiaru — jest logowany i widoczny w odpowiedzi jako `actionCard: null`. */
+      let deviationActionCardId: string | null = null;
+      try {
+        const deviation = await ensureActionCardForKpiDeviation({
+          organizationId: auth.organizationId,
+          actorUserId: auth.userId,
+          kpiId,
+          kpiName: version.name,
+          unit: version.unit,
+          periodStart: body.periodStart,
+          periodEnd: body.periodEnd,
+          actualValue: outcome.result?.actualValue ?? body.actualValue,
+          targetValue: version.targetValue,
+          performanceStatus: outcome.result?.performanceStatus ?? performanceStatus,
+          kpiOwnerUserId: kpi.ownerUserId,
+        });
+        deviationActionCardId = deviation.card?.id ?? null;
+      } catch (deviationError) {
+        logger.error(
+          `[kpi.routes] recordMeasurement: karta działania dla odchylenia nie powstała (kpi=${kpiId}): ${
+            deviationError instanceof Error ? deviationError.message : String(deviationError)
+          }`
+        );
+      }
       observeVnextKpiWriter(
         req,
         auth,
@@ -987,6 +1020,7 @@ router.post(
         eventId: outcome.eventId,
         resultingVersion: outcome.resultingVersion,
         measurement: outcome.result,
+        actionCardId: deviationActionCardId,
       });
     } catch (err) {
       handleKpiRouteError(res, err, 'recordMeasurement');
@@ -1087,6 +1121,43 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
+      /* P7K część B — POPRAWKA REZULTATU TEŻ JEST ZAPISEM REZULTATU. Bez tego
+         mechanizm miałby dziurę: rezultat wpisany w limicie, a potem
+         poprawiony na wartość poza limitem, nie otworzyłby karty działania.
+         Klucz źródła jest ten sam (`<kpiId>:<okres>`), więc poprawka w OBIE
+         strony w tym samym okresie nie tworzy drugiej karty. */
+      let deviationActionCardId: string | null = null;
+      try {
+        const superseding = outcome.result.superseding;
+        /* Odpowiedzialny za miernik — ta sama reguła co przy zapisie pomiaru
+           (`resolveDeviationCaseOwner`): właściciel KPI, a gdy go nie ma,
+           osoba, która poprawiła rezultat. */
+        const kpiRecord = await getKpi({
+          userId: auth.userId,
+          organizationId: auth.organizationId,
+          kpiId,
+        });
+        const deviation = await ensureActionCardForKpiDeviation({
+          organizationId: auth.organizationId,
+          actorUserId: auth.userId,
+          kpiId,
+          kpiName: version.name,
+          unit: version.unit,
+          periodStart: superseding.periodStart,
+          periodEnd: superseding.periodEnd,
+          actualValue: superseding.actualValue,
+          targetValue: version.targetValue,
+          performanceStatus: superseding.performanceStatus ?? performanceStatus,
+          kpiOwnerUserId: kpiRecord?.ownerUserId ?? null,
+        });
+        deviationActionCardId = deviation.card?.id ?? null;
+      } catch (deviationError) {
+        logger.error(
+          `[kpi.routes] correctMeasurement: karta działania dla odchylenia nie powstała (kpi=${kpiId}): ${
+            deviationError instanceof Error ? deviationError.message : String(deviationError)
+          }`
+        );
+      }
       observeVnextKpiWriter(
         req,
         auth,
@@ -1099,6 +1170,7 @@ router.post(
         resultingVersion: outcome.resultingVersion,
         original: outcome.result.original,
         measurement: outcome.result.superseding,
+        actionCardId: deviationActionCardId,
       });
     } catch (err) {
       handleKpiRouteError(res, err, 'correctMeasurement');

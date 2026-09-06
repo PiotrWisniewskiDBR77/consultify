@@ -58,14 +58,35 @@ export interface ActionCardScope {
   actorUserId: string;
 }
 
+/**
+ * DEFEKT ZNALEZIONY 06.09 (P7K część B): kolumny DATE wracają z `pg` jako
+ * obiekt `Date`, a nie tekst. `String(new Date(...)).slice(0, 10)` dawało
+ * „Tue Apr 14" zamiast „2026-04-14" — czyli KAŻDA data karty działania
+ * (okres i termin) była na Postgresie nieczytelna. Ta funkcja jest jedynym
+ * miejscem, w którym data wychodzi z wiersza, więc naprawa jest tu.
+ */
+function toIsoDay(value: unknown): string {
+  if (value == null) return '';
+  if (value instanceof Date) {
+    // Sterownik `pg` oddaje kolumnę DATE jako północ w strefie LOKALNEJ, więc
+    // `toISOString()` cofa datę o dobę na wschód od Greenwich (2026-04-14 →
+    // „2026-04-13"). Składamy dzień z części lokalnych — bez konwersji stref.
+    const rok = value.getFullYear();
+    const miesiac = String(value.getMonth() + 1).padStart(2, '0');
+    const dzien = String(value.getDate()).padStart(2, '0');
+    return `${rok}-${miesiac}-${dzien}`;
+  }
+  return String(value).slice(0, 10);
+}
+
 function rowToActionCard(row: any): ActionCard {
   return {
     id: row.id,
     organizationId: row.organization_id,
     sourceKind: row.source_kind,
     sourceId: row.source_id,
-    periodStart: String(row.period_start).slice(0, 10),
-    periodEnd: String(row.period_end).slice(0, 10),
+    periodStart: toIsoDay(row.period_start),
+    periodEnd: toIsoDay(row.period_end),
     goalMet: Boolean(row.goal_met),
     actionRequired: Boolean(row.action_required),
     problem: row.problem,
@@ -73,7 +94,7 @@ function rowToActionCard(row: any): ActionCard {
     actionText: row.action_text,
     ownerUserId: row.owner_user_id,
     ownerName: row.owner_name || undefined,
-    dueDate: String(row.due_date).slice(0, 10),
+    dueDate: toIsoDay(row.due_date),
     comment: row.comment || undefined,
     status: row.status,
     createdBy: row.created_by,
@@ -113,6 +134,33 @@ export async function listActionCards(
   return rows.map(rowToActionCard);
 }
 
+/**
+ * Jedna karta na jedno źródło (organizacja + rodzaj + identyfikator źródła) —
+ * odczyt STRAŻNIKA IDEMPOTENCJI używanego przez wyzwalacze automatyczne
+ * (P7K część B). Filtr `organization_id` jest tu obowiązkowy: bez niego
+ * strażnik z jednej organizacji widziałby kartę innej i „idempotentnie"
+ * odmówiłby utworzenia karty właścicielowi, do którego ta sprawa należy.
+ */
+export async function getActionCard(scope: ActionCardScope, id: string): Promise<ActionCard | null> {
+  const rows = await queryHelpers.queryAll<any>(
+    `${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`,
+    [id, scope.organizationId]
+  );
+  return rows[0] ? rowToActionCard(rows[0]) : null;
+}
+
+export async function findActionCardBySource(
+  scope: ActionCardScope,
+  sourceKind: ActionCardSourceKind,
+  sourceId: string
+): Promise<ActionCard | null> {
+  const rows = await queryHelpers.queryAll<any>(
+    `${SELECT_ACTION_CARD} WHERE ac.organization_id = ? AND ac.source_kind = ? AND ac.source_id = ?`,
+    [scope.organizationId, sourceKind, sourceId]
+  );
+  return rows[0] ? rowToActionCard(rows[0]) : null;
+}
+
 export async function createActionCard(
   scope: ActionCardScope,
   input: CreateActionCardInput
@@ -135,7 +183,10 @@ export async function createActionCard(
     organizationId: scope.organizationId,
     type: 'ACTION_CARD_ASSIGNED',
     title: 'Karta działania wymaga reakcji',
-    body: input.actionText,
+    // Karta utworzona automatycznie nie ma jeszcze OPISU DZIAŁANIA (§2.4:
+    // wypełnia go człowiek), więc treść powiadomienia bierze wtedy OPIS PROBLEMU —
+    // pusty dzwonek nie powiedziałby odpowiedzialnemu, czego dotyczy zgłoszenie.
+    body: input.actionText || input.problem,
     entityType: 'action_card',
     entityId: id,
     actionUrl: `/my-work/inbox?actionCardId=${encodeURIComponent(id)}`,
@@ -176,5 +227,24 @@ export async function closeActionCard(scope: ActionCardScope, id: string): Promi
     [scope.actorUserId, new Date().toISOString(), id, scope.organizationId]
   );
   const rows = await queryHelpers.queryAll<any>(`${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`, [id, scope.organizationId]);
-  return rows[0] ? rowToActionCard(rows[0]) : null;
+  const card = rows[0] ? rowToActionCard(rows[0]) : null;
+  /* P7K część B: ZAMKNIĘCIE KARTY MUSI ZDJĄĆ WPIS ZE SKRZYNKI.
+     Materializacja (`inboxService`) tylko DOPISUJE otwarte karty — sam UPDATE
+     statusu zostawiłby w Skrzynce wiersz, który już nikogo nie dotyczy, a
+     właściciel zobaczyłby zadanie „zrobione, a dalej wisi". Ten sam wołacz,
+     którego używa zamykanie pozycji Skrzynki z Mojej Pracy; jest idempotentny
+     (`not_materialized`/`already_closed` to poprawne odpowiedzi, nie błędy),
+     więc nie wywraca zamknięcia karty. */
+  if (card) {
+    try {
+      const { closeInboxItemForSource } = await import('../inboxService.js');
+      await closeInboxItemForSource(card.ownerUserId, scope.organizationId, 'action_card', card.id, {
+        closedBy: 'action_card_close',
+      });
+    } catch {
+      /* Skrzynka nie może zablokować zamknięcia karty — wpis zostanie
+         posprzątany przy następnej materializacji zmiany statusu. */
+    }
+  }
+  return card;
 }
