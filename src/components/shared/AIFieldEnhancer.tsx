@@ -35,7 +35,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { generujTrescPola } from '@/services/ai/generujTrescPola';
+import { generujTrescPola, jezykAIzUI } from '@/services/ai/generujTrescPola';
 import { Api } from '@/services/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -135,10 +135,13 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
   iconOnly = false,
   outputFormat = 'paragraph',
 }) => {
-  const { t } = useTranslation();
-  // UI language stays localized, but AI output is standardized to English for international teams.
-  const targetLanguageName = 'English';
-  const aiLanguage = 'en';
+  const { t, i18n } = useTranslation();
+  // DEC-407 uzupełnienie (2026-09-06): język wyjścia AI = język UI, nie stały
+  // angielski. Do 2026-09-06 ten komponent wymuszał English niezależnie od
+  // `i18n.language` — propozycja w polskim UI wracała po angielsku (K2, zrzut
+  // `09-propozycja-do-zatwierdzenia.png`). `jezykAIzUI` czyta aktualny
+  // `i18n.language`; dla anglojęzycznego UI zachowanie jest identyczne jak wcześniej.
+  const { kod: aiLanguage, nazwa: targetLanguageName } = jezykAIzUI(i18n.language);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -230,6 +233,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         etykietaPola: sectionLabel,
         kontekstArtefaktu: artifactContext,
         format: outputFormat,
+        language: aiLanguage,
       });
 
       // §4.5: propozycja, nie nadpisanie — pole zmieni się dopiero po „Zastosuj".
@@ -240,7 +244,7 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [t, notifyAiFailure, sectionLabel, artifactContext, outputFormat]);
+  }, [t, notifyAiFailure, sectionLabel, artifactContext, outputFormat, aiLanguage]);
 
   const handleEnhance = useCallback(
     async (mode: AIEnhanceMode) => {
@@ -270,7 +274,9 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
                 ].join('\n')
               : `Keep a professional paragraph form.`;
 
-        // Keep AI instructions in English (international team standard).
+        // Instrukcje dla modelu są po angielsku (prompt engineering), ale
+        // WYNIK ma wyjść w języku UI — `targetLanguageName`/`aiLanguage`
+        // wyżej (DEC-407 uzupełnienie).
         const instructionByMode: Record<string, string> = {
           improve: [
             `Improve the text (keep the meaning) by:`,
@@ -338,7 +344,17 @@ export const AIFieldEnhancer: React.FC<AIFieldEnhancerProps> = ({
         setLoading(false);
       }
     },
-    [currentValue, t, notifyAiFailure, sectionLabel, artifactContext, handleGenerate, outputFormat]
+    [
+      currentValue,
+      t,
+      notifyAiFailure,
+      sectionLabel,
+      artifactContext,
+      handleGenerate,
+      outputFormat,
+      targetLanguageName,
+      aiLanguage,
+    ]
   );
 
   /** Akceptacja propozycji — dopiero tu treść pola zostaje nadpisana. */
