@@ -3168,6 +3168,24 @@ const ReportSlideOverContent: React.FC<{
 
   const statusKey = String(report.status || 'DRAFT').toUpperCase();
   const statusCfg = REPORT_STATUS_CONFIG[statusKey] || REPORT_STATUS_CONFIG.DRAFT;
+  // i18n (re-audyt 0609): status label/opis szedł na sztywno po angielsku mimo że
+  // common.reportStatus.* ma już polskie etykiety — dopinamy tłumaczenie tutaj,
+  // bo REPORT_STATUS_CONFIG żyje poza komponentem (brak dostępu do `t`).
+  const STATUS_I18N_SUFFIX: Record<string, string> = {
+    DRAFT: 'draft',
+    GENERATING: 'generating',
+    FINAL: 'final',
+    PENDING_APPROVAL: 'pendingApproval',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    UTILIZED: 'utilized',
+  };
+  const statusI18nSuffix = STATUS_I18N_SUFFIX[statusKey] || 'draft';
+  const statusLabel = t(`common.reportStatus.${statusI18nSuffix}`, statusCfg.label);
+  const statusDescription = t(
+    `assessment.hub.reportPreview.statusDescription.${statusI18nSuffix}`,
+    ''
+  );
   // #73: title/framework are shown by the wrapping StandardPreview instead
   // (header title + `details` block) — templateId is still used below in the
   // "Key details" card.
@@ -3194,16 +3212,8 @@ const ReportSlideOverContent: React.FC<{
           <Clock size={16} className={statusCfg.color} />
         )}
         <div>
-          <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusCfg.label}</span>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            {statusKey === 'DRAFT' && 'Report is being prepared'}
-            {statusKey === 'GENERATING' && 'AI is generating report content'}
-            {statusKey === 'FINAL' && 'Report content is finalized'}
-            {statusKey === 'PENDING_APPROVAL' && 'Awaiting stakeholder approval'}
-            {statusKey === 'APPROVED' && 'Report has been approved'}
-            {statusKey === 'REJECTED' && 'Report was rejected — needs revision'}
-            {statusKey === 'UTILIZED' && 'Report has been delivered & used'}
-          </p>
+          <span className={`text-sm font-semibold ${statusCfg.color}`}>{statusLabel}</span>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{statusDescription}</p>
         </div>
       </div>
 
@@ -3211,7 +3221,9 @@ const ReportSlideOverContent: React.FC<{
       <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl border border-slate-200/60 dark:border-navy-700/60 divide-y divide-slate-200/40 dark:divide-navy-700/40">
         {templateId && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Template</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('assessment.hub.reportPreview.fieldTemplate', 'Template')}
+            </span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {templateId}
             </span>
@@ -3219,7 +3231,9 @@ const ReportSlideOverContent: React.FC<{
         )}
         {report.assessmentName && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Source Assessment</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('assessment.hub.reportPreview.fieldSourceAssessment', 'Source Assessment')}
+            </span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px]">
               {report.assessmentName}
             </span>
@@ -3227,7 +3241,9 @@ const ReportSlideOverContent: React.FC<{
         )}
         {sectionCount > 0 && (
           <div className="flex items-center justify-between px-3.5 py-2.5">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Sections</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {t('assessment.hub.reportPreview.fieldSections', 'Sections')}
+            </span>
             <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
               {sectionCount}
             </span>
@@ -3235,7 +3251,7 @@ const ReportSlideOverContent: React.FC<{
         )}
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            <Calendar size={11} /> Created
+            <Calendar size={11} /> {t('assessment.hub.reportPreview.fieldCreated', 'Created')}
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
             {report.createdAt ? formatListDate(report.createdAt) : '—'}
@@ -3243,7 +3259,7 @@ const ReportSlideOverContent: React.FC<{
         </div>
         <div className="flex items-center justify-between px-3.5 py-2.5">
           <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            <Clock size={11} /> Last updated
+            <Clock size={11} /> {t('assessment.hub.reportPreview.fieldLastUpdated', 'Last updated')}
           </span>
           <span className="text-xs text-slate-700 dark:text-slate-300">
             {report.updatedAt ? formatListDate(report.updatedAt) : '—'}
@@ -3256,7 +3272,7 @@ const ReportSlideOverContent: React.FC<{
         <div className="px-3.5 py-2.5 border-b border-slate-200/40 dark:border-navy-700/40">
           <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
             <Download size={11} />
-            Generated Reports
+            {t('assessment.hub.reportPreview.generatedReports', 'Generated Reports')}
           </h5>
         </div>
 
@@ -3314,7 +3330,7 @@ const ReportSlideOverContent: React.FC<{
           /* Quick-generate buttons when no exports exist */
           <div className="p-3.5">
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
-              No exports yet. Generate now:
+              {t('assessment.hub.reportPreview.noExportsYet', 'No exports yet. Generate now:')}
             </p>
             <div className="grid grid-cols-3 gap-2">
               {(['pdf', 'pptx', 'docx'] as const).map((fmt) => {
@@ -3356,9 +3372,11 @@ const ReportSlideOverContent: React.FC<{
             </div>
             <div className="flex-1 text-left">
               <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                Web Preview
+                {t('assessment.hub.reportPreview.webPreview', 'Web Preview')}
               </div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">Open in editor</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                {t('assessment.hub.reportPreview.openInEditor', 'Open in editor')}
+              </div>
             </div>
             <ArrowRight
               size={14}
@@ -3372,7 +3390,7 @@ const ReportSlideOverContent: React.FC<{
       {report.executiveSummary && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
           <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1.5">
-            Executive Summary
+            {t('assessment.hub.reportPreview.executiveSummary', 'Executive Summary')}
           </h5>
           <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-4">
             {report.executiveSummary}
@@ -3384,14 +3402,16 @@ const ReportSlideOverContent: React.FC<{
       {sectionCount > 0 && (
         <div className="bg-slate-50/50 dark:bg-navy-800/50 rounded-xl p-3.5 border border-slate-200/60 dark:border-navy-700/60">
           <h5 className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-2">
-            Report Scope
+            {t('assessment.hub.reportPreview.reportScope', 'Report Scope')}
           </h5>
           <div className="space-y-1">
             {report.sections.slice(0, 6).map((section: any, idx: number) => {
               const sectionTitle =
                 typeof section === 'string'
                   ? section
-                  : section?.title || section?.name || `Section ${idx + 1}`;
+                  : section?.title ||
+                    section?.name ||
+                    t('assessment.hub.reportPreview.sectionFallback', 'Section {{n}}', { n: idx + 1 });
               return (
                 <div key={idx} className="flex items-center gap-2 py-1">
                   <span className="w-4 h-4 rounded bg-indigo-500/15 text-indigo-400 text-[10px] font-bold flex items-center justify-center shrink-0">
@@ -3405,7 +3425,9 @@ const ReportSlideOverContent: React.FC<{
             })}
             {sectionCount > 6 && (
               <span className="text-[11px] text-slate-500 dark:text-slate-400 pl-6">
-                +{sectionCount - 6} more sections
+                {t('assessment.hub.reportPreview.moreSections', '+{{count}} more sections', {
+                  count: sectionCount - 6,
+                })}
               </span>
             )}
           </div>
