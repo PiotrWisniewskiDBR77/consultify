@@ -50,6 +50,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import { statusChipLabel } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { formatListDate } from '@/utils/listDateFormat';
 import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 
 import { CreateProgramModal, type ProgramSummary } from './CreateProgramModal';
 
@@ -214,6 +215,9 @@ export const MyProjects: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
+  // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
+  const jedenPanel = useJedenPanel();
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [previewPinned, setPreviewPinned] = useState(false);
 
@@ -592,7 +596,10 @@ export const MyProjects: React.FC = () => {
           },
         ],
         universalHandlers: {
-          preview: () => setPreviewId(project.id),
+          preview: () => {
+            jedenPanel.otworz();
+            setPreviewId(project.id);
+          },
         },
       };
     },
@@ -721,7 +728,10 @@ export const MyProjects: React.FC = () => {
       const program = row as unknown as ProgramRow;
       return {
         universalHandlers: {
-          preview: () => setProgramPreviewId(program.id),
+          preview: () => {
+            jedenPanel.otworz();
+            setProgramPreviewId(program.id);
+          },
           edit: () => {
             setEditingProgram(program);
             setIsProgramModalOpen(true);
@@ -875,7 +885,10 @@ export const MyProjects: React.FC = () => {
                 },
               }}
               selectedRowId={programPreviewId}
-              onRowClick={(row) => setProgramPreviewId(String(row.id))}
+              onRowClick={(row) => {
+                jedenPanel.otworz();
+                setProgramPreviewId(String(row.id));
+              }}
               rowMenu={programRowMenu}
               defaultSort={{ columnId: 'createdAt', direction: 'desc' }}
               persistKey="mywork.programs.list"
@@ -1101,7 +1114,10 @@ export const MyProjects: React.FC = () => {
               }}
               selectedRowId={previewId}
               onRowClick={(row) => {
-                if (!previewPinned) setPreviewId(String(row.id));
+                if (!previewPinned) {
+                  jedenPanel.otworz();
+                  setPreviewId(String(row.id));
+                }
               }}
               rowMenu={rowMenu}
               defaultSort={{ columnId: 'created_at', direction: 'desc' }}
