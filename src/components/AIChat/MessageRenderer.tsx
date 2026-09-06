@@ -2084,11 +2084,22 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           >
             {isCopied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
           </button>
-          {/* Speak — always visible */}
+          {/* Speak / Stop — same button toggles based on live isSpeaking state.
+              [ODMROZENIE 13_CHAT DEC-397] Root-cause fix: this used to ALWAYS
+              call stopSpeaking() then unconditionally re-`speak()` 60ms later,
+              regardless of whether this message was the one already playing —
+              so clicking the red "reading" icon just restarted the same
+              utterance instead of silencing it ("Jak mówi, to nie mogę jej
+              zatrzymać"). Now a click while speaking only stops; a click while
+              idle starts reading THIS message. Esc also stops (see effect
+              below the message list). */}
           <button
             onClick={() => {
-              stopSpeaking();
-              setTimeout(() => speak(userVisibleContent), 60);
+              if (voiceState.isSpeaking) {
+                stopSpeaking();
+                return;
+              }
+              speak(userVisibleContent);
             }}
             disabled={msg.isStreaming}
             className={`p-1 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
@@ -2098,10 +2109,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             }`}
             title={
               voiceState.isSpeaking
-                ? t('chat.actions.stop', 'Stop')
-                : t('chat.actions.speak', 'Speak')
+                ? t('aiChat.voice.ttsStop', 'Stop reading')
+                : t('aiChat.voice.ttsPlay', 'Read aloud')
             }
-            aria-label={t('chat.actions.speak', 'Speak')}
+            aria-label={
+              voiceState.isSpeaking
+                ? t('aiChat.voice.ttsStop', 'Stop reading')
+                : t('aiChat.voice.ttsPlay', 'Read aloud')
+            }
           >
             <Volume2 size={12} />
           </button>

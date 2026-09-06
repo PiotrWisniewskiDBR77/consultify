@@ -27,7 +27,13 @@ export interface UseTeresaVoiceOptions {
   enabled: boolean;
   onTranscriptUpdate?: (transcript: string) => void;
   onModelAudioText?: (text: string) => void;
-  onStatusChange?: (status: TeresaVoiceStatus) => void;
+  /**
+   * `reason` is set whenever the transition is worth explaining to the user
+   * or telemetry — e.g. an unexpected WebSocket close mid-session. It is
+   * `undefined` for a plain user-initiated stop/toggle.
+   * [ODMROZENIE 13_CHAT DEC-397]
+   */
+  onStatusChange?: (status: TeresaVoiceStatus, reason?: string) => void;
 }
 
 export interface UseTeresaVoiceReturn {
@@ -83,9 +89,9 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   const onStatusChangeRef = useRef(onStatusChange);
   onStatusChangeRef.current = onStatusChange;
 
-  const updateStatus = useCallback((s: TeresaVoiceStatus) => {
+  const updateStatus = useCallback((s: TeresaVoiceStatus, reason?: string) => {
     setVoiceStatus(s);
-    onStatusChangeRef.current?.(s);
+    onStatusChangeRef.current?.(s, reason);
   }, []);
 
   useEffect(() => {
@@ -142,6 +148,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
   useEffect(() => {
     if (enabled) return;
+    // Bumping attemptRef here invalidates the token any in-flight/open
+    // session's callbacks were closed over — so if the SDK's `onclose`
+    // fires for the session we are about to tear down, its token guard
+    // (`if (attemptRef.current !== token) return;`) makes it a no-op
+    // instead of racing this synchronous `updateStatus('idle')`.
     attemptRef.current += 1;
     setVoiceError(null);
     setIsMuted(false);
@@ -331,17 +342,45 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
             };
           },
 
-          onclose: () => {
+          // [ODMROZENIE 13_CHAT DEC-397] The Gemini Live SDK calls `onclose`
+          // for BOTH a user-initiated stop AND an unexpected server/transport
+          // drop (auth/quota revocation, mid-call network failure, proxy
+          // timeout) — previously both cases fell through to the same
+          // silent `updateStatus('idle')`, which is exactly the "milczący
+          // powrót do idle" the MVP voice gate forbids: the user saw the
+          // conversation bubble vanish with zero explanation.
+          //
+          // A user-initiated stop (`stopVoiceConversation`) and the
+          // `enabled` flag flipping false both bump `attemptRef` BEFORE
+          // calling `teardownVoice()` (which is what actually closes the
+          // socket) — so by the time THIS onclose fires for that session,
+          // the token guard above has already made it a no-op. Reaching
+          // this point with a matching token therefore means the socket
+          // closed on its own (server/transport), never because we asked —
+          // so it is always worth an honest message + reason.
+          onclose: (event: CloseEvent) => {
             if (attemptRef.current !== token) return;
             void teardownVoice();
-            updateStatus('idle');
+
+            const code = typeof event?.code === 'number' ? event.code : null;
+            const rawReason = typeof event?.reason === 'string' ? event.reason.trim() : '';
+            const reason = `ws_close_${code ?? 'unknown'}${rawReason ? `:${rawReason.slice(0, 80)}` : ''}`;
+            updateStatus('error', reason);
+            setVoiceError(
+              `Rozmowa na żywo została przerwana — błąd: zamknięcie połączenia (kod ${
+                code ?? 'nieznany'
+              }${rawReason ? `, ${rawReason}` : ''}). Spróbuj ponownie.`
+            );
           },
 
           onerror: (liveError: unknown) => {
             if (attemptRef.current !== token) return;
             console.error('[useTeresaVoice] Gemini Live error', liveError);
-            updateStatus('error');
-            setVoiceError('Voice session error — try again.');
+            const message = liveError instanceof Error ? liveError.message : String(liveError ?? '');
+            updateStatus('error', `live_error${message ? `:${message.slice(0, 80)}` : ''}`);
+            setVoiceError(
+              `Rozmowa na żywo napotkała błąd sesji${message ? `: ${message}` : ''}. Spróbuj ponownie.`
+            );
             void teardownVoice();
           },
         },
