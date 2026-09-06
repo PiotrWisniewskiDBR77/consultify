@@ -1,0 +1,10 @@
+{
+  "module": "Administracja",
+  "route": "/admin",
+  "entry": "/^(Teresa|Zapytaj Teresę)/",
+  "status": "STOP",
+  "stopReason": "brak ekranu-artefaktu z prawym panelem; moduł nadzoruje AI",
+  "finalRoute": "/admin/team/members",
+  "failure": "brak wejścia, poza MVP",
+  "bledyKonsoli": []
+}

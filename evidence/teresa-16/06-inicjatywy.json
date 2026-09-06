@@ -1,0 +1,18 @@
+{
+  "module": "Inicjatywy",
+  "route": "/initiatives",
+  "entry": "Teresa",
+  "status": "FAIL",
+  "stopReason": null,
+  "finalRoute": "/initiatives",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "",
+  "language": "none",
+  "used_sources": 0,
+  "sources": [],
+  "degraded": [],
+  "first200": "",
+  "bledyKonsoli": [
+    "Stream error from server: Daily AI call limit reached (50). Upgrade for unlimited AI access. AI_LIMIT_REACHED"
+  ]
+}

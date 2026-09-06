@@ -1,0 +1,1167 @@
+[
+  {
+    "module": "Czat",
+    "route": "/chat",
+    "entry": "Czat główny",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/chat",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Widzimy, Å¼e Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej, ma 620 pracownikÃ³w oraz przychÃ³d wynoszÄ…cy â‚¬120M. Firma jest na podstawowym poziomie dojrzaÅ‚oÅ›ci PMO. Obecnie realizuje dwa aktywne projekty i ma trzy inicjatywy w fazie wykonawczej: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. \n\nIstniejÄ… trzy blokery bez podanego powodu oraz kilka oczekujÄ…cych decyzji, w tym dotyczÄ…ce rollout'u do domeny publicznej i polityki retencji logÃ³w. ObciÄ…Å¼enie pracÄ… uÅ¼ytkownika jest na poziomie ostrzegawczym, a jego zadania obejmujÄ… przygotowanie planu warsztatu i zadbanie o backup. UÅ¼ytkownik ma rÃ³wnieÅ¼ dwa oczekujÄ…ce na zatwierdzenie dziaÅ‚ania AI. \n\nW kontekÅ›cie inicjatyw, organizacja ma kilka projektÃ³w w fazie realizacji, takich jak optymalizacja Å‚aÅ„cucha dostaw i konsolidacja dostawcÃ³w, ale takÅ¼e jeden projekt zablokowany â€” program doskonalenia umiejÄ™tnoÅ›ci. Wiele decyzji organizacyjnych jest w trakcie oczekiwania na zatwierdzenie.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Widzimy, Å¼e Novatek Manufacturing Sp. z o.o. dziaÅ‚a w branÅ¼y produkcji dyskretnej, ma 620 pracownikÃ³w oraz przychÃ³d wynoszÄ…cy â‚¬120M. Firma jest na podstawowym poziomie dojrzaÅ‚oÅ›ci PMO. Obecn",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Moja Praca",
+    "route": "/my-work",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/my-work",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, dziaÅ‚ajÄ…ca na rynku mid-market z przychodem â‚¬120M i zatrudniajÄ…ca 620 pracownikÃ³w. Organizacja ma dojrzaÅ‚oÅ›Ä‡ PMO na poziomie podstawowym (BASIC). Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. WystÄ™pujÄ… trzy blokady bez podanego powodu, a uÅ¼ytkownik ma na swoim koncie piÄ™Ä‡ zadaÅ„, z czego dwa sÄ… w toku. Warto zwrÃ³ciÄ‡ uwagÄ™ na wysokie obciÄ…Å¼enie uÅ¼ytkownika, co moÅ¼e wpÅ‚ywaÄ‡ na wydajnoÅ›Ä‡ pracy. W kontekÅ›cie organizacji widoczne sÄ… takÅ¼e inne inicjatywy, z ktÃ³rych wiÄ™kszoÅ›Ä‡ jest na etapie realizacji, a jedna jest zablokowana. Istnieje rÃ³wnieÅ¼ szereg oczekujÄ…cych decyzji, co wskazuje na pewne opÃ³Åºnienia w procesie decyzyjnym.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, dziaÅ‚ajÄ…ca na rynku mid-market z przychodem â‚¬120M i zatrudniajÄ…ca 620 pracownikÃ³w. Organizacja ma dojrzaÅ‚oÅ›Ä‡ PMO na poziomie ",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Wywiad",
+    "route": "/interview",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/interview",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. ma kilka aktywnych projektÃ³w, w tym trzy inicjatywy w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i automatyzacja magazynu WIP. UÅ¼ytkownik ma kilka zadaÅ„ do wykonania, z czego czÄ™Å›Ä‡ jest w toku, a czÄ™Å›Ä‡ wymaga uwagi. SÄ… rÃ³wnieÅ¼ oczekujÄ…ce decyzje dotyczÄ…ce rÃ³Å¼nych inicjatyw. ObciÄ…Å¼enie uÅ¼ytkownika jest wysokie, co moÅ¼e wpÅ‚ywaÄ‡ na efektywnoÅ›Ä‡ realizacji zadaÅ„. W kontekÅ›cie organizacji zauwaÅ¼alne sÄ… pewne blokery, ktÃ³re mogÄ… wymagaÄ‡ dalszej analizy i wsparcia.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "WidzÄ™, Å¼e organizacja Novatek Manufacturing Sp. z o.o. ma kilka aktywnych projektÃ³w, w tym trzy inicjatywy w fazie realizacji: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i ",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Narzędzia",
+    "route": "/discovery-tools",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/discovery-tools",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Na podstawie dostÄ™pnych danych, Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, dziaÅ‚ajÄ…ca w segmencie mid-market, z przychodem w wysokoÅ›ci 120 milionÃ³w euro i zatrudniajÄ…ca 620 pracownikÃ³w. Obecnie firma realizuje dwa aktywne projekty i ma poziom dojrzaÅ‚oÅ›ci PMO okreÅ›lony jako podstawowy (BASIC).\n\nW kontekÅ›cie uÅ¼ytkownika, istnieje piÄ™Ä‡ zadaÅ„ do wykonania, trzy inicjatywy w fazie realizacji, trzy blokery bez podanych powodÃ³w, oraz trzy oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77. UÅ¼ytkownik ma rÃ³wnieÅ¼ dwa oczekujÄ…ce zatwierdzenia akcji AI.\n\nW portfelu inicjatyw organizacji sÄ… projekty takie jak optymalizacja Å‚aÅ„cucha dostaw, platforma cyfrowego miejsca pracy, konsolidacja dostawcÃ³w, program podnoszenia kwalifikacji talentÃ³w (zablokowany), audyt zgodnoÅ›ci z RODO oraz planowane analizy oparte na AI. Istnieje rÃ³wnieÅ¼ kilka decyzji organizacyjnych, ktÃ³re sÄ… obecnie oczekujÄ…ce.\n\nZasoby te wskazujÄ… na aktywne dziaÅ‚ania w zakresie transformacji cyfrowej i optymalizacji procesÃ³w wewnÄ™trznych.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Na podstawie dostÄ™pnych danych, Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcyjnej, dziaÅ‚ajÄ…ca w segmencie mid-market, z przychodem w wysokoÅ›ci 120 milionÃ³w euro i zatrudniajÄ…ca 62",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Ocena",
+    "route": "/assessment",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/assessment?tab=library",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "WidzÄ™, Å¼e Novatek Manufacturing Sp. z o.o. to firma dziaÅ‚ajÄ…ca w branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w z przychodem na poziomie 120 milionÃ³w euro. Firma realizuje obecnie kilka inicjatyw, z ktÃ³rych trzy sÄ… w trakcie realizacji: Robotyzacja gniazda spawalniczego, System wizyjny kontroli jakoÅ›ci oraz Automatyzacja magazynu WIP. \n\nPonadto, uÅ¼ytkownik ma kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatu z interesariuszami oraz zadbanie o backup i rollback plan w ramach projektu DBR77. IstniejÄ… rÃ³wnieÅ¼ blokery dla niektÃ³rych zadaÅ„ oraz oczekujÄ…ce decyzje dotyczÄ…ce m.in. rolloutu do domeny publicznej i polityki retencji logÃ³w.\n\nDodatkowo, w portfelu inicjatyw widniejÄ… inne projekty, takie jak Optymalizacja Å‚aÅ„cucha dostaw [M1], Cyfrowa platforma pracy [M2], Konsolidacja dostawcÃ³w [M3], Program podnoszenia kwalifikacji [M4], Audyt zgodnoÅ›ci z RODO [M5] oraz Analizy oparte na AI [M6]. OczekujÄ… rÃ³wnieÅ¼ decyzje dotyczÄ…ce rÃ³Å¼nych aspektÃ³w IT i zarzÄ…dzania danymi, takie jak aktualizacja licencji M365 E5 [M7] czy wybÃ³r dostawcy platformy danych [M11].\n\nFirma znajduje siÄ™ na etapie podstawowym dojrzaÅ‚oÅ›ci PMO, a w historii Å‚Ä…czna liczba inicjatyw wynosi 28, z czego Å¼adna nie zostaÅ‚a jeszcze ukoÅ„czona.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "WidzÄ™, Å¼e Novatek Manufacturing Sp. z o.o. to firma dziaÅ‚ajÄ…ca w branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w z przychodem na poziomie 120 milionÃ³w euro. Firma realizuje obecnie ",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Inicjatywy",
+    "route": "/initiatives",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/initiatives",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Oto kluczowe informacje dotyczÄ…ce organizacji Novatek Manufacturing Sp. z o.o.:\n\n1. **BranÅ¼a**: PrzemysÅ‚ wytwÃ³rczy (Manufacturing, Discrete).\n2. **Skala**: Åšrednia firma z 620 pracownikami i rocznym przychodem â‚¬120M.\n3. **Aktywne projekty**: 2 projekty w toku.\n4. **Poziom dojrzaÅ‚oÅ›ci PMO**: Podstawowy (BASIC).\n\n### Zadania UÅ¼ytkownika:\n- PiÄ™Ä‡ aktywnych zadaÅ„, w tym przeglÄ…d wydajnoÅ›ci i przygotowanie planu warsztatÃ³w.\n- Trzy blokery z nieokreÅ›lonym powodem.\n\n### Inicjatywy UÅ¼ytkownika:\n- Trzy inicjatywy w fazie realizacji: Robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP.\n\n### OczekujÄ…ce Decyzje:\n- Trzy decyzje dotyczÄ…ce m.in. rolloutÃ³w i polityki retencji logÃ³w.\n\n### ObciÄ…Å¼enie:\n- UÅ¼ytkownik jest pod duÅ¼ym obciÄ…Å¼eniem (âš ï¸ WARNING).\n\n### Inicjatywy Organizacji:\n- SzeÅ›Ä‡ inicjatyw, z czego wiÄ™kszoÅ›Ä‡ jest w toku realizacji. PrzykÅ‚ady to: optymalizacja Å‚aÅ„cucha dostaw i platforma cyfrowego miejsca pracy.\n\n### Decyzje Organizacji:\n- Kilka decyzji jest w stanie oczekiwania, w tym dotyczÄ…ce upgrade'u licencji M365 E5 i wyboru dostawcy platformy danych.\n\n### EfektywnoÅ›Ä‡:\n- Organizacja nie ukoÅ„czyÅ‚a jeszcze Å¼adnej inicjatywy pomyÅ›lnie, co wskazuje na potrzebÄ™ poprawy w realizacji projektÃ³w.\n\n### Blokery i Problemy:\n- IstniejÄ… aktywne blokery, ktÃ³re mogÄ… wymagaÄ‡ rozwiÄ…zania, aby usprawniÄ‡ postÄ™p projektÃ³w.\n\nJeÅ›li potrzebujesz bardziej szczegÃ³Å‚owych informacji na temat konkretnych aspektÃ³w, daj mi znaÄ‡.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Oto kluczowe informacje dotyczÄ…ce organizacji Novatek Manufacturing Sp. z o.o.: 1. **BranÅ¼a**: PrzemysÅ‚ wytwÃ³rczy (Manufacturing, Discrete). 2. **Skala**: Åšrednia firma z 620 pracownikami i rocz",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Realizacja",
+    "route": "/execution",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/execution?tab=list&view=table",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "W kontekÅ›cie organizacji Novatek Manufacturing Sp. z o.o., oto kluczowe informacje:\n\n1. **Inicjatywy:** \n   - Organizacja prowadzi kilka aktywnych inicjatyw takich jak: Robotyzacja gniazda spawalniczego, System wizyjny kontroli jakoÅ›ci, Automatyzacja magazynu WIP oraz inne jak Optymalizacja Å‚aÅ„cucha dostaw [M1], Platforma cyfrowego miejsca pracy [M2], Konsolidacja dostawcÃ³w [M3].\n   - Jedna inicjatywa, Program podnoszenia kwalifikacji talentÃ³w, napotkaÅ‚a blokady [M4].\n\n2. **Decyzje:** \n   - Istnieje kilka decyzji oczekujÄ…cych na zatwierdzenie, w tym: aktualizacja licencji M365 E5 [M7], zatwierdzenie nowego terminu go-live dla SAP [M8], oraz krÃ³tka lista dostawcÃ³w AI dla Å‚aÅ„cucha dostaw [M9].\n\n3. **Zadania uÅ¼ytkownika:**\n   - UÅ¼ytkownik ma do wykonania kilka zadaÅ„ zwiÄ…zanych z projektem DBR77, w tym przeglÄ…d wydajnoÅ›ci i mapowanie zaleÅ¼noÅ›ci oraz ryzyk.\n\n4. **Blokery:** \n   - IstniejÄ… trzy blokery bez podanego powodu, ktÃ³re mogÄ… wpÅ‚ywaÄ‡ na realizacjÄ™ zadaÅ„.\n\n5. **WskaÅºniki:** \n   - ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzegawczym, co wskazuje na koniecznoÅ›Ä‡ priorytetyzacji dziaÅ‚aÅ„.\n\nRekomendujÄ™ skoncentrowanie siÄ™ na usuniÄ™ciu blokerÃ³w i priorytetyzacji decyzji oczekujÄ…cych na zatwierdzenie, aby zapewniÄ‡ pÅ‚ynnoÅ›Ä‡ realizacji projektÃ³w.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "W kontekÅ›cie organizacji Novatek Manufacturing Sp. z o.o., oto kluczowe informacje: 1. **Inicjatywy:** - Organizacja prowadzi kilka aktywnych inicjatyw takich jak: Robotyzacja gniazda spawalnicz",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Wyniki",
+    "route": "/results/kpi",
+    "entry": "/^(Teresa|Zapytaj Teresę)/",
+    "status": "FAIL",
+    "stopReason": null,
+    "finalRoute": "/results/kpi",
+    "failure": "brak wejścia Teresy",
+    "bledyKonsoli": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  {
+    "module": "Finanse",
+    "route": "/finance",
+    "entry": "AI",
+    "status": "FAIL",
+    "stopReason": null,
+    "finalRoute": "/finance?tab=statements",
+    "failure": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Materiały",
+    "route": "/presentations",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/presentations",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Obecnie pracujesz nad kilkoma zadaniami zwiÄ…zanymi z projektem DBR77, w tym przeglÄ…dem wydajnoÅ›ci oraz mapowaniem zaleÅ¼noÅ›ci i ryzyk wdroÅ¼enia. Masz rÃ³wnieÅ¼ kilka inicjatyw w fazie realizacji, takich jak robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci i automatyzacja magazynu WIP.\n\nNa liÅ›cie blokujÄ…cych zadaÅ„ znajdujÄ… siÄ™ trzy, jednak brak jest szczegÃ³Å‚owych informacji na temat przyczyn ich zablokowania. Masz takÅ¼e trzy oczekujÄ…ce decyzje dotyczÄ…ce rollout'u do domeny publicznej, polityki retencji logÃ³w i danych oraz wÅ‚Ä…czenia signals feed w wersji beta.\n\nOrganizacja prowadzi rÃ³wnieÅ¼ inne inicjatywy, takie jak optymalizacja Å‚aÅ„cucha dostaw i audyt zgodnoÅ›ci z RODO, ktÃ³re sÄ… w trakcie realizacji [M1, M5]. Warto rÃ³wnieÅ¼ zwrÃ³ciÄ‡ uwagÄ™ na inicjatywy takie jak program doskonalenia umiejÄ™tnoÅ›ci, ktÃ³ry jest obecnie zablokowany [M4].\n\nTwoje obciÄ…Å¼enie jest na poziomie ostrzeÅ¼enia, co sugeruje, Å¼e warto rozwaÅ¼yÄ‡ priorytetyzacjÄ™ zadaÅ„ i ewentualne oddelegowanie czÄ™Å›ci obowiÄ…zkÃ³w. JeÅ›li potrzebujesz pomocy w zakresie blokad lub innych zadaÅ„, daj mi znaÄ‡.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Obecnie pracujesz nad kilkoma zadaniami zwiÄ…zanymi z projektem DBR77, w tym przeglÄ…dem wydajnoÅ›ci oraz mapowaniem zaleÅ¼noÅ›ci i ryzyk wdroÅ¼enia. Masz rÃ³wnieÅ¼ kilka inicjatyw w fazie realizacji,",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Audyty",
+    "route": "/audit-programs",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/audit-programs?tab=library",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Aktualnie Novatek Manufacturing Sp. z o.o. realizuje kilka inicjatyw, z ktÃ³rych trzy sÄ… w trakcie wykonania: **Robotyzacja gniazda spawalniczego**, **System wizyjny kontroli jakoÅ›ci** oraz **Automatyzacja magazynu WIP**. PosiadajÄ… takÅ¼e inne inicjatywy takie jak **Supply Chain Optimization** [M1], **Digital Workplace Platform** [M2], **Vendor Consolidation** [M3], ktÃ³re sÄ… w trakcie realizacji. Jedna inicjatywa, **Talent Upskilling Program** [M4], jest zablokowana. \n\nDodatkowo, organizacja ma kilka oczekujÄ…cych decyzji, takich jak **Digital Workplace â€” M365 E5 license upgrade** [M7] oraz **SAP go-live date rebaseline approval** [M8].\n\nUÅ¼ytkownik ma obecnie piÄ™Ä‡ aktywnych zadaÅ„, dwa z nich sÄ… w trakcie realizacji, a trzy majÄ… nadchodzÄ…ce terminy. WystÄ™pujÄ… takÅ¼e blokery, ktÃ³re nie majÄ… okreÅ›lonego powodu, oraz oczekujÄ…ce decyzje w ramach inicjatywy DBR77.\n\nOgÃ³lnie, organizacja jest w trakcie kilku transformacyjnych inicjatyw, ale napotyka pewne przeszkody i ma kilka decyzji do podjÄ™cia.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Aktualnie Novatek Manufacturing Sp. z o.o. realizuje kilka inicjatyw, z ktÃ³rych trzy sÄ… w trakcie wykonania: **Robotyzacja gniazda spawalniczego**, **System wizyjny kontroli jakoÅ›ci** oraz **Automa",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Spotkania",
+    "route": "/meetings",
+    "entry": "Teresa",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/meetings",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci z przychodami wynoszÄ…cymi â‚¬120M i zatrudnieniu 620 pracownikÃ³w. Obecnie trwajÄ… dwie aktywne inicjatywy zwiÄ…zane z robotyzacjÄ… i automatyzacjÄ…. Firma ma doÅ›Ä‡ podstawowy poziom dojrzaÅ‚oÅ›ci w zarzÄ…dzaniu projektami (PMO). W kontekÅ›cie uÅ¼ytkownika znajdujÄ… siÄ™ zadania takie jak przygotowanie planu warsztatu oraz zadbanie o backup i rollback plan. UÅ¼ytkownik ma rÃ³wnieÅ¼ blokery i oczekujÄ…ce decyzje zwiÄ…zane z projektem DBR77. ObciÄ…Å¼enie uÅ¼ytkownika jest na poziomie ostrzeÅ¼enia. Inicjatywy firmy majÄ… zerowy wskaÅºnik ukoÅ„czenia, co moÅ¼e wskazywaÄ‡ na trudnoÅ›ci w realizacji projektÃ³w.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci z przychodami wynoszÄ…cymi â‚¬120M i zatrudnieniu 620 pracownikÃ³w. Obecnie trwajÄ… dwie aktywne inicjat",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Administracja",
+    "route": "/admin",
+    "entry": "/^(Teresa|Zapytaj Teresę)/",
+    "status": "FAIL",
+    "stopReason": "brak ekranu-artefaktu z prawym panelem; moduł nadzoruje AI",
+    "finalRoute": "/admin/team/members",
+    "failure": "brak wejścia, poza MVP",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Ustawienia",
+    "route": "/settings/profile",
+    "entry": "/^(Teresa|Zapytaj Teresę)/",
+    "status": "FAIL",
+    "stopReason": "brak ekranu-artefaktu z prawym panelem; ekran konfiguracji",
+    "finalRoute": "/settings/profile",
+    "failure": "brak wejścia, poza MVP",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Organizacja",
+    "route": "/organization",
+    "entry": "Zapytaj Teresę o kontekst organizacji",
+    "status": "PASS",
+    "stopReason": null,
+    "finalRoute": "/organization/profile/identity-scale",
+    "unifiedChatPanelDomCount": 1,
+    "answer": "Novatek Manufacturing Sp. z o.o. jest Å›redniej wielkoÅ›ci firmÄ… produkcyjnÄ… z 620 pracownikami i przychodem â‚¬120M. Obecnie prowadzi kilka inicjatyw w fazie realizacji, w tym robotyzacjÄ™ gniazda spawalniczego i automatyzacjÄ™ magazynu WIP. WystÄ™pujÄ… trzy blokery bez podanego powodu, co moÅ¼e wpÅ‚ywaÄ‡ na obciÄ…Å¼enie pracÄ…, ktÃ³re jest na poziomie ostrzegawczym.\n\nUÅ¼ytkownik ma kilka zadaÅ„ do wykonania, takich jak przygotowanie planu warsztatu i przeglÄ…d wydajnoÅ›ci. IstniejÄ… rÃ³wnieÅ¼ oczekujÄ…ce decyzje dotyczÄ…ce rollout'u do domeny publicznej i polityki retencji logÃ³w. Dodatkowo, oczekujÄ… dwa dziaÅ‚ania AI na zatwierdzenie przez uÅ¼ytkownika.\n\nW portfelu inicjatyw znajdujÄ… siÄ™ m.in. optymalizacja Å‚aÅ„cucha dostaw i konsolidacja dostawcÃ³w, a takÅ¼e zablokowany program doskonalenia umiejÄ™tnoÅ›ci. Wiele decyzji organizacyjnych czeka na zatwierdzenie, co moÅ¼e wpÅ‚ywaÄ‡ na postÄ™p projektÃ³w.",
+    "language": "pl",
+    "used_sources": 12,
+    "sources": [
+      {
+        "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+        "type": "module_data",
+        "title": "Inicjatywa: Supply Chain Optimization",
+        "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+        "link": null
+      },
+      {
+        "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "type": "module_data",
+        "title": "Inicjatywa: Digital Workplace Platform",
+        "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+        "link": null
+      },
+      {
+        "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "type": "module_data",
+        "title": "Inicjatywa: Vendor Consolidation",
+        "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+        "link": null
+      },
+      {
+        "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "type": "module_data",
+        "title": "Inicjatywa: Talent Upskilling Program",
+        "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+        "link": null
+      },
+      {
+        "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+        "type": "module_data",
+        "title": "Inicjatywa: Compliance & GDPR Audit",
+        "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+        "link": null
+      },
+      {
+        "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "type": "module_data",
+        "title": "Inicjatywa: AI-Powered Analytics",
+        "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+        "link": null
+      },
+      {
+        "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "type": "module_data",
+        "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+        "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+        "link": null
+      },
+      {
+        "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+        "type": "module_data",
+        "title": "Decyzja: SAP go-live date rebaseline approval",
+        "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+        "link": null
+      },
+      {
+        "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "type": "module_data",
+        "title": "Decyzja: Supply chain AI vendor shortlist",
+        "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+        "link": null
+      },
+      {
+        "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "type": "module_data",
+        "title": "Decyzja: DevOps toolchain consolidation",
+        "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "link": null
+      },
+      {
+        "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "type": "module_data",
+        "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+        "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "link": null
+      },
+      {
+        "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+        "type": "module_data",
+        "title": "Decyzja: Compliance remediation deadline extension",
+        "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+        "link": null
+      }
+    ],
+    "degraded": [],
+    "first200": "Novatek Manufacturing Sp. z o.o. jest Å›redniej wielkoÅ›ci firmÄ… produkcyjnÄ… z 620 pracownikami i przychodem â‚¬120M. Obecnie prowadzi kilka inicjatyw w fazie realizacji, w tym robotyzacjÄ™ gniazda ",
+    "bledyKonsoli": []
+  },
+  {
+    "module": "Partner",
+    "route": "/partner/dashboard",
+    "entry": "/^(Teresa|Zapytaj Teresę)/",
+    "status": "FAIL",
+    "stopReason": "brak ekranu-artefaktu z prawym panelem; portal poza rdzeniem MVP",
+    "finalRoute": "/partner?tab=partner-home",
+    "failure": "brak wejścia, poza MVP",
+    "bledyKonsoli": []
+  }
+]

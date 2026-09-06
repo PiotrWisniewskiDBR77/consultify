@@ -1,0 +1,122 @@
+{
+  "module": "Moja Praca",
+  "route": "/my-work",
+  "entry": "Teresa",
+  "status": "PASS",
+  "stopReason": null,
+  "finalRoute": "/my-work",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy inicjatywy: robotyzacja gniazda spawalniczego, system wizyjny kontroli jakoÅ›ci oraz automatyzacja magazynu WIP. UÅ¼ytkownik ma piÄ™tnaÅ›cie przypisanych zadaÅ„, z czego kilka jest w toku, a trzy sÄ… zablokowane bez podanej przyczyny. Na uwagÄ™ zasÅ‚uguje fakt, Å¼e organizacja ma zerowy wskaÅºnik sukcesu ukoÅ„czonych inicjatyw, co sugeruje koniecznoÅ›Ä‡ analizy i optymalizacji procesÃ³w projektowych. UÅ¼ytkownik ma takÅ¼e do podjÄ™cia trzy decyzje zwiÄ…zane z projektem DBR77. ObciÄ…Å¼enie uÅ¼ytkownika jest oznaczone jako â€žwarningâ€, co moÅ¼e wskazywaÄ‡ na ryzyko przeciÄ…Å¼enia pracÄ….",
+  "language": "pl",
+  "used_sources": 15,
+  "sources": [
+    {
+      "id": "module_task_1_seed_task_1788642392883_14_b9730303-41ca",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZweryfikowaÄ‡ eksport raportÃ³w publicznych",
+      "reference": "tasks/seed_task_1788642392883_14_b9730303-41ca-4d75-afed-115d4a853005",
+      "link": null
+    },
+    {
+      "id": "module_task_2_seed_task_1788642392883_0_33ba9d4f-eb95-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzygotowaÄ‡ plan warsztatu z interesariuszami",
+      "reference": "tasks/seed_task_1788642392883_0_33ba9d4f-eb95-417f-86c2-dbc3c3d09ea2",
+      "link": null
+    },
+    {
+      "id": "module_task_3_seed_task_1788642392883_15_6397cd82-2a7b",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZadbaÄ‡ o backup i rollback plan",
+      "reference": "tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1",
+      "link": null
+    },
+    {
+      "id": "module_task_4_seed_task_1788642392883_16_a4a57d28-8a71",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzeglÄ…d wydajnoÅ›ci: indeksy i cache",
+      "reference": "tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e",
+      "link": null
+    },
+    {
+      "id": "module_task_5_seed_task_1788642392883_1_fbb8606b-e1d6-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZmapowaÄ‡ zaleÅ¼noÅ›ci i ryzyka wdroÅ¼enia",
+      "reference": "tasks/seed_task_1788642392883_1_fbb8606b-e1d6-4e33-a7f1-7411186aa9b9",
+      "link": null
+    },
+    {
+      "id": "module_task_6_seed_task_1788642392883_17_c4d7364a-4748",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PorzÄ…dek w notyfikacjach (grupowanie)",
+      "reference": "tasks/seed_task_1788642392883_17_c4d7364a-4748-474e-849e-aa4e435c235c",
+      "link": null
+    },
+    {
+      "id": "module_task_7_seed_task_1788642392883_4_d2a2a9ce-bc94-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: ZamknÄ…Ä‡ krytyczne bugi przed cutover",
+      "reference": "tasks/seed_task_1788642392883_4_d2a2a9ce-bc94-42d3-95fa-2b50b24bd494",
+      "link": null
+    },
+    {
+      "id": "module_task_8_seed_task_1788642392883_5_3e3fbe59-b5da-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstaliÄ‡ SLA dla kluczowych procesÃ³w",
+      "reference": "tasks/seed_task_1788642392883_5_3e3fbe59-b5da-4445-84ce-62045bbdaa78",
+      "link": null
+    },
+    {
+      "id": "module_task_9_seed_task_1788642392883_19_32bc2c23-bb61",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: Weryfikacja E2E smoke po deploy",
+      "reference": "tasks/seed_task_1788642392883_19_32bc2c23-bb61-4cf3-b1f8-9606cbe05e0b",
+      "link": null
+    },
+    {
+      "id": "module_task_10_seed_task_1788642392883_2_dec2053e-1e4e-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstawiÄ‡ monitoring i alerting dla backendu",
+      "reference": "tasks/seed_task_1788642392883_2_dec2053e-1e4e-4193-acdd-27e138e89053",
+      "link": null
+    },
+    {
+      "id": "module_task_11_seed_task_1788642392883_6_9b043fa3-ce84-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzeglÄ…d jakoÅ›ci danych po migracji",
+      "reference": "tasks/seed_task_1788642392883_6_9b043fa3-ce84-4ffb-9873-e7ba0930a46a",
+      "link": null
+    },
+    {
+      "id": "module_task_12_seed_task_1788642392883_7_7dc8bd98-8aab-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: PrzygotowaÄ‡ checklistÄ™ go-live",
+      "reference": "tasks/seed_task_1788642392883_7_7dc8bd98-8aab-4cda-a1c9-b3d3515ea852",
+      "link": null
+    },
+    {
+      "id": "module_task_13_seed_task_1788642392883_9_d033dd16-9e7e-",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: SkonfigurowaÄ‡ integracje (webhooks)",
+      "reference": "tasks/seed_task_1788642392883_9_d033dd16-9e7e-4a3f-aae4-f9377a13bf2e",
+      "link": null
+    },
+    {
+      "id": "module_task_14_seed_task_1788642392883_10_81fb0b43-89c8",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: UstawiÄ‡ polityki bezpieczeÅ„stwa (CSRF/CORS)",
+      "reference": "tasks/seed_task_1788642392883_10_81fb0b43-89c8-4a52-89e5-65fee9b82d9c",
+      "link": null
+    },
+    {
+      "id": "module_task_15_seed_task_1788642392883_11_601ab222-a8a4",
+      "type": "module_data",
+      "title": "Zadanie: DBR77: Audyt kosztÃ³w i budÅ¼etu AI",
+      "reference": "tasks/seed_task_1788642392883_11_601ab222-a8a4-4817-85a0-851036a5eddd",
+      "link": null
+    }
+  ],
+  "degraded": [],
+  "first200": "Novatek Manufacturing Sp. z o.o. to firma z branÅ¼y produkcji dyskretnej o Å›redniej wielkoÅ›ci, zatrudniajÄ…ca 620 pracownikÃ³w i generujÄ…ca przychody rzÄ™du â‚¬120M. Obecnie realizowane sÄ… trzy in",
+  "bledyKonsoli": []
+}

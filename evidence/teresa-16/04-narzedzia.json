@@ -1,0 +1,19 @@
+{
+  "module": "Narzędzia",
+  "route": "/discovery-tools",
+  "entry": "Teresa",
+  "status": "PASS",
+  "stopReason": null,
+  "finalRoute": "/discovery-tools",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "Brak danych w module.",
+  "language": "pl",
+  "used_sources": 0,
+  "sources": [],
+  "degraded": {
+    "mode": "no_sources",
+    "reason": "no_citations_collected"
+  },
+  "first200": "Brak danych w module.",
+  "bledyKonsoli": []
+}

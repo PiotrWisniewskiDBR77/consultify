@@ -33,10 +33,22 @@ import logger from '../../utils/Logger.js';
 import type { AiLanguage } from './languagePolicy.js';
 
 export type ModuleContextKey =
+  | 'chat'
+  | 'interview'
+  | 'tools'
   | 'initiatives'
   | 'my_work'
   | 'execution'
   | 'assessment'
+  | 'results'
+  | 'finance'
+  | 'materials'
+  | 'audits'
+  | 'meetings'
+  | 'admin'
+  | 'settings'
+  | 'organization'
+  | 'partner'
   | 'org_overview';
 
 export interface ModuleContextCitation {
@@ -70,10 +82,22 @@ export interface ModuleContextGroundingInput {
 }
 
 const MODULE_LABELS_PL: Record<ModuleContextKey, string> = {
+  chat: 'Czat',
+  interview: 'Wywiad',
+  tools: 'Narzędzia',
   initiatives: 'Inicjatywy',
   my_work: 'Moja praca',
   execution: 'Realizacja',
   assessment: 'Ocena',
+  results: 'Wyniki',
+  finance: 'Finanse',
+  materials: 'Materiały',
+  audits: 'Audyty',
+  meetings: 'Spotkania',
+  admin: 'Administracja',
+  settings: 'Ustawienia',
+  organization: 'Organizacja',
+  partner: 'Partner',
   org_overview: 'Przegląd organizacji',
 };
 
@@ -84,7 +108,7 @@ const MODULE_LABELS_PL: Record<ModuleContextKey, string> = {
  */
 export function detectModuleKey(screenContext?: Record<string, unknown> | null): ModuleContextKey {
   const page = (screenContext?.page || {}) as Record<string, unknown>;
-  const raw = [
+  const rawParts = [
     screenContext?.moduleId,
     screenContext?.module,
     screenContext?.currentModule,
@@ -96,16 +120,32 @@ export function detectModuleKey(screenContext?: Record<string, unknown> | null):
     page.route,
     page.pathname,
     page.helpModuleId,
-  ]
-    .filter((v) => typeof v === 'string')
-    .join(' ')
-    .toLowerCase();
+  ].filter((v) => typeof v === 'string');
+  // `UnifiedChatPanel` przekazuje dziś `routeInfo` jako obiekt. Poprzednia
+  // wersja ignorowała go, przez co każdy moduł wpadał do `org_overview`.
+  // [ODMROZENIE 13_CHAT DEC-397]
+  try {
+    rawParts.push(JSON.stringify(screenContext || {}), JSON.stringify(page || {}));
+  } catch { /* obiekt diagnostyczny nie może zablokować czatu */ }
+  const raw = rawParts.join(' ').toLowerCase();
 
   if (!raw.trim()) return 'org_overview';
+  if (/partner/.test(raw)) return 'partner';
+  if (/settings|ustawieni/.test(raw)) return 'settings';
+  if (/\/admin|administracj/.test(raw)) return 'admin';
+  if (/meetings?|spotkani/.test(raw)) return 'meetings';
+  if (/audit-program|\baudits?\b|audyt/.test(raw)) return 'audits';
+  if (/presentation|document-studio|materials|materia/.test(raw)) return 'materials';
+  if (/finance|financial|finanse|economics/.test(raw)) return 'finance';
+  if (/results|wyniki|\bkpi\b|\bokr\b/.test(raw)) return 'results';
   if (/my-?work|mywork|moja-?praca|\btasks?\b|zadani/.test(raw)) return 'my_work';
+  if (/interview|wywiad/.test(raw)) return 'interview';
+  if (/discovery[-_]?tools|known[-_]?tool|narzędzi|narzedzi|tool_session/.test(raw)) return 'tools';
   if (/initiativ|inicjatyw/.test(raw)) return 'initiatives';
   if (/execution|realizacj|rollout/.test(raw)) return 'execution';
   if (/assessment|ocena|diagnoz/.test(raw)) return 'assessment';
+  if (/organization|organizacj|context/.test(raw)) return 'organization';
+  if (/\bchat\b/.test(raw)) return 'chat';
   return 'org_overview';
 }
 
@@ -182,9 +222,154 @@ export async function buildModuleContextGrounding(
     });
   };
 
+  const pushRows = (
+    heading: string,
+    kind: string,
+    referenceRoot: string,
+    rows: any[],
+    toTitle: (row: any) => string,
+    toExcerpt: (row: any) => string
+  ) => {
+    counts[kind] = rows.length;
+    if (rows.length === 0) return;
+    lines.push(`### ${heading} (${rows.length})`);
+    rows.forEach((row: any, index: number) => {
+      const title = truncate(toTitle(row) || 'Rekord bez nazwy', 180);
+      const excerpt = truncate(toExcerpt(row), 360);
+      lines.push(`- [M${citations.length + 1}] ${title}${excerpt ? ` — ${excerpt}` : ''}`);
+      pushCitation(kind, index + 1, row.id, title, `${referenceRoot}/${row.id}`, excerpt || title);
+    });
+  };
+
+  // Dane są rozdzielone per moduł. To celowe: źródło z Inicjatyw nie może
+  // nabijać licznika „Źródła” na ekranie Spotkań albo Finansów.
+  // [ODMROZENIE 02_INTERVIEW DEC-397]
+  if (moduleKey === 'interview') {
+    const rows = await safeQuery(
+      `SELECT id, name, status, answered_questions, total_questions, summary_facts, summary_gaps
+         FROM interview_sessions WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Sesje wywiadów', 'interviews', 'interview/sessions', rows,
+      (r) => r.name || 'Wywiad bez nazwy',
+      (r) => `status: ${r.status || '—'}; odpowiedzi: ${r.answered_questions ?? '—'}/${r.total_questions ?? '—'}${r.summary_facts ? `; fakty: ${truncate(r.summary_facts, 180)}` : ''}${r.summary_gaps ? `; luki: ${truncate(r.summary_gaps, 160)}` : ''}`);
+  }
+
+  // [ODMROZENIE 03_DISCOVERY_TOOLS DEC-397]
+  if (moduleKey === 'tools') {
+    const rows = await safeQuery(
+      `SELECT id, name, tool_type, status, completion_percent, confidence_avg
+         FROM tool_sessions WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Sesje narzędzi', 'tools', 'discovery-tools/sessions', rows,
+      (r) => r.name || r.tool_type || 'Sesja narzędzia',
+      (r) => `typ: ${r.tool_type || '—'}; status: ${r.status || '—'}; ukończenie: ${r.completion_percent ?? '—'}%`);
+  }
+
+  // [ODMROZENIE 04_ASSESSMENT DEC-397]
+  if (moduleKey === 'assessment') {
+    const rows = await safeQuery(
+      `SELECT id, name, framework_type, framework, status, completion_percent, overall_score, maturity_level
+         FROM assessments WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Oceny', 'assessments', 'assessment', rows,
+      (r) => r.name || r.framework_type || r.framework || 'Ocena bez nazwy',
+      (r) => `status: ${r.status || '—'}; ukończenie: ${r.completion_percent ?? '—'}%; poziom: ${r.maturity_level || '—'}; wynik: ${r.overall_score ?? '—'}`);
+  }
+
+  // [ODMROZENIE 09_RESULTS DEC-397]
+  if (moduleKey === 'results') {
+    const rows = await safeQuery(
+      `SELECT d.kpi_id AS id, d.kpi_code AS code, d.status,
+              v.name, v.unit, v.target_geometry, v.target_value, v.measurement_frequency_days
+         FROM rvn_kpi_definitions d
+         LEFT JOIN rvn_kpi_definition_versions v
+           ON v.definition_version_id = d.current_definition_version_id
+          AND v.organization_id = d.organization_id
+        WHERE d.organization_id = ?
+        ORDER BY d.updated_at DESC LIMIT 15`,
+      [organizationId]
+    );
+    pushRows('Definicje KPI', 'kpis', 'results/kpi', rows,
+      (r) => r.name || r.code || 'KPI bez nazwy',
+      (r) => `kod: ${r.code || '—'}; status: ${r.status || '—'}; jednostka: ${r.unit || '—'}; typ celu: ${r.target_geometry || '—'}; cel: ${r.target_value ?? '—'}; częstotliwość: ${r.measurement_frequency_days ?? '—'} dni`);
+  }
+
+  // [ODMROZENIE 10_FINANCE DEC-397]
+  if (moduleKey === 'finance') {
+    const rows = await safeQuery(
+      `SELECT id, entity_name, period_label, currency, pack_status, source_statement_count,
+              pack_readiness_status, pack_readiness_score
+         FROM financial_statement_packs WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Pakiety sprawozdań finansowych', 'financial_statements', 'finance/statements', rows,
+      (r) => r.entity_name || 'Sprawozdanie bez nazwy',
+      (r) => `okres: ${r.period_label || '—'}; waluta: ${r.currency || '—'}; status: ${r.pack_status || '—'}; dokumenty: ${r.source_statement_count ?? '—'}; gotowość: ${r.pack_readiness_score ?? '—'}`);
+  }
+
+  // [ODMROZENIE 11_MATERIALS DEC-397]
+  if (moduleKey === 'materials') {
+    const rows = await safeQuery(
+      `SELECT id, title, status, deck_type, slide_count, language
+         FROM presentation_decks WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Prezentacje', 'presentations', 'presentations', rows,
+      (r) => r.title || 'Prezentacja bez tytułu',
+      (r) => `status: ${r.status || '—'}; typ: ${r.deck_type || '—'}; slajdy: ${r.slide_count ?? '—'}; język: ${r.language || '—'}`);
+  }
+
+  // [ODMROZENIE 12_AUDITS DEC-397]
+  if (moduleKey === 'audits') {
+    const rows = await safeQuery(
+      `SELECT id, name, status, lifecycle_state, objective
+         FROM audit_programs WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Programy audytowe', 'audits', 'audit-programs', rows,
+      (r) => r.name || 'Audyt bez nazwy',
+      (r) => `status: ${r.status || r.lifecycle_state || '—'}${r.objective ? `; cel: ${truncate(r.objective, 220)}` : ''}`);
+  }
+
+  // [ODMROZENIE 08_MEETINGS DEC-397]
+  if (moduleKey === 'meetings') {
+    const rows = await safeQuery(
+      `SELECT id, title, status, start_at, end_at, location
+         FROM meetings WHERE organization_id = ?
+        ORDER BY COALESCE(updated_at, created_at) DESC LIMIT 12`,
+      [organizationId]
+    );
+    pushRows('Spotkania', 'meetings', 'meetings', rows,
+      (r) => r.title || 'Spotkanie bez tytułu',
+      (r) => `status: ${r.status || '—'}; termin: ${r.start_at || '—'}${r.location ? `; miejsce: ${r.location}` : ''}`);
+  }
+
+  // [ODMROZENIE 01_ORGANIZATION DEC-397]
+  if (moduleKey === 'organization') {
+    const rows = await safeQuery(
+      `SELECT id, company_name, industry, company_size, location, employee_count,
+              annual_revenue, key_metrics, stakeholders, open_gaps, completeness_percent
+         FROM organization_context WHERE organization_id = ?
+        ORDER BY updated_at DESC LIMIT 5`,
+      [organizationId]
+    );
+    pushRows('Twierdzenia kontekstu organizacji', 'organization_claims', 'organization/claims', rows,
+      (r) => r.company_name || 'Profil organizacji',
+      (r) => `branża: ${r.industry || '—'}; skala: ${r.company_size || '—'}; pracownicy: ${r.employee_count ?? '—'}; przychód: ${r.annual_revenue ?? '—'}; kompletność: ${r.completeness_percent ?? '—'}%; luki: ${truncate(r.open_gaps || '', 180)}`);
+  }
+
   // ---------------------------------------------------------------- inicjatywy
   const wantsInitiatives =
-    moduleKey === 'initiatives' || moduleKey === 'execution' || moduleKey === 'org_overview';
+    moduleKey === 'initiatives' || moduleKey === 'execution' || moduleKey === 'chat' || moduleKey === 'org_overview';
   if (wantsInitiatives) {
     const rows = await safeQuery(
       `SELECT id, name, title, status, current_stage, summary, problem_statement,
@@ -306,7 +491,21 @@ export async function buildModuleContextGrounding(
     }
   }
 
-  if (citations.length === 0) return null;
+  if (citations.length === 0) {
+    if (moduleKey === 'org_overview' || moduleKey === 'chat') return null;
+    return {
+      moduleKey,
+      citations: [],
+      counts,
+      systemInstructionAddon: [
+        `## DANE MODUŁU W ZASIĘGU — ${MODULE_LABELS_PL[moduleKey].toUpperCase()}`,
+        'BRAK DANYCH W MODULE dla tej organizacji i tego widoku.',
+        'Odpowiedz po polsku i powiedz wprost: „Brak danych w module”.',
+        'Nie zastępuj danych modułu ogólnym profilem organizacji, pamięcią ani przykładowymi danymi.',
+        'Nie wymyślaj źródeł; liczba użytych źródeł ma pozostać równa 0.',
+      ].join('\n'),
+    };
+  }
 
   const label = MODULE_LABELS_PL[moduleKey];
   const systemInstructionAddon = [
