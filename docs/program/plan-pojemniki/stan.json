@@ -61,12 +61,12 @@
           "nazwa": "P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)",
           "wykonawca": "Codex/Sonnet",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "odebrane",
           "galaz": "codex/p8-teresa",
-          "sha": "",
-          "dowod": "wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)",
-          "uwagi": "Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.",
-          "data": "06.09 06:40"
+          "sha": "72def3b049",
+          "dowod": "scalone na staging; 13 wejść Teresy w prawym panelu (inicjatywa, notatka, zadanie, wywiad, narzędzia, ocena, audyty, organizacja, spotkania…), e2e: dok z historią czatu i odpowiedź PL ze źródłami; 5 zrzutów evidence/p8-teresa-20260905/; CTO obejrzał inicjatywę",
+          "uwagi": "Właściciel 06.09 o zrzucie karty inicjatywy: „dokładnie taki jak kocham” = Tak (karta 3). Codex: 2 STOP-y rozstrzygnięte decyzjami DEC-398/DEC-400.",
+          "data": "06.09 10:55"
         },
         {
           "nr": "1.6",
@@ -225,8 +225,8 @@
           "tresc": "Teresa odpowiada po polsku ze źródłami w każdym module MVP",
           "kto": "nadzorca",
           "artefakt": "16 odpowiedzi z used_sources > 0 w evidence/",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "06.09: wejście do Teresy w prawym panelu 13 ekranów (P8, 72def3b049), e2e inicjatywa → odpowiedź PL ze Źródła>0; Czat „Źródła: 12” (A3); pomiar 16 odpowiedzi per moduł na stagingu w 1.9"
         },
         {
           "nr": "S1.7",
