@@ -215,7 +215,11 @@ export interface CommentReaction {
 // INITIATIVE TYPES
 // ==========================================
 
-export type InitiativeStatus = CanonicalInitiativeStatus;
+// UWAGA: NIE eksportuj tego aliasu z barrela (./types) — kanoniczny eksport
+// InitiativeStatus (typ + wartość) żyje w constants/initiativeStatuses.generated.ts
+// i jest eksportowany z korzenia paczki przez `export * from './constants'` w src/index.ts.
+// Podwójny `export *` z ./constants i ./types dawał TS2308 (build Railway ac7da0dd).
+type InitiativeStatus = CanonicalInitiativeStatus;
 
 export type InitiativeCategory =
   | 'digital_transformation'
