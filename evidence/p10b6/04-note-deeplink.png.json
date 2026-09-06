@@ -1,0 +1,19 @@
+{
+ "url": "http://127.0.0.1:3141/my-work/notebook/seed_nb_1788642392883_3_8d569e14-f6e3-4c40-9e7e-6436a4628c8d",
+ "tytul": "My Work — Consultify",
+ "kliki": [
+  "css=button[title^='Otwórz panel boczny']"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMoja Praca\nNotatnik\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nPomysły\nNotatnik\nSkrzynka\nKalendarz\nZadania\nDecyzje\nSejfy\nNowy notatnik\nWszystkie\n—\nOsobiste\n—\nCała organizacja\n—\nNotatnik\n7 stron\nWrzuć\nWszystkie (7)\nPrzypięte (2)\nOstatnie (6)\nDo przeglądu (2)\nŚwieże (6)\nOsierocone (7)\n⚠️\nRisk register — Transformation program blockers\n2d\n🛡️\nOur latest investment in open source security for the enterprise\n3d\n📝\nQ2 Strategy — Market expansion playbook\n9h\n📝\nUntitled draft\n23h\n🎯\nWeekly priorities — Sprint 14 focus areas\n1d\n👥\nMeeting notes — Team sync on Q2 roadmap\n5d\n🤖\nGoogle is making new investments in AI infrastructure\n1w\n⠿\n+\nDodaj okładkę\n⚠️\nWgrany plik\n\nRisk Register — Transformation Program R1 (HIGH): Data migration quality — 12% records failed validation in dry-run → Mitigation: dedicated cleanup sprint before cutover R2 (MEDIUM): Vendor lock-in on AI model provider → Mitigation: abstract LLM layer, evaluate 2 alternatives R3 (LOW): User adoption resistance in finance team → Mitigation: champion program + weekly office hours R4 (HIGH): Budget overrun on infrastructure costs → Mitigation: implement cost alerts + monthly review\n\nZałączniki\n\nNOTEBOOK\n\nSzczegóły notatki\nAKCJE\nWŁAŚCIWOŚCI\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\n0\nHISTORIA",
+ "kiedy": "2026-09-06T18:18:06.618Z"
+}
