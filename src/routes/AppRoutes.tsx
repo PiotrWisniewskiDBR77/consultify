@@ -37,6 +37,7 @@ import { isClientReaderEnabled } from '@/utils/clientReaderFlag';
 import { isExceleEngineEnabled } from '@/utils/exceleFlag';
 import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { isMeetingsModuleEnabled } from '@/utils/meetingsModuleFlag';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
 import { isStudioEnabled } from '@/utils/studioFlag';
@@ -310,6 +311,14 @@ const MeetingHub = lazyWithRetry(() =>
 // component's own header comment).
 const MeetingObjectPage = lazyWithRetry(() =>
   import('@/components/Meeting/MeetingObjectPage').then((m) => ({ default: m.MeetingObjectPage }))
+);
+// DEC-425 — neutral "planned for Wave 2" screen shown on every /meetings/**
+// route while `isMeetingsModuleEnabled()` is OFF (default). See
+// meetingsModuleFlag.ts and MeetingsWave2Placeholder.tsx header comments.
+const MeetingsWave2Placeholder = lazyWithRetry(() =>
+  import('@/components/Meeting/MeetingsWave2Placeholder').then((m) => ({
+    default: m.MeetingsWave2Placeholder,
+  }))
 );
 // NOTE: Legacy Management Reports UI has been deprecated in favor of the unified
 // Reports & Presentations hub under /presentations (tab=documents).
@@ -1005,6 +1014,12 @@ export const AppRoutes: React.FC = () => {
     []
   );
   const internalToolsEnabled = canUseInternalTools(currentUser);
+  // DEC-425 (właściciel, 2026-09-06): Spotkania (08_MEETINGS) NIEWIDOCZNE w
+  // MVP do Fali 2. Flaga domyślnie OFF (`meetingsModuleFlag.ts`) — z OFF
+  // każda trasa /meetings/** renderuje `MeetingsWave2Placeholder` zamiast
+  // `MeetingHub`/`MeetingObjectPage`, bez `BetaGate` (pełna niewidzialność,
+  // bez wyjątku dla adminów). Z ON: zero zmian względem obecnego zachowania.
+  const meetingsEnabled = isMeetingsModuleEnabled();
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -2700,18 +2715,29 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETINGS.ROOT}
           element={
-            <BetaGate moduleId="MODULE_MEETING">
-              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Meeting"
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}
+                  noPadding
                 >
-                  <RouteErrorBoundary>
-                    <MeetingHub />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingHub />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
               </MainLayout>
-            </BetaGate>
+            )
           }
         />
         {/*
@@ -2725,7 +2751,28 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETINGS.OBJECT}
           element={
-            <BetaGate moduleId="MODULE_MEETING">
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.meeting', 'Meeting'),
+                      t('meeting.meetingLabel', 'Meeting'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingObjectPage />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
@@ -2735,22 +2782,38 @@ export const AppRoutes: React.FC = () => {
                 }
                 noPadding
               >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Meeting"
-                >
-                  <RouteErrorBoundary>
-                    <MeetingObjectPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
               </MainLayout>
-            </BetaGate>
+            )
           }
         />
         <Route
           path={ROUTES.MEETINGS.MINUTES}
           element={
-            <BetaGate moduleId="MODULE_MEETING">
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.meeting', 'Meeting'),
+                      t('meeting.meetingLabel', 'Meeting'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingObjectPage />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
@@ -2760,22 +2823,38 @@ export const AppRoutes: React.FC = () => {
                 }
                 noPadding
               >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Meeting"
-                >
-                  <RouteErrorBoundary>
-                    <MeetingObjectPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
               </MainLayout>
-            </BetaGate>
+            )
           }
         />
         <Route
           path={ROUTES.MEETINGS.DECISIONS}
           element={
-            <BetaGate moduleId="MODULE_MEETING">
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.meeting', 'Meeting'),
+                      t('meeting.meetingLabel', 'Meeting'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingObjectPage />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
@@ -2785,22 +2864,38 @@ export const AppRoutes: React.FC = () => {
                 }
                 noPadding
               >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Meeting"
-                >
-                  <RouteErrorBoundary>
-                    <MeetingObjectPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
               </MainLayout>
-            </BetaGate>
+            )
           }
         />
         <Route
           path={ROUTES.MEETINGS.NOTE}
           element={
-            <BetaGate moduleId="MODULE_MEETING">
+            meetingsEnabled ? (
+              <BetaGate moduleId="MODULE_MEETING">
+                <MainLayout
+                  breadcrumbs={
+                    breadcrumbs || [
+                      t('sidebar.meeting', 'Meeting'),
+                      t('meeting.meetingLabel', 'Meeting'),
+                    ]
+                  }
+                  noPadding
+                >
+                  <ProductionModuleGate
+                    enabled={!hideNonCoreModulesOnPublicProduction}
+                    moduleName="Meeting"
+                  >
+                    <RouteErrorBoundary>
+                      <MeetingObjectPage />
+                    </RouteErrorBoundary>
+                  </ProductionModuleGate>
+                </MainLayout>
+              </BetaGate>
+            ) : (
               <MainLayout
                 breadcrumbs={
                   breadcrumbs || [
@@ -2810,16 +2905,11 @@ export const AppRoutes: React.FC = () => {
                 }
                 noPadding
               >
-                <ProductionModuleGate
-                  enabled={!hideNonCoreModulesOnPublicProduction}
-                  moduleName="Meeting"
-                >
-                  <RouteErrorBoundary>
-                    <MeetingObjectPage />
-                  </RouteErrorBoundary>
-                </ProductionModuleGate>
+                <RouteErrorBoundary>
+                  <MeetingsWave2Placeholder />
+                </RouteErrorBoundary>
               </MainLayout>
-            </BetaGate>
+            )
           }
         />
         <Route path="/presentations/wizard" element={<PresentationWizardRedirect />} />
