@@ -371,6 +371,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [showNewModal, setShowNewModal] = useState(false);
   const newModalDialogRef = useRef<HTMLDivElement>(null);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
+  const [planCreateRequestId, setPlanCreateRequestId] = useState(0);
+  const [capacityCreateRequestId, setCapacityCreateRequestId] = useState(0);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1690,6 +1692,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           initiatives={planInitiatives}
           activePreset={canonicalMenu3Preset.plan}
           onCountsChange={handlePlanMenu3Counts}
+          createRequestId={planCreateRequestId}
           /* Odbiór 141-plan-scenario (2026-08-31): „Otwórz" w podglądzie planu
              prowadzi do KARTY INICJATYWY — ta sama droga co w PortfolioHealthView
              niżej. Wcześniej otwierał warsztat planu pod tabelą. */
@@ -1709,6 +1712,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           demoMode={allowDemoData}
           activePreset={canonicalMenu3Preset.capacity}
           onCountsChange={handleCapacityMenu3Counts}
+          createRequestId={capacityCreateRequestId}
         />
       );
     if (activeTab === 'portfolioHealth') {
@@ -2424,41 +2428,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // opcjonalnie, chipy Menu 3).
   const canonicalMenu3FullOptions: Record<string, Array<{ id: string; label: string }>> = {
     plan: [
-      ['unscheduled', t('initiatives.menu3.plan.unscheduled')],
-      ['now', t('initiatives.menu3.plan.now')],
-      ['next', t('initiatives.menu3.plan.next')],
-      ['later', t('initiatives.menu3.plan.later')],
-      ['conflicted', t('initiatives.menu3.plan.conflicted')],
-      ['missing-dependencies', t('initiatives.menu3.plan.missingDependencies')],
-      ['needs-capacity', t('initiatives.menu3.plan.needsCapacity')],
-      ['ready', t('initiatives.menu3.plan.ready')],
-      ['published', t('initiatives.menu3.plan.published')],
+      ['all', t('common.all', 'Wszystkie')],
+      ['drafts', t('initiatives.plan.filters.drafts', 'Szkice')],
+      ['published', t('initiatives.plan.filters.published', 'Opublikowane')],
     ].map(([id, label]) => ({ id, label })),
     capacity: [
-      ['all', t('initiatives.menu3.capacity.all')],
-      ['critical', t('initiatives.menu3.capacity.critical')],
-      ['unknown-supply', t('initiatives.menu3.capacity.unknownSupply')],
-      ['missing-demand', t('initiatives.menu3.capacity.missingDemand')],
-      ['skill-gaps', t('initiatives.menu3.capacity.skillGaps')],
-      ['management-load', t('initiatives.menu3.capacity.managementLoad')],
-      ['budget-envelope', t('initiatives.menu3.capacity.budgetEnvelope')],
-      ['unconfirmed', t('initiatives.menu3.capacity.unconfirmed')],
-      ['resolved', t('initiatives.menu3.capacity.resolved')],
+      ['all', t('common.all', 'Wszystkie')],
+      ['drafts', t('initiatives.capacityAnalysis.filters.drafts', 'Szkice')],
+      ['published', t('initiatives.capacityAnalysis.filters.published', 'Opublikowane')],
     ].map(([id, label]) => ({ id, label })),
   };
   // Menu 3 (chipy) — ≤3 pozycje o największej wartości decyzyjnej; reszta
   // wyłącznie w dropdownie Menu 2 (`rightControls`, `Menu2PresetDropdown`).
-  const CANONICAL_MENU3_KEPT_IDS: Record<string, string[]> = {
-    plan: ['unscheduled', 'conflicted', 'published'],
-    capacity: ['all', 'critical', 'unconfirmed'],
+  const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> = {
+    plan: [
+      { id: 'drafts', label: t('initiatives.plan.filters.drafts', 'Szkice') },
+      { id: 'published', label: t('initiatives.plan.filters.published', 'Opublikowane') },
+      { id: 'conflicted', label: t('initiatives.plan.filters.conflicted', 'Z konfliktami') },
+    ],
+    capacity: [
+      { id: 'drafts', label: t('initiatives.capacityAnalysis.filters.drafts', 'Szkice') },
+      { id: 'published', label: t('initiatives.capacityAnalysis.filters.published', 'Opublikowane') },
+      { id: 'gaps', label: t('initiatives.capacityAnalysis.filters.gaps', 'Z lukami') },
+    ],
   };
-  const canonicalMenu3Definitions: Record<string, Array<{ id: string; label: string }>> =
-    Object.fromEntries(
-      Object.entries(canonicalMenu3FullOptions).map(([tabId, options]) => [
-        tabId,
-        options.filter((option) => (CANONICAL_MENU3_KEPT_IDS[tabId] ?? []).includes(option.id)),
-      ])
-    );
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
 
   const lifecycleDropdownOptions = [
@@ -2520,7 +2513,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       )}
       {activeTab === 'plan' && (
         <Menu2PresetDropdown
-          label={t('initiatives.filters.planState', 'Stan planu')}
+          label={t('initiatives.filters.planStatus', 'Status')}
           options={canonicalMenu3FullOptions.plan.map((option) => ({
             ...option,
             count: canonicalMenu3Counts.plan?.[option.id] ?? 0,
@@ -2532,7 +2525,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       )}
       {activeTab === 'capacity' && (
         <Menu2PresetDropdown
-          label={t('initiatives.filters.capacityConstraint', 'Ograniczenie')}
+          label={t('initiatives.filters.capacityStatus', 'Status')}
           options={canonicalMenu3FullOptions.capacity.map((option) => ({
             ...option,
             count: canonicalMenu3Counts.capacity?.[option.id] ?? 0,
@@ -2563,8 +2556,18 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
         primaryCta={
-          activeTab !== 'list'
-            ? undefined
+          activeTab === 'plan'
+            ? {
+                label: t('initiatives.plan.newPlan', 'Nowy plan'),
+                onClick: () => setPlanCreateRequestId((value) => value + 1),
+              }
+            : activeTab === 'capacity'
+              ? {
+                  label: t('initiatives.capacityAnalysis.newAnalysis', 'Nowa analiza'),
+                  onClick: () => setCapacityCreateRequestId((value) => value + 1),
+                }
+              : activeTab !== 'list'
+                ? undefined
             : isPilotParticipant
               ? {
                   label: t('initiatives.form.newInitiative'),

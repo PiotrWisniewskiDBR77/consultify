@@ -27,7 +27,7 @@ import {
   writeCapacityScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
-import { type CanonicalMenu3Contract, countPresets } from './canonicalMenu3';
+import type { CanonicalMenu3Contract } from './canonicalMenu3';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
 // 2026-09-03 (i18n-r3): te były Record<K,string> ze stałą wartością PL —
@@ -204,20 +204,10 @@ interface PublishedPlanBasis {
   timezone: string;
   periods: Array<{ periodId: string; start: string; end: string }>;
 }
-const capacityPresets = [
-  'all',
-  'critical',
-  'unknown-supply',
-  'missing-demand',
-  'skill-gaps',
-  'management-load',
-  'budget-envelope',
-  'unconfirmed',
-  'resolved',
-] as const;
 export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMode?: boolean }> = ({
   activePreset,
   onCountsChange,
+  createRequestId = 0,
   demoMode = false,
 }) => {
   const { t } = useTranslation();
@@ -241,6 +231,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const [showCreate, setShowCreate] = useState(false);
   const [newAnalysisId, setNewAnalysisId] = useState('');
   const [newPlanId, setNewPlanId] = useState('');
+  const handledCreateRequest = useRef(createRequestId);
+  useEffect(() => {
+    if (createRequestId === handledCreateRequest.current) return;
+    handledCreateRequest.current = createRequestId;
+    setShowCreate(true);
+  }, [createRequestId]);
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
@@ -382,12 +378,18 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
                       ? /budget|cost/i.test(row.detail)
                       : false;
   const visibleConstraintRows = constraintRows.filter((row) =>
-    matchesCapacityPreset(row, activePreset || 'all')
+    matchesCapacityPreset(
+      row,
+      ['drafts', 'published', 'gaps'].includes(activePreset) ? 'all' : activePreset || 'all'
+    )
   );
-  useEffect(
-    () => onCountsChange?.(countPresets(constraintRows, capacityPresets, matchesCapacityPreset)),
-    [constraintRows, onCountsChange]
-  );
+  useEffect(() => {
+    onCountsChange?.({
+      drafts: rows.filter((row) => row.state === 'DRAFT').length,
+      published: rows.filter((row) => row.state === 'PUBLISHED').length,
+      gaps: 0,
+    });
+  }, [rows, onCountsChange]);
   const [commitment, setCommitment] = useState({
     assignmentId: '',
     initiativeId: '',

@@ -30,7 +30,7 @@ import {
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
-import { type CanonicalMenu3Contract, countPresets } from './canonicalMenu3';
+import type { CanonicalMenu3Contract } from './canonicalMenu3';
 
 interface WindowDraft {
   initiativeId: string;
@@ -219,21 +219,11 @@ const planNextActionKey: Record<string, string> = {
   ADD_TO_PLAN_OR_EXCLUDE: 'initiatives.planScenario.nextActions.addToPlanOrExclude',
 };
 
-const planPresets = [
-  'unscheduled',
-  'now',
-  'next',
-  'later',
-  'conflicted',
-  'missing-dependencies',
-  'needs-capacity',
-  'ready',
-  'published',
-] as const;
 export const PlanScenarioSurface: React.FC<Props> = ({
   initiatives,
   activePreset,
   onCountsChange,
+  createRequestId = 0,
   demoMode = false,
   onOpenInitiative,
 }) => {
@@ -265,6 +255,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [showCreate, setShowCreate] = useState(false);
   const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
+  const handledCreateRequest = useRef(createRequestId);
+
+  useEffect(() => {
+    if (createRequestId === handledCreateRequest.current) return;
+    handledCreateRequest.current = createRequestId;
+    setShowCreate(true);
+  }, [createRequestId]);
 
   // 97-czternascie-kolumn (2026-08-30): 14 kolumny danych + kolumna akcji
   // nie mieszczą się w typowym obszarze planu (1366 px) nawet na podłodze
@@ -544,14 +541,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                           : false,
     []
   );
-  const effectivePreset = activePreset || 'all';
+  const effectivePreset = ['drafts', 'published', 'conflicted'].includes(activePreset)
+    ? 'all'
+    : activePreset || 'all';
   const visiblePlanWindows = planWindowRows.filter((row) =>
     matchesPlanPreset(row, effectivePreset)
   );
-  useEffect(
-    () => onCountsChange?.(countPresets(planWindowRows, planPresets, matchesPlanPreset)),
-    [planWindowRows, onCountsChange, matchesPlanPreset]
-  );
+  useEffect(() => {
+    onCountsChange?.({
+      drafts: rows.filter((row) => row.state === 'DRAFT').length,
+      published: rows.filter((row) => row.state === 'PUBLISHED').length,
+      conflicted: 0,
+    });
+  }, [rows, onCountsChange]);
 
   const open = async (id: string) => {
     setSelectedId(id);
