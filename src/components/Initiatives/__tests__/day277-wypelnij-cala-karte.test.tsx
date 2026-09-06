@@ -12,8 +12,14 @@ describe('Day 277 whole initiative AI fill contract', () => {
     expect(source).toContain('const runWholeCardAi = useCallback(async () =>');
     expect(source).toContain('for (const [index, section] of candidates.entries())');
     expect(source).toContain('await runSectionAi(section.id)');
-    expect(source).toMatch(/label=\{isPolish \? 'Wypełnij z AI'[\s\S]{0,1000}void runWholeCardAi\(\)/);
-    expect(source.match(/label=\{isPolish \? 'Wypełnij z AI'/g)).toHaveLength(1);
+    // DEC-407 (06.09.2026): osobny przycisk „Wypełnij z AI" ZNIKNĄŁ — zastąpiła go
+    // pozycja „Uzupełnij cały dokument" w liście wspólnego komponentu `PracujZAI`
+    // (jedna struktura sterowania AI we wszystkich kartach N). Sprawdzamy to,
+    // co jest kontraktem TERAZ: pozycja „cały dokument" wciąż woła TEN SAM
+    // sekwencyjny runner, a etykiety nazywa komponent, nie karta.
+    expect(source).toMatch(/uzupelnijDokument=\{\{[\s\S]{0,400}void runWholeCardAi\(\)/);
+    expect(source).toMatch(/uzupelnijSekcje=\{\{[\s\S]{0,400}void runActiveSectionAi\(\)/);
+    expect(source).not.toContain("label={isPolish ? 'Wypełnij z AI'");
   });
 
   it('reports section names and reasons instead of silently accepting partial fill', () => {

@@ -169,7 +169,9 @@ import {
   główne okno Teresy z kontekstem tej inicjatywy.
 */
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { PracujZAI } from '../standard/PracujZAI';
+import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
@@ -1505,7 +1507,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   // prawdy dla WSZYSTKICH afordancji edycji (readOnly pól, hideActions pasków,
   // onEdit/onAccept, empty-state „wypełnij", Archiwizuj/Usuń). Uprawnienie serwera
   // dalej obowiązuje (AND), więc read-mode nigdy nie „odblokuje" edycji.
-  const canEditCards = !!gateReadiness?.capabilities?.cards?.canEditCards && !readMode;
+  // Zasada 2b (DEC-407) potrzebuje SUROWEJ zdolności edycji rekordu — bez
+  // zwiniętego `readMode`. Inaczej przełącznik „Edycja | Podgląd" znikałby po
+  // pierwszym wejściu w Podgląd i nie dałoby się z niego wyjść.
+  const mozeEdytowacRekord = !!gateReadiness?.capabilities?.cards?.canEditCards;
+  const canEditCards = mozeEdytowacRekord && !readMode;
   const canUseAi = !!gateReadiness?.capabilities?.ctaBar?.canUseAi;
   // D-A tryb otwarcia — set the card's OWN readMode once, on first load, from the
   // lifecycle state: a committed initiative (anything past DRAFT) opens in PODGLĄD
@@ -11557,6 +11563,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               }}
             >
               <div className="xl:flex-1 xl:min-w-0">
+                {/* ── [ODMROZENIE 05_INITIATIVES DEC-407] Zasada 2 ─────────
+                    Menu 4 + Menu 5 w JEDNYM przyklejonym stosie. Było: Menu 5
+                    miało własne `sticky top-0 z-30 bg-transparent`, a Menu 4
+                    nie kleiło się wcale — przyklejony pasek z przezroczystym
+                    tłem przejeżdżał po treści sekcji. Jedno rozwiązanie dla
+                    wszystkich kart: `StickyStosKartyN`. ── */}
+                <StickyStosKartyN>
                 <NModeHeader
                   title={titleDraft || initiative?.name || ''}
                   onTitleChange={setTitleDraft}
@@ -11600,58 +11613,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       : undefined
                   }
                 />
-
-                {/* ── Menu 1 (tożsamość) primary CTA — JEDEN przycisk = przejście stanu
-                    lifecycle (Submit for Review → Approve for Execution → Schedule …).
-                    Renderowany natywnie przez NModeHeader.primaryAction (patrz wyżej),
-                    NIGDY crimson. Reszta akcji (Sekcje/Eksport/AI/Nowy)
-                    → Menu 3. */}
-
-                {/* RYTM PIONOWY (2026-07-24): `mt-2` (było `mt-4`) — razem
-                    z `py-2` kontenera Menu 2 daje 16 px odstępu Menu 1 ↔ Menu 2,
-                    dokładnie tyle co powłoka `NModeShell` (NMODE_TOOLBAR_SHELL_CLASS
-                    `mt-2` + `py-2`). Zmierzone przedtem: 24 px tu, 16 px we
-                    Wniosku/Narzędziu, 0 px w Decyzji/Zadaniu/Powiadomieniu. */}
-                <div className="col-span-full space-y-4 mt-2">
-                  {/* HP-8 workflow-engine status bar — ZESZŁA STĄD do slotu
-                      `statusBar` prawego panelu (patrz `artifactApprovalStatusBar`).
-                      Stała tu jako sierocy pasek między Menu 1 a Menu 2 i robiła
-                      68 px pustej dziury; Decyzja od początku miała go w panelu. */}
-                  {/* SPEC-N §2.2 / pakiet M7 pkt 1 — POZIOMA SIATKA 7 PÓL USUNIĘTA.
-                      Był tu <NModePropertiesStrip fields={nModePropertyFields} />:
-                      status · faza · następna brama · priorytet · właściciel ·
-                      termin · źródło, rozłożone poziomo pod nagłówkiem. To był
-                      „największa pojedyncza luka strukturalna" z inwentarza A1 —
-                      właściwości artefaktu należą do akordeonu prawego panelu,
-                      nie do pasa pod tytułem.
-                      Te SAME pola (ta sama tablica `nModePropertyFields`, te same
-                      `render()`, ta sama edytowalność) renderuje teraz sekcja
-                      „Właściwości" w initiativeRightPanelSections. */}
-
-                  {statusDriftUi ? (
-                    <Callout variant="warning" compact title={t('initiatives.statusDrift2')}>
-                      {t('initiatives.thisViewUsesNormalizedStatusAligned2')}
-                    </Callout>
-                  ) : null}
-
-                  {/* Etap 5 gridu n-Type: banner „co dalej" (InitiativeDraftJourney)
-                      USUNIĘTY stąd — patrz uzasadnienie przy stanie
-                      `draftJourneyDismissed` (teraz nieistniejącym), ok. linii 793.
-                      Status/faza/następna brama żyją w „Właściwościach"
-                      (nModePropertyFields), primary CTA w Menu 1. */}
-
-                  {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
-                      Container matches the shared NModeShell action-bar standard (slate, borderless)
-                      so the Initiative toolbar reads identically to the Insight toolbar. */}
-                  {/* ── Kolumna robocza ────────────────────────────────────────
-                      Wiersz flex z prawym panelem WYPROWADZONY WYŻEJ (obejmuje
-                      też Menu 1) — patrz komentarz „GEOMETRIA CHROMU" przy
-                      `min-h-screen`. Wcześniej flex startował TUTAJ, przez co
-                      Menu 1 (1088 px) i Menu 2 (712 px) rozjeżdżały się o 376 px
-                      w obrębie jednej karty. Te dwa kontenery zostają jako czyste
-                      grupy treści — bez własnej geometrii. */}
-                  <div>
-                    <div className="min-w-0">
                       {/* Kontener Menu 2 — PRZEZROCZYSTY (jak w Decyzji/Zadaniu, gdzie
                       zmierzone tło = rgba(0,0,0,0)). BYŁO: `bg-c-surface/95` +
                       `backdrop-blur` + `border-b` + ujemne marginesy
@@ -11662,7 +11623,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       {/* `mb-2` (było `mb-4`): z `py-2` daje 16 px między Menu 2
                           a pasem sekcji — tyle, ile mają Decyzja/Zadanie/
                           Powiadomienie (`space-y-4`). Było 24 px. */}
-                      <div className="sticky top-0 z-30 bg-transparent py-2 mb-2">
+                      <div className="py-2 pb-2">
                         {(() => {
                           // ETAP 1.2: `activeSectionName` USUNIETA — nazwa aktywnej karty
                           // nie nalezy do zadnej z trzech stref menu 2 (dubel lewej nawigacji).
@@ -11699,80 +11660,64 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                             <NModeMenu2
                               isPolish={isPolish}
                               readMode={readMode}
-                              onReadModeChange={setReadMode}
+                              onReadModeChange={mozeEdytowacRekord ? setReadMode : undefined}
+                              /* Zasada 2b (DEC-407): przełącznik „Edycja | Podgląd"
+                                 renderuje się TYLKO z prawem edycji rekordu.
+                                 Inicjatywa jako jedyna z sześciu kart ma realne
+                                 sprawdzenie uprawnień: `gateReadiness.capabilities
+                                 .cards.canEditCards` (macierz serwera). */
                               aiButton={
-                                // BEZWARUNKOWO (wzór: KnownToolDetailView) — było
-                                // `readMode ? undefined : …`, a `readMode` startuje
-                                // `true` dla każdej inicjatywy poza DRAFT, więc prawa
-                                // strefa Menu 2 była PUSTA przy wejściu na kartę
-                                // i standardowy przycisk „Analizuj z AI" nie istniał.
-                                // Analiza niczego nie zapisuje — ocenia gotowość karty
-                                // — więc nie jest afordancją EDYCJI i nie ma powodu,
-                                // żeby znikała w Podglądzie.
-                                //
-                                // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera
-                                // panel wyników. Było: przełącznik `aiPanelOpen`
-                                // (AIConsultantPanel = czat całego artefaktu).
-                                // Konsultant NIE zniknął — `AIConsultantPanel` nadal
-                                // renderuje się niżej i ma swoje wejścia; zmienia się
-                                // tylko to, co robi TEN przycisk, zgodnie z jego nazwą.
-                                //
-                                // ★ SPROSTOWANIE (odbiór właściciela 2026-08-30, karta-initiative:
-                                //   „nie ma przycisku AI w górnym pasku, który będzie odpowiadał
-                                //   za wypełnienie karty"). Zdanie wyżej — „ma swoje wejścia" —
-                                //   było NIEPRAWDZIWE. `setAiPanelOpen(true)` nie było wołane
-                                //   NIGDZIE w tym pliku (jedyne wystąpienia: deklaracja stanu,
-                                //   `onClose` i lista `anyOverlayOpen`), więc `AIConsultantPanel`
-                                //   renderował się z `open={false}` na zawsze: kompletny, podpięty
-                                //   panel (5 akcji kanonu, w tym „Uzupełnij puste" → realny
-                                //   `runActiveSectionAi`) BEZ ŻADNEGO WEJŚCIA. Zdejmując z paska
-                                //   „AI sekcji" przeniesiono jego akcje do panelu, którego nie
-                                //   dawało się otworzyć — zdolność wypełniania karty istniała
-                                //   w kodzie i była nieosiągalna z ekranu.
-                                //
-                                //   Dlatego pasek dostaje DWA przyciski AI o rozłącznych rolach:
-                                //     „Wypełnij z AI"  → otwiera Konsultanta (pisze do karty),
-                                //     „Analizuj z AI"  → ocenia gotowość (niczego nie zapisuje).
-                                //   Nowy przycisk stoi PRZED starym, więc kontrakt „Analizuj z AI
-                                //   skrajnie po prawej" (SPEC-N §2.3) zostaje spełniony.
-                                //
-                                // ★ 2026-09-01 („jedna Teresa, w swoim oknie"): „Wypełnij z AI"
-                                //   otwiera teraz JEDNO okno Teresy z kontekstem tej inicjatywy
-                                //   i jej komendami (`openInitiativeTeresa`), a nie własny czat
-                                //   karty. Rola przycisku i jego etykieta się NIE zmieniają —
-                                //   zmienia się miejsce, w którym toczy się rozmowa.
-                                <>
-                                  <Menu2AIButton
-                                    isPolish={isPolish}
-                                    label={isPolish ? 'Wypełnij z AI' : 'Fill with AI'}
-                                    busy={wholeCardAiBusy}
-                                    disabled={!canUseAi || wholeCardAiBusy}
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          t('initiatives.aiIsUnavailableBecauseYouHave2')
-                                        );
-                                        return;
-                                      }
-                                      void runWholeCardAi();
-                                    }}
-                                  />
-                                  <Menu2AIButton
-                                    isPolish={isPolish}
-                                    busy={initiativeCardAnalysis.loading}
-                                    aria-expanded={initiativeCardAnalysis.open}
-                                    disabled={!canUseAi}
-                                    onClick={() => {
-                                      if (!canUseAi) {
-                                        toast.error(
-                                          t('initiatives.aiIsUnavailableBecauseYouHave2')
-                                        );
-                                        return;
-                                      }
-                                      initiativeCardAnalysis.run();
-                                    }}
-                                  />
-                                </>
+                                // ── [ODMROZENIE 05_INITIATIVES DEC-407] ────────
+                                // JEDEN przycisk „Pracuj z AI" zamiast DWÓCH
+                                // („Wypełnij z AI" + „Analizuj z AI"). Zdolności
+                                // nie giną — wchodzą do listy jako pozycje:
+                                //   Analizuj                → initiativeCardAnalysis.run
+                                //   Uzupełnij tę sekcję     → runActiveSectionAi
+                                //   Uzupełnij cały dokument → runWholeCardAi
+                                // Oba uzupełnienia to wariant „własna propozycja":
+                                // sekcje inicjatywy mają WŁASNY mechanizm akceptu
+                                // (stan `ai-draft` + „✓ Zaakceptuj" na karcie
+                                // sekcji, `setSectionState`), więc podgląd zbiorczy
+                                // by go dublował. Uruchomienie i tak wymaga
+                                // kliknięcia „Zatwierdź" — nic nie startuje samo.
+                                <PracujZAI
+                                  isPolish={isPolish}
+                                  onAnalizuj={initiativeCardAnalysis.run}
+                                  analizaWToku={initiativeCardAnalysis.loading || wholeCardAiBusy}
+                                  analizaOtwarta={initiativeCardAnalysis.open}
+                                  aktywnaSekcja={activeNSection}
+                                  kontekstArtefaktu={{
+                                    title,
+                                    status,
+                                    type: 'initiative',
+                                  }}
+                                  moznaEdytowac={canEditCards}
+                                  powodTylkoOdczyt={
+                                    mozeEdytowacRekord
+                                      ? isPolish
+                                        ? 'karta otwarta w trybie Podgląd'
+                                        : 'card opened in Preview mode'
+                                      : isPolish
+                                        ? 'brak uprawnień do edycji tej inicjatywy'
+                                        : 'no permission to edit this initiative'
+                                  }
+                                  disabled={!canUseAi}
+                                  disabledTytul={t('initiatives.aiIsUnavailableBecauseYouHave2')}
+                                  uzupelnijSekcje={{
+                                    rodzaj: 'wlasnaPropozycja',
+                                    uruchom: () => void runActiveSectionAi(),
+                                    opis: isPolish
+                                      ? 'AI przygotuje treść aktywnej sekcji. Sekcja dostanie stan „szkic AI" — zatwierdzasz ją na karcie sekcji („✓ Zaakceptuj"). Nic nie zostaje uznane za fakt bez Twojego kliknięcia.'
+                                      : 'AI will draft the active section. The section gets the "AI draft" state — you accept it on the section card. Nothing becomes fact without your click.',
+                                  }}
+                                  uzupelnijDokument={{
+                                    rodzaj: 'wlasnaPropozycja',
+                                    uruchom: () => void runWholeCardAi(),
+                                    opis: isPolish
+                                      ? 'AI uzupełni WYŁĄCZNIE puste sekcje karty, po kolei. Sekcje wypełnione przez człowieka zostają nietknięte. Każda uzupełniona sekcja dostaje stan „szkic AI" do akceptacji.'
+                                      : 'AI will fill ONLY the empty sections, one by one. Sections written by a human are left untouched. Each filled section gets the "AI draft" state for acceptance.',
+                                  }}
+                                />
                               }
                               /* KEBAB MENU 2 USUNIĘTY (2026-07-24) — jego pozycje żyją teraz
                                  w kebabie Menu 1 (`extraOverflowItems` = `menu1ExtraOverflowItems`).
@@ -11954,6 +11899,59 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                           );
                         })()}
                       </div>
+                </StickyStosKartyN>
+
+                {/* ── Menu 1 (tożsamość) primary CTA — JEDEN przycisk = przejście stanu
+                    lifecycle (Submit for Review → Approve for Execution → Schedule …).
+                    Renderowany natywnie przez NModeHeader.primaryAction (patrz wyżej),
+                    NIGDY crimson. Reszta akcji (Sekcje/Eksport/AI/Nowy)
+                    → Menu 3. */}
+
+                {/* RYTM PIONOWY (2026-07-24): `mt-2` (było `mt-4`) — razem
+                    z `py-2` kontenera Menu 2 daje 16 px odstępu Menu 1 ↔ Menu 2,
+                    dokładnie tyle co powłoka `NModeShell` (NMODE_TOOLBAR_SHELL_CLASS
+                    `mt-2` + `py-2`). Zmierzone przedtem: 24 px tu, 16 px we
+                    Wniosku/Narzędziu, 0 px w Decyzji/Zadaniu/Powiadomieniu. */}
+                <div className="col-span-full space-y-4 mt-2">
+                  {/* HP-8 workflow-engine status bar — ZESZŁA STĄD do slotu
+                      `statusBar` prawego panelu (patrz `artifactApprovalStatusBar`).
+                      Stała tu jako sierocy pasek między Menu 1 a Menu 2 i robiła
+                      68 px pustej dziury; Decyzja od początku miała go w panelu. */}
+                  {/* SPEC-N §2.2 / pakiet M7 pkt 1 — POZIOMA SIATKA 7 PÓL USUNIĘTA.
+                      Był tu <NModePropertiesStrip fields={nModePropertyFields} />:
+                      status · faza · następna brama · priorytet · właściciel ·
+                      termin · źródło, rozłożone poziomo pod nagłówkiem. To był
+                      „największa pojedyncza luka strukturalna" z inwentarza A1 —
+                      właściwości artefaktu należą do akordeonu prawego panelu,
+                      nie do pasa pod tytułem.
+                      Te SAME pola (ta sama tablica `nModePropertyFields`, te same
+                      `render()`, ta sama edytowalność) renderuje teraz sekcja
+                      „Właściwości" w initiativeRightPanelSections. */}
+
+                  {statusDriftUi ? (
+                    <Callout variant="warning" compact title={t('initiatives.statusDrift2')}>
+                      {t('initiatives.thisViewUsesNormalizedStatusAligned2')}
+                    </Callout>
+                  ) : null}
+
+                  {/* Etap 5 gridu n-Type: banner „co dalej" (InitiativeDraftJourney)
+                      USUNIĘTY stąd — patrz uzasadnienie przy stanie
+                      `draftJourneyDismissed` (teraz nieistniejącym), ok. linii 793.
+                      Status/faza/następna brama żyją w „Właściwościach"
+                      (nModePropertyFields), primary CTA w Menu 1. */}
+
+                  {/* Action Bar — grouped: primary | context-create | secondary + danger | AI right-aligned.
+                      Container matches the shared NModeShell action-bar standard (slate, borderless)
+                      so the Initiative toolbar reads identically to the Insight toolbar. */}
+                  {/* ── Kolumna robocza ────────────────────────────────────────
+                      Wiersz flex z prawym panelem WYPROWADZONY WYŻEJ (obejmuje
+                      też Menu 1) — patrz komentarz „GEOMETRIA CHROMU" przy
+                      `min-h-screen`. Wcześniej flex startował TUTAJ, przez co
+                      Menu 1 (1088 px) i Menu 2 (712 px) rozjeżdżały się o 376 px
+                      w obrębie jednej karty. Te dwa kontenery zostają jako czyste
+                      grupy treści — bez własnej geometrii. */}
+                  <div>
+                    <div className="min-w-0">
 
                       {/* LeftNav + Canvas. Pływająca akcja „Oznacz gotowe" ZESZŁA
                       STĄD do sekcji „Akcje" prawego panelu (pkt 10 audytu): stała
