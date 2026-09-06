@@ -176,6 +176,34 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   }, [location.pathname, location.search]);
   const shouldMountChatPanel = shouldShowChatPanel || artifactStudioUsesGlobalChat;
 
+  /*
+   * ★ DEC-404 (CTO, 06.09.2026) — IKONA TERESY W MENU 1 W KAŻDYM MODULE.
+   * Słowa właściciela: „we wszystkich tych modułach nie ma ikony Teresy
+   * w Menu 1 i nie mogę otworzyć panelu AI w tym module".
+   *
+   * PRZYCZYNA (zmierzona na żywo 06.09, 16 ekranów): przycisk Teresy wisiał
+   * pod `shouldShowChatPanel`, a ten ma DWA człony — „ten widok w ogóle ma
+   * czat" ORAZ „nikt nie osadza Teresy u siebie" (`hasEmbeddedModuleChat`).
+   * Drugi człon jest słuszny dla MONTOWANIA doku (inaczej byłyby dwa panele),
+   * ale gasił też WEJŚCIE. Efekt: każdy ekran listowy z jednym prawym panelem
+   * P1 (`JedenPrawyPanel`/`TableWithPreviewLayout`/`NotebookContent`) tracił
+   * ikonę — Skrzynka, Zadania, Pomysły, Wywiad, Inicjatywy, Wykonanie,
+   * Wyniki, Ocena, Audyty, Spotkania. To dokładnie kształt „zamknięte przez
+   * wygaszenie": bramka gasząca dok zgasiła wejście dla wszystkich.
+   *
+   * REGUŁA: ikona pokazuje się wszędzie, gdzie NAPRAWDĘ jest co otworzyć —
+   * albo zamontuje się globalny dok, albo na ekranie siedzi gospodarz P1.
+   * Nigdy nie renderujemy martwego przycisku (Czat = sam jest Teresą; ekrany
+   * Ustawień świadomie nie mają panelu AI).
+   *
+   * KLIK: jedno i to samo `toggleChatCollapse()` obsługuje OBA przypadki —
+   * `useJedenPanel` nasłuchuje przejścia `isChatCollapsed` i przełącza swój
+   * JEDEN panel na zakładkę „Teresa" (a drugi klik wraca na „Rekord").
+   * Dzięki temu nadal istnieje DOKŁADNIE JEDEN `UnifiedChatPanel` i jeden
+   * `<aside>` — dok nie montuje się tam, gdzie jest gospodarz.
+   */
+  const hasTeresaEntry = shouldMountChatPanel || embeddedModuleChatHosted;
+
   // Compute workspace context for AI awareness
   const workspaceContext = useMemo(() => {
     if (!currentView) return null;
@@ -434,27 +462,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                 <NotificationDropdown />
 
-                {shouldShowChatPanel && (
+                {hasTeresaEntry && (
                   <>
                     <div className="h-4 w-px bg-slate-200 dark:bg-white/10"></div>
                     <button
                       type="button"
+                      data-testid="menu1-teresa"
                       onClick={() => toggleChatCollapse()}
                       className={`hidden lg:flex w-9 h-9 items-center justify-center rounded-full transition-colors ${
                         isChatCollapsed
                           ? 'bg-c-text text-c-bg hover:bg-c-text-secondary'
                           : 'bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25'
                       }`}
-                      title={
-                        isChatCollapsed
-                          ? t('layout.aiPanel.open', 'Open AI panel')
-                          : t('layout.aiPanel.close', 'Close AI panel')
-                      }
-                      aria-label={
-                        isChatCollapsed
-                          ? t('layout.aiPanel.open', 'Open AI panel')
-                          : t('layout.aiPanel.close', 'Close AI panel')
-                      }
+                      title={t('layout.teresa.label', 'Teresa')}
+                      aria-label={t('layout.teresa.label', 'Teresa')}
                       aria-pressed={!isChatCollapsed}
                     >
                       <Sparkles size={18} />
