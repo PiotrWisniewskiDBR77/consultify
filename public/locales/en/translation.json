@@ -33900,6 +33900,8 @@
       "title4": "Start working",
       "title5": "Pin",
       "title6": "Archive",
+      "unpinAction": "Unpin",
+      "rowMenuAriaLabel": "More",
       "label42": "Load more",
       "label43": "Failed to load notes.",
       "label44": "Retry",

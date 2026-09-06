@@ -236,6 +236,8 @@ const PrawyPasDeckBuilderSystemScreen = React.lazy(
 // awaryjną listę harnessu zamiast realnego ekranu. Dopisuję tylko rejestrację.
 const CalendarSyncSettingsScreen = React.lazy(() => import('./screens/calendar-sync-settings'));
 const NotebookQuickCaptureScreen = React.lazy(() => import('./screens/notebook-quick-capture'));
+// ZLECENIE 1.1-J (06.09) — lewa lista "Moje notatki" w jednej linii (kebab pionowy).
+const NotatnikListaScreen = React.lazy(() => import('./screens/notatnik-lista-11j'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -696,6 +698,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       '#12a — REALNY <NotebookQuickCapture> (pasek szybkiego wrzucania w Notatniku). Wpisz tekst, aby zobaczyć przycisk „Wrzuć" w stanie aktywnym.',
     render: () => <NotebookQuickCaptureScreen />,
+  },
+  'notatnik-lista-11j': {
+    label:
+      'ZLECENIE 1.1-J — REALNY <NotebookPageListRow> (lewa lista „Moje notatki"), 11 wierszy jednoliniowych, kebab pionowy. Kliknij ⋮ na dowolnym wierszu, żeby zobaczyć menu (Konwertuj/Przypnij/Archiwizuj).',
+    render: () => <NotatnikListaScreen />,
   },
   'meetings-module': {
     label:

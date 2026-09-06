@@ -14,7 +14,6 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
   AlertTriangle,
-  Archive,
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
@@ -27,13 +26,11 @@ import {
   Paperclip,
   Pen,
   Pin,
-  Play,
   RefreshCw,
   Sparkles,
   Trash2,
   Type,
   Unlink,
-  Users,
   WifiOff,
   X,
 } from 'lucide-react';
@@ -43,7 +40,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/primitives/Button';
 import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
@@ -61,7 +57,6 @@ import type {
 } from '@/types/myWork';
 
 import i18n from '../../i18n';
-import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { AI_BLOCK_MIME, type ConvertTarget } from './notebook/AIChatInlinePanel';
 import { AICommandPrompt } from './notebook/AICommandPrompt';
 import { type AICommandType, AIInlineResponse } from './notebook/AIInlineResponse';
@@ -82,7 +77,6 @@ import { NotebookAttachmentsSection } from './notebook/NotebookAttachmentsSectio
 import { NotebookBacklinksBar } from './notebook/NotebookBacklinksBar';
 import { NotebookBubbleToolbar } from './notebook/NotebookBubbleToolbar';
 import { getNotebookUploadSourceSummary } from './notebook/notebookCaptureSourceSummary';
-import { getNotebookConvertedOutputSummary } from './notebook/notebookConvertedOutputSummary';
 import { expandNotebookPageToCanvasDraft } from './notebook/notebookExpandToDocument';
 import { NotebookExportMenu } from './notebook/NotebookExportMenu';
 import { NotebookGraphPanel } from './notebook/NotebookGraphPanel';
@@ -99,6 +93,7 @@ import {
   type MentionMenuState,
   NotebookMentionMenu,
 } from './notebook/NotebookMentionMenu';
+import { NotebookPageListRow } from './notebook/NotebookPageListRow';
 import { NotebookPresenceStack } from './notebook/NotebookPresenceStack';
 import { NotebookQuickCapture } from './notebook/NotebookQuickCapture';
 import { NotebookReminderChip } from './notebook/NotebookReminderChip';
@@ -3120,221 +3115,34 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               <>
                 {filteredPages.map((p) => {
                   const isActive = p.id === activeId;
-                  const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
-                  const matCfg = MATURITY_CONFIG[mat] || MATURITY_CONFIG.seed;
                   const timeAgo = relativeTime(p.updatedAt);
-                  const statusDot =
-                    p.status === 'inbox'
-                      ? 'bg-amber-400 animate-pulse'
-                      : p.status === 'converted'
-                        ? 'bg-emerald-400'
-                        : p.status === 'archived'
-                          ? 'bg-slate-300 dark:bg-slate-600'
-                          : 'bg-blue-400';
                   return (
-                    <div
+                    <NotebookPageListRow
                       key={p.id}
-                      className={`group relative rounded-xl transition-all duration-200 ${
-                        isActive
-                          ? 'bg-c-surface-raised border border-c-border-subtle shadow-sm'
-                          : 'hover:bg-c-surface-raised border border-transparent'
-                      }`}
-                    >
-                      <button
-                        onClick={async () => {
-                          await flushPendingSave();
-                          setActiveId(p.id);
-                          // MW-08 mobile fix: the isMobile+activePage.id effect
-                          // that hides the list only re-fires when the id
-                          // ACTUALLY changes. Re-opening the SAME note that was
-                          // just backed out of via "All notes" (id unchanged)
-                          // left the list showing with no way back into the
-                          // editor — reproduced live: click registers (DOM
-                          // screenshot confirms the list stays mounted), the
-                          // effect's dependency array never sees a diff, so it
-                          // never runs. Set it directly here too so opening a
-                          // note always switches to editor mode, changed id or
-                          // not.
-                          if (isMobile) setMobileShowList(false);
-                        }}
-                        className="w-full text-left px-3 py-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                      >
-                        {/* S1-U2a: Ideas-list row anatomy — leading signal dot
-                          ("szyna skanu" §14.2), L2 title, L5 meta, neutral
-                          chip shells with color only in the dot. */}
-                        <div className="flex items-start gap-2">
-                          {p.icon && /\p{Emoji}/u.test(p.icon) ? (
-                            <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
-                          ) : null}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
-                              {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
-                              {p.visibility === 'project' && (
-                                <Users size={10} className="text-c-text-muted shrink-0" />
-                              )}
-                              <span
-                                className={`font-semibold text-[13px] truncate flex-1 ${
-                                  isActive ? 'text-c-text' : 'text-c-text'
-                                }`}
-                              >
-                                {p.title || t('notebook.notebookContent.label40', 'Untitled')}
-                              </span>
-                              {timeAgo && (
-                                <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
-                                  {timeAgo}
-                                </span>
-                              )}
-                            </div>
-
-                            {p.summary && (
-                              <div className="mt-0.5 text-[11px] text-c-text-secondary line-clamp-1 leading-relaxed">
-                                {p.summary}
-                              </div>
-                            )}
-
-                            <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                              <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
-                                <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
-                                {t(`myWorkNotebook.notebookContent.maturity_${mat}`, matCfg.label)}
-                              </span>
-                              {(p as any).verificationStatus === 'verified' && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-emerald-300/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0 text-[9px]"
-                                  title={t('notebook.notebookContent.title', 'Verified')}
-                                >
-                                  <CheckCircle2 size={9} className="inline" />
-                                </Badge>
-                              )}
-                              {(p as any).staleAt && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-300/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0 text-[9px]"
-                                  title={t('notebook.notebookContent.title2', 'Stale')}
-                                >
-                                  <AlertTriangle size={9} className="inline" />
-                                </Badge>
-                              )}
-                              {(() => {
-                                const uploadSource = getNotebookUploadSourceSummary(
-                                  (p as any).captureSource,
-                                  (p as any).captureMetadata,
-                                  isPolish
-                                );
-                                if (!uploadSource) return null;
-                                return (
-                                  <span
-                                    className="rounded-md bg-c-info/10 text-c-info px-1.5 py-0.5 text-[11px] font-medium"
-                                    title={uploadSource.title}
-                                  >
-                                    {uploadSource.label}
-                                  </span>
-                                );
-                              })()}
-                              {(() => {
-                                const convertedSummary = getNotebookConvertedOutputSummary(
-                                  p.convertedTo
-                                );
-                                if (convertedSummary.total === 0) return null;
-                                return (
-                                  <span
-                                    className="rounded-md bg-c-success/10 text-c-success px-1.5 py-0.5 text-[11px] font-medium"
-                                    title={convertedSummary.visibleTypes.join(', ')}
-                                  >
-                                    ✓ {convertedSummary.visibleTypes.join(', ')}
-                                    {convertedSummary.extraCount > 0
-                                      ? ` +${convertedSummary.extraCount}`
-                                      : ''}
-                                  </span>
-                                );
-                              })()}
-                              {/* #18 — orphan mark: zero link_graph_edges rows (no topics/mentions/backlinks) */}
-                              {orphanIds.has(p.id) && (
-                                <span
-                                  className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
-                                  title={t(
-                                    'notebook.notebookContent.title3',
-                                    'No connections — add a mention (@) or archive'
-                                  )}
-                                >
-                                  <Unlink size={9} className="inline" />
-                                  {t('notebook.notebookContent.label41', 'Unlinked')}
-                                </span>
-                              )}
-                              {/* #21 reminder chip — reads capture_metadata.reminder */}
-                              <NotebookReminderChip
-                                captureMetadata={(p as any).captureMetadata}
-                                isPolish={isPolish}
-                                size="sm"
-                              />
-                              {p.tags &&
-                                p.tags.slice(0, 2).map((tag) => (
-                                  <span
-                                    key={tag}
-                                    className="rounded-md bg-c-surface-raised text-c-text-muted px-1.5 py-0.5 text-[11px] font-medium"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              {p.tags && p.tags.length > 2 && (
-                                <span className="text-[9px] text-c-text-secondary">
-                                  +{p.tags.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-
-                      {/* Quick triage actions on hover */}
-                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-c-surface/90 rounded-lg shadow-sm border border-slate-200/60 dark:border-white/[0.03] px-0.5 py-0.5">
-                        {p.status === 'inbox' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSetStatus(p.id, 'active');
-                            }}
-                            className="p-1 rounded text-blue-500 hover:bg-blue-500/10 transition-colors"
-                            title={t('notebook.notebookContent.title4', 'Start working')}
-                          >
-                            <Play size={10} />
-                          </button>
-                        )}
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <ConvertToOutputMenu
-                            sourceType="notebook"
-                            sourceId={p.id}
-                            sourceTitle={p.title || ''}
-                            onConvertComplete={() => fetchPages()}
-                            variant="dropdown"
-                            compact
-                          />
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTogglePin(p.id);
-                          }}
-                          className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-c-text-secondary hover:text-amber-500 hover:bg-amber-500/10'}`}
-                          title={t('notebook.notebookContent.title5', 'Pin')}
-                        >
-                          <Pin size={10} />
-                        </button>
-                        {p.status !== 'archived' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSetStatus(p.id, 'archived');
-                            }}
-                            className="p-1 rounded text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                            title={t('notebook.notebookContent.title6', 'Archive')}
-                          >
-                            <Archive size={10} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      page={p}
+                      isActive={isActive}
+                      timeAgo={timeAgo}
+                      onSelect={async () => {
+                        await flushPendingSave();
+                        setActiveId(p.id);
+                        // MW-08 mobile fix: the isMobile+activePage.id effect
+                        // that hides the list only re-fires when the id
+                        // ACTUALLY changes. Re-opening the SAME note that was
+                        // just backed out of via "All notes" (id unchanged)
+                        // left the list showing with no way back into the
+                        // editor — reproduced live: click registers (DOM
+                        // screenshot confirms the list stays mounted), the
+                        // effect's dependency array never sees a diff, so it
+                        // never runs. Set it directly here too so opening a
+                        // note always switches to editor mode, changed id or
+                        // not.
+                        if (isMobile) setMobileShowList(false);
+                      }}
+                      onStartWorking={() => handleSetStatus(p.id, 'active')}
+                      onTogglePin={() => handleTogglePin(p.id)}
+                      onArchive={() => handleSetStatus(p.id, 'archived')}
+                      onConvertComplete={() => fetchPages()}
+                    />
                   );
                 })}
                 {hasMore && (
