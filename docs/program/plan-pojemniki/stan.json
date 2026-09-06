@@ -461,6 +461,18 @@
           "dowod": "",
           "uwagi": "",
           "data": ""
+        },
+        {
+          "nr": "2.10",
+          "nazwa": "3–4 audyty wewnętrzne zbudowane przez firmy zewnętrzne",
+          "wykonawca": "firmy zewnętrzne (pakiety audytowe)",
+          "zalezy_od": "zamrożony „Nowy audyt” → odmrożony z procedurą założeń (Fala 2 3.15) lub pakiety dostarczone jako seed",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 15:27: „wrzuć do MVP drugiego, przez zewnętrzne firmy, wybudowanie jeszcze trzech-czterech audytów wewnętrznych”.",
+          "data": "06.09"
         }
       ],
       "kryteria": [
@@ -831,6 +843,30 @@
           "sha": "",
           "dowod": "",
           "uwagi": "Właściciel 06.09 15:10: „bardzo nawala tego tekstu, powinno być łatwiej zorganizowane; poprawimy cały układ graficzny na etapie fali drugiej”. W pojemniku 1 tylko: kolor stanu odpowiedzi, działający Zapytaj Teresę i Podyktuj (DEC-415). 2–3 sesje.",
+          "data": "06.09"
+        },
+        {
+          "nr": "3.14",
+          "nazwa": "Raporty: eksport PDF i PowerPoint + generator raportów",
+          "wykonawca": "",
+          "zalezy_od": "szablony (1.6) + Gamma/pptxgenjs sufit",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 15:26: „dodaj możliwość generowania raportów w PDF i PowerPoint, bo teraz robi tylko w Wordzie; generalnie do fali drugiej”. 2–3 sesje.",
+          "data": "06.09"
+        },
+        {
+          "nr": "3.15",
+          "nazwa": "Audyty: wgrywanie założeń (norma/formatka) pod „Nowy audyt” + generator pytań audytowych",
+          "wykonawca": "",
+          "zalezy_od": "SSOT Audytów + prototyp",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 15:28: „pod Nowy audyt procedura wgrywania założeń — normę/formatkę się wgrywa — i generator pytań audytowych; na razie przycisk zamrozić”. 3–4 sesje.",
           "data": "06.09"
         }
       ],
