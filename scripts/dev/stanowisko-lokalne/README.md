@@ -189,3 +189,8 @@ Organizacja DBR77 na lokalnej bazie ma `organization_type=PAID` (jak org właśc
 2. Nowe hasło konta audytowego (hash bcryptjs, kolumna `users.password`): `HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.argv[1],10))" "$PW")` → `UPDATE users SET password=$HASH WHERE email='audyt@dbr77.local'`; `konto.json` = `{email, haslo, orgId, orgNazwa}` (chmod 600).
 3. `node scripts/dev/stanowisko-lokalne/zaloguj-api.mjs` → `auth.json`. Pliki `server.pid`/`vite.pid` odtworzyć z `lsof -nP -iTCP:4100 -iTCP:3090 -sTCP:LISTEN`.
 4. W każdym zleceniu: `rm -rf` wolno TYLKO we własnym worktree; `/private/tmp/stanowisko-noc` jest współdzielony (plik `NIE_USUWAC.txt`).
+
+### Dane pokazowe Sejfu (06.09, partia P10-B3 — DEC-429)
+Jeden dokument sejfu utworzony przez kontrakt produktu (`POST /api/knowledge/documents`), docId `c0fc94e7…`
+(pełny id i sposób usunięcia w `docs/program/PROGRAM_NAPRAWCZY_20260905/P10/vault-document.md` §0/§6).
+Zostawiony celowo: oba sejfy DBR77 miały 0 dokumentów, więc karta `vault-document` nie była mierzalna (P10-S STOP).
