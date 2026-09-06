@@ -6,18 +6,23 @@
  * ikony Teresy w Menu 1 i nie mogę otworzyć panelu AI w tym module".
  *
  * Przyczyna, przed którą broni ten plik: przycisk wisiał pod
- * `shouldShowChatPanel`, który zawiera człon `!hasEmbeddedModuleChat`.
- * Ten człon jest słuszny dla MONTOWANIA globalnego doku (inaczej byłyby dwa
- * panele Teresy naraz), ale gasił też WEJŚCIE — więc każdy ekran listowy
- * z gospodarzem P1 (`JedenPrawyPanel`/`TableWithPreviewLayout`) tracił ikonę.
+ * `shouldShowChatPanel`, który zawierał człon „nikt nie osadza Teresy u
+ * siebie" — więc każdy ekran listowy z gospodarzem P1
+ * (`JedenPrawyPanel`/`TableWithPreviewLayout`) tracił ikonę.
  *
- * MUTACJA, która MUSI zapalić czerwień (sprawdzone ręcznie 06.09):
- *   w `MainLayout.tsx` przywróć `{shouldShowChatPanel && (` przy przycisku
- *   `data-testid="menu1-teresa"` → przypadek „ekran listowy z gospodarzem"
- *   pada, bo ikony nie ma.
- * Druga mutacja: usuń człon `!hasEmbeddedModuleChat` z `shouldShowChatPanel`
- *   → pada przypadek „dokładnie jeden UnifiedChatPanel" (dok montuje się
- *   obok panelu gospodarza).
+ * ★ UZUPEŁNIENIE DEC-404 (06.09, po odrzuceniu przez właściciela pierwszej
+ * naprawy): rejestr gospodarzy P1 NIE gasi już doku. Klik ikony montuje
+ * STANDARDOWY dok — ten sam co na /results — a gospodarz P1 chowa wtedy swoją
+ * kolumnę podglądu (`useJedenPanel.dokOtwarty`, kontrakt mierzony
+ * w `jedenPanel.contract.test.tsx` T2b). Dok NIE staje obok podglądu.
+ *
+ * MUTACJE, które MUSZĄ zapalić czerwień:
+ *   (a) przywróć `{shouldShowChatPanel && (` przy `data-testid="menu1-teresa"`
+ *       → pada „ekran listowy z gospodarzem ma ikonę";
+ *   (b) przywróć `hasEmbeddedModuleChatByPath || embeddedModuleChatHosted`
+ *       w `hasEmbeddedModuleChat` → pada „przy gospodarzu P1 dok MONTUJE się";
+ *   (c) usuń `path.startsWith('/wordy')` → pada „ekran z własną powierzchnią
+ *       czatu (ścieżka) nie dostaje drugiego doku".
  */
 import { render, screen } from '@testing-library/react';
 import React from 'react';
@@ -172,11 +177,25 @@ describe('DEC-404 — ikona Teresy w Menu 1', () => {
     expect(appState.toggleChatCollapse).toHaveBeenCalledTimes(1);
   });
 
-  it('przy gospodarzu P1 globalny dok NIE montuje drugiego UnifiedChatPanel (MUTACJA: usuń `!hasEmbeddedModuleChat` → RED)', () => {
+  /*
+   * ★ DEC-404 (uzupełnienie 06.09) — TEN PRZYPADEK JEST ODWRÓCONY względem
+   * wersji z 1.1-G. Wtedy dok ustępował gospodarzowi, a Teresa lądowała
+   * w kolumnie podglądu jako zakładka. Właściciel to odrzucił („tu nie jest
+   * jej miejsce"), więc dok montuje się TAKŻE na ekranie listowym — to
+   * gospodarz chowa swój podgląd.
+   */
+  it('przy gospodarzu P1 dok MONTUJE dokładnie jeden UnifiedChatPanel (MUTACJA: przywróć gaszenie rejestrem → RED)', () => {
     gospodarzP1 = true;
     appState.isChatCollapsed = false;
     ekran('/my-work?tab=inbox');
+    expect(screen.queryAllByTestId('unified-chat-panel')).toHaveLength(1);
+  });
+
+  it('ekran z WŁASNĄ powierzchnią czatu (ścieżka) nadal nie dostaje doku', () => {
+    appState.isChatCollapsed = false;
+    ekran('/wordy');
     expect(screen.queryAllByTestId('unified-chat-panel')).toHaveLength(0);
+    expect(screen.queryByTestId('menu1-teresa')).toBeNull();
   });
 
   it('bez gospodarza P1 dok montuje DOKŁADNIE JEDEN UnifiedChatPanel', () => {

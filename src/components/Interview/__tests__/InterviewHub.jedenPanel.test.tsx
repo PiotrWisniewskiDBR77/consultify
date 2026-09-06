@@ -250,7 +250,12 @@ afterEach(() => {
 });
 
 describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)', () => {
-  it('T3: dokładnie jeden [data-right-panel] przy zaznaczonym wierszu i otwartej Teresie', async () => {
+  /*
+   * ★ DEC-404 (06.09.2026) — PRZEPISANE. Do 06.09 przypadek klikał zakładkę
+   * „Teresa" w kolumnie podglądu; właściciel odrzucił ten kształt. Teraz
+   * mierzy kontrakt DEC-404: panel podglądu = TYLKO rekord.
+   */
+  it('T3: panel podglądu = tylko rekord, bez zakładek i bez Teresy (MUTACJA: przywróć zakładkę → RED)', async () => {
     const { container } = renderInbox();
 
     const rows = await screen.findAllByText('Pierwsze zadanie');
@@ -261,15 +266,8 @@ describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)
     });
 
     const panel = container.querySelector('[data-right-panel]') as HTMLElement;
-    const tabs = within(panel).getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
-
-    fireEvent.click(tabs[1]);
-    expect(await within(panel).findByLabelText('Teresa composer')).toBeInTheDocument();
-    // Ciągle jeden korzeń — Teresa jest zakładką tego samego panelu, nie
-    // osobnym paneleem obok (dokładnie hipoteza P1: dziś dok globalny
-    // dokładałby DRUGI aside tutaj).
+    expect(within(panel).queryAllByRole('tab')).toHaveLength(0);
+    expect(within(panel).queryByLabelText('Teresa composer')).toBeNull();
     expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
   });
 
@@ -296,9 +294,9 @@ describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)
     expect(container.querySelector('[data-right-panel]')).toBeNull();
   });
 
-  it('T4: nowy markup (korzeń panelu + zakładki) nie wprowadza klas spoza tokenów', async () => {
+  it('T4: markup korzenia panelu nie wprowadza klas spoza tokenów', async () => {
     // Zakres 1:1 z `PreviewPane/__tests__/jedenPanel.contract.test.tsx` T7:
-    // klasa WŁASNA korzenia `[data-right-panel]` + zakładek — nie cała
+    // klasa WŁASNA korzenia `[data-right-panel]` — nie cała
     // poddrzewo (które niesie już zaakceptowany, istniejący kanon
     // `PreviewPaneShell`/`StandardPreview` z klasami typu `border-slate-200/70`,
     // spoza zakresu tego zlecenia). To, co TO zlecenie naprawiało, to bespoke
@@ -312,12 +310,9 @@ describe('InterviewHub — my_assignments (list): jeden prawy panel (P1 DEC-397)
       expect(container.querySelectorAll('[data-right-panel]')).toHaveLength(1);
     });
 
+    // DEC-404: rzędu zakładek już nie ma.
     const panel = container.querySelector('[data-right-panel]') as HTMLElement;
-    const controlledMarkup = [
-      panel.getAttribute('class'),
-      ...within(panel).getAllByRole('tab').map((tab) => tab.getAttribute('class')),
-    ].join(' ');
-    expect(controlledMarkup).not.toMatch(/primary-|navy-|slate-/);
+    expect(panel.getAttribute('class') ?? '').not.toMatch(/primary-|navy-|slate-/);
   });
 
   it('T4 (źródło): bespoke <aside bg-slate-50 dark:bg-navy-950> nie istnieje już w InterviewHub.tsx', async () => {

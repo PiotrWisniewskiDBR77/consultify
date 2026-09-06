@@ -5,15 +5,18 @@
  * bocznego, zarówno w IDE, jak i w notatce". Na Notatniku stały obok siebie
  * DWA panele: własny pas notatki ORAZ globalny dok Teresy z `MainLayout`.
  *
- * Ten test pilnuje kształtu PO naprawie, na trzech osiach, które da się
- * zmierzyć bez przeglądarki:
- *   1. panel ma DOKŁADNIE JEDEN korzeń `aside` (albo zero, gdy zamknięty),
- *   2. Teresa jest ZAKŁADKĄ tego panelu, nie drugą kolumną,
- *   3. gospodarz melduje się w rejestrze `embeddedModuleChatHost`, więc
- *      globalny dok na tym ekranie nie wchodzi — a na LIŚCIE notatników
- *      (brak otwartej notatki) wchodzi jak dotąd.
+ * ★ DEC-404 (właściciel, 06.09.2026) — oś 2 ODWRÓCONA. „Teresa jako zakładka
+ * tego panelu" to dokładnie kształt, który właściciel odrzucił („tu nie jest
+ * jej miejsce"). Notatnik NIE osadza już Teresy: `NotebookContent` nie podaje
+ * railowi `teresaContent`, nie melduje się w rejestrze i chowa rail na czas
+ * otwartego doku (`railWidoczny = notebookRailOpen && isChatCollapsed`).
  *
- * Zrzuty z żywego renderu: `proof-notatnik-*.png` (aside = 1 / 1 / 0).
+ * Ten test pilnuje kształtu PO naprawie, na trzech osiach mierzalnych bez
+ * przeglądarki:
+ *   1. panel ma DOKŁADNIE JEDEN korzeń `aside` (albo zero, gdy zamknięty),
+ *   2. rail bez `teresaContent` nie buduje rzędu zakładek ani czatu,
+ *   3. `MainLayout` NIE gasi doku rejestrem — dok wchodzi także tutaj, a rail
+ *      ustępuje mu miejsca.
  */
 import { render, screen } from '@testing-library/react';
 import fs from 'node:fs';
@@ -94,37 +97,34 @@ describe('Notatnik — jeden prawy panel (decyzja CTO 05.09)', () => {
     expect(container.querySelectorAll('aside')).toHaveLength(1);
   });
 
-  it('daje w główce zakładki „Notatka" | „Teresa" i JEDEN przycisk zamknięcia', () => {
-    render(
-      <NotebookRightRail
-        {...wspolneProps}
-        onClose={vi.fn()}
-        teresaContent={<div>rozmowa</div>}
-        panelTab="note"
-        onPanelTabChange={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId('notebook-panel-tab-note')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByTestId('notebook-panel-tab-teresa')).toHaveAttribute(
-      'aria-selected',
-      'false'
-    );
+  /*
+   * ★ DEC-404 — PRZEPISANE. Poprzednia wersja żądała rzędu zakładek
+   * „Notatka | Teresa" (`notebook-panel-tab-*`). Te testidy nie istnieją
+   * w `NotebookRightRail.tsx` odkąd rail chodzi ścieżką
+   * `isArtifactRightRailEnabled` — przypadek był CZERWONY już na bazie
+   * `6bf5fa2bb2`, przed tą zmianą. DEC-404 i tak kasuje zakładkę Teresy, więc
+   * zamiast wskrzeszać martwy kształt mierzymy kształt obowiązujący.
+   */
+  it('DEC-404: rail gospodarza nie ma zakładki Teresy i ma JEDEN przycisk zamknięcia', () => {
+    render(<NotebookRightRail {...wspolneProps} onClose={vi.fn()} />);
+    expect(screen.queryByTestId('notebook-panel-tab-teresa')).toBeNull();
     expect(screen.getAllByTestId('notebook-panel-close')).toHaveLength(1);
   });
 
-  it('w zakładce „Teresa" pokazuje rozmowę ZAMIAST sekcji — nie obok nich', () => {
-    const { container } = render(
-      <NotebookRightRail
-        {...wspolneProps}
-        onClose={vi.fn()}
-        teresaContent={<div>rozmowa</div>}
-        panelTab="teresa"
-        onPanelTabChange={vi.fn()}
-      />
-    );
+  /*
+   * ★ DEC-404 — PRZEPISANE (poprzednia wersja mierzyła zakładkę „Teresa"
+   * w railu; taki rail nie powstaje już u gospodarza).
+   */
+  it('DEC-404: gospodarz nie podaje railowi Teresy — rail ma jeden korzeń i zero czatu', () => {
+    const { container } = render(<NotebookRightRail {...wspolneProps} onClose={vi.fn()} />);
     expect(container.querySelectorAll('aside')).toHaveLength(1);
-    expect(screen.getByText('rozmowa')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Akcje/ })).toBeNull();
+    expect(screen.queryByText('rozmowa')).toBeNull();
+
+    const content = fs.readFileSync(path.resolve(__dirname, '../../NotebookContent.tsx'), 'utf8');
+    // MUTACJA: przywróć `teresaContent={notebookTeresaNode}` → RED.
+    expect(content).not.toMatch(/teresaContent=\{/);
+    expect(content).not.toMatch(/from '@\/components\/AIChat\/UnifiedChatPanel'/);
+    expect(content).not.toMatch(/import\('@\/components\/AIChat\/UnifiedChatPanel'\)/);
   });
 
   it('nagłówek panelu niesie NAZWĘ OBIEKTU i jego stan (kanon: nazwa + status + X)', () => {
@@ -203,15 +203,19 @@ describe('embeddedModuleChatHost — globalny dok Teresy ustępuje osadzonemu', 
     expect(isEmbeddedModuleChatHosted()).toBe(true);
   });
 
-  it('MainLayout łączy rejestr ze ścieżką — lista notatników zachowuje globalny dok', () => {
+  it('DEC-404: rejestr NIE gasi doku, a Notatnik nie melduje się jako gospodarz Teresy', () => {
     const layout = fs.readFileSync(
       path.resolve(__dirname, '../../../../layouts/MainLayout.tsx'),
       'utf8'
     );
-    expect(layout).toContain('useEmbeddedModuleChatHost');
-    expect(layout).toContain(
-      'const hasEmbeddedModuleChat = hasEmbeddedModuleChatByPath || embeddedModuleChatHosted;'
-    );
+    // MUTACJA: dopisz `|| embeddedModuleChatHosted` → RED (wraca odrzucony
+    // kształt „Teresa w kolumnie podglądu / w railu").
+    const linia = layout
+      .split('\n')
+      .find((wiersz) => wiersz.includes('const hasEmbeddedModuleChat ='));
+    expect(linia).toBeDefined();
+    expect(linia).not.toContain('embeddedModuleChatHosted');
+
     // Notatnik NIE jest wpisany po ścieżce — inaczej dok znikałby także na
     // liście notatników, gdzie nikt Teresy nie osadza („zamknięte przez
     // wygaszenie").
@@ -222,11 +226,10 @@ describe('embeddedModuleChatHost — globalny dok Teresy ustępuje osadzonemu', 
     expect(bramkaPoSciezce).not.toContain('/my-work/notebook');
 
     const content = fs.readFileSync(path.resolve(__dirname, '../../NotebookContent.tsx'), 'utf8');
-    expect(content).toContain('const notebookHostsTeresa = Boolean(activePage) && !isMobile;');
-    expect(content).toContain('return registerEmbeddedModuleChatHost();');
-    // Teresa w panelu to TEN SAM komponent, co dok globalny (moduł 13_CHAT
-    // jest zamrożony — importujemy, nie kopiujemy).
-    expect(content).toContain("import('@/components/AIChat/UnifiedChatPanel')");
-    expect(content).toContain('mode="split"');
+    // MUTACJA: przywróć meldunek → RED.
+    expect(content).not.toContain('registerEmbeddedModuleChatHost');
+    // Rail ustępuje dokowi: `notebookRailOpen` zostaje nietknięty, więc po
+    // zamknięciu doku rail wraca w stanie sprzed.
+    expect(content).toContain('const railWidoczny = notebookRailOpen && isChatCollapsed;');
   });
 });

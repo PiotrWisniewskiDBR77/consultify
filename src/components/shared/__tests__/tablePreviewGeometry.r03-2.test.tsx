@@ -14,8 +14,9 @@
  * i klasy, które ją ustalają; piksele domyka dowód wizualny G3/G4.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render as renderRTL, screen } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
@@ -38,6 +39,18 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/hooks/useDeviceType', () => ({
   useDeviceType: () => ({ isMobile: false, safeAreaInsets: { bottom: 0 } }),
 }));
+
+/*
+ * NAPRAWA HARNESSU (06.09.2026, przy DEC-404 — czerwień ZASTANA, nie skutek
+ * tej zmiany): `TableWithPreviewLayout` woła `useJedenPanel()` → `useLocation()`
+ * bezwarunkowo na szczycie komponentu (tak samo na bazie `6bf5fa2bb2`, linia
+ * 145). Ten plik renderował go bez `<Router>`, więc SZEŚĆ przypadków padało na
+ * „useLocation() may be used only in the context of a <Router>" — czyli nie
+ * mierzyło produktu wcale („brak pomiaru nie jest wynikiem"). Wszystkie
+ * `render` idą teraz przez `MemoryRouter`; żadna asercja nie została zmieniona.
+ */
+const render: typeof renderRTL = ((ui: React.ReactElement, opcje?: unknown) =>
+  renderRTL(<MemoryRouter initialEntries={['/my-work']}>{ui}</MemoryRouter>, opcje as never)) as never;
 
 /** `PreviewableItem` wymaga `id` i `title` — trzymamy się kontraktu komponentu. */
 interface Row {
