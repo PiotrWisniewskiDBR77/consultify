@@ -58,14 +58,35 @@ export interface ActionCardScope {
   actorUserId: string;
 }
 
+/**
+ * DEFEKT ZNALEZIONY 06.09 (P7K część B): kolumny DATE wracają z `pg` jako
+ * obiekt `Date`, a nie tekst. `String(new Date(...)).slice(0, 10)` dawało
+ * „Tue Apr 14" zamiast „2026-04-14" — czyli KAŻDA data karty działania
+ * (okres i termin) była na Postgresie nieczytelna. Ta funkcja jest jedynym
+ * miejscem, w którym data wychodzi z wiersza, więc naprawa jest tu.
+ */
+function toIsoDay(value: unknown): string {
+  if (value == null) return '';
+  if (value instanceof Date) {
+    // Sterownik `pg` oddaje kolumnę DATE jako północ w strefie LOKALNEJ, więc
+    // `toISOString()` cofa datę o dobę na wschód od Greenwich (2026-04-14 →
+    // „2026-04-13"). Składamy dzień z części lokalnych — bez konwersji stref.
+    const rok = value.getFullYear();
+    const miesiac = String(value.getMonth() + 1).padStart(2, '0');
+    const dzien = String(value.getDate()).padStart(2, '0');
+    return `${rok}-${miesiac}-${dzien}`;
+  }
+  return String(value).slice(0, 10);
+}
+
 function rowToActionCard(row: any): ActionCard {
   return {
     id: row.id,
     organizationId: row.organization_id,
     sourceKind: row.source_kind,
     sourceId: row.source_id,
-    periodStart: String(row.period_start).slice(0, 10),
-    periodEnd: String(row.period_end).slice(0, 10),
+    periodStart: toIsoDay(row.period_start),
+    periodEnd: toIsoDay(row.period_end),
     goalMet: Boolean(row.goal_met),
     actionRequired: Boolean(row.action_required),
     problem: row.problem,
@@ -73,7 +94,7 @@ function rowToActionCard(row: any): ActionCard {
     actionText: row.action_text,
     ownerUserId: row.owner_user_id,
     ownerName: row.owner_name || undefined,
-    dueDate: String(row.due_date).slice(0, 10),
+    dueDate: toIsoDay(row.due_date),
     comment: row.comment || undefined,
     status: row.status,
     createdBy: row.created_by,
