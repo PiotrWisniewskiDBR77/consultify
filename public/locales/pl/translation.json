@@ -2866,7 +2866,7 @@
     },
     "notebook": {
       "title": "Notatnik",
-      "new": "Nowa strona",
+      "new": "Nowa notatka",
       "searchHint": "Użyj głównego wyszukiwania u góry",
       "empty": "Brak stron",
       "project": "Projekt",
@@ -3107,7 +3107,7 @@
       "title5": "Karty",
       "ariaLabel7": "Tryb widoku pomyslow",
       "unifiedCreateNew": "+ Nowy",
-      "vault": "Sejf klienta"
+      "vault": "Sejfy"
     },
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
@@ -36442,7 +36442,7 @@
       "label23": "prezentację",
       "label24": "ocenę",
       "label25": "Konwersja nie powiodła się",
-      "label26": "Wszystkie notatniki",
+      "label26": "Wróć do notatników",
       "label27": "stron",
       "label28": "Wszystkie",
       "label29": "Moje",
@@ -36453,6 +36453,9 @@
       "label34": "Do przeglądu",
       "label35": "Świeże",
       "label36": "Osierocone",
+      "searchNotesPlaceholder": "Szukaj w notatkach…",
+      "viewFilterLabel": "Filtr notatek",
+      "searchNotesButtonTooltip": "Szukaj w notatkach",
       "label37": "Brak pasujących stron",
       "label38": "Zmień filtr powyżej",
       "label39": "Utwórz pierwszą stronę",

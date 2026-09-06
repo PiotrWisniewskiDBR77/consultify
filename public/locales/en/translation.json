@@ -3528,7 +3528,7 @@
     },
     "notebook": {
       "title": "Notebook",
-      "new": "New page",
+      "new": "New note",
       "searchHint": "Use the main search above",
       "empty": "No pages yet",
       "project": "Project",
@@ -3769,7 +3769,7 @@
       "title5": "Cards",
       "ariaLabel7": "Ideas view mode",
       "unifiedCreateNew": "+ New",
-      "vault": "Client Vault"
+      "vault": "Vaults"
     },
     "openDocuments": "Open documents",
     "inboxContent": {
@@ -33878,7 +33878,7 @@
       "label23": "presentation",
       "label24": "assessment",
       "label25": "Conversion failed",
-      "label26": "All notebooks",
+      "label26": "Back to notebooks",
       "label27": "pages",
       "label28": "All",
       "label29": "Mine",
@@ -33889,6 +33889,9 @@
       "label34": "To review",
       "label35": "Fresh",
       "label36": "Orphaned",
+      "searchNotesPlaceholder": "Search notes…",
+      "viewFilterLabel": "Notes filter",
+      "searchNotesButtonTooltip": "Search notes",
       "label37": "No matching pages",
       "label38": "Try a different filter above",
       "label39": "Create your first page",

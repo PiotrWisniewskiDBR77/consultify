@@ -186,6 +186,8 @@ export const ClientDocumentsVault: React.FC = () => {
             size={14}
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
           />
+          {/* DEC-408 — aria-label aligned with the Menu 2 tab/breadcrumb
+              (`myWork.hub.vault`): "Sejfy"/"Vaults", not "Sejf klienta". */}
           <input
             type="text"
             value={searchQuery}
@@ -194,7 +196,7 @@ export const ClientDocumentsVault: React.FC = () => {
               'vault.safes.searchPlaceholder',
               isPolish ? 'Szukaj sejfu…' : 'Search safes…'
             )}
-            aria-label={t('vault.breadcrumb.root', isPolish ? 'Sejf klienta' : 'Client Vault')}
+            aria-label={t('myWork.hub.vault', isPolish ? 'Sejfy' : 'Vaults')}
             className="h-9 w-48 rounded-lg border border-c-border bg-c-surface pl-8 pr-3 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           />
         </div>

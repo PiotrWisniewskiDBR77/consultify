@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
-  Clock,
   FileText,
   Layers,
   Lightbulb,
@@ -25,12 +24,10 @@ import {
   MoreVertical,
   Paperclip,
   Pen,
-  Pin,
   RefreshCw,
   Sparkles,
   Trash2,
   Type,
-  Unlink,
   WifiOff,
   X,
 } from 'lucide-react';
@@ -100,6 +97,14 @@ import { NotebookReminderChip } from './notebook/NotebookReminderChip';
 import { NotebookRightRail } from './notebook/NotebookRightRail';
 import { NotebookTopicView } from './notebook/NotebookTopicView';
 import { NotebookVersionHistory } from './notebook/NotebookVersionHistory';
+import { NotebookViewFilterSelect } from './notebook/NotebookViewFilterSelect';
+import {
+  isFreshPage as isFreshPagePure,
+  isRecentPage as isRecentPagePure,
+  isToReviewPage as isToReviewPagePure,
+  matchesView as matchesViewPure,
+  type NotebookViewLens,
+} from './notebook/notebookViewLensPredicates';
 import { CoverImageBar, IconPickerButton } from './notebook/NoteCoverPicker';
 import {
   detectSlashTrigger,
@@ -1468,42 +1473,32 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   //  • scope — who owns the page (mine vs the rest of the team)
   //  • view  — flattened "Today" sections (pinned / recent / to-review / fresh / orphaned)
   type NotebookScopeLens = 'all' | 'mine' | 'team';
-  type NotebookViewLens = 'all' | 'pinned' | 'recent' | 'toReview' | 'fresh' | 'orphaned';
+  // NotebookViewLens moved to `notebookViewLensPredicates.ts` (DEC-405b) so
+  // the dropdown component and its predicates share one definition.
   const [scopeLens, setScopeLens] = useState<NotebookScopeLens>('all');
   const [viewLens, setViewLens] = useState<NotebookViewLens>('all');
+  // DEC-405b — local, client-side title search for the sidebar's "Szukaj w
+  // notatkach…" field (`NotebookViewFilterSelect`). Independent of the
+  // Menu-3 `searchQuery` prop (server-backed, drives `fetchPages`) and of
+  // the header's cross-notebook search dialog — this only narrows the
+  // already-loaded `pages` array by title, same as the view-lens predicates
+  // it now sits next to.
+  const [noteSearchQuery, setNoteSearchQuery] = useState('');
 
   const isMinePage = useCallback(
     (p: NotebookPage) => !p.ownerUserId || p.ownerUserId === currentUserId,
     [currentUserId]
   );
-  // A page is "to review" when its knowledge is disputed/stale or still in inbox.
-  const isToReviewPage = useCallback(
-    (p: NotebookPage) => p.verificationStatus === 'disputed' || !!p.staleAt || p.status === 'inbox',
-    []
-  );
-  // "Fresh" = arrived via a capture source (quick-capture, email, file, canvas).
-  const isFreshPage = useCallback(
-    (p: NotebookPage) => !!(p.captureSource || p.captureMetadata?.captureSource),
-    []
-  );
-  // "Recent" = touched within the last 7 days.
-  const isRecentPage = useCallback((p: NotebookPage) => {
-    if (!p.updatedAt) return false;
-    const t = new Date(p.updatedAt).getTime();
-    if (Number.isNaN(t)) return false;
-    return Date.now() - t <= 7 * 24 * 60 * 60 * 1000;
-  }, []);
+  // isRecentPage/isToReviewPage/isFreshPage/matchesView — pure, unchanged
+  // predicates, extracted to `notebookViewLensPredicates.ts` (DEC-405b) so
+  // they're unit-testable without mounting this tiptap-heavy component.
+  const isToReviewPage = useCallback((p: NotebookPage) => isToReviewPagePure(p), []);
+  const isFreshPage = useCallback((p: NotebookPage) => isFreshPagePure(p), []);
+  const isRecentPage = useCallback((p: NotebookPage) => isRecentPagePure(p), []);
 
   const matchesView = useCallback(
-    (p: NotebookPage, lens: NotebookViewLens) => {
-      if (lens === 'pinned') return !!p.pinned;
-      if (lens === 'recent') return isRecentPage(p);
-      if (lens === 'toReview') return isToReviewPage(p);
-      if (lens === 'fresh') return isFreshPage(p);
-      if (lens === 'orphaned') return isOrphanedPage(p);
-      return true;
-    },
-    [isRecentPage, isToReviewPage, isFreshPage, isOrphanedPage]
+    (p: NotebookPage, lens: NotebookViewLens) => matchesViewPure(p, lens, isOrphanedPage),
+    [isOrphanedPage]
   );
 
   // Pages after the status (Menu 3) + scope lens — the base the view chips count against.
@@ -1531,13 +1526,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const teamPagesExist = useMemo(() => pages.some((p) => !isMinePage(p)), [pages, isMinePage]);
 
   const filteredPages = useMemo(() => {
-    const result = scopedPages.filter((p) => matchesView(p, viewLens));
+    let result = scopedPages.filter((p) => matchesView(p, viewLens));
+    const q = noteSearchQuery.trim().toLowerCase();
+    if (q) result = result.filter((p) => (p.title || '').toLowerCase().includes(q));
     result.sort((a, b) => {
       if ((a.pinned ? 1 : 0) !== (b.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
       return (b.updatedAt || '').localeCompare(a.updatedAt || '');
     });
     return result;
-  }, [scopedPages, viewLens, matchesView]);
+  }, [scopedPages, viewLens, matchesView, noteSearchQuery]);
 
   const handleTogglePin = useCallback(async (pageId: string) => {
     try {
@@ -2985,64 +2982,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             </div>
           )}
 
-          {/* N5 — View lens (flattened "Today" sections as chips). */}
-          <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-c-border-subtle">
-            {(
-              [
-                { key: 'all', label: t('notebook.notebookContent.label31', 'All'), icon: null },
-                {
-                  key: 'pinned',
-                  label: t('notebook.notebookContent.label32', 'Pinned'),
-                  icon: <Pin size={11} />,
-                },
-                {
-                  key: 'recent',
-                  label: t('notebook.notebookContent.label33', 'Recent'),
-                  icon: <Clock size={11} />,
-                },
-                {
-                  key: 'toReview',
-                  label: t('notebook.notebookContent.label34', 'To review'),
-                  icon: <AlertTriangle size={11} />,
-                },
-                {
-                  key: 'fresh',
-                  label: t('notebook.notebookContent.label35', 'Fresh'),
-                  icon: <Sparkles size={11} />,
-                },
-                {
-                  key: 'orphaned',
-                  label: t('notebook.notebookContent.label36', 'Orphaned'),
-                  icon: <Unlink size={11} />,
-                },
-              ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
-            ).map((v) => {
-              const count = viewCounts[v.key];
-              const active = viewLens === v.key;
-              return (
-                <button
-                  key={v.key}
-                  onClick={() => setViewLens(v.key)}
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                    active
-                      ? 'bg-c-text text-c-surface'
-                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised'
-                  }`}
-                >
-                  {v.icon}
-                  {v.label}
-                  {v.key !== 'all' && count > 0 && (
-                    <span
-                      className={`rounded-full px-1 text-[9px] ${
-                        active ? 'bg-c-surface/20' : 'bg-c-surface text-c-text-muted'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {/* DEC-405b (ZLECENIE 1.1-J2, przejście właściciela 06.09) — the
+              6-chip "Today" row (Wszystkie/Przypięte/Ostatnie/Do przeglądu/
+              Świeże/Osierocone) was "kawałek kramu" (owner). Replaced by ONE
+              dropdown with counters next to a persistent note-title search
+              field, one line — same `matchesView` predicates as before,
+              only the chrome changed (see `filteredPages` below). */}
+          <div className="px-3 py-2.5 border-b border-c-border-subtle">
+            <NotebookViewFilterSelect
+              searchQuery={noteSearchQuery}
+              onSearchQueryChange={setNoteSearchQuery}
+              value={viewLens}
+              onChange={setViewLens}
+              counts={viewCounts}
+            />
           </div>
 
           {/* Page list */}

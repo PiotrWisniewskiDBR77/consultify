@@ -241,6 +241,14 @@ const NotatnikListaScreen = React.lazy(() => import('./screens/notatnik-lista-11
 const MojaPracaNotatnikToggleEmptyScreen = React.lazy(
   () => import('./screens/mojapraca-notatnik-toggle-empty')
 );
+// ZLECENIE 1.1-J2 (06.09) — nagłówek listy notatek: filtr rozwijany z licznikami
+// (DEC-405b) + naprawa pustego dymka nad wstecz/+/lupa (DEC-405c).
+const NotatnikHeaderFiltrScreen = React.lazy(
+  () => import('./screens/notatnik-header-filtr-11j2')
+);
+// ZLECENIE 1.1-J2 (06.09, DEC-408) — Menu 2 „Sejf klienta” → „Sejfy”, okruszek
+// „Moja Praca › Sejfy”. REALNY <MyWorkHub> na zakładce vault.
+const MyWorkVaultSejfyScreen = React.lazy(() => import('./screens/mywork-vault-sejfy-11j2'));
 const AssessmentInitiativesPanelScreen = React.lazy(
   () => import('./screens/assessment-initiatives-panel')
 );
@@ -711,6 +719,15 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'H2 (1.1-H) — REALNY edytor Tiptap (extensions.ts + EDITOR_STYLES z NotebookContent.tsx) z pustym blokiem toggle. &case=empty-toggle|text &lang=pl|en',
     render: () => <MojaPracaNotatnikToggleEmptyScreen />,
+  'notatnik-header-filtr-11j2': {
+    label:
+      'ZLECENIE 1.1-J2 — REALNY <NotebookHeaderActions> + <NotebookViewFilterSelect> + <NotebookPageListRow>. DEC-405b: 6 chipów → 1 filtr rozwijany z licznikami obok „Szukaj w notatkach…”. DEC-405c: najedź na wstecz/+/lupa — dymek z tekstem, nie pusty (side="bottom", nieprzycięty przez overflow-hidden).',
+    render: () => <NotatnikHeaderFiltrScreen />,
+  },
+  'mywork-vault-sejfy-11j2': {
+    label:
+      'ZLECENIE 1.1-J2 (DEC-408) — REALNY <MyWorkHub> zakładka „Sejfy” (było „Sejf klienta”/„Client Vault”). Sprawdź pill Menu 2 + okruszek topbaru „Moja Praca › Sejfy”.',
+    render: () => <MyWorkVaultSejfyScreen />,
   },
   'meetings-module': {
     label:
