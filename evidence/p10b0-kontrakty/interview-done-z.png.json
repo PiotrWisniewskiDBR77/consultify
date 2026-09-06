@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3111/interview?tab=sessions&cardContract=1",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Sesje",
+  "text=Seed session: Governance and escalation map",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSesja: Seed session: Governance and escalation map\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nSeed session: Governance and escalation map\nBłąd pobierania danych\n\nSesja wywiadu została załadowana, ale pytania nie zostały pobrane. Spróbuj ponownie lub sprawdź połączenie.\n\nSpróbuj ponownie",
+ "kiedy": "2026-09-06T19:22:07.584Z"
+}

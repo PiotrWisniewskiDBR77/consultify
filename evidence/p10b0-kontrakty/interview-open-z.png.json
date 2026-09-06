@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3111/interview?tab=sessions&cardContract=1",
+ "tytul": "Interview — Consultify",
+ "kliki": [
+  "text=Sesje",
+  "css=tbody tr:first-child td:nth-child(2)",
+  "text=Otwórz"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWywiad\nSesja: Inbox — Quick assessment (my assignment)\nDane\nModel\n1\n7\nAudyt Nocny\nAN\nSkrzynka\nSesje\nPrzydzielone\nSzablony\nWnioski\nInicjatywy\nLista\ninterview\nInbox — Quick assessment (my assignment)\nWróć\n\nInbox — Quick assessment (my assignment)\n\nObszar roboczy pytania\n\nW trakcie\n7/10\n70%\nZapisz\nLista\n\nPYTANIA\n\n7/10\n\n3 do uzupełnienia\n\nWhat is the main business objective for the next 12 months?\nReduce lead time by 20% and improve OTIF to 95%.\n2\nWho owns the decision-making for exceptions?\nWhere is the biggest bottleneck today?\nApprovals between planning and production plus lon…\n4\nHow do you measure performance today?\nWhich systems support planning and execution?\nERP (SAP), MES (basic), Excel for scheduling adjus…\nWhat integrations are missing?\nNo API layer; manual exports/imports weekly.\nWhere do skills/training gaps show up most?\nShift leads rely on tribal knowledge; limited trai…\n8\nHow do employees react to process changes?\nWhat constraints apply to investments?\nPayback must be under 18 months; 2026 capex is con…\nHow do you measure ROI on improvements?\nAd-hoc; no standard benefits register.\nPrzegląd\nZapisz i wyjdź\n2\nz 10\nTekst\nWho owns the decision-making for exceptions?\nNagraj\nPlik\nObraz\n\nDODATKOWY KONTEKST\n\nŁącze\nArtefakt\nZapisano\n|\nEsc=zapisz · Enter=dalej\nWstecz\nZapisz\nNastępne",
+ "kiedy": "2026-09-06T19:15:38.589Z"
+}
