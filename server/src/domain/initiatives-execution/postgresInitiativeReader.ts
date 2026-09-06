@@ -1323,6 +1323,47 @@ export class PostgresInitiativeReader {
     };
   }
 
+  /**
+   * Odczyt ZBIORCZY inicjatyw po identyfikatorach — jedno zapytanie zamiast N.
+   *
+   * POWOD (pomiar 1.12-R2, 2026-09-06): `GET /runtime-v1/execution-cases`
+   * (`initiativesExecutionRuntime.routes.ts`) po `listExecutionCases()` szedl
+   * SEKWENCYJNA petla `for (...) { await findById(); await authorize(); }`.
+   * Przy N realizacjach to N zapytan do `ie_aggregate_state` odpalonych jedno
+   * po drugim (kazde czeka na poprzednie) — a dopiero PO tej liscie front
+   * zaczyna liczyc swoj limit 12 s na realizacje. Ten odczyt scala je w jedno
+   * zapytanie `= ANY($2::text[])`, wiec koszt listy przestaje rosnac z N.
+   */
+  async listInitiativesByIds(
+    organizationId: string,
+    initiativeIds: readonly string[]
+  ): Promise<Map<string, InitiativeReadModel>> {
+    const unique = [...new Set(initiativeIds.filter((id) => typeof id === 'string' && id))];
+    if (unique.length === 0) return new Map();
+    const result = await this.pool.query<{
+      aggregate_id: string;
+      version: number;
+      payload_json: RegisteredInitiative;
+      updated_at: Date | string;
+    }>(
+      `SELECT aggregate_id, version, payload_json, updated_at
+         FROM ie_aggregate_state
+        WHERE organization_id = $1 AND aggregate_type = 'initiative' AND aggregate_id = ANY($2::text[])`,
+      [organizationId, unique]
+    );
+    return new Map(
+      result.rows.map((row) => [
+        row.aggregate_id,
+        {
+          version: row.version,
+          initiative: row.payload_json,
+          updatedAt:
+            row.updated_at instanceof Date ? row.updated_at.toISOString() : String(row.updated_at),
+        },
+      ])
+    );
+  }
+
   async listInitiatives(organizationId: string): Promise<InitiativeReadModel[]> {
     const result = await this.pool.query<{
       version: number;
