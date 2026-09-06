@@ -160,6 +160,7 @@ interface FinancePreviewPanelProps {
   modelPreviewDetail: PreviewDataState['modelPreviewDetail'];
   predictionValidations: PreviewDataState['predictionValidations'];
   analysisPreviewRatios: PreviewDataState['analysisPreviewRatios'];
+  analysisPreviewMeta: PreviewDataState['analysisPreviewMeta'];
   budgetPreviewScenarios: PreviewDataState['budgetPreviewScenarios'];
   valuationPreviewResults: PreviewDataState['valuationPreviewResults'];
   valuationPreviewDetail: PreviewDataState['valuationPreviewDetail'];
@@ -188,6 +189,7 @@ export function useFinancePreview({
   modelPreviewDetail,
   predictionValidations,
   analysisPreviewRatios,
+  analysisPreviewMeta,
   budgetPreviewScenarios,
   valuationPreviewResults,
   valuationPreviewDetail,
@@ -352,6 +354,17 @@ export function useFinancePreview({
   const renderPreviewBody = useCallback(
     (row: FinanceRow) => {
       const metaPills: { label: string; value: string }[] = [];
+      // Z1 (re-audyt B) — dla analiz wyłącznie kanonicznych `row.currency`/
+      // `row.periodCount` są celowo puste (rejestr artefaktów ich nie niesie);
+      // `analysisPreviewMeta` liczy je z `kpi-values` — patrz financeTypes.ts.
+      // Wspólne dla chipów (metaPills) i tekstu szczegółów niżej w tej samej funkcji.
+      const isAnalysisOrInvestmentRow = row.kind === 'analysis' || row.kind === 'investment';
+      const analysisCurrency = isAnalysisOrInvestmentRow
+        ? analysisPreviewMeta?.currency || (row as FinanceAnalysisRow).currency || '—'
+        : '—';
+      const analysisPeriodCount = isAnalysisOrInvestmentRow
+        ? analysisPreviewMeta?.periodCount || (row as FinanceAnalysisRow).periodCount || 0
+        : 0;
 
       if (row.kind === 'statements') {
         const sRow = row as FinanceStatementRow;
@@ -412,10 +425,15 @@ export function useFinancePreview({
           );
         }
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
+        // analysisCurrency/analysisPeriodCount — patrz komentarz Z1 przy ich
+        // deklaracji na początku tej funkcji (wspólne z detailsText niżej).
         metaPills.push(
           { label: t('finance.columns.analysisType', 'Type'), value: row.analysisType },
-          { label: t('common.currency', 'Currency'), value: row.currency },
-          { label: t('finance.columns.periods', 'Periods'), value: String(row.periodCount) }
+          { label: t('common.currency', 'Currency'), value: analysisCurrency },
+          {
+            label: t('finance.columns.periods', 'Periods'),
+            value: analysisPeriodCount ? String(analysisPeriodCount) : '—',
+          }
         );
       } else {
         const vRow = row as FinanceValuationRow;
@@ -486,11 +504,15 @@ export function useFinancePreview({
             : t('finance.preview.financialAnalysisLabel', 'Financial analysis');
         // F-P5 §5 — bez tego podgląd renderował „Analiza finansowa: \nWaluta: \nLiczba okresów: 0"
         // (puste wartości przed dwukropkiem). Brak danych ma wyglądać jak „—", nie jak zero.
+        // Z1 (re-audyt B) — `analysisCurrency`/`analysisPeriodCount` (zdefiniowane
+        // na początku tej funkcji) preferują `analysisPreviewMeta` z `kpi-values`
+        // nad `row.currency`/`row.periodCount`, które dla analiz wyłącznie
+        // kanonicznych są celowo puste/0.
         detailsText = t('finance.preview.analysisDetails', '{{kindLabel}}: {{analysisType}}', {
           kindLabel,
           analysisType: row.analysisType || '—',
-          currency: row.currency || '—',
-          periods: row.periodCount ? String(row.periodCount) : '—',
+          currency: analysisCurrency,
+          periods: analysisPeriodCount ? String(analysisPeriodCount) : '—',
         });
       } else if (row.kind === 'prediction') {
         const pRow = row as FinanceModelRow;
