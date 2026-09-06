@@ -22,7 +22,9 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import DomainNavigation, { type DomainNavigationModule } from '../settings/shared/DomainNavigation';
+import { type DomainNavigationModule } from '../settings/shared/DomainNavigation';
+
+import { OrganizationDomainNav } from './OrganizationDomainNav';
 
 export type OrganizationModule =
   | 'profile'
@@ -207,7 +209,13 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
   const language = i18n?.resolvedLanguage || i18n?.language || 'pl';
   const isPolish = language.toLowerCase().startsWith('pl');
   return (
-    <DomainNavigation
+    // [ODMROZENIE 01_ORGANIZATION DEC-397] `OrganizationDomainNav` (nowy plik,
+    // fork z korzeniem <nav>) zamiast współdzielonego `DomainNavigation`
+    // (<aside>, moduł 15_SETTINGS — zamrożony, nie dotykamy). Ekran mountuje tę
+    // nawigację dwa razy naraz (desktop + szuflada mobile) — z <aside> dawało to
+    // 2 elementy tylko z nawigacji + 1 z prawego panelu stanu = 3 łącznie, łamiąc
+    // SPEC-A P1 („prawa krawędź = JEDEN panel"). Zero zmiany wyglądu/funkcji.
+    <OrganizationDomainNav
       title={t('organization.sidebar.title', isPolish ? 'ORGANIZACJA' : 'ORGANIZATION')}
       description={t(
         'organization.sidebar.description',
