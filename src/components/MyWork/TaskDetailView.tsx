@@ -161,6 +161,7 @@ import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsLi
 // MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
 // (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
 import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
+import { isTaskSectionVisible } from './taskSectionVisibility';
 import { TaskCardV2 } from './TaskCardV2';
 import { isTaskCardV2Enabled } from './taskCardV2Flag';
 import { TASK_GENERATED_SECTION_PERSISTENCE } from './taskGeneratedSectionPersistence';
@@ -4812,10 +4813,28 @@ Return ONLY the final comment text.`;
     onLayoutChange: persistTaskCardLayout,
   });
 
-  const visibleTaskNModeSections = useMemo(
-    () => taskCardLayout.applyToSections(nModeSectionsWithContent),
-    [taskCardLayout, nModeSectionsWithContent]
-  );
+  // [ODMROZENIE 07_MY_WORK_AGENT DEC-411] Pomysły, Ryzyko i RACI pozostają
+  // częścią kontraktu, ale pusty rekord nie może pokazywać pustej obietnicy.
+  const visibleTaskNModeSections = useMemo(() => {
+    const withData = nModeSectionsWithContent.filter((section) =>
+      isTaskSectionVisible(section.id, {
+        implementationIdeas,
+        risks,
+        alternatives,
+        stakeholders,
+        escalationRules,
+      })
+    );
+    return taskCardLayout.applyToSections(withData);
+  }, [
+    taskCardLayout,
+    nModeSectionsWithContent,
+    implementationIdeas,
+    risks,
+    alternatives,
+    stakeholders,
+    escalationRules,
+  ]);
 
   // R3 (przepis §3): każda sekcja renderowana przez Task ma wpis w katalogu
   // kanonicznym i odwrotnie. Cichy dev-only sygnał rozjazdu id kod↔katalog —
