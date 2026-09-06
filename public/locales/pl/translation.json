@@ -3055,6 +3055,7 @@
     },
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
+      "previewAriaLabel": "Podgląd pozycji",
       "systemTitles": {
         "defineTargetProcess": "Zdefiniuj proces docelowy i kryteria akceptacji",
         "submitComplianceDocumentation": "Prześlij dokumentację zgodności",
