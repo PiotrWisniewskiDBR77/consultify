@@ -66,7 +66,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Select } from '@/components/shared/forms';
-import { TeresaMark } from '@/components/shared/TeresaMark';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
@@ -2568,11 +2567,11 @@ ${sourceText || '(none)'}`;
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-c-info/10 text-c-info dark:bg-c-info/15">
-                  <TeresaMark size={16} />
+                  <Sparkles size={16} aria-hidden="true" />
                 </span>
                 <div>
                   <div className="text-sm font-semibold text-c-text">
-                    {t('interview.templateBuilder.teresaReviewedYourTemplate')}
+                    {t('interview.templateBuilder.aiReviewedYourTemplate', 'AI sprawdziło Twój wzorzec')}
                   </div>
                   <div className="text-xs text-c-text-muted">
                     {t('interview.templateBuilder.itemsToConsider', {
@@ -2660,7 +2659,7 @@ ${sourceText || '(none)'}`;
             <Button
               variant="outline"
               size="sm"
-              icon={<TeresaMark size={14} />}
+              icon={<Sparkles size={14} aria-hidden="true" />}
               onClick={handleCheckQuality}
               disabled={isCheckingQuality || questions.length === 0}
               loading={isCheckingQuality}
