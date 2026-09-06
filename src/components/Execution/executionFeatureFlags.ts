@@ -107,6 +107,24 @@ export function isExecutionFlagEnabled(
   // ★ Rule #7 (CLAUDE.md): brand-new, not-yet-screenshotted cockpit surface stays
   // OFF everywhere — including demo — until Piotr accepts a clean dev-render.
   // Does NOT inherit the D-D "ON except public prod" fallback below.
+  //
+  // POMIAR 1.12-R4 (06.09.2026, org DBR77) — dlaczego domyślna wartość ZOSTAJE `false`,
+  // mimo że zlecenie dopuszczało przełączenie na ON po zrzucie:
+  //   • Wszystkie cztery raporty (`reports-intelligence/`) czytają WYŁĄCZNIE szkielet
+  //     `runtime-v1`: `listExecutionCases` / `readExecutionWork` / `readExecutionMilestones`
+  //     (WorkIntelligenceReport), `listManagementSignals` / `listInterventions`
+  //     (ControlLoopReport), `readOperationalAllocations` (ResourcesCapacityReport).
+  //     Dla DBR77 te endpointy zwracają 0 rekordów (pomiar HTTP), więc włączenie flagi
+  //     pokazuje cztery PUSTE raporty — a nie brakującą funkcję.
+  //   • Zrzut, który daje zlecenie 1.12-R4, dotyczy NOWEGO ekranu Raporty (migawki na
+  //     realnych danych: /api/tasks, /api/decisions, /api/raid, /api/initiatives), a NIE
+  //     tych czterech komponentów. Domyślne ON byłoby więc włączeniem czegoś, czego nikt
+  //     nie obejrzał — dokładnie kształt, przed którym stoi reguła #7.
+  //   • Wejście do nich to DODATKOWY chip w Menu 3, które na zakładce „Praca" ma już 11
+  //     presetów (kanon dopuszcza ≤3) — przy 1440 px chip wypada poza ekran
+  //     (evidence/1-12-r4/05-menu3-chipy-flaga-on.png).
+  // Warunek zdjęcia tej linii: przepiąć te cztery raporty na realne dane (pakiet R1)
+  // ALBO zrobić ich własny czysty zrzut i dostać akcept właściciela.
   if (flag === 'execReportsIntelligence') return false;
   // D-D (2026-06-29): verified-ready M14 cockpit (Intelligence/What-If/Rollout/
   // Benefits/ganttBaseline) defaults ON everywhere EXCEPT public production

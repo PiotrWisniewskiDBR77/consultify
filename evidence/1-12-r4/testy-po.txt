@@ -1,0 +1,2647 @@
+
+ RUN  v4.1.8 /private/tmp/wt-12r4-raporty-4-poziomy
+
+
+ RUN  v4.1.8 /private/tmp/wt-12r4-raporty-4-poziomy
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 22ms
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 1006ms
+   → Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 20003ms
+   → Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera 1005ms
+   → expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 1005ms
+   → Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status 1004ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 1003ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 1005ms
+   → Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx (9 tests | 7 failed) 26061ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli 22ms
+     × pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd 1006ms
+     × nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE 20003ms
+     × liczniki Menu 3 dostają realne liczby, a nie zera 1005ms
+     ✓ przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru 5ms
+     × pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd 1005ms
+     × tłumaczy IN_PROGRESS zamiast pokazywać surowy status 1004ms
+     × nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA 1003ms
+     × nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko 1005ms
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+stderr | src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+An error occurred in the <TableWithPreviewLayout> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+
+ × src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a 1018ms
+   → Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator 1005ms
+   → Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx (2 tests | 2 failed) 2025ms
+     × pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a 1018ms
+     × gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator 1005ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > reconciles overdue KPI numerator to its exact drill-down population 2ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > keeps undated work as amber data-risk, never overdue or green 1ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > does not label zero overdue or approaching populations as red or amber 0ms
+ × src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders all nine management sections with real content in contract order 175ms
+   → Unable to find an element with the text: /BRAK_API_BSC/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300"[39m
+              [36m>[39m
+                [0mCritical[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              ...
+ ✓ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > keeps healthy source cases visible when one case read fails 18ms
+ × src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders an honest empty state when runtime returns no cases 9ms
+   → Unable to find an element with the text: UNKNOWN · BRAK_API_HISTORY. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+    ...
+ ✓ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > opens the governed task tool from the exact register row 16ms
+ ❯ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx (7 tests | 2 failed) 223ms
+     ✓ reconciles overdue KPI numerator to its exact drill-down population 2ms
+     ✓ keeps undated work as amber data-risk, never overdue or green 1ms
+     ✓ does not label zero overdue or approaching populations as red or amber 0ms
+     × renders all nine management sections with real content in contract order 175ms
+     ✓ keeps healthy source cases visible when one case read fails 18ms
+     × renders an honest empty state when runtime returns no cases 9ms
+     ✓ opens the governed task tool from the exact register row 16ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > names the transparent status select with the initiative name 208ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > is focusable via the accessible name 13ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > calls onChange with the chosen target status 11ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (EN) > does not render a mutation control when disabled 4ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > names the transparent status select in real Polish, not English fallback 23ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx > ExecutionInitiativeStatusControl — accessible contract (real PL) > calls onChange with the chosen target status under real Polish 8ms
+ ✓ src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx (6 tests) 268ms
+Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: keeps the current work register mounted, never mounts the report surface, and shows no report chip
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: keeps the current work register mounted, never mounts the report surface, and shows no report chip
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: mounts no reports-intelligence surface across work/resources/control and issues zero generator-only requests
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: mounts no reports-intelligence surface across work/resources/control and issues zero generator-only requests
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: stays off by default with no opt-in present (query, localStorage and env all absent)
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: stays off by default with no opt-in present (query, localStorage and env all absent)
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > ON: mounts the governed report surface from the Menu 3 chip, and never touches the canonical-only endpoints
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+stderr | src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > ON: mounts the governed report surface from the Menu 3 chip, and never touches the canonical-only endpoints
+[ExecutionHub] risk signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadRiskSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1448:22)
+    at async Promise.allSettled (index 0)
+[ExecutionHub] delay signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadDelaySignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1477:22)
+    at async Promise.allSettled (index 1)
+[ExecutionHub] overspend signals load failed TypeError: res.clone is not a function
+    at fetchWithRetry (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/baseClient.ts:104:18)
+    at v8Get (/private/tmp/wt-12r4-raporty-4-poziomy/src/services/api/v8/client.ts:16:15)
+    at loadOverspendSignals (/private/tmp/wt-12r4-raporty-4-poziomy/src/components/Execution/ExecutionHub.tsx:1506:22)
+    at async Promise.allSettled (index 2)
+
+ ✓ src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: keeps the current work register mounted, never mounts the report surface, and shows no report chip 120ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: mounts no reports-intelligence surface across work/resources/control and issues zero generator-only requests 43ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > OFF: stays off by default with no opt-in present (query, localStorage and env all absent) 43ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx > Execution reports intelligence flag — real ExecutionHub > ON: mounts the governed report surface from the Menu 3 chip, and never touches the canonical-only endpoints 74ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/reportsFlagOff.test.tsx (4 tests) 281ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > renders the KPI empty state after loading 26ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > DEC-120/A4: never offers the fake "Load Atelier Toys example" seed button on an empty KPI register 7ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > add KPI POSTs to /rollout/kpis and shows the returned row as read-only text 22ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > edit KPI opens the modal and PATCHes the minimal diff to /rollout/kpis/:id 58ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > delete KPI goes kebab → confirm dialog → DELETE /rollout/kpis/:id 113ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx > RolloutTab smoke > surfaces the load-error retry state when the fetch fails 4ms
+ ✓ src/components/Execution/__tests__/RolloutTab.smoke.test.tsx (6 tests) 231ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > renders rows as read-only canonical cells (text, not inputs) 42ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > renders the empty state when there are no rows 8ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > severity column-header filter narrows the visible rows 100ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > row click selects and double-click opens 13ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > free-text search narrows the visible rows (in-component pre-filter) 31ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > per-severity count badges reflect the data 10ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx > ProblemTable smoke (canon §27) > kebab exposes the row triage action and fires onAction 16ms
+ ✓ src/components/Execution/Manager/__tests__/ProblemTable.smoke.test.tsx (7 tests) 222ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > separates historical period, as-of, reporting week and forecast horizon 31ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > creates a governed runtime-v1 DRAFT against an exact published definition 99ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > increments the open-report counter as run pills are toggled 33ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > labels a published snapshot with its integrity hash and exposes no mutation control 21ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > renders honest load and validation states 17ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx > Unified Execution report generator > always warns that a created draft starts INCOMPLETE with zero sources attached 5ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/UnifiedExecutionReportGenerator.test.tsx (6 tests) 207ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > renders bidirectional lineage from signal through decision, work and verification 25ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > does not infer VERIFIED from a non-empty evidenceRefs array alone 6ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > defaults missing severity to UNKNOWN rather than DECISION_REQUIRED 5ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > marks a closed intervention without evidence as NOT_VERIFIED 4ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > reconciles KPI counts to the unified register 74ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx > Management Control Loop report > renders honest error and empty states 11ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ControlLoopReport.test.tsx (6 tests) 127ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ResourcesCapacityReport.test.tsx > Resources Capacity report > renders a person and role sourced from a single allocation record 93ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ResourcesCapacityReport.test.tsx > Resources Capacity report > keeps saturation UNKNOWN rather than 0% without availability 5ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ResourcesCapacityReport.test.tsx > Resources Capacity report > preserves healthy allocations when one project endpoint fails 8ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ResourcesCapacityReport.test.tsx > Resources Capacity report > renders honest error and empty states 10ms
+ ✓ src/components/Execution/reports-intelligence/__tests__/ResourcesCapacityReport.test.tsx (4 tests) 118ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > zwraca wiersze pozostałych realizacji, gdy jedna nie odpowiada NIGDY 75ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > przerywa wiszące żądanie sygnałem abort (nie zostawia wiszącego fetcha) 43ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > niesie identyfikatory realizacji, których nie udało się pobrać 1ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts > fanOutExecutionCases > nie zgłasza nikogo, gdy wszystkie realizacje odpowiadają 0ms
+ ✓ src/components/Execution/__tests__/executionCaseFanOut.test.ts (4 tests) 121ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > renders the Save button disabled with a visible reason 88ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx > MitigationPanel — writes disabled (DEC-120/A11) > never calls the retired legacy writer since the control cannot be activated 11ms
+ ✓ src/components/Execution/__tests__/MitigationPanel.writesDisabled.test.tsx (2 tests) 101ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > approving a decision calls decideDecision and renders the confirmed badge 81ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx > Manager approval write-back > DEC-120/A11: a non-decision lane action never round-trips through the retired 409 writer 32ms
+ ✓ src/components/Execution/__tests__/ManagerApproval.smoke.test.tsx (2 tests) 115ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="ryzyka": renderuje TYLKO tabelę ryzyk 40ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > activeView="rozstrzygniecia": renderuje TYLKO tabelę rozstrzygnięć 24ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx > ExecutionSummaryOneLook — przełącznik Ryzyka/Rozstrzygnięcia (DEC-426) > klik wiersza blokera otwiera inicjatywę (nie „decision" z prefiksem blk:) 13ms
+ ✓ src/components/Execution/__tests__/ExecutionSummaryOneLook.viewToggle.test.tsx (3 tests) 79ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — katalog czterech definicji MVP > ma dokładnie cztery klucze MVP i każdy z nich ma polską nazwę 32ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — katalog czterech definicji MVP > wszystkie dwanaście definicji katalogu ma polską nazwę, kadencję i odbiorców 3ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > Zdrowie programu liczy RAG per inicjatywa tylko dla inicjatyw w realizacji 13ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > alerty biorą powód z KODU sygnału, nie z angielskiego zdania serwera 1ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > Tygodniowy pakiet ma tabelę blokad i decyzji po terminie z realnych rekordów 1ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > RAG całego raportu jest czerwony, gdy są blokady i sygnały krytyczne 1ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > sekcja bez danych dostaje JAWNĄ etykietę, a nie niemą pustkę 0ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts > 1.12-R4 — migawka na realnych kształtach danych > definicja z Fali 2 nie generuje treści, tylko jawny komunikat 0ms
+ ✓ src/components/Execution/__tests__/executionReportModel.test.ts (8 tests) 52ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy włączonej fladze kokpitu ma pozycję „summary" jako pierwszą 34ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > Menu 2 modułu Realizacja > przy fladze OFF wygląda 1:1 jak przed zmianą (zero zmiany na żywo) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > wpuszcza summary, gdy flaga kokpitu jest włączona 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > NIE wpuszcza summary przy fladze OFF (deep-link degraduje się do listy) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > nigdy nie gubi zakładek, które działały wcześniej 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > deep-link ?tab= > lista deep-linku i kolejność Menu 2 to JEDNO źródło (nie da się ich rozjechać) 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > woła obie funkcje zamiast trzymać własne listy zakładek 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > nie ma już zaszytej listy dozwolonych wartości ?tab= 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts > ExecutionHub realnie z tego korzysta > renderuje kokpit dla activeTab === summary 0ms
+ ✓ src/components/Execution/__tests__/executionModuleTabs.test.ts (9 tests) 37ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (a) shows a human source label plus the framework, never the raw sourceType 26ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (b) shows the label alone when there is no source framework 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx > ExecutionHub Portfolio preview — source relation (real render) > (c) leaves the relations section empty when there is no sourceType 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.sourceRelation.render.test.tsx (3 tests) 34ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > bez pomiarów mówi po polsku, że trend pojawi się po dwóch 15ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy JEDNYM pomiarze nie kłamie, że historii nie ma 2ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx > KpiSparkline > przy dwóch pomiarach rysuje słupki, nie komunikat 5ms
+ ✓ src/components/Execution/__tests__/RolloutTab.kpiTrend.test.tsx (3 tests) 23ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts the initiative register as the primary Execution list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > uses the same initiative identities and full initiative document in Execution 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > does not mount the rejected Execution Case register in the primary list 1ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts > Execution mounted initiative truth spine > mounts and resolves the canonical execution-case deep link 2ms
+ ✓ src/components/Execution/__tests__/ExecutionRuntimeSpine.contract.test.ts (4 tests) 6ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > declares one context Open full and delegates the only preview to the manage block 2ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx > ExecutionHub Reporting row menu > passes that single contract to StandardTable for both row-menu entry points 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.reportingMenu.smoke.test.tsx (2 tests) 4ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > never silently clears the load error when substituting demo data after a failure 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > tags every demo-derived initiative row with isDemoSample 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > resets the stale banner once a real load succeeds 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > renders a visible "Sample" badge on the initiative-name cell for demo rows 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx > ExecutionHub demo-fallback honesty (DEC-120 A10) > shows a dedicated banner (not the full-page error blocker) while demo fallback is active 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.demoFallback.test.tsx (5 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > no longer fabricates a fake initiative from a raw id 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > defines a real openEntityById lookup that both onOpenEntity call sites use 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx > ExecutionHub onOpenEntity — real lookup, not a fabricated panel (DEC-120 A2b) > openEntityById looks up the real initiative by id and never opens an unsupported type 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.entityLookup.test.tsx (3 tests) 3ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > getExecutionMenu3 deklaruje dokładnie dwa chipy dla zakładki summary 1ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > domyślnie aktywny chip to "ryzyka" (KROK 3, test a) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > deep-link czyta ?kokpit= i akceptuje TYLKO ryzyka|rozstrzygniecia 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > stan → URL: ?kokpit= odzwierciedla chip TYLKO na zakładce summary 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts > Kokpit menedżera — Menu 3 (Ryzyka/Rozstrzygnięcia), DEC-426 > ExecutionSummaryOneLook dostaje activeView pochodzący z tego samego stanu (nie osobny) 0ms
+ ✓ src/components/Execution/__tests__/ExecutionHub.kokpitMenu3.source.test.ts (5 tests) 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:156:11
+    154|     );
+    155|
+    156|     await waitFor(() =>
+       |           ^
+    157|       expect(screen.getByText('Walidacja danych dostawców')).toBeInThe…
+    158|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:180:11
+    178|
+    179|     // Domyślny limit wachlarza to 12 s (EXECUTION_CASE_FANOUT_TIMEOUT…
+    180|     await waitFor(
+       |           ^
+    181|       () => expect(screen.getByText('Walidacja danych dostawców')).toB…
+    182|       { timeout: 20000 }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+AssertionError: expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:198:25
+    196|     await waitFor(() => {
+    197|       const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<str…
+    198|       expect(last?.all).toBe(1);
+       |                         ^
+    199|     });
+    200|     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<strin…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:235:11
+    233|     render(<ExecutionResourcesSurface activePreset="all" />);
+    234|
+    235|     await waitFor(() =>
+       |           ^
+    236|       expect(
+    237|         screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:281:11
+    279|   it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () …
+    280|     render(<ExecutionWorkSurface activePreset="all" />);
+    281|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    282|     expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:287:11
+    285|   it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async (…
+    286|     render(<ExecutionWorkSurface activePreset="all" />);
+    287|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    288|     expect(document.body.textContent).not.toContain('UNKNOWN');
+    289|     expect(document.body.textContent).toContain('SLA brak');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:307:11
+    305|   it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerob…
+    306|     render(<ExecutionWorkSurface activePreset="all" />);
+    307|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    308|     expect(document.body.textContent).not.toContain('d2b6a316-08c5-47c…
+    309|     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:117:11
+    115|     render(<ExecutionWorkSurface activePreset="all" />);
+    116|
+    117|     await waitFor(() =>
+       |           ^
+    118|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    119|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:129:11
+    127|     render(<ExecutionWorkSurface activePreset="all" />);
+    128|
+    129|     await waitFor(() =>
+       |           ^
+    130|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    131|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders all nine management sections with real content in contract order
+TestingLibraryElementError: Unable to find an element with the text: /BRAK_API_BSC/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300"[39m
+              [36m>[39m
+                [0mCritical[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx:149:19
+    147|
+    148|     expect(screen.getByRole('heading', { name: 'What is at stake' })).…
+    149|     expect(screen.getByText(/BRAK_API_BSC/)).toBeInTheDocument();
+       |                   ^
+    150|
+    151|     expect(screen.getByRole('heading', { name: 'Why it is happening' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders an honest empty state when runtime returns no cases
+TestingLibraryElementError: Unable to find an element with the text: UNKNOWN · BRAK_API_HISTORY. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+    ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx:194:19
+    192|       await screen.findByText('No work records are available for the s…
+    193|     ).toBeInTheDocument();
+    194|     expect(screen.getByText('UNKNOWN · BRAK_API_HISTORY')).toBeInTheDo…
+       |                   ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 9 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "liczniki Menu 3 dostają realne liczby, a nie zera". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "tłumaczy IN_PROGRESS zamiast pokazywać surowy status". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 failed | 20 passed (23)
+      Tests  11 failed | 99 passed (110)
+     Errors  9 errors
+   Start at  19:49:31
+   Duration  42.44s (transform 1.73s, setup 911ms, import 4.63s, tests 30.34s, environment 4.66s)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:156:11
+    154|     );
+    155|
+    156|     await waitFor(() =>
+       |           ^
+    157|       expect(screen.getByText('Walidacja danych dostawców')).toBeInThe…
+    158|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE
+TestingLibraryElementError: Unable to find an element with the text: Walidacja danych dostawców. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:180:11
+    178|
+    179|     // Domyślny limit wachlarza to 12 s (EXECUTION_CASE_FANOUT_TIMEOUT…
+    180|     await waitFor(
+       |           ^
+    181|       () => expect(screen.getByText('Walidacja danych dostawców')).toB…
+    182|       { timeout: 20000 }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca (ExecutionWorkSurface) > liczniki Menu 3 dostają realne liczby, a nie zera
+AssertionError: expected +0 to be 1 // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:198:25
+    196|     await waitFor(() => {
+    197|       const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<str…
+    198|       expect(last?.all).toBe(1);
+       |                         ^
+    199|     });
+    200|     const last = onCountsChange.mock.calls.at(-1)?.[0] as Record<strin…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Zasoby (ExecutionResourcesSurface) > pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd
+TestingLibraryElementError: Unable to find an element with the text: /Nie udało się pobrać zasobów z 1 realizacji/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:235:11
+    233|     render(<ExecutionResourcesSurface activePreset="all" />);
+    234|
+    235|     await waitFor(() =>
+       |           ^
+    236|       expect(
+    237|         screen.getByText(/Nie udało się pobrać zasobów z 1 realizacji/)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > tłumaczy IN_PROGRESS zamiast pokazywać surowy status
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:281:11
+    279|   it('tłumaczy IN_PROGRESS zamiast pokazywać surowy status', async () …
+    280|     render(<ExecutionWorkSurface activePreset="all" />);
+    281|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    282|     expect(screen.queryByText('IN_PROGRESS')).not.toBeInTheDocument();
+    283|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:287:11
+    285|   it('nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA', async (…
+    286|     render(<ExecutionWorkSurface activePreset="all" />);
+    287|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    288|     expect(document.body.textContent).not.toContain('UNKNOWN');
+    289|     expect(document.body.textContent).toContain('SLA brak');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx > Praca — etykiety realnych danych > nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko
+TestingLibraryElementError: Unable to find an element with the text: W toku. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx:307:11
+    305|   it('nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerob…
+    306|     render(<ExecutionWorkSurface activePreset="all" />);
+    307|     await waitFor(() => expect(screen.getByText('W toku')).toBeInTheDo…
+       |           ^
+    308|     expect(document.body.textContent).not.toContain('d2b6a316-08c5-47c…
+    309|     expect(document.body.textContent).not.toContain('D2b6a316 08c5');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:117:11
+    115|     render(<ExecutionWorkSurface activePreset="all" />);
+    116|
+    117|     await waitFor(() =>
+       |           ^
+    118|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    119|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx > ExecutionWorkSurface — kolumna osoby > gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator
+TestingLibraryElementError: Unable to find an element with the text: Zweryfikować kompletność danych. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div />[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx:129:11
+    127|     render(<ExecutionWorkSurface activePreset="all" />);
+    128|
+    129|     await waitFor(() =>
+       |           ^
+    130|       expect(screen.getByText('Zweryfikować kompletność danych')).toBe…
+    131|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders all nine management sections with real content in contract order
+TestingLibraryElementError: Unable to find an element with the text: /BRAK_API_BSC/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m1[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m1[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-[color-mix(in_srgb,var(--c-danger)_14%,transparent)] text-danger-700 dark:text-danger-300"[39m
+              [36m>[39m
+                [0mCritical[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m1[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx:149:19
+    147|
+    148|     expect(screen.getByRole('heading', { name: 'What is at stake' })).…
+    149|     expect(screen.getByText(/BRAK_API_BSC/)).toBeInTheDocument();
+       |                   ^
+    150|
+    151|     expect(screen.getByRole('heading', { name: 'Why it is happening' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx > Work Intelligence report > renders an honest empty state when runtime returns no cases
+TestingLibraryElementError: Unable to find an element with the text: UNKNOWN · BRAK_API_HISTORY. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<main[39m
+      [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto bg-c-surface p-4 text-c-text"[39m
+      [33mdata-testid[39m=[32m"work-intelligence-report"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"mx-auto max-w-7xl space-y-4"[39m
+      [36m>[39m
+        [36m<header>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-semibold uppercase tracking-wide text-c-text-muted"[39m
+          [36m>[39m
+            [0mOperational backlog report[0m
+          [36m</p>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"text-2xl font-semibold"[39m
+          [36m>[39m
+            [0mWork Intelligence Report[0m
+          [36m</h1>[39m
+        [36m</header>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-context-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"context"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-context-title"[39m
+          [36m>[39m
+            [0mContext and trust[0m
+          [36m</h2>[39m
+          [36m<dl[39m
+            [33mclass[39m=[32m"mt-2 grid gap-2 text-sm sm:grid-cols-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mState date[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0m9/6/2026[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mLast synchronization[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mSep 6, 2026, 7:50 PM[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+            [36m<div>[39m
+              [36m<dt[39m
+                [33mclass[39m=[32m"text-c-text-muted"[39m
+              [36m>[39m
+                [0mScope[0m
+              [36m</dt>[39m
+              [36m<dd>[39m
+                [0mAll accessible Execution cases[0m
+              [36m</dd>[39m
+            [36m</div>[39m
+          [36m</dl>[39m
+        [36m</section>[39m
+        [36m<section[39m
+          [33maria-labelledby[39m=[32m"work-pulse-title"[39m
+          [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4"[39m
+          [33mdata-section-order[39m=[32m"pulse"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"font-semibold"[39m
+            [33mid[39m=[32m"work-pulse-title"[39m
+          [36m>[39m
+            [0mExecutive Pulse[0m
+          [36m</h2>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueTasks"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueTasks[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"overdueDecisions"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0moverdueDecisions[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-semibold bg-c-surface-raised text-c-text-secondary"[39m
+              [36m>[39m
+                [0mNeutral[0m
+              [36m</span>[39m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"dueToday"[39m
+              [33mclass[39m=[32m"rounded-xl border border-c-border bg-c-surface-raised p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs font-semibold uppercase text-c-text-muted"[39m
+              [36m>[39m
+                [0mdueToday[0m
+              [36m</span>[39m
+              [36m<strong[39m
+                [33mclass[39m=[32m"mt-2 block text-2xl"[39m
+              [36m>[39m
+                [0m0[0m
+              [36m</strong>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+              [36m>[39m
+                [0m0[0m
+                [0m/[0m
+                [0m0[0m
+                [0m ·[0m
+                [0m [0m
+                [0mCALCULATED[0m
+              [36m</span>[39m
+              [36m<span[39m
+    ...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/Execution/reports-intelligence/__tests__/WorkIntelligenceReport.test.tsx:194:19
+    192|       await screen.findByText('No work records are available for the s…
+    193|     ).toBeInTheDocument();
+    194|     expect(screen.getByText('UNKNOWN · BRAK_API_HISTORY')).toBeInTheDo…
+       |                   ^
+    195|   });
+    196|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 9 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie wisi w nieskończoność, gdy realizacja NIE ODPOWIADA WCALE". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "liczniki Menu 3 dostają realne liczby, a nie zera". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "tłumaczy IN_PROGRESS zamiast pokazywać surowy status". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pisze angielskiego UNKNOWN w kolumnie Termin / SLA". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionSurfaces.hangingCase.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "nie pokazuje UUID-a w kolumnie osoby — ani surowego, ani przerobionego na nazwisko". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "pokazuje imię i nazwisko z katalogu organizacji zamiast UUID-a". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+Error: useLocation() may be used only in the context of a <Router> component.
+ ❯ invariant ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:207:11
+ ❯ useLocation ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-router/dist/development/chunk-62JRHF6Z.mjs:5880:3
+ ❯ useJedenPanel src/components/shared/PreviewPane/useJedenPanel.ts:98:24
+     96|  */
+     97| export function useJedenPanel(): UseJedenPanelResult {
+     98|   const { pathname } = useLocation();
+       |                        ^
+     99|   const modul = pathname.split('/').filter(Boolean)[0] || 'root';
+    100|   const isChatCollapsed = useAppStore((state) => state.isChatCollapsed…
+ ❯ TableWithPreviewLayout src/components/shared/TableWithPreviewLayout.tsx:138:22
+ ❯ Object.react_stack_bottom_frame ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+
+This error originated in "src/components/Execution/__tests__/ExecutionWorkSurface.ownerNames.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "gdy katalog nie zna osoby — „Nieznany użytkownik", nadal NIE identyfikator". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  3 failed | 20 passed (23)
+      Tests  11 failed | 99 passed (110)
+     Errors  9 errors
+   Start at  19:49:31
+   Duration  42.45s (transform 1.73s, setup 911ms, import 4.63s, tests 30.34s, environment 4.66s)
+
+JSON report written to /private/tmp/wt-12r4-raporty-4-poziomy/junit.xml
+JUNIT report written to /private/tmp/wt-12r4-raporty-4-poziomy/junit.xml
+EXIT=1

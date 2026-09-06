@@ -1,0 +1,23 @@
+{
+ "url": "http://localhost:3101/execution?tab=work&ff_execReportsIntel=1&view=table",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Work report"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [
+  "klik nieudany: text=Work report: locator.click: Timeout 8000ms exceeded."
+ ],
+ "bledyKonsoli": [
+  "klik nieudany: text=Work report: locator.click: Timeout 8000ms exceeded."
+ ],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n1\n11\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nSterowanie\nRaporty\nWszystkie realizacje\nSupply Chain Optimization — fala 1\nProcurement AI Copilot — pilotaż\nWszystkie\n7\nZadania\n5\nDecyzje\n2\nZablokowane\n1\nPrzeterminowane\n6\nWkrótce termin\n1\nBrak właściciela\n0\nBrak DoD/dowodów\n2\nOczekuje na zależność\n0\nMoje\n0\nWg zespołu\n0\nRaport pracy\nELEMENT PRACY\n\t\nRODZAJ\n\t\nSTATUS\n\t\nWŁAŚCICIEL / OSOBA DECYZYJNA\n\t\nTERMIN / SLA\n\t\n\n\nZweryfikować kompletność danych 20 kluczowych dostawców\n\t\nZadanie\n\t\nOtwarte\n\t\nAnna Kowalska\n\t\n27 sie 2026, 17:00 · SLA 26 sie 2026, 17:00\n\t\n\n\nSkalibrować model prognozowania popytu\n\t\nZadanie\n\t\nZablokowane\n\t\nMarek Nowak\n\t\n22 sie 2026, 14:00 · SLA 21 sie 2026, 14:00\n\t\n\n\nUruchomić dashboard pilotażu logistycznego\n\t\nZadanie\n\t\nOtwarte\n\t\nEwa Nowicka\n\t\n04 wrz 2026, 16:00 · SLA 03 wrz 2026, 16:00\n\t\n\n\nWybór kanonicznego źródła prognozy popytu\n\t\nDecyzja\n\t\nOczekuje na decyzję\n\t\nPiotr Wiśniewski\n\t\n25 sie 2026, 12:00\n\t\n\n\nZatwierdzić guardraile odpowiedzi zakupowych\n\t\nZadanie\n\t\nOtwarte\n\t\nKatarzyna Wójcik\n\t\n29 sie 2026, 14:00 · SLA 28 sie 2026, 14:00\n\t\n\n\nPrzeprowadzić pilotaż z pięcioma kupcami\n\t\nZadanie\n\t\nOtwarte\n\t\nTomasz Lewandowski\n\t\n08 wrz 2026, 18:00 · SLA 07 wrz 2026, 18:00\n\t\n\n\nZakres kategorii zakupowych w pilotażu\n\t\nDecyzja\n\t\nZatwierdzone\n\t\nPiotr Wiśniewski\n\t\n20 sie 2026, 12:00\n\t",
+ "kiedy": "2026-09-06T17:46:02.025Z"
+}
