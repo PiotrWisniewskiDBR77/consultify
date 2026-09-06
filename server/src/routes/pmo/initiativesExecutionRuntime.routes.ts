@@ -493,6 +493,7 @@ const PlanAnalysisCreateSchema = z.object({
   clientRequestId: z.string().min(1),
   scenarioId: z.string().min(1),
   inputAggregateVersion: z.number().int().min(1),
+  useCapacity: z.boolean().optional().default(true),
 });
 const PlanAnalysisReviewSchema = z.object({
   expectedVersion: z.number().int().min(1),
@@ -3514,7 +3515,7 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: {
           scenarioId: parsed.data.scenarioId,
           inputAggregateVersion: parsed.data.inputAggregateVersion,
-          capacityScenarioId: linkedCapacity?.id,
+          capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);

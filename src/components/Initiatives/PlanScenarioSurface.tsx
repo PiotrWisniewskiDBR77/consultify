@@ -32,6 +32,9 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
+import { PlanCard } from './cards/PlanCard';
+import type { PlanGenerationMode } from './Generator/GeneratorPlanuModal';
+import { applyAcceptedPlanProposal } from './planProposalReview';
 
 interface WindowDraft {
   initiativeId: string;
@@ -622,7 +625,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     : t('initiatives.planScenario.openCardUnavailable', {
         defaultValue: 'Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.',
       });
-  const create = () => {
+  const create = async () => {
     const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
       !newName.trim() ||
@@ -657,7 +660,24 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     setHistory([]);
     setCompareFrom(null);
     setCompareTo(null);
-    setWorkspaceOpen(true);
+    setWriteState('SAVING');
+    try {
+      const result = (await writePlanScenario(scenario.scenarioId, {
+        expectedVersion: 0,
+        clientRequestId: crypto.randomUUID(),
+        operation: 'CREATE',
+        scenario,
+      })) as { aggregateVersion: number; response: PlanScenario };
+      setAggregateVersion(result.aggregateVersion);
+      setDraft(result.response);
+      setShowCreate(false);
+      setWorkspaceOpen(true);
+      setWriteState('IDLE');
+      await loadRegister();
+      setSelectedId(result.response.scenarioId);
+    } catch (error) {
+      setWriteState(error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR');
+    }
   };
   const write = async (operation: 'CREATE' | 'UPDATE' | 'PUBLISH') => {
     if (!draft || !knownTimeBasis(draft) || writeState === 'SAVING') {
@@ -708,7 +728,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setCompareState('ERROR');
     }
   };
-  const analyzePlan = async () => {
+  const analyzePlan = async (mode: PlanGenerationMode = 'DEPENDENCIES') => {
     if (!draft || !aggregateVersion || draft.status !== 'DRAFT') return;
     setAnalysisState('LOADING');
     const proposalId = `plan-analysis-${draft.scenarioId}-${crypto.randomUUID()}`;
@@ -718,6 +738,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         clientRequestId: crypto.randomUUID(),
         scenarioId: draft.scenarioId,
         inputAggregateVersion: aggregateVersion,
+        useCapacity: mode !== 'DEPENDENCIES',
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
       setAnalysisState('IDLE');
@@ -729,7 +750,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     if (!analysisProposal || !draft) return;
     setAnalysisState('LOADING');
     try {
-      await reviewPlanAnalysisProposal(analysisProposal.proposalId, {
+      const reviewed = (await reviewPlanAnalysisProposal(analysisProposal.proposalId, {
         expectedVersion: 1,
         clientRequestId: crypto.randomUUID(),
         outcome,
@@ -737,14 +758,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           outcome === 'ACCEPT'
             ? 'Human accepted proposal for the editable draft.'
             : 'Human rejected proposal; draft remains unchanged.',
-      });
+      })) as { response?: PlanAnalysisProposal };
       if (outcome === 'ACCEPT') {
-        const proposed = new Map(
-          analysisProposal.changes.map((change) => [change.initiativeId, change.after])
-        );
         setDraft({
           ...draft,
-          windows: draft.windows.map((window) => proposed.get(window.initiativeId) ?? window),
+          windows: applyAcceptedPlanProposal(
+            draft.windows,
+            analysisProposal.changes,
+            reviewed.response?.status
+          ),
         });
       }
       setAnalysisProposal({
@@ -898,6 +920,24 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         </button>
       </div>
     );
+  if (workspaceOpen && draft) {
+    return (
+      <PlanCard
+        scenario={draft}
+        initiatives={initiatives}
+        proposal={analysisProposal}
+        busy={analysisState === 'LOADING' || writeState === 'SAVING'}
+        onBack={() => setWorkspaceOpen(false)}
+        onAnalyze={(mode) => void analyzePlan(mode)}
+        onReview={(outcome) => void reviewAnalysis(outcome)}
+        onPublish={() => {
+          const conflicts = analysisProposal?.conflicts.length ?? 0;
+          if (conflicts && !window.confirm(`Publikuję mimo ${conflicts} konfliktów`)) return;
+          void write('PUBLISH');
+        }}
+      />
+    );
+  }
   if (!workspaceOpen && !showCreate) {
     const visiblePlans = rows.filter((row) =>
       activePreset === 'drafts'
@@ -966,7 +1006,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             {t('initiatives.planScenario.subheading')}
           </p>
         </div>
-        <button type="button" className="btn-primary" onClick={() => setShowCreate(true)}>
+        <button type="button" className="btn-secondary" onClick={() => setShowCreate(true)}>
           <Plus size={15} /> {t('initiatives.planScenario.newPlan')}
         </button>
       </div>
@@ -1046,7 +1086,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           </label>
           <button
             type="button"
-            className="btn-primary"
+            className="btn-secondary"
             disabled={
               !newName.trim() ||
               !portfolioId.trim() ||
@@ -1056,7 +1096,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               newWeekCount < 1 ||
               newWeekCount > 104
             }
-            onClick={create}
+            onClick={() => void create()}
           >
             <Plus size={15} /> {t('initiatives.planScenario.form.createPlan')}
           </button>
@@ -1376,7 +1416,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="btn-secondary"
                 disabled={
                   !aggregateVersion ||
                   draft.status !== 'DRAFT' ||
@@ -1919,7 +1959,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
                     <div className="mt-3 flex gap-2">
                       <button
                         type="button"
-                        className="btn-primary"
+                        className="btn-secondary"
                         onClick={() => void reviewAnalysis('ACCEPT')}
                       >
                         {t('initiatives.planScenario.aside.applyToDraft')}

@@ -90,6 +90,9 @@ export interface AnalysisCriterion {
  * bo bezpośrednio przesuwa liczbę zgłaszanych braków.
  */
 export const ARTIFACT_CRITERIA: Record<CardAnalysisArtifactType, AnalysisCriterion[]> = {
+  action: [],
+  plan: [],
+  capacity_analysis: [],
   task: [
     {
       id: 'description-completeness',
@@ -828,6 +831,9 @@ export const SEVERITY_ANCHORS: readonly SeverityAnchor[] = [
 
 /** Deskryptory kanoniczne per artefakt. Klucz = `KartaNKey`. */
 const CARD_DESCRIPTORS: Record<CardAnalysisArtifactType, readonly KanonicznaKarta[]> = {
+  action: [],
+  plan: [],
+  capacity_analysis: [],
   task: TASK_CARDS,
   decision: DECISION_CARDS,
   notification: NOTIFICATION_CARDS,

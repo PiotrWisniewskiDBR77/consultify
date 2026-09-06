@@ -90,19 +90,19 @@ export interface KartaNWpis {
 export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
   plan: {
     nazwa: 'Plan',
-    komponent: 'src/components/Initiatives/PlanScenarioSurface.tsx',
+    komponent: 'src/components/Initiatives/cards/PlanCard.tsx',
     klasa: 'L',
     paragraf: 'P11 §4.2 · DEC-421',
     ekranHarnessu: 'karta-plan',
-    statusMigracji: 'przed',
+    statusMigracji: 'zmigrowana',
   },
   capacity_analysis: {
     nazwa: 'Capacity analysis',
-    komponent: 'src/components/Initiatives/CapacityScenarioSurface.tsx',
+    komponent: 'src/components/Initiatives/cards/CapacityAnalysisCard.tsx',
     klasa: 'L',
     paragraf: 'P11 §4.5 · DEC-421',
     ekranHarnessu: 'karta-capacity-analysis',
-    statusMigracji: 'przed',
+    statusMigracji: 'zmigrowana',
   },
   action: {
     nazwa: 'Action',
