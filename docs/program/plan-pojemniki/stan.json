@@ -49,7 +49,7 @@
           "nazwa": "P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)",
           "wykonawca": "Opus",
           "zalezy_od": "1.3",
-          "stan": "do_odbioru",
+          "stan": "odebrane",
           "galaz": "mvp/p7k-b-odchylenie",
           "sha": "0bfeed97bb",
           "dowod": "scalone na staging; e2e 2/2 na realnym mierniku (poza limitem → czerwony wiersz → Skrzynka → karta z nazwiskiem → zadanie → zamknięcie; w limicie → nic); PG 3/3 z 3 mutacjami; zrzuty evidence/p7k-b/; CTO obejrzał Skrzynkę i kartę",
@@ -201,8 +201,8 @@
           "tresc": "Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby",
           "kto": "właściciel + Playwright",
           "artefakt": "nagranie/zrzuty przepływu + bledyKonsoli=0",
-          "stan": "czesciowo",
-          "dowod": "06.09: Playwright 2/2 na lokalnym stanowisku (0bfeed97bb), zrzuty evidence/p7k-b/ (L2 czerwony wiersz, Skrzynka, karta); czeka: właściciel widzi na żywo na stagingu (karta 6)"
+          "stan": "tak",
+          "dowod": "06.09: Playwright 2/2 (0bfeed97bb), zrzuty evidence/p7k-b/ (L2 czerwony wiersz, Skrzynka, karta); właściciel: karta 6 = TAK; potwierdzenie na żywo na stagingu w czasie przejścia"
         },
         {
           "nr": "S1.4",
@@ -233,8 +233,8 @@
           "tresc": "Moje dane są czyste (jedna ocena 100%, zero śmieci, zero „Silesia”, legacy 2024 rozstrzygnięte)",
           "kto": "nadzorca + właściciel",
           "artefakt": "skrypty dry-run/apply z logiem, moje słowo",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "tak",
+          "dowod": "06.09: runda 1 (9 ocen archiwum, 16 rekordów testowych) + runda 2 (391: 281 pustych wątków, 94 nieotwieralne artefakty z modelami, 2 zadania BUG) — apply na stagingu z CSV i manifestami (a3c74fd297, 91e06cdc47); ocena 100 % b901d4a3 zostaje; Silesia 0 w danych UI; legacy 2024: 0 pakietów; słowo właściciela: „wywalaj”, „Tak razem z modelami — zrobimy nowe dane w czasie przejścia”"
         },
         {
           "nr": "S1.8",
