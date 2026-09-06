@@ -3523,7 +3523,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // it escapes the verb-adjacent documentIntentDetector regexes, e.g. the
       // noun sits after a colon: "Zrób krótki raport: tabela …"). A document may
       // contain a table; the document wins over standalone Table/Excel.
-      if (detectDocumentIntent(text) || hasStrongDocumentNoun(text)) {
+      // DEC-403 (06.09): system generowania materiałów uznany za pozostałość
+      // po nieukończonej funkcji — klasyfikator już nie przełącza odpowiedzi
+      // w tryb "Dokument: …"; prośba o treść spada do zwykłej odpowiedzi
+      // czatu (patrz czatWidocznosc.ts). Do Fali 2.
+      if (
+        !UKRYTE_DEC403.generatorMaterialow &&
+        (detectDocumentIntent(text) || hasStrongDocumentNoun(text))
+      ) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -6855,11 +6862,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-0.5"
             data-testid="chat-header-right-controls"
           >
-            <V8ArtifactRunControl
-              conversationId={activeConversationId}
-              defaultGoal={latestUserGoalHint}
-              snapshotContext={v8SnapshotContext}
-            />
+            {/* DEC-403 (06.09): wejście do panelu "Plan materiału wynikowego"
+                (V8ArtifactRunControl) uznane za pozostałość po nieukończonej
+                funkcji — do Fali 2, patrz czatWidocznosc.ts. */}
+            {!UKRYTE_DEC403.generatorMaterialow && (
+              <V8ArtifactRunControl
+                conversationId={activeConversationId}
+                defaultGoal={latestUserGoalHint}
+                snapshotContext={v8SnapshotContext}
+              />
+            )}
             <V8ContextIndicator
               conversationId={activeConversationId}
               defaultGoal={latestUserGoalHint}
