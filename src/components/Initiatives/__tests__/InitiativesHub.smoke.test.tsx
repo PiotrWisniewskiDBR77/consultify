@@ -317,13 +317,32 @@ describe('InitiativesHub smoke', () => {
     expect(screen.queryByTestId('canonical-initiative')).not.toBeInTheDocument();
   });
 
-  it('fails closed when the runtime-v1 registration read fails unexpectedly', async () => {
-    apiGet.mockRejectedValueOnce(Object.assign(new Error('runtime unavailable'), { status: 500 }));
+  // [ODMROZENIE 05_INITIATIVES DEC-397] INI-404 (2026-09-06).
+  //
+  // Tu stał test „fails closed when the runtime-v1 registration read fails unexpectedly":
+  // 500 z sondy `GET /initiatives/runtime-v1/initiatives/<id>` miało BLOKOWAĆ otwarcie karty.
+  // To był fail-closed bez chronionego przedmiotu (por. pamięć „zamknięte przez wygaszenie"):
+  // po usunięciu `CanonicalInitiativeCardWorkspace` (aed131a2ab) odpowiedź sondy nie
+  // zmieniała już ani renderera, ani danych — karta czyta rekord z `/api/v8/planning/
+  // initiatives/:id` i `/api/initiatives/:id`, a izolacja organizacji siedzi na TAMTYCH
+  // trasach (`WHERE i.id = ? AND i.organization_id = ?`), nie na sondzie. Jedynym realnym
+  // skutkiem sondy było `404` i czerwony błąd konsoli na KAŻDYM rekordzie klasycznego
+  // rejestru (zmierzone: 71 wierszy DBR77, 0 wierszy w projekcji runtime-v1).
+  //
+  // Kontrakt po naprawie: odczyt deep-linku nie pyta runtime-v1 o pojedynczą inicjatywę
+  // w ogóle, a karta otwiera się z tras, które rekord znają.
+  it('nie pyta runtime-v1 o pojedynczą inicjatywę przy otwieraniu deep-linku', async () => {
+    apiGet.mockClear();
     getInitiative.mockClear();
-    renderHubAt('/initiatives?open=broken-1&mode=doc');
-    await waitFor(() =>
-      expect(apiGet).toHaveBeenCalledWith('/initiatives/runtime-v1/initiatives/broken-1')
+    getInitiative.mockResolvedValueOnce({
+      initiative: { id: 'legacy-2', name: 'Legacy persisted', status: 'DRAFT' },
+    });
+    renderHubAt('/initiatives?open=legacy-2&mode=doc');
+
+    expect(await screen.findByTestId('legacy-initiative')).toBeInTheDocument();
+    const runtimeProbes = apiGet.mock.calls.filter((call) =>
+      String(call[0]).startsWith('/initiatives/runtime-v1/initiatives/')
     );
-    expect(getInitiative).not.toHaveBeenCalledWith('broken-1');
+    expect(runtimeProbes).toEqual([]);
   });
 });
