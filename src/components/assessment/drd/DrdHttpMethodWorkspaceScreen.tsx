@@ -1114,18 +1114,18 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
       />
     );
   }
-  // Mounted production DRD is fail-closed: a cached session may help explain
-  // what the user was viewing, but it is never an editable fallback when the
-  // API is unavailable.
-  if (state.status === 'offline') {
-    return (
-      <ErrorRetryView
-        message="Brak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana."
-        onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
-        onExit={onExit ?? (() => {})}
-      />
-    );
-  }
+  // 1.1-Z4 D3 (a/c) — REGRESJA (commit 915cf63a5b, "cut over mounted DRD to
+  // method core"): `state.status === 'offline'` tu zwracało pełnoekranowy
+  // `ErrorRetryView`, blokując CAŁĄ powłokę (sesja znikała z ekranu). To
+  // wprost zaprzecza komentarzowi trzy linijki niżej ("'offline' (queued
+  // writes, still show the last known session so work is never blocked)")
+  // i scenariuszowi 1 z brief S3 ("utrata API w trakcie pracy: OFFLINE,
+  // praca nie ginie") — offline queuing (`useMethodWorkspaceSave`'s
+  // OFFLINE_PENDING) istnieje właśnie po to, żeby edycja offline działała i
+  // czekała na reconciliation, nie żeby ekran zamieniał się w tryb
+  // wyłącznie-do-odczytu. Naprawa: offline NIE jest już wczesnym returnem —
+  // spada do głównego renderu niżej, z `OfflineBanner` (patrz poniżej) zamiast
+  // blokady całego widoku.
   if (state.status === 'error' && !state.session) {
     return (
       <ErrorRetryView
@@ -1202,6 +1202,33 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
 
   return (
     <div className="flex h-full flex-col">
+      {/* 1.1-Z4 D3 (a/c): both dropped in commit 915cf63a5b alongside the
+          offline fail-closed regression fixed above. `OfflineBanner` was
+          defined but never rendered (`OfflineBanner` — 0 call sites) — a
+          dead component, exactly the "biblioteka bez wywołania" shape.
+          `AssessmentSaveStateIndicator` was only ever mounted inside
+          ConflictView/RecoveryQueueView; every other state (ready, offline,
+          reconnecting, the SERVER settle after recovery) had no visible
+          save-state badge at all. Both restored here, in the session
+          header, across every non-conflict/non-recovery state — matching
+          the original wiring (commit 150332ed5e) that this file's own
+          `sourceKind` comment above still describes. */}
+      {state.status === 'offline' && (
+        <OfflineBanner
+          onRetry={() => void runReconciliation(() => runtime?.refresh() ?? Promise.resolve())}
+        />
+      )}
+      <div className="flex items-center gap-2 border-b border-c-border-subtle px-4 py-1">
+        <DrdSourceIndicator
+          source={sourceKind}
+          title={
+            sourceKind === 'SERVER'
+              ? 'Świeżo potwierdzone przez serwer.'
+              : 'Nie w pełni zsynchronizowane z serwerem.'
+          }
+        />
+        <AssessmentSaveStateIndicator state={saveIndicatorState} />
+      </div>
       {state.status === 'error' && state.error && (
         <div
           role="alert"
@@ -1450,7 +1477,14 @@ export const DrdHttpMethodWorkspaceScreen: React.FC<
             )
           }
           documentSourceLabel={sourceKind}
-          documentSourceIndicator={<DrdSourceIndicator source={sourceKind} />}
+          // 1.1-Z4 D3: `DrdSourceIndicator` now has a permanent home in this
+          // screen's own header (added above, next to
+          // `AssessmentSaveStateIndicator` — fix for finding (a)/(b)/(c)) —
+          // repeating it here inside Settings would be the exact
+          // "biblioteka bez wywołania"-adjacent duplicate-fact noise this
+          // file's own DEC-415b-style comments elsewhere warn against, and it
+          // broke `getByTestId('drd-source-indicator')` (singular) in
+          // DrdHttpMethodWorkspaceScreen.test.tsx by producing two matches.
           governanceActions={
             <>
               <button

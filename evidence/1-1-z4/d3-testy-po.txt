@@ -1,0 +1,1270 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 1 — utrata API w trakcie pracy: OFFLINE, praca nie ginie > forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen 105ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 2 — zmiana lokalna przy braku łączności -> RECOVERY_DRAFT > editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED 59ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED > clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER 68ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 4 — lokalna rewizja STARSZA niż serwerowa -> CONFLICT, brak nadpisania > forceState="conflict" shows the CONFLICT badge and never calls getSession until the explicit choice 10ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 5 — lokalna rewizja NOWSZA -> propozycja zapisu, nadal za potwierdzeniem > forceState="recovery" proposes applying the queued (locally newer) writes but does nothing without a click 11ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 6 — retry po nieudanym zapisie > the offline banner's retry button re-asks the server and clears the banner on success 53ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 7 — bezpieczne rozwiązanie konfliktu: obie wersje widoczne, wybór jawny > the conflict view names both the local and server version numbers and offers an explicit resolve action 8ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 8 — reopen po restarcie: serwer wygrywa > resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded 19ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx (9 tests) 336ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (a) happy path — recordAnswer carries the justification, the POST carries skipCode > sends the formatted justification via recordAnswer and skipCode via the skip-reasons POST 348ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (b) order — recordAnswer happens before the skip-reasons POST > appendEvent is invoked strictly before fetch, per mock.invocationCallOrder 161ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (c) a 200 response is a success — no error banner (never asserts === 201) > treats status 200 (idempotent replay) as success, same as a fresh 201 would be 147ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (d) network error then retry succeeds — same Idempotency-Key, recordAnswer called once > retries recordAssessmentSkipReason once on a network failure, reusing the Idempotency-Key 125ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (e) 403 — no retries, banner shown, navigation still happens > makes exactly one fetch call, shows the alert banner, and still runs handleUnitNav(1) 213ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (f) the skip-reasons POST body never carries organizationId > omits organizationId from the request body entirely 173ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx (6 tests) 1170ms
+     ✓ sends the formatted justification via recordAnswer and skipCode via the skip-reasons POST  348ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > offers exactly the 4 canonical codes and requires a choice before Potwierdź is enabled 286ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > skipping with a chosen code performs a real action: it advances the workspace (not a no-op under the button) 165ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — "Wstecz" (onBack) is real navigation, not a no-op > Dalej then Wstecz returns to the original unit 148ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > renders "Przypisz pytanie" disabled with a "Planowane" note — no per-question assignee exists 102ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Poproś o dowód" performs a real, visibly-confirmed action 110ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Wróć później" performs a real action and advances the workspace 105ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx (6 tests) 918ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 1 — flag OFF: legacy runtime, zero HTTP calls > mounts without forceHttpSourceOfTruth and never touches methodCoreApi 238ms
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready 1091ms
+   → Found multiple elements by: [data-testid="drd-source-indicator"]
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+  [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank bootstrap loading state before create() resolves 16ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank error+retry state when session creation fails 7ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 401 fail-closed with retry and no workspace 7ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 403 fail-closed with retry and no workspace 7ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 404 fail-closed with retry and no workspace 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > canonical cold reopen identity and read-only contract > renders exact session/method versions and disables writes without a write role 126ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > keeps Freeze disabled for an in-review owner without the approver process role 80ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > turns a real stale transition 409 into ConflictView without painting false success 105ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > forceState="conflict" renders the conflict view with the server version and an explicit reload action 23ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 5 — recovery queue requires an explicit choice, never auto-resolves > forceState="recovery" shows apply/discard actions and does nothing until one is clicked 27ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > Interview Focus advances with real progress — regression for the focus-level bug > after confirming levels 1 and 2, the focus level follows the real blocker (3), not always level 1 19ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx (14 tests | 1 failed) 1756ms
+     ✓ mounts without forceHttpSourceOfTruth and never touches methodCoreApi 238ms
+     × creates a session over HTTP and renders the SERVER indicator once ready 1091ms
+     ✓ shows a non-blank bootstrap loading state before create() resolves 16ms
+     ✓ shows a non-blank error+retry state when session creation fails 7ms
+     ✓ keeps a canonical resume 401 fail-closed with retry and no workspace 7ms
+     ✓ keeps a canonical resume 403 fail-closed with retry and no workspace 7ms
+     ✓ keeps a canonical resume 404 fail-closed with retry and no workspace 6ms
+     ✓ renders exact session/method versions and disables writes without a write role 126ms
+     ✓ keeps Freeze disabled for an in-review owner without the approver process role 80ms
+     ✓ turns a real stale transition 409 into ConflictView without painting false success 105ms
+     ✓ forceState="conflict" renders the conflict view with the server version and an explicit reload action 23ms
+     ✓ forceState="recovery" shows apply/discard actions and does nothing until one is clicked 27ms
+     ✓ after confirming levels 1 and 2, the focus level follows the real blocker (3), not always level 1 19ms
+     ✓ constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx > DEC-148 — Report tab present and Matrix tab still reachable (default ON, no override) > renders both the Matrix and Report tabs, and each mode paints its own content 511ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx (1 test) 512ms
+     ✓ renders both the Matrix and Report tabs, and each mode paints its own content  511ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > renderuje Wyjdź · tytuł · Pracuj z AI · Ustawienia · kebab 225ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > nie ma już „Zapisz teraz", „Zapisano" ani pigułki statusu — zapis jest automatyczny 58ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola bez zapisu widzi jedną pozycję i powód, a nie wyszarzone „Uzupełnij…" 27ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola z prawem zapisu ma wszystkie trzy pozycje 27ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > „Analizuj" otwiera ocenę gotowości sesji i niczego nie zapisuje 51ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > po „Potwierdzone" na ekranie zostaje TO SAMO pytanie, w kolorze stanu 100ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > dopiero „Dalej" odsłania kolejny, otwarty poziom tej jednostki 135ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx (7 tests) 625ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik w rzędzie komend woła openChatWithContext z metodą, jednostką, poziomem i treścią pytania 73ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Zapytaj Teresę" pod pomocą do pytania woła ten sam dok (jedna Teresa, nie drugi czat) 146ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Pokaż różnicę L-1/L/L+1" pyta o porównanie poziomów, nie o wyjaśnienie 78ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > sesja tylko do odczytu NIE odbiera prawa do zapytania Teresy (to akcja czytająca) 21ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik NIE tworzy już propozycji Teresy w panelu, którego powłoka nie renderuje 21ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx (5 tests) 341ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DRD structure — per-axis level scale is genuinely non-uniform (precondition for the UI test) > axis 1 (area 1A) runs 1..7, axis 7 (area 7A) runs 1..5 2ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 (area 1A) renders levels 1..7; switching to axis 7 renders 1..5 145ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state) 85ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx (3 tests) 235ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > SSOT ma polską nazwę dla każdego obszaru osi 1 (przesłanka testu, nie założenie) 2ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes" 39ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > etykietaObszaru bierze namePL — tak samo, jak robi to drzewo sesji 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > etykietyPoziomowZMetodyki(oś 1) zwraca dokładnie siedem nazw z książki 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > siatka rysuje te nazwy w wierszach, od 7 u góry do 1 na dole 21ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PRZED naprawą (503 px): 9 kolumn schodzi do progu czytelności, nie niżej 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PO naprawie (drzewo sesji schowane, macierz bez sufitu ≈ 780 px): 9 kolumn mieści się bez przewijania 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > szeroki kadr edytora (1400 px) NIE chudnie — minimum zostaje bazowe 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr niezmierzony (jsdom, pierwsza klatka) zachowuje się jak przed zmianą 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów 28ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > przelicza stan warsztatu na stan siatki bez wymyślania zer 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx (11 tests) 93ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > confirmedLevelsFor — dont_know is never counted as a confirmed level (never scored as zero) > an ANSWER_CONFIRMED event with answerState dont_know does not add the level to confirmedLevels 32ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > confirmedLevelsFor — dont_know is never counted as a confirmed level (never scored as zero) > a genuinely confirmed level (answerState confirmed) IS counted 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns null when no evidence has been attached 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns the single recorded strength 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns the STRONGEST of several recorded strengths, not the first or last 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > buildMatrixRowsForAxis — cells beyond the blocker are shaped as "unassessed", not "problem" > a level well beyond an untouched unit is achieved=false, blocker=false, reviewRequired=false 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > buildMatrixRowsForAxis — cells beyond the blocker are shaped as "unassessed", not "problem" > the first level of an untouched unit IS the blocker once any work exists elsewhere in the unit (workHasStarted) 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts (7 tests) 36ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > true for DRD when the historical flag is enabled 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 52ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness) 24ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > uses the application provider decision instead of an isolated bare-hook default 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx (6 tests) 80ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx > DrdMethodWorkspaceScreen — no duplicate draft-status banner > a freshly-created draft session reports its state ONLY in the header pill, never a second banner 50ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx (1 test) 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready
+TestingLibraryElementError: Found multiple elements by: [data-testid="drd-source-indicator"]
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+  [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx:140:36
+    138|
+    139|     fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' })…
+    140|     const indicator = await screen.findByTestId('drd-source-indicator'…
+       |                                    ^
+    141|     expect(indicator).toHaveAttribute('data-source', 'SERVER');
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 75 passed (76)
+   Start at  19:09:53
+   Duration  18.00s (transform 2.13s, setup 546ms, import 6.64s, tests 6.15s, environment 3.52s)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready
+TestingLibraryElementError: Found multiple elements by: [data-testid="drd-source-indicator"]
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+  [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+  [33mdata-source[39m=[32m"SERVER"[39m
+  [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+[36m>[39m
+  [0mSERVER[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2 border-b border-c-border-subtle px-4 py-1"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-success/40 bg-c-success/10 text-c-success"[39m
+          [33mdata-source[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+          [33mtitle[39m=[32m"Świeżo potwierdzone przez serwer."[39m
+        [36m>[39m
+          [0mSERVER[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-c-focus border-c-border text-c-text-secondary"[39m
+          [33mdata-save-state[39m=[32m"SERVER"[39m
+          [33mdata-testid[39m=[32m"assessment-save-state-indicator"[39m
+          [33mtitle[39m=[32m"Widok zgodny z ostatnim potwierdzonym stanem serwera."[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-check"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"11"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"11"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M20 6 9 17l-5-5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mSerwer[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-htt[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                 ...
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx:140:36
+    138|
+    139|     fireEvent.click(screen.getByRole('button', { name: 'Ustawienia' })…
+    140|     const indicator = await screen.findByTestId('drd-source-indicator'…
+       |                                    ^
+    141|     expect(indicator).toHaveAttribute('data-source', 'SERVER');
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 75 passed (76)
+   Start at  19:09:53
+   Duration  18.01s (transform 2.13s, setup 546ms, import 6.64s, tests 6.15s, environment 3.52s)
+
+JSON report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml
+JUNIT report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (a) happy path — recordAnswer carries the justification, the POST carries skipCode > sends the formatted justification via recordAnswer and skipCode via the skip-reasons POST 222ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (b) order — recordAnswer happens before the skip-reasons POST > appendEvent is invoked strictly before fetch, per mock.invocationCallOrder 103ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (c) a 200 response is a success — no error banner (never asserts === 201) > treats status 200 (idempotent replay) as success, same as a fresh 201 would be 124ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (d) network error then retry succeeds — same Idempotency-Key, recordAnswer called once > retries recordAssessmentSkipReason once on a network failure, reusing the Idempotency-Key 100ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (e) 403 — no retries, banner shown, navigation still happens > makes exactly one fetch call, shows the alert banner, and still runs handleUnitNav(1) 118ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (f) the skip-reasons POST body never carries organizationId > omits organizationId from the request body entirely 93ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx (6 tests) 762ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > offers exactly the 4 canonical codes and requires a choice before Potwierdź is enabled 195ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > skipping with a chosen code performs a real action: it advances the workspace (not a no-op under the button) 112ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — "Wstecz" (onBack) is real navigation, not a no-op > Dalej then Wstecz returns to the original unit 107ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > renders "Przypisz pytanie" disabled with a "Planowane" note — no per-question assignee exists 66ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Poproś o dowód" performs a real, visibly-confirmed action 82ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Wróć później" performs a real action and advances the workspace 94ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx (6 tests) 658ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 1 — flag OFF: legacy runtime, zero HTTP calls > mounts without forceHttpSourceOfTruth and never touches methodCoreApi 276ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 2 — flag ON: DrdHttpSessionRuntime, indicator shows SERVER > creates a session over HTTP and renders the SERVER indicator once ready 122ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank bootstrap loading state before create() resolves 26ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > shows a non-blank error+retry state when session creation fails 11ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 401 fail-closed with retry and no workspace 11ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 403 fail-closed with retry and no workspace 12ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 7 — loading and error each have their own visible state > keeps a canonical resume 404 fail-closed with retry and no workspace 12ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > canonical cold reopen identity and read-only contract > renders exact session/method versions and disables writes without a write role 202ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > keeps Freeze disabled for an in-review owner without the approver process role 87ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > turns a real stale transition 409 into ConflictView without painting false success 110ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 3 — a 409 on write shows an explicit conflict screen, never a silent overwrite > forceState="conflict" renders the conflict view with the server version and an explicit reload action 29ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > requirement 5 — recovery queue requires an explicit choice, never auto-resolves > forceState="recovery" shows apply/discard actions and does nothing until one is clicked 33ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > Interview Focus advances with real progress — regression for the focus-level bug > after confirming levels 1 and 2, the focus level follows the real blocker (3), not always level 1 34ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.test.tsx (14 tests) 969ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx > DEC-148 — Report tab present and Matrix tab still reachable (default ON, no override) > renders both the Matrix and Report tabs, and each mode paints its own content 496ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.reportMatrixCoexist.test.tsx (1 test) 498ms
+     ✓ renders both the Matrix and Report tabs, and each mode paints its own content  496ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > renderuje Wyjdź · tytuł · Pracuj z AI · Ustawienia · kebab 182ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (A) nagłówek sesji DRD — pięć elementów, ani jednego więcej > nie ma już „Zapisz teraz", „Zapisano" ani pigułki statusu — zapis jest automatyczny 49ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola bez zapisu widzi jedną pozycję i powód, a nie wyszarzone „Uzupełnij…" 23ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > rola z prawem zapisu ma wszystkie trzy pozycje 21ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (B) „Pracuj z AI" bez prawa edycji — wyłącznie „Analizuj" (Zasada 2b) > „Analizuj" otwiera ocenę gotowości sesji i niczego nie zapisuje 30ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > po „Potwierdzone" na ekranie zostaje TO SAMO pytanie, w kolorze stanu 59ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx > (C) wybór stanu odpowiedzi nie przeskakuje na kolejny poziom > dopiero „Dalej" odsłania kolejny, otwarty poziom tej jednostki 106ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.naglowekIStanOdpowiedzi.test.tsx (7 tests) 473ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (A) karta pytania niesie kolor wybranego stanu odpowiedzi > „Potwierdzone" → zielona lewa krawędź na CAŁEJ karcie 26ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (A) karta pytania niesie kolor wybranego stanu odpowiedzi > „Częściowo" → pomarańczowa lewa krawędź, nigdy zielona 8ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (A) karta pytania niesie kolor wybranego stanu odpowiedzi > bez odpowiedzi karta zostaje neutralna — kolor pojawia się dopiero po wyborze 9ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (A) karta pytania niesie kolor wybranego stanu odpowiedzi > wybrany przycisk stanu jest wypełniony tym samym kolorem co karta 89ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (C) „Podyktuj" — rozpoznany tekst dopisuje się do pola odpowiedzi > zdarzenie `result` z przeglądarkowego STT dopisuje tekst, nie zastępuje istniejącego 11ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx > (C) „Podyktuj" — rozpoznany tekst dopisuje się do pola odpowiedzi > drugi fragment dopisuje się do pierwszego, a nie nadpisuje go 7ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.stanIDyktowanie.test.tsx (6 tests) 152ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 1 — utrata API w trakcie pracy: OFFLINE, praca nie ginie > forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen 97ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 2 — zmiana lokalna przy braku łączności -> RECOVERY_DRAFT > editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED 55ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED > clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER 40ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 4 — lokalna rewizja STARSZA niż serwerowa -> CONFLICT, brak nadpisania > forceState="conflict" shows the CONFLICT badge and never calls getSession until the explicit choice 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 5 — lokalna rewizja NOWSZA -> propozycja zapisu, nadal za potwierdzeniem > forceState="recovery" proposes applying the queued (locally newer) writes but does nothing without a click 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 6 — retry po nieudanym zapisie > the offline banner's retry button re-asks the server and clears the banner on success 41ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 7 — bezpieczne rozwiązanie konfliktu: obie wersje widoczne, wybór jawny > the conflict view names both the local and server version numbers and offers an explicit resolve action 6ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 8 — reopen po restarcie: serwer wygrywa > resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded 15ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx (9 tests) 267ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik w rzędzie komend woła openChatWithContext z metodą, jednostką, poziomem i treścią pytania 53ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Zapytaj Teresę" pod pomocą do pytania woła ten sam dok (jedna Teresa, nie drugi czat) 111ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > „Pokaż różnicę L-1/L/L+1" pyta o porównanie poziomów, nie o wyjaśnienie 56ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > sesja tylko do odczytu NIE odbiera prawa do zapytania Teresy (to akcja czytająca) 16ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx > „Zapytaj Teresę" otwiera globalny dok Teresy z kontekstem pytania > klik NIE tworzy już propozycji Teresy w panelu, którego powłoka nie renderuje 17ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.zapytajTerese.test.tsx (5 tests) 254ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — evidence tone never reads as critical for normal gaps > evidenceState "missing" uses the warning token, never the danger token 28ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — evidence tone never reads as critical for normal gaps > evidenceState "weak" uses the warning token, never the danger token 9ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — evidence tone never reads as critical for normal gaps > evidenceState "conflicting" is the ONE legitimate danger case — contradicts and blocks freeze 9ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — evidence tone never reads as critical for normal gaps > evidenceState "complete" uses the success token 6ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — three independent axes render as three distinct signals > evidence STRENGTH (E0-E4) renders in its own badge, separate from the evidenceState rollup badge 7ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — three independent axes render as three distinct signals > omits the strength badge entirely when no evidence strength has been recorded yet 4ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — three independent axes render as three distinct signals > the answer-state control (approval axis) and the evidence badges are separate DOM regions 4ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx > InterviewFocusPanel — long text does not break the layout > renders a very long canonical question and a long existing answer without throwing, keeping the command row intact 6ms
+ ✓ src/components/method-workspace/__tests__/InterviewFocusPanel.test.tsx (8 tests) 75ms
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > VoiceAnswerChannel — transcript path (mocked hardware, real hook code) > a completed recording flows through getUserMedia -> MediaRecorder -> server STT -> onTranscript(text, true), never a second state
+[Voice] Audio level monitoring not available: ReferenceError: AudioContext is not defined
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:273:39
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:529:7
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > VoiceAnswerChannel — transcript path (mocked hardware, real hook code) > a completed recording flows through getUserMedia -> MediaRecorder -> server STT -> onTranscript(text, true), never a second state
+[Voice] Audio level monitoring not available: ReferenceError: AudioContext is not defined
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:273:39
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:529:7
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > Voice transcript reaches InterviewFocusPanel through the SAME handler as manual typing > a final transcript calls onAnswerChange with the combined text — identical to the textarea onChange path, no alternate state
+[Voice] Audio level monitoring not available: ReferenceError: AudioContext is not defined
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:273:39
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:529:7
+
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > Voice transcript reaches InterviewFocusPanel through the SAME handler as manual typing > a final transcript calls onAnswerChange with the combined text — identical to the textarea onChange path, no alternate state
+[Voice] Audio level monitoring not available: ReferenceError: AudioContext is not defined
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:273:39
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:529:7
+
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > VoiceAnswerChannel — transcript path (mocked hardware, real hook code) > a completed recording flows through getUserMedia -> MediaRecorder -> server STT -> onTranscript(text, true), never a second state 75ms
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > Voice transcript reaches InterviewFocusPanel through the SAME handler as manual typing > a final transcript calls onAnswerChange with the combined text — identical to the textarea onChange path, no alternate state
+[Voice] Transcription error: TypeError: Cannot read properties of undefined (reading 'trim')
+    at Object.onTranscript [as current] (/private/tmp/wt-11z4-wnioski-drd-d3/src/components/method-workspace/InterviewFocusPanel.tsx:223:39)
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/components/method-workspace/VoiceAnswerChannel.tsx:61:21
+    at FakeMediaRecorder.mediaRecorder.onstop (/private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:482:13)
+
+stderr | src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > Voice transcript reaches InterviewFocusPanel through the SAME handler as manual typing > a final transcript calls onAnswerChange with the combined text — identical to the textarea onChange path, no alternate state
+[Voice] Transcription error: TypeError: Cannot read properties of undefined (reading 'trim')
+    at Object.onTranscript [as current] (/private/tmp/wt-11z4-wnioski-drd-d3/src/components/method-workspace/InterviewFocusPanel.tsx:223:39)
+    at /private/tmp/wt-11z4-wnioski-drd-d3/src/components/method-workspace/VoiceAnswerChannel.tsx:61:21
+    at FakeMediaRecorder.mediaRecorder.onstop (/private/tmp/wt-11z4-wnioski-drd-d3/src/hooks/useUniversalVoice.ts:482:13)
+
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx > Voice transcript reaches InterviewFocusPanel through the SAME handler as manual typing > a final transcript calls onAnswerChange with the combined text — identical to the textarea onChange path, no alternate state 71ms
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.transcript.test.tsx (2 tests) 147ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > answers the six mandated questions 20ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > every onCommit call carries the previewId of the card it came from — commit without preview is unrepresentable 68ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > reject does not remove or mutate the proposal locally — the panel is a pure renderer of proposalQueue 23ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx > TeresaPreviewPanel > shows the before/after diff before any decision can be made 4ms
+ ✓ src/components/method-workspace/__tests__/TeresaPreviewPanel.test.tsx (4 tests) 117ms
+ ✓ src/components/method-workspace/__tests__/MethodNavigator.ownerBehavior.test.tsx > MethodNavigator — owner-approved compact axis navigation > expands only the root containing the active area 89ms
+ ✓ src/components/method-workspace/__tests__/MethodNavigator.ownerBehavior.test.tsx > MethodNavigator — owner-approved compact axis navigation > behaves as a root accordion and keeps one axis list open at a time 8ms
+ ✓ src/components/method-workspace/__tests__/MethodNavigator.ownerBehavior.test.tsx > MethodNavigator — owner-approved compact axis navigation > moves the expanded context when the active area changes 5ms
+ ✓ src/components/method-workspace/__tests__/MethodNavigator.ownerBehavior.test.tsx (3 tests) 102ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > renders Interview Focus in "interview" mode 30ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > switching to "matrix" mode shows the same unit/level data as the Graphic Mirror would 22ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > a selection made in Matrix mode survives switching to Report and back to Matrix 14ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx > MethodWorkspaceShell — view modes share one state > Report mode is a distinct workspace and does not duplicate Interview or Matrix 3ms
+ ✓ src/components/method-workspace/__tests__/MethodWorkspaceShell.test.tsx (4 tests) 71ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DRD structure — per-axis level scale is genuinely non-uniform (precondition for the UI test) > axis 1 (area 1A) runs 1..7, axis 7 (area 7A) runs 1..5 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 (area 1A) renders levels 1..7; switching to axis 7 renders 1..5 89ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state) 72ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx (3 tests) 164ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > every cell exposes a textual accessible name (method, unit, level, state, evidence) — not color alone 43ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > ASM-OWN-013: a cell with an AI proposal or a required review states so in its own accessible name — the global legend that used to explain the icon is gone 14ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > clicking a cell opens the side sheet scoped to that cell 13ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > closing and reopening from the same controlled state returns to the identical position/selection 13ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > closing the side sheet with Escape works, same as the explicit close button 9ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix > shows a Current/Target/Gap summary per row, readable without counting cells 8ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix — an unassessed area never looks like a blocker or an evidence gap > an untouched, not-yet-reached cell gets a calm neutral border — no dashed/amber, no danger, regardless of the unit-level evidenceState 3ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix — an unassessed area never looks like a blocker or an evidence gap > a REAL blocker (the current frontier, work has started) is visually distinct from an untouched cell — border-c-danger 2ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix — an unassessed area never looks like a blocker or an evidence gap > a genuinely engaged evidence gap (achieved level, no evidence attached) is distinct from both the untouched cell and the blocker — dashed amber 2ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx > LiveMatrix — an unassessed area never looks like a blocker or an evidence gap > the accessible name of an untouched cell never claims "brak dowodu" — it says it is simply not assessed yet 2ms
+ ✓ src/components/method-workspace/__tests__/LiveMatrix.test.tsx (10 tests) 114ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > SSOT ma polską nazwę dla każdego obszaru osi 1 (przesłanka testu, nie założenie) 2ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > pasek obszarów pisze „Procesy Sprzedaży", nie „Sales Processes" 35ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > A. Macierz podpisuje obszary tak samo jak drzewo sesji > etykietaObszaru bierze namePL — tak samo, jak robi to drzewo sesji 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > etykietyPoziomowZMetodyki(oś 1) zwraca dokładnie siedem nazw z książki 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > B. Wiersze niosą drabinę poziomów z kanonu, nie zmyśloną skalę > siatka rysuje te nazwy w wierszach, od 7 u góry do 1 na dole 19ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PRZED naprawą (503 px): 9 kolumn schodzi do progu czytelności, nie niżej 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr raportu PO naprawie (drzewo sesji schowane, macierz bez sufitu ≈ 780 px): 9 kolumn mieści się bez przewijania 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > szeroki kadr edytora (1400 px) NIE chudnie — minimum zostaje bazowe 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > C. Siatka dobiera szerokość kolumn do kadru, zamiast wypychać się w przewijanie > kadr niezmierzony (jsdom, pierwsza klatka) zachowuje się jak przed zmianą 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > rysuje siatkę obszary × poziomy z drabiną i polskimi nazwami obszarów 27ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx > D. Sesja DRD: zakładka „Macierz" to macierz właściciela > przelicza stan warsztatu na stan siatki bez wymyślania zer 0ms
+ ✓ src/components/assessment/drd/__tests__/macierz-sedno-20260905.test.tsx (11 tests) 86ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > true for DRD when the historical flag is enabled 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 48ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness) 19ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > uses the application provider decision instead of an isolated bare-hook default 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx (6 tests) 72ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > renders all six honest answer states 22ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > "Nie wiem" opens the ResolutionCard and reports dont_know, never a score 6ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > renders the ResolutionCard once value is dont_know, with no auto-zero side effect 8ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > "Nie dotyczy" requires a justification before confirming 8ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > "Nie wiem" is styled neutral — never danger, and never borrows a result colour (success/warning) 8ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx > AnswerStateControl > ResolutionCard actions forward to onResolutionAction 5ms
+ ✓ src/components/method-workspace/__tests__/AnswerStateControl.test.tsx (6 tests) 59ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > Potwierdzone = zielony (c-success), Częściowo = pomarańczowy (c-warning), Nie = czerwony (c-danger) 30ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > stany bez rozstrzygnięcia są neutralne — nigdy nie pożyczają koloru wyniku 0ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > każdy z sześciu stanów ma ton, a każdy ton ma klasę karty i kropki (brak dziur) 0ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > crimson / primary-* nigdy nie pojawia się w mapie (CLAUDE.md reguła UI 3) 0ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > bez odpowiedzi: karta neutralna bez lewej krawędzi, kropki nie ma wcale 0ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts > answerStateColors — kontrakt stan → token > rollup jednostki: gorszy stan wygrywa z „Potwierdzone" 0ms
+ ✓ src/components/method-workspace/__tests__/answerStateColors.test.ts (6 tests) 33ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > renders inline help when the pack provides content 20ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > shows the explicit "Help content unavailable" state when the pack has no help copy 1ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > expands the examples drawer progressively (level 2 help) 8ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx > QuestionHelpDisclosure > routes "Zapytaj Teresę" to the caller instead of duplicating the Teresa panel 3ms
+ ✓ src/components/method-workspace/__tests__/QuestionHelpDisclosure.test.tsx (4 tests) 33ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for CLEAN 15ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for SAVED 2ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for DIRTY 2ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for SAVING 1ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for SAVE_FAILED 1ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > renders a non-empty, visible indicator for OFFLINE_PENDING 1ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > only SAVE_FAILED uses the danger (crimson-adjacent) tone — every other state is neutral/success/info/warning 4ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > DIRTY (unsaved changes) is a normal working state, not an error — warning tone, not danger 1ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > OFFLINE_PENDING stays visible with an honest label, never silently hidden 1ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx > SaveStateIndicator — save state is always visible > SAVE_FAILED surfaces both the failure and an explicit retry action — never a silent stuck state 3ms
+ ✓ src/components/method-workspace/__tests__/SaveStateIndicator.test.tsx (10 tests) 33ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx > DrdMethodWorkspaceScreen — no duplicate draft-status banner > a freshly-created draft session reports its state ONLY in the header pill, never a second banner 48ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx (1 test) 50ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > confirmedLevelsFor — dont_know is never counted as a confirmed level (never scored as zero) > an ANSWER_CONFIRMED event with answerState dont_know does not add the level to confirmedLevels 31ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > confirmedLevelsFor — dont_know is never counted as a confirmed level (never scored as zero) > a genuinely confirmed level (answerState confirmed) IS counted 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns null when no evidence has been attached 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns the single recorded strength 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > evidenceStrengthFor — strength is its own axis, independent of evidenceState > returns the STRONGEST of several recorded strengths, not the first or last 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > buildMatrixRowsForAxis — cells beyond the blocker are shaped as "unassessed", not "problem" > a level well beyond an untouched unit is achieved=false, blocker=false, reviewRequired=false 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts > buildMatrixRowsForAxis — cells beyond the blocker are shaped as "unassessed", not "problem" > the first level of an untouched unit IS the blocker once any work exists elsewhere in the unit (workHasStarted) 0ms
+ ✓ src/components/assessment/drd/__tests__/drdWorkspaceViewModel.test.ts (7 tests) 34ms
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.test.tsx > VoiceAnswerChannel > shows an explicit degradation message when speech APIs are unsupported 16ms
+ ✓ src/components/method-workspace/__tests__/VoiceAnswerChannel.test.tsx (1 test) 18ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > starts CLEAN and markDirty transitions to DIRTY immediately 10ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > SAVED renders only after the save promise resolves ok — not optimistically 3ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > a failed save moves to SAVE_FAILED and attemptLeave refuses a silent exit 9ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > saveNow bypasses the debounce and saves immediately 9ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > offline edits queue as OFFLINE_PENDING instead of erroring 6ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts > useMethodWorkspaceSave > attemptLeave on CLEAN/SAVED allows a silent exit 2ms
+ ✓ src/components/method-workspace/__tests__/useMethodWorkspaceSave.test.ts (6 tests) 41ms
+
+ Test Files  25 passed (25)
+      Tests  146 passed (146)
+   Start at  19:15:52
+   Duration  21.60s (transform 2.12s, setup 1.06s, import 6.88s, tests 5.28s, environment 6.26s)
+
+
+ Test Files  25 passed (25)
+      Tests  146 passed (146)
+   Start at  19:15:52
+   Duration  21.60s (transform 2.12s, setup 1.06s, import 6.88s, tests 5.28s, environment 6.26s)
+
+JSON report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml
+JUNIT report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml

@@ -309,6 +309,16 @@ describe('1.1-Z3 #2 — syncAssessmentReports() na realnym schemacie Postgresa (
       );
       expect(assessmentConclusion).toBeTruthy();
       expect(assessmentConclusion.title).toContain('Sync report fixture');
+
+      // 1.1-Z4 #1: `assessment_reports.status` na żywej bazie jest UPPERCASE
+      // (`APPROVED`, nie `approved`). `row.status === 'approved'` w
+      // syncAssessmentReports() nigdy nie było prawdziwe, więc zatwierdzony
+      // raport zawsze produkował wniosek `low`/`needs_review` zamiast
+      // `medium`/`published`. Fikstura wyżej wstawia `status = 'APPROVED'`
+      // (uppercase, realny kształt) — dowód celuje właśnie w porównanie
+      // wielkości liter, nie w sam fakt powstania wniosku.
+      expect(assessmentConclusion.confidenceLevel).toBe('medium');
+      expect(assessmentConclusion.status).toBe('published');
     }
   );
 });
