@@ -606,7 +606,7 @@ export const ResultsKpiScorecardDetailPage: React.FC = () => {
    */
   const tabs: StandardModuleTab[] = getResultsDomainTabs();
   const onDomainTabChange = (id: string) => {
-    if (id === 'search' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
+    if (id === 'reports' || id === 'legacy' || isResultsDomain(id)) navigate(getResultsDomainPath(id));
   };
   const levelChips: StandardCounterChip[] = [
     { id: 'items', label: isPolish ? 'Mierniki' : 'Indicators' },
