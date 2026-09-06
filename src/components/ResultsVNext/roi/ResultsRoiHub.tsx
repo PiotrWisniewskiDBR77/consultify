@@ -48,9 +48,13 @@
  *                             per row already — the cheap, real source of a
  *                             table-level HonestValueCell showcase.
  *
- * Menu 3 chips on "All cases" bucket the real 13-state machine into 4 groups
- * (`ROI_STATUS_BUCKET` in `roiRegistryMappers.ts`) — counts always shown,
- * including 0, computed from the currently loaded page.
+ * A Menu 2 status dropdown on "All cases" (`roiStatusFilterControl`, DEC-422
+ * 06.09) buckets the real 13-state machine into 4 groups + "all"
+ * (`ROI_STATUS_BUCKET` in `roiRegistryMappers.ts`) — counts always shown in
+ * the option label, including 0, computed from the currently loaded page.
+ * Was 5 Menu 3 chips until DEC-422's odbiór flagged that as a kanon
+ * violation (Menu 3 ≤3 chips or none) — moved to Menu 2, Menu 3 now empty
+ * on this tab.
  *
  * Quick create's `initiativeId` picker uses `InitiativeApi.getInitiatives()`
  * (`src/services/api/initiatives.api.ts`) — the SAME real, already-used
@@ -64,6 +68,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import type { StandardCounterChip, TableRow } from '@/components/standard';
+import { SelectField } from '@/components/ui/primitives';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
 import { ROUTES } from '@/routes/routeConfig';
 import { InitiativeApi } from '@/services/api/initiatives.api';
@@ -540,7 +545,18 @@ export const ResultsRoiHub: React.FC = () => {
     [benefitsRows, selectedBenefitsCaseId]
   );
 
-  const chips: StandardCounterChip[] = [
+  /**
+   * DEC-422 (06.09, odbiór Piotra) — 5 chipów w Menu 3 ("Wszystkie · W toku ·
+   * Do akceptacji · Aktywne · Zamknięte/odrzucone") naruszały kanon TRIADA §B
+   * (Menu 3 = ≤3 chipy albo nic). Zamiast wybierać, które 3 z 5 nazwanych
+   * przez właściciela stanów są "ważniejsze" (arbitralne, nie zmierzone),
+   * CAŁY filtr statusu schodzi do dropdownu w Menu 2 (`filterControls`,
+   * ten sam wzorzec co `AssessmentHub.tsx`'s `statusDropdownControl` i
+   * `DiscoveryToolsHub.tsx`'s `StatusFilterDropdown`) — Menu 3 nie ma teraz
+   * żadnych chipów na tym ekranie. Liczby (`count`) zostają w etykiecie
+   * opcji, jak dotąd w chipach.
+   */
+  const roiStatusOptions: StandardCounterChip[] = [
     { id: 'all', label: isPolish ? 'Wszystkie' : 'All', count: cases?.length ?? 0 },
     {
       id: 'in_progress',
@@ -567,6 +583,22 @@ export const ResultsRoiHub: React.FC = () => {
       count: bucketCounts.closed_out,
     },
   ];
+  const roiStatusFilterControl = (
+    <div data-testid="roi-registry-status-filter">
+      <SelectField
+        value={chip}
+        onChange={(id) => setChip(id as 'all' | RoiStatusBucket)}
+        options={roiStatusOptions.map((opt) => ({
+          value: opt.id,
+          label: `${opt.label} (${opt.count ?? 0})`,
+        }))}
+        fullWidth={false}
+        wrapperClassName="w-auto"
+        className="min-w-[13rem]"
+        aria-label={isPolish ? 'Filtruj wg statusu' : 'Filter by status'}
+      />
+    </div>
+  );
 
   // Shared across both tabs: the transition dialog can be triggered from the
   // "All cases" kebab only, but is rendered once here regardless of `tab` so
@@ -682,9 +714,7 @@ export const ResultsRoiHub: React.FC = () => {
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
-          chips,
-          activeChip: chip,
-          onChipChange: (id) => setChip(id as 'all' | RoiStatusBucket),
+          filterControls: roiStatusFilterControl,
           // Quick create (master plan §9 Etap 3) — only meaningful on the
           // real case registry, not the read-only org rollup tab.
           // Gdy domena ROI jest w tej organizacji wygaszona, przycisk Menu 2
