@@ -1,0 +1,917 @@
+{
+  "zaktualizowano": "2026-09-06T06:40:00+02:00",
+  "sha_rejestru": "74d48a0c41",
+  "pojemniki": [
+    {
+      "id": 1,
+      "nazwa": "MVP rękami właściciela",
+      "cel_termin": "10 dni, do ~16.09",
+      "definicja": "Właściciel przechodzi cały system na stagingu na SWOICH danych, bez asysty, po ścieżce z PRZEKAZANIE_20260906_RANO.md §3, i nie znajduje nic, co go zawstydza.",
+      "pozycje": [
+        {
+          "nr": "1.1",
+          "nazwa": "Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)",
+          "wykonawca": "Sonnet/Opus",
+          "zalezy_od": "przejście właściciela",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim.",
+          "data": ""
+        },
+        {
+          "nr": "1.2",
+          "nazwa": "P1 dokończenie: Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) na wzorzec Rekord|Teresa; 8×3 zrzuty na żywo",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "—",
+          "stan": "w_toku",
+          "galaz": "mvp/p1-skrzynka-wywiad",
+          "sha": "",
+          "dowod": "worktree /private/tmp/wt-p1-skrzynka-wywiad; zlecenie z hipotezą nadzorcy do zmierzenia PRZED kodem (aside=2 przy Teresie, tabela Skrzynki <1000 px przy 1280, klik po X otwiera panel)",
+          "uwagi": "Progi: aside 1/1/0, tabela ≥1000 px, 2 ekrany × 3 szerokości + ciemny, T1–T4 z mutacją; markery 07_MY_WORK_AGENT / 02_INTERVIEW.",
+          "data": "06.09 06:25"
+        },
+        {
+          "nr": "1.3",
+          "nazwa": "P9 karta działania + Skrzynka (Codex: 5 powierzchni, K2/K3, e2e, test createActionCard→Skrzynka, sieroty usunięte, rejestr kart N „przed”)",
+          "wykonawca": "Codex, odbiór Sonnet",
+          "zalezy_od": "—",
+          "stan": "w_toku",
+          "galaz": "codex/p9-karta-dzialania",
+          "sha": "",
+          "dowod": "wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p9-karta-dzialania",
+          "uwagi": "Poprzednia runda ODESŁANA (P9 weryfikacja): tylko 35% zakresu — fundament OK (migracja addytywna 20261105_action_cards_spine.sql, ActionCard w kanonie, izolacja org broniona testem PG), ale 0 wołaczy w produkcie, rejestr kart N kłamie „zmigrowana”, brak podmiany 5 powierzchni, K2/K3, e2e.",
+          "data": "06.09 06:40"
+        },
+        {
+          "nr": "1.4",
+          "nazwa": "P7K część B: odchylenie → powiadomienie → Skrzynka → karta (na komponencie z 1.3)",
+          "wykonawca": "Opus",
+          "zalezy_od": "1.3",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Czeka na 1.3 (P9) — nie może startować, dopóki komponent karty działania nie jest gotowy.",
+          "data": ""
+        },
+        {
+          "nr": "1.5",
+          "nazwa": "P8 kontrakty Teresy (dokończenie 32 plików Codexa; wejście do Teresy w kanonie ArtifactRightPanel, Ocena bez flagi, martwe AIActionSlot/AIConsultantPanel, canvasMutationRisk.ts usunięty)",
+          "wykonawca": "Codex/Sonnet",
+          "zalezy_od": "—",
+          "stan": "w_toku",
+          "galaz": "codex/p8-teresa",
+          "sha": "",
+          "dowod": "wklejka 2 wydana Codexowi 06.09 06:40; wznowienie w /private/tmp/codex-p8-teresa (HEAD 59e282df88 + 32 pliki niecommitowane)",
+          "uwagi": "Kolejność: najpierw commit per krok z markerami, potem merge --no-ff stagingu, potem progi §10 z P8_TERESA_KONTRAKTY.md.",
+          "data": "06.09 06:40"
+        },
+        {
+          "nr": "1.6",
+          "nazwa": "Dokument i prezentacja z szablonu jako plik (prototyp → akcept właściciela → generator)",
+          "wykonawca": "Opus",
+          "zalezy_od": "—",
+          "stan": "w_toku",
+          "galaz": "mvp/dokument-prezentacja-plik",
+          "sha": "",
+          "dowod": "worktree /private/tmp/wt-dokument-plik; DOCX raportu z Oceny (7 rozdziałów DEC-46) + PPTX/PDF prezentacji z tej samej oceny DBR77, przez silnik i trasę produktu",
+          "uwagi": "Wymogi: polskie znaki, zero placeholderów, geometria PPTX = 0 nachodzeń, 10 liczb z SQL, rubryka 8 kryteriów, podglądy PNG każdej strony — do akceptu właściciela JAKO PLIK.",
+          "data": "06.09 06:35"
+        },
+        {
+          "nr": "1.7",
+          "nazwa": "Higiena danych właściciela (skrypty idempotentne z dry-run: oceny, śmieci, Silesia, legacy 2024)",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "decyzje właściciela",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Czeka na decyzje właściciela; częściowo dotknięte przy okazji innych dyżurów (napraw-region-silesia.ts w MVP-NAPRAWY-6), ale higiena jako całość niezaczęta.",
+          "data": ""
+        },
+        {
+          "nr": "1.8",
+          "nazwa": "Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤300, 16 testów z mockiem react-router",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "—",
+          "stan": "w_toku",
+          "galaz": "mvp/i18n-dlug-1",
+          "sha": "",
+          "dowod": "worktree /private/tmp/wt-i18n-dlug-1; cel: baseline pl==en ≤300 (z 484), chat.* = 0",
+          "uwagi": "16 mocków react-router bez useLocation naprawionych (liczby do zweryfikowania przez robotnika), dowód mutacyjny ratchetu, strażniki P3 §10, zrzuty Czat/Admin/Ustawienia.",
+          "data": "06.09 06:27"
+        },
+        {
+          "nr": "1.9",
+          "nazwa": "Re-audyt A/B na stagingu na sesji właściciela (nie na seedach) + zamrożenie zamroz.mjs per moduł",
+          "wykonawca": "Sonnet ×2",
+          "zalezy_od": "1.1–1.8",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Nie może startować przed domknięciem pozycji 1.1–1.8.",
+          "data": ""
+        },
+        {
+          "nr": "1.10",
+          "nazwa": "Środowisko demo dla pojemnika 2: rozdział bazy demo od stagingu (5 faz), zmienne, seedy pokazowe, promocja staging→demo przećwiczona, tag demo-safe",
+          "wykonawca": "Opus + nadzorca",
+          "zalezy_od": "1.9",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Dziś demo i staging dzielą bazę „trolley” (pamięć: topologia-srodowisk-staging-demo). Plan rozdziału w 5 fazach jeszcze niewykonany.",
+          "data": ""
+        }
+      ],
+      "kryteria": [
+        {
+          "nr": 1,
+          "tresc": "Przejście właściciela: 16 modułów, każdy z werdyktem „Tak” na jednym obrazie; defekty z przejścia = 0 otwartych BLOKER/WAŻNY.",
+          "spelnione": false,
+          "dowod": "Nierozpoczęte. Istnieje re-audyt lokalny A3/B3 (RAPORT_A3.md, RAPORT_B3.md) na stanowisku lokalnym, ale to nie jest przejście właściciela na stagingu."
+        },
+        {
+          "nr": 2,
+          "tresc": "Mechanika wartości działa end-to-end na żywo: rezultat KPI poza limitem → czerwony wiersz → wpis w Skrzynce → otwarta karta działania → zadanie osoby.",
+          "spelnione": false,
+          "dowod": "P9 (karta działania) ODESŁANE — tylko 35% zakresu, 0 wołaczy w produkcie; wklejka 2 wydana Codexowi (pozycja 1.3). P7K część B czeka na 1.3 (pozycja 1.4)."
+        },
+        {
+          "nr": 3,
+          "tresc": "Jeden dokument i jedna prezentacja z szablonu na danych DBR77 zaakceptowane przez właściciela JAKO PLIK (DOCX/PDF), nie jako zrzut.",
+          "spelnione": false,
+          "dowod": "Pozycja 1.6 W TOKU (mvp/dokument-prezentacja-plik, Opus) — prototyp jeszcze nie zaakceptowany przez właściciela."
+        },
+        {
+          "nr": 4,
+          "tresc": "Jeden prawy panel (Rekord | Teresa) na wszystkich 8 ekranach listowych z P1 (Skrzynka i Wywiad włącznie), zmierzony na żywo 1280/1440/1920.",
+          "spelnione": false,
+          "dowod": "Zadania/Realizacja naprawione (regresja lepkiego zamknięcia usunięta w P1-LEPKIE). Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) nadal mają własny panel bez wzorca — pozycja 1.2 w toku."
+        },
+        {
+          "nr": 5,
+          "tresc": "Teresa w każdym module MVP zgodnie z docs/ssot/KONTRAKTY_NARZEDZI_AI.md (wejście widoczne, odpowiedź po polsku, źródła z modułu, zero „no_sources” tam, gdzie moduł ma dane).",
+          "spelnione": false,
+          "dowod": "P8 (kontrakty Teresy) GOTOWE jako paczka dokumentacyjna (P8_TERESA_KONTRAKTY.md, ~7–8 sesji Codexa), ale wdrożenie ma 32 niecommitowane pliki u Codexa — wklejka 2 wydana (pozycja 1.5), niedomknięte."
+        },
+        {
+          "nr": 6,
+          "tresc": "Dane właściciela czyste: jedna ocena wypełniona w 100%, oceny/inicjatywy/spotkania bez śmieci testowych, „PL · Silesia” = 0, legacy finanse DBR77 albo naprawione (bilans 2024), albo zarchiwizowane z decyzją.",
+          "spelnione": false,
+          "dowod": "Oceny właściciela na stagingu wypełnione 0–8% (PRZEKAZANIE_20260906_RANO.md §4). Legacy finanse DBR77 2023–2025 niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazywane na CD PROJEKT. Silesia częściowo naprawiona skryptem napraw-region-silesia.ts (MVP-NAPRAWY-6), ale higiena całości (pozycja 1.7) czeka na decyzje właściciela."
+        },
+        {
+          "nr": 7,
+          "tresc": "Strażniki zielone i dług nie rośnie: check-list-canon, check-artefakt, i18nTrescPolska (ratchet ≤484, cel ≤300), 0 zmodyfikowanych migracji, tsc serwera.",
+          "spelnione": false,
+          "dowod": "i18nTrescPolska.baseline.json = 484 zastałe klucze (głównie admin.*); cel ≤300 jeszcze nieosiągnięty — pozycja 1.8 w toku (mvp/i18n-dlug-1). tsc serwera i 0-migracji niezmierzone w tej sesji panelu."
+        },
+        {
+          "nr": 8,
+          "tresc": "Środowisko demo dla pojemnika 2 gotowe: demo.consultify.ai z własną bazą, własnymi zmiennymi, danymi pokazowymi, promocją staging→demo przećwiczoną, tagiem demo-safe.",
+          "spelnione": false,
+          "dowod": "Dziś demo i staging dzielą wspólną bazę „trolley” (pamięć nadzorcy: topologia-srodowisk-staging-demo, plan rozdziału w 5 fazach). Pozycja 1.10 czeka na 1.9."
+        }
+      ],
+      "szampan": [
+        {
+          "nr": "S1.1",
+          "tresc": "Przeszedłem 16 modułów na stagingu na swoich danych po ścieżce pokazu; każdy ma moje „Tak”",
+          "kto": "właściciel",
+          "artefakt": "karta per moduł na 3100 (jeden obraz, Tak)",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.2",
+          "tresc": "Zero otwartych BLOKER/WAŻNY z mojego przejścia",
+          "kto": "nadzorca",
+          "artefakt": "rejestr odbioru: wiersze z SHA i zrzutem PO",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.3",
+          "tresc": "Widziałem na żywo: rezultat poza limitem → Skrzynka → karta działania → zadanie osoby",
+          "kto": "właściciel + Playwright",
+          "artefakt": "nagranie/zrzuty przepływu + bledyKonsoli=0",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.4",
+          "tresc": "Trzymam w ręku jeden dokument i jedną prezentację z szablonu na danych DBR77 i nie wstydzę się ich",
+          "kto": "właściciel",
+          "artefakt": "pliki DOCX/PDF/PPTX w evidence/ z moim „Tak”",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.5",
+          "tresc": "Jeden prawy panel na 8 listach, zwija się i nie wraca po zamknięciu",
+          "kto": "nadzorca",
+          "artefakt": "8×3 zrzuty na żywo, aside ≤ 1",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.6",
+          "tresc": "Teresa odpowiada po polsku ze źródłami w każdym module MVP",
+          "kto": "nadzorca",
+          "artefakt": "16 odpowiedzi z used_sources > 0 w evidence/",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.7",
+          "tresc": "Moje dane są czyste (jedna ocena 100%, zero śmieci, zero „Silesia”, legacy 2024 rozstrzygnięte)",
+          "kto": "nadzorca + właściciel",
+          "artefakt": "skrypty dry-run/apply z logiem, moje słowo",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.8",
+          "tresc": "Strażniki zielone, dług nie rośnie, tsc serwera OK, 0 zmodyfikowanych migracji",
+          "kto": "nadzorca",
+          "artefakt": "wynik komend w rejestrze",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.9",
+          "tresc": "Demo ma własną bazę, dane pokazowe i przećwiczoną promocję z cofnięciem",
+          "kto": "nadzorca + właściciel (klik na demo)",
+          "artefakt": "health demo = SHA, tag demo-safe-<data>, zrzuty z demo",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.10",
+          "tresc": "Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)",
+          "kto": "właściciel",
+          "artefakt": "ledger decyzji (DEC-…)",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.11",
+          "tresc": "Wszystkie 16 modułów + Wyniki + Finanse zamrożone tagiem",
+          "kto": "nadzorca",
+          "artefakt": "zamroz.mjs, tagi mvp-wlasciciel-<data>",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S1.12",
+          "tresc": "Przekazanie dla pojemnika 2 napisane (stan, kolejka, decyzje)",
+          "kto": "nadzorca",
+          "artefakt": "PRZEKAZANIE_<data>.md + pamięć",
+          "stan": "nie",
+          "dowod": ""
+        }
+      ],
+      "decyzje": [
+        {
+          "tresc": "Finanse MINIMUM do MVP (F1 §0) czy poza",
+          "rekomendacja": "Brak jawnej rekomendacji CTO w źródle; F1 opisuje wariant MINIMUM (7 paczek ≈ 8 sesji Codexa) vs PEŁNY (+11 ≈ 24 sesje)",
+          "stan": "czeka",
+          "dec": ""
+        },
+        {
+          "tresc": "Grupowanie inicjatyw po zdjęciu Projektów",
+          "rekomendacja": "Płaska lista + kolumna obszar/oś; program/portfel po MVP",
+          "stan": "czeka",
+          "dec": ""
+        },
+        {
+          "tresc": "Kropka „Model” w crimson",
+          "rekomendacja": "Brak jawnej rekomendacji w źródle (wzmianka „do potwierdzenia” w MVP-NAPRAWY-7)",
+          "stan": "czeka",
+          "dec": ""
+        },
+        {
+          "tresc": "Program naprawczy Award/CES 2027 może odmrażać moduły zamrożone 05.09 wyłącznie w zakresie paczek P1–P6, II, III; każdy commit niesie znacznik odmrożenia; po zakończeniu paczki moduł jest ponownie zamrażany tego samego dnia",
+          "rekomendacja": "Podjęta przez CTO 05.09 jako jedyne pytanie w tym programie",
+          "stan": "podjeta",
+          "dec": "DEC-397"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "nazwa": "MVP rękami klienta",
+      "cel_termin": "3 tygodnie po pojemniku 1, do ~7.10",
+      "definicja": "Pilotaż na demo (własna baza z pozycji 1.10), rękami czterech nazwanych osób pierwszej linii (Tomek, Kasia, Irina, Justyna), które zakładają organizację i dochodzą od wywiadu do wyniku bez asysty właściciela. Produkcja (consultify.ai) wchodzi dopiero po pilotażu, dla pierwszego klienta zewnętrznego.",
+      "pozycje": [
+        {
+          "nr": "2.0",
+          "nazwa": "Produkcja i cofnięcie przećwiczone",
+          "wykonawca": "Opus + nadzorca",
+          "zalezy_od": "pojemnik 1 zamknięty",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "2 sesje szacowane. Nie rozpoczęte — pojemnik 1 niezamknięty.",
+          "data": ""
+        },
+        {
+          "nr": "2.1",
+          "nazwa": "Przepływ „pusty stan → pierwsza wartość” per moduł",
+          "wykonawca": "Sonnet ×2",
+          "zalezy_od": "2.0",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "2 sesje szacowane.",
+          "data": ""
+        },
+        {
+          "nr": "2.2",
+          "nazwa": "Macierz cross-org + CSRF enforce + poczta",
+          "wykonawca": "Sonnet/Opus",
+          "zalezy_od": "2.1",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "3 sesje szacowane. Macierz cross-org 2725 tras (dyżur 307) nadal niezmierzona (SEC, 05.09 noc).",
+          "data": ""
+        },
+        {
+          "nr": "2.3",
+          "nazwa": "Dwa magazyny → jedna projekcja",
+          "wykonawca": "Opus",
+          "zalezy_od": "2.2",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "3 sesje szacowane. Dotyczy inicjatyw (runtime-v1 vs SQL), ocen (jądro vs zastane), analiz finansowych, artefaktów (aliasy).",
+          "data": ""
+        },
+        {
+          "nr": "2.4",
+          "nazwa": "Onboarding i TRIAL",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "2.3",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "1 sesja szacowana.",
+          "data": ""
+        },
+        {
+          "nr": "2.5",
+          "nazwa": "Wydajność ekranów flagowych",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "2.4",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "1 sesja szacowana.",
+          "data": ""
+        },
+        {
+          "nr": "2.6",
+          "nazwa": "Finanse wg decyzji (MINIMUM albo „wkrótce”)",
+          "wykonawca": "Codex",
+          "zalezy_od": "2.5",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "5–8 sesji szacowane, zależnie od decyzji z pojemnika 1.",
+          "data": ""
+        },
+        {
+          "nr": "2.7",
+          "nazwa": "Przewodnik „jak zacząć” w aplikacji",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "2.6",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "1 sesja szacowana.",
+          "data": ""
+        },
+        {
+          "nr": "2.8",
+          "nazwa": "Obserwowalność + limiter AI + eksport/usunięcie danych",
+          "wykonawca": "Sonnet",
+          "zalezy_od": "2.7",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "3 sesje szacowane. Limiter AI wyłączony od 05.09 — rachunek bez sufitu.",
+          "data": ""
+        },
+        {
+          "nr": "2.9",
+          "nazwa": "Playbook wdrożenia klienta",
+          "wykonawca": "właściciel + nadzorca",
+          "zalezy_od": "2.8",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "1 sesja szacowana.",
+          "data": ""
+        },
+        {
+          "nr": "2.10",
+          "nazwa": "Pilotaż Tomek/Kasia/Irina/Justyna na demo z dziennikiem i systemem reakcji",
+          "wykonawca": "nadzorca + 4 użytkownicy",
+          "zalezy_od": "2.9",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "2 tygodnie pilotażu.",
+          "data": ""
+        },
+        {
+          "nr": "2.11",
+          "nazwa": "Zamrożenie „MVP klienta” tagiem",
+          "wykonawca": "nadzorca",
+          "zalezy_od": "2.10",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "",
+          "data": ""
+        }
+      ],
+      "kryteria": [
+        {
+          "nr": 1,
+          "tresc": "Świeża organizacja od zera przechodzi przepływ „pusty stan → pierwsza wartość” w każdym module: puste stany po polsku z jedną akcją, zero ekranów „—” bez wskazówki.",
+          "spelnione": false,
+          "dowod": "Pojemnik 2 niezaczęty."
+        },
+        {
+          "nr": 2,
+          "tresc": "Bezpieczeństwo: macierz cross-org 2725 tras zmierzona (dyżur 307) = 0 wycieków; CSRF enforce na stagingu bez regresji; MFA z karencją sprawdzone na koncie obcym; brak 500 w logach stagingu przez 7 dni.",
+          "spelnione": false,
+          "dowod": "Macierz 2725 tras nadal niezmierzona (SEC 05.09 noc). CSRF dziś w trybie report, nie enforce."
+        },
+        {
+          "nr": 3,
+          "tresc": "Onboarding: kreator „Krok 1 z 3” działa i kończy się, TRIAL nie blokuje po 3 pytaniach bez jasnego komunikatu, poczta żywa.",
+          "spelnione": false,
+          "dowod": "Poczta martwa w całej aplikacji (PRZEKAZANIE_20260906_RANO §2)."
+        },
+        {
+          "nr": 4,
+          "tresc": "Wydajność: każdy ekran flagowy < 3 s do treści na stagingu, szkielety z P5 potwierdzone na żywo, Megatrendy 200.",
+          "spelnione": false,
+          "dowod": "P5 scalone (kod), zrzuty pomiaru na żywo do powtórki."
+        },
+        {
+          "nr": 5,
+          "tresc": "Dwa magazyny danych zlikwidowane albo trwale spięte projekcją w SSOT dla: inicjatyw, ocen, analiz finansowych, artefaktów.",
+          "spelnione": false,
+          "dowod": "Inicjatywy: dwa rejestry (runtime-v1 vs SQL) scalone tylko przy odczycie listy (MVP-INICJATYWY), decyzja o docelowej architekturze po MVP. Oceny: projekcja assessmentOutputProjection.ts scala jądro i zastane (MVP-OCENA-RAPORT), ale to nie jest likwidacja dwóch magazynów."
+        },
+        {
+          "nr": 6,
+          "tresc": "Finanse: jeśli decyzja „MINIMUM do MVP” → F-M2/M3/M4/M6/M7 wykonane; jeśli „poza” → moduł ukryty za jawnym „wkrótce”.",
+          "spelnione": false,
+          "dowod": "Decyzja właściciela jeszcze nie podjęta (pojemnik 1, decyzja w kolejce)."
+        },
+        {
+          "nr": 7,
+          "tresc": "Dokumentacja użytkownika: jedna strona „jak zacząć” po polsku w aplikacji.",
+          "spelnione": false,
+          "dowod": "Niezaczęte (pozycja 2.7)."
+        },
+        {
+          "nr": 8,
+          "tresc": "Pilotaż: 2 tygodnie codziennego użycia przez DBR77 z dziennikiem zgłoszeń; 0 BLOKER otwartych na koniec.",
+          "spelnione": false,
+          "dowod": "Niezaczęte."
+        },
+        {
+          "nr": 9,
+          "tresc": "Produkcja: opisana i przećwiczona ścieżka promocji staging → demo → produkcja z kopią zapasową, migracjami z bramką, health=SHA, cofnięciem wg _RUNBOOK_COFANIA.md.",
+          "spelnione": false,
+          "dowod": "Niezaczęte (pozycja 2.0)."
+        },
+        {
+          "nr": 10,
+          "tresc": "Obserwowalność: alert na 500/5xx i padnięcie health, logi csrf_violation/AI/błędów przeglądane raz dziennie przez 7 dni pilotażu.",
+          "spelnione": false,
+          "dowod": "Niezaczęte."
+        },
+        {
+          "nr": 11,
+          "tresc": "Koszt AI: limiter AI z powrotem włączony z budżetem per organizacja i czytelnym komunikatem po wyczerpaniu.",
+          "spelnione": false,
+          "dowod": "Limiter AI wyłączony od 05.09 (decyzja CTO tymczasowa) — rachunek bez sufitu."
+        },
+        {
+          "nr": 12,
+          "tresc": "Dane i prawo: eksport organizacji (JSON/CSV) i usunięcie na żądanie działają z UI; retencja opisana; umowa powierzenia jako szablon.",
+          "spelnione": false,
+          "dowod": "Niezaczęte."
+        },
+        {
+          "nr": 13,
+          "tresc": "Playbook wdrożenia klienta: kto zakłada organizację, kto ładuje kontekst, kto prowadzi pierwszy wywiad i ocenę, ile godzin kosztuje pierwszy tydzień klienta.",
+          "spelnione": false,
+          "dowod": "Niezaczęte (pozycja 2.9)."
+        },
+        {
+          "nr": 14,
+          "tresc": "Definicja pilotażu: czterech nazwanych użytkowników z własnymi kontami na demo, dziennik zgłoszeń przeglądany codziennie, próg wyjścia 0 BLOKER / ≤3 WAŻNE, każda osoba potwierdza „doszłam/doszedłem do wyniku sam”.",
+          "spelnione": false,
+          "dowod": "Niezaczęte (pozycja 2.10). Wymaga środowiska demo z pozycji 1.10."
+        },
+        {
+          "nr": 15,
+          "tresc": "System reakcji: kanał zgłoszeń → nadzorca → naprawa → zwrot do zgłaszającego, ustalony przez właściciela po starcie pilotażu.",
+          "spelnione": false,
+          "dowod": "Domyślnie: Feedback w aplikacji + dziennik + codzienny przegląd nadzorcy, do czasu decyzji właściciela."
+        }
+      ],
+      "szampan": [
+        {
+          "nr": "S2.1",
+          "tresc": "Tomek, Kasia, Irina i Justyna (każde z osobna) założyli organizację na demo i doszli od wywiadu do wyniku bez pytania „gdzie to jest”",
+          "kto": "czworo użytkowników pilotażu + nadzorca",
+          "artefakt": "dziennik pilotażu (Feedback) + 4 potwierdzenia",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.2",
+          "tresc": "Przepływ „pusty stan → pierwsza wartość” zielony w każdym module na świeżej organizacji",
+          "kto": "nadzorca",
+          "artefakt": "Playwright w CI, raport",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.3",
+          "tresc": "Bezpieczeństwo: macierz cross-org 2725 tras = 0 wycieków, CSRF enforce, MFA z karencją, 0×500 przez 7 dni",
+          "kto": "nadzorca",
+          "artefakt": "raport pomiaru + logi 7 dni",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.4",
+          "tresc": "Produkcja gotowa NA klienta zewnętrznego: promocja demo → produkcja przećwiczona z kopią i cofnięciem; health = SHA",
+          "kto": "nadzorca + właściciel",
+          "artefakt": "runbook z datami ćwiczeń, tag prod-safe-<data>",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.5",
+          "tresc": "Alert na 5xx/health dociera do nazwanej osoby; był sprawdzony sztucznym błędem",
+          "kto": "nadzorca",
+          "artefakt": "zrzut alertu",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.6",
+          "tresc": "Limiter AI z budżetem per organizacja działa i mówi po polsku, co się stało",
+          "kto": "nadzorca",
+          "artefakt": "test na wyczerpanie budżetu",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.7",
+          "tresc": "Eksport i usunięcie danych organizacji działają z UI; umowa powierzenia jako szablon",
+          "kto": "nadzorca + właściciel",
+          "artefakt": "plik eksportu, zrzut usunięcia, szablon umowy",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.8",
+          "tresc": "Poczta żywa (zaproszenie, reset hasła) na produkcji",
+          "kto": "nadzorca",
+          "artefakt": "dwa e-maile dostarczone",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.9",
+          "tresc": "Dwa magazyny danych spięte projekcją z testem „nowy rekord z UI widać wszędzie”",
+          "kto": "nadzorca",
+          "artefakt": "testy + mutacja",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.10",
+          "tresc": "Finanse wg decyzji: MINIMUM działa na CD PROJEKT albo moduł jawnie „wkrótce”",
+          "kto": "właściciel",
+          "artefakt": "jeden obraz, Tak",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.11",
+          "tresc": "Przewodnik „jak zacząć” w aplikacji po polsku",
+          "kto": "właściciel",
+          "artefakt": "jeden obraz, Tak",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.12",
+          "tresc": "Playbook wdrożenia klienta sprawdzony na pilotażu (godziny ludzi DBR77 policzone)",
+          "kto": "właściciel",
+          "artefakt": "jedna strona z liczbami",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.13",
+          "tresc": "2 tygodnie pilotażu czterech osób na demo: 0 BLOKER, ≤3 WAŻNE otwarte; system reakcji właściciela działa",
+          "kto": "nadzorca + właściciel",
+          "artefakt": "dziennik z werdyktem, czasy reakcji",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S2.14",
+          "tresc": "Zamrożenie „MVP klienta” + przekazanie dla fali 2",
+          "kto": "nadzorca",
+          "artefakt": "tag mvp-klient-<data>, PRZEKAZANIE_<data>.md",
+          "stan": "nie",
+          "dowod": ""
+        }
+      ],
+      "decyzje": []
+    },
+    {
+      "id": 3,
+      "nazwa": "Fala 2",
+      "cel_termin": "po pilotażu (decyzje właściciela z 05.09, MVP_BACKLOG_20260905.md §E–K)",
+      "definicja": "Funkcje świadomie wyjęte z MVP, każda jako osobny program z własnym SSOT, prototypem i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.",
+      "pozycje": [
+        {
+          "nr": "3.1",
+          "nazwa": "Agent (wykonawcy etapów, producent rozpoznawania sprawy, worker ENABLE_AI_TASKS_WORKER)",
+          "wykonawca": "Opus",
+          "zalezy_od": "SSOT Agenta + prototyp",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 6–8 sesji Opus. Zasady w docs/ssot/ZASADY_AI_TERESA_SSOT.md (Teresa nie jest silnikiem autonomicznym — Agent ma być jawny, z potwierdzeniem).",
+          "data": ""
+        },
+        {
+          "nr": "3.2",
+          "nazwa": "Projekty / grupowanie inicjatyw",
+          "wykonawca": "",
+          "zalezy_od": "decyzja właściciela",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 2–3 sesje. project_id zostaje opcjonalne, wg decyzji właściciela (program/portfel/płaska lista).",
+          "data": ""
+        },
+        {
+          "nr": "3.3",
+          "nazwa": "Menedżer (rola i widok kierownika)",
+          "wykonawca": "",
+          "zalezy_od": "SSOT roli",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 3–4 sesje. Kokpit dla przełożonego: zespół, Skrzynka zespołu, odchylenia, karty działania.",
+          "data": ""
+        },
+        {
+          "nr": "3.4",
+          "nazwa": "SIRI (pakiety metodyczne)",
+          "wykonawca": "",
+          "zalezy_od": "_FORMULA_MENU_NARZEDZI_12.md",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 8–12 sesji. seed-method-packs-siri, narzędzia z „już wkrótce” (35/36) — każde narzędzie: sesja → artefakt → dalej.",
+          "data": ""
+        },
+        {
+          "nr": "3.5",
+          "nazwa": "Finanse PEŁNY",
+          "wykonawca": "",
+          "zalezy_od": "F1 §PEŁNY",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 16 sesji. F-P1…F-P11: Baseline v3 (6 ogniw), prognoza, wycena, porównanie wersji, pełna tabela RZiS/BS/CF.",
+          "data": ""
+        },
+        {
+          "nr": "3.6",
+          "nazwa": "Kręgosłup wartości — reszta konwersji",
+          "wykonawca": "",
+          "zalezy_od": "SSOT gotowy",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 4–6 sesji. 20 z 32 nieklikalnych (docs/ssot/KREGOSLUP_WARTOSCI.md), rodowód i zatwierdzenia między modułami.",
+          "data": ""
+        },
+        {
+          "nr": "3.7",
+          "nazwa": "Korpus wiedzy organizacji dla Teresy",
+          "wykonawca": "",
+          "zalezy_od": "skrypt gotowy",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 2 sesje. Indeksowanie dokumentów org (teresa-indeksuj-org.ts), flagi ENABLE_ORG_KNOWLEDGE_RETRIEVAL po zaindeksowaniu, limiter AI z powrotem.",
+          "data": ""
+        },
+        {
+          "nr": "3.8",
+          "nazwa": "Tryb ciemny i dostępność jako bramka",
+          "wykonawca": "",
+          "zalezy_od": "przyrząd gotowy",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Szacunek 1–2 sesje. IV dokończone (E_TRYB_CIEMNY, klawiatura), bramka w CI.",
+          "data": ""
+        }
+      ],
+      "kryteria": [
+        {
+          "nr": 1,
+          "tresc": "Każdy program fali 2 ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową.",
+          "spelnione": false,
+          "dowod": "Fala 2 niezaczęta — czeka na pilotaż i decyzję właściciela o kolejności."
+        },
+        {
+          "nr": 2,
+          "tresc": "Programy wchodzą pojedynczo, nigdy hurtem i nigdy za flagą w ciszy.",
+          "spelnione": false,
+          "dowod": "Zasada zapisana w definicji pojemnika 3; brak jeszcze programu w realizacji, więc niezweryfikowana w praktyce."
+        }
+      ],
+      "szampan": [
+        {
+          "nr": "S3.1",
+          "tresc": "Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową",
+          "kto": "właściciel",
+          "artefakt": "SSOT w docs/ssot/, karta prototypu z „Tak”",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S3.2",
+          "tresc": "Zbudowany na kanonie (StandardTable/SPEC-A/ArtifactRightPanel), zero flag chowających, po polsku",
+          "kto": "nadzorca",
+          "artefakt": "strażniki + zrzuty",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S3.3",
+          "tresc": "Mechanika działa end-to-end na produkcji na danych pilotażu, z testem mutacyjnym w zabezpieczenie",
+          "kto": "nadzorca",
+          "artefakt": "Playwright + testy",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S3.4",
+          "tresc": "Użytkownik pilotażu użył funkcji sam i dziennik nie ma BLOKER",
+          "kto": "użytkownik + nadzorca",
+          "artefakt": "dziennik",
+          "stan": "nie",
+          "dowod": ""
+        },
+        {
+          "nr": "S3.5",
+          "tresc": "Program zamrożony tagiem, rejestr i przekazanie zaktualizowane",
+          "kto": "nadzorca",
+          "artefakt": "tag fala2-<program>-<data>",
+          "stan": "nie",
+          "dowod": ""
+        }
+      ],
+      "decyzje": [
+        {
+          "tresc": "Kolejność programów fali 2 (3.1–3.8) ustala właściciel jedną decyzją po pilotażu",
+          "rekomendacja": "CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent)",
+          "stan": "czeka",
+          "dec": ""
+        }
+      ]
+    }
+  ],
+  "przejscie_wlasciciela": [
+    {
+      "modul": "Czat",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE. Ścieżka pokazu: „Podsumuj co tu widzisz” → odpowiedź po polsku ze „Źródła: 12”. Przejście właściciela na stagingu jeszcze się nie odbyło."
+    },
+    {
+      "modul": "Moja Praca",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Ścieżka: Skrzynka → Zadania → wiersz → podgląd → Otwórz kartę zadania. Skrzynka nadal ma własny panel bez wzorca P1 (InboxContent.tsx:4324)."
+    },
+    {
+      "modul": "Wywiad",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE. Ścieżka: lista sesji (nazwy z datą) → sesja → Przydzielone. Panel Wywiadu nadal bez wzorca P1 (InterviewHub.tsx:8620)."
+    },
+    {
+      "modul": "Narzędzia",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Dynamiczny SWOT to jedyne pełne narzędzie; 35/36 pozostałych to „już wkrótce” (dane biblioteki, nie kod) — decyzja właściciela w kolejce."
+    },
+    {
+      "modul": "Ocena",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Lista Outputów → raport oceny (sekcje + macierz DRD). Oceny właściciela wypełnione tylko 0–8%, raport będzie chudy przez dane."
+    },
+    {
+      "modul": "Inicjatywy",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE (67 wierszy po scaleniu dwóch rejestrów). Ścieżka: lista → wiersz → podgląd → karta."
+    },
+    {
+      "modul": "Realizacja",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (A3): GOTOWE Z KOSMETYKĄ. Realizacje → wiersz → panel Rekord|Teresa; regresja „lepkiego zamknięcia” naprawiona (P1-LEPKIE)."
+    },
+    {
+      "modul": "Wyniki",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (B3): blisko, 3 blokery — dwie nazwy modułu („Resultaty” w pasku vs „Wyniki” w okruszku, częściowo naprawione w MVP-NAPRAWY-6), surowe enumy w Check-inach OKR, ogon sąsiedniego miesiąca w KPI L2."
+    },
+    {
+      "modul": "Finanse",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (B3): TAK Z ZASTRZEŻENIEM na CD PROJEKT (4 blokery naprawione i potwierdzone). Ścieżka: Sprawozdania → CD PROJEKT → Otwórz → pakiet → Analiza (18 wskaźników). Nie klikać Baseline (409 znany). Legacy DBR77 2023–2025 niespójne."
+    },
+    {
+      "modul": "Materiały",
+      "werdykt": "brak",
+      "zdanie": "Re-audyt lokalny (B3): NOWY BLOKER w chwili raportu — Dokumenty „Czysto” utykały na „Brak wczytanego dokumentu”; naprawione falą 6 (e6b0a152e3, Document Studio działa end-to-end), ale bez potwierdzenia żywym przejściem właściciela."
+    },
+    {
+      "modul": "Audyty",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Nagłówek ZAKTUALIZOWANO naprawiony (MVP-NAPRAWY-3), rodzina uciętych nagłówków dat naprawiona na 7 ekranach 1440 (MVP-NAPRAWY-4)."
+    },
+    {
+      "modul": "Spotkania",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji."
+    },
+    {
+      "modul": "Administracja",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Panel administratora poprawiony kosmetycznie (MVP-NAPRAWY-7)."
+    },
+    {
+      "modul": "Ustawienia",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe, Szablony ustawień po polsku (4 klucze naprawione w MVP-NAPRAWY-6, wcześniej po angielsku wg B3)."
+    },
+    {
+      "modul": "Organizacja",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe. „PL · Silesia” częściowo naprawione (napraw-region-silesia.ts), ale higiena całości danych (pozycja 1.7) jeszcze niewykonana."
+    },
+    {
+      "modul": "Partner",
+      "werdykt": "brak",
+      "zdanie": "Wg §3 skrótu: listy i karty gotowe. Brak osobnego wpisu w audytach A3/B3 poza ogólną wzmianką — niezmierzone szczegółowo w tej sesji."
+    }
+  ]
+}
