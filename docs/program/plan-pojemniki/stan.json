@@ -892,6 +892,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 16:10: „wrzuć do fali drugiej całą formułę budowania automatyzacji tworzenia tych raportów — to duże zadanie, żeby z organizacji zbierać te informacje”. Dziś istnieje szkielet Raporty › Harmonogramy/Automatyzacja (pusty).",
           "data": "06.09"
+        },
+        {
+          "nr": "3.17",
+          "nazwa": "Arkusze: źródła danych (podpięcie i rozwinięcie tabeli Źródła danych)",
+          "wykonawca": "",
+          "zalezy_od": "SSOT Materiałów",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 16:27: „w arkuszach ukryj na razie tabelę źródeł danych i zapisz do drugiej fali rozwinięcie źródeł danych do arkuszy”. W MVP segment „Arkusze | Źródła danych” ukryty (M-2).",
+          "data": "06.09"
         }
       ],
       "kryteria": [
