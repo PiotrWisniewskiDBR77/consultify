@@ -138,6 +138,15 @@ import {
 } from './executionModuleTabs';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
 import { buildExecutionSourceRelations } from './executionSourceRelations';
+// 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
+// dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
+import {
+  isDecisionOverdue,
+  isOpenDecision,
+  onTimeFromInitiatives,
+  openDecisions,
+  overdueOpenDecisions,
+} from './executionRealData';
 import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
 import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
 import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
@@ -491,14 +500,27 @@ const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
   InitiativeStatus.ARCHIVED,
 ];
 const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
-  new Set([...MODULE_STATUSES, ...EXECUTION_STATUS_FALLBACK])
+  new Set([
+    ...MODULE_STATUSES,
+    ...EXECUTION_STATUS_FALLBACK,
+    // 1.12-R1 (A): TRACKING (3 inicjatywy DBR77) należy do modułu `benefits`
+    // w `initiativeLifecycle`, więc Realizacja jej NIE wczytywała — mimo że
+    // „śledzona" inicjatywa jest w toku i ma terminy. Dołożone jawnie.
+    InitiativeStatus.TRACKING,
+  ])
 );
 
-// Execution "Active" scope = ongoing work only (hide terminal-ish outcomes)
+/**
+ * Zakres „w toku" Realizacji — decyzja CTO na pytanie C5.1 planu 1.12:
+ * moduł pokazuje WSZYSTKIE inicjatywy w toku (EXECUTING/BLOCKED/TRACKING;
+ * 26 na pomiarze 06.09), a formalny handoff jest opcjonalną bramką jakości,
+ * nie warunkiem istnienia wiersza. SCHEDULED (7) to jeszcze plan — widać je
+ * po przełączeniu zakresu na „Wszystkie".
+ */
 const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.SCHEDULED,
   InitiativeStatus.EXECUTING,
   InitiativeStatus.BLOCKED,
+  InitiativeStatus.TRACKING,
 ];
 
 // NAPRAWA MVP 06.09 (poz. 7.2, BLOKER): `getTypeCode()` renderowała surowy
@@ -1331,8 +1353,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       setInitiativesLoadError(null);
       setInitiativesLoadErrorCode(null);
       try {
+        // 1.12-R1 (D): bez `projectId` — 43 z 72 inicjatyw organizacji nie ma
+        // przypisanego projektu (pomiar 06.09), a Realizacja pokazuje portfel
+        // ORGANIZACJI. `listExecutionCases()` zostaje jako WZBOGACENIE wiersza
+        // (realizacja + handoff), nie jako warunek istnienia (decyzja CTO
+        // C5.1: wszystkie inicjatywy w toku, handoff = opcjonalna bramka).
         const [response, executionCasesResponse] = await Promise.all([
-          Api.getInitiatives(currentProjectId || undefined),
+          Api.getInitiatives(),
           listExecutionCases(),
         ]);
         const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
@@ -1648,12 +1675,19 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     };
   }, [currentProjectId, executionTruthRefreshKey]);
 
+  // 1.12-R1 (D): ZDJĘTY FILTR PO PROJEKCIE.
+  // POMIAR 06.09 (org DBR77): 43 z 72 inicjatyw i 20 z 35 decyzji NIE MA
+  // `projectId`. Oba efekty niżej robiły `if (!currentProjectId) return;`
+  // i pytały `/tasks?projectId=…` / `/decisions?projectId=…`, więc:
+  //   · bez wybranego projektu nie ładowało się NIC (pusty kokpit),
+  //   · z wybranym projektem znikała ponad połowa realnych rekordów.
+  // Realizacja jest widokiem ORGANIZACJI, nie jednego projektu — pytamy więc
+  // o cały zbiór. (Zawężenie do projektu wróci jako filtr UI, nie jako brama.)
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadTasks = async () => {
       setIsLoadingTasks(true);
       try {
-        const data = await Api.getTasks({ projectId: currentProjectId });
+        const data = await Api.getTasks();
         setTasks(normalizeExecutionArrayEnvelope<Task>(data, ['tasks']));
         setTasksFailed(false);
       } catch (err) {
@@ -1668,11 +1702,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   }, [currentProjectId, executionTruthRefreshKey]);
 
   useEffect(() => {
-    if (!currentProjectId) return;
     const loadDecisions = async () => {
       setIsLoadingDecisions(true);
       try {
-        const response = await Api.get(`/decisions?projectId=${currentProjectId}`);
+        const response = await Api.get('/decisions');
         const data = normalizeExecutionArrayEnvelope<any>(response, ['decisions']);
         setDecisions(data);
         setDecisionsFailed(false);
@@ -2682,15 +2715,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       initiatives.reduce((sum, i) => sum + (i.progress || 0), 0) / Math.max(totalInitiatives, 1)
     );
 
+    // 1.12-R1 (D): ta sama definicja „otwarta / po terminie" co w kaflu
+    // (patrz executionRealData.ts) — inaczej kondycja i kafel liczyłyby
+    // z dwóch różnych zbiorów tych samych decyzji.
     const overdueDecisions =
-      healthSnapshot?.decisions?.overdueCount ??
-      decisions.filter(
-        (decision) =>
-          String(decision.status).toUpperCase() === 'PENDING' && isPastDue(decision.dueDate)
-      ).length;
+      healthSnapshot?.decisions?.overdueCount ?? overdueOpenDecisions(decisions).length;
     const totalDecisions =
-      healthSnapshot?.decisions?.pendingCount ??
-      decisions.filter((d) => String(d.status).toUpperCase() === 'PENDING').length;
+      healthSnapshot?.decisions?.pendingCount ?? openDecisions(decisions).length;
     const decisionHealth = totalDecisions
       ? Math.max(0, 100 - Math.round((overdueDecisions / totalDecisions) * 100))
       : 100;
@@ -3524,9 +3555,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );
 
-    const overdueDecisions = decisions
-      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && isPastDue(d.dueDate))
-      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+    // 1.12-R1 (D): „otwarta decyzja po terminie" = PENDING **lub ESCALATED**.
+    // POMIAR 06.09 (DBR77): 12 decyzji po terminie, WSZYSTKIE ze statusem
+    // ESCALATED, zero z PENDING — poprzedni filtr `PENDING && isPastDue`
+    // zwracał dokładnie 0 i to on (nie tylko filtr po projekcie) robił
+    // z kafla „Do rozstrzygnięcia" jedynkę przy 25 otwartych decyzjach.
+    const overdueDecisions = overdueOpenDecisions(decisions).sort((a, b) =>
+      (a.dueDate || '').localeCompare(b.dueDate || '')
+    );
 
     const dueSoonTasks = tasks
       .filter((t) => {
@@ -3556,12 +3592,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const wsDelayed = wsItems.reduce((s, w) => s + (w.delayedCount || 0), 0);
     const wsTotal = wsOnTrack + wsAtRisk + wsDelayed;
 
-    // On-time %: preferuj workstreamy (silnik), inaczej portfolioMetrics.
-    const totalInit = wsTotal || dashboardBaseInitiatives.length;
-    const onTrack = wsTotal ? wsOnTrack : portfolioMetrics.onTrackCount;
-    const delayed = wsTotal ? wsDelayed : portfolioMetrics.blockedCount;
-    const atRisk = wsTotal ? wsAtRisk : Math.max(totalInit - onTrack - delayed, 0);
-    const onTimePercent = totalInit > 0 ? Math.round((onTrack / totalInit) * 100) : null;
+    // 1.12-R1 (D): „Na czas" z REALNYCH DAT inicjatyw.
+    // Do 06.09 zapasowa ścieżka liczyła `onTrack = wszystkie − zablokowane`,
+    // więc portfel bez ani jednej daty pokazywał ~92 % „na czas". Teraz
+    // mianownikiem są wyłącznie inicjatywy Z `plannedEndDate`; te bez daty
+    // idą do osobnego licznika „brak dat" (metodyka A1 pkt 8: szary to luka
+    // danych, nie zieleń). Silnik workstreamów, jeśli COKOLWIEK zwróci,
+    // nadal ma pierwszeństwo — jest bogatszy niż same daty.
+    const dateOnTime = onTimeFromInitiatives(dashboardBaseInitiatives);
+    const totalInit = wsTotal || dateOnTime.totalInitiatives;
+    const onTrack = wsTotal ? wsOnTrack : dateOnTime.onTrackCount;
+    const delayed = wsTotal ? wsDelayed : dateOnTime.delayedCount;
+    const atRisk = wsTotal ? wsAtRisk : dateOnTime.atRiskCount;
+    const onTimePercent = wsTotal
+      ? Math.round((wsOnTrack / wsTotal) * 100)
+      : dateOnTime.onTimePercent;
 
     // Obłożenie (#77 wiring fix 2026-07-19): realny silnik istnieje
     // (workloadCapacityService.getCapacityTimeline, DB-backed) i jest już
@@ -3638,9 +3683,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         context: null,
       };
     });
+    // 1.12-R1 (D): otwarte, jeszcze nie po terminie. Bez `slice(0, 6)` —
+    // kafel „Do rozstrzygnięcia" ma pokazywać LICZBĘ WSZYSTKICH otwartych
+    // pozycji, a nie sześciu pierwszych (kafel i tabela liczą z tej samej
+    // listy, więc obcięcie kłamało w obie strony).
     const pendingDecisionItems = decisions
-      .filter((d) => String(d.status).toUpperCase() === 'PENDING' && !isPastDue((d as any).dueDate))
-      .slice(0, 6)
+      .filter((d) => isOpenDecision(d) && !isDecisionOverdue(d))
       .map((d) => {
         const relId =
           (d as any).relatedObjectType === 'initiative' ? (d as any).relatedObjectId : null;
