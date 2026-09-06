@@ -1,0 +1,55 @@
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts > initiativeToleranceService > resolves overrides over defaults; ignores invalid 32ms
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts > initiativeToleranceService > no breach when within tolerance 0ms
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts > initiativeToleranceService > breach when schedule slip exceeds tolerance 1ms
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts > initiativeToleranceService > breach when cost overrun exceeds tolerance 0ms
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts > initiativeToleranceService > per-initiative tolerance widens the band 0ms
+ ✓ tests/unit/execution/initiativeToleranceService.test.ts (5 tests) 34ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > EMV = P% × financial impact 30ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > 5×5 score + categorisation 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > 5×5 returns null on unknown value (no silent fallback) 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > residual reduces inherent by control effectiveness 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts (4 tests) 32ms
+ ✓ tests/unit/execution/executionPayloadGuards.test.ts > normalizeExecutionArrayEnvelope > returns direct arrays unchanged 31ms
+ ✓ tests/unit/execution/executionPayloadGuards.test.ts > normalizeExecutionArrayEnvelope > reads arrays from top-level keyed envelopes 0ms
+ ✓ tests/unit/execution/executionPayloadGuards.test.ts > normalizeExecutionArrayEnvelope > reads arrays from nested v8 data envelopes 0ms
+ ✓ tests/unit/execution/executionPayloadGuards.test.ts > normalizeExecutionArrayEnvelope > returns an empty array for non-array payload drift 0ms
+ ✓ tests/unit/execution/executionPayloadGuards.test.ts (4 tests) 33ms
+
+ Test Files  33 passed (33)
+      Tests  257 passed (257)
+   Start at  21:03:41
+   Duration  15.60s (transform 710ms, setup 1.38s, import 1.50s, tests 1.67s, environment 8.27s)
+
+
+ Test Files  33 passed (33)
+      Tests  257 passed (257)
+   Start at  21:03:41
+   Duration  15.60s (transform 710ms, setup 1.38s, import 1.50s, tests 1.67s, environment 8.27s)
+
+JSON report written to /private/tmp/wt-p12intb-odczyty-slownik7/junit.xml
+JUNIT report written to /private/tmp/wt-p12intb-odczyty-slownik7/junit.xml
+     × every non-terminal status is counted, none silently dropped (scope "active") 0ms
+     × every status is counted in scope "all" 0ms
+     × reports the homeless status instead of dropping it without a trace 0ms
+     ✓ warns on the developer console, naming the status 0ms
+     ✓ stays quiet when nothing is homeless 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:40:22
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:48:22
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:55:43
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:74:32
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:91:30
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:103:30
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:127:30
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:40:22
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:48:22
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:55:43
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:74:32
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:91:30
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:103:30
+ ❯ src/components/Portfolio/__tests__/PortfolioKanbanView.lifecycle.test.ts:127:30
+ Test Files  1 failed (1)
+      Tests  8 failed | 3 passed (11)

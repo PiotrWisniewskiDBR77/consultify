@@ -1,0 +1,25 @@
+2026-09-06 21:17:40:1740 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+ ✓ tests/unit/execution/decisionSla.test.ts > decision SLA per priority > SLA days scale with priority 29ms
+ ✓ tests/unit/execution/decisionSla.test.ts > decision SLA per priority > overdue severity: high-stakes is always critical; low only after its SLA 0ms
+ ✓ tests/unit/execution/decisionSla.test.ts > decision SLA per priority > pending severity escalates at SLA and 2×SLA 0ms
+ ✓ tests/unit/execution/decisionSla.test.ts (3 tests) 31ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > EMV = P% × financial impact 29ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > 5×5 score + categorisation 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > 5×5 returns null on unknown value (no silent fallback) 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts > EMV / 5×5 / residual > residual reduces inherent by control effectiveness 0ms
+ ✓ tests/unit/execution/raidScoringEmv.test.ts (4 tests) 32ms
+
+ Test Files  42 passed | 3 skipped (45)
+      Tests  307 passed | 22 skipped (329)
+   Start at  21:17:20
+   Duration  20.63s (transform 2.02s, setup 1.63s, import 3.77s, tests 1.98s, environment 9.75s)
+
+
+ Test Files  42 passed | 3 skipped (45)
+      Tests  307 passed | 22 skipped (329)
+   Start at  21:17:20
+   Duration  20.64s (transform 2.02s, setup 1.63s, import 3.77s, tests 1.98s, environment 9.75s)
+
+JSON report written to /private/tmp/wt-p12intb-odczyty-slownik7/junit.xml
+JUNIT report written to /private/tmp/wt-p12intb-odczyty-slownik7/junit.xml
