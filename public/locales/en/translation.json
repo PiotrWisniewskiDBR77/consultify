@@ -8403,7 +8403,29 @@
       "uploadPdf": "Upload PDF",
       "uploadPdfTooltip": "Upload a DRD report (PDF)",
       "reportPreview": {
-        "notFound": "The report could not be loaded — it was not found or is temporarily unavailable."
+        "notFound": "The report could not be loaded — it was not found or is temporarily unavailable.",
+        "statusDescription": {
+          "draft": "Report is being prepared",
+          "generating": "AI is generating report content",
+          "final": "Report content is finalized",
+          "pendingApproval": "Awaiting stakeholder approval",
+          "approved": "Report has been approved",
+          "rejected": "Report was rejected — needs revision",
+          "utilized": "Report has been delivered & used"
+        },
+        "fieldTemplate": "Template",
+        "fieldSourceAssessment": "Source Assessment",
+        "fieldSections": "Sections",
+        "fieldCreated": "Created",
+        "fieldLastUpdated": "Last updated",
+        "generatedReports": "Generated Reports",
+        "noExportsYet": "No exports yet. Generate now:",
+        "webPreview": "Web Preview",
+        "openInEditor": "Open in editor",
+        "executiveSummary": "Executive Summary",
+        "reportScope": "Report Scope",
+        "sectionFallback": "Section {{n}}",
+        "moreSections": "+{{count}} more sections"
       }
     },
     "newModal": {
@@ -40241,6 +40263,7 @@
       "dependsOnScope": "Depends on scope",
       "goal": "Goal",
       "outcome": "Outcome",
+      "team": "Team",
       "aiRole": "AI Role",
       "duration": "Duration",
       "aiUnavailable": "AI unavailable",

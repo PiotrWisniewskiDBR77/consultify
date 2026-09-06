@@ -70,6 +70,12 @@ const kroki = args
 const wpisy = kroki.filter((k) => k.rodzaj === 'wpisz').map((k) => k.selektor);
 const przewin = get('przewin', '');
 const url = get('url', '/chat'); const requestedOut = get('out'); const czekaj = Number(get('czekaj', '1200'));
+// --czekaj-po=<ms> (OPT-IN, re-audyt 0609): dodatkowe oczekiwanie PO wykonaniu wszystkich
+// --klik/--wpisz, PRZED zrzutem i PRZED zamknieciem przegladarki. Domyslnie 0 (zero zmiany
+// zachowania) — bez tego strumienie SSE/fetch zainicjowane klikiem (np. wyslanie wiadomosci
+// czatu) sa przerywane przez `browser.close()` ok. 1.5s po kliku, co serwer loguje jako
+// "Provider stream was aborted before start" — to artefakt przyrzadu, nie usterka produktu.
+const czekajPo = Number(get('czekaj-po', '0'));
 const pelna = args.includes('--pelna'); const wysokosc = Number(get('wysokosc', '900'));
 const port = Number(get('port', '3000'));
 const host = get('host', 'localhost');
@@ -167,6 +173,7 @@ if (przewin) {
   catch (e) { bledy.push(`przewiniecie nieudane: ${przewin}: ${String(e.message).split('\n')[0].slice(0, 160)}`); }
 }
 await page.waitForTimeout(600);
+if (czekajPo > 0) await page.waitForTimeout(czekajPo);
 await page.screenshot({ path: out, fullPage: pelna });
 // --dom: pomiar liczebnosci (opt-in). Bez parametru `dom` w JSON nie ma — zero zmiany dla dotychczasowych wywolan.
 const dom = {};

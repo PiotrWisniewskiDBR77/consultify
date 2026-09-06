@@ -7827,7 +7827,29 @@
       "uploadPdf": "Wgraj PDF",
       "uploadPdfTooltip": "Wgraj raport DRD w formacie PDF",
       "reportPreview": {
-        "notFound": "Nie udało się wczytać raportu — nie znaleziono go albo jest chwilowo niedostępny."
+        "notFound": "Nie udało się wczytać raportu — nie znaleziono go albo jest chwilowo niedostępny.",
+        "statusDescription": {
+          "draft": "Raport jest przygotowywany",
+          "generating": "AI generuje treść raportu",
+          "final": "Treść raportu jest sfinalizowana",
+          "pendingApproval": "Oczekuje na zatwierdzenie przez interesariusza",
+          "approved": "Raport został zatwierdzony",
+          "rejected": "Raport został odrzucony — wymaga poprawek",
+          "utilized": "Raport został dostarczony i wykorzystany"
+        },
+        "fieldTemplate": "Szablon",
+        "fieldSourceAssessment": "Ocena źródłowa",
+        "fieldSections": "Sekcje",
+        "fieldCreated": "Utworzono",
+        "fieldLastUpdated": "Ostatnia aktualizacja",
+        "generatedReports": "Wygenerowane raporty",
+        "noExportsYet": "Brak eksportów. Wygeneruj teraz:",
+        "webPreview": "Podgląd w przeglądarce",
+        "openInEditor": "Otwórz w edytorze",
+        "executiveSummary": "Podsumowanie zarządcze",
+        "reportScope": "Zakres raportu",
+        "sectionFallback": "Sekcja {{n}}",
+        "moreSections": "+{{count}} więcej sekcji"
       }
     },
     "newModal": {
@@ -42892,6 +42914,7 @@
       "dependsOnScope": "Zależy od zakresu",
       "goal": "Cel",
       "outcome": "Rezultat",
+      "team": "Zespół",
       "aiRole": "Rola AI",
       "duration": "Czas",
       "aiUnavailable": "AI niedostępne",

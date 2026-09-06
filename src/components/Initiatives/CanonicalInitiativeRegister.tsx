@@ -89,12 +89,12 @@ export const CanonicalInitiativeRegister = ({
   const selected = layoutRows.find((row) => row.id === selectedId) ?? null;
   const renderPreview = (initiative: CanonicalInitiativeRow) => (
     <StandardPreview
-      title={initiative.name || 'Untitled initiative'}
+      title={initiative.name || 'Inicjatywa bez nazwy'}
       embedded
       meta={{
         pills: [
           {
-            label: INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] || 'UNKNOWN',
+            label: INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] || 'Nieznany',
             tone: statusChipTone(initiative.status),
           },
           {
@@ -109,11 +109,11 @@ export const CanonicalInitiativeRegister = ({
             v{String(initiative.canonicalVersion || '—')}
           </span>
         ),
-        recommendation: String(initiative.nextAction || 'UNKNOWN'),
+        recommendation: String(initiative.nextAction || '—'),
       }}
       details={{
         label: 'Kontekst inicjatywy',
-        text: initiative.summary || initiative.description || 'No description.',
+        text: initiative.summary || initiative.description || 'Brak opisu.',
         properties: [
           {
             id: 'gate',
@@ -133,14 +133,15 @@ export const CanonicalInitiativeRegister = ({
             id: 'owner',
             label: 'Właściciel',
             value:
-              initiative.ownerBusiness?.firstName ||
-              initiative.ownerExecution?.firstName ||
-              'UNASSIGNED',
+              initiative.ownerBusiness?.firstName || initiative.ownerExecution?.firstName || '—',
           },
           {
             id: 'impact',
             label: 'Oczekiwany efekt',
-            value: String(initiative.expectedImpact || 'UNKNOWN'),
+            value:
+              initiative.expectedImpact && String(initiative.expectedImpact) !== 'UNKNOWN'
+                ? String(initiative.expectedImpact)
+                : 'Nieznany',
           },
           {
             id: 'window',
