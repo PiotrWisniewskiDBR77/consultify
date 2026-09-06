@@ -68,7 +68,7 @@ import {
   buildIdeaMenu3Actions,
 } from './ideaCanvasMelsChips';
 import { IdeaCanvasMelsView } from './IdeaCanvasMelsView';
-import { IdeaSaveIndicator, IdeaStageChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
+import { IdeaStatusChip, IdeaToolIcon } from './IdeaCanvasMenu1Bits';
 import { IdeaCanvasSecondBar } from './IdeaCanvasSecondBar';
 import { IdeaContextPanel } from './IdeaContextPanel';
 import {
@@ -4078,18 +4078,26 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [graphRuntime, graphLanes]
   );
   // ── Menu 1 (top bar) chips — Z7 anatomy ─────────────────────────────────
-  // Clean identity row: ghost Teresa (secondary) + kebab `⋯`. Real: Eksport +
-  // Historia (all canvas tools) + Duplikuj + Usuń. Snapshots capture the shared
-  // graph + extensions, so restore is a full rollback on every tool.
-  // The sole primary "Konwertuj ▾" is `melsPrimaryActionSlot` below; the
-  // per-tool VIEW actions moved to Menu 3 (`melsSecondBarNode`).
+  // Clean identity row: kebab `⋯` (Eksport + Historia (all canvas tools) +
+  // Duplikuj + Usuń). Snapshots capture the shared graph + extensions, so
+  // restore is a full rollback on every tool. The sole primary "Konwertuj ▾"
+  // is `melsPrimaryActionSlot` below; the per-tool VIEW actions moved to
+  // Menu 3 (`melsSecondBarNode`).
+  //
+  // ★ NAPRAWA (1.1-N, DEC-404c): ghost "Teresa" (secondary chip, `onDiscuss`)
+  // ZDJĘTA stąd — na tym ekranie Teresa jest już zakładką kanonicznego
+  // prawego panelu (`IdeaElementInspector` "Składnik | Teresa", bez zmian),
+  // więc druga pigułka w rogu top bara była DRUGIM wejściem do tego samego
+  // miejsca (jedno wejście do panelu: "Pokaż panel" gdy zamknięty, zakładka
+  // "Teresa" gdy otwarty). `handleDiscussWithTeresa` samo w sobie zostaje —
+  // dalej napędza legacy `IdeaWorkspaceToolbar` (gałąź `!melsCanvasEnabled`,
+  // dziś nieosiągalna, bo `melsCanvasEnabled` jest przybite na `true`).
   const melsCanvasChips = useMemo(
     () =>
       melsCanvasEnabled
         ? buildIdeaMenu1Chips({
             isPolish: Boolean(isPolish),
             handlers: {
-              onDiscuss: handleDiscussWithTeresa,
               onExport: () => setExportMenuOpen(true),
               // Historia: enabled for every canvas tool. All four tools
               // (mindmap/whiteboard/process_flow/table) share ONE per-idea graph
@@ -4104,14 +4112,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      melsCanvasEnabled,
-      isPolish,
-      handleDiscussWithTeresa,
-      handleDuplicateIdea,
-      handleDeleteIdea,
-      activeTool,
-    ]
+    [melsCanvasEnabled, isPolish, handleDuplicateIdea, handleDeleteIdea, activeTool]
   );
   // ── Menu 3 (second bar) view actions — Z7 anatomy ───────────────────────
   // PRZEPIĘTE NA RENDER Z REJESTRU AKCJI (pierwsza powierzchnia, wzorzec dla
@@ -4596,8 +4597,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             titleIconSlot={<IdeaToolIcon tool={activeTool} label={activeToolLabel} />}
             titleTrailingSlot={
               <>
-                <IdeaStageChip stage={stage} isPolish={Boolean(isPolish)} />
-                <IdeaSaveIndicator state={graphRuntime.syncState} label={graphRuntime.syncLabel} />
+                {/* ★ NAPRAWA (1.1-N): Iskra + Zapisano scalone w JEDEN wyciszony
+                    status (jedna kropka) — patrz komentarz przy `IdeaStatusChip`
+                    w `IdeaCanvasMenu1Bits.tsx`. */}
+                <IdeaStatusChip
+                  stage={stage}
+                  isPolish={Boolean(isPolish)}
+                  saveState={graphRuntime.syncState}
+                  saveLabel={graphRuntime.syncLabel}
+                />
                 {/* ★ Powrót do zamkniętego panelu — ten sam wzorzec „pigułki",
                     który ma tabela Pomysłów (`IdeasTableContent.tsx`). Siedzi w
                     CHROME (górny pasek), nie nad płótnem: decyzja CTO mówi, że

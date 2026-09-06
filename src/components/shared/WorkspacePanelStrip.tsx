@@ -48,6 +48,7 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
         }`}
         title={title}
+        aria-label={title}
         aria-pressed={active}
       >
         <Icon size={size} />
@@ -65,7 +66,13 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
         id="tools"
         icon={SlidersHorizontal}
         title={t('sharedComponents.workspacePanelStrip.tools')}
-        activeClass="text-primary-600 dark:text-primary-300"
+        // ★ NAPRAWA (1.1-N, prawy róg warsztatu): stan aktywny był w rodzinie
+        // tailwind „primary” (odcienie 600/300 = Harvard Crimson #85182F,
+        // tailwind.config.js) — czerwień jest zarezerwowana dla stanu
+        // KRYTYCZNEGO, nie dla zwykłego przełącznika widoku. Neutralny
+        // akcentowy token c-focus-solid (ten sam, którego używa
+        // NModeLeftNav/RightRail dla aktywnej zakładki).
+        activeClass="text-c-focus-solid"
       />
       <Btn
         id="context"
@@ -77,7 +84,8 @@ export const WorkspacePanelStrip: React.FC<WorkspacePanelStripProps> = ({
         id="ai_suggestions"
         icon={MessageSquareWarning}
         title={t('sharedComponents.workspacePanelStrip.aiSuggestions')}
-        activeClass="text-primary-600 dark:text-primary-300"
+        // ★ NAPRAWA (1.1-N): jak wyżej — crimson zdjęty, neutralny c-focus-solid.
+        activeClass="text-c-focus-solid"
       />
     </div>
   );
