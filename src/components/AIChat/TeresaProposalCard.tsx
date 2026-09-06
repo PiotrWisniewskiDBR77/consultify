@@ -31,27 +31,27 @@ const STATUS_STYLES: Record<TeresaChatProposal['state'], { badge: string; label:
   approved: {
     badge:
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
-    label: 'Approved',
+    label: 'Zatwierdzone',
   },
   executing: {
     badge:
       'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    label: 'Executing',
+    label: 'W trakcie',
   },
   completed: {
     badge:
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
-    label: 'Completed',
+    label: 'Wykonane',
   },
   undone: {
     badge:
       'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    label: 'Undone',
+    label: 'Cofnięte',
   },
   rejected: {
     badge:
       'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300',
-    label: 'Rejected',
+    label: 'Odrzucone',
   },
 };
 
