@@ -1,6 +1,6 @@
 {
-  "zaktualizowano": "2026-09-06 16:25",
-  "sha_rejestru": "74d48a0c41",
+  "zaktualizowano": "2026-09-06 17:11",
+  "sha_rejestru": "22f10763f6",
   "pojemniki": [
     {
       "id": 1,
@@ -15,10 +15,10 @@
           "zalezy_od": "przejście właściciela",
           "stan": "w_toku",
           "galaz": "",
-          "sha": "7dac4d5440",
-          "dowod": "staging health gitSha 7dac4d5440; Czat (8 kart) i Moja Praca (B/G2/H/I/J/J2/K/L/M/M2/N/N2) na żywo; właściciel 13:19: „tym zamykamy przegląd mywork”",
-          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte",
-          "data": "06.09 14:06"
+          "sha": "5bf9988581",
+          "dowod": "paczka 7 na żywo ff60b6f831 (R3, K4, R1, I4); paczka 8 wypchnięta 17:06: R2, M-1, K5, R4 (+ search→reports)",
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3",
+          "data": "06.09 17:11"
         },
         {
           "nr": "1.2",
@@ -133,12 +133,12 @@
           "nazwa": "Statusy zatwierdzania inicjatyw — pełne przepracowanie w całym procesie (kompletny system zarządzania inicjatywami w statusach)",
           "wykonawca": "Fable: SSOT statusów + prototyp tablicy przejść → akcept właściciela → Codex (wklejka)",
           "zalezy_od": "słowo właściciela na tablicę statusów i przejść",
-          "stan": "czeka",
-          "galaz": "",
+          "stan": "w_toku",
+          "galaz": "mvp/111-statusy-inicjatyw",
           "sha": "",
           "dowod": "",
-          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje.",
-          "data": "06.09"
+          "uwagi": "Właściciel 06.09 15:43: „zapisz do fazy pierwszej pełne przepracowanie statusów zatwierdzania inicjatyw w całym procesie”. Dziś: Inicjatywy (Szkic/Zaproponowane/Zaplanowane/W trakcie/Zakończony/Anulowane), Wywiad→inicjatywy (Szkice/Do przeglądu/Przekazane dalej), Audyty (szkice propozycji: zarejestruj/odłóż/odrzuć), Narzędzia→Inicjatywy (Strategic/Medium), Ocena→Inicjatywy (Szkic zarejestrowany, bramki), Realizacja (handoff → sprawa). Krok 1 = jedna tablica: status · kto zmienia · z czego → na co · gdzie widać · co blokuje. | 17:11: krok 1 (pomiar zastanych słowników i przejść w kodzie, plik:linia) wydany Opusowi; po nim tablica do akceptu właściciela (jeden obraz, Tak/Nie), potem Codex wklejka 9.",
+          "data": "06.09 17:11"
         }
       ],
       "kryteria": [
@@ -1013,7 +1013,7 @@
     {
       "modul": "Inicjatywy",
       "werdykt": "w_toku",
-      "zdanie": "06.09 15:41: „nie mam większych uwag” do karty; I3 na żywo (Menu 3), I4 w toku (FILTERS, podgląd na klik); Plan/Obciążenie → P11 Codex; 1.11 statusy."
+      "zdanie": "06.09 17:11: „nie mam większych uwag” do karty; I3/I4 na żywo; K5 (podgląd wraca na klik) w paczce 8; Plan/Obciążenie → P11 Codex (8 commitów, pisze); 1.11 statusy — pomiar u Opusa."
     },
     {
       "modul": "Realizacja",
@@ -1023,7 +1023,7 @@
     {
       "modul": "Wyniki",
       "werdykt": "w_toku",
-      "zdanie": "06.09 16:00: „narzędzia świetne, sterowanie nie” → R1 scalone (Uwaga/Raport zarządczy precz), R3 scalone (KPI bez UUID), R2 (Raporty zarządcze) i R4 (karty N) w toku."
+      "zdanie": "06.09 17:11: R1+R3 na żywo; R2 (zakładka Raporty zarządcze) i R4 (karty KPI/OKR/ROI z „Pracuj z AI”, pigułka w pasku, sticky) scalone i wypchnięte w paczce 8 (5bf9988581, budowa trwa) — karta do odbioru po zdrowiu stagingu."
     },
     {
       "modul": "Finanse",
@@ -1033,12 +1033,12 @@
     {
       "modul": "Materiały",
       "werdykt": "w_toku",
-      "zdanie": "06.09 16:20: „zachwycony”; jedyna uwaga: popover filtrów → 2 dropdowny (M-1 w toku)."
+      "zdanie": "06.09 17:11: „zachwycony”; M-1 (2 dropdowny zamiast popovera) w paczce 8; M-2 (standard Menu 1–3, Biblioteka Galeria/Tabela, Nowy wzorzec zamrożony) kończy się — paczka 9."
     },
     {
       "modul": "Audyty",
       "werdykt": "w_toku",
-      "zdanie": "06.09: A1 na żywo (dbc1a03e19); A2 (Menu 3 jeden wzór, bez Ustaleń, generatory) w kolejce."
+      "zdanie": "06.09 17:11: A1 na żywo; A2 scalone lokalnie (Menu 3 jeden wzór, bez Ustaleń, CTA Nowy wynik/raport/inicjatywa) — paczka 9; A3 (bez flagi ff_auditsReportChain) i K6 u robotnika."
     },
     {
       "modul": "Spotkania",
