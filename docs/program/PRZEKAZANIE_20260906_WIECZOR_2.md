@@ -26,7 +26,6 @@ kolejny agent rozlicza się tym samym arkuszem postępu”. Ten plik = jedyny pu
 ## 2. Robotnicy W TOKU (worktree · gałąź · co · co zrobić z meldunkiem)
 | worktree | gałąź | zadanie | po meldunku |
 |---|---|---|---|
-| `/private/tmp/wt-11r4` | `mvp/1-1-r4-karty-wynikow` | DEC-422d: karty KPI/OKR/ROI = karty N (pigułka w pasku modułu, Menu 5 Pracuj z AI, sticky, rejestr `metric/objective/roi_case`) | zrzuty 3 kart + sticky → merge → wiersz; sprawdź `ResultsKpiScorecardDetailPage.tsx:609` `'search'→'reports'` (R2 znalezisko) |
 | `/private/tmp/wt-11m2b` | `mvp/1-1-m2-materialy-standard-menu` | DEC-423b/c/d: Materiały standard Menu 2 (Status z „Robocze”, Widoczność, widok, CTA; bez „Pokaż robocze”/„Filtry”), Menu 3 ≤3, Arkusze bez „Źródeł danych”, Biblioteka: Galeria/Tabela w Menu 2, formaty+źródła = Menu 3, „Nowy wzorzec” zamrożony | 7 zrzutów → merge → wiersz; potem właściciel dostaje kartę Materiałów |
 | `/private/tmp/wt-11a2` | `mvp/1-1-a2-audyty-menu3-generatory` | DEC-417b/c/d: Audyty Menu 3 jeden wzór, bez „Ustaleń”, CTA per zakładka na istniejących silnikach | zrzuty 5 zakładek → merge → wiersz |
 | `/private/tmp/codex-p10-karty-n` | `codex/p10-karty-n` | Codex, P10 runda 2 (wklejka 7 wydana właścicielowi 14:51) | gdy właściciel powie „Codex skończył”: `git -C /private/tmp/m03 fetch /private/tmp/codex-p10-karty-n HEAD && git merge --no-ff FETCH_HEAD` po obejrzeniu `P10/98_RAPORT.md`; 99_DECYZJE → jedna karta decyzji dla właściciela |
