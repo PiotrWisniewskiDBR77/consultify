@@ -44,14 +44,17 @@ describe('AdminSeatsLicencesPanel', () => {
   });
   it('renders configuration, history and honest purchase boundary', async () => {
     render(<AdminSeatsLicencesPanel />);
-    expect(await screen.findByText('invite')).toBeInTheDocument();
+    // Brak klucza `...seats-licences.types.invite` w słowniku PL -> spadek na
+    // `defaultValue: humanizeEnum('invite')` = "Invite", nie surowy fixture
+    // literal. Test asercji stary (sprzed konwencji humanizeEnum).
+    expect(await screen.findByText('Invite')).toBeInTheDocument();
     expect(screen.getByText(/Samoobsługowy zakup miejsc niedostępny/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Kup miejsca' })).toBeDisabled();
   });
   it('saves auto-add through the readback API', async () => {
     update.mockResolvedValue({ auto_add_seats_on_invite: 1, auto_add_seats_threshold: 75 });
     render(<AdminSeatsLicencesPanel />);
-    await screen.findByText('invite');
+    await screen.findByText('Invite');
     fireEvent.change(screen.getByLabelText('Próg procentowy'), { target: { value: '75' } });
     fireEvent.click(screen.getByRole('button', { name: 'Zapisz' }));
     expect(update).toHaveBeenCalledWith(false, 75);

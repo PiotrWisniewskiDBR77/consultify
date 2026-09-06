@@ -31,7 +31,12 @@ describe('AdminJobsPanel', () => {
       },
     ]);
     render(<AdminJobsPanel />);
-    expect(await screen.findByText('role-change')).toBeInTheDocument();
+    // Brak klucza `admin.health.queues-jobs.types.role-change` w słowniku PL
+    // -> komponent spada na `defaultValue: humanizeEnum('role-change')`
+    // = "Role Change" (utils/enumLabels.ts), nie surowy slug. Test asercji
+    // stary (sprzed konwencji humanizeEnum — zakaz surowych enumów, patrz
+    // komentarz w enumLabels.ts).
+    expect(await screen.findByText('Role Change')).toBeInTheDocument();
     expect(screen.queryByText(/Ponów|Anuluj/)).not.toBeInTheDocument();
   });
 

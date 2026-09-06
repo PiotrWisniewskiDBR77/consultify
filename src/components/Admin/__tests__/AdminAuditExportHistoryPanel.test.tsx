@@ -29,7 +29,10 @@ describe('AdminAuditExportHistoryPanel', () => {
       },
     ]);
     render(<AdminAuditExportHistoryPanel />);
-    expect(await screen.findByText('audit_logs_csv')).toBeInTheDocument();
+    // Komponent renderuje `t('...kinds.audit_logs_csv')` — realny klucz PL
+    // (public/locales/pl/translation.json: "Dziennik audytu (CSV)"), nie
+    // surowy enum. Test asercji stary (przed dodaniem klucza tłumaczenia).
+    expect(await screen.findByText('Dziennik audytu (CSV)')).toBeInTheDocument();
     expect(screen.getByText('owner-1')).toBeInTheDocument();
   });
   it('shows honest empty state', async () => {

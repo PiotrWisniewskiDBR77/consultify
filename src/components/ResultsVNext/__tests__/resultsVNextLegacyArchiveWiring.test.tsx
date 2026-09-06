@@ -96,22 +96,46 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
   describe('flaga OFF (domyślnie) — zero zmiany zachowania', () => {
     it('brak zakładki "legacy" w getResultsDomainTabs()', () => {
       const ids = getResultsDomainTabs().map((t) => t.id);
-      expect(ids).toEqual(['kpi', 'okr', 'roi']);
+      // `resultsSearch` jest dziś default-ON wszędzie (DEC 03.09 wieczór,
+      // A1 — patrz resultsVNextFeatureFlags.ts:185+224) — zakładka "search"
+      // jest więc obecna niezależnie od `resultsLegacyArchive`. Test pisany
+      // przed tą decyzją; asercja aktualizowana do realnego, zaakceptowanego
+      // stanu, nie rozluźniana (dalej zero "legacy" przy fladze OFF).
+      expect(ids).toEqual(['kpi', 'okr', 'roi', 'search']);
       expect(ids).not.toContain('legacy');
     });
 
     it('ROI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL', () => {
       setSearch('?resultsView=legacy');
-      render(<ResultsRoiRegistryPage />);
+      // StandardModuleBar -> useStandardPanelControls -> useJedenPanel wywołuje
+      // dziś useLocation() (react-router) — brak w tym teście, gdy renderuje
+      // się PEŁNY Hub (ten branch, legacy panel NIE montuje się). MemoryRouter
+      // jak w teście KPI niżej w tym pliku (ten sam plik, ten sam wzorzec).
+      render(
+        <MemoryRouter initialEntries={['/results/roi']}>
+          <ResultsRoiRegistryPage />
+        </MemoryRouter>
+      );
+      // `results-vnext-roi-disabled` NIE jest już renderowane tutaj:
+      // `roiRegistry` jest dziś default-ON (DEC 03.09 wieczór A1, patrz
+      // resultsVNextFeatureFlags.ts:224+230) — bez ?resultsView=legacy w
+      // stanie flagi ta strona montuje realny ResultsRoiHub, nie placeholder
+      // "jeszcze nie włączone". Sedno tego testu (i jego nazwy) to WYŁĄCZNIE
+      // że legacy-panel się NIE montuje — dokładnie ten sam, jedyny check co
+      // w teście KPI niżej w tym pliku (tam nigdy nie było asercji o
+      // disabled-testid, bo kpiRegistry był enabled już wcześniej).
       expect(legacyPanelMock).not.toHaveBeenCalled();
-      expect(screen.getByTestId('results-vnext-roi-disabled')).toBeInTheDocument();
     });
 
     it('OKR: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL', () => {
       setSearch('?resultsView=legacy');
-      render(<ResultsOkrRegistryPage />);
+      render(
+        <MemoryRouter initialEntries={['/results/okr']}>
+          <ResultsOkrRegistryPage />
+        </MemoryRouter>
+      );
+      // Patrz komentarz w teście ROI wyżej — `okrRegistry` też default-ON.
       expect(legacyPanelMock).not.toHaveBeenCalled();
-      expect(screen.getByTestId('results-vnext-okr-disabled')).toBeInTheDocument();
     });
 
     it('KPI: panel NIE jest montowany, nawet z ?resultsView=legacy już w URL', () => {
@@ -129,7 +153,9 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
     it('zakładka "legacy" pojawia się w getResultsDomainTabs()', () => {
       enableLegacyArchiveFlag();
       const ids = getResultsDomainTabs().map((t) => t.id);
-      expect(ids).toEqual(['kpi', 'okr', 'roi', 'legacy']);
+      // "search" (default-ON, DEC 03.09) poprzedza "legacy" w
+      // resultsDomainNavigation.ts — patrz komentarz wyżej w tym pliku.
+      expect(ids).toEqual(['kpi', 'okr', 'roi', 'search', 'legacy']);
     });
 
     it('ROI: montuje ResultsVNextLegacyArchivePanel z domain="roi"', () => {
@@ -166,7 +192,15 @@ describe('Archiwum (resultsLegacyArchive) — wołacz wiring', () => {
     it('ROI: BEZ ?resultsView=legacy w URL panel NIE jest montowany mimo włączonej flagi', () => {
       enableLegacyArchiveFlag();
       setSearch('');
-      render(<ResultsRoiRegistryPage />);
+      // Pełny Hub renderuje się (legacy panel nie montuje się bez
+      // ?resultsView=legacy) -> StandardModuleBar -> useJedenPanel ->
+      // useLocation() wymaga Router, jak w pozostałych "NIE jest montowany"
+      // testach w tym pliku.
+      render(
+        <MemoryRouter initialEntries={['/results/roi']}>
+          <ResultsRoiRegistryPage />
+        </MemoryRouter>
+      );
       expect(legacyPanelMock).not.toHaveBeenCalled();
     });
   });
