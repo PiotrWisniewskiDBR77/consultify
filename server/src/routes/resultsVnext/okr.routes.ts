@@ -174,6 +174,12 @@ import {
   listOkrSetApprovedSnapshots,
   listOkrSets,
 } from '../../services/resultsVnext/okr/okrSetRepository.js';
+// P7K część A (OKR) — read model raportu OKR: agregaty poziomu 1 i daty
+// ostatnich check-inów poziomu 2 jednym zapytaniem zamiast N+1 na wiersz.
+import {
+  listKeyResultCheckInSummariesForSet,
+  listOkrReportSummaries,
+} from '../../services/resultsVnext/okr/okrReportRepository.js';
 import {
   finalScoreOkrSet,
   recordObjectiveReflection,
@@ -978,6 +984,62 @@ router.get(
       res.status(200).json({ sets });
     } catch (err) {
       handleOkrRouteError(res, err, 'listOkrSets');
+    }
+  }
+);
+
+// ==========================================
+// GET /api/vnext/results/okr/report-summaries — P7K część A, poziom 1
+//
+// Agregaty raportów OKR (cele, rezultaty, rozkład stanu, właściciele,
+// ostatni check-in) dla WSZYSTKICH widocznych zestawów jednym zapytaniem.
+// Nie duplikuje `/sets` — ta trasa nie zwraca ani jednego pola zestawu,
+// tylko liczby, których `okr_vnext_sets` nie trzyma. Klient łączy jedno z
+// drugim po `setId`.
+//
+// Ścieżka LITERALNA na najwyższym poziomie, jak `/my`/`/company`/`/attention`
+// — ten router nie ma dynamicznej trasy `/:coś` na tym poziomie, więc nie ma
+// czego przesłonić (uwaga o kolejności montażu w nagłówku pliku).
+// ==========================================
+
+router.get('/report-summaries', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const summaries = await listOkrReportSummaries({
+      userId: auth.userId,
+      organizationId: auth.organizationId,
+    });
+    res.status(200).json({ summaries });
+  } catch (err) {
+    handleOkrRouteError(res, err, 'listOkrReportSummaries');
+  }
+});
+
+// ==========================================
+// GET /api/vnext/results/okr/sets/:setId/checkin-summaries — P7K, poziom 2
+//
+// Data i notatka OSTATNIEGO check-inu per kluczowy rezultat całego raportu.
+// Bez tego kolumna „OSTATNI CHECK-IN” w tabeli poziomu 2 kosztowałaby jedno
+// `GET /key-results/:id/check-ins` na wiersz (28 wywołań na raporcie DBR77).
+// ==========================================
+
+router.get(
+  '/sets/:setId/checkin-summaries',
+  validateParams(OkrSetIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { setId } = req.params as { setId: string };
+      const checkIns = await listKeyResultCheckInSummariesForSet({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        setId,
+      });
+      res.status(200).json({ checkIns });
+    } catch (err) {
+      handleOkrRouteError(res, err, 'listKeyResultCheckInSummariesForSet');
     }
   }
 );

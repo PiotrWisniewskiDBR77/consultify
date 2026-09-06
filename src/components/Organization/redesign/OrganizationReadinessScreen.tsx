@@ -48,6 +48,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { cn } from '../../../lib/utils';
+import { organizationFieldLabel } from '../../../labels/organizationFieldLabels';
 import { Api } from '../../../services/api';
 import {
   claimValueKey,
@@ -93,7 +94,8 @@ const BLOCKER_ICON: Record<OrgStatusTone, LucideIcon> = {
 };
 
 export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = (i18n.resolvedLanguage || i18n.language || 'pl').toLowerCase().startsWith('pl');
   const navigate = useNavigate();
   const { currentUser, currentOrganization } = useAppStore();
   const orgId = currentOrganization?.id || currentUser?.organizationId;
@@ -228,7 +230,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
           conflicts.length > 0
             ? conflicts
                 .slice(0, 2)
-                .map((conflict) => conflict.path)
+                .map((conflict) => organizationFieldLabel(conflict.path, isPolish))
                 .join(', ')
             : t(
                 'organization.readiness.dim.consistency.detailOk',
@@ -290,6 +292,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       conflicts,
       goToClaims,
       goToConflicts,
+      isPolish,
       latestVersion,
       stale.length,
       t,
@@ -310,7 +313,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
         id: `conflict-${conflict.path}`,
         tone: 'warning',
         title: t('organization.readiness.blocker.conflict.title', 'Konflikt: {{path}}', {
-          path: conflict.path,
+          path: organizationFieldLabel(conflict.path, isPolish),
         }),
         detail: conflict.values.join('  ↔  '),
         actionLabel: t('organization.readiness.blocker.conflict.action', 'Rozstrzygnij →'),
@@ -347,7 +350,7 @@ export const OrganizationReadinessScreen: React.FC<{ title: string }> = ({ title
       });
     }
     return items;
-  }, [conflicts, goToClaims, goToConflicts, latestVersion, pending.length, t]);
+  }, [conflicts, goToClaims, goToConflicts, isPolish, latestVersion, pending.length, t]);
 
   if (loading) {
     return (

@@ -26,11 +26,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
-import { LoadingState, SkeletonState } from '@/components/shared/states';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import type { ArtifactRailTeresaCommand } from '@/components/standard/ArtifactRightRail';
 import { IdeaRightPanel } from '@/components/standard/IdeaRightPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
+import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import i18n from '@/i18n';
 import { Api, getMapVersionFromPayload } from '@/services/api';
@@ -43,7 +44,6 @@ import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
 import { isIdeaInspectorRightRailEnabled } from '@/utils/ideaInspectorRightRailFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
-import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
 import {
   ARTIFACT_IDENTITY,
@@ -836,6 +836,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     language: i18n.language || 'en',
     onConflict: handleGraphConflict,
   });
+  const graphHydrating = loading || graphRuntime.loading;
+  const loadingPhase = useDeferredLoading(graphHydrating);
   // Wire refresh ref so handleGraphConflict can call it (ref avoids circular dep)
   conflictRefreshRef.current = graphRuntime.refresh;
 
@@ -3975,8 +3977,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     if (!detaleWPanelu || !panel6Enabled) return;
     if (nodeDetailOpen) setSekcjaPrawegoPaska('properties');
   }, [detaleWPanelu, panel6Enabled, nodeDetailOpen]);
-  // VF1 SPEC-A canvas states (loading/error) — default OFF, gated per rule #7.
-  const vf1CanvasSpecAEnabled = isVf1CanvasSpecAEnabled();
   // Z-menu1-delete: "Usuń" kebab entry — wires the same `Api.deleteMyIdea`
   // used by the ideas list (MyIdeasListContent) + the same confirm-dialog
   // pattern. "Duplikuj" (Api.duplicateMyIdea → deep-link into the new copy)
@@ -4494,16 +4494,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [ideaWorkspaceToolsSharedProps, handlePanelChange, panel6Enabled]
   );
 
-  if (loading) {
+  if (graphHydrating) {
     return (
       <div className="h-full w-full bg-[var(--c-surface)] p-6">
-        {/* VF1 SPEC-A (flag OFF default): A·Canvas artifacts load into the
-            canonical canvas skeleton; legacy panel skeleton stays default. */}
-        {vf1CanvasSpecAEnabled ? (
-          <SkeletonState variant="canvas" />
-        ) : (
-          <LoadingState template="panel" />
-        )}
+        {loadingPhase === 'timeout' ? (
+          <ErrorState
+            variant="timeout"
+            compact
+            onRetry={() => {
+              void hydrateRef.current();
+              void graphRuntime.refresh();
+            }}
+          />
+        ) : loadingPhase === 'pending' || loadingPhase === 'slow' ? (
+          <div data-testid="idea-canvas-loading" className="space-y-3">
+            {loadingPhase === 'slow' && (
+              <p role="status" className="text-sm text-c-text-muted">
+                Wczytywanie trwa dłużej niż zwykle…
+              </p>
+            )}
+            <SkeletonState variant="canvas" />
+          </div>
+        ) : null}
       </div>
     );
   }

@@ -68,7 +68,6 @@ import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { StatusChip } from '@/components/ui/primitives';
-import { ROUTES } from '@/routes/routeConfig';
 
 import { HonestValueCell } from '../HonestValue';
 import { ResultsVNextForbiddenState } from '../ResultsVNextForbiddenState';
@@ -79,12 +78,14 @@ import { memberNameOrUnknown, useOrganizationMemberNames } from '@/hooks/useOrga
 import { getOkrSet, type OkrSetDto } from './okrApi';
 import { getOkrCycle, type OkrCycleDto } from './okrAdminApi';
 import { listCheckIns, type OkrCheckInDto } from './okrCheckInApi';
+import { OKR_CHECKIN_STATUS_TONE, okrCheckInStatusLabel } from './okrCheckInMappers';
 import {
   getObjectiveWithKeyResults,
   type OkrKeyResultDto,
   type OkrObjectiveWithKeyResultsDto,
 } from './okrObjectiveApi';
 import {
+  getOkrCheckInSetLock,
   formatOkrDate,
   formatOkrNumeric,
   formatOkrProgressPercent,
@@ -113,11 +114,26 @@ import {
   isOkrObjectiveCardSectionId,
   type OkrObjectiveCardSectionId,
 } from './OkrObjectiveCardSections';
+import { withOwnerSampleData } from './okrObjectiveCardPath';
 import {
-  okrKeyResultCardPath,
-  okrKeyResultSetPath,
-  withOwnerSampleData,
-} from './okrObjectiveCardPath';
+  okrObjectiveCardInReportPath,
+  okrReportPath,
+  OKR_REPORT_REGISTRY_PATH,
+} from './p7k/okrReportPaths';
+import {
+  listCheckInOccurrences,
+  newOkrCheckInIdempotencyKey,
+  OkrCheckInApiError,
+  recordCheckIn,
+  suggestNextCheckInValue,
+  type OkrCheckInOccurrenceOption,
+  type OkrSuggestNextCheckInValue,
+  type RecordOkrCheckInInput,
+} from './okrCheckInApi';
+import {
+  OkrCheckInRecordDialog,
+  type OkrCheckInRecordFormValues,
+} from './OkrCheckInRecordDialog';
 import {
   OKR_CARD_LINK_CLASS,
   OKR_TONE_TEXT_CLASS,
@@ -141,6 +157,19 @@ export const OKR_CARD_SECTION_PARAM = 'sekcja';
 const NULL_TEXT = '—';
 
 /**
+ * Lewa krawędź bloku kluczowego rezultatu (SSOT §3). Kolor koduje WYŁĄCZNIE
+ * sygnał: czerwień tylko dla krytycznego, bursztyn dla zagrożenia, zieleń
+ * jako cienka kreska „idzie dobrze", neutralny dla reszty. Ani jednego
+ * `primary-*` — w tym repo `primary` to crimson (kanon UI #3).
+ */
+const KR_EDGE_CLASS: Record<OkrCardTone, string> = {
+  neutral: 'border-l-c-border',
+  success: 'border-l-c-success',
+  warning: 'border-l-c-warning',
+  danger: 'border-l-c-danger',
+};
+
+/**
  * Etykiety sekcji biorą się WYŁĄCZNIE z kontraktu `OkrObjectiveCardSections.ts`
  * (jedno źródło prawdy o kolejności i nazwach) — komponent nie ma własnej
  * drugiej listy, która mogłaby po cichu odjechać od zatwierdzonego obrazu.
@@ -160,7 +189,11 @@ export const OkrObjectiveCardPage: React.FC = () => {
   const isPolish = !!i18n.language?.startsWith('pl');
   const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
   const navigate = useNavigate();
-  const { objectiveId } = useParams<{ objectiveId: string }>();
+  // P7K część A — karta celu żyje POD raportem:
+  // `/results/okr/:setId/objectives/:objectiveId`. `setId` z adresu ma
+  // pierwszeństwo nad `objective.setId`, bo okruszek musi wiedzieć, z
+  // którego raportu przyszliśmy, ZANIM cel się wczyta.
+  const { objectiveId, setId: routeSetId } = useParams<{ objectiveId: string; setId?: string }>();
   const enabled = isResultsVNextFlagEnabled('okrRegistry');
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -196,6 +229,47 @@ export const OkrObjectiveCardPage: React.FC = () => {
   const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [checkIns, setCheckIns] = useState<Record<string, OkrCheckInDto[]>>({});
 
+  // ── Check-in NA BLOKU rezultatu (P7K, SSOT §3) ──────────────────────────
+  // Karta celu jest jedynym miejscem, z którego rezultat da się dziś
+  // zaktualizować (osobnej strony rezultatu nie ma), więc formularz
+  // check-inu musi być TUTAJ, a nie „gdzieś w zestawie".
+  const [checkInTarget, setCheckInTarget] = useState<OkrKeyResultDto | null>(null);
+  const [checkInSuggestion, setCheckInSuggestion] = useState<
+    OkrSuggestNextCheckInValue | null | undefined
+  >(undefined);
+  const [checkInOccurrences, setCheckInOccurrences] = useState<
+    OkrCheckInOccurrenceOption[] | undefined
+  >(undefined);
+  const [checkInOccurrencesError, setCheckInOccurrencesError] = useState<string | null>(null);
+  const [checkInBusy, setCheckInBusy] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [checkInConflict, setCheckInConflict] = useState(false);
+
+  /** `?rezultat=<id>` — wejście z wiersza tabeli poziomu 2 podświetla TEN
+   * rezultat w sekcji, zamiast otwierać dla niego osobną stronę. */
+  const highlightedKeyResultId = searchParams.get('rezultat');
+
+  const openCheckIn = useCallback(
+    (keyResult: OkrKeyResultDto) => {
+      setCheckInError(null);
+      setCheckInConflict(false);
+      setCheckInSuggestion(undefined);
+      setCheckInOccurrences(undefined);
+      setCheckInOccurrencesError(null);
+      setCheckInTarget(keyResult);
+      suggestNextCheckInValue(keyResult.keyResultId)
+        .then(setCheckInSuggestion)
+        .catch(() => setCheckInSuggestion(null));
+      listCheckInOccurrences(keyResult.keyResultId)
+        .then(setCheckInOccurrences)
+        .catch((err) => {
+          setCheckInOccurrences([]);
+          setCheckInOccurrencesError(toUserFacingErrorMessage(err, isPolish));
+        });
+    },
+    [isPolish]
+  );
+
   const loadObjective = useCallback(async () => {
     if (!objectiveId) return;
     setLoading(true);
@@ -223,7 +297,7 @@ export const OkrObjectiveCardPage: React.FC = () => {
     void loadObjective();
   }, [enabled, loadObjective]);
 
-  const setId = objective?.setId ?? null;
+  const setId = routeSetId ?? objective?.setId ?? null;
 
   useEffect(() => {
     if (!enabled || !setId) return;
@@ -290,8 +364,35 @@ export const OkrObjectiveCardPage: React.FC = () => {
     };
   }, [enabled, keyResults]);
 
+  const handleCheckInSubmit = useCallback(
+    (values: OkrCheckInRecordFormValues) => {
+      if (!checkInTarget) return;
+      setCheckInBusy(true);
+      setCheckInError(null);
+      setCheckInConflict(false);
+      const input: RecordOkrCheckInInput = {
+        ...values,
+        idempotencyKey: newOkrCheckInIdempotencyKey(),
+      };
+      recordCheckIn(checkInTarget.keyResultId, input)
+        .then(() => {
+          setCheckInTarget(null);
+          // Check-in zmienia wartość bieżącą, postęp rezultatu I postęp celu
+          // (rollup po stronie serwera) — przeładowujemy cel, zamiast
+          // domalowywać nową wartość lokalnie.
+          void loadObjective();
+        })
+        .catch((err) => {
+          setCheckInConflict(err instanceof OkrCheckInApiError && err.status === 409);
+          setCheckInError(toUserFacingErrorMessage(err, isPolish));
+        })
+        .finally(() => setCheckInBusy(false));
+    },
+    [checkInTarget, loadObjective, isPolish]
+  );
+
   const goToRegistry = useCallback(
-    () => navigate({ pathname: ROUTES.RESULTS_OKR.ROOT, search: window.location.search }),
+    () => navigate({ pathname: OKR_REPORT_REGISTRY_PATH, search: window.location.search }),
     [navigate]
   );
 
@@ -458,17 +559,14 @@ export const OkrObjectiveCardPage: React.FC = () => {
               ', calculated by the server-side progress engine and clamped to 0–100%. The measurement direction ("increase" / "decrease" / "maintain range") is part of each key result contract. When a value cannot be calculated, this card says so instead of showing zero.'
             )}
           </p>
+          {/* P7K: poziomy OKR są TRZY. „Piętra niżej" nie ma — kluczowy
+              rezultat jest BLOKIEM tej sekcji, a nie osobną stroną
+              (SSOT §1, korekta P7K §6). */}
           <p className="mt-2 text-[11px] text-c-text-muted">
-            {t('Piętro niżej: ', 'One level down: ')}
-            <button
-              type="button"
-              className={OKR_CARD_LINK_CLASS}
-              data-testid="okr-objective-card-open-key-result-set"
-              onClick={() => navigate(withOwnerSampleData(okrKeyResultSetPath(objective.objectiveId)))}
-            >
-              {t('zbiór kart kluczowych rezultatów', 'the set of key result cards')}
-            </button>
-            {t(' — a z niego kolejna karta.', ' — and another card from there.')}
+            {t(
+              'Każdy kluczowy rezultat jest blokiem poniżej — z własnym check-inem. Osobnej strony rezultatu nie ma.',
+              'Every key result is a block below — with its own check-in. There is no separate key result page.'
+            )}
           </p>
         </NModeContentBlock>
 
@@ -491,14 +589,35 @@ export const OkrObjectiveCardPage: React.FC = () => {
             const target = parseOkrNumericField(kr.targetValue);
             const current = parseOkrNumericField(kr.currentValue);
             return (
-              <NModeContentBlock
+              /* SSOT §3: rezultat zagrożony ma bursztynowy, krytyczny czerwony
+                 AKCENT NA LEWEJ KRAWĘDZI bloku — kolor niesie sygnał, nie
+                 kategorię, i nigdy nie wypełnia bloku (kanon UI #3). */
+              <div
                 key={kr.keyResultId}
+                className={`overflow-hidden rounded-xl border-l-4 ${KR_EDGE_CLASS[tone]} ${
+                  highlightedKeyResultId === kr.keyResultId
+                    ? 'ring-2 ring-c-focus ring-offset-1 ring-offset-c-app'
+                    : ''
+                }`}
+                data-testid={`okr-objective-card-kr-block-${kr.keyResultId}`}
+              >
+              <NModeContentBlock
                 blockId={`kr-${kr.keyResultId}`}
                 scope={scope}
                 title={`KR${index + 1} — ${kr.title}`}
                 readMode
               >
                 <div className="flex flex-col gap-3" data-testid={`okr-objective-card-kr-${kr.keyResultId}`}>
+                  <p className="text-[11px] text-c-text-muted">
+                    {t('Właściciel: ', 'Owner: ')}
+                    {resolveMemberName(kr.ownerUserId)}
+                    {' · '}
+                    {t('Zespół: ', 'Team: ')}
+                    {kr.teamName ?? NULL_TEXT}
+                    {' · '}
+                    {t('Termin: ', 'Deadline: ')}
+                    {kr.deadline ? formatOkrDate(kr.deadline, isPolish) : NULL_TEXT}
+                  </p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <OkrStatTile
                       label={t('Start', 'Start')}
@@ -561,20 +680,24 @@ export const OkrObjectiveCardPage: React.FC = () => {
                   {kr.description ? (
                     <p className="text-[11px] leading-relaxed text-c-text-muted">{kr.description}</p>
                   ) : null}
+                  {/* Check-in NA BLOKU (SSOT §3: „przycisk »Check-in« na
+                      bloku"). Zapisuje przez `recordCheckIn` — realny wpis,
+                      nie atrapa. Gdy zestaw nie jest aktywny, przycisk nadal
+                      działa, a okno mówi DLACZEGO nie da się zapisać
+                      (TRIADA §C3), zamiast milczeć. */}
                   <div>
                     <button
                       type="button"
-                      className={OKR_CARD_LINK_CLASS}
-                      data-testid={`okr-objective-card-open-kr-${kr.keyResultId}`}
-                      onClick={() =>
-                        navigate(withOwnerSampleData(okrKeyResultCardPath(objective.objectiveId, kr.keyResultId)))
-                      }
+                      className="inline-flex h-8 items-center rounded-lg border border-c-border px-3 text-xs font-medium text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      data-testid={`okr-objective-card-checkin-${kr.keyResultId}`}
+                      onClick={() => openCheckIn(kr)}
                     >
-                      {t('Otwórz kartę kluczowego rezultatu', 'Open the key result card')}
+                      {t('Check-in', 'Check-in')}
                     </button>
                   </div>
                 </div>
               </NModeContentBlock>
+              </div>
             );
           })
         )}
@@ -588,9 +711,9 @@ export const OkrObjectiveCardPage: React.FC = () => {
     .sort((a, b) => (a.entry.submittedAt < b.entry.submittedAt ? 1 : -1));
 
   const progressSection: NModeSection = {
-    id: 'postep',
+    id: 'check-iny',
     icon: TrendingUp,
-    ...sectionMeta('postep'),
+    ...sectionMeta('check-iny'),
     hasData: typeof progress === 'number' || allCheckIns.length > 0,
     alwaysShow: true,
     component: (
@@ -692,7 +815,10 @@ export const OkrObjectiveCardPage: React.FC = () => {
                       />
                     </span>
                     {entry.ownerDeclaredStatus ? (
-                      <StatusChip label={entry.ownerDeclaredStatus} tone="neutral" />
+                      <StatusChip
+                        label={okrCheckInStatusLabel(entry.ownerDeclaredStatus, isPolish)}
+                        tone={OKR_CHECKIN_STATUS_TONE[entry.ownerDeclaredStatus]}
+                      />
                     ) : null}
                     <span>{resolveMemberName(entry.submittedBy)}</span>
                   </div>
@@ -785,7 +911,7 @@ export const OkrObjectiveCardPage: React.FC = () => {
                     <button
                       type="button"
                       className={`${OKR_CARD_LINK_CLASS} mt-1`}
-                      onClick={() => navigate(withOwnerSampleData(`/results/okr/${otherId}`))}
+                      onClick={() => navigate(withOwnerSampleData(`/results/okr/objectives/${otherId}`))}
                     >
                       {otherId}
                     </button>
@@ -970,17 +1096,18 @@ export const OkrObjectiveCardPage: React.FC = () => {
           <button
             type="button"
             className="w-full rounded-lg border border-c-border px-3 py-1.5 text-left text-xs text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            data-testid="okr-objective-card-panel-key-result-set"
-            onClick={() => navigate(withOwnerSampleData(okrKeyResultSetPath(objective.objectiveId)))}
+            data-testid="okr-objective-card-panel-key-results"
+            onClick={() => setActiveSection('kluczowe-rezultaty')}
           >
-            {t('Zbiór kart kluczowych rezultatów', 'Set of key result cards')}
+            {t('Kluczowe rezultaty i check-in', 'Key results and check-in')}
           </button>
           <button
             type="button"
             className="w-full rounded-lg border border-c-border px-3 py-1.5 text-left text-xs text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-            onClick={() => (setId ? navigate(`/results/okr/sets/${setId}`) : undefined)}
+            data-testid="okr-objective-card-panel-open-report"
+            onClick={() => (setId ? navigate(okrReportPath(setId)) : undefined)}
           >
-            {t('Otwórz zestaw OKR', 'Open the OKR set')}
+            {t('Otwórz raport OKR', 'Open the OKR report')}
           </button>
         </div>
       ),
@@ -1018,11 +1145,14 @@ export const OkrObjectiveCardPage: React.FC = () => {
     },
   ];
 
+  // Trzy stopnie, dokładnie tyle, ile jest poziomów (P7K): raporty → raport
+  // → cel. Środkowy stopień prowadzi do RAPORTU (poziom 2), nie do powłoki
+  // administracyjnej zestawu — inaczej okruszek wychodziłby z formuły.
   const breadcrumbItems: { label: string; onClick?: () => void }[] = [
-    { label: t('Rejestr OKR', 'OKR registry'), onClick: goToRegistry },
+    { label: t('Raporty OKR', 'OKR reports'), onClick: goToRegistry },
     {
       label: setTitle,
-      onClick: () => (setId ? navigate(`/results/okr/sets/${setId}`) : undefined),
+      onClick: () => (setId ? navigate(okrReportPath(setId)) : undefined),
     },
     { label: objective.title },
   ];
@@ -1044,6 +1174,27 @@ export const OkrObjectiveCardPage: React.FC = () => {
           }
         />
       </div>
+      <OkrCheckInRecordDialog
+        open={!!checkInTarget}
+        keyResultTitle={checkInTarget?.title ?? ''}
+        isPolish={isPolish}
+        onClose={() => (checkInBusy ? undefined : setCheckInTarget(null))}
+        onSubmit={handleCheckInSubmit}
+        suggestion={checkInSuggestion}
+        occurrences={checkInOccurrences}
+        occurrencesError={checkInOccurrencesError}
+        blockedReason={
+          parentSet
+            ? (() => {
+                const lock = getOkrCheckInSetLock(parentSet.status);
+                return lock ? (isPolish ? lock.reason.pl : lock.reason.en) : null;
+              })()
+            : null
+        }
+        busy={checkInBusy}
+        errorMessage={checkInError}
+        isConflict={checkInConflict}
+      />
     </div>
   );
 };

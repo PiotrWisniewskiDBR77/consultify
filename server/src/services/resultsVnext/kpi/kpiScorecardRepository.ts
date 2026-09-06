@@ -80,6 +80,11 @@ import {
   type KpiScorecardReviewSnapshot,
   type KpiScorecardReviewSnapshotRow,
   type KpiScorecardRow,
+  type KpiPerformanceStatus,
+  type ScorecardPeriodCell,
+  type ScorecardPeriodDefinition,
+  type ScorecardPeriodMatrix,
+  type ScorecardPeriodMatrixItem,
   type ScorecardSnapshotItemFact,
   type ScorecardStatusCounts,
 } from './kpiScorecardTypes.js';
@@ -220,9 +225,28 @@ export interface ListScorecardItemsParams {
 
 export async function listScorecardItems(params: ListScorecardItemsParams): Promise<KpiScorecardItem[]> {
   const { userId, organizationId, scorecardId } = params;
+  /**
+   * P7K — pozycja raportu niesie teraz PEŁNY KONTRAKT MIERNIKA (SSOT §2):
+   * obszar i właściciel nadrzędny z kolumn pozycji (z fallbackiem na zapis
+   * seeda w `display_config`, patrz `toKpiScorecardItem`), a jednostka,
+   * kierunek, częstotliwość, definicja, metoda liczenia i ODPOWIEDZIALNY —
+   * z bieżącej wersji definicji, JOINEM. Bez tego joinu poziom 2 musiałby
+   * wystrzelić 138 osobnych zapytań o wersję, po jednym na miernik.
+   *
+   * `kpi_owner_name` idzie z `users`, nie jako UUID — kanon „nazwiska, nie
+   * identyfikatory". Gdy join nie trafi, front pokazuje „Nieznany
+   * użytkownik" przez `memberNameOrUnknown`, nigdy surowy identyfikator.
+   */
   const baseQuerySql = `
     SELECT si.*,
            dv.name AS kpi_name,
+           dv.unit AS kpi_unit,
+           dv.target_geometry AS kpi_target_geometry,
+           dv.measurement_frequency_days AS kpi_measurement_frequency_days,
+           dv.description AS kpi_description,
+           dv.formula_text AS kpi_formula_text,
+           kd.owner_user_id AS kpi_owner_user_id,
+           NULLIF(TRIM(CONCAT_WS(' ', kpi_owner.first_name, kpi_owner.last_name)), '') AS kpi_owner_name,
            NULLIF(TRIM(CONCAT_WS(' ', added.first_name, added.last_name)), '') AS added_by_name
       FROM rvn_kpi_scorecard_items si
       LEFT JOIN rvn_kpi_definitions kd
@@ -230,6 +254,7 @@ export async function listScorecardItems(params: ListScorecardItemsParams): Prom
       LEFT JOIN rvn_kpi_definition_versions dv
              ON dv.definition_version_id = kd.current_definition_version_id
             AND dv.organization_id = kd.organization_id
+      LEFT JOIN users kpi_owner ON kpi_owner.id = kd.owner_user_id AND kpi_owner.organization_id = si.organization_id
       LEFT JOIN users added ON added.id = si.added_by AND added.organization_id = si.organization_id
       INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
      WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
@@ -253,8 +278,18 @@ export interface GetScorecardStatusDistributionParams {
   asOf?: string;
 }
 
+export interface ScorecardAreaStatusDistribution extends ScorecardStatusCounts {
+  /** `null` = pozycja bez zadeklarowanego obszaru („Bez obszaru" w UI). */
+  areaName: string | null;
+  totalVisible: number;
+}
+
 export interface ScorecardStatusDistribution extends ScorecardStatusCounts {
   totalVisible: number;
+  /** Otwarte karty działania w całym raporcie (SSOT §6, kolumna L1). */
+  openDeviationCases: number;
+  /** Rozkład stanu per OBSZAR — podgląd raportu KPI (SSOT §6 / paczka §14). */
+  byArea: ScorecardAreaStatusDistribution[];
 }
 
 export async function getScorecardStatusDistribution(
@@ -262,22 +297,66 @@ export async function getScorecardStatusDistribution(
 ): Promise<ScorecardStatusDistribution> {
   const { userId, organizationId, scorecardId, asOf } = params;
   const asOfTimestamp = asOf ?? new Date().toISOString();
+  /**
+   * P7K — do rozkładu dochodzą DWIE rzeczy, obie potrzebne na poziomie 1
+   * (SSOT §6: kolumna OTWARTE DZIAŁANIA; podgląd raportu KPI ma „rozkład
+   * stanu PER OBSZAR"):
+   *   · `open_deviation_cases` — liczba otwartych kart działania w raporcie,
+   *   · `by_area` — ten sam rozkład w rozbiciu na obszary.
+   * Obie liczone w TYM SAMYM zapytaniu i za TYM SAMYM filtrem widoczności,
+   * żeby poziom 1 nie musiał ściągać całej matrycy okresów tylko po to, by
+   * narysować podgląd.
+   *
+   * `by_area` bierze obszar tak samo jak `toKpiScorecardItem`: kolumna
+   * `area_name`, a gdy pusta — zapis seeda w `display_config->>'obszar'`.
+   * Pozycja bez obszaru trafia do klucza NULL i UI opisuje ją „Bez obszaru",
+   * zamiast być cicho doliczona do cudzej grupy.
+   */
   const baseQuerySql = `
+    , scoped_items AS (
+      SELECT si.kpi_id,
+             COALESCE(si.area_name, NULLIF(TRIM(si.display_config->>'obszar'), '')) AS area_name,
+             latest.performance_status,
+             (
+               SELECT COUNT(*) FROM rvn_kpi_deviation_cases dc
+                WHERE dc.kpi_id = si.kpi_id
+                  AND dc.organization_id = si.organization_id
+                  AND dc.status <> 'closed'
+             ) AS open_cases
+        FROM rvn_kpi_scorecard_items si
+        INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
+        LEFT JOIN LATERAL (
+          SELECT m.performance_status FROM rvn_kpi_measurements m
+           WHERE m.kpi_id = si.kpi_id AND m.period_end <= $${VISIBILITY_CTE_PARAM_COUNT + 2}
+             AND NOT EXISTS (SELECT 1 FROM rvn_kpi_measurements newer WHERE newer.correction_of_measurement_id = m.measurement_id)
+           ORDER BY m.period_end DESC, m.recorded_at DESC LIMIT 1
+        ) latest ON true
+       WHERE si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND si.organization_id = $1
+    )
     SELECT
-        COUNT(*) FILTER (WHERE latest.performance_status = 'on_target') AS safe_count,
-        COUNT(*) FILTER (WHERE latest.performance_status = 'warning')   AS warning_count,
-        COUNT(*) FILTER (WHERE latest.performance_status = 'critical')  AS critical_count,
-        COUNT(*) FILTER (WHERE latest.performance_status IS NULL OR latest.performance_status = 'neutral') AS missing_count,
-        COUNT(*) AS total_count
-      FROM rvn_kpi_scorecard_items si
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
-      LEFT JOIN LATERAL (
-        SELECT m.performance_status FROM rvn_kpi_measurements m
-         WHERE m.kpi_id = si.kpi_id AND m.period_end <= $${VISIBILITY_CTE_PARAM_COUNT + 2}
-           AND NOT EXISTS (SELECT 1 FROM rvn_kpi_measurements newer WHERE newer.correction_of_measurement_id = m.measurement_id)
-         ORDER BY m.period_end DESC, m.recorded_at DESC LIMIT 1
-      ) latest ON true
-     WHERE si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND si.organization_id = $1`;
+        COUNT(*) FILTER (WHERE performance_status = 'on_target') AS safe_count,
+        COUNT(*) FILTER (WHERE performance_status = 'warning')   AS warning_count,
+        COUNT(*) FILTER (WHERE performance_status = 'critical')  AS critical_count,
+        COUNT(*) FILTER (WHERE performance_status IS NULL OR performance_status = 'neutral') AS missing_count,
+        COUNT(*) AS total_count,
+        COALESCE(SUM(open_cases), 0) AS open_deviation_cases,
+        COALESCE(
+          (
+            SELECT json_agg(area ORDER BY area.area_name NULLS LAST)
+              FROM (
+                SELECT area_name,
+                       COUNT(*) FILTER (WHERE performance_status = 'on_target') AS safe,
+                       COUNT(*) FILTER (WHERE performance_status = 'warning')   AS warning,
+                       COUNT(*) FILTER (WHERE performance_status = 'critical')  AS critical,
+                       COUNT(*) FILTER (WHERE performance_status IS NULL OR performance_status = 'neutral') AS missing,
+                       COUNT(*) AS total
+                  FROM scoped_items
+                 GROUP BY area_name
+              ) area
+          ),
+          '[]'::json
+        ) AS by_area
+      FROM scoped_items`;
   const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
   const values = [...wrapped.values, scorecardId, asOfTimestamp];
   const rows = await withReadClient((c) =>
@@ -287,16 +366,45 @@ export async function getScorecardStatusDistribution(
       critical_count: string;
       missing_count: string;
       total_count: string;
+      open_deviation_cases: string;
+      by_area:
+        | {
+            area_name: string | null;
+            safe: string | number;
+            warning: string | number;
+            critical: string | number;
+            missing: string | number;
+            total: string | number;
+          }[]
+        | null;
     }>(c, wrapped.sql, values)
   );
   const row = rows[0];
-  if (!row) return { safe: 0, warning: 0, critical: 0, missing: 0, totalVisible: 0 };
+  if (!row)
+    return {
+      safe: 0,
+      warning: 0,
+      critical: 0,
+      missing: 0,
+      totalVisible: 0,
+      openDeviationCases: 0,
+      byArea: [],
+    };
   return {
     safe: Number(row.safe_count),
     warning: Number(row.warning_count),
     critical: Number(row.critical_count),
     missing: Number(row.missing_count),
     totalVisible: Number(row.total_count),
+    openDeviationCases: Number(row.open_deviation_cases),
+    byArea: (row.by_area ?? []).map((area) => ({
+      areaName: area.area_name,
+      safe: Number(area.safe),
+      warning: Number(area.warning),
+      critical: Number(area.critical),
+      missing: Number(area.missing),
+      totalVisible: Number(area.total),
+    })),
   };
 }
 
@@ -425,4 +533,309 @@ export async function listReviewSnapshots(
 
   const visibleKpiIds = await withReadClient((c) => resolveVisibleKpiIdSet(c, { userId, organizationId }));
   return rows.map((row) => toKpiScorecardReviewSnapshot(redactSnapshotPayloadForReader(row, visibleKpiIds)));
+}
+
+// ==========================================
+// P7K — getScorecardPeriodMatrix
+//
+// Poziom 2 raportu KPI (SSOT §6): dla KAŻDEGO miernika raportu para
+// CEL / Rezultat w każdym okresie roku, YTD, stan ostatniego okresu i liczba
+// otwartych kart działania.
+//
+// Widoczność: dokładnie ta sama reguła co `listScorecardItems` i
+// `getScorecardStatusDistribution` (AC #4) — filtr po `resource_type = 'kpi'`
+// NA POZYCJI, przed jakąkolwiek agregacją. Widoczność raportu NIE implikuje
+// widoczności miernika, więc czytelnik bez dostępu do miernika nie zobaczy
+// ani jego komórek, ani jego wkładu w YTD.
+//
+// Dwa zapytania zamiast N+1: jedno po pomiarach wszystkich mierników raportu
+// w zakresie roku, drugie po liczbie otwartych spraw odchylenia. Przy 138
+// miernikach ścieżka „po jednym GET na miernik" oznaczałaby 138 przelotów.
+// ==========================================
+
+export interface GetScorecardPeriodMatrixParams {
+  userId: string;
+  organizationId: string;
+  scorecardId: string;
+  /** Rok raportu. Domyślnie rok bieżący. */
+  year: number;
+  /** Ziarno okresu; domyślnie wyprowadzone z `review_frequency` raportu. */
+  granularity: 'month' | 'quarter' | 'year';
+  /** „Teraz" dla wyznaczenia okresu bieżącego — wstrzykiwalne dla testów. */
+  now?: Date;
+}
+
+interface PeriodMeasurementRow {
+  kpi_id: string;
+  item_id: string;
+  unit: string | null;
+  measurement_id: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  actual_value: string | number | null;
+  period_target_value: string | number | null;
+  evidence_refs: unknown;
+  performance_status: KpiPerformanceStatus | null;
+  data_quality_status: string | null;
+}
+
+const pad2 = (value: number): string => String(value).padStart(2, '0');
+
+/**
+ * Siatka okresów roku. Generowana z ziarna, a NIE z tego, co akurat jest
+ * w pomiarach: miesiąc bez pomiaru ma istnieć jako kolumna z „—" (SSOT:
+ * „brak danych = »—«, nigdy 0"), a nie znikać z raportu.
+ */
+export function buildScorecardPeriodGrid(
+  year: number,
+  granularity: 'month' | 'quarter' | 'year',
+  now: Date
+): ScorecardPeriodDefinition[] {
+  const inRange = (start: Date, end: Date): boolean => now >= start && now <= end;
+  if (granularity === 'year') {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
+    return [
+      {
+        key: String(year),
+        periodStart: start.toISOString(),
+        periodEnd: end.toISOString(),
+        isCurrent: inRange(start, end),
+      },
+    ];
+  }
+  if (granularity === 'quarter') {
+    return [0, 1, 2, 3].map((q) => {
+      const start = new Date(Date.UTC(year, q * 3, 1));
+      const end = new Date(Date.UTC(year, q * 3 + 3, 0, 23, 59, 59, 999));
+      return {
+        key: `${year}-Q${q + 1}`,
+        periodStart: start.toISOString(),
+        periodEnd: end.toISOString(),
+        isCurrent: inRange(start, end),
+      };
+    });
+  }
+  return Array.from({ length: 12 }, (_unused, month) => {
+    const start = new Date(Date.UTC(year, month, 1));
+    const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+    return {
+      key: `${year}-${pad2(month + 1)}`,
+      periodStart: start.toISOString(),
+      periodEnd: end.toISOString(),
+      isCurrent: inRange(start, end),
+    };
+  });
+}
+
+/** Klucz siatki dla daty początku pomiaru — po nim wpadamy do właściwej kolumny. */
+function periodKeyFor(
+  isoDate: string,
+  granularity: 'month' | 'quarter' | 'year'
+): string | null {
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return null;
+  const year = date.getUTCFullYear();
+  if (granularity === 'year') return String(year);
+  if (granularity === 'quarter') return `${year}-Q${Math.floor(date.getUTCMonth() / 3) + 1}`;
+  return `${year}-${pad2(date.getUTCMonth() + 1)}`;
+}
+
+function numeric(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * CEL okresu: kolumna `period_target_value` (migracja
+ * `20261124_rvn_kpi_report_contract_fields.sql`), a gdy jest pusta — zapis
+ * seeda DBR77 w `evidence_refs` (`{"kind":"seed_period_target"}`). Kolumna
+ * zawsze wygrywa. Żadnego innego źródła NIE podstawiamy: roczny
+ * `target_value` wersji definicji to cel ROKU, nie cel miesiąca, i wpisanie
+ * go w komórkę miesiąca byłoby wymyśloną liczbą.
+ */
+export function resolvePeriodTarget(
+  columnValue: string | number | null | undefined,
+  evidenceRefs: unknown
+): number | null {
+  const fromColumn = numeric(columnValue);
+  if (fromColumn !== null) return fromColumn;
+  if (!Array.isArray(evidenceRefs)) return null;
+  for (const ref of evidenceRefs) {
+    if (!ref || typeof ref !== 'object') continue;
+    const entry = ref as { kind?: unknown; targetValue?: unknown };
+    if (entry.kind !== 'seed_period_target') continue;
+    const parsed = numeric(entry.targetValue as string | number | null);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+}
+
+/**
+ * Reguła agregacji YTD wyprowadzana z JEDNOSTKI, nie z oka:
+ *  · `%` (i inne jednostki udziału) — okresy się UŚREDNIAJĄ; suma dwunastu
+ *    procentów nie jest wielkością, którą ktokolwiek chciałby zobaczyć;
+ *  · pozostałe jednostki (sztuki, złote, godziny, LC/1000…) — SUMUJĄ się;
+ *  · brak jednostki — reguły nie da się wyprowadzić, więc YTD zostaje puste.
+ *    To jest świadome „nie wiem" zamiast liczby wziętej z sufitu.
+ */
+export function resolveYtdAggregation(unit: string | null): 'sum' | 'average' | 'unknown' {
+  if (unit === null) return 'unknown';
+  const normalized = unit.trim().toLowerCase();
+  if (normalized === '') return 'unknown';
+  if (normalized === '%' || normalized === 'proc.' || normalized === 'procent') return 'average';
+  return 'sum';
+}
+
+export async function getScorecardPeriodMatrix(
+  params: GetScorecardPeriodMatrixParams
+): Promise<ScorecardPeriodMatrix> {
+  const { userId, organizationId, scorecardId, year, granularity } = params;
+  const now = params.now ?? new Date();
+  const periods = buildScorecardPeriodGrid(year, granularity, now);
+  const rangeStart = periods[0]?.periodStart ?? new Date(Date.UTC(year, 0, 1)).toISOString();
+  const rangeEnd =
+    periods[periods.length - 1]?.periodEnd ??
+    new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)).toISOString();
+
+  const measurementSql = `
+    SELECT si.kpi_id,
+           si.item_id,
+           dv.unit,
+           m.measurement_id,
+           m.period_start,
+           m.period_end,
+           m.actual_value,
+           m.period_target_value,
+           m.evidence_refs,
+           m.performance_status,
+           m.data_quality_status
+      FROM rvn_kpi_scorecard_items si
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
+      LEFT JOIN rvn_kpi_definitions kd
+             ON kd.kpi_id = si.kpi_id AND kd.organization_id = si.organization_id
+      LEFT JOIN rvn_kpi_definition_versions dv
+             ON dv.definition_version_id = kd.current_definition_version_id
+            AND dv.organization_id = kd.organization_id
+      LEFT JOIN rvn_kpi_measurements m
+             ON m.kpi_id = si.kpi_id
+            AND m.organization_id = si.organization_id
+            AND m.period_start >= $${VISIBILITY_CTE_PARAM_COUNT + 2}
+            AND m.period_start <= $${VISIBILITY_CTE_PARAM_COUNT + 3}
+            AND NOT EXISTS (
+              SELECT 1 FROM rvn_kpi_measurements newer
+               WHERE newer.correction_of_measurement_id = m.measurement_id
+            )
+     WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+     ORDER BY si.sort_order ASC, m.period_start ASC, m.recorded_at ASC`;
+  const wrappedMeasurements = await wrapWithVisibilityScope(measurementSql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
+  const measurementRows = await withReadClient((c) =>
+    queryRows<PeriodMeasurementRow>(c, wrappedMeasurements.sql, [
+      ...wrappedMeasurements.values,
+      scorecardId,
+      rangeStart,
+      rangeEnd,
+    ])
+  );
+
+  // Otwarte karty działania (sprawy odchylenia) — `closed` jest jedynym
+  // stanem zamkniętym w cyklu życia sprawy (20260811_rvn_kpi_deviation_loop).
+  const deviationSql = `
+    SELECT si.kpi_id, COUNT(dc.case_id) AS open_count
+      FROM rvn_kpi_scorecard_items si
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
+      LEFT JOIN rvn_kpi_deviation_cases dc
+             ON dc.kpi_id = si.kpi_id
+            AND dc.organization_id = si.organization_id
+            AND dc.status <> 'closed'
+     WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
+     GROUP BY si.kpi_id`;
+  const wrappedDeviations = await wrapWithVisibilityScope(deviationSql, {
+    userId,
+    organizationId,
+    resourceType: 'kpi',
+  });
+  const deviationRows = await withReadClient((c) =>
+    queryRows<{ kpi_id: string; open_count: string }>(c, wrappedDeviations.sql, [
+      ...wrappedDeviations.values,
+      scorecardId,
+    ])
+  );
+  const openCases = new Map(deviationRows.map((r) => [r.kpi_id, Number(r.open_count)]));
+
+  const byItem = new Map<string, { kpiId: string; itemId: string; unit: string | null; rows: PeriodMeasurementRow[] }>();
+  for (const row of measurementRows) {
+    const bucket = byItem.get(row.item_id);
+    if (bucket) bucket.rows.push(row);
+    else byItem.set(row.item_id, { kpiId: row.kpi_id, itemId: row.item_id, unit: row.unit, rows: [row] });
+  }
+
+  const items: ScorecardPeriodMatrixItem[] = [...byItem.values()].map((bucket) => {
+    const cellByKey = new Map<string, ScorecardPeriodCell>();
+    for (const row of bucket.rows) {
+      if (!row.measurement_id || !row.period_start) continue;
+      const key = periodKeyFor(row.period_start, granularity);
+      if (!key) continue;
+      // Ostatni wpis okresu wygrywa — zapytanie sortuje po `recorded_at`,
+      // a korekty pomiaru są odfiltrowane po stronie SQL.
+      cellByKey.set(key, {
+        periodKey: key,
+        measurementId: row.measurement_id,
+        targetValue: resolvePeriodTarget(row.period_target_value, row.evidence_refs),
+        actualValue: numeric(row.actual_value),
+        performanceStatus: row.performance_status,
+        dataQualityStatus: row.data_quality_status,
+      });
+    }
+
+    const cells = periods.map(
+      (period) =>
+        cellByKey.get(period.key) ?? {
+          periodKey: period.key,
+          measurementId: null,
+          targetValue: null,
+          actualValue: null,
+          performanceStatus: null,
+          dataQualityStatus: null,
+        }
+    );
+
+    const aggregation = resolveYtdAggregation(bucket.unit);
+    const closedCells = cells.filter(
+      (cell, index) => cell.measurementId !== null && new Date(periods[index]!.periodEnd) <= now
+    );
+    const targets = closedCells.map((c) => c.targetValue).filter((v): v is number => v !== null);
+    const actuals = closedCells.map((c) => c.actualValue).filter((v): v is number => v !== null);
+    const aggregate = (values: number[]): number | null => {
+      if (aggregation === 'unknown' || values.length === 0) return null;
+      const sum = values.reduce((total, value) => total + value, 0);
+      const result = aggregation === 'average' ? sum / values.length : sum;
+      return Math.round(result * 100) / 100;
+    };
+
+    const latest = [...closedCells].reverse().find((cell) => cell.performanceStatus !== null);
+
+    return {
+      kpiId: bucket.kpiId,
+      itemId: bucket.itemId,
+      cells,
+      ytdTargetValue: aggregate(targets),
+      ytdActualValue: aggregate(actuals),
+      /* Stan YTD celowo NIE jest liczony w repozytorium: wymaga kierunku
+         miernika i dopuszczalnego limitu [%] z kontraktu POZYCJI raportu.
+         Składa go warstwa, która ma oba (`resultsVnext/kpi` — patrz
+         `evaluateAgainstPeriodTarget`), żeby nie było dwóch prawd o stanie. */
+      ytdPerformanceStatus: null,
+      ytdAggregation: aggregation,
+      latestPerformanceStatus: latest?.performanceStatus ?? null,
+      openDeviationCaseCount: openCases.get(bucket.kpiId) ?? 0,
+    };
+  });
+
+  return { scorecardId, year, granularity, periods, items };
 }

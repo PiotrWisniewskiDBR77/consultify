@@ -1,0 +1,118 @@
+data: {"type":"thought","step":"starting","status":"in_progress","label":"Starting…"}
+
+data: {"type":"thought","step":"policy","status":"in_progress","label":"Checking safety policy and evidence requirements…"}
+
+data: {"type":"policy_decision","decision":{"id":"1500e095-5186-4a2a-8107-062185a8ddea","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}}}
+
+data: {"type":"thought","step":"memory","status":"in_progress","label":"Loading conversation context and memory…"}
+
+data: {"type":"thought","step":"knowledge","status":"in_progress","label":"Searching knowledge base and documentation…"}
+
+data: {"type":"thought","step":"web_search_check","status":"in_progress","label":"Checking if web search is needed…"}
+
+data: {"type":"citations","citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","excerpt":"Status: EXECUTING"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","excerpt":"Status: EXECUTING"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","excerpt":"Status: EXECUTING"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","excerpt":"Status: BLOCKED"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","excerpt":"Status: EXECUTING"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","excerpt":"Status: SCHEDULED"},{"id":"module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","type":"module_data","title":"Inicjatywa: DevOps Maturity Program","reference":"initiatives/68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","excerpt":"Status: EXECUTING"},{"id":"module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649","type":"module_data","title":"Inicjatywa: Legacy Decommission","reference":"initiatives/3258858d-8ec5-4bea-bc39-31617a63a649","excerpt":"Status: EXECUTING"},{"id":"module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0","type":"module_data","title":"Inicjatywa: ERP SAP Integration","reference":"initiatives/4d991c47-07cb-4b09-a108-8a61d85718a0","excerpt":"Status: BLOCKED"},{"id":"module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09","type":"module_data","title":"Inicjatywa: Customer Portal Redesign","reference":"initiatives/2e578e14-a13d-4932-a62b-046be51e8f09","excerpt":"Status: SCHEDULED"},{"id":"module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","type":"module_data","title":"Inicjatywa: Security Hardening","reference":"initiatives/ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","excerpt":"Status: EXECUTING"},{"id":"module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747","type":"module_data","title":"Inicjatywa: Process Automation — RPA","reference":"initiatives/fdcd78d0-677d-4a6e-96c4-1815e0055747","excerpt":"Status: BLOCKED"}]}
+
+data: {"type":"thought","step":"generating","status":"in_progress","label":"Generating response based on gathered context…"}
+
+data: {"text":"Mod"}
+
+data: {"text":"u"}
+
+data: {"text":"ł"}
+
+data: {"text":" \""}
+
+data: {"text":"In"}
+
+data: {"text":"ic"}
+
+data: {"text":"j"}
+
+data: {"text":"aty"}
+
+data: {"text":"wy"}
+
+data: {"text":"\""}
+
+data: {"text":" zar"}
+
+data: {"text":"ząd"}
+
+data: {"text":"za"}
+
+data: {"text":" transform"}
+
+data: {"text":"acy"}
+
+data: {"text":"jn"}
+
+data: {"text":"ymi"}
+
+data: {"text":" projekt"}
+
+data: {"text":"ami"}
+
+data: {"text":","}
+
+data: {"text":" umo"}
+
+data: {"text":"żli"}
+
+data: {"text":"w"}
+
+data: {"text":"iają"}
+
+data: {"text":"c"}
+
+data: {"text":" twor"}
+
+data: {"text":"zenie"}
+
+data: {"text":","}
+
+data: {"text":" ś"}
+
+data: {"text":"led"}
+
+data: {"text":"zenie"}
+
+data: {"text":" i"}
+
+data: {"text":" pri"}
+
+data: {"text":"ory"}
+
+data: {"text":"t"}
+
+data: {"text":"ety"}
+
+data: {"text":"z"}
+
+data: {"text":"ację"}
+
+data: {"text":" inic"}
+
+data: {"text":"j"}
+
+data: {"text":"aty"}
+
+data: {"text":"w"}
+
+data: {"text":" w"}
+
+data: {"text":" organiz"}
+
+data: {"text":"acji"}
+
+data: {"text":"."}
+
+data: {"type":"quality_score","relevance":0.5,"groundedness":0.5,"completeness":1,"coherence":0.5,"actionability":0.3,"meceQuality":0.4,"overall":0.53,"flags":[],"llmJudged":false}
+
+data: {"type":"source_ledger","decisionId":"1500e095-5186-4a2a-8107-062185a8ddea","used_sources":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","link":null},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","link":null},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","link":null},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","link":null},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","link":null},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","link":null},{"id":"module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","type":"module_data","title":"Inicjatywa: DevOps Maturity Program","reference":"initiatives/68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","link":null},{"id":"module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649","type":"module_data","title":"Inicjatywa: Legacy Decommission","reference":"initiatives/3258858d-8ec5-4bea-bc39-31617a63a649","link":null},{"id":"module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0","type":"module_data","title":"Inicjatywa: ERP SAP Integration","reference":"initiatives/4d991c47-07cb-4b09-a108-8a61d85718a0","link":null},{"id":"module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09","type":"module_data","title":"Inicjatywa: Customer Portal Redesign","reference":"initiatives/2e578e14-a13d-4932-a62b-046be51e8f09","link":null},{"id":"module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","type":"module_data","title":"Inicjatywa: Security Hardening","reference":"initiatives/ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","link":null},{"id":"module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747","type":"module_data","title":"Inicjatywa: Process Automation — RPA","reference":"initiatives/fdcd78d0-677d-4a6e-96c4-1815e0055747","link":null}],"blocked_sources":[{"category":"cross_tenant","reason":"forbidden_by_policy","detail":null},{"category":"other_user_private","reason":"forbidden_by_policy","detail":null}],"degraded":null,"scope_resolution":{"privateMode":false,"knowledgeSources":{}}}
+
+data: {"type":"citations","citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","status":"stale"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","status":"stale"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","status":"stale"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","status":"stale"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","status":"stale"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","status":"stale"},{"id":"module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","status":"stale"},{"id":"module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649","status":"stale"},{"id":"module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0","status":"stale"},{"id":"module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09","status":"stale"},{"id":"module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","status":"stale"},{"id":"module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747","status":"stale"}]}
+
+data: {"type":"trust_bundle","bundle":{"version":"TrustBundleV1","answerId":"answer-stream-76015d70-9117-444f-97a6-4f5eda9d7ad5-1788644295782","conversationId":null,"messageId":"17a6442d-4306-4fb2-8fb4-8dde1c408e98","decisionId":"1500e095-5186-4a2a-8107-062185a8ddea","model":"openai/gpt-4o-mini","provider":"openrouter","tier":null,"sourceClasses":["general"],"citationsCount":12,"citations":[{"id":"module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621","type":"module_data","title":"Inicjatywa: Supply Chain Optimization","reference":"initiatives/fa87dc75-d838-4fa0-8263-590969aa8621","excerpt":"Status: EXECUTING"},{"id":"module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756","type":"module_data","title":"Inicjatywa: Digital Workplace Platform","reference":"initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756","excerpt":"Status: EXECUTING"},{"id":"module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8","type":"module_data","title":"Inicjatywa: Vendor Consolidation","reference":"initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8","excerpt":"Status: EXECUTING"},{"id":"module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af","type":"module_data","title":"Inicjatywa: Talent Upskilling Program","reference":"initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af","excerpt":"Status: BLOCKED"},{"id":"module_initiative_5_0838adde-c264-4304-af42-16977424307f","type":"module_data","title":"Inicjatywa: Compliance & GDPR Audit","reference":"initiatives/0838adde-c264-4304-af42-16977424307f","excerpt":"Status: EXECUTING"},{"id":"module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c","type":"module_data","title":"Inicjatywa: AI-Powered Analytics","reference":"initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c","excerpt":"Status: SCHEDULED"},{"id":"module_initiative_7_68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","type":"module_data","title":"Inicjatywa: DevOps Maturity Program","reference":"initiatives/68f1c0dc-ed77-41a3-afd6-08a0513dfdd5","excerpt":"Status: EXECUTING"},{"id":"module_initiative_8_3258858d-8ec5-4bea-bc39-31617a63a649","type":"module_data","title":"Inicjatywa: Legacy Decommission","reference":"initiatives/3258858d-8ec5-4bea-bc39-31617a63a649","excerpt":"Status: EXECUTING"},{"id":"module_initiative_9_4d991c47-07cb-4b09-a108-8a61d85718a0","type":"module_data","title":"Inicjatywa: ERP SAP Integration","reference":"initiatives/4d991c47-07cb-4b09-a108-8a61d85718a0","excerpt":"Status: BLOCKED"},{"id":"module_initiative_10_2e578e14-a13d-4932-a62b-046be51e8f09","type":"module_data","title":"Inicjatywa: Customer Portal Redesign","reference":"initiatives/2e578e14-a13d-4932-a62b-046be51e8f09","excerpt":"Status: SCHEDULED"},{"id":"module_initiative_11_ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","type":"module_data","title":"Inicjatywa: Security Hardening","reference":"initiatives/ee42d899-1aa7-4a8e-bc13-d98c6119ac1a","excerpt":"Status: EXECUTING"},{"id":"module_initiative_12_fdcd78d0-677d-4a6e-96c4-1815e0055747","type":"module_data","title":"Inicjatywa: Process Automation — RPA","reference":"initiatives/fdcd78d0-677d-4a6e-96c4-1815e0055747","excerpt":"Status: BLOCKED"}],"sourceLedgerSummary":{"usedCount":12,"blockedCount":2,"degraded":null,"scope":{"privateMode":false,"knowledgeSources":{}}},"policyDecision":{"id":"1500e095-5186-4a2a-8107-062185a8ddea","allowed":true,"category":"ok","rationale":"Allowed by policy gateway","evidence":{"required":false,"uncertaintyMarkerRequiredIfInsufficientEvidence":false}},"policyNotices":[],"generatedAt":"2026-09-05T21:38:16.961Z","degraded":null,"outputLength":134,"confidence":0.52,"citationVerification":{"total":12,"verified":0,"unverified":12,"broken":0,"score":0},"cost":null,"tokens":{"input":11,"output":34,"total":45},"routingTrace":null,"coverage":null,"warnings":[],"assistant":"teresa","assistantSurface":"workspace_copilot","actionSurface":"governed_execution"}}
+
+data: [DONE]
+

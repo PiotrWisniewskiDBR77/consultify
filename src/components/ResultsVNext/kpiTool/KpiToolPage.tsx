@@ -66,7 +66,9 @@ import {
   Blocks,
   FileText,
   GitBranch,
+  History,
   LayoutGrid,
+  MessageSquare,
   Link2,
   ListChecks,
   Play,
@@ -78,6 +80,8 @@ import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 import type { NModeHeaderConfig, NModeHeaderPrimaryAction, NModeSection } from '@/components/shared/NModeLayout/types';
 import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
 import { ArtifactBreadcrumb } from '@/components/standard/ArtifactBreadcrumb';
+import { TeresaEntryButton } from '@/components/standard/TeresaEntryButton';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from '@/components/standard/ArtifactPropertiesTable';
 import { StandardGridCard, type StandardGridCard as StandardGridCardData } from '@/components/standard/StandardGridCard';
 import { StatusChip } from '@/components/ui/primitives';
@@ -106,8 +110,10 @@ import {
 } from '../kpiApi';
 import {
   getKpiScorecard,
+  getKpiScorecardPeriodMatrix,
   listKpiScorecardsForKpi,
   type KpiScorecardDto,
+  type ScorecardPeriodMatrixItemDto,
 } from '../kpiScorecards/kpiScorecardApi';
 import {
   KPI_SCORECARD_STATUS_TONE,
@@ -135,7 +141,7 @@ import { KpiReviewedAttributionDialog } from './KpiReviewedAttributionDialog';
 import {
   isUnassignedCardSetId,
   KPI_CARD_SET_PARAM,
-  kpiCardSetPath,
+  kpiReportPath,
   withOwnerSampleData,
 } from './kpiCardSetPath';
 import { toUserFacingErrorMessage } from '../shared/errorMessage';
@@ -304,6 +310,9 @@ export const KpiToolPage: React.FC = () => {
   // identyfikator, tylko uczciwe „Nieznany użytkownik" (UUID w kolumnie
   // z człowiekiem był defektem rodziny zgłoszonym przez właściciela).
   const resolveMemberNameRaw = useOrganizationMemberNames();
+  /* Jedna Teresa, w swoim oknie (decyzja właściciela 01.09) — panel artefaktu
+     otwiera GŁÓWNE okno z kontekstem miernika, nie własny czat. */
+  const openChatWithContext = useOpenChatWithContext();
   const resolveMemberName = useCallback(
     (userId: string | null | undefined): string =>
       memberNameOrUnknown(resolveMemberNameRaw, userId, isPolish),
@@ -319,6 +328,15 @@ export const KpiToolPage: React.FC = () => {
   // 404, same discipline `ResultsKpiRegistryPage.tsx`'s own effect uses for
   // this same call) — never conflated with `'loading'`.
   const [definitionVersion, setDefinitionVersion] = useState<KpiDefinitionVersionDto | null | 'loading'>('loading');
+  /**
+   * YTD miernika (SSOT §2, sekcja „Wyniki"). Liczy je serwer dla CAŁEGO
+   * raportu (`GET .../scorecards/:id/periods`) — karta bierze z tej odpowiedzi
+   * SWÓJ wiersz, zamiast liczyć drugą, własną sumę. Dwie prawdy o YTD (jedna
+   * na poziomie 2, druga na karcie) byłyby gorsze niż brak YTD na karcie.
+   * Bez `?zbior=` w adresie nie wiadomo, w którym raporcie liczyć — wtedy
+   * kafelek pokazuje „—" z podpisem, a nie zgadniętą liczbę.
+   */
+  const [ytdWiersz, setYtdWiersz] = useState<ScorecardPeriodMatrixItemDto | null>(null);
   const [deviationCases, setDeviationCases] = useState<DeviationCaseDto[] | 'loading'>('loading');
   const [initiativeImpacts, setInitiativeImpacts] = useState<InitiativeKpiImpactDto[] | 'loading'>('loading');
   const [scorecards, setScorecards] = useState<KpiScorecardDto[] | 'loading'>('loading');
@@ -437,6 +455,26 @@ export const KpiToolPage: React.FC = () => {
       .then((sc) => setPathCardSetName(sc?.name ?? null))
       .catch(() => setPathCardSetName(null));
   }, [enabled, fromCardSetId]);
+
+  /* YTD z matrycy okresów RAPORTU, z którego przyszliśmy — patrz `ytdWiersz`. */
+  useEffect(() => {
+    if (!enabled || !kpiId || !fromCardSetId || isUnassignedCardSetId(fromCardSetId)) {
+      setYtdWiersz(null);
+      return;
+    }
+    let anulowane = false;
+    getKpiScorecardPeriodMatrix(fromCardSetId)
+      .then((matrix) => {
+        if (anulowane) return;
+        setYtdWiersz(matrix?.items.find((i) => i.kpiId === kpiId) ?? null);
+      })
+      .catch(() => {
+        if (!anulowane) setYtdWiersz(null);
+      });
+    return () => {
+      anulowane = true;
+    };
+  }, [enabled, kpiId, fromCardSetId]);
 
   useEffect(() => {
     if (!enabled || !kpiId) return;
@@ -636,7 +674,7 @@ export const KpiToolPage: React.FC = () => {
     { id: 'definitionVersion', label: t('Bieżąca wersja definicji', 'Current definition version'), value: definitionVersionDisplay },
     {
       id: 'cardSets',
-      label: t('Należy do zestawień', 'Belongs to card sets'),
+      label: t('Występuje w raportach', 'Appears in reports'),
       value:
         scorecards === 'loading'
           ? '…'
@@ -648,6 +686,24 @@ export const KpiToolPage: React.FC = () => {
     { id: 'updated', label: t('Zaktualizowano', 'Updated'), value: formatDate(kpi.updatedAt, isPolish) },
   ];
 
+  /**
+   * ── PRAWY PANEL ARTEFAKTU — SZEŚĆ SEKCJI SPEC-A §10.2 ────────────────────
+   *
+   * Do 2026-09-05 panel miał TRZY sekcje (Akcje · Właściwości · Powiązania),
+   * a kanon powłoki artefaktu (`ARTIFACT_ANATOMY_STANDARD.md` §10.2, SSOT
+   * Wyniki §6) wymienia sześć: Akcje · Właściwości · Powiązania · Źródła
+   * i założenia · Komentarze · Historia. Zaakceptowany prototyp pokazuje
+   * wszystkie sześć.
+   *
+   * TERESA — RÓŻNICA WOBEC PROTOTYPU, ŚWIADOMA. Prototyp rysuje Teresę jako
+   * ZAKŁADKĘ obok „Szczegółów". Nowsza, jawna decyzja właściciela
+   * (`docs/program/grafika/KANON_Z_ODBIOROW.md`, 01.09: „JEDNA TERESA, W SWOIM
+   * OKNIE") mówi, że czat Teresy ZNIKA z prawych paneli, a zostaje w nich
+   * WYŁĄCZNIE przycisk otwierający główne okno Teresy z kontekstem obiektu
+   * (`TeresaEntryButton`). Zakładka z drugim czatem byłaby odbudową dokładnie
+   * tego, co właściciel kazał usunąć — dlatego panel dostaje przycisk, a
+   * różnica jest zgłoszona nadzorcy zamiast być cicho rozstrzygnięta.
+   */
   const rightPanelSections: ArtifactRightPanelSection[] = [
     {
       id: 'actions',
@@ -669,6 +725,25 @@ export const KpiToolPage: React.FC = () => {
               {kpi.status === 'archived' ? archivedReason : noApprovedVersionReason}
             </p>
           )}
+          <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setActiveSection('measurements')}>
+            {t('Dodaj pomiar', 'Record measurement')}
+          </button>
+          {openCasesCount > 0 ? (
+            <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setActiveSection('deviations')}>
+              {t('Otwórz kartę działania', 'Open action card')}
+            </button>
+          ) : null}
+          <TeresaEntryButton
+            label={t('Zapytaj Teresę o ten miernik', 'Ask Teresa about this indicator')}
+            onClick={() =>
+              openChatWithContext({
+                entityType: 'kpi',
+                entityId: kpi.kpiId,
+                entityName: kpiTitle,
+                pmoContext: { kpiId: kpi.kpiId },
+              })
+            }
+          />
         </div>
       ),
     },
@@ -697,16 +772,121 @@ export const KpiToolPage: React.FC = () => {
             </button>
           ) : null}
           {Array.isArray(initiativeImpacts) && initiativeImpacts.length > 0 ? (
-            <button type="button" className="text-xs text-c-info underline block" onClick={() => setActiveSection('initiatives')}>
+            <button type="button" className="text-xs text-c-info underline block" onClick={() => setActiveSection('correctiveActions')}>
               {t(`${initiativeImpacts.length} powiązana(-e) inicjatywa(-y)`, `${initiativeImpacts.length} linked initiative(s)`)}
             </button>
           ) : null}
         </div>
       ),
     },
+    {
+      /**
+       * ŹRÓDŁA I ZAŁOŻENIA — to, na czym stoi liczba: metoda liczenia
+       * i definicja z wersji definicji miernika oraz źródło ostatniego pomiaru.
+       * Zero wymyślonych „dowodów": pola, których wersja definicji nie ma,
+       * pokazują „—".
+       */
+      id: 'evidence',
+      label: t('Źródła i założenia', 'Sources and assumptions'),
+      icon: FileText,
+      defaultOpen: false,
+      isEmpty:
+        (definitionVersion === 'loading' || !definitionVersion || (!definitionVersion.formulaText && !definitionVersion.description)) &&
+        (measurement === 'loading' || !measurement),
+      emptyLabel: t('Brak zapisanych źródeł', 'No sources recorded'),
+      children: (
+        <div className="space-y-2 text-xs text-c-text-secondary">
+          <p>
+            <span className="text-c-text-muted">{t('Metoda liczenia', 'Calculation method')}: </span>
+            {definitionVersion && definitionVersion !== 'loading' ? (definitionVersion.formulaText ?? '—') : '—'}
+          </p>
+          <p>
+            <span className="text-c-text-muted">{t('Definicja', 'Definition')}: </span>
+            {definitionVersion && definitionVersion !== 'loading' ? (definitionVersion.description ?? '—') : '—'}
+          </p>
+          <p>
+            <span className="text-c-text-muted">{t('Źródło ostatniego pomiaru', 'Latest measurement source')}: </span>
+            {measurement && measurement !== 'loading' ? (measurement.source ?? '—') : '—'}
+          </p>
+        </div>
+      ),
+    },
+    {
+      /**
+       * KOMENTARZE — sekcja kanonu SPEC-A, dla której miernik NIE MA dziś
+       * wątku w modelu (sprawdzone: `rvn_kpi_*` nie ma tabeli komentarzy,
+       * żadna trasa `kpi` ich nie wystawia). Pokazujemy ją WIDOCZNĄ
+       * I WYŁĄCZONĄ Z POWODEM, zamiast udawać pusty wątek albo cicho
+       * pominąć pozycję kanonu.
+       */
+      id: 'comments',
+      label: t('Komentarze', 'Comments'),
+      icon: MessageSquare,
+      defaultOpen: false,
+      isEmpty: true,
+      emptyLabel: t(
+        'Komentarze do miernika nie są jeszcze podpięte do modelu.',
+        'Indicator comments are not wired to the model yet.'
+      ),
+      children: null,
+    },
+    {
+      id: 'history',
+      label: t('Historia', 'History'),
+      icon: History,
+      defaultOpen: false,
+      isEmpty: !Array.isArray(historyEntries) || historyEntries.length === 0,
+      emptyLabel: t('Brak zapisanych zdarzeń', 'No recorded events'),
+      children: (
+        <div className="space-y-1.5 text-xs text-c-text-secondary">
+          {Array.isArray(historyEntries)
+            ? historyEntries.slice(0, 3).map((entry) => (
+                <p key={entry.entryId}>
+                  {formatDate(entry.occurredAt, isPolish)} · {entry.summaryCode}
+                </p>
+              ))
+            : null}
+          <button type="button" className="text-xs text-c-info underline" onClick={() => setActiveSection('history')}>
+            {t('Pokaż pełną historię', 'Show full history')}
+          </button>
+        </div>
+      ),
+    },
   ];
 
   // ── Section 1: Performance ──
+  /**
+   * ── SEKCJA „WYNIKI" (SSOT §2) ─────────────────────────────────────────────
+   *
+   * SSOT: „ostatni okres (CEL / Rezultat / odchylenie / stan), (…) YTD".
+   * Do 2026-09-05 sekcja pokazywała TYLKO Rezultat — bez CELU nie da się
+   * powiedzieć, czy 11 620 to dużo, czy mało, a odchylenie musiał liczyć
+   * w głowie czytelnik.
+   *
+   * CEL i odchylenie liczymy z pomiaru (`periodTargetValue`, kolumna dołożona
+   * migracją 20261124 z fallbackiem na zapis seeda). Gdy celu okresu nie ma —
+   * pokazujemy „—" i NIE podstawiamy rocznego celu wersji definicji: cel roku
+   * w kratce miesiąca byłby liczbą wymyśloną.
+   */
+  const okresowyCel =
+    measurement && measurement !== 'loading' ? (measurement.periodTargetValue ?? null) : null;
+  const okresowyWynik = measurement && measurement !== 'loading' ? measurement.actualValue : null;
+  const odchylenieProc =
+    okresowyCel != null && okresowyCel !== 0 && okresowyWynik != null
+      ? ((okresowyWynik - okresowyCel) / Math.abs(okresowyCel)) * 100
+      : null;
+  /* `== null` (nie `=== null`) ŚWIADOMIE: pole `periodTargetValue` może być
+     nieobecne w odpowiedzi sprzed tej zmiany, a `undefined.toLocaleString()`
+     wywraca całą kartę na biało. Złapane testem `KpiToolPage.test.tsx`, nie
+     oglądaniem — w harnessie fikstura pole miała. Nieliczba też daje „—". */
+  const liczba = (v: number | null | undefined, ulamek = 0) =>
+    v == null || !Number.isFinite(v)
+      ? '—'
+      : v.toLocaleString(isPolish ? 'pl-PL' : 'en-US', {
+          minimumFractionDigits: ulamek,
+          maximumFractionDigits: ulamek,
+        });
+
   const performanceSection: NModeSection = {
     id: 'performance',
     icon: Activity,
@@ -718,37 +898,76 @@ export const KpiToolPage: React.FC = () => {
         {/* Pigułka statusu NIE jest tu powtarzana — mieszka w Menu 1 obok
             tytułu (zatwierdzony obraz karty KPI). */}
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <p className={LABEL_CLASS}>{t('Ostatni pomiar', 'Latest measurement')}</p>
+          <p className={LABEL_CLASS}>
+            {measurement && measurement !== 'loading'
+              ? `${t('Wyniki · okres', 'Results · period')} ${formatDate(measurement.periodStart, isPolish)} – ${formatDate(measurement.periodEnd, isPolish)}`
+              : t('Wyniki · ostatni okres', 'Results · latest period')}
+          </p>
           {measurement === 'loading' ? (
             <span className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</span>
-          ) : (
-            <div className="flex items-center gap-4">
-              <HonestValueCell
-                isPolish={isPolish}
-                value={measurement ? measurement.actualValue : null}
-                format={(v) => <span className="text-2xl font-semibold tabular-nums text-c-text">{v.toLocaleString(isPolish ? 'pl-PL' : 'en-US')}</span>}
-              />
-              {measurement ? (
-                <div className="text-xs text-c-text-muted">
-                  <div>
-                    {t('Okres: ', 'Period: ')}
-                    {formatDate(measurement.periodStart, isPolish)} – {formatDate(measurement.periodEnd, isPolish)}
+          ) : measurement ? (
+            <>
+              <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('CEL', 'TARGET')}</div>
+                  <div className="whitespace-nowrap text-xl font-semibold tabular-nums text-c-text">
+                    {liczba(okresowyCel)}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
-                    <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
-                  </div>
-                  <p className="mt-2 text-[11px] text-c-text-muted">
-                    {t(
-                      'Wynik i jakość danych to DWA NIEZALEŻNE wymiary (plan §4.3/§4.4) — nigdy jedno pole.',
-                      'Performance and data quality are TWO INDEPENDENT dimensions (plan §4.3/§4.4) — never one field.'
-                    )}
-                  </p>
                 </div>
-              ) : (
-                <span className="text-xs text-c-text-muted">{t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}</span>
-              )}
-            </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('Rezultat', 'Actual')}</div>
+                  <div
+                    className={`whitespace-nowrap text-xl font-semibold tabular-nums ${
+                      measurement.performanceStatus === 'critical'
+                        ? 'text-c-danger'
+                        : measurement.performanceStatus === 'warning'
+                          ? 'text-c-warning'
+                          : 'text-c-text'
+                    }`}
+                  >
+                    {liczba(okresowyWynik)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">{t('Odchylenie', 'Deviation')}</div>
+                  <div
+                    className={`whitespace-nowrap text-xl font-semibold tabular-nums ${
+                      odchylenieProc !== null && odchylenieProc < 0 ? 'text-c-danger' : 'text-c-text'
+                    }`}
+                  >
+                    {odchylenieProc === null
+                      ? '—'
+                      : `${odchylenieProc > 0 ? '+' : '−'}${Math.abs(odchylenieProc).toLocaleString(isPolish ? 'pl-PL' : 'en-US', { maximumFractionDigits: 1 })}%`}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-c-text-muted">
+                    {t('YTD (rezultat / cel)', 'YTD (actual / target)')}
+                  </div>
+                  <div
+                    className="whitespace-nowrap text-xl font-semibold tabular-nums text-c-text"
+                    title={
+                      ytdWiersz
+                        ? undefined
+                        : t(
+                            'YTD liczy się w kontekście raportu — otwórz miernik z raportu, żeby je zobaczyć.',
+                            'YTD is computed in the context of a report — open the indicator from a report to see it.'
+                          )
+                    }
+                  >
+                    {ytdWiersz
+                      ? `${liczba(ytdWiersz.ytdActualValue)} / ${liczba(ytdWiersz.ytdTargetValue)}`
+                      : '—'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <StatusChip label={kpiPerformanceStatusLabel(measurement.performanceStatus, isPolish)} tone={KPI_PERFORMANCE_STATUS_TONE[measurement.performanceStatus]} />
+                <StatusChip label={kpiDataQualityStatusLabel(measurement.dataQualityStatus, isPolish)} tone={KPI_DATA_QUALITY_STATUS_TONE[measurement.dataQualityStatus]} />
+              </div>
+            </>
+          ) : (
+            <span className="text-xs text-c-text-muted">{t('Brak zarejestrowanych pomiarów.', 'No measurements recorded yet.')}</span>
           )}
         </div>
         <button type="button" className={GHOST_BUTTON_CLASS} onClick={() => setActiveSection('measurements')}>
@@ -899,53 +1118,24 @@ export const KpiToolPage: React.FC = () => {
   };
 
   // ── Section 5: Corrective actions (rollup notice + links) ──
-  const correctiveActionsSection: NModeSection = {
-    id: 'correctiveActions',
-    icon: Play,
-    label: { pl: 'Działania korygujące', en: 'Corrective actions' },
-    hasData: true,
-    alwaysShow: true,
-    component: (
-      <div className="space-y-3">
-        <GapNotice>
-          {t(
-            'Brak zbiorczego GET dla działań korygujących ponad wszystkimi sprawami tego KPI (kpiDeviationRepository.listCorrectiveActions istnieje, ale żaden route go nie wystawia — patrz kpiDeviation.routes.ts, sekcja „DESIGN NOTE"). Działania żyją WEWNĄTRZ każdej sprawy odchylenia — otwórz sprawę poniżej.',
-            'No aggregate GET exists for corrective actions across this KPI\'s cases (kpiDeviationRepository.listCorrectiveActions exists but no route exposes it — see kpiDeviation.routes.ts "DESIGN NOTE"). Actions live INSIDE each deviation case — open a case below.'
-          )}
-        </GapNotice>
-        {Array.isArray(deviationCases) && deviationCases.filter((c) => c.status !== 'closed').length > 0 ? (
-          <ul className="space-y-1.5">
-            {deviationCases
-              .filter((c) => c.status !== 'closed')
-              .map((c) => (
-                <li key={c.caseId}>
-                  <button
-                    type="button"
-                    className="text-xs text-c-info underline"
-                    onClick={() => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`)}
-                  >
-                    {t('Otwórz sprawę ', 'Open case ')}
-                    {shortId(c.caseId)} ({deviationCaseStatusLabel(c.status, isPolish)})
-                  </button>
-                </li>
-              ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-c-text-muted">{t('Brak otwartych spraw z działaniami do pokazania.', 'No open cases with actions to show.')}</p>
-        )}
-      </div>
-    ),
-  };
-
-  // ── Section 6: Initiatives affecting KPI ──
-  const initiativesSection: NModeSection = {
-    id: 'initiatives',
-    icon: GitBranch,
-    label: { pl: 'Inicjatywy', en: 'Initiatives' },
-    title: { pl: 'Inicjatywy wpływające na KPI', en: 'Initiatives affecting KPI' },
-    hasData: true,
-    alwaysShow: true,
-    component: (
+  /**
+   * ── INICJATYWY WPŁYWAJĄCE NA MIERNIK — BLOK, NIE ÓSMA SEKCJA ─────────────
+   *
+   * SSOT `SSOT_WYNIKI_KPI_OKR_ROI.md` §2 wymienia DOKŁADNIE siedem sekcji
+   * karty miernika: Wyniki · Kontrakt · Pomiary · Odchylenia · Działania ·
+   * Raporty · Historia — i tyle pokazuje zaakceptowany przez właściciela
+   * prototyp. Ósma pozycja w lewej nawigacji byłaby widoczną różnicą wobec
+   * obrazu, na którym stanął akcept.
+   *
+   * Ale ta powierzchnia to działający zestaw komend (zaproponuj / zatwierdź /
+   * przejrzyj / zastąp) — skasowanie jej, żeby lewa nawigacja zgadzała się
+   * z rysunkiem, byłoby zniszczeniem funkcji dla wyglądu. Dlatego treść
+   * zostaje w CAŁOŚCI, jako drugi blok sekcji „Działania": obie rzeczy
+   * odpowiadają na to samo pytanie — „co robimy, żeby ten miernik wrócił do
+   * normy" — a blok zachowuje pełną szerokość centrum karty (w prawym panelu,
+   * przy 320 px, byłby ściśnięty).
+   */
+  const initiativeImpactsBlock = (
       <div className="space-y-4">
         {initiativeImpacts === 'loading' ? (
           <p className="text-sm text-c-text-muted">{t('Ładowanie…', 'Loading…')}</p>
@@ -1069,15 +1259,64 @@ export const KpiToolPage: React.FC = () => {
           </button>
         </div>
       </div>
+  );
+
+  const correctiveActionsSection: NModeSection = {
+    id: 'correctiveActions',
+    icon: Play,
+    /* SSOT §2 nazywa tę sekcję po prostu „Działania" — tak samo jak
+       zaakceptowany prototyp. „Działania korygujące" było nazwą techniczną
+       z modelu spraw odchylenia, nie słowem właściciela. */
+    label: { pl: 'Działania', en: 'Actions' },
+    hasData: true,
+    alwaysShow: true,
+    component: (
+      <div className="space-y-3">
+        <GapNotice>
+          {t(
+            'Brak zbiorczego GET dla działań korygujących ponad wszystkimi sprawami tego KPI (kpiDeviationRepository.listCorrectiveActions istnieje, ale żaden route go nie wystawia — patrz kpiDeviation.routes.ts, sekcja „DESIGN NOTE"). Działania żyją WEWNĄTRZ każdej sprawy odchylenia — otwórz sprawę poniżej.',
+            'No aggregate GET exists for corrective actions across this KPI\'s cases (kpiDeviationRepository.listCorrectiveActions exists but no route exposes it — see kpiDeviation.routes.ts "DESIGN NOTE"). Actions live INSIDE each deviation case — open a case below.'
+          )}
+        </GapNotice>
+        {Array.isArray(deviationCases) && deviationCases.filter((c) => c.status !== 'closed').length > 0 ? (
+          <ul className="space-y-1.5">
+            {deviationCases
+              .filter((c) => c.status !== 'closed')
+              .map((c) => (
+                <li key={c.caseId}>
+                  <button
+                    type="button"
+                    className="text-xs text-c-info underline"
+                    onClick={() => navigate(`${ROUTES.RESULTS_KPI.TOOL.replace(':kpiId', kpi.kpiId)}/deviation-cases/${c.caseId}`)}
+                  >
+                    {t('Otwórz sprawę ', 'Open case ')}
+                    {shortId(c.caseId)} ({deviationCaseStatusLabel(c.status, isPolish)})
+                  </button>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-c-text-muted">{t('Brak otwartych spraw z działaniami do pokazania.', 'No open cases with actions to show.')}</p>
+        )}
+        <div className="border-t border-c-border-subtle pt-3">
+          <h3 className="mb-2 text-sm font-semibold text-c-text">
+            {t('Inicjatywy wpływające na ten miernik', 'Initiatives affecting this indicator')}
+          </h3>
+          {initiativeImpactsBlock}
+        </div>
+      </div>
     ),
   };
 
-  // ── Section 7: Scorecards and contexts ──
+  // ── Section 6: Raporty (SSOT §2) ──
   const scorecardsSection: NModeSection = {
     id: 'scorecards',
     icon: LayoutGrid,
-    label: { pl: 'Zestawienia', en: 'Card sets' },
-    title: { pl: 'Zestawienia (karty wyników), do których należy ten wskaźnik', en: 'Card sets (scorecards) this indicator belongs to' },
+    /* SSOT §2: „Raporty (w których występuje)". Jedna tożsamość miernika,
+       wiele raportów okresowych — dlatego liczba mnoga i słowo RAPORT, a nie
+       „zestawienie". */
+    label: { pl: 'Raporty', en: 'Reports' },
+    title: { pl: 'Raporty, w których występuje ten miernik', en: 'Reports this indicator appears in' },
     hasData: Array.isArray(scorecards) && scorecards.length > 0,
     alwaysShow: true,
     component: (
@@ -1109,7 +1348,7 @@ export const KpiToolPage: React.FC = () => {
                 <div key={scorecard.scorecardId} data-testid={`kpi-tool-scorecard-tile-${scorecard.scorecardId}`}>
                   <StandardGridCard
                     card={card}
-                    onClick={() => navigate(withOwnerSampleData(kpiCardSetPath(scorecard.scorecardId)))}
+                    onClick={() => navigate(withOwnerSampleData(kpiReportPath(scorecard.scorecardId)))}
                   />
                 </div>
               );
@@ -1123,9 +1362,11 @@ export const KpiToolPage: React.FC = () => {
   // ── Section 8: History / Lineage ──
   const historySection: NModeSection = {
     id: 'history',
-    icon: FileText,
-    label: { pl: 'Rodowód', en: 'Lineage' },
-    title: { pl: 'Historia / rodowód', en: 'History / lineage' },
+    icon: History,
+    /* SSOT §2: „Historia". „Rodowód" było kalką z `lineage` — słowo
+       techniczne, nie słowo właściciela. */
+    label: { pl: 'Historia', en: 'History' },
+    title: { pl: 'Historia zmian miernika', en: 'Indicator change history' },
     hasData: Array.isArray(historyEntries) && historyEntries.length > 0,
     alwaysShow: true,
     component: (
@@ -1153,13 +1394,20 @@ export const KpiToolPage: React.FC = () => {
     ),
   };
 
+  /**
+   * SIEDEM SEKCJI, W KOLEJNOŚCI SSOT §2:
+   *   Wyniki · Kontrakt · Pomiary · Odchylenia · Działania · Raporty · Historia.
+   * Dokładnie tyle i w tej kolejności pokazuje zaakceptowany prototyp
+   * (`evidence/p7k-wyniki/prototype/kpi-l3--light.png`). Inicjatywy wpływające
+   * na miernik są drugim BLOKIEM sekcji „Działania" — patrz komentarz przy
+   * `initiativeImpactsBlock`.
+   */
   const sections: NModeSection[] = [
     performanceSection,
     contractSection,
     measurementsSection,
     deviationsSection,
     correctiveActionsSection,
-    initiativesSection,
     scorecardsSection,
     historySection,
   ];
@@ -1185,7 +1433,7 @@ export const KpiToolPage: React.FC = () => {
   if (crumbCardSetId) {
     breadcrumbItems.push({
       label: crumbCardSetName ?? t('Zestawienie', 'Card set'),
-      onClick: () => navigate(withOwnerSampleData(kpiCardSetPath(crumbCardSetId))),
+      onClick: () => navigate(withOwnerSampleData(kpiReportPath(crumbCardSetId))),
     });
   }
   breadcrumbItems.push({ label: kpiTitle });

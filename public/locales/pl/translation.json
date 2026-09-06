@@ -1,4 +1,10 @@
 {
+  "notFoundPage": {
+    "title": "Nie ma takiej strony",
+    "message": "Adres, pod który trafiłeś/aś, nie istnieje albo został przeniesiony.",
+    "backToChat": "Wróć do Czatu",
+    "goBack": "Wstecz"
+  },
   "contextBuilder": {
     "dynamicList": {
       "actions": "Akcje",
@@ -1578,7 +1584,33 @@
         "aiGenerateDescription": "Wygeneruj ten slajd ponownie z obrazem AI",
         "aiGenerateInstruction": "Dodaj do tego slajdu pasujący obraz wygenerowany przez AI.",
         "upload": "Prześlij",
-        "uploadDescription": "Prześlij obraz z urządzenia"
+        "uploadDescription": "Prześlij obraz z urządzenia",
+        "layoutItems": {
+          "twoColumns": "2 kolumny",
+          "threeColumns": "3 kolumny",
+          "fourColumns": "4 kolumny",
+          "boxes": "Bloki",
+          "cards": "Karty"
+        },
+        "diagramItems": {
+          "processSteps": "Kroki procesu",
+          "funnel": "Lejek",
+          "timeline": "Oś czasu",
+          "matrix2x2": "Macierz 2x2",
+          "swot": "SWOT",
+          "pyramid": "Piramida",
+          "venn2": "Venn (2)",
+          "venn3": "Venn (3)",
+          "cycle": "Cykl",
+          "roadmap": "Teraz/Dalej/Później",
+          "hierarchy": "Hierarchia",
+          "decisionTree": "Drzewo decyzyjne"
+        },
+        "chartItems": {
+          "bar": "Wykres słupkowy",
+          "line": "Wykres liniowy",
+          "pie": "Wykres kołowy"
+        }
       },
       "blocks": {
         "heading": "Nagłówek",
@@ -1767,7 +1799,27 @@
       },
       "lockSlideAction": "Zablokuj slajd",
       "unlockSlideAction": "Odblokuj slajd",
-      "unlockSlide": "Edytowany ręcznie — chroniony przed przebudową AI. Kliknij, aby odblokować."
+      "unlockSlide": "Edytowany ręcznie — chroniony przed przebudową AI. Kliknij, aby odblokować.",
+      "defaultContent": {
+        "heading": "Nagłówek",
+        "paragraph": "Wpisz tekst tutaj…",
+        "item1": "Punkt 1",
+        "item2": "Punkt 2",
+        "item3": "Punkt 3",
+        "step1": "Krok 1",
+        "step2": "Krok 2",
+        "step3": "Krok 3",
+        "chart": "Wykres",
+        "metric": "Miernik",
+        "callout": "Ważna uwaga",
+        "calloutInfo": "Ważna informacja",
+        "timelineStart": "Początek",
+        "timelineMid": "Środek",
+        "timelineEnd": "Koniec",
+        "image": "Obraz",
+        "newSlide": "Nowy slajd",
+        "untitledArtifact": "Artefakt bez nazwy"
+      }
     },
     "agent": {
       "title": "Agent AI",
@@ -1913,7 +1965,7 @@
     "help": "Pomoc",
     "knowledge": "Baza Wiedzy",
     "organization": "Organizacja",
-    "adminPanel": "Panel Administratora",
+    "adminPanel": "Panel administratora",
     "logOut": "Wyloguj się",
     "chat": "Czat AI",
     "aiChat": "Czat",
@@ -1929,7 +1981,7 @@
     "initiatives": "Inicjatywy",
     "execution": "Realizacja",
     "benefits": "Korzyści",
-    "results": "Resultaty",
+    "results": "Wyniki",
     "economics": "Finanse",
     "reports": "Raporty",
     "reportsBuilder": "Kreator raportów",
@@ -3003,6 +3055,7 @@
     },
     "openDocuments": "Otwarte dokumenty",
     "inboxContent": {
+      "previewAriaLabel": "Podgląd pozycji",
       "systemTitles": {
         "defineTargetProcess": "Zdefiniuj proces docelowy i kryteria akceptacji",
         "submitComplianceDocumentation": "Prześlij dokumentację zgodności",
@@ -4900,7 +4953,15 @@
       "label2": "Przypisane do mnie",
       "label3": "Jestem właścicielem",
       "today": "Dzisiaj",
-      "weekdaysShort": ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+      "weekdaysShort": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "So",
+        "Nd"
+      ],
       "mobileFiltersButton": "Źródła i filtry",
       "mobileFiltersTitle": "Źródła i filtry"
     },
@@ -5574,6 +5635,7 @@
       "existingInterviewInitiatives": "Istniejących inicjatyw interview",
       "pendingReview2": "Dopuszczenie",
       "newSessionModalTitle": "Nowa sesja wywiadu",
+      "newSessionDefaultName": "Wywiad {{date}}",
       "sessionNameLabel": "Nazwa sesji",
       "create": "Utwórz",
       "creatingInterviewSession": "Tworzenie sesji wywiadu...",
@@ -7681,6 +7743,7 @@
       "initiativePackTooltip": "Wygeneruj paczkę inicjatyw AI na podstawie wniosków z assessmentu.",
       "resumeLatestLabel": "Wznów ostatni assessment",
       "resumeLatestTooltip": "Otwiera edytor najnowszego assessmentu i wraca do miejsca, w którym skończyłeś.",
+      "aiTriage": "AI Triaż",
       "aiTriageTooltip": "Otwiera czat AI z gotowym pytaniem: co w tej liście wymaga uwagi najpierw.",
       "chatTooltip": "Otwiera pusty czat AI dla tego huba.",
       "connectionError": "Błąd połączenia",
@@ -8179,12 +8242,35 @@
       "rowMenu": {
         "openReport": "Pokaż raport",
         "openPresentation": "Pokaż jako prezentację"
+      },
+      "emptyState": {
+        "title": "Brak wniosków",
+        "description": "Wnioski zamrożone z ukończonej sesji oceny pojawią się tutaj."
+      },
+      "forbidden": {
+        "title": "Brak dostępu do wniosków",
+        "description": "To konto nie ma uprawnień do przeglądania wniosków tej organizacji."
+      }
+    },
+    "lineage": {
+      "forbidden": {
+        "title": "Brak dostępu do historii pochodzenia",
+        "description": "To konto nie ma uprawnień do przeglądania historii pochodzenia tej sesji."
+      },
+      "error": {
+        "title": "Nie udało się wczytać historii pochodzenia",
+        "description": "Nie udało się wczytać historii pochodzenia dla tej sesji."
+      },
+      "unrecognized": {
+        "title": "Nie udało się odczytać tej historii pochodzenia",
+        "description": "Serwer zwrócił odpowiedź o nierozpoznanym kształcie."
       }
     },
     "emptyState": {
       "title": "Brak assessmentów",
       "createFirst": "Utwórz pierwszy assessment",
-      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę."
+      "description": "Utwórz pierwszy assessment, aby rozpocząć diagnozę.",
+      "warningDescription": "Lista assessmentów jest chwilowo niedostępna. Spróbuj ponownie albo utwórz nowy assessment, w czasie gdy staging się regeneruje."
     },
     "team": {
       "addModal": {
@@ -8900,7 +8986,7 @@
     },
     "status": {
       "draft": "Szkic",
-      "pendingReview": "Oczekuje na przegląd",
+      "pendingReview": "Do przeglądu",
       "review": "W przeglądzie",
       "promoted": "Promowana",
       "planning": "Planowanie",
@@ -8908,8 +8994,8 @@
       "scheduled": "Zaplanowana",
       "executing": "W realizacji",
       "blocked": "Zablokowana",
-      "done": "Ukończona",
-      "tracking": "Monitorowanie korzyści",
+      "done": "Zakończona",
+      "tracking": "Śledzenie",
       "cancelled": "Anulowana",
       "archived": "Zarchiwizowana",
       "unknown": "Nieznany status"
@@ -11652,22 +11738,6 @@
       "advanceTitle": "Dalej w procesie",
       "advanceCta": "Prześlij do przeglądu"
     },
-    "status": {
-      "draft": "Szkic",
-      "pendingReview": "Do przeglądu",
-      "review": "W przeglądzie",
-      "promoted": "Promowana",
-      "planning": "Planowanie",
-      "approved": "Zatwierdzona",
-      "scheduled": "Zaplanowana",
-      "executing": "W realizacji",
-      "blocked": "Zablokowana",
-      "done": "Zakończona",
-      "tracking": "Śledzenie",
-      "cancelled": "Anulowana",
-      "archived": "Zarchiwizowana",
-      "unknown": "Nieznany status"
-    },
     "priorityLevels": {
       "critical": "Krytyczny",
       "high": "Wysoki",
@@ -14302,6 +14372,12 @@
         "admin": "Administrator",
         "member": "Użytkownik",
         "superadmin": "Superadministrator",
+        "super_admin": "Superadministrator",
+        "user": "Użytkownik",
+        "guest": "Gość",
+        "viewer": "Obserwator",
+        "project_manager": "Kierownik projektu",
+        "team_member": "Członek zespołu",
         "product": "Produkt",
         "sales": "Sprzedaż",
         "operations": "Operacje",
@@ -15783,6 +15859,22 @@
         "ai_power_user": {
           "name": "Zaawansowane użycie AI",
           "description": "Konfiguracja nastawiona na intensywne użycie AI w zaawansowanych workflow."
+        },
+        "minimal": {
+          "name": "Minimalny",
+          "description": "Przejrzyste ustawienia bez zbędnych rozpraszaczy."
+        },
+        "power_user": {
+          "name": "Zaawansowany użytkownik",
+          "description": "Wszystkie funkcje włączone."
+        },
+        "privacy_focused": {
+          "name": "Nacisk na prywatność",
+          "description": "Maksymalne ustawienia prywatności."
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Nacisk na bezpieczeństwo i zgodność."
         }
       }
     },
@@ -17165,17 +17257,31 @@
         {
           "title": "Inteligencja finansowa",
           "description": "Consultify rozszerza klasyczny consulting o modele finansowe, analizy, wycenę i forecasting.",
-          "bullets": ["Modele finansowe", "Analiza finansowa", "Wycena spółki", "Forecasting"]
+          "bullets": [
+            "Modele finansowe",
+            "Analiza finansowa",
+            "Wycena spółki",
+            "Forecasting"
+          ]
         },
         {
           "title": "Raporty i prezentacje",
           "description": "Consultify zamienia bieżącą pracę w raporty, prezentacje executive i consulting deliverables.",
-          "bullets": ["Raporty", "Prezentacje executive", "Consulting deliverables"]
+          "bullets": [
+            "Raporty",
+            "Prezentacje executive",
+            "Consulting deliverables"
+          ]
         },
         {
           "title": "Moja praca",
           "description": "Consultify daje zespołom osobisty i współdzielony workspace do dowożenia pracy po rozpoczęciu działań strategicznych.",
-          "bullets": ["Taski", "Decyzje", "Pomysły", "Notatki"]
+          "bullets": [
+            "Taski",
+            "Decyzje",
+            "Pomysły",
+            "Notatki"
+          ]
         }
       ]
     },
@@ -17334,37 +17440,61 @@
           "badge": "AI Core",
           "title": "Strategiczny doradca AI",
           "description": "AI analizuje organizację, identyfikuje luki i generuje priorytetyzowaną mapę strategiczną — w minuty, nie miesiące.",
-          "highlights": ["Ocena diagnostyczna", "Analiza luk", "Benchmark vs. branża"]
+          "highlights": [
+            "Ocena diagnostyczna",
+            "Analiza luk",
+            "Benchmark vs. branża"
+          ]
         },
         "economics": {
           "badge": "Ekonomia",
           "title": "Modelowanie finansowe i ROI",
           "description": "Buduj business case'y, modeluj scenariusze NPV / IRR i śledź rzeczywiste vs. zakładane zwroty dla każdej inicjatywy.",
-          "highlights": ["Modelowanie NPV / IRR", "Analiza wrażliwości", "Śledzenie ROI na żywo"]
+          "highlights": [
+            "Modelowanie NPV / IRR",
+            "Analiza wrażliwości",
+            "Śledzenie ROI na żywo"
+          ]
         },
         "execution": {
           "badge": "Egzekucja",
           "title": "Zarządzanie inicjatywami",
           "description": "Zamień strategię w egzekucję. Zarządzaj workstreamami, kamieniami milowymi i governance — z AI popychającym Cię ku wpływowi.",
-          "highlights": ["Roadmapa inicjatyw", "Ludzkie bramki zatwierdzenia", "Flagowanie ryzyk"]
+          "highlights": [
+            "Roadmapa inicjatyw",
+            "Ludzkie bramki zatwierdzenia",
+            "Flagowanie ryzyk"
+          ]
         },
         "deliverables": {
           "badge": "Rezultaty",
           "title": "Generator raportów i prezentacji",
           "description": "Generuj raporty gotowe dla zarządu i decki dla inwestorów z żywych danych. Jedno kliknięcie od analizy do polerowanego outputu.",
-          "highlights": ["Auto-generowane decki", "Silnik narracji", "Śledzenie źródeł"]
+          "highlights": [
+            "Auto-generowane decki",
+            "Silnik narracji",
+            "Śledzenie źródeł"
+          ]
         },
         "chat": {
           "badge": "Czat",
           "title": "Wywiad z ekspertem AI",
           "description": "Zapytaj o cokolwiek w kontekście Twojego biznesu. AI korzysta z 10 000+ frameworków i Twoich danych wewnętrznych.",
-          "highlights": ["Czat kontekstowy", "Biblioteka frameworków", "Odpowiedzi ze źródłami"]
+          "highlights": [
+            "Czat kontekstowy",
+            "Biblioteka frameworków",
+            "Odpowiedzi ze źródłami"
+          ]
         },
         "results": {
           "badge": "Wyniki",
           "title": "Śledzenie wpływu",
           "description": "Połącz inicjatywy z realnymi KPI. Mierz faktycznie dostarczoną wartość i automatycznie flaguj odchylenia.",
-          "highlights": ["Dashboard KPI", "Alerty odchyleń", "Atrybucja wartości"]
+          "highlights": [
+            "Dashboard KPI",
+            "Alerty odchyleń",
+            "Atrybucja wartości"
+          ]
         }
       }
     },
@@ -17914,27 +18044,42 @@
       "registered": {
         "name": "Zarejestrowany",
         "requirement": "Zacznij tutaj",
-        "benefits": ["Podstawowe narzędzia", "Wpis w katalogu"]
+        "benefits": [
+          "Podstawowe narzędzia",
+          "Wpis w katalogu"
+        ]
       },
       "bronze": {
         "name": "Brązowy",
         "requirement": "3+ klientów, €5K ARR",
-        "benefits": ["Priorytetowe wsparcie", "Materiały szkoleniowe"]
+        "benefits": [
+          "Priorytetowe wsparcie",
+          "Materiały szkoleniowe"
+        ]
       },
       "silver": {
         "name": "Srebrny",
         "requirement": "10+ klientów, €25K ARR",
-        "benefits": ["Dedykowany manager", "Dostęp do beta funkcji"]
+        "benefits": [
+          "Dedykowany manager",
+          "Dostęp do beta funkcji"
+        ]
       },
       "gold": {
         "name": "Złoty",
         "requirement": "25+ klientów, €75K ARR",
-        "benefits": ["Co-marketing", "Wystąpienia na konferencjach"]
+        "benefits": [
+          "Co-marketing",
+          "Wystąpienia na konferencjach"
+        ]
       },
       "platinum": {
         "name": "Platynowy",
         "requirement": "50+ klientów, €200K+",
-        "benefits": ["Zwiększony udział w przychodach", "Partnerstwo na poziomie zarządu"]
+        "benefits": [
+          "Zwiększony udział w przychodach",
+          "Partnerstwo na poziomie zarządu"
+        ]
       }
     },
     "onboarding": {
@@ -23810,7 +23955,7 @@
       "scenario": "Scenariusz",
       "horizon": "Horyzont",
       "horizonYears": "Horyzont",
-      "analysisType": "Typ",
+      "analysisType": "Rodzaj analizy",
       "periods": "Okresy",
       "subtype": "Podtyp",
       "source": "Źródło",
@@ -24102,6 +24247,12 @@
       "status": "Status",
       "mappedLines": "Zmapowane linie",
       "previewTitle": "Stan pakietu",
+      "state": {
+        "ready": "Pakiet jest kompletny: rachunek zysków i strat, bilans oraz rachunek przepływów pieniężnych.",
+        "rejected": "Wszystkie sprawozdania w tym pakiecie zostały odrzucone — pakiet nie może zasilić dalszej pracy.",
+        "needsAttention": "Pakiet wymaga uwagi",
+        "collecting": "Pakiet wciąż zbiera wymagane sprawozdania."
+      },
       "ratios": "Sprawozdania",
       "validation": "Status pakietu",
       "computeRatios": "Przelicz ratios",
@@ -25242,7 +25393,12 @@
       },
       "rootcause": {
         "uploaderTitle": "Sygnały przyczyn źródłowych",
-        "suggestions": ["Raporty incydentów", "Dokumenty 5 Why", "PFMEA", "Diagramy Ishikawy"],
+        "suggestions": [
+          "Raporty incydentów",
+          "Dokumenty 5 Why",
+          "PFMEA",
+          "Diagramy Ishikawy"
+        ],
         "diagnosticLabel": "Pytania diagnostyczne:",
         "diagnosticBody": "Te odpowiedzi pomagają AI zidentyfikować ukryte przyczyny źródłowe stojące za zadeklarowanymi wyzwaniami.",
         "questions": [
@@ -27255,6 +27411,65 @@
     }
   },
   "results": {
+    "okr": {
+      "report": {
+        "columns": {
+          "name": "NAZWA",
+          "scope": "ZAKRES",
+          "cycle": "CYKL",
+          "objectives": "CELE",
+          "keyResults": "REZULTATY",
+          "state": "STAN",
+          "owners": "WŁAŚCICIELE",
+          "lastCheckIn": "OSTATNI CHECK-IN",
+          "objective": "CEL",
+          "keyResult": "KLUCZOWY REZULTAT",
+          "owner": "WŁAŚCICIEL",
+          "values": "START / CEL / BIEŻĄCA",
+          "progress": "POSTĘP",
+          "confidence": "PEWNOŚĆ",
+          "deadline": "TERMIN",
+          "stateOne": "STAN",
+          "team": "ZESPÓŁ"
+        },
+        "ambition": {
+          "committed": "Zobowiązanie",
+          "aspirational": "Aspiracja",
+          "standard": "Standardowy"
+        },
+        "stateTooltip": "na dobrej drodze {{onTrack}} · zagrożone {{atRisk}} · krytyczne {{critical}} · bez check-inu {{noSignal}}",
+        "stateWithCheckIn": "{{state}} · check-in {{date}}",
+        "stateWithoutCheckIn": "{{state}} · bez check-inu",
+        "newReport": "Nowy raport",
+        "openReport": "Otwórz raport",
+        "openObjective": "Otwórz kartę celu",
+        "addObjective": "Dodaj cel",
+        "registryCrumb": "Raporty OKR",
+        "summary": "Podsumowanie",
+        "noTheme": "Bez tematu",
+        "groupOwner": "właściciel nadrzędny: {{name}}",
+        "groupOwners": "{{count}} właścicieli celów",
+        "chipOwnerAll": "Właściciel: wszyscy",
+        "chipOwnerNamed": "Właściciel: {{name}}",
+        "chipAll": "Wszystkie",
+        "chipRisk": "Zagrożone",
+        "chipMissing": "Bez check-inu",
+        "ownerFilter": "Właściciel",
+        "owner": "Właściciel",
+        "ownerLoad": "Rezultaty i zagrożenia",
+        "ownerBreakdownValue": "{{total}} rezultatów · {{atRisk}} zagrożonych · {{critical}} krytycznych",
+        "reportOwner": "Właściciel raportu",
+        "reportGoal": "Cel raportu",
+        "aboutReport": "O raporcie",
+        "noOwners": "Brak właścicieli rezultatów",
+        "noKeyResults": "Brak rezultatów",
+        "noKeyResultsHint": "Ten cel nie ma jeszcze ani jednego kluczowego rezultatu.",
+        "emptyTitle": "Brak raportów OKR",
+        "emptyDescription": "Nie ma jeszcze żadnego raportu OKR w tej organizacji. Raport powstaje razem z zestawem celów na wybrany cykl.",
+        "emptyRowsTitle": "Brak wierszy dla tego filtra",
+        "emptyRowsDescription": "Żaden kluczowy rezultat nie pasuje do wybranego filtra. Zmień filtr albo dodaj cel do raportu."
+      }
+    },
     "sampleData": {
       "banner": "Dane przykładowe — nie z bazy"
     },
@@ -27467,6 +27682,33 @@
       }
     },
     "roi": {
+      "card": {
+        "breadcrumb": "Analiza ROI",
+        "registryTitle": "Analizy ROI",
+        "registrySubtitle": "Inwestycje · ekonomika, ryzyko i rekomendacja",
+        "parts": {
+          "assumptions": "Założenia",
+          "calculations": "Wyliczenia",
+          "realization": "Realizacja"
+        },
+        "recommendation": {
+          "go": "GO",
+          "conditional_go": "CONDITIONAL GO",
+          "no_go": "NO-GO"
+        },
+        "benefitClass": {
+          "hard": "Hard",
+          "avoided": "Avoided",
+          "soft": "Soft (nie monetyzowana)",
+          "strategic": "Strategic (nie monetyzowana)"
+        },
+        "verdict": {
+          "confirmed": "Potwierdzone",
+          "partially_confirmed": "Częściowo potwierdzone",
+          "refuted": "Obalone"
+        },
+        "empty": "Brak danych"
+      },
       "totalPlanned": "Łączne planowane ROI",
       "totalRealized": "Łączne zrealizowane ROI",
       "overallVariance": "Ogólna odchylenie",
@@ -28561,19 +28803,38 @@
           "registered": {
             "title": "Zarejestrowany",
             "description": "Dla rozpoczynających współpracę",
-            "requirements": ["Rejestracja", "Podstawowe szkolenie"],
-            "benefits": ["10% rabat", "Dostęp do materiałów", "Wsparcie email"]
+            "requirements": [
+              "Rejestracja",
+              "Podstawowe szkolenie"
+            ],
+            "benefits": [
+              "10% rabat",
+              "Dostęp do materiałów",
+              "Wsparcie email"
+            ]
           },
           "certified": {
             "title": "Certyfikowany",
             "description": "Dla doświadczonych konsultantów",
-            "requirements": ["Egzamin certyfikacyjny", "Min. 3 projekty"],
-            "benefits": ["12% rabat", "Logo partnera", "Dedykowane wsparcie", "Listing w katalogu"]
+            "requirements": [
+              "Egzamin certyfikacyjny",
+              "Min. 3 projekty"
+            ],
+            "benefits": [
+              "12% rabat",
+              "Logo partnera",
+              "Dedykowane wsparcie",
+              "Listing w katalogu"
+            ]
           },
           "premier": {
             "title": "Premier",
             "description": "Dla partnerów strategicznych",
-            "requirements": ["10+ projektów", "Case study", "Referencje"],
+            "requirements": [
+              "10+ projektów",
+              "Case study",
+              "Referencje"
+            ],
             "benefits": [
               "14% rabat",
               "Dedykowany opiekun",
@@ -32573,7 +32834,9 @@
       "creating": "Tworzenie pustego dokumentu…",
       "description": "Pusty dokument roboczy do samodzielnej edycji.",
       "section": "Sekcja 1",
-      "title": "Nowy dokument"
+      "title": "Nowy dokument",
+      "failed": "Nie udało się utworzyć pustego dokumentu. Spróbuj ponownie albo wróć do Materiałów.",
+      "retry": "Spróbuj ponownie"
     },
     "comments": {
       "addComment": "Dodaj komentarz",
@@ -32930,7 +33193,8 @@
       "backToMaterials": "Wróć do Materiałów",
       "startOverConfirm": "Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.",
       "artifactNotFoundTitle": "Nie ma tu dokumentu",
-      "templateResolveTitle": "Nie da się użyć tego wzorca"
+      "templateResolveTitle": "Nie da się użyć tego wzorca",
+      "noDocumentActionable": "Nie udało się otworzyć dokumentu. Spróbuj ponownie albo wróć do Materiałów."
     },
     "breadcrumb": {
       "new": "Nowy dokument",
@@ -39608,7 +39872,12 @@
           "Prototyp / POC",
           "Wywiad z ekspertem"
         ],
-        "issue": ["Hotfix natychmiast", "Eskalacja do sponsora", "Rollback", "Sztab kryzysowy"],
+        "issue": [
+          "Hotfix natychmiast",
+          "Eskalacja do sponsora",
+          "Rollback",
+          "Sztab kryzysowy"
+        ],
         "dependency": [
           "Spotkanie synchronizacyjne",
           "Mock API / stub",
@@ -39772,7 +40041,12 @@
         "continue": "Kontynuujmy pracę nad tą {{nounPl}} od miejsca, w którym skończyliśmy — jaki jest najbardziej wartościowy następny krok i pomóż mi go wykonać."
       },
       "closeLabel": "Zamknij",
-      "quickPrompts": ["Uzupełnij puste pola", "Zsyntetyzuj całość", "Sprawdź jakość", "Co dalej?"],
+      "quickPrompts": [
+        "Uzupełnij puste pola",
+        "Zsyntetyzuj całość",
+        "Sprawdź jakość",
+        "Co dalej?"
+      ],
       "chatUnavailableMessage": "Czat AI jest chwilowo niedostępny. Skorzystaj z akcji powyżej."
     },
     "nModeCardManager": {
@@ -41665,10 +41939,22 @@
       "missionProcess": "Risk mission, scope, success signal i constraints",
       "missionExample": "Jak zabezpieczyć transformację przed opóźnieniami, presją kosztów i zmianą popytu?",
       "cards": [
-        ["Assumptions", "Co musi być prawdą, żeby strategia działała"],
-        ["Risks", "Co może uderzyć w wynik, koszt, czas lub reputację"],
-        ["Scenarios", "Jak różne przyszłości zmieniają decyzję"],
-        ["Moves", "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"]
+        [
+          "Assumptions",
+          "Co musi być prawdą, żeby strategia działała"
+        ],
+        [
+          "Risks",
+          "Co może uderzyć w wynik, koszt, czas lub reputację"
+        ],
+        [
+          "Scenarios",
+          "Jak różne przyszłości zmieniają decyzję"
+        ],
+        [
+          "Moves",
+          "Waliduj, ograniczaj, monitoruj, zabezpieczaj, eskaluj"
+        ]
       ]
     },
     "portfolioPriorityLibraryGraphic": {
@@ -41678,10 +41964,22 @@
       "missionProcess": "Portfolio mission, scope, constraints i success signal",
       "missionExample": "Które produkty i inicjatywy finansować w kolejnym kwartale przy ograniczonym budżecie?",
       "quadrants": [
-        ["Stars", "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"],
-        ["Znaki zapytania", "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"],
-        ["Dojne krowy", "Stabilna pozycja: utrzymuj i finansuj wzrost"],
-        ["Dogs", "Słaba pozycja: ogranicz, wygasz lub przebuduj"]
+        [
+          "Stars",
+          "Wysoki wzrost i mocna pozycja: inwestuj selektywnie"
+        ],
+        [
+          "Znaki zapytania",
+          "Wysoki wzrost i słaba pozycja: testuj lub wybierz bet"
+        ],
+        [
+          "Dojne krowy",
+          "Stabilna pozycja: utrzymuj i finansuj wzrost"
+        ],
+        [
+          "Dogs",
+          "Słaba pozycja: ogranicz, wygasz lub przebuduj"
+        ]
       ],
       "insight": "Rekomendacja nie polega na równym wsparciu wszystkich tematów, tylko na świadomej alokacji: invest, maintain, test, harvest, stop.",
       "output": "Source summary -> inicjatywy portfolio -> deck -> raport"
@@ -41693,10 +41991,22 @@
       "missionProcess": "Growth mission, scope, success signal i constraints",
       "missionExample": "Jak zwiększyć przychód w segmencie premium bez rozmycia marży?",
       "quadrants": [
-        ["Penetracja rynku", "Lepsze wykorzystanie obecnego segmentu i kanałów"],
-        ["Rozwój rynku", "Wejście do nowych segmentów lub geografii"],
-        ["Rozwój produktu", "Nowe propozycje wartości dla obecnych klientów"],
-        ["Dywersyfikacja", "Nowy produkt i nowy rynek, najwyższe ryzyko"]
+        [
+          "Penetracja rynku",
+          "Lepsze wykorzystanie obecnego segmentu i kanałów"
+        ],
+        [
+          "Rozwój rynku",
+          "Wejście do nowych segmentów lub geografii"
+        ],
+        [
+          "Rozwój produktu",
+          "Nowe propozycje wartości dla obecnych klientów"
+        ],
+        [
+          "Dywersyfikacja",
+          "Nowy produkt i nowy rynek, najwyższe ryzyko"
+        ]
       ],
       "insight": "Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.",
       "output": "Source summary -> inicjatywa -> deck -> raport"
@@ -41725,11 +42035,31 @@
       "implicationsTitle": "Implikacje strategiczne",
       "movesTitle": "Most do inicjatyw",
       "forces": [
-        ["Rywalizacja", "4/5", "Wysoka presja cenowa i szybko kopiowane oferty"],
-        ["Nowi gracze", "3/5", "Wejście możliwe, ale wymaga kanału i zaufania"],
-        ["Substytuty", "2/5", "Alternatywy istnieją, lecz nie rozwiązują całego problemu"],
-        ["Siła kupujących", "5/5", "Duzi klienci wymuszają rabaty i warunki SLA"],
-        ["Siła dostawców", "3/5", "Koszty komponentów są zmienne, ale dywersyfikowalne"]
+        [
+          "Rywalizacja",
+          "4/5",
+          "Wysoka presja cenowa i szybko kopiowane oferty"
+        ],
+        [
+          "Nowi gracze",
+          "3/5",
+          "Wejście możliwe, ale wymaga kanału i zaufania"
+        ],
+        [
+          "Substytuty",
+          "2/5",
+          "Alternatywy istnieją, lecz nie rozwiązują całego problemu"
+        ],
+        [
+          "Siła kupujących",
+          "5/5",
+          "Duzi klienci wymuszają rabaty i warunki SLA"
+        ],
+        [
+          "Siła dostawców",
+          "3/5",
+          "Koszty komponentów są zmienne, ale dywersyfikowalne"
+        ]
       ],
       "implicationItems": [
         "Rynek może rosnąć, ale przewaga bez danych i kanału będzie krucha.",
@@ -41757,11 +42087,31 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Odbiorca, cel, sygnał sukcesu", "bg-sky-500"],
-        ["Myśl przewodnia", "Jedno zdanie, które ma zostać", "bg-sky-500"],
-        ["Filary", "Kolumny, które utrzymują dach", "bg-blue-500"],
-        ["Dowody", "Czym każdy filar jest poparty", "bg-amber-500"],
-        ["Narracja & outputy", "Wątki, ruchy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Odbiorca, cel, sygnał sukcesu",
+          "bg-sky-500"
+        ],
+        [
+          "Myśl przewodnia",
+          "Jedno zdanie, które ma zostać",
+          "bg-sky-500"
+        ],
+        [
+          "Filary",
+          "Kolumny, które utrzymują dach",
+          "bg-blue-500"
+        ],
+        [
+          "Dowody",
+          "Czym każdy filar jest poparty",
+          "bg-amber-500"
+        ],
+        [
+          "Narracja & outputy",
+          "Wątki, ruchy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "houseTitle": "Dom komunikatu",
       "houseHint": "Dach + filary",
@@ -41770,9 +42120,18 @@
       "proofWord": "dowody",
       "legendTitle": "Rezonans u odbiorcy",
       "legend": [
-        ["high", "Wysoki rezonans"],
-        ["medium", "Średni rezonans"],
-        ["low", "Niski rezonans"]
+        [
+          "high",
+          "Wysoki rezonans"
+        ],
+        [
+          "medium",
+          "Średni rezonans"
+        ],
+        [
+          "low",
+          "Niski rezonans"
+        ]
       ],
       "footer": "Narrative Engine = brief -> myśl przewodnia -> filary -> dowody -> narracja -> outputy",
       "pillars": [
@@ -41818,19 +42177,48 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Branża, domeny, priorytety, decyzja", "bg-sky-500"],
-        ["Zdolności", "Mapa zdolności wg domen", "bg-sky-500"],
-        ["Dojrzałość", "Obecna vs docelowa 1-5 + waga", "bg-blue-500"],
-        ["Luki", "Gdzie luka × waga jest największa", "bg-amber-500"],
-        ["Ruchy & outputy", "Build/buy/partner, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Branża, domeny, priorytety, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Zdolności",
+          "Mapa zdolności wg domen",
+          "bg-sky-500"
+        ],
+        [
+          "Dojrzałość",
+          "Obecna vs docelowa 1-5 + waga",
+          "bg-blue-500"
+        ],
+        [
+          "Luki",
+          "Gdzie luka × waga jest największa",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Build/buy/partner, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "ladderTitle": "Drabina dojrzałości",
       "scaleHint": "Skala dojrzałości 1-5",
       "legendTitle": "Rozmiar luki",
       "legend": [
-        ["critical", "Krytyczna luka"],
-        ["moderate", "Umiarkowana luka"],
-        ["minor", "Drobna luka"]
+        [
+          "critical",
+          "Krytyczna luka"
+        ],
+        [
+          "moderate",
+          "Umiarkowana luka"
+        ],
+        [
+          "minor",
+          "Drobna luka"
+        ]
       ],
       "currentLabel": "Obecna",
       "targetLabel": "Docelowa",
@@ -41884,27 +42272,68 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Priorytety, kryteria, cel, ograniczenia", "bg-sky-500"],
-        ["Priorytety", "Lista konkurujących opcji", "bg-sky-500"],
-        ["Ocena", "Wartość vs wysiłek 1-5 + dopasowanie", "bg-blue-500"],
-        ["Macierz", "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna", "bg-amber-500"],
-        ["Ruchy & outputy", "Pursue/defer/drop, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Brief",
+          "Priorytety, kryteria, cel, ograniczenia",
+          "bg-sky-500"
+        ],
+        [
+          "Priorytety",
+          "Lista konkurujących opcji",
+          "bg-sky-500"
+        ],
+        [
+          "Ocena",
+          "Wartość vs wysiłek 1-5 + dopasowanie",
+          "bg-blue-500"
+        ],
+        [
+          "Macierz",
+          "Szybkie wygrane, duże zakłady, wypełniacze, studnia bez dna",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Pursue/defer/drop, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "matrixTitle": "Macierz wartość x wysiłek",
       "scaleHint": "Skala 1-5",
       "axisValue": "Wartość",
       "axisEffort": "Wysiłek",
       "quadrants": [
-        ["Szybkie wygrane", "Wys. wartość, niski wysiłek"],
-        ["Duże zakłady", "Wys. wartość, wysoki wysiłek"],
-        ["Fill-ins", "Nis. wartość, niski wysiłek"],
-        ["Studnia bez dna", "Nis. wartość, wysoki wysiłek"]
+        [
+          "Szybkie wygrane",
+          "Wys. wartość, niski wysiłek"
+        ],
+        [
+          "Duże zakłady",
+          "Wys. wartość, wysoki wysiłek"
+        ],
+        [
+          "Fill-ins",
+          "Nis. wartość, niski wysiłek"
+        ],
+        [
+          "Studnia bez dna",
+          "Nis. wartość, wysoki wysiłek"
+        ]
       ],
       "legendTitle": "Rekomendacja",
       "legend": [
-        ["pursue", "Realizuj (pursue)"],
-        ["defer", "Odłóż (defer)"],
-        ["drop", "Odpuść (drop)"]
+        [
+          "pursue",
+          "Realizuj (pursue)"
+        ],
+        [
+          "defer",
+          "Odłóż (defer)"
+        ],
+        [
+          "drop",
+          "Odpuść (drop)"
+        ]
       ],
       "footer": "Focus & Trade-offs = brief -> priorytety -> wartość vs wysiłek -> macierz -> ruchy -> outputy",
       "bubbles": [
@@ -41950,19 +42379,48 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Ambicja", "Jedno zdanie + zakres + sygnał sukcesu", "bg-violet-500"],
-        ["Sygnały", "Co napędza i ogranicza ambicję", "bg-violet-500"],
-        ["Motywy", "Rozkład na motywy strategiczne", "bg-indigo-500"],
-        ["Cele & horyzont", "Metryka, cel i okno czasowe", "bg-sky-500"],
-        ["Ruchy & outputy", "Priorytety, inicjatywy, raport, deck", "bg-emerald-500"]
+        [
+          "Ambicja",
+          "Jedno zdanie + zakres + sygnał sukcesu",
+          "bg-violet-500"
+        ],
+        [
+          "Sygnały",
+          "Co napędza i ogranicza ambicję",
+          "bg-violet-500"
+        ],
+        [
+          "Motywy",
+          "Rozkład na motywy strategiczne",
+          "bg-indigo-500"
+        ],
+        [
+          "Cele & horyzont",
+          "Metryka, cel i okno czasowe",
+          "bg-sky-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Priorytety, inicjatywy, raport, deck",
+          "bg-emerald-500"
+        ]
       ],
       "cascadeTitle": "Kaskada ambicji",
       "cascadeHint": "Motywy wg horyzontu",
       "legendTitle": "Istotność motywu",
       "legend": [
-        ["high", "Wysoka istotność"],
-        ["medium", "Średnia istotność"],
-        ["low", "Niska istotność"]
+        [
+          "high",
+          "Wysoka istotność"
+        ],
+        [
+          "medium",
+          "Średnia istotność"
+        ],
+        [
+          "low",
+          "Niska istotność"
+        ]
       ],
       "horizonLabels": {
         "short": "Krótki",
@@ -42027,16 +42485,41 @@
       "stagesTitleProcess": "5 kroków pracy",
       "stagesTitleExample": "5 kroków pracy",
       "stages": [
-        ["Brief", "Branża, zakres łańcucha, pozycja, decyzja", "bg-sky-500"],
-        ["Aktywności", "Mapa 5 pierwotnych + 4 wspierających", "bg-sky-500"],
-        ["Wkład", "Koszt, wartość i rola w marży na aktywność", "bg-blue-500"],
-        ["Dźwignie", "Gdzie redukować koszt, gdzie wzmacniać wartość", "bg-amber-500"],
-        ["Ruchy & outputy", "Ruchy, inicjatywy, raport, deck lub idea", "bg-emerald-500"]
+        [
+          "Brief",
+          "Branża, zakres łańcucha, pozycja, decyzja",
+          "bg-sky-500"
+        ],
+        [
+          "Aktywności",
+          "Mapa 5 pierwotnych + 4 wspierających",
+          "bg-sky-500"
+        ],
+        [
+          "Wkład",
+          "Koszt, wartość i rola w marży na aktywność",
+          "bg-blue-500"
+        ],
+        [
+          "Dźwignie",
+          "Gdzie redukować koszt, gdzie wzmacniać wartość",
+          "bg-amber-500"
+        ],
+        [
+          "Ruchy & outputy",
+          "Ruchy, inicjatywy, raport, deck lub idea",
+          "bg-emerald-500"
+        ]
       ],
       "chainTitle": "Łańcuch wartości",
       "support": "Aktywności wspierające",
       "primary": "Aktywności pierwotne",
-      "supportItems": ["Infrastruktura", "Zasoby ludzkie", "Technologia", "Zaopatrzenie"],
+      "supportItems": [
+        "Infrastruktura",
+        "Zasoby ludzkie",
+        "Technologia",
+        "Zaopatrzenie"
+      ],
       "primaryItems": [
         "Logistyka wejściowa",
         "Operacje",
@@ -42047,9 +42530,18 @@
       "margin": "Marża",
       "legendTitle": "Rola w marży",
       "legend": [
-        ["creator", "Tworzy marżę"],
-        ["neutral", "Neutralna"],
-        ["drain", "Drenuje marżę"]
+        [
+          "creator",
+          "Tworzy marżę"
+        ],
+        [
+          "neutral",
+          "Neutralna"
+        ],
+        [
+          "drain",
+          "Drenuje marżę"
+        ]
       ],
       "footer": "Value Chain = brief -> aktywności -> wkład -> dźwignie -> ruchy -> outputy",
       "legendHint": "kolor każdej aktywności pokazuje, czy tworzy marżę, jest neutralna, czy ją drenuje. Wielkość i adnotacje wynikają z wkładu w koszt i wartość."
@@ -42456,7 +42948,13 @@
       "outputHintReport": "Dla final source summary gotowego do pokazania.",
       "outputHintPresentation": "Dla komunikacji wizualnej bez ponownego składania narracji.",
       "outputHintIdea": "Dla obiecujących hipotez lub kierunków do dalszej pracy.",
-      "groupLabels": ["Sesja", "Analiza", "Rezultaty", "Współpraca", "Zapisy"],
+      "groupLabels": [
+        "Sesja",
+        "Analiza",
+        "Rezultaty",
+        "Współpraca",
+        "Zapisy"
+      ],
       "finish": "Zakończ",
       "nextStep": "Następny",
       "requestReviewTitleReady": "Wyślij sesję do review",
@@ -44019,7 +44517,7 @@
         "myWorkDecisions": "Moja Praca · Decyzje",
         "myWork": "Moja Praca",
         "notebook": "Notatnik",
-        "results": "Resultaty",
+        "results": "Wyniki",
         "tables": "Tabele",
         "vault": "Sejf"
       }
@@ -44543,6 +45041,16 @@
       "back": "Wstecz",
       "createAndEdit": "Utwórz i edytuj",
       "next": "Dalej"
+    }
+  },
+  "list": {
+    "rightPanel": {
+      "tabRecord": "Rekord",
+      "tabTeresa": "Teresa",
+      "close": "Zamknij panel",
+      "show": "Pokaż panel",
+      "openTeresa": "Teresa",
+      "teresaEmpty": "Zaznacz wiersz albo zapytaj o cokolwiek z tej listy."
     }
   }
 }

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CanonicalWorkHardeningPanel } from '@/components/shared/CanonicalWorkHardeningPanel';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { TaskMilestoneBlastRadius } from '@/components/shared/TaskMilestoneBlastRadius';
 import { StandardPreview } from '@/components/standard/StandardPreview';
@@ -31,6 +32,7 @@ import {
   type MemberNameResolver,
 } from '@/hooks/useOrganizationMemberNames';
 import { useAppStore } from '@/store/useAppStore';
+import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { liczebnik } from '@/utils/liczebnik';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
@@ -315,6 +317,7 @@ export const ExecutionWorkSurface = ({
     // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
     // Stan jawny, bo cicha luka w liście to gorsze kłamstwo niż wisząca zakładka.
     [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
+  const loadingPhase = useDeferredLoading(state === 'LOADING');
   /**
    * Uczciwy stan częściowy — ale NIE między Menu 3 a tabelą.
    *
@@ -837,7 +840,23 @@ export const ExecutionWorkSurface = ({
           </div>
         </div>
       )}
-      {state === 'LOADING' && <p role="status">Wczytuję kanoniczny rejestr pracy…</p>}
+      {state === 'LOADING' && loadingPhase === 'timeout' && (
+        <ErrorState
+          variant="timeout"
+          compact
+          onRetry={() => (caseId ? void load(caseId) : void loadCases())}
+        />
+      )}
+      {state === 'LOADING' && (loadingPhase === 'pending' || loadingPhase === 'slow') && (
+        <div data-testid="execution-work-loading" className="flex min-h-0 flex-1 flex-col gap-3">
+          {loadingPhase === 'slow' && (
+            <p role="status" className="text-sm text-c-text-muted">
+              Wczytywanie trwa dłużej niż zwykle…
+            </p>
+          )}
+          <SkeletonState variant="table" rows={6} label="Wczytuję kanoniczny rejestr pracy" />
+        </div>
+      )}
       {!caseId && state === 'READY' && rows.length === 0 && (
         <div className="rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
           Brak kanonicznych zadań i decyzji w dostępnych realizacjach.

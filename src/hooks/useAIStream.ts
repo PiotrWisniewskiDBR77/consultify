@@ -490,6 +490,7 @@ type CitationsEvent = {
 };
 
 export type PartialResponse = {
+  found?: true;
   sessionId: string;
   content: string;
   canResume?: boolean;
@@ -1480,9 +1481,6 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
 
-        if (response.status === 404) {
-          return null;
-        }
         if (response.status === 403) {
           return { sessionId, content: '', canResume: false, forbidden: true };
         }
@@ -1490,7 +1488,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           throw new Error(`chat_partial_discovery_failed_${response.status}`);
         }
 
-        return (await response.json()) as PartialResponse;
+        const body = (await response.json()) as PartialResponse | { found: false };
+        return body.found === false ? null : body;
       } catch (error) {
         if (error instanceof Error && error.message.startsWith('chat_partial_discovery_failed_')) {
           throw error;

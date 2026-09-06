@@ -8,26 +8,30 @@
  * wizualnie zaakceptowanych komponentów: `AssessmentReportView` i
  * `AssessmentPresentationView`.
  *
- * ★ DOMYŚLNIE FALSE. Powód: CLAUDE.md reguła #7 — właściciel nigdy nie jest
- * pierwszym testerem wizualnym. Same ekrany (AssessmentReportView,
- * AssessmentPresentationView) mają akcept Piotra jako komponenty, ale DROGA
- * DOJŚCIA do nich — nowa pozycja w kebabie tabeli Outputs, nowe trasy w
- * AppRoutes — nie była jeszcze pokazana ani zaakceptowana. Zanim Piotr
- * zobaczy pozycję w menu, potrzebny jest dev-render zrzut tej konkretnej
- * ścieżki wejścia. Do tego czasu flaga zostaje OFF.
+ * ★ DOMYŚLNIE TRUE od naprawy MVP 06.09 (evidence/audyt-mvp-20260906/A2/
+ * RAPORT_A2.md poz. 5.2, BLOKER: "raport dla Finalne nie istnieje" — trasa
+ * przekierowywała na `/assessment?tab=outputs` dla KAŻDEGO assessmentu,
+ * niezależnie od statusu). Decyzja CTO: droga dojścia ma być widoczna na
+ * MVP — dev-render zrzut tej ścieżki wejścia zrobiony i sprawdzony jako
+ * część tej naprawy (evidence/mvp-naprawy-noc-2/), więc warunek reguły #7
+ * ("Piotr nigdy nie jest pierwszym testerem wizualnym") jest spełniony:
+ * ja renderuję i patrzę pierwszy, Piotr dostaje już zaakceptowaną ścieżkę.
  *
- * OFF = zachowanie bajt-w-bajt jak dziś: `AssessmentOutputsTab` renderuje
- * dokładnie te same dwie pozycje w kebabie i te same akcje w
- * `StandardPreview` co przed tą zmianą (żadnej nowej pozycji), a obie nowe
- * trasy przekierowują (`<Navigate to="/assessment?tab=outputs" replace />`)
- * zamiast montować komponent.
+ * Historia (do 06.09): flaga była domyślnie OFF dokładnie z powodu reguły
+ * #7 — ekrany docelowe miały akcept jako komponenty, ale droga dojścia
+ * (kebab + trasy) nie była jeszcze pokazana. To odróżnienie jest teraz
+ * nieaktualne.
  *
- * Włączenie do podglądu (dev-render/harness, NIE na żywym Piotrze):
- * `?ff_assessmentOutputArtifacts=1` w URL, lub localStorage
- * `ff.assessment_output_artifacts=1`.
+ * ON = `AssessmentOutputsTab` renderuje kebab pozycje "Pokaż raport" /
+ * "Pokaż jako prezentację", a obie trasy montują docelowy komponent
+ * zamiast przekierowywać.
+ *
+ * Wyłączenie awaryjne (np. regresja na żywo — patrz CLAUDE.md „przycisk
+ * cofania"): `?ff_assessmentOutputArtifacts=0` w URL, lub localStorage
+ * `ff.assessment_output_artifacts=0`.
  *
  * Resolution order (first wins): URL query → localStorage → Vite build env →
- * default false. Ten sam system co `unifiedCreateLauncherFlag.ts`.
+ * default true. Ten sam system co `unifiedCreateLauncherFlag.ts`.
  * (Do 2026-09-02 wskazywalo tu tez `src/components/Results/resultsFeatureFlags.ts`
  * — plik usuniety razem z wygaszonym poddrzewem ResultsHub.)
  */
@@ -73,10 +77,10 @@ function readEnv(): boolean | null {
 
 /**
  * True when the Assessment Output artifact screens (report + presentation)
- * and their kebab entry points are enabled. Default OFF — see header
- * comment (CLAUDE.md reguła #7, brak jeszcze pokazanej Piotrowi drogi
- * dojścia). Opt-in: `?ff_assessmentOutputArtifacts=1` lub localStorage
- * `ff.assessment_output_artifacts=1`.
+ * and their kebab entry points are enabled. Default ON since naprawa MVP
+ * 06.09 (CTO decision — patrz header comment). Opt-out (awaryjny):
+ * `?ff_assessmentOutputArtifacts=0` lub localStorage
+ * `ff.assessment_output_artifacts=0`.
  */
 export function isAssessmentOutputArtifactsEnabled(): boolean {
   const fromQuery = readQuery();
@@ -85,7 +89,7 @@ export function isAssessmentOutputArtifactsEnabled(): boolean {
   if (fromLs !== null) return fromLs;
   const fromEnv = readEnv();
   if (fromEnv !== null) return fromEnv;
-  return false;
+  return true;
 }
 
 export const ASSESSMENT_OUTPUT_ARTIFACTS_FLAG_KEYS = {

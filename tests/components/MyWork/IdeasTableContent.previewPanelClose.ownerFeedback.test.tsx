@@ -30,13 +30,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 // absence with `waitFor` instead of a synchronous query so the test reflects
 // the real (post-animation) end state instead of racing the transition.
 const expectClosed = () =>
-  waitFor(() => expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument());
+  waitFor(() => expect(document.querySelector('[data-right-panel]')).not.toBeInTheDocument());
 const expectOpen = () =>
-  waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument());
+  waitFor(() => expect(document.querySelector('[data-right-panel]')).toBeInTheDocument());
 
 import { IdeasTableContent } from '../../../src/components/MyWork/IdeasTableContent';
 import type { MyIdea } from '../../../src/components/MyWork/myIdeasTypes';
 import type { ColumnWidths, FilterOption, TableFilters } from '../../../src/components/ui/ResizableTable';
+import { resetJedenPanelForTests } from '../../../src/components/shared/PreviewPane/useJedenPanel';
 
 const COLUMN_WIDTHS: ColumnWidths = {
   select: 40,
@@ -115,6 +116,8 @@ const getRow = (title: string) => screen.getByText(title).closest('tr') as HTMLT
 describe('IdeasTableContent — right preview panel can actually be closed (owner feedback 05.09)', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
+    window.localStorage.removeItem('consultify.listPanel.root.closed');
+    resetJedenPanelForTests();
   });
   afterEach(() => {
     window.sessionStorage.clear();
@@ -125,7 +128,7 @@ describe('IdeasTableContent — right preview panel can actually be closed (owne
     fireEvent.click(getRow('Ekspansja DE — mapa hipotez'));
     await expectOpen();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
     await expectClosed();
   });
 
@@ -133,7 +136,7 @@ describe('IdeasTableContent — right preview panel can actually be closed (owne
     renderTable();
     fireEvent.click(getRow('Ekspansja DE — mapa hipotez'));
     await expectOpen();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
     await expectClosed();
 
     fireEvent.click(getRow('Automatyzacja raportowania OEE'));
@@ -148,7 +151,7 @@ describe('IdeasTableContent — right preview panel can actually be closed (owne
     const { unmount } = renderTable();
     fireEvent.click(getRow('Ekspansja DE — mapa hipotez'));
     await expectOpen();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
     await expectClosed();
     expect(window.sessionStorage.getItem('consultify.mywork.ideas.previewDismissed.v1')).toBe(
       'true'
@@ -164,7 +167,7 @@ describe('IdeasTableContent — right preview panel can actually be closed (owne
     renderTable();
     fireEvent.click(getRow('Ekspansja DE — mapa hipotez'));
     await expectOpen();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
     await expectClosed();
 
     const showPanelButton = screen.getByRole('button', { name: 'Show panel' });
@@ -183,7 +186,7 @@ describe('IdeasTableContent — right preview panel can actually be closed (owne
     renderTable();
     fireEvent.click(getRow('Ekspansja DE — mapa hipotez'));
     await expectOpen();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close panel' }));
     await expectClosed();
 
     const row = getRow('Automatyzacja raportowania OEE');

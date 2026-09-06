@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/primitives';
+import { organizationFieldLabel } from '@/labels/organizationFieldLabels';
 import {
   claimValueKey,
   type GovernedClaim,
@@ -230,7 +231,8 @@ export const OrganizationDecisionQualityPanel: React.FC<{
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-amber-400" />
                       <h4 className="font-medium text-[var(--c-text)]">
-                        {isPolish ? 'Sprzeczne wartości' : 'Conflicting values'} · {conflict.path}
+                        {isPolish ? 'Sprzeczne wartości' : 'Conflicting values'} ·{' '}
+                        {organizationFieldLabel(conflict.path, isPolish)}
                       </h4>
                     </div>
                     <p className="mt-2 text-sm text-[var(--c-text-secondary)]">

@@ -62,10 +62,16 @@ export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outp
           setState({ kind: 'not-found' });
           return;
         }
-        const [session, approvals] = await Promise.all([
-          fetchSessionForReport(outputResult.output.sessionId),
-          fetchApprovalsForReport(outputResult.output.sessionId),
-        ]);
+        // Ocena z magazynu zastanego nie ma sesji jądra ani śladu zatwierdzeń —
+        // pytanie o nie dałoby dwa pewne 404. Dokument mówi wtedy wprost, skąd
+        // wynik pochodzi (`source: 'legacy'`), zamiast udawać pustą metrykę.
+        const maSesjeJadra = outputResult.source !== 'legacy' && !!outputResult.output.sessionId;
+        const [session, approvals] = maSesjeJadra
+          ? await Promise.all([
+              fetchSessionForReport(outputResult.output.sessionId),
+              fetchApprovalsForReport(outputResult.output.sessionId),
+            ])
+          : ([null, []] as const);
         if (cancelled) return;
         setState({
           kind: 'loaded',
@@ -75,6 +81,9 @@ export const AssessmentReportView: React.FC<AssessmentReportViewProps> = ({ outp
             supersededByOutputId: outputResult.supersededByOutputId,
             session,
             approvals,
+            source: outputResult.source,
+            unitNotes: outputResult.unitNotes,
+            narrative: outputResult.narrative ?? null,
           },
         });
       } catch (err) {

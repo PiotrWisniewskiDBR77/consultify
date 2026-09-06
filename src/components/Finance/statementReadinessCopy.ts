@@ -113,3 +113,48 @@ export function statementReasonSentences(
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// „Stan pakietu" — jedno zdanie zamiast angielskiego akapitu z backendu.
+//
+// ★ POWÓD (audyt FIN 2026-09-06 defekt #8, zrzut `02-sprawozdania-podglad.png`):
+// wiersz „Stan pakietu" w podglądzie renderował WPROST
+// `financial_statement_packs.pack_quality_summary`, czyli angielskie zdanie
+// sklejone w `server/src/services/financialStatementPackService.ts:216-224`
+// („Statement pack contains a complete ready set of P&L, Balance Sheet, and
+// Cash Flow."). Backend nie zna języka użytkownika i nie powinien go znać —
+// niesie STAN (`packReadinessStatus`) i KODY POWODÓW (`packQualityReasonCodes`),
+// a zdanie składa warstwa prezentacji, z tego samego słownika co reszta pliku.
+// ---------------------------------------------------------------------------
+
+/** Zdanie o gotowości pakietu z jego stanu i kodów powodów. NIGDY nie zwraca tekstu z backendu. */
+export function statementPackStateSentence(
+  readinessStatus: string | null | undefined,
+  reasonCodes: readonly string[] | null | undefined,
+  t: TFunction
+): string {
+  const status = String(readinessStatus || '').trim().toLowerCase();
+  const sentences = statementReasonSentences(reasonCodes, t);
+
+  if (status === 'ready') {
+    return t(
+      'finance.statements.state.ready',
+      'Pakiet jest kompletny: rachunek zysków i strat, bilans oraz rachunek przepływów pieniężnych.'
+    );
+  }
+  if (status === 'rejected') {
+    return t(
+      'finance.statements.state.rejected',
+      'Wszystkie sprawozdania w tym pakiecie zostały odrzucone — pakiet nie może zasilić dalszej pracy.'
+    );
+  }
+  if (sentences.length > 0) {
+    return `${t('finance.statements.state.needsAttention', 'Pakiet wymaga uwagi')}: ${sentences
+      .map((sentence, index) => (index === 0 ? sentence : sentence.charAt(0).toLowerCase() + sentence.slice(1)))
+      .join('; ')}.`;
+  }
+  return t(
+    'finance.statements.state.collecting',
+    'Pakiet wciąż zbiera wymagane sprawozdania.'
+  );
+}

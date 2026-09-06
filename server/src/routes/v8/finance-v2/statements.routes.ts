@@ -197,6 +197,11 @@ router.get(
         statementType: l.statement_type,
         canonicalLineId: l.canonical_line_id,
         lineCode: l.line_code,
+        // Nazwy pozycji z taksonomii — bez nich klient miałby tylko kod
+        // (`AP`, `CASH`), a kod nie jest nazwą pozycji sprawozdania.
+        lineName: l.line_name,
+        lineNamePl: l.line_name_pl,
+        sortOrder: l.sort_order,
         entityId: l.entity_id,
         entityCode: l.entity_code,
         periodId: l.period_id,

@@ -88,7 +88,7 @@ export const NewAuditModal: React.FC<NewAuditModalProps> = ({
             {t(
               'audits.method.newAudit.empty',
               isPolish
-                ? 'Brak opublikowanych pakietów z przypisanym źródłem. Opublikuj pakiet w zakładce Library, aby rozpocząć audyt.'
+                ? 'Brak opublikowanych pakietów z przypisanym źródłem. Opublikuj pakiet w zakładce Biblioteka, aby rozpocząć audyt.'
                 : 'No published packs with an assigned source. Publish a pack in the Library tab to start an audit.'
             )}
           </span>

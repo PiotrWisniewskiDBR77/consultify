@@ -1,0 +1,22 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const auth = process.env.ODBIOR_AUTH_STATE;
+const sesja = JSON.parse(fs.readFileSync(auth, 'utf8'));
+const originy = sesja.origins || [];
+const zrodlo = originy.find((o) => o.origin === 'http://localhost:3000') || originy[0];
+if (zrodlo) { sesja.origins = [...originy.filter((o) => o.origin !== 'http://localhost:3090'), { ...zrodlo, origin: 'http://localhost:3090' }]; }
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ storageState: sesja, viewport: { width: 1440, height: 900 } });
+const page = await ctx.newPage();
+page.on('console', m => console.log('CONSOLE', m.type(), m.text().slice(0,200)));
+page.on('pageerror', e => console.log('PAGEERROR', String(e).slice(0,200)));
+page.on('requestfailed', r => console.log('REQFAIL', r.url(), r.failure()?.errorText));
+const resp = await page.goto('http://localhost:3090/meetings', { waitUntil: 'load', timeout: 20000 });
+console.log('status', resp && resp.status());
+await page.waitForTimeout(3000);
+await page.screenshot({ path: 'evidence/audyt-mvp-20260906/B2/_debug2.png' });
+console.log('url:', page.url());
+const html = await page.content();
+fs.writeFileSync('evidence/audyt-mvp-20260906/B2/_debug2.html', html);
+console.log('bodylen', html.length);
+await browser.close();

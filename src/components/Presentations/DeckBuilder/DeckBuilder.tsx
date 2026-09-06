@@ -1044,7 +1044,7 @@ export const DeckBuilder: React.FC = () => {
         order_index: idx,
         intent: 'key_messages',
         layout_id: 'content_full',
-        title: 'New Slide',
+        title: t('presentations.builder.defaultContent.newSlide', 'Nowy slajd'),
         blocks: [],
         source_refs: [],
         has_refreshable_data: false,
@@ -1054,7 +1054,7 @@ export const DeckBuilder: React.FC = () => {
       };
       addCard(idx, newCard);
     },
-    [deck, addCard]
+    [deck, addCard, t]
   );
 
   const handleInsertBlock = useCallback(
@@ -1064,7 +1064,7 @@ export const DeckBuilder: React.FC = () => {
         block_id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         card_id: activeCard.card_id,
         type: blockType as CardBlock['type'],
-        content: content || getDefaultContent(blockType),
+        content: content || getDefaultContent(blockType, t),
         is_refreshable: false,
         position: { area: 'full', order: activeCard.blocks.length },
         ai_editable: true,
@@ -1073,7 +1073,7 @@ export const DeckBuilder: React.FC = () => {
         blocks: [...activeCard.blocks, newBlock],
       });
     },
-    [activeCard, updateCard]
+    [activeCard, updateCard, t]
   );
 
   const handleInsertMediaImage = useCallback(
@@ -2412,22 +2412,42 @@ export const DeckBuilder: React.FC = () => {
   );
 };
 
-function getDefaultContent(blockType: string): Record<string, unknown> {
+export type SimpleT = (key: string, defaultValue?: string) => string;
+
+// Exported for tests (tests/unit/i18n/deck-builder-default-content.test.ts):
+// BLOKER 05/06.09 — every default block content used to be a hardcoded
+// English literal ("New Heading", "Item 1"...), visible the instant a user
+// created a blank presentation. Now it's routed through i18next with Polish
+// defaults; the test pins this down with a real `t` (not an identity stub)
+// so a regression that reintroduces an English literal fails loudly.
+export function getDefaultContent(blockType: string, t: SimpleT): Record<string, unknown> {
   switch (blockType) {
     case 'heading':
-      return { text: 'New Heading', level: 2 };
+      return { text: t('presentations.builder.defaultContent.heading', 'Nagłówek'), level: 2 };
     case 'paragraph':
-      return { text: 'Enter text here...' };
+      return { text: t('presentations.builder.defaultContent.paragraph', 'Wpisz tekst tutaj…') };
     case 'bullet_list':
-      return { items: ['Item 1', 'Item 2', 'Item 3'] };
+      return {
+        items: [
+          t('presentations.builder.defaultContent.item1', 'Punkt 1'),
+          t('presentations.builder.defaultContent.item2', 'Punkt 2'),
+          t('presentations.builder.defaultContent.item3', 'Punkt 3'),
+        ],
+      };
     case 'numbered_list':
-      return { items: ['Step 1', 'Step 2', 'Step 3'] };
+      return {
+        items: [
+          t('presentations.builder.defaultContent.step1', 'Krok 1'),
+          t('presentations.builder.defaultContent.step2', 'Krok 2'),
+          t('presentations.builder.defaultContent.step3', 'Krok 3'),
+        ],
+      };
     case 'table':
       return { headers: ['A', 'B', 'C'], rows: [['1', '2', '3']] };
     case 'chart':
       return {
         chartType: 'bar',
-        title: 'Chart',
+        title: t('presentations.builder.defaultContent.chart', 'Wykres'),
         data: [
           { label: 'A', value: 30 },
           { label: 'B', value: 50 },
@@ -2435,7 +2455,11 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
         ],
       };
     case 'kpi_widget':
-      return { label: 'Metric', value: '0', trend: 'stable' };
+      return {
+        label: t('presentations.builder.defaultContent.metric', 'Miernik'),
+        value: '0',
+        trend: 'stable',
+      };
     case 'metric_strip':
       return {
         metrics: [
@@ -2444,26 +2468,37 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
         ],
       };
     case 'callout':
-      return { variant: 'info', text: 'Important note' };
+      return {
+        variant: 'info',
+        text: t('presentations.builder.defaultContent.callout', 'Ważna uwaga'),
+      };
     case 'smart_layout':
       return { layoutType: '3col', items: [{ title: 'A' }, { title: 'B' }, { title: 'C' }] };
     case 'smart_diagram':
       return {
         diagram_kind: 'process_steps',
-        items: [{ label: 'Step 1' }, { label: 'Step 2' }, { label: 'Step 3' }],
+        items: [
+          { label: t('presentations.builder.defaultContent.step1', 'Krok 1') },
+          { label: t('presentations.builder.defaultContent.step2', 'Krok 2') },
+          { label: t('presentations.builder.defaultContent.step3', 'Krok 3') },
+        ],
       };
     case 'timeline_block':
       return {
         items: [
-          { date: 'Q1', title: 'Start' },
-          { date: 'Q2', title: 'Mid' },
-          { date: 'Q3', title: 'End' },
+          { date: 'Q1', title: t('presentations.builder.defaultContent.timelineStart', 'Początek') },
+          { date: 'Q2', title: t('presentations.builder.defaultContent.timelineMid', 'Środek') },
+          { date: 'Q3', title: t('presentations.builder.defaultContent.timelineEnd', 'Koniec') },
         ],
       };
     case 'divider':
       return { style: 'line' };
     case 'image':
-      return { url: '', alt: 'Image', fit: 'cover' };
+      return {
+        url: '',
+        alt: t('presentations.builder.defaultContent.image', 'Obraz'),
+        fit: 'cover',
+      };
     default:
       return {};
   }

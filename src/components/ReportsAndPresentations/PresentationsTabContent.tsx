@@ -17,6 +17,7 @@ import { LoadingState } from '@/components/ui/primitives';
 import { AssigneeCell } from '@/components/ui/primitives/cells';
 import { EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import {
@@ -28,9 +29,38 @@ import {
 } from '../standard';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
 import { displayLabel } from './TrustStatePreviewSection';
-import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
+import {
+  type ArtifactSourceRef,
+  PRESENTATION_STATUS_META,
+  type PresentationItem,
+  SOURCE_TYPE_META,
+} from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
+
+// [ODMROZENIE 11_MATERIALS DEC-397] `previewItem.sourceId` to techniczny
+// identyfikator rekordu źródłowego (assessment/tool/finance), nigdy nazwa —
+// panel podglądu pokazywał surowy UUID w polu "Źródło" (audyt odbioru 06.09,
+// evidence/odbior-zywo-20260906/P1/materialy-1280.png). `sourceRefs` (z
+// backendu, `source_refs_json`) niesie `artifact_name` dla dokładnie tego ID
+// — ten sam wzorzec resolvera id→nazwa co P4 `useResultsEntityNames`/
+// `useOrganizationMemberNames` (nazwa z już wczytanej listy, „—" gdy brak).
+// Ten sam guard na UUID-jak-nazwa co `resolveArtifactTitle` (useRapData.ts,
+// linia ~429) — nazwa nie może sama być surowym ID.
+const SOURCE_UUID_LIKE =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+function resolvePreviewSourceName(item: PresentationItem | null): string | null {
+  if (!item?.sourceId) return null;
+  const refs = Array.isArray(item.sourceRefs) ? item.sourceRefs : [];
+  const match = refs.find(
+    (ref): ref is ArtifactSourceRef =>
+      typeof ref === 'object' && ref !== null && (ref as ArtifactSourceRef).artifact_id === item.sourceId
+  );
+  const name = match?.artifact_name?.trim();
+  if (name && !SOURCE_UUID_LIKE.test(name)) return name;
+  return null;
+}
 
 interface PresentationsTabContentProps {
   viewMode: ViewMode;
@@ -450,8 +480,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           />
         </div>
 
-        {previewItem ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+        <JedenPrawyPanel rekord={previewItem ? (
             <StandardPreview
               title={previewItem.title || t('rap.columns.title', 'Prezentacja')}
               onClose={() => setSelectedId(null)}
@@ -487,7 +516,13 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
               }}
               relations={
                 previewItem.sourceId
-                  ? [{ label: `${t('rap.columns.source', 'Źródło')}: ${previewItem.sourceId}` }]
+                  ? [
+                      {
+                        label: `${t('rap.columns.source', 'Źródło')}: ${
+                          resolvePreviewSourceName(previewItem) ?? '—'
+                        }`,
+                      },
+                    ]
                   : []
               }
               actions={{
@@ -518,8 +553,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
                 ],
               }}
             />
-          </aside>
-        ) : null}
+        ) : null} />
       </div>
     </div>
   );

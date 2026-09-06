@@ -207,7 +207,12 @@ describe('AnalysisWorkspace — montowanie realnego komponentu (jsdom)', () => {
       />
     );
     await waitFor(() => expect(apiMocks.getAnalysisKpiValues).toHaveBeenCalled());
-    await screen.findByText('Marża brutto');
+    // ★ Od naprawy audytu FIN 2026-09-06 (defekt #6a) nazwa wskaźnika NIE jest
+    // brana z `kpiName` katalogu (bywa angielska: „Gross Margin %"), tylko ze
+    // słownika `financeKpiLabels` — dla GROSS_MARGIN_PCT jest to „Marża brutto
+    // na sprzedaży". Fikstura celowo zostawia w `kpiName` inną wartość, żeby ten
+    // test dowodził, że wygrywa słownik, a nie surowe pole katalogu.
+    await screen.findByText('Marża brutto na sprzedaży');
     expect(screen.getByText('FY2026')).toBeInTheDocument();
     const zeroCells = screen.queryAllByText('0');
     expect(zeroCells).toHaveLength(0); // KONTROLA NEGATYWNA: MISSING nigdy nie renderuje się jako "0"

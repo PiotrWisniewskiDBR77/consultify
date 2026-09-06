@@ -16,7 +16,7 @@
  * ładowania, Zasoby renderują pustkę). Mutacja celuje w SAM MECHANIZM
  * ODPORNOŚCI wachlarza, nie w mapowanie danych.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -124,6 +124,21 @@ afterEach(() => {
 });
 
 describe('Praca (ExecutionWorkSurface)', () => {
+  it('przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet tabeli', () => {
+    vi.useFakeTimers();
+    listExecutionCases.mockImplementationOnce(() => new Promise(() => {}));
+
+    render(<ExecutionWorkSurface activePreset="all" />);
+
+    expect(screen.queryByTestId('execution-work-loading')).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(299));
+    expect(screen.queryByTestId('execution-work-loading')).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByTestId('execution-work-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('execution-work-loading').querySelector('.animate-pulse')).not.toBeNull();
+    vi.useRealTimers();
+  });
+
   it('pokazuje pracę pozostałych realizacji mimo realizacji, która zwraca błąd', async () => {
     readExecutionWork.mockImplementation(async (caseId: string) => {
       if (caseId === HANGING_CASE) throw new Error('backend nie odpowiada');
@@ -188,13 +203,21 @@ describe('Praca (ExecutionWorkSurface)', () => {
 });
 
 describe('Zasoby (ExecutionResourcesSurface)', () => {
-  it('renderuje komunikat ładowania zamiast pustego, białego obszaru', () => {
+  it('przed 300 ms milczy, a od 300 ms renderuje ruchomy szkielet zamiast pustego obszaru', async () => {
+    vi.useFakeTimers();
+    listExecutionCases.mockImplementationOnce(() => new Promise(() => {}));
     readOperationalAllocations.mockImplementation(() => new Promise(() => {}));
     readExecutionWork.mockImplementation(() => new Promise(() => {}));
 
     render(<ExecutionResourcesSurface activePreset="all" />);
 
-    expect(screen.getByText(/Wczytuję kanoniczny rejestr zasobów/)).toBeInTheDocument();
+    expect(screen.queryByTestId('execution-resources-loading')).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(299));
+    expect(screen.queryByTestId('execution-resources-loading')).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByTestId('execution-resources-loading')).toBeInTheDocument();
+    expect(screen.getByTestId('execution-resources-loading').querySelector('.animate-pulse')).not.toBeNull();
+    vi.useRealTimers();
   });
 
   it('pokazuje zasoby pozostałych realizacji mimo realizacji, która zwraca błąd', async () => {

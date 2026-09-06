@@ -33,6 +33,7 @@ import {
 } from '@/components/standard';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, type GovernedMeetingNoteDto } from '@/services/api';
@@ -962,8 +963,7 @@ export const MeetingHub: React.FC = () => {
               />
             </div>
 
-            {selectedMeeting ? (
-              <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+            <JedenPrawyPanel rekord={selectedMeeting ? (
                 <StandardPreview
                   title={selectedMeeting.title || t('meeting.meetingLabel', 'Meeting')}
                   onClose={() => setSelectedId(null)}
@@ -1094,8 +1094,7 @@ export const MeetingHub: React.FC = () => {
                   }
                   actions={listPreviewActions}
                 />
-              </aside>
-            ) : null}
+            ) : null} />
           </div>
         )}
       </StandardModuleBar>

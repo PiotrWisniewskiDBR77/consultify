@@ -125,6 +125,18 @@ import {
   type RoiBenefitsRealizationRowVm,
 } from './roiRegistryPresenters';
 import { RoiTransitionDialog } from './RoiTransitionDialog';
+// ROI (P7K C) — poziom 1 wg SSOT §4: tabela ANALIZ ze wskaźnikami i
+// rekomendacją. `GET /registry` liczy CAPEX / roczną korzyść / ROI / Payback
+// jednym zapytaniem z agregatami po stronie Postgresa, więc powód, dla którego
+// te kolumny dotąd nie istniały („N+1 wywołanie kalkulacji per wiersz", patrz
+// nagłówek tego pliku), przestał obowiązywać. `listRoiCases` zostaje obok —
+// niesie status cyklu życia, `rowVersion` i wszystko, czego potrzebują chipy,
+// kebab i siedem przejść; nowy odczyt jest DODANY, nie podmieniony.
+import { listRoiRegistry, type RoiRegistryRow } from './card/roiCardApi';
+import {
+  buildRoiRegistryColumns,
+  buildRoiRegistryPreview,
+} from './card/roiCardRegistryPresenters';
 
 type RoiTab = 'all' | 'benefits';
 const ROI_CASES_FETCH_LIMIT = 200;
@@ -322,11 +334,22 @@ export const ResultsRoiHub: React.FC = () => {
     writeRoiHubUiState({ tab, chip, selectedCaseId, selectedBenefitsCaseId });
   }, [tab, chip, selectedCaseId, selectedBenefitsCaseId]);
 
+  // ROI (P7K C) — wiersze rejestru ze wskaźnikami, indeksowane po `caseId`.
+  // Osobny stan, a nie zastąpienie `cases`: brak/awaria tego odczytu ma
+  // degradować kolumny wskaźników do „—", a NIE wywracać całej listy.
+  const [registryRows, setRegistryRows] = useState<Map<string, RoiRegistryRow>>(new Map());
+
   const loadCases = useCallback(() => {
     setCasesLoading(true);
     setCasesError(null);
-    listRoiCases({ limit: ROI_CASES_FETCH_LIMIT })
-      .then((rows) => setCases(rows))
+    Promise.all([
+      listRoiCases({ limit: ROI_CASES_FETCH_LIMIT }),
+      listRoiRegistry().catch(() => [] as RoiRegistryRow[]),
+    ])
+      .then(([rows, registry]) => {
+        setCases(rows);
+        setRegistryRows(new Map(registry.map((r) => [r.caseId, r])));
+      })
       .catch((err) => setCasesError(toUserFacingErrorMessage(err, isPolish)))
       .finally(() => setCasesLoading(false));
   }, []);
@@ -633,7 +656,17 @@ export const ResultsRoiHub: React.FC = () => {
       ? 'Politykę widoczności ROI może opublikować wyłącznie właściciel lub administrator tej organizacji. Poproś go o włączenie domeny ROI.'
       : 'Only an owner or admin of this organization can publish the ROI visibility policy. Ask them to enable the ROI domain.';
 
-  const rows: TableRow[] = filteredCases.map(withId);
+  /**
+   * Wiersz tabeli = sprawa (cykl życia) + jej wiersz rejestru (wskaźniki).
+   * Gdy rejestru brak (starszy serwer, odmowa governance, awaria sieci),
+   * kolumny wskaźników dostają `null` i rysują „—" — nigdy 0.
+   */
+  const rows: TableRow[] = filteredCases.map((c) => {
+    const registry = registryRows.get(c.caseId);
+    return withId({ ...c, ...(registry ?? {}) } as typeof c);
+  });
+
+  const selectedRegistryRow = selectedCaseId ? (registryRows.get(selectedCaseId) ?? null) : null;
 
   return (
     <>
@@ -674,14 +707,16 @@ export const ResultsRoiHub: React.FC = () => {
                 }
               : undefined
             : {
-                label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                label: isPolish ? 'Nowa analiza' : 'New ROI case',
                 icon: Plus,
                 onClick: openCreateModal,
                 testId: 'roi-registry-create-cta',
               },
         }}
         table={{
-          columns: buildRoiCaseColumns(isPolish, resolveMemberName),
+          // Kolejność kolumn i to, co siedzi w pstryczku, to werdykt K4
+          // (P7K_KROK1_WERDYKT_20260905.md) na zaakceptowanym zrzucie roi-l1.
+          columns: buildRoiRegistryColumns(isPolish),
           data: rows,
           persistKey: 'results-vnext.roi-registry',
           loading: casesLoading,
@@ -718,12 +753,21 @@ export const ResultsRoiHub: React.FC = () => {
                         : isPolish
                           ? 'Żadna sprawa nie pasuje do tego filtra.'
                           : 'No case matches this filter.',
-                    actionLabel: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                    actionLabel: isPolish ? 'Nowa analiza' : 'New ROI case',
                     onAction: openCreateModal,
                   }
               : undefined,
           selectedRowId: selectedCaseId,
           onRowClick: (row) => setSelectedCaseId(String(row.caseId)),
+          // Poziom 1 → poziom 2: dwuklik otwiera KARTĘ analizy w trzech
+          // częściach (SSOT §4), nie pełne narzędzie edycyjne. Query string
+          // przenosimy razem z trasą — bez niego sesja, która weszła tu
+          // wyłącznie flagą w adresie, trafiłaby na „funkcja wyłączona".
+          onRowDoubleClick: (row) =>
+            navigate({
+              pathname: ROUTES.RESULTS_ROI.CARD.replace(':roiCaseId', String(row.caseId)),
+              search: window.location.search,
+            }),
           rowMenu: (row) =>
             buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
               onPreview: (r) => setSelectedCaseId(r.caseId),
@@ -751,7 +795,22 @@ export const ResultsRoiHub: React.FC = () => {
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}
         preview={
-          selectedCase
+          // Podgląd z Executive Summary (11 wskaźników) rysujemy, gdy mamy
+          // wiersz rejestru; bez niego zostaje dotychczasowy podgląd sprawy,
+          // żeby awaria jednego odczytu nie zabierała podglądu w ogóle.
+          selectedRegistryRow
+            ? buildRoiRegistryPreview(
+                selectedRegistryRow,
+                isPolish,
+                resolveMemberName,
+                () =>
+                  navigate({
+                    pathname: ROUTES.RESULTS_ROI.CARD.replace(':roiCaseId', selectedRegistryRow.caseId),
+                    search: window.location.search,
+                  }),
+                () => setSelectedCaseId(null)
+              )
+            : selectedCase
             ? buildRoiCasePreview(selectedCase, {
                 isPolish,
                 onClose: () => setSelectedCaseId(null),

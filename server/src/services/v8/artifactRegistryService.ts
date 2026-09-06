@@ -1064,6 +1064,45 @@ async function getOriginLinkByOrigin(
   return row ? mapOriginLinkRow(row) : null;
 }
 
+/**
+ * Odśwież SAM tytuł wiersza w Bibliotece wyników (Materiały) dla artefaktu
+ * zarejestrowanego pod danym pochodzeniem.
+ *
+ * ODBIÓR 06.09 (Materiały → Dokumenty): zmiana nazwy dokumentu w edytorze
+ * zapisywała się w schemacie (`PUT /document-studio/:id/content` z `title`,
+ * toast „Tytuł zapisany"), ale lista Materiałów dalej pokazywała
+ * `title_snapshot` z chwili utworzenia — czyli „Nowy dokument". Prezentacje
+ * mają na to `syncArtifactRegistryForDeck` (wołany przy każdej zmianie);
+ * dokumenty rejestrowały pochodzenie tylko RAZ, przy tworzeniu.
+ *
+ * Świadomie NIE reużywamy tu `registerArtifactOrigin`: jego ścieżka
+ * `updateArtifactMetadata` patchuje też `owner_user_id`, więc zapis treści
+ * przez współpracownika przepisałby właściciela wiersza. Ta funkcja rusza
+ * wyłącznie `title_snapshot`.
+ *
+ * Fail-open: zwraca `false`, gdy nie ma czego odświeżyć — wołający nie może
+ * z tego powodu przewrócić zapisu treści.
+ */
+export async function refreshArtifactTitleForOrigin(params: {
+  organizationId: string;
+  originRuntime: string;
+  originRecordId: string;
+  title: string;
+}): Promise<boolean> {
+  const title = params.title.trim();
+  if (!title) return false;
+  const link = await getOriginLinkByOrigin(
+    params.organizationId,
+    params.originRuntime,
+    params.originRecordId
+  );
+  if (!link) return false;
+  await updateArtifactMetadata(link.artifactId, params.organizationId, {
+    titleSnapshot: title,
+  } as Partial<RegisterArtifactOriginParams>);
+  return true;
+}
+
 export async function hasArtifactOriginLink(params: {
   organizationId: string;
   originRuntime:

@@ -1,0 +1,79 @@
+{
+  "when": "2026-09-05T20:50:10.319Z",
+  "base": "http://127.0.0.1:3097",
+  "coldStarts": 10,
+  "statusCounts": {},
+  "observed404": 0,
+  "runs": [
+    {
+      "run": 1,
+      "elapsedMs": 3026,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 2,
+      "elapsedMs": 2886,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 3,
+      "elapsedMs": 2953,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 4,
+      "elapsedMs": 3044,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 5,
+      "elapsedMs": 2941,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 6,
+      "elapsedMs": 3092,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 7,
+      "elapsedMs": 2854,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 8,
+      "elapsedMs": 3468,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 9,
+      "elapsedMs": 2942,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    },
+    {
+      "run": 10,
+      "elapsedMs": 2961,
+      "finalUrl": "http://127.0.0.1:3097/login?redirect=%2Fmy-work%3Ftab%3Dnotebook",
+      "hits": [],
+      "navigationError": null
+    }
+  ]
+}

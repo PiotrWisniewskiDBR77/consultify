@@ -36,6 +36,7 @@ import {
   type TableRow,
 } from '@/components/standard';
 import { categoryTone } from '@/components/ui/primitives/chips';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
 import { Api } from '@/services/api';
 
 // ==========================================
@@ -560,8 +561,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
           />
         </div>
 
-        {previewBlock ? (
-          <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+        <JedenPrawyPanel rekord={previewBlock ? (
             <StandardPreview
               title={previewBlock.name}
               onClose={() => setPreviewId(null)}
@@ -604,8 +604,7 @@ export const BlockTypesManager: React.FC<BlockTypesManagerProps> = () => {
               }}
               actions={previewActions}
             />
-          </aside>
-        ) : null}
+        ) : null} />
       </div>
 
       {/* Edit/Create Modal — poza zakresem kanonu list (edytor formularza) */}

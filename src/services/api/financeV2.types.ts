@@ -325,7 +325,17 @@ export function formatAnalysisKpiValueForDisplay(
   input: Pick<AnalysisKpiValueDto, 'unitType' | 'value'>,
   formatNumber: (n: number) => string = (n) => n.toLocaleString('pl-PL')
 ): FinanceValueDisplay {
-  const numericFormatter = input.unitType === 'PERCENT' ? (n: number) => formatNumber(n * 100) : formatNumber;
+  // KOSMETYKA (RAPORT_B3, 2026-09-06): DAYS bez własnego zaokrąglenia
+  // dziedziczył domyślny `toLocaleString('pl-PL')` (do 3 miejsc po przecinku)
+  // — cykl konwersji gotówki potrafił pokazać „-234,897 dni". Dni liczymy w
+  // całości (nikt nie mówi „45,3 dnia"), więc zaokrąglamy PRZED formatowaniem,
+  // analogicznie do specjalnego traktowania PERCENT (×100) obok.
+  const numericFormatter =
+    input.unitType === 'PERCENT'
+      ? (n: number) => formatNumber(n * 100)
+      : input.unitType === 'DAYS'
+        ? (n: number) => formatNumber(Math.round(n))
+        : formatNumber;
   const base = formatFinanceValueForDisplay(input.value, numericFormatter);
   if (base.isMissingLikeGlyph) return base;
 
@@ -621,7 +631,10 @@ export interface FinanceCreateArtifactResultDto {
 export interface FinanceArtifactDetailDto {
   artifactId: string;
   artifactType: FinanceArtifactType;
+  /** KLUCZ idempotencji (seed/backfill), NIE tytuł. Bywa techniczny (`seed:…:…`). */
   naturalKey: string | null;
+  /** Nazwa dla człowieka (migracja 20261102). `null` = brak własnej nazwy. */
+  displayName?: string | null;
   createdAt: string;
   archivedAt: string | null;
   archivedReason: string | null;
@@ -640,6 +653,7 @@ export interface FinanceArtifactSummaryDto {
   artifactId: string;
   artifactType: FinanceArtifactType;
   naturalKey: string | null;
+  displayName?: string | null;
   createdAt: string;
   currentBusinessVersion: {
     businessVersionId: string;
@@ -981,6 +995,12 @@ export interface StatementLineDto {
   statementType: StatementType;
   canonicalLineId: string | null;
   lineCode: string | null;
+  /** Nazwa pozycji z taksonomii tej instalacji (kolumna bazowa, zwykle EN). Może być echem kodu — patrz `financeLineLabel`. */
+  lineName?: string | null;
+  /** Nazwa pozycji PO POLSKU z taksonomii tej instalacji. */
+  lineNamePl?: string | null;
+  /** Porządek prezentacji z taksonomii (serwer już sortuje; pole niesione dla klientów, które grupują same). */
+  sortOrder?: number | null;
   entityId: string;
   entityCode: string | null;
   periodId: string;
@@ -1104,6 +1124,11 @@ export interface LineageEdgeDto {
   computeRunId: string | null;
   authorId: string | null;
   createdAt: string;
+  /** Nazwy artefaktów na końcach krawędzi — panel powiązań pokazuje NAZWĘ, nie hash wersji. */
+  sourceDisplayName?: string | null;
+  sourceNaturalKey?: string | null;
+  targetDisplayName?: string | null;
+  targetNaturalKey?: string | null;
 }
 
 /** crosscutting.routes.ts:68-71 (GET /versions/:id/lineage), całość. Relacje po
@@ -1819,6 +1844,11 @@ export function financeLineageTransformationKindLabel(kind: string | null): stri
       return 'Scenariusz predykcji na bazie modelu bazowego';
     case 'analysis_from_statement':
       return 'Analiza na bazie sprawozdania';
+    // MANUAL_LINK realnie występuje w bazie (zmierzone na pakiecie CD PROJEKT) i
+    // spadało do fallbacku, renderując po angielsku „Manual link" obok w pełni
+    // polskiego sąsiedztwa — audyt FIN 2026-09-06 defekt #12.
+    case 'MANUAL_LINK':
+      return 'Powiązanie ręczne';
     default:
       return kind
         .toLowerCase()

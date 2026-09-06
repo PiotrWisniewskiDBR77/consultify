@@ -36,6 +36,7 @@ Consultinity ma kilka **rozłącznych rodzajów prawdy**:
 | Która decyzja właściciela obowiązuje i od kiedy? | rejestr decyzji właściciela — [`program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md`](program/waves/WAVE_03_ACCEPTANCE/OWNER_DECISION_LEDGER_2026-08-24.md) |
 | Co wolno asystentowi AI (Teresie) i gdzie on jest? | [`ssot/ZASADY_AI_TERESA_SSOT.md`](ssot/ZASADY_AI_TERESA_SSOT.md) — zasady dla całej aplikacji |
 | Co Teresa robi w konkretnym module lub narzędziu? | [`ssot/KONTRAKTY_NARZEDZI_AI.md`](ssot/KONTRAKTY_NARZEDZI_AI.md) — kontrakt per moduł/narzędzie + stan z pomiaru kodu |
+| Co jest do zrobienia, w jakiej kolejności i kiedy jest „gotowe” (MVP rękami właściciela → rękami klienta → Fala 2)? | [`program/TRZY_POJEMNIKI_PRACY_20260906.md`](program/TRZY_POJEMNIKI_PRACY_20260906.md) — trzy pojemniki z mierzalnymi kryteriami zamknięcia |
 
 ## Hierarchia autorytetu
 

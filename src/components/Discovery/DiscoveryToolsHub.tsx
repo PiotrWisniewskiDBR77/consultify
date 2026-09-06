@@ -1733,6 +1733,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.type', 'Type'),
         width: '120px',
         filterable: true,
+        dataType: 'status',
         filterOptions: Object.entries(TOOL_META).map(([key, meta]) => ({
           value: key,
           label: `${meta.shortName} - ${meta.name}`,
@@ -1770,6 +1771,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.category', 'Category'),
         width: '130px',
         filterable: true,
+        dataType: 'status',
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
           label: meta.name,
@@ -1794,6 +1796,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.status', 'Status'),
         width: '140px',
         filterable: true,
+        dataType: 'status',
         filterOptions: [
           { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-c-text-muted' },
           {
@@ -1810,11 +1813,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'progress',
         label: t('tools.hub.table.progress', 'Progress'),
         width: '150px',
+        dataType: 'number',
       },
       {
         id: 'createdBy',
         label: t('tools.hub.table.author', 'Author'),
         width: '140px',
+        dataType: 'owner',
         render: (row) => {
           const label = getAuthorLabel(row?.createdBy);
           return label ? (
@@ -1827,8 +1832,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'updatedAt',
         label: t('tools.hub.table.updated', 'Updated'),
-        width: '120px',
+        width: '200px',
         sortable: true,
+        dataType: 'date',
       },
     ],
     [t, getAuthorLabel, isPolish]
@@ -1841,6 +1847,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.type', 'Type'),
         width: '160px',
         filterable: true,
+        dataType: 'status',
         filterOptions: [
           ...Object.entries(TOOL_META).map(([key, meta]) => ({
             value: meta.shortName,
@@ -1899,6 +1906,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.category', 'Category'),
         width: '130px',
         filterable: true,
+        dataType: 'status',
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
           label: meta.name,
@@ -1923,6 +1931,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         label: t('tools.hub.table.status', 'Status'),
         width: '140px',
         filterable: true,
+        dataType: 'status',
         filterOptions: [
           { value: 'draft', label: t('common.draft', 'Draft'), color: 'bg-c-text-muted' },
           {
@@ -1944,11 +1953,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         id: 'progress',
         label: t('tools.hub.table.progress', 'Progress'),
         width: '150px',
+        dataType: 'number',
       },
       {
         id: 'createdBy',
         label: t('tools.hub.table.author', 'Author'),
         width: '140px',
+        dataType: 'owner',
         render: (row: any) => {
           const label = getAuthorLabel(row?.createdBy);
           return label ? (
@@ -1961,8 +1972,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'updatedAt',
         label: t('tools.hub.table.updated', 'Updated'),
-        width: '120px',
+        width: '200px',
         sortable: true,
+        dataType: 'date',
       },
     ],
     [t, getAuthorLabel, isPolish]
@@ -2181,8 +2193,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'updatedAt',
         label: t('tools.hub.initiatives.columns.updated', 'Updated'),
-        width: '120px',
+        width: '200px',
         sortable: true,
+        dataType: 'date',
       },
     ],
     [t]
@@ -2261,8 +2274,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'updatedAt',
         label: t('tools.hub.outputs.columns.updated', 'Updated'),
-        width: '120px',
+        width: '200px',
         sortable: true,
+        dataType: 'date',
         // Insights/Outputs date-format fix (2026-08-27): without an explicit
         // `render`, FilterableTable's default `updatedAt` handling mixes a
         // relative label ("Xd ago") for rows under 7 days with a raw,

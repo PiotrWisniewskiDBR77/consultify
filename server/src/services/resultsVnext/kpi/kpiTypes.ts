@@ -242,6 +242,10 @@ export interface KpiMeasurementRow {
   period_start: string;
   period_end: string;
   actual_value: string | null;
+  /* P7K — CEL TEGO okresu (migracja `20261124_rvn_kpi_report_contract_fields`).
+     `?`, bo baza sprzed migracji tej kolumny nie ma, a `SELECT *` nie może się
+     przez to wywrócić. */
+  period_target_value?: string | number | null;
   performance_status: KpiPerformanceStatus;
   data_quality_status: KpiDataQualityStatus;
   correction_of_measurement_id: string | null;
@@ -261,6 +265,12 @@ export interface KpiMeasurement {
   periodStart: string;
   periodEnd: string;
   actualValue: number | null;
+  /**
+   * CEL tego okresu (SSOT §2 — para CEL/Rezultat). `null`, gdy nikt go nie
+   * zadeklarował — UI pokazuje wtedy „—", a NIE roczny cel wersji definicji:
+   * cel roku wstawiony w komórkę miesiąca byłby liczbą wymyśloną.
+   */
+  periodTargetValue: number | null;
   performanceStatus: KpiPerformanceStatus;
   dataQualityStatus: KpiDataQualityStatus;
   correctionOfMeasurementId: string | null;
@@ -272,6 +282,30 @@ export interface KpiMeasurement {
   recordedAt: string;
 }
 
+/**
+ * CEL okresu: kolumna `period_target_value`, a gdy pusta — zapis seeda DBR77
+ * w `evidence_refs` (`{"kind":"seed_period_target"}`). Ta sama reguła co
+ * `resolvePeriodTarget` w `kpiScorecardRepository.ts`; obie ścieżki odczytu
+ * MUSZĄ dawać tę samą liczbę, inaczej poziom 2 i poziom 3 pokazałyby dwa
+ * różne CELE dla tego samego miesiąca.
+ */
+function resolveMeasurementPeriodTarget(row: KpiMeasurementRow): number | null {
+  const fromColumn = row.period_target_value;
+  if (fromColumn !== null && fromColumn !== undefined) {
+    const parsed = typeof fromColumn === 'number' ? fromColumn : Number(fromColumn);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  if (!Array.isArray(row.evidence_refs)) return null;
+  for (const ref of row.evidence_refs) {
+    if (!ref || typeof ref !== 'object') continue;
+    const entry = ref as { kind?: unknown; targetValue?: unknown };
+    if (entry.kind !== 'seed_period_target') continue;
+    const parsed = Number(entry.targetValue);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
 export function toKpiMeasurement(row: KpiMeasurementRow): KpiMeasurement {
   return {
     measurementId: row.measurement_id,
@@ -280,6 +314,7 @@ export function toKpiMeasurement(row: KpiMeasurementRow): KpiMeasurement {
     organizationId: row.organization_id,
     periodStart: row.period_start,
     periodEnd: row.period_end,
+    periodTargetValue: resolveMeasurementPeriodTarget(row),
     actualValue: toNullableNumber(row.actual_value),
     performanceStatus: row.performance_status,
     dataQualityStatus: row.data_quality_status,

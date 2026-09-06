@@ -597,14 +597,16 @@ export function detectLanguage(
   conversationLanguage?: string | null,
   userPreferredLanguage?: string | null
 ): PersonaLanguage {
-  // i18n-teresa fix 2026-04-18: default is English, not Polish. Previously, an unset
-  // language would silently Polonize the persona prompt, which biased the LLM toward PL
-  // output even when the user had selected EN in the UI.
-  const lang = (conversationLanguage || userPreferredLanguage || 'en').toLowerCase().slice(0, 2);
-  if (lang in LANGUAGE_CONFIGS) return lang as PersonaLanguage;
-  // Map common variants
-  if (lang === 'pt' || lang === 'it' || lang === 'fr') return 'en'; // fallback to English for unsupported
-  return 'en';
+  // 2026-09-06 (SSOT jezyka): domyslka wraca na `pl`, zgodnie z
+  // `docs/ssot/ZASADY_AI_TERESA_SSOT.md` §8 J1 ("Polski jest domyslny").
+  // Wybor EN nadal wygrywa — ale musi byc JAWNY (z zadania / profilu / wątku),
+  // a nie wynikac z braku wartosci. Rozstrzyganie: services/ai/languagePolicy.ts.
+  const lang = (conversationLanguage || userPreferredLanguage || '').toLowerCase().slice(0, 2);
+  if (lang && lang in LANGUAGE_CONFIGS) return lang as PersonaLanguage;
+  // Jezyki nieobslugiwane przez persone (pt/it/fr/...) -> angielski, bo mamy tylko
+  // dwa komplety tekstow persony; brak wartosci -> polski.
+  if (lang) return 'en';
+  return 'pl';
 }
 
 // ---------------------------------------------------------------------------

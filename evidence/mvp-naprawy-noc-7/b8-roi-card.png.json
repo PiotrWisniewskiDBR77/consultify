@@ -1,0 +1,18 @@
+{
+ "url": "http://localhost:3086/results/roi",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Robotyzacja gniazda spawalniczego"
+ ],
+ "wpisy": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nWyszukiwarka\nNowa analiza\nWszystkie\n3\nW toku\n3\nDo akceptacji\n0\nAktywne\n0\nZamknięte / odrzucone\n0\nUwaga\nRaport zarządczy\nNAZWA\n\t\nPRZEDMIOT\n\t\nWARIANT\n\t\nCAPEX\n\t\nROCZNA KORZYŚĆ\n\t\nROI\n\t\nPAYBACK\n\t\nREKOMENDACJA\n\t\nFAZA\n\t\n\n\nAutomatyzacja magazynu WIP\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\n—\n\t\nZałożenia\n\t\n\n\nRobotyzacja gniazda spawalniczego\n\t\n—\n\t\n—\n\t\n1 000 000 zł\n\t\n400 000 zł\n\t\nROI 5Y 100 %\n\t\n2,5 roku\n\t\n—\n\t\nWyliczenia\n\t\n\n\nSystem wizyjny kontroli jakości\n\t\n—\n\t\n—\n\t\n620 000 zł\n\t\n238 000 zł\n\t\nROI 3Y 15 %\n\t\n2,6 roku\n\t\n—\n\t\nWyliczenia\n\t\nRobotyzacja gniazda spawalniczego\nOtwórz analizę\nFaza: Wyliczenia\nEXECUTIVE SUMMARY\nWłaściwość\tWartość\nPrzedmiot\t—\nWariant\t—\nHoryzont\t5 lat\nCAPEX\t1 000 000 zł\nRoczna korzyść netto\t400 000 zł\nROI 5Y\t100 %\nPayback\t2,5 roku\nNPV\t516 315 zł\nIRR\t28,7 %\nRekomendacja\t—\nFaza\tWyliczenia\nWłaściciel\tAudyt Nocny\nAktualizacja\t5 wrz 2026\nPOWIĄZANIA\nBrak powiązań",
+ "kiedy": "2026-09-06T00:21:52.782Z"
+}

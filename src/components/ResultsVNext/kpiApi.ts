@@ -169,6 +169,8 @@ export interface KpiMeasurementDto {
   periodEnd: string;
   /** `null` = no value was ever recorded for this period — NEVER fabricate 0. */
   actualValue: number | null;
+  /** CEL tego okresu (SSOT §2). `null` = nikt go nie zadeklarował ⇒ UI pokazuje „—". */
+  periodTargetValue: number | null;
   performanceStatus: KpiPerformanceStatus;
   dataQualityStatus: KpiDataQualityStatus;
   correctionOfMeasurementId: string | null;

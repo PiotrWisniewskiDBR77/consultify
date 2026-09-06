@@ -35,6 +35,15 @@ import {
 } from '../services/ai/runtimeCitationVerification.js';
 // Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
 // surowym `process.env.ENABLE_TERESA_MINDMAP` w tym pliku.
+// SSOT języka Teresy (2026-09-06) — jedno miejsce, w którym rozstrzyga się język
+// odpowiedzi i buduje instrukcję dla modelu. Wcześniej każdy handler miał własne
+// `(language || 'en')`, przez co wołacz bez `body.language` dostawał angielski.
+import {
+  AI_LANGUAGE_LABELS,
+  buildLanguageInstruction,
+  resolveAiLanguageForRequest,
+  resolveAiLanguageFromRequest,
+} from '../services/ai/languagePolicy.js';
 import {
   mapProviderError,
   toSafeErrorBody,
@@ -1446,19 +1455,10 @@ router.post(
     const aiGate = await ensureAiProviderAndAccess(req);
     if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
-    // Language instruction (keep behavior consistent with stream)
-    const languageMap: Record<string, string> = {
-      pl: 'Polish (Polski)',
-      en: 'English',
-      de: 'German (Deutsch)',
-      es: 'Spanish (Español)',
-      ja: 'Japanese (日本語)',
-      jp: 'Japanese (日本語)',
-      ar: 'Arabic (العربية)',
-    };
-    const langCode = (language || 'en').split('-')[0];
-    const langName = languageMap[langCode] || 'English';
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
+    // Language instruction — ten sam SSOT co /chat/stream (services/ai/languagePolicy.ts).
+    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langName = AI_LANGUAGE_LABELS[langCode];
+    const languageInstruction = `\n\n${buildLanguageInstruction(langCode)}\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -1679,7 +1679,7 @@ router.post(
       systemInstruction,
       context,
       roleName,
-      language,
+      language: bodyLanguage,
       conversationId,
       resumeFromPartial,
       projectId: bodyProjectId,
@@ -1694,6 +1694,12 @@ router.post(
       knowledgeSources,
       responseStyle,
     } = body;
+
+    // SSOT jezyka (services/ai/languagePolicy.ts): jawny wybor z zadania -> profil
+    // uzytkownika (`users.language`) -> `Accept-Language` -> `pl`. Wczesniej bylo tu
+    // `(language || 'en')`, wiec kazdy wolacz bez `body.language` (useIndependentAI,
+    // AICommandPrompt, useCanvasAIStream, wywolania API spoza UI) dostawal angielski.
+    const language = await resolveAiLanguageForRequest(req, bodyLanguage);
 
     // Security: prevent user-controlled arbitrary endpoints on production by default.
     // Local inference is expected to be loopback-only unless explicitly allowed.
@@ -1946,20 +1952,12 @@ router.post(
         .filter(Boolean);
     };
 
-    const languageMap: Record<string, string> = {
-      pl: 'Polish (Polski)',
-      en: 'English',
-      de: 'German (Deutsch)',
-      es: 'Spanish (Español)',
-      ja: 'Japanese (日本語)',
-      jp: 'Japanese (日本語)',
-      ar: 'Arabic (العربية)',
-    };
-    const langCode = (language || 'en').split('-')[0];
-    const langName = languageMap[langCode] || 'English';
+    // Jezyk rozstrzygniety wyzej przez SSOT (`resolveAiLanguageForRequest`).
+    const langCode = language;
+    const langName = AI_LANGUAGE_LABELS[language];
     const isPolish = langCode === 'pl';
     const startTime = Date.now();
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
+    const languageInstruction = `\n\n${buildLanguageInstruction(language)}\n`;
     const canvasContextPacket =
       (context as any)?.canvasContextPacket &&
       typeof (context as any).canvasContextPacket === 'object'
@@ -4254,6 +4252,71 @@ router.post(
         }
       }
 
+      // ================================================================
+      // Dane modulu jako ZRODLO (2026-09-06) — naprawa `degraded: no_sources`.
+      //
+      // `used_sources` liczy sie WYLACZNIE z ramek SSE `citations`, a te emitowaly
+      // tylko: baze wiedzy produktu, web, zalaczniki i korpus dokumentow org.
+      // Korpus org jest pusty (knowledge_chunks = 0 dla DBR77), wiec kazda rozmowa
+      // o wlasnych danych klienta konczyla sie `no_sources` — mimo ze dane modulu
+      // (71 inicjatyw, 84 zadania) BYLY w promptcie przez AIContextBuilder.
+      // Rodowod klamal w druga strone: odpowiedz ugruntowana, ledger pusty.
+      //
+      // SSOT Z1 wymienia „dane modulu w zasiegu" jako trzecia klase zrodel.
+      // Ten blok ja realizuje: czyta rekordy org (zawsze org-scoped), wklada je do
+      // promptu i emituje jako cytaty. Gdy modul nic nie ma — `no_sources` zostaje.
+      // ================================================================
+      try {
+        const allowOrganizationData =
+          !privateMode &&
+          (knowledgeSources as any)?.organizationData !== false &&
+          !userNarrowedContextScope;
+        if (allowOrganizationData && req.organizationId && message && message.trim().length > 0) {
+          const { buildModuleContextGrounding } = await import(
+            '../services/ai/moduleContextGrounding.js'
+          );
+          const moduleGrounding = await buildModuleContextGrounding({
+            organizationId: req.organizationId,
+            userId: String(req.userId || (req as any).user?.id || ''),
+            screenContext: (screenContext as any) || null,
+            projectId,
+            language,
+            allowOrganizationData: true,
+          });
+          if (moduleGrounding) {
+            pipelineRequest = {
+              ...pipelineRequest,
+              options: {
+                ...(pipelineRequest.options || {}),
+                systemInstruction:
+                  String((pipelineRequest.options as any)?.systemInstruction || '') +
+                  `\n\n${moduleGrounding.systemInstructionAddon}\n`,
+              },
+            } as any;
+            emitSSE({ type: 'citations', citations: moduleGrounding.citations });
+            hasGovernedGrounding = true;
+            if (chatRunId) {
+              import('../services/ai/chatTraceService.js')
+                .then((m: any) =>
+                  (m.default || m).addEvent(chatRunId, 'module_context', {
+                    moduleKey: moduleGrounding.moduleKey,
+                    citationsCount: moduleGrounding.citations.length,
+                    counts: moduleGrounding.counts,
+                  })
+                )
+                .catch(() => {
+                  /* ignore */
+                });
+            }
+          }
+        }
+      } catch (moduleCtxErr: any) {
+        logger.warn(
+          '[AI Stream] Module context grounding failed, continuing without it:',
+          moduleCtxErr?.message || String(moduleCtxErr)
+        );
+      }
+
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
         emitSSE({
           type: 'thought',
@@ -6480,12 +6543,13 @@ router.get(
       )) as { content: string; updated_at: string; superseded: boolean | number } | null;
 
       if (!row) {
-        return res.status(404).json({ error: 'No partial response found' });
+        return res.json({ found: false });
       }
 
       const stale = row.superseded === true || row.superseded === 1;
 
       return res.json({
+        found: true,
         sessionId: req.params.sessionId,
         content: row.content,
         updatedAt: row.updated_at,
@@ -6529,14 +6593,8 @@ router.post(
     if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // --- Build prompts ---
-    const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = {
-      pl: 'Polish',
-      en: 'English',
-      de: 'German',
-      es: 'Spanish',
-    };
-    const langName = langMap[langCode] || 'Polish';
+    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langName = AI_LANGUAGE_LABELS[langCode];
 
     const sys = [
       systemInstruction ||
@@ -6633,14 +6691,8 @@ router.post(
     if (aiGate) return res.status(aiGate.status).json(aiGate.body);
 
     // --- System prompt: return ONLY the modified fragment ---
-    const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = {
-      pl: 'Polish',
-      en: 'English',
-      de: 'German',
-      es: 'Spanish',
-    };
-    const langName = langMap[langCode] || 'Polish';
+    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langName = AI_LANGUAGE_LABELS[langCode];
 
     const sys = [
       'You edit a selected fragment of a document for an inline editor.',
@@ -9274,14 +9326,8 @@ router.post(
       logger.warn('[AI CardDraft] Failed to increment ai_calls usage:', err?.message || err);
     });
 
-    const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = {
-      pl: 'Polish',
-      en: 'English',
-      de: 'German',
-      es: 'Spanish',
-    };
-    const langName = langMap[langCode] || 'Polish';
+    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langName = AI_LANGUAGE_LABELS[langCode];
 
     const fieldsByType: Record<string, string[]> = {
       initiative: [
@@ -9422,14 +9468,8 @@ router.post(
       /* best-effort */
     }
 
-    const langCode = (language || 'pl').split('-')[0];
-    const langMap: Record<string, string> = {
-      pl: 'Polish',
-      en: 'English',
-      de: 'German',
-      es: 'Spanish',
-    };
-    const langName = langMap[langCode] || 'Polish';
+    const langCode = resolveAiLanguageFromRequest(req, language);
+    const langName = AI_LANGUAGE_LABELS[langCode];
 
     const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
     const gate = targetGate || currentStatus;

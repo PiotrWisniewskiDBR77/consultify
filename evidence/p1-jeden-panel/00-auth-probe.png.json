@@ -1,0 +1,70 @@
+{
+ "url": "http://127.0.0.1:41731/login?redirect=%2Fmy-work",
+ "tytul": "Logowanie — Consultify",
+ "kliki": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1280,
+ "motyw": "jasny",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "[TokenService] Refresh failed: 401",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:41731/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:41731/src/services/api.ts:709:15)\n ",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:41731/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:41731/src/services/api.ts:709:15)\n ",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+  "[TokenService] Refresh failed: 401",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:41731/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:41731/src/services/api.ts:709:15)\n ",
+  "[Auth] Profile sync failed: ApiError: Token expired\n    at createApiError (http://127.0.0.1:41731/src/services/api.ts:45:62)\n    at handleResponse (http://127.0.0.1:41731/src/services/api.ts:709:15)\n ",
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/auth/me"
+  },
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/feature-flags/runtime"
+  },
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/v10/teresa/voice-event"
+  },
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/v10/teresa/voice-event"
+  },
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/auth/refresh"
+  },
+  {
+   "status": 401,
+   "url": "http://127.0.0.1:41731/api/feature-flags/runtime"
+  }
+ ],
+ "tekst": "LOCAL @59e282df8851\nWitamy ponownie\n\nZaloguj się, aby kontynuować\n\nE-mail\nHasło\nZapomniałeś hasła?\nZaloguj się\nNie masz konta? Utwórz je\nMasz kod organizacji?\nWpisz kod dostępu\nPolityka prywatności•Regulamin•Centrum prawne\nWróć na start",
+ "dom": {
+  "[data-right-panel]": {
+   "liczba": 0,
+   "boxy": []
+  },
+  "table": {
+   "liczba": 0,
+   "boxy": []
+  }
+ },
+ "kiedy": "2026-09-05T20:57:46.070Z"
+}

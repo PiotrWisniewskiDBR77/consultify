@@ -52,6 +52,10 @@ export interface OkrObjectiveRow {
   confidence_numeric_value: string | null;
   confidence_calc_policy_version_id: string | null;
   confidence_calc_reason: string | null;
+  /** P7K (20262102_okr_p7k_report_fields.sql) — TEMAT celu, oś grupowania
+   * tabeli raportu OKR (TEMAT → CEL). NULL = cel bez tematu; UI grupuje go
+   * wtedy pod jawnym „Bez tematu”, nie zgaduje. */
+  theme?: string | null;
   sort_order: number;
   row_version: number;
   created_by: string;
@@ -78,6 +82,8 @@ export interface OkrObjective {
   confidenceNumericValue: string | null;
   confidenceCalcPolicyVersionId: string | null;
   confidenceCalcReason: string | null;
+  /** P7K — patrz `OkrObjectiveRow.theme`. */
+  theme: string | null;
   sortOrder: number;
   rowVersion: number;
   createdBy: string;
@@ -105,6 +111,7 @@ export function toOkrObjective(row: OkrObjectiveRow): OkrObjective {
     confidenceNumericValue: row.confidence_numeric_value,
     confidenceCalcPolicyVersionId: row.confidence_calc_policy_version_id,
     confidenceCalcReason: row.confidence_calc_reason,
+    theme: row.theme ?? null,
     sortOrder: row.sort_order,
     rowVersion: row.row_version,
     createdBy: row.created_by,
