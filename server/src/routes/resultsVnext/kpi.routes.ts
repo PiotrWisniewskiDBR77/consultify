@@ -1121,6 +1121,43 @@ router.post(
         correlationId: getCorrelationId(req),
         access,
       });
+      /* P7K część B — POPRAWKA REZULTATU TEŻ JEST ZAPISEM REZULTATU. Bez tego
+         mechanizm miałby dziurę: rezultat wpisany w limicie, a potem
+         poprawiony na wartość poza limitem, nie otworzyłby karty działania.
+         Klucz źródła jest ten sam (`<kpiId>:<okres>`), więc poprawka w OBIE
+         strony w tym samym okresie nie tworzy drugiej karty. */
+      let deviationActionCardId: string | null = null;
+      try {
+        const superseding = outcome.result.superseding;
+        /* Odpowiedzialny za miernik — ta sama reguła co przy zapisie pomiaru
+           (`resolveDeviationCaseOwner`): właściciel KPI, a gdy go nie ma,
+           osoba, która poprawiła rezultat. */
+        const kpiRecord = await getKpi({
+          userId: auth.userId,
+          organizationId: auth.organizationId,
+          kpiId,
+        });
+        const deviation = await ensureActionCardForKpiDeviation({
+          organizationId: auth.organizationId,
+          actorUserId: auth.userId,
+          kpiId,
+          kpiName: version.name,
+          unit: version.unit,
+          periodStart: superseding.periodStart,
+          periodEnd: superseding.periodEnd,
+          actualValue: superseding.actualValue,
+          targetValue: version.targetValue,
+          performanceStatus: superseding.performanceStatus ?? performanceStatus,
+          kpiOwnerUserId: kpiRecord?.ownerUserId ?? null,
+        });
+        deviationActionCardId = deviation.card?.id ?? null;
+      } catch (deviationError) {
+        logger.error(
+          `[kpi.routes] correctMeasurement: karta działania dla odchylenia nie powstała (kpi=${kpiId}): ${
+            deviationError instanceof Error ? deviationError.message : String(deviationError)
+          }`
+        );
+      }
       observeVnextKpiWriter(
         req,
         auth,
@@ -1133,6 +1170,7 @@ router.post(
         resultingVersion: outcome.resultingVersion,
         original: outcome.result.original,
         measurement: outcome.result.superseding,
+        actionCardId: deviationActionCardId,
       });
     } catch (err) {
       handleKpiRouteError(res, err, 'correctMeasurement');

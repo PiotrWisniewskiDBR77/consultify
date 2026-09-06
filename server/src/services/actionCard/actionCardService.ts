@@ -227,5 +227,24 @@ export async function closeActionCard(scope: ActionCardScope, id: string): Promi
     [scope.actorUserId, new Date().toISOString(), id, scope.organizationId]
   );
   const rows = await queryHelpers.queryAll<any>(`${SELECT_ACTION_CARD} WHERE ac.id = ? AND ac.organization_id = ?`, [id, scope.organizationId]);
-  return rows[0] ? rowToActionCard(rows[0]) : null;
+  const card = rows[0] ? rowToActionCard(rows[0]) : null;
+  /* P7K część B: ZAMKNIĘCIE KARTY MUSI ZDJĄĆ WPIS ZE SKRZYNKI.
+     Materializacja (`inboxService`) tylko DOPISUJE otwarte karty — sam UPDATE
+     statusu zostawiłby w Skrzynce wiersz, który już nikogo nie dotyczy, a
+     właściciel zobaczyłby zadanie „zrobione, a dalej wisi". Ten sam wołacz,
+     którego używa zamykanie pozycji Skrzynki z Mojej Pracy; jest idempotentny
+     (`not_materialized`/`already_closed` to poprawne odpowiedzi, nie błędy),
+     więc nie wywraca zamknięcia karty. */
+  if (card) {
+    try {
+      const { closeInboxItemForSource } = await import('../inboxService.js');
+      await closeInboxItemForSource(card.ownerUserId, scope.organizationId, 'action_card', card.id, {
+        closedBy: 'action_card_close',
+      });
+    } catch {
+      /* Skrzynka nie może zablokować zamknięcia karty — wpis zostanie
+         posprzątany przy następnej materializacji zmiany statusu. */
+    }
+  }
+  return card;
 }
