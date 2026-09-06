@@ -782,7 +782,17 @@ export function buildKpiReportItemColumns({
  */
 export function kpiReportItemRowClassName(row: KpiReportItemRowVm): string {
   if (row.group) return '';
-  return row.latestStatus === 'critical'
+  /* DWA POWODY, JEDEN KOLOR:
+     (a) `latestStatus === 'critical'` — OSTATNI ZAMKNIĘTY okres wypadł poza
+         limit, czyli miernik jest poza limitem DZIŚ;
+     (b) `openActionCards > 0` — jest NIEZAŁATWIONE przekroczenie limitu w
+         dowolnym okresie raportu (karta działania powstaje wyłącznie z
+         rezultatu `critical` i znika po zamknięciu).
+     Bez (b) rezultat wpisany dla okresu, który jeszcze się nie zamknął
+     (raport pokazuje cały rok), zostawiałby czerwoną KOMÓRKĘ w białym
+     wierszu — a właściciel czyta wiersz, nie komórkę. Bez (a) miernik z
+     zamkniętą kartą i dalej złym wynikiem zbielałby. */
+  return row.latestStatus === 'critical' || row.openActionCards > 0
     ? 'bg-c-danger/5 border-l-2 border-l-c-danger'
     : '';
 }

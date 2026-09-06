@@ -37,7 +37,17 @@
     "requested": "Przekazanie czeka na akceptację w Skrzynce.",
     "notReady": "Najpierw uzupełnij pakiet przekazania i kierownika realizacji.",
     "failed": "Nie udało się przekazać inicjatywy do realizacji.",
-    "acceptanceSection": "Do akceptacji"
+    "acceptanceSection": "Do akceptacji",
+    "acceptanceHeading": "Do akceptacji — przekazania czekające na Ciebie",
+    "acceptanceSubtitle": "Wyłącznie zamrożony pakiet. Akceptacja tworzy kanoniczną sprawę realizacji.",
+    "colHandoff": "Przekazanie",
+    "colInitiative": "Inicjatywa",
+    "colPackage": "Zamrożony pakiet",
+    "colCase": "Sprawa realizacji",
+    "colDue": "Termin",
+    "loading": "Wczytywanie przekazań…",
+    "unavailable": "Kolejka przekazań niedostępna.",
+    "retry": "Spróbuj ponownie"
   },
   "notFoundPage": {
     "title": "Nie ma takiej strony",
