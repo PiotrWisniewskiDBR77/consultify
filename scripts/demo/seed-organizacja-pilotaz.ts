@@ -396,7 +396,14 @@ async function rollback(c: PoolClient, orgId: string, admin: Administrator, kont
       `[pilotaz] rollback: konto administratora (${admin.email}) NIE jest kasowane — nie zostało utworzone przez ten seed (albo jego organizacja domowa jest inna). Kasowane jest tylko jego członkostwo, przez usunięcie organizacji.`
     );
 
-  await c.query('DELETE FROM organization_members WHERE organization_id = $1', [orgId]);
+  // Kolejność ma znaczenie — i to w OBIE STRONY naraz (cykl FK, oba NO ACTION,
+  // zmierzone testem izolacji, nie założone):
+  //   `organizations.owner_id`      → users.id           (blokuje kasowanie admina, dopóki org istnieje)
+  //   `users.organization_id`       → organizations.id   (blokuje kasowanie org, dopóki konta istnieją)
+  // Jedyne bezpieczne wyjście: najpierw ZERUJEMY owner_id (zrywamy jedną
+  // krawędź cyklu), potem kasujemy konta, na końcu organizację (co kaskadowo
+  // zabiera `organization_members` — tam FK JEST cascade).
+  await c.query('UPDATE organizations SET owner_id = NULL WHERE id = $1', [orgId]);
   const usunieciKonta = idsDoUsuniecia.length > 0 ? (await c.query('DELETE FROM users WHERE id = ANY($1::text[])', [idsDoUsuniecia])).rowCount ?? 0 : 0;
   await c.query('DELETE FROM organizations WHERE id = $1', [orgId]);
 
