@@ -152,3 +152,5 @@ Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomenda
 - 06.09 11:35 (słowo właściciela przy przejściu, Czat): „taki wielki plan wykonaj trzeba by też zrobić jakoś prościej i delikatniej — ale to już może iść do fazy 2” → **Fala 2, pozycja 3.9 (nowa): Propozycje Teresy — prostszy i delikatniejszy przepływ wykonania planu** (mniej kart, mniej ceremonii, jedna decyzja użytkownika); w pojemniku 1 tylko 1.1-A (wstaw do dokumentu, zero obiektów bez „Zatwierdź”).
 
 - 06.09 12:33 (właściciel, Notatnik): **Fala 2, pozycja 3.10 (nowa): dyktowanie notatek głosem** — „ja sobie coś gadam, a tu notatki się tworzą” (mowa → tekst w edytorze notatki, na bazie głosu Teresy z 1.1-C).
+
+- 06.09 13:00 (właściciel, Sejfy): **Fala 2, pozycja 3.11 (nowa): Foldery w Sejfach** — zakładka „Foldery” zdjęta z MVP, wraca jako osobny program po pilotażu.
