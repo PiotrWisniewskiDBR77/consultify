@@ -30,7 +30,13 @@ export async function listActionCards(filters: { ownerUserId?: string; status?: 
   const query = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => value && query.set(key, value));
   const response = await fetch(`/api/action-cards?${query}`, { credentials: 'include', headers: headers() });
-  return (await read<{ cards: ActionCardModel[] }>(response)).cards;
+  /* `?? []` NIE jest ozdobą: gdy odpowiedź nie ma koperty `cards` (atrapa
+     `fetch` w testach, pośrednik zwracający pustą treść), poprzednia wersja
+     oddawała `undefined`, a wołacz robił z tego `setCards(undefined)` i
+     wywracał całą Skrzynkę na `cards.length`. Zmierzone: 3 z 4 przypadków
+     `InboxContent.jedenPanel.test.tsx` padało z tego powodu JUŻ PRZED tą
+     paczką. Lista, której nie ma, jest listą pustą — nigdy `undefined`. */
+  return (await read<{ cards: ActionCardModel[] }>(response)).cards ?? [];
 }
 
 export async function createActionCard(payload: CreateActionCardPayload): Promise<ActionCardModel> {

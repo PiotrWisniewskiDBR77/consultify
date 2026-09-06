@@ -15,25 +15,37 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-import { ActionCard, type ActionCardModel } from '@/components/standard';
+import { ActionCard } from '@/components/standard/ActionCard';
+import type { ActionCardModel } from '@/components/standard/ActionCard.types';
 import { closeActionCard, createTaskFromActionCard, listActionCards } from '@/services/actionCards';
 
 export function InboxActionCards() {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [cards, setCards] = useState<ActionCardModel[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const kotwica = useRef<HTMLDivElement | null>(null);
 
-  const zZadresu = searchParams.get('actionCardId');
+  /* Adres z powiadomienia czytamy z `window.location`, NIE przez
+     `useSearchParams`. Powód zmierzony: `InboxContent` jest renderowany w
+     testach (i w kilku osadzeniach) BEZ routera, a `useSearchParams` rzuca
+     wtedy wyjątkiem i wywraca całe drzewo Skrzynki — regresja złapana przez
+     `InboxContent.jedenPanel.test.tsx`. `history.replaceState` zdejmuje
+     parametr bez nawigacji, więc router (gdy jest) nie traci stanu. */
+  const [zZadresu, setZAdresu] = useState<string | null>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('actionCardId');
+    } catch {
+      return null;
+    }
+  });
 
   const wczytaj = useCallback(async () => {
     try {
-      setCards(await listActionCards({ status: 'OPEN', ownerUserId: 'me' }));
+      const lista = await listActionCards({ status: 'OPEN', ownerUserId: 'me' });
+      setCards(Array.isArray(lista) ? lista : []);
     } catch {
       setCards([]);
     }
@@ -74,9 +86,14 @@ export function InboxActionCards() {
         toast.success(t('actionCard.closed', 'Karta zamknięta.'));
         if (openId === card.id) setOpenId(null);
         if (zZadresu === card.id) {
-          const next = new URLSearchParams(searchParams);
-          next.delete('actionCardId');
-          setSearchParams(next, { replace: true });
+          try {
+            const adres = new URL(window.location.href);
+            adres.searchParams.delete('actionCardId');
+            window.history.replaceState({}, '', `${adres.pathname}${adres.search}${adres.hash}`);
+          } catch {
+            /* brak History API (środowisko testowe) — parametr zostaje, karta i tak zniknie */
+          }
+          setZAdresu(null);
         }
         await wczytaj();
       } catch {
@@ -85,7 +102,7 @@ export function InboxActionCards() {
         setBusyId(null);
       }
     },
-    [openId, searchParams, setSearchParams, t, wczytaj, zZadresu]
+    [openId, t, wczytaj, zZadresu]
   );
 
   const naglowek = useMemo(
