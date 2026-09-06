@@ -238,7 +238,7 @@ export function buildRoiRegistryPreview(
       ],
     },
     details: {
-      label: t('Executive Summary', 'Executive Summary'),
+      label: t('Podsumowanie zarządcze', 'Executive Summary'),
       properties,
       propertyLabel: t('Właściwość', 'Property'),
       // Warunek rekomendacji to jedyna PROZA w podglądzie — bez niego
