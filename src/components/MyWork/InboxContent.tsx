@@ -2837,7 +2837,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
       {
         id: 'received',
         label: t('myWork.inboxContent.columns.received', 'Received'),
-        width: '130px',
+        width: '200px',
+        dataType: 'date',
         sortable: true,
         sortAccessor: (row) => new Date((row as unknown as InboxStandardRow).received).getTime(),
         render: (row: StandardTableRow) => {
