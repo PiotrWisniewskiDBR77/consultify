@@ -133,9 +133,10 @@ i akceptem przed budową — nigdy hurtem, nigdy za flagą w ciszy.
 | 3.10 | **Dyktowanie notatek głosem** | mowa → tekst w edytorze notatki, na bazie głosu Teresy z 1.1-C (właściciel 06.09, Notatnik) | głos Teresy stabilny | 1–2 |
 | 3.11 | **Foldery w Sejfach** | zakładka „Foldery” zdjęta z MVP (DEC-408), wraca jako osobny program (właściciel 06.09, Sejfy) | SSOT Sejfów | 1 |
 | 3.12 | **Wywiad: zatwierdzanie i dopuszczanie odpowiedzi** | procedura, w której menedżer zwracający wywiad przyjmuje albo nie przyjmuje udzielonych odpowiedzi (właściciel 06.09, Wywiad); punkt wyjścia = dzisiejsze „zatwierdź / odeślij do poprawy” w Przydzielone; zakładka „Dopuszczenie” usunięta (DEC-410b) | SSOT Wywiadu, decyzja właściciela o krokach | 2–3 |
+| 3.13 | **Warsztat sesji DRD — nowy układ graficzny** | „bardzo nawala tego tekstu; poprawimy cały układ graficzny na etapie fali drugiej” (właściciel 06.09, sesja DRD); w MVP tylko kolor stanu odpowiedzi, działające „Zapytaj Teresę” i „Podyktuj” (DEC-415) | prototyp + akcept właściciela | 2–3 |
 
 Kolejność w fali 2 ustala właściciel jedną decyzją po pilotażu; rekomendacja CTO: 3.6 → 3.1 → 3.3 → 3.4 → 3.5 → 3.2 → 3.7 → 3.8 (najpierw to, co domyka formułę „sygnał → wartość”, potem Agent).
-### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.12)
+### 🍾 Lista kontrolna szampana — koniec fali 2 (per program, powtarzana dla każdego z 3.1–3.13)
 | # | Co musi być prawdą | Kto potwierdza | Artefakt dowodu |
 |---|---|---|---|
 | S3.1 | Program ma własny SSOT (jedna strona) i prototyp zaakceptowany PRZED budową | właściciel | SSOT w `docs/ssot/`, karta prototypu z „Tak” |

@@ -820,6 +820,18 @@
           "dowod": "",
           "uwagi": "Właściciel 06.09 (Wywiad): menedżer zwracający przyjmuje albo nie przyjmuje udzielonych odpowiedzi. Punkt wyjścia = „zatwierdź / odeślij” w Przydzielone. Zakładka „Dopuszczenie” usunięta (DEC-410b). 2–3 sesje.",
           "data": "06.09"
+        },
+        {
+          "nr": "3.13",
+          "nazwa": "Warsztat sesji DRD — nowy układ graficzny (nawał tekstu)",
+          "wykonawca": "",
+          "zalezy_od": "prototyp + akcept właściciela",
+          "stan": "czeka",
+          "galaz": "",
+          "sha": "",
+          "dowod": "",
+          "uwagi": "Właściciel 06.09 15:10: „bardzo nawala tego tekstu, powinno być łatwiej zorganizowane; poprawimy cały układ graficzny na etapie fali drugiej”. W pojemniku 1 tylko: kolor stanu odpowiedzi, działający Zapytaj Teresę i Podyktuj (DEC-415). 2–3 sesje.",
+          "data": "06.09"
         }
       ],
       "kryteria": [
