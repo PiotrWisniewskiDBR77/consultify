@@ -310,6 +310,7 @@ export const ResultsReportGeneratorDrawer: React.FC<ResultsReportGeneratorDrawer
             {scope === 'PROJECT' ? (
               <div className="mt-3">
                 <SelectField
+                  id="results-report-project"
                   label={isPolish ? 'Wybierz projekt' : 'Select project'}
                   value={projectId}
                   onChange={setProjectId}
@@ -371,6 +372,7 @@ export const ResultsReportGeneratorDrawer: React.FC<ResultsReportGeneratorDrawer
             </div>
             <div className="mt-3">
               <SelectField
+                id="results-report-period"
                 label={isPolish ? 'Okres raportowania' : 'Reporting period'}
                 value={String(periodDays)}
                 onChange={(value) => setPeriodDays(Number(value))}

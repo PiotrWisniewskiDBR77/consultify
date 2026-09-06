@@ -1,0 +1,20 @@
+{
+ "url": "http://127.0.0.1:3171/results/kpi?resultsView=reports",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Nowy raport",
+  "css=[data-testid='results-report-source-project']"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nWyniki\nKPI\nDane\nModel\n1\n13\nAudyt Nocny\nAN\nKPI\nOKR\nROI\nRaporty zarządcze\nSelect…\nWszystkie (3)\nSzkic (3)\nFinalny (0)\nZatwierdzony (0)\nZarchiwizowany (0)\nNowy raport\nWszystkie\n3\nPortfel\n2\nProjekt\n1\nNAZWA\n\t\nTYP RAPORTU\n\t\nŹRÓDŁO\n\t\nSTATUS\n\t\nAUTOR\n\t\nZAKTUALIZOWANO\n\t\n\n\nSteering Committee Portfolio Report\n\t\nRaport dla komitetu sterującego\n\t\nPortfel\n\t\nSzkic\n\t\nAudyt Nocny\n\t\n6.09.2026\n\t\n\n\nPortfel — inicjatywy bezpośrednie Team Weekly Report\n\t\nRaport tygodniowy zespołu\n\t\nPortfel — inicjatywy bezpośrednie\n\t\nSzkic\n\t\nAudyt Nocny\n\t\n6.09.2026\n\t\n\n\nPortfolio RAID Report\n\t\nRAID (ryzyka, założenia, problemy, zależności)\n\t\nPortfel\n\t\nSzkic\n\t\nAudyt Nocny\n\t\n6.09.2026\n\t\nNowy raport zarządczy\n\nWybierz źródło i typ raportu, potem wygeneruj.\n\n1. Źródło\nPortfel (cała organizacja)\nWszystkie projekty i inicjatywy organizacji.\nProjekt\nJeden wybrany projekt z listy poniżej.\nKarta wyników KPI\nBrak generatora dla tego źródła\nZestaw OKR\nBrak generatora dla tego źródła\nAnaliza ROI\nBrak generatora dla tego źródła\nWybierz projekt\nWskaż projekt…\nPortfel — inicjatywy bezpośrednie\nTransformacja Cyfrowa Q2-Q3 2026\nTransformacja DBR77 2026\n2. Typ raportu\nRaport ze spotkania zespołuRaport tygodniowy zespołuRaport dla komitetu sterującegoKondycja portfelaRAID (ryzyka, założenia, problemy, zależności)\nOkres raportowania\nSelect…\nOstatnie 7 dni\nOstatnie 30 dni\nOstatni kwartał (90 dni)\n3. Generuj raport",
+ "kiedy": "2026-09-06T14:38:56.551Z"
+}
