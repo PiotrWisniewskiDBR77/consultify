@@ -1,0 +1,3232 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z4-wnioski-drd-d3
+
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 1 — utrata API w trakcie pracy: OFFLINE, praca nie ginie > forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen 1073ms
+   → Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 2 — zmiana lokalna przy braku łączności -> RECOVERY_DRAFT > editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED 1010ms
+   → Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED > clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER 19ms
+   → Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+          [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+        [36m>[39m
+          [0mŁadowanie sesji…[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+            [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+          [36m>[39m
+            [0mŁadowanie sesji…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 4 — lokalna rewizja STARSZA niż serwerowa -> CONFLICT, brak nadpisania > forceState="conflict" shows the CONFLICT badge and never calls getSession until the explicit choice 9ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 5 — lokalna rewizja NOWSZA -> propozycja zapisu, nadal za potwierdzeniem > forceState="recovery" proposes applying the queued (locally newer) writes but does nothing without a click 11ms
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 6 — retry po nieudanym zapisie > the offline banner's retry button re-asks the server and clears the banner on success 1006ms
+   → Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 7 — bezpieczne rozwiązanie konfliktu: obie wersje widoczne, wybór jawny > the conflict view names both the local and server version numbers and offers an explicit resolve action 9ms
+ × src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 8 — reopen po restarcie: serwer wygrywa > resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded 1011ms
+   → Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-res[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"4"[39m
+                    [33mcy[39m=[32m"20"[39m
+                    [33mr[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                [36m>[39m
+                  [0mWork with AI[0m
+                [36m</span>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"12"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"12"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+            [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 12H9"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mWyjdź[0m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+                [36m>[39m
+                  [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                  [0m · Sesja [0m
+                  [0msess-res[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+                [36m>[39m
+                  [0mMethod Pack {{version}}[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"shrink-0"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"menu"[39m
+                  [33maria-label[39m=[32m"Work with AI"[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                  [33mdata-menu2-slot[39m=[32m"ai"[39m
+                  [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                  [33mtitle[39m=[32m"Work with AI"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"13"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"13"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                  [36m>[39m
+                    [0mWork with AI[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-controls[39m=[32m"method-workspace-settings"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs f...
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > sanity — MethodCoreApiError is the real class (mock did not replace error semantics) > constructs with status/body/isNetworkError intact 1ms
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx (9 tests | 5 failed) 4150ms
+     × forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen 1073ms
+     × editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED 1010ms
+     × clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER 19ms
+     ✓ forceState="conflict" shows the CONFLICT badge and never calls getSession until the explicit choice 9ms
+     ✓ forceState="recovery" proposes applying the queued (locally newer) writes but does nothing without a click 11ms
+     × the offline banner's retry button re-asks the server and clears the banner on success 1006ms
+     ✓ the conflict view names both the local and server version numbers and offers an explicit resolve action 9ms
+     × resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded 1011ms
+     ✓ constructs with status/body/isNetworkError intact 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > true for DRD when the historical flag is enabled 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 52ms
+ × src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness) 31ms
+   → Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mf94c3fde[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > uses the application provider decision instead of an isolated bare-hook default 2ms
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx (6 tests | 1 failed) 88ms
+     ✓ true for DRD when the historical flag is enabled 1ms
+     ✓ remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+     ✓ false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+     ✓ renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 52ms
+     × shows the explicit demo-bypass banner (never a silent override of pack readiness) 31ms
+     ✓ uses the application provider decision instead of an isolated bare-hook default 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 1 — utrata API w trakcie pracy: OFFLINE, praca nie ginie > forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:125:25
+    123|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    124|
+    125|     expect(await screen.findByTestId('drd-http-offline-banner')).toBeI…
+       |                         ^
+    126|     expect(badge()).toHaveAttribute('data-save-state', 'OFFLINE');
+    127|     // The session shell is still rendered underneath — work is not bl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 2 — zmiana lokalna przy braku łączności -> RECOVERY_DRAFT > editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:138:18
+    136|
+    137|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    138|     await screen.findByTestId('drd-http-offline-banner');
+       |                  ^
+    139|     expect(badge()).toHaveAttribute('data-save-state', 'OFFLINE');
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED > clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER
+TestingLibraryElementError: Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+          [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+        [36m>[39m
+          [0mŁadowanie sesji…[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+            [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+          [36m>[39m
+            [0mŁadowanie sesji…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:183:11
+    181|     // 'ready' with pendingWriteCount 0 before awaiting refresh()), so…
+    182|     // main shell renders with a RECONNECTING badge, not a silent gap.
+    183|     await waitFor(() => expect(badge()).toHaveAttribute('data-save-sta…
+       |           ^
+    184|
+    185|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 6 — retry po nieudanym zapisie > the offline banner's retry button re-asks the server and clears the banner on success
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:240:18
+    238|
+    239|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    240|     await screen.findByTestId('drd-http-offline-banner');
+       |                  ^
+    241|
+    242|     fireEvent.click(screen.getByText(/Spróbuj połączyć ponownie/));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 8 — reopen po restarcie: serwer wygrywa > resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded
+TestingLibraryElementError: Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-res[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"4"[39m
+                    [33mcy[39m=[32m"20"[39m
+                    [33mr[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                [36m>[39m
+                  [0mWork with AI[0m
+                [36m</span>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"12"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"12"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+            [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 12H9"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mWyjdź[0m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+                [36m>[39m
+                  [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                  [0m · Sesja [0m
+                  [0msess-res[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+                [36m>[39m
+                  [0mMethod Pack {{version}}[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"shrink-0"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"menu"[39m
+                  [33maria-label[39m=[32m"Work with AI"[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                  [33mdata-menu2-slot[39m=[32m"ai"[39m
+                  [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                  [33mtitle[39m=[32m"Work with AI"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"13"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"13"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                  [36m>[39m
+                    [0mWork with AI[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-controls[39m=[32m"method-workspace-settings"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs f...
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:276:11
+    274|     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSession…
+    275|
+    276|     await waitFor(() => expect(badge()).toHaveAttribute('data-save-sta…
+       |           ^
+    277|     const sourceIndicator = screen.getAllByTestId('drd-source-indicato…
+    278|     expect(sourceIndicator).toHaveAttribute('data-source', 'SERVER');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness)
+TestingLibraryElementError: Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mf94c3fde[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx:96:19
+     94|     const storage = makeMemoryStorage();
+     95|     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="intervi…
+     96|     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocumen…
+       |                   ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 9 passed (15)
+   Start at  19:02:26
+   Duration  8.77s (transform 2.07s, setup 175ms, import 3.53s, tests 4.24s, environment 649ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 1 — utrata API w trakcie pracy: OFFLINE, praca nie ginie > forceState="offline" shows the OFFLINE badge and the offline banner, without losing the session already on screen
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:125:25
+    123|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    124|
+    125|     expect(await screen.findByTestId('drd-http-offline-banner')).toBeI…
+       |                         ^
+    126|     expect(badge()).toHaveAttribute('data-save-state', 'OFFLINE');
+    127|     // The session shell is still rendered underneath — work is not bl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 2 — zmiana lokalna przy braku łączności -> RECOVERY_DRAFT > editing a field while offline flips the badge from OFFLINE to RECOVERY_DRAFT, never SAVED
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:138:18
+    136|
+    137|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    138|     await screen.findByTestId('drd-http-offline-banner');
+       |                  ^
+    139|     expect(badge()).toHaveAttribute('data-save-state', 'OFFLINE');
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 3 — przywrócenie połączenia -> RECONNECTING -> RECOVERED > clicking "apply pending" shows RECONNECTING while the retry is in flight, then RECOVERED, then settles to SERVER
+TestingLibraryElementError: Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+          [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+        [36m>[39m
+          [0mŁadowanie sesji…[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full items-center justify-center text-sm text-c-text-muted"[39m
+            [33mdata-testid[39m=[32m"method-workspace-loading"[39m
+          [36m>[39m
+            [0mŁadowanie sesji…[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:183:11
+    181|     // 'ready' with pendingWriteCount 0 before awaiting refresh()), so…
+    182|     // main shell renders with a RECONNECTING badge, not a silent gap.
+    183|     await waitFor(() => expect(badge()).toHaveAttribute('data-save-sta…
+       |           ^
+    184|
+    185|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 6 — retry po nieudanym zapisie > the offline banner's retry button re-asks the server and clears the banner on success
+TestingLibraryElementError: Unable to find an element by: [data-testid="drd-http-offline-banner"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col items-center justify-center gap-3 p-6 text-center"[39m
+      [33mdata-testid[39m=[32m"drd-http-error-view"[39m
+      [33mrole[39m=[32m"alert"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border-c-warning/40 bg-c-warning/10 text-c-warning"[39m
+        [33mdata-source[39m=[32m"RECOVERY_DRAFT"[39m
+        [33mdata-testid[39m=[32m"drd-source-indicator"[39m
+      [36m>[39m
+        [0mRECOVERY_DRAFT[0m
+      [36m</span>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-triangle-alert text-c-danger"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 9v4"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M12 17h.01"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"max-w-md text-xs text-c-danger"[39m
+      [36m>[39m
+        [0mBrak połączenia z serwerem. Tryb DRD jest tylko do odczytu po potwierdzeniu serwera; żadna zmiana nie została zapisana.[0m
+      [36m</p>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-md border border-c-border bg-c-surface-raised px-3 py-1.5 text-xs font-semibold text-c-text hover:bg-c-border-subtle"[39m
+          [33mdata-testid[39m=[32m"error-retry"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-refresh-cw"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mheight[39m=[32m"13"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"13"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 3v5h-5"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 16H3v5"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0m Spróbuj ponownie[0m
+        [36m</button>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"rounded-md border border-c-border px-3 py-1.5 text-xs text-c-text-secondary hover:bg-c-surface-raised"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mWyjdź[0m
+        [36m</button>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:240:18
+    238|
+    239|     render(<DrdHttpMethodWorkspaceScreen storage={storage} forceState=…
+    240|     await screen.findByTestId('drd-http-offline-banner');
+       |                  ^
+    241|
+    242|     fireEvent.click(screen.getByText(/Spróbuj połączyć ponownie/));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx > scenario 8 — reopen po restarcie: serwer wygrywa > resuming a session with a stale cached revision shows the fresh server version, never the cache, once loaded
+TestingLibraryElementError: Unable to find an element by: [data-testid="assessment-save-state-indicator"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0msess-res[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Work with AI"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                [33mdata-menu2-slot[39m=[32m"ai"[39m
+                [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                [33mtitle[39m=[32m"Work with AI"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 2v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 4h-4"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"4"[39m
+                    [33mcy[39m=[32m"20"[39m
+                    [33mr[39m=[32m"2"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                [36m>[39m
+                  [0mWork with AI[0m
+                [36m</span>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"12"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"12"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+        ...
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full flex-col"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-0 flex-1"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+            [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+          [36m>[39m
+            [36m<header[39m
+              [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"13"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"13"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M21 12H9"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0mWyjdź[0m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"min-w-0 flex-1"[39m
+              [36m>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+                [36m>[39m
+                  [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                  [0m · Sesja [0m
+                  [0msess-res[0m
+                [36m</p>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+                [36m>[39m
+                  [0mMethod Pack {{version}}[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"shrink-0"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-expanded[39m=[32m"false"[39m
+                  [33maria-haspopup[39m=[32m"menu"[39m
+                  [33maria-label[39m=[32m"Work with AI"[39m
+                  [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-ai/40 bg-c-ai/10 text-c-ai hover:bg-c-ai/15 "[39m
+                  [33mdata-menu2-slot[39m=[32m"ai"[39m
+                  [33mdata-testid[39m=[32m"pracuj-z-ai"[39m
+                  [33mtitle[39m=[32m"Work with AI"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-sparkles shrink-0"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"13"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"13"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M20 2v4"[39m
+                    [36m/>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"M22 4h-4"[39m
+                    [36m/>[39m
+                    [36m<circle[39m
+                      [33mcx[39m=[32m"4"[39m
+                      [33mcy[39m=[32m"20"[39m
+                      [33mr[39m=[32m"2"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"hidden truncate lg:inline"[39m
+                  [36m>[39m
+                    [0mWork with AI[0m
+                  [36m</span>[39m
+                  [36m<svg[39m
+                    [33maria-hidden[39m=[32m"true"[39m
+                    [33mclass[39m=[32m"lucide lucide-chevron-down shrink-0 opacity-70"[39m
+                    [33mfill[39m=[32m"none"[39m
+                    [33mheight[39m=[32m"12"[39m
+                    [33mstroke[39m=[32m"currentColor"[39m
+                    [33mstroke-linecap[39m=[32m"round"[39m
+                    [33mstroke-linejoin[39m=[32m"round"[39m
+                    [33mstroke-width[39m=[32m"2"[39m
+                    [33mviewBox[39m=[32m"0 0 24 24"[39m
+                    [33mwidth[39m=[32m"12"[39m
+                    [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                  [36m>[39m
+                    [36m<path[39m
+                      [33md[39m=[32m"m6 9 6 6 6-6"[39m
+                    [36m/>[39m
+                  [36m</svg>[39m
+                [36m</button>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-controls[39m=[32m"method-workspace-settings"[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs f...
+ ❯ Proxy.waitForWrapper ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.offlineRecovery.test.tsx:276:11
+    274|     render(<DrdHttpMethodWorkspaceScreen storage={storage} demoSession…
+    275|
+    276|     await waitFor(() => expect(badge()).toHaveAttribute('data-save-sta…
+       |           ^
+    277|     const sourceIndicator = screen.getAllByTestId('drd-source-indicato…
+    278|     expect(sourceIndicator).toHaveAttribute('data-source', 'SERVER');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness)
+TestingLibraryElementError: Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mf94c3fde[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx:96:19
+     94|     const storage = makeMemoryStorage();
+     95|     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="intervi…
+     96|     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocumen…
+       |                   ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 9 passed (15)
+   Start at  19:02:26
+   Duration  8.78s (transform 2.07s, setup 175ms, import 3.53s, tests 4.24s, environment 649ms)
+
+JSON report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml
+JUNIT report written to /private/tmp/wt-11z4-wnioski-drd-d3/junit.xml

@@ -53,6 +53,7 @@ import { DrdSourceIndicator } from './DrdSourceIndicator';
 import { drdAdapter } from '@/method-core/methods/drd/drdAdapter';
 import {
   createDrdDemoSession,
+  DRD_DEMO_SESSION_NOTICE,
   DrdSessionRuntime,
   listDemoSessionIds,
 } from '@/method-core/methods/drd/drdSessionRuntime';
@@ -541,6 +542,24 @@ const DrdMethodWorkspaceScreenLegacy: React.FC<DrdMethodWorkspaceScreenProps> = 
 
   return (
     <div className="flex h-full flex-col">
+      {/* 1.1-Z4 D3 (d) — REGRESJA (checkpoint af75a84e37, 23.08): ta notatka
+          i jej import zostały usunięte razem z bespoke actor-selectem i
+          osobnym paskiem osi (oba słusznie superseded przez
+          `MethodWorkspaceShell`'s Navigator/Settings), ale
+          `DRD_DEMO_SESSION_NOTICE` poleciało w tym samym cięciu jako
+          collateral damage — cichy bypass bramki gotowości (`canStartSession()
+          === false` dla `methodology_review`) bez ostrzeżenia. Doc-comment
+          `drdSessionRuntime.ts` jest wprost: "the UI is required to show
+          that notice (never a silent override)". Przywrócone jako stały
+          banner (nie warunkowy jak `lastRefusal`) — bypass obowiązuje przez
+          całą sesję demonstracyjną, nie tylko przy błędzie. */}
+      <div
+        role="status"
+        className="flex items-center gap-2 border-b border-c-warning/30 bg-c-warning/10 px-4 py-1.5 text-[11px] text-c-warning"
+      >
+        <AlertTriangle size={12} className="shrink-0" />
+        <span>{DRD_DEMO_SESSION_NOTICE}</span>
+      </div>
       {lastRefusal && (
         <div role="alert" className="flex items-center gap-2 border-b border-c-danger/30 bg-c-danger/10 px-4 py-1.5 text-xs text-c-danger">
           <AlertTriangle size={12} />
