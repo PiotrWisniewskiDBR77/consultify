@@ -10,7 +10,7 @@ poprzednie: PRZEKAZANIE_20260905_NOC.md
 # Meldunek poranny 06.09 — noc przed ogłoszeniem MVP
 
 ## 1. Co jest na stagingu (`origin/staging` = `codex/m03-admin-20260824`)
-~150 commitów i 27 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
+~165 commitów i 29 scaleń nad punktem wieczornym `59e282df88`. Każde scalenie odebrane niezależnym pomiarem (drugi model), własnymi oczami na zrzutach i wpisane do „Rejestru odbioru” w `PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md`.
 
 **Zbudowane od zera tej nocy**
 - **Wyniki KPI · OKR · ROI** — trzy poziomy wg SSOT i zaakceptowanego prototypu, na realnych danych DBR77 (138 mierników z Twojego arkusza, 3 zestawy OKR z check-inem end-to-end, 3 analizy ROI z NPV/IRR/wrażliwością/PIR). Trzy migracje addytywne. Pierwsze uruchomienie zapytań KPI na Postgresie złapało i naprawiło błąd 500.
@@ -43,6 +43,7 @@ Pełne ścieżki per moduł w `A3/RAPORT_A3.md` i `B3/RAPORT_B3.md`. Skrót:
 - Zrzuty na żywo ze stagingu na Twoim koncie: sesja automatu padła wieczorem (przyrząd nadpisywał plik sesji; naprawione), dlatego noc stała na lokalnym stanowisku z Twoimi seedami. Pierwsze przejście na stagingu robisz Ty.
 - Twoje oceny na stagingu są wypełnione w 0–8 % — raport z Oceny będzie chudy przez dane; do pokazu warto jedną ocenę wypełnić.
 - Dane finansowe legacy DBR77 2023–2025 są niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazujemy na CD PROJEKT.
+- Jeden prawy panel (P1): Zadania/Realizacja naprawione (lepkie zamknięcie), ale Skrzynka i Wywiad nadal mają własny panel bez wzorca Rekord|Teresa.
 - P9 karta działania + Skrzynka (mechanika „coś źle → ktoś działa”) nie weszła; P7K część B (odchylenie → karta) czeka na P9.
 - 484 klucze pl==en w ratchecie (głównie `admin.*`), 141 kluczy Czatu z dyżuru 374, 7 zastanych czerwonych testów.
 - Ogon sąsiedniej kolumny w KPI L2 przy wyczerpanym zakresie przewijania (kosmetyka, zmiana strukturalna tabeli po MVP).
