@@ -10,3 +10,6 @@
 # Asercja NEGATYWNA pilnująca braku crimson focus-ring (strażnik, nie użycie) — nadzorca 2026-08-26
 */src/components/Organization/redesign/__tests__/OrganizationKnowledgeGraphScreen.test.tsx
 src/components/Organization/redesign/__tests__/OrganizationKnowledgeGraphScreen.test.tsx
+# Asercja NEGATYWNA pilnująca braku crimson w chipie filtra (1.1-Z4 #2, 06.09.2026)
+*/src/components/Conclusions/__tests__/ConclusionsHub.filterChipCanon.test.tsx
+src/components/Conclusions/__tests__/ConclusionsHub.filterChipCanon.test.tsx

@@ -25,6 +25,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { Menu3Chip } from '@/components/shared/ModuleMenu3';
 import { EmptyState, LoadingState } from '@/components/shared/states';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -39,22 +40,20 @@ import { ConclusionReadout } from './ConclusionReadout';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
+// 1.1-Z4 #2: aktywny chip filtra źródła miał wypełnienie mapujące się na
+// crimson marki #85182F (pułapka #1 kanonu — czerwień tylko dla semantyki
+// krytycznej). Stan aktywny chipa filtra to zwykły stan wyboru, nie
+// ostrzeżenie — używamy tego samego `Menu3Chip` co reszta Menu 3
+// (`docs/ui-standards/TRIADA_KANON.md`), którego aktywne wypełnienie jest
+// neutralne (`bg-state-selected`).
 const FilterButton: React.FC<{
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }> = ({ active, onClick, children }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-      active
-        ? 'bg-[var(--c-accent)] text-white'
-        : 'border border-[var(--c-border-subtle)] bg-[var(--c-surface)] text-[var(--c-text-secondary)] hover:bg-[var(--c-surface-raised)]'
-    }`}
-  >
+  <Menu3Chip active={active} onClick={onClick}>
     {children}
-  </button>
+  </Menu3Chip>
 );
 
 const ConclusionsHub: React.FC = () => {
