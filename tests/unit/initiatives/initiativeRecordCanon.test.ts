@@ -108,3 +108,47 @@ describe('NotificationSettingsV2 (decyzja A5, 03.09 wieczór) nie wraca', () => 
     ).toBe(false);
   });
 });
+
+/**
+ * INI-404 (2026-09-06) — [ODMROZENIE 05_INITIATIVES DEC-397].
+ *
+ * Zmierzone na REALNYM rekordzie klasycznego rejestru DBR77 (lokalne stanowisko,
+ * baza 54400, org cc9db573…, inicjatywa `fa87dc75-…` „Supply Chain Optimization";
+ * tabela `initiatives` = 71 wierszy, projekcja runtime-v1 = 0 wierszy):
+ * ścieżka lista → wiersz → podgląd → „Otwórz" dawała DOKŁADNIE JEDNO
+ * `404 GET /api/initiatives/runtime-v1/initiatives/<id>` i jeden czerwony błąd
+ * w konsoli. Źródłem była sonda w odczycie deep-linku `InitiativesHub`, która
+ * ustawiała flagę przynależności do rejestru i wybierała jeden z dwóch handlerów otwarcia.
+ *
+ * Po usunięciu `CanonicalInitiativeCardWorkspace` (aed131a2ab, decyzja właściciela
+ * 2026-09-03) obie gałęzie dawały ten sam dokument, więc odpowiedź sondy nie
+ * zmieniała już nic na ekranie — a kosztowała 404 na KAŻDYM realnym rekordzie
+ * klasycznego rejestru. Trasa serwera jest poprawna (404 = „nie ma w tym rejestrze",
+ * ten sam kod dostaje obca organizacja — anty-enumeracja), więc naprawiony został
+ * wołacz, nie trasa.
+ *
+ * Test jest tekstowy, bo pilnuje NIEOBECNOŚCI wołania sieciowego. Dowód mutacyjny:
+ * przywrócenie w `InitiativesHub.tsx` sondy `Api.get('/initiatives/runtime-v1/
+ * initiatives/${...}')` → ten test RED.
+ */
+describe('INI-404: karta inicjatywy nie sonduje rejestru runtime-v1 po id', () => {
+  const src = () => fs.readFileSync(HUB, 'utf8');
+
+  it('InitiativesHub nie woła runtime-v1 dla POJEDYNCZEJ inicjatywy', () => {
+    // Wołanie listy `/initiatives/runtime-v1/initiatives` (bez segmentu id) zostaje —
+    // to źródło wierszy rejestru. Zakazany jest wyłącznie odczyt per-id.
+    expect(src()).not.toMatch(/runtime-v1\/initiatives\/\$\{/);
+    expect(src()).not.toMatch(/runtime-v1\/initiatives\/['"]?\s*\+/);
+  });
+
+  it('lista dalej czyta OBA rejestry (nic nie zlikwidowano)', () => {
+    expect(src()).toMatch(/listRegisteredInitiatives\(\)/);
+    expect(src()).toMatch(/listLegacyInitiatives\(\)/);
+    expect(src()).toMatch(/mergeLegacyInitiativesIntoRegister/);
+  });
+
+  it('odczyt deep-linku nie rozgałęzia otwarcia po przynależności do rejestru', () => {
+    expect(src()).not.toMatch(/isCanonicalRuntime/);
+    expect(src()).toMatch(/handleOpenInitiativeDocument\(initiative\)/);
+  });
+});
