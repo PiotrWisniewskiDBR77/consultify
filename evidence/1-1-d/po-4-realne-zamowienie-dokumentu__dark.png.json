@@ -1,0 +1,29 @@
+{
+ "url": "http://127.0.0.1:3119/document-studio",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=[data-testid=\"chat-send-btn\"]"
+ ],
+ "wpisy": [
+  "css=[data-testid=\"chat-input\"]"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "bledyKonsoli": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "odpowiedziHttp": [
+  {
+   "status": 404,
+   "url": "http://127.0.0.1:3119/api/deliverables/generations"
+  }
+ ],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nDokumenty\nNowy dokument\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nWróć do Materiałów\nMateriały\nGeneruj\nPlik\nGeneruj\nZaplanuj szablon\nTryby 1, 2, 3 · Środowisko artefaktów Word/PDF\nJak chcesz zacząć dokument?\n\nWybierz tryb — wszystkie trzy są równorzędne.\n\nOd zera\nPusty dokument w edytorze. Piszesz samodzielnie, bez AI.\nZ AI\nOpisz dokument — Studio zaplanuje strukturę i pierwszą wersję.\nZ wzorca\nZacznij od zatwierdzonego wzorca i dostosuj treść.",
+ "kiedy": "2026-09-06T10:09:38.952Z"
+}

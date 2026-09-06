@@ -53,6 +53,11 @@ import {
   type DeliverableGenerationPlanItem,
   type DeliverableGenerationStatus,
   isDeliverablesLightEnabled,
+  // [ODMROZENIE 13_CHAT DEC-397] — powód po polsku + rozpoznanie braku
+  // serwerowej powierzchni generacji (żeby użytkownik nie zobaczył „Not found").
+  isDeliverablesSurfaceMissing,
+  markDeliverablesSurfaceUnavailable,
+  opisBleduGeneracji,
   planDeckGeneration,
   planDocGeneration,
   planSheetGeneration,
@@ -3428,14 +3433,46 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     title: sheetTitle,
                     phase: 'error',
                     format: 'sheet',
-                    error: final.error,
+                    // [ODMROZENIE 13_CHAT DEC-397] — powód po polsku, nie napis serwera.
+                    error: opisBleduGeneracji(
+                      new Error(String(final.error || '')),
+                      uiLang === 'pl' ? 'pl' : 'en'
+                    ),
                   })
                 );
               }
             } catch (err: unknown) {
               if (err instanceof DOMException && err.name === 'AbortError') return;
+              // [ODMROZENIE 13_CHAT DEC-397] Serwer udowodnił, że powierzchni
+              // generacji nie ma (404 na kontrakcie — front ma VITE_ENABLE_DELIVERABLES_LIGHT,
+              // serwer nie ma ENABLE_DELIVERABLES_LIGHT). Nie zostawiamy czerwonej
+              // karty z angielskim „Not found": zdejmujemy kartę, zapamiętujemy brak
+              // i wracamy DOKŁADNIE na ścieżkę „flaga wyłączona" — tę samą, którą
+              // użytkownik dostaje, gdy obie flagi są off.
+              if (isDeliverablesSurfaceMissing(err)) {
+                console.warn(
+                  '[UnifiedChatPanel] Deliverables generation surface missing (404) — fallback to legacy path:',
+                  err
+                );
+                markDeliverablesSurfaceUnavailable();
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                addChatMessage({
+                  id: `excele-redirect-${Date.now()}`,
+                  role: 'ai',
+                  content:
+                    uiLang === 'pl'
+                      ? 'Otwieram Tabele Studio — zaraz przygotuję Twoją tabelę.'
+                      : "Opening Table Studio — I'll prepare your table.",
+                  timestamp: new Date(),
+                });
+                useAppStore.getState().setChatKickoffMessage(text);
+                navigateToRoute('/tabele');
+                onMessageSent?.(content);
+                return;
+              }
+              // Powód ZAWSZE po polsku — nigdy surowa odpowiedź serwera.
               updateSheetChecklist('error', {
-                error: err instanceof Error ? err.message : undefined,
+                error: opisBleduGeneracji(err, uiLang === 'pl' ? 'pl' : 'en'),
               });
             }
           };
@@ -3748,14 +3785,47 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     title: docTitle,
                     phase: 'error',
                     format: 'doc',
-                    error: final.error,
+                    // [ODMROZENIE 13_CHAT DEC-397] serwerowy powód idzie do konsoli,
+                    // użytkownik dostaje zdanie po polsku.
+                    error: opisBleduGeneracji(
+                      new Error(String(final.error || '')),
+                      uiLangDoc === 'pl' ? 'pl' : 'en'
+                    ),
                   })
                 );
               }
             } catch (err: unknown) {
               if (err instanceof DOMException && err.name === 'AbortError') return;
+              // [ODMROZENIE 13_CHAT DEC-397] Serwer udowodnił, że powierzchni
+              // generacji nie ma (404 na kontrakcie — front ma VITE_ENABLE_DELIVERABLES_LIGHT,
+              // serwer nie ma ENABLE_DELIVERABLES_LIGHT). Nie zostawiamy czerwonej
+              // karty z angielskim „Not found": zdejmujemy kartę, zapamiętujemy brak
+              // i wracamy DOKŁADNIE na ścieżkę „flaga wyłączona" — tę samą, którą
+              // użytkownik dostaje, gdy obie flagi są off.
+              if (isDeliverablesSurfaceMissing(err)) {
+                console.warn(
+                  '[UnifiedChatPanel] Deliverables generation surface missing (404) — fallback to legacy path:',
+                  err
+                );
+                markDeliverablesSurfaceUnavailable();
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                addChatMessage({
+                  id: `doc-redirect-${Date.now()}`,
+                  role: 'ai',
+                  content:
+                    uiLangDoc === 'pl'
+                      ? 'Otwieram Dokumenty \u2014 zaraz zaczynam pracę nad dokumentem.'
+                      : "Opening Documents \u2014 I'll start working on your document.",
+                  timestamp: new Date(),
+                });
+                useAppStore.getState().setChatKickoffMessage(text);
+                navigateToRoute('/wordy');
+                onMessageSent?.(content);
+                return;
+              }
+              // Powód ZAWSZE po polsku — nigdy surowa odpowiedź serwera.
               updateDocChecklist('error', {
-                error: err instanceof Error ? err.message : undefined,
+                error: opisBleduGeneracji(err, uiLangDoc === 'pl' ? 'pl' : 'en'),
               });
             }
           })();
@@ -3953,14 +4023,46 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                     lang: uiLangPrez,
                     title: deckTitle,
                     phase: 'error',
-                    error: final.error,
+                    // [ODMROZENIE 13_CHAT DEC-397] — powód po polsku, nie napis serwera.
+                    error: opisBleduGeneracji(
+                      new Error(String(final.error || '')),
+                      uiLangPrez === 'pl' ? 'pl' : 'en'
+                    ),
                   })
                 );
               }
             } catch (err: unknown) {
               if (err instanceof DOMException && err.name === 'AbortError') return;
+              // [ODMROZENIE 13_CHAT DEC-397] Serwer udowodnił, że powierzchni
+              // generacji nie ma (404 na kontrakcie — front ma VITE_ENABLE_DELIVERABLES_LIGHT,
+              // serwer nie ma ENABLE_DELIVERABLES_LIGHT). Nie zostawiamy czerwonej
+              // karty z angielskim „Not found": zdejmujemy kartę, zapamiętujemy brak
+              // i wracamy DOKŁADNIE na ścieżkę „flaga wyłączona" — tę samą, którą
+              // użytkownik dostaje, gdy obie flagi są off.
+              if (isDeliverablesSurfaceMissing(err)) {
+                console.warn(
+                  '[UnifiedChatPanel] Deliverables generation surface missing (404) — fallback to legacy path:',
+                  err
+                );
+                markDeliverablesSurfaceUnavailable();
+                useConversationStore.getState().removeLocalMessage(progressMessageId);
+                addChatMessage({
+                  id: `prez-redirect-${Date.now()}`,
+                  role: 'ai',
+                  content:
+                    uiLangPrez === 'pl'
+                      ? 'Otwieram Prezentacje \u2014 zaraz przygotuję deck.'
+                      : "Opening Presentations \u2014 I'll prepare your deck.",
+                  timestamp: new Date(),
+                });
+                useAppStore.getState().setChatKickoffMessage(text);
+                navigateToRoute('/prezentacje');
+                onMessageSent?.(content);
+                return;
+              }
+              // Powód ZAWSZE po polsku — nigdy surowa odpowiedź serwera.
               updateChecklist('error', {
-                error: err instanceof Error ? err.message : undefined,
+                error: opisBleduGeneracji(err, uiLangPrez === 'pl' ? 'pl' : 'en'),
               });
             }
           })();
@@ -5644,8 +5746,25 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setRequestedCanvasDraftId(draftId);
       setRequestedCanvasStarterId('document');
       setIsWorkPanelOpen(true);
+      // [ODMROZENIE 13_CHAT DEC-397 + 11_MATERIALS] Sam szkic canvasa NIE trafia
+      // do Materiały → Dokumenty (zmierzone 06.09: wiersz w work_canvas_drafts
+      // jest, listy Materiałów nie ma). Rejestracja w bibliotece Wyników to
+      // dokładnie ten sam ruch, co `registerChatDeliverable` robi dla generacji —
+      // tu brakowało ostatniego przewodu. Fire-and-forget: błąd rejestracji nie
+      // może zabrać użytkownikowi otwartego dokumentu.
+      void Api.workCanvasRegisterInOutputs(draftId).catch((regErr: unknown) => {
+        console.warn('[UnifiedChatPanel] register-in-outputs failed (non-blocking):', regErr);
+      });
     } catch (err) {
       console.error('[UnifiedChatPanel] auto-emit to document failed:', err);
+      // [ODMROZENIE 13_CHAT DEC-397] Cisza po kliknięciu to najgorszy możliwy
+      // wynik: użytkownik klika „Otwórz jako dokument" i NIC się nie dzieje.
+      // Powód po polsku, nigdy surowa odpowiedź serwera.
+      toast.error(
+        (i18n.language || 'en').startsWith('pl')
+          ? 'Nie udało się otworzyć dokumentu z tej odpowiedzi. Spróbuj ponownie za chwilę.'
+          : 'Could not open a document from this answer. Please try again in a moment.'
+      );
     }
   }, []);
 

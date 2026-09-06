@@ -1,0 +1,301 @@
+{
+ "url": "http://127.0.0.1:3119/chat/c820831d-9d87-430b-988b-03ee00aa7afe",
+ "tytul": "AI Chat — Consultify",
+ "kliki": [
+  "css=[data-testid=\"chat-send-btn\"]"
+ ],
+ "wpisy": [
+  "css=[data-testid=\"chat-input\"]"
+ ],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "dark",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "3 V9 overrides\nLOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nCzat AI\nDane\nModel\n1\n15\nAudyt Nocny\nAN\nPrzejdź do pola wiadomości\nMain\nAudyt Nocny\nSłuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda normalnie plan strategiczny w tym zakresie bez głębszej analizy\nTERESA PROPOSAL\nSłuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak w…\ncreate\nProposal ready\nInitiatives · create\nSłuchaj wiesz co chodzi mi o to żebyś zrobiła taką krótką zajawkę jak wygląda normalnie plan strategiczny w tym zakresi…\nPlan strategiczny w kontekście cyfrowej transformacji organizacji, takiej jak Novatek Manufacturing, zazwyczaj obejmuje…\nZatwierdź\nOdrzuć\nOtwórz cel\n\nPlan strategiczny w kontekście cyfrowej transformacji organizacji, takiej jak Novatek Manufacturing, zazwyczaj obejmuje następujące kluczowe elementy:\n\nWizja i Cele: Określenie długoterminowych celów organizacji, które mają być osiągnięte poprzez cyfrową transformację, np. poprawa efektywności operacyjnej, zwiększenie innowacyjności, czy poprawa satysfakcji klienta.\n\nAnaliza Stanu Obecnego: Ocena aktualnego poziomu dojrzałości cyfrowej, identyfikacja kluczowych luk oraz obszarów wymagających poprawy. Może to obejmować audyty technologiczne oraz ocenę procesów.\n\nStrategie Transformacyjne: Definicja konkretnych inicjatyw, które będą prowadzić do realizacji celów strategicznych. Przykłady to automatyzacja procesów, wdrożenie nowych technologii, czy rozwój kompetencji pracowników.\n\nPlan Wdrożenia: Szczegółowy harmonogram działań, który określa, kiedy i jak poszczególne inicjatywy będą realizowane. Uwzględnia priorytetyzację działań oraz alokację zasobów.\n\nMonitoring i Ewaluacja: Ustalenie wskaźników sukcesu (KPI) oraz mechanizmów monitorowania postępów w realizacji planu, aby na bieżąco oceniać efektywność wdrażanych zmian.\n\nW przypadku każdego z tych elementów ważne jest, aby były one oparte na konkretach i dostosowane do specyfiki działalności organizacji.\n\nOtwórz jako dokument\nŹródła: 6",
+ "dom": {
+  "css=button[title]": {
+   "liczba": 54,
+   "boxy": [
+    {
+     "x": 1408,
+     "y": 630,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1408,
+     "y": 666,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1408,
+     "y": 702,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 17,
+     "y": 60,
+     "width": 30,
+     "height": 30
+    },
+    {
+     "x": 8,
+     "y": 126,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 160,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 194,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 228,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 262,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 296,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 330,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 364,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 398,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 432,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 8,
+     "y": 466,
+     "width": 48,
+     "height": 32
+    },
+    {
+     "x": 16,
+     "y": 720,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 16,
+     "y": 754,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 16,
+     "y": 788,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 12,
+     "y": 822,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "x": 12,
+     "y": 856,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "x": 1011.46875,
+     "y": 5.5,
+     "width": 97.703125,
+     "height": 36
+    },
+    {
+     "x": 1142.171875,
+     "y": 7.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1207.171875,
+     "y": 7.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 80,
+     "y": 52.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 114,
+     "y": 52.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 148,
+     "y": 52.5,
+     "width": 102.171875,
+     "height": 32
+    },
+    {
+     "x": 252.171875,
+     "y": 52.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1326,
+     "y": 52.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1360,
+     "y": 52.5,
+     "width": 32,
+     "height": 32
+    },
+    {
+     "x": 1162,
+     "y": -121.5,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 1184,
+     "y": -121.5,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 1206,
+     "y": -121.5,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 1228,
+     "y": -121.5,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 224,
+     "y": 625.234375,
+     "width": 177.359375,
+     "height": 30
+    },
+    {
+     "x": 231,
+     "y": 698.234375,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 255,
+     "y": 698.234375,
+     "width": 20,
+     "height": 20
+    },
+    {
+     "x": 279,
+     "y": 696.234375,
+     "width": 24,
+     "height": 24
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+     "x": 237,
+     "y": 845,
+     "width": 36,
+     "height": 36
+    },
+    {
+     "x": 277,
+     "y": 845,
+     "width": 36,
+     "height": 36
+    },
+    {
+     "x": 317,
+     "y": 845,
+     "width": 36,
+     "height": 36
+    },
+    {
+     "x": 1063,
+     "y": 850,
+     "width": 26,
+     "height": 26
+    },
+    {
+     "x": 1097,
+     "y": 846,
+     "width": 34,
+     "height": 34
+    },
+    {
+     "x": 1139,
+     "y": 846,
+     "width": 44,
+     "height": 34
+    },
+    {
+     "x": 1191,
+     "y": 846,
+     "width": 44,
+     "height": 34
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-06T09:54:39.893Z"
+}

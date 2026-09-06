@@ -70,6 +70,53 @@ const STRONG_DOCUMENT_CREATION_VERB =
 const STRONG_DOCUMENT_NOUN =
   /\b(report|document|memo|brief|write-?up|analysis|raport|dokument|sprawozdani|analiz|notatk|opracowani|memo|brief)\w*/i;
 
+// ── [ODMROZENIE 13_CHAT DEC-397] Dwie bramki zawężające ──────────────────────
+// Zgłoszenie właściciela 06.09 (1.1-D): „…żebyś zrobiła taką krótką ZAJAWKĘ jak
+// wygląda normalnie plan strategiczny w tym zakresie BEZ GŁĘBSZEJ ANALIZY" trafiło
+// w `hasStrongDocumentNoun` i uruchomiło generację dokumentu, choć prośba była
+// o krótką odpowiedź W CZACIE. Zmierzone przyczyny (obie realne, obie tu łatane):
+//
+//  (1) RZECZOWNIK ZANEGOWANY. Reguła szukała czasownika i rzeczownika GDZIEKOLWIEK
+//      w zdaniu, więc „bez głębszej analizy" (= wyraźna odmowa analizy) liczyło się
+//      jak zamówienie analizy. Rzeczownik po „bez / zamiast / without / instead of /
+//      no need for" jest wykluczeniem, nie zamówieniem.
+//  (2) PROŚBA O ZAJAWKĘ. Słowa „zajawka / w skrócie / pokrótce / w kilku zdaniach /
+//      teaser / in a nutshell" nazywają FORMĘ ODPOWIEDZI (krótko, w rozmowie), a nie
+//      artefakt do wygenerowania. Uwaga: samo „krótki" NIE wetuje — „napisz krótki
+//      raport" to nadal zamówienie dokumentu (patrz test kontraktowy).
+//
+// Obie bramki celowo są wąskie: mają zdejmować fałszywe trafienia, nie zawężać
+// realnych zamówień dokumentu.
+
+/** Fragmenty zdania, w których rzeczownik-dokument jest WYKLUCZANY, nie zamawiany. */
+const DOCUMENT_NOUN_EXCLUSION_SCOPE =
+  /\b(bez|zamiast|without|instead\s+of|no\s+need\s+for|nie\s+potrzebuj[ęe]|nie\s+trzeba)\b[^.,;!?]*$/i;
+
+/** Prośba o krótką odpowiedź w rozmowie — nie o artefakt. */
+const CHAT_TEASER_REQUEST =
+  /(zajawk\w*|w\s+skr[óo]cie|pokr[óo]tce|w\s+kilku\s+zdaniach|w\s+dw[óo]ch\s+zdaniach|teaser|in\s+a\s+nutshell|in\s+short|briefly)/i;
+
+/**
+ * True, gdy rzeczownik-dokument stoi w zasięgu wykluczenia („bez … analizy").
+ * Sprawdzamy tekst PRZED rzeczownikiem, ucięty do bieżącej frazy (kropka/przecinek
+ * kończy zasięg), więc „Napisz raport. Bez wodolejstwa." nie jest wetowane.
+ */
+function documentNounIsExcluded(text: string): boolean {
+  // Skanujemy WSZYSTKIE wystąpienia: wystarczy jedno niewykluczone, żeby prośba
+  // dalej była zamówieniem dokumentu („Bez raportu, napisz notatkę" — „notatk"
+  // stoi poza zasięgiem „bez"). Kopia regexa z flagą /g, bo `lastIndex` na
+  // współdzielonym obiekcie jest pułapką.
+  const scanner = new RegExp(STRONG_DOCUMENT_NOUN.source, 'gi');
+  let match: RegExpExecArray | null;
+  let seen = false;
+  while ((match = scanner.exec(text)) !== null) {
+    seen = true;
+    if (!DOCUMENT_NOUN_EXCLUSION_SCOPE.test(text.slice(0, match.index))) return false;
+    if (match.index === scanner.lastIndex) scanner.lastIndex += 1;
+  }
+  return seen;
+}
+
 /**
  * True when the prompt names an explicit document deliverable (creation verb +
  * document noun). Used to give "document-with-a-table" precedence over
@@ -77,7 +124,23 @@ const STRONG_DOCUMENT_NOUN =
  */
 export function hasStrongDocumentNoun(message: string): boolean {
   const text = String(message || '');
-  return STRONG_DOCUMENT_CREATION_VERB.test(text) && STRONG_DOCUMENT_NOUN.test(text);
+  if (!STRONG_DOCUMENT_CREATION_VERB.test(text)) return false;
+  if (!STRONG_DOCUMENT_NOUN.test(text)) return false;
+  // [ODMROZENIE 13_CHAT DEC-397] — patrz komentarz nad regexami wyżej.
+  if (documentNounIsExcluded(text)) return false;
+  if (CHAT_TEASER_REQUEST.test(text)) return false;
+  return true;
+}
+
+/**
+ * [ODMROZENIE 13_CHAT DEC-397] True, gdy użytkownik prosi o KRÓTKĄ ODPOWIEDŹ
+ * w rozmowie („krótka zajawka", „w skrócie") — wtedy czat odpowiada tekstem,
+ * a dokument powstaje dopiero na życzenie („Otwórz jako dokument").
+ * Wystawione osobno, żeby orkiestracja czatu mogła to sprawdzić jednym wołaniem
+ * i żeby test kontraktowy miał co mierzyć.
+ */
+export function isChatTeaserRequest(message: string): boolean {
+  return CHAT_TEASER_REQUEST.test(String(message || ''));
 }
 
 export function detectPresentationIntent(message: string): boolean {
