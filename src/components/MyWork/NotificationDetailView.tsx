@@ -78,7 +78,10 @@ import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
+import { PracujZAI } from '../standard/PracujZAI';
+import { StickyStosKartyN } from '../standard/StickyStosKartyN';
+import { zbudujZrodlaPracujZAI } from '../standard/pracujZAIzKartAnalizy';
+import { NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
 import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
@@ -2536,8 +2539,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   //   dokładnie to, czego kontrakt zabrania („AI NIE nadpisuje treści bez
   //   potwierdzenia"). Generator zostaje żywy jako auto-uzupełnienie pustego
   //   arkusza przy wczytaniu (efekt wyżej), przycisk przechodzi na ANALIZĘ.
-  const notificationAnalysisFields = useMemo<CardAnalysisField[]>(() => {
-    switch (activeNSection) {
+  // DEC-407: jedna deklaracja pól obsługuje „Analizuj" i „Uzupełnij…".
+  const notificationPolaSekcji = useCallback(
+    (sekcjaId: string): CardAnalysisField[] => {
+    switch (sekcjaId) {
       case 'whats-happening':
         return [
           {
@@ -2601,8 +2606,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       default:
         return [];
     }
-  }, [
-    activeNSection,
+    },
+    [
     isPolish,
     descriptionDraft,
     whyImportantDraft,
@@ -2610,7 +2615,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     expectedActionDraft,
     actionChecklist,
     notification?.data,
-  ]);
+    ]
+  );
+
+  const notificationAnalysisFields = useMemo<CardAnalysisField[]>(
+    () => notificationPolaSekcji(activeNSection),
+    [notificationPolaSekcji, activeNSection]
+  );
 
   const notificationWritableFieldIds = useMemo(
     () => notificationAnalysisFields.filter((f) => f.writable).map((f) => f.id),
@@ -2703,6 +2714,23 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
     buildInput: buildNotificationAnalysisInput,
     applyChange: applyNotificationAnalysisChange,
   });
+
+  // ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] „Pracuj z AI" ───────────────────
+  // „Uzupełnij…" stoi na deklaracji pól karty i na `applyNotificationAnalysisChange`.
+  // Świadomie NIE podpinam tu `handleAnalyzeWithAI` (generator całego arkusza):
+  // on ZAPISUJE do pięciu pól sam, bez podglądu i bez „Zatwierdź" — a to jest
+  // dokładnie zakaz z `ZASADY_AI_TERESA_SSOT` §3. Ścieżka przez pola daje ten
+  // sam efekt (te same pola), ale przez propozycję.
+  const zrodlaPracujZAI = useMemo(
+    () =>
+      zbudujZrodlaPracujZAI({
+        sekcje: nModeSections.map((s) => ({ id: s.id, label: s.label })),
+        polaSekcji: notificationPolaSekcji,
+        applyChange: applyNotificationAnalysisChange,
+        isPolish,
+      }),
+    [nModeSections, notificationPolaSekcji, applyNotificationAnalysisChange, isPolish]
+  );
 
   // ── Loading / 404 guards (AFTER all hooks to respect Rules of Hooks) ────
 
@@ -3381,6 +3409,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                  Edytowalna checklista ma wlasny, poprawny kanal: `isDirty`/`saving`.
                  `lastWorksheetSavedAt` nadal jest ustawiany w logice zapisu — nie
                  renderujemy go tylko w powloce. */}
+            {/* ── [ODMROZENIE 07_MY_WORK_AGENT DEC-407] Zasada 2 ────────────
+                Menu 4 + Menu 5 jako JEDEN przyklejony stos. ── */}
+            <StickyStosKartyN>
             <NModeHeader
               title={
                 notification.title || t('myWork.notificationDetail.notification', 'Notification')
@@ -3449,7 +3480,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                  dlatego import `NModePropertiesStrip` znika z tego pliku.
                  ═══════════════════════════════════════════════════════════════ */}
             {presentationMode === 'n' && (
-              <div className="col-span-full space-y-4 pt-4">
+              <div className="pt-4 pb-2">
                 {/* RYTM PIONOWY (2026-07-24): `pt-4` = 16 px między Menu 1 a Menu 2 —
                     tyle, ile daje powłoka `NModeShell` (mt-2 na pasku + py-2 w środku)
                     Wnioskowi i Narzędziu. `mt-*` tu NIE DZIAŁA: rodzic ma `space-y-0`,
@@ -3505,19 +3536,42 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                     ) : undefined
                   }
                   readMode={readMode}
+                  /* Zasada 2b: powiadomienie przeczytane i zamknięte przez
+                     działanie jest rekordem systemowym — arkusz zostaje wtedy
+                     w Podglądzie. Karta Powiadomienia NIE ma żadnego innego
+                     sprawdzenia prawa edycji (grep `canEdit|readOnly|isReadOnly`:
+                     tylko lokalny `readMode`) — zgłoszone w meldunku. */
                   onReadModeChange={setReadMode}
                   aiButton={
-                    // ETAP 3: przycisk ANALIZUJE aktywną kartę i otwiera panel
-                    // wyników. Nie pisze do pól — zapis wyłącznie przez „Zastosuj".
-                    <Menu2AIButton
+                    // DEC-407: „Analizuj z AI" ZASTĄPIONE przez „Pracuj z AI".
+                    <PracujZAI
                       isPolish={isPolish}
-                      busy={notificationCardAnalysis.loading}
-                      aria-expanded={notificationCardAnalysis.open}
-                      onClick={notificationCardAnalysis.run}
+                      onAnalizuj={notificationCardAnalysis.run}
+                      analizaWToku={notificationCardAnalysis.loading || isAnalyzingWorksheet}
+                      analizaOtwarta={notificationCardAnalysis.open}
+                      aktywnaSekcja={activeNSection}
+                      kontekstArtefaktu={{
+                        title: notification?.title,
+                        status: notification?.isRead ? 'read' : 'unread',
+                        priority: notification?.severity || '',
+                        type: 'notification',
+                      }}
+                      moznaEdytowac={!readMode}
+                      powodTylkoOdczyt={
+                        isPolish ? 'karta otwarta w trybie Podgląd' : 'card opened in Preview mode'
+                      }
+                      uzupelnijSekcje={zrodlaPracujZAI.sekcja}
+                      uzupelnijDokument={zrodlaPracujZAI.dokument}
                     />
                   }
                 />
 
+              </div>
+            )}
+            </StickyStosKartyN>
+
+            {presentationMode === 'n' && (
+              <div className="col-span-full space-y-4 pt-4">
                 {/* ── 3-Pane: LeftNav + Canvas + prawy panel (SPEC-N §2.2) ── */}
                 <div className="flex gap-0 min-h-[60vh]">
                   <NModeLeftNav
