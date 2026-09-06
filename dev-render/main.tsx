@@ -719,6 +719,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'H2 (1.1-H) — REALNY edytor Tiptap (extensions.ts + EDITOR_STYLES z NotebookContent.tsx) z pustym blokiem toggle. &case=empty-toggle|text &lang=pl|en',
     render: () => <MojaPracaNotatnikToggleEmptyScreen />,
+  },
   'notatnik-header-filtr-11j2': {
     label:
       'ZLECENIE 1.1-J2 — REALNY <NotebookHeaderActions> + <NotebookViewFilterSelect> + <NotebookPageListRow>. DEC-405b: 6 chipów → 1 filtr rozwijany z licznikami obok „Szukaj w notatkach…”. DEC-405c: najedź na wstecz/+/lupa — dymek z tekstem, nie pusty (side="bottom", nieprzycięty przez overflow-hidden).',
