@@ -4,19 +4,29 @@ import {
   NAVIGATE_ITEM_TYPES,
   resolveOpenItemRoute,
 } from '../../src/components/MyWork/openItemRouting';
+import { UKRYTE_DEC406 } from '../../src/components/MyWork/mojaPracaWidocznosc';
 
 /**
- * DP-2 "global IDE-tabs doc" contract — closes BOTH M03 L-08 and M13 L-07
- * (same feature: the #10 live note "opening an initiative hard-navigates").
- * Clicking an initiative opens IN-CONTEXT (document overlay / dynamic tab),
- * NOT a hard navigate(). Heavy artifact types still navigate away.
+ * DP-2 "global IDE-tabs doc" contract — guards the SSOT used by the MyWorkHub
+ * `mywork-open-item` handler and the calendar `onInitiativeClick` wiring,
+ * without mounting the ~9k-line component.
  *
- * This guards the SSOT used by the MyWorkHub `mywork-open-item` handler and the
- * calendar `onInitiativeClick` wiring, without mounting the ~9k-line component.
+ * ★ DEC-406 (CTO, 2026-09-06) ODWRACA CZĘŚĆ TEGO KONTRAKTU DLA INICJATYWY.
+ * Do 06.09 inicjatywa otwierała się IN-CONTEXT (M03 L-08 / M13 L-07) — i tym
+ * samym trafiała na stary warsztat `Initiatives/InitiativeFullView.tsx`
+ * (stepper ŹRÓDŁO — PRZEGLĄD — PLANOWANIE — REALIZACJA — KORZYŚCI, „Zatwierdź /
+ * Anuluj"), a nie na zaakceptowaną przez właściciela kanoniczną kartę
+ * `InitiativeDocumentView`. Słowo właściciela: „nie wiem, co to za ekran".
+ * Od DEC-406 inicjatywa z Mojej Pracy ZAWSZE nawiguje do modułu Inicjatywy.
+ * Asercje „in-context dla inicjatywy" zostały tu ZAKTUALIZOWANE, nie usunięte.
  */
-describe('mywork-open-item routing (M03 L-08 / M13 L-07 / DP-2)', () => {
-  it('routes initiative IN-CONTEXT, not navigate (M03 L-08 + M13 L-07)', () => {
-    expect(resolveOpenItemRoute('initiative')).toBe('in-context');
+describe('mywork-open-item routing (DP-2, po DEC-406)', () => {
+  it('DEC-406: inicjatywa NAWIGUJE do własnego modułu, nie otwiera się in-context', () => {
+    expect(resolveOpenItemRoute('initiative')).toBe('navigate');
+  });
+
+  it('DEC-406: stała ukrycia warsztatu inicjatywy jest włączona (jedno miejsce)', () => {
+    expect(UKRYTE_DEC406.warsztatInicjatywy).toBe(true);
   });
 
   it('keeps task/decision/idea/notification/notebook in-context (unchanged)', () => {
@@ -41,9 +51,8 @@ describe('mywork-open-item routing (M03 L-08 / M13 L-07 / DP-2)', () => {
     }
   });
 
-  it('initiative is in the in-context set and absent from the navigate set', () => {
-    expect(IN_CONTEXT_ITEM_TYPES).toContain('initiative');
-    expect(NAVIGATE_ITEM_TYPES as readonly string[]).not.toContain('initiative');
+  it('DEC-406: initiative nie jest już w zbiorze in-context', () => {
+    expect(IN_CONTEXT_ITEM_TYPES as readonly string[]).not.toContain('initiative');
   });
 
   it('the two route sets do not overlap', () => {
