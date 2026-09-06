@@ -257,8 +257,8 @@
           "tresc": "Trzy decyzje podjęte i zapisane (Finanse MINIMUM, grupowanie inicjatyw, kropka „Model”)",
           "kto": "właściciel",
           "artefakt": "ledger decyzji (DEC-…)",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "czesciowo",
+          "dowod": "1/3: Finanse MINIMUM → pojemnik 2 (DEC-399, 06.09); czekają: grupowanie inicjatyw, kropka „Model”"
         },
         {
           "nr": "S1.11",
@@ -280,9 +280,9 @@
       "decyzje": [
         {
           "tresc": "Finanse MINIMUM do MVP (F1 §0) czy poza",
-          "rekomendacja": "Brak jawnej rekomendacji CTO w źródle; F1 opisuje wariant MINIMUM (7 paczek ≈ 8 sesji Codexa) vs PEŁNY (+11 ≈ 24 sesje)",
-          "stan": "czeka",
-          "dec": ""
+          "rekomendacja": "CTO: MINIMUM w pojemniku 2 (pierwsza linia sprzedaje analizę finansową, CD PROJEKT już stoi). Właściciel 06.09: „wyrzuć finanse do pojemnika 2” — MINIMUM (F‑M2/M3/M4/M6/M7) wykonywane w pozycji 2.6, poza pojemnikiem 1",
+          "stan": "podjeta",
+          "dec": "DEC-399"
         },
         {
           "tresc": "Grupowanie inicjatyw po zdjęciu Projektów",
