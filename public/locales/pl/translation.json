@@ -35286,7 +35286,9 @@
         "templateUpdated": "Szablon zaktualizowany",
         "templateCreated": "Szablon utworzony",
         "failedToSaveTemplate": "Nie udało się zapisać szablonu",
-        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym."
+        "requiresPlatformTable": "Szablony rekordów wymagają tabeli platformowej — ta tabela działa jeszcze na silniku zastanym.",
+        "previewYes": "Tak",
+        "previewNo": "Nie"
       },
       "refineDialog": {
         "suggestionAddPriority": "Dodaj pole priorytet",
@@ -35749,6 +35751,7 @@
       "noFilterResultsBody_one": "Jedyny wiersz nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "noFilterResultsBody_few": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "noFilterResultsBody_many": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
+      "noFilterResultsBody_other": "Żaden z {{count}} wierszy nie pasuje do bieżącego filtra. Zmień warunki albo wyczyść filtr, aby zobaczyć wszystkie rekordy.",
       "tableTemplates": "Szablony tabeli"
     },
     "mindmap": {
@@ -36179,13 +36182,15 @@
       "collapsePeriods": "Zwiń okresy miesięczne",
       "expandPeriods": "Edytuj okresy miesięczne",
       "col": {
+        "expand": "Rozwiń",
         "label": "Czynnik",
         "type": "Typ",
         "category": "Kategoria",
         "unit": "Jednostka",
         "total": "Suma",
         "confidence": "Pewność",
-        "evidence": "Dowody"
+        "evidence": "Dowody",
+        "actions": "Akcje"
       },
       "monthlyValues": "Wartości miesięczne",
       "months": "mies.",

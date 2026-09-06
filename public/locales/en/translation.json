@@ -32732,7 +32732,9 @@
         "templateUpdated": "Template updated",
         "templateCreated": "Template created",
         "failedToSaveTemplate": "Failed to save template",
-        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine."
+        "requiresPlatformTable": "Record templates require a platform table — this table still runs on the legacy engine.",
+        "previewYes": "Yes",
+        "previewNo": "No"
       },
       "refineDialog": {
         "suggestionAddPriority": "Add a priority field",
@@ -33618,13 +33620,15 @@
       "collapsePeriods": "Collapse monthly periods",
       "expandPeriods": "Edit monthly periods",
       "col": {
+        "expand": "Expand",
         "label": "Driver",
         "type": "Type",
         "category": "Category",
         "unit": "Unit",
         "total": "Total",
         "confidence": "Confidence",
-        "evidence": "Evidence"
+        "evidence": "Evidence",
+        "actions": "Actions"
       },
       "monthlyValues": "Monthly values",
       "months": "mo",

@@ -177,8 +177,22 @@ describe('InitiativesHub smoke', () => {
     renderHub();
     fireEvent.click(await screen.findByText('Adopt classic initiative'));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, request] = fetchMock.mock.calls[0];
+    // DEC-397 (MVP fix 2026-09-05): InitiativesHub's fetchData now also
+    // backfills legacy rows via `listLegacyInitiatives` (GET
+    // `/api/initiatives`), which goes through this same stubbed global
+    // `fetch` — on mount and again on the post-adoption refresh. So the
+    // adoption POST is no longer necessarily the only (or first) call;
+    // find it by URL instead of assuming call count/order.
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([callUrl]) => callUrl === '/api/initiatives/runtime-v1/adoptions/accepted-classic'
+        )
+      ).toBe(true)
+    );
+    const [url, request] = fetchMock.mock.calls.find(
+      ([callUrl]) => callUrl === '/api/initiatives/runtime-v1/adoptions/accepted-classic'
+    )!;
     expect(url).toBe('/api/initiatives/runtime-v1/adoptions/accepted-classic');
     expect(JSON.parse(String((request as RequestInit).body))).toMatchObject({
       candidateId: 'candidate-1',
