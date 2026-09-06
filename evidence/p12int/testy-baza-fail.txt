@@ -1,0 +1,46 @@
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when initiative id exceeds max allowed length
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when params accessor throws
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status exceeds max allowed length
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 400 when status is non-string type
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when StatusMachine throws
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns 500 when db row has invalid current status
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus returns fallback error when transition reason is missing
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus skips DB lookup when status is whitespace-only
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats non-boolean valid flag as invalid transition
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats null body as empty payload and skips DB lookup
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateInitiativeStatus treats undefined status machine response as invalid transition
+ FAIL  tests/unit/backend/middleware/pmoValidation.middleware.test.ts > pmoValidation.middleware > validateTaskStatus treats non-boolean valid flag as invalid transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should accept blocked reason for BLOCKED status
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Blocked Status Validation > should require blocked reason for BLOCKED initiative status
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow APPROVED to SCHEDULED transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow DRAFT to PENDING_REVIEW transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to BLOCKED transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow EXECUTING to DONE transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PENDING_REVIEW to REVIEW transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PLANNING to APPROVED transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow PROMOTED to PLANNING transition
+ FAIL  tests/unit/backend/scmsGovernance.test.js > StatusMachine > Initiative Status Transitions > should allow REVIEW to PROMOTED transition
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > canTransitionInitiative > should allow valid transition
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should allow blocking with reason
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent approved state if governance failed
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should prevent completion if pending tasks exist
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should require reason for blocking
+ FAIL  tests/unit/backend/statusMachine.test.js > StatusMachine > validateInitiativeTransition > should return valid for simple allowed transition
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > allows DRAFT -> PENDING_REVIEW (canonical transitions)
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > exposes allowed transitions list for a status
+ FAIL  tests/unit/backend/statusMachine/initiativeTransitions.test.ts > StatusMachine: initiative transitions > returns valid=true for allowed transition when no extra rules apply
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects APPROVED -> SCHEDULED when requiresScheduling=true but isScheduled=false
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when pendingTasks > 0
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects DONE when there are blocking decisions
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > rejects REVIEW -> PROMOTED when charterCompleteness is below 60
+ FAIL  tests/unit/backend/statusMachine/initiativeValidationRules.test.ts > StatusMachine: initiative validation rules > requires blockedReason when transitioning to BLOCKED
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > detects module transition across module boundaries
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > maps DRAFT to ASSESSMENT module label
+ FAIL  tests/unit/backend/statusMachine/moduleAndLabels.test.ts > StatusMachine: modules, labels, stages > returns stable status labels for known statuses
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > canTransitionInitiative > allows DRAFT → PENDING_REVIEW
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns ASSESSMENT for DRAFT
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > getInitiativeModule > returns EXECUTION for EXECUTING
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > allows BLOCKED when blockedReason provided
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > rejects DONE when pendingTasks > 0
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > requires blockedReason when transitioning to BLOCKED
+ FAIL  tests/unit/execution/status-machine.test.ts > StatusMachine (REAL) > validateInitiativeTransition > returns valid for allowed transition

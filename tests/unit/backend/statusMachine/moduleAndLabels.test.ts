@@ -6,30 +6,49 @@ import StatusMachine, {
 } from '../../../../server/src/services/statusMachine.ts';
 
 describe('StatusMachine: modules, labels, stages', () => {
-  it('maps DRAFT to ASSESSMENT module label', () => {
-    expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT)).toBe('ASSESSMENT');
-  });
-
-  it('maps REVIEW to INITIATIVE_MANAGEMENT module label', () => {
-    expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.REVIEW)).toBe(
+  it('maps DRAFT to INITIATIVE_MANAGEMENT module label', () => {
+    expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT)).toBe(
       'INITIATIVE_MANAGEMENT'
     );
   });
 
+  it('maps IN_EXECUTION to EXECUTION and CLOSED to BENEFITS', () => {
+    expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.IN_EXECUTION)).toBe('EXECUTION');
+    expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.CLOSED)).toBe('BENEFITS');
+  });
+
+  it('returns UNKNOWN for a status outside both dictionaries', () => {
+    expect(StatusMachine.getInitiativeModule('NIE_ISTNIEJE')).toBe('UNKNOWN');
+  });
+
   it('detects module transition across module boundaries', () => {
-    const res = StatusMachine.isModuleTransition(
-      INITIATIVE_STATUSES.DRAFT,
-      INITIATIVE_STATUSES.REVIEW
-    );
-    expect(res).toEqual({
+    expect(
+      StatusMachine.isModuleTransition(
+        INITIATIVE_STATUSES.DRAFT,
+        INITIATIVE_STATUSES.IN_EXECUTION
+      )
+    ).toEqual({
       crossesModule: true,
-      fromModule: 'ASSESSMENT',
-      toModule: 'INITIATIVE_MANAGEMENT',
+      fromModule: 'INITIATIVE_MANAGEMENT',
+      toModule: 'EXECUTION',
     });
   });
 
-  it('returns stable status labels for known statuses', () => {
-    expect(StatusMachine.getStatusLabel(INITIATIVE_STATUSES.DONE)).toBe('Done');
+  it('does not report a module transition inside one module', () => {
+    expect(
+      StatusMachine.isModuleTransition(
+        INITIATIVE_STATUSES.DRAFT,
+        INITIATIVE_STATUSES.PENDING_APPROVAL
+      ).crossesModule
+    ).toBe(false);
+  });
+
+  it('returns stable status labels for the 7 canonical statuses', () => {
+    expect(StatusMachine.getStatusLabel(INITIATIVE_STATUSES.CLOSED)).toBe('Closed');
+    expect(StatusMachine.getStatusLabel(INITIATIVE_STATUSES.IN_EXECUTION)).toBe('In Execution');
+    // Legacy nazwy zwijają się do etykiety statusu kanonicznego.
+    expect(StatusMachine.getStatusLabel('DONE')).toBe('Closed');
+    expect(StatusMachine.getStatusLabel('NIE_ISTNIEJE')).toBe('NIE_ISTNIEJE');
   });
 
   it('blocks DELIVERY stage when pendingReviews > 0', () => {

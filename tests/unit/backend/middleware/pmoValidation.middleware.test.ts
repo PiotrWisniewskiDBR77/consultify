@@ -15,7 +15,6 @@ import {
   logStatusChange,
   setDependencies,
   validateInitiative,
-  validateInitiativeStatus,
   validateTask,
   validateTaskStatus,
 } from '../../../../server/src/middleware/pmoValidation.middleware.ts';
@@ -28,6 +27,10 @@ function makeRes() {
   return res as Response;
 }
 
+// DEC-424 (P12): `validateInitiativeStatus` zniknęło z middleware — bramka
+// statusu inicjatywy żyje wyłącznie w silniku przejść
+// (server/src/constants/initiativeStatuses.ts, testy: tests/unit/backend/
+// initiativeStatuses/**). Testy tamtego kontraktu usunięte razem z funkcją.
 describe('pmoValidation.middleware', () => {
   const statusMachineMock = {
     validateInitiativeTransition: vi.fn(),
@@ -269,46 +272,6 @@ describe('pmoValidation.middleware', () => {
     expect(runMock).not.toHaveBeenCalled();
   });
 
-  it('validateInitiativeStatus returns 400 when params accessor throws', async () => {
-    const req: any = { body: { status: 'IN_PROGRESS' } };
-    Object.defineProperty(req, 'params', {
-      configurable: true,
-      get: () => {
-        throw new Error('params getter failed');
-      },
-    });
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(next).not.toHaveBeenCalled();
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus skips DB lookup when status is whitespace-only', async () => {
-    const req: any = { body: { status: '   ' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus treats null body as empty payload and skips DB lookup', async () => {
-    const req: any = { body: null, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
   it('validateTaskStatus returns 400 when params accessor throws', async () => {
     const req: any = { body: { status: 'DONE' } };
     Object.defineProperty(req, 'params', {
@@ -349,34 +312,6 @@ describe('pmoValidation.middleware', () => {
     expect(getMock).not.toHaveBeenCalled();
   });
 
-  it('validateInitiativeStatus returns 400 when status exceeds max allowed length', async () => {
-    const req: any = { body: { status: 'S'.repeat(129) }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ rule: 'STATUS_VALUE_TOO_LONG' })
-    );
-    expect(getMock).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus returns 400 when status is non-string type', async () => {
-    const req: any = { body: { status: 123 }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'INVALID_STATUS_TYPE' }));
-    expect(getMock).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
-  });
-
   it('validateTaskStatus returns 400 when status exceeds max allowed length', async () => {
     const req: any = { body: { status: 'S'.repeat(129) }, params: { id: 'task-1' } };
     const res = makeRes();
@@ -401,21 +336,6 @@ describe('pmoValidation.middleware', () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ rule: 'INVALID_STATUS_TYPE' }));
-    expect(getMock).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus returns 400 when initiative id exceeds max allowed length', async () => {
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'i'.repeat(129) } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ rule: 'INVALID_ENTITY_ID' })
-    );
     expect(getMock).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
@@ -454,92 +374,6 @@ describe('pmoValidation.middleware', () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus returns 500 when StatusMachine throws', async () => {
-    statusMachineMock.validateInitiativeTransition.mockImplementationOnce(() => {
-      throw new Error('status machine failed');
-    });
-    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus returns 500 when db row has invalid current status', async () => {
-    getMock.mockResolvedValueOnce({ status: null, project_id: 'proj-1' });
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(statusMachineMock.validateInitiativeTransition).not.toHaveBeenCalled();
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus returns fallback error when transition reason is missing', async () => {
-    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce({ valid: false });
-    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rule: 'INVALID_STATUS_TRANSITION',
-        error: 'Invalid status transition',
-      })
-    );
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus treats non-boolean valid flag as invalid transition', async () => {
-    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce({ valid: 1 as any });
-    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await validateInitiativeStatus(req, res, next as unknown as NextFunction);
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rule: 'INVALID_STATUS_TRANSITION',
-        currentStatus: 'NEW',
-        requestedStatus: 'IN_PROGRESS',
-      })
-    );
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('validateInitiativeStatus treats undefined status machine response as invalid transition', async () => {
-    statusMachineMock.validateInitiativeTransition.mockReturnValueOnce(undefined as any);
-    getMock.mockResolvedValueOnce({ status: 'NEW', project_id: 'proj-1' });
-    const req: any = { body: { status: 'IN_PROGRESS' }, params: { id: 'init-1' } };
-    const res = makeRes();
-    const next = vi.fn();
-
-    await expect(validateInitiativeStatus(req, res, next as unknown as NextFunction)).resolves.toBeUndefined();
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rule: 'INVALID_STATUS_TRANSITION',
-        error: 'Invalid status transition',
-      })
-    );
-    expect(next).not.toHaveBeenCalled();
   });
 
   it('validateTaskStatus returns 500 when StatusMachine throws', async () => {

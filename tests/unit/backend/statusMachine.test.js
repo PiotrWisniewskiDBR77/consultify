@@ -4,19 +4,19 @@ import StatusMachine from '../../../server/src/services/statusMachine.js';
 describe('StatusMachine', () => {
   describe('canTransitionInitiative', () => {
     it('should allow valid transition', () => {
-      // DRAFT -> PENDING_REVIEW is the correct first transition now
+      // DEC-424: DRAFT -> PENDING_APPROVAL to pierwsze przejście cyklu życia
       const result = StatusMachine.canTransitionInitiative(
         StatusMachine.INITIATIVE_STATUSES.DRAFT,
-        StatusMachine.INITIATIVE_STATUSES.PENDING_REVIEW
+        StatusMachine.INITIATIVE_STATUSES.PENDING_APPROVAL
       );
       expect(result).toBe(true);
     });
 
     it('should block invalid transition', () => {
-      // DRAFT -> EXECUTING is not allowed directly
+      // DRAFT -> IN_EXECUTION nie jest przejściem bezpośrednim
       const result = StatusMachine.canTransitionInitiative(
         StatusMachine.INITIATIVE_STATUSES.DRAFT,
-        StatusMachine.INITIATIVE_STATUSES.EXECUTING
+        StatusMachine.INITIATIVE_STATUSES.IN_EXECUTION
       );
       expect(result).toBe(false);
     });
@@ -36,27 +36,26 @@ describe('StatusMachine', () => {
 
   describe('validateInitiativeTransition', () => {
     it('should return valid for simple allowed transition', () => {
-      // Updated to valid canonical transition
-      const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PENDING_REVIEW');
+      const result = StatusMachine.validateInitiativeTransition('DRAFT', 'PENDING_APPROVAL');
       expect(result.valid).toBe(true);
     });
 
-    it('should require reason for blocking', () => {
-      // Updated: EXECUTING is the new name for IN_EXECUTION
-      const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED');
+    it('should require reason for rejection', () => {
+      // DEC-424: BLOCKED to flaga on_hold, nie status. REJECTED wymaga powodu.
+      const result = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'REJECTED');
       expect(result.valid).toBe(false);
       expect(result.reason).toContain('requires a reason');
     });
 
-    it('should allow blocking with reason', () => {
-      const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'BLOCKED', {
-        blockedReason: 'Wait for resources',
+    it('should allow rejection with reason', () => {
+      const result = StatusMachine.validateInitiativeTransition('IN_EXECUTION', 'REJECTED', {
+        reason: 'Wait for resources',
       });
       expect(result.valid).toBe(true);
     });
 
     it('should prevent completion if pending tasks exist', () => {
-      // Updated: DONE is the new name for COMPLETED
+      // Wejścia w starym słowniku (EXECUTING/DONE) są normalizowane.
       const result = StatusMachine.validateInitiativeTransition('EXECUTING', 'DONE', {
         pendingTasks: 5,
       });
@@ -65,8 +64,7 @@ describe('StatusMachine', () => {
     });
 
     it('should prevent approved state if governance failed', () => {
-      // Canonical transition: PLANNING -> APPROVED requires governance approval
-      const result = StatusMachine.validateInitiativeTransition('PLANNING', 'APPROVED', {
+      const result = StatusMachine.validateInitiativeTransition('PENDING_APPROVAL', 'APPROVED', {
         requiresApproval: true,
         isApproved: false,
       });

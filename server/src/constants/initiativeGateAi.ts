@@ -9,7 +9,10 @@
  * default readiness threshold. Section keys MUST match the registry
  * (`src/components/Initiatives/sections/registry.ts` / migration 529 section
  * types). The regressive/lateral gates (SEND_BACK, REJECT, BLOCK, UNBLOCK,
- * CANCEL) are intentionally absent — AI readiness only gates forward progress.
+ * CANCEL, ARCHIVE) plus the creation gate (CREATE_DRAFT) are intentionally
+ * outside AI_GATES — AI readiness only gates forward progress on an existing
+ * card. Mapa `GATE_REQUIRED_SECTIONS` musi jednak pokrywać KAŻDĄ bramkę ze
+ * słownika `GateType` (DEC-424 dołożył CREATE_DRAFT i ARCHIVE).
  */
 import { GateType, type GateTypeValue } from './initiativeStatuses.js';
 
@@ -18,7 +21,7 @@ export const DEFAULT_GATE_AI_THRESHOLD = 75;
 
 /**
  * The 9 forward-progress gates that get an AI readiness check.
- * Order mirrors the happy path (DRAFT → … → TRACKING).
+ * Order mirrors the happy path (DRAFT → … → CLOSED).
  */
 export const AI_GATES: GateTypeValue[] = [
   GateType.SUBMIT_FOR_REVIEW,
@@ -66,12 +69,19 @@ export const GATE_REQUIRED_SECTIONS: Record<GateTypeValue, string[]> = {
   [GateType.COMPLETE]: ['tasks', 'kpis'],
   [GateType.START_TRACKING]: ['kpis', 'control'],
 
+  // ── Bramka tworzenia: karta jeszcze nie istnieje ───────────────────────
+  // PROPOSED → DRAFT niesie tylko tytuł i uzasadnienie (warunek
+  // TITLE_AND_JUSTIFICATION), więc nie ma sekcji do oceny merytorycznej.
+  [GateType.CREATE_DRAFT]: [],
+
   // ── Regressive / lateral gates: no AI readiness ────────────────────────
   [GateType.SEND_BACK]: [],
   [GateType.REJECT]: [],
   [GateType.BLOCK]: [],
   [GateType.UNBLOCK]: [],
   [GateType.CANCEL]: [],
+  // ARCHIVE to operacja na fladze `archived`, nie postęp cyklu życia.
+  [GateType.ARCHIVE]: [],
 };
 
 /** True when a gate participates in the AI readiness flow. */

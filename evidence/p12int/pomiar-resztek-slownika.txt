@@ -1,0 +1,49 @@
+POMIAR RESZTEK STAREGO SŁOWNIKA 13 (2026-09-06, gałąź mvp/p12int-typy-serwera)
+Metoda: grep -rnE po src/ i server/src/, z wyłączeniem node_modules, _backup, dist, __tests__.
+
+A) Referencje `InitiativeStatus(es).<STARA_NAZWA>` w src/ i server/src/: 0 (zero trafień).
+   Słownik jako SYMBOL jest czysty — P12 dokończone.
+
+B) LITERAŁY statusów w starym słowniku — server/src (poza mapowaniem legacy).
+   Silnik przejść normalizuje `nextStatusInput` (initiativeTransitionService.ts:427),
+   więc ZAPISY przez silnik są poprawne mimo brzydkich literałów. Groźne są ODCZYTY
+   (filtry SQL/JS), bo po migracji danych 20262103_p12 nie pasują do żadnego wiersza:
+
+   server/src/controllers/ExecutionController.ts:29,139,376,409,419,454,623
+     EXECUTION_STATUSES = ['EXECUTING','BLOCKED','DONE','CANCELLED','ARCHIVED']
+     + 4 filtry SQL `status IN ('EXECUTING','BLOCKED','DONE'...)` na tabeli initiatives
+     -> po migracji cały moduł Realizacja czyta ZERO inicjatyw.
+   server/src/controllers/InitiativeController.ts:1594-1596
+     rollup zdrowia portfela: health_green/amber liczone po EXECUTING/DONE/TRACKING i
+     APPROVED/REVIEW/PROMOTED/SCHEDULED/PLANNING -> zawsze 0 zielonych, wszystko czerwone.
+   server/src/repositories/ManagementReportRepository.ts:426
+     getInitiativeStatistics: onTrack po ('EXECUTING','DONE'), atRisk po 'BLOCKED'
+     -> zawsze 0. (UWAGA: plik ma niescalone zmiany w głównym checkoucie — inna ręka.)
+   server/src/controllers/InitiativeController.ts:769, 2843, 5757, 5767
+     martwe warunki na 'CANCELLED'/'ARCHIVED'/'PENDING_REVIEW'/'REVIEW'/'PROMOTED'/'PLANNING'.
+   server/src/types/chatExecutionIntegration.ts:155  case 'EXECUTING'.
+   server/src/controllers/InitiativeController.ts:2183 ('PROMOTED'), :2283 ('EXECUTING'),
+   server/src/controllers/DecisionController.ts:470 ('EXECUTING')
+     -> zapis przez silnik, normalizowane; działa, ale myli czytającego.
+
+   NIE NAPRAWIONE w tym zleceniu: każda pozycja wymaga decyzji produktowej „który z 7
+   statusów zastępuje dany zbiór" (np. czy Realizacja pokazuje CLOSED i REJECTED),
+   dotyka zamrożonego 06_EXECUTION i wymaga sprawdzenia na żywych danych.
+
+C) LITERAŁY w src/ (front) — zgłoszenie, bez naprawy:
+   src/utils/initiativeHelpers.ts:197-234  dwie listy statusów w słowniku 13 `as InitiativeStatus`
+   src/components/InitiativeDetailModal.tsx:460,466,542,2265-2384  stepper cyklu życia i grupy kolumn
+   src/components/MyWork/EffectivenessClosureQueue.tsx:60,61,154,156,504,551,561  'TRACKING'/'PENDING_REVIEW'
+   src/components/MyWork/ScheduleDecisionQueue.tsx:143  lifecycleState 'SCHEDULED'
+   (src/contracts/initiatives-execution/statusMapping.ts i foundation.ts to CELOWA
+    warstwa mapowania runtime-v1 — zostawić.)
+
+D) ZASTANE CZERWONE POZA MOIM ZAKRESEM (pomiar na bazie 620a461fb7, te same nazwy po zmianie):
+   tests/unit/initiative + tests/unit/initiatives + tests/unit/initiatives-execution
+   = 62 czerwone testy w 26 plikach, najwięcej:
+     20  tests/unit/initiative/stageHandoffService.test.ts   (cały kontrakt na słowniku 13)
+      6  tests/unit/initiatives-execution/executionWorkResources.test.tsx
+      5  tests/unit/initiatives-execution/executionControlSurface.test.tsx
+      3  chatActionHandler.createInitiative / effectivenessClosureQueue /
+         canonicalInitiativeRegisterParity / initiativeLineageService
+   Moja zmiana: 0 nowych czerwonych, 1 nowy zielony (własny strażnik przewodu P11).

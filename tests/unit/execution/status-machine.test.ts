@@ -10,15 +10,15 @@ import { INITIATIVE_STATUSES } from '../../../server/src/services/statusMachine.
 
 describe('StatusMachine (REAL)', () => {
   describe('canTransitionInitiative', () => {
-    it('allows DRAFT → PENDING_REVIEW', () => {
+    it('allows DRAFT → PENDING_APPROVAL', () => {
       expect(
-        StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.DRAFT, INITIATIVE_STATUSES.PENDING_REVIEW),
+        StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.DRAFT, INITIATIVE_STATUSES.PENDING_APPROVAL),
       ).toBe(true);
     });
 
     it('denies invalid transition', () => {
       expect(
-        StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.DONE, INITIATIVE_STATUSES.DRAFT),
+        StatusMachine.canTransitionInitiative(INITIATIVE_STATUSES.CLOSED, INITIATIVE_STATUSES.DRAFT),
       ).toBe(false);
     });
 
@@ -31,43 +31,43 @@ describe('StatusMachine (REAL)', () => {
     it('returns valid for allowed transition', () => {
       const r = StatusMachine.validateInitiativeTransition(
         INITIATIVE_STATUSES.DRAFT,
-        INITIATIVE_STATUSES.PENDING_REVIEW,
+        INITIATIVE_STATUSES.PENDING_APPROVAL,
       );
       expect(r.valid).toBe(true);
     });
 
     it('returns invalid for disallowed transition', () => {
       const r = StatusMachine.validateInitiativeTransition(
-        INITIATIVE_STATUSES.DONE,
+        INITIATIVE_STATUSES.CLOSED,
         INITIATIVE_STATUSES.DRAFT,
       );
       expect(r.valid).toBe(false);
       expect(r.reason).toContain('Cannot transition');
     });
 
-    it('requires blockedReason when transitioning to BLOCKED', () => {
+    it('requires a reason when transitioning to REJECTED', () => {
       const r = StatusMachine.validateInitiativeTransition(
-        INITIATIVE_STATUSES.EXECUTING,
-        INITIATIVE_STATUSES.BLOCKED,
+        INITIATIVE_STATUSES.IN_EXECUTION,
+        INITIATIVE_STATUSES.REJECTED,
         {},
       );
       expect(r.valid).toBe(false);
-      expect(r.reason).toContain('Blocked status requires a reason');
+      expect(r.reason).toContain('Rejection requires a reason');
     });
 
-    it('allows BLOCKED when blockedReason provided', () => {
+    it('allows REJECTED when a reason is provided', () => {
       const r = StatusMachine.validateInitiativeTransition(
-        INITIATIVE_STATUSES.EXECUTING,
-        INITIATIVE_STATUSES.BLOCKED,
-        { blockedReason: 'Waiting for approval' },
+        INITIATIVE_STATUSES.IN_EXECUTION,
+        INITIATIVE_STATUSES.REJECTED,
+        { reason: 'Waiting for approval' },
       );
       expect(r.valid).toBe(true);
     });
 
-    it('rejects DONE when pendingTasks > 0', () => {
+    it('rejects CLOSED when pendingTasks > 0', () => {
       const r = StatusMachine.validateInitiativeTransition(
-        INITIATIVE_STATUSES.EXECUTING,
-        INITIATIVE_STATUSES.DONE,
+        INITIATIVE_STATUSES.IN_EXECUTION,
+        INITIATIVE_STATUSES.CLOSED,
         { pendingTasks: 3 },
       );
       expect(r.valid).toBe(false);
@@ -144,12 +144,14 @@ describe('StatusMachine (REAL)', () => {
   });
 
   describe('getInitiativeModule', () => {
-    it('returns ASSESSMENT for DRAFT', () => {
-      expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT)).toBe('ASSESSMENT');
+    it('returns INITIATIVE_MANAGEMENT for DRAFT', () => {
+      expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.DRAFT)).toBe(
+        'INITIATIVE_MANAGEMENT',
+      );
     });
 
-    it('returns EXECUTION for EXECUTING', () => {
-      expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.EXECUTING)).toBe('EXECUTION');
+    it('returns EXECUTION for IN_EXECUTION', () => {
+      expect(StatusMachine.getInitiativeModule(INITIATIVE_STATUSES.IN_EXECUTION)).toBe('EXECUTION');
     });
   });
 });

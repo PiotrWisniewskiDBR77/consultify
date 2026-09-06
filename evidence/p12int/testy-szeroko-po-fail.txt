@@ -1,0 +1,66 @@
+ FAIL  tests/unit/initiative/createInitiativeService.test.ts > createInitiativeService — single funnel > preserves an explicitly provided status
+ FAIL  tests/unit/initiative/initiativeLineageService.test.ts > getInitiativeFunnel (F5.2) > (e) aggregates byStatus, bySource and conversion
+ FAIL  tests/unit/initiative/initiativeLineageService.test.ts > getInitiativeLineage (F5.1) > (a) builds source → initiative → execution → benefits chain
+ FAIL  tests/unit/initiative/initiativeLineageService.test.ts > getInitiativeLineage (F5.1) > (d) fail-safe: getTableColumns throws ⇒ no benefits, no throw
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — VALID_TRANSITIONS guard > allows a simple valid transition with no readiness contract
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — VALID_TRANSITIONS guard > is case-insensitive on status input
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — closure contract (→TRACKING) > allows DONE → TRACKING when gateApproved
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — closure contract (→TRACKING) > blocks DONE → TRACKING without gateApproved
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — ready-for-execution contract (→EXECUTING) > allows SCHEDULED → EXECUTING when full contract met
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — ready-for-execution contract (→EXECUTING) > blocks SCHEDULED → EXECUTING when contract missing
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — ready-for-execution contract (→SCHEDULED) > allows APPROVED → SCHEDULED when full contract met
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — ready-for-execution contract (→SCHEDULED) > blocks APPROVED → SCHEDULED listing every missing readiness item
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > evaluateHandoff — ready-for-execution contract (→SCHEDULED) > blocks when only one readiness item is missing
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > handoffBoundary — 5 boundaries > 1) analysis_to_initiative (PENDING_REVIEW → REVIEW)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > handoffBoundary — 5 boundaries > 2) initiative_to_execution (APPROVED → SCHEDULED)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > handoffBoundary — 5 boundaries > 3) execution_to_results (DONE → TRACKING)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > handoffBoundary — 5 boundaries > 4) results_to_finance (TRACKING → ARCHIVED)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > handoffBoundary — 5 boundaries > 5) within_module (REVIEW → PROMOTED both in initiatives)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps SCHEDULED to execution (ready-for-execution boundary)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps TRACKING to benefits (results)
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps draft-phase statuses to tools
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps execution statuses to execution
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps planning statuses to initiatives
+ FAIL  tests/unit/initiative/stageHandoffService.test.ts > stageHandoffService (Uspójnienie F2.1) > moduleForStatus > maps terminal statuses to terminal
+ FAIL  tests/unit/initiatives-execution/aiAnalysisProposalReviewQueue.test.tsx > AIAnalysisProposalReviewQueue > reviews full provenance and publishes exact human edit with stable card lineage
+ FAIL  tests/unit/initiatives-execution/analysisDecisionQueue.test.tsx > AnalysisDecisionQueue > approves the canonical Analysis Decision ID inside its dedicated queue
+ FAIL  tests/unit/initiatives-execution/canonicalInitiativeRegisterParity.test.tsx > canonical Initiative register parity > keeps identical presentation while routing Open for execution.canonical.executions.v1
+ FAIL  tests/unit/initiatives-execution/canonicalInitiativeRegisterParity.test.tsx > canonical Initiative register parity > keeps identical presentation while routing Open for initiatives.canonical-register.v1
+ FAIL  tests/unit/initiatives-execution/canonicalInitiativeRegisterParity.test.tsx > canonical Initiative register parity > opens the selected Initiative with Enter and exposes filtered-empty reset
+ FAIL  tests/unit/initiatives-execution/capacityScenarioSurface.test.tsx [ tests/unit/initiatives-execution/capacityScenarioSurface.test.tsx ]
+ FAIL  tests/unit/initiatives-execution/closureDecisionQueue.test.tsx > ClosureDecisionQueue > passes exact CLOSURE quorum and only CLOSE produces immutable CLOSED snapshot
+ FAIL  tests/unit/initiatives-execution/closureDecisionQueue.test.tsx > ClosureDecisionQueue > requests exact reviewed lineage with mandatory canonical Task follow-up
+ FAIL  tests/unit/initiatives-execution/definitionRemediationQueue.test.tsx [ tests/unit/initiatives-execution/definitionRemediationQueue.test.tsx ]
+ FAIL  tests/unit/initiatives-execution/deliveryResultsAcceptanceQueue.test.tsx > DeliveryResultsAcceptanceQueue > decides exact Delivery Acceptance and reads immutable handoff pack
+ FAIL  tests/unit/initiatives-execution/deliveryResultsAcceptanceQueue.test.tsx > DeliveryResultsAcceptanceQueue > keeps rejected Results at DELIVERED and uses stable Results Case ID
+ FAIL  tests/unit/initiatives-execution/effectivenessClosureQueue.test.tsx > EffectivenessClosureQueue > fails closed on legal hold and creates a separate read-only Archive Manifest
+ FAIL  tests/unit/initiatives-execution/effectivenessClosureQueue.test.tsx > EffectivenessClosureQueue > forces NOT_MEASURED to null and UNKNOWN and creates Effectiveness from exact observation refs only
+ FAIL  tests/unit/initiatives-execution/effectivenessClosureQueue.test.tsx > EffectivenessClosureQueue > shows UNKNOWN and creates immutable canonical Effectiveness Snapshot without direct close
+ FAIL  tests/unit/initiatives-execution/executionCasesInitiativeTitle.test.ts > GET /execution-cases attaches initiativeTitle (EXE-1) > returns initiativeTitle alongside the raw executionCaseId/initiativeId
+ FAIL  tests/unit/initiatives-execution/executionControlSurface.test.tsx > ExecutionControlSurface > creates governed PLANNING_BASELINE change from the exact selected RESEQUENCE option
+ FAIL  tests/unit/initiatives-execution/executionControlSurface.test.tsx > ExecutionControlSurface > filters the visible projection and reports counts from the same canonical rows
+ FAIL  tests/unit/initiatives-execution/executionControlSurface.test.tsx > ExecutionControlSurface > ingests a deduplicated exact occurrence and guides a multi-signal Intervention draft
+ FAIL  tests/unit/initiatives-execution/executionControlSurface.test.tsx > ExecutionControlSurface > keeps the register fail-closed and retries without losing the route
+ FAIL  tests/unit/initiatives-execution/executionControlSurface.test.tsx > ExecutionControlSurface > opens stable Intervention ID by keyboard and closes only EFFECTIVE verification
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > creates a canonical Milestone with exact Case and Handoff baseline versions
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps Resources fail-closed and retries the canonical case register
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps Work fail-closed and retries the canonical case register
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > keeps allocation simulation pure and exposes literal EVIDENCE_MISSING
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > loads Task projection by stable executionCaseId and opens preview with keyboard
+ FAIL  tests/unit/initiatives-execution/executionWorkResources.test.tsx > Execution canonical work/resources > opens Allocation preview on single click and workspace on double click
+ FAIL  tests/unit/initiatives-execution/gateSignoffQueue.test.tsx > GateSignoffQueue > renders exact Small, Standard and Complex policy/rule/SLA projections
+ FAIL  tests/unit/initiatives-execution/gateSignoffQueue.test.tsx > GateSignoffQueue > submits only the actor-owned bound role and exact quorum version
+ FAIL  tests/unit/initiatives-execution/handoffExecutionSurfaces.test.tsx > Handoff and Realizacje > accepts exact pack using current canonical Initiative version and reads back stable case
+ FAIL  tests/unit/initiatives-execution/initiativeExecutionLink.contract.test.ts [ tests/unit/initiatives-execution/initiativeExecutionLink.contract.test.ts ]
+ FAIL  tests/unit/initiatives-execution/initiativesHubCanonicalTabs.test.tsx > InitiativesHub canonical intake navigation > clears retired proposal context and links a scheduled initiative to Execution
+ FAIL  tests/unit/initiatives-execution/materialChangeQueue.test.tsx > MaterialChangeQueue > shows exact diff hashes and lets independent authority approve canonical proposal
+ FAIL  tests/unit/initiatives-execution/planScenarioSurface.test.tsx [ tests/unit/initiatives-execution/planScenarioSurface.test.tsx ]
+ FAIL  tests/unit/initiatives-execution/portfolioDecisionQueue.test.tsx > PortfolioDecisionQueue > records conditional approval only with conditions and reads back APPROVED_BACKLOG when governance is explicitly not enforced
+ FAIL  tests/unit/initiatives-execution/portfolioDecisionQueue.test.tsx > PortfolioDecisionQueue > shows the exact Initiative, Scenario, Card and membership snapshot and fails closed when governance is unknown
+ FAIL  tests/unit/initiatives-execution/scheduleDecisionQueue.test.tsx > ScheduleDecisionQueue > opens with keyboard and approves the canonical decision with exact refs and handoff read-back
+ FAIL  tests/unit/initiatives-execution/tableWithPreviewAccessibility.test.tsx > TableWithPreviewLayout canonical keyboard accessibility > supports arrows, input-safe Enter, Esc and focus return
+ FAIL  tests/unit/initiatives-execution/tableWithPreviewMobileAccessibility.test.tsx > TableWithPreviewLayout mobile dialog accessibility > uses an aria-modal dialog, traps Tab and returns focus on Escape
+ FAIL  tests/unit/initiatives/chatActionHandler.createInitiative.test.ts > handleChatAction CREATE_INITIATIVE > creates the initiative and navigates to its DOCUMENT deep link
+ FAIL  tests/unit/initiatives/chatActionHandler.createInitiative.test.ts > handleChatAction CREATE_INITIATIVE > still succeeds without navigation when no id is returned
+ FAIL  tests/unit/initiatives/chatActionHandler.createInitiative.test.ts > handleChatAction CREATE_INITIATIVE > supports the { initiative: { id } } response envelope
+ FAIL  tests/unit/initiatives/gateTimeline.test.ts > gateTimelineService.getTimelineFlags > flags an unready finish-to-start dependency as a single block
