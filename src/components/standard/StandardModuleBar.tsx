@@ -168,6 +168,16 @@ export interface StandardPrimaryCta {
    */
   locked?: boolean;
   lockedReason?: string;
+  /**
+   * Zamrożony CTA (inny kształt niż `locked`): `onClick` NIE jest wywoływany —
+   * przycisk jest natywnie `disabled` (przeglądarka blokuje kliknięcie, brak
+   * toastu, brak modalu). Użyj gdy funkcja jest zamrożona z powodów
+   * produktowych (np. czeka na kolejną falę), nie z powodu uprawnień —
+   * DEC-417 „Nowy audyt" zamrożony do fali 2. Wymaga `disabledReason`
+   * (tooltip `title` + `aria-describedby`) żeby użytkownik wiedział dlaczego.
+   */
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export interface StandardModuleBarProps {
@@ -463,17 +473,42 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
     ? !!forceCommandRowOverride || !!panelControls
     : bulkActive || !!panelControls;
 
+  const primaryCtaDisabledReasonId =
+    primaryCta?.disabled && primaryCta.disabledReason && primaryCta.testId
+      ? `${primaryCta.testId}-disabled-reason`
+      : undefined;
+
   const primaryCtaNode = primaryCta ? (
-    <button
-      type="button"
-      onClick={primaryCta.onClick}
-      title={primaryCta.locked ? primaryCta.lockedReason : undefined}
-      data-testid={primaryCta.testId}
-      className={primaryCta.locked ? MENU_1_PRIMARY_CTA_LOCKED : MENU_1_PRIMARY_CTA}
-    >
-      {primaryCta.icon ? <primaryCta.icon size={16} /> : null}
-      <span>{primaryCta.label}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={primaryCta.disabled ? undefined : primaryCta.onClick}
+        disabled={primaryCta.disabled}
+        aria-disabled={primaryCta.disabled || undefined}
+        aria-describedby={primaryCtaDisabledReasonId}
+        title={
+          primaryCta.locked
+            ? primaryCta.lockedReason
+            : primaryCta.disabled
+              ? primaryCta.disabledReason
+              : undefined
+        }
+        data-testid={primaryCta.testId}
+        className={
+          primaryCta.locked || primaryCta.disabled
+            ? MENU_1_PRIMARY_CTA_LOCKED
+            : MENU_1_PRIMARY_CTA
+        }
+      >
+        {primaryCta.icon ? <primaryCta.icon size={16} /> : null}
+        <span>{primaryCta.label}</span>
+      </button>
+      {primaryCtaDisabledReasonId ? (
+        <span id={primaryCtaDisabledReasonId} className="sr-only">
+          {primaryCta.disabledReason}
+        </span>
+      ) : null}
+    </>
   ) : undefined;
 
   const barContent = (

@@ -491,7 +491,20 @@ export const AuditsMethodHub: React.FC = () => {
           ? {
               label: t('audits.method.newAudit.cta', isPolish ? 'Nowy audyt' : 'New audit'),
               icon: Plus,
+              // DEC-417 (06.09, uwaga właściciela 15:29): "Nowy audyt" zamrożony
+              // do fali 2 — procedura wgrywania założeń (norma/formatka) i
+              // generator pytań audytowych jeszcze nie istnieją. Przycisk
+              // zostaje w Menu 2, ale natywnie `disabled` (bez toastu, bez
+              // modalu) — `onClick` jest tu tylko dla zgodności typu, nigdy
+              // się nie wywoła (patrz `disabled` w StandardModuleBar).
               onClick: () => setNewAuditModalOpen(true),
+              disabled: true,
+              disabledReason: t(
+                'audits.method.newAudit.frozenReason',
+                isPolish
+                  ? 'Zamrożone do fali 2: wgrywanie założeń audytu i generator pytań.'
+                  : 'Frozen until wave 2: uploading audit assumptions and the question generator.'
+              ),
               testId: 'audits-method-new-audit-cta',
             }
           : undefined
