@@ -97,12 +97,12 @@
           "nazwa": "Dług i18n: 141 kluczy Czatu (374), 484 pl==en → ≤300, 16 testów z mockiem react-router",
           "wykonawca": "Sonnet",
           "zalezy_od": "—",
-          "stan": "w_toku",
+          "stan": "scalone",
           "galaz": "mvp/i18n-dlug-1",
-          "sha": "",
-          "dowod": "worktree /private/tmp/wt-i18n-dlug-1; cel: baseline pl==en ≤300 (z 484), chat.* = 0",
-          "uwagi": "16 mocków react-router bez useLocation naprawionych (liczby do zweryfikowania przez robotnika), dowód mutacyjny ratchetu, strażniki P3 §10, zrzuty Czat/Admin/Ustawienia.",
-          "data": "06.09 06:27"
+          "sha": "ffd7302a8c",
+          "dowod": "baseline pl==en 484 → 261 (cel ≤300), Czat i Admin = 0; 119/124 kluczy Czatu; pomiar niezależny a86883d249: scalić po poprawce",
+          "uwagi": "Dług zapisany w rejestrze: 5 brakujących kluczy Czatu, „Partner Slack”, dziura w białej liście ratchetu, 15 zastanych czerwonych testów po odmaskowaniu.",
+          "data": "06.09 09:10"
         },
         {
           "nr": "1.9",
