@@ -1,0 +1,10 @@
+{
+  "module": "Finanse",
+  "route": "/finance",
+  "entry": "AI",
+  "status": "FAIL",
+  "stopReason": null,
+  "finalRoute": "/finance?tab=statements",
+  "failure": "\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed",
+  "bledyKonsoli": []
+}

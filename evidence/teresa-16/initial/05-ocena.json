@@ -1,0 +1,101 @@
+{
+  "module": "Ocena",
+  "route": "/assessment",
+  "entry": "Teresa",
+  "status": "PASS",
+  "stopReason": null,
+  "finalRoute": "/assessment?tab=library",
+  "unifiedChatPanelDomCount": 1,
+  "answer": "WidzÄ™, Å¼e Novatek Manufacturing Sp. z o.o. to firma dziaÅ‚ajÄ…ca w branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w z przychodem na poziomie 120 milionÃ³w euro. Firma realizuje obecnie kilka inicjatyw, z ktÃ³rych trzy sÄ… w trakcie realizacji: Robotyzacja gniazda spawalniczego, System wizyjny kontroli jakoÅ›ci oraz Automatyzacja magazynu WIP. \n\nPonadto, uÅ¼ytkownik ma kilka zadaÅ„ do wykonania, w tym przygotowanie planu warsztatu z interesariuszami oraz zadbanie o backup i rollback plan w ramach projektu DBR77. IstniejÄ… rÃ³wnieÅ¼ blokery dla niektÃ³rych zadaÅ„ oraz oczekujÄ…ce decyzje dotyczÄ…ce m.in. rolloutu do domeny publicznej i polityki retencji logÃ³w.\n\nDodatkowo, w portfelu inicjatyw widniejÄ… inne projekty, takie jak Optymalizacja Å‚aÅ„cucha dostaw [M1], Cyfrowa platforma pracy [M2], Konsolidacja dostawcÃ³w [M3], Program podnoszenia kwalifikacji [M4], Audyt zgodnoÅ›ci z RODO [M5] oraz Analizy oparte na AI [M6]. OczekujÄ… rÃ³wnieÅ¼ decyzje dotyczÄ…ce rÃ³Å¼nych aspektÃ³w IT i zarzÄ…dzania danymi, takie jak aktualizacja licencji M365 E5 [M7] czy wybÃ³r dostawcy platformy danych [M11].\n\nFirma znajduje siÄ™ na etapie podstawowym dojrzaÅ‚oÅ›ci PMO, a w historii Å‚Ä…czna liczba inicjatyw wynosi 28, z czego Å¼adna nie zostaÅ‚a jeszcze ukoÅ„czona.",
+  "language": "pl",
+  "used_sources": 12,
+  "sources": [
+    {
+      "id": "module_initiative_1_fa87dc75-d838-4fa0-8263-590969aa8621",
+      "type": "module_data",
+      "title": "Inicjatywa: Supply Chain Optimization",
+      "reference": "initiatives/fa87dc75-d838-4fa0-8263-590969aa8621",
+      "link": null
+    },
+    {
+      "id": "module_initiative_2_c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "type": "module_data",
+      "title": "Inicjatywa: Digital Workplace Platform",
+      "reference": "initiatives/c7148bc1-4378-42a9-bf9c-966dd6864756",
+      "link": null
+    },
+    {
+      "id": "module_initiative_3_ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "type": "module_data",
+      "title": "Inicjatywa: Vendor Consolidation",
+      "reference": "initiatives/ab5ab3f1-4f3d-4660-a433-f897babeb2c8",
+      "link": null
+    },
+    {
+      "id": "module_initiative_4_70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "type": "module_data",
+      "title": "Inicjatywa: Talent Upskilling Program",
+      "reference": "initiatives/70d422bd-4707-485e-a74c-bc1db1a7b7af",
+      "link": null
+    },
+    {
+      "id": "module_initiative_5_0838adde-c264-4304-af42-16977424307f",
+      "type": "module_data",
+      "title": "Inicjatywa: Compliance & GDPR Audit",
+      "reference": "initiatives/0838adde-c264-4304-af42-16977424307f",
+      "link": null
+    },
+    {
+      "id": "module_initiative_6_fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "type": "module_data",
+      "title": "Inicjatywa: AI-Powered Analytics",
+      "reference": "initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c",
+      "link": null
+    },
+    {
+      "id": "module_decision_1_0ad71420-31d7-4edd-a64b-c2d49a85478b",
+      "type": "module_data",
+      "title": "Decyzja: Digital Workplace â€” M365 E5 license upgrade",
+      "reference": "decisions/0ad71420-31d7-4edd-a64b-c2d49a85478b",
+      "link": null
+    },
+    {
+      "id": "module_decision_2_01190bb1-9182-4757-96c6-c5f9951f5775",
+      "type": "module_data",
+      "title": "Decyzja: SAP go-live date rebaseline approval",
+      "reference": "decisions/01190bb1-9182-4757-96c6-c5f9951f5775",
+      "link": null
+    },
+    {
+      "id": "module_decision_3_5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+      "type": "module_data",
+      "title": "Decyzja: Supply chain AI vendor shortlist",
+      "reference": "decisions/5b07dc0d-cc27-4474-83dd-9bd3a818663a",
+      "link": null
+    },
+    {
+      "id": "module_decision_4_13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+      "type": "module_data",
+      "title": "Decyzja: DevOps toolchain consolidation",
+      "reference": "decisions/13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+      "link": null
+    },
+    {
+      "id": "module_decision_5_ed7f71ac-1827-49ab-a92c-dadb8276417c",
+      "type": "module_data",
+      "title": "Decyzja: Data platform â€” Databricks vs Snowflake",
+      "reference": "decisions/ed7f71ac-1827-49ab-a92c-dadb8276417c",
+      "link": null
+    },
+    {
+      "id": "module_decision_6_2c52fb12-841b-447e-9abb-d7e829a26703",
+      "type": "module_data",
+      "title": "Decyzja: Compliance remediation deadline extension",
+      "reference": "decisions/2c52fb12-841b-447e-9abb-d7e829a26703",
+      "link": null
+    }
+  ],
+  "degraded": [],
+  "first200": "WidzÄ™, Å¼e Novatek Manufacturing Sp. z o.o. to firma dziaÅ‚ajÄ…ca w branÅ¼y produkcji dyskretnej, zatrudniajÄ…ca 620 pracownikÃ³w z przychodem na poziomie 120 milionÃ³w euro. Firma realizuje obecnie ",
+  "bledyKonsoli": []
+}
