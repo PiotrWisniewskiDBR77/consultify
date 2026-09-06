@@ -44,7 +44,11 @@ import { getTimelineWarningsSnapshot } from '../services/executionControlReadSer
 import { CanonicalExecutionReadProjections } from '../services/executionControl/canonicalExecutionReadProjections.js';
 import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
-import { getCapacityTimeline, getOverloadAlerts } from '../services/workloadCapacityService.js';
+import {
+  getCapacityTimeline,
+  getExecutionResourcePlan,
+  getOverloadAlerts,
+} from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -1059,6 +1063,50 @@ router.get(
       utilizationPercent: w.utilizationPercent,
     }));
     return res.json({ weeks });
+  })
+);
+
+/**
+ * PLAN ZASOBOW dla zakladki Realizacja > Zasoby (1.12-R2).
+ *
+ * `/capacity/timeline` OBOK liczy podaz z `initiative_resources` (w DBR77:
+ * 0 wierszy -> capacityHours = 0 we WSZYSTKICH 12 tygodniach -> kafel
+ * „Oblozenie" = „—"). Ta trasa czyta podaz z PROFILU OSOBY
+ * (`users.weekly_capacity_hours` x `availability_percent`, migracja 20262103),
+ * czyli ze zrodla, ktore ma wlasciciela i da sie edytowac jedna liczba
+ * (`PATCH /api/users/:id/capacity`).
+ *
+ * Kafel „Oblozenie" w Kokpicie ma tu gotowe zrodlo (`summary.utilizationPercent`);
+ * podpiecie kafla nalezy do wlasciciela pliku Kokpitu — ta trasa go NIE dotyka.
+ */
+router.get(
+  '/capacity/resource-plan',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('user'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const weeks = Number(req.query.weeks);
+    const plan = await getExecutionResourcePlan(orgId, {
+      weeks: Number.isFinite(weeks) ? weeks : undefined,
+    });
+    const totalDemand = plan.rows.reduce((sum, row) => sum + row.demandHours, 0);
+    const totalSupply = plan.rows.reduce((sum, row) => sum + row.supplyHours, 0);
+    return res.json({
+      ...plan,
+      summary: {
+        peopleCount: plan.people.length,
+        demandHours: Math.round(totalDemand * 10) / 10,
+        supplyHours: Math.round(totalSupply * 10) / 10,
+        gapHours: Math.round((totalSupply - totalDemand) * 10) / 10,
+        // NULL, nie 0 — „nie wiemy" nie jest tym samym co „nikt nic nie robi".
+        utilizationPercent:
+          totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
+        overloadedCount: plan.rows.filter((row) => row.utilizationPercent > 105).length,
+        peopleWithoutProfileSupply: plan.people.filter((p) => p.supplySource === 'DOMYSLNA').length,
+      },
+    });
   })
 );
 
