@@ -6726,7 +6726,8 @@
       "sessionCreateMissingId": "Interview session create response did not include an id",
       "sessionCreateNotInList": "Created interview session was not returned by the canonical sessions list",
       "sessionNotFound": "Session not found",
-      "failedToLoadSessionGeneric": "Failed to load session"
+      "failedToLoadSessionGeneric": "Failed to load session",
+      "generateInitiatives": "Generate initiatives"
     },
     "insightViewer": {
       "panelResults": "Results",
