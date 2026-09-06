@@ -132,6 +132,9 @@ import { pushRecentAttachment } from './chatRecentAttachments';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
+// DEC-403 (06.09, słowo właściciela): jedyne miejsce sterujące widocznością
+// trzech ukrytych elementów Czatu — patrz komentarze przy miejscach użycia.
+import { UKRYTE_DEC403 } from './czatWidocznosc';
 import {
   detectDocumentIntent,
   detectPresentationIntent,
@@ -3569,7 +3572,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // it escapes the verb-adjacent documentIntentDetector regexes, e.g. the
       // noun sits after a colon: "Zrób krótki raport: tabela …"). A document may
       // contain a table; the document wins over standalone Table/Excel.
-      if (detectDocumentIntent(text) || hasStrongDocumentNoun(text)) {
+      // DEC-403 (06.09): system generowania materiałów uznany za pozostałość
+      // po nieukończonej funkcji — klasyfikator już nie przełącza odpowiedzi
+      // w tryb "Dokument: …"; prośba o treść spada do zwykłej odpowiedzi
+      // czatu (patrz czatWidocznosc.ts). Do Fali 2.
+      if (
+        !UKRYTE_DEC403.generatorMaterialow &&
+        (detectDocumentIntent(text) || hasStrongDocumentNoun(text))
+      ) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -6904,7 +6914,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             {/* M01-P03A — conversation branching (finding M01-035). Only once
                 a real, persisted conversation is active: a `local-*` id has
                 no server-side row yet, so GET /:id/branches would 404. */}
-            {activeConversationId && !String(activeConversationId).startsWith('local-') && (
+            {/* DEC-403 (06.09): wybór gałęzi ("Main (2)") uznany za
+                pozostałość po nieukończonej funkcji — ukryty do Fali 2, patrz
+                czatWidocznosc.ts. Rozmowa zostaje na gałęzi domyślnej. */}
+            {!UKRYTE_DEC403.galezie && activeConversationId && !String(activeConversationId).startsWith('local-') && (
               <>
                 {branchParentConversationId && (
                   <button
@@ -6957,7 +6970,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             )}
 
             {/* T012: Important signals (chat-active) */}
-            {signalsEnabled && (
+            {/* DEC-403 (06.09): przycisk ważnych sygnałów uznany za pozostałość
+                po nieukończonej funkcji — do Fali 2, patrz czatWidocznosc.ts. */}
+            {signalsEnabled && !UKRYTE_DEC403.sygnaly && (
               <button
                 onClick={() => setSignalsOpen(true)}
                 data-testid="chat-signals-button"
@@ -6976,11 +6991,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-0.5"
             data-testid="chat-header-right-controls"
           >
-            <V8ArtifactRunControl
-              conversationId={activeConversationId}
-              defaultGoal={latestUserGoalHint}
-              snapshotContext={v8SnapshotContext}
-            />
+            {/* DEC-403 (06.09): wejście do panelu "Plan materiału wynikowego"
+                (V8ArtifactRunControl) uznane za pozostałość po nieukończonej
+                funkcji — do Fali 2, patrz czatWidocznosc.ts. */}
+            {!UKRYTE_DEC403.generatorMaterialow && (
+              <V8ArtifactRunControl
+                conversationId={activeConversationId}
+                defaultGoal={latestUserGoalHint}
+                snapshotContext={v8SnapshotContext}
+              />
+            )}
             <V8ContextIndicator
               conversationId={activeConversationId}
               defaultGoal={latestUserGoalHint}
@@ -7679,7 +7699,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       )}
 
       {/* Important signals panel (T012) */}
-      {signalsEnabled && (
+      {/* DEC-403 (06.09): panel ważnych sygnałów ukryty razem z wejściem —
+          do Fali 2, patrz czatWidocznosc.ts. */}
+      {signalsEnabled && !UKRYTE_DEC403.sygnaly && (
         <ChatSignalsPanel
           open={signalsOpen}
           onClose={() => setSignalsOpen(false)}
