@@ -667,12 +667,20 @@ class ManagementReportRepository {
   }
 
   async getBasicTaskMetrics(projectId) {
-    // RED #4 (audyt adwersaryjny W3/B10): `tasks.progress` is TEXT on the real
-    // Postgres schema (never numeric), so plain `AVG(progress)` 500s with
-    // "function avg(text) does not exist". CAST(NULLIF(progress,'') AS NUMERIC)
-    // treats NULL/empty as "no progress recorded" (excluded from the average,
-    // matching AVG's normal NULL-skipping semantics) and safely converts
-    // genuine numeric strings ('0'..'100').
+    // 1.1-Z2 #1 (DATABASE_ERROR na PORTFOLIO_HEALTH, zmierzone na żywo 06.09):
+    // poprzedni komentarz twierdził, że `tasks.progress` jest TEXT na realnym
+    // Postgresie — nieprawda. Migracje `000_z_core_baseline.sql:364` i
+    // `20260801_exe002004_idempotency_keys.sql:84` deklarują
+    // `progress INTEGER DEFAULT 0`, potwierdzone `\d tasks` na żywej bazie
+    // (typ: integer). `NULLIF(progress, '')` porównywało kolumnę INTEGER z
+    // literałem tekstowym '' — Postgres usiłował rzutować '' na integer i
+    // padał (22P02 invalid input syntax for type integer) zanim doszło do
+    // zewnętrznego CAST(...AS NUMERIC). Naprawa: rzutuj najpierw na TEXT
+    // (`CAST(progress AS TEXT)`, NIE `progress::text` — to składnia wyłącznie
+    // Postgresa, a to repozytorium przez `getDatabase()` obsługuje też
+    // SQLite), dopiero wtedy NULLIF('') i CAST AS NUMERIC. NULL/empty nadal
+    // jest wykluczane z AVG (NULL-skipping), prawdziwe wartości integer/text
+    // przechodzą bez błędu typu — na obu silnikach.
     // Aliases double-quoted: Postgres folds unquoted identifiers to lowercase
     // (the systemic "SQLite-izm" — MEMORY finding_unquoted_camelcase_aliases),
     // and callers (managementReportsService.generatePortfolioHealthReport)
@@ -685,7 +693,7 @@ class ManagementReportRepository {
                 SELECT
                     COUNT(*) as "totalTasks",
                     SUM(CASE WHEN status = 'DONE' THEN 1 ELSE 0 END) as "completedTasks",
-                    AVG(CAST(NULLIF(progress, '') AS NUMERIC)) as "avgProgress",
+                    AVG(CAST(NULLIF(CAST(progress AS TEXT), '') AS NUMERIC)) as "avgProgress",
                     SUM(CASE WHEN due_date < date('now') AND status != 'DONE' THEN 1 ELSE 0 END) as "overdueTasks",
                     SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
                 FROM tasks WHERE project_id = ?

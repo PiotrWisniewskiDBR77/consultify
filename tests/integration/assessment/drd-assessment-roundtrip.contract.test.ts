@@ -144,6 +144,14 @@ describe('H3 DRD assessment round-trip (create → save → resume → guarded u
         organization_id TEXT NOT NULL,
         project_id TEXT,
         assessment_type TEXT,
+        -- 1.1-Z2 #4: PUT /:assessmentId (server/src/routes/v8/assessment.routes.ts)
+        -- SELECTs framework_type — resolveAssessmentFramework/isDrdAssessmentRow
+        -- (assessmentFramework.ts, odbiór 05.09) resolve the framework from
+        -- COALESCE(framework_type, assessment_type, 'DRD'), a real column on the
+        -- Postgres schema (\d assessments: framework_type text default 'DRD').
+        -- This hand-rolled fixture predates that column and was missing it,
+        -- so every PUT 500'd with "no such column: framework_type" (SQLITE_ERROR).
+        framework_type TEXT DEFAULT 'DRD',
         name TEXT,
         status TEXT DEFAULT 'DRAFT',
         completion_percent INTEGER DEFAULT 0,

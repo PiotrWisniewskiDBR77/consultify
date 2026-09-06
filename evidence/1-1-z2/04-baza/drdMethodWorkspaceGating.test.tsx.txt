@@ -1,0 +1,495 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > true for DRD when the historical flag is enabled 1ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > shouldMountDrdMethodWorkspace — mounted DRD is canonical regardless of rollout flag > false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 51ms
+ × src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness) 29ms
+   → Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mea8e2213[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ✓ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > uses the application provider decision instead of an isolated bare-hook default 2ms
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx (6 tests | 1 failed) 84ms
+     ✓ true for DRD when the historical flag is enabled 1ms
+     ✓ remains true when the historical flag is OFF — legacy/local writer is not a production fallback 0ms
+     ✓ false for every other framework, flag ON or OFF — this slice is DRD-only 0ms
+     ✓ renders data-testid="method-workspace-shell" — not a stand-in, the actual A5 component 51ms
+     × shows the explicit demo-bypass banner (never a silent override of pack readiness) 29ms
+     ✓ uses the application provider decision instead of an isolated bare-hook default 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness)
+TestingLibraryElementError: Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mea8e2213[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx:96:19
+     94|     const storage = makeMemoryStorage();
+     95|     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="intervi…
+     96|     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocumen…
+       |                   ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  17:28:39
+   Duration  2.82s (transform 1.64s, setup 95ms, import 2.34s, tests 84ms, environment 227ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx > DrdMethodWorkspaceScreen (the ON-path render target) mounts the REAL MethodWorkspaceShell > shows the explicit demo-bypass banner (never a silent override of pack readiness)
+TestingLibraryElementError: Unable to find an element with the text: /SESJA DEMONSTRACYJNA/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex h-full flex-col"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"min-h-0 flex-1"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex h-full flex-col bg-c-bg text-c-text "[39m
+          [33mdata-testid[39m=[32m"method-workspace-shell"[39m
+        [36m>[39m
+          [36m<header[39m
+            [33mclass[39m=[32m"flex items-center gap-3 border-b border-c-border px-4 py-2.5"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-log-out"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m16 17 5-5-5-5"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 12H9"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mWyjdź[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"min-w-0 flex-1"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-sm font-semibold text-c-text"[39m
+              [36m>[39m
+                [0mDRD — Digital Readiness Diagnosis (Digital Pathfinder)[0m
+                [0m · Sesja [0m
+                [0mea8e2213[0m
+              [36m</p>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"truncate text-[11px] text-c-text-muted"[39m
+              [36m>[39m
+                [0mMethod Pack {{version}}[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"method-workspace-settings"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-settings"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"13"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"13"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"[39m
+                [36m/>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"12"[39m
+                  [33mcy[39m=[32m"12"[39m
+                  [33mr[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mUstawienia[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"relative shrink-0"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33maria-expanded[39m=[32m"false"[39m
+                [33maria-haspopup[39m=[32m"menu"[39m
+                [33maria-label[39m=[32m"Więcej opcji"[39m
+                [33mclass[39m=[32m"rounded-lg p-1.5 text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-ellipsis-vertical"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mheight[39m=[32m"16"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"2"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"16"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"12"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"5"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                  [36m<circle[39m
+                    [33mcx[39m=[32m"12"[39m
+                    [33mcy[39m=[32m"19"[39m
+                    [33mr[39m=[32m"1"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</header>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center justify-between border-b border-c-border-subtle px-4 py-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"text-xs text-c-text-muted"[39m
+            [36m>[39m
+              [0m{{answered}}/{{tota...
+ ❯ Object.getElementError ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../../Users/piotrwisniewski/Developer/Consultify/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/assessment/drd/__tests__/drdMethodWorkspaceGating.test.tsx:96:19
+     94|     const storage = makeMemoryStorage();
+     95|     render(<DrdMethodWorkspaceScreen storage={storage} seedTo="intervi…
+     96|     expect(screen.getByText(/SESJA DEMONSTRACYJNA/i)).toBeInTheDocumen…
+       |                   ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  17:28:39
+   Duration  2.83s (transform 1.64s, setup 95ms, import 2.34s, tests 84ms, environment 227ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

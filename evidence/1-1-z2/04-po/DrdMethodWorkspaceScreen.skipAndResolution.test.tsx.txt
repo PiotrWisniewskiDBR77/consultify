@@ -1,0 +1,27 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > offers exactly the 4 canonical codes and requires a choice before Potwierdź is enabled 187ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — skip dictionary (DEC-2026-08-25-55) > skipping with a chosen code performs a real action: it advances the workspace (not a no-op under the button) 107ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — "Wstecz" (onBack) is real navigation, not a no-op > Dalej then Wstecz returns to the original unit 104ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > renders "Przypisz pytanie" disabled with a "Planowane" note — no per-question assignee exists 61ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Poproś o dowód" performs a real, visibly-confirmed action 76ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx > DRD Interview Focus — Resolution Card ("Nie wiem") actions > "Wróć później" performs a real action and advances the workspace 86ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.skipAndResolution.test.tsx (6 tests) 623ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:36:53
+   Duration  2.24s (transform 941ms, setup 93ms, import 1.22s, tests 623ms, environment 229ms)
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:36:53
+   Duration  2.24s (transform 941ms, setup 93ms, import 1.22s, tests 623ms, environment 229ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

@@ -1,0 +1,27 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (a) happy path — recordAnswer carries the justification, the POST carries skipCode > sends the formatted justification via recordAnswer and skipCode via the skip-reasons POST 258ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (b) order — recordAnswer happens before the skip-reasons POST > appendEvent is invoked strictly before fetch, per mock.invocationCallOrder 131ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (c) a 200 response is a success — no error banner (never asserts === 201) > treats status 200 (idempotent replay) as success, same as a fresh 201 would be 149ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (d) network error then retry succeeds — same Idempotency-Key, recordAnswer called once > retries recordAssessmentSkipReason once on a network failure, reusing the Idempotency-Key 148ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (e) 403 — no retries, banner shown, navigation still happens > makes exactly one fetch call, shows the alert banner, and still runs handleUnitNav(1) 128ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx > (f) the skip-reasons POST body never carries organizationId > omits organizationId from the request body entirely 134ms
+ ✓ src/components/assessment/drd/__tests__/DrdHttpMethodWorkspaceScreen.skipCode.test.tsx (6 tests) 952ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:28:04
+   Duration  2.99s (transform 1.22s, setup 102ms, import 1.55s, tests 952ms, environment 281ms)
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  17:28:04
+   Duration  2.99s (transform 1.22s, setup 102ms, import 1.55s, tests 952ms, environment 281ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

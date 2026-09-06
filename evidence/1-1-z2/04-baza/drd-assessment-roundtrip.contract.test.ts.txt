@@ -1,0 +1,156 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > creates a DRD assessment (DRAFT) 42ms
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > rejects an unknown framework type 2ms
+ × tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > saves axis answers + navigation and resumes them via GET 6ms
+   → expected 500 to be 200 // Object.is equality
+ × tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > a partial update (name only) must NOT clobber saved answers 2ms
+   → expected 500 to be 200 // Object.is equality
+ ✓ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > resume is fail-soft on a corrupt answers blob (no 500) 2ms
+ × tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > P28 no-silent-scoring: direct scoreSummary writes are refused once a workbench exists 1ms
+   → expected 500 to be 409 // Object.is equality
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts (6 tests | 3 failed) 379ms
+     ✓ creates a DRD assessment (DRAFT) 42ms
+     ✓ rejects an unknown framework type 2ms
+     × saves axis answers + navigation and resumes them via GET 6ms
+     × a partial update (name only) must NOT clobber saved answers 2ms
+     ✓ resume is fail-soft on a corrupt answers blob (no 500) 2ms
+     × P28 no-silent-scoring: direct scoreSummary writes are refused once a workbench exists 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > saves axis answers + navigation and resumes them via GET
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:208:24
+    206|         navigation: { selectedAxis: 1, framework: 'drd' },
+    207|       });
+    208|     expect(put.status).toBe(200);
+       |                        ^
+    209|
+    210|     const res = await request(app).get(`/api/v8/assessment/${assessmen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > a partial update (name only) must NOT clobber saved answers
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:221:24
+    219|       .put(`/api/v8/assessment/${assessmentId}`)
+    220|       .send({ name: 'DRD — Acme digital maturity (renamed)' });
+    221|     expect(put.status).toBe(200);
+       |                        ^
+    222|
+    223|     const res = await request(app).get(`/api/v8/assessment/${assessmen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > P28 no-silent-scoring: direct scoreSummary writes are refused once a workbench exists
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:254:24
+    252|       .put(`/api/v8/assessment/${assessmentId}`)
+    253|       .send({ scoreSummary: { overall: 5 } });
+    254|     expect(res.status).toBe(409);
+       |                        ^
+    255|     expect(res.body.code).toBe('P28_NO_SILENT_SCORING');
+    256|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  17:28:45
+   Duration  859ms (transform 315ms, setup 95ms, import 71ms, tests 379ms, environment 232ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > saves axis answers + navigation and resumes them via GET
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:208:24
+    206|         navigation: { selectedAxis: 1, framework: 'drd' },
+    207|       });
+    208|     expect(put.status).toBe(200);
+       |                        ^
+    209|
+    210|     const res = await request(app).get(`/api/v8/assessment/${assessmen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > a partial update (name only) must NOT clobber saved answers
+AssertionError: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:221:24
+    219|       .put(`/api/v8/assessment/${assessmentId}`)
+    220|       .send({ name: 'DRD — Acme digital maturity (renamed)' });
+    221|     expect(put.status).toBe(200);
+       |                        ^
+    222|
+    223|     const res = await request(app).get(`/api/v8/assessment/${assessmen…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts > H3 DRD assessment round-trip (create → save → resume → guarded update) > P28 no-silent-scoring: direct scoreSummary writes are refused once a workbench exists
+AssertionError: expected 500 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 500
+
+ ❯ tests/integration/assessment/drd-assessment-roundtrip.contract.test.ts:254:24
+    252|       .put(`/api/v8/assessment/${assessmentId}`)
+    253|       .send({ scoreSummary: { overall: 5 } });
+    254|     expect(res.status).toBe(409);
+       |                        ^
+    255|     expect(res.body.code).toBe('P28_NO_SILENT_SCORING');
+    256|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  17:28:45
+   Duration  864ms (transform 315ms, setup 95ms, import 71ms, tests 379ms, environment 232ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

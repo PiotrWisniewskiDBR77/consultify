@@ -1,0 +1,22 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx > DrdMethodWorkspaceScreen — no duplicate draft-status banner > a freshly-created draft session reports its state ONLY in the header pill, never a second banner 77ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.draftStatusBanner.test.tsx (1 test) 80ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:28:08
+   Duration  3.04s (transform 1.88s, setup 115ms, import 2.43s, tests 80ms, environment 282ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:28:08
+   Duration  3.05s (transform 1.88s, setup 115ms, import 2.43s, tests 80ms, environment 282ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

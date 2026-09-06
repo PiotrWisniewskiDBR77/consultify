@@ -1,0 +1,595 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:22:37:2237 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:39:2239 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:39:2239 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:39:2239 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:39:2239 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:22:41:2241 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:22:41:2241 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.436Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.436Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 17:22:41:2241 [32minfo[39m: [32m[2026-09-06T15:22:41.437Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:43:2243 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:43:2243 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:43:2243 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:43:2243 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:44:2244 [33mwarn[39m: [33m[2026-09-06T15:22:44.119Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:44:2244 [33mwarn[39m: [33m[2026-09-06T15:22:44.119Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:50:2250 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:50:2250 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 17:22:56:2256 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:57:2257 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:22:57:2257 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:23:07:237 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts
+2026-09-06 17:23:07:237 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11z2-znaleziska-serwer/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11z2-znaleziska-serwer/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures the real break between an interview finding and conclusions
+DAY151_HTTP_ASSESSMENT_LOAD 404 {"error":"V8 features not available","code":"V8_DISABLED"}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures the real break between an interview finding and conclusions
+DAY151_HTTP_ASSESSMENT_LOAD 404 {"error":"V8 features not available","code":"V8_DISABLED"}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONCLUSION_CREATE 201 {"ok":true}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONCLUSION_CREATE 201 {"ok":true}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_SELECT_SEEDED_CONCLUSION [{"id":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","organization_id":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","source_module":"assessment_drd","source_artifact_refs_json":"[{\"type\":\"assessment\",\"id\":\"f1ccf965-ffd8-4bea-ab14-758081f6f20f\",\"title\":\"Farma DRD\",\"url\":null}]","status":"candidate"}]
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_SELECT_SEEDED_CONCLUSION [{"id":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","organization_id":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","source_module":"assessment_drd","source_artifact_refs_json":"[{\"type\":\"assessment\",\"id\":\"f1ccf965-ffd8-4bea-ab14-758081f6f20f\",\"title\":\"Farma DRD\",\"url\":null}]","status":"candidate"}]
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONVERSION_PROPOSE 201 {"conversion":{"id":"78d40b6f-0115-403a-9f9e-22a58bc3b6dd","organizationId":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","projectId":null,"sourceConclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactType":"assessment","sourceArtifactId":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","sourceArtifactTitle":"Farma DRD","sourceModule":"assessment_drd","targetArtifactType":"initiative","targetArtifactId":null,"conversionIntent":"Farma pilot","conversionStatus":"proposed","confidenceLevel":"high","limits":"Jeden proces jakościowy i jeden zakład.","evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"sourcePack":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"limits":"Jeden proces jakościowy i jeden zakład."},"payload":{"title":"Pilotaż wspólnego obiegu danych jakościowych","summary":"Ręczne uzgodnienia wydłużają zwolnienie serii.","hypothesis":"Uruchomić pilotaż.","problemStatement":"Ręczne uzgodnienia wydłużają zwolnienie serii.","keyRisks":["Jeden proces jakościowy i jeden zakład."],"successCriteria":["Uruchomić pilotaż."],"deliverables":["Clarified initiative intake from Wnioski conversion"],"confidenceLevel":"high","status":"DRAFT","sourceType":"conclusion","sourceId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceContext":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceModule":"assessment_drd","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceCount":1,"limits":"Jeden proces jakościowy i jeden zakład.","recommendedNextAction":"Uruchomić pilotaż."}},"createdBy":"243e622e-120e-40f6-9274-9e503e11dfc1","approvedBy":null,"createdAt":"2026-09-06T13:23:12.375Z","updatedAt":"2026-09-06T13:23:12.375Z","errorMessage":null},"warning":null}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONVERSION_PROPOSE 201 {"conversion":{"id":"78d40b6f-0115-403a-9f9e-22a58bc3b6dd","organizationId":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","projectId":null,"sourceConclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactType":"assessment","sourceArtifactId":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","sourceArtifactTitle":"Farma DRD","sourceModule":"assessment_drd","targetArtifactType":"initiative","targetArtifactId":null,"conversionIntent":"Farma pilot","conversionStatus":"proposed","confidenceLevel":"high","limits":"Jeden proces jakościowy i jeden zakład.","evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"sourcePack":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"limits":"Jeden proces jakościowy i jeden zakład."},"payload":{"title":"Pilotaż wspólnego obiegu danych jakościowych","summary":"Ręczne uzgodnienia wydłużają zwolnienie serii.","hypothesis":"Uruchomić pilotaż.","problemStatement":"Ręczne uzgodnienia wydłużają zwolnienie serii.","keyRisks":["Jeden proces jakościowy i jeden zakład."],"successCriteria":["Uruchomić pilotaż."],"deliverables":["Clarified initiative intake from Wnioski conversion"],"confidenceLevel":"high","status":"DRAFT","sourceType":"conclusion","sourceId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceContext":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceModule":"assessment_drd","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceCount":1,"limits":"Jeden proces jakościowy i jeden zakład.","recommendedNextAction":"Uruchomić pilotaż."}},"createdBy":"243e622e-120e-40f6-9274-9e503e11dfc1","approvedBy":null,"createdAt":"2026-09-06T13:23:12.375Z","updatedAt":"2026-09-06T13:23:12.375Z","errorMessage":null},"warning":null}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative a00c99d1-daa4-4883-8313-78fa7936d658: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+2026-09-06 17:23:12:2312 [32minfo[39m: [32m[createInitiativeService] §B3 quality (advisory) — initiative a00c99d1-daa4-4883-8313-78fa7936d658: 10/10 failed [kpi_baseline_target, raid_mix, scope_out_mece, scope_in_count, deliverables_count, success_count, kill_count, milestones_count, roi_sizing, owner_assigned][39m
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONCLUSIONS_TO_INITIATIVE 200 {"conversion":{"id":"78d40b6f-0115-403a-9f9e-22a58bc3b6dd","organizationId":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","projectId":null,"sourceConclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactType":"assessment","sourceArtifactId":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","sourceArtifactTitle":"Farma DRD","sourceModule":"assessment_drd","targetArtifactType":"initiative","targetArtifactId":"a00c99d1-daa4-4883-8313-78fa7936d658","conversionIntent":"Farma pilot","conversionStatus":"converted","confidenceLevel":"high","limits":"Jeden proces jakościowy i jeden zakład.","evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"sourcePack":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"limits":"Jeden proces jakościowy i jeden zakład."},"payload":{"title":"Pilotaż wspólnego obiegu danych jakościowych","summary":"Ręczne uzgodnienia wydłużają zwolnienie serii.","hypothesis":"Uruchomić pilotaż.","problemStatement":"Ręczne uzgodnienia wydłużają zwolnienie serii.","keyRisks":["Jeden proces jakościowy i jeden zakład."],"successCriteria":["Uruchomić pilotaż."],"deliverables":["Clarified initiative intake from Wnioski conversion"],"confidenceLevel":"high","status":"DRAFT","sourceType":"conclusion","sourceId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceContext":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceModule":"assessment_drd","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceCount":1,"limits":"Jeden proces jakościowy i jeden zakład.","recommendedNextAction":"Uruchomić pilotaż."}},"createdBy":"243e622e-120e-40f6-9274-9e503e11dfc1","approvedBy":"243e622e-120e-40f6-9274-9e503e11dfc1","createdAt":"2026-09-06T13:23:12.375Z","updatedAt":"2026-09-06T13:23:12.382Z","errorMessage":null},"initiative":{"id":"a00c99d1-daa4-4883-8313-78fa7936d658"}}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_CONCLUSIONS_TO_INITIATIVE 200 {"conversion":{"id":"78d40b6f-0115-403a-9f9e-22a58bc3b6dd","organizationId":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","projectId":null,"sourceConclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactType":"assessment","sourceArtifactId":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","sourceArtifactTitle":"Farma DRD","sourceModule":"assessment_drd","targetArtifactType":"initiative","targetArtifactId":"a00c99d1-daa4-4883-8313-78fa7936d658","conversionIntent":"Farma pilot","conversionStatus":"converted","confidenceLevel":"high","limits":"Jeden proces jakościowy i jeden zakład.","evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"sourcePack":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceRefs":[{"type":"attachment","ref":"doc:farma","excerpt":"Ręczne uzgodnienia."}],"limits":"Jeden proces jakościowy i jeden zakład."},"payload":{"title":"Pilotaż wspólnego obiegu danych jakościowych","summary":"Ręczne uzgodnienia wydłużają zwolnienie serii.","hypothesis":"Uruchomić pilotaż.","problemStatement":"Ręczne uzgodnienia wydłużają zwolnienie serii.","keyRisks":["Jeden proces jakościowy i jeden zakład."],"successCriteria":["Uruchomić pilotaż."],"deliverables":["Clarified initiative intake from Wnioski conversion"],"confidenceLevel":"high","status":"DRAFT","sourceType":"conclusion","sourceId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceContext":{"conclusionId":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","sourceModule":"assessment_drd","sourceArtifactRefs":[{"type":"assessment","id":"f1ccf965-ffd8-4bea-ab14-758081f6f20f","title":"Farma DRD","url":null}],"evidenceCount":1,"limits":"Jeden proces jakościowy i jeden zakład.","recommendedNextAction":"Uruchomić pilotaż."}},"createdBy":"243e622e-120e-40f6-9274-9e503e11dfc1","approvedBy":"243e622e-120e-40f6-9274-9e503e11dfc1","createdAt":"2026-09-06T13:23:12.375Z","updatedAt":"2026-09-06T13:23:12.382Z","errorMessage":null},"initiative":{"id":"a00c99d1-daa4-4883-8313-78fa7936d658"}}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_SELECT_INITIATIVES [{"id":"a00c99d1-daa4-4883-8313-78fa7936d658","organization_id":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","source_type":"artifact","source_id":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","status":"DRAFT"}]
+DAY151_SELECT_IE_AGGREGATE_STATE []
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_SELECT_INITIATIVES [{"id":"a00c99d1-daa4-4883-8313-78fa7936d658","organization_id":"0f04b59d-9c7a-43a7-a0ba-4891afd799f3","source_type":"artifact","source_id":"4da9e8be-6fd8-4496-9897-a0f6c6a097b1","status":"DRAFT"}]
+DAY151_SELECT_IE_AGGREGATE_STATE []
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_RUNTIME_LIST 200 {"initiatives":[],"nextCursor":null}
+
+stdout | server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store
+DAY151_HTTP_RUNTIME_LIST 200 {"initiatives":[],"nextCursor":null}
+
+ × server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures the real break between an interview finding and conclusions 26ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures conclusion conversion writing only to the classic initiative store 140ms
+ ❯ server/src/routes/__tests__/day151.chain-transitions.pg.test.ts (2 tests | 1 failed) 222ms
+     × measures the real break between an interview finding and conclusions 26ms
+     ✓ measures conclusion conversion writing only to the classic initiative store 140ms
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:13:2313 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [32minfo[39m: [32m[AI Settings Routes] AISettingsService loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [32minfo[39m: [32m[AI Settings Routes] AIProactivityEngine loaded successfully[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [33mwarn[39m: [33m[2026-09-06T15:23:14.895Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:14:2314 [33mwarn[39m: [33m[2026-09-06T15:23:14.895Z] [WARN] [AI:[Queue] Mock queue disabled; AI tasks will be unavailable] undefined[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[AuthRoutes] login handler is type:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:23:16:2316 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:23:16:2316 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] LLM circuit breakers initialized[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check function set for [openai][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check registered for [openai][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check function set for [google][39m
+2026-09-06 17:23:16:2316 [32minfo[39m: [32m[2026-09-06T15:23:16.866Z] [INFO] [AI:CircuitBreaker] Health check registered for [google][39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Module loaded - TypeScript version[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Router type:[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] Router created. Stack length:[39m
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[Economics Routes] After /analyses route. Stack length:[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:17:2317 [32minfo[39m: [32m[RatioAnalysisService] Loaded[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:20:2320 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts
+2026-09-06 17:23:20:2320 [32minfo[39m: [32m[SuperAdminRoutes] SuperAdminController keys:[39m {"0":"setDependencies","1":"getOrganizations","2":"getActivities","3":"getDashboardStats","4":"updateOrganization","5":"deleteOrganization","6":"getOrgBilling","7":"getUsers","8":"updateUser","9":"createUser","10":"deleteUser","11":"inviteUser","12":"resetUserPassword","13":"getAccessRequests","14":"approveAccessRequest","15":"rejectAccessRequest","16":"getAccessCodes","17":"createAccessCode","18":"deactivateAccessCode","19":"impersonateUser","20":"getDatabaseTables","21":"getDatabaseRows","22":"getStorageUsage","23":"getStorageFiles","24":"deleteStorageFile","25":"getAllLegalDocs","26":"publishLegalDoc","27":"toggleLegalDocActive","28":"getLegalDocById","29":"getLegalEvents","30":"getLegalEventStats","31":"getOrgAttribution","32":"exportAttribution","33":"getPartnerSummary","34":"getUsageByOrganization","35":"getInvoices","36":"getInvoiceStats","37":"getSystemHealth","38":"getSystemAnalytics","39":"remindInvoice","40":"markInvoicePaid","41":"getInvoicePdf","42":"uploadBrandingLogo","43":"getApiKeys","44":"createApiKey","45":"deleteApiKey","46":"getApiKeyUsage","47":"getComplianceFrameworks","48":"getComplianceStatus","49":"getComplianceSummary","50":"getDsarRequests","51":"getComplianceAudits","52":"updateComplianceControl","53":"createDsarRequest","54":"getDsarRequestById","55":"createComplianceAudit","56":"createProcessingRecord","57":"getProcessingRecords","58":"exportComplianceReport","59":"refreshToken","60":"getOrganizationMetadata","61":"updateOrganizationMetadata","62":"getOrganizationTags","63":"addOrganizationTag","64":"removeOrganizationTag","65":"getOrganizationHealth","66":"getOrganizationRelationships","67":"getOrganizationAnalytics","68":"getUserProfileExtended","69":"updateUserProfileExtended","70":"getUserActivity","71":"getUserSessions","72":"revokeUserSession","73":"getUserGroups","74":"getUserOnboardingProgress","75":"updateUserOnboardingProgress","76":"getUserLicense","77":"assignUserLicense","78":"getIPWhitelist","79":"addIPWhitelist","80":"removeIPWhitelist","81":"getUserDevices","82":"blockDevice","83":"getMFAMethods","84":"setupTOTP","85":"verifyTOTP","86":"getPasswordPolicy","87":"updatePasswordPolicy","88":"getSecurityEvents","89":"getSecurityEventStats","90":"resolveSecurityEvent","91":"getIPAccessRules","92":"updateIPRule","93":"getSecurityPolicies","94":"updateSecurityPolicy","95":"getSupportTickets","96":"createSupportTicket","97":"updateSupportTicket","98":"getTicketComments","99":"addTicketComment","100":"getCustomerSuccessNotes","101":"createCustomerSuccessNote","102":"getCustomerHealthCheck","103":"getFeedbackItems","104":"createFeedbackItem","105":"voteFeedback","106":"addFeedbackComment","107":"getFeatureRoadmap","108":"updateFeatureRoadmap","109":"getUserAdoptionMetrics","110":"getChurnPrediction","111":"getDataRetentionPolicies","112":"createDataRetentionPolicy","113":"getGDPRRequests","114":"createGDPRRequest","115":"getUserConsents","116":"updateUserConsent","117":"getAutomationRules","118":"createAutomationRule","119":"updateAutomationRule","120":"getWebhookSubscriptions","121":"createWebhookSubscription","122":"getEmailTemplates","123":"createEmailTemplate","124":"getEmailCampaigns","125":"createEmailCampaign","126":"getNotificationPreferences","127":"updateNotificationPreferences","128":"getAdminSessions","129":"createAdminSession","130":"revokeAdminSession","131":"revokeAllAdminSessions","132":"getAdminSessionStats","133":"getAdminAuditLogs","134":"getAdminAuditStats","135":"resolveAdminAuditLog","136":"exportAuditLogs","137":"getRecentHighRiskActions","138":"getAdminPermissions","139":"createAdminPermission","140":"updateAdminPermission","141":"deleteAdminPermission","142":"getPermissionsMatrix","143":"updateRolePermissions","144":"toggleRolePermission","145":"copyRolePermissions","146":"compareRoles","147":"getPermissionsStats","148":"getApprovalWorkflows","149":"createApprovalWorkflow","150":"updateApprovalWorkflow","151":"deleteApprovalWorkflow","152":"getApprovalRequests","153":"approveRequest","154":"rejectRequest","155":"getAnalyticsDashboards","156":"createAnalyticsDashboard","157":"updateAnalyticsDashboard","158":"deleteAnalyticsDashboard","159":"getAnalyticsDashboardData","160":"shareAnalyticsDashboard","161":"getAnalyticsReports","162":"createAnalyticsReport","163":"updateAnalyticsReport","164":"deleteAnalyticsReport","165":"executeAnalyticsReport","166":"scheduleAnalyticsReport","167":"getReportExecutions","168":"getBusinessMetrics","169":"createBusinessMetric","170":"updateBusinessMetric","171":"deleteBusinessMetric","172":"calculateBusinessMetric","173":"getMetricHistory","174":"getMetricsStats","175":"getPredictiveModels","176":"createPredictiveModel","177":"updatePredictiveModel","178":"deletePredictiveModel","179":"trainPredictiveModel","180":"makePrediction","181":"getModelPredictions","182":"evaluatePredictiveModel","183":"getSecurityIncidents","184":"getSecurityIncidentStats","185":"getSecurityIncidentById","186":"createSecurityIncident","187":"updateSecurityIncident","188":"resolveSecurityIncident","189":"deleteSecurityIncident","190":"getThreats","191":"getThreatStats","192":"getThreatById","193":"addThreat","194":"updateThreat","195":"blockThreat","196":"unblockThreat","197":"deleteThreat","198":"checkIPReputation","199":"checkDomainReputation","200":"getBlockedIPs","201":"getBlockedDomains","202":"bulkImportThreats","203":"getDLPPolicies","204":"getDLPPolicyById","205":"createDLPPolicy","206":"updateDLPPolicy","207":"toggleDLPPolicy","208":"deleteDLPPolicy","209":"getDLPViolations","210":"getDLPViolationById","211":"resolveDLPViolation","212":"getDLPStats","213":"scanResourceDLP","214":"getIntegrations","215":"connectIntegration","216":"disconnectIntegration","217":"testIntegration","218":"refreshIntegration","219":"updateIntegrationConfig","220":"getWebhooks","221":"createWebhook","222":"updateWebhook","223":"deleteWebhook","224":"testWebhook","225":"getWebhookDeliveries","226":"getDashboards","227":"getDashboardBuilderStats","228":"getDashboardById","229":"createDashboard","230":"updateDashboard","231":"cloneDashboard","232":"toggleDashboardShare","233":"deleteDashboard","234":"addDashboardWidget","235":"updateDashboardWidget","236":"removeDashboardWidget","237":"reorderDashboardWidgets","238":"getDashboardWidgetData","239":"getPricingPlans","240":"createPricingPlan","241":"updatePricingPlan","242":"deletePricingPlan","243":"getPlanFeatures","244":"addPlanFeature","245":"removePlanFeature","246":"comparePricingPlans","247":"getSubscriptionChanges","248":"createSubscriptionChange","249":"approveSubscriptionChange","250":"rejectSubscriptionChange","251":"calculateProration","252":"getSubscriptionChangeStats","253":"getRevenueRecognitions","254":"createRevenueRecognition","255":"updateRevenueRecognition","256":"recognizeRevenue","257":"getRecognitionSchedule","258":"getRevenueRecognitionStats","259":"getRevenueForecasts","260":"createRevenueForecast","261":"updateRevenueForecast","262":"deleteRevenueForecast","263":"generateRevenueForecast","264":"getRevenueForecastStats","265":"getPaymentMethods","266":"addPaymentMethod","267":"updatePaymentMethod","268":"deletePaymentMethod","269":"getPaymentFailures","270":"retryPayment","271":"getPaymentFailureStats","272":"getLifecycleStages","273":"createLifecycleStage","274":"updateLifecycleStage","275":"deleteLifecycleStage","276":"transitionOrganization","277":"getLifecycleTransitions","278":"getLifecycleStats","279":"getSuccessPlaybooks","280":"createSuccessPlaybook","281":"updateSuccessPlaybook","282":"deleteSuccessPlaybook","283":"executeSuccessPlaybook","284":"getSuccessActions","285":"getPlaybookStats","286":"getCustomerContracts","287":"createCustomerContract","288":"updateCustomerContract","289":"deleteCustomerContract","290":"createContractAmendment","291":"getContractAmendments","292":"getUpcomingRenewals","293":"getContractStats"}
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11z2-znaleziska-serwer/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Initializing gateway routes...[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/auth[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/billing[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/ai[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tools[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-outputs[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/workbook[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/artifact-lineage[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/known-tools[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/tool-assets[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-evidence[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/consulting-templates[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/portfolio-optimization[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/assessment-workflow-v2[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin-data[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/users[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/revenue[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/superadmin/analytics[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/admin/prompts[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[Gateway] economicsRoutes type:[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[PresentationStudio] Layout-capacity persistence: no_persisted_file (path=/private/tmp/wt-11z2-znaleziska-serwer/.runtime-config/presentation-studio-layout-capacity-overrides.json)[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/v8[39m
+2026-09-06 17:23:22:2322 [32minfo[39m: [32m[ApiGateway] Mounting /api/v10/teresa[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+2026-09-06 17:23:22:2322 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+DAY154_HTTP_FORCED_SQL_FAILURE 200 {"conclusions":[]}
+
+stdout | server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+DAY154_HTTP_FORCED_SQL_FAILURE 200 {"conclusions":[]}
+
+ × server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > persists an HTTP-created finding as an interview conclusion with the session project 39ms
+   → expected 404 to be 201 // Object.is equality
+ × server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish 54ms
+   → expected 200 to be 500 // Object.is equality
+ ❯ server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts (2 tests | 2 failed) 160ms
+     × persists an HTTP-created finding as an interview conclusion with the session project 39ms
+     × returns a visible error, logs the SQL message, and lets the tools sibling finish 54ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures the real break between an interview finding and conclusions
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/src/routes/__tests__/day151.chain-transitions.pg.test.ts:69:25
+     67|       .set(auth);
+     68|     console.log('DAY151_HTTP_ASSESSMENT_LOAD', load.status, JSON.strin…
+     69|     expect(load.status).toBe(200);
+       |                         ^
+     70|
+     71|     const state = load.body.data.workbench;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > persists an HTTP-created finding as an interview conclusion with the session project
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts:82:36
+     80|         evidence_pointers: [],
+     81|       });
+     82|     expect(findingResponse.status).toBe(201);
+       |                                    ^
+     83|
+     84|     const findingId = findingResponse.body.data.finding.id as string;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts:140:29
+    138|
+    139|     console.log('DAY154_HTTP_FORCED_SQL_FAILURE', response.status, JSO…
+    140|     expect(response.status).toBe(500);
+       |                             ^
+    141|     const logged = errorSpy.mock.calls.flat().map(String).join(' ');
+    142|     console.log('DAY154_FORCED_SQL_FAILURE_LOG', logged);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed (4)
+   Start at  17:22:36
+   Duration  46.02s (transform 27.95s, setup 324ms, import 45.11s, tests 382ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/src/routes/__tests__/day151.chain-transitions.pg.test.ts > Day 151 — Ocena -> Wywiad -> Wnioski -> Inicjatywy on real PostgreSQL > measures the real break between an interview finding and conclusions
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ server/src/routes/__tests__/day151.chain-transitions.pg.test.ts:69:25
+     67|       .set(auth);
+     68|     console.log('DAY151_HTTP_ASSESSMENT_LOAD', load.status, JSON.strin…
+     69|     expect(load.status).toBe(200);
+       |                         ^
+     70|
+     71|     const state = load.body.data.workbench;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > persists an HTTP-created finding as an interview conclusion with the session project
+AssertionError: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts:82:36
+     80|         evidence_pointers: [],
+     81|       });
+     82|     expect(findingResponse.status).toBe(201);
+       |                                    ^
+     83|
+     84|     const findingId = findingResponse.body.data.finding.id as string;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts > Day 154 — interview findings reach conclusions on real PostgreSQL > returns a visible error, logs the SQL message, and lets the tools sibling finish
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/src/routes/__tests__/day154.interview-conclusions.pg.test.ts:140:29
+    138|
+    139|     console.log('DAY154_HTTP_FORCED_SQL_FAILURE', response.status, JSO…
+    140|     expect(response.status).toBe(500);
+       |                             ^
+    141|     const logged = errorSpy.mock.calls.flat().map(String).join(' ');
+    142|     console.log('DAY154_FORCED_SQL_FAILURE_LOG', logged);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed (4)
+   Start at  17:22:36
+   Duration  46.03s (transform 27.95s, setup 324ms, import 45.11s, tests 382ms, environment 0ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

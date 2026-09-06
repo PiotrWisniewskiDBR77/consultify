@@ -8,6 +8,7 @@ import { Router } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
+import { resolveAiLanguageFromRequest } from '../services/ai/languagePolicy.js';
 import managementReportsService from '../services/managementReportsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -64,6 +65,7 @@ router.post(
       aiEnhancement,
       requiresApproval,
       approvalConfig,
+      language,
     } = req.body;
 
     if (!userId || !organizationId) {
@@ -82,6 +84,12 @@ router.post(
       return res.status(400).json({ error: 'projectId is required for project scope' });
     }
 
+    // 1.1-Z2 #2: tytuł raportu (`Portfolio RAID Report` itd.) był zawsze po
+    // angielsku bez względu na język użytkownika/organizacji — ten sam SSOT
+    // jezykowy co reszta serwera (services/ai/languagePolicy.ts), jawny wybór
+    // z żądania/nagłówka wygrywa, domyślny `pl` (nie `en`).
+    const resolvedLanguage = resolveAiLanguageFromRequest(req, language);
+
     const report = await managementReportsService.generateReport({
       reportType,
       scope,
@@ -94,6 +102,7 @@ router.post(
       requiresApproval,
       approvalConfig,
       userId,
+      language: resolvedLanguage,
     });
 
     return res.json({ success: true, report });

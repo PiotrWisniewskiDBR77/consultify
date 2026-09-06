@@ -1,0 +1,84 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-06 17:12:16:1216 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[FinancialStatementService] Loaded[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[FinancialModelingService] Loaded[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:12:17:1217 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] DATABASE_URL: SET[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] DB_TYPE: postgres[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[DB Config] Using PostgreSQL[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[Postgres] Initializing connection pool...[39m
+2026-09-06 17:12:17:1217 [32minfo[39m: [32m[Postgres] Config:[39m {"host":"127.0.0.1","database":"consultify_noc","max":10,"dbTarget":"unset"}
+DB_IDENTITY role=app identity=127.0.0.1:54400/consultify_noc host=127.0.0.1 port=54400 database=consultify_noc source=app:pool-config
+2026-09-06 17:12:17:1217 [33mwarn[39m: [33m[Postgres] Skipping initDb() in test mode (POSTGRES_SKIP_INIT_IN_TEST=1)[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+stdout | tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony
+2026-09-06 17:12:17:1217 [37mdebug[39m: [37m[Postgres] Client connected[39m
+
+ ✓ tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts > 1.1-Z2 #1 — PORTFOLIO_HEALTH generate nie 500-uje na integer tasks.progress (real Postgres) > POST /generate PORTFOLIO_HEALTH — 200 z raportem, projekt z zadaniami (progress integer + NULL) policzony 106ms
+ ✓ tests/integration/managementReports.portfolioHealth.progress.realdb.test.ts (1 test) 228ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:12:16
+   Duration  2.00s (transform 940ms, setup 105ms, import 1.21s, tests 228ms, environment 366ms)
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:12:16
+   Duration  2.00s (transform 940ms, setup 105ms, import 1.21s, tests 228ms, environment 366ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml

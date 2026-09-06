@@ -1,0 +1,24 @@
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+
+ RUN  v4.1.8 /private/tmp/wt-11z2-znaleziska-serwer
+
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DRD structure — per-axis level scale is genuinely non-uniform (precondition for the UI test) > axis 1 (area 1A) runs 1..7, axis 7 (area 7A) runs 1..5 1ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > axis 1 (area 1A) renders levels 1..7; switching to axis 7 renders 1..5 85ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx > DrdMethodWorkspaceScreen — Matrix: per-axis scale, not a global one > selecting a matrix cell, switching to Interview, then back to Matrix preserves the selected cell (no forked/reset state) 67ms
+ ✓ src/components/assessment/drd/__tests__/DrdMethodWorkspaceScreen.matrix.test.tsx (3 tests) 154ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:28:34
+   Duration  1.80s (transform 949ms, setup 96ms, import 1.23s, tests 154ms, environment 234ms)
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:28:34
+   Duration  1.80s (transform 949ms, setup 96ms, import 1.23s, tests 154ms, environment 234ms)
+
+JSON report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
+JUNIT report written to /private/tmp/wt-11z2-znaleziska-serwer/junit.xml
