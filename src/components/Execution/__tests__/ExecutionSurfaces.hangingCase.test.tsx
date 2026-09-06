@@ -224,7 +224,7 @@ describe('Zasoby (ExecutionResourcesSurface)', () => {
     readOperationalAllocations.mockImplementation(() => new Promise(() => {}));
     readExecutionWork.mockImplementation(() => new Promise(() => {}));
 
-    render(<ExecutionResourcesSurface activePreset="all" />);
+    render(<ExecutionResourcesSurface activePreset="osoby" />);
 
     expect(screen.queryByTestId('execution-resources-loading')).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(299));
@@ -245,7 +245,7 @@ describe('Zasoby (ExecutionResourcesSurface)', () => {
       return OK_ALLOCATIONS;
     });
 
-    render(<ExecutionResourcesSurface activePreset="all" />);
+    render(<ExecutionResourcesSurface activePreset="osoby" />);
 
     await waitFor(() =>
       expect(

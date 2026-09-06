@@ -12726,6 +12726,9 @@
         "team": "Wg zespołu"
       },
       "resources": {
+        "people": "Osoby",
+        "role": "Role",
+        "conflicts": "Konflikty",
         "overallocated": "Przeciążeni",
         "unassigned": "Nieprzypisana praca",
         "skillGaps": "Braki kompetencji",

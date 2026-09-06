@@ -148,7 +148,6 @@ import { buildExecutionSourceRelations } from './executionSourceRelations';
 // 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
 // dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
 import {
-  normalizeInitiativeStatus,
   initiativeDeviationDays,
   initiativeLevelLabel,
   initiativeRag,
@@ -527,15 +526,22 @@ const EXECUTION_STATUSES: InitiativeStatus[] = Array.from(
 
 /**
  * Zakres „w toku" Realizacji — decyzja CTO na pytanie C5.1 planu 1.12:
- * moduł pokazuje WSZYSTKIE inicjatywy w toku (EXECUTING/BLOCKED/TRACKING;
- * 26 na pomiarze 06.09), a formalny handoff jest opcjonalną bramką jakości,
- * nie warunkiem istnienia wiersza. SCHEDULED (7) to jeszcze plan — widać je
- * po przełączeniu zakresu na „Wszystkie".
+ * moduł pokazuje WSZYSTKIE inicjatywy w toku, a formalny handoff jest
+ * opcjonalną bramką jakości, nie warunkiem istnienia wiersza. APPROVED
+ * (zatwierdzona, jeszcze nie w realizacji) i SCHEDULED (plan) NIE są „w
+ * toku" — widać je po przełączeniu zakresu na „Wszystkie".
+ *
+ * NAPRAWA odbioru 06.09 (audytor, DEC-441): po migracji statusów na słownik
+ * 7 (P12) ta stała łapała `[APPROVED, IN_EXECUTION]` — czyli zakładka
+ * „Realizacje" pokazywała 12 inicjatyw dopiero ZATWIERDZONYCH zamiast
+ * inicjatyw faktycznie REALIZOWANYCH (moduł Inicjatywy liczył w tym samym
+ * czasie „W realizacji" = 22). Zakres zawężony do samego `IN_EXECUTION`.
+ * Wstrzymane realizacje (`on_hold`, patrz `initiativeTransitionService.ts`
+ * — flaga dozwolona WYŁĄCZNIE gdy `currentStatus === 'IN_EXECUTION'`)
+ * zostają widoczne: `on_hold` to FLAGA nałożona NA status IN_EXECUTION, nie
+ * osobny status, więc zawężenie do samego IN_EXECUTION ich nie usuwa.
  */
-const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [
-  InitiativeStatus.APPROVED,
-  InitiativeStatus.IN_EXECUTION,
-];
+const ACTIVE_EXECUTION_STATUSES: InitiativeStatus[] = [InitiativeStatus.IN_EXECUTION];
 
 // NAPRAWA MVP 06.09 (poz. 7.2, BLOKER): `getTypeCode()` renderowała surowy
 // 3-literowy kod wewnętrzny wprost w UI (kolumna TYP + zakładka otwartego
@@ -741,17 +747,21 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['overdue', t('execution.menu3.work.overdue', 'Overdue')],
       ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
     ].map(([id, label]) => ({ id, label })),
+    // NAPRAWA odbioru 06.09 (audytor, DEC-441): 10 chipów, z czego 6 zawsze
+    // pokazywały zero (`unassigned`/`skill-gaps`/`unconfirmed`/`cost-risk`/
+    // `team`/`initiative` — `matches()` w ExecutionResourcesSurface.tsx nigdy
+    // nie miał dla nich gałęzi, więc zwracał `false` niezależnie od danych;
+    // patrz historyczny komentarz przy `matches()` niżej). Kanon (plan 1.12,
+    // `docs/program/PROGRAM_NAPRAWCZY_20260905/1_12_REALIZACJA_PLAN.md:304`)
+    // przewiduje dla tej zakładki dokładnie trzy: Osoby · Role · Konflikty.
+    // `role` pokazuje dziś 0 NIE z braku implementacji, tylko z braku danych
+    // (pole `role` w `/api/execution-control/capacity/resource-plan` jest
+    // puste dla WSZYSTKICH 72 wierszy na DBR77, pomiar 06.09) — ZNALEZISKO
+    // do meldunku, nie maskowane fałszywym filtrem.
     resources: [
-      ['all', t('common.all', 'All')],
-      ['overallocated', t('execution.menu3.resources.overallocated', 'Overallocated')],
-      ['unassigned', t('execution.menu3.resources.unassigned', 'Unassigned work')],
-      ['skill-gaps', t('execution.menu3.resources.skillGaps', 'Skill gaps')],
-      ['unconfirmed', t('execution.menu3.resources.unconfirmed', 'Unconfirmed assignments')],
-      ['unknown', t('execution.menu3.resources.unknown', 'Availability unknown')],
-      ['cost-risk', t('execution.menu3.resources.costRisk', 'Cost risk')],
-      ['needs-decision', t('execution.menu3.resources.needsDecision', 'Needs decision')],
-      ['team', t('execution.menu3.resources.team', 'By team')],
-      ['initiative', t('execution.menu3.resources.initiative', 'By Initiative')],
+      ['osoby', t('execution.menu3.resources.people', 'People')],
+      ['role', t('execution.menu3.resources.role', 'Role')],
+      ['konflikty', t('execution.menu3.resources.conflicts', 'Conflicts')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R1 (C): 12 chipów → 3. Osiem z dwunastu filtrowało regexem po
     // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który
@@ -821,7 +831,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
     list: 'wszystkie',
     work: 'all',
-    resources: 'all',
+    resources: 'osoby',
     control: 'decyzje',
     reports: 'all',
     // DEC-426 (1.1-E-1): domyślnie aktywne „Ryzyka" (KROK 3, test a).
@@ -1384,20 +1394,29 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           Api.getInitiatives(),
           listExecutionCases(),
         ]);
-        // 1.12-R1 (A): sprowadź status do enumu frontu, ZANIM cokolwiek go
-        // porówna. `GET /api/initiatives` potrafi oddać ten sam portfel
-        // w drugim słowniku (`IN_EXECUTION`/`PENDING_APPROVAL`/`CLOSED`…),
-        // którego `InitiativeStatus` nie zna — i wtedy KAŻDY wiersz wypadał
-        // z filtra, a zakładka „Realizacje" była pusta przy 72 inicjatywach
-        // w odpowiedzi. Pomiar i mapa: executionRealData.STATUS_ALIASES.
-        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, [
-          'initiatives',
-        ]).map((initiative) => {
-          const znormalizowany = normalizeInitiativeStatus(initiative.status);
-          return znormalizowany === String(initiative.status)
-            ? initiative
-            : { ...initiative, status: znormalizowany as InitiativeStatus };
-        });
+        // NAPRAWA odbioru 06.09 (audytor, DEC-441) — ZNALEZISKO-RODZEŃSTWO
+        // dla pozycji 1 zlecenia: do dziś ta pętla nadpisywała `initiative.status`
+        // wynikiem `normalizeInitiativeStatus()` (executionRealData.ts), który
+        // MAPUJE słownik 7 (`IN_EXECUTION`/`PENDING_APPROVAL`/`CLOSED`/`REJECTED`)
+        // NA STARY słownik front-endu (`EXECUTING`/`REVIEW`/`DONE`/`CANCELLED`,
+        // `STATUS_ALIASES`). 1.12-R1 (06.09 rano) pisał to defensywnie, gdy
+        // `InitiativeStatus` w tym repo ZNAŁ TYLKO stary słownik, a API tego
+        // dnia (przed ustabilizowaniem P12) potrafiło oddać oba na przemian
+        // (patrz nagłówek komentarza przy `STATUS_ALIASES`). Od migracji P12
+        // `InitiativeStatus` (packages/shared, generated) jest KANONICZNIE
+        // słownikiem 7 — więc to nadpisanie zamieniało już poprawny status na
+        // wartość, której `InitiativeStatus`/`EXECUTION_STATUSES` NIE ZNAJĄ,
+        // i wiersz wypadał z każdego porównania w tym pliku (m.in.
+        // `canonicalExecutionInitiatives`, `ACTIVE_EXECUTION_STATUSES`,
+        // `handleOpenDocument`). POMIAR 06.09 (żywe API, org DBR77): surowe
+        // statusy to WYŁĄCZNIE słownik 7 (72/72 wierszy), zero starych nazw —
+        // nadpisanie nie broni dziś przed niczym, tylko psuje każdy poprawny
+        // wiersz poza `APPROVED` (jedyna nazwa, której `STATUS_ALIASES` nie
+        // rusza). Helpery w `executionRealData.ts` (isBlockedInitiative,
+        // isInFlightInitiative, RAG) same wołają `normalizeInitiativeStatus`
+        // na żądanie — nie zależą od tego, czy `initiative.status` jest już
+        // znormalizowany, więc zdjęcie nadpisania nic im nie psuje.
+        const data = normalizeExecutionArrayEnvelope<FullInitiative>(response, ['initiatives']);
         const activeExecutionInitiativeIds = new Set(
           normalizeExecutionArrayEnvelope<{ initiativeId?: string; state?: string }>(
             executionCasesResponse,

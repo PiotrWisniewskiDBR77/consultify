@@ -174,7 +174,11 @@ const OK_ALLOCATIONS = {
 const renderSurface = (props: Record<string, unknown> = {}) =>
   render(
     <MemoryRouter initialEntries={['/execution']}>
-      <ExecutionResourcesSurface activePreset="all" {...(props as any)} />
+      {/* NAPRAWA odbioru 06.09 (DEC-441): preset 'all' zastąpiony 'osoby' —
+          Menu 3 tej zakładki zawężony do 3 chipów (Osoby · Role · Konflikty),
+          patrz ExecutionResourcesSurface.tsx (matches()) i ExecutionHub.tsx
+          (getExecutionMenu3). */}
+      <ExecutionResourcesSurface activePreset="osoby" {...(props as any)} />
     </MemoryRouter>
   );
 

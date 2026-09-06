@@ -13267,6 +13267,9 @@
         "team": "By team"
       },
       "resources": {
+        "people": "People",
+        "role": "Role",
+        "conflicts": "Conflicts",
         "overallocated": "Overallocated",
         "unassigned": "Unassigned work",
         "skillGaps": "Skill gaps",
