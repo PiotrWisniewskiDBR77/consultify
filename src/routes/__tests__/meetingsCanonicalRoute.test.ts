@@ -48,28 +48,36 @@ describe('Meetings canonical route (DEC-2026-08-24-07)', () => {
       expect(routeSlice).not.toContain('<MeetingHub');
     });
 
-    it('mounts MeetingHub directly on the canonical /meetings list route', () => {
+    it('mounts MeetingHub directly on the canonical /meetings list route, gated behind meetingsEnabled (DEC-425)', () => {
       const routeIndex = source.indexOf('path={ROUTES.MEETINGS.ROOT}');
       expect(routeIndex).toBeGreaterThan(-1);
-      const routeSlice = source.slice(routeIndex, routeIndex + 500);
+      const routeSlice = source.slice(routeIndex, routeIndex + 950);
+      expect(routeSlice).toContain('meetingsEnabled ? (');
       expect(routeSlice).toContain('<MeetingHub');
       expect(routeSlice).toContain('BetaGate moduleId="MODULE_MEETING"');
+      // DEC-425 (1.1-M-3): flag OFF renders the Wave 2 placeholder instead —
+      // not a 404, not an exception.
+      expect(routeSlice).toContain('<MeetingsWave2Placeholder');
     });
 
-    it('mounts MeetingObjectPage on the object card route', () => {
+    it('mounts MeetingObjectPage on the object card route, gated behind meetingsEnabled (DEC-425)', () => {
       const routeIndex = source.indexOf('path={ROUTES.MEETINGS.OBJECT}');
       expect(routeIndex).toBeGreaterThan(-1);
-      const routeSlice = source.slice(routeIndex, routeIndex + 700);
+      const routeSlice = source.slice(routeIndex, routeIndex + 1300);
+      expect(routeSlice).toContain('meetingsEnabled ? (');
       expect(routeSlice).toContain('<MeetingObjectPage');
+      expect(routeSlice).toContain('<MeetingsWave2Placeholder');
     });
 
     it.each(['MINUTES', 'DECISIONS', 'NOTE'] as const)(
-      'mounts ROUTES.MEETINGS.%s on a real page, not left unregistered',
+      'mounts ROUTES.MEETINGS.%s on a real page, not left unregistered, gated behind meetingsEnabled (DEC-425)',
       (key) => {
         const routeIndex = source.indexOf(`path={ROUTES.MEETINGS.${key}}`);
         expect(routeIndex).toBeGreaterThan(-1);
-        const routeSlice = source.slice(routeIndex, routeIndex + 700);
+        const routeSlice = source.slice(routeIndex, routeIndex + 1300);
+        expect(routeSlice).toContain('meetingsEnabled ? (');
         expect(routeSlice).toContain('<MeetingObjectPage');
+        expect(routeSlice).toContain('<MeetingsWave2Placeholder');
       }
     );
 
