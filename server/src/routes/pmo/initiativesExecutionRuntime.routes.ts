@@ -446,6 +446,7 @@ const PlanScenarioSchema = z.object({
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
   scenario: z.object({
     scenarioId: z.string().min(1),
+    name: z.string().trim().min(1).nullable().optional(),
     scenarioVersion: z.number().int().min(0),
     status: z.enum(['DRAFT', 'PUBLISHED', 'SUPERSEDED']),
     portfolioScenarioId: z.string().min(1),
@@ -517,6 +518,7 @@ const CapacityScenarioSchema = z.object({
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
   scenario: z.object({
     scenarioId: z.string().min(1),
+    name: z.string().trim().min(1).nullable().optional(),
     scenarioVersion: z.number().int().min(0),
     status: z.enum(['DRAFT', 'PUBLISHED', 'SUPERSEDED']),
     planScenarioId: z.string().min(1),

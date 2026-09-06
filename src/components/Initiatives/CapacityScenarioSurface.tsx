@@ -115,6 +115,7 @@ type Range = {
 };
 type Scenario = {
   scenarioId: string;
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   planScenarioId: string;
@@ -619,8 +620,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   };
   const createAnalysis = async () => {
     const plan = publishedPlans.find((item) => item.id === newPlanId);
-    const scenarioId = newAnalysisId.trim();
-    if (!plan || !scenarioId || writeState === 'SAVING') return;
+    const name = newAnalysisId.trim();
+    if (!plan || !name || writeState === 'SAVING') return;
+    const scenarioId = `capacity-${crypto.randomUUID()}`;
     const unknownRange = (ownerId: string): Range => ({
       knowledgeState: 'UNKNOWN',
       low: null,
@@ -635,6 +637,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     });
     const next: Scenario = {
       scenarioId,
+      name,
       scenarioVersion: 0,
       status: 'DRAFT',
       planScenarioId: plan.id,

@@ -37,6 +37,7 @@ export interface ProposedAssignment {
 }
 export interface CapacityScenario {
   scenarioId: string;
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   planScenarioId: string;

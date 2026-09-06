@@ -50,6 +50,7 @@ interface PeriodDraft {
 }
 interface PlanScenario {
   scenarioId: string;
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   portfolioScenarioId: string;
@@ -254,7 +255,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [compareState, setCompareState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [analysisProposal, setAnalysisProposal] = useState<PlanAnalysisProposal | null>(null);
   const [analysisState, setAnalysisState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
-  const [newId, setNewId] = useState('');
+  const [newName, setNewName] = useState('');
   const [portfolioId, setPortfolioId] = useState('');
   const [portfolioVersion, setPortfolioVersion] = useState(1);
   const [newWindowUnit, setNewWindowUnit] = useState('WEEK');
@@ -597,7 +598,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const create = () => {
     const periods = createWeeklyPeriods(newStart, newWeekCount);
     if (
-      !newId.trim() ||
+      !newName.trim() ||
       !portfolioId.trim() ||
       portfolioVersion < 1 ||
       !newWindowUnit.trim() ||
@@ -606,7 +607,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     )
       return;
     const scenario: PlanScenario = {
-      scenarioId: newId.trim(),
+      scenarioId: `plan-${crypto.randomUUID()}`,
+      name: newName.trim(),
       scenarioVersion: 0,
       status: 'DRAFT',
       portfolioScenarioId: portfolioId.trim(),
@@ -889,8 +891,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             <input
               aria-label={t('initiatives.planScenario.form.planNameAria')}
               className="mt-1 block bg-c-surface p-2"
-              value={newId}
-              onChange={(e) => setNewId(e.target.value)}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
             />
           </label>
           <label className="text-xs">
@@ -960,7 +962,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             type="button"
             className="btn-primary"
             disabled={
-              !newId.trim() ||
+              !newName.trim() ||
               !portfolioId.trim() ||
               !newWindowUnit.trim() ||
               !newTimezone.trim() ||
