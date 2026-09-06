@@ -93,13 +93,13 @@ export function moduleForStatus(status: InitiativeStatusType | string): string {
   const s = String(status || '').toUpperCase() as InitiativeStatusType;
 
   // Statusy terminalne nie należą do żadnego modułu operacyjnego.
-  if (s === InitiativeStatus.CANCELLED || s === InitiativeStatus.ARCHIVED) {
+  if (s === InitiativeStatus.REJECTED || s === InitiativeStatus.CLOSED) {
     return 'terminal';
   }
 
   // SCHEDULED jest współdzielony (initiatives + execution) — przypisz do execution,
   // bo zaplanowanie = wejście w fazę realizacji (ready-for-execution boundary).
-  if (s === InitiativeStatus.SCHEDULED) {
+  if (s === InitiativeStatus.APPROVED) {
     return 'execution';
   }
 
@@ -190,7 +190,7 @@ export function evaluateHandoff(
   }
 
   // 2) Kontrakt gotowości na kluczowych granicach.
-  if (to === InitiativeStatus.SCHEDULED || to === InitiativeStatus.EXECUTING) {
+  if (to === InitiativeStatus.IN_EXECUTION) {
     // ready-for-execution
     if (!payload.hasDates) missing.push('hasDates');
     if (!payload.hasMilestone) missing.push('hasMilestone');
@@ -199,7 +199,7 @@ export function evaluateHandoff(
     if (missing.length > 0) {
       reasons.push(`Ready-for-execution contract not met (missing: ${missing.join(', ')})`);
     }
-  } else if (to === InitiativeStatus.TRACKING) {
+  } else if (to === InitiativeStatus.CLOSED) {
     // closure (wykonanie → rezultaty)
     if (!payload.gateApproved) {
       missing.push('gateApproved');
@@ -290,9 +290,8 @@ export async function recordHandoff(
   let evaluation: HandoffEvaluation | null = null;
   try {
     const needsReadiness =
-      to === InitiativeStatus.SCHEDULED ||
-      to === InitiativeStatus.EXECUTING ||
-      to === InitiativeStatus.TRACKING;
+      to === InitiativeStatus.IN_EXECUTION ||
+      to === InitiativeStatus.CLOSED;
     const payload = needsReadiness ? await deriveReadiness(orgId, initiativeId) : {};
     evaluation = evaluateHandoff(from, to, payload);
   } catch {

@@ -2066,7 +2066,7 @@ export async function applyDecisionBlockTransitionOnClient(
     };
   }
 
-  if (currentStatus === InitiativeStatus.BLOCKED) {
+  if (lockedRow.on_hold === true) {
     // Idempotent no-op — do not fabricate a second transition/audit row.
     return {
       ok: true,

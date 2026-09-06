@@ -59,7 +59,7 @@ import {
   type V8PlanningDecisionChain,
   type V8PlanningInitiativeSnapshot,
 } from '@/services/api/v8/planning';
-import { getStatusesForModule } from '@/services/initiativeLifecycle';
+import { getLocalizedStatusLabel, getStatusesForModule } from '@/services/initiativeLifecycle';
 import {
   cancelInitiativeWriteTruth,
   createInitiativeWriteTruth,
@@ -2272,10 +2272,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // (`rightControls`). Wybór: „Do decyzji" (kolejka wymagająca akcji
   // właściciela) i „W realizacji" (aktywna praca) — to dwa stany o
   // największej wartości decyzyjnej po samym „Wszystkie".
-  const KEPT_LIFECYCLE_MENU3_IDS: InitiativeLifecyclePreset[] = ['DECISION', 'IN_EXECUTION'];
-  const menu3LifecyclePresets = INITIATIVE_LIFECYCLE_PRESETS.filter((preset) =>
-    KEPT_LIFECYCLE_MENU3_IDS.includes(preset.id)
-  );
+  const menu3Statuses = [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.IN_EXECUTION];
 
   const commandRowContent = (
     <div className="flex items-center justify-between gap-2">
@@ -2286,32 +2283,31 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             setActiveLifecyclePreset(null);
             setActiveStatusFilter(null);
           }}
-          className={!activeLifecyclePreset ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+          className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           data-testid="initiatives-menu3-chip-all"
         >
           <span className={MENU_3_ALL_DOT_CLASS} />
           <span>Wszystkie</span>
-          <span className={!activeLifecyclePreset ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+          <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
             {lifecyclePresetCounts.all ?? 0}
           </span>
         </button>
-        {menu3LifecyclePresets.map((preset) => {
-          const isActive = activeLifecyclePreset === preset.id;
-          const count = lifecyclePresetCounts[preset.id] ?? 0;
+        {menu3Statuses.map((status) => {
+          const isActive = activeStatusFilter === status;
+          const count = statusCounts[status] ?? 0;
           return (
             <button
-              key={preset.id}
+              key={status}
               type="button"
               onClick={() => {
-                setActiveLifecyclePreset(isActive ? null : preset.id);
-                setActiveStatusFilter(null);
-                if (preset.id === 'HISTORICAL' && !isActive) setScope('all');
+                setActiveStatusFilter(isActive ? null : status);
+                setActiveLifecyclePreset(null);
               }}
               className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-              data-testid={`initiatives-menu3-chip-${preset.id}`}
+              data-testid={`initiatives-menu3-chip-${status}`}
             >
               <span className="h-2 w-2 rounded-full bg-c-text-muted" />
-              <span>{preset.label}</span>
+              <span>{getLocalizedStatusLabel(status, t)}</span>
               <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                 {count}
               </span>
@@ -2424,11 +2420,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const canonicalMenu3 = canonicalMenu3Definitions[activeTab] ?? [];
 
   const lifecycleDropdownOptions = [
-    { id: 'all', label: 'Wszystkie', count: lifecyclePresetCounts.all ?? 0 },
-    ...INITIATIVE_LIFECYCLE_PRESETS.map((preset) => ({
-      id: preset.id,
-      label: preset.label,
-      count: lifecyclePresetCounts[preset.id] ?? 0,
+    { id: 'all', label: 'Wszystkie', count: allInitiatives.length },
+    ...Object.values(InitiativeStatus).map((status) => ({
+      id: status,
+      label: getLocalizedStatusLabel(status, t),
+      count: statusCounts[status] ?? 0,
     })),
   ];
 
@@ -2466,14 +2462,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               presetów), Menu 3 obok trzyma tylko "Wszystkie · Do decyzji ·
               W realizacji". */}
           <Menu2PresetDropdown
-            label={t('initiatives.filters.lifecycle', 'Cykl życia')}
+            label={t('initiatives.filters.status', 'Status')}
             options={lifecycleDropdownOptions}
-            value={activeLifecyclePreset ?? 'all'}
+            value={activeStatusFilter ?? 'all'}
             onChange={(id) => {
-              const nextPreset = id === 'all' ? null : (id as InitiativeLifecyclePreset);
-              setActiveLifecyclePreset(nextPreset);
-              setActiveStatusFilter(null);
-              if (nextPreset === 'HISTORICAL') setScope('all');
+              setActiveStatusFilter(id === 'all' ? null : id);
+              setActiveLifecyclePreset(null);
             }}
             data-testid="initiatives-lifecycle-dropdown"
           />

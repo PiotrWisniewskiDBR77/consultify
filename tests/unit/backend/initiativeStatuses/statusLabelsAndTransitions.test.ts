@@ -1,44 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { InitiativeStatus, getLifecycleOrder, getStatusLabel, getValidNextStatuses, isValidTransition, validateTransition } from '../../../../server/src/constants/initiativeStatuses.ts';
 
-import {
-  InitiativeStatus,
-  getLifecycleOrder,
-  getStatusLabel,
-  getValidNextStatuses,
-  isValidTransition,
-  validateTransition,
-} from '../../../../server/src/constants/initiativeStatuses.ts';
-
-describe('initiativeStatuses: labels + transitions helpers', () => {
-  it('returns localized status labels from metadata', () => {
-    expect(getStatusLabel(InitiativeStatus.DRAFT, 'pl')).toBe('Szkic');
-    expect(getStatusLabel(InitiativeStatus.DRAFT, 'en')).toBe('Draft');
+describe('initiativeStatuses: DEC-424 labels + transition helpers', () => {
+  it('returns the generated translation key from metadata', () => {
+    expect(getStatusLabel(InitiativeStatus.DRAFT)).toBe('initiatives.status.DRAFT');
   });
-
-  it('returns a deterministic lifecycle order list', () => {
-    const order = getLifecycleOrder();
-    expect(order[0]).toBe(InitiativeStatus.DRAFT);
-    expect(order[1]).toBe(InitiativeStatus.PENDING_REVIEW);
-    expect(order[order.length - 1]).toBe(InitiativeStatus.ARCHIVED);
+  it('returns the exact seven-status lifecycle order', () => {
+    expect(getLifecycleOrder()).toEqual(Object.values(InitiativeStatus));
   });
-
-  it('checks validity of transitions via VALID_TRANSITIONS', () => {
-    expect(isValidTransition(InitiativeStatus.DRAFT, InitiativeStatus.PENDING_REVIEW)).toBe(true);
+  it('checks transitions through the canonical matrix', () => {
+    expect(isValidTransition(InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL)).toBe(true);
     expect(isValidTransition(InitiativeStatus.DRAFT, InitiativeStatus.APPROVED)).toBe(false);
+    expect(getValidNextStatuses(InitiativeStatus.DRAFT)).toEqual([InitiativeStatus.PENDING_APPROVAL]);
   });
-
-  it('returns valid next statuses for a given status', () => {
-    const next = getValidNextStatuses(InitiativeStatus.DRAFT);
-    expect(next).toEqual(
-      expect.arrayContaining([InitiativeStatus.PENDING_REVIEW, InitiativeStatus.CANCELLED])
-    );
-  });
-
-  it('enforces additional validation rules (BLOCKED requires blockedReason)', () => {
-    const res = validateTransition(InitiativeStatus.EXECUTING, InitiativeStatus.BLOCKED, {
-      userRole: 'PMO',
-    } as any);
-    expect(res.valid).toBe(false);
-    expect(res.reason).toBe('Blocked status requires a reason');
+  it('requires a reason on canonical rejection', () => {
+    const result = validateTransition(InitiativeStatus.IN_EXECUTION, InitiativeStatus.REJECTED, { userRole: 'PMO' });
+    expect(result).toEqual({ valid: false, reason: 'Reason is required' });
   });
 });

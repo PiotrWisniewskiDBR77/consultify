@@ -168,6 +168,7 @@ export const resolveInitiativeAreaOrAxis = (row: InitiativeRegisterRow): string 
 export const createInitiativeRegisterColumns = (
   options: InitiativeRegisterColumnOptions = {}
 ): TableColumn[] => {
+  const t = options.t;
   const base: TableColumn[] = [
     {
       id: 'name',

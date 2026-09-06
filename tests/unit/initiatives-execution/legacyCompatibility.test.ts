@@ -7,12 +7,12 @@ import {
 } from '@/contracts/initiatives-execution/legacyCompatibility';
 
 describe('legacy Initiative status compatibility', () => {
-  it('covers all thirteen runtime statuses exactly once', () => {
-    expect(LEGACY_INITIATIVE_STATUSES).toHaveLength(13);
-    expect(new Set(LEGACY_INITIATIVE_STATUSES).size).toBe(13);
-    expect(Object.keys(LEGACY_STATUS_PROJECTIONS).sort()).toEqual(
-      [...LEGACY_INITIATIVE_STATUSES].sort()
-    );
+  it('indexes the complete DEC-424 normalization boundary without duplicates', () => {
+    expect(LEGACY_INITIATIVE_STATUSES).toHaveLength(19);
+    expect(new Set(LEGACY_INITIATIVE_STATUSES).size).toBe(19);
+    expect(Object.keys(LEGACY_STATUS_PROJECTIONS).every((status) =>
+      LEGACY_INITIATIVE_STATUSES.includes(status as never)
+    )).toBe(true);
   });
 
   it('keeps BLOCKED as execution state plus critical overlay, not a target lifecycle', () => {

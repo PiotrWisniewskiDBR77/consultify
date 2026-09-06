@@ -2426,7 +2426,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // — patrz ten sam fix w ExecutionSummaryOneLook.tsx i
           // WorkIntelligenceReport.tsx). danger-700 w light (7.69:1 na tym tle),
           // dark: token zostaje (juz przechodzi).
-          if (row.status === InitiativeStatus.IN_EXECUTION) {
+          if (row.onHold === true) {
             badges.push(
               <span
                 key="blocked"
@@ -3451,7 +3451,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const now = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
 
-    const blocked = dashboardBaseInitiatives.filter((i) => i.status === InitiativeStatus.IN_EXECUTION);
+    const blocked = dashboardBaseInitiatives.filter((i) => i.onHold === true);
     const missingDates = dashboardBaseInitiatives.filter(
       (i) => !i.plannedStartDate || !i.plannedEndDate
     );

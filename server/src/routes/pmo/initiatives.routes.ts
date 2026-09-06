@@ -696,11 +696,9 @@ router.get('/capacity', requireOrgRole('user'), async (req: any, res: any) => {
         ? String(req.query.projectId).trim()
         : null;
 
-    const excluded = [
-      InitiativeStatus.CANCELLED,
-      InitiativeStatus.ARCHIVED,
-      InitiativeStatus.DONE,
-    ].map((status) => status.toUpperCase());
+    const excluded = [InitiativeStatus.REJECTED, InitiativeStatus.CLOSED].map((status) =>
+      status.toUpperCase()
+    );
 
     const params: unknown[] = [String(orgId), ...excluded];
     let sql = `SELECT COUNT(*) AS active_count

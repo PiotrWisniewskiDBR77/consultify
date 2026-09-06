@@ -126,7 +126,7 @@ export async function autoStartScheduledInitiatives(options: { limit?: number } 
         orgId,
         initiativeId,
         actorId: SYSTEM_ACTOR_ID,
-        nextStatusInput: InitiativeStatus.EXECUTING,
+        nextStatusInput: InitiativeStatus.IN_EXECUTION,
         reason: 'Auto-started by timeline (planned start date reached)',
         actor: SYSTEM_ACTOR,
       });
