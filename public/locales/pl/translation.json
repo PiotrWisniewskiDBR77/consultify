@@ -571,7 +571,6 @@
     "maximize": "Zmaksymalizuj",
     "characters": "znaków",
     "unassigned": "Nieprzypisane",
-    "filters": "Filtry",
     "overview": "Przegląd",
     "deleting": "Usuwanie...",
     "noData": "Brak danych",
@@ -28422,10 +28421,7 @@
       "type": "Typ",
       "category": "Kategoria",
       "scope": "Zakres",
-      "source": "Źródło",
-      "hint": "Wybierz statusy oraz (opcjonalnie) źródła.",
       "status": {
-        "active": "Aktywny",
         "draft": "Szkic",
         "archived": "Zarchiwizowany",
         "generated": "Wygenerowany",
@@ -28721,11 +28717,9 @@
         "approved": "Zatwierdzony"
       },
       "cta": {
-        "new": "Nowy output"
+        "new": "Nowy materiał"
       },
-      "filters": {
-        "kind": "Typ outputu"
-      },
+      "filters": {},
       "source": {
         "initiativeLinked": "Powiązany z inicjatywą"
       },
