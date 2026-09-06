@@ -1,0 +1,4 @@
+MUTACJA A: ANSWER_STATE_TONE.confirmed 'success' -> 'warning'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed | 9 passed (12)

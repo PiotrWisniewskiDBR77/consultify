@@ -1,0 +1,3 @@
+MUTACJA B: usuniety onClick z przycisku 'Zapytaj Terese' (rzad komend)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
