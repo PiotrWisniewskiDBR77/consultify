@@ -1,0 +1,59 @@
+P12 / DEC-424 — pomiar bazowy przed pierwszą zmianą
+Data: 2026-09-06
+Marker: 8d1600d530e19888fd9ae9d2a979017ce4eacc83
+
+Stanowisko
+- GET http://127.0.0.1:4100/api/health: HTTP 200, status=ok, database=connected.
+- PostgreSQL: 127.0.0.1:54400/consultify_noc.
+
+Definicja initiatives_status_check przed zmianą
+CHECK ((status = ANY (ARRAY['DRAFT'::text, 'PENDING_REVIEW'::text, 'REVIEW'::text,
+'PROMOTED'::text, 'PLANNING'::text, 'APPROVED'::text, 'SCHEDULED'::text,
+'EXECUTING'::text, 'BLOCKED'::text, 'DONE'::text, 'TRACKING'::text,
+'CANCELLED'::text, 'ARCHIVED'::text])))
+
+Rozkład initiatives.status przed zmianą
+APPROVED=5
+ARCHIVED=1
+BLOCKED=6
+CANCELLED=3
+DONE=5
+DRAFT=19
+EXECUTING=17
+PENDING_REVIEW=1
+PLANNING=5
+PROMOTED=5
+REVIEW=5
+SCHEDULED=7
+TRACKING=3
+Razem=82
+Wiersze z wartością inną niż UPPER(status)=0
+
+ie_aggregate_state dla aggregate_type='initiative'
+APPROVED_BACKLOG=5
+Razem=5
+
+Testy zastane — każdy plik uruchomiony w osobnym procesie:
+  npx vitest run <plik> --no-file-parallelism --reporter=verbose
+
+1. tests/unit/backend/initiativeStatuses/stateMachineComplete.test.ts — 30/30 PASS
+2. tests/unit/backend/initiativeStatuses/gatesAndValidation.test.ts — 5/5 PASS
+3. server/src/services/initiative/__tests__/initiativeCapabilityMatrix.test.ts — 28/28 PASS
+4. server/src/services/initiative/__tests__/initiativeTransitionService.closureGate.test.ts — 4/4 PASS
+5. tests/unit/initiatives-execution/initiativeRegisterProjection.test.ts — 5/5 PASS
+6. tests/unit/initiatives-execution/legacyCompatibility.test.ts — 4/4 PASS
+7. tests/resultsVnext/kpi/scorecardCommands.test.ts — 8/8 PASS
+8. src/components/Execution/__tests__/ExecutionInitiativeStatusControl.a11y.test.tsx — 6/6 PASS
+9. src/components/Initiatives/__tests__/InitiativesHub.menu3Chips.test.tsx — 3/3 PASS
+
+Razem: 93/93 PASS, 9/9 plików PASS, zero „No test files found".
+Pełne nazwy testów i wyniki są zachowane w testy-baza-json/1.json … 9.json.
+
+Progi wejściowe §7
+- Literały wskazane przez komendę §7 w src/components/Initiatives: 50 trafień / 12 plików,
+  nie 52/14 z instrukcji. Część trafień opisuje statusy zadań lub innych obiektów;
+  klasyfikacja nastąpi w kroku 11.
+- Surowe zapisy statusu wskazane w paczce: 7 miejsc.
+- validateInitiativeStatus: 1 trafienie, wyłącznie definicja.
+- labelPL w server/src/constants/initiativeStatuses.ts: typ + 13 wartości + helper.
+- primary-[0-9] w powierzchniach wskazanych przez §4(f): 0.
