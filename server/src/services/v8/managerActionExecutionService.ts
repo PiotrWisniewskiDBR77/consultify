@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { all as rawDbAll, run as rawDbRun } from '../../utils/DbPromise.js';
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 import { send as notifySend } from '../notificationService.js';
+import { executeInitiativeTransition } from '../initiative/initiativeTransitionService.js';
 import { getManagerProblems } from './managerProblemsService.js';
 
 type ManagerProblemRow = Awaited<ReturnType<typeof getManagerProblems>>[number];
@@ -182,6 +183,26 @@ async function executeProblemActionInternal(
 
   const candidateUser = async (...excludedIds: Array<string | null | undefined>) =>
     pickCandidateUser(organizationId, [userId, row.ownerId, ...excludedIds]);
+  const resumeInitiative = async () => {
+    const context = managerTransaction.getStore();
+    if (!context) throw new Error('Manager initiative transition requires a pinned transaction');
+    const result = await executeInitiativeTransition({
+      orgId: organizationId,
+      initiativeId: row.sourceEntityId,
+      actorId: userId,
+      actorRole: null,
+      nextStatusInput: 'IN_EXECUTION',
+      expectedCurrentStatus: 'IN_EXECUTION',
+      flagOperation: 'RESUME',
+      transactionClient: context.client,
+      deferPostCommitEffect: (effect) => context.afterCommit.push(effect),
+    });
+    if (!result.ok) {
+      const error = new Error(String(result.body.error || 'Initiative transition rejected')) as Error & { statusCode?: number };
+      error.statusCode = result.statusCode;
+      throw error;
+    }
+  };
 
   if (row.sourceEntityType === 'TASK') {
     switch (actionId) {
@@ -312,10 +333,7 @@ async function executeProblemActionInternal(
         return { message: 'Initiative replanned to a new target date.', changedEntities };
       }
       case 'unblock': {
-        await dbRun(
-          `UPDATE initiatives SET status = 'IN_PROGRESS', updated_at = NOW() WHERE id = ? AND organization_id = ?`,
-          [row.sourceEntityId, organizationId]
-        );
+        await resumeInitiative();
         addChange('INITIATIVE', row.sourceEntityId);
         return { message: 'Initiative moved out of blocked state.', changedEntities };
       }
@@ -351,12 +369,12 @@ async function executeProblemActionInternal(
         // so variance vs baseline stays visible in the control tower.
         await dbRun(
           `UPDATE initiatives
-           SET status = 'IN_PROGRESS',
-               forecast_end_date = ?,
+           SET forecast_end_date = ?,
                updated_at = NOW()
            WHERE id = ? AND organization_id = ?`,
           [isoDay(21), row.sourceEntityId, organizationId]
         );
+        await resumeInitiative();
         addChange('INITIATIVE', row.sourceEntityId);
         return {
           message: 'Initiative scope was reduced and the work was moved back into execution.',

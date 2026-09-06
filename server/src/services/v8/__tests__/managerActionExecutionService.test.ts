@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockDbAll = vi.fn();
 const mockDbRun = vi.fn();
 const mockGetManagerProblems = vi.fn();
+const mockExecuteInitiativeTransition = vi.fn();
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
@@ -26,6 +27,9 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
 }));
 vi.mock('../managerProblemsService.js', () => ({
   getManagerProblems: (...args: unknown[]) => mockGetManagerProblems(...args),
+}));
+vi.mock('../../initiative/initiativeTransitionService.js', () => ({
+  executeInitiativeTransition: (...args: unknown[]) => mockExecuteInitiativeTransition(...args),
 }));
 
 import {
@@ -153,8 +157,10 @@ beforeEach(() => {
   mockDbAll.mockReset();
   mockDbRun.mockReset();
   mockGetManagerProblems.mockReset();
+  mockExecuteInitiativeTransition.mockReset();
   mockDbAll.mockImplementation((sql: string) => routeDbAll(sql));
   mockDbRun.mockResolvedValue({ changes: 1 });
+  mockExecuteInitiativeTransition.mockResolvedValue({ ok: true, status: 'IN_EXECUTION' });
 });
 
 afterEach(() => {
@@ -222,6 +228,24 @@ describe('managerActionExecutionService', () => {
     });
     expectSuccessResult(result);
   });
+
+  it.each(['unblock', 'scope_reduction'])(
+    'initiative %s przechodzi przez silnik i nie zapisuje statusu bezpośrednio',
+    async (actionId) => {
+      mockGetManagerProblems.mockResolvedValue([{ ...initiativeProblem, actions: [{ id: actionId }] }]);
+      const result = await executeManagerProblemAction({
+        organizationId: ORG, userId: UID, laneId: LANE_ID,
+        problemId: initiativeProblem.id, actionId,
+      });
+      expectSuccessResult(result);
+      expect(mockExecuteInitiativeTransition).toHaveBeenCalledWith(expect.objectContaining({
+        orgId: ORG, initiativeId: initiativeProblem.sourceEntityId, actorId: UID,
+        nextStatusInput: 'IN_EXECUTION', flagOperation: 'RESUME',
+        transactionClient: expect.any(Object),
+      }));
+      expect(mockDbRun.mock.calls.some(([sql]) => /UPDATE initiatives\s+SET status/i.test(String(sql)))).toBe(false);
+    }
+  );
 
   it('executeManagerProblemAction succeeds for decision approve action', async () => {
     mockGetManagerProblems.mockResolvedValue([decisionProblem]);
