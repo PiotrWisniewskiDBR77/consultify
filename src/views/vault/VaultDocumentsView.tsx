@@ -69,12 +69,14 @@ import {
   CheckCircle2,
   Download,
   FileText,
+  Filter,
   Folder,
   Info,
   Layers,
   Pencil,
   Search,
   Sparkles,
+  Tag,
   Trash2,
   X,
   XCircle,
@@ -93,6 +95,7 @@ import {
   MENU_3_INNER_CLASS,
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
+  MENU_3_ROW_CLASS,
   Menu3Badge,
   Menu3Chip,
 } from '@/components/shared/ModuleMenu3';
@@ -165,13 +168,6 @@ const STATUS_GROUP = (status: string): Exclude<StatusChipId, 'all'> => {
   // Unknown backend states need attention but must not create endless polling.
   return 'failed';
 };
-
-// Kształt 1:1 z pigułkami filtrów obok (Folder / Wszystkie / Zindeksowane…) —
-// uwaga Piotra 2026-07-28: w jednym rzędzie filtrów wszystkie kontrolki mają
-// mieć ten sam kształt, inaczej rząd wygląda na sklejony z dwóch systemów.
-const SELECT_CLASS =
-  'h-9 rounded-full border border-c-border bg-c-surface px-3.5 text-sm text-c-text transition-colors ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
 
 export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
   safe,
@@ -558,6 +554,17 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     URL.revokeObjectURL(url);
   }, [rows, safe.name, t, isPolish, folderNameById]);
 
+  // ── 1.1-M2 (DEC-408b, ZNALEZISKO z 1.1-M) ────────────────────────────────
+  // Kolumna NAZWA wychodziła ~90px, bo puste FOLDER/TAGI zjadały budżet
+  // `table-fixed` bez oddawania go z powrotem. Zamiast hacku CSS per ekran:
+  // gdy WSZYSTKIE dokumenty tego sejfu nie mają folderu/tagów, kolumna po
+  // prostu się nie renderuje (patrz `visibleColumns` niżej) i NAZWA dostaje
+  // ich budżet. Liczone na `documents` (pełny, nieprzefiltrowany zbiór sejfu),
+  // nie na `rows` — żeby kolumna nie znikała/wracała przy zmianie filtra.
+  const allFoldersEmpty = documents.length > 0 && documents.every((d) => !d.folder_id);
+  const allTagsEmpty = documents.length > 0 && documents.every((d) => d.tags.length === 0);
+  const filenameColumnWidth = 220 + (allFoldersEmpty ? 120 : 0) + (allTagsEmpty ? 155 : 0);
+
   // ── Kolumny tabeli ───────────────────────────────────────────────────────
   const columns: TableColumn[] = useMemo(
     () => [
@@ -570,7 +577,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         // reszta (w tym ta kolumna 300→220) oddała różnicę — nazwy plików już
         // i tak się skracają (świadome, nie ten defekt), status nie miał na to
         // prawa (nagłówek/pigułka).
-        width: '220px',
+        // 1.1-M2 (DEC-408b): rozszerzona o budżet kolumn FOLDER/TAGI, gdy te
+        // są ukryte (puste dla wszystkich dokumentów sejfu) — patrz
+        // `filenameColumnWidth` wyżej.
+        width: `${filenameColumnWidth}px`,
         sortable: true,
         // [ODMROZENIE 07_MY_WORK_AGENT DEC-397] — kolumna pokazywała surową
         // nazwę z magazynu (`1786125362405-Tesco_2026_..._EN`). Nazwa idzie
@@ -605,8 +615,10 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
       },
       // ★ VLT-FOLDERS — kolumna KONTEKSTU (jak "Poziom"/"W wiedzy AI"): pokazuje
       // W KTÓRYM folderze tego sejfu żyje dokument. Bez lejka — filtr folderu
-      // mieszka w pasku nad tabelą (dropdown "Folder"), nie tu (kanon gęstości
-      // §"jedna akcja = jeden dom" — patrz `filterBarNode`).
+      // mieszka w Menu 3 (dropdown "Folder", `commandRowNode`), nie tu (kanon
+      // gęstości §"jedna akcja = jeden dom"). 1.1-M2 (DEC-408b): kolumna
+      // ukrywana, gdy WSZYSTKIE dokumenty sejfu są bez folderu (patrz
+      // `allFoldersEmpty`/`visibleColumns` niżej).
       {
         id: 'folder',
         label: t('vault.docs.colFolder', 'Folder'),
@@ -733,7 +745,21 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
         ),
       },
     ],
-    [t, isPolish, tagOptions, folderNameById]
+    [t, isPolish, tagOptions, folderNameById, filenameColumnWidth]
+  );
+
+  // 1.1-M2 (DEC-408b) — kolumny KONTEKSTU bez treści znikają, zamiast zajmować
+  // budżet `table-fixed` pustym „—" w każdym wierszu (patrz `allFoldersEmpty`/
+  // `allTagsEmpty` wyżej). Backend/logika folderów i tagów nietknięte — to
+  // wyłącznie widoczność kolumny w TEJ tabeli.
+  const visibleColumns = useMemo(
+    () =>
+      columns.filter((c) => {
+        if (c.id === 'folder' && allFoldersEmpty) return false;
+        if (c.id === 'tags' && allTagsEmpty) return false;
+        return true;
+      }),
+    [columns, allFoldersEmpty, allTagsEmpty]
   );
 
   // ── Kebab wiersza (kontrakt 5 bloków; bloki 4/5 dokłada StandardTable) ───
@@ -939,141 +965,175 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     [t, isPolish]
   );
 
-  // ── Pasek filtrów DOKUMENTÓW — renderowany LOKALNIE nad tabelą ───────────
-  //
-  // ★ KOREKTA WŁAŚCICIELA (2026-07-27, po pierwszym wdrożeniu): pierwotnie te
-  // kontrolki szły do `filterControls` slotu huba (Menu 2). Piotr odrzucił to
-  // na żywym demo: „to, co się pojawiło w menu drugim po prawej stronie, nie
-  // jest w ogóle tu potrzebne […] jak się otworzy karta, to tego po prostu nie
-  // widać, bo nie widzimy teraz przecież konkretnej listy".
-  //
-  // ZASADA (do stosowania w całej aplikacji): pasek huba to NAWIGACJA —
-  // co jest otwarte i czym się przełączam. Filtry listy należą do TREŚCI, więc
-  // gdy lista jest zawartością OTWARTEJ KARTY (jak dokumenty wewnątrz sejfu),
-  // jej filtry siedzą w obszarze roboczym nad tą listą, a nie w pasku
-  // gospodarza. Do slotu huba idą tylko: karta obiektu (Menu 3) i CTA.
-  //
-  // Zawartość bez zmian względem poprzedniej wersji: lupa + Kategoria + chipy
-  // statusu indeksowania (VLT-007 — nadal widoczne, bo nie konkurują już z
-  // kartą o ten sam rząd) + kebab (Odśwież / Eksportuj CSV).
-  const filterBarNode = useMemo(
+  // ── DEC-408c (06.09, słowo właściciela) — pasek „Szukaj dokumentu ·
+  // Wszystkie kategorie · Folder · Wszystkie/Zindeksowane/W trakcie/Błąd · ⋮"
+  // ZNIKA jako osobny rząd nad tabelą. Rozbite na dwa miejsca:
+  //  - szukanie zostaje w lupie Menu 2 huba (`filterControls`, patrz
+  //    `useHubBarSlot` niżej) — dokładnie ten sam mechanizm, którym
+  //    `ClientDocumentsVault` wstrzykuje lupę sejfów do tego samego paska;
+  //  - kategoria/folder/status indeksowania idą do Menu 3 PO PRAWEJ jako
+  //    listy rozwijane (`Menu3DropdownChip`, jak przełącznik zakresu), status
+  //    jako JEDEN filtr rozwijany z licznikami zamiast czterech osobnych
+  //    chipów. Renderowane LOKALNIE (nie przez hub-slot — `HubBarSlotValue`
+  //    nie ma trzeciego, dynamicznego rzędu), ten sam wzór co `renderBulkBar`
+  //    niżej w tym samym pliku.
+  const searchFieldNode = useMemo(
     () => (
-      <div className="flex flex-wrap items-center gap-2 pb-2">
-        <div className="relative">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t(
-              'vault.docs.searchPlaceholder',
-              isPolish ? 'Szukaj dokumentu…' : 'Search documents…'
-            )}
-            aria-label={t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name')}
-            className="h-9 w-44 rounded-full border border-c-border bg-c-surface pl-8 pr-3.5 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-          />
-        </div>
-        <select
-          data-testid="vault-docs-category-filter"
-          aria-label={t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category')}
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className={SELECT_CLASS}
-        >
-          <option value="">
-            {t('vault.docs.allCategories', isPolish ? 'Wszystkie kategorie' : 'All categories')}
-          </option>
-          {DOCUMENT_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {categoryLabel(cat, isPolish, t)}
-            </option>
-          ))}
-        </select>
-        {foldersAvailable ? (
-          <Menu3DropdownChip
-            data-testid="vault-docs-folder-chip"
-            icon={<Folder size={14} className="text-c-text-muted" />}
-            label={
-              activeFolderId
-                ? folderNameById.get(activeFolderId) || t('vault.docs.folder', 'Folder')
-                : t('vault.docs.folder', 'Folder')
-            }
-            active={Boolean(activeFolderId)}
-            ariaLabel={t('vault.docs.folder', 'Folder')}
-            items={[
-              {
-                id: 'all',
-                label: t(
-                  'vault.docs.allFolders',
-                  isPolish ? 'Wszystkie dokumenty' : 'All documents'
-                ),
-                icon: <Layers size={14} />,
-                active: !activeFolderId,
-                onSelect: () => setActiveFolderId(null),
-              },
-              ...folders.map((f) => ({
-                id: f.id,
-                label: f.name,
-                icon: <Folder size={14} />,
-                active: activeFolderId === f.id,
-                trailing: activeFolderId === f.id ? '✓' : undefined,
-                onSelect: () => setActiveFolderId(f.id),
-              })),
-              ...(activeFolderId
-                ? [
-                    {
-                      id: 'delete-folder',
-                      label: t(
-                        'vault.docs.deleteFolder',
-                        isPolish ? 'Usuń ten folder' : 'Delete this folder'
-                      ),
-                      icon: <Trash2 size={14} />,
-                      danger: true,
-                      onSelect: () => void handleDeleteFolder(activeFolderId),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        ) : null}
-        <div className="flex items-center gap-1">
-          {statusChipDefs.map(({ id, label, dot }) => (
-            <Menu3Chip key={id} active={statusChip === id} onClick={() => setStatusChip(id)}>
-              {dot ? <span className={cn('h-1.5 w-1.5 rounded-full', dot)} /> : null}
-              {label}
-              <Menu3Badge count={statusCounts[id]} active={statusChip === id} />
-            </Menu3Chip>
-          ))}
-        </div>
-        <RowActionsMenu
-          size="sm"
-          sections={[
-            {
-              id: 'safe',
-              kind: 'context',
-              actions: [
-                {
-                  id: 'export-csv',
-                  label: t(
-                    'vault.docs.exportCsv',
-                    isPolish ? 'Eksportuj listę (CSV)' : 'Export list (CSV)'
-                  ),
-                  icon: Download,
-                  onClick: exportCsv,
-                  disabled: rows.length === 0,
-                },
-              ],
-            },
-          ]}
+      <div className="relative">
+        <Search
+          size={14}
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-c-text-muted"
         />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t(
+            'vault.docs.searchPlaceholder',
+            isPolish ? 'Szukaj dokumentu…' : 'Search documents…'
+          )}
+          aria-label={t('vault.docs.colName', isPolish ? 'Nazwa' : 'Name')}
+          className="h-9 w-44 rounded-full border border-c-border bg-c-surface pl-8 pr-3.5 text-sm text-c-text placeholder:text-c-text-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        />
+      </div>
+    ),
+    [search, t, isPolish]
+  );
+
+  const commandRowNode = useMemo(
+    () => (
+      <div className={MENU_3_ROW_CLASS}>
+        <div className={MENU_3_INNER_CLASS}>
+          <div className={MENU_3_LEFT_CLASS} />
+          <div className={MENU_3_RIGHT_CLASS}>
+            <Menu3DropdownChip
+              data-testid="vault-docs-category-filter"
+              icon={<Tag size={14} className="text-c-text-muted" />}
+              label={
+                categoryFilter
+                  ? categoryLabel(categoryFilter, isPolish, t)
+                  : t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category')
+              }
+              active={Boolean(categoryFilter)}
+              ariaLabel={t('vault.docs.colCategory', isPolish ? 'Kategoria' : 'Category')}
+              align="right"
+              items={[
+                {
+                  id: 'all',
+                  label: t(
+                    'vault.docs.allCategories',
+                    isPolish ? 'Wszystkie kategorie' : 'All categories'
+                  ),
+                  icon: <Layers size={14} />,
+                  active: !categoryFilter,
+                  onSelect: () => setCategoryFilter(''),
+                },
+                ...DOCUMENT_CATEGORIES.map((cat) => ({
+                  id: cat,
+                  label: categoryLabel(cat, isPolish, t),
+                  icon: <Tag size={14} />,
+                  active: categoryFilter === cat,
+                  trailing: categoryFilter === cat ? '✓' : undefined,
+                  onSelect: () => setCategoryFilter(cat),
+                })),
+              ]}
+            />
+            {foldersAvailable ? (
+              <Menu3DropdownChip
+                data-testid="vault-docs-folder-chip"
+                icon={<Folder size={14} className="text-c-text-muted" />}
+                label={
+                  activeFolderId
+                    ? folderNameById.get(activeFolderId) || t('vault.docs.folder', 'Folder')
+                    : t('vault.docs.folder', 'Folder')
+                }
+                active={Boolean(activeFolderId)}
+                ariaLabel={t('vault.docs.folder', 'Folder')}
+                align="right"
+                items={[
+                  {
+                    id: 'all',
+                    label: t(
+                      'vault.docs.allFolders',
+                      isPolish ? 'Wszystkie dokumenty' : 'All documents'
+                    ),
+                    icon: <Layers size={14} />,
+                    active: !activeFolderId,
+                    onSelect: () => setActiveFolderId(null),
+                  },
+                  ...folders.map((f) => ({
+                    id: f.id,
+                    label: f.name,
+                    icon: <Folder size={14} />,
+                    active: activeFolderId === f.id,
+                    trailing: activeFolderId === f.id ? '✓' : undefined,
+                    onSelect: () => setActiveFolderId(f.id),
+                  })),
+                  ...(activeFolderId
+                    ? [
+                        {
+                          id: 'delete-folder',
+                          label: t(
+                            'vault.docs.deleteFolder',
+                            isPolish ? 'Usuń ten folder' : 'Delete this folder'
+                          ),
+                          icon: <Trash2 size={14} />,
+                          danger: true,
+                          onSelect: () => void handleDeleteFolder(activeFolderId),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            ) : null}
+            <Menu3DropdownChip
+              data-testid="vault-docs-status-filter"
+              icon={<Filter size={14} className="text-c-text-muted" />}
+              label={
+                statusChip === 'all'
+                  ? t('vault.docs.statusFilterLabel', isPolish ? 'Status' : 'Status')
+                  : statusChipDefs.find((d) => d.id === statusChip)?.label ||
+                    t('vault.docs.statusFilterLabel', isPolish ? 'Status' : 'Status')
+              }
+              active={statusChip !== 'all'}
+              ariaLabel={t('vault.docs.colStatus', isPolish ? 'Status indeksowania' : 'Index status')}
+              align="right"
+              items={statusChipDefs.map(({ id, label, dot }) => ({
+                id,
+                label,
+                icon: dot ? <span className={cn('h-1.5 w-1.5 rounded-full', dot)} /> : undefined,
+                trailing: <Menu3Badge count={statusCounts[id]} active={statusChip === id} />,
+                active: statusChip === id,
+                onSelect: () => setStatusChip(id),
+              }))}
+            />
+            <RowActionsMenu
+              size="sm"
+              sections={[
+                {
+                  id: 'safe',
+                  kind: 'context',
+                  actions: [
+                    {
+                      id: 'export-csv',
+                      label: t(
+                        'vault.docs.exportCsv',
+                        isPolish ? 'Eksportuj listę (CSV)' : 'Export list (CSV)'
+                      ),
+                      icon: Download,
+                      onClick: exportCsv,
+                      disabled: rows.length === 0,
+                    },
+                  ],
+                },
+              ]}
+            />
+          </div>
+        </div>
       </div>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      search,
       categoryFilter,
       statusChip,
       statusCounts,
@@ -1103,10 +1163,14 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     [t, isPolish]
   );
 
-  // Do paska huba idzie WYŁĄCZNIE nawigacja (karta otwartego sejfu w Menu 3)
-  // i jeden CTA. Filtry dokumentów — patrz `filterBarNode` wyżej — zostają
-  // w obszarze roboczym, bo dotyczą treści karty, nie huba.
+  // DEC-408c — do paska huba idzie nawigacja (karta otwartego sejfu w Menu 3),
+  // CTA i, jak na `ClientDocumentsVault`/liście sejfów, lupa dokumentów
+  // (`filterControls` — dokładnie ten sam mechanizm, „szukanie zostaje w
+  // lupie Menu 2"). Kategoria/folder/status — patrz `commandRowNode` wyżej —
+  // zostają w obszarze roboczym (rząd Menu 3 lokalny), bo dotyczą treści
+  // karty, nie huba.
   useHubBarSlot({
+    filterControls: searchFieldNode,
     primaryCta: primaryCtaValue,
     openItems,
     activeItemId: safe.id,
@@ -1228,7 +1292,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
     <div className="flex h-full min-h-0 flex-col bg-c-bg">
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-w-0 flex-1 overflow-auto pb-4 pl-4 pr-1.5 pt-3">
-          {filterBarNode}
+          {commandRowNode}
           {renderBulkBar()}
           {backgroundRefreshError ? (
             <div
@@ -1257,7 +1321,7 @@ export const VaultDocumentsView: React.FC<VaultDocumentsViewProps> = ({
             </div>
           ) : null}
           <StandardTable
-            columns={columns}
+            columns={visibleColumns}
             data={rows as unknown as TableRow[]}
             loading={loading}
             error={error}
