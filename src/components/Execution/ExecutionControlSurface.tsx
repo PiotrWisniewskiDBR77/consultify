@@ -2229,6 +2229,21 @@ export const ExecutionControlSurface = ({
       </div>
     );
     return () => onRegisterFilterControl(null);
+    /*
+      `t` CELOWO POZA ZALEŻNOŚCIAMI (znalezione 07.09 przy R5, OOM w vitest).
+      Ten efekt REJESTRUJE węzeł u gospodarza, a gospodarz na to reaguje
+      `setState` → nowy render tej powierzchni. Jeżeli w zależnościach stanie
+      cokolwiek, co zmienia TOŻSAMOŚĆ przy każdym renderze, powstaje pętla:
+      efekt → setState gospodarza → render → efekt… W aplikacji `t` z
+      react-i18next jest stabilne, ale w każdym teście tego ekranu atrapa
+      `useTranslation` zwraca NOWĄ funkcję przy każdym wywołaniu — i wtedy
+      pętla jest realna: worker vitest puchł do 4 GB i padał
+      („Ineffective mark-compacts near heap limit"), a raport pokazywał
+      „Tests (25)" BEZ ani jednego „passed" — czyli wyglądał na zielony
+      w JUnit, choć nie wykonał się ANI JEDEN przypadek.
+      Etykiety w tym węźle i tak są statyczne, a zmiana języka przerysowuje
+      całą zakładkę, więc nic tu nie tracimy.
+    */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     onRegisterFilterControl,
@@ -2238,7 +2253,6 @@ export const ExecutionControlSurface = ({
     delayRows,
     executionInitiatives,
     canDecide,
-    t,
   ]);
   if (state === 'ERROR')
     return (

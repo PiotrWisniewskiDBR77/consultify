@@ -142,11 +142,25 @@ const INICJATYWY = [
   { id: 'ini-3', name: 'Zamknięta', status: 'DONE', ownerId: 'osoba-3' },
 ];
 
+/**
+ * Jedna atrapa API dla trzech źródeł zakładki (P16/R5): inicjatywy, sygnały
+ * opóźnień i — domyślnie — rejestr decyzji. `decyzje` podaje przypadek.
+ */
+const odpowiedz = (sciezka: string, decyzje: unknown): unknown =>
+  sciezka === '/initiatives'
+    ? INICJATYWY
+    : sciezka === '/execution-control/delay-signals'
+      ? { signals: [], count: 0 }
+      : decyzje;
+
 beforeEach(() => {
   vi.clearAllMocks();
-  apiGet.mockImplementation((sciezka: string) =>
-    Promise.resolve(sciezka === '/initiatives' ? INICJATYWY : DECYZJE)
-  );
+  // [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: atrapa musi ROZRÓŻNIAĆ trzecie
+  // źródło. Bez tej gałęzi `/execution-control/delay-signals` dostawał listę
+  // DECYZJI i chip „Sygnały" pokazywał 27 zamiast 0 — atrapa karmiła ekran nie
+  // tym, co czyta serwer. `sygnalyAtrapa` trzyma to w jednym miejscu, bo
+  // pojedyncze przypadki nadpisują `apiGet` własnymi implementacjami.
+  apiGet.mockImplementation((sciezka: string) => Promise.resolve(odpowiedz(sciezka, DECYZJE)));
   getOrganizationMembers.mockResolvedValue([
     { userId: 'osoba-1', name: 'Anna Kowalska' },
     { userId: 'osoba-2', name: 'Marek Nowak' },
@@ -209,12 +223,10 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
   it('decyzja ARCHIWALNA (CANCELLED) nie wchodzi do rejestru', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : [
-              ...DECYZJE,
-              { id: 'arch-1', title: 'Decyzja usunięta', status: 'CANCELLED', isOverdue: false },
-            ]
+        odpowiedz(sciezka, [
+          ...DECYZJE,
+          { id: 'arch-1', title: 'Decyzja usunięta', status: 'CANCELLED', isOverdue: false },
+        ])
       )
     );
     zamontuj('decyzje');
@@ -235,11 +247,12 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
   it('kolumna Eskalacja pokazuje KROK z licznika serwera, nie barwę (P16/R3)', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : DECYZJE.map((d, i) =>
-              d.status === 'ESCALATED' ? { ...d, escalationStep: i < 2 ? 3 : 1 } : d
-            )
+        odpowiedz(
+          sciezka,
+          DECYZJE.map((d, i) =>
+            d.status === 'ESCALATED' ? { ...d, escalationStep: i < 2 ? 3 : 1 } : d
+          )
+        )
       )
     );
     zamontuj('decyzje');
@@ -297,21 +310,19 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
   it('filtr „Po terminie" liczy TYLKO decyzje nierozstrzygnięte (P16/R3)', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : [
-              ...DECYZJE,
-              // Rozstrzygnięta PO TERMINIE — jest w rejestrze, ale nie jest
-              // już zaległością: preset „Po terminie" ma jej NIE liczyć.
-              {
-                id: 'done-late',
-                title: 'Decyzja rozstrzygnięta po terminie',
-                status: 'APPROVED',
-                dueDate: dzien(-30),
-                isOverdue: true,
-                daysOverdue: 30,
-              },
-            ]
+        odpowiedz(sciezka, [
+          ...DECYZJE,
+          // Rozstrzygnięta PO TERMINIE — jest w rejestrze, ale nie jest już
+          // zaległością: filtr „Po terminie" ma jej NIE liczyć.
+          {
+            id: 'done-late',
+            title: 'Decyzja rozstrzygnięta po terminie',
+            status: 'APPROVED',
+            dueDate: dzien(-30),
+            isOverdue: true,
+            daysOverdue: 30,
+          },
+        ])
       )
     );
     const { getByTestId } = zamontujZMenu2('decyzje');

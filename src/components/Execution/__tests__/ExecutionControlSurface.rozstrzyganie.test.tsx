@@ -172,6 +172,17 @@ const Gospodarz: React.FC = () => {
 const zamontuj = () => render(<Gospodarz />);
 
 const otworzFormularz = async () => {
+  /*
+    [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: CTA „Nowa decyzja" widzi tylko
+    ten, kto może decyzję utworzyć. ZMIERZONE 07.09 na koncie MEMBER
+    (`anna.kowalska@dbr77.com`, API 4161): `POST /api/decisions` odsyła
+    **403 Permission denied** (`approve_changes`) — więc przed R5 ten blok
+    testował formularz pod przyciskiem, który dla MEMBER-a i tak nie mógł
+    zadziałać. Reguła (`canDecide`) jest ta sama, którą R3 zastosował do akcji
+    rozstrzygających; sam formularz i jego payload sprawdzamy dalej BEZ ZMIAN,
+    tyle że rolą, która ma do niego prawo.
+  */
+  uzytkownik.role = 'ADMIN';
   zamontuj();
   await waitFor(() => expect(screen.getByText('Moja decyzja po terminie')).toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: 'Nowa decyzja' }));

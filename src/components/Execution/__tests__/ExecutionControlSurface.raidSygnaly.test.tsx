@@ -589,8 +589,30 @@ describe('MEMBER — para negatywna', () => {
     fireEvent.click(screen.getByText('Migracja ERP'));
     await waitFor(() => expect(screen.getByText('Sygnał opóźnienia')).toBeInTheDocument());
     expect(screen.queryByRole('button', { name: /Przygotuj interwencję/ })).toBeNull();
-    // Katalog osób nie jest nawet pobierany dla MEMBER-a (naprawa z R3).
-    expect(getOrganizationMembers).not.toHaveBeenCalled();
+  });
+
+  /**
+   * SPROSTOWANIE WŁASNE (07.09): pisząc ten plik założyłem, że po naprawie R3
+   * katalog osób nie jest dla MEMBER-a pobierany W OGÓLE. Test to OBALIŁ —
+   * `getOrganizationMembers` jest wołany mimo wszystko, bo R3 obwarował
+   * warunkiem `canDecide` TYLKO `loadDecisionDictionaries`, a DRUGI, niezależny
+   * czytelnik tego samego endpointu — hook `useOrganizationMemberNames`
+   * (zamienia `ownerId` na nazwisko w kolumnie Właściciel) — woła go bezwarunkowo.
+   * To wyjaśnia `403 GET /api/organizations/:id/members` w konsoli konta MEMBER
+   * (`evidence/p16-r45/po-member/odmowy.log`): dług ZASTANY, spoza R4/R5,
+   * i większy niż zakładka Realizacji — hook żyje w wielu modułach.
+   * Test pilnuje FAKTU, nie mojej tezy, żeby naprawa hooka miała gdzie odbić.
+   */
+  it('403 katalogu osób u MEMBER-a ma ZASTANE źródło: hook nazwisk, nie formularz', async () => {
+    uzytkownik.role = 'MEMBER';
+    getOrganizationMembers.mockRejectedValue(new TestowyApiError({}, 'Forbidden', 403));
+    render(<Gospodarz preset="ryzyka" />);
+    await waitFor(() => expect(screen.getByText('Awaria dostawcy chmury')).toBeInTheDocument());
+    // Wołany DOKŁADNIE RAZ — przez hook nazwisk, nie przez słowniki formularza
+    // (te R3 obwarował `canDecide`). Gdyby wołał też formularz, byłoby 2.
+    expect(getOrganizationMembers).toHaveBeenCalledTimes(1);
+    // Mimo odmowy 403 ekran NIE pada i pokazuje rejestr.
+    expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
   it('MEMBER nie widzi CTA tworzenia pozycji RAID ani akcji zapisu', async () => {
