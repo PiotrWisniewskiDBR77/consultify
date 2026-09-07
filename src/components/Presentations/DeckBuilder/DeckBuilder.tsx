@@ -22,9 +22,11 @@ import {
   ArtifactMenu3,
 } from '@/components/shared/ArtifactStudio';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 import { ErrorState as SpecAErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
@@ -1807,17 +1809,48 @@ export const DeckBuilder: React.FC = () => {
           }}
           leftRailTitle={t('presentations.builder.structure', 'Structure')}
           menu3Slot={
-            <ArtifactMenu3
-              registry={presentationArtifactCommands}
-              context={presentationArtifactCommandContext}
-              resolveLabel={(label) => label}
-              // 9 miejsc: Cofnij · Ponów · Nowy slajd · Pole tekstowe · Obraz ·
-              // Motyw · Duplikuj slajd · Zablokuj · Usuń slajd. Domyślne 7
-              // wypychało operacje na slajdzie pod „Więcej", a to one są
-              // odpowiedzią na „nie widzę, gdzie mogę edytować". Pasek jest
-              // pełnej szerokości ekranu (siedzi nad kolumnami powłoki).
-              maxVisible={9}
-              ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
+            <NModeMenu2
+              isPolish={i18n.language?.startsWith('pl')}
+              sectionsMenu={
+                <ArtifactMenu3
+                  registry={presentationArtifactCommands}
+                  context={presentationArtifactCommandContext}
+                  resolveLabel={(label) => label}
+                  maxVisible={9}
+                  ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
+                />
+              }
+              aiButton={
+                <PracujZAI
+                  isPolish={i18n.language?.startsWith('pl')}
+                  onAnalizuj={() => setQualityGatesOpen(true)}
+                  aktywnaSekcja={activeCard?.card_id ?? null}
+                  kontekstArtefaktu={{ title: deck.title, type: 'presentation' }}
+                  moznaEdytowac
+                  uzupelnijSekcje={{
+                    rodzaj: 'wlasnaPropozycja',
+                    uruchom: () => handleTeresaDeckIntent(
+                      i18n.language?.startsWith('pl')
+                        ? `Przygotuj propozycję uzupełnienia slajdu: ${activeCard?.title || ''}`
+                        : `Prepare a proposal to complete the slide: ${activeCard?.title || ''}`
+                    ),
+                    opis: i18n.language?.startsWith('pl')
+                      ? 'Zmiana pojawi się jako propozycja do zaakceptowania lub odrzucenia.'
+                      : 'The change appears as a proposal to accept or reject.',
+                  }}
+                  uzupelnijDokument={{
+                    rodzaj: 'wlasnaPropozycja',
+                    uruchom: () => handleTeresaDeckIntent(
+                      i18n.language?.startsWith('pl')
+                        ? 'Przygotuj propozycję uzupełnienia całej prezentacji.'
+                        : 'Prepare a proposal to complete the whole presentation.'
+                    ),
+                    opis: i18n.language?.startsWith('pl')
+                      ? 'Zmiana całej prezentacji pojawi się jako propozycja do zatwierdzenia.'
+                      : 'The whole-deck change appears as a proposal for approval.',
+                  }}
+                />
+              }
             />
           }
           reviewPanel={
@@ -2005,10 +2038,6 @@ export const DeckBuilder: React.FC = () => {
               currentIndex={activeCardIndex}
               totalCards={deck.cards.length}
               cardTitle={activeCard?.title || ''}
-              onQuickEdits={
-                // Jedno wejscie w obu torach (2026-09-01) — glowne okno Teresy.
-                openGlobalTeresa
-              }
               onToggleNotes={() => setShowNotes((v) => !v)}
               notesOpen={showNotes}
             />
@@ -2380,7 +2409,6 @@ export const DeckBuilder: React.FC = () => {
           currentIndex={activeCardIndex}
           totalCards={deck.cards.length}
           cardTitle={activeCard?.title || ''}
-          onQuickEdits={openGlobalTeresa}
           onToggleNotes={() => setShowNotes((v) => !v)}
           notesOpen={showNotes}
         />

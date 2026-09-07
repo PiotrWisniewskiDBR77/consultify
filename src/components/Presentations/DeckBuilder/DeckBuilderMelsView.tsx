@@ -47,6 +47,7 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 
 import {
   buildDeckBuilderTopBarChips,
@@ -434,13 +435,6 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       </button>
     ) : null;
 
-  const detailRow = (label: string, value: React.ReactNode): React.ReactNode => (
-    <div key={label} className="flex items-baseline justify-between gap-3 py-1">
-      <dt className="shrink-0 text-xs text-c-text-muted">{label}</dt>
-      <dd className="min-w-0 truncate text-right text-xs font-medium text-c-text">{value}</dd>
-    </div>
-  );
-
   const artifactRightPanel = useMemo((): React.ReactNode => {
     if (!artifactStudioMode) return undefined;
 
@@ -475,20 +469,18 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
 
     const propertyRows = artifactPanelMeta
       ? [
-          detailRow(L('Slajdy', 'Slides'), artifactPanelMeta.slideCount),
+          { id: 'slides', label: L('Slajdy', 'Slides'), value: artifactPanelMeta.slideCount },
           artifactPanelMeta.confidentiality
-            ? detailRow(
-                L('Klasyfikacja', 'Classification'),
+            ? { id: 'classification', label: L('Klasyfikacja', 'Classification'), value:
                 artifactPanelMeta.confidentiality === 'public'
                   ? L('Publiczna', 'Public')
                   : artifactPanelMeta.confidentiality === 'confidential'
                     ? L('Poufna', 'Confidential')
                     : L('Wewnętrzna', 'Internal')
-              )
+              }
             : null,
           artifactPanelMeta.status
-            ? detailRow(
-                L('Status', 'Status'),
+            ? { id: 'status', label: L('Status', 'Status'), value:
                 artifactPanelMeta.status === 'in_review'
                   ? L('Do przeglądu', 'In review')
                   : artifactPanelMeta.status === 'approved'
@@ -498,29 +490,27 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
                       : artifactPanelMeta.status === 'ready'
                         ? L('Gotowa', 'Ready')
                         : L('Szkic', 'Draft')
-              )
+              }
             : null,
           artifactPanelMeta.colorSetId
-            ? detailRow(
-                L('Motyw', 'Theme'),
+            ? { id: 'theme', label: L('Motyw', 'Theme'), value:
                 artifactPanelMeta.colorSetId === 'brand_kit'
                   ? L('Identyfikacja marki', 'Brand kit')
                   : (CURATED_COLOR_SETS.find((set) => set.id === artifactPanelMeta.colorSetId)
                       ?.name ?? artifactPanelMeta.colorSetId.replace(/_/g, ' '))
-              )
+              }
             : null,
           typeof artifactPanelMeta.version === 'number'
-            ? detailRow(L('Wersja', 'Version'), artifactPanelMeta.version)
+            ? { id: 'version', label: L('Wersja', 'Version'), value: artifactPanelMeta.version }
             : null,
           typeof artifactPanelMeta.lockedSlideCount === 'number' &&
           artifactPanelMeta.lockedSlideCount > 0
-            ? detailRow(
-                L('Edytowane ręcznie', 'Hand-edited'),
+            ? { id: 'manual', label: L('Edytowane ręcznie', 'Hand-edited'), value:
                 L(
                   `${artifactPanelMeta.lockedSlideCount} z ${artifactPanelMeta.slideCount}`,
                   `${artifactPanelMeta.lockedSlideCount} of ${artifactPanelMeta.slideCount}`
                 )
-              )
+              }
             : null,
         ].filter(Boolean)
       : [];
@@ -541,7 +531,13 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
         label: L('Właściwości', 'Properties'),
         icon: SlidersHorizontal,
         defaultOpen: true,
-        children: <dl className="divide-y divide-c-border-subtle">{propertyRows}</dl>,
+        children: (
+          <ArtifactPropertiesTable
+            rows={propertyRows}
+            propertyLabel={L('Właściwość', 'Property')}
+            valueLabel={L('Wartość', 'Value')}
+          />
+        ),
       };
     }
     if (rightRailPanels.relations) {
