@@ -1,0 +1,17 @@
+PRZED (liczba wierszy): 65
+PO   (liczba wierszy): 65
+--- relation_type PO migracji ---
+CAPACITY_SCENARIO_PLAN                 2 source_version 1..2
+INITIATIVE_ANALYSIS_DECISION           5 source_version 36..36
+INITIATIVE_DEFINITION_DECISION         5 source_version 33..33
+INITIATIVE_PORTFOLIO_DECISION          5 source_version 38..38
+PLAN_SCENARIO_MEMBER                   15 source_version 1..3
+PLAN_SCENARIO_PORTFOLIO                4 source_version 1..3
+PORTFOLIO_SCENARIO_MEMBER              20 source_version 1..4
+PORTFOLIO_SCENARIO_VERSION             4 source_version 1..4
+SOURCE_REGISTRATION                    5 source_version 1..1
+--- indeksy PO migracji ---
+CREATE INDEX idx_ie_relations_target ON public.ie_aggregate_relations USING btree (organization_id, target_type, target_id)
+CREATE UNIQUE INDEX ie_aggregate_relations_identity_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, source_type, source_id, source_version, target_type, target_id)
+CREATE UNIQUE INDEX ie_aggregate_relations_singleton_source_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, source_type, source_id) WHERE ((relation_type = ANY (ARRAY['INITIATIVE_EXECUTION_CASE'::text, 'ACCEPTED_CLASSIC_ADOPTION'::text, 'TERESA_CHAT_DRAFT_ADOPTION'::text, 'RESOURCE_COMMITMENT_CAPACITY'::text])) OR (relation_type ~~ 'SOURCE\_%'::text))
+CREATE UNIQUE INDEX ie_aggregate_relations_singleton_target_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, target_type, target_id) WHERE ((relation_type = ANY (ARRAY['INITIATIVE_EXECUTION_CASE'::text, 'ACCEPTED_CLASSIC_ADOPTION'::text, 'TERESA_CHAT_DRAFT_ADOPTION'::text, 'RESOURCE_COMMITMENT_CAPACITY'::text])) OR (relation_type ~~ 'SOURCE\_%'::text))

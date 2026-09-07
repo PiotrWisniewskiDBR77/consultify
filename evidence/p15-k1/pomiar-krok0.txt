@@ -1,0 +1,48 @@
+# P15-K1 KROK 0 — POMIAR (07.09, kopia consultify_fable -> consultify_p15k1)
+
+## Stary klucz (przed zmiana), \d ie_aggregate_relations
+PRIMARY KEY (organization_id, relation_type, source_type, source_id)
+UNIQUE CONSTRAINT ie_aggregate_relations_organization_id_relation_type_target_key
+       (organization_id, relation_type, target_type, target_id)
+INDEX idx_ie_relations_target (organization_id, target_type, target_id)
+CHECK ie_aggregate_relations_source_version_check (source_version >= 1)
+KOLUMNY: organization_id, relation_type, source_type, source_id, source_version,
+         target_type, target_id, payload_json, created_at
+         -> source_id i source_version JUZ ISTNIALY (migracja 932), wiec D4 nie
+            wymagal nowych kolumn, tylko przeniesienia tozsamosci z nazwy do nich.
+
+## Liczba wierszy na kopii przed zmiana: 65
+
+## Wszystkie relation_type wstawiane przez UoW (grep claimRelation w server/src,
+## 31 wywolan w 26 plikach) — 8 nazw bylo juz stalych, 23 niosly tozsamosc:
+STALE (bez tozsamosci):
+  SOURCE_REGISTRATION · INITIATIVE_EXECUTION_CASE · ACCEPTED_CLASSIC_ADOPTION
+  TERESA_CHAT_DRAFT_ADOPTION · RESOURCE_COMMITMENT_CAPACITY · SOURCE_<dyspozycja>
+Z TOZSAMOSCIA/WERSJA W NAZWIE (naprawione):
+  PLAN_SCENARIO_PORTFOLIO:<v> · PLAN_SCENARIO_MEMBER:<v>:<inicjatywa>
+  PORTFOLIO_SCENARIO_VERSION:<v> · PORTFOLIO_SCENARIO_MEMBER:<v>:<inicjatywa>
+  CAPACITY_SCENARIO_PLAN:<v> · INITIATIVE_DEFINITION_DECISION:<id>
+  INITIATIVE_ANALYSIS_DECISION:<id> · INITIATIVE_PORTFOLIO_DECISION:<id>
+  INITIATIVE_SCHEDULE_DECISION:<id> · INITIATIVE_HANDOFF_ACCEPTANCE:<id>
+  INITIATIVE_HANDOFF_PACKAGE:<id> · INITIATIVE_CLOSURE_CASE:<id>
+  INITIATIVE_EFFECTIVENESS_SNAPSHOT:<id> · EFFECTIVENESS_CLOSURE:<id>
+  INITIATIVE_ARCHIVE:<id> · GATE_SIGNOFF:<id> · EXECUTION_CASE_MILESTONE:<id>
+  MILESTONE_TASK:<kamien>:<zadanie> · EXECUTION_CASE_TASK:<id>
+  EXECUTION_CASE_DECISION:<id> · EXECUTION_TASK_ALLOCATION:<id>
+  DEFINITION_REMEDIATION_TASK:<id> · DEFINITION_REMEDIATION_DECISION:<id>
+  DELIVERY_BENEFITS_PACK:<id> · AI_TRUTH_CARD:<id> · MATERIAL_CHANGE_TARGET:<id>
+  INTERVENTION_SIGNAL:<id> · PLAN_INTERVENTION:<id> · RESULTS_OBSERVATION:<id>
+  REPORT_REFRESH:<id> · REPORT_FOLLOW_UP:<id>
+
+## Odtworzenie 500 (test na realnym PG, PRZED zmiana) — RED:
+vitest run src/domain/initiatives-execution/__tests__/planScenario.relationIdentity.realdb.test.ts
+  x zaklada DWA plany na tej samej wersji portfela i zapisuje obie relacje
+  x powtorzony CREATE z tym samym clientRequestId nie duplikuje relacji
+  error: duplicate key value violates unique constraint
+         "ie_aggregate_relations_organization_id_relation_type_target_key"
+  (planScenario.ts:247 -> postgresMaterialCommandUnitOfWork.ts:601)
+  Tests 2 failed (2)
+Uwaga: drugi test padal na PIERWSZYM planie, bo relacja
+PLAN_SCENARIO_MEMBER:1:<inicjatywa> -> ta sama inicjatywa byla juz zajeta przez
+plan z pierwszego testu. Czyli blokada dotyczyla nie tylko drugiego planu na tym
+samym portfelu, ale KAZDEGO drugiego planu obejmujacego te sama inicjatywe.
