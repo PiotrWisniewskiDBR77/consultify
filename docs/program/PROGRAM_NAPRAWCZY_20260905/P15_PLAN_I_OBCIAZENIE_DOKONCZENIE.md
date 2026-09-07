@@ -106,6 +106,30 @@ Ekranów: 2 zakładki + 2 karty N. Modułów zamrożonych: 05_INITIATIVES.
    wybór „Przesuń kolejność" = nowa propozycja analizy planu z przesunięciem → plan v+1 do zatwierdzenia w karcie planu.
 4. Lista: „Plan źródłowy" = nazwa planu + wersja.
 
+## 4.7 KOREKTA PO K0 (pomiar Sonnet 07.09 20:20, kopia bazy consultify_fable) — zastępuje D2/D3 w tym, co niżej
+
+Zmierzone: `project_members` = 0 wierszy w CAŁEJ bazie; `users.job_title`/`title` = 0/31 wypełnione; resource-plan czyta
+rolę z `COALESCE(u.job_title, u.title)` (`workloadCapacityService.ts:694`), nie z `project_members`; `required_capacity_fte`
+= 0 dla 72/72 inicjatyw; `competencies_required` puste 72/72; `initiative_dependencies` i `task_dependencies` = 0 wierszy;
+daty planowane = 28/28 kandydatów (APPROVED 12 + PENDING_APPROVAL 16); `estimated_duration_weeks` = 0/28.
+5 agregatów `ie/initiative` to te same id, co w `initiatives` (4 APPROVED, 1 IN_EXECUTION) — most istnieje tylko dla nich.
+Istniejący most `adoptions/accepted-classic` wymaga wiersza w `project_members` (422 `INITIATIVE_OWNER_INELIGIBLE` na żywo)
+i rodowodu SWOT (0/72) — nieużywalny dla D1.
+
+**D2' (rola i podaż).** Rola osoby = stanowisko `users.job_title` (pole, które JUŻ czyta arkusz Zasobów), edytowane w
+Zespole/profilu; K5 sprawdza, czy UI edycji istnieje, w braku — inline w arkuszu analizy. Podaż roli w okresie =
+suma dostępności osób z tym stanowiskiem z resource-plan (h/tydzień → FTE = h/40) + ręczna korekta („ręcznie").
+Osoby bez stanowiska = wiersz „Bez stanowiska" (jawne, nie zero).
+**D3' (popyt).** Popyt wpisuje PMO w planie: okno inicjatywy × rola × FTE (`windows[].roleDemand[{role, fte}]`),
+z podpowiedzią z `required_capacity_fte`, gdy > 0. Analiza sumuje popyt per rola per okres z opublikowanego planu.
+Brak wpisu = „Nieznane". Zależności: wpisywane w planie (okno → „po inicjatywie X"), zapisywane do
+`initiative_dependencies` (tabela istnieje, 0 wierszy) — solver już je czyta ze snapshotu.
+**D1' (most).** Nowy generyczny most: „Nowy plan" / dodanie inicjatywy do planu tworzy agregat `ie/initiative`
+(APPROVED_BACKLOG) dla wskazanej inicjatywy modułu bez warunku `project_members` i bez rodowodu SWOT, plus portfel roboczy
+automatyczny. Kwalifikacja: status APPROVED (domyślnie) + PENDING_APPROVAL jako „warunkowe".
+**Warunek odbioru na danych DBR77:** przed odbiorem właściciel (lub nadzorca z jego zgodą) wpisuje stanowiska kilku osobom
+i popyt na 5 inicjatywach — inaczej arkusz uczciwie pokaże „Nieznane" zamiast luki.
+
 ## 5. Kroki wykonania (kolejność wymuszona zależnościami)
 
 | # | Krok | Pliki | Kto | Rozmiar | Zależy od |
