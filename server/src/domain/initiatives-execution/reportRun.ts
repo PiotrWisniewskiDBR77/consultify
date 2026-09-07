@@ -130,7 +130,7 @@ export async function createReportRun(
     if (p.parentRunRef)
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `REPORT_REFRESH:${p.parentRunRef.reportRunId}`,
+        relationType: 'REPORT_REFRESH',
         sourceType: 'report_run',
         sourceId: p.parentRunRef.reportRunId,
         sourceVersion: p.parentRunRef.version,
@@ -280,7 +280,7 @@ export async function transitionReportRun(
         );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `REPORT_FOLLOW_UP:${p.taskId}`,
+        relationType: 'REPORT_FOLLOW_UP',
         sourceType: 'report_run',
         sourceId: r.reportRunId,
         sourceVersion: envelope.expectedVersion,

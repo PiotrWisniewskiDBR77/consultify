@@ -92,6 +92,7 @@ import {
 } from '../../domain/initiatives-execution/materialChange.js';
 import {
   MaterialCommandConflictError,
+  MaterialCommandRuleError,
   MaterialCommandValidationError,
 } from '../../domain/initiatives-execution/materialCommand.js';
 import {
@@ -162,6 +163,46 @@ import {
   resolveEffectiveAccess,
 } from '../../services/effectiveAccessService.js';
 import { ControlKpiReadModel } from '../../services/executionControl/controlKpiReadModel.js';
+
+/**
+ * P15-K1 (DEC-421): komunikat domeny -> KOD REGULY dla ekranu.
+ *
+ * POMIAR 07.09: drugi plan na tej samej wersji portfela konczyl sie HTTP 500
+ * `INITIATIVES_EXECUTION_RUNTIME_FAILED`, a bledy walidacji planu wracaly jako
+ * bezimienne 400 `COMMAND_VALIDATION_FAILED`. Uzytkownik widzial „Operacja nie
+ * powiodla sie" bez powodu. Klucz mapy to DOKLADNY komunikat rzucany w domenie
+ * (`planScenario.ts`, `capacityScenario.ts`), wartosc to kod reguly, ktory ma
+ * odpowiednik w `initiatives.planScenario.errors.*` (pl + en).
+ */
+export const DOMAIN_RULE_BY_MESSAGE: Record<string, { rule: string; status: 400 | 409 }> = {
+  'Plan Scenario already exists': { rule: 'PLAN_SCENARIO_DUPLICATE', status: 409 },
+  'Exact published Portfolio Scenario not found': {
+    rule: 'PORTFOLIO_VERSION_MISMATCH',
+    status: 400,
+  },
+  'Published Portfolio Scenario snapshot is stale': {
+    rule: 'PORTFOLIO_VERSION_MISMATCH',
+    status: 409,
+  },
+  'Plan membership is not approved by Portfolio Scenario': {
+    rule: 'PLAN_MEMBER_NOT_APPROVED',
+    status: 400,
+  },
+  'Only exact APPROVED_BACKLOG Initiative snapshots may be planned': {
+    rule: 'INITIATIVE_SNAPSHOT_STALE',
+    status: 400,
+  },
+  'Explicit conflict publication confirmation is required': {
+    rule: 'PLAN_PUBLISH_CONFIRMATION_REQUIRED',
+    status: 400,
+  },
+  'Exact published Plan Scenario not found': { rule: 'PLAN_VERSION_MISMATCH', status: 400 },
+  'Published Plan Scenario snapshot is stale': { rule: 'PLAN_VERSION_MISMATCH', status: 409 },
+};
+
+function respondWithRule(res: Response, status: 400 | 409, rule: string): void {
+  res.status(status).json({ error: { code: rule, rule }, code: rule, rule });
+}
 
 const RegisterSchema = z.object({
   initiativeId: z.string().min(1).max(255),
@@ -6735,7 +6776,18 @@ export function createInitiativesExecutionRuntimeRouter(
   );
 
   router.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    // P15-K1 (DEC-421): naruszenie NAZWANEJ reguly domenowej wraca z kodem reguly,
+    // zeby ekran mial co pokazac. 500 zostaje wylacznie dla realnych awarii.
+    if (error instanceof MaterialCommandRuleError) {
+      respondWithRule(res, error.httpStatus, error.rule);
+      return;
+    }
     if (error instanceof MaterialCommandConflictError) {
+      const mapped = DOMAIN_RULE_BY_MESSAGE[error.message];
+      if (mapped) {
+        respondWithRule(res, mapped.status, mapped.rule);
+        return;
+      }
       res.status(409).json({
         error: {
           code: 'VERSION_OR_IDEMPOTENCY_CONFLICT',
@@ -6746,6 +6798,11 @@ export function createInitiativesExecutionRuntimeRouter(
       return;
     }
     if (error instanceof MaterialCommandValidationError) {
+      const mapped = DOMAIN_RULE_BY_MESSAGE[error.message];
+      if (mapped) {
+        respondWithRule(res, mapped.status, mapped.rule);
+        return;
+      }
       if (error.message.includes('Authorized signer role or exact delegation proof required')) {
         res.status(403).json({ error: { code: 'GATE_SIGNOFF_AUTHORITY_REQUIRED' } });
         return;

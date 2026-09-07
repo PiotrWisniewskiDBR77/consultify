@@ -132,7 +132,7 @@ export async function createDefinitionRemediationWork(
     );
     await transaction.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `DEFINITION_REMEDIATION_TASK:${findingId}`,
+      relationType: 'DEFINITION_REMEDIATION_TASK',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,
@@ -142,7 +142,7 @@ export async function createDefinitionRemediationWork(
     });
     await transaction.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `DEFINITION_REMEDIATION_DECISION:${findingId}`,
+      relationType: 'DEFINITION_REMEDIATION_DECISION',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,

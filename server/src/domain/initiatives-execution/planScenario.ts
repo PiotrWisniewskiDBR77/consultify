@@ -246,7 +246,7 @@ export async function mutatePlanScenario(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `PLAN_SCENARIO_PORTFOLIO:${v}`,
+      relationType: 'PLAN_SCENARIO_PORTFOLIO',
       sourceType: 'plan_scenario',
       sourceId: envelope.aggregateId,
       sourceVersion: v,
@@ -257,7 +257,7 @@ export async function mutatePlanScenario(
     for (const w of next.windows)
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `PLAN_SCENARIO_MEMBER:${v}:${w.initiativeId}`,
+        relationType: 'PLAN_SCENARIO_MEMBER',
         sourceType: 'plan_scenario',
         sourceId: envelope.aggregateId,
         sourceVersion: v,

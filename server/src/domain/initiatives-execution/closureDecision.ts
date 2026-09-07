@@ -153,7 +153,7 @@ export async function requestClosureCase(
     };
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_CLOSURE_CASE:${envelope.aggregateId}`,
+      relationType: 'INITIATIVE_CLOSURE_CASE',
       sourceType: 'initiative',
       sourceId: p.initiativeId,
       sourceVersion: initiative.version,

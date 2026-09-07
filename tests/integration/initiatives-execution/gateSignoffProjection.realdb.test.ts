@@ -88,7 +88,7 @@ real('GateSignoff My Work projection realDB', () => {
     await pool.query(
       `INSERT INTO ie_aggregate_relations
        (organization_id,relation_type,source_type,source_id,source_version,target_type,target_id,payload_json)
-       VALUES($1,'INITIATIVE_DEFINITION_DECISION:decision-a','initiative','initiative-a',5,'decision','decision-a','{}')`,
+       VALUES($1,'INITIATIVE_DEFINITION_DECISION','initiative','initiative-a',5,'decision','decision-a','{}')`,
       [org]
     );
     await pool.query(
@@ -200,7 +200,7 @@ real('GateSignoff My Work projection realDB', () => {
     await pool.query(
       `INSERT INTO ie_aggregate_relations
        (organization_id,relation_type,source_type,source_id,source_version,target_type,target_id,payload_json)
-       VALUES($1,'INITIATIVE_CLOSURE_CASE:closure-a','initiative','initiative-a',5,'closure_case','closure-a','{}')`,
+       VALUES($1,'INITIATIVE_CLOSURE_CASE','initiative','initiative-a',5,'closure_case','closure-a','{}')`,
       [org]
     );
     await pool.query(

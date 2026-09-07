@@ -207,7 +207,7 @@ export async function mutateCapacityScenario(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `CAPACITY_SCENARIO_PLAN:${v}`,
+      relationType: 'CAPACITY_SCENARIO_PLAN',
       sourceType: 'capacity_scenario',
       sourceId: envelope.aggregateId,
       sourceVersion: v,

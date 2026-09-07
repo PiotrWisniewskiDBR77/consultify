@@ -143,7 +143,7 @@ export async function mutatePortfolioScenario(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `PORTFOLIO_SCENARIO_VERSION:${nextVersion}`,
+      relationType: 'PORTFOLIO_SCENARIO_VERSION',
       sourceType: 'portfolio_scenario',
       sourceId: envelope.aggregateId,
       sourceVersion: nextVersion,
@@ -154,7 +154,7 @@ export async function mutatePortfolioScenario(
     for (const membership of next.memberships)
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `PORTFOLIO_SCENARIO_MEMBER:${nextVersion}:${membership.initiativeId}`,
+        relationType: 'PORTFOLIO_SCENARIO_MEMBER',
         sourceType: 'portfolio_scenario',
         sourceId: envelope.aggregateId,
         sourceVersion: nextVersion,

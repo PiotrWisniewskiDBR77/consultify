@@ -169,7 +169,7 @@ export async function requestDefinitionDecision(
     );
     await transaction.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_DEFINITION_DECISION:${decision.decisionId}`,
+      relationType: 'INITIATIVE_DEFINITION_DECISION',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,

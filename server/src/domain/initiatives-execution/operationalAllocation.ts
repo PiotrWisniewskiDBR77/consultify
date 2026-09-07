@@ -205,7 +205,7 @@ export async function proposeOperationalAllocation(
     delete (a as any).expectedTaskVersion;
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `EXECUTION_TASK_ALLOCATION:${a.allocationId}`,
+      relationType: 'EXECUTION_TASK_ALLOCATION',
       sourceType: 'execution_task',
       sourceId: a.taskId,
       sourceVersion: p.expectedTaskVersion + 1,

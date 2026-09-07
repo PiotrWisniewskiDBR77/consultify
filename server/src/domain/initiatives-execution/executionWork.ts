@@ -163,7 +163,7 @@ export async function prepareExecutionTaskCreation(
   task.blastRadius = await recomputeTaskMilestones(tx, envelope.organizationId, task);
   await tx.claimRelation({
     organizationId: envelope.organizationId,
-    relationType: `EXECUTION_CASE_TASK:${task.taskId}`,
+    relationType: 'EXECUTION_CASE_TASK',
     sourceType: 'execution_case',
     sourceId: task.executionCaseId,
     sourceVersion: p.expectedCaseVersion + 1,
@@ -372,7 +372,7 @@ export async function createExecutionDecision(
     delete (d as any).expectedCaseVersion;
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `EXECUTION_CASE_DECISION:${d.decisionId}`,
+      relationType: 'EXECUTION_CASE_DECISION',
       sourceType: 'execution_case',
       sourceId: d.executionCaseId,
       sourceVersion: p.expectedCaseVersion + 1,
@@ -511,7 +511,7 @@ export async function decideExecutionDecision(
       );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `EXECUTION_CASE_TASK:${task.taskId}`,
+        relationType: 'EXECUTION_CASE_TASK',
         sourceType: 'execution_case',
         sourceId: d.executionCaseId,
         sourceVersion: envelope.payload.expectedCaseVersion + 1,
