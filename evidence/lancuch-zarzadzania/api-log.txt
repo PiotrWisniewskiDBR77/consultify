@@ -1,0 +1,71 @@
+2026-09-07T15:21:28.360Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"DRAFT","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN"],"transitions":[{"targetStatus":"PENDING_APPROVAL","gate":"SUBMIT_FOR_REVIEW","requiredRoles":["CONSULTANT"],"roleAllowed":true,"conditionSatisfied":false,"block
+
+2026-09-07T15:21:38.586Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"DRAFT","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"PENDING_APPROVAL","gate":"SUBMIT_FOR_REVIEW","requiredRoles":["CONSULTANT"],"roleAllowed":tr
+
+2026-09-07T15:21:41.794Z PATCH 200 /api/initiatives/proba-lancuch-20260907/status
+    {"id":"proba-lancuch-20260907","status":"PENDING_APPROVAL","previousStatus":"DRAFT","gate":"SUBMIT_FOR_REVIEW","message":"Status updated"}
+
+2026-09-07T15:21:41.869Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR","PORTFOLIO_OWNER"],
+
+2026-09-07T15:21:51.284Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR","PORTFOLIO_OWNER"],
+
+2026-09-07T15:22:02.130Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR","PORTFOLIO_OWNER"],
+
+2026-09-07T15:22:05.349Z PATCH 200 /api/initiatives/proba-lancuch-20260907/status
+    {"id":"proba-lancuch-20260907","status":"APPROVED","previousStatus":"PENDING_APPROVAL","gate":"APPROVE","message":"Status updated"}
+
+2026-09-07T15:22:05.436Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"APPROVED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"IN_EXECUTION","gate":"START","requiredRoles":["PMO"],"roleAllowed":true,"conditionSatisfi
+
+2026-09-07T15:22:14.847Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"APPROVED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"IN_EXECUTION","gate":"START","requiredRoles":["PMO"],"roleAllowed":true,"conditionSatisfi
+
+2026-09-07T15:22:25.668Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"APPROVED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"IN_EXECUTION","gate":"START","requiredRoles":["PMO"],"roleAllowed":true,"conditionSatisfi
+
+2026-09-07T15:22:28.849Z PATCH 200 /api/initiatives/proba-lancuch-20260907/status
+    {"id":"proba-lancuch-20260907","status":"IN_EXECUTION","previousStatus":"APPROVED","gate":"START","message":"Status updated"}
+
+2026-09-07T15:22:28.967Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tr
+
+2026-09-07T15:22:38.334Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tr
+
+2026-09-07T15:22:46.800Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tr
+
+2026-09-07T15:22:51.913Z POST 200 /api/initiatives/proba-lancuch-20260907/lifecycle-flag
+    {"id":"proba-lancuch-20260907","operation":"HOLD","onHold":true,"message":"Lifecycle flag updated"}
+
+2026-09-07T15:22:52.043Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":true,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tru
+
+2026-09-07T15:23:02.353Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":true,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tru
+
+2026-09-07T15:23:05.427Z POST 200 /api/initiatives/proba-lancuch-20260907/lifecycle-flag
+    {"id":"proba-lancuch-20260907","operation":"RESUME","onHold":false,"message":"Lifecycle flag updated"}
+
+2026-09-07T15:23:05.542Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tr
+
+2026-09-07T15:23:15.865Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":tr
+
+2026-09-07T15:23:19.000Z PATCH 200 /api/initiatives/proba-lancuch-20260907/status
+    {"id":"proba-lancuch-20260907","status":"CLOSED","previousStatus":"IN_EXECUTION","gate":"COMPLETE","message":"Status updated"}
+
+2026-09-07T15:23:19.134Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"CLOSED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[],"flags":[{"operation":"HOLD","gate":"BLOCK","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,
+
+2026-09-07T15:23:27.355Z GET 200 /api/initiatives/proba-lancuch-20260907/transition-preflight
+    {"initiativeId":"proba-lancuch-20260907","currentStatus":"CLOSED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[],"flags":[{"operation":"HOLD","gate":"BLOCK","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,
+
+2026-09-07T15:23:36.232Z GET 200 /api/initiatives/proba-lancuch-rola/transition-preflight
+    {"initiativeId":"proba-lancuch-rola","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":false,"effectiveRoles":[],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR","PORTFOLIO_OWNER"],"roleAllowed":false,"conditionSatisfied":false

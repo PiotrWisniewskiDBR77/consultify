@@ -1,0 +1,11 @@
+{
+  "nazwa": "14-zamknieta",
+  "opis": "Zakres \"Wszystkie\" -> wiersz zamknietej inicjatywy -> podglad: pill \"Zamknięta\", sekcja \"Etap inicjatywy\" bez przyciskow przejsc (status terminalny)",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "CLOSED",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:23:29.795Z"
+}

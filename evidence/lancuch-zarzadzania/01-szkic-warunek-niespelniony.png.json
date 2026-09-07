@@ -1,0 +1,11 @@
+{
+  "nazwa": "01-szkic-warunek-niespelniony",
+  "opis": "Inicjatywy -> wiersz -> \"Prześlij do zatwierdzenia\" nieaktywny, powod: karta niekompletna",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "DRAFT",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:21:31.298Z"
+}

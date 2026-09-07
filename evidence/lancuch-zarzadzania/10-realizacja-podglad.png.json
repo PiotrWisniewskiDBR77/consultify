@@ -1,0 +1,11 @@
+{
+  "nazwa": "10-realizacja-podglad",
+  "opis": "Ekran Realizacja -> wiersz -> podglad z \"Zamknij inicjatywę\" i \"Wstrzymaj realizację\"",
+  "url": "http://localhost:3160/execution?tab=list&view=table",
+  "statusWBazie": {
+    "status": "IN_EXECUTION",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:22:49.753Z"
+}

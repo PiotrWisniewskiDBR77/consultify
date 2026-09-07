@@ -1,0 +1,11 @@
+{
+  "nazwa": "09-w-realizacji",
+  "opis": "Po odswiezeniu, w Inicjatywach — status \"W realizacji\" utrzymal sie w bazie",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "IN_EXECUTION",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:22:41.285Z"
+}

@@ -1,0 +1,11 @@
+{
+  "nazwa": "12-wstrzymana",
+  "opis": "Po odswiezeniu — widac \"Wznów realizację\" (on_hold=true w bazie)",
+  "url": "http://localhost:3160/execution?tab=list&view=table",
+  "statusWBazie": {
+    "status": "IN_EXECUTION",
+    "onHold": true
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:23:05.291Z"
+}

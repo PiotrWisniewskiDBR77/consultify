@@ -1,0 +1,11 @@
+{
+  "nazwa": "13-wznowiona",
+  "opis": "Po odswiezeniu — \"Wznów realizację\" zadzialalo (on_hold=false)",
+  "url": "http://localhost:3160/execution?tab=list&view=table",
+  "statusWBazie": {
+    "status": "IN_EXECUTION",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:23:18.830Z"
+}

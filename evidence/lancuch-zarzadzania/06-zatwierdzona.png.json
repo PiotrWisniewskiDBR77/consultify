@@ -1,0 +1,11 @@
+{
+  "nazwa": "06-zatwierdzona",
+  "opis": "Po odswiezeniu — status \"Zatwierdzona\" utrzymal sie w bazie",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "APPROVED",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:22:17.811Z"
+}

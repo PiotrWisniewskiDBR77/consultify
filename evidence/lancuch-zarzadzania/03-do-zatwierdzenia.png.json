@@ -1,0 +1,11 @@
+{
+  "nazwa": "03-do-zatwierdzenia",
+  "opis": "Po odswiezeniu — status \"Do zatwierdzenia\" utrzymal sie w bazie",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "PENDING_APPROVAL",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:21:54.217Z"
+}

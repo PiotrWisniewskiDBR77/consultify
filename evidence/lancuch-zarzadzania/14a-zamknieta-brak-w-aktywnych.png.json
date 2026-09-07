@@ -1,0 +1,11 @@
+{
+  "nazwa": "14a-zamknieta-brak-w-aktywnych",
+  "opis": "Zakres \"Aktywne\" (domyslny filtr listy) — zamknieta inicjatywa NIE jest widoczna na liscie Inicjatyw",
+  "url": "http://localhost:3160/initiatives",
+  "statusWBazie": {
+    "status": "CLOSED",
+    "onHold": false
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T15:23:24.553Z"
+}
