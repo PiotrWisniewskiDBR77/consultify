@@ -43,10 +43,10 @@ function renderView(artifactStudioMode: boolean) {
 }
 
 describe('DeckBuilderMelsView Artifact Studio adapter', () => {
-  it('keeps the legacy Teresa chip and external bottom bar when the rollout is off', () => {
+  it('keeps the external bottom bar but does not restore the legacy Teresa chip when the rollout is off', () => {
     renderView(false);
 
-    expect(screen.getByRole('button', { name: 'Teresa' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Teresa' })).not.toBeInTheDocument();
     expect(screen.getByText('Global Teresa surface')).toBeInTheDocument();
     expect(screen.queryByText('Context menu 3')).not.toBeInTheDocument();
     expect(screen.getByText('Presentation bottom bar').parentElement).toHaveAttribute(
