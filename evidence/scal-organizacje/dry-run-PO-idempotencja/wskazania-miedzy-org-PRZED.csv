@@ -1,0 +1,6 @@
+krawedz,dziecko,kolumna,rodzic,org_dziecka,org_rodzica,wierszy
+"activity_logs_user_id_fkey","activity_logs","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","570"
+"organization_members_user_id_fkey","organization_members","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","2"
+"rvn_platform_resource_visibility_policy_id_fkey","rvn_platform_resource_visibility","policy_id","rvn_platform_visibility_policies","a3e05d4a-5397-419d-b486-8e44366c0063","dbr77","3"
+"BEZ_FK:v8_artifact_origin_links.artifact_id","v8_artifact_origin_links","artifact_id","v8_output_artifacts","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","99"
+"BEZ_FK:api_logs.user_id","api_logs","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","9111"

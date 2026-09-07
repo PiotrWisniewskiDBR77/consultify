@@ -1,0 +1,11 @@
+krawedz,dziecko,kolumna,rodzic,org_dziecka,org_rodzica,wierszy
+"access_requests_reviewed_by_fkey","access_requests","reviewed_by","users","a3e05d4a-5397-419d-b486-8e44366c0063","dbr77","1"
+"activity_logs_user_id_fkey","activity_logs","user_id","users","a3e05d4a-5397-419d-b486-8e44366c0063","dbr77","44"
+"activity_logs_user_id_fkey","activity_logs","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","83"
+"decisions_created_by_fkey","decisions","created_by","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","4"
+"initiatives_owner_execution_id_fkey","initiatives","owner_execution_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","2"
+"organization_members_user_id_fkey","organization_members","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","2"
+"tasks_assignee_id_fkey","tasks","assignee_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","15"
+"tasks_reporter_id_fkey","tasks","reporter_id","users","a3e05d4a-5397-419d-b486-8e44366c0063","dbr77","13"
+"BEZ_FK:api_logs.user_id","api_logs","user_id","users","a3e05d4a-5397-419d-b486-8e44366c0063","dbr77","37"
+"BEZ_FK:api_logs.user_id","api_logs","user_id","users","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063","601"

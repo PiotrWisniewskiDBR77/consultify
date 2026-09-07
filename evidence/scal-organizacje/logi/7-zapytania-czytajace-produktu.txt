@@ -1,0 +1,14 @@
+zapytanie	wynik
+1. raid.routes.ts:62 — GET /api/raid (org kanoniczna)	7
+2. raid.routes.ts:70 — filtr po projekcie (Transformacja Cyfrowa Q2 2026)	7
+3. ExecutionController:436 — risksSql (RISK, OPEN/IN_PROGRESS)	4
+4. ExecutionController:948 — LEFT JOIN initiatives, ile RYZYK bez nazwy inicjatywy (musi byc 0)	0
+5. ExecutionController:948 — ile RYZYK z inicjatywa w INNEJ organizacji (musi byc 0)	0
+6. ExecutionController:243 — zadania projektu (org kanoniczna)	45
+7. ExecutionController:425 — decyzje projektu (org kanoniczna)	12
+8. inicjatywy projektu (org kanoniczna)	6
+9. spotkania (org kanoniczna, dawne legacy)	15
+10. czlonkowie katalogu (org kanoniczna)	16
+11. uzytkownicy z users.organization_id = kanoniczna	16
+12. wlasciciele RAID SPOZA organizacji docelowej (musi byc 0)	0
+-- 12 wierszy --
