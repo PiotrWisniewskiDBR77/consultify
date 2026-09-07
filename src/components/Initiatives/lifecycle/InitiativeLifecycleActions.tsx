@@ -93,33 +93,48 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
 
   if (!initiativeId || !enabled) return null;
 
+  // Nagłówek sekcji stoi także nad stanem pustym/awarią — dowód 07.09 (zrzut 15):
+  // bez niego zdanie „Nie masz uprawnień…" wisiało w podglądzie bez kontekstu.
+  const sectionHeading =
+    heading && density === 'full' ? (
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+        {heading}
+      </div>
+    ) : null;
+
   if (loadError) {
     return (
-      <div className={['flex items-start gap-2 text-xs text-c-text-secondary', className || ''].join(' ')}>
-        <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--c-warning)]" />
-        <span data-testid="initiative-lifecycle-load-error">{loadError}</span>
+      <div className={['space-y-2', className || ''].join(' ')}>
+        {sectionHeading}
+        <div className="flex items-start gap-2 text-xs text-c-text-secondary">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--c-warning)]" />
+          <span data-testid="initiative-lifecycle-load-error">{loadError}</span>
+        </div>
       </div>
     );
   }
 
   if (loading && actions.length === 0) {
     return (
-      <div className={['text-xs text-c-text-muted', className || ''].join(' ')}>
-        {t('initiatives.lifecycle.loading', 'Sprawdzam dostępne działania…')}
+      <div className={['space-y-2', className || ''].join(' ')}>
+        {sectionHeading}
+        <div className="text-xs text-c-text-muted">
+          {t('initiatives.lifecycle.loading', 'Sprawdzam dostępne działania…')}
+        </div>
       </div>
     );
   }
 
   if (actions.length === 0) {
     return (
-      <div
-        className={['text-xs text-c-text-muted', className || ''].join(' ')}
-        data-testid="initiative-lifecycle-empty"
-      >
-        {t(
-          'initiatives.lifecycle.none',
-          'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
-        )}
+      <div className={['space-y-2', className || ''].join(' ')}>
+        {sectionHeading}
+        <div className="text-xs text-c-text-muted" data-testid="initiative-lifecycle-empty">
+          {t(
+            'initiatives.lifecycle.none',
+            'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
+          )}
+        </div>
       </div>
     );
   }
@@ -128,11 +143,7 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
 
   return (
     <div className={['space-y-2', className || ''].join(' ')} data-testid="initiative-lifecycle-actions">
-      {heading && density === 'full' ? (
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-          {heading}
-        </div>
-      ) : null}
+      {sectionHeading}
       <div className="flex flex-wrap gap-2">
         {actions.map((action) => (
           <button
