@@ -1,0 +1,9 @@
+{
+  "nazwa": "18-sygnal-przed-interwencja",
+  "opis": "Podglad sygnalu z akcja Przygotuj interwencje",
+  "url": "http://localhost:3185/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:46:14.962Z"
+}

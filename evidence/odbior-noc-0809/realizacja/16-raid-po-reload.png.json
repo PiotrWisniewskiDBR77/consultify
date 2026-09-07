@@ -1,0 +1,9 @@
+{
+  "nazwa": "16-raid-po-reload",
+  "opis": "RAID - po reload, nowa pozycja trwala, ekspozycja w kolumnie",
+  "url": "http://localhost:3185/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:46:11.443Z"
+}

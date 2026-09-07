@@ -1,0 +1,9 @@
+{
+  "nazwa": "01-lista-realizacje",
+  "opis": "Zakladka glowna Realizacje - podglad z lancuchem statusow, pill Wstrzymana",
+  "url": "http://localhost:3185/execution?tab=list&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:45:25.028Z"
+}

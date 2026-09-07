@@ -1,0 +1,9 @@
+{
+  "nazwa": "08-zasoby-po",
+  "opis": "Zasoby - obciazenie PO zmianie terminu (porownaj z 06)",
+  "url": "http://localhost:3185/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:45:49.731Z"
+}

@@ -1,0 +1,149 @@
+{
+  "status": 200,
+  "body": {
+    "dryRun": true,
+    "escalated": 0,
+    "skippedAtMax": 0,
+    "skippedAlreadyToday": 0,
+    "errors": 0,
+    "maxLevel": 3,
+    "candidates": [
+      {
+        "decisionId": "01190bb1-9182-4757-96c6-c5f9951f5775",
+        "title": "SAP go-live date rebaseline approval",
+        "deadline": "2026-08-24T19:09:18.482Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "a587edff-c9e4-4496-8fc4-2dc0758b3fff",
+        "title": "Budget Approval Q2 — Cloud Migration",
+        "deadline": "2026-08-26T19:09:18.317Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "422bf033-4dcf-4673-843d-d8b3e71a6e64",
+        "title": "Scope reduction for Legacy Decommission",
+        "deadline": "2026-08-28T19:09:18.367Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "ed7f71ac-1827-49ab-a92c-dadb8276417c",
+        "title": "Data platform — Databricks vs Snowflake",
+        "deadline": "2026-08-29T19:09:18.446Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "01566fe1-8609-49c4-a6ad-663b86b2716b",
+        "title": "Vendor selection — SAP integration partner",
+        "deadline": "2026-08-31T19:09:18.324Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "11f90bee-6703-4e10-9d20-c764c4c1ee94",
+        "title": "RPA vendor change to Automation Anywhere",
+        "deadline": "2026-09-02T19:09:18.362Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_0_b2ba9e68-53ed-4b56-8814-29b8e4e17b85",
+        "title": "DBR77: Scope — My Work V2 rollout",
+        "deadline": "2026-09-03T19:06:32.902Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_16_6ff9dee7-7a6c-47dc-948f-42c32aa41884",
+        "title": "DBR77: Polityka uprawnień (RBAC) dla My Work",
+        "deadline": "2026-09-03T19:06:32.915Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "9f34e810-fcb1-4f15-8821-5fd4bb3fdcae",
+        "title": "Training budget increase for upskilling",
+        "deadline": "2026-09-03T19:09:18.405Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_1_12b18915-e937-4fab-ae4e-897ad3aafc91",
+        "title": "DBR77: Czy włączamy publiczne linki do raportów?",
+        "deadline": "2026-09-04T19:06:32.904Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_9_4847c485-fed0-4e79-b79a-6340d99be73e",
+        "title": "DBR77: Polityka retencji logów i danych",
+        "deadline": "2026-09-04T19:06:32.910Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "13c1add6-3e89-4c4a-a910-5a8ffc9bbbc7",
+        "title": "DevOps toolchain consolidation",
+        "deadline": "2026-09-04T19:09:18.450Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_10_2d42a93c-bad7-45d6-82ea-3edb6fca7bd9",
+        "title": "DBR77: CORS — whitelist domen i tryb produkcyjny",
+        "deadline": "2026-09-05T19:06:32.911Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_11_083d8edb-7168-4771-bc72-dbf809d71d48",
+        "title": "DBR77: Budżet tokenów — limity i alerty",
+        "deadline": "2026-09-06T19:06:32.911Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_19_45ba7b4d-924d-4420-95cf-be137ff0c314",
+        "title": "DBR77: Plan rollback po deploy",
+        "deadline": "2026-09-06T19:06:32.917Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "seed_decision_1788642392883_4_c931c80b-a385-41e6-9a7e-84e72c606eec",
+        "title": "DBR77: Rollout do domeny publicznej",
+        "deadline": "2026-09-07T19:06:32.907Z",
+        "status": "escalated",
+        "fromLevel": 0,
+        "toLevel": 1
+      },
+      {
+        "decisionId": "2c52fb12-841b-447e-9abb-d7e829a26703",
+        "title": "Compliance remediation deadline extension",
+        "deadline": "2026-09-07T19:09:18.420Z",
+        "status": "pending",
+        "fromLevel": 0,
+        "toLevel": 1
+      }
+    ]
+  }
+}

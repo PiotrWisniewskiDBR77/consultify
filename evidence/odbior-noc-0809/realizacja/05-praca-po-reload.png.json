@@ -1,0 +1,9 @@
+{
+  "nazwa": "05-praca-po-reload",
+  "opis": "Po reload - wartosc statusu trwala",
+  "url": "http://localhost:3185/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:45:33.118Z"
+}

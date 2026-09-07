@@ -1,0 +1,9 @@
+{
+  "nazwa": "17-sygnaly-lista",
+  "opis": "Preset Sygnaly (N) - delay-signals z systemu",
+  "url": "http://localhost:3185/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoliDoTejPory": 0,
+  "czas": "2026-09-07T21:46:13.687Z"
+}
