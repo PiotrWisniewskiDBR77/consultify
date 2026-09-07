@@ -95,6 +95,14 @@ describe('InitiativeLifecycleActions — łańcuch zarządzania', () => {
     expect(screen.getByTestId('initiative-lifecycle-empty').textContent).toContain('Nie masz uprawnień');
   });
 
+  it('1b. etap końcowy (zero przejść w macierzy): inne zdanie niż „brak uprawnień"', async () => {
+    fetchPreflightMock.mockResolvedValue(preflight({ currentStatus: 'CLOSED', transitions: [] }));
+    render(<InitiativeLifecycleActions initiativeId="ini-1" />);
+    const terminal = await screen.findByTestId('initiative-lifecycle-terminal');
+    expect(terminal.textContent).toContain('Etap końcowy');
+    expect(screen.queryByTestId('initiative-lifecycle-empty')).toBeNull();
+  });
+
   it('2. warunek niespełniony: przycisk widoczny, nieaktywny, z powodem po polsku obok', async () => {
     fetchPreflightMock.mockResolvedValue(
       preflight({

@@ -12083,6 +12083,7 @@
       "working": "Zapisuję…",
       "applied": "Zapisano: {{action}}",
       "none": "Nie masz uprawnień do zmiany etapu tej inicjatywy.",
+      "terminal": "Etap końcowy — ta inicjatywa nie ma już dalszych przejść.",
       "noInitiative": "Brak inicjatywy.",
       "preflightFailed": "Nie udało się sprawdzić dostępnych działań dla tej inicjatywy.",
       "reasonTitle": "{{action}} — podaj powód",

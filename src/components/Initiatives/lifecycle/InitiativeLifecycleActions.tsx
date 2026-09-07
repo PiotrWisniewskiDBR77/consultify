@@ -57,7 +57,7 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
 }) => {
   const { t } = useTranslation();
   const translate = useCallback((key: string, fallback: string) => t(key, fallback), [t]);
-  const { actions, loading, loadError, pendingActionId, run } = useInitiativeLifecycle(
+  const { actions, loading, loadError, pendingActionId, preflight, run } = useInitiativeLifecycle(
     initiativeId,
     translate,
     { enabled, onApplied }
@@ -126,14 +126,26 @@ export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProp
   }
 
   if (actions.length === 0) {
+    // Dowód 07.09 (zrzut 14): zamknięta inicjatywa pokazywała adminowi „Nie masz
+    // uprawnień" — a realny powód to etap końcowy bez żadnego przejścia w macierzy.
+    // Dwa różne przypadki muszą mieć dwa zdania.
+    const terminal = !!preflight && preflight.transitions.length === 0;
     return (
       <div className={['space-y-2', className || ''].join(' ')}>
         {sectionHeading}
-        <div className="text-xs text-c-text-muted" data-testid="initiative-lifecycle-empty">
-          {t(
-            'initiatives.lifecycle.none',
-            'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
-          )}
+        <div
+          className="text-xs text-c-text-muted"
+          data-testid={terminal ? 'initiative-lifecycle-terminal' : 'initiative-lifecycle-empty'}
+        >
+          {terminal
+            ? t(
+                'initiatives.lifecycle.terminal',
+                'Etap końcowy — ta inicjatywa nie ma już dalszych przejść.'
+              )
+            : t(
+                'initiatives.lifecycle.none',
+                'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
+              )}
         </div>
       </div>
     );

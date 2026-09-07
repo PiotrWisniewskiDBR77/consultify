@@ -12641,6 +12641,7 @@
       "working": "Saving…",
       "applied": "Saved: {{action}}",
       "none": "You do not have permission to change this initiative's stage.",
+      "terminal": "Final stage — this initiative has no further transitions.",
       "noInitiative": "No initiative.",
       "preflightFailed": "Could not check the available actions for this initiative.",
       "reasonTitle": "{{action}} — provide a reason",
