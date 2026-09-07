@@ -10149,12 +10149,12 @@
       "publishedAt": "Published",
       "panelAria": "Load analysis details",
       "primaryNone": "Publishing is a decision in the Decisions section.",
-      "worksheetHint": "Demand comes from the published plan's \\u201cRole load\\u201d, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.",
-      "noRoleSheet": "This analysis predates the role dimension. Create a new analysis from a published plan to see the period \\u00d7 role worksheet.",
+      "worksheetHint": "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.",
+      "noRoleSheet": "This analysis predates the role dimension. Create a new analysis from a published plan to see the period × role worksheet.",
       "noGaps": "No role is overloaded.",
       "noGapsLegacy": "No gaps detected (analysis without the role dimension).",
       "gapLine": "demand {{demand}} FTE against supply {{supply}} FTE (short by {{gap}})",
-      "needsPublish": "The advisor computes options for a published analysis. Publish the analysis in \\u201cDecisions\\u201d, then run \\u201cWork with AI\\u201d.",
+      "needsPublish": "The advisor computes options for a published analysis. Publish the analysis in “Decisions”, then run “Work with AI”.",
       "noConstraints": "No recorded constraints.",
       "noComments": "No comment thread for this analysis.",
       "aiSection": "The advisor will prepare change proposals for review.",
@@ -10368,13 +10368,13 @@
         "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional."
       },
       "roleDemand": {
-        "loading": "Loading role load\\u2026",
+        "loading": "Loading role load…",
         "unavailable": "Could not load role load.",
-        "noWindows": "The plan has no initiative in scope yet \\u2014 pick them in the generator first.",
+        "noWindows": "The plan has no initiative in scope yet — pick them in the generator first.",
         "noRoles": "Nobody in the organization has a job title. Fill in job titles in Team to plan role load.",
         "hint": "Enter how many FTE of each role the initiative needs within its window. These numbers are the demand in the load analysis.",
         "initiative": "Initiative",
-        "readOnly": "The plan is published \\u2014 role load is read-only.",
+        "readOnly": "The plan is published — role load is read-only.",
         "saved": "Saved {{time}}",
         "failed": "Role load was not saved."
       }
