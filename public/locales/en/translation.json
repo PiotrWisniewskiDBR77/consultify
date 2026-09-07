@@ -10166,7 +10166,8 @@
         "horizonStartAria": "Plan start date",
         "weekCount": "Number of weeks",
         "weekCountAria": "Plan week count",
-        "createPlan": "Create plan"
+        "createPlan": "Create plan",
+        "workingPortfolioHint": "The working portfolio is created automatically from the initiatives selected in the generator."
       },
       "conflictError": "Plan changed or its Portfolio basis is stale. Reopen before retrying.",
       "writeError": "Plan operation failed; no Initiative or task date changed.",
@@ -10320,7 +10321,8 @@
         "PLAN_PUBLISH_CONFIRMATION_REQUIRED": "Publishing a plan with conflicts requires an explicit confirmation of the conflict count.",
         "CAPACITY_SCENARIO_DUPLICATE": "A capacity analysis already exists for this plan. Open the existing one or give the new one a different name.",
         "PORTFOLIO_SCENARIO_DUPLICATE": "This portfolio scenario already exists. Open the existing one or give the new one a different name.",
-        "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier."
+        "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier.",
+        "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional."
       }
     },
     "analysis": {
@@ -12670,6 +12672,38 @@
         "benefits_kpis": "KPIs",
         "unknown": "gate requirements"
       }
+    },
+    "planGenerator": {
+      "title": "Plan generator",
+      "step1": "1. Source",
+      "step2": "2. Selection",
+      "step3": "3. Parameters",
+      "step4": "4. Generate",
+      "step5": "5. Approve",
+      "sourceApproved": "Approved initiatives ({{n}})",
+      "sourceConditional": "+ pending approval ({{n}})",
+      "statusApproved": "Approved",
+      "statusPending": "Pending approval",
+      "conditionalChip": "conditional",
+      "noneEligible": "No initiative qualifies for planning.",
+      "startAria": "Horizon start",
+      "periodsAria": "Number of periods",
+      "unitAria": "Unit",
+      "modeAria": "Analysis mode",
+      "modeDependencies": "By dependencies",
+      "modeCapacity": "By role capacity",
+      "modeMixed": "Mixed",
+      "generate": "Generate proposal",
+      "proposalAria": "Proposed sequence",
+      "columnInitiative": "Initiative",
+      "columnWindow": "Window from-to",
+      "columnRationale": "Rationale",
+      "columnConflict": "Conflict",
+      "emptyProposal": "The solver proposed no window change.",
+      "reviewHint": "A proposal never changes the plan without a human decision.",
+      "accept": "Approve",
+      "reject": "Reject",
+      "savedAt": "Saved {{time}}"
     }
   },
   "execution": {
