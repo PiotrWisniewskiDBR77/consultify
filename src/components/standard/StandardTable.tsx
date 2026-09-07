@@ -24,7 +24,7 @@
  */
 
 import { Archive, Eye, type LucideIcon, Pencil, Trash2 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TABLE_SURFACE_REGISTER } from '@/contracts/tableSurface/surfaceRegister';
@@ -43,6 +43,158 @@ import { EmptyState, LoadingState } from '../shared/states';
 
 export type { TableColumn, TableRow } from '../shared/ModuleHub/FilterableTable';
 export type { RowAction, RowActionSection } from '../shared/RowActionsMenu';
+
+// ── Edycja komórki W WIERSZU (podwójny klik) ───────────────────────────────
+//
+// PO CO: kanon rynkowy PMO (`AUDYT_RYNKU_PMO_20260907.md` §4.1) — Wrike:
+// „Double-click any field to edit its data"; Clarity: „Edit Data in the grid".
+// Do 07.09 żaden ekran listowy Consultify nie umiał zmienić wartości bez
+// wychodzenia do osobnego widoku, więc każdy moduł, który tego potrzebował,
+// musiałby zbudować własną komórkę-edytor — czyli dokładnie ten kształt, który
+// `check-list-canon.sh` blokuje („naprawa per-wywołanie odrasta").
+//
+// Mechanika należy do fasady, deklaracja do modułu: kolumna podaje `editable`,
+// fasada trzyma stan „która komórka jest w edycji", zatrzymuje propagację
+// (żeby podwójny klik w komórkę nie otwierał wiersza) i rysuje edytor.
+// ADDYTYWNE: kolumna bez `editable` renderuje się bajt w bajt jak dotąd.
+export interface StandardCellEditor {
+  /** `select` — słownik wartości; `date` — kalendarz (natywny `input[type=date]`). */
+  kind: 'select' | 'date';
+  /** Etykieta dla czytnika ekranu (obowiązkowa — edytor nie ma widocznego labela). */
+  ariaLabel: string;
+  /** Aktualna wartość w formacie edytora (`select`: klucz opcji, `date`: `RRRR-MM-DD`). */
+  value: (row: TableRow) => string;
+  /** Opcje dla `kind: 'select'`. */
+  options?: (row: TableRow) => Array<{ value: string; label: string }>;
+  /** Zapis — wołany TYLKO gdy wartość naprawdę się zmieniła. */
+  onCommit: (row: TableRow, value: string) => void | Promise<void>;
+  /** Wiersz bez prawa edycji (np. z innego rejestru) — brak `true` = edytowalny. */
+  isEditable?: (row: TableRow) => boolean;
+  /** Podpowiedź na komórce edytowalnej / nieedytowalnej. */
+  hint?: string;
+  disabledHint?: string;
+}
+
+export interface StandardTableColumn extends TableColumn {
+  editable?: StandardCellEditor;
+}
+
+const EDITOR_CLASS =
+  'h-8 w-full min-w-0 rounded-md border border-c-border-subtle bg-c-surface px-1.5 text-sm ' +
+  'text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus';
+
+const StandardEditableCell: React.FC<{
+  row: TableRow;
+  editor: StandardCellEditor;
+  editing: boolean;
+  onStart: () => void;
+  onStop: () => void;
+  /** Zapamiętuje, że gest zaczął się w TEJ komórce (patrz `handleRowDoubleClick`). */
+  onPointerStart: () => void;
+  children: React.ReactNode;
+}> = ({ row, editor, editing, onStart, onStop, onPointerStart, children }) => {
+  const canEdit = editor.isEditable ? editor.isEditable(row) : true;
+  const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+
+  if (!editing) {
+    return (
+      <div
+        data-editable={canEdit ? 'tak' : 'nie'}
+        title={canEdit ? editor.hint : editor.disabledHint}
+        className={canEdit ? '-mx-1 rounded-sm px-1 hover:bg-c-surface-hover' : undefined}
+        /*
+         * ★ GEST ZAPAMIĘTANY NA `mousedown`, NIE DOPIERO NA `dblclick`.
+         *
+         * ZMIERZONE 07.09 (Playwright, 1440, zakładka Praca): podwójny klik
+         * w kolumnę Termin albo Status BYŁ GUBIONY, gdy panel podglądu był
+         * zamknięty. Pierwszy klik zaznaczał wiersz → podgląd się otwierał →
+         * tabela zwężała się o jego szerokość → drugi klik lądował już nad
+         * INNĄ komórką. Więc `dblclick` nie padał na tę komórkę, tylko na
+         * wiersz, i wyrzucał użytkownika poza moduł. To nie jest artefakt
+         * testu: mysz człowieka też stoi w miejscu między dwoma klikami.
+         *
+         * DWIE WARSTWY, obie zmierzone:
+         *  1. komórka edytowalna PRZEJMUJE swój pojedynczy klik — bez tego
+         *     otwarcie podglądu przesuwało układ w połowie gestu i edytor
+         *     kolumn Termin/Status nie otwierał się ANI RAZU przy zamkniętym
+         *     podglądzie (zmierzone: 0/2 prób). Podgląd otwiera się klikiem
+         *     w Zadanie / Inicjatywę / Dni po terminie oraz z kebaba
+         *     („Otwórz podgląd"), więc żadna droga nie znika;
+         *  2. ślad z `mousedown` (PRZED jakimkolwiek przesunięciem układu) —
+         *     gdy `dblclick` mimo wszystko trafi w wiersz, `handleRowDoubleClick`
+         *     otworzy edytor TEJ komórki zamiast wyrzucać poza moduł.
+         */
+        onClick={(event) => {
+          if (canEdit) event.stopPropagation();
+        }}
+        onMouseDown={() => {
+          if (canEdit) onPointerStart();
+        }}
+        onDoubleClick={(event) => {
+          if (!canEdit) return;
+          event.stopPropagation();
+          event.preventDefault();
+          onStart();
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  const commit = (next: string) => {
+    onStop();
+    if (next !== editor.value(row)) void editor.onCommit(row, next);
+  };
+
+  if (editor.kind === 'select') {
+    return (
+      <select
+        autoFocus
+        aria-label={editor.ariaLabel}
+        defaultValue={editor.value(row)}
+        className={EDITOR_CLASS}
+        onClick={stop}
+        onDoubleClick={stop}
+        onMouseDown={stop}
+        onBlur={onStop}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+          if (event.key === 'Escape') onStop();
+        }}
+        onChange={(event) => {
+          event.stopPropagation();
+          commit(event.target.value);
+        }}
+      >
+        {(editor.options?.(row) ?? []).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <input
+      autoFocus
+      type="date"
+      aria-label={editor.ariaLabel}
+      defaultValue={editor.value(row)}
+      className={EDITOR_CLASS}
+      onClick={stop}
+      onDoubleClick={stop}
+      onMouseDown={stop}
+      onBlur={(event) => commit(event.target.value)}
+      onKeyDown={(event) => {
+        event.stopPropagation();
+        if (event.key === 'Escape') onStop();
+        if (event.key === 'Enter') commit((event.target as HTMLInputElement).value);
+      }}
+    />
+  );
+};
 
 // ── Kebab wiersza — zamknięty kontrakt 3 stref ─────────────────────────────
 // context → manage → danger. Puste strefy znikają. Funkcja bez handlera i bez
@@ -234,7 +386,8 @@ export interface StandardTableSelection {
 }
 
 export interface StandardTableProps {
-  columns: TableColumn[];
+  /** `StandardTableColumn` = `TableColumn` + opcjonalne `editable` (edycja w wierszu). */
+  columns: StandardTableColumn[];
   data: TableRow[];
 
   /**
@@ -384,6 +537,29 @@ export const StandardTable: React.FC<StandardTableProps> = ({
     return undefined;
   }, [rowMenu, rowActions, buildSections]);
 
+  // ── Edycja w wierszu: która komórka jest otwarta ─────────────────────────
+  const [editingCell, setEditingCell] = useState<{ rowId: string; columnId: string } | null>(null);
+  /** Ślad gestu z `mousedown` komórki edytowalnej — patrz `handleRowDoubleClick`. */
+  const gestKomorki = useRef<{ rowId: string; columnId: string; czas: number } | null>(null);
+
+  /**
+   * Podwójny klik na wierszu: gdy gest zaczął się w komórce edytowalnej, otwiera
+   * EDYTOR TEJ KOMÓRKI zamiast wiersza (nawet jeśli drugi klik wylądował już
+   * gdzie indziej, bo układ przesunął się po otwarciu podglądu).
+   */
+  const handleRowDoubleClick = useCallback(
+    (row: TableRow) => {
+      const slad = gestKomorki.current;
+      if (slad && slad.rowId === String(row.id) && Date.now() - slad.czas < 1500) {
+        gestKomorki.current = null;
+        setEditingCell({ rowId: slad.rowId, columnId: slad.columnId });
+        return;
+      }
+      onRowDoubleClick?.(row);
+    },
+    [onRowDoubleClick]
+  );
+
   // ── Lejki kolumn: controlled ↔ internal ──────────────────────────────────
   const [internalFilters, setInternalFilters] = useState<FilterChip[]>([]);
   const filters = activeFilters ?? internalFilters;
@@ -495,12 +671,51 @@ export const StandardTable: React.FC<StandardTableProps> = ({
 
   assertContractInDev(`StandardTable(${surfaceId ?? 'bez surfaceId'})`, contractCheck);
 
+  /**
+   * Kolumny z `editable` dostają render owinięty w `StandardEditableCell`.
+   * Kolumny bez `editable` przechodzą przez tę mapę BEZ ZMIANY (ta sama
+   * referencja obiektu), więc żaden istniejący ekran nie zmienia zachowania.
+   */
+  const editableColumns = useMemo<TableColumn[]>(
+    () =>
+      columns.map((column) => {
+        const editor = column.editable;
+        if (!editor) return column;
+        const baseRender = column.render;
+        return {
+          ...column,
+          render: (row: TableRow) => (
+            <StandardEditableCell
+              row={row}
+              editor={editor}
+              editing={editingCell?.rowId === String(row.id) && editingCell?.columnId === column.id}
+              onStart={() => setEditingCell({ rowId: String(row.id), columnId: column.id })}
+              onStop={() => setEditingCell(null)}
+              onPointerStart={() => {
+                gestKomorki.current = {
+                  rowId: String(row.id),
+                  columnId: column.id,
+                  czas: Date.now(),
+                };
+              }}
+            >
+              {baseRender ? baseRender(row) : ((row[column.id] as React.ReactNode) ?? '—')}
+            </StandardEditableCell>
+          ),
+        };
+      }),
+    [columns, editingCell]
+  );
+
   const effectiveColumns = useMemo<TableColumn[]>(
     () =>
       effectiveSelection
-        ? [{ id: '__select', label: '', type: 'select' as const, width: '44px' }, ...columns]
-        : columns,
-    [effectiveSelection, columns]
+        ? [
+            { id: '__select', label: '', type: 'select' as const, width: '44px' },
+            ...editableColumns,
+          ]
+        : editableColumns,
+    [effectiveSelection, editableColumns]
   );
 
   const selectionDriver = useMemo(() => {
@@ -584,7 +799,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
       data={tableData}
       selectedRowId={selectedRowId}
       onRowClick={onRowClick}
-      onRowDoubleClick={onRowDoubleClick}
+      onRowDoubleClick={handleRowDoubleClick}
       getRowActionSections={getSections}
       /* Bez rowMenu/rowActions FilterableTable renderowałby domyślny kebab
          z 5 no-op pozycjami (onRowAction nie jest forwardowany) — martwe
