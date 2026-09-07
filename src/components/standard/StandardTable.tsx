@@ -220,12 +220,35 @@ export function normalizeRowActionSections(sections: RowActionSection[]): RowAct
     .map((zone) => ({ id: zone, kind: zone, actions: zones[zone] }));
 }
 
+/**
+ * P16-R6 (D6, Raporty Realizacji): jeden kafel jednego kliknięcia w pustym
+ * stanie — np. „Wygeneruj" konkretną definicję raportu zamiast jednego CTA
+ * ogólnego. `title`/`description`/`meta` niosą treść karty (co to jest / po
+ * co / dla kogo); `actionLabel`+`onAction` — jego jedyny przycisk.
+ */
+export interface StandardTableEmptyAction {
+  id: string;
+  title: string;
+  description?: string;
+  /** Dopisek pod opisem (np. odbiorcy/audytorium) — opcjonalny, ciche tło. */
+  meta?: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
 export interface StandardTableEmpty {
   title: string;
   description?: string;
   icon?: LucideIcon;
   actionLabel?: string;
   onAction?: () => void;
+  /**
+   * Kafle jednego kliknięcia pod tekstem pustego stanu (ADDYTYWNE — pominięcie
+   * propa daje dokładnie dotychczasowe zachowanie: `EmptyState` z co najwyżej
+   * jednym `actionLabel`/`onAction`, bez kafli, ZERO zmian dla istniejących
+   * ekranów). Nie jest nową tabelą — to karty w `tbody` pustego stanu.
+   */
+  actions?: StandardTableEmptyAction[];
 }
 
 export interface StandardTableSelection {
@@ -555,6 +578,37 @@ export const StandardTable: React.FC<StandardTableProps> = ({
             : undefined
         }
       />
+      {empty.actions && empty.actions.length > 0 && (
+        <div
+          className="mx-auto grid max-w-4xl grid-cols-1 gap-3 px-8 pb-10 sm:grid-cols-2 lg:grid-cols-4"
+          data-testid="standard-table-empty-actions"
+        >
+          {empty.actions.map((action) => (
+            <div
+              key={action.id}
+              data-testid={`standard-table-empty-action-${action.id}`}
+              className="flex flex-col gap-2 rounded-token-lg border border-[var(--c-border)] bg-[var(--c-surface)] p-4 text-left"
+            >
+              <h4 className="text-sm font-semibold text-[var(--c-text)]">{action.title}</h4>
+              {action.description && (
+                <p className="text-xs text-[var(--c-text-muted)]">{action.description}</p>
+              )}
+              {action.meta && (
+                <p className="text-[11px] uppercase tracking-wide text-[var(--c-text-muted)]">
+                  {action.meta}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn-secondary mt-auto self-start"
+                onClick={action.onAction}
+              >
+                {action.actionLabel}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   ) : (
     emptyMessage

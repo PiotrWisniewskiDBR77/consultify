@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React, { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -98,18 +98,44 @@ const definition = {
  * gałęzi bazowej przed jakąkolwiek zmianą tego zlecenia; naprawione przy
  * okazji tego samego pliku zamiast zostawić martwe czerwone).
  */
+/**
+ * P16-R6 (D6, właściciel 07.09): „Nowa definicja"/„Kontrakt raportu
+ * (zaawansowane)" wyprowadzone z Menu 2 (widoczne dla każdego) do kebaba
+ * Menu 3, renderowanego WYŁĄCZNIE dla `isAdmin`. Ten harness testuje
+ * zachowanie ADMIN-a (te same asercje co przed R6, tylko przez kebab, nie
+ * przycisk drugorzędny) — test roli MEMBER (`isAdmin=false` → brak kebaba)
+ * żyje osobno w `src/components/Execution/__tests__/
+ * ExecutionReportsSurface.emptyTiles.test.tsx`.
+ */
 function Harness(props: React.ComponentProps<typeof ExecutionReportsSurface>) {
   const [control, setControl] = useState<React.ReactNode>(null);
+  const [menu3Control, setMenu3Control] = useState<React.ReactNode>(null);
   return (
     <MemoryRouter>
-      <ExecutionReportsSurface {...props} onRegisterFilterControl={setControl} />
+      <ExecutionReportsSurface
+        isAdmin
+        {...props}
+        onRegisterFilterControl={setControl}
+        onRegisterMenu3Control={setMenu3Control}
+      />
       <div data-testid="menu2-slot">{control}</div>
+      <div data-testid="menu3-slot">{menu3Control}</div>
     </MemoryRouter>
   );
 }
 
 const dispatchNewReportCta = () =>
   fireEvent(window, new CustomEvent('execution:reports-new-report'));
+
+/**
+ * Otwiera kebab Menu 3 („Nowa definicja"/„Kontrakt raportu (zaawansowane)").
+ * Zamyka się po każdym wyborze — wołaj przed KAŻDYM kliknięciem pozycji.
+ * Skopowane do `menu3-slot`: `RowActionsMenu` jest TAKŻE kebabem każdego
+ * wiersza tabeli (ten sam komponent, celowo reużyty) — bez zawężenia
+ * `getByLabelText('Row actions')` trafiłby na dwa elementy naraz.
+ */
+const openReportsKebab = () =>
+  fireEvent.click(within(screen.getByTestId('menu3-slot')).getByLabelText('Row actions'));
 
 describe('ExecutionReportsSurface', () => {
   beforeEach(() => {
@@ -201,8 +227,9 @@ describe('ExecutionReportsSurface', () => {
     expect(screen.getAllByText('owner 1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('approver 1').length).toBeGreaterThan(0);
     expect(screen.getAllByText('1').length).toBeGreaterThan(0);
-    // „Nowa definicja" — teraz przycisk drugorzędny w Menu 2, obok dropdownu „Poziom".
-    fireEvent.click(screen.getByRole('button', { name: 'Nowa definicja' }));
+    // „Nowa definicja" — P16-R6: teraz w kebabie Menu 3 (admin-only).
+    openReportsKebab();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Nowa definicja' }));
     fireEvent.change(screen.getByLabelText('Report Definition publish rationale'), {
       target: { value: 'Independent contract approval' },
     });
@@ -217,12 +244,12 @@ describe('ExecutionReportsSurface', () => {
         })
       )
     );
-    // Kontrakt raportu (zaawansowane) — otwiera edytor pełnego kontraktu
-    // ReportRun (`showRunEditor`), w odróżnieniu od CTA „Nowy raport" (Menu
-    // 2), które otwiera tylko kreator migawki MVP (`wizardOpen`).
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Kontrakt raportu (zaawansowane)' })
-    );
+    // Kontrakt raportu (zaawansowane) — P16-R6: teraz w kebabie Menu 3
+    // (admin-only). Otwiera edytor pełnego kontraktu ReportRun
+    // (`showRunEditor`), w odróżnieniu od CTA „Nowy raport" (Menu 2), które
+    // otwiera tylko kreator migawki MVP (`wizardOpen`).
+    openReportsKebab();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Kontrakt raportu (zaawansowane)' }));
     fireEvent.change(screen.getByLabelText('ReportRun published Definition version'), {
       target: { value: 'weekly@2' },
     });
@@ -245,7 +272,8 @@ describe('ExecutionReportsSurface', () => {
   });
   it('creates a versioned Definition only with explicit project scope and no tenant-wide default', async () => {
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Nowa definicja' }));
+    openReportsKebab();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Nowa definicja' }));
     expect(screen.getByRole('button', { name: 'Utwórz definicję' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Report Definition ID'), {
       target: { value: 'project-report' },
@@ -291,11 +319,11 @@ describe('ExecutionReportsSurface', () => {
     render(<Harness />);
     fireEvent.click((await screen.findByText(/Weekly execution · 08 sie 2026/)).closest('tr')!);
     // Pola zadania następczego żyją w edytorze pełnego kontraktu ReportRun
-    // (`showRunEditor`) — otwiera go „Kontrakt raportu (zaawansowane)", nie
-    // CTA „Nowy raport" (to tylko kreator migawki MVP).
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Kontrakt raportu (zaawansowane)' })
-    );
+    // (`showRunEditor`) — otwiera go „Kontrakt raportu (zaawansowane)" z
+    // kebaba Menu 3 (P16-R6, admin-only), nie CTA „Nowy raport" (to tylko
+    // kreator migawki MVP).
+    openReportsKebab();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Kontrakt raportu (zaawansowane)' }));
     for (const [label, value] of [
       ['executionCaseId', 'case-1'],
       ['taskId', 'task-follow-1'],
@@ -334,14 +362,27 @@ describe('ExecutionReportsSurface', () => {
     expect(await screen.findByText(/Zadanie następcze task-follow-1 v1/)).toBeInTheDocument();
   });
 
-  it('Menu 3 (3 presety): „Do przeglądu" łączy szkice CONTRACT z definicjami MVP; „Opublikowane" zawęża do PUBLISHED', async () => {
-    render(<Harness activePreset="needs-review" />);
-    // Zastany kontrakt runtime-v1 (`run`, status APPROVED) NIE jest ani DRAFT/
-    // FROZEN/VALIDATED/FAILED ani PUBLISHED — więc nie pojawia się w żadnym z
-    // dwóch zawężonych presetów. Potwierdza to, że preset realnie filtruje
-    // (nie jest dekoracją z licznikiem, ten sam błąd co 1.12-R1).
+  it('Menu 3: „Opublikowane" zawęża do PUBLISHED — kontrakt APPROVED znika', async () => {
+    render(<Harness activePreset="published" />);
+    // Zastany kontrakt runtime-v1 (`run`, status APPROVED) nie jest PUBLISHED
+    // — nie pojawia się w tym zawężonym presecie. Potwierdza to, że preset
+    // realnie filtruje (nie jest dekoracją z licznikiem, ten sam błąd co
+    // 1.12-R1).
     await screen.findByText('Brak raportów');
     expect(screen.queryByText(/Weekly execution · 08 sie 2026/)).not.toBeInTheDocument();
+  });
+
+  // P16-R6 (D7, „policz uczciwie" — P16 §5 R6 pkt 3): przed tą naprawą
+  // biały wykaz `['DRAFT','FROZEN','VALIDATED','FAILED']` zostawiał status
+  // APPROVED w ŻADNYM kubełku — suma „Do przeglądu" + „Opublikowane" mogła
+  // być MNIEJSZA niż „Wszystkie". Naprawa: każdy status inny niż PUBLISHED
+  // trafia do „Do przeglądu" — dwa kubełki, suma zawsze równa całości.
+  it('Menu 3 (D7 „policz uczciwie"): „Do przeglądu" pokazuje KAŻDY nieopublikowany status, nie tylko biały wykaz', async () => {
+    render(<Harness activePreset="needs-review" />);
+    // Zastany kontrakt runtime-v1 (`run`, status APPROVED) NIE jest w białym
+    // wykazie DRAFT/FROZEN/VALIDATED/FAILED, ale JEST nieopublikowany — musi
+    // się pojawić w „Do przeglądu", inaczej zniknąłby z obu kubełków.
+    expect(await screen.findByText(/Weekly execution · 08 sie 2026/)).toBeInTheDocument();
   });
 
   it('dropdown „Poziom" (Menu 2) jest zarejestrowany i domyślnie na „Wszystkie"', async () => {

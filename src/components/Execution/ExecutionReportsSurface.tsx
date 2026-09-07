@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
 import { Menu2PresetDropdown } from '@/components/standard/Menu2PresetDropdown';
 import {
   StandardTable,
+  type StandardTableEmptyAction,
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
@@ -143,6 +145,14 @@ const definitionColumns: TableColumn[] = [
 const reportPresets = ['all', 'needs-review', 'published'] as const;
 
 const REPORT_LEVELS = ['OWNER', 'PMO', 'STEERCO', 'BOARD'] as const;
+// P16-R6 (D6): domyślny okres per kafel pustego stanu — „ostatnie 7 dni dla
+// tygodniowego, 14 dla zdrowia, 30 dla reszty" (P16 §5 R6, sprawdzone
+// parametry kreatora: `wizardPeriod.start/end`, format `YYYY-MM-DD`).
+const TILE_DEFAULT_PERIOD_DAYS: Record<string, number> = {
+  'weekly-exec': 7,
+  'program-health': 14,
+};
+const TILE_DEFAULT_PERIOD_DAYS_FALLBACK = 30;
 const distributionLabels: Record<string, string> = {
   receiptId: 'Identyfikator dystrybucji',
   audience: 'Odbiorcy',
@@ -170,17 +180,37 @@ export const ExecutionReportsSurface = ({
   activePreset,
   onCountsChange,
   onRegisterFilterControl,
+  onRegisterMenu3Control,
+  isAdmin = false,
 }: ExecutionMenu3Contract & {
   /**
    * Rejestruje węzeł kontrolki (dropdown „Poziom" + przełącznik
-   * Raporty|Definicje + akcje zaawansowane) do prawej strony Menu 2
-   * gospodarza (`ExecutionHub`). Ten sam wzorzec co
-   * `ExecutionWorkSurface.onRegisterFilterControl` (odbiór grafiki
-   * 165-menu3-pasek) — 1.12-R4b usuwa własny nagłówek tej powierzchni
+   * Raporty|Definicje) do prawej strony Menu 2 gospodarza (`ExecutionHub`).
+   * Ten sam wzorzec co `ExecutionWorkSurface.onRegisterFilterControl` (odbiór
+   * grafiki 165-menu3-pasek) — 1.12-R4b usuwa własny nagłówek tej powierzchni
    * (h2 + przyciski), który wcześniej rozpychał pion między Menu 3 a
    * tabelą, i CTA „Nowy raport" wraz z filtrami przenoszą się tutaj.
    */
   onRegisterFilterControl?: (node: React.ReactNode) => void;
+  /**
+   * P16-R6 (D6): rejestruje kebab z akcjami deweloperskimi („Nowa definicja",
+   * „Kontrakt raportu (zaawansowane)") do prawego slotu Menu 3
+   * (`StandardModuleBar.menu3Right`) gospodarza. Te dwa przyciski żyły dotąd
+   * jako drugorzędne CTA w Menu 2, widoczne dla KAŻDEGO — pomiar 07.09
+   * (`ExecutionReportsSurface.tsx:1217`, `:855`) pokazał, że to jedyne dwa
+   * przyciski tego ekranu adresowane do dewelopera/administratora, nie do
+   * PMO. Ten sam kanał rejestracji co `onRegisterFilterControl`, osobny slot.
+   */
+  onRegisterMenu3Control?: (node: React.ReactNode) => void;
+  /**
+   * Rola systemowa bieżącego użytkownika (ADMIN/OWNER/SUPERADMIN) — gospodarz
+   * czyta ją z `currentUser.role` (`isAdminOwnerOrSuperAdminRole`, ten sam
+   * strażnik co Sidebar/AIConfigCore). Kebab z akcjami deweloperskimi
+   * renderuje się WYŁĄCZNIE gdy `true`; serwer ma odpowiadającą bramkę
+   * (`requireOrgRole('admin')` na `POST /report-definitions/:id[/transitions]`
+   * — ukryty przycisk sam w sobie nie jest zabezpieczeniem).
+   */
+  isAdmin?: boolean;
 }) => {
   const { t } = useTranslation();
   // 1.12-R4 — katalog definicji (report_definitions) i rejestr migawek.
@@ -438,6 +468,20 @@ export const ExecutionReportsSurface = ({
     return () => window.removeEventListener('execution:reports-new-report', openWizard);
   }, [catalog]);
 
+  /** Otwiera dokładnie ten sam kreator co „Nowy raport", z wybraną definicją
+   * i domyślnym okresem — używane przez kafle pustego stanu Raportów. */
+  const openWizardForDefinition = useCallback((definitionKey: string) => {
+    const days = TILE_DEFAULT_PERIOD_DAYS[definitionKey] ?? TILE_DEFAULT_PERIOD_DAYS_FALLBACK;
+    const end = new Date();
+    const start = new Date(end.getTime() - (days - 1) * 86400000);
+    const iso = (value: Date) => value.toISOString().slice(0, 10);
+    setWizardPeriod({ start: iso(start), end: iso(end) });
+    setWizardKey(definitionKey);
+    setRegisterMode('RUNS');
+    setGenerateError(null);
+    setWizardOpen(true);
+  }, []);
+
   /**
    * Migawka na REALNYCH danych: czytamy te same API co reszta modułu
    * (/api/tasks, /api/decisions, /api/raid, /api/initiatives, delay-signals),
@@ -501,6 +545,28 @@ export const ExecutionReportsSurface = ({
         definition: {},
       })),
     [cadenceLabel, catalog, definitionName, levelLabel, t]
+  );
+
+  /**
+   * P16-R6 (D6): kafle jednego kliknięcia dla pustego stanu rejestru migawek
+   * — po jednym na definicję MVP z KATALOGU serwera (`item.mvp`, patrz
+   * `EXECUTION_REPORT_CATALOG` w `executionReports.routes.ts`), NIE lista na
+   * sztywno — gdy katalog kiedyś zmieni, które 4 definicje są MVP, kafle
+   * zmieniają się z nim automatycznie.
+   */
+  const emptyRunsTiles = useMemo<StandardTableEmptyAction[]>(
+    () =>
+      catalog
+        .filter((item) => item.mvp)
+        .map((item) => ({
+          id: item.key,
+          title: definitionName(item.key, item.name),
+          description: t(`executionReports.definitions.${item.key}.scope`, item.scope || '—'),
+          meta: t(`executionReports.definitions.${item.key}.audience`, item.audience || '—'),
+          actionLabel: t('executionReports.action.generate', 'Wygeneruj raport'),
+          onAction: () => openWizardForDefinition(item.key),
+        })),
+    [catalog, definitionName, openWizardForDefinition, t]
   );
 
   const snapshotRows = useMemo<Row[]>(
@@ -568,6 +634,10 @@ export const ExecutionReportsSurface = ({
   // needs-review + needs-generation (katalog/CONTRACT) — dla właściciela to
   // jedna kolejka „wymaga mojej akcji", nie dwie osobne.
   const matches = useCallback((item: ReportRegisterItem, preset: string) => {
+    // P16-R6 (D6/D7): chip Menu 3 „Definicje (N)" przełącza widok na katalog
+    // (patrz `activePreset`-driven `registerMode` sync niżej) — samo w sobie
+    // nie zawęża rejestru, więc pokazuje WSZYSTKO w aktywnym trybie.
+    if (preset === 'definitions') return true;
     const raw = item.row as any;
     // Wiersze katalogu i migawek MVP mają płaskie pola (poziom/status),
     // nie kontrakt agregatu — bez tego rozgałęzienia liczniki Menu 3 pokazałyby zera.
@@ -583,7 +653,14 @@ export const ExecutionReportsSurface = ({
       item.kind === 'RUN' ? (raw.rawStatus ?? raw.status) : (raw.rawState ?? raw.state)
     ).toUpperCase();
     if (preset === 'all') return true;
-    if (preset === 'needs-review') return ['DRAFT', 'FROZEN', 'VALIDATED', 'FAILED'].includes(status);
+    // R6/D7 „policz uczciwie": rejestr atestacji runtime-v1 (CONTRACT) zna
+    // więcej statusów niż DRAFT/PUBLISHED (APPROVED/RETURNED/SUPERSEDED…).
+    // Biały wykaz `['DRAFT','FROZEN','VALIDATED','FAILED']` zostawiał te
+    // statusy w ŻADNYM kubełku — suma „Do przeglądu" + „Opublikowane" mogła
+    // wtedy być mniejsza niż „Wszystkie" (defekt zmierzony 07.09, P16 §5 R6
+    // pkt 3). Każdy status nieopublikowany trafia do „Do przeglądu" —
+    // dwa kubełki, suma zawsze równa całości.
+    if (preset === 'needs-review') return status !== 'PUBLISHED';
     if (preset === 'published') return status === 'PUBLISHED';
     return false;
   }, []);
@@ -611,8 +688,23 @@ export const ExecutionReportsSurface = ({
       registerMode === 'DEFINITIONS'
         ? definitions.map((row) => ({ kind: 'DEFINITION', row }))
         : rows.map((row) => ({ kind: 'RUN', row }));
-    onCountsChange?.(countExecutionPresets(lensItems, reportPresets, matches));
-  }, [definitions, matches, onCountsChange, registerMode, rows]);
+    onCountsChange?.({
+      ...countExecutionPresets(lensItems, reportPresets, matches),
+      // P16-R6 (D6/D7): „Definicje (N)" liczy CAŁY katalog niezależnie od
+      // trybu/aktywnego presetu — to jest liczba obiektów za przełącznikiem,
+      // nie kubełek migawek.
+      definitions: catalog.length,
+    });
+  }, [catalog.length, definitions, matches, onCountsChange, registerMode, rows]);
+  // P16-R6 (D6): chip Menu 3 „Definicje" (gospodarz przekazuje jego id jako
+  // `activePreset`) przełącza widok tej powierzchni na katalog — ten sam
+  // `registerMode`, którym steruje wewnętrzny przełącznik Raporty|Definicje
+  // (Menu 2). Efekt reaguje TYLKO na zmianę `activePreset` (nie na
+  // `registerMode`), więc nie wchodzi w konflikt z ręcznym klikiem pigułki.
+  useEffect(() => {
+    if (!activePreset) return;
+    setRegisterMode(activePreset === 'definitions' ? 'DEFINITIONS' : 'RUNS');
+  }, [activePreset]);
   const cid = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
     ids.current.set(key, value);
@@ -787,16 +879,17 @@ export const ExecutionReportsSurface = ({
     }
   };
   // 1.12-R4b — Menu 2 (prawa strona gospodarza): dropdown „Poziom" + przełącznik
-  // Raporty|Definicje + akcje zaawansowane. Ten sam wzorzec co
+  // Raporty|Definicje. Ten sam wzorzec co
   // `ExecutionWorkSurface.onRegisterFilterControl` (odbiór grafiki
   // 165-menu3-pasek): blok NIE rozpycha pionu między Menu 3 a tabelą —
   // wcześniej żył tu, we własnym nagłówku (h2 + przyciski), teraz go nie ma.
-  // „Nowa definicja"/„Kontrakt raportu (zaawansowane)" zostają przyciskami
-  // DRUGORZĘDNYMI obok dropdownu (nie CTA głównym — ten jest „Nowy raport"
-  // w Menu 2 gospodarza) — zmierzone: dziś ŻADEN endpoint report_definitions
-  // nie ma ograniczenia roli (grep `role` w tym pliku i w
-  // `server/src/routes/executionReports.routes.ts` — zero trafień), więc nie
-  // wprowadzamy tu nowej bramki admina, której nie ma po stronie serwera.
+  // P16-R6 (D6): „Nowa definicja"/„Kontrakt raportu (zaawansowane)" WYPROWADZONE
+  // stąd — pomiar 07.09 (`:1217`, `:855`) pokazał, że to jedyne dwa przyciski
+  // tego ekranu adresowane do dewelopera/administratora, widoczne dotąd dla
+  // KAŻDEGO. Żyją teraz w kebabie Menu 3 (`onRegisterMenu3Control` niżej),
+  // renderowanym WYŁĄCZNIE dla ADMIN/OWNER — patrz też
+  // `requireOrgRole('admin')` na `POST /report-definitions/:id[/transitions]`
+  // (serwer), bo ukryty przycisk sam w sobie nie jest bramką.
   useEffect(() => {
     if (!onRegisterFilterControl) return;
     onRegisterFilterControl(
@@ -839,31 +932,50 @@ export const ExecutionReportsSurface = ({
             {t('executionReports.tab.definitions', 'Definicje')}
           </button>
         </div>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => {
-            setRegisterMode('DEFINITIONS');
-            setShowDefinitionEditor(true);
-          }}
-        >
-          {t('executionReports.action.newDefinition', 'Nowa definicja')}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => {
-            setRegisterMode('RUNS');
-            setShowRunEditor(true);
-          }}
-        >
-          {t('executionReports.action.newContractRun', 'Kontrakt raportu (zaawansowane)')}
-        </button>
       </div>
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterFilterControl, registerMode, levelFilter, levelLabel, t]);
+
+  // P16-R6 (D6): kebab Menu 3 z akcjami deweloperskimi — WYŁĄCZNIE ADMIN/OWNER.
+  // Reużywa `RowActionsMenu` (ten sam kebab co wiersze tabel), zamiast
+  // budować nowy komponent — kanon: kebab, nie nowy prymityw UI.
+  useEffect(() => {
+    if (!onRegisterMenu3Control) return;
+    if (!isAdmin) {
+      onRegisterMenu3Control(null);
+      return () => onRegisterMenu3Control(null);
+    }
+    onRegisterMenu3Control(
+      <RowActionsMenu
+        size="md"
+        iconVariant="horizontal"
+        actions={[
+          {
+            id: 'new-definition',
+            label: t('executionReports.action.newDefinition', 'Nowa definicja'),
+            onClick: () => {
+              setRegisterMode('DEFINITIONS');
+              setShowDefinitionEditor(true);
+            },
+          },
+          {
+            id: 'new-contract-run',
+            label: t(
+              'executionReports.action.newContractRun',
+              'Kontrakt raportu (zaawansowane)'
+            ),
+            onClick: () => {
+              setRegisterMode('RUNS');
+              setShowRunEditor(true);
+            },
+          },
+        ]}
+      />
+    );
+    return () => onRegisterMenu3Control(null);
+  }, [isAdmin, onRegisterMenu3Control, t]);
 
   // Otwarty dokument migawki wygrywa nad rejestrem (archetyp B — pełny widok obiektu).
   if (openRun)
@@ -1546,13 +1658,31 @@ export const ExecutionReportsSurface = ({
               universalHandlers: { preview: () => setSelectedId(r.id) },
             })}
             persistKey="execution.report-runs.v2"
-            empty={{
-              title: t('executionReports.empty.runs.title', 'Brak raportów'),
-              description: t(
-                'executionReports.empty.runs.body',
-                'Kliknij „Nowy raport", wybierz poziom i okres — migawka powstanie z realnych danych realizacji.'
-              ),
-            }}
+            empty={
+              emptyRunsTiles.length > 0
+                ? {
+                    // P16-R6 (D6): pierwsze wejście prowadzi do generowania —
+                    // cztery kafle zamiast gołego „Brak raportów" (pomiar
+                    // 07.09: u właściciela 0 raportów, katalog był schowany
+                    // za przełącznikiem „Definicje").
+                    title: t(
+                      'executionReports.empty.runs.tilesTitle',
+                      'Wygeneruj pierwszy raport'
+                    ),
+                    description: t(
+                      'executionReports.empty.runs.tilesBody',
+                      'Wybierz jeden z czterech raportów startowych — migawka powstanie z realnych danych realizacji.'
+                    ),
+                    actions: emptyRunsTiles,
+                  }
+                : {
+                    title: t('executionReports.empty.runs.title', 'Brak raportów'),
+                    description: t(
+                      'executionReports.empty.runs.body',
+                      'Kliknij „Nowy raport", wybierz poziom i okres — migawka powstanie z realnych danych realizacji.'
+                    ),
+                  }
+            }
           />
         </TableWithPreviewLayout>
       )}
