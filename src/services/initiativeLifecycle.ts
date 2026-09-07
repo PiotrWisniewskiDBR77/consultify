@@ -52,7 +52,7 @@ export const isTerminalStatus = (status: InitiativeStatusCode): boolean => statu
 export const isActiveStatus = (status: InitiativeStatusCode): boolean => !isTerminalStatus(status);
 export const needsAttention = (status: InitiativeStatusCode): boolean => status === InitiativeStatus.PENDING_APPROVAL;
 
-export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean; gate?: string }
+export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean; gate?: string | null }
 /** Klucz etykiety per BRAMKA — słownictwo z tablicy DEC-424 zaakceptowanej przez właściciela. */
 export const gateActionLabelKey = (gate: string): string => `initiatives.lifecycle.action.${gate}`;
 export function getStatusActions(status: InitiativeStatusCode): StatusAction[] {
