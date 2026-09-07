@@ -1,0 +1,9 @@
+{
+  "nazwa": "05-generator-wybor-5",
+  "opis": "Wybrane 5 inicjatywy modułu i 12 okresów",
+  "url": "http://localhost:3173/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:22:34.114Z"
+}

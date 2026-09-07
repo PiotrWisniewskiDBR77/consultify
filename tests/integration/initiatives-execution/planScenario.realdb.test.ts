@@ -145,7 +145,9 @@ real('Plan Scenario realDB', () => {
           periods: base.periods,
           knowledgeState: 'KNOWN',
         },
-        portfolioRef: { scenarioId: 'portfolio-ie060', scenarioVersion: 1 },
+        // P15-K2 (DEC-421): rejestr planow niesie takze NAZWE portfela (kolumna
+        // „Portfel / wersja"); portfele sprzed paczki nazwy nie maja -> null.
+        portfolioRef: { scenarioId: 'portfolio-ie060', scenarioVersion: 1, name: null },
       }),
     ]);
     const known = {

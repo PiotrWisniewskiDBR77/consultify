@@ -782,6 +782,48 @@ export async function listMyPortfolioDecisions(signal?: AbortSignal) {
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
+/**
+ * MOST P15-K2 (DEC-421): inicjatywy MODUŁU kwalifikujące się do planowania.
+ * Kwalifikację liczy SERWER po surowym `initiatives.status`, żeby generator nie
+ * pokazał pozycji, której komenda `register` i tak by nie przyjęła.
+ */
+export interface PlannableInitiative {
+  id: string;
+  name: string;
+  status: 'APPROVED' | 'PENDING_APPROVAL';
+  conditional: boolean;
+  projectId: string | null;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  requiredCapacityFte: number | null;
+}
+export async function listPlannableInitiatives(signal?: AbortSignal) {
+  const response = await fetch('/api/initiatives/runtime-v1/planning/plannable-initiatives', {
+    credentials: 'include',
+    signal,
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as { initiatives: PlannableInitiative[] };
+}
+/** „Przyjmij inicjatywę modułu do planowania" — zakłada/odświeża agregat `ie/initiative`. */
+export async function registerInitiativeForPlanning(
+  initiativeId: string,
+  command: { clientRequestId: string; allowConditional?: boolean }
+) {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/planning/initiatives/${encodeURIComponent(initiativeId)}/register`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+    }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as { status: string; aggregateVersion: number; response: Record<string, unknown> };
+}
 export async function writePlanScenario(scenarioId: string, command: Record<string, unknown>) {
   const response = await fetch(
     `/api/initiatives/runtime-v1/plan-scenarios/${encodeURIComponent(scenarioId)}`,

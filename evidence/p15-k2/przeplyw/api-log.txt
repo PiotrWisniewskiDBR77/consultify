@@ -1,0 +1,52 @@
+# P15-K2 — wywołania runtime-v1 podczas przepływu klikanego
+# BASE=http://localhost:3173, API=4153, baza=consultify_p15k2, 2026-09-07T18:23:12.928Z
+
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-89e7be82-0443-42c2-9ae2-5a7247b03c92/history
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-final-02/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-test-02/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-adma-04/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-final-03/register
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/analysis-proposals/plan-analysis-plan-e3fd97c3-822f-4454-827c-230887611ed8-3fa2492d-9199-4c53-b95d-ce3393f850ed
+POST 200 /api/initiatives/runtime-v1/plan-analysis-proposals/plan-analysis-plan-e3fd97c3-822f-4454-827c-230887611ed8-3fa2492d-9199-4c53-b95d-ce3393f850ed/review
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-e3fd97c3-822f-4454-827c-230887611ed8/history
+
+# błędy konsoli: 0

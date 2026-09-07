@@ -1,0 +1,9 @@
+{
+  "nazwa": "10-karta-kolejnosc-i-okna",
+  "opis": "Karta planu po reloadzie: sekcja „Kolejność i okna\" = 5 okien z propozycji",
+  "url": "http://localhost:3173/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:23:12.928Z"
+}

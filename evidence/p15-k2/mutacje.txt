@@ -1,0 +1,45 @@
+# P15-K2 — dowody mutacyjne (kazda mutacja zalozona recznie i COFNIETA)
+# baza: consultify_p15k2 (kopia consultify_fable + migracja K1)
+
+== MUTACJA a) registerModuleInitiativeForPlanning.assertPlannable — zdjety warunek statusu modulu
+   plik: server/src/domain/initiatives-execution/registerModuleInitiativeForPlanning.ts
+   test: tests/integration/initiatives-execution/planningBridge.http.realdb.test.ts
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+
+== MUTACJA b) initiativesExecutionRuntime.routes — portfel roboczy NIE jest zakladany
+   plik: server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
+   test: tests/integration/initiatives-execution/planningBridge.http.realdb.test.ts
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+
+== MUTACJA c) PlanCard — generator przekazuje TYLKO tryb (stan sprzed paczki)
+   plik: src/components/Initiatives/cards/PlanCard.tsx
+   test: tests/unit/initiatives-execution/planGeneratorPrzewod.test.tsx
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+
+== MUTACJA c2) PlanScenarioSurface.generatePlan — UPDATE bez okresow i okien z wyboru
+   plik: src/components/Initiatives/PlanScenarioSurface.tsx
+   test: tests/unit/initiatives-execution/planGeneratorPrzewod.test.tsx
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+
+== MUTACJA d) GeneratorPlanuModal — usunieta tabela propozycji
+   plik: src/components/Initiatives/Generator/GeneratorPlanuModal.tsx
+   test: tests/unit/initiatives-execution/planGeneratorMost.test.tsx
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+
+== MUTACJA e) PlanScenarioSurface.markSaved — znacznik zapisu jako STALA, nie z odpowiedzi serwera
+   plik: src/components/Initiatives/PlanScenarioSurface.tsx
+   test: tests/unit/initiatives-execution/planGeneratorPrzewod.test.tsx
+   PRZED (zielono): Test Files  1 passed (1) | Test Files  1 passed (1)
+   PO MUTACJI (RED): Test Files  1 failed (1) | Test Files  1 failed (1)
+   PO COFNIECIU: Test Files  1 passed (1) | Test Files  1 passed (1)
+

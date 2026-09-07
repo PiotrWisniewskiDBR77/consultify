@@ -66,6 +66,10 @@ vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   readPlanScenarioHistory: vi.fn(async () => ({ versions: [] })),
   createPlanAnalysisProposal: vi.fn(),
   reviewPlanAnalysisProposal: vi.fn(),
+  // P15-K2 (DEC-421): most inicjatyw modulu — powierzchnia wczytuje liste
+  // kwalifikujacych sie inicjatyw przy montazu.
+  listPlannableInitiatives: vi.fn(async () => ({ initiatives: [] })),
+  registerInitiativeForPlanning: vi.fn(),
   writePlanScenario,
   RuntimeApiError: RuntimeApiErrorMock,
 }));
@@ -97,9 +101,8 @@ describe('P15-K1 — blad zapisu planu nazywa regule', () => {
     fireEvent.change(await screen.findByLabelText('Nazwa planu nadana przez Ciebie'), {
       target: { value: 'Plan modernizacji' },
     });
-    fireEvent.change(screen.getByLabelText('Identyfikator scenariusza portfela'), {
-      target: { value: 'portfolio-1' },
-    });
+    // P15-K2 (DEC-421): formularz NIE pyta juz o portfel — zaklada go serwer
+    // (portfel roboczy). Zostaje sama nazwa planu.
     fireEvent.click(screen.getByRole('button', { name: (name) => name.includes('Utwórz plan') }));
 
     const alert = await waitFor(() => screen.getByRole('alert'));

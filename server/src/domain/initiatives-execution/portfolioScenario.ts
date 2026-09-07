@@ -30,6 +30,13 @@ export interface PortfolioMembership {
 }
 export interface PortfolioScenario {
   scenarioId: string;
+  /**
+   * P15-K2 (DEC-421): nazwa czytelna dla człowieka. Portfel roboczy zakładany
+   * automatycznie przy „Nowy plan" nazywa się „Portfel roboczy — …", a lista planów
+   * pokazuje tę nazwę zamiast surowego identyfikatora agregatu. Portfele sprzed tej
+   * paczki nazwy nie mają — zostaje `null`/brak, ekran wtedy nie zmyśla.
+   */
+  name?: string | null;
   scenarioVersion: number;
   status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
   scope: { portfolioId: string; goalIds: string[]; asOf: string };

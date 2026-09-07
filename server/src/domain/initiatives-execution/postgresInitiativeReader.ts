@@ -8,6 +8,7 @@ import type { PortfolioScenario } from './portfolioScenario.js';
 import type { PortfolioDecision } from './portfolioDecision.js';
 import type { EffectiveGovernancePolicy } from './postgresGovernancePolicyResolver.js';
 import type { RegisteredInitiative } from './registerInitiative.js';
+import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
 
 export interface SourceProposalReadModel {
   id: string;
@@ -1200,6 +1201,107 @@ export class PostgresInitiativeReader {
       : null;
   }
 
+  /**
+   * MOST P15-K2 (DEC-421): inicjatywy MODUŁU kwalifikujące się do planowania.
+   *
+   * Generator planu MUSI pokazywać dokładnie ten sam zbiór, który przepuszcza
+   * komenda `initiative.planning.register` (`registerModuleInitiativeForPlanning.ts`),
+   * inaczej PMO zaznaczy pozycję, której serwer nie przyjmie. Dlatego kwalifikacja
+   * jest liczona TU, po surowym `initiatives.status`, a nie po `lifecycle` sklejanym
+   * na froncie z trzech różnych pól.
+   */
+  async listPlannableModuleInitiatives(organizationId: string): Promise<
+    Array<{
+      id: string;
+      name: string;
+      status: 'APPROVED' | 'PENDING_APPROVAL';
+      conditional: boolean;
+      projectId: string | null;
+      plannedStartDate: string | null;
+      plannedEndDate: string | null;
+      requiredCapacityFte: number | null;
+    }>
+  > {
+    const result = await this.pool.query<{
+      id: string;
+      name: string | null;
+      title: string | null;
+      status: string;
+      project_id: string | null;
+      planned_start_date: string | null;
+      planned_end_date: string | null;
+      required_capacity_fte: number | null;
+    }>(
+      `SELECT id, name, title, status, project_id,
+              planned_start_date, planned_end_date, required_capacity_fte
+         FROM initiatives
+        WHERE organization_id = $1
+          AND status IN ('APPROVED', 'PENDING_APPROVAL')
+          AND COALESCE(archived, false) = false
+          AND archived_at IS NULL
+        ORDER BY status, COALESCE(name, title, id)`,
+      [organizationId]
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      name: (row.name ?? row.title ?? row.id).trim() || row.id,
+      status: row.status === 'APPROVED' ? ('APPROVED' as const) : ('PENDING_APPROVAL' as const),
+      conditional: row.status === 'PENDING_APPROVAL',
+      projectId: row.project_id,
+      plannedStartDate: row.planned_start_date,
+      plannedEndDate: row.planned_end_date,
+      requiredCapacityFte:
+        row.required_capacity_fte === null ? null : Number(row.required_capacity_fte),
+    }));
+  }
+
+  /**
+   * Jeden wiersz modułu w kształcie, którego używa komenda planowania — trasa
+   * potrzebuje go do 404, do autoryzacji i do sprawdzenia, czy powtórzone
+   * „przyjmij do planowania" cokolwiek zmienia (idempotencja bez podbijania wersji).
+   */
+  async findModuleInitiativeForPlanning(
+    organizationId: string,
+    initiativeId: string
+  ): Promise<ModuleInitiativeForPlanning | null> {
+    const result = await this.pool.query<{
+      id: string;
+      name: string | null;
+      title: string | null;
+      status: string | null;
+      project_id: string | null;
+      planned_start_date: string | null;
+      planned_end_date: string | null;
+      required_capacity_fte: number | null;
+    }>(
+      `SELECT id, name, title, status, project_id,
+              planned_start_date, planned_end_date, required_capacity_fte
+         FROM initiatives
+        WHERE organization_id = $1 AND id = $2`,
+      [organizationId, initiativeId]
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    const dependencies = await this.pool.query<{ to_initiative_id: string }>(
+      `SELECT to_initiative_id
+         FROM initiative_dependencies
+        WHERE organization_id = $1 AND from_initiative_id = $2
+        ORDER BY to_initiative_id`,
+      [organizationId, initiativeId]
+    );
+    return {
+      initiativeId: row.id,
+      name: (row.name ?? row.title ?? row.id).trim() || row.id,
+      status: String(row.status ?? ''),
+      projectId: row.project_id,
+      plannedStartDate: row.planned_start_date,
+      plannedEndDate: row.planned_end_date,
+      requiredCapacityFte:
+        row.required_capacity_fte === null ? null : Number(row.required_capacity_fte),
+      dependsOn: dependencies.rows.map((dependency) => dependency.to_initiative_id),
+    };
+  }
+
   async findPlanScenario(
     organizationId: string,
     scenarioId: string
@@ -1251,6 +1353,7 @@ export class PostgresInitiativeReader {
       conflicts_count: number | null;
       updated_by_first_name: string | null;
       updated_by_last_name: string | null;
+      portfolio_name: string | null;
     }>(
       `SELECT
          s.aggregate_id,
@@ -1258,7 +1361,8 @@ export class PostgresInitiativeReader {
          s.updated_at,
          proposal.conflicts_count,
          u.first_name AS updated_by_first_name,
-         u.last_name AS updated_by_last_name
+         u.last_name AS updated_by_last_name,
+         portfolio.payload_json->>'name' AS portfolio_name
        FROM ie_aggregate_state s
        LEFT JOIN LATERAL (
          SELECT jsonb_array_length(COALESCE(p.payload_json->'conflicts', '[]'::jsonb)) AS conflicts_count
@@ -1269,6 +1373,10 @@ export class PostgresInitiativeReader {
          ORDER BY p.updated_at DESC
          LIMIT 1
        ) proposal ON true
+       LEFT JOIN ie_aggregate_state portfolio
+              ON portfolio.organization_id = s.organization_id
+             AND portfolio.aggregate_type = 'portfolio_scenario'
+             AND portfolio.aggregate_id = (s.payload_json->>'portfolioScenarioId')
        LEFT JOIN users u ON u.id = (s.payload_json->>'updatedBy')
        WHERE s.organization_id=$1 AND s.aggregate_type='plan_scenario'
        ORDER BY s.updated_at DESC`,
@@ -1290,6 +1398,11 @@ export class PostgresInitiativeReader {
         portfolioRef: {
           scenarioId: r.payload_json.portfolioScenarioId,
           scenarioVersion: r.payload_json.portfolioScenarioVersion,
+          // P15-K2 (DEC-421): kolumna „Portfel / wersja" pokazywała surowy
+          // identyfikator agregatu. Nazwa portfela (m.in. „Portfel roboczy — …")
+          // jest w ładunku portfela; brak nazwy zostaje `null`, żeby ekran nie
+          // udawał, że ją zna.
+          name: r.portfolio_name,
         },
         timeBasis: {
           windowUnit: r.payload_json.windowUnit ?? null,

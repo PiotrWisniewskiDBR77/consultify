@@ -22,10 +22,13 @@ import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
   createPlanAnalysisProposal,
+  listPlannableInitiatives,
   listPlanScenarioRegister,
+  type PlannableInitiative,
   readPlanScenario,
   readPlanScenarioDiff,
   readPlanScenarioHistory,
+  registerInitiativeForPlanning,
   reviewPlanAnalysisProposal,
   RuntimeApiError,
   writePlanScenario,
@@ -33,7 +36,11 @@ import {
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
 import { PlanCard } from './cards/PlanCard';
-import type { PlanGenerationMode } from './Generator/GeneratorPlanuModal';
+import type {
+  GeneratorPlanInput,
+  GeneratorProposalRow,
+  PlanGenerationMode,
+} from './Generator/GeneratorPlanuModal';
 import { applyAcceptedPlanProposal } from './planProposalReview';
 
 interface WindowDraft {
@@ -94,6 +101,25 @@ interface RegisterRow extends TableRow {
   conflicts: number;
   author: string;
 }
+/** Kszalt wiersza z `GET /plan-scenarios` (rejestr planów). */
+interface RegisterApiRow {
+  id: string;
+  name: string;
+  state: string;
+  version: number;
+  portfolioRef: { scenarioId: string; scenarioVersion: number; name?: string | null };
+  window: { earliest: string | null; latest: string | null };
+  updatedAt: string;
+  timeBasis?: {
+    windowUnit: string;
+    timezone: string;
+    periods: Array<{ periodId: string; start: string; end: string }>;
+    knowledgeState: 'KNOWN' | 'UNKNOWN';
+  };
+  initiativeCount?: number;
+  conflicts?: number;
+  author?: string;
+}
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
@@ -136,16 +162,27 @@ const toInput = (value: string | null) => (value ? value.slice(0, 16) : '');
 const toIso = (value: string) => (value ? new Date(value).toISOString() : null);
 const toDateInput = (value: string) => value.slice(0, 10);
 const toDateIso = (value: string) => `${value}T00:00:00.000Z`;
-const createWeeklyPeriods = (start: string, count: number): PeriodDraft[] => {
+/**
+ * P15-K2 (DEC-421): horyzont z PARAMETRÓW generatora, nie z seedu. Jednostka
+ * decyduje o kroku okresu; identyfikator okresu jest DANĄ zapisywaną w planie
+ * (tak samo jak przed tą paczką), nie napisem tłumaczonym per użytkownik.
+ */
+const createPeriods = (
+  start: string,
+  count: number,
+  unit: 'WEEK' | 'MONTH' = 'WEEK'
+): PeriodDraft[] => {
   const first = new Date(toDateIso(start));
   if (Number.isNaN(first.getTime()) || count < 1) return [];
   return Array.from({ length: count }, (_, index) => {
     const periodStart = new Date(first);
-    periodStart.setUTCDate(first.getUTCDate() + index * 7);
+    if (unit === 'MONTH') periodStart.setUTCMonth(first.getUTCMonth() + index);
+    else periodStart.setUTCDate(first.getUTCDate() + index * 7);
     const periodEnd = new Date(periodStart);
-    periodEnd.setUTCDate(periodStart.getUTCDate() + 7);
+    if (unit === 'MONTH') periodEnd.setUTCMonth(periodStart.getUTCMonth() + 1);
+    else periodEnd.setUTCDate(periodStart.getUTCDate() + 7);
     return {
-      periodId: `Tydzień ${index + 1}`,
+      periodId: `${unit === 'MONTH' ? 'Miesiąc' : 'Tydzień'} ${index + 1}`,
       start: periodStart.toISOString(),
       end: periodEnd.toISOString(),
     };
@@ -257,8 +294,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [analysisState, setAnalysisState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [publishConfirmationPending, setPublishConfirmationPending] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
-  const [portfolioId, setPortfolioId] = useState('');
-  const [portfolioVersion, setPortfolioVersion] = useState(1);
+  // P15-K2 (DEC-421), D1': portfel roboczy zakłada SERWER — formularz „Nowy plan"
+  // nie pyta już o identyfikator i wersję scenariusza portfela.
+  const [plannable, setPlannable] = useState<PlannableInitiative[]>([]);
+  const [savedLabel, setSavedLabel] = useState<string | null>(null);
   const [newWindowUnit, setNewWindowUnit] = useState('WEEK');
   const [newTimezone, setNewTimezone] = useState('Europe/Warsaw');
   const [newStart, setNewStart] = useState(() => new Date().toISOString().slice(0, 10));
@@ -267,6 +306,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [initiativeLifecycleFilter, setInitiativeLifecycleFilter] = useState('ALL');
   const commandIds = useRef(new Map<string, string>());
   const handledCreateRequest = useRef(createRequestId);
+  /** Ostatnio wczytana lista planów — źródło znacznika „Zapisano hh:mm" (serwerowe `updatedAt`). */
+  const loadedRows = useRef<RegisterRow[]>([]);
 
   useEffect(() => {
     if (createRequestId === handledCreateRequest.current) return;
@@ -320,6 +361,67 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     },
     [demoMode]
   );
+
+  // ZMIERZONE 07.09: opakowanie tego mapowania w `useCallback([t])` wpuszczalo
+  // `t` w liste zaleznosci `loadRegister`. W srodowisku, w ktorym `t` nie jest
+  // stabilne miedzy renderami (atrapy testowe, ale takze przelaczenie jezyka),
+  // efekt `useEffect([loadRegister])` odpalal sie w kolko — React przerywal
+  // renderowanie z „Maximum update depth exceeded". Zwykla funkcja w ciele
+  // komponentu nie ma tego problemu i nie zmienia zachowania.
+  const toRegisterRow =
+    (item: RegisterApiRow): RegisterRow => ({
+      id: item.id,
+      title: resolveBusinessDisplayLabel({
+        displayName: item.name,
+        rawId: item.id,
+        fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
+      }),
+      state: item.state,
+      version: item.version,
+      // P15-K2 (DEC-421): kolumna „Portfel / wersja" pokazuje NAZWĘ portfela
+      // (np. „Portfel roboczy — …") z czytnika; surowy identyfikator agregatu
+      // zostaje wyłącznie jako ostatnia deska ratunku dla portfeli sprzed paczki.
+      portfolio: `${resolveBusinessDisplayLabel({
+        displayName: item.portfolioRef.name ?? item.portfolioRef.scenarioId,
+        rawId: item.portfolioRef.scenarioId,
+        fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
+      })} · v${item.portfolioRef.scenarioVersion}`,
+      earliest: item.window.earliest ?? 'Unknown',
+      latest: item.window.latest ?? 'Unknown',
+      updatedAt: item.updatedAt,
+      timeBasisState: item.timeBasis?.knowledgeState ?? 'UNKNOWN',
+      initiativeCount: item.initiativeCount ?? 0,
+      conflicts: item.conflicts ?? 0,
+      author: resolveBusinessDisplayLabel({
+        displayName: item.author,
+        rawId: item.author,
+        fallback: t('common.unknown', 'Nieznane'),
+      }),
+    });
+
+  /**
+   * P15-K2 (DEC-421): LEKKIE odświeżenie rejestru planów — bez `setState('LOADING')`.
+   *
+   * ZMIERZONE w przepływie klikanym 07.09 (evidence/p15-k2/przeplyw): wołanie
+   * pełnego `loadRegister()` w środku generowania przełączało powierzchnię na
+   * gałąź „ładowanie", co ODMONTOWYWAŁO kartę planu razem z otwartym oknem
+   * generatora — propozycja znikała, zanim człowiek zdążył ją zobaczyć.
+   * Ta ścieżka aktualizuje wyłącznie wiersze rejestru (potrzebne do znacznika
+   * „Zapisano hh:mm" z serwerowego `updatedAt`) i nie rusza gałęzi renderu.
+   */
+  const refreshRegisterRows = useCallback(async () => {
+    if (demoMode) return;
+    try {
+      const result = (await listPlanScenarioRegister()) as { scenarios?: RegisterApiRow[] };
+      const nextRows = (result.scenarios ?? []).map(toRegisterRow);
+      setRows(nextRows);
+      loadedRows.current = nextRows;
+    } catch {
+      // Rejestr jest tu wyłącznie źródłem znacznika zapisu — nieudane odświeżenie
+      // NIE może przewrócić karty, na której użytkownik właśnie pracuje.
+      setWriteRule(null);
+    }
+  }, [demoMode]);
 
   const loadRegister = useCallback(async () => {
     setState('LOADING');
@@ -406,26 +508,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       return;
     }
     try {
-      const result = (await listPlanScenarioRegister()) as {
-        scenarios?: Array<{
-          id: string;
-          name: string;
-          state: string;
-          version: number;
-          portfolioRef: { scenarioId: string; scenarioVersion: number };
-          window: { earliest: string | null; latest: string | null };
-          updatedAt: string;
-          timeBasis?: {
-            windowUnit: string;
-            timezone: string;
-            periods: Array<{ periodId: string; start: string; end: string }>;
-            knowledgeState: 'KNOWN' | 'UNKNOWN';
-          };
-          initiativeCount?: number;
-          conflicts?: number;
-          author?: string;
-        }>;
-      };
+      const result = (await listPlanScenarioRegister()) as { scenarios?: RegisterApiRow[] };
       const enrichedScenarios = await Promise.all(
         (result.scenarios ?? []).map(async (item) => {
           if (item.initiativeCount !== undefined && item.author !== undefined) return item;
@@ -437,33 +520,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           };
         })
       );
-      const nextRows = enrichedScenarios.map((item) => ({
-        id: item.id,
-        title: resolveBusinessDisplayLabel({
-          displayName: item.name,
-          rawId: item.id,
-          fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
-        }),
-        state: item.state,
-        version: item.version,
-        portfolio: `${resolveBusinessDisplayLabel({
-          displayName: item.portfolioRef.scenarioId,
-          rawId: item.portfolioRef.scenarioId,
-          fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
-        })} · v${item.portfolioRef.scenarioVersion}`,
-        earliest: item.window.earliest ?? 'Unknown',
-        latest: item.window.latest ?? 'Unknown',
-        updatedAt: item.updatedAt,
-        timeBasisState: item.timeBasis?.knowledgeState ?? 'UNKNOWN',
-        initiativeCount: item.initiativeCount ?? 0,
-        conflicts: item.conflicts ?? 0,
-        author: resolveBusinessDisplayLabel({
-          displayName: item.author,
-          rawId: item.author,
-          fallback: t('common.unknown', 'Nieznane'),
-        }),
-      }));
+      const nextRows = enrichedScenarios.map(toRegisterRow);
       setRows(nextRows);
+      loadedRows.current = nextRows;
       if (nextRows.length) {
         const initial = nextRows.find((item) => item.state === 'PUBLISHED') ?? nextRows[0];
         setSelectedId(initial.id);
@@ -490,6 +549,21 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   useEffect(() => {
     void loadRegister();
   }, [loadRegister]);
+  // MOST P15-K2 (DEC-421): kwalifikację inicjatyw modułu liczy SERWER (ten sam
+  // warunek, co komenda `register`), a nie front po sklejanym `lifecycle`.
+  useEffect(() => {
+    if (demoMode) {
+      setPlannable([]);
+      return;
+    }
+    const controller = new AbortController();
+    void listPlannableInitiatives(controller.signal)
+      .then((result) => setPlannable(result.initiatives ?? []))
+      .catch((error) => {
+        if ((error as { name?: string })?.name !== 'AbortError') setPlannable([]);
+      });
+    return () => controller.abort();
+  }, [demoMode]);
   const planWindowRows = useMemo(() => {
     const names = new Map(initiatives.map((item) => [item.id, item.name]));
     const scheduled = (draft?.windows ?? []).map((window) => {
@@ -641,23 +715,15 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         defaultValue: 'Kartę inicjatywy otwiera moduł Inicjatywy — ten widok jest tylko planem.',
       });
   const create = async () => {
-    const periods = createWeeklyPeriods(newStart, newWeekCount);
-    if (
-      !newName.trim() ||
-      !portfolioId.trim() ||
-      portfolioVersion < 1 ||
-      !newWindowUnit.trim() ||
-      !newTimezone.trim() ||
-      !periods.length
-    )
-      return;
+    const periods = createPeriods(newStart, newWeekCount, newWindowUnit === 'MONTH' ? 'MONTH' : 'WEEK');
+    if (!newName.trim() || !newWindowUnit.trim() || !newTimezone.trim() || !periods.length) return;
     const scenario: PlanScenario = {
       scenarioId: `plan-${crypto.randomUUID()}`,
       name: newName.trim(),
       scenarioVersion: 0,
       status: 'DRAFT',
-      portfolioScenarioId: portfolioId.trim(),
-      portfolioScenarioVersion: portfolioVersion,
+      portfolioScenarioId: '',
+      portfolioScenarioVersion: 0,
       windowUnit: newWindowUnit.trim(),
       timezone: newTimezone.trim(),
       periods,
@@ -682,6 +748,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: 0,
         clientRequestId: crypto.randomUUID(),
         operation: 'CREATE',
+        portfolio: 'auto',
         scenario,
       })) as { aggregateVersion: number; response: PlanScenario };
       setAggregateVersion(result.aggregateVersion);
@@ -716,6 +783,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: aggregateVersion,
         clientRequestId,
         operation,
+        portfolio: 'auto',
         ...(publishConfirmation ? { publishConfirmation } : {}),
         scenario: draft,
       })) as { aggregateVersion: number; response: PlanScenario };
@@ -723,7 +791,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setDraft(result.response);
       setWriteState('IDLE');
       setPublishConfirmationPending(null);
-      await loadRegister();
+      // Lekkie odswiezenie: pelny `loadRegister` przelaczylby powierzchnie na
+      // galaz „ladowanie" i odmontowal karte planu razem z otwartym oknem.
+      await refreshRegisterRows();
+      markSaved(result.response.scenarioId);
       setSelectedId(result.response.scenarioId);
       await loadHistory(result.response.scenarioId);
       if (result.response.scenarioVersion > 1) {
@@ -754,6 +825,106 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setCompareState('ERROR');
     }
   };
+  /**
+   * „Zapisano hh:mm" z ODPOWIEDZI SERWERA. Pomiar 07.09: `PlanCard.tsx:38` miał
+   * `saveState:'saved'` na sztywno — karta twierdziła, że zapisano, także wtedy,
+   * gdy nic nie poszło do bazy. Znacznik bierzemy z `updated_at` agregatu, który
+   * wraca w rejestrze planów po zapisie.
+   */
+  const markSaved = useCallback((scenarioId: string) => {
+    const row = loadedRows.current.find((item) => item.id === scenarioId);
+    const saved = row?.updatedAt ? new Date(row.updatedAt) : null;
+    setSavedLabel(
+      saved && !Number.isNaN(saved.getTime())
+        ? t('initiatives.planGenerator.savedAt', {
+            defaultValue: 'Zapisano {{time}}',
+            time: new Intl.DateTimeFormat(i18n.language === 'pl' ? 'pl-PL' : 'en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }).format(saved),
+          })
+        : null
+    );
+  }, [t]);
+
+  /**
+   * GENERATOR END-TO-END (P15-K2, DEC-421 — decyzje D1' i D5).
+   *
+   * (a) most: każda wybrana inicjatywa MODUŁU zostaje przyjęta do planowania
+   *     (agregat `ie/initiative` w APPROVED_BACKLOG — inaczej plan odrzuca okno
+   *     regułą PLAN_MEMBER_NOT_APPROVED, zmierzone 07.09);
+   * (b) UPDATE planu: okresy z parametrów, okna z WYBORU (przed tą paczką
+   *     `PlanCard.tsx:38` przekazywał wyłącznie tryb);
+   * (c) propozycja solvera — pokazana w kroku 4 PRZED „Zatwierdź".
+   */
+  const generatePlan = async (input: GeneratorPlanInput) => {
+    if (!draft || draft.status !== 'DRAFT' || !input.initiativeIds.length) return;
+    setAnalysisState('LOADING');
+    setWriteRule(null);
+    setAnalysisProposal(null);
+    try {
+      const versions = new Map<string, number>();
+      for (const initiativeId of input.initiativeIds) {
+        const registered = await registerInitiativeForPlanning(initiativeId, {
+          clientRequestId: crypto.randomUUID(),
+          allowConditional: input.allowConditional,
+        });
+        versions.set(initiativeId, registered.aggregateVersion);
+      }
+      const periods = createPeriods(input.start, input.periods, input.unit);
+      if (!periods.length) {
+        setAnalysisState('ERROR');
+        return;
+      }
+      const horizonStart = periods[0].start;
+      const horizonEnd = periods[periods.length - 1].end;
+      const windows: WindowDraft[] = input.initiativeIds.map((initiativeId) => {
+        const source = plannable.find((item) => item.id === initiativeId);
+        const previous = draft.windows.find((window) => window.initiativeId === initiativeId);
+        const planned = source?.plannedStartDate ?? null;
+        return {
+          initiativeId,
+          initiativeVersion: versions.get(initiativeId) ?? previous?.initiativeVersion ?? 1,
+          earliest: horizonStart,
+          // Data docelowa = planowany start z modułu, o ile MIEŚCI SIĘ w horyzoncie;
+          // inaczej początek horyzontu — bez cichego wypychania okna poza plan.
+          target: planned && planned >= horizonStart && planned <= horizonEnd ? planned : horizonStart,
+          latest: horizonEnd,
+          confidence: previous?.confidence ?? 'UNKNOWN',
+          rationale:
+            previous?.rationale?.trim() ||
+            t('initiatives.planScenario.workbench.defaultRationale'),
+          dependencySnapshot: previous?.dependencySnapshot ?? [],
+          constraintSnapshot: previous?.constraintSnapshot ?? [],
+        };
+      });
+      const updated = (await writePlanScenario(draft.scenarioId, {
+        expectedVersion: aggregateVersion,
+        clientRequestId: crypto.randomUUID(),
+        operation: 'UPDATE',
+        portfolio: 'auto',
+        scenario: { ...draft, windowUnit: input.unit, periods, windows },
+      })) as { aggregateVersion: number; response: PlanScenario };
+      setAggregateVersion(updated.aggregateVersion);
+      setDraft(updated.response);
+      await refreshRegisterRows();
+      markSaved(updated.response.scenarioId);
+      const proposalId = `plan-analysis-${draft.scenarioId}-${crypto.randomUUID()}`;
+      const result = (await createPlanAnalysisProposal(draft.scenarioId, proposalId, {
+        expectedVersion: 0,
+        clientRequestId: crypto.randomUUID(),
+        scenarioId: draft.scenarioId,
+        inputAggregateVersion: updated.aggregateVersion,
+        useCapacity: input.mode !== 'DEPENDENCIES',
+      })) as { response: PlanAnalysisProposal };
+      setAnalysisProposal(result.response);
+      setAnalysisState('IDLE');
+    } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      setAnalysisState('ERROR');
+    }
+  };
+
   const analyzePlan = async (mode: PlanGenerationMode = 'DEPENDENCIES') => {
     if (!draft || !aggregateVersion || draft.status !== 'DRAFT') return;
     setAnalysisState('LOADING');
@@ -786,14 +957,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             : 'Human rejected proposal; draft remains unchanged.',
       })) as { response?: PlanAnalysisProposal };
       if (outcome === 'ACCEPT') {
-        setDraft({
-          ...draft,
-          windows: applyAcceptedPlanProposal(
-            draft.windows,
-            analysisProposal.changes,
-            reviewed.response?.status
-          ),
-        });
+        // P15 §4.0 D5: „Zatwierdź" = UPDATE okien Z PROPOZYCJI na serwerze, nie
+        // zmiana żyjąca w stanie Reacta. Pomiar 07.09: po ACCEPT plan w bazie
+        // zostawał bez zmian, a karta i tak pokazywała „Zapisano".
+        const windows = applyAcceptedPlanProposal(
+          draft.windows,
+          analysisProposal.changes,
+          reviewed.response?.status
+        );
+        const updated = (await writePlanScenario(draft.scenarioId, {
+          expectedVersion: aggregateVersion,
+          clientRequestId: crypto.randomUUID(),
+          operation: 'UPDATE',
+          portfolio: 'auto',
+          scenario: { ...draft, windows },
+        })) as { aggregateVersion: number; response: PlanScenario };
+        setAggregateVersion(updated.aggregateVersion);
+        setDraft(updated.response);
+        await refreshRegisterRows();
+        markSaved(updated.response.scenarioId);
       }
       setAnalysisProposal({
         ...analysisProposal,
@@ -988,15 +1170,37 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       </div>
     );
   if (workspaceOpen && draft) {
+    const proposalNames = new Map([
+      ...initiatives.map((item) => [item.id, item.name] as const),
+      ...plannable.map((item) => [item.id, item.name] as const),
+    ]);
+    const proposalRows: GeneratorProposalRow[] | null = analysisProposal
+      ? analysisProposal.changes.map((change) => ({
+          initiativeId: change.initiativeId,
+          name: proposalNames.get(change.initiativeId) ?? change.initiativeId,
+          from: formatDate(change.after?.earliest ?? null),
+          to: formatDate(change.after?.latest ?? null),
+          rationale: change.after?.rationale ?? '',
+          conflict:
+            analysisProposal.conflicts.find((conflict) =>
+              conflict.includes(change.initiativeId)
+            ) ?? null,
+        }))
+      : null;
     return (
       <>
         <PlanCard
           scenario={draft}
           initiatives={initiatives}
+          plannable={plannable}
           proposal={analysisProposal}
+          proposalRows={proposalRows}
+          proposalConflicts={analysisProposal?.conflicts ?? []}
+          savedLabel={savedLabel}
           busy={analysisState === 'LOADING' || writeState === 'SAVING'}
           onBack={() => setWorkspaceOpen(false)}
           onAnalyze={(mode) => void analyzePlan(mode)}
+          onGenerate={(input) => void generatePlan(input)}
           onReview={(outcome) => void reviewAnalysis(outcome)}
           onPublish={requestPublish}
         />
@@ -1135,26 +1339,12 @@ export const PlanScenarioSurface: React.FC<Props> = ({
               onChange={(e) => setNewName(e.target.value)}
             />
           </label>
-          <label className="text-xs">
-            {t('initiatives.planScenario.form.sourcePortfolio')}
-            <input
-              aria-label={t('initiatives.planScenario.form.sourcePortfolioAria')}
-              className="mt-1 block bg-c-surface p-2"
-              value={portfolioId}
-              onChange={(e) => setPortfolioId(e.target.value)}
-            />
-          </label>
-          <label className="text-xs">
-            {t('initiatives.planScenario.form.portfolioVersion')}
-            <input
-              aria-label={t('initiatives.planScenario.form.portfolioVersionAria')}
-              className="mt-1 block w-20 bg-c-surface p-2"
-              type="number"
-              min={1}
-              value={portfolioVersion}
-              onChange={(e) => setPortfolioVersion(Number(e.target.value))}
-            />
-          </label>
+          <p className="w-full text-xs text-c-text-muted">
+            {t('initiatives.planScenario.form.workingPortfolioHint', {
+              defaultValue:
+                'Portfel roboczy założy się sam ze składu inicjatyw wybranych w generatorze.',
+            })}
+          </p>
           <label className="text-xs">
             {t('initiatives.planScenario.form.windowUnit')}
             <select
@@ -1203,7 +1393,6 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             className="btn-secondary"
             disabled={
               !newName.trim() ||
-              !portfolioId.trim() ||
               !newWindowUnit.trim() ||
               !newTimezone.trim() ||
               !newStart ||

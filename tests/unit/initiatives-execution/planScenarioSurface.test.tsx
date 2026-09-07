@@ -194,6 +194,10 @@ vi.mock('../../../src/services/initiatives-execution/runtimeApi', () => ({
     }
   },
   createPlanAnalysisProposal: vi.fn(),
+  // P15-K2 (DEC-421): most inicjatyw modulu — powierzchnia wczytuje liste
+  // kwalifikujacych sie inicjatyw przy montazu.
+  listPlannableInitiatives: vi.fn(async () => ({ initiatives: [] })),
+  registerInitiativeForPlanning: vi.fn(),
   listPlanScenarioRegister: vi.fn(),
   readPlanScenario: vi.fn(),
   readPlanScenarioDiff: vi.fn(),

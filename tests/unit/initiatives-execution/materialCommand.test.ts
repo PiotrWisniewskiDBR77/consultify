@@ -68,6 +68,11 @@ function createUnitOfWork(
         async getAggregatePayload(_organizationId, aggregateType, aggregateId) {
           return store.aggregates?.get(`${aggregateType}:${aggregateId}`) ?? null;
         },
+        // P15-K2 (DEC-421): most inicjatyw modułu nie jest używany przez testy
+        // komendy materialnej — atrapa zostaje kompletna wobec interfejsu.
+        async getModuleInitiativeForPlanning() {
+          throw new Error('not used by material command unit tests');
+        },
         async persistAggregate(_org, _type, _id, fromVersion, toVersion, mutation) {
           expect(store.version).toBe(fromVersion);
           store.version = toVersion;

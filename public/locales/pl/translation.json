@@ -9602,7 +9602,8 @@
         "horizonStartAria": "Data rozpoczęcia planu",
         "weekCount": "Liczba tygodni",
         "weekCountAria": "Liczba tygodni planu",
-        "createPlan": "Utwórz plan"
+        "createPlan": "Utwórz plan",
+        "workingPortfolioHint": "Portfel roboczy założy się sam ze składu inicjatyw wybranych w generatorze."
       },
       "conflictError": "Plan zmienił się albo jego baza portfela jest nieaktualna. Otwórz ponownie przed próbą zapisu.",
       "writeError": "Operacja na planie nie powiodła się; żadna data inicjatywy ani zadania nie została zmieniona.",
@@ -9756,7 +9757,8 @@
         "PLAN_PUBLISH_CONFIRMATION_REQUIRED": "Publikacja planu z konfliktami wymaga wyraźnego potwierdzenia liczby konfliktów.",
         "CAPACITY_SCENARIO_DUPLICATE": "Taka analiza obciążenia już istnieje dla tego planu. Otwórz istniejącą albo nadaj nowej inną nazwę.",
         "PORTFOLIO_SCENARIO_DUPLICATE": "Taki scenariusz portfela już istnieje. Otwórz istniejący albo nadaj nowemu inną nazwę.",
-        "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej."
+        "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej.",
+        "INITIATIVE_NOT_PLANNABLE": "Ta inicjatywa nie kwalifikuje się do planowania. Do planu wchodzą inicjatywy zatwierdzone, a „do zatwierdzenia” tylko jako warunkowe."
       }
     },
     "analysis": {
@@ -12112,6 +12114,38 @@
         "benefits_kpis": "wskaźniki KPI",
         "unknown": "wymagania bramki"
       }
+    },
+    "planGenerator": {
+      "title": "Generator planu",
+      "step1": "1. Źródło",
+      "step2": "2. Wybór",
+      "step3": "3. Parametry",
+      "step4": "4. Generuj",
+      "step5": "5. Zatwierdź",
+      "sourceApproved": "Zatwierdzone inicjatywy ({{n}})",
+      "sourceConditional": "+ do zatwierdzenia ({{n}})",
+      "statusApproved": "Zatwierdzona",
+      "statusPending": "Do zatwierdzenia",
+      "conditionalChip": "warunkowa",
+      "noneEligible": "Brak inicjatyw kwalifikujących się do planowania.",
+      "startAria": "Początek horyzontu",
+      "periodsAria": "Liczba okresów",
+      "unitAria": "Jednostka",
+      "modeAria": "Tryb analizy",
+      "modeDependencies": "Według zależności",
+      "modeCapacity": "Według obciążenia ról",
+      "modeMixed": "Mieszany",
+      "generate": "Generuj propozycję",
+      "proposalAria": "Proponowana kolejność",
+      "columnInitiative": "Inicjatywa",
+      "columnWindow": "Okno od–do",
+      "columnRationale": "Uzasadnienie",
+      "columnConflict": "Konflikt",
+      "emptyProposal": "Solver nie zaproponował żadnej zmiany okien.",
+      "reviewHint": "Propozycja nie zmienia planu bez decyzji człowieka.",
+      "accept": "Zatwierdź",
+      "reject": "Odrzuć",
+      "savedAt": "Zapisano {{time}}"
     }
   },
   "execution": {
