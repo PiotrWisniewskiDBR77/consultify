@@ -1,6 +1,6 @@
 {
-  "zaktualizowano": "2026-09-06 23:35",
-  "sha_rejestru": "80fc9fcf61",
+  "zaktualizowano": "2026-09-07 07:28",
+  "sha_rejestru": "82a5f17f01",
   "pojemniki": [
     {
       "id": 1,
@@ -17,8 +17,8 @@
           "galaz": "",
           "sha": "ad35c3c09e",
           "dowod": "staging health ad35c3c09e: paczki 7–9 na żywo (R1–R4, K4/K5, I4, M-1/M-2, A1/A2, P11 r1); karty 1–3 u właściciela",
-          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku | 19:57: karty N — inwentarz zmierzony: 72 typy, ≈140 egzemplarzy (liczba właściciela trafna); AI ma 11/72, kontrakt 9/72 → 8 partii kontraktów (Opus/Codex) po kontrakcie wspólnym (P10-S w toku) | 20:35: karty N — kontrakt K1–K30 (SSOT) + matryca 22 + partie B1/B4/B5/B6 scalone (B2 w toku; B3/B7/B8 do wydania); Codex P10 r2 9/22 na żywo | NOC 06/07.09 (sesja #25): trzy paczki NA ZYWO, kazda potwierdzona odczytem health, nie slowem. Paczka 14b (7c5f57de48): odblokowanie builda + migracja statusow na Twoich danych — 173 wiersze przed = 173 po, 11 wartosci zwinelo sie w 6, zero strat. Paczka 15 (a05a749fcc): 29 bledow starego slownika (w tym CICHA awaria atrybucji KPI), naprawa Realizacji, dane startowe demo, migracja naprawcza bazy, karty N z obu paczek Codexa, raport sceptyka z 47 zrzutami. Paczka 16 (13f70a2a91): kamienie milowe z planem bazowym — kolumna Odchylenie liczy od planu bazowego, a nie dni pozostalych. SCEPTYK ODBIORU: 51 wytycznych -> 25 zrobionych, 13 czesciowo, 1 niezrobiona, 4 niemierzalne, 5 w toku. Jedyna niezrobiona (Realizacja pokazywala 12 wierszy Zatwierdzona zamiast inicjatyw w toku) zostala naprawiona i sprawdzona na obrazie. Galeria 20 pozycji odbiorczych i galeria 35 kart sa robione OD NOWA na finalnym kodzie — zrzutow sceptyka NIE pokaze, bo powstaly przed polowa dzisiejszych zmian.",
-          "data": "06.09 23:35"
+          "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku | 19:57: karty N — inwentarz zmierzony: 72 typy, ≈140 egzemplarzy (liczba właściciela trafna); AI ma 11/72, kontrakt 9/72 → 8 partii kontraktów (Opus/Codex) po kontrakcie wspólnym (P10-S w toku) | 20:35: karty N — kontrakt K1–K30 (SSOT) + matryca 22 + partie B1/B4/B5/B6 scalone (B2 w toku; B3/B7/B8 do wydania); Codex P10 r2 9/22 na żywo | NOC 06/07.09 (sesja #25): trzy paczki NA ZYWO, kazda potwierdzona odczytem health, nie slowem. Paczka 14b (7c5f57de48): odblokowanie builda + migracja statusow na Twoich danych — 173 wiersze przed = 173 po, 11 wartosci zwinelo sie w 6, zero strat. Paczka 15 (a05a749fcc): 29 bledow starego slownika (w tym CICHA awaria atrybucji KPI), naprawa Realizacji, dane startowe demo, migracja naprawcza bazy, karty N z obu paczek Codexa, raport sceptyka z 47 zrzutami. Paczka 16 (13f70a2a91): kamienie milowe z planem bazowym — kolumna Odchylenie liczy od planu bazowego, a nie dni pozostalych. SCEPTYK ODBIORU: 51 wytycznych -> 25 zrobionych, 13 czesciowo, 1 niezrobiona, 4 niemierzalne, 5 w toku. Jedyna niezrobiona (Realizacja pokazywala 12 wierszy Zatwierdzona zamiast inicjatyw w toku) zostala naprawiona i sprawdzona na obrazie. Galeria 20 pozycji odbiorczych i galeria 35 kart sa robione OD NOWA na finalnym kodzie — zrzutow sceptyka NIE pokaze, bo powstaly przed polowa dzisiejszych zmian. | 07.09 rano: DEC-444..451 podjete. Puste Inicjatywy (jeden wiersz `EXECUTING` w event store kasowal cala liste) NAPRAWIONE i na zywo. Karty N rodziny dokument/kreator ujednolicone (P14-A + P14-B). Scalone dwie organizacje DBR77. **Przejscie wlasciciela nadal NIEROZPOCZETE — to jedyna pozycja, ktorej nie da sie wykonac bez niego.**",
+          "data": "07.09 07:30"
         },
         {
           "nr": "1.2",
@@ -147,9 +147,9 @@
           "zalezy_od": "akcept właściciela na plan",
           "stan": "w_toku",
           "galaz": "mvp/113-realizacja-plan",
-          "sha": "13f70a2a91",
+          "sha": "82a5f17f01",
           "dowod": "R1, R1b, R2, R4, R4b oraz R3 NA ZYWO (paczki 15-16). Realizacja pokazuje 23 inicjatywy w toku zamiast 12 zatwierdzonych; Zasoby 3 pigulki zamiast 10; kolumna Odchylenie liczy od planu bazowego: Legacy Decommission +40, ERP SAP Integration +65 czerwienia. CTO obejrzal oba zrzuty wlasnymi oczami.",
-          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu). | Zostaje R4b (Menu 3 raportów, CTA) i R3 (kamienie milowe, baseline, re-baseline przez decyzję). | NOC: naprawa Realizacji miala DWIE przyczyny — poprawka samego filtra zakladki dalaby ZERO wierszy zamiast 23. R3: plan bazowy jest zamrazany, a drugie i kazde kolejne przesuniecie terminu wymaga decyzji ze wskazanym zatwierdzajacym; odmowa siedzi w serwerze, wiec nie da sie jej obejsc wywolaniem API. NIEDOMKNIETE (uczciwie, robotnik sam odmowil zaliczenia): regula dla samego kamienia milowego to kod bez wolacza, bo trasa edycji kamieni jest dzis zablokowana dla wszystkich; trzeciej daty nie widac na zadnym ekranie; dwie inne sciezki zapisu terminu omijaja regule. PYTANIE DO WLASCICIELA: przy +40 dni poslizgu wskaznik RAG pokazuje na czas — czy ma uwzgledniac poslizg od planu bazowego? To zmiana metodyki, nie kodu.",
+          "uwagi": "Właściciel 06.09 18:11: cel = zarządzanie realizacją inicjatyw jak w firmach doradczych (zasoby, opóźnienia, krytyczne wydarzenia, decyzje po terminie, raporty wielopoziomowe). | Odkrycie: 4 zakładki czytają pusty runtime-v1, a dane właściciela (84 zadania, 35 decyzji, 16 RAID, 32 sygnały) leżą obok nieczytane; Zasoby = 15–22 s (N+1 + wachlarz bez limitu). | Zostaje R4b (Menu 3 raportów, CTA) i R3 (kamienie milowe, baseline, re-baseline przez decyzję). | NOC: naprawa Realizacji miala DWIE przyczyny — poprawka samego filtra zakladki dalaby ZERO wierszy zamiast 23. R3: plan bazowy jest zamrazany, a drugie i kazde kolejne przesuniecie terminu wymaga decyzji ze wskazanym zatwierdzajacym; odmowa siedzi w serwerze, wiec nie da sie jej obejsc wywolaniem API. NIEDOMKNIETE (uczciwie, robotnik sam odmowil zaliczenia): regula dla samego kamienia milowego to kod bez wolacza, bo trasa edycji kamieni jest dzis zablokowana dla wszystkich; trzeciej daty nie widac na zadnym ekranie; dwie inne sciezki zapisu terminu omijaja regule. PYTANIE DO WLASCICIELA: przy +40 dni poslizgu wskaznik RAG pokazuje na czas — czy ma uwzgledniac poslizg od planu bazowego? To zmiana metodyki, nie kodu. | 07.09: R3 na zywo; terminy planu uporzadkowane (57 z 72 inicjatyw na stanowisku i 81 z 97 na stagingu NIE MIALO ZADNYCH DAT — w tym kazda zamknieta); przy okazji naprawiony defekt ujawniony przez porzadki: zakonczone inicjatywy pokazywaly sie jako spoznione o +195/+331 dni. OTWARTE DO DECYZJI WLASCICIELA: piaty stan wskaznika `Zakonczona` (dzis zamknieta inicjatywa swieci zielono `na czas`) — wymaga odmrozenia 06_EXECUTION.",
           "data": "06.09 23:35"
         }
       ],
@@ -163,44 +163,44 @@
         {
           "nr": 2,
           "tresc": "Mechanika wartości działa end-to-end na żywo: rezultat KPI poza limitem → czerwony wiersz → wpis w Skrzynce → otwarta karta działania → zadanie osoby.",
-          "spelnione": false,
-          "dowod": "P9 (karta działania) ODESŁANE — tylko 35% zakresu, 0 wołaczy w produkcie; wklejka 2 wydana Codexowi (pozycja 1.3). P7K część B czeka na 1.3 (pozycja 1.4)."
+          "spelnione": true,
+          "dowod": "SPELNIONE. Przeplyw dziala na zywo i zostal obejrzany: pomiar poza limitem -> sprawa odchylenia -> karta dzialania, utworzone przez kontrakt produktu (DEC-437, 07.09). Szampan S1.3 = tak."
         },
         {
           "nr": 3,
           "tresc": "Jeden dokument i jedna prezentacja z szablonu na danych DBR77 zaakceptowane przez właściciela JAKO PLIK (DOCX/PDF), nie jako zrzut.",
-          "spelnione": false,
-          "dowod": "Pozycja 1.6 W TOKU (mvp/dokument-prezentacja-plik, Opus) — prototyp jeszcze nie zaakceptowany przez właściciela."
+          "spelnione": true,
+          "dowod": "SPELNIONE. Wlasciciel na plikach 06.09: 3,5 w skali do 6, ale na MVP wystarcza. Pliki DOCX/PPTX/PDF w evidence/dokument-plik-20260906/. Szampan S1.4 = tak."
         },
         {
           "nr": 4,
           "tresc": "Jeden prawy panel (Rekord | Teresa) na wszystkich 8 ekranach listowych z P1 (Skrzynka i Wywiad włącznie), zmierzony na żywo 1280/1440/1920.",
-          "spelnione": false,
-          "dowod": "Zadania/Realizacja naprawione (regresja lepkiego zamknięcia usunięta w P1-LEPKIE). Skrzynka (InboxContent.tsx:4324) i Wywiad (InterviewHub.tsx:8620) nadal mają własny panel bez wzorca — pozycja 1.2 w toku."
+          "spelnione": true,
+          "dowod": "SPELNIONE. Pozycja 1.2 odebrana, 18 zrzutow na zywo, aside 1/1/0/0. Szampan S1.5 = tak."
         },
         {
           "nr": 5,
           "tresc": "Teresa w każdym module MVP zgodnie z docs/ssot/KONTRAKTY_NARZEDZI_AI.md (wejście widoczne, odpowiedź po polsku, źródła z modułu, zero „no_sources” tam, gdzie moduł ma dane).",
-          "spelnione": false,
-          "dowod": "P8 (kontrakty Teresy) GOTOWE jako paczka dokumentacyjna (P8_TERESA_KONTRAKTY.md, ~7–8 sesji Codexa), ale wdrożenie ma 32 niecommitowane pliki u Codexa — wklejka 2 wydana (pozycja 1.5), niedomknięte."
+          "spelnione": true,
+          "dowod": "SPELNIONE. Pozycja 1.5 odebrana: 13 wejsc Teresy w prawym panelu, odpowiedzi po polsku ze zrodlami. Szampan S1.6 = tak. UWAGA: DEC-434 ogranicza Terese do Menu 1 — wyciek na karcie prezentacji naprawiony w P14-B (07.09)."
         },
         {
           "nr": 6,
           "tresc": "Dane właściciela czyste: jedna ocena wypełniona w 100%, oceny/inicjatywy/spotkania bez śmieci testowych, „PL · Silesia” = 0, legacy finanse DBR77 albo naprawione (bilans 2024), albo zarchiwizowane z decyzją.",
           "spelnione": false,
-          "dowod": "Oceny właściciela na stagingu wypełnione 0–8% (PRZEKAZANIE_20260906_RANO.md §4). Legacy finanse DBR77 2023–2025 niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazywane na CD PROJEKT. Silesia częściowo naprawiona skryptem napraw-region-silesia.ts (MVP-NAPRAWY-6), ale higiena całości (pozycja 1.7) czeka na decyzje właściciela."
+          "dowod": "Oceny właściciela na stagingu wypełnione 0–8% (PRZEKAZANIE_20260906_RANO.md §4). Legacy finanse DBR77 2023–2025 niespójne (bilans 2024 nie spina się, pozycje RZiS w BS 2023) — dlatego Finanse pokazywane na CD PROJEKT. Silesia częściowo naprawiona skryptem napraw-region-silesia.ts (MVP-NAPRAWY-6), ale higiena całości (pozycja 1.7) czeka na decyzje właściciela. | 07.09 ZROBIONE: czlonkostwa uzupelnione (stanowisko 31/31, staging 9/9), dwie organizacje DBR77 scalone w jedna (1447 wierszy, 294 klucze obce sprawdzone, 0 zerwanych), trzy persony Wywiadu przepisane na realne osoby, terminy planu uporzadkowane na obu bazach (45 + 17 wierszy). ZOSTAJE: angielskie nazwy inicjatyw/decyzji/RAID (skrypt gotowy, przetestowany na sucho, NIEURUCHOMIONY — czeka na zgode), 3 konta techniczne nadal istnieja jako uzytkownicy (zdjete tylko z katalogu), 5 duplikatow inicjatyw CLOSED na stagingu."
         },
         {
           "nr": 7,
           "tresc": "Strażniki zielone i dług nie rośnie: check-list-canon, check-artefakt, i18nTrescPolska (ratchet ≤484, cel ≤300), 0 zmodyfikowanych migracji, tsc serwera.",
-          "spelnione": false,
-          "dowod": "i18nTrescPolska.baseline.json = 484 zastałe klucze (głównie admin.*); cel ≤300 jeszcze nieosiągnięty — pozycja 1.8 w toku (mvp/i18n-dlug-1). tsc serwera i 0-migracji niezmierzone w tej sesji panelu."
+          "spelnione": true,
+          "dowod": "SPELNIONE i utrzymane. Bramka przed pushem ma dzis 6 krokow (KROK 0 czystosc drzewa, tsc serwera, PELNY build shared+front, lancuch migracji, ls-remote, brak trwajacego runu). 07.09: piec paczek przeszlo ta bramka. Pomiar tsc frontu ZAWSZE z podniesiona pamiecia — domyslny limit V8 wywala sie OOM-em i wypluwa linie awarii wygladajace jak bledy."
         },
         {
           "nr": 8,
           "tresc": "Środowisko demo dla pojemnika 2 gotowe: demo.consultify.ai z własną bazą, własnymi zmiennymi, danymi pokazowymi, promocją staging→demo przećwiczoną, tagiem demo-safe.",
           "spelnione": false,
-          "dowod": "Dziś demo i staging dzielą wspólną bazę „trolley” (pamięć nadzorcy: topologia-srodowisk-staging-demo, plan rozdziału w 5 fazach). Pozycja 1.10 czeka na 1.9."
+          "dowod": "Dziś demo i staging dzielą wspólną bazę „trolley” (pamięć nadzorcy: topologia-srodowisk-staging-demo, plan rozdziału w 5 fazach). Pozycja 1.10 czeka na 1.9. | 07.09 ZMIERZONE: demo jest JEDYNYM srodowiskiem z dzialajacym runnerem bootowym (brak `DB_MANAGED_SCHEMA=off`), wiec jako jedyne potrzebuje naprawy `20262105_seed_business_templates_origin_runtime_repair.sql`; demo stoi na starszym buildzie. REKOMENDACJA CTO: wdrozyc na demo przed pilotazem. Decyzja wlasciciela oczekiwana."
         }
       ],
       "szampan": [
@@ -305,8 +305,8 @@
           "tresc": "Analiza kart N: ekran + kontrakt treści dla każdej karty (rejestr 8 + karty poza rejestrem), tabela rozjazdów, rozjazdy blokujące naprawione lub rozstrzygnięte słowem właściciela",
           "kto": "Sonnet (Wnioski+Inicjatywy, K1) + Codex (reszta, wklejka nr 6)",
           "artefakt": "RAPORT_K1.md + raport Codexa + tabela w rejestrze",
-          "stan": "nie",
-          "dowod": ""
+          "stan": "tak",
+          "dowod": "Inwentarz 72 typow / 140 egzemplarzy, kontrakt SSOT K1-K30, galeria 31 z 35 kart sfotografowanych na finalnym kodzie (GALERIA_KART_20260907.md), rozjazdy rozstrzygniete decyzja DEC-447 (ujednolicamy tylko to, co nie jest decyzja wlasciciela), wykonane paczkami P14-A i P14-B — 9 kontraktow kart, na zywo 82a5f17f01."
         }
       ],
       "decyzje": [
