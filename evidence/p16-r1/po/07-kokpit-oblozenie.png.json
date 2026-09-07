@@ -1,0 +1,10 @@
+{
+  "nazwa": "07-kokpit-oblozenie",
+  "opis": "Kokpit: kafel Oblozenie liczony z tej samej odpowiedzi resource-plan",
+  "faza": "po",
+  "url": "http://localhost:3178/execution?tab=summary&view=table&kokpit=ryzyka",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:48:39.860Z"
+}

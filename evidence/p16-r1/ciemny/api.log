@@ -1,0 +1,6 @@
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8

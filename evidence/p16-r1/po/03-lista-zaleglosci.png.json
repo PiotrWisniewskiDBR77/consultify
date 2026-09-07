@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-lista-zaleglosci",
+  "opis": "Lista zadan zaleglych z trzema akcjami",
+  "faza": "po",
+  "url": "http://localhost:3178/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:48:20.885Z"
+}

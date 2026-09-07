@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-zasoby-tabela",
+  "opis": "Zasoby: tabela osoba x tydzien z paskiem podsumowania",
+  "faza": "przed",
+  "url": "http://localhost:3178/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:30:34.202Z"
+}

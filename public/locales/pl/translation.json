@@ -12850,7 +12850,8 @@
         "costRisk": "Ryzyko kosztowe",
         "needsDecision": "Wymaga decyzji",
         "team": "Wg zespołu",
-        "initiative": "Wg inicjatywy"
+        "initiative": "Wg inicjatywy",
+        "withBacklog": "Z zaległością"
       },
       "control": {
         "needsAction": "Wymaga działania",
@@ -13343,7 +13344,8 @@
         "cost": "Koszt / prognoza",
         "conflict": "Konflikt",
         "freshness": "Świeżość",
-        "nextAction": "Następne działanie"
+        "nextAction": "Następne działanie",
+        "backlog": "Zaległość (h)"
       },
       "actions": {
         "proposeAllocation": "Zaproponuj przydział",

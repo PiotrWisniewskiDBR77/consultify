@@ -758,10 +758,14 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // tydzień >100% obłożenia) · Bez stanowiska (brak `role`). `role` i
     // `konflikty` (przeciążenia JEDNEJ osoby, inna definicja niż „Przeciążeni")
     // znikają — ich sens przejmują te dwa nowe.
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16-R1: trzeci chip to „Z zaległością"
+    // (osoby z pracą po terminie), a nie „Bez stanowiska" (0/31 trafień na
+    // pomiarze 07.09 — chip, który nigdy niczego nie pokazał). Kanon dopuszcza
+    // najwyżej trzy presety Menu 3, więc to zamiana, nie dołożenie.
     resources: [
       ['osoby', t('execution.menu3.resources.people', 'People')],
       ['przeciazeni', t('execution.menu3.resources.overallocated', 'Overallocated')],
-      ['bez-stanowiska', t('execution.menu3.resources.noRole', 'No role')],
+      ['z-zalegloscia', t('execution.menu3.resources.withBacklog', 'With backlog')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R1 (C): 12 chipów → 3. Osiem z dwunastu filtrowało regexem po
     // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który

@@ -16,7 +16,8 @@
  *  - `przeciazeni` = osoba ma choć jeden tydzień z obłożeniem > 100 %
  *    (Anna: 160 % w tygodniu 1 -> licz; Julia: 120 % w tygodniu 2 -> licz;
  *    Marek: 50 %/60 % -> nie licz) = 2, NIE liczba wierszy przeciążonych;
- *  - `bez-stanowiska` = osoba bez `role` (Marek, `role: ''`) = 1.
+ *  - trzeci chip: do P16-R0 `bez-stanowiska` (osoba bez `role`), od P16-R1
+ *    `z-zalegloscia` (osoba z pracą po terminie — Marek, `backlogHours: 6`) = 1.
  * Filtr chipa `przeciazeni` zawęża TABELĘ do wierszy tych dwóch osób (4
  * wiersze z 6), nie do pojedynczych przeciążonych wierszy.
  *
@@ -71,6 +72,10 @@ const { readExecutionResourcePlan, saveUserCapacity } = vi.hoisted(() => ({
 vi.mock('@/services/execution/resourcePlanApi', () => ({
   readExecutionResourcePlan,
   saveUserCapacity,
+  // P16-R1: powierzchnia woła też trzy akcje rozliczenia zaległości.
+  przeniesZadanieNaTermin: vi.fn(),
+  zamknijZadanieZaleglosci: vi.fn(),
+  zmniejszZakresZadania: vi.fn(),
 }));
 
 vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
@@ -183,6 +188,9 @@ const PLAN = {
       availabilityPercent: 100,
       supplySource: 'DOMYSLNA' as const,
       backlogHours: 0,
+      unscheduledHours: 0,
+      backlogTaskIds: [] as string[],
+      backlogTasks: [] as never[],
     },
     {
       userId: 'u-marek',
@@ -192,6 +200,19 @@ const PLAN = {
       availabilityPercent: 100,
       supplySource: 'PROFIL' as const,
       backlogHours: 6,
+      unscheduledHours: 0,
+      backlogTaskIds: ['t-marek-1'],
+      backlogTasks: [
+        {
+          taskId: 't-marek-1',
+          title: 'Raport tygodniowy',
+          status: 'todo',
+          dueDate: '2026-09-02',
+          daysOverdue: 5,
+          estimatedHours: 6,
+          remainingHours: 6,
+        },
+      ],
     },
     {
       userId: 'u-julia',
@@ -201,6 +222,9 @@ const PLAN = {
       availabilityPercent: 100,
       supplySource: 'PROFIL' as const,
       backlogHours: 0,
+      unscheduledHours: 0,
+      backlogTaskIds: [] as string[],
+      backlogTasks: [] as never[],
     },
   ],
   summary: {
@@ -211,6 +235,8 @@ const PLAN = {
     utilizationPercent: 90,
     overloadedCount: 2,
     peopleWithoutProfileSupply: 0,
+    backlogHoursTotal: 6,
+    backlogPeople: 1,
   },
 };
 
@@ -256,7 +282,7 @@ describe('Zasoby — chipy liczą osoby, nie wiersze (P16-R0)', () => {
     expect(lastCounts.przeciazeni).toBe(2);
   });
 
-  it('chip "Bez stanowiska" liczy 1 osobę (Marek, role: "")', async () => {
+  it('chip "Z zaległością" liczy 1 osobę (Marek, backlogHours 6)', async () => {
     const onCountsChange = vi.fn();
     renderSurface({ onCountsChange });
 
@@ -264,7 +290,7 @@ describe('Zasoby — chipy liczą osoby, nie wiersze (P16-R0)', () => {
     await waitFor(() => expect(onCountsChange).toHaveBeenCalled());
 
     const lastCounts = onCountsChange.mock.calls.at(-1)?.[0];
-    expect(lastCounts['bez-stanowiska']).toBe(1);
+    expect(lastCounts['z-zalegloscia']).toBe(1);
   });
 
   it('preset "przeciazeni" filtruje wiersze do osób z przeciążeniem (Anna + Julia = 4 wiersze z 6, bez Marka)', async () => {
@@ -275,8 +301,8 @@ describe('Zasoby — chipy liczą osoby, nie wiersze (P16-R0)', () => {
     expect(screen.queryAllByText(/Marek Nowak/).length).toBe(0);
   });
 
-  it('preset "bez-stanowiska" filtruje wiersze do Marka (bez roli), bez Anny/Julii', async () => {
-    renderSurface({ activePreset: 'bez-stanowiska' });
+  it('preset "z-zalegloscia" filtruje wiersze do Marka (jedyna zaległość), bez Anny/Julii', async () => {
+    renderSurface({ activePreset: 'z-zalegloscia' });
 
     await waitFor(() => expect(screen.getAllByText(/Marek Nowak/).length).toBeGreaterThan(0));
     expect(screen.queryAllByText(/Anna Kowalska/).length).toBe(0);

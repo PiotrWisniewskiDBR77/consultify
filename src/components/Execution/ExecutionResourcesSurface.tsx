@@ -8,8 +8,12 @@ import { StandardPreview, StandardTable, type TableColumn } from '@/components/s
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { capacityUnitLabel } from '@/labels/capacityUnitLabels';
 import {
+  przeniesZadanieNaTermin,
   readExecutionResourcePlan,
   saveUserCapacity,
+  zamknijZadanieZaleglosci,
+  zmniejszZakresZadania,
+  type ResourcePlanBacklogTask,
   type ResourcePlanResponse,
   type ResourcePlanRow,
 } from '@/services/execution/resourcePlanApi';
@@ -40,7 +44,12 @@ import {
 // [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§3 pkt 3, §4 D7) — patrz komentarz
 // przy `personSummaries`/`personMatches` niżej: poprzednie id `role`/`konflikty`
 // odchodzą, chipy liczą się po osobach.
-const resourcePresets = ['osoby', 'przeciazeni', 'bez-stanowiska'] as const;
+// [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1/D7): trzeci chip to
+// „Z zaległością" — kanon dopuszcza najwyżej trzy presety Menu 3, a zaległość
+// jest pytaniem, które PMO zadaje w poniedziałek („kogo trzeba rozliczyć"),
+// podczas gdy „Bez stanowiska" pytało o kompletność słownika kadrowego
+// (0/31 trafień na pomiarze 07.09 — chip, który nigdy niczego nie pokazał).
+const resourcePresets = ['osoby', 'przeciazeni', 'z-zalegloscia'] as const;
 const allocationStatusLabel = (value?: string) =>
   ({
     PROPOSED: 'Propozycja',
@@ -143,7 +152,19 @@ export const ExecutionResourcesSurface = ({
       hours: string;
       percent: string;
     } | null>(null),
-    [capacityError, setCapacityError] = useState('');
+    [capacityError, setCapacityError] = useState(''),
+    /*
+     * [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1) — panel ZALEGŁOŚCI.
+     * Zaległość (termin minął, praca otwarta) nie wchodzi już do popytu
+     * tygodnia; stoi obok jako osobna liczba, a klik w nią otwiera listę zadań
+     * z trzema akcjami. `backlogBusyTaskId` blokuje podwójne kliknięcie w
+     * trakcie zapisu, `backlogError` niesie komunikat PO POLSKU.
+     */
+    [backlogPanel, setBacklogPanel] = useState<{ userId: string; name: string } | null>(null),
+    [backlogError, setBacklogError] = useState(''),
+    [backlogBusyTaskId, setBacklogBusyTaskId] = useState(''),
+    [backlogMove, setBacklogMove] = useState<{ taskId: string; date: string } | null>(null),
+    [backlogScope, setBacklogScope] = useState<{ taskId: string; hours: string } | null>(null);
   const loadingPhase = useDeferredLoading(planState === 'LOADING');
   const loadPlan = useCallback(async () => {
     setPlanState('LOADING');
@@ -346,6 +367,39 @@ export const ExecutionResourcesSurface = ({
       sortable: true,
       width: '130px',
     },
+    /*
+     * [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1, audyt rynku §4.2):
+     * SIÓDMA kolumna — zaległość. Liczba stoi TYLKO w wierszu bieżącego
+     * tygodnia (jedna na osobę, nie osiem), w pozostałych „—", żeby nikt jej
+     * nie zsumował po tygodniach. Klik w liczbę otwiera listę zadań zaległych
+     * z trzema akcjami. Nikt na rynku tego nie ma — Planview dolicza zaległość
+     * do „dziś" (stąd nasze dawne 310 %), Asana milczy.
+     */
+    {
+      id: 'backlogLabel',
+      label: t('execution.resources.columns.backlog', 'Zaległość (h)'),
+      sortable: true,
+      width: '150px',
+      render: (row: any) =>
+        row.backlogHours > 0 ? (
+          <button
+            type="button"
+            data-testid={`execution-resources-backlog-open-${row.userId}`}
+            className="rounded text-sm font-medium text-c-text underline decoration-dotted underline-offset-2 focus:outline-none focus:ring-2 focus:ring-c-focus"
+            onClick={(event) => {
+              event.stopPropagation();
+              setBacklogError('');
+              setBacklogMove(null);
+              setBacklogScope(null);
+              setBacklogPanel({ userId: row.userId, name: row.title });
+            }}
+          >
+            {row.backlogLabel}
+          </button>
+        ) : (
+          <span className="text-sm text-c-text-muted">{row.backlogLabel}</span>
+        ),
+    },
   ];
   const planRows = useMemo(() => plan?.rows ?? [], [plan]);
   const planPeople = useMemo(() => plan?.people ?? [], [plan]);
@@ -380,6 +434,10 @@ export const ExecutionResourcesSurface = ({
         // Luka ujemna = brakuje godzin. Znak „+" przy nadwyżce, żeby kierunek
         // był czytelny bez czytania nagłówka.
         gapLabel: `${row.gapHours > 0 ? '+' : ''}${godziny(row.gapHours)}`,
+        // Zaległość: liczba tylko tam, gdzie serwer ją postawił (wiersz
+        // bieżącego tygodnia); w pozostałych myślnik, nie „0 h" — bo „0 h"
+        // czyta się jako „ta osoba nie ma zaległości w TYM tygodniu".
+        backlogLabel: row.backlogHours > 0 ? godziny(row.backlogHours) : '—',
       })),
     [planRows]
   );
@@ -420,14 +478,16 @@ export const ExecutionResourcesSurface = ({
         userId: person.userId,
         role: person.role,
         overloaded: personOverloaded.get(person.userId) ?? false,
+        backlogHours: person.backlogHours ?? 0,
       })),
     [personOverloaded, planPeople]
   );
   const personMatches = useCallback(
-    (person: { role?: string | null; overloaded: boolean }, preset: string) => {
+    (person: { role?: string | null; overloaded: boolean; backlogHours?: number }, preset: string) => {
       if (preset === 'osoby') return true;
       if (preset === 'przeciazeni') return person.overloaded;
-      if (preset === 'bez-stanowiska') return !String(person.role ?? '').trim();
+      // P16-R1: chip liczy OSOBY z zaległością (§4 D7 — chipy liczą osoby).
+      if (preset === 'z-zalegloscia') return Number(person.backlogHours ?? 0) > 0;
       return false;
     },
     []
@@ -445,6 +505,38 @@ export const ExecutionResourcesSurface = ({
   useEffect(
     () => onCountsChange?.(countExecutionPresets(personSummaries, resourcePresets, personMatches)),
     [onCountsChange, personMatches, personSummaries]
+  );
+  /*
+   * [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1) — trzy akcje rozliczenia
+   * zaległości. Każda to JEDEN zapis istniejącej trasy `PUT /api/tasks/:id`;
+   * po każdym zapisie przeliczamy plan z serwera (`loadPlan`), a nie stan
+   * komponentu — inaczej liczba w kolumnie byłaby obietnicą, nie faktem.
+   */
+  const backlogOsoba = useMemo(
+    () => planPeople.find((person) => person.userId === backlogPanel?.userId) ?? null,
+    [planPeople, backlogPanel]
+  );
+  const domyslnyTydzien = useCallback(() => plan?.weeks?.[1] ?? plan?.weeks?.[0] ?? '', [plan]);
+  const wykonajAkcjeZaleglosci = useCallback(
+    async (taskId: string, akcja: () => Promise<void>) => {
+      setBacklogBusyTaskId(taskId);
+      setBacklogError('');
+      try {
+        await akcja();
+        setBacklogMove(null);
+        setBacklogScope(null);
+        await loadPlan();
+      } catch (error) {
+        setBacklogError(
+          error instanceof Error && error.message
+            ? error.message
+            : 'Zapis nie przeszedł. Spróbuj ponownie.'
+        );
+      } finally {
+        setBacklogBusyTaskId('');
+      }
+    },
+    [loadPlan]
   );
   const propose = async () => {
     const p = JSON.parse(json),
@@ -675,7 +767,178 @@ export const ExecutionResourcesSurface = ({
             {`obłożenie ${plan.summary.utilizationPercent === null ? 'brak danych' : `${plan.summary.utilizationPercent} %`}`}
           </span>
           {` · przeciążonych tygodni ${plan.summary.overloadedCount}`}
+          {/*
+           * [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1): zaległość w
+           * pasku jako WŁASNA para liczb (godziny + ilu osób), a nie doliczona
+           * do popytu. To ta sama liczba, którą widać w kolumnie „Zaległość"
+           * — pasek sumuje ją po osobach, tabela pokazuje per osoba.
+           */}
+          {` · zaległość ${godziny(plan.summary.backlogHoursTotal ?? 0)} u ${plan.summary.backlogPeople ?? 0} os.`}
         </p>
+      )}
+      {backlogPanel && (
+        <section
+          aria-label="Zaległość osoby"
+          data-testid="execution-resources-backlog-panel"
+          className="mb-3 rounded-xl border border-c-border p-4"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-c-text-primary">{`Zaległość · ${backlogPanel.name}`}</h3>
+              <p className="mt-1 text-xs text-c-text-muted">
+                {`Termin minął, praca otwarta: ${godziny(backlogOsoba?.backlogHours ?? 0)} w ${backlogOsoba?.backlogTasks?.length ?? 0} zadaniach. Ta liczba NIE wchodzi do popytu żadnego tygodnia — rozlicz ją tutaj.`}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn-secondary"
+              data-testid="execution-resources-backlog-panel-close"
+              onClick={() => {
+                setBacklogPanel(null);
+                setBacklogError('');
+                setBacklogMove(null);
+                setBacklogScope(null);
+              }}
+            >
+              Zamknij
+            </button>
+          </div>
+          {backlogError && (
+            <p
+              role="alert"
+              data-testid="execution-resources-backlog-error"
+              className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-c-text-secondary"
+            >
+              {backlogError}
+            </p>
+          )}
+          {(backlogOsoba?.backlogTasks ?? []).length === 0 ? (
+            <p className="mt-3 text-sm text-c-text-muted">
+              Brak zadań zaległych — nie ma czego rozliczać.
+            </p>
+          ) : (
+            <ul className="mt-3 divide-y divide-c-border-subtle">
+              {(backlogOsoba?.backlogTasks ?? []).map((task: ResourcePlanBacklogTask) => (
+                <li key={task.taskId} className="py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-c-text-primary">
+                        {task.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-c-text-muted">
+                        {`Termin ${task.dueDate ? tydzien(task.dueDate) : 'brak'} · ${task.daysOverdue} dni po terminie · ${godziny(task.remainingHours)} do zrobienia`}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid={`execution-resources-backlog-move-${task.taskId}`}
+                        disabled={backlogBusyTaskId === task.taskId}
+                        onClick={() => {
+                          setBacklogScope(null);
+                          setBacklogError('');
+                          setBacklogMove({ taskId: task.taskId, date: domyslnyTydzien() });
+                        }}
+                      >
+                        Przenieś na tydzień
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid={`execution-resources-backlog-close-${task.taskId}`}
+                        disabled={backlogBusyTaskId === task.taskId}
+                        onClick={() =>
+                          void wykonajAkcjeZaleglosci(task.taskId, () =>
+                            zamknijZadanieZaleglosci(task.taskId, task.status)
+                          )
+                        }
+                      >
+                        Uznaj za zamknięte
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid={`execution-resources-backlog-scope-${task.taskId}`}
+                        disabled={backlogBusyTaskId === task.taskId}
+                        onClick={() => {
+                          setBacklogMove(null);
+                          setBacklogError('');
+                          setBacklogScope({
+                            taskId: task.taskId,
+                            hours: String(task.estimatedHours),
+                          });
+                        }}
+                      >
+                        Zmniejsz zakres
+                      </button>
+                    </div>
+                  </div>
+                  {backlogMove?.taskId === task.taskId && (
+                    <div className="mt-2 flex flex-wrap items-end gap-2">
+                      <label className="text-sm">
+                        <span className="block text-xs text-c-text-muted">Nowy termin</span>
+                        <input
+                          type="date"
+                          data-testid="execution-resources-backlog-move-date"
+                          value={backlogMove.date}
+                          onChange={(e) => setBacklogMove({ ...backlogMove, date: e.target.value })}
+                          className="mt-1 h-9 w-44 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid="execution-resources-backlog-move-confirm"
+                        disabled={!backlogMove.date || backlogBusyTaskId === task.taskId}
+                        onClick={() =>
+                          void wykonajAkcjeZaleglosci(task.taskId, () =>
+                            przeniesZadanieNaTermin(task.taskId, backlogMove.date)
+                          )
+                        }
+                      >
+                        Przenieś
+                      </button>
+                    </div>
+                  )}
+                  {backlogScope?.taskId === task.taskId && (
+                    <div className="mt-2 flex flex-wrap items-end gap-2">
+                      <label className="text-sm">
+                        <span className="block text-xs text-c-text-muted">
+                          Pracochłonność (h)
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={999}
+                          data-testid="execution-resources-backlog-scope-hours"
+                          value={backlogScope.hours}
+                          onChange={(e) =>
+                            setBacklogScope({ ...backlogScope, hours: e.target.value })
+                          }
+                          className="mt-1 h-9 w-32 rounded-lg border border-c-border-subtle bg-c-surface-raised px-2"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid="execution-resources-backlog-scope-confirm"
+                        disabled={backlogBusyTaskId === task.taskId}
+                        onClick={() =>
+                          void wykonajAkcjeZaleglosci(task.taskId, () =>
+                            zmniejszZakresZadania(task.taskId, Number(backlogScope.hours))
+                          )
+                        }
+                      >
+                        Zapisz zakres
+                      </button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
       {planState === 'READY' && planRows.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-c-border p-8 text-center text-sm text-c-text-muted">
@@ -739,14 +1002,27 @@ export const ExecutionResourcesSurface = ({
                 }}
                 details={{
                   label: 'Obłożenie w tym tygodniu',
+                  /*
+                   * P16-R1: popyt tygodnia to WYŁĄCZNIE praca zaplanowana na
+                   * ten tydzień (udział zadania między startem a terminem).
+                   * Zaległość stoi obok — nie jest w tej liczbie.
+                   */
                   text:
-                    row.overdueHours > 0
-                      ? `W tym ${godziny(row.overdueHours)} z zadań po terminie, doliczonych do bieżącego tygodnia.`
-                      : 'Brak zadań po terminie doliczonych do tego tygodnia.',
+                    (planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0) >
+                    0
+                      ? `Popyt tygodnia liczony bez zaległości. Zaległość ${godziny(planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0)} — rozlicz ją osobno.`
+                      : 'Popyt tygodnia to praca zaplanowana na ten tydzień. Ta osoba nie ma zaległości.',
                   properties: [
                     { id: 'demand', label: 'Popyt', value: row.demandLabel },
                     { id: 'supply', label: 'Podaż', value: row.supplyLabel },
                     { id: 'gap', label: 'Luka', value: row.gapLabel },
+                    {
+                      id: 'backlog',
+                      label: 'Zaległość',
+                      value: godziny(
+                        planPeople.find((person) => person.userId === row.userId)?.backlogHours ?? 0
+                      ),
+                    },
                     { id: 'tasks', label: 'Zadania', value: String(row.taskCount) },
                     {
                       id: 'allocations',
@@ -763,6 +1039,26 @@ export const ExecutionResourcesSurface = ({
                 relationsEmptyLabel="Brak kanonicznych przydziałów dla tej osoby"
                 actions={{
                   informational: [
+                    // P16-R1: wejście do rozliczenia zaległości także z
+                    // podglądu osoby — nie tylko klikiem w liczbę w tabeli.
+                    ...((planPeople.find((person) => person.userId === row.userId)?.backlogHours ??
+                      0) > 0
+                      ? [
+                          {
+                            id: 'backlog',
+                            label: 'Rozlicz zaległość',
+                            variant: 'positive' as const,
+                            icon: ArrowRight,
+                            shortcut: 'Z',
+                            onClick: () => {
+                              setBacklogError('');
+                              setBacklogMove(null);
+                              setBacklogScope(null);
+                              setBacklogPanel({ userId: row.userId, name: row.title });
+                            },
+                          },
+                        ]
+                      : []),
                     {
                       id: 'capacity',
                       label: 'Ustaw dostępność',

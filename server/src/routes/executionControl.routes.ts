@@ -1103,8 +1103,17 @@ router.get(
         // NULL, nie 0 — „nie wiemy" nie jest tym samym co „nikt nic nie robi".
         utilizationPercent:
           totalSupply > 0 ? Math.round((totalDemand / totalSupply) * 100) : null,
+        // Liczy PRZECIAZONE TYGODNIE (wiersze osoba x tydzien), nie osoby —
+        // pasek Zasobow nazywa to wprost „przeciążonych tygodni". Od P16-R1
+        // liczy sie z NOWEGO popytu (bez zaleglosci doliczanej do tygodnia 1).
         overloadedCount: plan.rows.filter((row) => row.utilizationPercent > 105).length,
         peopleWithoutProfileSupply: plan.people.filter((p) => p.supplySource === 'DOMYSLNA').length,
+        // [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1): zaleglosc jako
+        // wlasna para liczb — ile godzin i u ilu osob. Nie miesza sie z
+        // popytem ani z obłozeniem.
+        backlogHoursTotal:
+          Math.round(plan.people.reduce((sum, person) => sum + person.backlogHours, 0) * 10) / 10,
+        backlogPeople: plan.people.filter((person) => person.backlogHours > 0).length,
       },
     });
   })

@@ -13391,7 +13391,8 @@
         "costRisk": "Cost risk",
         "needsDecision": "Needs decision",
         "team": "By team",
-        "initiative": "By Initiative"
+        "initiative": "By Initiative",
+        "withBacklog": "With backlog"
       },
       "control": {
         "needsAction": "Needs action",
@@ -13857,7 +13858,8 @@
         "cost": "Cost / forecast",
         "conflict": "Conflict",
         "freshness": "Freshness",
-        "nextAction": "Next action"
+        "nextAction": "Next action",
+        "backlog": "Backlog (h)"
       },
       "actions": {
         "proposeAllocation": "Propose allocation",
