@@ -195,7 +195,7 @@ interface CapacityRegisterItem {
   id: string;
   name: string;
   state: string;
-  planRef: { scenarioId: string; scenarioVersion: number };
+  planRef: { scenarioId: string; scenarioVersion: number; name?: string | null };
   window: { start: string | null; end: string | null };
   knowledgeSummary: { known: number; estimated: number; unknown: number; unconfirmed: number };
   updatedAt: string;
@@ -577,7 +577,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           fallback: `${t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy')} · ${formatPeriodDate(x.updatedAt)}`,
         }),
         state: x.state,
-        plan: `${resolveBusinessDisplayLabel({ displayName: x.planRef.scenarioId, rawId: x.planRef.scenarioId, fallback: t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy') })} · v${x.planRef.scenarioVersion}`,
+        plan: `${resolveBusinessDisplayLabel({ displayName: x.planRef.name, rawId: x.planRef.scenarioId, fallback: t('initiatives.plan.unnamed', 'Plan bez nazwy') })} · v${x.planRef.scenarioVersion}`,
         window: `${x.window.start ?? '—'} → ${x.window.end ?? '—'}`,
         knowledge: `K ${x.knowledgeSummary.known} · E ${x.knowledgeSummary.estimated} · U ${x.knowledgeSummary.unknown} · UC ${x.knowledgeSummary.unconfirmed}`,
         updatedAt: x.updatedAt,

@@ -204,12 +204,27 @@ export class PostgresInitiativeReader {
   }
 
   async listCapacityScenarios(organizationId: string) {
+    // [ODMROZENIE 05_INITIATIVES DEC-421] „Plan źródłowy" = NAZWA agregatu `plan_scenario`
+    // wskazanego przez `planScenarioId` (nie literał). Brak planu / brak nazwy =
+    // `plan_name` puste — front pokazuje istniejący fallback resolwera „Plan bez nazwy".
     const result = await this.pool.query<{
       aggregate_id: string;
       payload_json: CapacityScenario;
       updated_at: Date | string;
+      plan_name: string | null;
     }>(
-      `SELECT aggregate_id,payload_json,updated_at FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='capacity_scenario' ORDER BY updated_at DESC`,
+      `SELECT
+         s.aggregate_id,
+         s.payload_json,
+         s.updated_at,
+         plan.payload_json->>'name' AS plan_name
+       FROM ie_aggregate_state s
+       LEFT JOIN ie_aggregate_state plan
+         ON plan.organization_id = s.organization_id
+        AND plan.aggregate_type = 'plan_scenario'
+        AND plan.aggregate_id = (s.payload_json->>'planScenarioId')
+       WHERE s.organization_id=$1 AND s.aggregate_type='capacity_scenario'
+       ORDER BY s.updated_at DESC`,
       [organizationId]
     );
     return result.rows.map((r) => {
@@ -226,7 +241,8 @@ export class PostgresInitiativeReader {
         state: r.payload_json.status,
         version: r.payload_json.scenarioVersion,
         periodCount: r.payload_json.periods.length,
-        roleCount: new Set(r.payload_json.proposedAssignments.map((item) => item.resourceOrRoleId)).size,
+        roleCount: new Set(r.payload_json.proposedAssignments.map((item) => item.resourceOrRoleId))
+          .size,
         gapCount: r.payload_json.periods.filter(
           (period) =>
             period.demand.base !== null &&
@@ -236,6 +252,7 @@ export class PostgresInitiativeReader {
         planRef: {
           scenarioId: r.payload_json.planScenarioId,
           scenarioVersion: r.payload_json.planScenarioVersion,
+          name: r.plan_name ?? null,
         },
         window: {
           start: r.payload_json.periods[0]?.start ?? null,
@@ -1221,52 +1238,86 @@ export class PostgresInitiativeReader {
     return result.rows.map((r) => r.payload_json);
   }
   async listPlanScenarios(organizationId: string) {
+    // [ODMROZENIE 05_INITIATIVES DEC-421] Konflikty = liczba z NAJNOWSZEJ propozycji
+    // analizy planu (`plan_analysis_proposal`) powiązanej z tym planem po `scenarioId`
+    // (patrz `planAnalysisProposal.ts`: `proposal.scenarioId = plan_scenario.scenarioId`).
+    // Brak propozycji = 0 (front renderuje „Brak"). Autor = imię i nazwisko z `users`
+    // po `updatedBy` (id aktora), NIE surowe UUID; brak dopasowania = jawne
+    // „Nieznany użytkownik".
     const result = await this.pool.query<{
       aggregate_id: string;
       payload_json: PlanScenario;
       updated_at: Date | string;
+      conflicts_count: number | null;
+      updated_by_first_name: string | null;
+      updated_by_last_name: string | null;
     }>(
-      `SELECT aggregate_id,payload_json,updated_at FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_type='plan_scenario' ORDER BY updated_at DESC`,
+      `SELECT
+         s.aggregate_id,
+         s.payload_json,
+         s.updated_at,
+         proposal.conflicts_count,
+         u.first_name AS updated_by_first_name,
+         u.last_name AS updated_by_last_name
+       FROM ie_aggregate_state s
+       LEFT JOIN LATERAL (
+         SELECT jsonb_array_length(COALESCE(p.payload_json->'conflicts', '[]'::jsonb)) AS conflicts_count
+         FROM ie_aggregate_state p
+         WHERE p.organization_id = s.organization_id
+           AND p.aggregate_type = 'plan_analysis_proposal'
+           AND p.payload_json->>'scenarioId' = s.aggregate_id
+         ORDER BY p.updated_at DESC
+         LIMIT 1
+       ) proposal ON true
+       LEFT JOIN users u ON u.id = (s.payload_json->>'updatedBy')
+       WHERE s.organization_id=$1 AND s.aggregate_type='plan_scenario'
+       ORDER BY s.updated_at DESC`,
       [organizationId]
     );
-    return result.rows.map((r) => ({
-      id: r.aggregate_id,
-      name: String((r.payload_json as any).name ?? r.aggregate_id),
-      state: r.payload_json.status,
-      version: r.payload_json.scenarioVersion,
-      initiativeCount: r.payload_json.windows.length,
-      conflicts: 0,
-      author: r.payload_json.updatedBy,
-      portfolioRef: {
-        scenarioId: r.payload_json.portfolioScenarioId,
-        scenarioVersion: r.payload_json.portfolioScenarioVersion,
-      },
-      timeBasis: {
-        windowUnit: r.payload_json.windowUnit ?? null,
-        timezone: r.payload_json.timezone ?? null,
-        periods: r.payload_json.periods ?? null,
-        knowledgeState:
-          r.payload_json.windowUnit &&
-          r.payload_json.timezone &&
-          Array.isArray(r.payload_json.periods)
-            ? 'KNOWN'
-            : 'UNKNOWN',
-      },
-      window: {
-        earliest:
-          r.payload_json.windows
-            .map((w) => w.earliest)
-            .filter(Boolean)
-            .sort()[0] ?? null,
-        latest:
-          r.payload_json.windows
-            .map((w) => w.latest)
-            .filter(Boolean)
-            .sort()
-            .at(-1) ?? null,
-      },
-      updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
-    }));
+    return result.rows.map((r) => {
+      const updatedByName = [r.updated_by_first_name, r.updated_by_last_name]
+        .map((part) => (typeof part === 'string' ? part.trim() : ''))
+        .filter(Boolean)
+        .join(' ');
+      return {
+        id: r.aggregate_id,
+        name: String((r.payload_json as any).name ?? r.aggregate_id),
+        state: r.payload_json.status,
+        version: r.payload_json.scenarioVersion,
+        initiativeCount: r.payload_json.windows.length,
+        conflicts: Number(r.conflicts_count ?? 0),
+        author: updatedByName || (r.payload_json.updatedBy ? 'Nieznany użytkownik' : ''),
+        portfolioRef: {
+          scenarioId: r.payload_json.portfolioScenarioId,
+          scenarioVersion: r.payload_json.portfolioScenarioVersion,
+        },
+        timeBasis: {
+          windowUnit: r.payload_json.windowUnit ?? null,
+          timezone: r.payload_json.timezone ?? null,
+          periods: r.payload_json.periods ?? null,
+          knowledgeState:
+            r.payload_json.windowUnit &&
+            r.payload_json.timezone &&
+            Array.isArray(r.payload_json.periods)
+              ? 'KNOWN'
+              : 'UNKNOWN',
+        },
+        window: {
+          earliest:
+            r.payload_json.windows
+              .map((w) => w.earliest)
+              .filter(Boolean)
+              .sort()[0] ?? null,
+          latest:
+            r.payload_json.windows
+              .map((w) => w.latest)
+              .filter(Boolean)
+              .sort()
+              .at(-1) ?? null,
+        },
+        updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
+      };
+    });
   }
   async findCapacityScenario(
     organizationId: string,
