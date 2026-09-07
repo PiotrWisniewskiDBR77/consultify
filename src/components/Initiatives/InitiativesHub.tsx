@@ -359,6 +359,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [planCreateRequestId, setPlanCreateRequestId] = useState(0);
   const [capacityCreateRequestId, setCapacityCreateRequestId] = useState(0);
+  /**
+   * P15-K6/K7 (DEC-421): PRZEJŚCIE MIĘDZY ZAKŁADKAMI Plan ↔ Obciążenie.
+   * Karta planu prowadzi do analizy („Otwórz analizę", „Nowa analiza z tego
+   * planu"), a karta analizy do planu powstałego z wybranego wariantu. Bez
+   * tego użytkownik dostawał nazwę drugiego ekranu i musiał go szukać sam.
+   */
+  const [capacityCreatePlanId, setCapacityCreatePlanId] = useState<string | null>(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1737,6 +1744,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           activePreset={canonicalMenu3Preset.plan}
           onCountsChange={handlePlanMenu3Counts}
           createRequestId={planCreateRequestId}
+          onOpenCapacityAnalysis={() => setActiveTab('capacity')}
+          onNewCapacityAnalysis={(planScenarioId) => {
+            setCapacityCreatePlanId(planScenarioId);
+            setCapacityCreateRequestId((value) => value + 1);
+            setActiveTab('capacity');
+          }}
           /* Odbiór 141-plan-scenario (2026-08-31): „Otwórz" w podglądzie planu
              prowadzi do KARTY INICJATYWY — ta sama droga co w PortfolioHealthView
              niżej. Wcześniej otwierał warsztat planu pod tabelą. */
@@ -1757,6 +1770,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           activePreset={canonicalMenu3Preset.capacity}
           onCountsChange={handleCapacityMenu3Counts}
           createRequestId={capacityCreateRequestId}
+          createPlanId={capacityCreatePlanId}
+          onOpenPlan={() => setActiveTab('plan')}
         />
       );
     if (activeTab === 'portfolioHealth') {

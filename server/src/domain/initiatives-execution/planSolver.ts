@@ -6,6 +6,23 @@ import {
   type PlanSolverDependencyReason,
 } from './planSolverReason.js';
 
+/**
+ * P15-K6 (DEC-421, §5 K6): PODPOWIEDŹ PRZESUNIĘCIA z wariantu doradcy.
+ *
+ * Wybór „Przesuń kolejność" w karcie analizy obciążenia niesie liczbę okresów
+ * wyliczoną przez `capacityOptionsAdvisor` (`impact.date.base`). Bez tego
+ * wejścia solver układał plan dokładnie tak samo jak przed wyborem wariantu —
+ * użytkownik klikał „Przesuń kolejność" i dostawał plan bez przesunięcia.
+ *
+ * Podpowiedź podnosi WYŁĄCZNIE dolną granicę okresu dla wskazanej inicjatywy
+ * (tak samo, jak robi to zależność). Reszta matematyki — kolejność zależności,
+ * bilans mocy, wybór pierwszego wykonalnego okresu — bez zmian.
+ */
+export interface PlanSolverHint {
+  initiativeId: string;
+  shiftPeriods: number;
+}
+
 export interface PlanSolverResult {
   assignments: Array<{
     window: PlannedWindow;
@@ -87,7 +104,8 @@ const demandFor = (
 
 export function solvePlanScenario(
   scenario: PlanScenario,
-  capacity?: CapacityScenario
+  capacity?: CapacityScenario,
+  hints?: PlanSolverHint[]
 ): PlanSolverResult {
   const { ordered, conflicts, cycleMembers } = dependencyOrder(scenario.windows);
   const assignments: PlanSolverResult['assignments'] = [];
@@ -108,10 +126,41 @@ export function solvePlanScenario(
     const dependencyIndexes = window.dependencySnapshot
       .map((dependency) => assignedPeriodIndex.get(dependency))
       .filter((value): value is number => value !== undefined);
-    const firstAllowed = dependencyIndexes.length ? Math.max(...dependencyIndexes) + 1 : 0;
+    const dependencyFloor = dependencyIndexes.length ? Math.max(...dependencyIndexes) + 1 : 0;
+    // P15-K6: podpowiedź doradcy liczy się OD OKRESU, w którym okno stoi dziś.
+    const hint = hints?.find((item) => item.initiativeId === window.initiativeId);
+    const currentIndex = scenario.periods.findIndex(
+      (period) =>
+        window.target !== null && period.start <= window.target && period.end >= window.target
+    );
+    const hintFloor =
+      hint && hint.shiftPeriods > 0 && currentIndex >= 0 ? currentIndex + hint.shiftPeriods : 0;
+    if (hintFloor > 0)
+      assumptions.push(
+        encodePlanSolverReason({
+          code: 'ADVISOR_SHIFT',
+          initiativeId: window.initiativeId,
+          periods: hint?.shiftPeriods ?? 0,
+        })
+      );
+    const firstAllowed = Math.max(dependencyFloor, hintFloor);
     const candidates = scenario.periods
       .map((period, index) => ({ period, index }))
-      .filter(({ period, index }) => index >= firstAllowed && intersects(window, period));
+      /**
+       * Przy PODPOWIEDZI z wariantu doradcy własna górna granica okna (`latest`)
+       * nie może blokować przesunięcia — to o jej przesunięcie prosi człowiek,
+       * wybierając „Przesuń kolejność". Bez tego wyjątku podpowiedź dawała
+       * NO_FEASIBLE_PERIOD dla każdej inicjatywy (zmierzone 07.09: okna sięgały
+       * tygodnia 2, a przesunięcie celowało w tydzień 3). Dolna granica
+       * (`earliest`) i granica zależności obowiązują dalej.
+       */
+      .filter(
+        ({ period, index }) =>
+          index >= firstAllowed &&
+          (hintFloor > 0
+            ? window.earliest === null || period.end >= window.earliest
+            : intersects(window, period))
+      );
 
     const targetCandidate = candidates.find(
       ({ period }) =>

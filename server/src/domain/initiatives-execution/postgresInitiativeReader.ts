@@ -927,6 +927,32 @@ export class PostgresInitiativeReader {
       ...x.payload_json,
     }));
   }
+  /**
+   * P15-K6 (DEC-421): propozycje analizy DLA JEDNEGO PLANU.
+   *
+   * Do K5 propozycja żyła wyłącznie w stanie Reacta powierzchni planu — kto
+   * wybrał wariant w karcie ANALIZY, ten w karcie PLANU nie widział niczego do
+   * zatwierdzenia (odczytu propozycji nie było w ogóle). Zwracamy oczekujące
+   * najpierw, żeby karta miała co pokazać bez dodatkowego sortowania.
+   */
+  async listPlanAnalysisProposals(organizationId: string, scenarioId: string) {
+    const r = await this.pool.query<{
+      version: number;
+      aggregate_id: string;
+      payload_json: Record<string, unknown>;
+    }>(
+      `SELECT version,aggregate_id,payload_json FROM ie_aggregate_state
+        WHERE organization_id=$1 AND aggregate_type='plan_analysis_proposal'
+          AND payload_json->>'scenarioId'=$2
+        ORDER BY updated_at DESC`,
+      [organizationId, scenarioId]
+    );
+    return r.rows.map((x) => ({
+      aggregateVersion: x.version,
+      ...x.payload_json,
+      proposalId: x.aggregate_id,
+    }));
+  }
   async listGateQuorums(organizationId: string) {
     const r = await this.pool.query<{
       version: number;

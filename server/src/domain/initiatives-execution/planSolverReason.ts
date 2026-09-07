@@ -61,7 +61,15 @@ export type PlanSolverAssumptionReason =
   | { code: 'DEPENDENCIES_PRECEDE' }
   | { code: 'ONE_FEASIBLE_PERIOD' }
   | { code: 'CAPACITY_UNKNOWN_FOR_PERIOD'; period: string }
-  | { code: 'DEMAND_UNKNOWN_FOR_INITIATIVE'; initiativeId: string; period: string };
+  | { code: 'DEMAND_UNKNOWN_FOR_INITIATIVE'; initiativeId: string; period: string }
+  /**
+   * P15-K6 (DEC-421): wybór wariantu „Przesuń kolejność" w karcie analizy
+   * obciążenia przekazuje solverowi PODPOWIEDŹ przesunięcia (`hints`). Kod
+   * mówi wprost, że okres nie wziął się z samej matematyki zależności, tylko
+   * z decyzji człowieka na wariancie doradcy — inaczej PMO nie odróżni jednego
+   * od drugiego w propozycji.
+   */
+  | { code: 'ADVISOR_SHIFT'; initiativeId: string; periods: number };
 
 export type PlanSolverReason =
   | PlanSolverAssignmentReason
@@ -120,6 +128,10 @@ export function encodePlanSolverReason(reason: PlanSolverReason): string {
     case 'DEMAND_UNKNOWN_FOR_INITIATIVE':
       push('initiativeId', reason.initiativeId);
       push('period', reason.period);
+      break;
+    case 'ADVISOR_SHIFT':
+      push('initiativeId', reason.initiativeId);
+      push('periods', reason.periods);
       break;
     default:
       break;
@@ -206,6 +218,12 @@ export function decodePlanSolverReason(value: string): PlanSolverReason | null {
         code: 'DEMAND_UNKNOWN_FOR_INITIATIVE',
         initiativeId: text('initiativeId'),
         period: text('period'),
+      };
+    case 'ADVISOR_SHIFT':
+      return {
+        code: 'ADVISOR_SHIFT',
+        initiativeId: text('initiativeId'),
+        periods: number('periods'),
       };
     default:
       return null;

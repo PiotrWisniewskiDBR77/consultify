@@ -48,6 +48,21 @@ export interface CapacityOptionsComparison {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * P15-K6 (DEC-421, §5 K6): ŚLAD DECYZJI. Agregat analizy nie ma listy
+   * `decisions[]`, więc wybór wariantu zapisuje się addytywnie tutaj — kto
+   * wybrał, kiedy, i (dla „Przesuń kolejność") do jakiej wersji planu poszła
+   * propozycja. Bez tego karta analizy nie miała czego pokazać w „Decyzjach",
+   * a wybór ginął po odświeżeniu.
+   */
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  decisionNote?: string | null;
+  resultingPlanRef?: {
+    scenarioId: string;
+    scenarioVersion: number;
+    proposalId: string | null;
+  } | null;
 }
 export const hasPublishedScenarioStatus = (
   scenario: Pick<PlanScenario, 'status'> | Pick<CapacityScenario, 'status'>
@@ -143,6 +158,13 @@ export async function selectCapacityOption(
   envelope: MaterialCommandEnvelope<{
     optionId: string;
     nextKind: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION';
+    /** P15-K6: opis wariantu po polsku — to zdanie czyta PMO w „Decyzjach". */
+    decisionNote?: string;
+    resultingPlanRef?: {
+      scenarioId: string;
+      scenarioVersion: number;
+      proposalId: string | null;
+    };
   }>
 ): Promise<MaterialCommandResult<CapacityOptionsComparison>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
@@ -167,12 +189,21 @@ export async function selectCapacityOption(
         'capacity_scenario',
         c.capacityRef.scenarioId
       );
-    if (
-      !plan ||
-      plan.version !== c.planRef.version ||
-      !capacity ||
-      capacity.version !== c.capacityRef.version
-    )
+    /**
+     * P15-K6 (DEC-421): wybór „Przesuń kolejność" NAJPIERW zakłada szkic v+1
+     * planu, a dopiero potem zapisuje decyzję — inaczej nie miałby czego wpisać
+     * w `resultingPlanRef`. Plan jest wtedy o jedną wersję DALEJ niż snapshot
+     * porównania i stary warunek równości odrzucał własny skutek wyboru
+     * (zmierzone 07.09: 400 COMMAND_VALIDATION_FAILED na `/select`).
+     * Wyjątek jest wąski: dotyczy wyłącznie planu, którego dotyczy TO
+     * porównanie, i wyłącznie gdy wołający deklaruje wersję wynikową.
+     */
+    const declaresResultingPlan =
+      envelope.payload.resultingPlanRef?.scenarioId === c.planRef.scenarioId;
+    const planStale = declaresResultingPlan
+      ? !plan || plan.version < c.planRef.version
+      : !plan || plan.version !== c.planRef.version;
+    if (planStale || !capacity || capacity.version !== c.capacityRef.version)
       throw new MaterialCommandValidationError('Scenario snapshots became stale');
     const next = {
       ...c,
@@ -185,6 +216,10 @@ export async function selectCapacityOption(
         comparisonVersion: envelope.expectedVersion + 1,
       },
       updatedAt: new Date().toISOString(),
+      decidedBy: envelope.actorId,
+      decidedAt: new Date().toISOString(),
+      decisionNote: envelope.payload.decisionNote ?? null,
+      resultingPlanRef: envelope.payload.resultingPlanRef ?? null,
     };
     return {
       mutation: next,

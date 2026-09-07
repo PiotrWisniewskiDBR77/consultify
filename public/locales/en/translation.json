@@ -10178,7 +10178,18 @@
         "relations": "Relations",
         "evidence": "Sources and assumptions",
         "history": "History"
-      }
+      },
+      "decision": {
+        "selected": "Selected option",
+        "noteMissing": "option without a recorded description",
+        "planDraft": "plan v{{version}} (draft)",
+        "resequence": "Resequence by {{periods}} period(s) — proposal sent to the plan.",
+        "resequenceUnknown": "Resequence — the advisor found no feasible shift, the plan is unchanged.",
+        "scopeSplit": "Split scope — decision recorded, the plan is unchanged.",
+        "addCapacity": "Add capacity — decision recorded, the plan is unchanged."
+      },
+      "variantApplied": "Selection saved. Details and the link to the plan are in the \"Decisions\" section.",
+      "variantNoShift": "The advisor found no feasible shift — the decision is recorded, the plan is unchanged."
     },
     "planScenario": {
       "status": {
@@ -10367,7 +10378,8 @@
         "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier.",
         "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional.",
         "INITIATIVE_DEPENDENCY_CYCLE": "That dependency would close a loop: the initiative would wait for itself. Remove one dependency from the chain.",
-        "DEPENDENCY_INITIATIVE_NOT_FOUND": "The chosen predecessor initiative does not exist in this organization. Refresh the plan and pick again."
+        "DEPENDENCY_INITIATIVE_NOT_FOUND": "The chosen predecessor initiative does not exist in this organization. Refresh the plan and pick again.",
+        "CAPACITY_SCENARIO_REQUIRED": "The role-capacity mode requires a published capacity analysis for this plan version — create one in Capacity."
       },
       "roleDemand": {
         "loading": "Loading role load…",
@@ -12786,7 +12798,12 @@
       "capacityUnknown": "Unknown — no published capacity analysis.",
       "listEmptyTitle": "No plans",
       "listEmptyDescription": "Create the first plan with \"New plan\" — you pick the approved initiatives and the horizon there.",
-      "proposalTitle": "Solver proposal (awaiting a human decision)"
+      "proposalTitle": "Solver proposal (awaiting a human decision)",
+      "capacityFromAnalysis": "Result of analysis \"{{name}}\" (version {{version}}).",
+      "openCapacityAnalysis": "Open analysis",
+      "newCapacityAnalysis": "New analysis from this plan",
+      "capacitySheetAria": "Role capacity from the analysis",
+      "capacityModeBlocked": "The role-capacity mode requires a published capacity analysis for this plan version — create one in Capacity."
     },
     "planSolver": {
       "selected": "The solver picked {{period}}: {{dependency}}; the initiative window intersects that period; {{capacity}}. Awaiting human confirmation.",
@@ -12811,7 +12828,8 @@
         "dependenciesPrecede": "Dependencies precede dependent initiatives.",
         "oneFeasiblePeriod": "A deterministic solver selects one feasible target period per initiative; no Plan or Initiative date was changed.",
         "capacityUnknownForPeriod": "Capacity unknown for period {{period}} - the capacity constraint was not applied.",
-        "demandUnknownForInitiative": "Demand unknown for \"{{initiative}}\" in period {{period}} - the capacity constraint was not applied."
+        "demandUnknownForInitiative": "Demand unknown for \"{{initiative}}\" in period {{period}} - the capacity constraint was not applied.",
+        "advisorShift": "Shift from the advisor option: \"{{initiative}}\" by {{periods}} period(s)."
       }
     }
   },

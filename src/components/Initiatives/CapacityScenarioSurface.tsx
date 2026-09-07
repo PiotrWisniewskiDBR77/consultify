@@ -27,6 +27,9 @@ import {
   selectCapacityOption,
   writeCapacityScenario,
   computeCapacityScenario,
+  createPlanAnalysisProposal,
+  readPlanScenario,
+  writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
@@ -92,6 +95,35 @@ const actorLabel = (value: string) =>
         'controls-engineer': 'Controls Engineer',
         'role:controls-engineer': 'Controls Engineer',
       }[value] ?? value.replace(/^role:/, '').replaceAll('-', ' '));
+/**
+ * P15-K6 (DEC-421): ZDANIE DECYZJI zapisywane z wyborem wariantu. To ono
+ * ląduje w „Decyzjach" karty analizy — musi mówić, CO wybrano, nie pokazywać
+ * surowego `RESEQUENCE`.
+ */
+export const variantDecisionNote = (
+  kind: 'RESEQUENCE' | 'SCOPE_SPLIT' | 'ADD_CAPACITY',
+  shiftPeriods: number | null
+): string => {
+  if (kind === 'RESEQUENCE')
+    return shiftPeriods === null
+      ? i18n.t(
+          'initiatives.capacityAnalysis.decision.resequenceUnknown',
+          'Przesuń kolejność — doradca nie wyliczył wykonalnego przesunięcia, plan bez zmian.'
+        )
+      : i18n.t('initiatives.capacityAnalysis.decision.resequence', {
+          defaultValue: 'Przesuń kolejność o {{periods}} okres(y) — propozycja do planu.',
+          periods: shiftPeriods,
+        });
+  if (kind === 'SCOPE_SPLIT')
+    return i18n.t(
+      'initiatives.capacityAnalysis.decision.scopeSplit',
+      'Podziel zakres — decyzja zapisana, plan bez zmian.'
+    );
+  return i18n.t(
+    'initiatives.capacityAnalysis.decision.addCapacity',
+    'Dołóż moce — decyzja zapisana, plan bez zmian.'
+  );
+};
 const formatPeriodDate = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'UNKNOWN';
@@ -190,11 +222,21 @@ interface PublishedPlanBasis {
   timezone: string;
   periods: Array<{ periodId: string; start: string; end: string }>;
 }
-export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMode?: boolean }> = ({
+export const CapacityScenarioSurface: React.FC<
+  CanonicalMenu3Contract & {
+    demoMode?: boolean;
+    /** P15-K6: „→ plan vN (szkic)" wraca do zakładki Plan i otwiera tam kartę. */
+    onOpenPlan?: (planScenarioId: string) => void;
+    /** P15-K7 pkt 1: „Nowa analiza z tego planu" wchodzi tu z gotowym planem. */
+    createPlanId?: string | null;
+  }
+> = ({
   activePreset,
   onCountsChange,
   createRequestId = 0,
   demoMode = false,
+  onOpenPlan,
+  createPlanId = null,
 }) => {
   const { t } = useTranslation();
   // Katalog osób organizacji — patrz komentarz przy `RangeView` niżej.
@@ -217,6 +259,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const [advisorState, setAdvisorState] = useState<
     'IDLE' | 'SAVING' | 'APPLIED' | 'NO_PRESSURE' | 'NEEDS_PUBLISH' | 'CONFLICT' | 'FAILED'
   >('IDLE');
+  /** P15-K6: wynik OSTATNIEGO wyboru wariantu — karta ma powiedzieć, co się stało. */
+  const [variantOutcome, setVariantOutcome] = useState<'APPLIED' | 'NO_SHIFT' | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newAnalysisId, setNewAnalysisId] = useState('');
   const [newPlanId, setNewPlanId] = useState('');
@@ -226,8 +270,10 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   useEffect(() => {
     if (createRequestId === handledCreateRequest.current) return;
     handledCreateRequest.current = createRequestId;
+    // P15-K7: plan przyniesiony z karty planu wypełnia formularz od razu.
+    if (createPlanId) setNewPlanId(createPlanId);
     setShowCreate(true);
-  }, [createRequestId]);
+  }, [createRequestId, createPlanId]);
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );
@@ -780,10 +826,74 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       setCommitmentWrite({ state: 'FAILED', message: 'Resource-manager decision failed; retry.' });
     }
   };
+  /**
+   * WYBÓR WARIANTU → NOWA WERSJA PLANU (P15-K6, DEC-421, §5 K6).
+   *
+   * POMIAR 07.09: `selectOption` tworzyło wyłącznie „kontrolowany wniosek"
+   * (`nextGovernedInput`) — plan zostawał nietknięty, a PMO klikało „Przesuń
+   * kolejność" i nie dostawało żadnego przesunięcia. Teraz:
+   *   • „Przesuń kolejność" → (plan OPUBLIKOWANY: nowy SZKIC v+1 mechanizmem
+   *     K3) → `analysis-proposals` z `capacityScenarioId` TEJ analizy i
+   *     podpowiedzią przesunięcia (`hints`) → propozycja czeka w karcie PLANU;
+   *   • „Podziel zakres" / „Dołóż moce" → sam wpis decyzji (opis + kto),
+   *     bez zmiany planu — to decyzja do dalszej rozmowy, nie ruch w kalendarzu.
+   */
   const selectOption = async (comparison: CapacityComparison, optionId: string) => {
     setWriteRule(null);
     setWriteState('SAVING');
+    setVariantOutcome(null);
+    const option = comparison.options.find((item) => item.optionId === optionId) ?? null;
+    const shiftPeriods =
+      option?.kind === 'RESEQUENCE' && option.impact.date.knowledgeState !== 'UNKNOWN'
+        ? Math.max(1, Math.round(option.impact.date.base ?? 0))
+        : null;
     try {
+      let resultingPlanRef: {
+        scenarioId: string;
+        scenarioVersion: number;
+        proposalId: string | null;
+      } | null = null;
+      if (option?.kind === 'RESEQUENCE' && shiftPeriods !== null) {
+        const planId = comparison.planRef.scenarioId;
+        const loaded = (await readPlanScenario(planId)) as {
+          version: number;
+          scenario: {
+            scenarioId: string;
+            status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+            scenarioVersion: number;
+          } & Record<string, unknown>;
+        };
+        let planVersion = loaded.version;
+        let scenarioVersion = loaded.scenario.scenarioVersion;
+        if (loaded.scenario.status !== 'DRAFT') {
+          // Mechanizm K3 „Utwórz nową wersję (szkic)": UPDATE opublikowanego
+          // planu daje SZKIC v+1 z tą samą treścią. Plan opublikowany nie
+          // przyjmuje propozycji (domena: „only a DRAFT Plan").
+          const created = (await writePlanScenario(planId, {
+            expectedVersion: planVersion,
+            clientRequestId: crypto.randomUUID(),
+            operation: 'UPDATE',
+            portfolio: 'auto',
+            scenario: loaded.scenario,
+          })) as { aggregateVersion: number; response: { scenarioVersion: number } };
+          planVersion = created.aggregateVersion;
+          scenarioVersion = created.response.scenarioVersion;
+        }
+        const proposalId = `plan-analysis-${planId}-${crypto.randomUUID()}`;
+        await createPlanAnalysisProposal(planId, proposalId, {
+          expectedVersion: 0,
+          clientRequestId: crypto.randomUUID(),
+          scenarioId: planId,
+          inputAggregateVersion: planVersion,
+          useCapacity: true,
+          capacityScenarioId: comparison.capacityRef.scenarioId,
+          hints: option.affectedMemberships.map((membership) => ({
+            initiativeId: membership.initiativeId,
+            shiftPeriods,
+          })),
+        });
+        resultingPlanRef = { scenarioId: planId, scenarioVersion, proposalId };
+      }
       await selectCapacityOption(comparison.comparisonId, {
         expectedVersion: comparison.version,
         clientRequestId: commandId(
@@ -791,9 +901,14 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         ),
         optionId,
         nextKind: nextInputKind,
+        decisionNote: option ? variantDecisionNote(option.kind, shiftPeriods) : null,
+        resultingPlanRef,
       });
       await load(true);
       setWriteState('IDLE');
+      setVariantOutcome(
+        option?.kind === 'RESEQUENCE' && shiftPeriods === null ? 'NO_SHIFT' : 'APPLIED'
+      );
     } catch (error) {
       setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
@@ -882,6 +997,8 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           void overrideSupply(periodId, roleId, supply)
         }
         onSelectOption={(comparison, optionId) => void selectOption(comparison, optionId)}
+        onOpenPlan={onOpenPlan}
+        variantOutcome={variantOutcome}
       />
     );
   }

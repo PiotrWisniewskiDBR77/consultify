@@ -53,6 +53,15 @@ export type CapacityComparison = {
     comparisonId: string;
     comparisonVersion: number;
   } | null;
+  /** P15-K6 (DEC-421): ślad decyzji — kto wybrał wariant, kiedy i z jakim skutkiem. */
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  decisionNote?: string | null;
+  resultingPlanRef?: {
+    scenarioId: string;
+    scenarioVersion: number;
+    proposalId: string | null;
+  } | null;
 };
 
 const knowledgeLabel = (value: CapacityKnowledgeState): string =>

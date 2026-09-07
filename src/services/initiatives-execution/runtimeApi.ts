@@ -1852,6 +1852,19 @@ export function createPlanAnalysisProposal(
     command
   );
 }
+/**
+ * P15-K6 (DEC-421): propozycje analizy JEDNEGO planu. Wybór wariantu doradcy
+ * powstaje w karcie ANALIZY, a zatwierdza się go w karcie PLANU — bez odczytu
+ * karta planu nie miałaby czego pokazać po przejściu między zakładkami.
+ */
+export function listPlanAnalysisProposals(scenarioId: string, signal?: AbortSignal) {
+  return allocationRequest(
+    `/plan-scenarios/${encodeURIComponent(scenarioId)}/analysis-proposals`,
+    'GET',
+    undefined,
+    signal
+  );
+}
 export function reviewPlanAnalysisProposal(proposalId: string, command: unknown) {
   return allocationRequest(
     `/plan-analysis-proposals/${encodeURIComponent(proposalId)}/review`,
