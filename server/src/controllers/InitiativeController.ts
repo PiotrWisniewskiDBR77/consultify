@@ -428,6 +428,13 @@ export class InitiativeController {
         // syncInitiativeCapacity columns.
         allocatedCapacityFte: Number((i as any).allocated_capacity_fte) || 0,
         requiredCapacityFte: Number((i as any).required_capacity_fte) || 0,
+        // DEC-424: wstrzymanie i archiwum sa FLAGAMI na statusie, nie statusem.
+        // Dowod 07.09 (zrzut 12): lista nie niosla `on_hold`, wiec pigulka
+        // „Wstrzymana" w Realizacji i ton wiersza w rejestrze Inicjatyw nigdy
+        // sie nie zapalaly — flaga miala pisarza, ale zadnego czytnika na liscie.
+        onHold: Boolean((i as any).on_hold),
+        blockedReason: (i as any).blocked_reason ?? null,
+        archived: Boolean((i as any).archived),
       }));
 
       res.json(initiatives);
