@@ -3,11 +3,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
-import {
-  getInitiativeStatusChipTone,
-  getLocalizedStatusLabel,
-  type InitiativeStatus,
-} from '@/services/initiativeLifecycle';
+import { getInitiativeStatusChipTone, getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -104,7 +100,10 @@ export const CanonicalInitiativeRegister = ({
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
             label:
               INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] ||
-              getLocalizedStatusLabel(String(initiative.status) as InitiativeStatus, t),
+              getLocalizedStatusLabel(
+                String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
+                t
+              ),
             tone: getInitiativeStatusChipTone(initiative.status, { onHold: initiative.onHold }),
           },
           {
