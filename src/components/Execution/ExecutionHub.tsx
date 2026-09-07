@@ -2402,7 +2402,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           return (
             <EntityStatusChip
               status={String(row.status)}
-              label={getLocalizedStatusLabel(status, t)}
+              label={
+                row.onHold === true
+                  ? t('initiatives.status.ON_HOLD', 'Wstrzymana')
+                  : getLocalizedStatusLabel(status, t)
+              }
               tone={getInitiativeStatusChipTone(status, { onHold: row.onHold })}
             />
           );
