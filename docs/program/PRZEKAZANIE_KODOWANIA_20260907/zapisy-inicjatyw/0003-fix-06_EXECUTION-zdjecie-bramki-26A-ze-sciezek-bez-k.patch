@@ -1,0 +1,191 @@
+From 56fdcb7b5b9bd01e80c5797d46311962aba6abe4 Mon Sep 17 00:00:00 2001
+From: Piotr <piotr.wisniewski@dbr77.com>
+Date: Mon, 7 Sep 2026 08:28:32 +0200
+Subject: [PATCH 3/5] fix(06_EXECUTION): zdjecie bramki 26A ze sciezek bez
+ kanonicznego nastepcy [ODMROZENIE 06_EXECUTION DEC-453]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Zmierzone na zywym API (PRZED -> PO):
+  POST /initiatives/:id/milestones      409 -> 201
+  POST /initiatives/:id/resources       409 -> 201
+  POST /initiatives/:id/budget-items    409 -> 201
+  PUT  /initiatives/:id/gate-roles      409 -> 200
+  POST /initiatives/:id/staffing-plans  409 -> 201
+  POST /initiatives/:id/move            409 -> 400 (walidacja, trasa osiagalna)
+  PATCH /tasks/:id                      409 -> 404 (brak zadania, trasa osiagalna)
+  POST /initiatives/:id/raid            409 -> 409 (26A NIENARUSZONE)
+
+DLACZEGO: 26A wymaga jednego writera pracy wykonawczej. Bramka wymieniala
+jednak zasoby, dla ktorych kanoniczny writer NIE ISTNIAL (milestones przez
+initiativeId, resources, staffing-plans, budget-items, gate-roles, move) albo
+pisal do INNEGO modelu odczytu niz ten, ktory czyta ekran. Router /api/tasks:
+kanoniczna komenda pisze do ie_aggregate_state, a UI Realizacji i Mojej Pracy
+czyta tabele "tasks" — w postgresMaterialCommandUnitOfWork nie ma ani jednego
+INSERT/UPDATE na tej tabeli. Bramka nie przekierowywala ruchu, tylko go
+kasowala: przeciagniecie karty na kanbanie Realizacji, komentarz do zadania,
+lista kontrolna i zaleznosci konczyly sie 409.
+
+Wycofana zostaje sciezka "raid" (ma sprawdzonego nastepce piszacego do tej
+samej tabeli raid_items) oraz start-execution/block/unblock, lifecycle-*,
+apply-template, apply-blueprint (zero wolaczy w src/ — otwieranie martwej
+powierzchni nic nie daje).
+
+Test: executionSpineLegacyReadOnly.middleware.test.ts 35/35; mutacja
+przywracajaca stara liste -> 10 czerwonych
+---
+ ...tionSpineLegacyReadOnly.middleware.test.ts | 35 ++++++++++++++++---
+ ...executionSpineLegacyReadOnly.middleware.ts | 34 ++++++++++++++++--
+ server/src/routes/pmo/tasks.routes.ts         | 25 +++++++++----
+ 3 files changed, 82 insertions(+), 12 deletions(-)
+
+diff --git a/server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts b/server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts
+index 5acad807d8..5ce6979f01 100644
+--- a/server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts
++++ b/server/src/middleware/__tests__/executionSpineLegacyReadOnly.middleware.test.ts
+@@ -74,21 +74,48 @@ describe('execution spine legacy read-only boundary', () => {
+     }
+   });
+ 
++  // DEC-453: wycofana zostaje TYLKO sciezka, ktora ma sprawdzonego nastepce
++  // (RAID) albo ktorej nikt nie wola (start/block/unblock, lifecycle-*,
++  // apply-*). Ta lista jest bezpiecznikiem przed ponownym rozszerzeniem
++  // bramki na zasoby bez nastepcy — to wlasnie wylaczylo zarzadzanie
++  // inicjatywami na 19 dni.
+   it.each([
+-    '/initiative-1/milestones',
+-    '/initiative-1/resources/resource-1',
+-    '/initiative-1/staffing-plans/plan-1/roles',
+-    '/initiative-1/budget-items/item-1',
++    '/initiative-1/raid',
+     '/initiative-1/raid/risk-1',
+     '/initiative-1/start-execution',
++    '/initiative-1/block',
++    '/initiative-1/unblock',
+     '/initiative-1/lifecycle-gate-decisions',
+     '/initiative-1/apply-template',
++    '/initiative-1/apply-blueprint',
+   ])('denies the legacy Initiative execution writer %s', (path) => {
+     const result = invokeInitiative('POST', path);
+     expect(result.next).not.toHaveBeenCalled();
+     expect(result.status).toHaveBeenCalledWith(409);
+   });
+ 
++  // MUTACJA: dopisz ktorykolwiek z tych zasobow z powrotem do
++  // LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS — ten test staje sie czerwony.
++  it.each([
++    '/initiative-1/milestones',
++    '/initiative-1/milestones/milestone-1',
++    '/initiative-1/resources',
++    '/initiative-1/resources/resource-1',
++    '/initiative-1/resources/ai-apply-log',
++    '/initiative-1/staffing-plans',
++    '/initiative-1/staffing-plans/plan-1/roles',
++    '/initiative-1/budget-items',
++    '/initiative-1/budget-items/item-1',
++    '/initiative-1/gate-roles',
++    '/initiative-1/move',
++  ])('przepuszcza %s — nie ma kanonicznego nastepcy, wiec 409 kasowalo funkcje', (path) => {
++    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
++      const result = invokeInitiative(method, path);
++      expect(result.next, `${method} ${path}`).toHaveBeenCalledOnce();
++      expect(result.status, `${method} ${path}`).not.toHaveBeenCalled();
++    }
++  });
++
+   it.each([
+     '/wizard/sessions',
+     '/similarity-check',
+diff --git a/server/src/middleware/executionSpineLegacyReadOnly.middleware.ts b/server/src/middleware/executionSpineLegacyReadOnly.middleware.ts
+index 8f6486477a..6db230eee5 100644
+--- a/server/src/middleware/executionSpineLegacyReadOnly.middleware.ts
++++ b/server/src/middleware/executionSpineLegacyReadOnly.middleware.ts
+@@ -49,9 +49,39 @@ export function requireCanonicalExecutionWriter(
+  * execution subresources; it must not turn the whole Initiative product into
+  * a read-only surface.
+  */
++/**
++ * ZAWEZENIE 07.09 (DEC-453) — retirement nie moze wyprzedzac nastepcy.
++ *
++ * 26A mowi: mutacje maja wchodzic przez Runtime-v1, zeby byl DOKLADNIE JEDEN
++ * writer pracy wykonawczej. Ta lista przez 19 dni wymieniala jednak takze
++ * zasoby, dla ktorych kanoniczny writer NIE ISTNIAL albo pisal do INNEGO
++ * modelu odczytu niz ten, ktory czyta ekran. Skutek zmierzony na zywo:
++ * `Dodaj element` w RAID, kamieniach milowych, zasobach, planach obsady,
++ * pozycjach budzetu, rolach bram i przeniesieniu inicjatywy odpowiadalo 409 i
++ * NIC sie nie dzialo. Wlasciciel cofnal odbior Inicjatyw i Realizacji.
++ *
++ * Zasada, ktora ta lista teraz realizuje: sciezka zostaje wycofana WYLACZNIE
++ * wtedy, gdy istnieje kanoniczna komenda Runtime-v1 pisząca do TEGO SAMEGO
++ * modelu odczytu — albo gdy nikt jej nie wola.
++ *
++ * WYCOFANE, bo maja sprawdzonego nastepce:
++ *   `raid` -> POST/PATCH/DELETE
++ *   /api/initiatives/runtime-v1/initiatives/:id/raid-items/:raidItemId
++ *   (pisze do tej samej tabeli `raid_items`, ktora czyta `GET .../raid`;
++ *    dowod: zapisyInicjatyw.raidCanonical.pg.test.ts).
++ *
++ * WYCOFANE, bo NIKT ICH NIE WOLA (zmierzone grepem po `src/`, 0 wolaczy):
++ *   start-execution, block, unblock, lifecycle-*, apply-template,
++ *   apply-blueprint. Otwieranie martwej powierzchni nic nie daje.
++ *
++ * PRZYWROCONE (nastepcy brak lub pisze do innego modelu odczytu):
++ *   milestones, resources, staffing-plans, budget-items, gate-roles, move.
++ *   Kazda z nich wraca na liste wycofanych DOPIERO razem z kanoniczna
++ *   komenda, ktorej zapis widac w tym samym czytniku co dzis.
++ */
+ const LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS = [
+-  /^\/[^/]+\/(?:start-execution|block|unblock|move)\/?$/,
+-  /^\/[^/]+\/(?:milestones|resources|staffing-plans|budget-items|raid|gate-roles)(?:\/.*)?$/,
++  /^\/[^/]+\/(?:start-execution|block|unblock)\/?$/,
++  /^\/[^/]+\/raid(?:\/.*)?$/,
+   /^\/[^/]+\/(?:lifecycle-transition-proposals|lifecycle-transition-executions|lifecycle-gate-decisions)(?:\/.*)?$/,
+   /^\/[^/]+\/(?:apply-template|apply-blueprint)\/?$/,
+ ];
+diff --git a/server/src/routes/pmo/tasks.routes.ts b/server/src/routes/pmo/tasks.routes.ts
+index b27ece7078..008aad7c0d 100644
+--- a/server/src/routes/pmo/tasks.routes.ts
++++ b/server/src/routes/pmo/tasks.routes.ts
+@@ -13,7 +13,6 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
+ const TaskController = TaskControllerRaw as any;
+ import { verifyToken } from '../../middleware/auth.middleware.js';
+ import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
+-import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
+ import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
+ import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+ import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
+@@ -60,11 +59,25 @@ router.use(requireOrgAccess());
+ 
+ // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
+ router.use(demoContextMiddleware);
+-// AMD-EXE-SPINE-AUTHORITY-004: retain the legacy PMO task read model during
+-// cutover, but route every mutation through the receipt-backed Runtime-v1
+-// writer. This runs after auth and tenant resolution to avoid leaking route
+-// availability to an unauthenticated or foreign principal.
+-router.use(requireCanonicalExecutionWriter);
++// AMD-EXE-SPINE-AUTHORITY-004 (26A) — BRAMKA ZDJETA 07.09, DEC-453.
++//
++// Ta jedna linia odpowiadala 409 na KAZDY zapis calego routera `/api/tasks`:
++// tworzenie i edycje zadania, przeciagniecie na kanbanie Realizacji
++// (`ExecutionHub` -> `PATCH /tasks/:id`), komentarze, listy kontrolne,
++// zaleznosci, przeniesienia. Wlasciciel zglosil to jako „realizacja nie
++// dziala" i cofnal odbior modulu.
++//
++// Kanoniczny nastepca (`/api/initiatives/runtime-v1/execution-cases/:caseId/
++// tasks/:taskId`) ISTNIEJE, ale pisze do zdarzeniowego `ie_aggregate_state`,
++// a NIE do tabeli `tasks`, ktora czyta cale UI Realizacji i Mojej Pracy
++// (zmierzone: `postgresMaterialCommandUnitOfWork.ts` nie ma ani jednego
++// `INSERT/UPDATE` na `tasks`). Bramka wiec nie przekierowywala ruchu — po
++// prostu go kasowala. To nie jest cutover, to jest wylaczona funkcja.
++//
++// Bramka wraca tutaj DOPIERO wtedy, gdy kanoniczna komenda bedzie widoczna w
++// tym samym modelu odczytu, z ktorego korzysta ekran. Do tego czasu jedynym
++// uczciwym stanem jest dzialajacy zapis legacy.
++// Patrz: server/src/middleware/executionSpineLegacyReadOnly.middleware.ts
+ 
+ // ==========================================
+ // TASK CRUD
+-- 
+2.50.1 (Apple Git-155)
+

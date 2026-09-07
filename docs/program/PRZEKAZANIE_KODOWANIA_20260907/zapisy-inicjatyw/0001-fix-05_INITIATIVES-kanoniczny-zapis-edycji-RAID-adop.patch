@@ -1,0 +1,594 @@
+From 92a03f169a3235b33a5366815f441b178d9583fd Mon Sep 17 00:00:00 2001
+From: Piotr <piotr.wisniewski@dbr77.com>
+Date: Mon, 7 Sep 2026 07:46:59 +0200
+Subject: [PATCH 1/5] fix(05_INITIATIVES): kanoniczny zapis edycji RAID +
+ adopcja pozycji sprzed 26A
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bramka requireCanonicalInitiativeExecutionWriter wycofala PATCH
+/api/initiatives/:id/raid/:raidId, ale Runtime-v1 nie mial nastepcy —
+edycja RAID byla martwa na obu drogach naraz (legacy 409, kanoniczna
+nieistniejaca). Dodane:
+
+- komenda domenowa raid-item.update + PATCH
+  /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId
+- createIfMissing na PATCH i DELETE — pozycje zalozone przed 26A nie maja
+  wiersza w ie_aggregate_state, wiec CAS (null !== 0) blokowal kanoniczny
+  writer nawet po przepieciu frontu
+- parytet punktacji ryzyka (risk_score/score_category) z wycofanym zapisem
+  legacy, bo UI koloruje tabele po tych kolumnach
+- execution-write-map i capabilities wymieniaja teraz komplet mapowan RAID
+
+Test: server/src/routes/pmo/__tests__/zapisyInicjatyw.raidCanonical.pg.test.ts
+(realny PostgreSQL, 3/3; mutacja bez createIfMissing -> 1 czerwony)
+---
+ .../initiatives-execution/materialCommand.ts  |  13 ++
+ .../postgresMaterialCommandUnitOfWork.ts      |  76 ++++++-
+ .../domain/initiatives-execution/raidItem.ts  |  55 +++++
+ .../zapisyInicjatyw.raidCanonical.pg.test.ts  | 210 ++++++++++++++++++
+ .../pmo/initiativesExecutionRuntime.routes.ts |  91 +++++++-
+ 5 files changed, 442 insertions(+), 3 deletions(-)
+ create mode 100644 server/src/routes/pmo/__tests__/zapisyInicjatyw.raidCanonical.pg.test.ts
+
+diff --git a/server/src/domain/initiatives-execution/materialCommand.ts b/server/src/domain/initiatives-execution/materialCommand.ts
+index 10b93d1846..38e162003d 100644
+--- a/server/src/domain/initiatives-execution/materialCommand.ts
++++ b/server/src/domain/initiatives-execution/materialCommand.ts
+@@ -143,6 +143,19 @@ export interface MaterialCommandTransaction {
+     mitigationPlan: string | null;
+     linkedItems: string[];
+   }): Promise<void>;
++  updateRaidItem(input: {
++    organizationId: string;
++    initiativeId: string;
++    raidItemId: string;
++    title: string | null;
++    description: string | null;
++    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
++    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
++    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
++    ownerId: string | null;
++    dueDate: string | null;
++    mitigationPlan: string | null;
++  }): Promise<void>;
+   deleteRaidItem(input: {
+     organizationId: string;
+     initiativeId: string;
+diff --git a/server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts b/server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts
+index 6f0bdb08ff..4398a15b6b 100644
+--- a/server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts
++++ b/server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts
+@@ -11,6 +11,11 @@ import type {
+   SourceProposalSnapshot,
+   StoredCommandReceipt,
+ } from './materialCommand.js';
++import {
++  calculateRiskScore,
++  categorizeScore,
++  DEFAULT_THRESHOLDS,
++} from '../../services/raidScoringService.js';
+ import { MaterialCommandConflictError, MaterialCommandValidationError } from './materialCommand.js';
+ 
+ interface QueryResultRowCount {
+@@ -49,11 +54,17 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
+     if (initiative.rowCount !== 1) {
+       throw new MaterialCommandValidationError('Initiative not found');
+     }
++    // Parytet z czytnikiem legacy (`GET /api/initiatives/:id/raid` zwraca
++    // riskScore/scoreCategory i tabele UI po nich koloruja): kanoniczny writer
++    // musi wyliczyc te same kolumny co wycofany zapis legacy, inaczej rekord
++    // dodany przez Runtime-v1 wraca do UI bez oceny ryzyka.
++    const riskScore = calculateRiskScore(input.probability || 'LOW', input.impact || 'LOW');
++    const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
+     const result = await this.client.query(
+       `INSERT INTO raid_items
+        (id,organization_id,initiative_id,type,title,description,status,probability,impact,
+-        owner_id,due_date,mitigation_plan,linked_items)
+-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
++        owner_id,due_date,mitigation_plan,linked_items,risk_score,score_category)
++       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+       [
+         input.raidItemId,
+         input.organizationId,
+@@ -68,11 +79,72 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
+         input.dueDate,
+         input.mitigationPlan,
+         JSON.stringify(input.linkedItems),
++        riskScore,
++        scoreCategory,
+       ]
+     );
+     requireSingleRow(result, 'RAID item insert');
+   }
+ 
++  async updateRaidItem(input: {
++    organizationId: string;
++    initiativeId: string;
++    raidItemId: string;
++    title: string | null;
++    description: string | null;
++    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
++    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
++    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
++    ownerId: string | null;
++    dueDate: string | null;
++    mitigationPlan: string | null;
++  }): Promise<void> {
++    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
++      `${input.organizationId}:initiative-raid:${input.initiativeId}`,
++    ]);
++    const existing = await this.client.query(
++      `SELECT probability, impact FROM raid_items
++       WHERE id=$1 AND organization_id=$2 AND initiative_id=$3 FOR UPDATE`,
++      [input.raidItemId, input.organizationId, input.initiativeId]
++    );
++    if (existing.rowCount !== 1) throw new MaterialCommandValidationError('RAID item not found');
++    const probability = input.probability ?? existing.rows[0].probability ?? 'LOW';
++    const impact = input.impact ?? existing.rows[0].impact ?? 'LOW';
++    const riskScore = calculateRiskScore(probability, impact);
++    const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
++    const result = await this.client.query(
++      `UPDATE raid_items SET
++         title=COALESCE($4,title),
++         description=COALESCE($5,description),
++         status=COALESCE($6,status),
++         probability=COALESCE($7,probability),
++         impact=COALESCE($8,impact),
++         owner_id=COALESCE($9,owner_id),
++         due_date=COALESCE($10,due_date),
++         mitigation_plan=COALESCE($11,mitigation_plan),
++         risk_score=$12,
++         score_category=$13,
++         updated_at=CURRENT_TIMESTAMP
++       WHERE id=$1 AND organization_id=$2 AND initiative_id=$3`,
++      [
++        input.raidItemId,
++        input.organizationId,
++        input.initiativeId,
++        input.title,
++        input.description,
++        input.status,
++        input.probability,
++        input.impact,
++        input.ownerId,
++        input.dueDate,
++        input.mitigationPlan,
++        riskScore,
++        scoreCategory,
++      ]
++    );
++    if (result.rowCount !== 1) throw new MaterialCommandValidationError('RAID item not found');
++  }
++
+   async deleteRaidItem(input: {
+     organizationId: string;
+     initiativeId: string;
+diff --git a/server/src/domain/initiatives-execution/raidItem.ts b/server/src/domain/initiatives-execution/raidItem.ts
+index 5f62d06e20..82324aa6f5 100644
+--- a/server/src/domain/initiatives-execution/raidItem.ts
++++ b/server/src/domain/initiatives-execution/raidItem.ts
+@@ -56,6 +56,61 @@ export async function createRaidItem(
+   });
+ }
+ 
++export type RaidItemUpdatePayload = {
++  initiativeId: string;
++  title: string | null;
++  description: string | null;
++  status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
++  probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
++  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
++  ownerId: string | null;
++  dueDate: string | null;
++  mitigationPlan: string | null;
++};
++
++/**
++ * Kanoniczny (26A) zapis edycji pozycji RAID.
++ *
++ * POWOD: wycofanie `PATCH /api/initiatives/:id/raid/:raidId` (bramka
++ * `requireCanonicalInitiativeExecutionWriter`) nie mialo nastepcy w Runtime-v1
++ * — istnialy tylko create i delete. Bez tej komendy edycja RAID byla martwa
++ * na obu drogach naraz: legacy 409, kanoniczna nieistniejaca.
++ *
++ * Pola `null` znacza "nie zmieniaj" (UPDATE ... COALESCE), tak samo jak w
++ * wycofanym zapisie legacy, zeby czesciowa edycja z UI nie zerowala reszty.
++ */
++export async function updateRaidItem(
++  unitOfWork: MaterialCommandUnitOfWork,
++  envelope: MaterialCommandEnvelope<RaidItemUpdatePayload>
++): Promise<MaterialCommandResult<RaidItemUpdatePayload & { raidItemId: string }>> {
++  if (envelope.commandType !== 'raid-item.update' || envelope.aggregateType !== 'raid_item') {
++    throw new MaterialCommandValidationError('Invalid RAID item update target');
++  }
++  return executeMaterialCommand(unitOfWork, envelope, async (tx) => {
++    await tx.updateRaidItem({
++      organizationId: envelope.organizationId,
++      initiativeId: envelope.payload.initiativeId,
++      raidItemId: envelope.aggregateId,
++      title: envelope.payload.title,
++      description: envelope.payload.description,
++      status: envelope.payload.status,
++      probability: envelope.payload.probability,
++      impact: envelope.payload.severity,
++      ownerId: envelope.payload.ownerId,
++      dueDate: envelope.payload.dueDate,
++      mitigationPlan: envelope.payload.mitigationPlan,
++    });
++    const state = { ...envelope.payload, raidItemId: envelope.aggregateId };
++    return {
++      mutation: state,
++      response: state,
++      eventType: 'raid-item.updated',
++      eventPayload: state,
++      auditPayload: { disposition: 'UPDATE_RAID_ITEM', after: state },
++    };
++  });
++}
++
+ export async function deleteRaidItem(
+   unitOfWork: MaterialCommandUnitOfWork,
+   envelope: MaterialCommandEnvelope<RaidItemDeletePayload>
+diff --git a/server/src/routes/pmo/__tests__/zapisyInicjatyw.raidCanonical.pg.test.ts b/server/src/routes/pmo/__tests__/zapisyInicjatyw.raidCanonical.pg.test.ts
+new file mode 100644
+index 0000000000..d080a57f95
+--- /dev/null
++++ b/server/src/routes/pmo/__tests__/zapisyInicjatyw.raidCanonical.pg.test.ts
+@@ -0,0 +1,210 @@
++/** @vitest-environment node */
++
++/**
++ * ZAPISY INICJATYW — kontrakt kanonicznego writera RAID (26A).
++ *
++ * POWOD: wlasciciel produktu wycofal odbior Inicjatyw i Realizacji, bo
++ * zarzadzanie pozycjami RAID nie dzialalo. Bramka
++ * `requireCanonicalInitiativeExecutionWriter` odcina zapisy legacy
++ * (`/api/initiatives/:id/raid*` -> 409), a front nadal je wolal. Ten plik
++ * przybija kontrakt, na ktory front zostal przepiety:
++ *
++ *  1. legacy POST/PATCH/DELETE dalej zwraca 409 (26A nienaruszone),
++ *  2. kanoniczne POST/PATCH/DELETE `raid-items` dzialaja i sa widoczne w tym
++ *     samym modelu odczytu, ktory czyta UI (`raid_items`),
++ *  3. pozycje zalozone PRZED 26A (bez wiersza w `ie_aggregate_state`) daja sie
++ *     edytowac i usuwac kanonicznie (adopcja, `expectedVersion: 0`),
++ *  4. konflikt wersji zwraca `currentVersion`, po ktorym klient ponawia.
++ *
++ * MUTACJA: przywroc `.catch` na trasie legacy albo usun `createIfMissing`
++ * z trasy DELETE/PATCH — test staje sie czerwony.
++ */
++import { randomUUID } from 'node:crypto';
++
++import express, { type Express } from 'express';
++import jwt from 'jsonwebtoken';
++import { Pool } from 'pg';
++import request from 'supertest';
++import { afterAll, beforeAll, describe, expect, it } from 'vitest';
++
++import { assertRealPostgresTestEnvironment } from '../../../../../tests/integration/_helpers/assertRealPostgres.js';
++
++const databaseUrl = process.env.DATABASE_URL ?? '';
++
++describe('Kanoniczny writer RAID inicjatywy (Runtime-v1) na realnym PostgreSQL', () => {
++  const run = randomUUID();
++  const organizationId = `zap-org-${run}`;
++  const userId = `zap-user-${run}`;
++  const initiativeId = `zap-ini-${run}`;
++  const canonicalRaidId = `zap-raid-canon-${run}`;
++  const legacyRaidId = `zap-raid-legacy-${run}`;
++  let app: Express;
++  let pool: Pool;
++  let authorization = '';
++
++  beforeAll(async () => {
++    await assertRealPostgresTestEnvironment({ allowHost: '127.0.0.1' });
++    pool = new Pool({ connectionString: databaseUrl });
++    await pool.query(`INSERT INTO organizations (id,name) VALUES ($1,'Zapisy')`, [organizationId]);
++    await pool.query(
++      `INSERT INTO users (id,organization_id,email,password,first_name,last_name,role,status)
++       VALUES ($1,$2,$3,'unused','Zap','Isy','ADMIN','active')`,
++      [userId, organizationId, `${userId}@example.test`]
++    );
++    await pool.query(
++      `INSERT INTO organization_members (id,organization_id,user_id,role,status)
++       VALUES ($1,$2,$3,'OWNER','ACTIVE')`,
++      [`zap-member-${run}`, organizationId, userId]
++    );
++    await pool.query(
++      `INSERT INTO initiatives (id,organization_id,name,status,created_by)
++       VALUES ($1,$2,'Zapisy initiative','DRAFT',$3)`,
++      [initiativeId, organizationId, userId]
++    );
++
++    const { default: config } = await import('../../../config/Config.js');
++    authorization = `Bearer ${jwt.sign(
++      { id: userId, organizationId, email: `${userId}@example.test`, role: 'ADMIN' },
++      config.JWT_SECRET,
++      { expiresIn: '10m' }
++    )}`;
++    const { ApiGateway } = await import('../../../Gateway.js');
++    app = express();
++    app.use(express.json());
++    ApiGateway.getInstance().initializeRoutes(app);
++  }, 180_000);
++
++  afterAll(async () => {
++    if (!pool) return;
++    await pool.query(`DELETE FROM raid_items WHERE organization_id=$1`, [organizationId]);
++    await pool.query(`DELETE FROM ie_aggregate_state WHERE organization_id=$1`, [organizationId]);
++    await pool.query(`DELETE FROM initiatives WHERE organization_id=$1`, [organizationId]);
++    await pool.query(`DELETE FROM organization_members WHERE organization_id=$1`, [organizationId]);
++    await pool.query(`DELETE FROM users WHERE organization_id=$1`, [organizationId]);
++    await pool.query(`DELETE FROM organizations WHERE id=$1`, [organizationId]);
++    await pool.end();
++  }, 60_000);
++
++  const auth = () => ({ Authorization: authorization, 'x-organization-id': organizationId });
++  const canonical = (raidItemId: string) =>
++    `/api/initiatives/runtime-v1/initiatives/${initiativeId}/raid-items/${raidItemId}`;
++
++  it('trzyma zapisy legacy RAID zamkniete na 409 (26A nienaruszone)', async () => {
++    const surfaces = [
++      { method: 'post' as const, path: `/api/initiatives/${initiativeId}/raid` },
++      { method: 'patch' as const, path: `/api/initiatives/${initiativeId}/raid/${legacyRaidId}` },
++      { method: 'delete' as const, path: `/api/initiatives/${initiativeId}/raid/${legacyRaidId}` },
++    ];
++    for (const surface of surfaces) {
++      const response = await request(app)[surface.method](surface.path).set(auth()).send({});
++      expect(response.status, `${surface.method} ${surface.path}`).toBe(409);
++      expect(response.body.code).toBe('EXECUTION_RUNTIME_V1_WRITE_REQUIRED');
++    }
++  });
++
++  it('kanonicznie zaklada, edytuje i usuwa pozycje RAID widoczna w modelu odczytu UI', async () => {
++    const created = await request(app)
++      .post(canonical(canonicalRaidId))
++      .set(auth())
++      .send({
++        expectedVersion: 0,
++        clientRequestId: `zap-create-${run}`,
++        type: 'RISK',
++        title: 'Ryzyko kanoniczne',
++        severity: 'HIGH',
++        probability: 'HIGH',
++        status: 'OPEN',
++      });
++    expect(created.status, JSON.stringify(created.body)).toBe(201);
++
++    // Parytet z legacy: UI koloruje po riskScore/scoreCategory.
++    const afterCreate = await pool.query(
++      `SELECT title,status,risk_score,score_category FROM raid_items WHERE id=$1`,
++      [canonicalRaidId]
++    );
++    expect(afterCreate.rows[0].title).toBe('Ryzyko kanoniczne');
++    expect(afterCreate.rows[0].risk_score).not.toBeNull();
++    expect(afterCreate.rows[0].score_category).not.toBeNull();
++
++    const updated = await request(app)
++      .patch(canonical(canonicalRaidId))
++      .set(auth())
++      .send({
++        expectedVersion: 1,
++        clientRequestId: `zap-update-${run}`,
++        title: 'Ryzyko po edycji',
++        status: 'MITIGATED',
++      });
++    expect(updated.status, JSON.stringify(updated.body)).toBe(200);
++
++    // Widoczne przez ten sam czytnik, ktorego uzywa UI.
++    const read = await request(app)
++      .get(`/api/initiatives/${initiativeId}/raid`)
++      .set(auth());
++    expect(read.status).toBe(200);
++    const row = read.body.items.find((i: { id: string }) => i.id === canonicalRaidId);
++    expect(row).toMatchObject({ title: 'Ryzyko po edycji', status: 'MITIGATED' });
++
++    const deleted = await request(app)
++      .delete(canonical(canonicalRaidId))
++      .set(auth())
++      .send({ expectedVersion: 2, clientRequestId: `zap-delete-${run}` });
++    expect(deleted.status, JSON.stringify(deleted.body)).toBe(200);
++    expect(
++      (await pool.query(`SELECT id FROM raid_items WHERE id=$1`, [canonicalRaidId])).rowCount
++    ).toBe(0);
++  });
++
++  it('adoptuje pozycje sprzed 26A (brak wiersza w ie_aggregate_state) przy edycji i usunieciu', async () => {
++    await pool.query(
++      `INSERT INTO raid_items (id,organization_id,initiative_id,type,title,status,probability,impact)
++       VALUES ($1,$2,$3,'RISK','Pozycja sprzed 26A','OPEN','LOW','LOW')`,
++      [legacyRaidId, organizationId, initiativeId]
++    );
++    expect(
++      (
++        await pool.query(
++          `SELECT 1 FROM ie_aggregate_state WHERE organization_id=$1 AND aggregate_id=$2`,
++          [organizationId, legacyRaidId]
++        )
++      ).rowCount
++    ).toBe(0);
++
++    const updated = await request(app)
++      .patch(canonical(legacyRaidId))
++      .set(auth())
++      .send({
++        expectedVersion: 0,
++        clientRequestId: `zap-adopt-update-${run}`,
++        title: 'Pozycja sprzed 26A po edycji',
++      });
++    expect(updated.status, JSON.stringify(updated.body)).toBe(200);
++    expect(
++      (await pool.query(`SELECT title FROM raid_items WHERE id=$1`, [legacyRaidId])).rows[0].title
++    ).toBe('Pozycja sprzed 26A po edycji');
++
++    // Nieaktualna wersja -> 409 z currentVersion, po ktorym klient ponawia.
++    const stale = await request(app)
++      .patch(canonical(legacyRaidId))
++      .set(auth())
++      .send({
++        expectedVersion: 0,
++        clientRequestId: `zap-adopt-stale-${run}`,
++        title: 'Nie powinno przejsc',
++      });
++    expect(stale.status).toBe(409);
++    expect(stale.body.error).toMatchObject({
++      code: 'VERSION_OR_IDEMPOTENCY_CONFLICT',
++      currentVersion: 1,
++    });
++
++    const deleted = await request(app)
++      .delete(canonical(legacyRaidId))
++      .set(auth())
++      .send({ expectedVersion: 1, clientRequestId: `zap-adopt-delete-${run}` });
++    expect(deleted.status, JSON.stringify(deleted.body)).toBe(200);
++    expect(
++      (await pool.query(`SELECT id FROM raid_items WHERE id=$1`, [legacyRaidId])).rowCount
++    ).toBe(0);
++  });
++});
+diff --git a/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts b/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
+index 1e12880931..ca8a526675 100644
+--- a/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
++++ b/server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
+@@ -124,7 +124,11 @@ import { PostgresInitiativeReader } from '../../domain/initiatives-execution/pos
+ import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
+ import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
+ import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
+-import { createRaidItem, deleteRaidItem } from '../../domain/initiatives-execution/raidItem.js';
++import {
++  createRaidItem,
++  deleteRaidItem,
++  updateRaidItem,
++} from '../../domain/initiatives-execution/raidItem.js';
+ import { refreshInitiativeSource } from '../../domain/initiatives-execution/refreshInitiativeSource.js';
+ import { registerInitiative } from '../../domain/initiatives-execution/registerInitiative.js';
+ import {
+@@ -868,6 +872,18 @@ const RaidItemDeleteSchema = z.object({
+   expectedVersion: z.number().int().min(0),
+   clientRequestId: z.string().min(1),
+ });
++const RaidItemUpdateSchema = z.object({
++  expectedVersion: z.number().int().min(0),
++  clientRequestId: z.string().min(1),
++  title: z.string().min(1).nullable().default(null),
++  description: z.string().nullable().default(null),
++  status: z.enum(['OPEN', 'MITIGATED', 'REALIZED', 'CLOSED']).nullable().default(null),
++  probability: z.enum(['LOW', 'MEDIUM', 'HIGH']).nullable().default(null),
++  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable().default(null),
++  ownerId: z.string().nullable().default(null),
++  dueDate: z.string().nullable().default(null),
++  mitigationPlan: z.string().nullable().default(null),
++});
+ const ManagerExecutionActionSchema = z.object({
+   expectedVersion: z.number().int().min(0),
+   clientRequestId: z.string().min(1),
+@@ -2327,6 +2343,15 @@ export function createInitiativesExecutionRuntimeRouter(
+               legacyDenialAt: 'BRAMKA_LEGACY',
+               legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+             },
++            update: {
++              available: canUpdate,
++              canonicalCommand:
++                'PATCH /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
++              denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
++              denialCode: canUpdate ? null : 'NOT_FOUND',
++              legacyDenialAt: 'BRAMKA_LEGACY',
++              legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
++            },
+             delete: {
+               available: canUpdate,
+               canonicalCommand:
+@@ -5014,6 +5039,13 @@ export function createInitiativesExecutionRuntimeRouter(
+           ? await authorizeProjects(actor, projectIds, 'initiative.update')
+           : await deps.authorize(actor, '', 'initiative.update');
+       if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
++      // ADOPCJA WIERSZY SPRZED 26A: pozycje RAID zalozone wycofanym zapisem
++      // legacy nie maja wiersza w `ie_aggregate_state`, wiec ich biezaca
++      // wersja to `null`. Bez `createIfMissing` kazde usuniecie takiej pozycji
++      // konczylo sie konfliktem CAS (null !== 0) i kanoniczny writer nie mogl
++      // ich w ogole dotknac. Zabezpieczenie zostaje: `tx.deleteRaidItem`
++      // wymaga dokladnie jednego wiersza w `raid_items`, wiec "usuniecie"
++      // nieistniejacej pozycji nadal zawodzi.
+       const result = await deleteRaidItem(deps.unitOfWork, {
+         organizationId: actor.organizationId,
+         actorId: actor.userId,
+@@ -5025,11 +5057,50 @@ export function createInitiativesExecutionRuntimeRouter(
+         policyId: 'execution-control',
+         policyVersion: 1,
+         commandType: 'raid-item.delete',
++        createIfMissing: true,
+         payload: { initiativeId },
+       });
+       res.status(200).json(result);
+     })
+   );
++  router.patch(
++    '/initiatives/:initiativeId/raid-items/:raidItemId',
++    asyncHandler(async (req, res) => {
++      const actor = actorFromRequest(req);
++      const parsed = RaidItemUpdateSchema.safeParse(req.body);
++      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
++      if (!parsed.success)
++        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
++      const initiativeId = firstParam(req.params.initiativeId);
++      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
++        actor.organizationId,
++        'initiative',
++        initiativeId
++      );
++      const canUpdate =
++        projectIds.length > 0
++          ? await authorizeProjects(actor, projectIds, 'initiative.update')
++          : await deps.authorize(actor, '', 'initiative.update');
++      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
++      const { expectedVersion, clientRequestId, ...item } = parsed.data;
++      const result = await updateRaidItem(deps.unitOfWork, {
++        organizationId: actor.organizationId,
++        actorId: actor.userId,
++        aggregateType: 'raid_item',
++        aggregateId: firstParam(req.params.raidItemId),
++        expectedVersion,
++        clientRequestId,
++        correlationId: clientRequestId,
++        policyId: 'execution-control',
++        policyVersion: 1,
++        commandType: 'raid-item.update',
++        // Patrz komentarz przy DELETE — adopcja pozycji zalozonych przed 26A.
++        createIfMissing: true,
++        payload: { ...item, initiativeId },
++      });
++      res.status(200).json(result);
++    })
++  );
+   router.post(
+     '/initiatives/:initiativeId/raid-mitigations/:raidItemId',
+     asyncHandler(async (req, res) => {
+@@ -5207,6 +5278,24 @@ export function createInitiativesExecutionRuntimeRouter(
+           canonicalCommand:
+             'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+         },
++        {
++          legacyMethod: 'POST',
++          legacyPath: '/api/initiatives/:initiativeId/raid',
++          canonicalCommand:
++            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
++        },
++        {
++          legacyMethod: 'PATCH',
++          legacyPath: '/api/initiatives/:initiativeId/raid/:raidItemId',
++          canonicalCommand:
++            'PATCH /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
++        },
++        {
++          legacyMethod: 'DELETE',
++          legacyPath: '/api/initiatives/:initiativeId/raid/:raidItemId',
++          canonicalCommand:
++            'DELETE /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
++        },
+         {
+           legacyMethod: 'PATCH',
+           legacyPath: '/api/v8/execution-control/raid/:raidItemId/mitigation',
+-- 
+2.50.1 (Apple Git-155)
+

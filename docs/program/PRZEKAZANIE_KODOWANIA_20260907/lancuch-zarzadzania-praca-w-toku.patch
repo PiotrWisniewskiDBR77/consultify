@@ -1,0 +1,1740 @@
+diff --git a/packages/shared/src/constants/initiativeStatuses.generated.ts b/packages/shared/src/constants/initiativeStatuses.generated.ts
+index 210f5ba6aa..ab9363a875 100644
+--- a/packages/shared/src/constants/initiativeStatuses.generated.ts
++++ b/packages/shared/src/constants/initiativeStatuses.generated.ts
+@@ -24,3 +24,36 @@ export const INITIATIVE_STATUS_LABEL_KEYS: Record<InitiativeStatus, string> = {
+   CLOSED: 'initiatives.status.CLOSED',
+   REJECTED: 'initiatives.status.REJECTED',
+ };
++
++export type InitiativeGate = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['gate'];
++export type InitiativeTransitionCondition = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['condition'];
++
++/** Macierz DEC-424 — brak wiersza oznacza zakaz. Nie dopisuj krawędzi tutaj. */
++export const INITIATIVE_TRANSITION_MATRIX = [
++  { from: 'PROPOSED', to: 'DRAFT', gate: 'CREATE_DRAFT', roles: ['CONSULTANT'], condition: 'TITLE_AND_JUSTIFICATION', authorOnly: true },
++  { from: 'PROPOSED', to: 'REJECTED', gate: 'REJECT', roles: ['PROJECT_MANAGER'], condition: 'REASON_REQUIRED', authorOnly: false },
++  { from: 'DRAFT', to: 'PENDING_APPROVAL', gate: 'SUBMIT_FOR_REVIEW', roles: ['CONSULTANT'], condition: 'CARD_COMPLETE', authorOnly: true },
++  { from: 'PENDING_APPROVAL', to: 'APPROVED', gate: 'APPROVE', roles: ['PROJECT_SPONSOR', 'STEERING_COMMITTEE'], condition: 'CURRENT_GO_DECISION', authorOnly: false },
++  { from: 'PENDING_APPROVAL', to: 'DRAFT', gate: 'SEND_BACK', roles: ['PROJECT_SPONSOR', 'STEERING_COMMITTEE'], condition: 'REASON_REQUIRED', authorOnly: false },
++  { from: 'PENDING_APPROVAL', to: 'REJECTED', gate: 'REJECT', roles: ['PROJECT_SPONSOR', 'STEERING_COMMITTEE'], condition: 'REASON_REQUIRED', authorOnly: false },
++  { from: 'APPROVED', to: 'IN_EXECUTION', gate: 'START', roles: ['PMO'], condition: 'HANDOFF_AND_START_DATE', authorOnly: false },
++  { from: 'APPROVED', to: 'REJECTED', gate: 'REJECT', roles: ['PMO', 'STEERING_COMMITTEE'], condition: 'REASON_REQUIRED', authorOnly: false },
++  { from: 'IN_EXECUTION', to: 'CLOSED', gate: 'COMPLETE', roles: ['INITIATIVE_OWNER', 'PMO'], condition: 'NO_OPEN_WORK', authorOnly: false },
++  { from: 'IN_EXECUTION', to: 'REJECTED', gate: 'CANCEL', roles: ['PMO', 'STEERING_COMMITTEE'], condition: 'REASON_REQUIRED', authorOnly: false },
++] as const;
++
++export const INITIATIVE_FLAG_RULES = [
++  { operation: 'HOLD', gate: 'BLOCK', roles: ['INITIATIVE_OWNER', 'PMO'], reasonRequired: true },
++  { operation: 'RESUME', gate: 'UNBLOCK', roles: ['PROJECT_SPONSOR', 'STEERING_COMMITTEE'], reasonRequired: false },
++  { operation: 'ARCHIVE', gate: 'ARCHIVE', roles: ['PMO', 'STEERING_COMMITTEE'], reasonRequired: false },
++] as const;
++
++export const INITIATIVE_VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
++  PROPOSED: ['DRAFT', 'REJECTED'],
++  DRAFT: ['PENDING_APPROVAL'],
++  PENDING_APPROVAL: ['APPROVED', 'DRAFT', 'REJECTED'],
++  APPROVED: ['IN_EXECUTION', 'REJECTED'],
++  IN_EXECUTION: ['CLOSED', 'REJECTED'],
++  CLOSED: [],
++  REJECTED: [],
++};
+diff --git a/public/locales/en/translation.json b/public/locales/en/translation.json
+index 8488fc3a2e..5a289f4516 100644
+--- a/public/locales/en/translation.json
++++ b/public/locales/en/translation.json
+@@ -12595,6 +12595,47 @@
+       "toast": {
+         "rescheduleFailed": "Couldn't reschedule"
+       }
++    },
++    "lifecycle": {
++      "action": {
++        "CREATE_DRAFT": "Create draft",
++        "SUBMIT_FOR_REVIEW": "Submit for approval",
++        "APPROVE": "Approve initiative",
++        "SEND_BACK": "Send back to draft",
++        "REJECT": "Reject initiative",
++        "START": "Start execution",
++        "COMPLETE": "Close initiative",
++        "CANCEL": "Cancel initiative",
++        "BLOCK": "Put execution on hold",
++        "UNBLOCK": "Resume execution",
++        "ARCHIVE": "Archive"
++      },
++      "blocked": {
++        "TITLE_AND_JUSTIFICATION_REQUIRED": "Add a title and a justification first.",
++        "REASON_REQUIRED": "This action requires a reason.",
++        "INITIATIVE_CARD_INCOMPLETE": "The card is incomplete — add description, owner and scope.",
++        "GATE_DECISION_REQUIRED": "A current GO decision from the committee is missing.",
++        "HANDOFF_AND_START_DATE_REQUIRED": "An accepted handoff and a start date are required.",
++        "OPEN_WORK_BLOCKS_CLOSURE": "Open tasks or unresolved decisions block closure.",
++        "AUTHOR_ONLY": "Only the initiative author can perform this action.",
++        "INVALID_TRANSITION": "This transition does not exist for the current status.",
++        "UNEXPECTED_CURRENT_STATUS": "The status changed meanwhile — refresh the view.",
++        "MISSING_TRANSITION_GATE": "This transition has no governed gate and cannot run.",
++        "INVALID_FLAG_OPERATION": "This operation is not allowed in the initiative's current state.",
++        "UNSUPPORTED_FLAG_OPERATION": "Unsupported lifecycle flag operation.",
++        "UNKNOWN": "The action could not be completed. Refresh the view and try again."
++      },
++      "heading": "Initiative stage",
++      "loading": "Checking available actions…",
++      "working": "Saving…",
++      "applied": "Saved: {{action}}",
++      "none": "You do not have permission to change this initiative's stage.",
++      "noInitiative": "No initiative.",
++      "preflightFailed": "Could not check the available actions for this initiative.",
++      "reasonTitle": "{{action}} — provide a reason",
++      "reasonLabel": "Reason (required)",
++      "reasonPlaceholder": "Explain why you are making this decision — it goes into the initiative history.",
++      "reasonHint": "Without a reason this operation will not be saved."
+     }
+   },
+   "execution": {
+diff --git a/public/locales/pl/translation.json b/public/locales/pl/translation.json
+index 16487f9946..3ad4b988cc 100644
+--- a/public/locales/pl/translation.json
++++ b/public/locales/pl/translation.json
+@@ -12037,6 +12037,47 @@
+       "toast": {
+         "rescheduleFailed": "Nie udało się zmienić terminu"
+       }
++    },
++    "lifecycle": {
++      "action": {
++        "CREATE_DRAFT": "Utwórz szkic",
++        "SUBMIT_FOR_REVIEW": "Prześlij do zatwierdzenia",
++        "APPROVE": "Zatwierdź inicjatywę",
++        "SEND_BACK": "Zwróć do szkicu",
++        "REJECT": "Odrzuć inicjatywę",
++        "START": "Rozpocznij realizację",
++        "COMPLETE": "Zamknij inicjatywę",
++        "CANCEL": "Anuluj inicjatywę",
++        "BLOCK": "Wstrzymaj realizację",
++        "UNBLOCK": "Wznów realizację",
++        "ARCHIVE": "Zarchiwizuj"
++      },
++      "blocked": {
++        "TITLE_AND_JUSTIFICATION_REQUIRED": "Uzupełnij tytuł i uzasadnienie inicjatywy.",
++        "REASON_REQUIRED": "To działanie wymaga podania powodu.",
++        "INITIATIVE_CARD_INCOMPLETE": "Karta jest niekompletna — uzupełnij opis, właściciela i zakres.",
++        "GATE_DECISION_REQUIRED": "Brakuje aktualnej decyzji GO komitetu.",
++        "HANDOFF_AND_START_DATE_REQUIRED": "Wymagany przyjęty handoff i termin startu realizacji.",
++        "OPEN_WORK_BLOCKS_CLOSURE": "Zamknięcie blokują otwarte zadania lub nierozstrzygnięte decyzje.",
++        "AUTHOR_ONLY": "To działanie może wykonać wyłącznie autor inicjatywy.",
++        "INVALID_TRANSITION": "To przejście nie istnieje dla bieżącego statusu.",
++        "UNEXPECTED_CURRENT_STATUS": "Status inicjatywy zmienił się w międzyczasie — odśwież widok.",
++        "MISSING_TRANSITION_GATE": "To przejście nie ma zdefiniowanej bramki i nie może zostać wykonane.",
++        "INVALID_FLAG_OPERATION": "Ta operacja nie jest dozwolona w bieżącym stanie inicjatywy.",
++        "UNSUPPORTED_FLAG_OPERATION": "Nieobsługiwana operacja flagi cyklu życia.",
++        "UNKNOWN": "Nie udało się wykonać działania. Odśwież widok i spróbuj ponownie."
++      },
++      "heading": "Etap inicjatywy",
++      "loading": "Sprawdzam dostępne działania…",
++      "working": "Zapisuję…",
++      "applied": "Zapisano: {{action}}",
++      "none": "Nie masz uprawnień do zmiany etapu tej inicjatywy.",
++      "noInitiative": "Brak inicjatywy.",
++      "preflightFailed": "Nie udało się sprawdzić dostępnych działań dla tej inicjatywy.",
++      "reasonTitle": "{{action}} — podaj powód",
++      "reasonLabel": "Powód (wymagany)",
++      "reasonPlaceholder": "Napisz, dlaczego podejmujesz tę decyzję — trafi do historii inicjatywy.",
++      "reasonHint": "Bez powodu ta operacja nie zostanie zapisana."
+     }
+   },
+   "execution": {
+diff --git a/scripts/generate-initiative-statuses.mjs b/scripts/generate-initiative-statuses.mjs
+index 19053d5d12..81e7f30f95 100644
+--- a/scripts/generate-initiative-statuses.mjs
++++ b/scripts/generate-initiative-statuses.mjs
+@@ -17,6 +17,37 @@ const entries = codes.map((code) => `  ${code}: '${code}',`).join('\n');
+ const labels = codes.map((code) => `  ${code}: 'initiatives.status.${code}',`).join('\n');
+ const legacyCodes = [...source.matchAll(/^\s*([A-Z_]+):\s*InitiativeStatus\.[A-Z_]+,/gm)]
+   .map((match) => `'${match[1]}'`).join(', ');
++// Macierz przejść DEC-424 — jedyny powód, dla którego front może narysować przycisk.
++// Do 2026-09-07 front miał WŁASNĄ, ręcznie pisaną kopię (`src/services/initiativeLifecycle.ts`)
++// i ta kopia się rozjechała: pozwalała odrzucić szkic (serwer: brak takiej krawędzi),
++// a zwrot do szkicu przypisywała PROJECT_MANAGER/PMO zamiast sponsorowi/komitetowi.
++const matrixBody = source.match(/export const INITIATIVE_TRANSITION_MATRIX = \[([\s\S]*?)\] as const satisfies/)?.[1];
++if (!matrixBody) throw new Error('Nie znaleziono INITIATIVE_TRANSITION_MATRIX');
++const rowPattern = /\{\s*from:\s*InitiativeStatus\.([A-Z_]+),\s*to:\s*InitiativeStatus\.([A-Z_]+),\s*gate:\s*GateType\.([A-Z_]+),\s*roles:\s*\[([^\]]*)\],\s*condition:\s*'([A-Z_]+)'(,\s*authorOnly:\s*(true|false))?\s*\}/g;
++const rows = [...matrixBody.matchAll(rowPattern)].map((m) => ({
++  from: m[1],
++  to: m[2],
++  gate: m[3],
++  roles: m[4].split(',').map((r) => r.trim().replace(/^Role\./, '')).filter(Boolean),
++  condition: m[5],
++  authorOnly: m[7] === 'true',
++}));
++if (rows.length === 0) throw new Error('Macierz przejść pusta — regex nie trafił w źródło');
++
++const flagBody = source.match(/export const INITIATIVE_FLAG_RULES = \{([\s\S]*?)\} as const;/)?.[1];
++if (!flagBody) throw new Error('Nie znaleziono INITIATIVE_FLAG_RULES');
++const flagRows = [...flagBody.matchAll(/([A-Z_]+):\s*\{\s*gate:\s*GateType\.([A-Z_]+),\s*roles:\s*\[([^\]]*)\],\s*reasonRequired:\s*(true|false)\s*\}/g)].map((m) => ({
++  operation: m[1],
++  gate: m[2],
++  roles: m[3].split(',').map((r) => r.trim().replace(/^Role\./, '')).filter(Boolean),
++  reasonRequired: m[4] === 'true',
++}));
++if (flagRows.length === 0) throw new Error('Reguły flag puste — regex nie trafił w źródło');
++
++const matrixLiteral = rows.map((row) => `  { from: '${row.from}', to: '${row.to}', gate: '${row.gate}', roles: [${row.roles.map((r) => `'${r}'`).join(', ')}], condition: '${row.condition}', authorOnly: ${row.authorOnly} },`).join('\n');
++const flagLiteral = flagRows.map((row) => `  { operation: '${row.operation}', gate: '${row.gate}', roles: [${row.roles.map((r) => `'${r}'`).join(', ')}], reasonRequired: ${row.reasonRequired} },`).join('\n');
++const validNext = codes.map((code) => `  ${code}: [${rows.filter((row) => row.from === code).map((row) => `'${row.to}'`).join(', ')}],`).join('\n');
++
+ const output = `// NIE EDYTUJ RĘCZNIE. Źródło: server/src/constants/initiativeStatuses.ts
+ // Generator: scripts/generate-initiative-statuses.mjs
+ export const InitiativeStatus = {
+@@ -31,5 +62,21 @@ export const LEGACY_INITIATIVE_STATUS_CODES = [${legacyCodes}] as const;
+ export const INITIATIVE_STATUS_LABEL_KEYS: Record<InitiativeStatus, string> = {
+ ${labels}
+ };
++
++export type InitiativeGate = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['gate'];
++export type InitiativeTransitionCondition = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['condition'];
++
++/** Macierz DEC-424 — brak wiersza oznacza zakaz. Nie dopisuj krawędzi tutaj. */
++export const INITIATIVE_TRANSITION_MATRIX = [
++${matrixLiteral}
++] as const;
++
++export const INITIATIVE_FLAG_RULES = [
++${flagLiteral}
++] as const;
++
++export const INITIATIVE_VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
++${validNext}
++};
+ `;
+ writeFileSync(targetPath, output);
+diff --git a/server/src/controllers/InitiativeController.ts b/server/src/controllers/InitiativeController.ts
+index 4724f72516..eadc3a1d09 100644
+--- a/server/src/controllers/InitiativeController.ts
++++ b/server/src/controllers/InitiativeController.ts
+@@ -65,6 +65,7 @@ import {
+   removeLinkedItem,
+ } from '../services/initiative/initiativeLinkedItemsService.js';
+ import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
++import { getInitiativeTransitionPreflight } from '../services/initiative/initiativeTransitionPreflightService.js';
+ import {
+   executeInitiativeTransition,
+   getColumnNameSet,
+@@ -5931,6 +5932,89 @@ export class InitiativeController {
+     }
+   );
+ 
++  /**
++   * GET /initiatives/:id/transition-preflight
++   *
++   * Kanoniczny podgląd łańcucha zarządzania inicjatywą (DEC-424): dla każdego
++   * przejścia i każdej flagi mówi, czy rola aktora przechodzi bramkę, czy warunek
++   * merytoryczny jest spełniony i czy trzeba będzie podać powód. Liczone tym samym
++   * kodem, którym `PATCH /:id/status` odmawia — więc interfejs nie może pokazać
++   * przycisku, którego pisarz nie przyjmie.
++   */
++  /**
++   * POST /initiatives/:id/lifecycle-flag  { operation: 'HOLD' | 'RESUME', reason? }
++   *
++   * Wstrzymanie realizacji jest FLAGĄ, nie statusem (DEC-424, wiersz „W realizacji").
++   * Zastane `POST /:id/block` i `/:id/unblock` są od decyzji 26A wygaszone (409), więc
++   * flaga nie miała ŻADNEJ osiągalnej trasy z interfejsu. Ten adapter wchodzi do tego
++   * samego silnika (`executeInitiativeTransition` z `flagOperation`) — nie odtwarza
++   * drugiej kopii reguł i nie reaktywuje wygaszonej ścieżki wykonawczej.
++   */
++  static setLifecycleFlag = asyncHandler(
++    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++      const orgId = req.user?.organizationId;
++      const actorId = req.user?.id;
++      const { id } = req.params;
++      if (!orgId || !actorId) {
++        res.status(401).json({ error: 'Unauthorized' });
++        return;
++      }
++      const operation = String((req.body as any)?.operation || '')
++        .trim()
++        .toUpperCase();
++      if (operation !== 'HOLD' && operation !== 'RESUME') {
++        res.status(400).json({
++          error: 'Unsupported lifecycle flag operation',
++          rule: 'UNSUPPORTED_FLAG_OPERATION',
++        });
++        return;
++      }
++      const reason = (req.body as any)?.reason;
++      const result = await executeInitiativeTransition({
++        orgId,
++        initiativeId: id,
++        actorId,
++        actorRole: req.user?.role ?? null,
++        actorFirstName: req.user?.firstName ?? null,
++        actorLastName: req.user?.lastName ?? null,
++        actorEmail: req.user?.email ?? null,
++        requestIp: (req as any).ip ?? null,
++        requestUserAgent: (req as any).get?.('user-agent') ?? null,
++        nextStatusInput: 'IN_EXECUTION',
++        flagOperation: operation,
++        reason: reason ? String(reason) : null,
++      });
++      if (!result.ok) {
++        res.status(result.statusCode).json(result.body);
++        return;
++      }
++      res.json({ id, operation, onHold: operation === 'HOLD', message: 'Lifecycle flag updated' });
++    }
++  );
++
++  static getTransitionPreflight = asyncHandler(
++    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
++      const orgId = req.user?.organizationId;
++      const actorId = req.user?.id;
++      const { id: initiativeId } = req.params;
++      if (!orgId || !actorId) {
++        res.status(401).json({ error: 'Unauthorized' });
++        return;
++      }
++      const preflight = await getInitiativeTransitionPreflight({
++        orgId,
++        initiativeId,
++        actorId,
++        actorRole: req.user?.role ?? null,
++      });
++      if (!preflight) {
++        res.status(404).json({ error: 'Initiative not found' });
++        return;
++      }
++      res.json(preflight);
++    }
++  );
++
+   /**
+    * GET /initiatives/:id/gate-readiness-check
+    * Comprehensive gate readiness check for the current status.
+diff --git a/server/src/routes/pmo/initiatives.routes.ts b/server/src/routes/pmo/initiatives.routes.ts
+index 3b78a91521..e364e02ca2 100644
+--- a/server/src/routes/pmo/initiatives.routes.ts
++++ b/server/src/routes/pmo/initiatives.routes.ts
+@@ -3968,6 +3968,24 @@ router.delete(
+   InitiativeController.removeLinkedItem
+ );
+ router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
++
++/**
++ * GET /api/initiatives/:id/transition-preflight
++ * Co aktor może zrobić z tą inicjatywą i dlaczego nie może (DEC-424).
++ * GET — nietknięty przez `requireCanonicalInitiativeExecutionWriter`.
++ */
++router.get('/:id/transition-preflight', InitiativeController.getTransitionPreflight);
++
++/**
++ * POST /api/initiatives/:id/lifecycle-flag
++ * Flaga „wstrzymana" (HOLD/RESUME) — jedyna osiągalna trasa po wygaszeniu
++ * `/:id/block` i `/:id/unblock` decyzją 26A. Wchodzi w ten sam silnik przejść.
++ */
++router.post(
++  '/:id/lifecycle-flag',
++  requireGovernedInitiativeCapability('initiative.status.change', { shadow: true }),
++  InitiativeController.setLifecycleFlag
++);
+ router.get('/:id/status-history', InitiativeController.getStatusHistory);
+ 
+ export default router;
+diff --git a/server/src/services/initiative/initiativeTransitionConditions.ts b/server/src/services/initiative/initiativeTransitionConditions.ts
+new file mode 100644
+index 0000000000..29536e823c
+--- /dev/null
++++ b/server/src/services/initiative/initiativeTransitionConditions.ts
+@@ -0,0 +1,198 @@
++/**
++ * Warunki merytoryczne przejść inicjatywy (DEC-424) — JEDEN kod dla zapisu i dla podglądu.
++ *
++ * Powód istnienia tego pliku: dopóki warunek („komplet karty", „0 otwartych zadań",
++ * „aktualna decyzja GO") był zapisany wyłącznie w ciele `executeInitiativeTransition`,
++ * interfejs nie miał jak pokazać powodu blokady PRZED kliknięciem — pokazywał przycisk,
++ * a serwer odmawiał po fakcie. Każdy warunek jest tu policzony dokładnie raz i wołany
++ * z dwóch miejsc:
++ *   1) `executeInitiativeTransition` — ścieżka zapisu (na zablokowanym wierszu),
++ *   2) `GET /api/initiatives/:id/transition-preflight` — ścieżka podglądu (bez blokady).
++ * Rozjazd między przyciskiem a pisarzem jest więc niemożliwy z konstrukcji.
++ *
++ * Serwer NIE zwraca tekstu po polsku — zwraca kod reguły (`rule`), a warstwa UI mapuje
++ * go na klucz i18n. Dzięki temu jeden komunikat nie żyje w dwóch językach w dwóch repo.
++ */
++
++import type { InitiativeTransitionCondition } from '../../constants/initiativeStatuses.js';
++import type { PgTransactionClient } from '../../utils/queryHelpers.js';
++import * as queryHelpers from '../../utils/queryHelpers.js';
++
++export const INITIATIVE_CONDITION_RULES = {
++  TITLE_AND_JUSTIFICATION: 'TITLE_AND_JUSTIFICATION_REQUIRED',
++  REASON_REQUIRED: 'REASON_REQUIRED',
++  CARD_COMPLETE: 'INITIATIVE_CARD_INCOMPLETE',
++  CURRENT_GO_DECISION: 'GATE_DECISION_REQUIRED',
++  HANDOFF_AND_START_DATE: 'HANDOFF_AND_START_DATE_REQUIRED',
++  NO_OPEN_WORK: 'OPEN_WORK_BLOCKS_CLOSURE',
++} as const satisfies Record<InitiativeTransitionCondition, string>;
++
++export const INITIATIVE_AUTHOR_ONLY_RULE = 'AUTHOR_ONLY' as const;
++
++export interface InitiativeConditionFailure {
++  /** Kod reguły — kontrakt z UI, mapowany na klucz i18n po stronie frontu. */
++  rule: string;
++  /** Angielski opis techniczny; UI go NIE pokazuje, służy logom i testom. */
++  error: string;
++}
++
++export interface EvaluateInitiativeConditionInput {
++  orgId: string;
++  initiativeId: string;
++  /** Wiersz `initiatives` — w zapisie zablokowany `FOR UPDATE`, w podglądzie zwykły odczyt. */
++  row: Record<string, unknown>;
++  condition: InitiativeTransitionCondition;
++  /** Powód podany przez użytkownika (już przycięty). */
++  reason: string;
++  /**
++   * Podgląd nie zna jeszcze powodu — dla niego REASON_REQUIRED nie jest blokadą,
++   * tylko informacją „to przejście poprosi o powód" (pole `requiresReason`).
++   */
++  skipReasonRequired?: boolean;
++  /**
++   * Wstrzykiwane po to, by ścieżka zapisu użyła SWOJEGO przypiętego klienta
++   * (ta sama transakcja, ten sam zablokowany wiersz), a podgląd zwykłego odczytu.
++   */
++  hasApprovedGateDecision: (
++    orgId: string,
++    initiativeId: string,
++    pmoDomain: string,
++    client: PgTransactionClient
++  ) => Promise<{ ok: boolean; decisionId: string | null }>;
++  hasPendingExecutionGateDecisions: (orgId: string, initiativeId: string) => Promise<boolean>;
++}
++
++const nonEmpty = (value: unknown): boolean => String(value ?? '').trim().length > 0;
++
++const scopePresent = (row: Record<string, unknown>): boolean =>
++  [row.scope_in, row.scope_out].some((value) =>
++    Array.isArray(value) ? value.length > 0 : String(value ?? '').trim().length > 0
++  );
++
++/** Właściciel biznesowy LUB wykonawczy — tak samo jak `executeInitiativeTransition`. */
++const ownerId = (row: Record<string, unknown>): unknown =>
++  row.owner_business_id ?? row.owner_execution_id;
++
++/**
++ * Zwraca `null` gdy warunek spełniony, albo opis blokady.
++ * Nigdy nie rzuca dla „warunek niespełniony" — rzut zarezerwowany dla awarii bazy.
++ */
++export async function evaluateInitiativeTransitionCondition(
++  client: PgTransactionClient,
++  input: EvaluateInitiativeConditionInput
++): Promise<InitiativeConditionFailure | null> {
++  const { condition, row, reason, orgId, initiativeId } = input;
++
++  if (condition === 'TITLE_AND_JUSTIFICATION') {
++    const titled = nonEmpty(row.title ?? row.name);
++    if (!titled || !nonEmpty(row.description)) {
++      return {
++        rule: INITIATIVE_CONDITION_RULES.TITLE_AND_JUSTIFICATION,
++        error: 'Title and justification are required',
++      };
++    }
++    return null;
++  }
++
++  if (condition === 'REASON_REQUIRED') {
++    if (input.skipReasonRequired) return null;
++    if (!nonEmpty(reason)) {
++      return { rule: INITIATIVE_CONDITION_RULES.REASON_REQUIRED, error: 'Reason is required' };
++    }
++    return null;
++  }
++
++  if (condition === 'CARD_COMPLETE') {
++    if (!nonEmpty(row.description) || !ownerId(row) || !scopePresent(row)) {
++      return {
++        rule: INITIATIVE_CONDITION_RULES.CARD_COMPLETE,
++        error: 'Description, owner and scope are required',
++      };
++    }
++    return null;
++  }
++
++  if (condition === 'CURRENT_GO_DECISION') {
++    const goNoGo = await input.hasApprovedGateDecision(
++      orgId,
++      initiativeId,
++      'GOVERNANCE_DECISION_MAKING',
++      client
++    );
++    if (!goNoGo.ok) {
++      return {
++        rule: INITIATIVE_CONDITION_RULES.CURRENT_GO_DECISION,
++        error: 'A current GO decision is required',
++      };
++    }
++    return null;
++  }
++
++  if (condition === 'HANDOFF_AND_START_DATE') {
++    const handoff = (
++      await client.query<{ ok: boolean }>(
++        `SELECT TRUE AS ok FROM initiative_handoffs
++         WHERE initiative_id = ? AND organization_id = ? AND readiness_allowed = TRUE
++         ORDER BY created_at DESC LIMIT 1`,
++        [initiativeId, orgId]
++      )
++    ).rows[0];
++    if (!handoff?.ok || !(row.planned_start_date ?? row.start_date)) {
++      return {
++        rule: INITIATIVE_CONDITION_RULES.HANDOFF_AND_START_DATE,
++        error: 'Accepted handoff and start date are required',
++      };
++    }
++    return null;
++  }
++
++  if (condition === 'NO_OPEN_WORK') {
++    const openTasks = Number(
++      (
++        await client.query<{ count: string }>(
++          `SELECT COUNT(*)::text AS count FROM tasks
++           WHERE initiative_id = ? AND organization_id = ?
++             AND UPPER(COALESCE(status, '')) NOT IN ('DONE', 'COMPLETED', 'CANCELLED')`,
++          [initiativeId, orgId]
++        )
++      ).rows[0]?.count ?? 0
++    );
++    if (openTasks > 0 || (await input.hasPendingExecutionGateDecisions(orgId, initiativeId))) {
++      return {
++        rule: INITIATIVE_CONDITION_RULES.NO_OPEN_WORK,
++        error: 'Open tasks or blocking decisions prevent closure',
++      };
++    }
++    return null;
++  }
++
++  return null;
++}
++
++/** Autorstwo — jedyny warunek, który kończy się 403, a nie 400. */
++export function evaluateInitiativeAuthorOnly(
++  row: Record<string, unknown>,
++  actorId: string | null | undefined
++): InitiativeConditionFailure | null {
++  const createdBy = row.created_by ? String(row.created_by) : null;
++  if (!createdBy || createdBy !== String(actorId ?? '')) {
++    return {
++      rule: INITIATIVE_AUTHOR_ONLY_RULE,
++      error: 'Only the initiative author can execute this transition',
++    };
++  }
++  return null;
++}
++
++/**
++ * Klient „tylko do odczytu" dla podglądu — ten sam interfejs co transakcyjny,
++ * więc funkcja warunków nie wie, z której ścieżki jest wołana.
++ */
++export function createReadOnlyConditionClient(): PgTransactionClient {
++  return {
++    query: async <T = unknown>(sql: string, params: unknown[] = []) => {
++      const rows = (await queryHelpers.queryAll(sql, params)) as T[];
++      return { rows, rowCount: rows.length };
++    },
++  };
++}
+diff --git a/server/src/services/initiative/initiativeTransitionPreflightService.ts b/server/src/services/initiative/initiativeTransitionPreflightService.ts
+new file mode 100644
+index 0000000000..719fe725ef
+--- /dev/null
++++ b/server/src/services/initiative/initiativeTransitionPreflightService.ts
+@@ -0,0 +1,186 @@
++/**
++ * Podgląd przejść inicjatywy (DEC-424) — co użytkownik MOŻE zrobić i dlaczego nie może.
++ *
++ * Wymaganie właściciela: „warunek blokujący jest widoczny ZANIM użytkownik kliknie".
++ * Ten serwis liczy dla KAŻDEGO przejścia z macierzy trzy niezależne rzeczy:
++ *   • `roleAllowed`        — czy rola aktora przechodzi bramkę (ta sama `canExecuteGate`),
++ *   • `conditionSatisfied` — czy warunek merytoryczny jest spełniony (ten sam moduł
++ *                            `initiativeTransitionConditions`, którego używa pisarz),
++ *   • `requiresReason`     — czy przejście zażąda powodu (okno tekstowe w UI).
++ * Brak roli => UI nie pokazuje przycisku. Warunek niespełniony => przycisk nieaktywny
++ * z powodem. Nigdy odwrotnie: 403/400 po kliknięciu jest awarią projektu, nie UX-em.
++ */
++
++import {
++  INITIATIVE_FLAG_RULES,
++  INITIATIVE_TRANSITION_MATRIX,
++  VALID_TRANSITIONS,
++  getTransitionDefinition,
++  type InitiativeFlagOperation,
++} from '../../constants/initiativeStatuses.js';
++import type { PgTransactionClient } from '../../utils/queryHelpers.js';
++import * as queryHelpers from '../../utils/queryHelpers.js';
++import {
++  canExecuteGate,
++  resolveGateRequiredRoles,
++  resolveInitiativeCapabilityContext,
++} from './initiativeCapabilityMatrix.js';
++import {
++  createReadOnlyConditionClient,
++  evaluateInitiativeAuthorOnly,
++  evaluateInitiativeTransitionCondition,
++} from './initiativeTransitionConditions.js';
++import {
++  hasApprovedGateDecision,
++  hasPendingExecutionGateDecisions,
++  normalizeStatus,
++} from './initiativeTransitionService.js';
++import { normalizeInitiativeDbStatusForRead } from './initiativeLifecycleCanon.js';
++
++export interface InitiativeTransitionPreflightItem {
++  targetStatus: string;
++  gate: string | null;
++  requiredRoles: string[];
++  roleAllowed: boolean;
++  conditionSatisfied: boolean;
++  /** Kod reguły blokującej (kontrakt i18n dla UI) albo `null`. */
++  blockingRule: string | null;
++  requiresReason: boolean;
++  /** Wypadkowa: przycisk wolno kliknąć. */
++  allowed: boolean;
++}
++
++export interface InitiativeFlagPreflightItem {
++  operation: InitiativeFlagOperation;
++  gate: string;
++  requiredRoles: string[];
++  roleAllowed: boolean;
++  requiresReason: boolean;
++  /** Czy stan inicjatywy w ogóle dopuszcza tę operację (np. RESUME tylko gdy wstrzymana). */
++  stateAllowed: boolean;
++  allowed: boolean;
++}
++
++export interface InitiativeTransitionPreflight {
++  initiativeId: string;
++  currentStatus: string;
++  onHold: boolean;
++  archived: boolean;
++  isAuthor: boolean;
++  effectiveRoles: string[];
++  transitions: InitiativeTransitionPreflightItem[];
++  flags: InitiativeFlagPreflightItem[];
++}
++
++export async function getInitiativeTransitionPreflight(input: {
++  orgId: string;
++  initiativeId: string;
++  actorId: string;
++  actorRole?: string | null;
++}): Promise<InitiativeTransitionPreflight | null> {
++  const { orgId, initiativeId, actorId } = input;
++
++  const row = (await queryHelpers.queryOne(
++    `SELECT * FROM initiatives WHERE id = ? AND organization_id = ?`,
++    [initiativeId, orgId]
++  )) as Record<string, unknown> | null;
++  if (!row) return null;
++
++  const currentStatus = normalizeInitiativeDbStatusForRead(String(row.status || ''));
++  const accessCtx = await resolveInitiativeCapabilityContext(
++    orgId,
++    initiativeId,
++    actorId,
++    input.actorRole ?? null
++  );
++  const steeringBoardEnabled = !!accessCtx?.steeringBoardEnabled;
++  const effectiveRoles: string[] = accessCtx?.effectiveRoles || [];
++  const client: PgTransactionClient = createReadOnlyConditionClient();
++  const isAuthor = evaluateInitiativeAuthorOnly(row, actorId) === null;
++
++  const validNext: string[] =
++    (VALID_TRANSITIONS as Record<string, string[]>)[normalizeStatus(currentStatus)] || [];
++
++  const transitions: InitiativeTransitionPreflightItem[] = [];
++  for (const targetStatus of validNext) {
++    const definition = getTransitionDefinition(currentStatus as never, targetStatus as never);
++    const gate = definition?.gate ?? null;
++    const requiredRoles = resolveGateRequiredRoles(gate, steeringBoardEnabled);
++    const roleByGate = canExecuteGate({ gate, effectiveRoles, steeringBoardEnabled });
++    // `authorOnly` jest częścią prawa do wykonania, nie warunkiem merytorycznym —
++    // nie-autor NIE ma widzieć przycisku „Prześlij do zatwierdzenia" cudzego szkicu.
++    const roleAllowed = roleByGate && (!definition?.authorOnly || isAuthor);
++    const requiresReason = definition?.condition === 'REASON_REQUIRED';
++
++    let blockingRule: string | null = null;
++    if (definition) {
++      const failure = await evaluateInitiativeTransitionCondition(client, {
++        orgId,
++        initiativeId,
++        row,
++        condition: definition.condition,
++        reason: '',
++        skipReasonRequired: true,
++        hasApprovedGateDecision,
++        hasPendingExecutionGateDecisions,
++      });
++      blockingRule = failure?.rule ?? null;
++    }
++
++    transitions.push({
++      targetStatus,
++      gate,
++      requiredRoles,
++      roleAllowed,
++      conditionSatisfied: blockingRule === null,
++      blockingRule,
++      requiresReason,
++      allowed: roleAllowed && blockingRule === null,
++    });
++  }
++
++  const onHold = Boolean(row.on_hold);
++  const archived = Boolean(row.archived);
++  const flags: InitiativeFlagPreflightItem[] = (
++    Object.keys(INITIATIVE_FLAG_RULES) as InitiativeFlagOperation[]
++  ).map((operation) => {
++    const rule = INITIATIVE_FLAG_RULES[operation];
++    const requiredRoles = resolveGateRequiredRoles(rule.gate, steeringBoardEnabled);
++    const roleAllowed = canExecuteGate({
++      gate: rule.gate,
++      effectiveRoles,
++      steeringBoardEnabled,
++    });
++    // Strażnik stanu z `executeInitiativeTransition`, ZAWĘŻONY o jeden warunek:
++    // pisarz przyjmuje HOLD także dla już wstrzymanej inicjatywy, a interfejs nie ma
++    // powodu pokazywać „Wstrzymaj" obok „Wznów". Zawężenie nigdy nie odblokowuje
++    // niczego, czego pisarz by odmówił — działa wyłącznie w stronę bezpieczną.
++    const stateAllowed =
++      operation === 'ARCHIVE'
++        ? currentStatus === 'CLOSED' || currentStatus === 'REJECTED'
++        : currentStatus === 'IN_EXECUTION' && (operation === 'RESUME' ? onHold : !onHold);
++    return {
++      operation,
++      gate: rule.gate,
++      requiredRoles,
++      roleAllowed,
++      requiresReason: rule.reasonRequired,
++      stateAllowed,
++      allowed: roleAllowed && stateAllowed,
++    };
++  });
++
++  return {
++    initiativeId,
++    currentStatus,
++    onHold,
++    archived,
++    isAuthor,
++    effectiveRoles,
++    transitions,
++    flags,
++  };
++}
++
++/** Eksport dla testów kontraktu: macierz, z której liczony jest podgląd. */
++export const PREFLIGHT_SOURCE_MATRIX = INITIATIVE_TRANSITION_MATRIX;
+diff --git a/server/src/services/initiative/initiativeTransitionService.ts b/server/src/services/initiative/initiativeTransitionService.ts
+index 3304a7ca32..5b15506331 100644
+--- a/server/src/services/initiative/initiativeTransitionService.ts
++++ b/server/src/services/initiative/initiativeTransitionService.ts
+@@ -56,6 +56,10 @@ import {
+   normalizeInitiativeDbStatusForRead,
+ } from './initiativeLifecycleCanon.js';
+ import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
++import {
++  evaluateInitiativeAuthorOnly,
++  evaluateInitiativeTransitionCondition,
++} from './initiativeTransitionConditions.js';
+ 
+ // ==========================================
+ // SHARED HELPERS (moved from InitiativeController.ts — these are also used by
+@@ -585,60 +589,28 @@ export async function executeInitiativeTransition(
+       }
+ 
+       const condition = transitionDefinition.condition;
+-      const trimmedReason = String(reason ?? '').trim();
+-      const ownerId = lockedRow.owner_business_id ?? lockedRow.owner_execution_id;
+-      const scopePresent = [lockedRow.scope_in, lockedRow.scope_out]
+-        .some((value) => Array.isArray(value) ? value.length > 0 : String(value ?? '').trim().length > 0);
+-      if (condition === 'TITLE_AND_JUSTIFICATION' &&
+-        (!String(lockedRow.title ?? lockedRow.name ?? '').trim() || !String(lockedRow.description ?? '').trim())) {
+-        return { kind: 'error', statusCode: 400, body: {
+-          error: 'Title and justification are required', rule: 'TITLE_AND_JUSTIFICATION_REQUIRED',
+-        } };
+-      }
+-      if (condition === 'REASON_REQUIRED' && !trimmedReason) {
+-        return { kind: 'error', statusCode: 400, body: { error: 'Reason is required', rule: 'REASON_REQUIRED' } };
+-      }
+-      if (condition === 'CARD_COMPLETE' &&
+-        (!String(lockedRow.description ?? '').trim() || !ownerId || !scopePresent)) {
++      // Warunki merytoryczne liczy WSPÓLNY moduł `initiativeTransitionConditions`
++      // — ten sam, z którego korzysta `GET /:id/transition-preflight`. Dzięki temu
++      // przycisk wyszarzony w interfejsie i odmowa pisarza mają jedno źródło.
++      const conditionFailure = await evaluateInitiativeTransitionCondition(client, {
++        orgId,
++        initiativeId: id,
++        row: lockedRow,
++        condition,
++        reason: String(reason ?? '').trim(),
++        hasApprovedGateDecision,
++        hasPendingExecutionGateDecisions,
++      });
++      if (conditionFailure) {
+         return { kind: 'error', statusCode: 400, body: {
+-          error: 'Description, owner and scope are required', rule: 'INITIATIVE_CARD_INCOMPLETE',
++          error: conditionFailure.error, rule: conditionFailure.rule,
+         } };
+       }
+       if (transitionDefinition.authorOnly && !isSystemActor) {
+-        const createdBy = lockedRow.created_by ? String(lockedRow.created_by) : null;
+-        if (!createdBy || createdBy !== String(actorId)) {
++        const authorFailure = evaluateInitiativeAuthorOnly(lockedRow, actorId);
++        if (authorFailure) {
+           return { kind: 'error', statusCode: 403, body: {
+-            error: 'Only the initiative author can execute this transition', rule: 'AUTHOR_ONLY',
+-          } };
+-        }
+-      }
+-      if (condition === 'CURRENT_GO_DECISION') {
+-        const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING', client);
+-        if (!goNoGo.ok) return { kind: 'error', statusCode: 400, body: {
+-          error: 'A current GO decision is required', rule: 'GATE_DECISION_REQUIRED',
+-        } };
+-      }
+-      if (condition === 'HANDOFF_AND_START_DATE') {
+-        const handoff = (await client.query<{ ok: boolean }>(
+-          `SELECT TRUE AS ok FROM initiative_handoffs
+-           WHERE initiative_id = ? AND organization_id = ? AND readiness_allowed = TRUE
+-           ORDER BY created_at DESC LIMIT 1`, [id, orgId]
+-        )).rows[0];
+-        if (!handoff?.ok || !(lockedRow.planned_start_date ?? lockedRow.start_date)) {
+-          return { kind: 'error', statusCode: 400, body: {
+-            error: 'Accepted handoff and start date are required', rule: 'HANDOFF_AND_START_DATE_REQUIRED',
+-          } };
+-        }
+-      }
+-      if (condition === 'NO_OPEN_WORK') {
+-        const openTasks = Number((await client.query<{ count: string }>(
+-          `SELECT COUNT(*)::text AS count FROM tasks
+-           WHERE initiative_id = ? AND organization_id = ?
+-             AND UPPER(COALESCE(status, '')) NOT IN ('DONE', 'COMPLETED', 'CANCELLED')`, [id, orgId]
+-        )).rows[0]?.count ?? 0);
+-        if (openTasks > 0 || await hasPendingExecutionGateDecisions(orgId, id)) {
+-          return { kind: 'error', statusCode: 400, body: {
+-            error: 'Open tasks or blocking decisions prevent closure', rule: 'OPEN_WORK_BLOCKS_CLOSURE',
++            error: authorFailure.error, rule: authorFailure.rule,
+           } };
+         }
+       }
+diff --git a/src/components/Initiatives/lifecycle/InitiativeLifecycleActions.tsx b/src/components/Initiatives/lifecycle/InitiativeLifecycleActions.tsx
+new file mode 100644
+index 0000000000..7f9709c489
+--- /dev/null
++++ b/src/components/Initiatives/lifecycle/InitiativeLifecycleActions.tsx
+@@ -0,0 +1,212 @@
++/**
++ * Pasek działań łańcucha zarządzania inicjatywą — jedna powierzchnia dla listy
++ * Inicjatyw i dla Realizacji.
++ *
++ * Kontrakt widoczny gołym okiem:
++ *   • akcja bez uprawnienia w ogóle się nie renderuje (hak ją odfiltrował),
++ *   • akcja z niespełnionym warunkiem jest nieaktywna, a POWÓD stoi obok, po polsku,
++ *     nie tylko w tooltipie — właściciel ma go zobaczyć bez najeżdżania myszą,
++ *   • akcja wymagająca powodu otwiera okno tekstowe,
++ *   • nieudany zapis mówi, co się stało; nie ma cichej awarii.
++ *
++ * Czerwień (`danger-*`) wyłącznie dla odrzucenia/anulowania. Zatwierdzenie i start
++ * są neutralne — `primary-*` w tym repo to crimson i jest zarezerwowany dla semantyki
++ * krytycznej (reguła #3 kanonu).
++ */
++
++import { AlertCircle } from 'lucide-react';
++import React, { useCallback, useState } from 'react';
++import toast from 'react-hot-toast';
++import { useTranslation } from 'react-i18next';
++
++import { InitiativeReasonDialog } from './InitiativeReasonDialog';
++import {
++  type InitiativeLifecycleAction,
++  useInitiativeLifecycle,
++} from './useInitiativeLifecycle';
++
++export interface InitiativeLifecycleActionsProps {
++  initiativeId: string | null | undefined;
++  /** Wywoływane po UDANEJ zmianie — powierzchnia ma przeładować swoje dane. */
++  onApplied?: () => void;
++  enabled?: boolean;
++  className?: string;
++  /** `compact` — stopka podglądu; `full` — pasek nad treścią. */
++  density?: 'compact' | 'full';
++  /** Nagłówek sekcji; pomijany w stopce podglądu. */
++  heading?: string;
++}
++
++const buttonBase =
++  'inline-flex items-center justify-center h-8 rounded-full border px-3 text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-45 disabled:cursor-not-allowed';
++
++const variantClass = (variant: InitiativeLifecycleAction['variant']): string =>
++  variant === 'danger'
++    ? 'border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-100/70 dark:hover:bg-danger-500/15'
++    : variant === 'secondary'
++      ? 'border-c-border bg-transparent text-c-text-secondary hover:bg-c-surface-2'
++      : 'border-c-border bg-c-surface-2 text-c-text-primary hover:bg-c-surface-raised';
++
++export const InitiativeLifecycleActions: React.FC<InitiativeLifecycleActionsProps> = ({
++  initiativeId,
++  onApplied,
++  enabled = true,
++  className,
++  density = 'compact',
++  heading,
++}) => {
++  const { t } = useTranslation();
++  const translate = useCallback((key: string, fallback: string) => t(key, fallback), [t]);
++  const { actions, loading, loadError, pendingActionId, run } = useInitiativeLifecycle(
++    initiativeId,
++    translate,
++    { enabled, onApplied }
++  );
++  const [reasonAction, setReasonAction] = useState<InitiativeLifecycleAction | null>(null);
++  const [reasonBusy, setReasonBusy] = useState(false);
++
++  const execute = useCallback(
++    async (action: InitiativeLifecycleAction, reason?: string) => {
++      const failure = await run(action, reason);
++      if (failure) {
++        toast.error(failure, { duration: 6000 });
++        return false;
++      }
++      toast.success(
++        t('initiatives.lifecycle.applied', 'Zapisano: {{action}}', { action: action.label })
++      );
++      return true;
++    },
++    [run, t]
++  );
++
++  const onClick = useCallback(
++    (action: InitiativeLifecycleAction) => {
++      if (action.requiresReason) {
++        setReasonAction(action);
++        return;
++      }
++      void execute(action);
++    },
++    [execute]
++  );
++
++  if (!initiativeId || !enabled) return null;
++
++  if (loadError) {
++    return (
++      <div className={['flex items-start gap-2 text-xs text-c-text-secondary', className || ''].join(' ')}>
++        <AlertCircle size={14} className="mt-0.5 shrink-0 text-[var(--c-warning)]" />
++        <span data-testid="initiative-lifecycle-load-error">{loadError}</span>
++      </div>
++    );
++  }
++
++  if (loading && actions.length === 0) {
++    return (
++      <div className={['text-xs text-c-text-muted', className || ''].join(' ')}>
++        {t('initiatives.lifecycle.loading', 'Sprawdzam dostępne działania…')}
++      </div>
++    );
++  }
++
++  if (actions.length === 0) {
++    return (
++      <div
++        className={['text-xs text-c-text-muted', className || ''].join(' ')}
++        data-testid="initiative-lifecycle-empty"
++      >
++        {t(
++          'initiatives.lifecycle.none',
++          'Nie masz uprawnień do zmiany etapu tej inicjatywy.'
++        )}
++      </div>
++    );
++  }
++
++  const blocked = actions.filter((action) => action.disabled && action.disabledReason);
++
++  return (
++    <div className={['space-y-2', className || ''].join(' ')} data-testid="initiative-lifecycle-actions">
++      {heading && density === 'full' ? (
++        <div className="text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
++          {heading}
++        </div>
++      ) : null}
++      <div className="flex flex-wrap gap-2">
++        {actions.map((action) => (
++          <button
++            key={action.id}
++            type="button"
++            data-testid={`initiative-lifecycle-${action.id}`}
++            data-gate={action.gate || ''}
++            disabled={action.disabled || pendingActionId !== null}
++            title={action.disabled ? action.disabledReason : undefined}
++            aria-describedby={action.disabled ? `${action.id}-reason` : undefined}
++            onClick={() => onClick(action)}
++            className={[buttonBase, variantClass(action.variant)].join(' ')}
++          >
++            {pendingActionId === action.id
++              ? t('initiatives.lifecycle.working', 'Zapisuję…')
++              : action.label}
++          </button>
++        ))}
++      </div>
++      {blocked.length > 0 ? (
++        <ul className="space-y-1">
++          {blocked.map((action) => (
++            <li
++              key={action.id}
++              id={`${action.id}-reason`}
++              className="flex items-start gap-1.5 text-[11px] text-c-text-secondary"
++              data-testid={`initiative-lifecycle-reason-${action.id}`}
++            >
++              <AlertCircle size={12} className="mt-0.5 shrink-0 text-[var(--c-warning)]" />
++              <span>
++                <span className="font-medium">{action.label}:</span> {action.disabledReason}
++              </span>
++            </li>
++          ))}
++        </ul>
++      ) : null}
++      <InitiativeReasonPrompt
++        action={reasonAction}
++        busy={reasonBusy}
++        onCancel={() => setReasonAction(null)}
++        onConfirm={async (reason) => {
++          if (!reasonAction) return;
++          setReasonBusy(true);
++          const ok = await execute(reasonAction, reason);
++          setReasonBusy(false);
++          if (ok) setReasonAction(null);
++        }}
++      />
++    </div>
++  );
++};
++
++/** Wydzielone, żeby okno nie było montowane, dopóki nie jest potrzebne. */
++const InitiativeReasonPrompt: React.FC<{
++  action: InitiativeLifecycleAction | null;
++  busy: boolean;
++  onCancel: () => void;
++  onConfirm: (reason: string) => void | Promise<void>;
++}> = ({ action, busy, onCancel, onConfirm }) => {
++  const { t } = useTranslation();
++  if (!action) return null;
++  return (
++    <InitiativeReasonDialog
++      open
++      title={t('initiatives.lifecycle.reasonTitle', '{{action}} — podaj powód', {
++        action: action.label,
++      })}
++      confirmLabel={action.label}
++      destructive={action.variant === 'danger'}
++      busy={busy}
++      onCancel={onCancel}
++      onConfirm={onConfirm}
++    />
++  );
++};
++
++export default InitiativeLifecycleActions;
+diff --git a/src/components/Initiatives/lifecycle/InitiativeReasonDialog.tsx b/src/components/Initiatives/lifecycle/InitiativeReasonDialog.tsx
+new file mode 100644
+index 0000000000..1fc0966b6b
+--- /dev/null
++++ b/src/components/Initiatives/lifecycle/InitiativeReasonDialog.tsx
+@@ -0,0 +1,134 @@
++/**
++ * Okno wymaganego powodu (DEC-424: „wymagany powód" przy zwrocie, odrzuceniu,
++ * anulowaniu i wstrzymaniu).
++ *
++ * Powodu NIE DA SIĘ pominąć: przycisk potwierdzenia jest nieaktywny do czasu
++ * wpisania niepustego tekstu, a `Enter` w polu nie zatwierdza formularza.
++ */
++
++import { X } from 'lucide-react';
++import React, { useEffect, useRef, useState } from 'react';
++import { useTranslation } from 'react-i18next';
++
++export interface InitiativeReasonDialogProps {
++  open: boolean;
++  title: string;
++  confirmLabel: string;
++  /** `true` dla odrzucenia/anulowania — jedyny przypadek czerwieni. */
++  destructive?: boolean;
++  busy?: boolean;
++  onCancel: () => void;
++  onConfirm: (reason: string) => void;
++}
++
++export const InitiativeReasonDialog: React.FC<InitiativeReasonDialogProps> = ({
++  open,
++  title,
++  confirmLabel,
++  destructive = false,
++  busy = false,
++  onCancel,
++  onConfirm,
++}) => {
++  const { t } = useTranslation();
++  const [reason, setReason] = useState('');
++  const inputRef = useRef<HTMLTextAreaElement | null>(null);
++
++  useEffect(() => {
++    if (open) {
++      setReason('');
++      window.setTimeout(() => inputRef.current?.focus(), 0);
++    }
++  }, [open]);
++
++  useEffect(() => {
++    if (!open) return;
++    const onKey = (event: KeyboardEvent) => {
++      if (event.key === 'Escape') onCancel();
++    };
++    window.addEventListener('keydown', onKey);
++    return () => window.removeEventListener('keydown', onKey);
++  }, [open, onCancel]);
++
++  if (!open) return null;
++  const trimmed = reason.trim();
++
++  return (
++    <div
++      className="fixed inset-0 z-[140] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
++      role="dialog"
++      aria-modal="true"
++      aria-label={title}
++      data-testid="initiative-reason-dialog"
++    >
++      <div className="w-full max-w-lg rounded-2xl border border-c-border bg-c-surface-1 shadow-2xl">
++        <div className="px-4 py-3 border-b border-c-border flex items-center justify-between">
++          <h3 className="text-sm font-semibold text-c-text-primary">{title}</h3>
++          <button
++            type="button"
++            onClick={onCancel}
++            aria-label={t('common.close', 'Zamknij')}
++            className="p-1.5 rounded-md text-c-text-muted hover:bg-c-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
++          >
++            <X size={16} />
++          </button>
++        </div>
++        <div className="px-4 py-4 space-y-2">
++          <label
++            htmlFor="initiative-reason-input"
++            className="block text-xs font-medium text-c-text-secondary"
++          >
++            {t('initiatives.lifecycle.reasonLabel', 'Powód (wymagany)')}
++          </label>
++          <textarea
++            id="initiative-reason-input"
++            ref={inputRef}
++            value={reason}
++            onChange={(event) => setReason(event.target.value)}
++            rows={4}
++            maxLength={500}
++            data-testid="initiative-reason-input"
++            placeholder={t(
++              'initiatives.lifecycle.reasonPlaceholder',
++              'Napisz, dlaczego podejmujesz tę decyzję — trafi do historii inicjatywy.'
++            )}
++            className="w-full rounded-lg border border-c-border bg-c-surface-2 px-3 py-2 text-sm text-c-text-primary placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
++          />
++          <p className="text-[11px] text-c-text-muted">
++            {t(
++              'initiatives.lifecycle.reasonHint',
++              'Bez powodu ta operacja nie zostanie zapisana.'
++            )}
++          </p>
++        </div>
++        <div className="px-4 py-3 border-t border-c-border flex items-center justify-end gap-2">
++          <button
++            type="button"
++            onClick={onCancel}
++            className="inline-flex items-center h-9 px-4 rounded-full border border-c-border bg-transparent text-xs font-medium text-c-text-secondary hover:bg-c-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
++          >
++            {t('common.cancel', 'Anuluj')}
++          </button>
++          <button
++            type="button"
++            disabled={!trimmed || busy}
++            data-testid="initiative-reason-confirm"
++            onClick={() => onConfirm(trimmed)}
++            className={[
++              'inline-flex items-center h-9 px-4 rounded-full border text-xs font-medium transition-colors',
++              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
++              'disabled:opacity-45 disabled:cursor-not-allowed',
++              destructive
++                ? 'border-danger-300/40 dark:border-danger-500/30 bg-danger-50 dark:bg-danger-500/10 text-danger-700 dark:text-danger-200 hover:bg-danger-100/70'
++                : 'border-c-border bg-c-surface-2 text-c-text-primary hover:bg-c-surface-raised',
++            ].join(' ')}
++          >
++            {confirmLabel}
++          </button>
++        </div>
++      </div>
++    </div>
++  );
++};
++
++export default InitiativeReasonDialog;
+diff --git a/src/components/Initiatives/lifecycle/initiativeLifecycleMessages.ts b/src/components/Initiatives/lifecycle/initiativeLifecycleMessages.ts
+new file mode 100644
+index 0000000000..ed06d9f32b
+--- /dev/null
++++ b/src/components/Initiatives/lifecycle/initiativeLifecycleMessages.ts
+@@ -0,0 +1,92 @@
++/**
++ * Kody reguł serwera → polski (i angielski) komunikat dla użytkownika.
++ *
++ * Serwer NIGDY nie wysyła zdania po polsku — wysyła `rule`. Tłumaczenie żyje wyłącznie
++ * tutaj i w plikach `public/locales/*`, więc jeden komunikat nie rozjeżdża się na dwa
++ * repozytoria. Fallback (drugi argument `t`) jest po polsku, bo to język właściciela
++ * produktu i bez tłumaczeń ma się wyświetlić zdanie, a nie klucz.
++ */
++
++export const INITIATIVE_RULE_MESSAGE_KEYS: Record<string, { key: string; pl: string }> = {
++  TITLE_AND_JUSTIFICATION_REQUIRED: {
++    key: 'initiatives.lifecycle.blocked.TITLE_AND_JUSTIFICATION_REQUIRED',
++    pl: 'Uzupełnij tytuł i uzasadnienie inicjatywy.',
++  },
++  REASON_REQUIRED: {
++    key: 'initiatives.lifecycle.blocked.REASON_REQUIRED',
++    pl: 'To działanie wymaga podania powodu.',
++  },
++  INITIATIVE_CARD_INCOMPLETE: {
++    key: 'initiatives.lifecycle.blocked.INITIATIVE_CARD_INCOMPLETE',
++    pl: 'Karta jest niekompletna — uzupełnij opis, właściciela i zakres.',
++  },
++  GATE_DECISION_REQUIRED: {
++    key: 'initiatives.lifecycle.blocked.GATE_DECISION_REQUIRED',
++    pl: 'Brakuje aktualnej decyzji GO komitetu.',
++  },
++  HANDOFF_AND_START_DATE_REQUIRED: {
++    key: 'initiatives.lifecycle.blocked.HANDOFF_AND_START_DATE_REQUIRED',
++    pl: 'Wymagany przyjęty handoff i termin startu realizacji.',
++  },
++  OPEN_WORK_BLOCKS_CLOSURE: {
++    key: 'initiatives.lifecycle.blocked.OPEN_WORK_BLOCKS_CLOSURE',
++    pl: 'Zamknięcie blokują otwarte zadania lub nierozstrzygnięte decyzje.',
++  },
++  AUTHOR_ONLY: {
++    key: 'initiatives.lifecycle.blocked.AUTHOR_ONLY',
++    pl: 'To działanie może wykonać wyłącznie autor inicjatywy.',
++  },
++  INVALID_TRANSITION: {
++    key: 'initiatives.lifecycle.blocked.INVALID_TRANSITION',
++    pl: 'To przejście nie istnieje dla bieżącego statusu.',
++  },
++  UNEXPECTED_CURRENT_STATUS: {
++    key: 'initiatives.lifecycle.blocked.UNEXPECTED_CURRENT_STATUS',
++    pl: 'Status inicjatywy zmienił się w międzyczasie — odśwież widok.',
++  },
++  MISSING_TRANSITION_GATE: {
++    key: 'initiatives.lifecycle.blocked.MISSING_TRANSITION_GATE',
++    pl: 'To przejście nie ma zdefiniowanej bramki i nie może zostać wykonane.',
++  },
++  INVALID_FLAG_OPERATION: {
++    key: 'initiatives.lifecycle.blocked.INVALID_FLAG_OPERATION',
++    pl: 'Ta operacja nie jest dozwolona w bieżącym stanie inicjatywy.',
++  },
++  UNSUPPORTED_FLAG_OPERATION: {
++    key: 'initiatives.lifecycle.blocked.UNSUPPORTED_FLAG_OPERATION',
++    pl: 'Nieobsługiwana operacja flagi cyklu życia.',
++  },
++};
++
++export const INITIATIVE_RULE_FALLBACK = {
++  key: 'initiatives.lifecycle.blocked.UNKNOWN',
++  pl: 'Nie udało się wykonać działania. Odśwież widok i spróbuj ponownie.',
++} as const;
++
++export type TranslateFn = (key: string, fallback: string) => string;
++
++/** Zwraca gotowe, ludzkie zdanie dla kodu reguły — nigdy kodu i nigdy pustki. */
++export function initiativeRuleMessage(rule: string | null | undefined, t: TranslateFn): string {
++  const entry = (rule && INITIATIVE_RULE_MESSAGE_KEYS[rule]) || INITIATIVE_RULE_FALLBACK;
++  return t(entry.key, entry.pl);
++}
++
++/** Etykieta akcji per bramka — słownictwo z tablicy DEC-424. */
++export const INITIATIVE_GATE_LABELS: Record<string, string> = {
++  CREATE_DRAFT: 'Utwórz szkic',
++  SUBMIT_FOR_REVIEW: 'Prześlij do zatwierdzenia',
++  APPROVE: 'Zatwierdź inicjatywę',
++  SEND_BACK: 'Zwróć do szkicu',
++  REJECT: 'Odrzuć inicjatywę',
++  START: 'Rozpocznij realizację',
++  COMPLETE: 'Zamknij inicjatywę',
++  CANCEL: 'Anuluj inicjatywę',
++  BLOCK: 'Wstrzymaj realizację',
++  UNBLOCK: 'Wznów realizację',
++  ARCHIVE: 'Zarchiwizuj',
++};
++
++export function initiativeGateLabel(gate: string | null | undefined, t: TranslateFn): string {
++  const code = String(gate || '');
++  return t(`initiatives.lifecycle.action.${code}`, INITIATIVE_GATE_LABELS[code] || 'Zmień status');
++}
+diff --git a/src/components/Initiatives/lifecycle/useInitiativeLifecycle.ts b/src/components/Initiatives/lifecycle/useInitiativeLifecycle.ts
+new file mode 100644
+index 0000000000..ffa4b066b4
+--- /dev/null
++++ b/src/components/Initiatives/lifecycle/useInitiativeLifecycle.ts
+@@ -0,0 +1,178 @@
++/**
++ * Hak łańcucha zarządzania inicjatywą (DEC-424).
++ *
++ * Jedna zasada, z której wszystko wynika:
++ *   • brak roli  ⇒ akcji NIE MA na ekranie (użytkownik nie klika w 403),
++ *   • warunek niespełniony ⇒ akcja WIDOCZNA, ale nieaktywna, z powodem po polsku,
++ *   • powód wymagany ⇒ okno tekstowe, bez możliwości pominięcia.
++ * Wszystkie trzy informacje przychodzą z `GET /:id/transition-preflight`, liczone tym
++ * samym kodem, którym `PATCH /:id/status` odmawia. Front nie ma własnej kopii reguł.
++ */
++
++import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
++
++import {
++  applyInitiativeTransition,
++  fetchInitiativeTransitionPreflight,
++  readInitiativeFailureRule,
++  setInitiativeLifecycleFlag,
++  type InitiativeTransitionPreflight,
++} from '@/services/initiatives/lifecycleApi';
++
++import { initiativeGateLabel, initiativeRuleMessage, type TranslateFn } from './initiativeLifecycleMessages';
++
++export interface InitiativeLifecycleAction {
++  id: string;
++  kind: 'transition' | 'flag';
++  gate: string | null;
++  /** Dla `kind: 'transition'`. */
++  targetStatus?: string;
++  /** Dla `kind: 'flag'`. */
++  operation?: 'HOLD' | 'RESUME';
++  label: string;
++  /** `danger` wyłącznie dla semantyki krytycznej (odrzucenie/anulowanie). */
++  variant: 'primary' | 'secondary' | 'danger';
++  disabled: boolean;
++  /** Puste, gdy akcja jest aktywna. */
++  disabledReason: string;
++  requiresReason: boolean;
++}
++
++const DESTRUCTIVE_GATES = new Set(['REJECT', 'CANCEL']);
++
++export interface UseInitiativeLifecycleResult {
++  preflight: InitiativeTransitionPreflight | null;
++  actions: InitiativeLifecycleAction[];
++  loading: boolean;
++  /** Awaria ODCZYTU podglądu, po polsku. Nigdy nie połykamy jej po cichu. */
++  loadError: string | null;
++  pendingActionId: string | null;
++  reload: () => Promise<void>;
++  /** Zwraca `null` przy sukcesie albo polski komunikat błędu. NIE rzuca. */
++  run: (action: InitiativeLifecycleAction, reason?: string) => Promise<string | null>;
++}
++
++export function useInitiativeLifecycle(
++  initiativeId: string | null | undefined,
++  t: TranslateFn,
++  options?: { enabled?: boolean; onApplied?: () => void }
++): UseInitiativeLifecycleResult {
++  const enabled = options?.enabled !== false && Boolean(initiativeId);
++  const [preflight, setPreflight] = useState<InitiativeTransitionPreflight | null>(null);
++  const [loading, setLoading] = useState(false);
++  const [loadError, setLoadError] = useState<string | null>(null);
++  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
++  const requestSeq = useRef(0);
++  const onApplied = options?.onApplied;
++
++  const reload = useCallback(async () => {
++    if (!initiativeId || options?.enabled === false) {
++      setPreflight(null);
++      return;
++    }
++    const seq = ++requestSeq.current;
++    setLoading(true);
++    setLoadError(null);
++    try {
++      const next = await fetchInitiativeTransitionPreflight(initiativeId);
++      if (seq !== requestSeq.current) return;
++      setPreflight(next);
++    } catch (error) {
++      if (seq !== requestSeq.current) return;
++      setPreflight(null);
++      // Świadomie NIE `catch(() => {})`: gdy podgląd nie działa, użytkownik ma
++      // zobaczyć dlaczego nie ma przycisków, zamiast pustego miejsca.
++      setLoadError(
++        t(
++          'initiatives.lifecycle.preflightFailed',
++          'Nie udało się sprawdzić dostępnych działań dla tej inicjatywy.'
++        )
++      );
++    } finally {
++      if (seq === requestSeq.current) setLoading(false);
++    }
++  }, [initiativeId, options?.enabled, t]);
++
++  useEffect(() => {
++    if (!enabled) {
++      setPreflight(null);
++      setLoadError(null);
++      return;
++    }
++    void reload();
++  }, [enabled, reload]);
++
++  const actions = useMemo<InitiativeLifecycleAction[]>(() => {
++    if (!preflight) return [];
++    const transitionActions = preflight.transitions
++      // Brak roli ⇒ przycisku NIE MA. Świadomie nie renderujemy go wyszarzonego:
++      // wyszarzenie sugeruje „dokończ warunek", a tu chodzi o cudzą kompetencję.
++      .filter((item) => item.roleAllowed)
++      .map<InitiativeLifecycleAction>((item) => ({
++        id: `transition:${item.targetStatus}`,
++        kind: 'transition',
++        gate: item.gate,
++        targetStatus: item.targetStatus,
++        label: initiativeGateLabel(item.gate, t),
++        variant: DESTRUCTIVE_GATES.has(String(item.gate)) ? 'danger' : item.gate === 'SEND_BACK' ? 'secondary' : 'primary',
++        disabled: !item.conditionSatisfied,
++        disabledReason: item.conditionSatisfied ? '' : initiativeRuleMessage(item.blockingRule, t),
++        requiresReason: item.requiresReason,
++      }));
++
++    const flagActions = preflight.flags
++      .filter((flag) => flag.operation === 'HOLD' || flag.operation === 'RESUME')
++      .filter((flag) => flag.roleAllowed && flag.stateAllowed)
++      .map<InitiativeLifecycleAction>((flag) => ({
++        id: `flag:${flag.operation}`,
++        kind: 'flag',
++        gate: flag.gate,
++        operation: flag.operation as 'HOLD' | 'RESUME',
++        label: initiativeGateLabel(flag.gate, t),
++        variant: 'secondary',
++        disabled: false,
++        disabledReason: '',
++        requiresReason: flag.requiresReason,
++      }));
++
++    return [...transitionActions, ...flagActions];
++  }, [preflight, t]);
++
++  const run = useCallback(
++    async (action: InitiativeLifecycleAction, reason?: string): Promise<string | null> => {
++      if (!initiativeId) return t('initiatives.lifecycle.noInitiative', 'Brak inicjatywy.');
++      if (action.disabled) return action.disabledReason;
++      if (action.requiresReason && !String(reason || '').trim()) {
++        return initiativeRuleMessage('REASON_REQUIRED', t);
++      }
++      setPendingActionId(action.id);
++      try {
++        if (action.kind === 'flag' && action.operation) {
++          await setInitiativeLifecycleFlag(initiativeId, action.operation, reason);
++        } else if (action.targetStatus) {
++          await applyInitiativeTransition(initiativeId, action.targetStatus, reason);
++        } else {
++          return initiativeRuleMessage('MISSING_TRANSITION_GATE', t);
++        }
++        await reload();
++        onApplied?.();
++        return null;
++      } catch (error) {
++        const rule = readInitiativeFailureRule(error);
++        // Gdy serwer nie podał kodu reguły (np. 500), pokazujemy JEGO treść —
++        // nigdy „coś poszło nie tak".
++        const message = rule
++          ? initiativeRuleMessage(rule, t)
++          : String((error as Error)?.message || '').trim() ||
++            initiativeRuleMessage(null, t);
++        await reload();
++        return message;
++      } finally {
++        setPendingActionId(null);
++      }
++    },
++    [initiativeId, onApplied, reload, t]
++  );
++
++  return { preflight, actions, loading, loadError, pendingActionId, reload, run };
++}
+diff --git a/src/components/shared/PreviewPane/PreviewActionBar.tsx b/src/components/shared/PreviewPane/PreviewActionBar.tsx
+index 96a054e291..96608a17a0 100644
+--- a/src/components/shared/PreviewPane/PreviewActionBar.tsx
++++ b/src/components/shared/PreviewPane/PreviewActionBar.tsx
+@@ -13,6 +13,13 @@ export interface ActionButton {
+   /** Stretch to fill available space (flex-1) */
+   flex?: boolean;
+   disabled?: boolean;
++  /**
++   * Powód, dla którego akcja jest nieaktywna — pokazywany jako `title` przycisku.
++   * Dodane 2026-09-07 razem z łańcuchem zarządzania inicjatywą: wyszarzony przycisk
++   * bez powodu jest tym samym, co „coś poszło nie tak" po fakcie. Addytywne — brak
++   * propu = zero zmian w istniejących stopkach.
++   */
++  title?: string;
+   /** Extra CSS classes */
+   className?: string;
+   /** Single-key shortcut displayed as a badge (e.g. "T" for Triage). Handled by TableWithPreviewLayout. */
+@@ -265,6 +272,7 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({
+                   key={btnIdx}
+                   onClick={btn.onClick}
+                   disabled={btn.disabled}
++                  title={btn.title}
+                   className={actionPillClass(
+                     btn.colorScheme,
+                     [
+diff --git a/src/services/initiativeLifecycle.ts b/src/services/initiativeLifecycle.ts
+index f021ea8df2..472eed965a 100644
+--- a/src/services/initiativeLifecycle.ts
++++ b/src/services/initiativeLifecycle.ts
+@@ -1,5 +1,12 @@
+ /** Frontend projection of DEC-424. Codes and label keys come from the generated server SSOT. */
+-import { InitiativeStatus, INITIATIVE_STATUS_LABEL_KEYS, type InitiativeStatus as InitiativeStatusCode } from '../../packages/shared/src/constants/initiativeStatuses.generated';
++import {
++  InitiativeStatus,
++  INITIATIVE_FLAG_RULES as GENERATED_FLAG_RULES,
++  INITIATIVE_STATUS_LABEL_KEYS,
++  INITIATIVE_TRANSITION_MATRIX,
++  INITIATIVE_VALID_TRANSITIONS,
++  type InitiativeStatus as InitiativeStatusCode,
++} from '../../packages/shared/src/constants/initiativeStatuses.generated';
+ import type { StatusTone } from '../components/ui/primitives/chips';
+ 
+ export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
+@@ -7,11 +14,14 @@ export interface ModuleConfig { id: ModuleId; name: string; route: string; statu
+ export interface StatusMeta { labelKey: string; color: string; bgColor: string; dotColor: string; descriptionKey: string }
+ const ALL = Object.values(InitiativeStatus);
+ 
+-export const VALID_TRANSITIONS: Record<InitiativeStatusCode, InitiativeStatusCode[]> = {
+-  PROPOSED: [InitiativeStatus.DRAFT, InitiativeStatus.REJECTED], DRAFT: [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.REJECTED],
+-  PENDING_APPROVAL: [InitiativeStatus.DRAFT, InitiativeStatus.APPROVED, InitiativeStatus.REJECTED], APPROVED: [InitiativeStatus.IN_EXECUTION, InitiativeStatus.REJECTED],
+-  IN_EXECUTION: [InitiativeStatus.CLOSED, InitiativeStatus.REJECTED], CLOSED: [], REJECTED: [],
+-};
++/**
++ * ★ Do 2026-09-07 ta tablica była RĘCZNĄ kopią macierzy serwera i rozjechała się z nią:
++ * pozwalała odrzucić szkic (serwer: brak takiej krawędzi -> 400 INVALID_TRANSITION po
++ * kliknięciu). Teraz pochodzi z wygenerowanego SSOT (`scripts/generate-initiative-statuses.mjs`),
++ * więc rozjazd jest niemożliwy bez przegenerowania pliku.
++ */
++export const VALID_TRANSITIONS: Record<InitiativeStatusCode, InitiativeStatusCode[]> =
++  INITIATIVE_VALID_TRANSITIONS;
+ export const MODULES: Record<ModuleId, ModuleConfig> = {
+   tools: { id: 'tools', name: 'Tools', route: '/tools', statuses: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT], color: 'slate' },
+   assessment: { id: 'assessment', name: 'Assessment', route: '/assessment', statuses: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT], color: 'slate' },
+@@ -42,23 +52,80 @@ export const isTerminalStatus = (status: InitiativeStatusCode): boolean => statu
+ export const isActiveStatus = (status: InitiativeStatusCode): boolean => !isTerminalStatus(status);
+ export const needsAttention = (status: InitiativeStatusCode): boolean => status === InitiativeStatus.PENDING_APPROVAL;
+ 
+-export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean }
+-const ACTION_KEYS: Partial<Record<InitiativeStatusCode, string>> = { DRAFT: 'initiatives.transition.createDraft', PENDING_APPROVAL: 'initiatives.transition.submitForReview', APPROVED: 'initiatives.transition.approve', IN_EXECUTION: 'initiatives.transition.startExecution', CLOSED: 'initiatives.transition.markComplete' };
+-export function getStatusActions(status: InitiativeStatusCode): StatusAction[] { return getValidNextStatuses(status).map((targetStatus) => ({ labelKey: targetStatus === InitiativeStatus.REJECTED ? 'initiatives.transition.reject' : ACTION_KEYS[targetStatus] ?? 'initiatives.transition.changeStatus', targetStatus, variant: targetStatus === InitiativeStatus.REJECTED ? 'danger' : targetStatus === InitiativeStatus.DRAFT ? 'secondary' : 'primary', requiresReason: targetStatus === InitiativeStatus.REJECTED })); }
++export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean; gate?: string }
++/** Klucz etykiety per BRAMKA — słownictwo z tablicy DEC-424 zaakceptowanej przez właściciela. */
++export const gateActionLabelKey = (gate: string): string => `initiatives.lifecycle.action.${gate}`;
++export function getStatusActions(status: InitiativeStatusCode): StatusAction[] {
++  return INITIATIVE_TRANSITION_MATRIX.filter((row) => row.from === status).map((row) => ({
++    labelKey: gateActionLabelKey(row.gate),
++    targetStatus: row.to as InitiativeStatusCode,
++    // Crimson (`danger`) rezerwujemy dla semantyki krytycznej: odrzucenie/anulowanie.
++    variant: row.to === InitiativeStatus.REJECTED ? 'danger' : row.gate === 'SEND_BACK' ? 'secondary' : 'primary',
++    requiresReason: row.condition === 'REASON_REQUIRED',
++    gate: row.gate,
++  }));
++}
+ export type ContextActionId = 'task' | 'decision' | 'raid';
+ export const getContextActions = (status: InitiativeStatusCode): ContextActionId[] => status === InitiativeStatus.IN_EXECUTION ? ['task', 'decision', 'raid'] : status === InitiativeStatus.DRAFT || status === InitiativeStatus.APPROVED ? ['task', 'raid'] : [];
+ 
+-export const GateType = { SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW', SEND_BACK: 'SEND_BACK', APPROVE: 'APPROVE', START: 'START', COMPLETE: 'COMPLETE', REJECT: 'REJECT' } as const;
+-export type GateTypeValue = (typeof GateType)[keyof typeof GateType];
+-export const GateRole = { ADMIN: 'ADMIN', CONSULTANT: 'CONSULTANT', PROJECT_MANAGER: 'PROJECT_MANAGER', PROJECT_LEAD: 'PROJECT_LEAD', INITIATIVE_OWNER: 'INITIATIVE_OWNER', PROJECT_SPONSOR: 'PROJECT_SPONSOR', PMO: 'PMO', STEERING_COMMITTEE: 'STEERING_COMMITTEE', TEAM_MEMBER: 'TEAM_MEMBER', BUSINESS_OWNER: 'BUSINESS_OWNER' } as const;
+-export type GateRoleValue = (typeof GateRole)[keyof typeof GateRole];
+-export const GATE_PERMISSIONS: Record<GateTypeValue, GateRoleValue[]> = { SUBMIT_FOR_REVIEW: [GateRole.CONSULTANT, GateRole.INITIATIVE_OWNER], SEND_BACK: [GateRole.PROJECT_MANAGER, GateRole.PMO], APPROVE: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE], START: [GateRole.PMO], COMPLETE: [GateRole.INITIATIVE_OWNER, GateRole.PMO], REJECT: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE] };
+-export const GATE_TRANSITIONS: Record<GateTypeValue, { from: InitiativeStatusCode[]; to: InitiativeStatusCode }> = {
+-  SUBMIT_FOR_REVIEW: { from: [InitiativeStatus.DRAFT], to: InitiativeStatus.PENDING_APPROVAL }, SEND_BACK: { from: [InitiativeStatus.PENDING_APPROVAL], to: InitiativeStatus.DRAFT }, APPROVE: { from: [InitiativeStatus.PENDING_APPROVAL], to: InitiativeStatus.APPROVED }, START: { from: [InitiativeStatus.APPROVED], to: InitiativeStatus.IN_EXECUTION }, COMPLETE: { from: [InitiativeStatus.IN_EXECUTION], to: InitiativeStatus.CLOSED }, REJECT: { from: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.APPROVED, InitiativeStatus.IN_EXECUTION], to: InitiativeStatus.REJECTED },
+-};
+-export function getGateForTransition(from: InitiativeStatusCode, to: InitiativeStatusCode): GateTypeValue | null { return (Object.entries(GATE_TRANSITIONS).find(([, v]) => v.from.includes(from) && v.to === to)?.[0] as GateTypeValue | undefined) ?? null; }
+-export function canUserExecuteGate(roles: string[], gate: GateTypeValue): boolean { return roles.includes('ADMIN') || roles.includes('SUPERADMIN') || GATE_PERMISSIONS[gate].some((role) => roles.includes(role)); }
+-export function getFilteredStatusActions(status: InitiativeStatusCode, roles: string[]) { return getStatusActions(status).map((action) => { const gate = getGateForTransition(status, action.targetStatus); const requiredRoles = gate ? GATE_PERMISSIONS[gate] : []; return { ...action, gate, requiredRoles, variant: !gate || canUserExecuteGate(roles, gate) ? action.variant : 'disabled' as any }; }); }
++/** Bramki, role i warunki — WYŁĄCZNIE z wygenerowanego SSOT DEC-424. */
++export type GateTypeValue = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['gate'];
++export type GateRoleValue = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['roles'][number];
++export type InitiativeFlagOperation = (typeof GENERATED_FLAG_RULES)[number]['operation'];
++
++export const GateType = Object.fromEntries(
++  INITIATIVE_TRANSITION_MATRIX.map((row) => [row.gate, row.gate])
++) as Record<GateTypeValue, GateTypeValue>;
++
++export const GATE_PERMISSIONS: Record<string, string[]> = INITIATIVE_TRANSITION_MATRIX.reduce<
++  Record<string, string[]>
++>((out, row) => {
++  out[row.gate] = Array.from(new Set([...(out[row.gate] ?? []), ...row.roles]));
++  return out;
++}, GENERATED_FLAG_RULES.reduce<Record<string, string[]>>((out, rule) => {
++  out[rule.gate] = Array.from(new Set([...(out[rule.gate] ?? []), ...rule.roles]));
++  return out;
++}, {}));
++
++export const GATE_TRANSITIONS: Record<string, { from: InitiativeStatusCode[]; to: InitiativeStatusCode | null }> =
++  INITIATIVE_TRANSITION_MATRIX.reduce<Record<string, { from: InitiativeStatusCode[]; to: InitiativeStatusCode | null }>>(
++    (out, row) => {
++      const entry = out[row.gate] ?? { from: [] as InitiativeStatusCode[], to: row.to as InitiativeStatusCode };
++      if (!entry.from.includes(row.from as InitiativeStatusCode)) entry.from.push(row.from as InitiativeStatusCode);
++      out[row.gate] = entry;
++      return out;
++    },
++    {}
++  );
++
++/** Zachowany kontrakt nazw ról dla ekranów, które indeksują `GATE_PERMISSIONS`. */
++export const GateRole = {
++  ADMIN: 'ADMIN', SUPERADMIN: 'SUPERADMIN', CONSULTANT: 'CONSULTANT',
++  PROJECT_MANAGER: 'PROJECT_MANAGER', PROJECT_LEAD: 'PROJECT_LEAD',
++  INITIATIVE_OWNER: 'INITIATIVE_OWNER', PROJECT_SPONSOR: 'PROJECT_SPONSOR',
++  PMO: 'PMO', STEERING_COMMITTEE: 'STEERING_COMMITTEE',
++  PORTFOLIO_OWNER: 'PORTFOLIO_OWNER', TEAM_MEMBER: 'TEAM_MEMBER',
++  BUSINESS_OWNER: 'BUSINESS_OWNER',
++} as const;
++
++export const INITIATIVE_FLAG_RULES = GENERATED_FLAG_RULES;
++
++export function getTransitionRow(from: InitiativeStatusCode, to: InitiativeStatusCode) {
++  return INITIATIVE_TRANSITION_MATRIX.find((row) => row.from === from && row.to === to) ?? null;
++}
++export function getGateForTransition(from: InitiativeStatusCode, to: InitiativeStatusCode): GateTypeValue | null {
++  return getTransitionRow(from, to)?.gate ?? null;
++}
++export function canUserExecuteGate(roles: string[], gate: string): boolean {
++  return roles.includes('ADMIN') || roles.includes('SUPERADMIN') || (GATE_PERMISSIONS[gate] ?? []).some((role) => roles.includes(role));
++}
++export function getFilteredStatusActions(status: InitiativeStatusCode, roles: string[]) {
++  return getStatusActions(status).map((action) => {
++    const gate = getGateForTransition(status, action.targetStatus);
++    const requiredRoles = gate ? (GATE_PERMISSIONS[gate] ?? []) : [];
++    return { ...action, gate, requiredRoles, variant: !gate || canUserExecuteGate(roles, gate) ? action.variant : ('disabled' as any) };
++  });
++}
+ export function getRequiredRolesForNextGate(status: InitiativeStatusCode) { return getValidNextStatuses(status).flatMap((targetStatus) => { const gate = getGateForTransition(status, targetStatus); return gate ? [{ gate, requiredRoles: GATE_PERMISSIONS[gate], targetStatus }] : []; }); }
+ 
+-export default { VALID_TRANSITIONS, MODULES, STATUS_METADATA, getModuleForStatus, getModuleConfigForStatus, isValidTransition, getValidNextStatuses, willChangeModule, getTargetModule, getStatusMeta, getLocalizedStatusLabel, getLocalizedStatusDescription, getStatusesForModule, isStatusInModule, getLifecycleProgress, getLifecycleOrder, isTerminalStatus, isActiveStatus, needsAttention, getStatusActions, getContextActions, GATE_PERMISSIONS, GATE_TRANSITIONS, getGateForTransition, canUserExecuteGate, getFilteredStatusActions, getRequiredRolesForNextGate };
++export default { VALID_TRANSITIONS, MODULES, STATUS_METADATA, getModuleForStatus, getModuleConfigForStatus, isValidTransition, getValidNextStatuses, willChangeModule, getTargetModule, getStatusMeta, getLocalizedStatusLabel, getLocalizedStatusDescription, getStatusesForModule, isStatusInModule, getLifecycleProgress, getLifecycleOrder, isTerminalStatus, isActiveStatus, needsAttention, getStatusActions, getContextActions, GATE_PERMISSIONS, GATE_TRANSITIONS, getGateForTransition, canUserExecuteGate, getFilteredStatusActions, getRequiredRolesForNextGate, getTransitionRow, INITIATIVE_FLAG_RULES };
+diff --git a/src/services/initiatives/lifecycleApi.ts b/src/services/initiatives/lifecycleApi.ts
+new file mode 100644
+index 0000000000..90cfda41c3
+--- /dev/null
++++ b/src/services/initiatives/lifecycleApi.ts
+@@ -0,0 +1,105 @@
++/**
++ * Łańcuch zarządzania inicjatywą (DEC-424) — klient jedynych kanonicznych tras.
++ *
++ * Powód istnienia: do 2026-09-07 front nie wołał ANI RAZU zmiany statusu inicjatywy
++ * z listy ani z Realizacji; jedyny „pisarz" (`updateInitiativeStatusWriteTruth`) wisiał
++ * na przeciągnij-i-upuść kanbana, który jest wyłączony (`canDrag={false}`). Ten moduł
++ * daje trzy operacje i NIC WIĘCEJ: podgląd, przejście, flagę wstrzymania.
++ *
++ * Trasy zastane (`/start-execution`, `/block`, `/unblock`, `/move`) są od decyzji 26A
++ * wygaszone (409) i nie wolno ich tu wołać.
++ */
++
++import { Api } from '@/services/api';
++import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
++
++export interface InitiativeTransitionPreflightItem {
++  targetStatus: string;
++  gate: string | null;
++  requiredRoles: string[];
++  roleAllowed: boolean;
++  conditionSatisfied: boolean;
++  blockingRule: string | null;
++  requiresReason: boolean;
++  allowed: boolean;
++}
++
++export interface InitiativeFlagPreflightItem {
++  operation: 'HOLD' | 'RESUME' | 'ARCHIVE';
++  gate: string;
++  requiredRoles: string[];
++  roleAllowed: boolean;
++  requiresReason: boolean;
++  stateAllowed: boolean;
++  allowed: boolean;
++}
++
++export interface InitiativeTransitionPreflight {
++  initiativeId: string;
++  currentStatus: string;
++  onHold: boolean;
++  archived: boolean;
++  isAuthor: boolean;
++  effectiveRoles: string[];
++  transitions: InitiativeTransitionPreflightItem[];
++  flags: InitiativeFlagPreflightItem[];
++}
++
++/** Kod reguły z serwera; UI mapuje go na polski komunikat. Nigdy nie tłumacz na serwerze. */
++export type InitiativeBlockingRule =
++  | 'TITLE_AND_JUSTIFICATION_REQUIRED'
++  | 'REASON_REQUIRED'
++  | 'INITIATIVE_CARD_INCOMPLETE'
++  | 'GATE_DECISION_REQUIRED'
++  | 'HANDOFF_AND_START_DATE_REQUIRED'
++  | 'OPEN_WORK_BLOCKS_CLOSURE'
++  | 'AUTHOR_ONLY';
++
++export async function fetchInitiativeTransitionPreflight(
++  initiativeId: string
++): Promise<InitiativeTransitionPreflight> {
++  const response = await Api.get(
++    `/initiatives/${encodeURIComponent(initiativeId)}/transition-preflight`
++  );
++  const payload = (response?.data ?? response) as InitiativeTransitionPreflight;
++  if (!payload || !Array.isArray(payload.transitions)) {
++    throw new Error('Odpowiedź podglądu przejść nie ma oczekiwanego kształtu');
++  }
++  return payload;
++}
++
++/**
++ * Kod reguły z odrzuconego zapisu. `ApiError.data` niesie pełną kopertę serwera,
++ * więc powód („brak powodu", „otwarte zadania") nie ginie za ogólnikiem.
++ */
++export const readInitiativeFailureRule = (error: unknown): string | null => {
++  const data = (error as { data?: { rule?: unknown } } | null)?.data;
++  const rule = data && typeof data === 'object' ? (data as { rule?: unknown }).rule : null;
++  return rule ? String(rule) : null;
++};
++
++export async function applyInitiativeTransition(
++  initiativeId: string,
++  targetStatus: string,
++  reason?: string
++): Promise<void> {
++  // ZERO cichych awarii: brak `.catch(() => {})`. Błąd leci do wołającego,
++  // który MUSI go pokazać po polsku.
++  await Api.patch(`/initiatives/${encodeURIComponent(initiativeId)}/status`, {
++    status: targetStatus,
++    ...(reason && reason.trim() ? { reason: reason.trim() } : {}),
++  });
++  bumpInitiativeRefresh();
++}
++
++export async function setInitiativeLifecycleFlag(
++  initiativeId: string,
++  operation: 'HOLD' | 'RESUME',
++  reason?: string
++): Promise<void> {
++  await Api.post(`/initiatives/${encodeURIComponent(initiativeId)}/lifecycle-flag`, {
++    operation,
++    ...(reason && reason.trim() ? { reason: reason.trim() } : {}),
++  });
++  bumpInitiativeRefresh();
++}

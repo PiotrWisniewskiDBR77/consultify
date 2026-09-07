@@ -1,0 +1,266 @@
+From 07967227ac973780f253b0d75629e3c8a578e31d Mon Sep 17 00:00:00 2001
+From: Piotr <piotr.wisniewski@dbr77.com>
+Date: Mon, 7 Sep 2026 08:32:57 +0200
+Subject: [PATCH 4/5] fix(05_INITIATIVES): koniec cichych awarii w zasobach i
+ budzecie [ODMROZENIE 05_INITIATIVES DEC-453]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Cztery zapisy w widoku dokumentu inicjatywy mialy `catch { // best-effort }`:
+edycja i usuniecie zasobu oraz edycja i usuniecie pozycji budzetu. Wiersz
+znikal albo zmienial sie na ekranie, serwer zostawal ze starym stanem, a
+uzytkownik nie dostawal zadnego sygnalu. Piaty: wpis do sladu audytu przy
+zastosowaniu propozycji AI w Zasobach ginal bez slowa.
+
+Teraz kazda odmowa mowi po polsku, co sie stalo, i przywraca poprzedni stan
+wiersza (albo — przy sladzie audytu — mowi wprost, ze same zasoby zapisano, a
+wpisu nie).
+
+Klucze i18n pl+en: failedToUpdateResource2, failedToRemoveResource2,
+failedToUpdateBudgetItem2, failedToRemoveBudgetItem2,
+resourcesSection.aiApplyLogFailed.
+
+Test: tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts 14/14; mutacja
+przywracajaca cichy catch -> 1 czerwony.
+tsc frontu: 877 linii / 200 error TS PRZED = PO
+---
+ public/locales/en/translation.json            |  9 +++-
+ public/locales/pl/translation.json            |  9 +++-
+ .../Initiatives/InitiativeDocumentView.tsx    | 52 ++++++++++++++-----
+ .../Initiatives/sections/ResourcesSection.tsx | 12 ++++-
+ .../zapisyRaidKanoniczneTrasy.test.ts         | 32 ++++++++++++
+ 5 files changed, 94 insertions(+), 20 deletions(-)
+
+diff --git a/public/locales/en/translation.json b/public/locales/en/translation.json
+index d638ec942f..486e3ba3ac 100644
+--- a/public/locales/en/translation.json
++++ b/public/locales/en/translation.json
+@@ -11265,7 +11265,8 @@
+       "noAdditionsForTable": "AI suggested no additions for this table.",
+       "noMissingResources": "AI suggested no missing resources to add.",
+       "invalidAiFormat": "AI response has invalid format (cannot apply).",
+-      "english": "English"
++      "english": "English",
++      "aiApplyLogFailed": "Resources were added, but the audit-trail entry was not saved. Repeat the action if you need that entry."
+     },
+     "timelinePlanner": {
+       "initiativeStart": "Initiative Start",
+@@ -12599,7 +12600,11 @@
+     "raid": {
+       "newItemTitle": "New item"
+     },
+-    "failedToRemoveRaid2": "Failed to remove RAID item"
++    "failedToRemoveRaid2": "Failed to remove RAID item",
++    "failedToUpdateResource2": "Could not save the resource",
++    "failedToRemoveResource2": "Could not remove the resource",
++    "failedToUpdateBudgetItem2": "Could not save the budget item",
++    "failedToRemoveBudgetItem2": "Could not remove the budget item"
+   },
+   "execution": {
+     "review": {
+diff --git a/public/locales/pl/translation.json b/public/locales/pl/translation.json
+index 4f658d6506..80cf020030 100644
+--- a/public/locales/pl/translation.json
++++ b/public/locales/pl/translation.json
+@@ -10703,7 +10703,8 @@
+       "noAdditionsForTable": "AI nie zaproponowało dodatków dla tej tabeli.",
+       "noMissingResources": "AI nie zaproponowało brakujących zasobów do dodania.",
+       "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować).",
+-      "english": "Polish"
++      "english": "Polish",
++      "aiApplyLogFailed": "Zasoby zostały dodane, ale nie zapisano wpisu w śladzie audytu. Powtórz operację, jeśli ten wpis jest potrzebny."
+     },
+     "timelinePlanner": {
+       "initiativeStart": "Start inicjatywy",
+@@ -12041,7 +12042,11 @@
+     "raid": {
+       "newItemTitle": "Nowa pozycja"
+     },
+-    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID"
++    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID",
++    "failedToUpdateResource2": "Nie udało się zapisać zasobu",
++    "failedToRemoveResource2": "Nie udało się usunąć zasobu",
++    "failedToUpdateBudgetItem2": "Nie udało się zapisać pozycji budżetu",
++    "failedToRemoveBudgetItem2": "Nie udało się usunąć pozycji budżetu"
+   },
+   "execution": {
+     "review": {
+diff --git a/src/components/Initiatives/InitiativeDocumentView.tsx b/src/components/Initiatives/InitiativeDocumentView.tsx
+index 206f27ffd1..5c39404ff3 100644
+--- a/src/components/Initiatives/InitiativeDocumentView.tsx
++++ b/src/components/Initiatives/InitiativeDocumentView.tsx
+@@ -3847,29 +3847,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+ 
+   const handleUpdateResource = useCallback(
+     async (id: string, data: Partial<(typeof apiResourceItems)[0]>) => {
++      const poprzedni = apiResourceItems.find((item) => item.id === id);
+       setApiResourceItems((prev) =>
+         prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+       );
+       try {
+         await Api.put(`/initiatives/${initiativeId}/resources/${id}`, data);
+-      } catch {
+-        // best-effort
++      } catch (e: any) {
++        // Do 07.09 ta awaria byla polykana: wiersz zmienial sie na ekranie,
++        // serwer zostawal ze stara wartoscia, a uzytkownik nie wiedzial nic.
++        toast.error(
++          e?.message || t('initiatives.failedToUpdateResource2', 'Nie udało się zapisać zasobu')
++        );
++        if (poprzedni) {
++          setApiResourceItems((prev) => prev.map((item) => (item.id === id ? poprzedni : item)));
++        }
+       }
+     },
+-    [initiativeId]
++    [initiativeId, apiResourceItems, t]
+   );
+ 
+   const handleDeleteResource = useCallback(
+     async (id: string) => {
++      const usuniety = apiResourceItems.find((item) => item.id === id);
+       setApiResourceItems((prev) => prev.filter((item) => item.id !== id));
+-      toast.success(t('initiatives.resourceRemoved2'));
+       try {
+         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
+-      } catch {
+-        // best-effort
++        toast.success(t('initiatives.resourceRemoved2'));
++      } catch (e: any) {
++        toast.error(
++          e?.message || t('initiatives.failedToRemoveResource2', 'Nie udało się usunąć zasobu')
++        );
++        if (usuniety) setApiResourceItems((prev) => [...prev, usuniety]);
+       }
+     },
+-    [initiativeId, isPolish]
++    [initiativeId, apiResourceItems, t]
+   );
+ 
+   const handleAddBudgetItem = useCallback(
+@@ -3888,29 +3900,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+ 
+   const handleUpdateBudgetItem = useCallback(
+     async (id: string, data: Partial<(typeof apiBudgetItems)[0]>) => {
++      const poprzednia = apiBudgetItems.find((item) => item.id === id);
+       setApiBudgetItems((prev) =>
+         prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+       );
+       try {
+         await Api.put(`/initiatives/${initiativeId}/budget-items/${id}`, data);
+-      } catch {
+-        // best-effort
++      } catch (e: any) {
++        toast.error(
++          e?.message ||
++            t('initiatives.failedToUpdateBudgetItem2', 'Nie udało się zapisać pozycji budżetu')
++        );
++        if (poprzednia) {
++          setApiBudgetItems((prev) => prev.map((item) => (item.id === id ? poprzednia : item)));
++        }
+       }
+     },
+-    [initiativeId]
++    [initiativeId, apiBudgetItems, t]
+   );
+ 
+   const handleDeleteBudgetItem = useCallback(
+     async (id: string) => {
++      const usunieta = apiBudgetItems.find((item) => item.id === id);
+       setApiBudgetItems((prev) => prev.filter((item) => item.id !== id));
+-      toast.success(t('initiatives.budgetItemRemoved2'));
+       try {
+         await Api.delete(`/initiatives/${initiativeId}/budget-items/${id}`);
+-      } catch {
+-        // best-effort
++        toast.success(t('initiatives.budgetItemRemoved2'));
++      } catch (e: any) {
++        toast.error(
++          e?.message ||
++            t('initiatives.failedToRemoveBudgetItem2', 'Nie udało się usunąć pozycji budżetu')
++        );
++        if (usunieta) setApiBudgetItems((prev) => [...prev, usunieta]);
+       }
+     },
+-    [initiativeId, isPolish]
++    [initiativeId, apiBudgetItems, t]
+   );
+ 
+   const handleAddTool = useCallback(
+diff --git a/src/components/Initiatives/sections/ResourcesSection.tsx b/src/components/Initiatives/sections/ResourcesSection.tsx
+index 3bb3d7e209..f243f47823 100644
+--- a/src/components/Initiatives/sections/ResourcesSection.tsx
++++ b/src/components/Initiatives/sections/ResourcesSection.tsx
+@@ -1318,7 +1318,9 @@ export const ResourcesSection: React.FC = () => {
+         });
+       }
+ 
+-      // Audit (single summary entry) — best-effort, never block UX
++      // Wpis do sladu audytu. Same pozycje sa juz zapisane wyzej, wiec brak
++      // wpisu nie cofa pracy — ale do 07.09 byl POLYKANY W CISZY i slad
++      // audytu gubil zdarzenia, o czym nikt sie nie dowiadywal.
+       try {
+         await Api.post(`/initiatives/${initiativeId}/resources/ai-apply-log`, {
+           scope: aiProposal.scope,
+@@ -1329,7 +1331,13 @@ export const ResourcesSection: React.FC = () => {
+           note: aiProposal.note || null,
+         });
+       } catch {
+-        // ignore
++        toast(
++          t(
++            'initiatives.resourcesSection.aiApplyLogFailed',
++            'Zasoby zostały dodane, ale nie zapisano wpisu w śladzie audytu. Powtórz operację, jeśli ten wpis jest potrzebny.'
++          ),
++          { icon: '⚠️' }
++        );
+       }
+ 
+       closeAIModal();
+diff --git a/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts b/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
+index 9034e1bc41..9687cfbc75 100644
+--- a/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
++++ b/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
+@@ -61,6 +61,38 @@ describe('zapisy RAID inicjatywy ida wylacznie kanoniczna trasa (26A)', () => {
+     }
+   });
+ 
++  /**
++   * DEC-453: po zdjeciu bramki 26A ze sciezek bez kanonicznego nastepcy te
++   * zapisy znowu dochodza do serwera. Nie moga wracac do stanu, w ktorym
++   * niepowodzenie znika bez sladu — wiersz na ekranie zmieniony, serwer nie.
++   *
++   * MUTACJA: zamien `toast.error(...)` w ktoryms z tych catchow na pusty
++   * komentarz — test staje sie czerwony.
++   */
++  it.each([
++    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/resources/${id}`, data)'],
++    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/resources/${id}`)'],
++    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/budget-items/${id}`, data)'],
++    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/budget-items/${id}`)'],
++    ['src/components/Initiatives/sections/ResourcesSection.tsx', '/resources/ai-apply-log`'],
++  ])('%s — zapis %s konczy sie komunikatem, nie cisza', (relative, fragment) => {
++    const linie = read(relative).split('\n');
++    const indeks = linie.findIndex((line) => line.includes(fragment));
++    expect(indeks, `nie znalazlem wywolania ${fragment}`).toBeGreaterThan(-1);
++    // Bierzemy WYLACZNIE cialo najblizszego `catch` po tym wywolaniu — inaczej
++    // `toast.success` z bloku `try` falszywie zazielenilby cichy catch.
++    const poczatekCatch = linie.findIndex(
++      (line, i) => i >= indeks && /\}\s*catch\b/.test(line)
++    );
++    expect(poczatekCatch, `brak catch po ${fragment}`).toBeGreaterThan(-1);
++    const cialo = [];
++    for (let i = poczatekCatch + 1; i < linie.length && i < poczatekCatch + 20; i += 1) {
++      if (/^\s{0,8}\}/.test(linie[i])) break;
++      cialo.push(linie[i]);
++    }
++    expect(cialo.join('\n'), `cichy catch przy ${fragment}`).toMatch(/toast[.(]/);
++  });
++
+   it('kazda odmowa zapisu ma komunikat po polsku, bez kodow technicznych', () => {
+     const client = read('src/services/initiatives-execution/raidWrites.ts');
+     for (const phrase of [
+-- 
+2.50.1 (Apple Git-155)
+

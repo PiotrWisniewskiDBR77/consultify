@@ -1,0 +1,822 @@
+From eac49f90bebe24591b29b3a1e28e0a3b232c88f8 Mon Sep 17 00:00:00 2001
+From: Piotr <piotr.wisniewski@dbr77.com>
+Date: Mon, 7 Sep 2026 08:03:57 +0200
+Subject: [PATCH 2/5] fix(05_INITIATIVES): RAID przepiety na kanoniczny writer
+ + koniec cichych awarii [ODMROZENIE 05_INITIATIVES DEC-453]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Wlasciciel cofnal odbior: zarzadzanie inicjatywami nie dziala. Zmierzone —
+komponenty RAID wolaly wycofane trasy /initiatives/:id/raid* (409), a czesc
+wywolan miala .catch(() => {}), wiec klikniecie nie robilo nic i nie mowilo nic.
+
+- nowy kanoniczny klient src/services/initiatives-execution/raidWrites.ts:
+  Runtime-v1, CAS z jednokrotnym ponowieniem po wersji podanej przez serwer,
+  komunikaty po polsku bez kodow technicznych
+- RaidSection: dodaj/edytuj/usun kanonicznie; identyfikator nadaje klient, wiec
+  cala maszyneria temp-id i kolejkowania edycji zniknela; nieudane usuniecie
+  przywraca wiersz zamiast udawac sukces
+- InitiativeDocumentView: 5 miejsc (AI dodaj/usun, recznie dodaj, usun);
+  handleUpdateRaid byl WYLACZNIE lokalny — edycja nigdy nie wychodzila na
+  serwer, teraz zapisuje sie kanonicznie
+- GateReadinessSection: zastosowanie propozycji AI dla RAID
+- pusty tytul nowej pozycji byl odrzucany przez serwer (400) juz przed 26A —
+  wpisujemy roboczy tytul z i18n (pl/en)
+- rejestr: DEC-453 (cofniecie odbioru + zmierzona przyczyna)
+
+Test: tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts (9/9; mutacja
+powrotu na trase legacy z polykaczem -> 2 czerwone)
+tsc frontu: 877 linii / 200 error TS PRZED = PO
+---
+ .../01_INDEKS_I_HARMONOGRAM.md                |   1 +
+ public/locales/en/translation.json            |   6 +-
+ public/locales/pl/translation.json            |   6 +-
+ .../Initiatives/InitiativeDocumentView.tsx    |  97 +++++++--
+ .../sections/GateReadinessSection.tsx         |   6 +-
+ .../Initiatives/sections/RaidSection.tsx      | 167 ++++++--------
+ .../initiatives-execution/raidWrites.ts       | 205 ++++++++++++++++++
+ .../zapisyRaidKanoniczneTrasy.test.ts         |  77 +++++++
+ 8 files changed, 436 insertions(+), 129 deletions(-)
+ create mode 100644 src/services/initiatives-execution/raidWrites.ts
+ create mode 100644 tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
+
+diff --git a/docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md b/docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md
+index f099a443a1..fc9e7b10f3 100644
+--- a/docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md
++++ b/docs/program/PROGRAM_NAPRAWCZY_20260905/01_INDEKS_I_HARMONOGRAM.md
+@@ -364,6 +364,7 @@
+ | P14-B SCALONE PRZEZ ROZSTRZYGNIECIE | `mvp/scal-p14b` (Sonnet) | **scalone** (`5f0fbf585b`) | 07.09 07:18 | (**ZWERYFIKOWANE PRZEZ CTO**: test kompletnosci rejestru 4/4 zielony w m03; 33 pliki, rozjazd 0; bramka: tsc serwera 0 linii, build `built in` OK, migracje 0 pending) | Konflikt add/add w `documentCardContracts.ts` + konflikt tresci w `registry.ts`. **Rejestr: 35/35/35/35 na czterech drzewach** — zadna strona nie dodawala kart, obie edytowaly metadane istniejacych wpisow; git skonfliktowal caly hunk, bo `report-builder` i `management-report` sasiaduja. Rozstrzygniecie per linia wg tego, KTO ja realnie migrowal (P14-B migrowal `report-builder`, P14-A `management-report`) — potwierdzone testem `registry.p14b.test.ts`, ktory wymienia piec kart P14-B i NIE wymienia `management-report`. **Najtrudniejsze miejsce**: obie paczki zdefiniowaly INNY KSZTALT typu `DocumentCardSectionContract` (P14-A: `icon`/`iconName`/`aiReason`; P14-B: `column: main|right` + `ai: writes|assists|read-only`). Robotnik NIE wybral strony — sprawdzil konsumentow, ustalil ze obie rodziny sa ROZLACZNE (`DocumentCardMenu5`+`StandardArtifactShell` vs nowy `DocumentCardNFrame`), polaczyl plik zachowujac WSZYSTKIE eksporty 1:1 i przemianowal tylko wewnetrzny typ. **9 kontraktow = 4 + 5, zero strat.** Testy: 7 plikow / 30 PASS. tsc frontu 877 linii / 200 bledow PRZED = PO (rozni sie tylko numeracja linii). Dlug przedmergowy nazwany: 3 bledy TFunction w widokach architekta wzorcow istnialy juz na HEAD |
+ | **DEC-452 — ODBIOR WLASCICIELA: WSZYSTKIE MODULY MVP WLASCICIELA** | pojemnik 1, pozycja 1.1 | **ODEBRANE** | 07.09 07:29 | (slowa wlasciciela) | Cytat: *Ja juz przeklikalem ekrany i na moje. To, jezeli chodzi o MVP wlasciciela, jestem OK ze wszystkimi modulami.* Skutek: pozycja **1.1 = odebrane**, szampan **S1.1 = tak**. To domyka wąskie gardlo, na ktorym staly trzy z czterech otwartych pozycji pojemnika 1 (1.9 re-audyt, 1.10 demo, 1.12 domkniecie Realizacji). **CZEGO TEN ODBIOR NIE OBEJMUJE (uczciwie, do wiadomosci wlasciciela):** (1) deduplikacja po tytule UKRYWA realne dokumenty — drugi `Nowy dokument` nie pojawia sie na liscie; przy czterech osobach w pilotazu kazdy kolejny zniknie pod poprzednim; to utrata dostepu do wlasnej pracy, wiec klasyfikuje jako WAZNY; (2) angielskie nazwy inicjatyw, decyzji i RAID (skrypt gotowy, przetestowany na sucho, NIEURUCHOMIONY — czeka na zgode); (3) piaty stan wskaznika `Zakonczona` (zamknieta inicjatywa swieci `na czas`) — wymaga odmrozenia 06_EXECUTION; (4) demo na starszym buildzie. Dlatego **kryterium 1 pozostaje NIESPELNIONE** mimo odbioru modulow: jego druga polowa brzmi `defekty z przejscia = 0 otwartych BLOKER/WAZNY`, a punkt (1) jest otwartym WAZNYM. Nie przestawiam go na zielono na podstawie samego `OK` |
+ | **SPROSTOWANIE DEC-452 (zglosil WLASCICIEL, nie ja)** | pojemnik 1, pozycja 1.1 | POPRAWIONE | 07.09 07:30 | (wlasciciel: *A wiem, gdzie lezelismy. Lezelismy w realizacji, tak? Tego jeszcze nie odbieralem.*) | Zapisalem DEC-452 jako `wszystkie moduly` — **za szeroko**. Wlasciciel sam skorygowal: **modul REALIZACJA nie byl odbierany**. Zgodne z zapisem z nocy: przyjete byly Czat, Moja Praca, Organizacja, Panel admin, Ustawienia, Wyniki, Materialy, Partnerzy oraz KARTA 5 (Kokpit Realizacji) i KARTA 6 (Audyty-Wnioski) — ale nie Realizacja jako modul. **To ja mialem to wiedziec i nie dopilnowalem** — mialem ten fakt w przekazaniu nocnym i mimo to przyjalem szersza formule. DEC-452 obowiazuje dla pozostalych modulow; pozycja 1.1 wraca na `w_toku` do czasu odbioru Realizacji. REALIZACJA JEST TEZ MODULEM, KTORY ZMIENIL SIE TEJ NOCY NAJBARDZIEJ: zakladka Realizacje (23 wiersze w toku zamiast 12 zatwierdzonych), Zasoby (3 pigulki zamiast 10), kolumna Odchylenie liczona od planu bazowego, uporzadkowane terminy, zakonczone inicjatywy nie sa juz `po terminie`, RAG bursztynowy przy dodatnim poslizgu, a na stagingu Decyzje i ryzyka maja teraz 7 pozycji RAID (przed scaleniem organizacji bylo 0) |
++| **DEC-453 — WLASCICIEL COFA ODBIOR: INICJATYWY I REALIZACJA** | pojemnik 1, pozycja 1.1 | **COFNIETE** | 07.09 08:00 | (slowa wlasciciela, sprawdzil na stagingu) | Cytat: *Niestety, ani jedno, ani drugie nie dziala. Takze cofamy. Inicjatywy i execution, funkcje zwiazane z zarzadzaniem nimi nie dzialaja.* **PRZYCZYNA ZMIERZONA (nie hipoteza)**: commit `bb57239243` z 19.08 (`feat(execution): retire legacy write surfaces`, decyzja 26A) zamontowal bramke, ktora odpowiada **409** na KAZDY zapis pod `/api/initiatives/:id/(milestones|resources|staffing-plans|budget-items|raid|gate-roles|start-execution|block|unblock|move|lifecycle-*|apply-template|apply-blueprint)`, na CALY router `/api/tasks` i na `/api/execution-control`. Retirement **wyprzedzil nastepce**: kanoniczny Runtime-v1 mial odpowiednik zapisu tylko dla czesci z tych zasobow, a front przez 19 dni nadal wolal wycofane trasy — czesc z `.catch(() => {})`, wiec awaria byla polykana bez slowa. **SKUTEK**: pozycja 1.1 wraca na `w_toku` dla 05_INITIATIVES i 06_EXECUTION; odmrozenie obu modulow jest konieczne, zeby naprawic zapisy. Zakres naprawy i to, co ZOSTAJE niesprawne, w meldunku galezi `mvp/zapisy-inicjatyw` |
+ | 1.5 P8 (wklejka 2) | `codex/p8-teresa` | WYDANE Codexowi 06.09 rano | 06.09 06:40 | — | funkcja celu: wznowienie w `/private/tmp/codex-p8-teresa` (HEAD `59e282df88` + 32 pliki niecommitowane), najpierw commit per krok z markerami, potem `merge --no-ff` stagingu, potem progi §10 z `P8_TERESA_KONTRAKTY.md` |
+ | P7 | — | nawigacja KPI tabela → lista → karta N | **WYKONANE 05.09** (`dda794943e`) | — | — |
+ | P8 | (w P3/P5) | sprzątanie danych testowych z historii Czatu | 0,5 d | — | dane, nie kod |
+diff --git a/public/locales/en/translation.json b/public/locales/en/translation.json
+index 8488fc3a2e..d638ec942f 100644
+--- a/public/locales/en/translation.json
++++ b/public/locales/en/translation.json
+@@ -12595,7 +12595,11 @@
+       "toast": {
+         "rescheduleFailed": "Couldn't reschedule"
+       }
+-    }
++    },
++    "raid": {
++      "newItemTitle": "New item"
++    },
++    "failedToRemoveRaid2": "Failed to remove RAID item"
+   },
+   "execution": {
+     "review": {
+diff --git a/public/locales/pl/translation.json b/public/locales/pl/translation.json
+index 16487f9946..4f658d6506 100644
+--- a/public/locales/pl/translation.json
++++ b/public/locales/pl/translation.json
+@@ -12037,7 +12037,11 @@
+       "toast": {
+         "rescheduleFailed": "Nie udało się zmienić terminu"
+       }
+-    }
++    },
++    "raid": {
++      "newItemTitle": "Nowa pozycja"
++    },
++    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID"
+   },
+   "execution": {
+     "review": {
+diff --git a/src/components/Initiatives/InitiativeDocumentView.tsx b/src/components/Initiatives/InitiativeDocumentView.tsx
+index b7a55f174f..206f27ffd1 100644
+--- a/src/components/Initiatives/InitiativeDocumentView.tsx
++++ b/src/components/Initiatives/InitiativeDocumentView.tsx
+@@ -88,6 +88,12 @@ import { Api, API_URL, getHeaders } from '@/services/api';
+ import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
+ import { V8PlanningApi } from '@/services/api/v8/planning';
+ import { V8ResultsApi } from '@/services/api/v8/results';
++import {
++  createRaidItem as createCanonicalRaidItem,
++  deleteRaidItem as deleteCanonicalRaidItem,
++  newRaidItemId,
++  updateRaidItem as updateCanonicalRaidItem,
++} from '@/services/initiatives-execution/raidWrites';
+ import { readRegisteredInitiative, requestHandoffAcceptance } from '@/services/initiatives-execution/runtimeApi';
+ // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+ import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+@@ -1345,14 +1351,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+       // Add first (non-destructive), then remove.
+       for (const x of toAdd) {
+         const typeUpper = String(x.type || 'risk').toUpperCase();
+-        const res: any = await Api.post(`/initiatives/${initiativeId}/raid`, {
+-          type: typeUpper,
++        // Kanoniczny writer 26A — wycofana trasa `/initiatives/:id/raid`
++        // odpowiadala 409 i propozycje AI nigdy sie nie zapisywaly.
++        const id = await createCanonicalRaidItem(initiativeId, newRaidItemId(), {
++          type: typeUpper as 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY',
+           title: x.title,
+           description: x.description || x.rationale || '',
+-          severity: x.severity || 'MEDIUM',
++          severity: (x.severity || 'MEDIUM') as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
++          status: 'OPEN',
+         });
+-
+-        const id = String(res?.id || res?.raidId || res?.item?.id || '');
+         if (id) {
+           setRaidItems((prev) => [
+             ...prev,
+@@ -1376,11 +1383,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+       for (const r of toRemove) {
+         const id = r.raidId;
+         setRaidItems((prev) => prev.filter((item: any) => String(item?.id) !== String(id)));
+-        try {
+-          await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
+-        } catch {
+-          // best-effort
+-        }
++        // Bez try/catch: nieudane usuniecie musi przerwac stosowanie propozycji
++        // i powiedziec o tym uzytkownikowi (obsluga w catch ponizej), a nie
++        // zniknac po cichu razem z wierszem na ekranie.
++        await deleteCanonicalRaidItem(initiativeId, String(id));
+       }
+ 
+       // Refresh RAID list (server is source of truth)
+@@ -3730,14 +3736,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+     if (!newRaidTitle.trim()) return;
+     setIsMutating(true);
+     try {
+-      const res = await Api.post(`/initiatives/${initiativeId}/raid`, {
+-        type: newRaidType,
++      const id = await createCanonicalRaidItem(initiativeId, newRaidItemId(), {
++        type: String(newRaidType).toUpperCase() as
++          | 'RISK'
++          | 'ASSUMPTION'
++          | 'ISSUE'
++          | 'DEPENDENCY',
+         title: newRaidTitle,
+         description: newRaidDescription,
+-        severity: newRaidSeverity,
++        severity: String(newRaidSeverity).toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+         status: 'OPEN',
+       });
+-      setRaidItems((prev) => [...prev, res]);
++      setRaidItems((prev) => [
++        ...prev,
++        {
++          id,
++          initiativeId,
++          type: newRaidType,
++          title: newRaidTitle,
++          description: newRaidDescription,
++          severity: newRaidSeverity,
++          status: 'OPEN',
++        } as any,
++      ]);
+       setNewRaidTitle('');
+       setNewRaidDescription('');
+       setShowCreateRaid(false);
+@@ -3749,21 +3770,53 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
+     }
+   };
+ 
+-  const handleUpdateRaid = useCallback((id: string, updates: Partial<RaidItem>) => {
+-    setRaidItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+-  }, []);
++  /**
++   * Edycja pozycji RAID w widoku dokumentu byla do 07.09 WYLACZNIE lokalna —
++   * zaden zapis nie wychodzil na serwer, wiec zmiana znikala po odswiezeniu
++   * strony i nikt sie o tym nie dowiadywal. Teraz idzie kanoniczna komenda.
++   */
++  const handleUpdateRaid = useCallback(
++    (id: string, updates: Partial<RaidItem>) => {
++      setRaidItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
++      if (!initiativeId) return;
++      const patch: Record<string, unknown> = {};
++      if (updates.title !== undefined) patch.title = updates.title || null;
++      if (updates.description !== undefined) patch.description = updates.description ?? null;
++      if (updates.status !== undefined) patch.status = String(updates.status).toUpperCase();
++      if (updates.severity !== undefined) patch.severity = String(updates.severity).toUpperCase();
++      // dueDate/ownerId nie naleza do typu RaidItem tego widoku — czytamy je
++      // defensywnie, zeby edytor, ktory je poda, tez zostal zapisany.
++      const extra = updates as Partial<RaidItem> & { dueDate?: string; ownerId?: string };
++      if (extra.dueDate !== undefined) patch.dueDate = extra.dueDate || null;
++      if (extra.ownerId !== undefined) patch.ownerId = extra.ownerId || null;
++      if (Object.keys(patch).length === 0) return;
++      void updateCanonicalRaidItem(initiativeId, id, patch).catch((error: Error) => {
++        toast.error(error.message);
++      });
++    },
++    [initiativeId]
++  );
+ 
+   const handleDeleteRaid = useCallback(
+     async (id: string) => {
++      const removed = raidItems.find((item) => item.id === id);
+       setRaidItems((prev) => prev.filter((item) => item.id !== id));
+-      toast.success(t('initiatives.raidItemRemoved2'));
+       try {
+-        await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
+-      } catch {
+-        // Best-effort backend delete — item already removed from UI
++        await deleteCanonicalRaidItem(initiativeId, id);
++        toast.success(t('initiatives.raidItemRemoved2'));
++      } catch (error: any) {
++        // Nieudane usuniecie bylo polykane w ciszy: wiersz znikal z ekranu,
++        // a na serwerze zostawal. Teraz wraca i mowi, dlaczego.
++        toast.error(
++          error?.message ||
++            t('initiatives.failedToRemoveRaid2', 'Nie udało się usunąć pozycji RAID')
++        );
++        if (removed) {
++          setRaidItems((prev) => (prev.some((i) => i.id === id) ? prev : [...prev, removed]));
++        }
+       }
+     },
+-    [initiativeId, isPolish]
++    [initiativeId, raidItems, t]
+   );
+ 
+   // ── Resource CRUD handlers (Team / Budget / Tools) ──────────────────────
+diff --git a/src/components/Initiatives/sections/GateReadinessSection.tsx b/src/components/Initiatives/sections/GateReadinessSection.tsx
+index 18588727eb..428612a258 100644
+--- a/src/components/Initiatives/sections/GateReadinessSection.tsx
++++ b/src/components/Initiatives/sections/GateReadinessSection.tsx
+@@ -26,6 +26,7 @@ import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+ import { useGateAi } from '@/hooks/useGateAi';
+ import Api from '@/services/api';
+ import { trackFunnelEvent } from '@/services/funnelAnalytics';
++import { updateRaidItem as updateCanonicalRaidItem } from '@/services/initiatives-execution/raidWrites';
+ import { getStatusMeta } from '@/services/initiativeLifecycle';
+ 
+ import { GateReadinessPanel, GateReadinessPill } from '../gate-ai';
+@@ -958,7 +959,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
+           if (u.ownerId) payload.ownerId = u.ownerId;
+           if (u.dueDate) payload.dueDate = toIsoFromDateOnly(u.dueDate);
+           if (Object.keys(payload).length === 0) continue;
+-          await Api.patch(`/initiatives/${initiativeId}/raid/${u.raidId}`, payload);
++          // Kanoniczny writer 26A. Wycofana trasa
++          // `PATCH /initiatives/:id/raid/:raidId` odpowiadala 409, wiec
++          // zastosowanie propozycji AI dla RAID nie zmienialo niczego.
++          await updateCanonicalRaidItem(initiativeId, u.raidId, payload);
+         }
+       }
+ 
+diff --git a/src/components/Initiatives/sections/RaidSection.tsx b/src/components/Initiatives/sections/RaidSection.tsx
+index 9961e2f683..e367b8f773 100644
+--- a/src/components/Initiatives/sections/RaidSection.tsx
++++ b/src/components/Initiatives/sections/RaidSection.tsx
+@@ -21,14 +21,22 @@ import type {
+   RiskResponseStrategy,
+ } from '@/components/shared/NModeSections/RaidCanvas';
+ import { RaidCanvas } from '@/components/shared/NModeSections/RaidCanvas';
+-import { Api } from '@/services/api';
++import {
++  createRaidItem as createCanonicalRaidItem,
++  deleteRaidItem as deleteCanonicalRaidItem,
++  newRaidItemId,
++  updateRaidItem as updateCanonicalRaidItem,
++} from '@/services/initiatives-execution/raidWrites';
+ 
+ import { CollapsibleSection } from './CollapsibleSection';
+ import { useInitiativeContext } from './InitiativeContext';
+ import type { InitiativeSectionProps } from './types';
+ 
+-/** Local-only ids are generated client-side before the server confirms the row. */
+-const isTempRaidId = (id: string): boolean => id.startsWith('raid-');
++/**
++ * Identyfikator pozycji RAID nadaje teraz KLIENT (kanoniczna komenda 26A jest
++ * adresowana docelowym id), wiec nie ma juz stanu "tymczasowego id" i calej
++ * maszynerii kolejkowania edycji na czas lotu POST-a.
++ */
+ 
+ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+   sectionType,
+@@ -57,16 +65,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+   // (selects, date picker) go straight through.
+   const pendingPatchRef = useRef<Record<string, Partial<RaidItem>>>({});
+   const patchTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+-  // Ids removed locally while their create POST was still in flight — used
+-  // to clean up the orphaned server row once the real id comes back.
+-  const removedWhilePendingRef = useRef<Set<string>>(new Set());
+-  // Edits made to a brand-new item while its create POST is still in
+-  // flight can't PATCH yet (no real id exists server-side). Queue them
+-  // here keyed by tempId and flush under the real id once the POST
+-  // resolves — otherwise they're silently dropped (data-loss bug fixed
+-  // 2026-08-01: sendRaidPatch no-ops on temp ids with nowhere for the
+-  // edit to go).
+-  const queuedPatchForTempIdRef = useRef<Record<string, Partial<RaidItem>>>({});
+ 
+   // Debounced PATCHes are fire-and-forget timers outside React's render
+   // cycle — clear them on unmount so navigating away mid-edit doesn't
+@@ -105,13 +103,19 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+ 
+   // ── Handlers ─────────────────────────────────────────────────────────
+ 
+-  /** Backend PATCH /initiatives/:id/raid/:raidId only persists these fields. */
++  /**
++   * Kanoniczny (26A) zapis edycji pozycji RAID.
++   *
++   * Wczesniej szedl na wycofana trase `PATCH /initiatives/:id/raid/:raidId`
++   * (odpowiedz 409) i mial `.catch(() => {})` — edycja przepadala BEZ SLOWA.
++   * Teraz kazda nieudana zmiana mowi uzytkownikowi, co sie stalo.
++   */
+   const sendRaidPatch = useCallback(
+     (id: string, updates: Partial<RaidItem>) => {
+-      if (!initiativeId || isTempRaidId(id)) return;
++      if (!initiativeId) return;
+ 
+       const body: Record<string, unknown> = {};
+-      if (updates.title !== undefined) body.title = updates.title;
++      if (updates.title !== undefined) body.title = updates.title || null;
+       if (updates.description !== undefined) body.description = updates.description;
+       if (updates.status !== undefined) body.status = String(updates.status).toUpperCase();
+       if (updates.impact !== undefined) body.severity = String(updates.impact).toUpperCase();
+@@ -119,15 +123,15 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+         body.probability = String(updates.probability).toUpperCase();
+       if (updates.dueDate !== undefined) body.dueDate = updates.dueDate || null;
+       if (updates.owner !== undefined) body.ownerId = updates.owner || null;
++      if (updates.mitigation !== undefined) body.mitigationPlan = updates.mitigation || null;
+ 
+-      // Fields like category/mitigation/contingency/proposedAction/source/
+-      // responseStrategy/type have no column on this endpoint today — they
+-      // stay local-only (UI still reflects them via setRaidItems above).
++      // Pola category/contingency/proposedAction/source/responseStrategy/type
++      // nie maja wlasnej kolumny w kanonicznej komendzie — zostaja lokalne
++      // (UI odzwierciedla je przez setRaidItems powyzej).
+       if (Object.keys(body).length === 0) return;
+ 
+-      Api.patch(`/initiatives/${initiativeId}/raid/${id}`, body).catch(() => {
+-        // Best-effort — local state already reflects the edit; a silent
+-        // background sync failure shouldn't interrupt typing.
++      void updateCanonicalRaidItem(initiativeId, id, body).catch((error: Error) => {
++        toast.error(error.message);
+       });
+     },
+     [initiativeId]
+@@ -137,11 +141,18 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+     (type: RaidType) => {
+       if (!initiativeId) return;
+ 
+-      const tempId = `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
++      // Id nadaje klient — kanoniczna komenda jest adresowana docelowym id,
++      // wiec pozycja od pierwszej chwili ma ostateczny identyfikator i kazda
++      // edycja trafia we wlasciwy rekord.
++      const id = newRaidItemId();
++      // Tytul nie moze byc pusty: i wycofany zapis legacy, i kanoniczna
++      // komenda odrzucaja pusty tytul (400). Wpisujemy roboczy, ktory
++      // uzytkownik nadpisuje w tabeli.
++      const title = t('initiatives.raid.newItemTitle', 'Nowa pozycja');
+       const newItem = {
+-        id: tempId,
++        id,
+         type,
+-        title: '',
++        title,
+         severity: 'MEDIUM' as const,
+         status: 'OPEN',
+         owner: '',
+@@ -149,52 +160,22 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+       };
+       setRaidItems((prev) => [newItem, ...prev]);
+ 
+-      Api.post(`/initiatives/${initiativeId}/raid`, {
+-        type: String(type).toUpperCase(),
+-        title: '',
+-        description: '',
++      void createCanonicalRaidItem(initiativeId, id, {
++        type: String(type).toUpperCase() as 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY',
++        title,
+         severity: 'MEDIUM',
+-        idempotencyKey: tempId,
++        status: 'OPEN',
+       })
+-        .then((res: any) => {
+-          const realId = res?.id;
+-          if (!realId) return;
+-
+-          if (removedWhilePendingRef.current.has(tempId)) {
+-            // User already removed the row locally before the server id
+-            // came back — the local list no longer has it, so just clean
+-            // up the now-orphaned server-side row.
+-            removedWhilePendingRef.current.delete(tempId);
+-            delete queuedPatchForTempIdRef.current[tempId];
+-            Api.delete(`/initiatives/${initiativeId}/raid/${realId}`).catch(() => {});
+-            return;
+-          }
+-
+-          setRaidItems((prev) =>
+-            prev.map((item) => (item.id === tempId ? { ...item, id: realId } : item))
+-          );
++        .then(() => {
+           toast.success(t('initiatives.raidItemAdded2'));
+-
+-          // Flush any edit(s) the user made while the create POST was still
+-          // in flight — these were queued (not dropped) by sendRaidPatch
+-          // because there was no real id to PATCH against yet.
+-          const queued = queuedPatchForTempIdRef.current[tempId];
+-          if (queued) {
+-            delete queuedPatchForTempIdRef.current[tempId];
+-            sendRaidPatch(realId, queued);
+-          }
+         })
+-        .catch((e: any) => {
+-          removedWhilePendingRef.current.delete(tempId);
+-          toast.error(
+-            e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item')
+-          );
+-          // Roll back the optimistic local item — the UI must not claim
+-          // something was saved when it wasn't.
+-          setRaidItems((prev) => prev.filter((item) => item.id !== tempId));
++        .catch((error: Error) => {
++          toast.error(error.message);
++          // Cofamy optymistyczny wiersz — UI nie moze udawac, ze cos zapisal.
++          setRaidItems((prev) => prev.filter((item) => item.id !== id));
+         });
+     },
+-    [setRaidItems, initiativeId, t, sendRaidPatch]
++    [setRaidItems, initiativeId, t]
+   );
+ 
+   const handleUpdateItem = useCallback(
+@@ -232,15 +213,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+         updates.owner !== undefined;
+ 
+       if (!isKeystrokeField) {
+-        if (isTempRaidId(id)) {
+-          // Create POST still in flight — nothing to PATCH yet. Queue so
+-          // handleAddItem's .then() can flush it once the real id lands.
+-          queuedPatchForTempIdRef.current[id] = {
+-            ...(queuedPatchForTempIdRef.current[id] || {}),
+-            ...updates,
+-          };
+-          return;
+-        }
+         sendRaidPatch(id, updates);
+         return;
+       }
+@@ -255,18 +227,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+         delete pending[id];
+         delete timers[id];
+         if (!merged) return;
+-        if (isTempRaidId(id)) {
+-          // The create POST for this item still hadn't resolved by the
+-          // time the debounce fired — queue instead of dropping (fixes
+-          // the 2026-08-01 silent-data-loss bug: this branch used to call
+-          // sendRaidPatch(id, merged) here, which no-ops on temp ids and
+-          // threw the edit away for good).
+-          queuedPatchForTempIdRef.current[id] = {
+-            ...(queuedPatchForTempIdRef.current[id] || {}),
+-            ...merged,
+-          };
+-          return;
+-        }
+         sendRaidPatch(id, merged);
+       }, 400);
+     },
+@@ -275,6 +235,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+ 
+   const handleRemoveItem = useCallback(
+     (id: string) => {
++      // Zapamietujemy wiersz, zeby przywrocic go, gdy serwer odmowi.
++      const removed = raidItems.find((item: { id: string }) => item.id === id);
+       setRaidItems((prev) => prev.filter((item) => item.id !== id));
+ 
+       // Drop any pending debounced patch for this item.
+@@ -287,25 +249,22 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
+ 
+       if (!initiativeId) return;
+ 
+-      if (isTempRaidId(id)) {
+-        // Create POST is still in flight — mark for cleanup once the real
+-        // id comes back, since there's nothing to DELETE yet. Also drop
+-        // any edit queued for this temp id — the item is gone, nothing
+-        // left to flush.
+-        removedWhilePendingRef.current.add(id);
+-        delete queuedPatchForTempIdRef.current[id];
+-        toast.success(t('initiatives.raidItemRemoved2'));
+-        return;
+-      }
+-
+-      toast.success(t('initiatives.raidItemRemoved2'));
+-      Api.delete(`/initiatives/${initiativeId}/raid/${id}`).catch((e: any) => {
+-        toast.error(
+-          e?.message || t('initiatives.toast.deleteRaidError', 'Failed to remove RAID item')
+-        );
+-      });
++      void deleteCanonicalRaidItem(initiativeId, id)
++        .then(() => {
++          toast.success(t('initiatives.raidItemRemoved2'));
++        })
++        .catch((error: Error) => {
++          toast.error(error.message);
++          // Przywracamy wiersz — pozycja nadal istnieje po stronie serwera,
++          // wiec lista nie moze udawac, ze zostala usunieta.
++          if (removed) {
++            setRaidItems((prev) =>
++              prev.some((i: { id: string }) => i.id === id) ? prev : [removed, ...prev]
++            );
++          }
++        });
+     },
+-    [setRaidItems, initiativeId, t]
++    [setRaidItems, raidItems, initiativeId, t]
+   );
+ 
+   const handleConvertToIssue = useCallback(
+diff --git a/src/services/initiatives-execution/raidWrites.ts b/src/services/initiatives-execution/raidWrites.ts
+new file mode 100644
+index 0000000000..2daeda9ce9
+--- /dev/null
++++ b/src/services/initiatives-execution/raidWrites.ts
+@@ -0,0 +1,205 @@
++/**
++ * Kanoniczny (26A) klient zapisu pozycji RAID inicjatywy.
++ *
++ * POWOD ISTNIENIA — trzy rzeczy naraz, zmierzone 07.09:
++ *
++ *  1. Front wolal wycofane trasy `POST/PATCH/DELETE /api/initiatives/:id/raid*`.
++ *     Bramka `requireCanonicalInitiativeExecutionWriter` odpowiada na nie 409,
++ *     wiec dodanie, edycja i usuniecie ryzyka nie robily NIC.
++ *  2. Czesc wywolan miala `.catch(() => {})` — awaria byla polykana w ciszy,
++ *     uzytkownik nie dostawal zadnego komunikatu.
++ *  3. Kanoniczny writer jest CAS-owy (`expectedVersion`), a UI nie ma skad
++ *     znac wersji agregatu. Ten modul trzyma ja u siebie i po konflikcie
++ *     ponawia raz z wersja podana przez serwer, wiec ekran nie musi o tym
++ *     wiedziec.
++ *
++ * Zapis idzie do tego samego modelu odczytu, ktory czyta UI
++ * (`GET /api/initiatives/:id/raid` -> tabela `raid_items`), wiec rekord jest
++ * widoczny po odswiezeniu strony, a nie tylko w stanie komponentu.
++ */
++
++const BASE = '/api/initiatives/runtime-v1/initiatives';
++
++/** Wersja agregatu per pozycja RAID — CAS kanonicznego writera. */
++const aggregateVersions = new Map<string, number>();
++
++function newRequestId(): string {
++  const c = globalThis.crypto;
++  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
++  return `raid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
++}
++
++export class RaidWriteError extends Error {
++  constructor(
++    /** Komunikat po polsku, gotowy do pokazania uzytkownikowi. */
++    message: string,
++    readonly status: number
++  ) {
++    super(message);
++    this.name = 'RaidWriteError';
++  }
++}
++
++function messageForStatus(status: number, conflictAfterRetry: boolean): string {
++  if (conflictAfterRetry) {
++    return 'Ktoś inny zmienił tę pozycję w tym samym czasie. Odśwież stronę i wprowadź zmianę jeszcze raz.';
++  }
++  if (status === 401) return 'Sesja wygasła. Zaloguj się ponownie i powtórz zmianę.';
++  if (status === 403 || status === 404) {
++    return 'Nie możesz zmieniać tej inicjatywy albo została usunięta. Odśwież stronę.';
++  }
++  if (status === 400) return 'Nie udało się zapisać — sprawdź wypełnione pola i spróbuj ponownie.';
++  if (status === 0) return 'Zapis nie doszedł do serwera. Sprawdź połączenie i spróbuj ponownie.';
++  return 'Zapis się nie powiódł. Spróbuj ponownie za chwilę.';
++}
++
++async function readJson(response: Response): Promise<Record<string, any>> {
++  try {
++    return (await response.json()) as Record<string, any>;
++  } catch {
++    return {};
++  }
++}
++
++async function call(
++  method: 'POST' | 'PATCH' | 'DELETE',
++  initiativeId: string,
++  raidItemId: string,
++  payload: Record<string, unknown>,
++  expectedVersion: number
++): Promise<{ ok: true; version: number } | { ok: false; status: number; currentVersion?: number }> {
++  let response: Response;
++  try {
++    response = await fetch(
++      `${BASE}/${encodeURIComponent(initiativeId)}/raid-items/${encodeURIComponent(raidItemId)}`,
++      {
++        method,
++        headers: { 'Content-Type': 'application/json' },
++        credentials: 'include',
++        body: JSON.stringify({ ...payload, expectedVersion, clientRequestId: newRequestId() }),
++      }
++    );
++  } catch {
++    return { ok: false, status: 0 };
++  }
++  const body = await readJson(response);
++  if (response.ok) {
++    return { ok: true, version: Number(body.aggregateVersion ?? expectedVersion + 1) };
++  }
++  const current = body?.error?.currentVersion;
++  return {
++    ok: false,
++    status: response.status,
++    currentVersion: typeof current === 'number' ? current : undefined,
++  };
++}
++
++/**
++ * Wysyla komende i — gdy serwer zglosi konflikt wersji — ponawia RAZ z wersja,
++ * ktora serwer podal jako biezaca. Pozycje zalozone przed 26A nie maja jeszcze
++ * wersji (serwer zwraca `null`), dlatego domyslna wartoscia jest 0.
++ */
++async function send(
++  method: 'POST' | 'PATCH' | 'DELETE',
++  initiativeId: string,
++  raidItemId: string,
++  payload: Record<string, unknown>
++): Promise<void> {
++  const first = await call(
++    method,
++    initiativeId,
++    raidItemId,
++    payload,
++    aggregateVersions.get(raidItemId) ?? 0
++  );
++  if (first.ok) {
++    aggregateVersions.set(raidItemId, first.version);
++    return;
++  }
++  if (first.status === 409 && typeof first.currentVersion === 'number') {
++    const retry = await call(method, initiativeId, raidItemId, payload, first.currentVersion);
++    if (retry.ok) {
++      aggregateVersions.set(raidItemId, retry.version);
++      return;
++    }
++    throw new RaidWriteError(messageForStatus(retry.status, retry.status === 409), retry.status);
++  }
++  throw new RaidWriteError(messageForStatus(first.status, first.status === 409), first.status);
++}
++
++export type RaidItemDraft = {
++  type: 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY';
++  title: string;
++  description?: string | null;
++  status?: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED';
++  probability?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
++  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
++  ownerId?: string | null;
++  dueDate?: string | null;
++  mitigationPlan?: string | null;
++};
++
++export type RaidItemPatch = {
++  title?: string | null;
++  description?: string | null;
++  status?: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
++  probability?: 'LOW' | 'MEDIUM' | 'HIGH' | null;
++  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
++  ownerId?: string | null;
++  dueDate?: string | null;
++  mitigationPlan?: string | null;
++};
++
++/** Identyfikator nadaje klient — kanoniczna komenda jest adresowana docelowym id. */
++export function newRaidItemId(): string {
++  return newRequestId();
++}
++
++export async function createRaidItem(
++  initiativeId: string,
++  raidItemId: string,
++  draft: RaidItemDraft
++): Promise<string> {
++  await send('POST', initiativeId, raidItemId, {
++    type: draft.type,
++    title: draft.title,
++    description: draft.description ?? null,
++    status: draft.status ?? 'OPEN',
++    probability: draft.probability ?? null,
++    severity: draft.severity ?? null,
++    ownerId: draft.ownerId ?? null,
++    dueDate: draft.dueDate ?? null,
++    mitigationPlan: draft.mitigationPlan ?? null,
++    linkedItems: [],
++  });
++  return raidItemId;
++}
++
++export async function updateRaidItem(
++  initiativeId: string,
++  raidItemId: string,
++  patch: RaidItemPatch
++): Promise<void> {
++  // `null` znaczy "nie zmieniaj" — kanoniczna komenda robi COALESCE, tak samo
++  // jak robil wycofany zapis legacy, wiec czesciowa edycja nie zeruje reszty.
++  await send('PATCH', initiativeId, raidItemId, {
++    title: patch.title ?? null,
++    description: patch.description ?? null,
++    status: patch.status ?? null,
++    probability: patch.probability ?? null,
++    severity: patch.severity ?? null,
++    ownerId: patch.ownerId ?? null,
++    dueDate: patch.dueDate ?? null,
++    mitigationPlan: patch.mitigationPlan ?? null,
++  });
++}
++
++export async function deleteRaidItem(initiativeId: string, raidItemId: string): Promise<void> {
++  await send('DELETE', initiativeId, raidItemId, {});
++  aggregateVersions.delete(raidItemId);
++}
++
++/** Wylacznie dla testow — czysci pamiec wersji miedzy przypadkami. */
++export function __resetRaidVersionCache(): void {
++  aggregateVersions.clear();
++}
+diff --git a/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts b/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
+new file mode 100644
+index 0000000000..9034e1bc41
+--- /dev/null
++++ b/tests/unit/initiatives/zapisyRaidKanoniczneTrasy.test.ts
+@@ -0,0 +1,77 @@
++/**
++ * Bezpiecznik: front NIE MOZE wolac wycofanych tras zapisu RAID.
++ *
++ * POWOD: 07.09 wlasciciel wycofal odbior Inicjatyw, bo dodanie/edycja/usuniecie
++ * ryzyka nie robily nic — komponenty wolaly `/initiatives/:id/raid*`, a bramka
++ * `requireCanonicalInitiativeExecutionWriter` odpowiada na te trasy 409.
++ *
++ * MUTACJA (sprawdzona): przywroc w dowolnym z tych plikow
++ * `Api.post('/initiatives/${id}/raid', ...)` albo `.catch(() => {})` na sciezce
++ * zapisu — test staje sie czerwony.
++ */
++import { readFileSync } from 'node:fs';
++import { join } from 'node:path';
++
++import { describe, expect, it } from 'vitest';
++
++const ROOT = process.cwd();
++
++/** Pliki, ktore realnie zapisuja pozycje RAID inicjatywy. */
++const RAID_WRITERS = [
++  'src/components/Initiatives/sections/RaidSection.tsx',
++  'src/components/Initiatives/InitiativeDocumentView.tsx',
++  'src/components/Initiatives/sections/GateReadinessSection.tsx',
++];
++
++const read = (relative: string): string => readFileSync(join(ROOT, relative), 'utf8');
++
++/** Wycofane zapisy legacy — POST/PATCH/PUT/DELETE na `/initiatives/:id/raid`. */
++const LEGACY_RAID_WRITE = /Api\.(post|put|patch|delete)\(\s*`\/initiatives\/\$\{[^}]+\}\/raid/;
++
++describe('zapisy RAID inicjatywy ida wylacznie kanoniczna trasa (26A)', () => {
++  it.each(RAID_WRITERS)('%s nie wola wycofanej trasy legacy', (relative) => {
++    expect(LEGACY_RAID_WRITE.test(read(relative))).toBe(false);
++  });
++
++  it.each(RAID_WRITERS)('%s uzywa kanonicznego klienta raidWrites', (relative) => {
++    expect(read(relative)).toContain("@/services/initiatives-execution/raidWrites");
++  });
++
++  it('kanoniczny klient uderza w Runtime-v1, a nie w powierzchnie legacy', () => {
++    const client = read('src/services/initiatives-execution/raidWrites.ts');
++    expect(client).toContain("'/api/initiatives/runtime-v1/initiatives'");
++    expect(client).toMatch(/raid-items/);
++  });
++
++  it('zaden zapis RAID nie polyka awarii po cichu', () => {
++    // `.catch(() => {})` / `catch {}` na sciezce zapisu = uzytkownik klika i nic
++    // sie nie dzieje, bez komunikatu. To wlasnie zglosil wlasciciel.
++    const swallow = /\.catch\(\s*\(\s*\)\s*=>\s*\{\s*\}\s*\)/;
++    for (const relative of [...RAID_WRITERS, 'src/services/initiatives-execution/raidWrites.ts']) {
++      const source = read(relative);
++      const raidBlocks = source
++        .split('\n')
++        // Komentarze opisuja WYCOFANY wzorzec — nie sa kodem, ktory polyka.
++        .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
++        .filter((line) => /raid/i.test(line) || swallow.test(line));
++      expect(
++        raidBlocks.filter((line) => swallow.test(line)),
++        `polykacz bledu w ${relative}`
++      ).toEqual([]);
++    }
++  });
++
++  it('kazda odmowa zapisu ma komunikat po polsku, bez kodow technicznych', () => {
++    const client = read('src/services/initiatives-execution/raidWrites.ts');
++    for (const phrase of [
++      'Sesja wygasła',
++      'Odśwież stronę',
++      'Sprawdź połączenie',
++      'spróbuj ponownie',
++    ]) {
++      expect(client, `brak komunikatu: ${phrase}`).toContain(phrase);
++    }
++    // Zadnych kodow/statusow na ekranie.
++    expect(client).not.toMatch(/EXECUTION_RUNTIME_V1_WRITE_REQUIRED'[^)]*message/);
++  });
++});
+-- 
+2.50.1 (Apple Git-155)
+
