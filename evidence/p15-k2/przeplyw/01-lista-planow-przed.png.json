@@ -1,0 +1,9 @@
+{
+  "nazwa": "01-lista-planow-przed",
+  "opis": "Inicjatywy → Plan: lista planów przed założeniem nowego",
+  "url": "http://localhost:3173/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:22:21.621Z"
+}

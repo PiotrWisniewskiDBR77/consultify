@@ -91,14 +91,19 @@ export function GeneratorPlanuModal({
     item.conditional
       ? t('initiatives.planGenerator.statusPending', 'Do zatwierdzenia')
       : t('initiatives.planGenerator.statusApproved', 'Zatwierdzona');
+  // ZMIERZONE 07.09 (evidence/p15-k2/przeplyw/06-…): `bg-c-overlay/60` i
+  // `bg-c-background` NIE ISTNIEJĄ w skali tokenów (tailwind.config.js `c:` ma
+  // `bg`/`surface`/`surface-raised`, nie `overlay`/`background`), więc okno
+  // generatora było PRZEZROCZYSTE — treść strony przebijała przez sekcje.
+  // Ta sama zasłona, co dialog publikacji planu w `PlanScenarioSurface`.
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={t('initiatives.planGenerator.title', 'Generator planu')}
-      className="fixed inset-0 z-modal flex items-center justify-center bg-c-overlay/60 p-6"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-black/50 p-6"
     >
-      <div className="max-h-[92vh] w-full max-w-4xl overflow-auto rounded-2xl border border-c-border bg-c-background p-5 text-c-text shadow-2xl">
+      <div className="max-h-[92vh] w-full max-w-4xl overflow-auto rounded-2xl border border-c-border bg-c-surface p-5 text-c-text shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
             {t('initiatives.planGenerator.title', 'Generator planu')}

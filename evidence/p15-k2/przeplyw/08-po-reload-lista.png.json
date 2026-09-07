@@ -1,0 +1,9 @@
+{
+  "nazwa": "08-po-reload-lista",
+  "opis": "Po przeładowaniu: lista planów z nazwą portfela roboczego i autorem",
+  "url": "http://localhost:3173/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:23:02.560Z"
+}

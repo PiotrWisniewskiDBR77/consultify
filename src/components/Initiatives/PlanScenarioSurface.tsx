@@ -101,6 +101,25 @@ interface RegisterRow extends TableRow {
   conflicts: number;
   author: string;
 }
+/** Kszalt wiersza z `GET /plan-scenarios` (rejestr planów). */
+interface RegisterApiRow {
+  id: string;
+  name: string;
+  state: string;
+  version: number;
+  portfolioRef: { scenarioId: string; scenarioVersion: number; name?: string | null };
+  window: { earliest: string | null; latest: string | null };
+  updatedAt: string;
+  timeBasis?: {
+    windowUnit: string;
+    timezone: string;
+    periods: Array<{ periodId: string; start: string; end: string }>;
+    knowledgeState: 'KNOWN' | 'UNKNOWN';
+  };
+  initiativeCount?: number;
+  conflicts?: number;
+  author?: string;
+}
 interface Props extends CanonicalMenu3Contract {
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
   demoMode?: boolean;
@@ -343,6 +362,67 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     [demoMode]
   );
 
+  // ZMIERZONE 07.09: opakowanie tego mapowania w `useCallback([t])` wpuszczalo
+  // `t` w liste zaleznosci `loadRegister`. W srodowisku, w ktorym `t` nie jest
+  // stabilne miedzy renderami (atrapy testowe, ale takze przelaczenie jezyka),
+  // efekt `useEffect([loadRegister])` odpalal sie w kolko — React przerywal
+  // renderowanie z „Maximum update depth exceeded". Zwykla funkcja w ciele
+  // komponentu nie ma tego problemu i nie zmienia zachowania.
+  const toRegisterRow =
+    (item: RegisterApiRow): RegisterRow => ({
+      id: item.id,
+      title: resolveBusinessDisplayLabel({
+        displayName: item.name,
+        rawId: item.id,
+        fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
+      }),
+      state: item.state,
+      version: item.version,
+      // P15-K2 (DEC-421): kolumna „Portfel / wersja" pokazuje NAZWĘ portfela
+      // (np. „Portfel roboczy — …") z czytnika; surowy identyfikator agregatu
+      // zostaje wyłącznie jako ostatnia deska ratunku dla portfeli sprzed paczki.
+      portfolio: `${resolveBusinessDisplayLabel({
+        displayName: item.portfolioRef.name ?? item.portfolioRef.scenarioId,
+        rawId: item.portfolioRef.scenarioId,
+        fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
+      })} · v${item.portfolioRef.scenarioVersion}`,
+      earliest: item.window.earliest ?? 'Unknown',
+      latest: item.window.latest ?? 'Unknown',
+      updatedAt: item.updatedAt,
+      timeBasisState: item.timeBasis?.knowledgeState ?? 'UNKNOWN',
+      initiativeCount: item.initiativeCount ?? 0,
+      conflicts: item.conflicts ?? 0,
+      author: resolveBusinessDisplayLabel({
+        displayName: item.author,
+        rawId: item.author,
+        fallback: t('common.unknown', 'Nieznane'),
+      }),
+    });
+
+  /**
+   * P15-K2 (DEC-421): LEKKIE odświeżenie rejestru planów — bez `setState('LOADING')`.
+   *
+   * ZMIERZONE w przepływie klikanym 07.09 (evidence/p15-k2/przeplyw): wołanie
+   * pełnego `loadRegister()` w środku generowania przełączało powierzchnię na
+   * gałąź „ładowanie", co ODMONTOWYWAŁO kartę planu razem z otwartym oknem
+   * generatora — propozycja znikała, zanim człowiek zdążył ją zobaczyć.
+   * Ta ścieżka aktualizuje wyłącznie wiersze rejestru (potrzebne do znacznika
+   * „Zapisano hh:mm" z serwerowego `updatedAt`) i nie rusza gałęzi renderu.
+   */
+  const refreshRegisterRows = useCallback(async () => {
+    if (demoMode) return;
+    try {
+      const result = (await listPlanScenarioRegister()) as { scenarios?: RegisterApiRow[] };
+      const nextRows = (result.scenarios ?? []).map(toRegisterRow);
+      setRows(nextRows);
+      loadedRows.current = nextRows;
+    } catch {
+      // Rejestr jest tu wyłącznie źródłem znacznika zapisu — nieudane odświeżenie
+      // NIE może przewrócić karty, na której użytkownik właśnie pracuje.
+      setWriteRule(null);
+    }
+  }, [demoMode]);
+
   const loadRegister = useCallback(async () => {
     setState('LOADING');
     if (demoMode) {
@@ -428,26 +508,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       return;
     }
     try {
-      const result = (await listPlanScenarioRegister()) as {
-        scenarios?: Array<{
-          id: string;
-          name: string;
-          state: string;
-          version: number;
-          portfolioRef: { scenarioId: string; scenarioVersion: number; name?: string | null };
-          window: { earliest: string | null; latest: string | null };
-          updatedAt: string;
-          timeBasis?: {
-            windowUnit: string;
-            timezone: string;
-            periods: Array<{ periodId: string; start: string; end: string }>;
-            knowledgeState: 'KNOWN' | 'UNKNOWN';
-          };
-          initiativeCount?: number;
-          conflicts?: number;
-          author?: string;
-        }>;
-      };
+      const result = (await listPlanScenarioRegister()) as { scenarios?: RegisterApiRow[] };
       const enrichedScenarios = await Promise.all(
         (result.scenarios ?? []).map(async (item) => {
           if (item.initiativeCount !== undefined && item.author !== undefined) return item;
@@ -459,35 +520,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           };
         })
       );
-      const nextRows = enrichedScenarios.map((item) => ({
-        id: item.id,
-        title: resolveBusinessDisplayLabel({
-          displayName: item.name,
-          rawId: item.id,
-          fallback: `${t('initiatives.plan.unnamed', 'Plan bez nazwy')} · ${formatDate(item.updatedAt)}`,
-        }),
-        state: item.state,
-        version: item.version,
-        // P15-K2 (DEC-421): kolumna „Portfel / wersja" pokazuje NAZWĘ portfela
-        // (np. „Portfel roboczy — …") z czytnika; surowy identyfikator agregatu
-        // zostaje wyłącznie jako ostatnia deska ratunku dla portfeli sprzed paczki.
-        portfolio: `${resolveBusinessDisplayLabel({
-          displayName: item.portfolioRef.name ?? item.portfolioRef.scenarioId,
-          rawId: item.portfolioRef.scenarioId,
-          fallback: t('initiatives.plan.portfolioFallback', 'Portfel źródłowy'),
-        })} · v${item.portfolioRef.scenarioVersion}`,
-        earliest: item.window.earliest ?? 'Unknown',
-        latest: item.window.latest ?? 'Unknown',
-        updatedAt: item.updatedAt,
-        timeBasisState: item.timeBasis?.knowledgeState ?? 'UNKNOWN',
-        initiativeCount: item.initiativeCount ?? 0,
-        conflicts: item.conflicts ?? 0,
-        author: resolveBusinessDisplayLabel({
-          displayName: item.author,
-          rawId: item.author,
-          fallback: t('common.unknown', 'Nieznane'),
-        }),
-      }));
+      const nextRows = enrichedScenarios.map(toRegisterRow);
       setRows(nextRows);
       loadedRows.current = nextRows;
       if (nextRows.length) {
@@ -758,7 +791,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setDraft(result.response);
       setWriteState('IDLE');
       setPublishConfirmationPending(null);
-      await loadRegister();
+      // Lekkie odswiezenie: pelny `loadRegister` przelaczylby powierzchnie na
+      // galaz „ladowanie" i odmontowal karte planu razem z otwartym oknem.
+      await refreshRegisterRows();
       markSaved(result.response.scenarioId);
       setSelectedId(result.response.scenarioId);
       await loadHistory(result.response.scenarioId);
@@ -872,7 +907,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       })) as { aggregateVersion: number; response: PlanScenario };
       setAggregateVersion(updated.aggregateVersion);
       setDraft(updated.response);
-      await loadRegister();
+      await refreshRegisterRows();
       markSaved(updated.response.scenarioId);
       const proposalId = `plan-analysis-${draft.scenarioId}-${crypto.randomUUID()}`;
       const result = (await createPlanAnalysisProposal(draft.scenarioId, proposalId, {
@@ -939,7 +974,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         })) as { aggregateVersion: number; response: PlanScenario };
         setAggregateVersion(updated.aggregateVersion);
         setDraft(updated.response);
-        await loadRegister();
+        await refreshRegisterRows();
         markSaved(updated.response.scenarioId);
       }
       setAnalysisProposal({
