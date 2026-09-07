@@ -1,4 +1,4 @@
-import { FileText, Sparkles } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,7 +6,6 @@ interface DeckBuilderBottomBarProps {
   currentIndex: number;
   totalCards: number;
   cardTitle: string;
-  onQuickEdits: () => void;
   onToggleNotes: () => void;
   notesOpen: boolean;
 }
@@ -15,7 +14,6 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
   currentIndex,
   totalCards,
   cardTitle,
-  onQuickEdits,
   onToggleNotes,
   notesOpen,
 }) => {
@@ -29,15 +27,6 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
       </span>
 
       <span className="text-xs font-medium text-c-text-secondary truncate flex-1">{cardTitle}</span>
-
-      <button
-        type="button"
-        onClick={onQuickEdits}
-        className="flex min-h-8 items-center gap-1.5 px-2.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-      >
-        <Sparkles size={12} />
-        {t('presentations.builder.bottomBar.quickEdits', 'Ask Teresa')}
-      </button>
 
       <button
         type="button"

@@ -40,8 +40,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
-import { generujTrescPola } from '@/services/ai/generujTrescPola';
-
 import type {
   PoleDoUzupelnienia,
   PracujZAIProps,
@@ -97,6 +95,13 @@ const L = {
 
 type Para = { pl: string; en: string };
 const wybierz = (para: Para, pl: boolean) => (pl ? para.pl : para.en);
+
+// Lazy by design: cards using their own proposal engine must not load the
+// generic AI service (and its i18n bootstrap) merely by rendering Menu 5.
+const domyslnyGenerator: NonNullable<PracujZAIProps['generuj']> = async (opts) => {
+  const { generujTrescPola } = await import('@/services/ai/generujTrescPola');
+  return generujTrescPola(opts);
+};
 
 /** Wspólna baza przycisku paska — 1:1 z `NModeMenu2.BTN_BASE`. */
 const BTN_BASE =
@@ -155,7 +160,7 @@ export const PracujZAI: React.FC<PracujZAIProps> = ({
   disabledTytul,
   isPolish = false,
   className = '',
-  generuj = generujTrescPola,
+  generuj = domyslnyGenerator,
 }) => {
   const { t } = useTranslation();
   const [otwarte, setOtwarte] = useState(false);

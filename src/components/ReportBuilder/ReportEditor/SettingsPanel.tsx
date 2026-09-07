@@ -169,6 +169,8 @@ interface SettingsPanelProps {
   reportId?: string;
   /** Last saved timestamp */
   lastSavedAt?: string | null;
+  /** Render content inside the canonical ArtifactRightPanel without creating a nested aside. */
+  embedded?: boolean;
 }
 
 // ==========================================
@@ -606,6 +608,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   reportStatus,
   reportId,
   lastSavedAt,
+  embedded = false,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -673,8 +676,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </button>
     );
 
+    const CollapsedRoot: React.ElementType = embedded ? 'div' : 'aside';
     return (
-      <aside className="relative flex-shrink-0">
+      <CollapsedRoot className="relative flex-shrink-0">
         <div className="w-11 h-full bg-c-bg border-l border-c-border-subtle flex flex-col items-center py-3 gap-1">
           {/* Expand */}
           <button
@@ -737,12 +741,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             />
           )}
         </div>
-      </aside>
+      </CollapsedRoot>
     );
   }
 
+  const PanelRoot: React.ElementType = embedded ? 'div' : 'aside';
   return (
-    <aside className="w-80 bg-c-surface border-l border-c-border-subtle flex flex-col overflow-hidden flex-shrink-0">
+    <PanelRoot className={embedded
+      ? 'w-full bg-c-surface flex flex-col overflow-hidden'
+      : 'w-80 bg-c-surface border-l border-c-border-subtle flex flex-col overflow-hidden flex-shrink-0'}>
       {/* Header — segmented toggle */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle bg-c-surface">
         {/* Segmented control */}
@@ -1554,7 +1561,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         {/* ========== EXPORT TAB (hidden, but kept for compatibility) ========== */}
         {activeSection === 'export' && <div className="p-4">{exportPanel || null}</div>}
       </div>
-    </aside>
+    </PanelRoot>
   );
 };
 

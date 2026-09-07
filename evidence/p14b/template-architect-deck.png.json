@@ -1,0 +1,43 @@
+{
+ "url": "http://127.0.0.1:3091/presentations/templates/deck/evidence-missing-no-existing-template",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nBiblioteka wzorców\nKreator szablonów prezentacji\nDane\nModel\n2\nAudyt Nocny\nAN\nSekcje\nEdycja\nPodgląd\nPracuj z AI\nKreator szablonów prezentacji\n\nZaprojektuj wielokrotnego użytku, zarządzany szablon prezentacji. Zatwierdzanie i wycofywanie odbywa się w rejestrze zarządzania SuperAdmin.\n\nUtwórz szkic nowego szablonu\nNazwa szablonu\nTyp prezentacji\nPrezentacja komitetu sterującego\nPrezentacja decyzyjna dla zarządu\nPrezentacja diagnostyczna DRD\nPrezentacja startowa inicjatywy\nPrezentacja podsumowująca transformację cyfrową\nCel (wymagane)\nOdbiorcy\nZarząd\nSponsor\nInwestor / VC\nZespół wewnętrzny\nIntencja\nInformuj\nDecyduj\nSprzedaj\nAlignuj\nJęzyk\nPolski\nAngielski\nMotyw\nKorporacyjny\nMinimalistyczny\nNowoczesny\nDopracuj z Kreatorem Szablonów AI (opcjonalnie)\nPozwala AI przeredagować tytuły slajdów i zaproponować dopracowaną nazwę/opis szablonu. W razie niedostępności AI po cichu wraca do deterministycznego konspektu. Intencje slajdów, kolejność i liczba nigdy nie są zmieniane przez AI.\nUtwórz szkic szablonu\nRejestr szablonów\nOdśwież\nSZABLON\n\t\nTYP\n\t\nSLAJDY\n\t\nSTATUS\n\n\nBrak szablonów.\nAKCJE\n\nBrak dodatkowych akcji.\n\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tNowy wzorzec\nWłaściciel\t—\nPriorytet\t—\nOkres\t—\nKontekst\t—\nUtworzono\t—\nZaktualizowano\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument",
+ "dom": {
+  "[data-testid=\"pracuj-z-ai\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1258.84375,
+     "y": 68,
+     "width": 120.15625,
+     "height": 32
+    }
+   ]
+  },
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1072,
+     "y": 124,
+     "width": 320,
+     "height": 760
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-07T04:04:01.731Z"
+}
