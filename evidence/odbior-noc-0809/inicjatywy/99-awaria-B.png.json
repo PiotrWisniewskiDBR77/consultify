@@ -1,0 +1,7 @@
+{
+  "nazwa": "99-awaria-B",
+  "opis": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator('[data-testid=\"pracuj-z-ai\"]') to be visible\n",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:25:42.579Z"
+}

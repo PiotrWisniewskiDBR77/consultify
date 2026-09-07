@@ -1,0 +1,11 @@
+{
+  "nazwa": "C07-arkusz-obciazenia-seed",
+  "opis": "Sekcja \"Arkusz obciążenia\" — dane seed (okres x rola, popyt/podaz)",
+  "url": "http://localhost:3184/initiatives?tab=capacity",
+  "bledyKonsoli": [
+    "Failed to fetch tasks TypeError: Failed to fetch\n    at window.fetch (http://localhost:3184/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://localhost:3184/src/services/csrfClient.ts:78:14)\n    at Object.getPersonalTasks (http://localhost:3184/src/services/api.ts:33",
+    "[ChatProjectStore] Fetch error: TypeError: Failed to fetch\n    at window.fetch (http://localhost:3184/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://localhost:3184/src/services/csrfClient.ts:78:14)\n    at fetchWithRetryInner (http://localhost:3184/src/services/api",
+    "[ConversationStore] Fetch error: TypeError: Failed to fetch\n    at window.fetch (http://localhost:3184/src/services/feedbackCollector/NetworkBuffer.ts:43:32)\n    at window.fetch (http://localhost:3184/src/services/csrfClient.ts:78:14)\n    at fetchWithRetryInner (http://localhost:3184/src/services/ap"
+  ],
+  "czas": "2026-09-07T21:54:43.803Z"
+}

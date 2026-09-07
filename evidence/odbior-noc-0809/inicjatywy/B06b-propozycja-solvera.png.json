@@ -1,0 +1,9 @@
+{
+  "nazwa": "B06b-propozycja-solvera",
+  "opis": "Po \"Generuj propozycję\" — tabela z wierszami i uzasadnieniami po polsku",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "czas": "2026-09-07T21:49:45.056Z"
+}

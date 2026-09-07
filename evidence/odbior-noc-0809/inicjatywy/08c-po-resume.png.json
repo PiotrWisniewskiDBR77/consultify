@@ -1,0 +1,8 @@
+{
+  "nazwa": "08c-po-resume",
+  "opis": "Po RESUME i reloadzie — flaga zdjeta, on_hold powinno wrocic do false",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": "IN_EXECUTION|f",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:41:42.141Z"
+}

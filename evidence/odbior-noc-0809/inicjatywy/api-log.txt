@@ -1,0 +1,35 @@
+2026-09-07T21:15:15.276Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"DRAFT","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"PENDING_APPROVAL","gate":"SUBMIT_FOR_REVIEW","requiredRoles":["CONSULTAN
+
+2026-09-07T21:15:18.455Z PATCH 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/status
+    {"id":"odbior-noc-0907-automatyzacja-raportowania","status":"PENDING_APPROVAL","previousStatus":"DRAFT","gate":"SUBMIT_FOR_REVIEW","message":"Status updated"}
+
+2026-09-07T21:15:18.532Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR"
+
+2026-09-07T21:15:27.963Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR"
+
+2026-09-07T21:15:32.852Z PATCH 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/status
+    {"id":"odbior-noc-0907-automatyzacja-raportowania","status":"DRAFT","previousStatus":"PENDING_APPROVAL","gate":"SEND_BACK","message":"Status updated"}
+
+2026-09-07T21:15:32.925Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"DRAFT","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"PENDING_APPROVAL","gate":"SUBMIT_FOR_REVIEW","requiredRoles":["CONSULTAN
+
+2026-09-07T21:15:42.395Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"DRAFT","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"PENDING_APPROVAL","gate":"SUBMIT_FOR_REVIEW","requiredRoles":["CONSULTAN
+
+2026-09-07T21:15:45.601Z PATCH 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/status
+    {"id":"odbior-noc-0907-automatyzacja-raportowania","status":"PENDING_APPROVAL","previousStatus":"DRAFT","gate":"SUBMIT_FOR_REVIEW","message":"Status updated"}
+
+2026-09-07T21:15:45.676Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR"
+
+2026-09-07T21:15:55.122Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"PENDING_APPROVAL","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"APPROVED","gate":"APPROVE","requiredRoles":["PROJECT_SPONSOR"
+
+2026-09-07T21:15:59.525Z PATCH 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/status
+    {"id":"odbior-noc-0907-automatyzacja-raportowania","status":"REJECTED","previousStatus":"PENDING_APPROVAL","gate":"REJECT","message":"Status updated"}
+
+2026-09-07T21:15:59.598Z GET 200 /api/initiatives/odbior-noc-0907-automatyzacja-raportowania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-automatyzacja-raportowania","currentStatus":"REJECTED","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[],"flags":[{"operation":"HOLD","gate":"BLOCK","requiredRoles":["INITIATIVE_OWNER","PMO

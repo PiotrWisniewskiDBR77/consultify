@@ -1,0 +1,10 @@
+{
+  "nazwa": "B10b-fte-wpisane",
+  "opis": "Wpisano FTE=2.5 dla \"FTE AI Governance & Ethics Framework Analityk\" i odblurowano (auto-save)",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "czas": "2026-09-07T21:49:55.063Z",
+  "ariaLabelUzyty": "FTE AI Governance & Ethics Framework Analityk"
+}

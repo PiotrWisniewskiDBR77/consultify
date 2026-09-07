@@ -1,0 +1,9 @@
+{
+  "nazwa": "B08b-karta-planu-po-generatorze",
+  "opis": "Karta planu po zamknieciu generatora — okna widoczne w sekcji Kolejnosc/Zakres",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "czas": "2026-09-07T21:49:50.799Z"
+}

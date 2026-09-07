@@ -1,0 +1,7 @@
+{
+  "nazwa": "B01-formularz-nowego-planu",
+  "opis": "Plan -> \"Nowy plan\" -> formularz (nazwa, jednostka, horyzont, liczba tygodni)",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:51:28.039Z"
+}

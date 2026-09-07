@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-szkic-podglad",
+  "opis": "Inicjatywy -> wiersz (SQL-seed DRAFT, wlasciciel+zakres uzupelnione) -> podglad",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": {
+    "status": "DRAFT"
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:15:18.200Z"
+}

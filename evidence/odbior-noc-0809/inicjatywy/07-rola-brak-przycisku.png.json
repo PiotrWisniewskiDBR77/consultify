@@ -1,0 +1,12 @@
+{
+  "nazwa": "07-rola-brak-przycisku",
+  "opis": "Konto MEMBER (Anna) bez roli w inicjatywach — sekcja \"Nie masz uprawnień...\", zero przyciskow przejsc",
+  "url": "http://localhost:3184/initiatives",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "[InterviewHub] Failed to load insights: InterviewCapabilityError: Interview insights capability failed (forbidden)\n    at classifyInterviewV8Failure (http://localhost:3184/src/components/Interview/interviewBackendRouting.ts:27:10)\n    at loadInterviewV8Capability (http://localhost:3184/src/component"
+  ],
+  "czas": "2026-09-07T21:20:01.968Z",
+  "pomijStatusWBazie": true
+}

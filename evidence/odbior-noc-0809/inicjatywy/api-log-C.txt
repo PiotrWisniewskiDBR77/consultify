@@ -1,0 +1,125 @@
+2026-09-07T21:52:22.017Z GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+
+2026-09-07T21:52:22.023Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:22.028Z GET 200 /api/initiatives/runtime-v1/initiatives
+    {"initiatives":[{"version":41,"initiative":{"name":"Predictive Maintenance — CNC Machines","title":"Predictive Maintenance — CNC Machines","source":{"sourceId":"init-siri-02","freshness":"CURRENT","proposalId":"p11-dec421-proposal-init-siri-02","sourceType":"p11_dec421_owner_decision","refreshedAt":"2026-09-06T15:37:00.052Z","sourceVersion":1,"proposalVersion":2},"problem":"Zaplanowanie inicjatywy
+
+2026-09-07T21:52:22.032Z GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+
+2026-09-07T21:52:22.041Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:22.051Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:22.056Z GET 200 /api/initiatives/runtime-v1/initiatives
+    {"initiatives":[{"version":41,"initiative":{"name":"Predictive Maintenance — CNC Machines","title":"Predictive Maintenance — CNC Machines","source":{"sourceId":"init-siri-02","freshness":"CURRENT","proposalId":"p11-dec421-proposal-init-siri-02","sourceType":"p11_dec421_owner_decision","refreshedAt":"2026-09-06T15:37:00.052Z","sourceVersion":1,"proposalVersion":2},"problem":"Zaplanowanie inicjatywy
+
+2026-09-07T21:52:22.084Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios/p11-dec421-capacity-20260906
+    {"version":2,"scenario":{"name":"Analiza obciążenia — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","demand":{"low":2,"asOf":"2026-09-06T00:00:00.000Z","base":2,"high":2,"reason":null,"ownerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","sourceRef":"P11-DEC-421-owner-decision","confidence":"HIGH","sourceVersion":1,"knowledgeStat
+
+2026-09-07T21:52:22.102Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:22.138Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios/p11-dec421-capacity-20260906
+    {"version":2,"scenario":{"name":"Analiza obciążenia — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","demand":{"low":2,"asOf":"2026-09-06T00:00:00.000Z","base":2,"high":2,"reason":null,"ownerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","sourceRef":"P11-DEC-421-owner-decision","confidence":"HIGH","sourceVersion":1,"knowledgeStat
+
+2026-09-07T21:52:26.029Z GET 200 /api/initiatives/runtime-v1/initiatives
+    {"initiatives":[{"version":41,"initiative":{"name":"Predictive Maintenance — CNC Machines","title":"Predictive Maintenance — CNC Machines","source":{"sourceId":"init-siri-02","freshness":"CURRENT","proposalId":"p11-dec421-proposal-init-siri-02","sourceType":"p11_dec421_owner_decision","refreshedAt":"2026-09-06T15:37:00.052Z","sourceVersion":1,"proposalVersion":2},"problem":"Zaplanowanie inicjatywy
+
+2026-09-07T21:52:26.029Z GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+    {"initiatives":[{"id":"init-drd-final-02","name":"AI Governance & Ethics Framework","status":"APPROVED","conditional":false,"projectId":null,"plannedStartDate":"2026-09-28T09:00:00.000Z","plannedEndDate":"2027-01-30T09:00:00.000Z","requiredCapacityFte":0.5},{"id":"fbdeede9-85e0-439c-b798-c07caf2ca21c","name":"AI-Powered Analytics","status":"APPROVED","conditional":false,"projectId":"e100da3b-a502-
+
+2026-09-07T21:52:26.033Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:26.038Z GET 200 /api/initiatives/runtime-v1/initiatives
+    {"initiatives":[{"version":41,"initiative":{"name":"Predictive Maintenance — CNC Machines","title":"Predictive Maintenance — CNC Machines","source":{"sourceId":"init-siri-02","freshness":"CURRENT","proposalId":"p11-dec421-proposal-init-siri-02","sourceType":"p11_dec421_owner_decision","refreshedAt":"2026-09-06T15:37:00.052Z","sourceVersion":1,"proposalVersion":2},"problem":"Zaplanowanie inicjatywy
+
+2026-09-07T21:52:26.060Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+    {"version":3,"scenario":{"name":"Plan klikany P11 — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04
+
+2026-09-07T21:52:26.074Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:26.089Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+    {"versions":[{"status":"SUPERSEDED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04T00:00:00.000Z","start":"2026-09-27T00:00:00.000Z","peri
+
+2026-09-07T21:52:26.102Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:26.103Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/analysis-proposals
+    {"items":[{"aggregateVersion":2,"status":"ACCEPTED","changes":[{"after":{"latest":"2026-09-13T00:00:00.000Z","target":"2026-09-13T00:00:00.000Z","earliest":"2026-09-06T00:00:00.000Z","rationale":"Deterministic solver selected Tydzień 1: no scheduled predecessor; own window intersects the period; no linked published capacity scenario was supplied. Human validation required. Zakres zatwierdzony w pr
+
+2026-09-07T21:52:26.116Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+    {"version":3,"scenario":{"name":"Plan klikany P11 — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04
+
+2026-09-07T21:52:26.124Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:26.124Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios/p11-dec421-capacity-20260906
+    {"version":2,"scenario":{"name":"Analiza obciążenia — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","demand":{"low":2,"asOf":"2026-09-06T00:00:00.000Z","base":2,"high":2,"reason":null,"ownerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","sourceRef":"P11-DEC-421-owner-decision","confidence":"HIGH","sourceVersion":1,"knowledgeStat
+
+2026-09-07T21:52:26.144Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+    {"versions":[{"status":"SUPERSEDED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04T00:00:00.000Z","start":"2026-09-27T00:00:00.000Z","peri
+
+2026-09-07T21:52:26.152Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+    {"version":3,"scenario":{"name":"Plan klikany P11 — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04
+
+2026-09-07T21:52:26.162Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:26.184Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+    {"versions":[{"status":"SUPERSEDED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04T00:00:00.000Z","start":"2026-09-27T00:00:00.000Z","peri
+
+2026-09-07T21:52:26.190Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+    {"version":3,"scenario":{"name":"Plan klikany P11 — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04
+
+2026-09-07T21:52:26.227Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+    {"versions":[{"status":"SUPERSEDED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-20T00:00:00.000Z","start":"2026-09-13T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-27T00:00:00.000Z","start":"2026-09-20T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-04T00:00:00.000Z","start":"2026-09-27T00:00:00.000Z","peri
+
+2026-09-07T21:52:29.417Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-9f20c660-4e70-4c42-a055-beb9de073d72
+    {"version":4,"scenario":{"name":"ODBIÓR NOC 07.09 — plan audytu v3","status":"DRAFT","periods":[{"end":"2026-09-14T00:00:00.000Z","start":"2026-09-07T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-21T00:00:00.000Z","start":"2026-09-14T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-28T00:00:00.000Z","start":"2026-09-21T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-05T00:00:
+
+2026-09-07T21:52:29.437Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-9f20c660-4e70-4c42-a055-beb9de073d72/history
+    {"versions":[{"name":"ODBIÓR NOC 07.09 — plan audytu v3","status":"SUPERSEDED","periods":[{"end":"2026-09-14T00:00:00.000Z","start":"2026-09-07T00:00:00.000Z","periodId":"Tydzień 1"},{"end":"2026-09-21T00:00:00.000Z","start":"2026-09-14T00:00:00.000Z","periodId":"Tydzień 2"},{"end":"2026-09-28T00:00:00.000Z","start":"2026-09-21T00:00:00.000Z","periodId":"Tydzień 3"},{"end":"2026-10-05T00:00:00.000
+
+2026-09-07T21:52:29.437Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:29.437Z GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-9f20c660-4e70-4c42-a055-beb9de073d72/analysis-proposals
+    {"items":[{"aggregateVersion":2,"status":"ACCEPTED","changes":[{"after":{"latest":"2026-09-21T00:00:00.000Z","target":"2026-09-17T09:00:00.000Z","earliest":"2026-09-14T00:00:00.000Z","rationale":"SOLVER-1:SELECTED;period=Tydzie%C5%84%202;dep=NO_PREDECESSOR;cap=NO_CAPACITY_SCENARIO","confidence":"MEDIUM","initiativeId":"init-adma-04","initiativeVersion":41,"constraintSnapshot":[],"dependencySnapsho
+
+2026-09-07T21:52:33.103Z GET 200 /api/initiatives/runtime-v1/capacity-roles
+    {"roles":[{"roleId":"controls-engineer","roleLabel":"Controls Engineer","fteWeekly":2.5,"headcount":3},{"roleId":"analityk","roleLabel":"Analityk","fteWeekly":2,"headcount":2},{"roleId":"kierownik-projektu","roleLabel":"Kierownik projektu","fteWeekly":1,"headcount":1}]}
+
+2026-09-07T21:52:33.121Z GET 200 /api/initiatives/runtime-v1/capacity-roles
+    {"roles":[{"roleId":"controls-engineer","roleLabel":"Controls Engineer","fteWeekly":2.5,"headcount":3},{"roleId":"analityk","roleLabel":"Analityk","fteWeekly":2,"headcount":2},{"roleId":"kierownik-projektu","roleLabel":"Kierownik projektu","fteWeekly":1,"headcount":1}]}
+
+2026-09-07T21:52:33.927Z GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+
+2026-09-07T21:52:33.932Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:33.938Z GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+
+2026-09-07T21:52:33.947Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:33.956Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+    {"scenarios":[{"id":"p11-dec421-capacity-20260906","name":"Analiza obciążenia — Controls Engineer","state":"PUBLISHED","version":2,"periodCount":12,"roleCount":1,"gapCount":12,"planRef":{"scenarioId":"plan-f807b6fd-357e-40ba-860c-cc7de75afedc","scenarioVersion":3,"name":"Plan klikany P11 — Controls Engineer"},"window":{"start":"2026-09-06T00:00:00.000Z","end":"2026-11-29T00:00:00.000Z"},"unit":{"w
+
+2026-09-07T21:52:33.973Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios/p11-dec421-capacity-20260906
+    {"version":2,"scenario":{"name":"Analiza obciążenia — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","demand":{"low":2,"asOf":"2026-09-06T00:00:00.000Z","base":2,"high":2,"reason":null,"ownerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","sourceRef":"P11-DEC-421-owner-decision","confidence":"HIGH","sourceVersion":1,"knowledgeStat
+
+2026-09-07T21:52:33.987Z GET 200 /api/initiatives/runtime-v1/plan-scenarios
+    {"scenarios":[{"id":"plan-67e99600-76b9-41d7-8fb9-6d0c9b530f55","name":"ODBIÓR NOC 07.09 — plan audytu","state":"DRAFT","version":1,"initiativeCount":0,"conflicts":0,"author":"Audyt Nocny","portfolioRef":{"scenarioId":"portfolio-cc9db573-260f-4a19-927f-f3cc1fbaea38-roboczy","scenarioVersion":6,"name":"Portfel roboczy — zatwierdzone inicjatywy, stan z 2026-09-07"},"timeBasis":{"windowUnit":"WEEK","
+
+2026-09-07T21:52:34.015Z GET 200 /api/initiatives/runtime-v1/capacity-scenarios/p11-dec421-capacity-20260906
+    {"version":2,"scenario":{"name":"Analiza obciążenia — Controls Engineer","status":"PUBLISHED","periods":[{"end":"2026-09-13T00:00:00.000Z","start":"2026-09-06T00:00:00.000Z","demand":{"low":2,"asOf":"2026-09-06T00:00:00.000Z","base":2,"high":2,"reason":null,"ownerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","sourceRef":"P11-DEC-421-owner-decision","confidence":"HIGH","sourceVersion":1,"knowledgeStat

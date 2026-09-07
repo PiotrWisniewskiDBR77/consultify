@@ -1,0 +1,34 @@
+=== 01: Plan -> Nowy plan (formularz) ===
+=== 02: wypelnij nazwe (aria-label, NIE xpath-sibling) ===
+ZRZUT B01b-formularz-wypelniony: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B01b-formularz-wypelniony.png (bledyKonsoli=0)
+  "Utwórz plan" disabled? false
+=== 03: czekam na otwarcie warsztatu planu (pracuj-z-ai) ===
+ZRZUT B02b-warsztat-otwarty: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B02b-warsztat-otwarty.png (bledyKonsoli=1)
+=== 04: Pracuj z AI -> Uzupelnij caly dokument (generator) ===
+ZRZUT B03b-menu-pracuj-z-ai: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B03b-menu-pracuj-z-ai.png (bledyKonsoli=1)
+=== 04b: brama zgody "Uruchomić AI?" -> Zatwierdź ===
+  brama zgody obecna: true
+ZRZUT B04a-brama-zgody-ai: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B04a-brama-zgody-ai.png (bledyKonsoli=1)
+ZRZUT B04b-generator-otwarty: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B04b-generator-otwarty.png (bledyKonsoli=1)
+=== 05: wybor 5 zatwierdzonych inicjatyw ===
+  AI Governance & Ethics Framework: checkbox znaleziony=true
+  Change Management & Digital Culture Program: checkbox znaleziony=true
+  ERP-MES Real-time Integration: checkbox znaleziony=true
+  Operator Upskilling Program — 50 Pilot: checkbox znaleziony=true
+  Predictive Maintenance — CNC Machines: checkbox znaleziony=true
+ZRZUT B05b-parametry-wypelnione: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B05b-parametry-wypelnione.png (bledyKonsoli=1)
+=== 06: Generuj propozycje ===
+ZRZUT B06b-propozycja-solvera: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B06b-propozycja-solvera.png (bledyKonsoli=1)
+=== 07: Zatwierdz propozycje w generatorze ===
+  przycisk Zatwierdz w generatorze: 1
+ZRZUT B07b-po-zatwierdzeniu-generator: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B07b-po-zatwierdzeniu-generator.png (bledyKonsoli=1)
+=== 08: zamknij generator ===
+ZRZUT B08b-karta-planu-po-generatorze: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B08b-karta-planu-po-generatorze.png (bledyKonsoli=1)
+=== 09: sekcja "Obciazenie rol" -> edycja FTE ===
+ZRZUT B09b-sekcja-obciazenie-rol: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B09b-sekcja-obciazenie-rol.png (bledyKonsoli=1)
+  input FTE znaleziony: 1
+ZRZUT B10b-fte-wpisane: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B10b-fte-wpisane.png (bledyKonsoli=1)
+=== 10: reload — trwalosc FTE ===
+  wartosc FTE po reloadzie: null
+ZRZUT B11b-po-reloadzie-fte-trwale: /private/tmp/wt-fable-inicjatywy/evidence/odbior-noc-0809/inicjatywy/B11b-po-reloadzie-fte-trwale.png (bledyKonsoli=1)
+GOTOWE scenariusz B v2 (plan + generator + obciazenie rol + trwalosc).

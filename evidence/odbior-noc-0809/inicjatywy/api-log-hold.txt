@@ -1,0 +1,20 @@
+2026-09-07T21:41:09.929Z GET 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-flaga-wstrzymania","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,"conditionSatisfied":false,"blockingRule":"GATE_BLOCKED","blockingItems":[{"key":"time
+
+2026-09-07T21:41:13.891Z POST 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/lifecycle-flag
+    {"id":"odbior-noc-0907-flaga-wstrzymania","operation":"HOLD","onHold":true,"message":"Lifecycle flag updated"}
+
+2026-09-07T21:41:13.968Z GET 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-flaga-wstrzymania","currentStatus":"IN_EXECUTION","onHold":true,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,"conditionSatisfied":false,"blockingRule":"GATE_BLOCKED","blockingItems":[{"key":"timel
+
+2026-09-07T21:41:25.487Z GET 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-flaga-wstrzymania","currentStatus":"IN_EXECUTION","onHold":true,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,"conditionSatisfied":false,"blockingRule":"GATE_BLOCKED","blockingItems":[{"key":"timel
+
+2026-09-07T21:41:28.158Z POST 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/lifecycle-flag
+    {"id":"odbior-noc-0907-flaga-wstrzymania","operation":"RESUME","onHold":false,"message":"Lifecycle flag updated"}
+
+2026-09-07T21:41:28.235Z GET 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-flaga-wstrzymania","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,"conditionSatisfied":false,"blockingRule":"GATE_BLOCKED","blockingItems":[{"key":"time
+
+2026-09-07T21:41:39.690Z GET 200 /api/initiatives/odbior-noc-0907-flaga-wstrzymania/transition-preflight
+    {"initiativeId":"odbior-noc-0907-flaga-wstrzymania","currentStatus":"IN_EXECUTION","onHold":false,"archived":false,"isAuthor":true,"effectiveRoles":["ADMIN","INITIATIVE_OWNER","BUSINESS_OWNER"],"transitions":[{"targetStatus":"CLOSED","gate":"COMPLETE","requiredRoles":["INITIATIVE_OWNER","PMO"],"roleAllowed":true,"conditionSatisfied":false,"blockingRule":"GATE_BLOCKED","blockingItems":[{"key":"time

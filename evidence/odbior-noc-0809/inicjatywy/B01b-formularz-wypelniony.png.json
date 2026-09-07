@@ -1,0 +1,7 @@
+{
+  "nazwa": "B01b-formularz-wypelniony",
+  "opis": "Plan -> \"Nowy plan\" -> formularz z wypelniona nazwa (aria-label selector)",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:49:31.429Z"
+}

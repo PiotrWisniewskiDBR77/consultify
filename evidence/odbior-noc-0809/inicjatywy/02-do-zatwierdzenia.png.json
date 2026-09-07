@@ -1,0 +1,10 @@
+{
+  "nazwa": "02-do-zatwierdzenia",
+  "opis": "Po \"Prześlij do zatwierdzenia\" i odswiezeniu — status \"Do zatwierdzenia\"",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": {
+    "status": "PENDING_APPROVAL"
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:15:30.893Z"
+}

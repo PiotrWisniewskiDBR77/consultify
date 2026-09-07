@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-zatwierdz-zablokowany",
+  "opis": "\"Zatwierdź inicjatywę\" — disabled=true. Powod: Zatwierdź inicjatywę: Brakuje aktualnej decyzji GO komitetu.",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": {
+    "status": "PENDING_APPROVAL"
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:15:31.350Z"
+}

@@ -1,0 +1,10 @@
+{
+  "nazwa": "05-znow-do-zatwierdzenia",
+  "opis": "Ponownie \"Do zatwierdzenia\" po drugim przeslaniu",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": {
+    "status": "PENDING_APPROVAL"
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:15:58.041Z"
+}

@@ -1,0 +1,10 @@
+{
+  "nazwa": "04-znow-szkic",
+  "opis": "Po \"Zwróć do szkicu\" (z powodem) i odswiezeniu — status \"Szkic\" ponownie",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": {
+    "status": "DRAFT"
+  },
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:15:45.352Z"
+}

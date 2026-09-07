@@ -1,0 +1,12 @@
+{
+  "nazwa": "B12-po-reloadzie-otwarte-ponownie",
+  "opis": "Po reloadzie: wiersz otwarty ponownie (dblclick) -> sekcja Obciążenie ról -> FTE odczytane=\"2.5\" (oczekiwane \"2.5\")",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [
+    "Failed to fetch tasks TypeError: Failed to fetch",
+    "[ConversationStore] Fetch error: TypeError: Failed to fetch"
+  ],
+  "czas": "2026-09-07T21:51:32.950Z",
+  "wartosc": "2.5",
+  "oczekiwane": "2.5"
+}

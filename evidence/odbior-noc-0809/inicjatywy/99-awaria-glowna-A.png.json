@@ -1,0 +1,9 @@
+{
+  "nazwa": "99-awaria-glowna-A",
+  "opis": "Nieprzechwycony blad skryptu: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator('table tbody tr').filter({ hasText: 'ODBIOR NOC 07.09 — automatyzacja raportowania' }).first() to be visible\n",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": null,
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:16:30.524Z",
+  "pomijStatusWBazie": true
+}

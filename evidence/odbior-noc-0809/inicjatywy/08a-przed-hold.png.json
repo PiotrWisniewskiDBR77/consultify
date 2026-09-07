@@ -1,0 +1,8 @@
+{
+  "nazwa": "08a-przed-hold",
+  "opis": "IN_EXECUTION, on_hold=false — stan wyjsciowy przed flaga",
+  "url": "http://localhost:3184/initiatives",
+  "statusWBazie": "IN_EXECUTION|f",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:41:12.395Z"
+}
