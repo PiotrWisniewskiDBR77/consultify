@@ -1,0 +1,552 @@
+=== TEKST ===
+3 V9 overrides
+LOCAL
+?
+Centrum Pomocy
+Opinie
+Dokumenty
+77
+Przejdź do głównej treści
+Realizacja
+Dane
+Model
+2
+7
+Audyt Nocny
+AN
+Kokpit
+Realizacje
+Praca
+Zasoby
+Decyzje i ryzyka
+Raporty
+Wszystkie realizacje
+Supply Chain Optimization — fala 1
+Procurement AI Copilot — pilotaż
+Wszystkie
+91
+Po terminie
+28
+Zablokowane
+11
+ZADANIE
+	
+INICJATYWA
+	
+OSOBA
+	
+TERMIN
+	
+STATUS
+	
+POŚLIZG (DNI)
+	
+
+
+DBR77: Ustalić ownerów inicjatyw i zadań
+	
+—
+	
+Audyt Nocny
+	
+28 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+DBR77: Zweryfikować eksport raportów publicznych
+	
+—
+	
+Audyt Nocny
+	
+02 wrz 2026
+	
+W przeglądzie
+	
++4
+	
+
+
+DBR77: Ustawić monitoring i alerting dla backendu
+	
+—
+	
+Audyt Nocny
+	
+08 wrz 2026
+	
+Zablokowane
+	
+—
+	
+
+
+DBR77: Przegląd jakości danych po migracji
+	
+—
+	
+Audyt Nocny
+	
+08 wrz 2026
+	
+W toku
+	
+—
+	
+
+
+DBR77: Utworzyć raport statusowy dla PMO
+	
+—
+	
+Audyt Nocny
+	
+02 wrz 2026
+	
+Wykonane
+	
+—
+	
+
+
+DBR77: Zmapować zależności i ryzyka wdrożenia
+	
+—
+	
+Audyt Nocny
+	
+05 wrz 2026
+	
+W toku
+	
++1
+	
+
+
+DBR77: Porządek w notyfikacjach (grupowanie)
+	
+—
+	
+Audyt Nocny
+	
+05 wrz 2026
+	
+Zablokowane
+	
++1
+	
+
+
+DBR77: Ustalić SLA dla kluczowych procesów
+	
+—
+	
+Audyt Nocny
+	
+07 wrz 2026
+	
+Do zrobienia
+	
+—
+	
+
+
+DBR77: Skonfigurować integracje (webhooks)
+	
+—
+	
+Audyt Nocny
+	
+11 wrz 2026
+	
+W przeglądzie
+	
+—
+	
+
+
+DBR77: Zoptymalizować dashboard My Work
+	
+—
+	
+Audyt Nocny
+	
+28 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+DBR77: Przygotować plan warsztatu z interesariuszami
+	
+—
+	
+Audyt Nocny
+	
+03 wrz 2026
+	
+Do zrobienia
+	
++3
+	
+
+
+DBR77: Przegląd wydajności: indeksy i cache
+	
+—
+	
+Audyt Nocny
+	
+04 wrz 2026
+	
+W toku
+	
++2
+	
+
+
+DBR77: Zamknąć krytyczne bugi przed cutover
+	
+—
+	
+Audyt Nocny
+	
+06 wrz 2026
+	
+W przeglądzie
+	
++1
+	
+
+
+DBR77: Ustawić polityki bezpieczeństwa (CSRF/CORS)
+	
+—
+	
+Audyt Nocny
+	
+12 wrz 2026
+	
+Do zrobienia
+	
+—
+	
+
+
+DBR77: Przygotować komunikację do użytkowników
+	
+—
+	
+Audyt Nocny
+	
+14 wrz 2026
+	
+Zablokowane
+	
+—
+	
+
+
+DBR77: Zweryfikować uprawnienia i role (RBAC)
+	
+—
+	
+Audyt Nocny
+	
+02 wrz 2026
+	
+Wykonane
+	
+—
+	
+
+
+DBR77: Zadbać o backup i rollback plan
+	
+—
+	
+Audyt Nocny
+	
+03 wrz 2026
+	
+Do zrobienia
+	
++3
+	
+
+
+DBR77: Weryfikacja E2E smoke po deploy
+	
+—
+	
+Audyt Nocny
+	
+07 wrz 2026
+	
+W przeglądzie
+	
+—
+	
+
+
+DBR77: Przygotować checklistę go-live
+	
+—
+	
+Audyt Nocny
+	
+09 wrz 2026
+	
+Zablokowane
+	
+—
+	
+
+
+DBR77: Audyt kosztów i budżetu AI
+	
+—
+	
+Audyt Nocny
+	
+13 wrz 2026
+	
+W toku
+	
+—
+	
+
+
+Process mapping workshop
+	
+Process Automation — RPA
+	
+Tomasz Lewandowski
+	
+18 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+Training curriculum design
+	
+Talent Upskilling Program
+	
+Tomasz Lewandowski
+	
+21 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+Set up Delta Lake storage
+	
+Data Platform — Lakehouse
+	
+Marek Nowak
+	
+24 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+Set up AKS cluster
+	
+Cloud Migration — Azure
+	
+Marek Nowak
+	
+26 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+UiPath license procurement
+	
+Process Automation — RPA
+	
+Jan Zieliński
+	
+26 sie 2026
+	
+Zablokowane
+	
++11
+	
+
+
+API versioning strategy doc
+	
+API Gateway v2
+	
+Katarzyna Wójcik
+	
+28 sie 2026
+	
+Wykonane
+	
+—
+	
+
+
+SAP FI module config
+	
+ERP SAP Integration
+	
+Marek Nowak
+	
+28 sie 2026
+	
+Zablokowane
+	
++9
+	
+
+
+VM sizing for prod environment
+	
+Cloud Migration — Azure
+	
+Marek Nowak
+	
+29 sie 2026
+	
+W toku
+	
++8
+	
+
+
+Data governance policy draft
+	
+Data Platform — Lakehouse
+	
+Ewa Nowicka
+	
+31 sie 2026
+	
+W toku
+	
++6
+	
+
+
+First bot development
+	
+Process Automation — RPA
+	
+Jan Zieliński
+	
+31 sie 2026
+	
+Zablokowane
+	
++6
+	
+
+
+Cloud certification program
+	
+Talent Upskilling Program
+	
+Tomasz Lewandowski
+	
+31 sie 2026
+	
+Zablokowane
+	
++6
+	
+
+
+Intranet migration to SharePoint
+	
+Digital Workp
+
+=== SIEC ===
+200 GET http://localhost:3160/src/services/api/organizationContextWorker.api.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/settings.api.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/assessment.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/my-work.ts?t=1788792121376
+200 GET http://localhost:3160/src/types/api/requests.ts
+200 GET http://localhost:3160/src/types/api/responses.ts
+200 GET http://localhost:3160/src/services/api/v8/client.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/baseClient.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/index.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/admin.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/ai-core.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/execution-control.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/chat.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/finance.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/interview.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/kb.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/multiplayer.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/partner.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/results.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/prompt-os.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/planning.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/sync.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8/retrieval.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/workCanvas.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/tablePlatform.api.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/artifactRuns.ts?t=1788792121376
+200 GET http://localhost:3160/src/services/api/v8Execution.ts?t=1788792121376
+200 GET http://localhost:3160/api/csrf-token
+200 GET http://localhost:3160/api/settings/preferences/accessibility
+200 GET http://localhost:3160/api/organizations/current
+202 POST http://localhost:3160/api/v10/teresa/voice-event
+200 GET http://localhost:3160/api/feature-flags/runtime
+200 GET http://localhost:3160/api/v8/admin/flags
+200 GET http://localhost:3160/api/auth/me
+200 GET http://localhost:3160/api/organization-context
+200 GET http://localhost:3160/api/ai-settings/user
+200 GET http://localhost:3160/api/health
+200 GET http://localhost:3160/api/llm/providers/health?timeoutMs=4000
+200 GET http://localhost:3160/api/mfa/status
+200 GET http://localhost:3160/api/my-work/personal-tasks
+200 GET http://localhost:3160/api/demo/status
+200 GET http://localhost:3160/api/v10/teresa/voice-config
+200 GET http://localhost:3160/src/services/api/organizations.api.ts
+200 GET http://localhost:3160/api/action-cards?status=OPEN&sourceKind=execution_delay
+200 GET http://localhost:3160/api/organizations/cc9db573-260f-4a19-927f-f3cc1fbaea38/members
+200 GET http://localhost:3160/api/v8/execution-control/risk-signals
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/action-queue/problems
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/decisions/problems
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/blockers/problems
+200 GET http://localhost:3160/api/initiatives
+200 GET http://localhost:3160/api/initiatives/runtime-v1/execution-cases
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/workload/problems
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/risk/problems
+200 GET http://localhost:3160/api/v8/execution-control/manager/lanes/people-change/problems
+200 GET http://localhost:3160/api/v8/execution-control/capacity/leveling-alerts
+200 GET http://localhost:3160/api/v8/execution-control/timeline-warnings
+200 GET http://localhost:3160/api/raid
+200 GET http://localhost:3160/api/execution-control/capacity/resource-plan?weeks=8
+200 GET http://localhost:3160/api/decisions
+200 GET http://localhost:3160/api/tasks
+200 GET http://localhost:3160/api/report-builder/definitions?kind=EXECUTION_PACK
+200 GET http://localhost:3160/api/v8/execution-control/delay-signals
+200 GET http://localhost:3160/api/v8/execution-control/capacity/timeline
+200 GET http://localhost:3160/api/notifications/unread-count
+200 GET http://localhost:3160/api/notifications?limit=20
+200 GET http://localhost:3160/api/v8/execution-control/budget/overspend-signals
+
+=== BLEDY ===

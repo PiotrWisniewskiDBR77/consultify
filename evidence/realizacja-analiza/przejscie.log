@@ -1,0 +1,218 @@
+
+### PRACA: chip Po terminie
+URL=http://localhost:3160/login?redirect=%2Fexecution%3Ftab%3Dwork
+401 GET /api/demo/status
+200 GET /api/health
+401 GET /api/mfa/status
+200 GET /api/llm/providers/health?timeoutMs=4000
+401 GET /api/my-work/personal-tasks
+401 GET /api/organizations/current
+
+### PRACA: preview
+URL=http://localhost:3160/login?redirect=%2Fexecution%3Ftab%3Dwork
+
+
+### PRACA: kebab
+URL=http://localhost:3160/login?redirect=%2Fexecution%3Ftab%3Dwork
+
+
+### PRACA: chip Po terminie
+URL=http://localhost:3160/execution?tab=work&view=table
+200 GET /api/settings/preferences/accessibility
+200 GET /api/csrf-token
+200 GET /api/feature-flags/runtime
+202 POST /api/v10/teresa/voice-event
+200 GET /api/v8/admin/flags
+200 GET /api/organizations/current
+200 GET /api/auth/me
+200 GET /api/organization-context
+200 GET /api/ai-settings/user
+200 GET /api/health
+200 GET /api/llm/providers/health?timeoutMs=4000
+200 GET /api/mfa/status
+200 GET /api/demo/status
+200 GET /api/my-work/personal-tasks
+200 GET /api/v10/teresa/voice-config
+200 GET /api/action-cards?status=OPEN&sourceKind=execution_delay
+200 GET /api/organizations/cc9db573-260f-4a19-927f-f3cc1fbaea38/members
+200 GET /api/v8/execution-control/risk-signals
+200 GET /api/v8/execution-control/manager/lanes/action-queue/problems
+200 GET /api/v8/execution-control/manager/lanes/decisions/problems
+200 GET /api/initiatives/runtime-v1/execution-cases
+200 GET /api/v8/execution-control/manager/lanes/blockers/problems
+200 GET /api/v8/execution-control/manager/lanes/workload/problems
+200 GET /api/v8/execution-control/manager/lanes/risk/problems
+200 GET /api/v8/execution-control/manager/lanes/people-change/problems
+200 GET /api/initiatives
+200 GET /api/v8/execution-control/capacity/leveling-alerts
+200 GET /api/v8/execution-control/timeline-warnings
+200 GET /api/raid
+200 GET /api/execution-control/capacity/resource-plan?weeks=8
+200 GET /api/tasks
+200 GET /api/decisions
+200 GET /api/report-builder/definitions?kind=EXECUTION_PACK
+200 GET /api/v8/execution-control/delay-signals
+200 GET /api/v8/execution-control/capacity/timeline
+200 GET /api/v8/execution-control/budget/overspend-signals
+200 GET /api/notifications/unread-count
+200 GET /api/notifications?limit=20
+
+### PRACA: preview
+URL=http://localhost:3160/execution?tab=work&view=table
+
+
+KEBAB PRACA:
+Otwórz zadanie
+Zaktualizuj zadanie
+Otwórz podgląd
+Archiwizuj
+Elementy pracy podlegają retencji Execution Case.
+Usuń
+Kanoniczny element pracy nie może zostać usunięty.
+
+### PRACA: kebab
+URL=http://localhost:3160/execution?tab=work&view=table
+
+
+### PRACA: kebab -> Zaktualizuj zadanie
+URL=http://localhost:3160/my-work
+200 GET /api/action-cards?status=OPEN&ownerUserId=me
+200 GET /api/v8/my-work/inbox/canonical/stats
+200 GET /api/v8/my-work/inbox/canonical?status=pending&limit=200
+200 GET /api/my-work/personal-tasks?includeDone=true
+200 GET /api/health/data-context
+200 GET /api/my-work/context-summary
+200 GET /api/initiatives/runtime-v1/my-work/handoff-acceptances
+200 GET /api/my-work/focus/state
+200 GET /api/my-work/personal-tasks/seed_task_1788642392883_18_66b50496-4b4a-4889-b0df-23bec5fdba58
+200 GET /api/initiatives/runtime-v1/my-work/gate-signoffs
+201 POST /api/v8/my-work/inbox/canonical/materialize
+200 GET /api/users
+200 GET /api/my-work/link-graph/backlinks?type=task&id=seed_task_1788642392883_18_66b50496-4b4a-4889-b0df-23bec5fdba58&limit=100
+200 GET /api/tasks/seed_task_1788642392883_18_66b50496-4b4a-4889-b0df-23bec5fdba58/risk-alternatives
+200 GET /api/v8/my-work/notebook/pages?q=DBR77%3A+Ustali%C4%87+owner%C3%B3w+inicjatyw+i+zada%C5%84&limit=5
+200 GET /api/my-work/object-attachments/task/seed_task_1788642392883_18_66b50496-4b4a-4889-b0df-23bec5fdba58
+200 GET /api/initiatives
+200 GET /api/tasks/seed_task_1788642392883_18_66b50496-4b4a-4889-b0df-23bec5fdba58/comments
+200 GET /api/my-work/my-ideas/suggest?q=DBR77%3A+Ustali%C4%87+owner%C3%B3w+inicjatyw+i+zada%C5%84+DBR77+%2F+My+Work%3A+seeded+task+%28execution%2Fdone%2Fcritical%29.&limit=5
+200 GET /api/v8/my-work/notebook/pages?q=DBR77%3A+Ustali%C4%87+owner%C3%B3w+inicjatyw+i+zada%C5%84+DBR77+%2F+My+Work%3A+seeded+task+%28execution%2Fdone%2Fcritical%29.&limit=5
+
+### ZASOBY: Dodaj dostepnosc
+URL=http://localhost:3160/execution?tab=resources&view=table
+
+
+### ZASOBY: kebab wiersza
+URL=http://localhost:3160/execution?tab=resources&view=table
+
+
+### DECYZJE: Nowa decyzja
+URL=http://localhost:3160/execution?tab=control&view=table
+400 POST /api/decisions :: {"error":"Missing decision context"}
+
+### DECYZJE: Dodaj sygnal (formularz)
+URL=http://localhost:3160/execution?tab=control&view=table
+
+
+### RAPORTY: przelacznik Definicje
+URL=http://localhost:3160/execution?tab=reports&view=table
+
+
+### RAPORTY: Nowa definicja
+URL=http://localhost:3160/execution?tab=reports&view=table
+
+
+### RAPORTY: Kontrakt raportu (zaawansowane)
+URL=http://localhost:3160/execution?tab=reports&view=table
+
+
+### DECYZJE: sekcja sygnalow
+URL=http://localhost:3160/execution?tab=control&view=table
+
+
+### RAPORTY: Nowa definicja (pelna strona)
+URL=http://localhost:3160/execution?tab=reports&view=table
+200 GET /api/settings/preferences/accessibility
+200 GET /api/csrf-token
+200 GET /api/v8/admin/flags
+200 GET /api/feature-flags/runtime
+200 GET /api/organizations/current
+200 GET /api/auth/me
+202 POST /api/v10/teresa/voice-event
+200 GET /api/ai-settings/user
+200 GET /api/mfa/status
+200 GET /api/my-work/personal-tasks
+200 GET /api/demo/status
+200 GET /api/v10/teresa/voice-config
+200 GET /api/action-cards?status=OPEN&sourceKind=execution_delay
+200 GET /api/organizations/cc9db573-260f-4a19-927f-f3cc1fbaea38/members
+200 GET /api/v8/execution-control/manager/lanes/action-queue/problems
+200 GET /api/v8/execution-control/risk-signals
+200 GET /api/v8/execution-control/manager/lanes/decisions/problems
+200 GET /api/v8/execution-control/manager/lanes/blockers/problems
+200 GET /api/initiatives/runtime-v1/execution-cases
+200 GET /api/v8/execution-control/manager/lanes/workload/problems
+200 GET /api/v8/execution-control/manager/lanes/risk/problems
+200 GET /api/v8/execution-control/manager/lanes/people-change/problems
+200 GET /api/v8/execution-control/capacity/leveling-alerts
+200 GET /api/v8/execution-control/timeline-warnings
+200 GET /api/raid
+200 GET /api/execution-control/capacity/resource-plan?weeks=8
+200 GET /api/tasks
+200 GET /api/decisions
+200 GET /api/initiatives
+200 GET /api/report-builder/definitions?kind=EXECUTION_PACK
+200 GET /api/execution-reports/definitions
+200 GET /api/v8/execution-control/capacity/timeline
+200 GET /api/execution-reports/runs
+200 GET /api/initiatives/runtime-v1/report-runs
+200 GET /api/initiatives/runtime-v1/report-definitions
+200 GET /api/v8/execution-control/delay-signals
+200 GET /api/v8/execution-control/budget/overspend-signals
+200 GET /api/notifications/unread-count
+200 GET /api/notifications?limit=20
+
+### DECYZJE: sekcja sygnalow
+URL=http://localhost:3160/execution?tab=control&view=table
+
+
+### RAPORTY: Nowa definicja (pelna strona)
+URL=http://localhost:3160/execution?tab=reports&view=table
+200 GET /api/settings/preferences/accessibility
+200 GET /api/csrf-token
+200 GET /api/v8/admin/flags
+200 GET /api/feature-flags/runtime
+200 GET /api/organizations/current
+200 GET /api/auth/me
+202 POST /api/v10/teresa/voice-event
+200 GET /api/ai-settings/user
+200 GET /api/mfa/status
+200 GET /api/my-work/personal-tasks
+200 GET /api/demo/status
+200 GET /api/action-cards?status=OPEN&sourceKind=execution_delay
+200 GET /api/organizations/cc9db573-260f-4a19-927f-f3cc1fbaea38/members
+200 GET /api/v8/execution-control/risk-signals
+200 GET /api/initiatives/runtime-v1/execution-cases
+200 GET /api/v8/execution-control/manager/lanes/action-queue/problems
+200 GET /api/v8/execution-control/manager/lanes/decisions/problems
+200 GET /api/v8/execution-control/manager/lanes/blockers/problems
+200 GET /api/v8/execution-control/manager/lanes/workload/problems
+200 GET /api/v8/execution-control/manager/lanes/risk/problems
+200 GET /api/v10/teresa/voice-config
+200 GET /api/v8/execution-control/manager/lanes/people-change/problems
+200 GET /api/v8/execution-control/timeline-warnings
+200 GET /api/v8/execution-control/capacity/leveling-alerts
+200 GET /api/raid
+200 GET /api/execution-control/capacity/resource-plan?weeks=8
+200 GET /api/initiatives
+200 GET /api/tasks
+200 GET /api/decisions
+200 GET /api/v8/execution-control/delay-signals
+200 GET /api/report-builder/definitions?kind=EXECUTION_PACK
+200 GET /api/execution-reports/definitions
+200 GET /api/execution-reports/runs
+200 GET /api/v8/execution-control/capacity/timeline
+200 GET /api/initiatives/runtime-v1/report-runs
+200 GET /api/initiatives/runtime-v1/report-definitions
+200 GET /api/v8/execution-control/budget/overspend-signals
+200 GET /api/notifications?limit=20
+200 GET /api/notifications/unread-count
