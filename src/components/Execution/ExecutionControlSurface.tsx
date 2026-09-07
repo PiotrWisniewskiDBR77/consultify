@@ -831,9 +831,19 @@ export const ExecutionControlSurface = ({
    * kontekstu i kończy się tym samym 400, które R3 naprawia.
    */
   const loadDecisionDictionaries = useCallback(async () => {
+    /**
+     * Katalog osób pobieramy TYLKO, gdy użytkownik może z niego skorzystać.
+     * ZMIERZONE 07.09 na koncie MEMBER (Anna): `GET /api/organizations/:id/
+     * members` odsyła 403, a `POST /api/decisions` i tak wymaga uprawnienia
+     * `approve_changes` — więc dla MEMBER-a to było wywołanie, które nie mogło
+     * się udać i nie było do niczego potrzebne, a zostawiało 403 w konsoli
+     * przy każdym wejściu na zakładkę. Warunek jest ten sam, który rządzi
+     * widocznością akcji rozstrzygających (`canDecide`).
+     */
+    const mozeTworzyc = canDecide(null);
     const [inicjatywy, czlonkowie] = await Promise.allSettled([
       Api.get('/initiatives'),
-      currentOrganization?.id
+      mozeTworzyc && currentOrganization?.id
         ? OrganizationApi.getOrganizationMembers(currentOrganization.id)
         : Promise.resolve([]),
     ]);
@@ -862,7 +872,7 @@ export const ExecutionControlSurface = ({
           .filter((member) => Boolean(member.id))
       );
     }
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, canDecide]);
 
   const load = useCallback(async () => {
     setState('LOADING');
