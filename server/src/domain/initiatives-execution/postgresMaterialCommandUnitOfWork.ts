@@ -11,6 +11,11 @@ import type {
   SourceProposalSnapshot,
   StoredCommandReceipt,
 } from './materialCommand.js';
+import {
+  calculateRiskScore,
+  categorizeScore,
+  DEFAULT_THRESHOLDS,
+} from '../../services/raidScoringService.js';
 import { MaterialCommandConflictError, MaterialCommandValidationError } from './materialCommand.js';
 
 interface QueryResultRowCount {
@@ -49,11 +54,17 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
     if (initiative.rowCount !== 1) {
       throw new MaterialCommandValidationError('Initiative not found');
     }
+    // Parytet z czytnikiem legacy (`GET /api/initiatives/:id/raid` zwraca
+    // riskScore/scoreCategory i tabele UI po nich koloruja): kanoniczny writer
+    // musi wyliczyc te same kolumny co wycofany zapis legacy, inaczej rekord
+    // dodany przez Runtime-v1 wraca do UI bez oceny ryzyka.
+    const riskScore = calculateRiskScore(input.probability || 'LOW', input.impact || 'LOW');
+    const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
     const result = await this.client.query(
       `INSERT INTO raid_items
        (id,organization_id,initiative_id,type,title,description,status,probability,impact,
-        owner_id,due_date,mitigation_plan,linked_items)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        owner_id,due_date,mitigation_plan,linked_items,risk_score,score_category)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
       [
         input.raidItemId,
         input.organizationId,
@@ -68,9 +79,70 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
         input.dueDate,
         input.mitigationPlan,
         JSON.stringify(input.linkedItems),
+        riskScore,
+        scoreCategory,
       ]
     );
     requireSingleRow(result, 'RAID item insert');
+  }
+
+  async updateRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+    title: string | null;
+    description: string | null;
+    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
+    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
+    ownerId: string | null;
+    dueDate: string | null;
+    mitigationPlan: string | null;
+  }): Promise<void> {
+    await this.client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+      `${input.organizationId}:initiative-raid:${input.initiativeId}`,
+    ]);
+    const existing = await this.client.query(
+      `SELECT probability, impact FROM raid_items
+       WHERE id=$1 AND organization_id=$2 AND initiative_id=$3 FOR UPDATE`,
+      [input.raidItemId, input.organizationId, input.initiativeId]
+    );
+    if (existing.rowCount !== 1) throw new MaterialCommandValidationError('RAID item not found');
+    const probability = input.probability ?? existing.rows[0].probability ?? 'LOW';
+    const impact = input.impact ?? existing.rows[0].impact ?? 'LOW';
+    const riskScore = calculateRiskScore(probability, impact);
+    const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
+    const result = await this.client.query(
+      `UPDATE raid_items SET
+         title=COALESCE($4,title),
+         description=COALESCE($5,description),
+         status=COALESCE($6,status),
+         probability=COALESCE($7,probability),
+         impact=COALESCE($8,impact),
+         owner_id=COALESCE($9,owner_id),
+         due_date=COALESCE($10,due_date),
+         mitigation_plan=COALESCE($11,mitigation_plan),
+         risk_score=$12,
+         score_category=$13,
+         updated_at=CURRENT_TIMESTAMP
+       WHERE id=$1 AND organization_id=$2 AND initiative_id=$3`,
+      [
+        input.raidItemId,
+        input.organizationId,
+        input.initiativeId,
+        input.title,
+        input.description,
+        input.status,
+        input.probability,
+        input.impact,
+        input.ownerId,
+        input.dueDate,
+        input.mitigationPlan,
+        riskScore,
+        scoreCategory,
+      ]
+    );
+    if (result.rowCount !== 1) throw new MaterialCommandValidationError('RAID item not found');
   }
 
   async deleteRaidItem(input: {

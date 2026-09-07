@@ -143,6 +143,19 @@ export interface MaterialCommandTransaction {
     mitigationPlan: string | null;
     linkedItems: string[];
   }): Promise<void>;
+  updateRaidItem(input: {
+    organizationId: string;
+    initiativeId: string;
+    raidItemId: string;
+    title: string | null;
+    description: string | null;
+    status: 'OPEN' | 'MITIGATED' | 'REALIZED' | 'CLOSED' | null;
+    probability: 'LOW' | 'MEDIUM' | 'HIGH' | null;
+    impact: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null;
+    ownerId: string | null;
+    dueDate: string | null;
+    mitigationPlan: string | null;
+  }): Promise<void>;
   deleteRaidItem(input: {
     organizationId: string;
     initiativeId: string;

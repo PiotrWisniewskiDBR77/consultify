@@ -124,7 +124,11 @@ import { PostgresInitiativeReader } from '../../domain/initiatives-execution/pos
 import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
 import { publishInitiativeCard } from '../../domain/initiatives-execution/publishInitiativeCard.js';
-import { createRaidItem, deleteRaidItem } from '../../domain/initiatives-execution/raidItem.js';
+import {
+  createRaidItem,
+  deleteRaidItem,
+  updateRaidItem,
+} from '../../domain/initiatives-execution/raidItem.js';
 import { refreshInitiativeSource } from '../../domain/initiatives-execution/refreshInitiativeSource.js';
 import { registerInitiative } from '../../domain/initiatives-execution/registerInitiative.js';
 import {
@@ -867,6 +871,18 @@ const RaidItemCreateSchema = z.object({
 const RaidItemDeleteSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
+});
+const RaidItemUpdateSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  title: z.string().min(1).nullable().default(null),
+  description: z.string().nullable().default(null),
+  status: z.enum(['OPEN', 'MITIGATED', 'REALIZED', 'CLOSED']).nullable().default(null),
+  probability: z.enum(['LOW', 'MEDIUM', 'HIGH']).nullable().default(null),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullable().default(null),
+  ownerId: z.string().nullable().default(null),
+  dueDate: z.string().nullable().default(null),
+  mitigationPlan: z.string().nullable().default(null),
 });
 const ManagerExecutionActionSchema = z.object({
   expectedVersion: z.number().int().min(0),
@@ -2322,6 +2338,15 @@ export function createInitiativesExecutionRuntimeRouter(
               available: canUpdate,
               canonicalCommand:
                 'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
+              denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
+              denialCode: canUpdate ? null : 'NOT_FOUND',
+              legacyDenialAt: 'BRAMKA_LEGACY',
+              legacyDenialCode: 'EXECUTION_RUNTIME_V1_WRITE_REQUIRED',
+            },
+            update: {
+              available: canUpdate,
+              canonicalCommand:
+                'PATCH /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
               denialAt: canUpdate ? null : 'ZDOLNOŚĆ',
               denialCode: canUpdate ? null : 'NOT_FOUND',
               legacyDenialAt: 'BRAMKA_LEGACY',
@@ -5014,6 +5039,13 @@ export function createInitiativesExecutionRuntimeRouter(
           ? await authorizeProjects(actor, projectIds, 'initiative.update')
           : await deps.authorize(actor, '', 'initiative.update');
       if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      // ADOPCJA WIERSZY SPRZED 26A: pozycje RAID zalozone wycofanym zapisem
+      // legacy nie maja wiersza w `ie_aggregate_state`, wiec ich biezaca
+      // wersja to `null`. Bez `createIfMissing` kazde usuniecie takiej pozycji
+      // konczylo sie konfliktem CAS (null !== 0) i kanoniczny writer nie mogl
+      // ich w ogole dotknac. Zabezpieczenie zostaje: `tx.deleteRaidItem`
+      // wymaga dokladnie jednego wiersza w `raid_items`, wiec "usuniecie"
+      // nieistniejacej pozycji nadal zawodzi.
       const result = await deleteRaidItem(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -5025,7 +5057,46 @@ export function createInitiativesExecutionRuntimeRouter(
         policyId: 'execution-control',
         policyVersion: 1,
         commandType: 'raid-item.delete',
+        createIfMissing: true,
         payload: { initiativeId },
+      });
+      res.status(200).json(result);
+    })
+  );
+  router.patch(
+    '/initiatives/:initiativeId/raid-items/:raidItemId',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = RaidItemUpdateSchema.safeParse(req.body);
+      if (!actor) return void res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      if (!parsed.success)
+        return void res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+      const initiativeId = firstParam(req.params.initiativeId);
+      const projectIds = await deps.reader.resolveProjectIdsForAggregate(
+        actor.organizationId,
+        'initiative',
+        initiativeId
+      );
+      const canUpdate =
+        projectIds.length > 0
+          ? await authorizeProjects(actor, projectIds, 'initiative.update')
+          : await deps.authorize(actor, '', 'initiative.update');
+      if (!canUpdate) return void res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      const { expectedVersion, clientRequestId, ...item } = parsed.data;
+      const result = await updateRaidItem(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'raid_item',
+        aggregateId: firstParam(req.params.raidItemId),
+        expectedVersion,
+        clientRequestId,
+        correlationId: clientRequestId,
+        policyId: 'execution-control',
+        policyVersion: 1,
+        commandType: 'raid-item.update',
+        // Patrz komentarz przy DELETE — adopcja pozycji zalozonych przed 26A.
+        createIfMissing: true,
+        payload: { ...item, initiativeId },
       });
       res.status(200).json(result);
     })
@@ -5206,6 +5277,24 @@ export function createInitiativesExecutionRuntimeRouter(
           legacyPath: '/api/v8/execution-control/realizations',
           canonicalCommand:
             'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/realizations/:realizationId',
+        },
+        {
+          legacyMethod: 'POST',
+          legacyPath: '/api/initiatives/:initiativeId/raid',
+          canonicalCommand:
+            'POST /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
+        },
+        {
+          legacyMethod: 'PATCH',
+          legacyPath: '/api/initiatives/:initiativeId/raid/:raidItemId',
+          canonicalCommand:
+            'PATCH /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
+        },
+        {
+          legacyMethod: 'DELETE',
+          legacyPath: '/api/initiatives/:initiativeId/raid/:raidItemId',
+          canonicalCommand:
+            'DELETE /api/initiatives/runtime-v1/initiatives/:initiativeId/raid-items/:raidItemId',
         },
         {
           legacyMethod: 'PATCH',
