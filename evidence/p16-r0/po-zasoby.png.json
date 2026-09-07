@@ -1,0 +1,10 @@
+{
+  "nazwa": "po-zasoby",
+  "opis": "Zakladka Realizacja > Zasoby — chipy + tabela osoba x tydzien",
+  "faza": "po",
+  "url": "http://127.0.0.1:3174/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:18:22.953Z"
+}

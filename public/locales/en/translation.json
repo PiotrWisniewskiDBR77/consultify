@@ -13349,6 +13349,7 @@
         "role": "Role",
         "conflicts": "Conflicts",
         "overallocated": "Overallocated",
+        "noRole": "No role",
         "unassigned": "Unassigned work",
         "skillGaps": "Skill gaps",
         "unconfirmed": "Unconfirmed assignments",
@@ -13827,6 +13828,9 @@
       "actions": {
         "proposeAllocation": "Propose allocation",
         "addAvailability": "Add availability"
+      },
+      "summary": {
+        "utilizationTooltip": "Average of {{count}} weeks"
       }
     },
     "governance": {

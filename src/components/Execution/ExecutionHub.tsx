@@ -748,21 +748,20 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['overdue', t('execution.menu3.work.overdue', 'Overdue')],
       ['blocked', t('execution.menu3.work.blocked', 'Blocked')],
     ].map(([id, label]) => ({ id, label })),
-    // NAPRAWA odbioru 06.09 (audytor, DEC-441): 10 chipów, z czego 6 zawsze
-    // pokazywały zero (`unassigned`/`skill-gaps`/`unconfirmed`/`cost-risk`/
-    // `team`/`initiative` — `matches()` w ExecutionResourcesSurface.tsx nigdy
-    // nie miał dla nich gałęzi, więc zwracał `false` niezależnie od danych;
-    // patrz historyczny komentarz przy `matches()` niżej). Kanon (plan 1.12,
-    // `docs/program/PROGRAM_NAPRAWCZY_20260905/1_12_REALIZACJA_PLAN.md:304`)
-    // przewiduje dla tej zakładki dokładnie trzy: Osoby · Role · Konflikty.
-    // `role` pokazuje dziś 0 NIE z braku implementacji, tylko z braku danych
-    // (pole `role` w `/api/execution-control/capacity/resource-plan` jest
-    // puste dla WSZYSTKICH 72 wierszy na DBR77, pomiar 06.09) — ZNALEZISKO
-    // do meldunku, nie maskowane fałszywym filtrem.
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§3 pkt 3, §4 D7): poprzednie
+    // trzy chipy (Osoby/Role/Konflikty, odbiór 06.09 DEC-441) liczyły WIERSZE
+    // osoba×tydzień, nie osoby — nagłówek obok mówił „osób 9", a chip „Osoby"
+    // pokazywał 72 (liczba wierszy). `role` filtrował po `job_title`, który na
+    // DBR77 jest pusty dla wszystkich — chip zawsze 0, bez sensu bez roli w
+    // danych. Nowe trzy, liczone PO OSOBACH (patrz `personMatches` w
+    // ExecutionResourcesSurface.tsx): Osoby (wszystkie) · Przeciążeni (≥1
+    // tydzień >100% obłożenia) · Bez stanowiska (brak `role`). `role` i
+    // `konflikty` (przeciążenia JEDNEJ osoby, inna definicja niż „Przeciążeni")
+    // znikają — ich sens przejmują te dwa nowe.
     resources: [
       ['osoby', t('execution.menu3.resources.people', 'People')],
-      ['role', t('execution.menu3.resources.role', 'Role')],
-      ['konflikty', t('execution.menu3.resources.conflicts', 'Conflicts')],
+      ['przeciazeni', t('execution.menu3.resources.overallocated', 'Overallocated')],
+      ['bez-stanowiska', t('execution.menu3.resources.noRole', 'No role')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R1 (C): 12 chipów → 3. Osiem z dwunastu filtrowało regexem po
     // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który
