@@ -33,7 +33,6 @@ import {
   Trash2,
   Type,
   X,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -42,12 +41,15 @@ import ReactMarkdown from 'react-markdown';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
+import { PracujZAI } from '@/components/standard/PracujZAI';
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 import { useAppStore } from '@/store/useAppStore';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 
 import { Api } from '../../../services/api';
 import { InitiativeSourceLink } from '../../Initiatives/InitiativeSourceLink';
-import TeresaMark from '../../shared/TeresaMark';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';
@@ -567,7 +569,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
   const [settingsSection, setSettingsSection] = useState<
     'intent' | 'styling' | 'export' | 'review' | 'versions'
   >('intent');
-  const [isSettingsPanelCollapsed, setIsSettingsPanelCollapsed] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [showChapterNav, setShowChapterNav] = useState(true);
@@ -2353,89 +2354,6 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
             {t('reportBuilder.editor.save', 'Save')}
           </button>
 
-          {/* 2. Generate (AI) */}
-          {!isTemplateMode && blocks.length > 0 && (
-            <div className="relative group">
-              <button
-                onClick={() => handleGenerate('new_only')}
-                disabled={isGenerating}
-                className="inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border border-c-accent bg-c-accent-soft0 text-c-accent hover:bg-c-accent-soft0 transition-all disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
-                )}
-                {t('reportBuilder.editor.generate', 'Generate')}
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1 overflow-hidden">
-                <button
-                  onClick={() => handleGenerate('new_only')}
-                  disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                >
-                  <Zap className="w-3.5 h-3.5 text-c-accent flex-shrink-0" />
-                  <div className="text-left">
-                    <div className="text-xs font-medium">
-                      {t('reportBuilder.editor.generateNew', 'Generate new')}
-                    </div>
-                    <div className="text-[10px] text-c-text-secondary">
-                      {t('reportBuilder.editor.emptySectionsOnly', 'Empty sections only')}
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleGenerate('modified')}
-                  disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
-                  <div className="text-left">
-                    <div className="text-xs font-medium">
-                      {t('reportBuilder.editor.refreshModified', 'Refresh modified')}
-                    </div>
-                    <div className="text-[10px] text-c-text-secondary">
-                      {t('reportBuilder.editor.sectionsNeedingUpdate', 'Sections needing update')}
-                    </div>
-                  </div>
-                </button>
-                <div className="border-t border-c-border-subtle my-1" />
-                <button
-                  onClick={() => handleGenerate('all')}
-                  disabled={isGenerating}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                  <div className="text-left">
-                    <div className="text-xs font-medium">
-                      {t('reportBuilder.editor.regenerateAll', 'Regenerate all')}
-                    </div>
-                    <div className="text-[10px] text-c-text-secondary">
-                      {t('reportBuilder.editor.overwriteAllSections', 'Overwrite all sections')}
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Agent Chat toggle */}
-          {!isTemplateMode && reportIdForActions && (
-            <button
-              onClick={() => setShowAgentChat((p) => !p)}
-              className={`inline-flex items-center gap-1.5 h-8 px-3.5 text-[13px] font-medium rounded-full border transition-all ${
-                showAgentChat
-                  ? 'border-c-accent bg-c-accent-soft0 text-c-accent'
-                  : 'border-c-border-strong bg-c-surface text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text-secondary'
-              }`}
-              title={t('reportBuilder.editor.reportAgent', 'Report Agent')}
-            >
-              <TeresaMark className="w-3.5 h-3.5" />
-              {t('reportBuilder.editor.agent', 'Agent')}
-            </button>
-          )}
-
           {/* 3. View / Export (dropdown: Web, PDF, PPTX, Word) */}
           {!isTemplateMode && (
             <div className="relative group">
@@ -2522,6 +2440,35 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           )}
         </div>
       </header>
+
+      {!isTemplateMode ? (
+        <div className="shrink-0 px-4 py-2">
+          <NModeMenu2
+            isPolish={isPl}
+            sectionsMenu={<span className="text-xs font-medium text-c-text-secondary">{t('common.sections', 'Sekcje')}</span>}
+            aiButton={
+              <PracujZAI
+                isPolish={isPl}
+                onAnalizuj={() => setShowAgentChat(true)}
+                analizaWToku={isGenerating}
+                aktywnaSekcja={selectedBlockId}
+                kontekstArtefaktu={{ title: reportTitle, type: 'report-builder' }}
+                moznaEdytowac
+                uzupelnijSekcje={{
+                  rodzaj: 'wlasnaPropozycja',
+                  uruchom: () => selectedBlockId ? generateSingleBlock(selectedBlockId) : undefined,
+                  opis: isPl ? 'Treść sekcji zostanie przygotowana w istniejącym przepływie raportu.' : 'Section content is prepared in the existing report workflow.',
+                }}
+                uzupelnijDokument={{
+                  rodzaj: 'wlasnaPropozycja',
+                  uruchom: () => handleGenerate('all'),
+                  opis: isPl ? 'Cały raport zostanie przygotowany do przeglądu przed dalszym użyciem.' : 'The whole report is prepared for review before further use.',
+                }}
+              />
+            }
+          />
+        </div>
+      ) : null}
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -2741,32 +2688,48 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
         </main>
 
         {/* Right Sidebar - Settings */}
-        <SettingsPanel
-          intent={intent}
-          styling={styling}
-          sourceType={isTemplateMode ? templateSourceType : sourceType}
-          sourceName={isTemplateMode ? null : sourceName}
-          onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
-          onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
-          activeSection={settingsSection}
-          onSectionChange={setSettingsSection}
-          isTemplateMode={isTemplateMode}
-          onApplyPreset={isTemplateMode ? applyPreset : undefined}
-          templateMeta={isTemplateMode ? templateMetaForPanel : undefined}
-          onTemplateMetaChange={isTemplateMode ? handleTemplateMetaChange : undefined}
-          exportPanel={exportPanel}
-          isCollapsed={isSettingsPanelCollapsed}
-          onToggleCollapse={() => setIsSettingsPanelCollapsed((prev) => !prev)}
-          reviewPanel={isTemplateMode ? undefined : reviewPanel}
-          currentVersion={report?.version}
-          versions={versions}
-          isLoadingVersions={isLoadingVersions}
-          onCreateVersion={(summary) => createManualVersion(summary)}
-          onRollbackVersion={rollbackToVersion}
-          onLoadVersions={loadVersions}
-          reportStatus={reportStatus}
-          reportId={reportIdForActions || undefined}
-          lastSavedAt={lastSavedAt}
+        <ArtifactRightPanel
+          width="var(--ntype-right-panel-width, 320px)"
+          sections={[
+            {
+              id: 'actions',
+              label: isPl ? 'Akcje' : 'Actions',
+              defaultOpen: true,
+              children: <SettingsPanel
+                intent={intent} styling={styling}
+                sourceType={isTemplateMode ? templateSourceType : sourceType}
+                sourceName={isTemplateMode ? null : sourceName}
+                onIntentChange={(updates) => setIntent((prev) => ({ ...prev, ...updates }))}
+                onStylingChange={(updates) => setStyling((prev) => ({ ...prev, ...updates }))}
+                activeSection={settingsSection} onSectionChange={setSettingsSection}
+                isTemplateMode={isTemplateMode} onApplyPreset={isTemplateMode ? applyPreset : undefined}
+                templateMeta={isTemplateMode ? templateMetaForPanel : undefined}
+                onTemplateMetaChange={isTemplateMode ? handleTemplateMetaChange : undefined}
+                exportPanel={exportPanel} isCollapsed={false} onToggleCollapse={() => undefined}
+                reviewPanel={isTemplateMode ? undefined : reviewPanel}
+                currentVersion={report?.version} versions={versions} isLoadingVersions={isLoadingVersions}
+                onCreateVersion={(summary) => createManualVersion(summary)} onRollbackVersion={rollbackToVersion}
+                onLoadVersions={loadVersions} reportStatus={reportStatus}
+                reportId={reportIdForActions || undefined} lastSavedAt={lastSavedAt}
+              />,
+            },
+            {
+              id: 'properties', label: isPl ? 'Właściwości' : 'Properties', defaultOpen: true,
+              children: <ArtifactPropertiesTable
+                propertyLabel={isPl ? 'Właściwość' : 'Property'} valueLabel={isPl ? 'Wartość' : 'Value'}
+                rows={[
+                  { id: 'status', label: 'Status', value: reportStatus || '—' },
+                  { id: 'owner', label: isPl ? 'Właściciel' : 'Owner', value: '—' },
+                  { id: 'priority', label: isPl ? 'Priorytet' : 'Priority', value: '—' },
+                  { id: 'period', label: isPl ? 'Okres' : 'Period', value: '—' },
+                  { id: 'source', label: isPl ? 'Źródło' : 'Source', value: sourceName || sourceType || '—' },
+                  { id: 'created', label: isPl ? 'Utworzono' : 'Created', value: '—' },
+                  { id: 'updated', label: isPl ? 'Zaktualizowano' : 'Updated', value: lastSavedAt || '—' },
+                ]}
+              />,
+            },
+            { id: 'evidence', label: isPl ? 'Źródła i założenia' : 'Sources and assumptions', children: <p className="text-xs text-c-text-secondary">{sourceName || (isPl ? 'Brak zapisanych źródeł.' : 'No sources recorded.')}</p> },
+          ]}
         />
       </div>
 
