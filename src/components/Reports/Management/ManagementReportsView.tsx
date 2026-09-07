@@ -21,6 +21,12 @@ import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
+import { StandardArtifactShell } from '@/components/standard/StandardArtifactShell';
+import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
+import { MANAGEMENT_REPORT_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
+
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
 import {
@@ -29,7 +35,6 @@ import {
   ManagementReportStatus,
   ManagementReportType,
 } from '../../../types';
-import { ExportControls } from './ExportControls';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportHistoryTable } from './ReportHistoryTable';
@@ -53,6 +58,34 @@ type ViewModeExtended = ViewMode | 'templates' | 'schedule' | 'settings';
 interface ManagementReportsViewProps {
   className?: string;
 }
+
+export const ManagementReportCard: React.FC<{
+  report: ManagementReport;
+  onBack: () => void;
+  onExportPDF: () => Promise<string>;
+  onExportPPTX: () => Promise<string>;
+  onShare: () => Promise<{ shareUrl: string; expiresAt: string }>;
+  children: React.ReactNode;
+}> = ({ report, onBack, onExportPDF, onExportPPTX, onShare, children }) => {
+  const [activeSection, setActiveSection] = useState('report');
+  const sections: StandardSekcjaDef[] = MANAGEMENT_REPORT_CARD_CONTRACT.map((item) => ({
+    ...item,
+    component: children,
+    aiContract: { none: true as const, reason: item.aiReason },
+  }));
+  const reportTypeLabel: Record<string, string> = { TEAM_MEETING: 'Spotkanie zespołu', TEAM_WEEKLY: 'Raport tygodniowy zespołu', STEERING_COMMITTEE: 'Komitet sterujący', PORTFOLIO_HEALTH: 'Zdrowie portfela', RAID: 'RAID' };
+  const scopeLabel: Record<string, string> = { PORTFOLIO: 'Portfel', PROJECT: 'Projekt', ORGANIZATION: 'Organizacja' };
+  const statusLabel: Record<string, string> = { DRAFT: 'Szkic', FINAL: 'Finalny', APPROVED: 'Zatwierdzony', ARCHIVED: 'Zarchiwizowany' };
+  const rightPanel = {
+    actions: { label: 'Akcje', children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>Eksportuj PDF</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>Eksportuj PPTX</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>Udostępnij link</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
+    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'type', label: 'Typ', value: reportTypeLabel[report.reportType] ?? report.reportType }, { id: 'scope', label: 'Zakres', value: scopeLabel[report.scope] ?? report.scope }, { id: 'status', label: 'Status', value: statusLabel[report.status] ?? report.status }, { id: 'period', label: 'Okres', value: `${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodStart))} – ${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodEnd))}`, mono: true }, { id: 'author', label: 'Autor', value: report.generatedByName || '—' }]} /> },
+    relations: { pominieta: true as const, reason: 'Raport nie deklaruje czytelnych powiązań biznesowych.' },
+    evidence: report.aiWarnings?.length ? { label: 'Źródła i założenia', children: <ul className="list-disc pl-4 text-sm">{report.aiWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> } : { pominieta: true as const, reason: 'Brak zapisanych źródeł i założeń.' },
+    comments: { pominieta: true as const, reason: 'Raport zarządczy nie ma wątku komentarzy.' },
+    history: { label: 'Historia', children: <p className="text-sm">Utworzono {new Intl.DateTimeFormat('pl-PL').format(new Date(report.createdAt))} · wersja {report.currentVersion ?? 1}</p> },
+  };
+  return <div className="h-full min-h-0"><StandardArtifactShell karta="management-report" klasa="L" header={{ title: report.title, onTitleChange: () => undefined, titleReadOnly: true, artifactType: 'document' as any, artifactId: report.id, onSave: () => undefined, saveState: 'saved', onClose: onBack, statusLabel: report.status, statusTone: report.status === 'APPROVED' || report.status === 'FINAL' ? 'approved' : 'draft' }} primaryAction={{ intentionallyNone: true, reason: 'Eksport i udostępnianie są w sekcji Akcje.' }} sections={sections} rightPanel={rightPanel} activeSection={activeSection} onSectionChange={setActiveSection} densityMode="n" onDensityModeChange={() => undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={activeSection} onSectionChange={setActiveSection} readMode ai={{ onAnalizuj: () => toast('Raport zawiera analizę z chwili wygenerowania; ponowna analiza wymaga nowego raportu.'), kontekstArtefaktu: { title: report.title, status: report.status, type: 'management-report' }, moznaEdytowac: false, powodTylkoOdczyt: 'raport jest wynikiem generatora i nie ma pól do uzupełnienia' }} />} panelAriaLabel="Szczegóły raportu zarządczego" /></div>;
+};
 
 export const normalizeManagementReportProjects = (
   response: any
@@ -579,22 +612,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
         )}
 
         {viewMode === 'preview' && currentReport && (
-          <div className="max-w-5xl mx-auto space-y-6">
-            {/* Export Controls */}
-            <div className="flex items-center justify-between bg-c-surface rounded-xl border border-slate-200/60 dark:border-white/[0.03] p-4">
-              <div className="text-sm text-c-text-muted">
-                Report ID:{' '}
-                <code className="px-1 py-0.5 bg-c-surface-raised rounded">{currentReport.id}</code>
-              </div>
-              <ExportControls
-                reportId={currentReport.id}
-                onExportPDF={handleExportPDF}
-                onExportPPTX={handleExportPPTX}
-                onShare={handleShare}
-              />
-            </div>
-
-            {/* Report Content with Suspense */}
+          <ManagementReportCard report={currentReport} onBack={() => setViewMode('selector')} onExportPDF={handleExportPDF} onExportPPTX={handleExportPPTX} onShare={handleShare}>
             <Suspense fallback={<ReportSkeleton reportType={currentReport.reportType} />}>
               {currentReport.reportType === 'TEAM_MEETING' ||
               currentReport.reportType === 'TEAM_WEEKLY' ? (
@@ -607,7 +625,7 @@ export const ManagementReportsView: React.FC<ManagementReportsViewProps> = ({ cl
                 <SteeringCommitteeReport report={currentReport} />
               )}
             </Suspense>
-          </div>
+          </ManagementReportCard>
         )}
 
         {viewMode === 'history' && (

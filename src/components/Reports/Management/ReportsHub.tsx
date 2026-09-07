@@ -60,6 +60,7 @@ import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';
 import { ReportingAutomationWorkspace } from './ReportingAutomationWorkspace';
 import { SteeringCommitteeReport } from './SteeringCommitteeReport';
 import { TeamMeetingReport } from './TeamMeetingReport';
+import { ManagementReportCard } from './ManagementReportsView';
 
 // Report type metadata. Identity (type) is carried by a muted icon + short
 // label — color is NOT a status signal here (canon §4.0a), so we keep the icon
@@ -753,7 +754,26 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({ initialTab = 'list' }) =
 
     // Show report preview if document is open
     if (activeDocumentId && currentReport) {
-      return <div className="overflow-auto h-full p-6">{renderReportPreview()}</div>;
+      return (
+        <ManagementReportCard
+          report={currentReport}
+          onBack={handleShowList}
+          onExportPDF={async () => {
+            const response = await Api.get(`/api/management-reports/${currentReport.id}/pdf`);
+            return response.data?.pdfUrl || '';
+          }}
+          onExportPPTX={async () => {
+            const response = await Api.get(`/api/management-reports/${currentReport.id}/pptx`);
+            return response.data?.pptxUrl || '';
+          }}
+          onShare={async () => {
+            const response = await Api.post(`/api/management-reports/${currentReport.id}/share`, { expiresInDays: 7 });
+            return { shareUrl: response.data?.shareUrl || '', expiresAt: response.data?.expiresAt || '' };
+          }}
+        >
+          {renderReportPreview()}
+        </ManagementReportCard>
+      );
     }
 
     // Tab: Reports (default)

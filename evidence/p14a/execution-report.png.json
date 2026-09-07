@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3194/execution?tab=reports&view=table",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=td:has-text('Zdrowie programu')",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nRealizacja\nDane\nModel\n2\n7\nAudyt Nocny\nAN\nKokpit\nRealizacje\nPraca\nZasoby\nDecyzje i ryzyka\nRaporty\nPoziom\nRaporty\nDefinicje\nNowa definicja\nKontrakt raportu (zaawansowane)\nNowy raport\nWszystkie\n6\nDo przeglądu\n4\nOpublikowane\n1\nZdrowie programu · 06.09.2026\nOpublikowany\nZapisano\nSekcje\nPracuj z AI\nMierniki\nTreść raportu\n\nInicjatywy w realizacji\n\n23\n\nZadania po terminie\n\n20\n\nZadania zablokowane\n\n10\n\nDecyzje do rozstrzygnięcia\n\n25\n\n13 po terminie\n\nNa czas\n\n73%\n\nOtwarte pozycje RAID\n\n16\n\nAKCJE\nPobierz DOCX\nPobierz PDF\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nPoziom\tKomitet sterujący\nStatus\tOpublikowany\nStan danych na\t6.09.2026\nOkres\t31.08.2026 – 7.09.2026\nAutor\tAudyt Nocny\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj\n\nTylko do odczytu: raport jest zamrożoną migawką; AI nie może uzupełniać jego treści",
+ "kiedy": "2026-09-07T03:46:37.373Z"
+}

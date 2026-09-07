@@ -4,6 +4,12 @@
  * wyjątkami tylko do decyzji właściciela; powód nie może być pusty.
  */
 import { describe, expect, it } from 'vitest';
+import {
+  CAPACITY_ANALYSIS_CARD_CONTRACT,
+  EXECUTION_REPORT_CARD_CONTRACT,
+  MANAGEMENT_REPORT_CARD_CONTRACT,
+  PLAN_CARD_CONTRACT,
+} from '../documentCardContracts';
 import { REJESTR_KART_N } from '../registry';
 
 const OCZEKIWANE_W_REJESTRZE = [
@@ -59,6 +65,16 @@ const JAWNE_WYJATKI = {
 } as const;
 
 describe('P10 — kompletność rejestru kart N', () => {
+  it('zachowuje kompletne kontrakty sekcji czterech kart P14-A', () => {
+    expect(PLAN_CARD_CONTRACT.map((section) => section.id)).toEqual([
+      'horizon', 'scope', 'windows', 'dependencies', 'capacity', 'decisions',
+    ]);
+    expect(CAPACITY_ANALYSIS_CARD_CONTRACT.map((section) => section.id)).toEqual([
+      'source', 'worksheet', 'pressure', 'proposals', 'decisions',
+    ]);
+    expect(EXECUTION_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['metrics', 'content']);
+    expect(MANAGEMENT_REPORT_CARD_CONTRACT.map((section) => section.id)).toEqual(['report']);
+  });
   it('zawiera wszystkie 35 kart wskazanych przez KartaNKey (scalenie P13-B tool-document DEC-439 + P13-C Wyniki/Materiały/Finanse/Realizacja DEC-434)', () => {
     expect(Object.keys(REJESTR_KART_N).sort()).toEqual([...OCZEKIWANE_W_REJESTRZE].sort());
   });
