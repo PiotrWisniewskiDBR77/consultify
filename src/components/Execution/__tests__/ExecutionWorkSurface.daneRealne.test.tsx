@@ -42,7 +42,16 @@ vi.mock('@/services/api/organizations.api', () => ({
 
 const { getTasks } = vi.hoisted(() => ({ getTasks: vi.fn() }));
 vi.mock('@/services/api', () => ({
-  Api: { getTasks, getInitiatives: vi.fn().mockResolvedValue([]) },
+  Api: {
+    getTasks,
+    getInitiatives: vi.fn().mockResolvedValue([]),
+    // P16-R2: powierzchnia czyta słownik statusów zadania z serwera
+    // (`GET /api/tasks/workflow-config`) — bez tej atrapy `Api.get` nie
+    // istnieje i efekt wywraca render zanim tabela zdąży się pojawić.
+    get: vi.fn().mockResolvedValue({ data: { statuses: [], transitions: {} } }),
+    updateTask: vi.fn(),
+    post: vi.fn(),
+  },
 }));
 
 const { listExecutionCases, readExecutionWork } = vi.hoisted(() => ({
@@ -124,10 +133,13 @@ describe('1.12-R1 (B) — źródło danych zakładki Praca', () => {
     expect(screen.queryByText('Termin / SLA')).toBeNull();
     expect(screen.queryByText('Due / SLA')).toBeNull();
     expect(document.body.textContent).not.toContain('SLA brak');
-    expect(screen.getByText('Poślizg (dni)')).toBeInTheDocument();
+    // P16-R2: kolumna nazwana uczciwie — liczy „dziś − termin", nie odchylenie
+    // od planu bazowego. Poślizg wobec baseline wraca z R3 (metodyka).
+    expect(screen.getByText('Dni po terminie')).toBeInTheDocument();
+    expect(screen.queryByText('Poślizg (dni)')).toBeNull();
   });
 
-  it('kolumna „Poślizg (dni)" liczy dni po terminie dla zadań przeterminowanych', async () => {
+  it('kolumna „Dni po terminie" liczy dni po terminie dla zadań przeterminowanych', async () => {
     zamontuj();
     await waitFor(() => expect(screen.getByText('Zadanie realne 0')).toBeInTheDocument());
     const wiersz = wierszeTabeli().find((tr) => (tr.textContent || '').includes('Zadanie realne 3'));

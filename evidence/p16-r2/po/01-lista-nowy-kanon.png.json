@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-lista-nowy-kanon",
+  "opis": "Lista: „Dni po terminie\", „Bez inicjatywy\" na koncu, CTA „Nowe zadanie\"",
+  "faza": "po",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:48:54.251Z"
+}

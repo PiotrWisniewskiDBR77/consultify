@@ -1,5 +1,6 @@
-import { AlertTriangle, ArrowRight, Eye } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarClock, CheckCircle2, Eye, UserCog } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,9 +11,19 @@ import { TaskMilestoneBlastRadius } from '@/components/shared/TaskMilestoneBlast
 import { StandardPreview } from '@/components/standard/StandardPreview';
 import {
   StandardTable,
-  type TableColumn,
+  type StandardTableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
+import { useDeferredLoading } from '@/hooks/useDeferredLoading';
+import {
+  memberNameOrUnknown,
+  type MemberNameResolver,
+  readMemberId,
+  readMemberLabel,
+  useOrganizationMemberNames,
+} from '@/hooks/useOrganizationMemberNames';
+import { Api } from '@/services/api';
+import { OrganizationApi } from '@/services/api/organizations.api';
 import { persistentCommandId } from '@/services/initiatives-execution/persistentCommandId';
 import {
   completeExecutionTask,
@@ -27,21 +38,12 @@ import {
   requestExecutionDecision,
   updateExecutionTask,
 } from '@/services/initiatives-execution/runtimeApi';
-import {
-  memberNameOrUnknown,
-  useOrganizationMemberNames,
-  type MemberNameResolver,
-} from '@/hooks/useOrganizationMemberNames';
 import { useAppStore } from '@/store/useAppStore';
-import { useDeferredLoading } from '@/hooks/useDeferredLoading';
-import { liczebnik } from '@/utils/liczebnik';
-
-import { Api } from '@/services/api';
 import { getArtifactPath } from '@/utils/artifactLinks';
+import { liczebnik } from '@/utils/liczebnik';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
 import { fanOutExecutionCases } from './executionCaseFanOut';
-import { isTaskBlocked, isTaskOverdue, taskSlipDays } from './executionRealData';
 import {
   executionLocalReviewEnabled,
   executionReviewCases,
@@ -51,6 +53,7 @@ import {
   getExecutionReviewMilestones,
   getExecutionReviewWork,
 } from './executionLocalReviewData';
+import { isTaskBlocked, isTaskOverdue, taskSlipDays } from './executionRealData';
 type WorkKind = 'TASK' | 'DECISION';
 interface Row extends TableRow {
   id: string;
@@ -204,58 +207,188 @@ const actorLabel = (
  * kolumna zajmowała szerokość i udawała informację. W jej miejsce wchodzi
  * „Poślizg (dni)", który dla tych samych danych ma realną wartość.
  */
-const buildCols = (
-  t: (key: string, fallback: string) => string,
-  resolveMemberName?: MemberNameResolver,
-  isPolish = true
-): TableColumn[] => [
-  {
-    id: 'title',
-    label: t('execution.work.columns.title', 'Zadanie'),
-    sortable: true,
-    width: '260px',
-  },
-  {
-    id: 'initiativeName',
-    label: t('execution.work.columns.initiative', 'Inicjatywa'),
-    sortable: true,
-    width: '200px',
-    render: (row) => (row.initiativeName as string) || '—',
-  },
-  {
-    id: 'owner',
-    label: t('execution.work.columns.person', 'Osoba'),
-    sortable: true,
-    width: '160px',
-    render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
-  },
-  {
-    id: 'dueAt',
-    label: t('execution.work.columns.due', 'Termin'),
-    sortable: true,
-    width: '150px',
-  },
-  {
-    id: 'status',
-    label: t('execution.work.columns.status', 'Status'),
-    sortable: true,
-    width: '130px',
-    render: (row) => (
-      <span role="status">{workStatusLabel[row.status as string] ?? (row.status as string)}</span>
-    ),
-  },
-  {
-    id: 'slipDays',
-    label: t('execution.work.columns.slip', 'Poślizg (dni)'),
-    sortable: true,
-    width: '110px',
-    render: (row) => {
-      const slip = row.slipDays as number | null;
-      if (slip == null) return <span className="text-c-text-muted">—</span>;
-      return <span className="font-semibold tabular-nums text-c-danger">+{slip}</span>;
+/** Słownik statusów zadania z serwera (`GET /api/tasks/workflow-config`). */
+export interface SlownikStatusowZadania {
+  statuses: string[];
+  transitions: Record<string, string[]>;
+}
+
+/** Pola edytowalne w wierszu — dokładnie te trzy, które PMO zmienia na stand-upie. */
+export type PoleEdycjiZadania = 'assigneeId' | 'dueDate' | 'status';
+
+/** ISO → `RRRR-MM-DD` dla `input[type=date]`; puste, gdy terminu nie ma. */
+const naWartoscDaty = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toISOString().slice(0, 10);
+};
+
+/**
+ * Etykieta statusu zadania w języku interfejsu. Słownik `workStatusLabel` jest
+ * polski i module-scope (nie reaguje na `?lang=`), więc angielska wersja idzie
+ * przez `t` z kluczem `execution.work.status.<wartość serwera>`.
+ */
+const etykietaStatusu = (status: string, t: (key: string, fallback: string) => string): string => {
+  const serwerowy = String(status ?? '').toLowerCase();
+  const polski = workStatusLabel[String(status ?? '').toUpperCase()] ?? String(status ?? '');
+  return t(`execution.work.status.${serwerowy}`, polski);
+};
+
+/**
+ * ZADANIA BEZ INICJATYWY NA KONIEC (D5, plan P16 §4).
+ *
+ * POMIAR 07.09: 20 z 84 zadań demo nie ma `initiative_id`, a że przychodzą z
+ * `/api/tasks` w kolejności utworzenia, zajmowały CAŁY pierwszy ekran kolumną
+ * „—". Menedżer otwierał zakładkę i widział wyłącznie wiersze bez kontekstu.
+ * Sortowanie jest STABILNE (zachowuje kolejność serwera wewnątrz obu grup), bo
+ * kolejność w grupie z inicjatywą niesie sens (data utworzenia), a przetasowanie
+ * jej „przy okazji" byłoby zmianą, o którą nikt nie prosił.
+ */
+export function sortujBezInicjatywyNaKoniec<T extends { initiativeId?: string }>(
+  rows: readonly T[]
+): T[] {
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const aBez = a.row.initiativeId ? 0 : 1;
+      const bBez = b.row.initiativeId ? 0 : 1;
+      if (aBez !== bBez) return aBez - bBez;
+      return a.index - b.index;
+    })
+    .map((wpis) => wpis.row);
+}
+
+interface KontekstKolumn {
+  t: (key: string, fallback: string) => string;
+  resolveMemberName?: MemberNameResolver;
+  isPolish: boolean;
+  osoby: Array<{ id: string; label: string }>;
+  slownikStatusow: SlownikStatusowZadania | null;
+  /** Wiersz edytowalny w tabeli — tylko rekord z `/api/tasks` (patrz `Row.origin`). */
+  edytowalny: (row: TableRow) => boolean;
+  zapisz: (row: TableRow, pole: PoleEdycjiZadania, wartosc: string | null) => void;
+}
+
+const buildCols = ({
+  t,
+  resolveMemberName,
+  isPolish,
+  osoby,
+  slownikStatusow,
+  edytowalny,
+  zapisz,
+}: KontekstKolumn): StandardTableColumn[] => {
+  const podpowiedz = t('execution.work.edit.hint', 'Zmień podwójnym kliknięciem');
+  const podpowiedzBrak = t(
+    'execution.work.edit.notEditable',
+    'Ten wiersz pochodzi z kanonicznego rejestru realizacji — otwórz element pracy, żeby go zmienić.'
+  );
+  const brakOsoby = t('execution.work.edit.unassigned', 'Nieprzypisany');
+
+  return [
+    {
+      id: 'title',
+      label: t('execution.work.columns.title', 'Zadanie'),
+      sortable: true,
+      width: '260px',
     },
-  },
-];
+    {
+      id: 'initiativeName',
+      label: t('execution.work.columns.initiative', 'Inicjatywa'),
+      sortable: true,
+      width: '200px',
+      // „—" nie mówi, czy danych brakuje, czy zadanie naprawdę nie należy do
+      // żadnej inicjatywy. Tu wiadomo, że to drugie (pole jest puste w bazie).
+      render: (row) =>
+        (row.initiativeName as string) || (
+          <span className="text-c-text-muted">
+            {t('execution.work.withoutInitiative', 'Bez inicjatywy')}
+          </span>
+        ),
+    },
+    {
+      id: 'owner',
+      label: t('execution.work.columns.person', 'Osoba'),
+      sortable: true,
+      width: '170px',
+      render: (row) => actorLabel(row.owner as string, t, resolveMemberName, isPolish),
+      editable: {
+        kind: 'select',
+        ariaLabel: t('execution.work.edit.person', 'Zmień osobę'),
+        hint: podpowiedz,
+        disabledHint: podpowiedzBrak,
+        isEditable: edytowalny,
+        value: (row) => String(row.owner ?? ''),
+        options: () => [
+          { value: '', label: brakOsoby },
+          ...osoby.map((osoba) => ({ value: osoba.id, label: osoba.label })),
+        ],
+        onCommit: (row, wartosc) => zapisz(row, 'assigneeId', wartosc || null),
+      },
+    },
+    {
+      id: 'dueAt',
+      label: t('execution.work.columns.due', 'Termin'),
+      sortable: true,
+      width: '150px',
+      editable: {
+        kind: 'date',
+        ariaLabel: t('execution.work.edit.due', 'Zmień termin'),
+        hint: podpowiedz,
+        disabledHint: podpowiedzBrak,
+        isEditable: edytowalny,
+        value: (row) => naWartoscDaty(row.rawDueAt as string | null),
+        onCommit: (row, wartosc) => zapisz(row, 'dueDate', wartosc || null),
+      },
+    },
+    {
+      id: 'status',
+      label: t('execution.work.columns.status', 'Status'),
+      sortable: true,
+      width: '150px',
+      render: (row) => <span role="status">{etykietaStatusu(row.status as string, t)}</span>,
+      editable: {
+        kind: 'select',
+        ariaLabel: t('execution.work.edit.status', 'Zmień status'),
+        hint: podpowiedz,
+        disabledHint: podpowiedzBrak,
+        isEditable: edytowalny,
+        value: (row) => String(row.status ?? '').toLowerCase(),
+        /**
+         * Lista = status bieżący + przejścia DOPUSZCZONE PRZEZ SERWER
+         * (`GET /api/tasks/workflow-config` → `validateTaskStatusTransition`).
+         * Nie wymyślamy własnego słownika: gdyby lista była szersza, użytkownik
+         * dostawałby 400 za wybór, który mu sami pokazaliśmy.
+         */
+        options: (row) => {
+          const biezacy = String(row.status ?? '').toLowerCase();
+          const dozwolone = slownikStatusow?.transitions?.[biezacy] ?? [];
+          return [biezacy, ...dozwolone]
+            .filter((wartosc, index, lista) => wartosc && lista.indexOf(wartosc) === index)
+            .map((wartosc) => ({ value: wartosc, label: etykietaStatusu(wartosc, t) }));
+        },
+        onCommit: (row, wartosc) => zapisz(row, 'status', wartosc),
+      },
+    },
+    {
+      id: 'slipDays',
+      // „Poślizg" to odchylenie wobec planu bazowego (wraca z R3, gdy będą
+      // kamienie i baseline). To, co ta kolumna liczy naprawdę, to
+      // `dziś − termin` dla zadań niezakończonych — czyli DNI PO TERMINIE.
+      // Mylenie tych dwóch liczb jest najczęstszym błędem rynku
+      // (`AUDYT_RYNKU_PMO_20260907.md` §4.1).
+      label: t('execution.work.columns.daysOverdue', 'Dni po terminie'),
+      sortable: true,
+      width: '130px',
+      render: (row) => {
+        const dni = row.slipDays as number | null;
+        if (dni == null) return <span className="text-c-text-muted">—</span>;
+        return <span className="font-semibold tabular-nums text-c-danger">+{dni}</span>;
+      },
+    },
+  ];
+};
 /**
  * 1.12-R1 (B): TRZY chipy zamiast jedenastu.
  *
@@ -424,11 +557,8 @@ export const ExecutionWorkSurface = ({
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
   const resolveMemberName = useOrganizationMemberNames();
-  const cols = useMemo(
-    () => buildCols(t, resolveMemberName, isPolish),
-    [t, resolveMemberName, isPolish]
-  );
   const navigate = useNavigate();
+  const currentOrganizationId = useAppStore((store) => store.currentOrganization?.id ?? null);
   const actorId = useAppStore((store) => store.currentUser?.id ?? null);
   const [cases, setCases] = useState<Array<any>>([]),
     [caseId, setCaseId] = useState(''),
@@ -468,6 +598,40 @@ export const ExecutionWorkSurface = ({
     // Realizacje, których backend nie zwrócił (błąd albo brak odpowiedzi w czasie).
     // Stan jawny, bo cicha luka w liście to gorsze kłamstwo niż wisząca zakładka.
     [unreachableCaseIds, setUnreachableCaseIds] = useState<string[]>([]);
+
+  // ── D5: edycja w wierszu i tworzenie zadania (P16-R2) ────────────────────
+  /** Katalog osób do selecta „Osoba" — ta sama lista, z której idą nazwiska. */
+  const [osoby, setOsoby] = useState<Array<{ id: string; label: string }>>([]);
+  /** Słownik statusów + dozwolone przejścia — Z SERWERA, nie z kopii w kodzie. */
+  const [slownikStatusow, setSlownikStatusow] = useState<SlownikStatusowZadania | null>(null);
+  /** Inicjatywy do selecta „Inicjatywa" w formularzu „Nowe zadanie". */
+  const [inicjatywy, setInicjatywy] = useState<Array<{ id: string; name: string }>>([]);
+  /** Błąd zapisu PRZY WIERSZU — cisza po nieudanym zapisie jest zakazana. */
+  const [bladWiersza, setBladWiersza] = useState<{ rowId: string; message: string } | null>(null);
+  const [zapisywanyWiersz, setZapisywanyWiersz] = useState<string | null>(null);
+  /** Otwarta akcja podglądu (Zmień osobę / Zmień termin) — edytor w podglądzie. */
+  const [edycjaPodgladu, setEdycjaPodgladu] = useState<'owner' | 'due' | null>(null);
+  /** Formularz „Nowe zadanie" (Menu 2). */
+  const [formularzNowego, setFormularzNowego] = useState<{
+    otwarty: boolean;
+    title: string;
+    initiativeId: string;
+    assigneeId: string;
+    dueDate: string;
+    status: string;
+    blad: string | null;
+    zapisywanie: boolean;
+  }>({
+    otwarty: false,
+    title: '',
+    initiativeId: '',
+    assigneeId: '',
+    dueDate: '',
+    status: 'todo',
+    blad: null,
+    zapisywanie: false,
+  });
+
   const loadingPhase = useDeferredLoading(state === 'LOADING');
   /**
    * Uczciwy stan częściowy — ale NIE między Menu 3 a tabelą.
@@ -524,6 +688,14 @@ export const ExecutionWorkSurface = ({
         (inicjatywy ?? [])
           .filter((i: any) => i?.id && i?.name)
           .map((i: any) => [String(i.id), String(i.name)])
+      );
+      // Ta sama lista zasila select „Inicjatywa" w formularzu „Nowe zadanie" —
+      // jedno pobranie, jedno źródło nazw (kolumna i formularz nie mogą się
+      // rozjechać).
+      setInicjatywy(
+        (inicjatywy ?? [])
+          .filter((i: any) => i?.id && i?.name)
+          .map((i: any) => ({ id: String(i.id), name: String(i.name) }))
       );
       realTaskRows = mapRealTaskRows(zadania, nazwyInicjatyw);
     } catch (error) {
@@ -597,6 +769,289 @@ export const ExecutionWorkSurface = ({
   useEffect(() => {
     void loadCases();
   }, [loadCases]);
+
+  // ── Katalog osób do selecta „Osoba" ──────────────────────────────────────
+  // Ta sama trasa, z której `useOrganizationMemberNames` bierze nazwiska —
+  // tam potrzebny jest resolver `id → nazwa`, tu LISTA do wyboru. Brak listy
+  // (403 na katalogu dla zwykłego użytkownika) nie wywraca zakładki: select
+  // pokazuje wtedy samo „Nieprzypisany" i bieżącą osobę.
+  useEffect(() => {
+    if (!currentOrganizationId) return;
+    let anulowane = false;
+    OrganizationApi.getOrganizationMembers(currentOrganizationId)
+      .then((czlonkowie) => {
+        if (anulowane) return;
+        const lista = (czlonkowie ?? [])
+          .map((czlonek) => ({
+            id: readMemberId(czlonek as unknown as Record<string, unknown>),
+            label: readMemberLabel(czlonek as unknown as Record<string, unknown>) ?? '',
+          }))
+          .filter((osoba) => osoba.id && osoba.label);
+        setOsoby(lista);
+      })
+      .catch((error) => {
+        console.error('[ExecutionWorkSurface] katalog osób nieosiągalny:', error);
+        if (!anulowane) setOsoby([]);
+      });
+    return () => {
+      anulowane = true;
+    };
+  }, [currentOrganizationId]);
+
+  // ── Słownik statusów zadania — Z SERWERA ─────────────────────────────────
+  // `GET /api/tasks/workflow-config` zwraca ten sam zbiór, który waliduje
+  // `validateTaskStatusTransition` przy zapisie. Kopia w kodzie klienta
+  // rozjechałaby się przy pierwszej zmianie reguł, a użytkownik dostałby 400
+  // za wybór, który sami mu pokazaliśmy.
+  useEffect(() => {
+    let anulowane = false;
+    Api.get('/tasks/workflow-config')
+      .then((odpowiedz: any) => {
+        if (anulowane) return;
+        // `Api.get` zwraca kopertę „axios-like" — słownik siedzi w `.data`.
+        const dane = odpowiedz?.data ?? odpowiedz;
+        if (Array.isArray(dane?.statuses) && dane?.transitions) {
+          setSlownikStatusow({
+            statuses: dane.statuses.map((s: unknown) => String(s)),
+            transitions: dane.transitions,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error('[ExecutionWorkSurface] słownik statusów nieosiągalny:', error);
+      });
+    return () => {
+      anulowane = true;
+    };
+  }, []);
+
+  /**
+   * Komunikat błędu PO POLSKU. Serwer odpowiada po angielsku
+   * („Cannot transition from todo to done. Allowed: …"), a właściciel czyta
+   * polski ekran. Tłumaczymy to, co umiemy rozpoznać, a resztę DOPISUJEMY
+   * (nie chowamy) — cichy błąd jest gorszy niż obcy język.
+   */
+  const komunikatBledu = useCallback(
+    (error: unknown): string => {
+      const surowy = error instanceof Error ? error.message : String(error ?? '');
+      const przejscie = /Cannot transition from ([a-z_]+) to ([a-z_]+)/i.exec(surowy);
+      if (przejscie) {
+        return t('execution.work.edit.transitionBlocked', {
+          z: etykietaStatusu(przejscie[1], t),
+          na: etykietaStatusu(przejscie[2], t),
+          defaultValue: 'Nie można zmienić statusu z „{{z}}” na „{{na}}”.',
+        }) as unknown as string;
+      }
+      if (/Blocking decisions/i.test(surowy)) {
+        return t(
+          'execution.work.edit.blockedByDecision',
+          'Zadania nie można zamknąć: czeka na rozstrzygnięcie decyzji.'
+        );
+      }
+      if (/Blocked reason is required/i.test(surowy)) {
+        return t(
+          'execution.work.edit.blockedReasonRequired',
+          'Status „Zablokowane” wymaga podania powodu blokady.'
+        );
+      }
+      return t('execution.work.edit.failed', {
+        powod: surowy || t('execution.work.edit.unknownReason', 'brak odpowiedzi serwera'),
+        defaultValue: 'Nie udało się zapisać zmiany: {{powod}}',
+      }) as unknown as string;
+    },
+    [t]
+  );
+
+  /**
+   * Czy „Zamknij zadanie" wolno w ogóle kliknąć — wg SŁOWNIKA SERWERA.
+   * `validateTaskStatusTransition` nie pozwala na `todo → done` (trzeba przejść
+   * przez „W toku"/„W przeglądzie"), więc przycisk, który zawsze wygląda na
+   * czynny, byłby obietnicą 400-tki. Powód jest widoczny w podglądzie.
+   */
+  const mozliwoscZamkniecia = useCallback(
+    (row: Row): { mozna: boolean; powod: string } => {
+      const biezacy = String(row.status ?? '').toLowerCase();
+      if (biezacy === 'done')
+        return {
+          mozna: false,
+          powod: t('execution.work.edit.alreadyClosed', 'Zadanie jest już zamknięte.'),
+        };
+      if (!slownikStatusow)
+        return {
+          mozna: false,
+          powod: t(
+            'execution.work.edit.dictionaryMissing',
+            'Słownik statusów jeszcze się nie wczytał.'
+          ),
+        };
+      if (!(slownikStatusow.transitions?.[biezacy] ?? []).includes('done'))
+        return {
+          mozna: false,
+          powod: t('execution.work.edit.closeBlocked', {
+            z: etykietaStatusu(biezacy, t),
+            defaultValue:
+              'Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”.',
+          }) as unknown as string,
+        };
+      return { mozna: true, powod: '' };
+    },
+    [slownikStatusow, t]
+  );
+
+  /**
+   * ZAPIS JEDNEGO POLA ZADANIA — `PUT /api/tasks/:id`.
+   *
+   * POMIAR 07.09 (własne API 4155): `PUT` z ciałem `{status}` / `{assigneeId}`
+   * / `{dueDate}` → 200; `PATCH` → 404 (router ma wyłącznie `PUT /:id`).
+   * Wysyłamy DOKŁADNIE jedno pole — zapis pełnego obiektu nadpisywałby wartości,
+   * których użytkownik nie dotknął (i tak właśnie psuł się serwer przed
+   * naprawą `UpdateTaskSchema`, patrz server/src/validators/task.validators.ts).
+   *
+   * Po sukcesie odświeżamy JEDEN WIERSZ z odpowiedzi serwera (kontroler
+   * odpowiada ponownie odczytanym rekordem, snake_case) — bez przeładowania
+   * całej listy, żeby nie tracić przewinięcia i zaznaczenia.
+   */
+  const zapiszPoleZadania = useCallback(
+    async (row: TableRow, pole: PoleEdycjiZadania, wartosc: string | null) => {
+      const id = String(row.id);
+      setBladWiersza(null);
+      setZapisywanyWiersz(id);
+      // `tasks.due_date` to `timestamp with time zone` — `input[type=date]` daje
+      // samo `RRRR-MM-DD`, więc doprowadzamy do ISO w JEDNYM miejscu (edytor
+      // w wierszu i edytor w podglądzie wołają tę samą funkcję).
+      const doWyslania =
+        pole === 'dueDate' && wartosc && /^\d{4}-\d{2}-\d{2}$/.test(wartosc)
+          ? new Date(`${wartosc}T00:00:00.000Z`).toISOString()
+          : wartosc;
+      try {
+        const odpowiedz = (await Api.updateTask(id, { [pole]: doWyslania })) as any;
+        const potwierdzonyStatus = String(
+          odpowiedz?.status ?? (pole === 'status' ? wartosc : row.status)
+        ).toUpperCase();
+        const potwierdzonyTermin =
+          odpowiedz?.due_date ?? odpowiedz?.dueDate ?? (pole === 'dueDate' ? doWyslania : null);
+        const potwierdzonaOsoba = String(
+          odpowiedz?.assignee_id ??
+            odpowiedz?.assigneeId ??
+            (pole === 'assigneeId' ? wartosc : '') ??
+            ''
+        );
+        setRows((current) =>
+          current.map((wiersz) =>
+            wiersz.id === id
+              ? {
+                  ...wiersz,
+                  status: potwierdzonyStatus,
+                  owner: pole === 'assigneeId' ? potwierdzonaOsoba : wiersz.owner,
+                  rawDueAt: pole === 'dueDate' ? (potwierdzonyTermin ?? null) : wiersz.rawDueAt,
+                  dueAt: pole === 'dueDate' ? formatDate(potwierdzonyTermin ?? null) : wiersz.dueAt,
+                  slipDays: taskSlipDays({
+                    status: potwierdzonyStatus,
+                    dueDate:
+                      pole === 'dueDate'
+                        ? (potwierdzonyTermin ?? undefined)
+                        : (wiersz.rawDueAt ?? undefined),
+                  }),
+                  source: { ...(wiersz.source ?? {}), ...(odpowiedz ?? {}) },
+                }
+              : wiersz
+          )
+        );
+        toast.success(t('execution.work.edit.saved', 'Zapisano zmianę zadania'));
+      } catch (error) {
+        const komunikat = komunikatBledu(error);
+        setBladWiersza({ rowId: id, message: komunikat });
+        toast.error(komunikat);
+        console.error('[ExecutionWorkSurface] zapis zadania nieudany:', error);
+      } finally {
+        setZapisywanyWiersz(null);
+      }
+    },
+    [komunikatBledu, t]
+  );
+
+  const cols = useMemo(
+    () =>
+      buildCols({
+        t,
+        resolveMemberName,
+        isPolish,
+        osoby,
+        slownikStatusow,
+        // Edytowalny jest WYŁĄCZNIE wiersz z tabeli `tasks`. Rekord kanonicznego
+        // rejestru `runtime-v1` ma własny protokół (wersja + `clientRequestId`),
+        // więc `PUT /api/tasks/:id` go nie dotyczy.
+        edytowalny: (row) => (row as Row).origin === 'tasks',
+        zapisz: (row, pole, wartosc) => void zapiszPoleZadania(row, pole, wartosc),
+      }),
+    [t, resolveMemberName, isPolish, osoby, slownikStatusow, zapiszPoleZadania]
+  );
+
+  /**
+   * NOWE ZADANIE — `POST /api/tasks` (D5).
+   *
+   * Do 07.09 przycisk tworzenia pojawiał się WYŁĄCZNIE po wybraniu realizacji
+   * `runtime-v1`, a tych na DBR77 jest ZERO — czyli zakładka „Praca" nie miała
+   * jak utworzyć zadania w ogóle. Tu tworzymy w tabeli `tasks`, tej samej,
+   * z której lista czyta 84 wiersze; inicjatywa jest polem formularza
+   * (domyślnie ta z filtra realizacji), a nie warunkiem istnienia przycisku.
+   */
+  const utworzZadanie = useCallback(async () => {
+    const tytul = formularzNowego.title.trim();
+    if (!tytul) {
+      setFormularzNowego((biezacy) => ({
+        ...biezacy,
+        blad: t('execution.work.create.titleRequired', 'Podaj tytuł zadania.'),
+      }));
+      return;
+    }
+    setFormularzNowego((biezacy) => ({ ...biezacy, zapisywanie: true, blad: null }));
+    try {
+      const odpowiedz = (await Api.post('/tasks', {
+        title: tytul,
+        initiativeId: formularzNowego.initiativeId || null,
+        assigneeId: formularzNowego.assigneeId || null,
+        dueDate: formularzNowego.dueDate
+          ? new Date(`${formularzNowego.dueDate}T00:00:00.000Z`).toISOString()
+          : null,
+        status: formularzNowego.status || 'todo',
+      })) as any;
+      const utworzone = odpowiedz?.data ?? odpowiedz;
+      const nazwaInicjatywy =
+        inicjatywy.find((i) => i.id === formularzNowego.initiativeId)?.name ?? '';
+      const [nowyWiersz] = mapRealTaskRows(
+        [
+          {
+            id: utworzone?.id,
+            title: utworzone?.title ?? tytul,
+            status: utworzone?.status ?? formularzNowego.status,
+            assigneeId: utworzone?.assignee_id ?? utworzone?.assigneeId ?? '',
+            dueDate: utworzone?.due_date ?? utworzone?.dueDate ?? null,
+            initiativeId: utworzone?.initiative_id ?? formularzNowego.initiativeId ?? '',
+          },
+        ],
+        new Map(nazwaInicjatywy ? [[formularzNowego.initiativeId, nazwaInicjatywy]] : [])
+      );
+      setRows((current) => [nowyWiersz, ...current]);
+      setSelectedId(nowyWiersz.id);
+      setFormularzNowego({
+        otwarty: false,
+        title: '',
+        initiativeId: '',
+        assigneeId: '',
+        dueDate: '',
+        status: 'todo',
+        blad: null,
+        zapisywanie: false,
+      });
+      toast.success(t('execution.work.create.created', 'Zadanie utworzone'));
+    } catch (error) {
+      const komunikat = komunikatBledu(error);
+      setFormularzNowego((biezacy) => ({ ...biezacy, zapisywanie: false, blad: komunikat }));
+      toast.error(komunikat);
+      console.error('[ExecutionWorkSurface] tworzenie zadania nieudane:', error);
+    }
+  }, [formularzNowego, inicjatywy, komunikatBledu, t]);
   const load = async (id: string) => {
     setCaseId(id);
     setUnreachableCaseIds([]);
@@ -697,8 +1152,9 @@ export const ExecutionWorkSurface = ({
       return isTaskOverdue({ status: row.status, dueDate: row.rawDueAt ?? undefined });
     return false;
   }, []);
+  // D5: domyślna kolejność listy — zadania BEZ inicjatywy na końcu.
   const visibleRows = useMemo(
-    () => rows.filter((row) => matches(row, activePreset ?? 'all')),
+    () => sortujBezInicjatywyNaKoniec(rows.filter((row) => matches(row, activePreset ?? 'all'))),
     [activePreset, matches, rows]
   );
   useEffect(
@@ -861,11 +1317,31 @@ export const ExecutionWorkSurface = ({
             </option>
           ))}
         </select>
+        {/*
+         * JEDEN „Nowe zadanie" w Menu 2 — ZAWSZE widoczny (D5).
+         * Poprzedni przycisk o tej samej nazwie pokazywał się tylko przy
+         * wybranej realizacji `runtime-v1` (0 sztuk na DBR77) i pisał do innego
+         * rejestru. Dwa przyciski „Nowe zadanie" obok siebie łamałyby doktrynę
+         * gęstości (JEDNA AKCJA = JEDEN DOM), więc runtime'owy znika z paska;
+         * edytor zadania `runtime-v1` zostaje dostępny z wiersza tego rejestru.
+         */}
+        <button
+          type="button"
+          className="btn-secondary"
+          data-testid="execution-work-new-task"
+          onClick={() =>
+            setFormularzNowego((biezacy) => ({
+              ...biezacy,
+              otwarty: true,
+              blad: null,
+              initiativeId: biezacy.initiativeId || initiativeId || '',
+            }))
+          }
+        >
+          {t('execution.actions.newTask', 'Nowe zadanie')}
+        </button>
         {caseId && (
           <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-secondary" onClick={() => setToolMode('TASK')}>
-              {t('execution.actions.newTask', 'New Task')}
-            </button>
             <button type="button" className="btn-secondary" onClick={() => setToolMode('DECISION')}>
               {t('execution.actions.newDecision', 'New Decision')}
             </button>
@@ -882,7 +1358,7 @@ export const ExecutionWorkSurface = ({
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, documentId, caseId, cases, degradedChip]);
+  }, [onRegisterFilterControl, documentId, caseId, cases, degradedChip, initiativeId, t]);
 
   if (state === 'ERROR')
     return (
@@ -942,6 +1418,140 @@ export const ExecutionWorkSurface = ({
   // dokumentu (documentId) — tam nie ma listy do filtrowania.
   return (
     <section aria-label="Execution Work" className="flex h-full min-h-0 flex-col p-4">
+      {/*
+       * Formularz „Nowe zadanie" jako WARSTWA, nie panel nad tabelą — kanon
+       * triady: tabela zaczyna się pod Menu 3 i nic jej stamtąd nie spycha.
+       */}
+      {formularzNowego.otwarty && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('execution.work.create.title', 'Nowe zadanie')}
+          data-testid="execution-work-create-dialog"
+          className="fixed inset-0 z-modal flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setFormularzNowego((biezacy) => ({ ...biezacy, otwarty: false }))}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl border border-c-border bg-c-surface-raised p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-c-text">
+              {t('execution.work.create.title', 'Nowe zadanie')}
+            </h3>
+            <div className="mt-4 grid gap-3">
+              <label className="block text-xs text-c-text-secondary">
+                {t('execution.work.create.fieldTitle', 'Tytuł')}
+                <input
+                  autoFocus
+                  type="text"
+                  aria-label={t('execution.work.create.fieldTitle', 'Tytuł')}
+                  value={formularzNowego.title}
+                  onChange={(event) =>
+                    setFormularzNowego((biezacy) => ({ ...biezacy, title: event.target.value }))
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                />
+              </label>
+              <label className="block text-xs text-c-text-secondary">
+                {t('execution.work.columns.initiative', 'Inicjatywa')}
+                <select
+                  aria-label={t('execution.work.columns.initiative', 'Inicjatywa')}
+                  value={formularzNowego.initiativeId}
+                  onChange={(event) =>
+                    setFormularzNowego((biezacy) => ({
+                      ...biezacy,
+                      initiativeId: event.target.value,
+                    }))
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <option value="">
+                    {t('execution.work.withoutInitiative', 'Bez inicjatywy')}
+                  </option>
+                  {inicjatywy.map((inicjatywa) => (
+                    <option key={inicjatywa.id} value={inicjatywa.id}>
+                      {inicjatywa.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-c-text-secondary">
+                {t('execution.work.columns.person', 'Osoba')}
+                <select
+                  aria-label={t('execution.work.columns.person', 'Osoba')}
+                  value={formularzNowego.assigneeId}
+                  onChange={(event) =>
+                    setFormularzNowego((biezacy) => ({
+                      ...biezacy,
+                      assigneeId: event.target.value,
+                    }))
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  <option value="">{t('execution.work.edit.unassigned', 'Nieprzypisany')}</option>
+                  {osoby.map((osoba) => (
+                    <option key={osoba.id} value={osoba.id}>
+                      {osoba.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-c-text-secondary">
+                {t('execution.work.columns.due', 'Termin')}
+                <input
+                  type="date"
+                  aria-label={t('execution.work.columns.due', 'Termin')}
+                  value={formularzNowego.dueDate}
+                  onChange={(event) =>
+                    setFormularzNowego((biezacy) => ({ ...biezacy, dueDate: event.target.value }))
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                />
+              </label>
+              <label className="block text-xs text-c-text-secondary">
+                {t('execution.work.columns.status', 'Status')}
+                <select
+                  aria-label={t('execution.work.columns.status', 'Status')}
+                  value={formularzNowego.status}
+                  onChange={(event) =>
+                    setFormularzNowego((biezacy) => ({ ...biezacy, status: event.target.value }))
+                  }
+                  className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {(slownikStatusow?.statuses ?? ['todo']).map((wartosc) => (
+                    <option key={wartosc} value={wartosc}>
+                      {etykietaStatusu(wartosc, t)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {formularzNowego.blad && (
+              <p role="alert" className="mt-3 text-xs text-c-danger">
+                {formularzNowego.blad}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setFormularzNowego((biezacy) => ({ ...biezacy, otwarty: false }))}
+              >
+                {t('common.cancel', 'Anuluj')}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                data-testid="execution-work-create-submit"
+                disabled={formularzNowego.zapisywanie}
+                onClick={() => void utworzZadanie()}
+              >
+                {t('execution.work.create.submit', 'Utwórz zadanie')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {documentId && (
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -1037,11 +1647,13 @@ export const ExecutionWorkSurface = ({
                     { id: 'due', label: 'Termin', value: r.dueAt || 'Brak terminu' },
                     {
                       id: 'slip',
-                      label: 'Poślizg',
+                      // Ta sama nazwa co kolumna w tabeli — podgląd i wiersz
+                      // nie mogą nazywać tej samej liczby dwoma słowami.
+                      label: t('execution.work.columns.daysOverdue', 'Dni po terminie'),
                       value:
                         r.slipDays == null
-                          ? 'Bez poślizgu'
-                          : `${r.slipDays} ${liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])} po terminie`,
+                          ? '—'
+                          : `${r.slipDays} ${liczebnik(r.slipDays, ['dzień', 'dni', 'dni'])}`,
                     },
                     {
                       id: 'case',
@@ -1075,19 +1687,111 @@ export const ExecutionWorkSurface = ({
                       ]
                 }
                 relationsEmptyLabel="Brak powiązań"
-                actions={{
-                  informational: [
-                    {
-                      id: 'open',
-                      label: r.origin === 'tasks' ? 'Otwórz zadanie' : 'Otwórz element pracy',
-                      variant: 'positive',
-                      icon: Eye,
-                      shortcut: 'O',
-                      onClick: () => void openWorkspace(r),
-                    },
-                  ],
-                }}
-              />
+                /*
+                 * D5 — te same trzy akcje co w wierszu, w bloku akcji podglądu.
+                 * „Otwórz" ZNIKA z paska: nagłówek podglądu ma już swój
+                 * przycisk otwarcia (`onOpenFull`), a kanon podglądu zabrania
+                 * dublowania go w stopce.
+                 */
+                actions={
+                  r.origin === 'tasks'
+                    ? {
+                        informational: [
+                          {
+                            id: 'change-person',
+                            label: t('execution.work.edit.person', 'Zmień osobę'),
+                            variant: 'neutral',
+                            icon: UserCog,
+                            onClick: () => setEdycjaPodgladu('owner'),
+                          },
+                          {
+                            id: 'change-due',
+                            label: t('execution.work.edit.due', 'Zmień termin'),
+                            variant: 'neutral',
+                            icon: CalendarClock,
+                            onClick: () => setEdycjaPodgladu('due'),
+                          },
+                          {
+                            id: 'close-task',
+                            label: t('execution.work.edit.close', 'Zamknij zadanie'),
+                            variant: 'positive',
+                            icon: CheckCircle2,
+                            disabled: !mozliwoscZamkniecia(r).mozna,
+                            onClick: () => void zapiszPoleZadania(r, 'status', 'done'),
+                          },
+                        ],
+                      }
+                    : {
+                        informational: [
+                          {
+                            id: 'open',
+                            label: 'Otwórz element pracy',
+                            variant: 'positive',
+                            icon: Eye,
+                            shortcut: 'O',
+                            onClick: () => void openWorkspace(r),
+                          },
+                        ],
+                      }
+                }
+              >
+                {r.origin === 'tasks' && (
+                  <div className="mt-3 space-y-2" data-testid="execution-work-preview-edit">
+                    {edycjaPodgladu === 'owner' && (
+                      <label className="block text-xs text-c-text-secondary">
+                        {t('execution.work.edit.person', 'Zmień osobę')}
+                        <select
+                          autoFocus
+                          aria-label={t('execution.work.edit.person', 'Zmień osobę')}
+                          defaultValue={String(r.owner ?? '')}
+                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          onChange={(event) => {
+                            setEdycjaPodgladu(null);
+                            if (event.target.value !== String(r.owner ?? ''))
+                              void zapiszPoleZadania(r, 'assigneeId', event.target.value || null);
+                          }}
+                        >
+                          <option value="">
+                            {t('execution.work.edit.unassigned', 'Nieprzypisany')}
+                          </option>
+                          {osoby.map((osoba) => (
+                            <option key={osoba.id} value={osoba.id}>
+                              {osoba.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {edycjaPodgladu === 'due' && (
+                      <label className="block text-xs text-c-text-secondary">
+                        {t('execution.work.edit.due', 'Zmień termin')}
+                        <input
+                          autoFocus
+                          type="date"
+                          aria-label={t('execution.work.edit.due', 'Zmień termin')}
+                          defaultValue={naWartoscDaty(r.rawDueAt)}
+                          className="mt-1 h-9 w-full rounded-md border border-c-border-subtle bg-c-surface px-2 text-sm text-c-text outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          onChange={(event) => {
+                            setEdycjaPodgladu(null);
+                            if (event.target.value !== naWartoscDaty(r.rawDueAt))
+                              void zapiszPoleZadania(r, 'dueDate', event.target.value || null);
+                          }}
+                        />
+                      </label>
+                    )}
+                    {!mozliwoscZamkniecia(r).mozna && (
+                      <p role="note" className="text-xs text-c-text-muted">
+                        {mozliwoscZamkniecia(r).powod}
+                      </p>
+                    )}
+                    {bladWiersza?.rowId === r.id && (
+                      <p role="alert" className="text-xs text-c-danger">
+                        {bladWiersza.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </StandardPreview>
             )}
           >
             <StandardTable
@@ -1108,6 +1812,35 @@ export const ExecutionWorkSurface = ({
                   setToolMode(work.kind);
                   void openWorkspace(work);
                 };
+                /*
+                 * WIERSZ Z `/api/tasks` — kebab ma DWIE pozycje: Otwórz i
+                 * Otwórz podgląd. Zmiana osoby/terminu/statusu żyje w wierszu
+                 * (podwójny klik) i w podglądzie; powtórzenie jej tutaj byłoby
+                 * tą samą akcją w trzech domach (doktryna gęstości §1).
+                 * Świadomie BEZ „Archiwizuj"/„Usuń": to jest słownik rejestru
+                 * `runtime-v1` („Kanoniczny element pracy nie może zostać
+                 * usunięty"), a zadanie z tabeli `tasks` nie ma z nim nic
+                 * wspólnego — atrapa z obcą notą jest gorsza niż brak pozycji.
+                 */
+                if (work.origin === 'tasks') {
+                  return {
+                    primary: [
+                      {
+                        id: 'open',
+                        label: t('execution.work.menu.openTask', 'Otwórz zadanie'),
+                        icon: ArrowRight,
+                        onClick: openWorkspaceForAction,
+                      },
+                    ],
+                    universalHandlers: {
+                      preview: () => {
+                        setSelectedId(String(row.id));
+                        setShowWorkspace(false);
+                        setEdycjaPodgladu(null);
+                      },
+                    },
+                  };
+                }
                 return {
                   primary: [
                     {

@@ -95,7 +95,40 @@ export const CreateTaskSchema = z.object({
   idempotencyKey: z.string().max(255).optional().nullable(),
 });
 
-export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });
+/**
+ * ★ AKTUALIZACJA CZĘŚCIOWA NIE MOŻE DOPISYWAĆ WARTOŚCI DOMYŚLNYCH (P16-R2, 07.09).
+ *
+ * POMIAR na własnym API (kopia bazy `consultify_p16r2`, zadanie `proba-r2-1`):
+ *   PRZED: status=review · priority=critical · task_type=analysis
+ *   `PUT /api/tasks/:id` z ciałem `{"dueDate":"…"}` → 200
+ *   PO:    status=todo   · priority=medium   · task_type=execution
+ *
+ * Przyczyna: repo jest na **zod 4**, w którym `.partial()` NIE zdejmuje
+ * `.default()` z pola — owija je w kolejny `optional`, a `ZodDefault` i tak
+ * wstrzykuje wartość domyślną dla brakującego klucza. Zmierzone wprost:
+ *   z.object({ status: z.enum([...]).optional().default('todo') }).partial()
+ *     .parse({ title: 'x' })  →  { title: 'x', status: 'todo', priority: 'medium' }
+ * Cztery pola `CreateTaskSchema` mają domyślki (`status`, `priority`,
+ * `taskType`, `source`), a trzy pierwsze są na liście `allowedFields`
+ * `TaskController.updateTask`, więc KAŻDY zapis jednego pola kasował trzy inne.
+ * Dotyczyło to wszystkich wołaczy `Api.updateTask` (Moja Praca, Inbox, Focus,
+ * karta inicjatywy), nie tylko nowej edycji w wierszu w Realizacji.
+ *
+ * Naprawa jest minimalna i addytywna: te cztery pola wracają jako czyste
+ * `optional()` BEZ domyślki. `CreateTaskSchema` (tworzenie) zostaje bez zmian —
+ * tam domyślka jest poprawna i potrzebna.
+ *
+ * MUTACJA (test `tests/unit/server/updateTaskSchema.partial.test.ts`): usuń
+ * `.extend({...})` poniżej → test czerwony.
+ */
+export const UpdateTaskSchema = CreateTaskSchema.partial()
+  .omit({ organizationId: true })
+  .extend({
+    status: TaskStatusEnum.optional(),
+    priority: PriorityEnum.optional(),
+    taskType: TaskTypeEnum.optional(),
+    source: TaskSourceEnum.optional(),
+  });
 
 export const AssignTaskSchema = z.object({
   assigneeId: FlexibleId,

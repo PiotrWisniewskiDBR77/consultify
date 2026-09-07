@@ -1,0 +1,10 @@
+{
+  "nazwa": "10-podglad-gora",
+  "opis": "Podglad — naglowek, meta, szczegoly (Dni po terminie)",
+  "faza": "po",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:49:25.189Z"
+}
