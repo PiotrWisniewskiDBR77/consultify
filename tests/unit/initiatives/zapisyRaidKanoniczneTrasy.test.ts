@@ -61,6 +61,38 @@ describe('zapisy RAID inicjatywy ida wylacznie kanoniczna trasa (26A)', () => {
     }
   });
 
+  /**
+   * DEC-453: po zdjeciu bramki 26A ze sciezek bez kanonicznego nastepcy te
+   * zapisy znowu dochodza do serwera. Nie moga wracac do stanu, w ktorym
+   * niepowodzenie znika bez sladu — wiersz na ekranie zmieniony, serwer nie.
+   *
+   * MUTACJA: zamien `toast.error(...)` w ktoryms z tych catchow na pusty
+   * komentarz — test staje sie czerwony.
+   */
+  it.each([
+    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/resources/${id}`, data)'],
+    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/resources/${id}`)'],
+    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/budget-items/${id}`, data)'],
+    ['src/components/Initiatives/InitiativeDocumentView.tsx', '/budget-items/${id}`)'],
+    ['src/components/Initiatives/sections/ResourcesSection.tsx', '/resources/ai-apply-log`'],
+  ])('%s — zapis %s konczy sie komunikatem, nie cisza', (relative, fragment) => {
+    const linie = read(relative).split('\n');
+    const indeks = linie.findIndex((line) => line.includes(fragment));
+    expect(indeks, `nie znalazlem wywolania ${fragment}`).toBeGreaterThan(-1);
+    // Bierzemy WYLACZNIE cialo najblizszego `catch` po tym wywolaniu — inaczej
+    // `toast.success` z bloku `try` falszywie zazielenilby cichy catch.
+    const poczatekCatch = linie.findIndex(
+      (line, i) => i >= indeks && /\}\s*catch\b/.test(line)
+    );
+    expect(poczatekCatch, `brak catch po ${fragment}`).toBeGreaterThan(-1);
+    const cialo = [];
+    for (let i = poczatekCatch + 1; i < linie.length && i < poczatekCatch + 20; i += 1) {
+      if (/^\s{0,8}\}/.test(linie[i])) break;
+      cialo.push(linie[i]);
+    }
+    expect(cialo.join('\n'), `cichy catch przy ${fragment}`).toMatch(/toast[.(]/);
+  });
+
   it('kazda odmowa zapisu ma komunikat po polsku, bez kodow technicznych', () => {
     const client = read('src/services/initiatives-execution/raidWrites.ts');
     for (const phrase of [

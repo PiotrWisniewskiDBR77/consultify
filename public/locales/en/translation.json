@@ -11265,7 +11265,8 @@
       "noAdditionsForTable": "AI suggested no additions for this table.",
       "noMissingResources": "AI suggested no missing resources to add.",
       "invalidAiFormat": "AI response has invalid format (cannot apply).",
-      "english": "English"
+      "english": "English",
+      "aiApplyLogFailed": "Resources were added, but the audit-trail entry was not saved. Repeat the action if you need that entry."
     },
     "timelinePlanner": {
       "initiativeStart": "Initiative Start",
@@ -12599,7 +12600,11 @@
     "raid": {
       "newItemTitle": "New item"
     },
-    "failedToRemoveRaid2": "Failed to remove RAID item"
+    "failedToRemoveRaid2": "Failed to remove RAID item",
+    "failedToUpdateResource2": "Could not save the resource",
+    "failedToRemoveResource2": "Could not remove the resource",
+    "failedToUpdateBudgetItem2": "Could not save the budget item",
+    "failedToRemoveBudgetItem2": "Could not remove the budget item"
   },
   "execution": {
     "review": {

@@ -1318,7 +1318,9 @@ export const ResourcesSection: React.FC = () => {
         });
       }
 
-      // Audit (single summary entry) — best-effort, never block UX
+      // Wpis do sladu audytu. Same pozycje sa juz zapisane wyzej, wiec brak
+      // wpisu nie cofa pracy — ale do 07.09 byl POLYKANY W CISZY i slad
+      // audytu gubil zdarzenia, o czym nikt sie nie dowiadywal.
       try {
         await Api.post(`/initiatives/${initiativeId}/resources/ai-apply-log`, {
           scope: aiProposal.scope,
@@ -1329,7 +1331,13 @@ export const ResourcesSection: React.FC = () => {
           note: aiProposal.note || null,
         });
       } catch {
-        // ignore
+        toast(
+          t(
+            'initiatives.resourcesSection.aiApplyLogFailed',
+            'Zasoby zostały dodane, ale nie zapisano wpisu w śladzie audytu. Powtórz operację, jeśli ten wpis jest potrzebny.'
+          ),
+          { icon: '⚠️' }
+        );
       }
 
       closeAIModal();

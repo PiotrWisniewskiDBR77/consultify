@@ -10703,7 +10703,8 @@
       "noAdditionsForTable": "AI nie zaproponowało dodatków dla tej tabeli.",
       "noMissingResources": "AI nie zaproponowało brakujących zasobów do dodania.",
       "invalidAiFormat": "Odpowiedź AI ma nieprawidłowy format (nie można zastosować).",
-      "english": "Polish"
+      "english": "Polish",
+      "aiApplyLogFailed": "Zasoby zostały dodane, ale nie zapisano wpisu w śladzie audytu. Powtórz operację, jeśli ten wpis jest potrzebny."
     },
     "timelinePlanner": {
       "initiativeStart": "Start inicjatywy",
@@ -12041,7 +12042,11 @@
     "raid": {
       "newItemTitle": "Nowa pozycja"
     },
-    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID"
+    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID",
+    "failedToUpdateResource2": "Nie udało się zapisać zasobu",
+    "failedToRemoveResource2": "Nie udało się usunąć zasobu",
+    "failedToUpdateBudgetItem2": "Nie udało się zapisać pozycji budżetu",
+    "failedToRemoveBudgetItem2": "Nie udało się usunąć pozycji budżetu"
   },
   "execution": {
     "review": {

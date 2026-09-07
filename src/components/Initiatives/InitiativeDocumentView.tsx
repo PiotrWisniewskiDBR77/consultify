@@ -3847,29 +3847,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleUpdateResource = useCallback(
     async (id: string, data: Partial<(typeof apiResourceItems)[0]>) => {
+      const poprzedni = apiResourceItems.find((item) => item.id === id);
       setApiResourceItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...data } : item))
       );
       try {
         await Api.put(`/initiatives/${initiativeId}/resources/${id}`, data);
-      } catch {
-        // best-effort
+      } catch (e: any) {
+        // Do 07.09 ta awaria byla polykana: wiersz zmienial sie na ekranie,
+        // serwer zostawal ze stara wartoscia, a uzytkownik nie wiedzial nic.
+        toast.error(
+          e?.message || t('initiatives.failedToUpdateResource2', 'Nie udało się zapisać zasobu')
+        );
+        if (poprzedni) {
+          setApiResourceItems((prev) => prev.map((item) => (item.id === id ? poprzedni : item)));
+        }
       }
     },
-    [initiativeId]
+    [initiativeId, apiResourceItems, t]
   );
 
   const handleDeleteResource = useCallback(
     async (id: string) => {
+      const usuniety = apiResourceItems.find((item) => item.id === id);
       setApiResourceItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(t('initiatives.resourceRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
-      } catch {
-        // best-effort
+        toast.success(t('initiatives.resourceRemoved2'));
+      } catch (e: any) {
+        toast.error(
+          e?.message || t('initiatives.failedToRemoveResource2', 'Nie udało się usunąć zasobu')
+        );
+        if (usuniety) setApiResourceItems((prev) => [...prev, usuniety]);
       }
     },
-    [initiativeId, isPolish]
+    [initiativeId, apiResourceItems, t]
   );
 
   const handleAddBudgetItem = useCallback(
@@ -3888,29 +3900,41 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleUpdateBudgetItem = useCallback(
     async (id: string, data: Partial<(typeof apiBudgetItems)[0]>) => {
+      const poprzednia = apiBudgetItems.find((item) => item.id === id);
       setApiBudgetItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...data } : item))
       );
       try {
         await Api.put(`/initiatives/${initiativeId}/budget-items/${id}`, data);
-      } catch {
-        // best-effort
+      } catch (e: any) {
+        toast.error(
+          e?.message ||
+            t('initiatives.failedToUpdateBudgetItem2', 'Nie udało się zapisać pozycji budżetu')
+        );
+        if (poprzednia) {
+          setApiBudgetItems((prev) => prev.map((item) => (item.id === id ? poprzednia : item)));
+        }
       }
     },
-    [initiativeId]
+    [initiativeId, apiBudgetItems, t]
   );
 
   const handleDeleteBudgetItem = useCallback(
     async (id: string) => {
+      const usunieta = apiBudgetItems.find((item) => item.id === id);
       setApiBudgetItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(t('initiatives.budgetItemRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/budget-items/${id}`);
-      } catch {
-        // best-effort
+        toast.success(t('initiatives.budgetItemRemoved2'));
+      } catch (e: any) {
+        toast.error(
+          e?.message ||
+            t('initiatives.failedToRemoveBudgetItem2', 'Nie udało się usunąć pozycji budżetu')
+        );
+        if (usunieta) setApiBudgetItems((prev) => [...prev, usunieta]);
       }
     },
-    [initiativeId, isPolish]
+    [initiativeId, apiBudgetItems, t]
   );
 
   const handleAddTool = useCallback(
