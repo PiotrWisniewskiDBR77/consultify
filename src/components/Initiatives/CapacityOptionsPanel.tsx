@@ -12,6 +12,8 @@ import React from 'react';
 import { memberNameOrUnknown, type MemberNameResolver } from '@/hooks/useOrganizationMemberNames';
 import i18n from '@/i18n';
 
+import { formatPlanSolverReason } from './planSolverReason';
+
 export type CapacityKnowledgeState = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
 export type OptionRange = {
   low: number | null;
@@ -169,7 +171,14 @@ export const CapacityOptionsPanel = ({
                   <strong>Założenia</strong>
                   {option.assumptions.map((assumption) => (
                     <p key={`${option.optionId}:${assumption.assumption}`}>
-                      {assumption.knowledgeState} · {assumption.assumption} · właściciel{' '}
+                      {assumption.knowledgeState} ·{' '}
+                      {/* Konflikt solvera przychodzi jako KOD (P15-K3) — tu dostaje język.
+                          Panel wyjety z powierzchni do wlasnego pliku (P15-K5), wiec
+                          tlumaczenie mieszka razem z jedynym miejscem, ktore je rysuje. */}
+                      {formatPlanSolverReason(assumption.assumption, (klucz, opcje) =>
+                        String(i18n.t(klucz, opcje))
+                      )}{' '}
+                      · właściciel{' '}
                       {memberNameOrUnknown(resolveMemberName, assumption.ownerId, true)} ·{' '}
                       {assumption.sourceRef.ref} v
                       {assumption.sourceRef.version}

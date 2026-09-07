@@ -1,0 +1,11 @@
+{
+  "nazwa": "08b-fte-po-zapisie-daty",
+  "opis": "Po zapisie daty (K3) FTE per rola (K5) nietknięte: 1, 1, 1, 1, 1",
+  "url": "http://localhost:3182/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "baza": "consultify_p15scal (kopia consultify_fable + migracja K1 + seed stanowisk K5)",
+  "galaz": "mvp/p15-k3k5-scalenie",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:06:25.076Z"
+}

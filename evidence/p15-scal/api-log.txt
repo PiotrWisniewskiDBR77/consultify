@@ -1,0 +1,131 @@
+# P15 SCALENIE K3+K5 — wywołania runtime-v1 w przepływie klikanym
+# BASE=http://localhost:3182, API=4162, baza=consultify_p15scal, 2026-09-07T20:07:22.101Z
+
+# K3 ZAKRES: „Dodaj inicjatywę" ×1, „Usuń z planu" ×0
+# K3 OKNA: pól dat na karcie = 15
+# SCALENIE: komunikat K3 ×1, pól FTE „Controls Engineer" (K5) = 5
+# ZAPIS FTE: „Zapisano" ×1, „Nie zapisano" ×0 (oczekiwane 0)
+# PO RELOAD FTE: ["1","1","1","1","1"]
+# K3 PO K5: „Najpóźniej — AI Governance & Ethics Framework" 2026-09-21 → 2026-10-12; komunikatów o konflikcie wersji ×0 (oczekiwane 0)
+# PO RELOAD DATA: 2026-10-12 (oczekiwane 2026-10-12); FTE po tej samej stronie: ["1","1","1","1","1"]
+# ARKUSZ K5: wierszy okres × rola = 22
+# WARIANTY: „dotyczy roli" (K5) ×3, surowych kodów SOLVER- (K3 niedokończone) ×0, angielskich zdań ×0
+
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=1&to=2
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=2&to=3
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=3&to=4
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=4&to=5
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=5&to=6
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=6&to=7
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=7&to=8
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-2ee81c56-a1cc-424f-8a93-e1b869070e1b/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+GET 200 /api/initiatives/runtime-v1/capacity-roles
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/proba-k5-plan-7e2964f1-180e-4ae2-87d4-d516cb6b066c/diff?from=8&to=9
+GET 200 /api/initiatives/runtime-v1/capacity-options
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-options
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-22b38ac6-0e93-41d2-abbb-65adf16553da
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-22b38ac6-0e93-41d2-abbb-65adf16553da
+POST 201 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809/compute
+GET 200 /api/initiatives/runtime-v1/capacity-options
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+POST 201 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+GET 200 /api/initiatives/runtime-v1/capacity-options
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+POST 200 /api/initiatives/runtime-v1/capacity-options/advisor-capacity-322d69e5-1d41-42e5-830a-759247ac0809/propose
+GET 200 /api/initiatives/runtime-v1/capacity-options
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/capacity-scenarios/capacity-322d69e5-1d41-42e5-830a-759247ac0809
+
+# błędy konsoli: 0

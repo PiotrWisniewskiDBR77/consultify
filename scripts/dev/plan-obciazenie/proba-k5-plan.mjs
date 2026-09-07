@@ -11,8 +11,15 @@
  */
 import fs from 'node:fs';
 
-const [, , API = 'http://127.0.0.1:4160', AUTH = '/private/tmp/wt-p15-k5/.auth-k5.json'] =
-  process.argv;
+// NAZWA jako argument (scalenie K3+K5, 07.09): dowod scalenia zaklada WLASNY szkic
+// obok planu K5, wiec musi go umiec odroznic na liscie po nazwie.
+const [
+  ,
+  ,
+  API = 'http://127.0.0.1:4160',
+  AUTH = '/private/tmp/wt-p15-k5/.auth-k5.json',
+  NAZWA = 'proba-k5 — plan obciążenia ról',
+] = process.argv;
 const cookie = JSON.parse(fs.readFileSync(AUTH, 'utf8'))
   .cookies.map((c) => `${c.name}=${c.value}`)
   .join('; ');
@@ -65,7 +72,7 @@ const periods = Array.from({ length: 6 }, (_, index) => {
 const scenarioId = `proba-k5-plan-${uuid()}`;
 const scenario = {
   scenarioId,
-  name: 'proba-k5 — plan obciążenia ról',
+  name: NAZWA,
   scenarioVersion: 0,
   status: 'DRAFT',
   portfolioScenarioId: '',

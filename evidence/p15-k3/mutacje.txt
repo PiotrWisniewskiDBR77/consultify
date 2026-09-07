@@ -1,0 +1,65 @@
+# P15-K3 — dowody mutacyjne (kazda mutacja zalozona recznie i COFNIETA)
+# baza: consultify_p15k3 (kopia consultify_fable + migracja K1 20262107), API 4159, vite 3179
+
+== MUTACJA a) addInitiativeToPlan — „Dodaj inicjatywe" NIE zapisuje planu (tylko register)
+   plik: src/components/Initiatives/PlanScenarioSurface.tsx
+   test: tests/unit/initiatives-execution/planWarsztatKarty.test.tsx
+   PRZED (zielono): Tests  10 passed (10)
+   PO MUTACJI (RED): Tests  1 failed | 9 passed (10)
+   PO COFNIECIU:    Tests  10 passed (10)
+
+== MUTACJA b) persistScenario — zapis bez CAS (expectedVersion: 0 zamiast aggregateVersion)
+   plik: src/components/Initiatives/PlanScenarioSurface.tsx
+   test: tests/unit/initiatives-execution/planWarsztatKarty.test.tsx
+   PRZED (zielono): Tests  10 passed (10)
+   PO MUTACJI (RED): Tests  1 failed | 9 passed (10)
+   PO COFNIECIU:    Tests  10 passed (10)
+
+== MUTACJA c1) replaceInitiativeDependencies — brak petli INSERT (zaleznosc nie trafia do bazy)
+   plik: server/src/domain/initiatives-execution/postgresMaterialCommandUnitOfWork.ts
+   test: tests/integration/initiatives-execution/planDependencies.http.realdb.test.ts (realny PG)
+   PRZED (zielono): Tests  6 passed (6)
+   PO MUTACJI (RED): Tests  4 failed | 2 passed (6)
+   PO COFNIECIU:    Tests  6 passed (6)
+
+== MUTACJA c2) trasa dependencies — brak wykrywania cyklu przed zapisem
+   plik: server/src/routes/pmo/initiativesExecutionRuntime.routes.ts
+   test: tests/integration/initiatives-execution/planDependencies.http.realdb.test.ts (realny PG)
+   PRZED (zielono): Tests  6 passed (6)
+   PO MUTACJI (RED): Tests  1 failed | 5 passed (6)
+   PO COFNIECIU:    Tests  6 passed (6)
+
+== MUTACJA d) formatPlanSolverReason — zwraca surowy napis (kod zamiast polskiego zdania)
+   plik: src/components/Initiatives/planSolverReason.ts
+   testy: planWarsztatKarty.test.tsx + planSolverReason.test.ts
+   PRZED (zielono): Tests  16 passed (16)
+   PO MUTACJI (RED): Tests  3 failed | 13 passed (16)
+   PO COFNIECIU:    Tests  16 passed (16)
+
+== MUTACJA e) PlanCard errorLabel = null — konflikt wersji (409) nic nie mowi na ekranie
+   plik: src/components/Initiatives/PlanScenarioSurface.tsx
+   test: tests/unit/initiatives-execution/planWarsztatKarty.test.tsx
+   PRZED (zielono): Tests  10 passed (10)
+   PO MUTACJI (RED): Tests  1 failed | 9 passed (10)
+   PO COFNIECIU:    Tests  10 passed (10)
+
+== MUTACJA f) sekcja „Zaleznosci i konflikty" ukrywana bez konfliktow (stan sprzed paczki)
+   plik: src/components/Initiatives/cards/PlanCard.tsx
+   test: tests/unit/initiatives-execution/planWarsztatKarty.test.tsx
+   PRZED (zielono): Tests  10 passed (10)
+   PO MUTACJI (RED): Tests  1 failed | 9 passed (10)
+   PO COFNIECIU:    Tests  10 passed (10)
+
+== MUTACJA g) planSolver — powrot do angielskiego zdania w uzasadnieniu
+   plik: server/src/domain/initiatives-execution/planSolver.ts
+   test: tests/unit/initiatives-execution/planSolverReason.test.ts
+   PRZED (zielono): Tests  6 passed (6)
+   PO MUTACJI (RED): Tests  2 failed | 4 passed (6)
+   PO COFNIECIU:    Tests  6 passed (6)
+
+# REGRESJA (ten sam zbior testow PRZED i PO paczce, tests/unit/initiatives-execution + src/components/Initiatives/__tests__):
+#   PRZED (kod z HEAD 661e286a8a): Test Files 27 failed | 66 passed (93) · Tests 41 failed | 321 passed | 8 skipped | 1 todo (371)
+#   PO  (ta paczka):               Test Files 27 failed | 69 passed (96) · Tests 41 failed | 343 passed | 8 skipped | 1 todo (393)
+#   => zero nowych czerwonych; +22 zielone to testy tej paczki. Zastane czerwone (41) sa
+#      identyczne w obu przebiegach (m.in. atrapy react-i18next bez initReactI18next
+#      i testy wymagajace bazy) — nie ruszane w K3.

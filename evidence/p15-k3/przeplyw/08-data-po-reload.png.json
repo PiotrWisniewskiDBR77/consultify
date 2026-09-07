@@ -1,0 +1,9 @@
+{
+  "nazwa": "08-data-po-reload",
+  "opis": "Data docelowa trwała po przeładowaniu: 2026-10-19",
+  "url": "http://localhost:3179/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:35:12.543Z"
+}

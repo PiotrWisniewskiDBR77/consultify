@@ -1,0 +1,11 @@
+{
+  "nazwa": "05-fte-wpisane",
+  "opis": "FTE wpisane per rola, „Zapisano\" ×1, błędów zapisu ×0",
+  "url": "http://localhost:3182/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "baza": "consultify_p15scal (kopia consultify_fable + migracja K1 + seed stanowisk K5)",
+  "galaz": "mvp/p15-k3k5-scalenie",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:05:35.224Z"
+}

@@ -99,6 +99,9 @@ vi.mock('@/services/initiatives-execution/runtimeApi', () => ({
   readPlanScenarioHistory: vi.fn(),
   registerInitiativeForPlanning: vi.fn(),
   reviewPlanAnalysisProposal: vi.fn(),
+  // P15-K3: karta woła też zapis zależności — atrapa musi wystawić ten eksport,
+  // inaczej import modułu przewraca cały plik testowy.
+  writeInitiativeDependencies: vi.fn(),
   writePlanScenario: vi.fn(),
 }));
 

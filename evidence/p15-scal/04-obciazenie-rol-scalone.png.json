@@ -1,0 +1,11 @@
+{
+  "nazwa": "04-obciazenie-rol-scalone",
+  "opis": "„Obciążenie ról\": komunikat analizy (K3) ×1 NAD arkuszem FTE per rola (K5), pól CE 5",
+  "url": "http://localhost:3182/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "baza": "consultify_p15scal (kopia consultify_fable + migracja K1 + seed stanowisk K5)",
+  "galaz": "mvp/p15-k3k5-scalenie",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:05:16.949Z"
+}

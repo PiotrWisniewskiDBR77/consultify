@@ -824,6 +824,29 @@ export async function registerInitiativeForPlanning(
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: string; aggregateVersion: number; response: Record<string, unknown> };
 }
+/**
+ * „Po inicjatywie X" (P15-K3, DEC-421): zapis KOMPLETU poprzedników jednej
+ * inicjatywy do `initiative_dependencies` przez kanoniczną trasę runtime-v1.
+ * Cykl wraca jako 400 z regułą `INITIATIVE_DEPENDENCY_CYCLE` — wołający ma
+ * pokazać komunikat, a nie zapisać planu, którego solver i tak nie policzy.
+ */
+export async function writeInitiativeDependencies(
+  initiativeId: string,
+  command: { clientRequestId: string; dependsOn: string[] }
+) {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/planning/initiatives/${encodeURIComponent(initiativeId)}/dependencies`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+    }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body as { initiativeId: string; dependsOn: string[] };
+}
 export async function writePlanScenario(scenarioId: string, command: Record<string, unknown>) {
   const response = await fetch(
     `/api/initiatives/runtime-v1/plan-scenarios/${encodeURIComponent(scenarioId)}`,

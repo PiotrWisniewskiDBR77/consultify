@@ -6,19 +6,19 @@
  * zero arytmetyki. Tu PMO wpisuje POPYT: inicjatywa x rola x FTE. Z tego, i tylko
  * z tego, analiza obciazenia liczy popyt per rola per okres.
  *
- * Komponent jest SAMOWYSTARCZALNY (sam czyta wersje agregatu i sam zapisuje),
- * zeby osadzenie w `PlanCard` bylo jedna linia — K3 pracuje rownolegle na tym
- * samym pliku i nie moze dostac konfliktu na polowie karty.
+ * SCALENIE K3+K5 (07.09): komponent byl SAMOWYSTARCZALNY — sam czytal plan i sam
+ * go zapisywal z wlasnym licznikiem wersji. Po scaleniu z warsztatem K3 na tej
+ * samej karcie sa DWAJ pisarze jednego agregatu: kazdy zapis FTE unieważnialby
+ * `expectedVersion` powierzchni (i odwrotnie), czyli 409 po pierwszej zmianie.
+ * Dlatego edytor jest STEROWANY: okna dostaje z karty, a zapis oddaje przez
+ * `onChange` do `persistScenario(scenario, 'UPDATE')` — jedno CAS, jedna wersja.
+ * Wlasny odczyt zostaje TYLKO na slownik rol (`GET /capacity-roles`), ktorego
+ * karta nie ma skad wziac.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  listCapacityRoles,
-  readPlanScenario,
-  RuntimeApiError,
-  writePlanScenario,
-} from '@/services/initiatives-execution/runtimeApi';
+import { listCapacityRoles } from '@/services/initiatives-execution/runtimeApi';
 
 interface RoleOption {
   roleId: string;
@@ -26,103 +26,86 @@ interface RoleOption {
   fteWeekly: number;
   headcount: number;
 }
-interface RoleDemandLine {
+export interface RoleDemandLine {
   roleId: string;
   roleLabel: string;
   fte: number;
 }
-interface PlanWindow {
+interface EditorWindow {
   initiativeId: string;
   roleDemand?: RoleDemandLine[];
-  [key: string]: unknown;
-}
-interface PlanPayload {
-  scenarioId: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
-  windows: PlanWindow[];
-  [key: string]: unknown;
 }
 
 export function PlanRoleDemandEditor({
-  scenarioId,
+  windows,
   initiativeNames,
+  editable,
+  busy,
+  errorLabel,
+  onChange,
 }: {
-  scenarioId: string;
+  windows: EditorWindow[];
   initiativeNames: Map<string, string>;
+  /** Plan opublikowany = tylko odczyt (ta sama regula, co reszta karty). */
+  editable: boolean;
+  busy?: boolean;
+  /** Regula z odrzuconego zapisu (np. konflikt wersji) — karta ja liczy. */
+  errorLabel?: string | null;
+  onChange?: (initiativeId: string, roleDemand: RoleDemandLine[]) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
-  const [plan, setPlan] = useState<PlanPayload | null>(null);
-  const [version, setVersion] = useState(0);
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saveState, setSaveState] = useState<'IDLE' | 'SAVING' | 'SAVED' | 'FAILED'>('IDLE');
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const [rule, setRule] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const [planBody, roleBody] = await Promise.all([
-        readPlanScenario(scenarioId) as Promise<{ version: number; scenario: PlanPayload }>,
-        listCapacityRoles() as Promise<{ roles: RoleOption[] }>,
-      ]);
-      setPlan(planBody.scenario);
-      setVersion(planBody.version);
-      setRoles(roleBody.roles ?? []);
-      setState('READY');
-    } catch {
-      setState('ERROR');
-    }
-  }, [scenarioId]);
   useEffect(() => {
-    void load();
-  }, [load]);
+    let alive = true;
+    listCapacityRoles()
+      .then((body) => {
+        if (!alive) return;
+        setRoles(((body as { roles?: RoleOption[] }).roles ?? []) as RoleOption[]);
+        setState('READY');
+      })
+      .catch(() => {
+        if (alive) setState('ERROR');
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Kolumny arkusza = role obsadzone w organizacji + role juz uzyte w planie
   // (nawet gdy ostatnia osoba o tym stanowisku odeszla — plan ma o niej pamietac).
   const columns = useMemo(() => {
     const map = new Map<string, string>();
     for (const role of roles) map.set(role.roleId, role.roleLabel);
-    for (const window of plan?.windows ?? [])
+    for (const window of windows)
       for (const line of window.roleDemand ?? []) map.set(line.roleId, line.roleLabel);
     return [...map.entries()]
       .map(([roleId, roleLabel]) => ({ roleId, roleLabel }))
       .sort((left, right) => left.roleLabel.localeCompare(right.roleLabel, 'pl'));
-  }, [roles, plan]);
-
-  const editable = plan?.status === 'DRAFT';
+  }, [roles, windows]);
 
   const save = async (initiativeId: string, roleId: string, roleLabel: string, raw: string) => {
-    if (!plan || saveState === 'SAVING') return;
+    if (!onChange || saveState === 'SAVING') return;
+    const window = windows.find((item) => item.initiativeId === initiativeId);
+    if (!window) return;
     const parsed = Number(raw.replace(',', '.'));
     if (raw.trim() !== '' && (!Number.isFinite(parsed) || parsed < 0)) return;
     const fte = raw.trim() === '' ? 0 : parsed;
-    const windows = plan.windows.map((window) => {
-      if (window.initiativeId !== initiativeId) return window;
-      const others = (window.roleDemand ?? []).filter((line) => line.roleId !== roleId);
-      return {
-        ...window,
-        roleDemand: fte > 0 ? [...others, { roleId, roleLabel, fte }] : others,
-      };
-    });
-    setRule(null);
+    const others = (window.roleDemand ?? []).filter((line) => line.roleId !== roleId);
+    const current = (window.roleDemand ?? []).find((line) => line.roleId === roleId);
+    if ((current?.fte ?? 0) === fte) return;
     setSaveState('SAVING');
-    try {
-      const updated = (await writePlanScenario(plan.scenarioId, {
-        expectedVersion: version,
-        clientRequestId: crypto.randomUUID(),
-        operation: 'UPDATE',
-        portfolio: 'auto',
-        scenario: { ...plan, windows },
-      })) as { aggregateVersion: number; response: PlanPayload };
-      setVersion(updated.aggregateVersion);
-      setPlan(updated.response);
-      setSaveState('SAVED');
+    const saved = await onChange(
+      initiativeId,
+      fte > 0 ? [...others, { roleId, roleLabel, fte }] : others
+    );
+    setSaveState(saved ? 'SAVED' : 'FAILED');
+    if (saved)
       setSavedAt(new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }));
-    } catch (error) {
-      setRule(error instanceof RuntimeApiError ? (error.rule ?? error.code ?? null) : null);
-      setSaveState('FAILED');
-    }
   };
 
   if (state === 'LOADING')
@@ -140,7 +123,7 @@ export function PlanRoleDemandEditor({
         )}
       </p>
     );
-  if (!plan?.windows.length)
+  if (!windows.length)
     return (
       <p className="text-sm text-c-text-muted">
         {t(
@@ -184,7 +167,7 @@ export function PlanRoleDemandEditor({
           </tr>
         </thead>
         <tbody>
-          {plan.windows.map((window) => (
+          {windows.map((window) => (
             <tr key={window.initiativeId} className="border-b border-c-border-subtle">
               <td className="px-3 py-2 text-sm">
                 {initiativeNames.get(window.initiativeId) ?? window.initiativeId}
@@ -201,7 +184,7 @@ export function PlanRoleDemandEditor({
                       aria-label={`FTE ${initiativeNames.get(window.initiativeId) ?? window.initiativeId} ${column.roleLabel}`}
                       className="w-20 rounded border border-c-border bg-c-surface px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       inputMode="decimal"
-                      disabled={!editable || saveState === 'SAVING'}
+                      disabled={!editable || busy === true || saveState === 'SAVING'}
                       value={value}
                       onChange={(event) =>
                         setDraft((state) => ({ ...state, [key]: event.target.value }))
@@ -238,7 +221,7 @@ export function PlanRoleDemandEditor({
       {saveState === 'FAILED' && (
         <p role="alert" className="mt-3 text-sm text-c-danger">
           {t('initiatives.planScenario.roleDemand.failed', 'Nie zapisano obciążenia ról.')}
-          {rule ? ` (${rule})` : ''}
+          {errorLabel ? ` (${errorLabel})` : ''}
         </p>
       )}
     </div>

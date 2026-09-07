@@ -1,0 +1,9 @@
+{
+  "nazwa": "10-zaleznosc-po-reload",
+  "opis": "Zależność trwała po przeładowaniu: true",
+  "url": "http://localhost:3179/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:35:42.099Z"
+}

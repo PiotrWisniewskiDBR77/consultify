@@ -7,6 +7,7 @@ vi.mock('@/components/standard/StandardArtifactShell', () => ({
   StandardArtifactShell: ({ sections }: any) => <>{sections.map((section: any) => <section key={section.id}>{section.component}</section>)}</>,
 }));
 import { CapacityAnalysisCard } from '../cards/CapacityAnalysisCard';
+import { encodePlanSolverReason } from '../../../../server/src/domain/initiatives-execution/planSolverReason';
 
 const scenario = {
   scenarioId: 'capacity-123456789',
@@ -122,5 +123,57 @@ describe('P15-K5 — arkusz okres x rola w karcie', () => {
     expect(screen.getByText(/^-2[.,]5$/)).toBeInTheDocument();
     // Rola bez ani jednej osoby: „Nieznane", nigdy zero.
     expect(screen.getAllByText('Nieznane').length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+/**
+ * SCALENIE K3+K5 (07.09, DEC-421) — KOD SOLVERA W PANELU WARIANTÓW MÓWI PO POLSKU.
+ *
+ * K3 dołożył tłumaczenie kodu solvera w `CapacityScenarioSurface` (panel wariantów
+ * był tam funkcją lokalną), a K5 W TYM SAMYM CZASIE wyjął panel do
+ * `CapacityOptionsPanel.tsx`. Scalenie przeniosło te linie do panelu — ten test
+ * jest jedynym dowodem, że przeżyły przeprowadzkę: doradca przepuszcza konflikt
+ * solvera jako KOD (`SOLVER-1:{…}`) i dopiero ekran nadaje mu język.
+ *
+ * MUTACJA: usuń `formatPlanSolverReason` z `CapacityOptionsPanel` → w założeniach
+ * staje surowy `SOLVER-1:{"code":"DEPENDENCY_CYCLE"…}` i test pada.
+ */
+describe('P15 scalenie K3+K5 — założenia wariantu', () => {
+  it('konflikt solvera renderuje się po polsku, nie jako surowy kod', () => {
+    const kod = encodePlanSolverReason({ code: 'DEPENDENCY_CYCLE', path: ['init-a', 'init-b'] });
+    render(
+      <CapacityAnalysisCard
+        onBack={() => undefined}
+        onAnalyze={() => undefined}
+        onPublish={() => undefined}
+        scenario={scenario}
+        comparisons={[
+          {
+            version: 1,
+            comparisonId: 'advisor-capacity-1',
+            planRef: { scenarioId: 'plan-123456789', version: 1 },
+            capacityRef: { scenarioId: 'capacity-123456789', version: 1 },
+            status: 'DRAFT',
+            options: [
+              {
+                ...wariant('RESEQUENCE', 'Przesuń kolejność prac dla zasobu rola Controls Engineer'),
+                assumptions: [
+                  {
+                    assumption: kod,
+                    ownerId: 'user-1',
+                    sourceRef: { ref: 'capacity-scenario:capacity-123456789', version: 1 },
+                    knowledgeState: 'KNOWN' as const,
+                  },
+                ],
+              },
+            ],
+            selectedOptionId: null,
+            nextGovernedInput: null,
+          },
+        ]}
+      />
+    );
+    expect(screen.getByText(/Cykl zależności: init-a → init-b/)).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(kod.slice(0, 12)))).toBeNull();
   });
 });

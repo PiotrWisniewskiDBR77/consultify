@@ -1,0 +1,11 @@
+{
+  "nazwa": "11-luki-per-rola",
+  "opis": "Analiza: luka per rola (K5) — nazwa roli, nie sam skalar okresu",
+  "url": "http://localhost:3182/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "baza": "consultify_p15scal (kopia consultify_fable + migracja K1 + seed stanowisk K5)",
+  "galaz": "mvp/p15-k3k5-scalenie",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:07:00.311Z"
+}

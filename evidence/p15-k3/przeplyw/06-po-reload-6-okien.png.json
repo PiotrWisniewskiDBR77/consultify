@@ -1,0 +1,9 @@
+{
+  "nazwa": "06-po-reload-6-okien",
+  "opis": "Po przeładowaniu: 6 okien w zakresie",
+  "url": "http://localhost:3179/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:34:37.693Z"
+}

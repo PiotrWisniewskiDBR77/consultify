@@ -1,0 +1,123 @@
+# P15-K3 — wywołania runtime-v1 podczas przepływu klikanego
+# BASE=http://localhost:3179, API=4159, baza=consultify_p15k3, 2026-09-07T19:36:50.989Z
+
+# GENERATOR: wybrano 5 inicjatyw, propozycja ma 5 wierszy
+# DODANO: „Customer Portal Redesign"
+# PO RELOAD: okien w zakresie = 6 (oczekiwane 6)
+# DATA PO RELOAD: 2026-10-19 (oczekiwane 2026-10-19)
+# ZALEZNOSC ZAZNACZONA: true
+# ZALEZNOSC: „AI Governance & Ethics Framework" po „AI-Powered Analytics"
+# ZALEZNOSC PO RELOAD: zaznaczona
+# UZASADNIENIE: „Solver wybrał…" ×5, angielskich ×0, surowych kodów ×0
+# PROPOZYCJA W KARCIE: 5 wierszy, „po okresie poprzednika" ×0
+# PUBLIKACJA: Publikuję mimo 1 konfliktów
+# OPUBLIKOWANY: zdanie o nowej wersji ×1, przycisk „Dodaj inicjatywę" ×0 (oczekiwane 0)
+
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-final-02/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/fbdeede9-85e0-439c-b798-c07caf2ca21c/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-test-02/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-adma-04/register
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-final-03/register
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/analysis-proposals/plan-analysis-plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568-e8468ae8-2e3d-4034-8af0-d81cff88d5f8
+POST 200 /api/initiatives/runtime-v1/plan-analysis-proposals/plan-analysis-plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568-e8468ae8-2e3d-4034-8af0-d81cff88d5f8/review
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/2e578e14-a13d-4932-a62b-046be51e8f09/register
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/diff?from=3&to=4
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/diff?from=4&to=5
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/diff?from=5&to=6
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+POST 200 /api/initiatives/runtime-v1/planning/initiatives/init-drd-final-02/dependencies
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/diff?from=6&to=7
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/planning/plannable-initiatives
+GET 200 /api/initiatives/runtime-v1/initiatives
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-f807b6fd-357e-40ba-860c-cc7de75afedc/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/analysis-proposals/plan-analysis-plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568-adeb9e7b-e817-468e-a943-fd3a057f37bc
+POST 200 /api/initiatives/runtime-v1/plan-analysis-proposals/plan-analysis-plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568-adeb9e7b-e817-468e-a943-fd3a057f37bc/review
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+POST 201 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568
+GET 200 /api/initiatives/runtime-v1/plan-scenarios
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/history
+GET 200 /api/initiatives/runtime-v1/plan-scenarios/plan-96ca323b-21fa-4ecc-98ae-47d3dc5b4568/diff?from=8&to=9
+
+# błędy konsoli: 0
