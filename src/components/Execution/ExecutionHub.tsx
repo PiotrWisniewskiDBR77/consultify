@@ -3239,9 +3239,13 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       // Optimistic update
       setTasks((prev) => prev.map((t) => (t.id === activeId ? { ...t, status: newStatus } : t)));
 
-      // API call to update task status
+      // DRUGI DEFEKT KANBANU (zmierzony 07.09): `/api/tasks/:id` ma tylko
+      // metode PUT — PATCH wpadal w globalny 404 `API_ROUTE_NOT_FOUND`.
+      // Przez trzy tygodnie maskowala to bramka 26A, ktora i tak odpowiadala
+      // 409 na kazdy zapis tego routera. Po zdjeciu bramki przeciagniecie
+      // karty nadal by nie dzialalo, tylko z innym kodem bledu.
       try {
-        await Api.patch(`/tasks/${activeId}`, { status: newStatus });
+        await Api.put(`/tasks/${activeId}`, { status: newStatus });
         toast.success(
           t('execution.toast.taskMoved', 'Zadanie przeniesione do {{column}}', {
             column: targetColumnId.replace('_', ' '),

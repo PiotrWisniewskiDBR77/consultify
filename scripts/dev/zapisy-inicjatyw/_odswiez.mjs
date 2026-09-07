@@ -1,0 +1,23 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const [, , BASE, AUTH, OUT, NAZWA, SEKCJA] = process.argv;
+const b = await chromium.launch();
+const c = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light', storageState: AUTH, locale: 'pl-PL' });
+const p = await c.newPage();
+const konsola = [];
+p.on('console', (m) => { if (m.type() === 'error') konsola.push(m.text().slice(0, 200)); });
+await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+await p.evaluate(() => { const K='consultify-storage'; const r=localStorage.getItem(K); const j=r?JSON.parse(r):{state:{},version:0}; j.state={...(j.state||{}),theme:'light'}; localStorage.setItem(K,JSON.stringify(j)); });
+await p.goto(`${BASE}/initiatives`, { waitUntil: 'domcontentloaded' });
+await p.waitForTimeout(5000);
+const w = p.locator('table tbody tr', { hasText: NAZWA }).first();
+await w.scrollIntoViewIfNeeded(); await p.waitForTimeout(400); await w.dblclick();
+await p.waitForTimeout(8000);
+const s = p.getByRole('button', { name: new RegExp('^' + SEKCJA) });
+await s.waitFor({ timeout: 25000 }); await s.click(); await p.waitForTimeout(3000);
+const e = p.locator('button').filter({ hasText: /^Edycja$/ });
+if (await e.count()) { await e.first().click(); await p.waitForTimeout(3000); }
+await p.screenshot({ path: OUT, fullPage: true });
+fs.writeFileSync(`${OUT}.json`, JSON.stringify({ url: p.url(), szerokosc: 1440, motyw: 'jasny', bledyKonsoli: konsola, czas: new Date().toISOString() }, null, 2));
+console.log('ZRZUT', OUT, '| url', p.url(), '| bledyKonsoli', konsola.length);
+await b.close();
