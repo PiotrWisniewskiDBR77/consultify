@@ -49,6 +49,7 @@ export function GeneratorPlanuModal({
   busy,
   proposal,
   proposalConflicts,
+  savedLabel,
   onClose,
   onGenerate,
   onReview,
@@ -58,6 +59,8 @@ export function GeneratorPlanuModal({
   busy?: boolean;
   proposal?: GeneratorProposalRow[] | null;
   proposalConflicts?: string[];
+  /** „Zapisano hh:mm" — znacznik z ODPOWIEDZI serwera po zatwierdzeniu propozycji. */
+  savedLabel?: string | null;
   onClose: () => void;
   onGenerate: (input: GeneratorPlanInput) => void;
   onReview: (outcome: 'ACCEPT' | 'REJECT') => void;
@@ -305,6 +308,11 @@ export function GeneratorPlanuModal({
                   {t('initiatives.planGenerator.reject', 'Odrzuć')}
                 </button>
               </div>
+            )}
+            {savedLabel && (
+              <p className="mt-2 text-sm" role="status">
+                {savedLabel}
+              </p>
             )}
           </section>
         </div>
