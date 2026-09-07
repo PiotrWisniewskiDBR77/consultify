@@ -1,0 +1,16 @@
+{
+  "url": "http://localhost:3141/initiatives",
+  "etykieta": "sonda-lokalna",
+  "zakres": "aktywne",
+  "api": {
+    "legacy": 72,
+    "runtimeV1": 5
+  },
+  "liczby": {
+    "wierszeTabeli": 60,
+    "stanPusty": false,
+    "menu3Wszystkie": 60,
+    "menu2PrzyFiltrze": 60
+  },
+  "bledyKonsoli": []
+}

@@ -1,0 +1,16 @@
+{
+  "url": "http://localhost:3142/initiatives",
+  "etykieta": "po",
+  "zakres": "aktywne",
+  "api": {
+    "legacy": 104,
+    "runtimeV1": 6
+  },
+  "liczby": {
+    "wierszeTabeli": 90,
+    "stanPusty": false,
+    "menu3Wszystkie": 90,
+    "menu2PrzyFiltrze": 90
+  },
+  "bledyKonsoli": []
+}

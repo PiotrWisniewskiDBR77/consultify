@@ -519,13 +519,51 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               return [];
             }),
           ]);
-          const registeredRows = registeredResult.initiatives.map((record) =>
-            toCanonicalInitiativeRegisterItem(record, {
-              id: currentUserId,
-              displayName: currentUserDisplayName,
-            })
+          // PUSTA LISTA INICJATYW (07.09.2026) — bezpiecznik konstrukcyjny.
+          // Przyczyna zgloszenia „w inicjatywach jest pusto" byla w adapterze
+          // (`runtimeLifecycleToInitiativeStatus`, naprawiona), ale sam ksztalt
+          // tego kodu byl rownie winny: pojedynczy wyjatek z `.map()` leci do
+          // `catch` ponizej i zeruje CALY rejestr — 97 wierszy w bazie, HTTP 200
+          // na obu trasach, tabela pusta. Od teraz zly wiersz kosztuje ten jeden
+          // wiersz i glosny wpis w konsoli, nigdy cala liste.
+          const skippedRows: Array<{ id: unknown; error: unknown }> = [];
+          const mapSafely = <TSource, TRow>(
+            rows: TSource[],
+            map: (row: TSource) => TRow,
+            idOf: (row: TSource) => unknown
+          ): TRow[] => {
+            const mapped: TRow[] = [];
+            for (const row of rows) {
+              try {
+                mapped.push(map(row));
+              } catch (rowError) {
+                skippedRows.push({ id: idOf(row), error: rowError });
+              }
+            }
+            return mapped;
+          };
+
+          const registeredRows = mapSafely(
+            registeredResult.initiatives,
+            (record) =>
+              toCanonicalInitiativeRegisterItem(record, {
+                id: currentUserId,
+                displayName: currentUserDisplayName,
+              }),
+            (record) => record?.initiative?.initiativeId
           );
-          const legacyCanonicalRows = legacyRows.map(toCanonicalInitiativeRegisterItemFromLegacyRow);
+          const legacyCanonicalRows = mapSafely(
+            legacyRows,
+            toCanonicalInitiativeRegisterItemFromLegacyRow,
+            (row) => row?.id
+          );
+          if (skippedRows.length > 0) {
+            console.error(
+              `[InitiativesHub] ${skippedRows.length} wiersz(y) rejestru pominietych przy mapowaniu ` +
+                '(reszta listy renderuje sie normalnie):',
+              skippedRows
+            );
+          }
           canonicalRows = mergeLegacyInitiativesIntoRegister(registeredRows, legacyCanonicalRows);
         }
         const sourceRows = selectInitiativeRegisterSource(
