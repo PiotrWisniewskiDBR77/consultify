@@ -21,7 +21,6 @@
 import type React from 'react';
 
 import type { NModeCardStateProps } from '@/components/shared/NModeLayout/NModeCardState';
-import type { NModeToolbarProps } from '@/components/shared/NModeLayout/NModeToolbar';
 import type {
   NModeAction,
   NModeAIContextAction,
@@ -326,7 +325,7 @@ export interface StandardArtifactShellProps<
    * `<NModeToolbar …>`; powłoka nie eksportuje surowego `renderActionBar`, więc bespoke
    * `<div>` i `createPortal` poza powłokę (dzisiejszy Tool Document) nie mają którędy wejść.
    */
-  readonly toolbar?: React.ReactElement<NModeToolbarProps>;
+  readonly toolbar?: React.ReactElement;
 
   /** Szerokość prawego panelu w px (kanon §11.2: 320–420, domyślnie 360). */
   readonly panelWidth?: number;
