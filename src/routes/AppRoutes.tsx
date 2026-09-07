@@ -295,6 +295,16 @@ const DocumentStudioView = lazyWithRetry(() =>
     default: m.DocumentStudioView,
   }))
 );
+const DocumentStudioTemplateArchitectView = lazyWithRetry(() =>
+  import('@/components/DocumentStudio/DocumentStudioTemplateArchitectView').then((m) => ({
+    default: m.DocumentStudioTemplateArchitectView,
+  }))
+);
+const PresentationTemplateArchitectView = lazyWithRetry(() =>
+  import('@/components/Presentations/PresentationTemplateArchitectView').then((m) => ({
+    default: m.PresentationTemplateArchitectView,
+  }))
+);
 const DeckBuilder = lazyWithRetry(() =>
   import('@/components/Presentations/DeckBuilder/DeckBuilder').then((m) => ({
     default: m.DeckBuilder,
@@ -888,6 +898,17 @@ export const AssessmentOutputPresentationRoute: React.FC = () => {
     return <Navigate to="/assessment?tab=outputs" replace />;
   }
   return <AssessmentOutputPresentationView outputId={params.outputId ?? null} />;
+};
+
+/** DEC-432: an identity route opens one concrete template, not just the registry. */
+export const DocumentTemplateArchitectIdentityRoute: React.FC = () => {
+  const { templateId = '' } = useParams<{ templateId: string }>();
+  return <DocumentStudioTemplateArchitectView initialTemplateId={templateId} />;
+};
+
+export const PresentationTemplateArchitectIdentityRoute: React.FC = () => {
+  const { templateId = '' } = useParams<{ templateId: string }>();
+  return <PresentationTemplateArchitectView initialTemplateId={templateId} />;
 };
 
 const LegacyAuditCriterionRedirect: React.FC = () => {
@@ -3011,6 +3032,30 @@ export const AppRoutes: React.FC = () => {
                   </RouteErrorBoundary>
                 </MainLayout>
               </BetaGate>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/presentations/templates/document/:templateId"
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials'), t('rap.tabs.templates', 'Templates'), t('documentStudio.templateArchitect.heading', 'Document Template Architect')]} noPadding>
+                <RouteErrorBoundary>
+                  <DocumentTemplateArchitectIdentityRoute />
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/presentations/templates/deck/:templateId"
+          element={
+            <ProtectedRoute requireAuth={true}>
+              <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.materialy', 'Materials'), t('rap.tabs.templates', 'Templates'), t('presentations.templateArchitect.heading', 'Deck Template Architect')]} noPadding>
+                <RouteErrorBoundary>
+                  <PresentationTemplateArchitectIdentityRoute />
+                </RouteErrorBoundary>
+              </MainLayout>
             </ProtectedRoute>
           }
         />
