@@ -1,10 +1,8 @@
 import {
   AlertTriangle,
   BarChart3,
-  Calculator,
   ChevronDown,
   ChevronRight,
-  FileBarChart,
   FileText,
   PanelRightClose,
   PanelRightOpen,
@@ -16,6 +14,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import { ArtifactRightPanel } from '@/components/standard/ArtifactRightPanel';
+import { PracujZAI } from '@/components/standard/PracujZAI';
 
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
@@ -394,7 +397,6 @@ function SkeletonRows() {
 export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   statementPackId,
   onStatementChanged,
-  onCreateModelFromPack,
   onCreateAnalysisFromPack,
   onAddFile,
 }) => {
@@ -760,16 +762,8 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            {onCreateModelFromPack && packRow.isWorkable && (
-              <button
-                type="button"
-                onClick={() => onCreateModelFromPack(packRow)}
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
-              >
-                <Calculator size={12} />
-                <span className="hidden sm:inline">Model</span>
-              </button>
-            )}
+            {/* DEC-440: the retired FinancialModelWorkspace is intentionally
+                absent. A statement pack may lead only to Finance Analysis. */}
             {onCreateAnalysisFromPack && packRow.isWorkable && (
               <button
                 type="button"
@@ -895,33 +889,6 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           >
             <Search size={11} />
             {showLineage ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-          </button>
-
-          {/* O4.2-O4.6 — Generate report section (silnik→papier): scenarios + value tree + portfolio + trend */}
-          <button
-            type="button"
-            onClick={() => {
-              if (!showSection) void generateSection();
-              else setShowSection(false);
-            }}
-            disabled={sectionLoading}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-50 dark:text-c-text-secondary dark:hover:bg-white/[0.04]"
-            title={t(
-              'finance.pack.section.tooltip',
-              'Generate the finance report section (scenarios, value tree, portfolio advisory, trend)'
-            )}
-          >
-            <FileBarChart size={11} />
-            <span className="hidden lg:inline">
-              {t('finance.pack.section.cta', 'Generate report section')}
-            </span>
-            {sectionLoading ? (
-              <RefreshCw size={11} className="animate-spin" />
-            ) : showSection ? (
-              <ChevronDown size={11} />
-            ) : (
-              <ChevronRight size={11} />
-            )}
           </button>
 
           {/* Separator */}
@@ -1200,6 +1167,36 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         )}
       </div>
 
+      <NModeMenu2
+        isPolish={isPl}
+        sectionsMenu={<span className="text-xs font-medium text-c-text-secondary">{isPl ? 'Sekcje' : 'Sections'}</span>}
+        aiButton={
+          <PracujZAI
+            isPolish={isPl}
+            onAnalizuj={() => {
+              if (!showSection) void generateSection();
+              else setShowSection(true);
+            }}
+            analizaWToku={sectionLoading}
+            analizaOtwarta={showSection}
+            aktywnaSekcja="statements"
+            kontekstArtefaktu={{ title: packRow.entityName || packRow.title, type: 'finance-statement-pack' }}
+            moznaEdytowac={Boolean(packRow.isWorkable)}
+            powodTylkoOdczyt={isPl ? 'pakiet nie jest gotowy do pracy' : 'the pack is not ready for work'}
+            uzupelnijSekcje={{
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: () => generateSection(),
+              opis: isPl ? 'Istniejący silnik przygotuje sekcję analizy; wynik pozostaje widoczny przed dalszym użyciem.' : 'The existing engine prepares an analysis section; the result remains visible before further use.',
+            }}
+            uzupelnijDokument={onCreateAnalysisFromPack ? {
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: () => onCreateAnalysisFromPack(packRow),
+              opis: isPl ? 'Tworzy do dalszej pracy wyłącznie analizę finansową dopuszczoną przez DEC-440.' : 'Creates only the Finance Analysis allowed by DEC-440 for further work.',
+            } : undefined}
+          />
+        }
+      />
+
       {/* ═══ CONTENT AREA ═══ */}
       {selectedStatement ? (
         <div
@@ -1273,8 +1270,32 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
 
           {/* Side panel */}
           {showSidePanel && (
-            <div className="flex min-h-0 flex-col">
-              {selectedExplain ? (
+            <ArtifactRightPanel
+              width="100%"
+              className="h-full"
+              sections={[
+                {
+                  id: 'actions', label: isPl ? 'Akcje' : 'Actions', defaultOpen: true,
+                  children: <button type="button" onClick={() => onAddFile?.(statementPackId)} className="w-full rounded-lg border border-c-border-subtle px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-state-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus">{isPl ? 'Dodaj plik' : 'Add file'}</button>,
+                },
+                {
+                  id: 'properties', label: isPl ? 'Właściwości' : 'Properties', defaultOpen: true,
+                  children: <ArtifactPropertiesTable
+                    propertyLabel={isPl ? 'Właściwość' : 'Property'} valueLabel={isPl ? 'Wartość' : 'Value'}
+                    rows={[
+                      { id: 'status', label: 'Status', value: packRow.status || '—' },
+                      { id: 'owner', label: isPl ? 'Właściciel' : 'Owner', value: '—' },
+                      { id: 'priority', label: isPl ? 'Priorytet' : 'Priority', value: '—' },
+                      { id: 'period', label: isPl ? 'Okres' : 'Period', value: packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}` },
+                      { id: 'source', label: isPl ? 'Źródło' : 'Source', value: packRow.entityName || '—' },
+                      { id: 'created', label: isPl ? 'Utworzono' : 'Created', value: '—' },
+                      { id: 'updated', label: isPl ? 'Zaktualizowano' : 'Updated', value: '—' },
+                    ]}
+                  />,
+                },
+                {
+                  id: 'evidence', label: isPl ? 'Źródła i założenia' : 'Sources and assumptions',
+                  children: selectedExplain ? (
                 <StatementExplainPanel
                   explain={selectedExplain}
                   selectedRow={selectedRow}
@@ -1293,7 +1314,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     'No stored evidence for this value.'
                   )}
                 />
-              ) : (
+                  ) : (
                 /* Source files list when no row selected */
                 <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/90">
                   <div className="flex-shrink-0 border-b border-slate-200/70 px-3 py-2.5 dark:border-white/[0.06]">
@@ -1412,8 +1433,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </div>
       ) : (
