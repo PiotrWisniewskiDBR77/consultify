@@ -22,6 +22,12 @@ import {
   selectCapacityOption,
 } from '../../domain/initiatives-execution/capacityOptions.js';
 import { mutateCapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
+import type { CapacityScenario } from '../../domain/initiatives-execution/capacityScenario.js';
+import {
+  buildRoleSheet,
+  roleSlug,
+} from '../../domain/initiatives-execution/capacityRoleSheet.js';
+import { getRoleWeeklySupply } from '../../services/workloadCapacityService.js';
 import {
   decideClosureCase,
   requestClosureCase,
@@ -544,6 +550,16 @@ const PlanScenarioSchema = z.object({
             detail: z.string().min(1),
           })
         ),
+        /** P15-K5 (D3'): popyt okna per rola (stanowisko) w FTE. */
+        roleDemand: z
+          .array(
+            z.object({
+              roleId: z.string().min(1),
+              roleLabel: z.string().min(1),
+              fte: z.number().min(0),
+            })
+          )
+          .optional(),
       })
     ),
     assumptions: z.array(z.string().min(1)),
@@ -603,6 +619,19 @@ const CapacityScenarioSchema = z.object({
         end: z.string().datetime(),
         demand: CapacityRangeSchema,
         supply: CapacityRangeSchema,
+        /** P15-K5 (§4.2 pkt 1): arkusz okres x rola. */
+        roles: z
+          .array(
+            z.object({
+              roleId: z.string().min(1),
+              roleLabel: z.string().min(1),
+              demand: z.number().min(0).nullable(),
+              supply: z.number().min(0).nullable(),
+              supplySource: z.enum(['RESOURCE_PLAN', 'MANUAL', 'UNKNOWN']),
+              demandSource: z.enum(['PLAN', 'MANUAL', 'UNKNOWN']),
+            })
+          )
+          .optional(),
       })
     ),
     constraints: z.array(
@@ -628,6 +657,28 @@ const CapacityScenarioSchema = z.object({
     publishedBy: z.string().nullable(),
     publishedAt: z.string().nullable(),
   }),
+});
+/**
+ * P15-K5 (DEC-421): komenda `compute` — serwer LICZY arkusz okres x rola z planu
+ * i podazy organizacji, zamiast przyjmowac pusty scenariusz od przegladarki.
+ * Do K4 „Nowa analiza" tworzyla 12 okresow z UNKNOWN wszedzie i 0 rol.
+ */
+const CapacityComputeSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  clientRequestId: z.string().min(1),
+  operation: z.enum(['CREATE', 'UPDATE']),
+  planScenarioId: z.string().min(1),
+  name: z.string().trim().min(1).nullable().optional(),
+  /** Reczne korekty podazy z arkusza (`MANUAL`), zachowywane przy przeliczeniu. */
+  supplyOverrides: z
+    .array(
+      z.object({
+        periodId: z.string().min(1),
+        roleId: z.string().min(1),
+        supply: z.number().min(0),
+      })
+    )
+    .optional(),
 });
 const RequestCommitmentSchema = z.object({
   expectedVersion: z.literal(0),
@@ -4023,6 +4074,142 @@ export function createInitiativesExecutionRuntimeRouter(
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5 — „Nowa analiza" WYPELNIONA.
+   *
+   * POMIAR 07.09: `CapacityScenarioSurface.createAnalysis` sklejal scenariusz
+   * w przegladarce z UNKNOWN na kazdym okresie i zerem rol, wiec karta analizy
+   * otwierala sie pusta, a „Luki i presja" pokazywaly 12 luk przy 5 tygodniach.
+   * Teraz liczy SERWER: popyt z okien opublikowanego planu (`roleDemand`, D3'),
+   * podaz ze stanowisk osob organizacji (`users.job_title`, D2').
+   */
+  router.post(
+    '/capacity-scenarios/:scenarioId/compute',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      const parsed = CapacityComputeSchema.safeParse(req.body);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
+        return;
+      }
+      const plan = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        parsed.data.planScenarioId
+      );
+      const portfolio = plan
+        ? await deps.reader.findPortfolioScenario(
+            actor.organizationId,
+            plan.scenario.portfolioScenarioId
+          )
+        : null;
+      if (
+        !plan ||
+        !portfolio ||
+        !(await deps.authorize(actor, portfolio.scenario.scope.portfolioId, 'initiative.update'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      if (plan.scenario.status !== 'PUBLISHED') {
+        res.status(400).json({
+          error: {
+            code: 'VALIDATION_FAILED',
+            rule: 'CAPACITY_REQUIRES_PUBLISHED_PLAN',
+          },
+        });
+        return;
+      }
+      const scenarioId = firstParam(req.params.scenarioId);
+      const existing = await deps.reader.findCapacityScenario(actor.organizationId, scenarioId);
+      const supply = await getRoleWeeklySupply(actor.organizationId, roleSlug);
+      const fallbackDemandFte = await deps.reader.readRequiredCapacityFte(
+        actor.organizationId,
+        plan.scenario.windows.map((window) => window.initiativeId)
+      );
+      // Reczne korekty z arkusza wchodza jako `MANUAL` do wejscia przeliczenia,
+      // zeby przeliczenie ich NIE ZGUBILO (i zeby nie trzeba bylo dwoch zapisow).
+      const previous: CapacityScenario | null = existing
+        ? {
+            ...existing.scenario,
+            periods: existing.scenario.periods.map((period) => ({
+              ...period,
+              roles: (period.roles ?? []).map((role) => {
+                const override = (parsed.data.supplyOverrides ?? []).find(
+                  (item) => item.periodId === period.periodId && item.roleId === role.roleId
+                );
+                return override
+                  ? { ...role, supply: override.supply, supplySource: 'MANUAL' as const }
+                  : role;
+              }),
+            })),
+          }
+        : null;
+      const periods = buildRoleSheet({
+        plan: plan.scenario,
+        supply,
+        fallbackDemandFte,
+        previous,
+        ownerId: actor.userId,
+      });
+      const scenario: CapacityScenario = {
+        scenarioId,
+        name: parsed.data.name ?? existing?.scenario.name ?? null,
+        scenarioVersion: existing?.scenario.scenarioVersion ?? 0,
+        status: 'DRAFT',
+        planScenarioId: plan.scenario.scenarioId,
+        planScenarioVersion: plan.scenario.scenarioVersion,
+        windowUnit: plan.scenario.windowUnit,
+        timezone: plan.scenario.timezone,
+        periods,
+        constraints: existing?.scenario.constraints ?? [],
+        proposedAssignments: existing?.scenario.proposedAssignments ?? [],
+        createdBy: existing?.scenario.createdBy ?? actor.userId,
+        updatedBy: actor.userId,
+        publishedBy: null,
+        publishedAt: null,
+      };
+      const policy = await deps.resolvePolicy(
+        actor.organizationId,
+        portfolio.scenario.scope.portfolioId
+      );
+      const result = await mutateCapacityScenario(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'capacity_scenario',
+        aggregateId: scenarioId,
+        expectedVersion: parsed.data.expectedVersion,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: `capacity-compute-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'capacity.scenario.mutate',
+        createIfMissing: parsed.data.operation === 'CREATE',
+        payload: { operation: parsed.data.operation, scenario },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5: slownik ROL organizacji.
+   * Rola = stanowisko z `users.job_title` (to samo pole, ktore czyta arkusz
+   * Realizacja -> Zasoby). Sluzy edytorowi „Obciazenie rol" w karcie planu,
+   * zeby PMO wybieralo rolę z listy, a nie wpisywalo wolny tekst.
+   */
+  router.get(
+    '/capacity-roles',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      res.json({ roles: await getRoleWeeklySupply(actor.organizationId, roleSlug) });
     })
   );
   router.get(

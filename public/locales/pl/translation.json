@@ -9570,7 +9570,50 @@
         "periods": "Okresy",
         "roles": "Role",
         "gaps": "Luki",
-        "updatedAt": "Zaktualizowano"
+        "updatedAt": "Zaktualizowano",
+        "period": "Okres",
+        "role": "Rola",
+        "demand": "Popyt (FTE)",
+        "supply": "Podaż (FTE)",
+        "gap": "Luka",
+        "supplySourceShort": "Źródło podaży"
+      },
+      "unknownValue": "Nieznane",
+      "version": "wersja",
+      "backToList": "Wróć do listy",
+      "publish": "Opublikuj analizę",
+      "publishedAt": "Opublikowano",
+      "panelAria": "Szczegóły analizy obciążenia",
+      "primaryNone": "Publikacja jest w sekcji Decyzje.",
+      "worksheetHint": "Popyt pochodzi z „Obciążenia ról” opublikowanego planu, podaż ze stanowisk osób w organizacji (1 FTE = 40 h/tydzień). Podaż możesz poprawić ręcznie.",
+      "noRoleSheet": "Ta analiza powstała przed wprowadzeniem wymiaru roli. Utwórz nową analizę z opublikowanego planu, aby zobaczyć arkusz okres × rola.",
+      "noGaps": "Żadna rola nie jest przeciążona.",
+      "noGapsLegacy": "Brak wykrytych luk (analiza bez wymiaru roli).",
+      "gapLine": "popyt {{demand}} FTE wobec podaży {{supply}} FTE (brakuje {{gap}})",
+      "needsPublish": "Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje”, potem uruchom „Pracuj z AI”.",
+      "noConstraints": "Brak zapisanych ograniczeń.",
+      "noComments": "Brak mechanizmu komentarzy dla analizy.",
+      "aiSection": "Doradca przygotuje propozycje zmian do oceny.",
+      "aiDocument": "Doradca przygotuje wariant całej analizy do oceny.",
+      "supplySource": {
+        "resourcePlan": "Z Zasobów",
+        "manual": "Ręcznie",
+        "unknown": "Nieznane"
+      },
+      "demandSource": {
+        "plan": "Z planu",
+        "manual": "Ręcznie",
+        "unknown": "Nieznane (brak podziału na role)"
+      },
+      "panel": {
+        "actions": "Akcje",
+        "properties": "Właściwości",
+        "property": "Właściwość",
+        "value": "Wartość",
+        "status": "Status",
+        "relations": "Powiązania",
+        "evidence": "Źródła i założenia",
+        "history": "Historia"
       }
     },
     "planScenario": {
@@ -9759,6 +9802,17 @@
         "PORTFOLIO_SCENARIO_DUPLICATE": "Taki scenariusz portfela już istnieje. Otwórz istniejący albo nadaj nowemu inną nazwę.",
         "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej.",
         "INITIATIVE_NOT_PLANNABLE": "Ta inicjatywa nie kwalifikuje się do planowania. Do planu wchodzą inicjatywy zatwierdzone, a „do zatwierdzenia” tylko jako warunkowe."
+      },
+      "roleDemand": {
+        "loading": "Wczytuję obciążenie ról…",
+        "unavailable": "Nie udało się wczytać obciążenia ról.",
+        "noWindows": "Plan nie ma jeszcze żadnej inicjatywy w zakresie — najpierw wybierz je w generatorze.",
+        "noRoles": "Żadna osoba w organizacji nie ma wpisanego stanowiska. Uzupełnij stanowiska w Zespole, aby zaplanować obciążenie ról.",
+        "hint": "Wpisz, ile etatów (FTE) każdej roli wymaga inicjatywa w swoim oknie. Te liczby są popytem w analizie obciążenia.",
+        "initiative": "Inicjatywa",
+        "readOnly": "Plan jest opublikowany — obciążenie ról jest tylko do odczytu.",
+        "saved": "Zapisano {{time}}",
+        "failed": "Nie zapisano obciążenia ról."
       }
     },
     "analysis": {

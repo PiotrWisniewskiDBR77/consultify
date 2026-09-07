@@ -9,6 +9,18 @@ import {
 import type { PortfolioScenario } from './portfolioScenario.js';
 import { solvePlanScenario } from './planSolver.js';
 
+/**
+ * P15-K5 (DEC-421, decyzja D3'): popyt inicjatywy wyrażony PER ROLA (stanowisko),
+ * w FTE na okres okna. Wpisuje go PMO w karcie planu („Obciążenie ról"), bo
+ * pomiar K0 pokazał, że `required_capacity_fte` jest puste 72/72, a
+ * `competencies_required` 72/72 — nie ma z czego wyliczyć podziału na role.
+ * Pole jest OPCJONALNE: plany sprzed K5 nie mają go i nadal się walidują.
+ */
+export interface RoleDemandLine {
+  roleId: string;
+  roleLabel: string;
+  fte: number;
+}
 export interface PlannedWindow {
   initiativeId: string;
   initiativeVersion: number;
@@ -19,6 +31,7 @@ export interface PlannedWindow {
   rationale: string;
   dependencySnapshot: string[];
   constraintSnapshot: Array<{ constraintId: string; state: 'KNOWN' | 'UNKNOWN'; detail: string }>;
+  roleDemand?: RoleDemandLine[];
 }
 export interface PlanScenario {
   scenarioId: string;
@@ -94,6 +107,18 @@ export function validatePlanScenario(s: PlanScenario) {
       );
     if (!w.rationale.trim())
       throw new MaterialCommandValidationError('Window rationale is required');
+    if (w.roleDemand) {
+      const roles = new Set<string>();
+      for (const line of w.roleDemand) {
+        if (!line.roleId.trim() || !line.roleLabel.trim())
+          throw new MaterialCommandValidationError('Role demand requires role identity');
+        if (roles.has(line.roleId))
+          throw new MaterialCommandValidationError('Role demand must be unique per role');
+        roles.add(line.roleId);
+        if (!Number.isFinite(line.fte) || line.fte < 0)
+          throw new MaterialCommandValidationError('Role demand FTE must be zero or greater');
+      }
+    }
     const horizonStart = Date.parse(s.periods[0].start);
     const horizonEnd = Date.parse(s.periods[s.periods.length - 1].end);
     if (values.some((value) => value !== null && (value < horizonStart || value > horizonEnd)))

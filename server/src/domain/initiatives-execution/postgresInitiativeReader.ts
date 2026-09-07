@@ -204,6 +204,29 @@ export class PostgresInitiativeReader {
     return [];
   }
 
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5, decyzja D3' — awaryjny popyt.
+   * `initiatives.required_capacity_fte` sluzy WYLACZNIE jako podpowiedz dla okien
+   * planu bez podzialu na role; w arkuszu ladauje w wierszu „Bez stanowiska"
+   * ze zrodlem UNKNOWN, zeby PMO widzialo, ze podzial na role jeszcze nie powstal.
+   */
+  async readRequiredCapacityFte(
+    organizationId: string,
+    initiativeIds: string[]
+  ): Promise<Record<string, number>> {
+    if (!initiativeIds.length) return {};
+    const result = await this.pool.query<{ id: string; required_capacity_fte: string | number | null }>(
+      `SELECT id, required_capacity_fte FROM initiatives
+        WHERE organization_id=$1 AND id = ANY($2::text[])`,
+      [organizationId, initiativeIds]
+    );
+    const map: Record<string, number> = {};
+    for (const row of result.rows) {
+      const value = Number(row.required_capacity_fte ?? 0);
+      if (Number.isFinite(value) && value > 0) map[String(row.id)] = value;
+    }
+    return map;
+  }
   async listCapacityScenarios(organizationId: string) {
     // [ODMROZENIE 05_INITIATIVES DEC-421] „Plan źródłowy" = NAZWA agregatu `plan_scenario`
     // wskazanego przez `planScenarioId` (nie literał). Brak planu / brak nazwy =
@@ -236,20 +259,41 @@ export class PostgresInitiativeReader {
         ]),
         ...r.payload_json.constraints.map((c) => c.state),
       ];
+      const hasRoleSheet = r.payload_json.periods.some((period) => (period.roles ?? []).length > 0);
       return {
         id: r.aggregate_id,
         name: String((r.payload_json as any).name ?? r.aggregate_id),
         state: r.payload_json.status,
         version: r.payload_json.scenarioVersion,
         periodCount: r.payload_json.periods.length,
-        roleCount: new Set(r.payload_json.proposedAssignments.map((item) => item.resourceOrRoleId))
-          .size,
-        gapCount: r.payload_json.periods.filter(
-          (period) =>
-            period.demand.base !== null &&
-            period.supply.base !== null &&
-            period.demand.base > period.supply.base
-        ).length,
+        // P15-K5 (DEC-421): Role = ile ROL ma popyt > 0 w arkuszu; Luki = ile par
+        // (okres, rola) ma popyt ponad podaz. Analizy sprzed K5 nie maja `roles`,
+        // wiec dla nich zostaje stary pomiar na skalarach i `proposedAssignments`.
+        roleCount: hasRoleSheet
+          ? new Set(
+              r.payload_json.periods.flatMap((period) =>
+                (period.roles ?? [])
+                  .filter((role) => (role.demand ?? 0) > 0)
+                  .map((role) => role.roleId)
+              )
+            ).size
+          : new Set(r.payload_json.proposedAssignments.map((item) => item.resourceOrRoleId)).size,
+        gapCount: hasRoleSheet
+          ? r.payload_json.periods.reduce(
+              (total, period) =>
+                total +
+                (period.roles ?? []).filter(
+                  (role) =>
+                    role.demand !== null && role.supply !== null && role.demand > role.supply
+                ).length,
+              0
+            )
+          : r.payload_json.periods.filter(
+              (period) =>
+                period.demand.base !== null &&
+                period.supply.base !== null &&
+                period.demand.base > period.supply.base
+            ).length,
         planRef: {
           scenarioId: r.payload_json.planScenarioId,
           scenarioVersion: r.payload_json.planScenarioVersion,

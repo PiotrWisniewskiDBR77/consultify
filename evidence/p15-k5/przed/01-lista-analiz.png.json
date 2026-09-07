@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-lista-analiz",
+  "opis": "Inicjatywy -> Obciazenie: lista analiz (kolumny Role/Luki)",
+  "faza": "przed",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:34:59.053Z"
+}

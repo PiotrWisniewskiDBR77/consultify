@@ -1,0 +1,10 @@
+{
+  "nazwa": "04-plan-opublikowany",
+  "opis": "Karta planu: plan opublikowany",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:19:40.093Z"
+}

@@ -1,0 +1,10 @@
+{
+  "nazwa": "05-warianty-ai",
+  "opis": "Karta analizy: warianty doradcy po Pracuj z AI -> Analizuj",
+  "faza": "przed",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:35:17.847Z"
+}

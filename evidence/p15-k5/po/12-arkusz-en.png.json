@@ -1,0 +1,11 @@
+{
+  "nazwa": "12-arkusz-en",
+  "opis": "Arkusz okres x rola w trybie EN (teksty pl+en)",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "jezyk": "en",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:31:21.721Z"
+}

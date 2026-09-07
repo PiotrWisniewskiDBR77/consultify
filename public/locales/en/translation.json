@@ -10134,7 +10134,50 @@
         "periods": "Periods",
         "roles": "Roles",
         "gaps": "Gaps",
-        "updatedAt": "Updated"
+        "updatedAt": "Updated",
+        "period": "Period",
+        "role": "Role",
+        "demand": "Demand (FTE)",
+        "supply": "Supply (FTE)",
+        "gap": "Gap",
+        "supplySourceShort": "Supply source"
+      },
+      "unknownValue": "Unknown",
+      "version": "version",
+      "backToList": "Back to list",
+      "publish": "Publish analysis",
+      "publishedAt": "Published",
+      "panelAria": "Load analysis details",
+      "primaryNone": "Publishing is a decision in the Decisions section.",
+      "worksheetHint": "Demand comes from the published plan's “Role load”, supply from people's job titles in the organization (1 FTE = 40 h/week). You can correct supply manually.",
+      "noRoleSheet": "This analysis predates the role dimension. Create a new analysis from a published plan to see the period × role worksheet.",
+      "noGaps": "No role is overloaded.",
+      "noGapsLegacy": "No gaps detected (analysis without the role dimension).",
+      "gapLine": "demand {{demand}} FTE against supply {{supply}} FTE (short by {{gap}})",
+      "needsPublish": "The advisor computes options for a published analysis. Publish the analysis in “Decisions”, then run “Work with AI”.",
+      "noConstraints": "No recorded constraints.",
+      "noComments": "No comment thread for this analysis.",
+      "aiSection": "The advisor will prepare change proposals for review.",
+      "aiDocument": "The advisor will prepare a whole-analysis variant for review.",
+      "supplySource": {
+        "resourcePlan": "From Resources",
+        "manual": "Manual",
+        "unknown": "Unknown"
+      },
+      "demandSource": {
+        "plan": "From plan",
+        "manual": "Manual",
+        "unknown": "Unknown (no role breakdown)"
+      },
+      "panel": {
+        "actions": "Actions",
+        "properties": "Properties",
+        "property": "Property",
+        "value": "Value",
+        "status": "Status",
+        "relations": "Relations",
+        "evidence": "Sources and assumptions",
+        "history": "History"
       }
     },
     "planScenario": {
@@ -10323,6 +10366,17 @@
         "PORTFOLIO_SCENARIO_DUPLICATE": "This portfolio scenario already exists. Open the existing one or give the new one a different name.",
         "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier.",
         "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional."
+      },
+      "roleDemand": {
+        "loading": "Loading role load…",
+        "unavailable": "Could not load role load.",
+        "noWindows": "The plan has no initiative in scope yet — pick them in the generator first.",
+        "noRoles": "Nobody in the organization has a job title. Fill in job titles in Team to plan role load.",
+        "hint": "Enter how many FTE of each role the initiative needs within its window. These numbers are the demand in the load analysis.",
+        "initiative": "Initiative",
+        "readOnly": "The plan is published — role load is read-only.",
+        "saved": "Saved {{time}}",
+        "failed": "Role load was not saved."
       }
     },
     "analysis": {
