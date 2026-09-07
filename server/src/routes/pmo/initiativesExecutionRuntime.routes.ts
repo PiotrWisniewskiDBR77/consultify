@@ -121,6 +121,13 @@ import {
   type EffectiveGovernancePolicy,
   PostgresGovernancePolicyResolver,
 } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
+import {
+  assertPlannable,
+  planningProjectScope,
+  planningRegistrationState,
+  planningRegistrationUnchanged,
+  registerModuleInitiativeForPlanning,
+} from '../../domain/initiatives-execution/registerModuleInitiativeForPlanning.js';
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
 import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
@@ -489,6 +496,12 @@ const PlanScenarioSchema = z.object({
   expectedVersion: z.number().int().min(0),
   clientRequestId: z.string().min(1),
   operation: z.enum(['CREATE', 'UPDATE', 'PUBLISH']),
+  /**
+   * P15-K2 (DEC-421), decyzja D1': scenariusz portfela PRZESTAJE być wymogiem
+   * przy zakładaniu planu. `portfolio: 'auto'` (albo pusty `portfolioScenarioId`)
+   * znaczy: załóż/odśwież PORTFEL ROBOCZY organizacji ze składu okien planu.
+   */
+  portfolio: z.literal('auto').optional(),
   publishConfirmation: z
     .object({
       conflictCount: z.number().int().positive(),
@@ -500,8 +513,8 @@ const PlanScenarioSchema = z.object({
     name: z.string().trim().min(1).nullable().optional(),
     scenarioVersion: z.number().int().min(0),
     status: z.enum(['DRAFT', 'PUBLISHED', 'SUPERSEDED']),
-    portfolioScenarioId: z.string().min(1),
-    portfolioScenarioVersion: z.number().int().min(1),
+    portfolioScenarioId: z.string(),
+    portfolioScenarioVersion: z.number().int().min(0),
     windowUnit: z.string().min(1),
     timezone: z.string().min(1),
     periods: z
@@ -538,6 +551,11 @@ const PlanScenarioSchema = z.object({
     publishedBy: z.string().nullable(),
     publishedAt: z.string().nullable(),
   }),
+});
+const PlanningRegisterSchema = z.object({
+  clientRequestId: z.string().min(1).max(255),
+  /** „+ do zatwierdzenia": PMO świadomie bierze inicjatywy PENDING_APPROVAL jako warunkowe. */
+  allowConditional: z.boolean().optional(),
 });
 const PlanAnalysisCreateSchema = z.object({
   expectedVersion: z.literal(0),
@@ -3342,6 +3360,250 @@ export function createInitiativesExecutionRuntimeRouter(
     })
   );
 
+  /**
+   * MOST P15-K2 (DEC-421), decyzja D1' — inicjatywy modułu jako źródło planu.
+   *
+   * `portfolio-<organizacja>-roboczy` to jeden portfel na organizację, którego
+   * skład NADPISUJE każdy zapis planu z `portfolio: 'auto'`. Nazwa niesie datę
+   * stanu, bo portfel jest migawką „co było zatwierdzone, gdy PMO planowało".
+   */
+  const workingPortfolioId = (organizationId: string) =>
+    `portfolio-${organizationId}-roboczy`;
+  const workingPortfolioName = (asOf: Date) =>
+    `Portfel roboczy — zatwierdzone inicjatywy, stan z ${asOf.toISOString().slice(0, 10)}`;
+  const membershipFingerprint = (
+    memberships: Array<{ initiativeId: string; initiativeVersion: number; disposition: string }>
+  ) =>
+    JSON.stringify(
+      [...memberships]
+        .map((membership) => [
+          membership.initiativeId,
+          membership.initiativeVersion,
+          membership.disposition,
+        ])
+        .sort()
+    );
+
+  /**
+   * Zakłada albo odświeża portfel roboczy i zwraca OPUBLIKOWANĄ wersję, na którą
+   * plan może się powołać. Reguła 26A: kanonicznym pisarzem jest komenda
+   * `portfolio.scenario.mutate` z runtime-v1, nie trasa legacy. Identyfikatory
+   * komend są POCHODNE od `clientRequestId` zapisu planu, więc powtórka żądania
+   * odtwarza się z pokwitowania zamiast zakładać drugi portfel.
+   */
+  const ensureWorkingPortfolio = async (
+    actor: RuntimeActor,
+    windows: Array<{ initiativeId: string; initiativeVersion: number }>,
+    clientRequestId: string
+  ): Promise<{ scenarioId: string; scenarioVersion: number }> => {
+    const scenarioId = workingPortfolioId(actor.organizationId);
+    const aggregates = await deps.reader.listInitiativesByIds(
+      actor.organizationId,
+      windows.map((window) => window.initiativeId)
+    );
+    const memberships = windows.map((window, index) => ({
+      initiativeId: window.initiativeId,
+      initiativeVersion: window.initiativeVersion,
+      disposition: (
+        aggregates.get(window.initiativeId)?.initiative as { conditional?: unknown } | undefined
+      )?.conditional
+        ? ('CONDITIONAL' as const)
+        : ('INCLUDED' as const),
+      scoreDecomposition: {},
+      rank: index + 1,
+      rankOverride: null,
+      coverage: {
+        state: 'UNKNOWN' as const,
+        value: null,
+        reason: 'Portfel roboczy nie ocenia pokrycia celów.',
+      },
+      overlap: {
+        state: 'UNKNOWN' as const,
+        value: null,
+        reason: 'Portfel roboczy nie ocenia nakładania się zakresów.',
+      },
+      roughDemand: {
+        state: 'UNKNOWN' as const,
+        value: null,
+        reason: 'Popyt na role wpisuje PMO w planie (P15 §4.7 D3\u0027).',
+      },
+      confidence: 'UNKNOWN' as const,
+      rationale: 'Skład portfela roboczego wynika z wyboru inicjatyw w generatorze planu.',
+    }));
+    const existing = await deps.reader.findPortfolioScenario(actor.organizationId, scenarioId);
+    if (
+      existing &&
+      existing.scenario.status === 'PUBLISHED' &&
+      membershipFingerprint(existing.scenario.memberships) === membershipFingerprint(memberships)
+    ) {
+      return { scenarioId, scenarioVersion: existing.scenario.scenarioVersion };
+    }
+    const policy = await deps.resolvePolicy(actor.organizationId, actor.organizationId);
+    const asOf = new Date();
+    const scenario: PortfolioScenario = {
+      scenarioId,
+      name: workingPortfolioName(asOf),
+      scenarioVersion: 0,
+      status: 'DRAFT',
+      scope: {
+        // Portfel roboczy jest ORGANIZACYJNY: inicjatywy modułu bywają bez projektu
+        // (pomiar 07.09: 43 z 72 mają `project_id` NULL), więc zakresem jest
+        // organizacja — ta sama decyzja, co `planningProjectScope`.
+        portfolioId: actor.organizationId,
+        goalIds: [],
+        asOf: asOf.toISOString(),
+      },
+      model: { modelId: 'portfel-roboczy', version: 1 },
+      memberships,
+      decompositionKeys: [],
+      createdBy: actor.userId,
+      updatedBy: actor.userId,
+      publishedBy: null,
+      publishedAt: null,
+      previousPublishedVersion: null,
+    };
+    const command = (
+      operation: 'CREATE' | 'UPDATE' | 'PUBLISH',
+      expectedVersion: number,
+      suffix: string
+    ) => ({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      aggregateType: 'portfolio_scenario',
+      aggregateId: scenarioId,
+      expectedVersion,
+      clientRequestId: `${clientRequestId}-portfel-${suffix}`,
+      correlationId: `portfel-roboczy-${clientRequestId}-${suffix}`,
+      policyId: policy.policyId,
+      policyVersion: policy.version,
+      commandType: 'portfolio.scenario.mutate' as const,
+      createIfMissing: operation === 'CREATE',
+      payload: { operation, scenario },
+    });
+    const draft = await mutatePortfolioScenario(
+      deps.unitOfWork,
+      existing
+        ? command('UPDATE', existing.version, 'aktualizacja')
+        : command('CREATE', 0, 'zalozenie')
+    );
+    const published = await mutatePortfolioScenario(
+      deps.unitOfWork,
+      command('PUBLISH', draft.aggregateVersion, 'publikacja')
+    );
+    return { scenarioId, scenarioVersion: published.response.scenarioVersion };
+  };
+
+  router.get(
+    '/planning/plannable-initiatives',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const candidates = await deps.reader.listPlannableModuleInitiatives(actor.organizationId);
+      const decisions = await authorizeProjectsMap(
+        actor,
+        candidates.map((candidate) =>
+          planningProjectScope(candidate.projectId, actor.organizationId)
+        ),
+        'initiative.update'
+      );
+      res.json({
+        initiatives: candidates.filter((candidate) =>
+          decisions.get(planningProjectScope(candidate.projectId, actor.organizationId))
+        ),
+      });
+    })
+  );
+
+  router.post(
+    '/planning/initiatives/:initiativeId/register',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const parsed = PlanningRegisterSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+        return;
+      }
+      const initiativeId = firstParam(req.params.initiativeId);
+      const moduleInitiative = await deps.reader.findModuleInitiativeForPlanning(
+        actor.organizationId,
+        initiativeId
+      );
+      if (!moduleInitiative) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const projectScope = planningProjectScope(
+        moduleInitiative.projectId,
+        actor.organizationId
+      );
+      if (!(await deps.authorize(actor, projectScope, 'initiative.update'))) {
+        res.status(403).json({ error: { code: 'INITIATIVE_UPDATE_FORBIDDEN' } });
+        return;
+      }
+      const policy = await deps.resolvePolicy(actor.organizationId, projectScope, initiativeId);
+      const existing = await deps.reader.findById(actor.organizationId, initiativeId);
+      const { conditional } = assertPlannable(
+        moduleInitiative,
+        (existing?.initiative as { lifecycleState?: unknown } | undefined)?.lifecycleState ===
+          undefined
+          ? null
+          : String((existing?.initiative as { lifecycleState?: unknown }).lifecycleState),
+        parsed.data.allowConditional === true
+      );
+      const wouldWrite = planningRegistrationState(
+        moduleInitiative,
+        (existing?.initiative as unknown as Record<string, unknown> | undefined) ?? null,
+        conditional,
+        {
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          policyId: policy.policyId,
+          policyVersion: policy.version,
+        },
+        new Date().toISOString()
+      );
+      // IDEMPOTENCJA (wymóg K2): drugie „przyjmij do planowania" na niezmienionych
+      // danych modułu NIE podbija wersji agregatu — inaczej każdy powrót do
+      // generatora unieważniałby `initiativeVersion` w oknach planu.
+      if (
+        existing &&
+        planningRegistrationUnchanged(
+          existing.initiative as unknown as Record<string, unknown>,
+          wouldWrite
+        )
+      ) {
+        res.status(200).json({
+          status: 'UNCHANGED',
+          aggregateVersion: existing.version,
+          response: existing.initiative,
+        });
+        return;
+      }
+      const result = await registerModuleInitiativeForPlanning(deps.unitOfWork, {
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        aggregateType: 'initiative',
+        aggregateId: initiativeId,
+        expectedVersion: existing?.version ?? 0,
+        clientRequestId: parsed.data.clientRequestId,
+        correlationId: `planning-register-${parsed.data.clientRequestId}`,
+        policyId: policy.policyId,
+        policyVersion: policy.version,
+        commandType: 'initiative.planning.register',
+        createIfMissing: !existing,
+        payload: { allowConditional: parsed.data.allowConditional === true },
+      });
+      res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+
   router.get(
     '/plan-scenarios',
     asyncHandler(async (req, res) => {
@@ -3379,9 +3641,30 @@ export function createInitiativesExecutionRuntimeRouter(
         res.status(400).json({ error: { code: 'VALIDATION_FAILED' } });
         return;
       }
+      // P15-K2 (DEC-421), D1': portfel roboczy AUTOMATYCZNY. „Nowy plan" nie każe
+      // PMO wpisywać identyfikatora scenariusza portfela — system zakłada/odświeża
+      // portfel roboczy organizacji ze składu okien planu i wiąże plan z jego
+      // OPUBLIKOWANĄ wersją. Rozpoznanie: jawne `portfolio: 'auto'`, brak
+      // identyfikatora, albo plan już związany z portfelem roboczym.
+      const requestedPortfolioId = parsed.data.scenario.portfolioScenarioId.trim();
+      const autoPortfolio =
+        parsed.data.portfolio === 'auto' ||
+        !requestedPortfolioId ||
+        requestedPortfolioId === workingPortfolioId(actor.organizationId);
+      if (autoPortfolio && !(await deps.authorize(actor, actor.organizationId, 'initiative.update'))) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      const portfolioRef = autoPortfolio
+        ? await ensureWorkingPortfolio(
+            actor,
+            parsed.data.scenario.windows,
+            parsed.data.clientRequestId
+          )
+        : null;
       const portfolio = await deps.reader.findPortfolioScenario(
         actor.organizationId,
-        parsed.data.scenario.portfolioScenarioId
+        portfolioRef?.scenarioId ?? requestedPortfolioId
       );
       if (
         !portfolio ||
@@ -3415,6 +3698,12 @@ export function createInitiativesExecutionRuntimeRouter(
             : {}),
           scenario: {
             ...parsed.data.scenario,
+            ...(portfolioRef
+              ? {
+                  portfolioScenarioId: portfolioRef.scenarioId,
+                  portfolioScenarioVersion: portfolioRef.scenarioVersion,
+                }
+              : {}),
             windows: parsed.data.scenario.windows.map((window) => ({
               ...window,
               earliest: window.earliest ?? null,

@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
+
 export interface MaterialCommandEnvelope<TPayload> {
   organizationId: string;
   actorId: string;
@@ -194,6 +196,16 @@ export interface MaterialCommandTransaction {
     aggregateType: string,
     aggregateId: string
   ): Promise<TPayload | null>;
+  /**
+   * MOST P15-K2 (DEC-421): odczyt inicjatywy MODUŁU (`initiatives`) wewnątrz tej
+   * samej transakcji, co zapis agregatu planowania. Bez niego komenda „przyjmij do
+   * planowania" musiałaby czytać status poza transakcją i mogłaby zapisać backlog
+   * na podstawie statusu, który w międzyczasie się zmienił.
+   */
+  getModuleInitiativeForPlanning(
+    organizationId: string,
+    initiativeId: string
+  ): Promise<ModuleInitiativeForPlanning | null>;
   persistAggregate<TMutation>(
     organizationId: string,
     aggregateType: string,

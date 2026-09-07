@@ -11,6 +11,7 @@ import type {
   SourceProposalSnapshot,
   StoredCommandReceipt,
 } from './materialCommand.js';
+import type { ModuleInitiativeForPlanning } from './registerModuleInitiativeForPlanning.js';
 import {
   calculateRiskScore,
   categorizeScore,
@@ -481,6 +482,56 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
       [organizationId, aggregateType, aggregateId]
     );
     return result.rows[0]?.payload_json ?? null;
+  }
+
+  /**
+   * MOST P15-K2 (DEC-421): inicjatywa MODUŁU jako źródło planu.
+   *
+   * `planned_start_date`/`planned_end_date` są w tej tabeli kolumnami TEXT (pomiar
+   * 07.09), więc wracają jako zapisany napis ISO — bez konwersji przez `Date`,
+   * która zamieniłaby brak strefy na lokalną. `initiative_dependencies` ma dziś
+   * 0 wierszy; pusta lista to UCZCIWE „brak zależności", nie ukryte zero.
+   */
+  async getModuleInitiativeForPlanning(
+    organizationId: string,
+    initiativeId: string
+  ): Promise<ModuleInitiativeForPlanning | null> {
+    const result = await this.client.query<{
+      id: string;
+      name: string | null;
+      title: string | null;
+      status: string | null;
+      project_id: string | null;
+      planned_start_date: string | null;
+      planned_end_date: string | null;
+      required_capacity_fte: number | null;
+    }>(
+      `SELECT id, name, title, status, project_id,
+              planned_start_date, planned_end_date, required_capacity_fte
+         FROM initiatives
+        WHERE organization_id = $1 AND id = $2`,
+      [organizationId, initiativeId]
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    const dependencies = await this.client.query<{ to_initiative_id: string }>(
+      `SELECT to_initiative_id
+         FROM initiative_dependencies
+        WHERE organization_id = $1 AND from_initiative_id = $2
+        ORDER BY to_initiative_id`,
+      [organizationId, initiativeId]
+    );
+    return {
+      initiativeId: row.id,
+      name: (row.name ?? row.title ?? row.id).trim() || row.id,
+      status: String(row.status ?? ''),
+      projectId: row.project_id,
+      plannedStartDate: row.planned_start_date,
+      plannedEndDate: row.planned_end_date,
+      requiredCapacityFte:
+        row.required_capacity_fte === null ? null : Number(row.required_capacity_fte),
+      dependsOn: dependencies.rows.map((dependency) => dependency.to_initiative_id),
+    };
   }
 
   async persistAggregate<TMutation>(
