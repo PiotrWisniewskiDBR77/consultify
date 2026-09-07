@@ -238,6 +238,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [rows, setRows] = useState<RegisterRow[]>([]);
   const [state, setState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'ERROR'>('IDLE');
+  // P15-K1 (DEC-421): kod reguly z odpowiedzi serwera. Bez niego kazdy blad
+  // zapisu planu wygladal tak samo — jednym zdaniem bez powodu.
+  const [writeRule, setWriteRule] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedWindowId, setSelectedWindowId] = useState<string | null>(null);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
@@ -672,6 +675,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     setHistory([]);
     setCompareFrom(null);
     setCompareTo(null);
+    setWriteRule(null);
     setWriteState('SAVING');
     try {
       const result = (await writePlanScenario(scenario.scenarioId, {
@@ -688,6 +692,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       await loadRegister();
       setSelectedId(result.response.scenarioId);
     } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
         error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR'
       );
@@ -701,6 +706,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       if (draft && !knownTimeBasis(draft)) setWriteState('ERROR');
       return;
     }
+    setWriteRule(null);
     setWriteState('SAVING');
     const key = `${draft.scenarioId}:${aggregateVersion}:${operation}`;
     const clientRequestId = commandIds.current.get(key) ?? crypto.randomUUID();
@@ -729,6 +735,7 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         setDiff(d.changes);
       }
     } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
         error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR'
       );
@@ -1214,9 +1221,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       )}
       {(writeState === 'ERROR' || writeState === 'CONFLICT') && (
         <div role="alert" className="m-3 text-sm text-c-danger">
-          {writeState === 'CONFLICT'
-            ? t('initiatives.planScenario.conflictError')
-            : t('initiatives.planScenario.writeError')}
+          {writeRule
+            ? t(`initiatives.planScenario.errors.${writeRule}`, {
+                defaultValue: t('initiatives.planScenario.writeError'),
+              })
+            : writeState === 'CONFLICT'
+              ? t('initiatives.planScenario.conflictError')
+              : t('initiatives.planScenario.writeError')}
         </div>
       )}
       <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-c-border px-3 py-2">

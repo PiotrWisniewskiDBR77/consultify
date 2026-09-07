@@ -233,6 +233,9 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     [publishedPlans, setPublishedPlans] = useState<PublishedPlanBasis[]>([]),
     [aggregateVersion, setAggregateVersion] = useState(0),
     [writeState, setWriteState] = useState<'IDLE' | 'SAVING' | 'CONFLICT' | 'FAILED'>('IDLE');
+  // P15-K1 (DEC-421): kod reguly z odpowiedzi serwera zamiast jednego
+  // zdania „Nie zapisano zmian." bez powodu.
+  const [writeRule, setWriteRule] = useState<string | null>(null);
   const [advisorState, setAdvisorState] = useState<
     'IDLE' | 'SAVING' | 'APPLIED' | 'NO_PRESSURE' | 'CONFLICT' | 'FAILED'
   >('IDLE');
@@ -676,6 +679,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       publishedBy: null,
       publishedAt: null,
     };
+    setWriteRule(null);
     setWriteState('SAVING');
     try {
       const result = (await writeCapacityScenario(scenarioId, {
@@ -695,6 +699,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       setWorkspaceOpen(true);
       setWriteState('IDLE');
     } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
         error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'FAILED'
       );
@@ -707,6 +712,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   };
   const write = async (operation: 'UPDATE' | 'PUBLISH') => {
     if (!scenario) return;
+    setWriteRule(null);
     setWriteState('SAVING');
     try {
       await writeCapacityScenario(scenario.scenarioId, {
@@ -719,6 +725,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       await load();
       setWriteState('IDLE');
     } catch (e) {
+      setWriteRule(e instanceof RuntimeApiError ? (e.rule ?? null) : null);
       setWriteState(e instanceof RuntimeApiError && e.status === 409 ? 'CONFLICT' : 'FAILED');
     }
   };
@@ -782,6 +789,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     }
   };
   const selectOption = async (comparison: CapacityComparison, optionId: string) => {
+    setWriteRule(null);
     setWriteState('SAVING');
     try {
       await selectCapacityOption(comparison.comparisonId, {
@@ -795,6 +803,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       await load();
       setWriteState('IDLE');
     } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
         error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'FAILED'
       );
@@ -1265,9 +1274,13 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
           </div>
           {(writeState === 'CONFLICT' || writeState === 'FAILED') && (
             <p role="alert" className="text-c-danger">
-              {writeState === 'CONFLICT'
-                ? 'Wariant został zmieniony. Odśwież dane przed ponowną próbą.'
-                : 'Nie zapisano zmian.'}
+              {writeRule
+                ? i18n.t(`initiatives.planScenario.errors.${writeRule}`, {
+                    defaultValue: 'Nie zapisano zmian.',
+                  })
+                : writeState === 'CONFLICT'
+                  ? 'Wariant został zmieniony. Odśwież dane przed ponowną próbą.'
+                  : 'Nie zapisano zmian.'}
             </p>
           )}
           <div className="mt-4 space-y-3">
