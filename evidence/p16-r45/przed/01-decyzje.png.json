@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-decyzje",
+  "opis": "Zakladka Decyzje i ryzyka, preset Decyzje",
+  "faza": "przed",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:10:34.410Z"
+}

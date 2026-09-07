@@ -1,0 +1,356 @@
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"50
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:32:42.701Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"50
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:32:42.752Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"50
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"50
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"50
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+POST 201 /api/initiatives/runtime-v1/initiatives/fa87dc75-d838-4fa0-8263-590969aa8621/raid-items/51be7a77-ef38-4dc0-b83f-3b68d4d55a03
+    {"status":"APPLIED","aggregateVersion":1,"response":{"type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"status":"OPEN","probability":"HIGH","severity":"CRITICAL","ownerId":null,"dueDate":"2026-09-01T00:00:00.000Z","mitigati
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:00.419Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:00.463Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-09-0
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+PATCH 200 /api/initiatives/runtime-v1/initiatives/fa87dc75-d838-4fa0-8263-590969aa8621/raid-items/51be7a77-ef38-4dc0-b83f-3b68d4d55a03
+    {"status":"APPLIED","aggregateVersion":2,"response":{"title":null,"description":null,"status":null,"probability":null,"severity":null,"ownerId":null,"dueDate":"2026-12-15T00:00:00.000Z","mitigationPlan":null,"initiativeId":"fa87dc75-d838-4f
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:18.994Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:19.042Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"51be7a77-ef38-4dc0-b83f-3b68d4d55a03","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"RISK","title":"proba-r45-ryzyko-161338","description":null,"severity":"CRITICAL","status":"OPEN","ownerId":null,"dueDate":"2026-12-1
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+POST 201 /api/initiatives/runtime-v1/initiatives/fa87dc75-d838-4fa0-8263-590969aa8621/raid-items/711b3bb6-5bee-41cd-a751-c24c2e8fa31a
+    {"status":"APPLIED","aggregateVersion":1,"response":{"type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338&quot;","status":"OPEN","probability":"HIGH","s
+PATCH 200 /api/initiatives/runtime-v1/initiatives/fa87dc75-d838-4fa0-8263-590969aa8621/raid-items/51be7a77-ef38-4dc0-b83f-3b68d4d55a03
+    {"status":"APPLIED","aggregateVersion":3,"response":{"title":null,"description":"PRZEKSZTAŁCONE-W-PROBLEM: 711b3bb6-5bee-41cd-a751-c24c2e8fa31a","status":"CLOSED","probability":null,"severity":null,"ownerId":null,"dueDate":null,"mitigationP
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:36.314Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:36.359Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:50.375Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:33:50.419Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt No
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+POST 201 /api/decisions
+    {"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","projectId":null,"title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","status":"PENDING"}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/decisions
+    [{"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","description":"Późny start · Bez właściciela","decisionType":"RE_BASELINE","recommendation":null,"h
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:34:09.210Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","description":"Późny start · Bez właściciela","decisionType":"RE_BASELINE","recommendation":null,"h
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:34:09.307Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/decisions
+    [{"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","description":"Późny start · Bez właściciela","decisionType":"RE_BASELINE","recommendation":null,"h
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:34:21.018Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/decisions
+    [{"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","description":"Późny start · Bez właściciela","decisionType":"RE_BASELINE","recommendation":null,"h
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T20:34:21.099Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","we
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"711b3bb6-5bee-41cd-a751-c24c2e8fa31a","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"ISSUE","title":"proba-r45-ryzyko-161338","description":"ŹRÓDŁO-RAID: 51be7a77-ef38-4dc0-b83f-3b68d4d55a03 — „proba-r45-ryzyko-161338
+GET 200 /api/decisions
+    [{"id":"21e78a1e-d6e2-475a-9d99-c88677afb1bb","title":"Przesunięcie terminu: OPC-UA Migration & Industrial Connectivity Standard (+140 dni)","description":"Późny start · Bez właściciela","decisionType":"RE_BASELINE","recommendation":null,"h
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/delay-signals
+    {"signals":[{"id":"late-start-init-siri-01","entityType":"INITIATIVE","entityId":"init-siri-01","entityName":"OPC-UA Migration & Industrial Connectivity Standard","deviationType":"LATE_START","severity":"CRITICAL","daysDeviation":140,"plann

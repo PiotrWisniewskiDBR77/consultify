@@ -12956,7 +12956,8 @@
       "governance": {
         "decisions": "Decyzje",
         "risks": "Ryzyka",
-        "overdue": "Po terminie"
+        "overdue": "Po terminie",
+        "signals": "Sygnały"
       }
     },
     "scope": {
@@ -13450,6 +13451,9 @@
         "raidLabel": "Pozycja RAID",
         "noDescription": "Brak dodatkowego opisu.",
         "noRelations": "Brak powiązań"
+      },
+      "filters": {
+        "dueLabel": "Termin"
       }
     },
     "rag": {
@@ -13459,7 +13463,119 @@
       "onTrack": "Na czas",
       "noDates": "Brak dat planu"
     },
-    "decisionsLabel": "Decyzje"
+    "decisionsLabel": "Decyzje",
+    "raid": {
+      "untitled": "Pozycja RAID bez tytułu",
+      "columns": {
+        "probability": "Prawdopodobieństwo",
+        "impact": "Wpływ",
+        "exposure": "Ekspozycja",
+        "status": "Status"
+      },
+      "probability": {
+        "low": "Niskie",
+        "medium": "Średnie",
+        "high": "Wysokie"
+      },
+      "impact": {
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki",
+        "critical": "Krytyczny"
+      },
+      "status": {
+        "open": "Otwarta",
+        "mitigated": "Ograniczona",
+        "realized": "Zmaterializowana",
+        "closed": "Zamknięta"
+      },
+      "actions": {
+        "new": "Nowa pozycja RAID",
+        "changeDue": "Zmień termin",
+        "changeOwner": "Zmień właściciela",
+        "close": "Zamknij pozycję",
+        "escalateToIssue": "Eskaluj do problemu"
+      },
+      "notes": {
+        "alreadyIssue": "To już jest problem.",
+        "closed": "Pozycja jest zamknięta."
+      },
+      "form": {
+        "title": "Tytuł (wymagany)",
+        "initiative": "Inicjatywa (wymagana)",
+        "unassigned": "Nieprzypisana",
+        "save": "Zapisz pozycję RAID"
+      },
+      "dialog": {
+        "close": "Zamknij pozycję RAID",
+        "closeLabel": "Co z tym zrobiono (wymagane)",
+        "closePlaceholder": "Napisz jednym zdaniem, dlaczego pozycja jest zamykana.",
+        "closeHint": "Pozycja zostaje w rejestrze ze statusem „Zamknięta\" i przestaje liczyć się do „Po terminie\".",
+        "due": "Zmień termin pozycji RAID",
+        "owner": "Zmień właściciela pozycji RAID"
+      },
+      "preview": {
+        "initiative": "Inicjatywa",
+        "noInitiative": "Bez inicjatywy",
+        "source": "Powstało z pozycji",
+        "closed": "Pozycja zamknięta — zostaje w rejestrze.",
+        "overdueSuffix": "dni — zmień termin albo zamknij pozycję.",
+        "noDue": "Pozycja bez terminu — ustaw termin, żeby dało się ją pilnować."
+      },
+      "errors": {
+        "saveFailed": "Nie udało się zapisać pozycji RAID."
+      }
+    },
+    "signals": {
+      "columns": {
+        "entity": "Inicjatywa / zadanie",
+        "kind": "Rodzaj sygnału",
+        "deviation": "Odchylenie (dni)",
+        "reason": "Powód",
+        "detectedAt": "Wykryto",
+        "state": "Stan"
+      },
+      "kind": {
+        "lateStart": "Późny start",
+        "overdue": "Po terminie",
+        "lateFinishRisk": "Ryzyko poślizgu końca",
+        "deadlineRisk": "Zagrożony termin"
+      },
+      "reason": {
+        "blocked": "Blokada",
+        "dependency": "Niedomknięta zależność",
+        "noOwner": "Bez właściciela",
+        "raidHighRisk": "Wysokie ryzyko RAID",
+        "capacity": "Przeciążenie zasobów",
+        "noTasks": "Brak zaplanowanych zadań",
+        "unknown": "Nie ustalono"
+      },
+      "state": {
+        "new": "Nowy",
+        "intervention": "Interwencja",
+        "closed": "Zamknięty"
+      },
+      "actions": {
+        "prepareIntervention": "Przygotuj interwencję"
+      },
+      "preview": {
+        "label": "Sygnał opóźnienia",
+        "initiative": "Sygnał dotyczy inicjatywy.",
+        "task": "Sygnał dotyczy zadania.",
+        "planned": "Data planowana",
+        "decision": "Wniosek o przesunięcie",
+        "new": "Sygnał bez odpowiedzi — przygotuj wniosek o przesunięcie albo nadrób opóźnienie.",
+        "intervention": "Wniosek o przesunięcie czeka na rozstrzygnięcie w widoku Decyzje.",
+        "closed": "Wniosek o przesunięcie już zapadł."
+      },
+      "empty": {
+        "title": "Brak sygnałów opóźnień",
+        "description": "System liczy sygnały z terminów inicjatyw i zadań. Pusto znaczy, że nic się nie sypie."
+      },
+      "errors": {
+        "interventionFailed": "Nie udało się utworzyć wniosku o przesunięcie."
+      }
+    }
   },
   "benefits": {
     "tabs": {

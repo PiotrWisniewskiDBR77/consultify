@@ -1,0 +1,9 @@
+{
+  "nazwa": "podglad-problemu",
+  "opis": "Podglad Problemu — wiersz „Powstalo z pozycji\" z ID zrodla",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:33:49.584Z"
+}

@@ -1,9 +1,19 @@
-import { ArrowUpCircle, CheckCircle2, CircleSlash, XCircle } from 'lucide-react';
+import {
+  ArrowUpCircle,
+  CalendarClock,
+  CheckCircle2,
+  CircleSlash,
+  ShieldAlert,
+  UserCog,
+  Wrench,
+  XCircle,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
+import { Menu2PresetDropdown } from '@/components/standard/Menu2PresetDropdown';
 import { ReasonDialog } from '@/components/standard/ReasonDialog';
 import {
   type StandardRowMenu,
@@ -21,6 +31,13 @@ import {
 import { Api, ApiError } from '@/services/api';
 import { OrganizationApi } from '@/services/api/organizations.api';
 import {
+  createRaidItem,
+  newRaidItemId,
+  RaidWriteError,
+  seedRaidVersions,
+  updateRaidItem,
+} from '@/services/initiatives-execution/raidWrites';
+import {
   createMaterialChange,
   draftIntervention,
   ingestManagementSignal,
@@ -32,6 +49,19 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
+import {
+  type DecyzjaRodowod,
+  powodySygnaluLabel,
+  RODZAJ_DECYZJI_REBASELINE,
+  rodzajSygnaluLabel,
+  stanSygnalu,
+  stanSygnaluLabel,
+  type StanSygnalu,
+  type SygnalOpoznienia,
+  terminInterwencji,
+  tytulInterwencji,
+  ZRODLO_SYGNALU,
+} from './delaySignals';
 import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
@@ -46,6 +76,23 @@ import {
   isDecisionOverdue,
   isResolvedDecision,
 } from './executionRealData';
+import {
+  czyRaidOtwarty,
+  czyRaidPoTerminie,
+  ekspozycjaRaid,
+  opisEskalacjiRyzyka,
+  opisPoPrzeksztalceniu,
+  pasmoEkspozycji,
+  RAID_PRAWDOPODOBIENSTWO,
+  RAID_PRAWDOPODOBIENSTWO_OPCJE,
+  RAID_STATUS_KONCOWY,
+  RAID_TYPY,
+  RAID_WPLYW,
+  RAID_WPLYW_OPCJE,
+  raidDniPoTerminie,
+  type RaidTyp,
+  zrodloEskalacji,
+} from './raidGovernance';
 
 const interventionFieldLabels: Record<string, string> = {
   interventionId: 'Identyfikator interwencji',
@@ -299,7 +346,21 @@ const signalFieldLabels: Record<string, string> = {
  * Sygnały i interwencje NIE ZNIKAJĄ z kodu — pokazują się w sekcji warsztatu
  * wtedy i tylko wtedy, gdy mają choć jeden rekord (zero pustych ekranów).
  */
-const controlPresets = ['decyzje', 'ryzyka', 'po-terminie'] as const;
+/**
+ * P16/R5 (DEC-453, §4 D4): TRZECI PRESET TO „SYGNAŁY", nie „Po terminie".
+ *
+ * Kanon Triady dopuszcza NAJWYŻEJ TRZY chipy Menu 3, a §4 D4 wymaga presetu
+ * „Sygnały (N)" obok Decyzji i Ryzyk. „Po terminie" nie znika — schodzi do
+ * Menu 2 jako FILTR TERMINU (`Menu2PresetDropdown`, ten sam wzorzec, którym
+ * DEC-420/423 rozwiązały ten sam konflikt w Inicjatywach i Materiałach).
+ * Zysk: filtr działa w KAŻDYM z trzech widoków i nie odbiera miejsca
+ * trzeciemu rejestrowi.
+ */
+const controlPresets = ['decyzje', 'ryzyka', 'sygnaly'] as const;
+
+/** Filtr terminu z Menu 2 — wspólny dla decyzji, RAID i sygnałów. */
+const filtryTerminu = ['wszystkie', 'po-terminie'] as const;
+type FiltrTerminu = (typeof filtryTerminu)[number];
 
 /** Wiersz rejestru decyzji albo RAID — wspólny kształt tabeli (plan C2, wiersz 5). */
 interface GovernanceRow extends TableRow {
@@ -333,6 +394,59 @@ interface GovernanceRow extends TableRow {
   /** Uzasadnienie rozstrzygnięcia — pokazywane w podglądzie, nieusuwalne. */
   rationale?: string;
   decidedAt?: string | null;
+  /**
+   * P16/R4 (DEC-453) — pola WYŁĄCZNIE pozycji RAID. Decyzja zostawia je puste;
+   * zestaw kolumn decyzji nigdy po nie nie sięga.
+   */
+  /** Identyfikator pozycji BEZ przedrostka `raid:` — do wołania writera. */
+  raidId?: string;
+  /** Inicjatywa, do której pozycja należy — kanoniczna komenda jej wymaga. */
+  raidInitiativeId?: string | null;
+  /** Nazwa inicjatywy z rejestru (albo identyfikator, gdy jej nie znamy). */
+  raidInitiativeName?: string;
+  /** Typ pozycji z bazy (RISK/ISSUE/DEPENDENCY/ASSUMPTION). */
+  rawRaidType?: string;
+  /** Prawdopodobieństwo i wpływ — słowniki bazy, PL w kolumnie. */
+  rawProbability?: string | null;
+  rawImpact?: string | null;
+  probabilityLabel?: string;
+  impactLabel?: string;
+  /** EKSPOZYCJA = prawdopodobieństwo × wpływ. LICZONA, tylko do odczytu. */
+  exposure?: number | null;
+  /** Status pozycji z bazy i po polsku. */
+  rawRaidStatus?: string;
+  raidStatusLabel?: string;
+  /** Właściciel (identyfikator) — potrzebny przy zmianie właściciela. */
+  ownerId?: string | null;
+  /** Opis — niesie link do pozycji źródłowej po eskalacji ryzyko → problem. */
+  description?: string | null;
+}
+
+/** Wiersz rejestru SYGNAŁÓW OPÓŹNIEŃ (P16/R5, `/execution-control/delay-signals`). */
+interface DelayRow extends TableRow {
+  id: string;
+  /** Kolumna główna tabeli — patrz komentarz przy `buildDelayColumns`. */
+  title: string;
+  /** Obiekt, którego dotyczy sygnał (inicjatywa albo zadanie) — nazwa, nie id. */
+  entityName: string;
+  entityType: string;
+  entityId: string;
+  /** Rodzaj odchylenia po polsku. */
+  kindLabel: string;
+  /** Odchylenie w dniach (liczba, nie tekst — sortowanie ma działać). */
+  deviationDays: number;
+  /** Powody `whySlipReasons` po polsku, złączone. */
+  reasonLabel: string;
+  /** Data wykrycia. */
+  detectedAt: string;
+  rawDetectedAt: string;
+  /** Stan liczony z rejestru decyzji (serwer nie trzyma stanu sygnału). */
+  state: StanSygnalu;
+  stateLabel: string;
+  /** Decyzja re-baseline powiązana z tym sygnałem (gdy istnieje). */
+  decisionId: string | null;
+  severity: string;
+  signal: SygnalOpoznienia;
 }
 
 /**
@@ -445,6 +559,54 @@ const severityToEscalation = (value: unknown): string =>
     String(value ?? '').toUpperCase()
   ] ?? 'Brak';
 
+/**
+ * PRAWDOPODOBIEŃSTWO i WPŁYW po polsku, Z LICZBĄ ze skali (P16/R4).
+ *
+ * Liczba stoi obok słowa celowo: bez niej kolumna „Ekspozycja" byłaby jedyną
+ * liczbą na ekranie, której nie da się sprawdzić w pamięci („Wysokie razy
+ * Krytyczny = 20?"). Ze skalą widoczną w obu składnikach iloczyn wyjaśnia się
+ * sam — §10 paczki: zero liczb, których nie da się wyjaśnić jednym zdaniem.
+ */
+const raidProbabilityLabel = (
+  value: unknown,
+  t: (key: string, fallback: string) => string
+): string => {
+  const key = String(value ?? '').toUpperCase();
+  const slownik: Record<string, string> = {
+    LOW: t('execution.raid.probability.low', 'Niskie'),
+    MEDIUM: t('execution.raid.probability.medium', 'Średnie'),
+    HIGH: t('execution.raid.probability.high', 'Wysokie'),
+  };
+  const nazwa = slownik[key];
+  if (!nazwa) return '—';
+  return `${nazwa} (${RAID_PRAWDOPODOBIENSTWO[key]})`;
+};
+
+const raidImpactLabel = (value: unknown, t: (key: string, fallback: string) => string): string => {
+  const key = String(value ?? '').toUpperCase();
+  const slownik: Record<string, string> = {
+    LOW: t('execution.raid.impact.low', 'Niski'),
+    MEDIUM: t('execution.raid.impact.medium', 'Średni'),
+    HIGH: t('execution.raid.impact.high', 'Wysoki'),
+    CRITICAL: t('execution.raid.impact.critical', 'Krytyczny'),
+  };
+  const nazwa = slownik[key];
+  if (!nazwa) return '—';
+  return `${nazwa} (${RAID_WPLYW[key]})`;
+};
+
+/** Status pozycji RAID po polsku (słownik `RaidItemCreateSchema`). */
+const raidStatusPl = (value: unknown, t: (key: string, fallback: string) => string): string => {
+  const key = String(value ?? 'OPEN').toUpperCase();
+  const slownik: Record<string, string> = {
+    OPEN: t('execution.raid.status.open', 'Otwarta'),
+    MITIGATED: t('execution.raid.status.mitigated', 'Ograniczona'),
+    REALIZED: t('execution.raid.status.realized', 'Zmaterializowana'),
+    CLOSED: t('execution.raid.status.closed', 'Zamknięta'),
+  };
+  return slownik[key] ?? String(value ?? '—');
+};
+
 const formatDay = (value: string | null | undefined) => {
   if (!value) return '—';
   const parsed = new Date(value);
@@ -546,44 +708,213 @@ const buildDecisionColumns = (t: (key: string, fallback: string) => string): Tab
   },
 ];
 
-/** Kolumny RAID — zestaw sprzed R3, bez zmian (domknięcie: R4). */
+/**
+ * Kolumny RAID (P16/R4, DEC-453 + AUDYT_RYNKU_PMO §4.3 wiersz „Kolumny (RAID)").
+ *
+ * Tytuł · Typ · Właściciel · Termin · Prawdopodobieństwo · Wpływ ·
+ * **Ekspozycja** · Status · Dni po terminie.
+ *
+ * Kolumna „Eskalacja" ZNIKA z tego zestawu: przed R4 pokazywała
+ * `severityToEscalation(item.severity)`, czyli DOTKLIWOŚĆ przemalowaną na
+ * słowo „Czerwona/Bursztynowa" — dokładnie ta sama pomyłka semantyczna, którą
+ * R3 usunął z kolumny „Typ" (jedna nazwa, dwie różne rzeczy). Dotkliwość
+ * niesie teraz WPROST kolumna „Wpływ", a ryzyko wysokie widać po ekspozycji.
+ */
 const buildRaidColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
-  kolumnaTytul(t),
+  /*
+    SZEROKOŚCI ZMIERZONE, NIE ZGADNIĘTE (1440 px, P2_TABELA_NIE_UCINA).
+    Pomiar 07.09 `.local/mierz.mjs`: kontener tabeli 1270 px, kolumna akcji
+    (sticky) 80 px → 1190 px na dane. Podłogi `FilterableTable` (typ kolumny
+    ORAZ zmierzony nagłówek) dla DZIEWIĘCIU kolumn dawały 1415 px — tabela
+    wychodziła 1595 px i „Status" oraz „Dni po terminie" znikały pod przypiętą
+    kolumną akcji (nie ucięcie tekstu, tylko OKLUZJA). Dlatego:
+      · `dataType` ustawiony na każdej kolumnie (obniża podłogę typu),
+      · „Prawdopodobieństwo" bez filtra (nagłówek 18 znaków to najdroższa
+        podłoga na ekranie; filtrowanie zostaje na Typie, Wpływie i Statusie),
+      · „Dni po terminie" `defaultVisible: false` — DZIEWIĄTA kolumna fizycznie
+        się nie mieści, a jest jedyną w pełni WYLICZALNĄ z sąsiedniej („Termin"):
+        ten sam zbiór wierszy pokazuje filtr „Po terminie" w Menu 2, liczbę
+        podaje podgląd, a pstryczek kolumn dokłada ją jednym kliknięciem.
+    UWAGA O `dataType`: w `FilterableTable` to pole ma DOKŁADNIE JEDNO
+    zastosowanie — wybiera PODŁOGĘ SZEROKOŚCI kolumny
+    (`COLUMN_MIN_WIDTH_BY_DATA_TYPE`, sprawdzone: `dataType` nie występuje
+    nigdzie indziej w tym pliku). Nie steruje ani renderem, ani filtrem.
+    Dlatego kolumny o krótkiej treści („Ryzyko", „Wysoki (4)", „Otwarta")
+    dostają wąską podłogę `number` (90 px) — to deklaracja SZEROKOŚCI, nie
+    twierdzenie, że treść jest liczbą. Bez tego podłoga `status` (130 px)
+    ×3 zjadała 49 px, których brakowało kolumnie „Właściciel" i „Tomasz
+    Lewandowski" łamał się na dwie linie (wiersz 65 px zamiast 57).
+
+    Suma zadeklarowana: 200+105+176+128+183+120+132+128 = 1172 + 80 = 1252 px.
+  */
+  // Tytuł stoi na swojej PODŁODZE (200 px): jako kolumna główna i tak skraca
+  // się wielokropkiem w jednej linii, a każdy oddany piksel ratuje kolumny,
+  // które zawijają na dwie linie i rozpychają wiersz ponad kanoniczne 56 px.
+  { ...kolumnaTytul(t), width: '200px' },
   {
     id: 'kindLabel',
     label: t('execution.governance.columns.type', 'Typ'),
+    dataType: 'number',
     sortable: true,
     filterable: true,
-    width: '130px',
+    width: '105px',
   },
   {
     id: 'owner',
+    // ZMIERZONE (`.local/mierz2.mjs`): przy 140 px „Katarzyna Wójcik" zawijała
+    // się na dwie linie i wiersz rósł z 57 do 65 px — kanon trzyma 56 px.
+    // Kolumny inne niż główna mają `line-clamp-2`, więc nie skracają się
+    // wielokropkiem: jedyną naprawą jest realna szerokość.
     label: t('execution.governance.columns.owner', 'Właściciel'),
+    dataType: 'text',
     sortable: true,
-    width: '170px',
+    width: '176px',
   },
   {
     id: 'dueAt',
+    // 125 px, nie 110: przy 110 px zostaje 78 px na treść, a „15 gru 2026"
+    // potrzebuje ~85 px i ZAWIJAŁO SIĘ na dwie linie (wiersz 65 px zamiast 57).
+    // Zmierzone `.local/mierz4.mjs` — defekt widoczny przy JEDNEJ wartości:
+    // wiersze bez terminu („—") wyglądały poprawnie i zasłaniały problem.
     label: t('execution.governance.columns.due', 'Termin'),
+    dataType: 'date',
     sortable: true,
-    width: '140px',
+    width: '128px',
   },
-  kolumnaDniPoTerminie(t),
   {
-    id: 'escalation',
-    label: t('execution.governance.columns.escalation', 'Eskalacja'),
+    id: 'probabilityLabel',
+    // Bez sortowania i bez filtra: nagłówek „PRAWDOPODOBIEŃSTWO" (18 znaków)
+    // to najdroższa podłoga na tym ekranie, a każdy z tych afordansów dokłada
+    // do niej budżet (16 px sortowanie, 26 px filtr). Porządkowanie ryzyk robi
+    // się po EKSPOZYCJI (sortowalna) — to ona jest liczbą decyzyjną, nie sam
+    // jeden ze składników; filtrowanie zostaje na Typie, Wpływie i Statusie.
+    label: t('execution.raid.columns.probability', 'Prawdopodobieństwo'),
+    dataType: 'status',
+    width: '172px',
+  },
+  {
+    id: 'impactLabel',
+    label: t('execution.raid.columns.impact', 'Wpływ'),
+    dataType: 'number',
     sortable: true,
     filterable: true,
-    width: '130px',
+    width: '120px',
+  },
+  {
+    id: 'exposure',
+    label: t('execution.raid.columns.exposure', 'Ekspozycja'),
+    dataType: 'number',
+    align: 'right',
+    sortable: true,
+    width: '132px',
+    /*
+      POLE LICZONE, TYLKO DO ODCZYTU (§4.3: Planview `RiskRate` = Impact ×
+      %Probability „read-only, calculated"; MS Project „Exposure — the product
+      of your Probability by Impact factors"). Wartość NIE jest czytana z
+      `raid_items.risk_score`: na kopii bazy 3 z 16 wierszy mają tam liczbę,
+      która nie jest iloczynem (seed, nie kalkulator) — patrz `raidGovernance.ts`.
+      Brak składnika = pusta komórka, nigdy zmyślone zero.
+    */
     render: (row) => {
-      const value = String(row.escalation ?? '');
+      const value = row.exposure as number | null | undefined;
+      if (value == null) return <span className="text-c-text-muted">—</span>;
+      const pasmo = pasmoEkspozycji(value);
       const tone =
-        value === 'Czerwona'
+        pasmo === 'wysokie'
           ? 'text-c-danger'
-          : value === 'Bursztynowa'
+          : pasmo === 'srednie'
             ? 'text-c-warning'
-            : 'text-c-text-muted';
-      return <span className={`font-medium ${tone}`}>{value}</span>;
+            : 'text-c-text-primary';
+      return <span className={`font-semibold tabular-nums ${tone}`}>{value}</span>;
+    },
+  },
+  {
+    id: 'raidStatusLabel',
+    label: t('execution.raid.columns.status', 'Status'),
+    dataType: 'number',
+    sortable: true,
+    filterable: true,
+    width: '128px',
+  },
+  { ...kolumnaDniPoTerminie(t), dataType: 'number', defaultVisible: false },
+];
+
+/**
+ * Kolumny SYGNAŁÓW OPÓŹNIEŃ (P16/R5, §4 D4).
+ * Inicjatywa · Rodzaj sygnału · Odchylenie (dni) · Powód · Wykryto · Stan.
+ */
+const buildDelayColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  {
+    /*
+      `title`, nie `entityName` — identyfikator kolumny WYBIERA kanon renderu:
+      tylko `title`/`name` dostają jedną linię z wielokropkiem, reszta zawija
+      na dwie (`line-clamp-2`). Nazwy inicjatyw bywają długie („OPC-UA
+      Migration & Industrial Connectivity Standard") i przy zawijaniu wiersz
+      rósł z 56 do 65 px — zmierzone `.local/mierz2.mjs`.
+    */
+    id: 'title',
+    label: t('execution.signals.columns.entity', 'Inicjatywa / zadanie'),
+    sortable: true,
+    width: '300px',
+  },
+  {
+    id: 'kindLabel',
+    label: t('execution.signals.columns.kind', 'Rodzaj sygnału'),
+    dataType: 'status',
+    sortable: true,
+    filterable: true,
+    width: '190px',
+  },
+  {
+    id: 'deviationDays',
+    label: t('execution.signals.columns.deviation', 'Odchylenie (dni)'),
+    dataType: 'number',
+    sortable: true,
+    width: '176px',
+    render: (row) => {
+      const dni = Number(row.deviationDays ?? 0);
+      return (
+        <span
+          className={`font-semibold tabular-nums ${dni > 0 ? 'text-c-danger' : 'text-c-text-muted'}`}
+        >
+          {dni > 0 ? `+${dni}` : '—'}
+        </span>
+      );
+    },
+  },
+  {
+    id: 'reasonLabel',
+    // 250 px: sygnał bywa wielopowodowy („Blokada · Wysokie ryzyko RAID"
+    // = ~205 px treści) i przy 226 px zawijał wiersz na dwie linie.
+    label: t('execution.signals.columns.reason', 'Powód'),
+    dataType: 'text',
+    sortable: true,
+    filterable: true,
+    width: '250px',
+  },
+  {
+    id: 'detectedAt',
+    label: t('execution.signals.columns.detectedAt', 'Wykryto'),
+    dataType: 'date',
+    sortable: true,
+    width: '130px',
+  },
+  {
+    id: 'stateLabel',
+    label: t('execution.signals.columns.state', 'Stan'),
+    dataType: 'status',
+    sortable: true,
+    filterable: true,
+    width: '144px',
+    render: (row) => {
+      const stan = row.state as StanSygnalu;
+      const tone =
+        stan === 'INTERWENCJA'
+          ? 'text-c-warning'
+          : stan === 'ZAMKNIETY'
+            ? 'text-c-text-muted'
+            : 'text-c-text-primary';
+      return <span className={`font-medium ${tone}`}>{String(row.stateLabel ?? '')}</span>;
     },
   },
 ];
@@ -607,6 +938,7 @@ export const ExecutionControlSurface = ({
   const signalColumns = useMemo(() => buildSignalColumns(t), [t]);
   const decisionColumns = useMemo(() => buildDecisionColumns(t), [t]);
   const raidColumns = useMemo(() => buildRaidColumns(t), [t]);
+  const delayColumns = useMemo(() => buildDelayColumns(t), [t]);
   const currentUser = useAppStore((store) => store.currentUser);
   const currentOrganization = useAppStore((store) => store.currentOrganization);
   /**
@@ -655,15 +987,45 @@ export const ExecutionControlSurface = ({
     [executionInitiatives, setExecutionInitiatives] = useState<
       Array<{ id: string; name: string; ownerId?: string | null }>
     >([]),
-    /** Członkowie organizacji — lista wyboru decydenta. */
+    /** Nazwy WSZYSTKICH inicjatyw (id → nazwa) — podgląd RAID nie pokazuje UUID. */
+    [initiativeNames, setInitiativeNames] = useState<Record<string, string>>({}),
+    /** Członkowie organizacji — lista wyboru decydenta i właściciela RAID. */
     [orgMembers, setOrgMembers] = useState<Array<{ id: string; name: string }>>([]),
     /** Otwarte okno powodu: która akcja i na której decyzji. */
     [reasonDialog, setReasonDialog] = useState<{
-      kind: 'approve' | 'reject' | 'supersede' | 'escalate';
+      kind: 'approve' | 'reject' | 'supersede' | 'escalate' | 'raid-close';
       row: GovernanceRow;
     } | null>(null),
     [reasonBusy, setReasonBusy] = useState(false),
     [reasonError, setReasonError] = useState<string | null>(null),
+    /** P16/R4: formularz „Nowa pozycja RAID" (widok Ryzyka). */
+    [newRaidOpen, setNewRaidOpen] = useState(false),
+    [newRaid, setNewRaid] = useState({
+      title: '',
+      type: 'RISK' as RaidTyp,
+      initiativeId: '',
+      ownerId: '',
+      dueDate: '',
+      probability: 'MEDIUM',
+      impact: 'MEDIUM',
+    }),
+    [newRaidError, setNewRaidError] = useState<string | null>(null),
+    [newRaidBusy, setNewRaidBusy] = useState(false),
+    /** P16/R4: edycja pojedynczego pola pozycji RAID z podglądu. */
+    [raidEdit, setRaidEdit] = useState<{
+      pole: 'dueDate' | 'ownerId';
+      row: GovernanceRow;
+      wartosc: string;
+    } | null>(null),
+    [raidBusy, setRaidBusy] = useState(false),
+    [raidError, setRaidError] = useState<string | null>(null),
+    /** P16/R5: sygnały opóźnień i stan tworzenia interwencji. */
+    [delayRows, setDelayRows] = useState<DelayRow[]>([]),
+    [selectedDelayId, setSelectedDelayId] = useState<string | null>(null),
+    [interventionBusy, setInterventionBusy] = useState(false),
+    [interventionError, setInterventionError] = useState<string | null>(null),
+    /** Filtr terminu z Menu 2 (zastępuje czwarty chip „Po terminie"). */
+    [filtrTerminu, setFiltrTerminu] = useState<FiltrTerminu>('wszystkie'),
     [rows, setRows] = useState<Row[]>([]),
     [signalRows, setSignalRows] = useState<SignalRow[]>([]),
     [selectedSignalId, setSelectedSignalId] = useState<string | null>(null),
@@ -742,7 +1104,17 @@ export const ExecutionControlSurface = ({
    * dokładnie ten defekt, przez który cała zakładka była pusta).
    */
   const loadGovernance = useCallback(async () => {
-    const [decyzje, raid] = await Promise.allSettled([Api.get('/decisions'), Api.raidList()]);
+    /*
+      P16/R5 (DEC-453): TRZECIE ŹRÓDŁO — sygnały opóźnień. Dokładany do tej
+      samej `allSettled`, bo dzieli z rejestrem decyzji jedno wywołanie: stan
+      sygnału („Nowy / Interwencja / Zamknięty") liczy się z rodowodu decyzji,
+      więc obie listy muszą pochodzić z tej samej chwili.
+    */
+    const [decyzje, raid, sygnaly] = await Promise.allSettled([
+      Api.get('/decisions'),
+      Api.raidList(),
+      Api.get('/execution-control/delay-signals'),
+    ]);
 
     const decisionItems: any[] =
       decyzje.status === 'fulfilled'
@@ -756,6 +1128,14 @@ export const ExecutionControlSurface = ({
           ? raid.value
           : ((raid.value as any)?.items ?? (raid.value as any)?.raid ?? [])
         : [];
+    /*
+      P16/R4: pamięć wersji CAS zasilana z modelu odczytu PRZY KAŻDYM ładowaniu.
+      Bez tego pierwszy zapis po przeładowaniu strony leciał ze ślepym
+      `expectedVersion: 0`, dostawał 409 i dopiero ponowienie kończyło się 200 —
+      czerwony błąd w konsoli i CAS, który nigdy nie chronił (patrz komentarz
+      przy `seedRaidVersions`).
+    */
+    seedRaidVersions(raidItems);
 
     const decisionRows: GovernanceRow[] = decisionItems
       /**
@@ -802,26 +1182,92 @@ export const ExecutionControlSurface = ({
         };
       });
 
-    const raidRows: GovernanceRow[] = raidItems.map((item) => ({
-      id: `raid:${item.id}`,
-      title: item.title ?? 'Pozycja RAID bez tytułu',
-      kind: 'RAID' as const,
-      kindLabel: raidTypeLabel(item.type),
-      owner: raidOwnerLabel(item, resolveMemberName, isPolish),
-      // POMIAR: 0 z 16 pozycji RAID ma termin — kolumna pokaże „—",
-      // a nie zmyśloną datę (dobudowa terminów to R3, plan C2 wiersz 5).
-      dueAt: formatDay(item.dueDate),
-      rawDueAt: item.dueDate ?? null,
-      daysOverdue:
-        item.dueDate && Date.parse(item.dueDate) < Date.now()
-          ? Math.floor((Date.now() - Date.parse(item.dueDate)) / 86_400_000)
-          : null,
-      escalation: severityToEscalation(item.severity),
-      isOverdue: Boolean(item.dueDate) && Date.parse(item.dueDate) < Date.now(),
-      source: item,
-    }));
+    /**
+     * P16/R4 (DEC-453): wiersz RAID niesie komplet pól swojego zestawu kolumn.
+     *
+     * `impact` to nazwa kolumny w `raid_items` i pola w `GET /api/raid`;
+     * kanoniczny writer nazywa TO SAMO pole `severity` (kontrakt
+     * `RaidItemCreateSchema`). Czytamy oba, żeby wiersz był poprawny niezależnie
+     * od tego, którą nazwą przyszedł — to nie jest domysł, to zmierzona
+     * rozbieżność dwóch kontraktów na jedną kolumnę.
+     */
+    const raidRows: GovernanceRow[] = raidItems.map((item) => {
+      const wplyw = item.impact ?? item.severity ?? null;
+      const status = String(item.status ?? 'OPEN').toUpperCase();
+      return {
+        id: `raid:${item.id}`,
+        raidId: String(item.id),
+        raidInitiativeId: item.initiativeId ?? null,
+        title: item.title ?? t('execution.raid.untitled', 'Pozycja RAID bez tytułu'),
+        kind: 'RAID' as const,
+        kindLabel: raidTypeLabel(item.type),
+        rawRaidType: String(item.type ?? '').toUpperCase(),
+        owner: raidOwnerLabel(item, resolveMemberName, isPolish),
+        ownerId: item.ownerId ?? null,
+        dueAt: formatDay(item.dueDate),
+        rawDueAt: item.dueDate ?? null,
+        rawProbability: item.probability ?? null,
+        rawImpact: wplyw,
+        probabilityLabel: raidProbabilityLabel(item.probability, t),
+        impactLabel: raidImpactLabel(wplyw, t),
+        // EKSPOZYCJA — LICZONA z dwóch pól, nigdy czytana z `riskScore`.
+        exposure: ekspozycjaRaid(item.probability, wplyw),
+        rawRaidStatus: status,
+        raidStatusLabel: raidStatusPl(status, t),
+        description: item.description ?? null,
+        // Dni po terminie tylko dla pozycji OTWARTEJ z terminem.
+        daysOverdue: raidDniPoTerminie(item.dueDate, status),
+        escalation: severityToEscalation(wplyw),
+        isOverdue: czyRaidPoTerminie(item.dueDate, status),
+        source: item,
+      };
+    });
 
     setGovernanceRows([...decisionRows, ...raidRows]);
+
+    /*
+      STAN SYGNAŁU liczony z rodowodu decyzji (`sourceType`/`sourceId`).
+      `delay-signals` NIE MA trwałego stanu — `detectDelaySignals` wylicza
+      listę przy każdym zapytaniu, więc gdyby stan miał mieszkać w sygnale,
+      po odświeżeniu strony znikałby. Rejestr decyzji jest jedynym miejscem,
+      w którym ślad interwencji przeżywa reload.
+    */
+    const signalItemsRaw: SygnalOpoznienia[] =
+      sygnaly.status === 'fulfilled'
+        ? ((sygnaly.value as any)?.signals ??
+          (Array.isArray(sygnaly.value) ? (sygnaly.value as any) : []))
+        : [];
+    const rodowody: DecyzjaRodowod[] = decisionItems.map((d) => ({
+      id: String(d.id),
+      status: d.status ?? null,
+      sourceType: d.sourceType ?? null,
+      sourceId: d.sourceId ?? null,
+    }));
+    setDelayRows(
+      signalItemsRaw
+        .filter((signal) => !signal.isDismissed)
+        .map((signal) => {
+          const { stan, decyzjaId } = stanSygnalu(String(signal.id), rodowody);
+          const nazwa = signal.entityName || String(signal.entityId);
+          return {
+            id: String(signal.id),
+            title: nazwa,
+            entityName: nazwa,
+            entityType: String(signal.entityType ?? ''),
+            entityId: String(signal.entityId ?? ''),
+            kindLabel: rodzajSygnaluLabel(signal.deviationType, t),
+            deviationDays: Number(signal.daysDeviation ?? 0),
+            reasonLabel: powodySygnaluLabel(signal.whySlipReasons, t),
+            detectedAt: formatDay(signal.createdAt),
+            rawDetectedAt: String(signal.createdAt ?? ''),
+            state: stan,
+            stateLabel: stanSygnaluLabel(stan, t),
+            decisionId: decyzjaId,
+            severity: String(signal.severity ?? ''),
+            signal,
+          };
+        })
+    );
   }, [resolveMemberName, isPolish, t, canDecide]);
 
   /**
@@ -852,6 +1298,20 @@ export const ExecutionControlSurface = ({
       const surowe: any[] = Array.isArray(inicjatywy.value)
         ? inicjatywy.value
         : ((inicjatywy.value as any)?.initiatives ?? (inicjatywy.value as any)?.items ?? []);
+      /*
+        P16/R4: NAZWY WSZYSTKICH inicjatyw, nie tylko tych w realizacji.
+        Pozycja RAID bywa przypięta do inicjatywy spoza filtru realizacji, a
+        podgląd ma pokazać JEJ NAZWĘ, nie UUID — to ta sama rodzina defektu, co
+        `ownerId` w kolumnie Właściciel przed 1.12-R1.
+      */
+      setInitiativeNames(
+        Object.fromEntries(
+          surowe.map((initiative: any) => [
+            String(initiative.id),
+            String(initiative.name ?? initiative.title ?? initiative.id),
+          ])
+        )
+      );
       setExecutionInitiatives(
         filterInFlightInitiatives(surowe).map((initiative: any) => ({
           id: String(initiative.id),
@@ -986,33 +1446,66 @@ export const ExecutionControlSurface = ({
   const matches = useCallback((row: GovernanceRow, preset: string) => {
     if (preset === 'decyzje') return row.kind === 'DECISION';
     if (preset === 'ryzyka') return row.kind === 'RAID';
-    if (preset === 'po-terminie') {
-      if (!row.isOverdue) return false;
-      /**
-       * P16/R3 (DEC-453): „Po terminie" liczy WYŁĄCZNIE decyzje, które
-       * jeszcze nie zapadły (Oczekuje / Eskalowana). Decyzja rozstrzygnięta
-       * po terminie zostaje w rejestrze (wpis nieusuwalny), ale nie jest już
-       * zaległością — inaczej licznik nigdy by nie spadł do zera i przestałby
-       * cokolwiek znaczyć. Pozycje RAID zostają w tym presecie bez zmian
-       * (ich reguła terminu jest przedmiotem R4).
-       */
-      if (row.kind !== 'DECISION') return true;
-      return row.rawStatus === 'PENDING' || row.rawStatus === 'ESCALATED';
-    }
     return false;
   }, []);
   const activeGovernancePreset = activePreset ?? 'decyzje';
+  /**
+   * PO TERMINIE — reguła wspólna, filtr Menu 2 (P16/R4+R5, DEC-453).
+   *
+   *   · decyzja  — po terminie i JESZCZE NIE ZAPADŁA (Oczekuje / Eskalowana);
+   *     rozstrzygnięta po terminie zostaje w rejestrze (wpis nieusuwalny), ale
+   *     zaległością już nie jest, inaczej licznik nigdy nie spadłby do zera,
+   *   · RAID     — OTWARTA (status ≠ Zamknięta) i `due_date` < dziś (§R4.3).
+   *
+   * Reguła RAID żyje w `raidGovernance.raidDniPoTerminie` i została policzona
+   * przy budowie wiersza — tu tylko czytamy wynik, żeby nie mieć dwóch definicji
+   * tej samej liczby w dwóch miejscach.
+   */
+  const poTerminie = useCallback((row: GovernanceRow) => {
+    if (!row.isOverdue) return false;
+    if (row.kind !== 'DECISION') return true;
+    return row.rawStatus === 'PENDING' || row.rawStatus === 'ESCALATED';
+  }, []);
   const visibleGovernanceRows = useMemo(
-    () => governanceRows.filter((row) => matches(row, activeGovernancePreset)),
-    [governanceRows, matches, activeGovernancePreset]
+    () =>
+      governanceRows.filter(
+        (row) =>
+          matches(row, activeGovernancePreset) &&
+          (filtrTerminu === 'wszystkie' || poTerminie(row))
+      ),
+    [governanceRows, matches, activeGovernancePreset, filtrTerminu, poTerminie]
   );
   const selectedGovernance = useMemo(
     () => governanceRows.find((row) => row.id === selectedGovernanceId) ?? null,
     [governanceRows, selectedGovernanceId]
   );
+  /**
+   * P16/R5: sygnał „po terminie" = odchylenie dodatnie. Sygnał LATE_START z
+   * `daysDeviation` 0 nie jest zaległością, tylko ostrzeżeniem progowym.
+   */
+  const visibleDelayRows = useMemo(
+    () =>
+      filtrTerminu === 'wszystkie'
+        ? delayRows
+        : delayRows.filter((row) => row.deviationDays > 0),
+    [delayRows, filtrTerminu]
+  );
+  const selectedDelay = useMemo(
+    () => delayRows.find((row) => row.id === selectedDelayId) ?? null,
+    [delayRows, selectedDelayId]
+  );
+  /**
+   * LICZNIKI CHIPÓW — „Sygnały (N)" liczy `delay-signals`, nie pusty rejestr
+   * runtime-v1. Chipy pokazują CAŁE zbiory (bez filtru terminu z Menu 2), bo
+   * filtr ma zawężać tabelę, a nie podmieniać liczbę na chipie.
+   */
   useEffect(
-    () => onCountsChange?.(countExecutionPresets(governanceRows, controlPresets, matches)),
-    [governanceRows, matches, onCountsChange]
+    () =>
+      onCountsChange?.({
+        ...countExecutionPresets(governanceRows, ['decyzje', 'ryzyka'], matches),
+        sygnaly: delayRows.length,
+      }),
+    [governanceRows, delayRows, matches, onCountsChange]
   );
   /**
    * Warsztat sygnałów/interwencji `runtime-v1` zostaje w kodzie, ale nie
@@ -1125,6 +1618,140 @@ export const ExecutionControlSurface = ({
   };
 
   /**
+   * KOMUNIKAT BŁĘDU ZAPISU RAID — kanoniczny writer sam tłumaczy status HTTP
+   * na polskie zdanie (`RaidWriteError`), więc tutaj tylko go przepuszczamy.
+   * Zakaz z §4: żadnego `.catch(() => {})` — każda awaria ma widoczny tekst.
+   */
+  const raidErrorMessage = useCallback(
+    (error: unknown): string => {
+      if (error instanceof RaidWriteError) return error.message;
+      return t('execution.raid.errors.saveFailed', 'Nie udało się zapisać pozycji RAID.');
+    },
+    [t]
+  );
+
+  /**
+   * „NOWA POZYCJA RAID" (P16/R4, DEC-453) — KANONICZNY pisarz, nie trasa legacy.
+   *
+   * ZMIERZONE PRZED R4: z tej zakładki NIE DAŁO SIĘ dodać pozycji RAID w ogóle
+   * (zero CTA), a jedyny front, który próbował (`RaidSection`,
+   * `InitiativeDocumentView`), wołał wycofane `POST /api/initiatives/:id/raid`
+   * — bramka `executionSpineLegacyReadOnly` odpowiada na to 409 (decyzja 26A).
+   * Dlatego zapis idzie WYŁĄCZNIE przez `raidWrites` →
+   * `POST /api/initiatives/runtime-v1/initiatives/:id/raid-items/:raidItemId`.
+   *
+   * Kontrakt kanonicznej komendy nazywa wpływ `severity`, a kolumna w bazie i
+   * `GET /api/raid` nazywają go `impact` — dlatego wysyłamy `severity`, a
+   * czytamy `impact`. To nie jest niekonsekwencja tego ekranu, tylko zmierzona
+   * rozbieżność dwóch kontraktów na jedno pole.
+   */
+  const createRaid = async () => {
+    const title = newRaid.title.trim();
+    const initiativeId = newRaid.initiativeId.trim();
+    if (!title || !initiativeId) return;
+    setNewRaidError(null);
+    setNewRaidBusy(true);
+    try {
+      await createRaidItem(initiativeId, newRaidItemId(), {
+        type: newRaid.type,
+        title,
+        status: 'OPEN',
+        probability: newRaid.probability as 'LOW' | 'MEDIUM' | 'HIGH',
+        severity: newRaid.impact as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+        ownerId: newRaid.ownerId || null,
+        dueDate: newRaid.dueDate ? new Date(newRaid.dueDate).toISOString() : null,
+      });
+      setNewRaid({
+        title: '',
+        type: 'RISK',
+        initiativeId: '',
+        ownerId: '',
+        dueDate: '',
+        probability: 'MEDIUM',
+        impact: 'MEDIUM',
+      });
+      setNewRaidOpen(false);
+      await loadGovernance();
+    } catch (error) {
+      setNewRaidError(raidErrorMessage(error));
+    } finally {
+      setNewRaidBusy(false);
+    }
+  };
+
+  /**
+   * EDYCJA POJEDYNCZEGO POLA POZYCJI RAID z podglądu (termin / właściciel).
+   * Powód NIE jest wymagany — wymaga go wyłącznie ZAMKNIĘCIE pozycji (§R4.2).
+   */
+  const zapiszPoleRaid = async () => {
+    if (!raidEdit) return;
+    const { pole, row, wartosc } = raidEdit;
+    if (!row.raidId || !row.raidInitiativeId) return;
+    setRaidBusy(true);
+    setRaidError(null);
+    try {
+      await updateRaidItem(row.raidInitiativeId, row.raidId, {
+        [pole]:
+          pole === 'dueDate'
+            ? wartosc
+              ? new Date(wartosc).toISOString()
+              : null
+            : wartosc || null,
+      });
+      setRaidEdit(null);
+      await loadGovernance();
+    } catch (error) {
+      setRaidError(raidErrorMessage(error));
+    } finally {
+      setRaidBusy(false);
+    }
+  };
+
+  /**
+   * ESKALACJA RYZYKO → PROBLEM (§R4.2, AUDYT_RYNKU_PMO §4.3 „Eskalacja RAID").
+   *
+   * Wzorzec Clarity: z ryzyka powstaje NOWY rekord typu Problem, który ma
+   * „a link back to the originating Risk", a źródło zostaje oznaczone jako
+   * przekształcone. `raid_items` nie ma kolumny na taki odnośnik (28 kolumn,
+   * sprawdzone w `information_schema`), a paczka zabrania migracji tam, gdzie
+   * da się bez niej — więc link idzie w OPISIE, w formacie odczytywalnym
+   * maszynowo (`ŹRÓDŁO-RAID: <id> — „<tytuł>"`) i okiem.
+   *
+   * Dwa zapisy, nie jeden: najpierw powstaje Problem (jeśli ten padnie, nic
+   * się nie zmieniło), potem źródło dostaje status końcowy i adnotację. Gdyby
+   * padł drugi, użytkownik widzi Problem z linkiem i otwarte ryzyko obok —
+   * stan niepełny, ale PRAWDZIWY i naprawialny ręcznie. Odwrotna kolejność
+   * mogłaby zamknąć ryzyko bez problemu, czyli zgubić pozycję z rejestru.
+   */
+  const eskalujDoProblemu = async (row: GovernanceRow) => {
+    if (!row.raidId || !row.raidInitiativeId) return;
+    setRaidBusy(true);
+    setRaidError(null);
+    try {
+      const problemId = newRaidItemId();
+      await createRaidItem(row.raidInitiativeId, problemId, {
+        type: 'ISSUE',
+        title: row.title,
+        description: opisEskalacjiRyzyka(row.raidId, row.title, row.description),
+        status: 'OPEN',
+        probability: (row.rawProbability as 'LOW' | 'MEDIUM' | 'HIGH' | null) ?? null,
+        severity: (row.rawImpact as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | null) ?? null,
+        ownerId: row.ownerId ?? null,
+        dueDate: row.rawDueAt ?? null,
+      });
+      await updateRaidItem(row.raidInitiativeId, row.raidId, {
+        status: RAID_STATUS_KONCOWY,
+        description: opisPoPrzeksztalceniu(problemId, row.description),
+      });
+      await loadGovernance();
+    } catch (error) {
+      setRaidError(raidErrorMessage(error));
+    } finally {
+      setRaidBusy(false);
+    }
+  };
+
+  /**
    * ROZSTRZYGNIĘCIE / ESKALACJA Z OKNA POWODU (P16/R3, DEC-453).
    *
    * Jedna funkcja dla czterech akcji, bo różnią się WYŁĄCZNIE trasą i
@@ -1140,6 +1767,32 @@ export const ExecutionControlSurface = ({
   const confirmReason = async (reason: string) => {
     if (!reasonDialog) return;
     const { kind, row } = reasonDialog;
+    /*
+      P16/R4: ZAMKNIĘCIE POZYCJI RAID — jedyna akcja RAID z wymaganym powodem.
+      Uzasadnienie idzie w `mitigationPlan`, bo `raid_items` nie ma osobnego
+      pola na powód zamknięcia, a `mitigation_plan` jest polem tekstowym
+      kontraktu kanonicznej komendy i to właśnie ono opisuje, CO zrobiono
+      z ryzykiem. Wpis zostaje w pozycji, tak jak uzasadnienie zostaje
+      w decyzji.
+    */
+    if (kind === 'raid-close') {
+      if (!row.raidId || !row.raidInitiativeId) return;
+      setReasonBusy(true);
+      setReasonError(null);
+      try {
+        await updateRaidItem(row.raidInitiativeId, row.raidId, {
+          status: RAID_STATUS_KONCOWY,
+          mitigationPlan: reason,
+        });
+        setReasonDialog(null);
+        await loadGovernance();
+      } catch (error) {
+        setReasonError(raidErrorMessage(error));
+      } finally {
+        setReasonBusy(false);
+      }
+      return;
+    }
     const decisionId = row.decisionId;
     if (!decisionId) return;
     setReasonBusy(true);
@@ -1168,6 +1821,59 @@ export const ExecutionControlSurface = ({
   };
 
   /**
+   * „PRZYGOTUJ INTERWENCJĘ" (P16/R5, DEC-453, §4 D4) — sygnał → DECYZJA.
+   *
+   * ZMIERZONE PRZED R5: przycisk o tej nazwie stał w Menu 2, był ZAWSZE
+   * wyszarzony (`disabled={draftSignalIds.length === 0}`, a lista sygnałów
+   * runtime-v1 miała 0 rekordów) i prowadził do formularza z 16 polami
+   * technicznymi (UUID interwencji, wersje źródeł, „blastRadiusRefs").
+   *
+   * Po R5 to jest JEDNA akcja w podglądzie sygnału, która tworzy wniosek
+   * o przesunięcie: decyzję typu re-baseline z terminem (dziś + 3 dni) i
+   * decydentem. Metodyka A1 pkt 6: data planowana bez decyzji jest
+   * niezmienna — więc przesunięcie MUSI mieć decyzję, a nie ręczną edycję
+   * daty. `sourceType` + `sourceId` niosą rodowód: dzięki nim sygnał po
+   * przeładowaniu pokazuje stan „Interwencja" i odnośnik do decyzji.
+   */
+  const przygotujInterwencje = async (row: DelayRow) => {
+    setInterventionBusy(true);
+    setInterventionError(null);
+    try {
+      const inicjatywa =
+        row.entityType === 'INITIATIVE'
+          ? executionInitiatives.find((item) => item.id === row.entityId)
+          : undefined;
+      await Api.createDecision({
+        title: tytulInterwencji(row.entityName, row.deviationDays),
+        description: `${row.kindLabel} · ${row.reasonLabel}`,
+        decisionType: RODZAJ_DECYZJI_REBASELINE,
+        sourceType: ZRODLO_SYGNALU,
+        sourceId: row.id,
+        // Kontekst obiektu, gdy sygnał dotyczy inicjatywy — wtedy decyzja
+        // trafia też do rejestru tej inicjatywy. Dla sygnału z zadania
+        // kontekstem zostaje sam rodowód sygnału (para sourceType+sourceId,
+        // przyjmowana przez kontroler od OKR-E006).
+        ...(row.entityType === 'INITIATIVE' ? { initiativeId: row.entityId } : {}),
+        dueDate: terminInterwencji(),
+        // Decydent: właściciel inicjatywy, a gdy go nie ma — bieżący
+        // użytkownik (PMO), bo kontroler i tak podstawia wołającego.
+        ...(inicjatywa?.ownerId ? { decisionOwnerId: String(inicjatywa.ownerId) } : {}),
+      });
+      await loadGovernance();
+    } catch (error) {
+      setInterventionError(
+        decisionErrorMessage(
+          error,
+          'execution.signals.errors.interventionFailed',
+          'Nie udało się utworzyć wniosku o przesunięcie.'
+        )
+      );
+    } finally {
+      setInterventionBusy(false);
+    }
+  };
+
+  /**
    * KEBAB WIERSZA vs BLOK AKCJI PODGLĄDU — rozdział, nie duplikat.
    *
    * Doktryna gęstości §1: JEDNA AKCJA = JEDEN DOM. Ta sama akcja nie może
@@ -1186,6 +1892,33 @@ export const ExecutionControlSurface = ({
           preview: () => setSelectedGovernanceId(wiersz.id),
         },
       };
+      /*
+        P16/R4: KEBAB POZYCJI RAID — Otwórz podgląd (wyżej) + „Eskaluj do
+        problemu". Doktryna gęstości §1: ta akcja NIE stoi w bloku akcji
+        podglądu (tam mieszkają Zmień termin · Zmień właściciela · Zamknij
+        pozycję), bo jedna akcja ma jeden dom.
+      */
+      if (wiersz.kind === 'RAID') {
+        const juzProblem = wiersz.rawRaidType === 'ISSUE';
+        const zamknieta = !czyRaidOtwarty(wiersz.rawRaidStatus);
+        menu.primary = [
+          {
+            id: 'raid-escalate-to-issue',
+            label: t('execution.raid.actions.escalateToIssue', 'Eskaluj do problemu'),
+            icon: ShieldAlert,
+            onClick:
+              juzProblem || zamknieta || raidBusy
+                ? undefined
+                : () => void eskalujDoProblemu(wiersz),
+            note: juzProblem
+              ? t('execution.raid.notes.alreadyIssue', 'To już jest problem.')
+              : zamknieta
+                ? t('execution.raid.notes.closed', 'Pozycja jest zamknięta.')
+                : undefined,
+          },
+        ];
+        return menu;
+      }
       if (wiersz.kind !== 'DECISION') return menu;
       const zakonczona = isResolvedDecision({ status: wiersz.rawStatus });
       const naMaksie = Number(wiersz.escalationStep ?? 0) >= ESCALATION_STEP_MAX;
@@ -1213,7 +1946,8 @@ export const ExecutionControlSurface = ({
       ];
       return menu;
     },
-    [t]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, raidBusy]
   );
   const cid = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
@@ -1411,43 +2145,101 @@ export const ExecutionControlSurface = ({
       setWrite('FAILED');
     }
   };
-  // Menu 2 (prawa strona) — "Dodaj sygnał" / "Przygotuj interwencję". Patrz
-  // komentarz propa `onRegisterFilterControl` powyżej.
+  /**
+   * MENU 2 — JEDEN FILTR + JEDNO CTA NA WIDOK (P16/R4+R5, DEC-453).
+   *
+   * ZMIERZONE PRZED R4/R5: pasek niósł trzy przyciski naraz („Nowa decyzja",
+   * „Dodaj sygnał", „Przygotuj interwencję"), z czego DWA były dla dewelopera
+   * i nie dało się ich użyć — „Dodaj sygnał" żądał UUID obiektu i numeru
+   * wersji źródła, a „Przygotuj interwencję" był ZAWSZE wyszarzony, bo warunek
+   * `draftSignalIds.length > 0` liczył sygnały runtime-v1, których jest 0.
+   * Oba znikają z Menu 2 (kontrakt `ingestManagementSignal` /
+   * `draftIntervention` ZOSTAJE w API i w kodzie — patrz warsztat niżej,
+   * rysowany tylko wtedy, gdy runtime-v1 ma choć jeden rekord).
+   *
+   * Zostaje: filtr terminu (dropdown kanonu Menu 2, przejęty po czwartym
+   * chipie „Po terminie") i JEDNO CTA właściwe widokowi — „Nowa decyzja"
+   * w Decyzjach, „Nowa pozycja RAID" w Ryzykach, żadne w Sygnałach (sygnału
+   * nie tworzy człowiek, tylko system).
+   */
   useEffect(() => {
     if (!onRegisterFilterControl) return;
+    const liczbaPoTerminie =
+      activeGovernancePreset === 'sygnaly'
+        ? delayRows.filter((row) => row.deviationDays > 0).length
+        : governanceRows.filter(
+            (row) => matches(row, activeGovernancePreset) && poTerminie(row)
+          ).length;
+    const liczbaWszystkich =
+      activeGovernancePreset === 'sygnaly'
+        ? delayRows.length
+        : governanceRows.filter((row) => matches(row, activeGovernancePreset)).length;
     onRegisterFilterControl(
-      <div className="flex flex-wrap gap-2">
-        {/* 1.12-R1 (C): CTA Menu 2 zakładki „Decyzje i ryzyka". */}
-        <button type="button" className="btn-secondary" onClick={() => setNewDecisionOpen(true)}>
-          {t('execution.governance.actions.newDecision', 'Nowa decyzja')}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => {
-            setInterventionComposerOpen(false);
-            setShowInterventionForm(true);
-            setShowSignalForm(true);
-          }}
-        >
-          {t('execution.control.actions.addSignal', 'Add signal')}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          disabled={draftSignalIds.length === 0}
-          onClick={() => {
-            setShowInterventionForm(true);
-            setInterventionComposerOpen(true);
-          }}
-        >
-          {t('execution.control.actions.prepareIntervention', 'Prepare intervention')}
-        </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Menu2PresetDropdown
+          compact
+          label={t('execution.governance.filters.dueLabel', 'Termin')}
+          data-testid="execution-governance-due-filter"
+          value={filtrTerminu}
+          onChange={(id) => setFiltrTerminu(id as FiltrTerminu)}
+          options={[
+            {
+              id: 'wszystkie',
+              label: t('common.all', 'Wszystkie'),
+              count: liczbaWszystkich,
+            },
+            {
+              id: 'po-terminie',
+              label: t('execution.menu3.governance.overdue', 'Po terminie'),
+              count: liczbaPoTerminie,
+            },
+          ]}
+        />
+        {/*
+          ZALEGŁOŚĆ PO R3, ZMIERZONA I ZAMKNIĘTA TU (07.09, konto MEMBER Anna):
+          „Nowa decyzja" pokazywała się KAŻDEMU, a `POST /api/decisions` odsyła
+          MEMBER-owi 403 `Permission denied` (`approve_changes`). R3 zamknął tę
+          samą regułą akcje rozstrzygające (`canDecide`), ale CTA tworzenia mu
+          umknęło. Próg §10: zero przycisków, które dla MEMBER-a nie mogą zadziałać.
+        */}
+        {activeGovernancePreset === 'decyzje' && canDecide(null) && (
+          <button type="button" className="btn-secondary" onClick={() => setNewDecisionOpen(true)}>
+            {t('execution.governance.actions.newDecision', 'Nowa decyzja')}
+          </button>
+        )}
+        {activeGovernancePreset === 'ryzyka' && (
+          <button
+            type="button"
+            className="btn-secondary"
+            data-testid="execution-new-raid-open"
+            onClick={() => {
+              setNewRaidError(null);
+              setNewRaid((current) => ({
+                ...current,
+                // Domyślna inicjatywa z filtru realizacji — użytkownik nie musi
+                // jej szukać, tak samo jak przy „Nowej decyzji" (R3).
+                initiativeId: current.initiativeId || (executionInitiatives[0]?.id ?? ''),
+              }));
+              setNewRaidOpen(true);
+            }}
+          >
+            {t('execution.raid.actions.new', 'Nowa pozycja RAID')}
+          </button>
+        )}
       </div>
     );
     return () => onRegisterFilterControl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterFilterControl, draftSignalIds]);
+  }, [
+    onRegisterFilterControl,
+    activeGovernancePreset,
+    filtrTerminu,
+    governanceRows,
+    delayRows,
+    executionInitiatives,
+    canDecide,
+    t,
+  ]);
   if (state === 'ERROR')
     return (
       <div role="alert" className="m-4 rounded-xl border border-c-danger/40 p-4 text-sm">
@@ -1582,6 +2374,174 @@ export const ExecutionControlSurface = ({
           </button>
         </div>
       )}
+      {/*
+        „NOWA POZYCJA RAID" (P16/R4, DEC-453) — SIEDEM pól, tyle ile potrzeba,
+        żeby wiersz był kompletny od razu: bez prawdopodobieństwa i wpływu
+        kolumna „Ekspozycja" byłaby pusta, a bez terminu preset „Po terminie"
+        nigdy by niczego nie pokazał (to jest DOKŁADNIE stan sprzed R4: 0 z 16
+        pozycji miało termin). Wymagane są tytuł i inicjatywa — inicjatywa, bo
+        kanoniczna komenda adresuje pozycję przez agregat inicjatywy.
+      */}
+      {newRaidOpen && (
+        <div className="mb-3 rounded-lg border border-c-border p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <strong>{t('execution.raid.actions.new', 'Nowa pozycja RAID')}</strong>
+            <button type="button" className="btn-secondary" onClick={() => setNewRaidOpen(false)}>
+              {t('common.close', 'Zamknij')}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <label className="text-xs">
+              {t('execution.raid.form.title', 'Tytuł (wymagany)')}
+              <input
+                aria-label={t('execution.raid.form.title', 'Tytuł (wymagany)')}
+                value={newRaid.title}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, title: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              />
+            </label>
+            <label className="text-xs">
+              {t('execution.governance.columns.type', 'Typ')}
+              <select
+                aria-label={t('execution.governance.columns.type', 'Typ')}
+                value={newRaid.type}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, type: event.target.value as RaidTyp }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {RAID_TYPY.map((typ) => (
+                  <option key={typ} value={typ}>
+                    {raidTypeLabel(typ)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('execution.raid.form.initiative', 'Inicjatywa (wymagana)')}
+              <select
+                aria-label={t('execution.raid.form.initiative', 'Inicjatywa (wymagana)')}
+                value={newRaid.initiativeId}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, initiativeId: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <option value="">
+                  {t('execution.decisions.form.initiativePlaceholder', 'Wybierz realizację…')}
+                </option>
+                {executionInitiatives.map((initiative) => (
+                  <option key={initiative.id} value={initiative.id}>
+                    {initiative.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('execution.governance.columns.owner', 'Właściciel')}
+              <select
+                aria-label={t('execution.governance.columns.owner', 'Właściciel')}
+                value={newRaid.ownerId}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, ownerId: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <option value="">{t('execution.raid.form.unassigned', 'Nieprzypisana')}</option>
+                {orgMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('execution.governance.columns.due', 'Termin')}
+              <input
+                aria-label={t('execution.governance.columns.due', 'Termin')}
+                type="date"
+                value={newRaid.dueDate}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, dueDate: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              />
+            </label>
+            <label className="text-xs">
+              {t('execution.raid.columns.probability', 'Prawdopodobieństwo')}
+              <select
+                aria-label={t('execution.raid.columns.probability', 'Prawdopodobieństwo')}
+                value={newRaid.probability}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, probability: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {RAID_PRAWDOPODOBIENSTWO_OPCJE.map((opcja) => (
+                  <option key={opcja} value={opcja}>
+                    {raidProbabilityLabel(opcja, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('execution.raid.columns.impact', 'Wpływ')}
+              <select
+                aria-label={t('execution.raid.columns.impact', 'Wpływ')}
+                value={newRaid.impact}
+                onChange={(event) =>
+                  setNewRaid((current) => ({ ...current, impact: event.target.value }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                {RAID_WPLYW_OPCJE.map((opcja) => (
+                  <option key={opcja} value={opcja}>
+                    {raidImpactLabel(opcja, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {/*
+              EKSPOZYCJA W FORMULARZU — pokazana, ale NIEEDYTOWALNA. To ta sama
+              liczba, którą pokaże kolumna; widać ją zanim się zapisze, więc
+              nikt nie odkrywa jej dopiero na liście.
+            */}
+            <div className="text-xs">
+              {t('execution.raid.columns.exposure', 'Ekspozycja')}
+              <output
+                data-testid="execution-new-raid-exposure"
+                aria-label={t('execution.raid.columns.exposure', 'Ekspozycja')}
+                className="mt-[2px] block w-full rounded border border-c-border bg-c-surface-muted p-2 font-semibold tabular-nums"
+              >
+                {ekspozycjaRaid(newRaid.probability, newRaid.impact) ?? '—'}
+              </output>
+            </div>
+          </div>
+          {newRaidError && (
+            <p role="alert" className="mt-2 text-xs text-c-danger">
+              {newRaidError}
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-secondary mt-3"
+            data-testid="execution-new-raid-save"
+            disabled={!newRaid.title.trim() || !newRaid.initiativeId.trim() || newRaidBusy}
+            onClick={() => void createRaid()}
+          >
+            {t('execution.raid.form.save', 'Zapisz pozycję RAID')}
+          </button>
+        </div>
+      )}
+      {/*
+        DWA REJESTRY, JEDNA ZAKŁADKA (P16/R5, DEC-453). Preset „Sygnały" ma
+        WŁASNY zbiór wierszy (`/execution-control/delay-signals`, 42 sztuki),
+        własny zestaw kolumn i własny podgląd — nie da się go wcisnąć w
+        `GovernanceRow`, bo sygnał nie ma ani decydenta, ani ekspozycji.
+      */}
+      {activeGovernancePreset !== 'sygnaly' && (
       <div className="mb-3 flex min-h-0 flex-1 flex-col">
         <TableWithPreviewLayout<GovernanceRow>
           selectedId={selectedGovernanceId}
@@ -1598,31 +2558,57 @@ export const ExecutionControlSurface = ({
               meta={{
                 pills: [
                   { label: row.kindLabel, tone: 'neutral' },
-                  {
-                    label: row.escalation,
-                    tone:
-                      row.kind === 'DECISION'
-                        ? Number(row.escalationStep ?? 0) >= ESCALATION_STEP_MAX
-                          ? 'danger'
-                          : Number(row.escalationStep ?? 0) > 0
-                            ? 'warning'
-                            : 'neutral'
-                        : row.escalation === 'Czerwona'
-                          ? 'danger'
-                          : row.escalation === 'Bursztynowa'
-                            ? 'warning'
-                            : 'neutral',
-                  },
+                  /*
+                    P16/R4: druga pigułka POZYCJI RAID to jej STATUS i pasmo
+                    ekspozycji, nie „Eskalacja: Czerwona". Przed R4 pigułka
+                    pokazywała dotkliwość przemalowaną na słowo z rejestru
+                    decyzji — pozycja RAID nie ma kroków eskalacji, więc ta
+                    etykieta obiecywała mechanizm, którego nie ma.
+                  */
+                  row.kind === 'RAID'
+                    ? {
+                        label: row.raidStatusLabel ?? '',
+                        tone:
+                          pasmoEkspozycji(row.exposure ?? null) === 'wysokie'
+                            ? 'danger'
+                            : pasmoEkspozycji(row.exposure ?? null) === 'srednie'
+                              ? 'warning'
+                              : 'neutral',
+                      }
+                    : {
+                        label: row.escalation,
+                        tone:
+                          Number(row.escalationStep ?? 0) >= ESCALATION_STEP_MAX
+                            ? 'danger'
+                            : Number(row.escalationStep ?? 0) > 0
+                              ? 'warning'
+                              : 'neutral',
+                      },
                 ],
+                /*
+                  P16/R4: ZDANIE DLA POZYCJI RAID MÓWI O RAID, nie o decyzji.
+                  Bez tej gałęzi podgląd ryzyka po terminie radził
+                  „rozstrzygnij albo eskaluj" — czasowniki rejestru DECYZJI,
+                  których na pozycji RAID nie ma (są: zmień termin, zmień
+                  właściciela, zamknij, eskaluj do problemu).
+                */
                 recommendation:
-                  row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
-                    ? t(
-                        'execution.decisions.preview.resolved',
-                        'Decyzja zapadła — wpis jest nieusuwalny.'
-                      )
-                    : row.daysOverdue != null
-                      ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'dni — rozstrzygnij albo eskaluj.')}`
-                      : t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.'),
+                  row.kind === 'RAID'
+                    ? !czyRaidOtwarty(row.rawRaidStatus)
+                      ? t('execution.raid.preview.closed', 'Pozycja zamknięta — zostaje w rejestrze.')
+                      : row.daysOverdue != null
+                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.raid.preview.overdueSuffix', 'dni — zmień termin albo zamknij pozycję.')}`
+                        : row.rawDueAt
+                          ? t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.')
+                          : t('execution.raid.preview.noDue', 'Pozycja bez terminu — ustaw termin, żeby dało się ją pilnować.')
+                    : row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
+                      ? t(
+                          'execution.decisions.preview.resolved',
+                          'Decyzja zapadła — wpis jest nieusuwalny.'
+                        )
+                      : row.daysOverdue != null
+                        ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'dni — rozstrzygnij albo eskaluj.')}`
+                        : t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.'),
               }}
               details={{
                 label:
@@ -1687,6 +2673,17 @@ export const ExecutionControlSurface = ({
                           : []),
                       ]
                     : [
+                        // P16/R4: podglad POZYCJI RAID mowi to samo, co kolumny,
+                        // plus inicjatywe (NAZWA, nie UUID) i zrodlo eskalacji.
+                        {
+                          id: 'initiative',
+                          label: t('execution.raid.preview.initiative', 'Inicjatywa'),
+                          value:
+                            initiativeNames[String(row.raidInitiativeId ?? '')] ??
+                            (row.raidInitiativeId
+                              ? String(row.raidInitiativeId)
+                              : t('execution.raid.preview.noInitiative', 'Bez inicjatywy')),
+                        },
                         {
                           id: 'owner',
                           label: t('execution.governance.columns.owner', 'Właściciel'),
@@ -1698,15 +2695,42 @@ export const ExecutionControlSurface = ({
                           value: row.dueAt,
                         },
                         {
-                          id: 'overdue',
-                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
-                          value: row.daysOverdue == null ? 'Brak' : String(row.daysOverdue),
+                          id: 'probability',
+                          label: t('execution.raid.columns.probability', 'Prawdopodobieństwo'),
+                          value: row.probabilityLabel ?? '—',
                         },
                         {
-                          id: 'escalation',
-                          label: t('execution.governance.columns.escalation', 'Eskalacja'),
-                          value: row.escalation,
+                          id: 'impact',
+                          label: t('execution.raid.columns.impact', 'Wpływ'),
+                          value: row.impactLabel ?? '—',
                         },
+                        {
+                          id: 'exposure',
+                          label: t('execution.raid.columns.exposure', 'Ekspozycja'),
+                          value: row.exposure == null ? '—' : String(row.exposure),
+                        },
+                        {
+                          id: 'raidStatus',
+                          label: t('execution.raid.columns.status', 'Status'),
+                          value: row.raidStatusLabel ?? '—',
+                        },
+                        {
+                          id: 'overdue',
+                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+                          value:
+                            row.daysOverdue == null
+                              ? t('execution.decisions.escalation.none', 'Brak')
+                              : String(row.daysOverdue),
+                        },
+                        ...(zrodloEskalacji(row.description)
+                          ? [
+                              {
+                                id: 'sourceRaid',
+                                label: t('execution.raid.preview.source', 'Powstało z pozycji'),
+                                value: String(zrodloEskalacji(row.description)),
+                              },
+                            ]
+                          : []),
                       ],
               }}
               /*
@@ -1718,9 +2742,68 @@ export const ExecutionControlSurface = ({
                 MEMBER nie zobaczy przycisku, który i tak odbiłby się o 403.
               */
               actions={
-                row.kind === 'DECISION' &&
-                row.canDecide &&
-                !isResolvedDecision({ status: row.rawStatus })
+                /*
+                  P16/R4: BLOK AKCJI POZYCJI RAID — Zmień termin · Zmień
+                  właściciela · Zamknij pozycję. „Eskaluj do problemu" NIE stoi
+                  tutaj: ona ma dom w kebabie wiersza (doktryna gęstości §1).
+                  Uzasadnienia wymaga WYŁĄCZNIE zamknięcie (§R4.2) — zmiana
+                  terminu i właściciela zapisuje się od razu.
+                  Zamknięta pozycja nie dostaje żadnej akcji: to jest stan
+                  końcowy, a nie „można jeszcze poprawić".
+                */
+                row.kind === 'RAID'
+                  ? czyRaidOtwarty(row.rawRaidStatus)
+                    ? {
+                        resolutions: [
+                          {
+                            id: 'raid-due',
+                            variant: 'neutral',
+                            label: t('execution.raid.actions.changeDue', 'Zmień termin'),
+                            icon: CalendarClock,
+                            disabled: raidBusy,
+                            onClick: () => {
+                              setRaidError(null);
+                              setRaidEdit({
+                                pole: 'dueDate',
+                                row,
+                                wartosc: row.rawDueAt ? String(row.rawDueAt).slice(0, 10) : '',
+                              });
+                            },
+                          },
+                          {
+                            id: 'raid-owner',
+                            variant: 'neutral',
+                            label: t('execution.raid.actions.changeOwner', 'Zmień właściciela'),
+                            icon: UserCog,
+                            disabled: raidBusy,
+                            onClick: () => {
+                              setRaidError(null);
+                              setRaidEdit({
+                                pole: 'ownerId',
+                                row,
+                                wartosc: String(row.ownerId ?? ''),
+                              });
+                            },
+                          },
+                        ],
+                        informational: [
+                          {
+                            id: 'raid-close',
+                            variant: 'neutral',
+                            label: t('execution.raid.actions.close', 'Zamknij pozycję'),
+                            icon: CircleSlash,
+                            disabled: raidBusy,
+                            onClick: () => {
+                              setReasonError(null);
+                              setReasonDialog({ kind: 'raid-close', row });
+                            },
+                          },
+                        ],
+                      }
+                    : undefined
+                  : row.kind === 'DECISION' &&
+                      row.canDecide &&
+                      !isResolvedDecision({ status: row.rawStatus })
                   ? {
                       resolutions: [
                         {
@@ -1790,7 +2873,201 @@ export const ExecutionControlSurface = ({
             }}
           />
         </TableWithPreviewLayout>
+        {/*
+          BŁĄD ZAPISU RAID Z KEBABA („Eskaluj do problemu") — widoczny NA
+          EKRANIE. Zakaz z §4: żadnego `.catch(() => {})`; awaria po kliknięciu
+          w kebab nie ma okna, w którym mogłaby się pokazać, więc ma własne
+          miejsce pod tabelą.
+        */}
+        {raidError && !raidEdit && (
+          <p role="alert" className="mt-2 text-xs text-c-danger">
+            {raidError}
+          </p>
+        )}
       </div>
+      )}
+      {/*
+        REJESTR SYGNAŁÓW OPÓŹNIEŃ (P16/R5, §4 D4) — 42 policzone przez system,
+        czytane, a nie wpisywane ręcznie. Wiersz → podgląd → „Przygotuj
+        interwencję" = wniosek o przesunięcie jako decyzja re-baseline.
+      */}
+      {activeGovernancePreset === 'sygnaly' && (
+        <div className="mb-3 flex min-h-0 flex-1 flex-col">
+          <TableWithPreviewLayout<DelayRow>
+            selectedId={selectedDelayId}
+            selectedItem={selectedDelay}
+            onSelect={setSelectedDelayId}
+            itemIds={visibleDelayRows.map((row) => row.id)}
+            getItemById={(id) => delayRows.find((row) => row.id === id) ?? null}
+            previewOpen={Boolean(selectedDelayId)}
+            renderPreview={(row) => (
+              <StandardPreview
+                embedded
+                title={row.entityName}
+                onClose={() => setSelectedDelayId(null)}
+                meta={{
+                  pills: [
+                    { label: row.kindLabel, tone: 'neutral' },
+                    {
+                      label: row.stateLabel,
+                      tone:
+                        row.state === 'INTERWENCJA'
+                          ? 'warning'
+                          : row.state === 'ZAMKNIETY'
+                            ? 'neutral'
+                            : 'danger',
+                    },
+                  ],
+                  recommendation:
+                    row.state === 'NOWY'
+                      ? t(
+                          'execution.signals.preview.new',
+                          'Sygnał bez odpowiedzi — przygotuj wniosek o przesunięcie albo nadrób opóźnienie.'
+                        )
+                      : row.state === 'INTERWENCJA'
+                        ? t(
+                            'execution.signals.preview.intervention',
+                            'Wniosek o przesunięcie czeka na rozstrzygnięcie w widoku Decyzje.'
+                          )
+                        : t(
+                            'execution.signals.preview.closed',
+                            'Wniosek o przesunięcie już zapadł.'
+                          ),
+                }}
+                details={{
+                  label: t('execution.signals.preview.label', 'Sygnał opóźnienia'),
+                  text:
+                    row.entityType === 'INITIATIVE'
+                      ? t('execution.signals.preview.initiative', 'Sygnał dotyczy inicjatywy.')
+                      : t('execution.signals.preview.task', 'Sygnał dotyczy zadania.'),
+                  properties: [
+                    {
+                      id: 'kind',
+                      label: t('execution.signals.columns.kind', 'Rodzaj sygnału'),
+                      value: row.kindLabel,
+                    },
+                    {
+                      id: 'deviation',
+                      label: t('execution.signals.columns.deviation', 'Odchylenie (dni)'),
+                      value: row.deviationDays > 0 ? `+${row.deviationDays}` : '—',
+                    },
+                    {
+                      id: 'reason',
+                      label: t('execution.signals.columns.reason', 'Powód'),
+                      value: row.reasonLabel,
+                    },
+                    {
+                      id: 'planned',
+                      label: t('execution.signals.preview.planned', 'Data planowana'),
+                      value: formatDay(row.signal.plannedDate),
+                    },
+                    {
+                      id: 'detected',
+                      label: t('execution.signals.columns.detectedAt', 'Wykryto'),
+                      value: row.detectedAt,
+                    },
+                    {
+                      id: 'state',
+                      label: t('execution.signals.columns.state', 'Stan'),
+                      value: row.stateLabel,
+                    },
+                    ...(row.decisionId
+                      ? [
+                          {
+                            id: 'decision',
+                            label: t('execution.signals.preview.decision', 'Wniosek o przesunięcie'),
+                            value: tytulInterwencji(row.entityName, row.deviationDays),
+                          },
+                        ]
+                      : []),
+                  ],
+                }}
+                /*
+                  JEDNA AKCJA, JEDEN DOM (doktryna gęstości §1): „Przygotuj
+                  interwencję" stoi WYŁĄCZNIE tutaj — nie ma jej ani w kebabie
+                  wiersza, ani w Menu 2 (skąd martwy przycisk o tej nazwie
+                  usunął R5). Znika, gdy wniosek już istnieje: druga decyzja na
+                  ten sam sygnał nie ma sensu i tylko rozdwoiłaby ślad.
+                */
+                actions={
+                  /*
+                    UPRAWNIENIE ZMIERZONE, NIE ZGADNIĘTE (07.09, konto MEMBER
+                    Anna Kowalska na kopii bazy): `POST /api/decisions` odsyła
+                    MEMBER-owi **403 Permission denied** (`approve_changes`) —
+                    ta sama bramka, którą R3 lustruje w `canDecide`. Dlatego
+                    „Przygotuj interwencję" nie pokazuje się temu, kto i tak
+                    dostałby 403. Bramką prawdy zostaje SERWER; to jest
+                    wyłącznie uprzejmość interfejsu.
+                    UWAGA — dla pozycji RAID robimy INACZEJ i celowo: kanoniczny
+                    writer sprawdza uprawnienie `initiative.update` PER PROJEKT,
+                    a nie rolę (zmierzone: ta sama Anna dostaje 404 na inicjatywie
+                    bez dostępu), więc ukrycie CTA po roli zabrałoby przycisk
+                    członkom, którzy mają prawo zgłosić ryzyko na SWOIM projekcie.
+                    Tam zostaje CTA + polski komunikat po odmowie.
+                  */
+                  row.state === 'NOWY' && canDecide(null)
+                    ? {
+                        resolutions: [
+                          {
+                            id: 'signal-intervention',
+                            variant: 'positive',
+                            label: t(
+                              'execution.signals.actions.prepareIntervention',
+                              'Przygotuj interwencję'
+                            ),
+                            icon: Wrench,
+                            disabled: interventionBusy,
+                            onClick: () => void przygotujInterwencje(row),
+                          },
+                        ],
+                      }
+                    : undefined
+                }
+                relationsEmptyLabel={t('execution.governance.preview.noRelations', 'Brak powiązań')}
+              />
+            )}
+          >
+            <StandardTable
+              columns={delayColumns}
+              data={visibleDelayRows}
+              selectedRowId={selectedDelayId}
+              onRowClick={(row) => setSelectedDelayId(row.id)}
+              persistKey="execution.governance.signals.v1"
+              empty={{
+                title: t('execution.signals.empty.title', 'Brak sygnałów opóźnień'),
+                description: t(
+                  'execution.signals.empty.description',
+                  'System liczy sygnały z terminów inicjatyw i zadań. Pusto znaczy, że nic się nie sypie.'
+                ),
+              }}
+            />
+          </TableWithPreviewLayout>
+          {interventionError && (
+            <p role="alert" className="mt-2 text-xs text-c-danger">
+              {interventionError}
+            </p>
+          )}
+        </div>
+      )}
+      {/*
+        WARSZTAT runtime-v1 (P16/R5, DEC-453) — ZOSTAJE ZAMKNIĘTY.
+
+        Po usunięciu z Menu 2 przycisków „Dodaj sygnał" i „Przygotuj
+        interwencję" (oba martwe: pierwszy żądał UUID i wersji źródła, drugi
+        był ZAWSZE wyszarzony) nic już tego warsztatu nie otwiera.
+        ZMIERZONE 07.09 na zrzucie `evidence/p16-r45/po/03-po-reload-trwale.png`:
+        gdy spróbowałem otworzyć go samym istnieniem danych, warsztat WYPCHNĄŁ
+        rejestr RAID poza ekran (atrapa przeglądu podstawia 2 interwencje) i
+        odsłonił drugi, starszy defekt — komentarz JSX niżej był napisany bez
+        klamer, więc jego treść wyciekała na ekran jako tekst.
+
+        DŁUG NAZWANY WPROST: ~600 linii UI runtime-v1 w tym pliku nie ma dziś
+        żadnego wołacza z interfejsu. Kontrakt API (`ingestManagementSignal`,
+        `draftIntervention`, `transitionIntervention`) zostaje nietknięty —
+        usunięcie samego UI to osobny krok, poza zakresem R5, i dotknie
+        `tests/unit/initiatives-execution/executionControlSurface.test.tsx`
+        (5 z 5 przypadków czerwonych już na HEAD, `useLocation` bez Routera).
+      */}
       {showInterventionForm && (
         <section
           aria-label="Intervention Signal Workbench"
@@ -1878,11 +3155,20 @@ export const ExecutionControlSurface = ({
               </button>
             </div>
           )}
-          /* * Lancuch wysokosci - patrz komentarz w ExecutionResourcesSurface.tsx. *
-          `TableWithPreviewLayout` ma root `h-full`; `height:100%` rozwiazuje sie * tylko wzgledem
-          rodzica o definitywnej wysokosci. Pudelka `p-4`/`mt-4` * o wysokosci `auto` przerywaly ten
-          lancuch i panel podgladu konczyl sie * na wlasnej tresci. Zmierzone narzedziem *
-          `scripts/dev/measure-preview-canon.mjs --wysokosc`. */
+          {/*
+            KOMENTARZ, NIE TREŚĆ (naprawa przy P16/R5, DEC-453): ten blok był
+            napisany bez klamer `{...}`, więc JSX traktował go jako TEKST i
+            wypisywał na ekran „/* * Lancuch wysokosci …". Nie było tego widać,
+            bo warsztat nigdy się nie rysował — wyszło dopiero na zrzucie
+            `evidence/p16-r45/po/03-po-reload-trwale.png`.
+
+            Treść oryginalna: łańcuch wysokości — patrz komentarz w
+            `ExecutionResourcesSurface.tsx`. `TableWithPreviewLayout` ma root
+            `h-full`; `height:100%` rozwiązuje się tylko względem rodzica
+            o definitywnej wysokości. Pudełka `p-4`/`mt-4` o wysokości `auto`
+            przerywały ten łańcuch i panel podglądu kończył się na własnej
+            treści. Zmierzone `scripts/dev/measure-preview-canon.mjs --wysokosc`.
+          */}
           <div className="flex min-h-0 flex-1 flex-col">
             <TableWithPreviewLayout<SignalRow>
               selectedId={selectedSignalId}
@@ -2405,7 +3691,9 @@ export const ExecutionControlSurface = ({
               ? t('execution.decisions.dialog.reject', 'Odrzuć decyzję')
               : reasonDialog?.kind === 'supersede'
                 ? t('execution.decisions.dialog.supersede', 'Oznacz decyzję jako nieaktualną')
-                : t('execution.decisions.dialog.escalate', 'Eskaluj decyzję')
+                : reasonDialog?.kind === 'raid-close'
+                  ? t('execution.raid.dialog.close', 'Zamknij pozycję RAID')
+                  : t('execution.decisions.dialog.escalate', 'Eskaluj decyzję')
         }
         confirmLabel={
           reasonDialog?.kind === 'approve'
@@ -2414,12 +3702,16 @@ export const ExecutionControlSurface = ({
               ? t('execution.decisions.actions.reject', 'Odrzuć')
               : reasonDialog?.kind === 'supersede'
                 ? t('execution.decisions.actions.supersede', 'Nieaktualna')
-                : t('execution.decisions.actions.escalate', 'Eskaluj')
+                : reasonDialog?.kind === 'raid-close'
+                  ? t('execution.raid.actions.close', 'Zamknij pozycję')
+                  : t('execution.decisions.actions.escalate', 'Eskaluj')
         }
         label={
           reasonDialog?.kind === 'escalate'
             ? t('execution.decisions.dialog.escalateLabel', 'Powód eskalacji (wymagany)')
-            : t('execution.decisions.dialog.rationaleLabel', 'Uzasadnienie (wymagane)')
+            : reasonDialog?.kind === 'raid-close'
+              ? t('execution.raid.dialog.closeLabel', 'Co z tym zrobiono (wymagane)')
+              : t('execution.decisions.dialog.rationaleLabel', 'Uzasadnienie (wymagane)')
         }
         placeholder={
           reasonDialog?.kind === 'escalate'
@@ -2427,10 +3719,15 @@ export const ExecutionControlSurface = ({
                 'execution.decisions.dialog.escalatePlaceholder',
                 'Napisz, dlaczego decyzja idzie poziom wyżej.'
               )
-            : t(
-                'execution.decisions.dialog.rationalePlaceholder',
-                'Napisz jednym zdaniem, dlaczego tak rozstrzygasz — trafi do rejestru na stałe.'
-              )
+            : reasonDialog?.kind === 'raid-close'
+              ? t(
+                  'execution.raid.dialog.closePlaceholder',
+                  'Napisz jednym zdaniem, dlaczego pozycja jest zamykana.'
+                )
+              : t(
+                  'execution.decisions.dialog.rationalePlaceholder',
+                  'Napisz jednym zdaniem, dlaczego tak rozstrzygasz — trafi do rejestru na stałe.'
+                )
         }
         hint={
           reasonDialog?.kind === 'escalate'
@@ -2438,10 +3735,15 @@ export const ExecutionControlSurface = ({
                 'execution.decisions.dialog.escalateHint',
                 'Poziom rośnie o jeden: właściciel inicjatywy → PMO → komitet.'
               )
-            : t(
-                'execution.decisions.dialog.rationaleHint',
-                'Wpisu nie da się usunąć ani rozstrzygnąć drugi raz.'
-              )
+            : reasonDialog?.kind === 'raid-close'
+              ? t(
+                  'execution.raid.dialog.closeHint',
+                  'Pozycja zostaje w rejestrze ze statusem „Zamknięta" i przestaje liczyć się do „Po terminie".'
+                )
+              : t(
+                  'execution.decisions.dialog.rationaleHint',
+                  'Wpisu nie da się usunąć ani rozstrzygnąć drugi raz.'
+                )
         }
         onCancel={() => {
           setReasonDialog(null);
@@ -2449,6 +3751,94 @@ export const ExecutionControlSurface = ({
         }}
         onConfirm={(reason) => void confirmReason(reason)}
       />
+      {/*
+        EDYCJA JEDNEGO POLA POZYCJI RAID (P16/R4, DEC-453) — termin albo
+        właściciel. Powód NIE jest wymagany: §R4.2 wymaga go wyłącznie przy
+        ZAMKNIĘCIU pozycji, a żądanie uzasadnienia przy każdej zmianie daty
+        zamieniłoby rejestr w formularz i nikt by go nie prowadził.
+      */}
+      {raidEdit && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            raidEdit.pole === 'dueDate'
+              ? t('execution.raid.dialog.due', 'Zmień termin pozycji RAID')
+              : t('execution.raid.dialog.owner', 'Zmień właściciela pozycji RAID')
+          }
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        >
+          <div className="w-full max-w-md rounded-xl border border-c-border bg-c-surface p-5 shadow-lg">
+            <h3 className="text-sm font-semibold">
+              {raidEdit.pole === 'dueDate'
+                ? t('execution.raid.dialog.due', 'Zmień termin pozycji RAID')
+                : t('execution.raid.dialog.owner', 'Zmień właściciela pozycji RAID')}
+            </h3>
+            <p className="mt-1 text-xs text-c-text-muted">{raidEdit.row.title}</p>
+            {raidEdit.pole === 'dueDate' ? (
+              <input
+                type="date"
+                autoFocus
+                data-testid="execution-raid-edit-input"
+                aria-label={t('execution.governance.columns.due', 'Termin')}
+                value={raidEdit.wartosc}
+                onChange={(event) =>
+                  setRaidEdit((current) =>
+                    current ? { ...current, wartosc: event.target.value } : current
+                  )
+                }
+                className="mt-3 block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              />
+            ) : (
+              <select
+                autoFocus
+                data-testid="execution-raid-edit-input"
+                aria-label={t('execution.governance.columns.owner', 'Właściciel')}
+                value={raidEdit.wartosc}
+                onChange={(event) =>
+                  setRaidEdit((current) =>
+                    current ? { ...current, wartosc: event.target.value } : current
+                  )
+                }
+                className="mt-3 block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <option value="">{t('execution.raid.form.unassigned', 'Nieprzypisana')}</option>
+                {orgMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {raidError && (
+              <p role="alert" className="mt-2 text-xs text-c-danger">
+                {raidError}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setRaidEdit(null);
+                  setRaidError(null);
+                }}
+              >
+                {t('common.cancel', 'Anuluj')}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                data-testid="execution-raid-edit-save"
+                disabled={raidBusy}
+                onClick={() => void zapiszPoleRaid()}
+              >
+                {t('common.save', 'Zapisz')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

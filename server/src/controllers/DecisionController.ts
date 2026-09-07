@@ -927,6 +927,14 @@ export class DecisionController {
             decisionRationale: (row as any).decision_rationale || undefined,
             decidedAt: (row as any).decided_at || undefined,
             decidedBy: (row as any).decided_by || undefined,
+            // P16/R5 (DEC-453): RODOWÓD decyzji. `createDecision` ZAPISUJE
+            // `source_type`/`source_id` od OKR-E006, a `SELECT d.*` wyżej je
+            // czyta — do dziś ginęły w tym mapowaniu i nie było jak sprawdzić,
+            // z czego decyzja powstała. Bez nich sygnał opóźnienia nie ma jak
+            // pokazać stanu „Interwencja", bo `delay-signals` liczy się przy
+            // każdym zapytaniu i sam żadnego stanu nie trzyma.
+            sourceType: (row as any).source_type || undefined,
+            sourceId: (row as any).source_id || undefined,
           };
         })
       );

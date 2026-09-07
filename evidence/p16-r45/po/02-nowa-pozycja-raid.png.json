@@ -1,0 +1,9 @@
+{
+  "nazwa": "nowa-pozycja-raid",
+  "opis": "Formularz: p=Wysokie(4), w=Krytyczny(5) → ekspozycja 20",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T20:32:55.591Z"
+}
