@@ -178,8 +178,13 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     zamontuj();
     await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
 
-    const komorki = wiersz('Zadanie z inicjatywa').querySelectorAll('td');
-    fireEvent.doubleClick(komorki[3]);
+    // Podwójny klik musi trafić w warstwę edytowalną (`data-editable`), nie w
+    // samo `td` — zdarzenie w Reakcie bąbelkuje w GÓRĘ, więc klik w rodzica
+    // nie odpala handlera dziecka.
+    const komorkaTerminu = wiersz('Zadanie z inicjatywa').querySelectorAll(
+      'td [data-editable]'
+    )[1];
+    fireEvent.doubleClick(komorkaTerminu);
 
     const edytor = await screen.findByLabelText('Zmień termin');
     fireEvent.change(edytor, { target: { value: '2026-12-01' } });
@@ -188,7 +193,8 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     await waitFor(() => expect(updateTask).toHaveBeenCalledTimes(1));
     const [, cialo] = updateTask.mock.calls[0];
     expect(Object.keys(cialo)).toEqual(['dueDate']);
-    expect(cialo.dueDate).toBe('2026-12-01');
+    // `tasks.due_date` jest `timestamptz`, więc data z kalendarza idzie jako ISO.
+    expect(cialo.dueDate).toBe('2026-12-01T00:00:00.000Z');
   });
 
   it('lista statusów bierze się z przejść dopuszczonych przez serwer, nie z kopii w kodzie', async () => {
@@ -196,8 +202,10 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     await waitFor(() => expect(screen.getByText('Zadanie z inicjatywa')).toBeInTheDocument());
     expect(apiGet).toHaveBeenCalledWith('/tasks/workflow-config');
 
-    const komorki = wiersz('Zadanie z inicjatywa').querySelectorAll('td');
-    fireEvent.doubleClick(komorki[4]);
+    const komorkaStatusu = wiersz('Zadanie z inicjatywa').querySelectorAll(
+      'td [data-editable]'
+    )[2];
+    fireEvent.doubleClick(komorkaStatusu);
     const edytor = (await screen.findByLabelText('Zmień status')) as HTMLSelectElement;
 
     const wartosci = Array.from(edytor.options).map((o) => o.value);
@@ -231,8 +239,8 @@ describe('P16-R2 (a) — edycja w wierszu woła PUT /tasks/:id z JEDNYM polem', 
     zamontuj();
     await waitFor(() => expect(screen.getByText('Zadanie runtime')).toBeInTheDocument());
 
-    const komorki = wiersz('Zadanie runtime').querySelectorAll('td');
-    fireEvent.doubleClick(komorki[4]);
+    const komorkaStatusu = wiersz('Zadanie runtime').querySelectorAll('td [data-editable]')[2];
+    fireEvent.doubleClick(komorkaStatusu);
     expect(screen.queryByLabelText('Zmień status')).toBeNull();
     expect(updateTask).not.toHaveBeenCalled();
   });
