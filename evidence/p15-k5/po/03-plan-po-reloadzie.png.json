@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-plan-po-reloadzie",
+  "opis": "Po odświeżeniu strony: wpisane FTE są trwałe",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:19:33.929Z"
+}

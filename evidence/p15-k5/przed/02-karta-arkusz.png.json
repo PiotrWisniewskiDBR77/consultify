@@ -1,0 +1,10 @@
+{
+  "nazwa": "02-karta-arkusz",
+  "opis": "Karta analizy: sekcja Arkusz obciazenia (okres x rola)",
+  "faza": "przed",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:35:05.233Z"
+}

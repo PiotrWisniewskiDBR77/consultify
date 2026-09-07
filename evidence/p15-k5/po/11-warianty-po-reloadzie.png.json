@@ -1,0 +1,10 @@
+{
+  "nazwa": "11-warianty-po-reloadzie",
+  "opis": "Po odswiezeniu i ponownym otwarciu: warianty doradcy trwale",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:21:36.033Z"
+}

@@ -902,6 +902,35 @@ export async function writeCapacityScenario(id: string, command: Record<string, 
   if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5: „Nowa analiza" nie sklada juz
+ * scenariusza w przegladarce — serwer liczy arkusz okres x rola z planu
+ * (popyt) i ze stanowisk osob organizacji (podaz).
+ */
+/** Slownik rol organizacji (stanowiska + podaz FTE/tydzien) — P15-K5. */
+export async function listCapacityRoles(signal?: AbortSignal) {
+  const response = await fetch('/api/initiatives/runtime-v1/capacity-roles', {
+    credentials: 'include',
+    signal,
+  });
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body;
+}
+export async function computeCapacityScenario(id: string, command: Record<string, unknown>) {
+  const response = await fetch(
+    `/api/initiatives/runtime-v1/capacity-scenarios/${encodeURIComponent(id)}/compute`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(command),
+    }
+  );
+  const body = await readJson(response);
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
+  return body;
+}
 export async function readCapacityScenario(id: string, signal?: AbortSignal) {
   const response = await fetch(
     `/api/initiatives/runtime-v1/capacity-scenarios/${encodeURIComponent(id)}`,

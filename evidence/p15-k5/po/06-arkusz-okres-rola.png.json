@@ -1,0 +1,10 @@
+{
+  "nazwa": "06-arkusz-okres-rola",
+  "opis": "Karta analizy: arkusz okres × rola z liczbami i źródłem podaży",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:20:04.232Z"
+}

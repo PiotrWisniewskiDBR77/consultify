@@ -1,0 +1,10 @@
+{
+  "nazwa": "01-plan-obciazenie-rol-puste",
+  "opis": "Karta planu: „Obciążenie ról\" — arkusz inicjatywa × rola przed wpisem",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:18:57.463Z"
+}

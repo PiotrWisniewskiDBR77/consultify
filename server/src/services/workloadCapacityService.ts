@@ -812,6 +812,73 @@ export async function getExecutionResourcePlan(
   return { asOf: new Date().toISOString(), weeks, rows, people };
 }
 
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5, decyzja D2' — PODAZ PER STANOWISKO.
+ *
+ * Ta sama polityka co arkusz Realizacja -> Zasoby wyzej: `weekly_capacity_hours`
+ * z profilu (w braku 40 h) razy `availability_percent` (w braku 100 %), przeliczone
+ * na FTE przez `CAPACITY_POLICY.weeklyHoursPerFte`. Rozdzielone na CZYSTA FUNKCJE,
+ * zeby analiza obciazenia i arkusz Zasobow nie rozjechaly sie w liczeniu.
+ *
+ * Rozny jest tylko ZBIOR OSOB: `getExecutionResourcePlan` bierze wylacznie osoby
+ * z otwartymi zadaniami (popyt), a podaz roli musi objac CALA organizacje —
+ * inaczej rola bez zadan wygladalaby na nieobsadzona (pomiar 07.09: resource-plan
+ * zwracal 1 osobe z 31).
+ */
+export function personWeeklySupplyFte(
+  weeklyCapacityHours: number | string | null | undefined,
+  availabilityPercent: number | null | undefined
+): number {
+  const hours =
+    weeklyCapacityHours === null || weeklyCapacityHours === undefined
+      ? CAPACITY_POLICY.weeklyHoursPerFte
+      : Number(weeklyCapacityHours);
+  const usableHours = Number.isFinite(hours) && hours > 0 ? hours : CAPACITY_POLICY.weeklyHoursPerFte;
+  const availability = clampAllocationPercent(availabilityPercent ?? 100);
+  return ((usableHours * availability) / 100) / CAPACITY_POLICY.weeklyHoursPerFte;
+}
+
+export interface RoleWeeklySupplyRow {
+  roleId: string;
+  roleLabel: string;
+  fteWeekly: number;
+  headcount: number;
+}
+
+/** Podaz w FTE/tydzien pogrupowana po STANOWISKU (`COALESCE(job_title, title)`). */
+export async function getRoleWeeklySupply(
+  orgId: string,
+  slugify: (label: string) => string
+): Promise<RoleWeeklySupplyRow[]> {
+  const rows = await DbPromise.all<{
+    role: string | null;
+    weekly_capacity_hours: number | string | null;
+    availability_percent: number | null;
+  }>(
+    `SELECT COALESCE(u.job_title, u.title) AS role,
+            u.weekly_capacity_hours, u.availability_percent
+       FROM users u
+      WHERE u.organization_id = ? AND COALESCE(u.is_active, 1) = 1`,
+    [orgId]
+  );
+  const byRole = new Map<string, RoleWeeklySupplyRow>();
+  for (const row of rows) {
+    const label = String(row.role ?? '').trim();
+    // Osoba bez stanowiska NIE zasila zadnej roli — jej podaz byla wliczana
+    // w cudza luke. Zostaje widoczna dopiero, gdy ktos jej stanowisko wpisze.
+    if (!label) continue;
+    const roleId = slugify(label);
+    const current = byRole.get(roleId) ?? { roleId, roleLabel: label, fteWeekly: 0, headcount: 0 };
+    current.fteWeekly += personWeeklySupplyFte(row.weekly_capacity_hours, row.availability_percent);
+    current.headcount += 1;
+    byRole.set(roleId, current);
+  }
+  return [...byRole.values()].map((role) => ({
+    ...role,
+    fteWeekly: Math.round(role.fteWeekly * 1000) / 1000,
+  }));
+}
+
 export async function getCapacityTimeline(
   orgId: string,
   initiativeId?: string,

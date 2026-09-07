@@ -26,9 +26,11 @@ import {
   RuntimeApiError,
   selectCapacityOption,
   writeCapacityScenario,
+  computeCapacityScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
+import { CapacityOptionsPanel, type CapacityComparison } from './CapacityOptionsPanel';
 import { CapacityAnalysisCard } from './cards/CapacityAnalysisCard';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
@@ -124,7 +126,22 @@ type Scenario = {
   planScenarioVersion: number;
   windowUnit: string;
   timezone: string;
-  periods: Array<{ periodId: string; start: string; end: string; demand: Range; supply: Range }>;
+  periods: Array<{
+    periodId: string;
+    start: string;
+    end: string;
+    demand: Range;
+    supply: Range;
+    // P15-K5 (DEC-421): arkusz okres x rola liczony przez serwer (`/compute`).
+    roles?: Array<{
+      roleId: string;
+      roleLabel: string;
+      demand: number | null;
+      supply: number | null;
+      supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
+      demandSource: 'PLAN' | 'MANUAL' | 'UNKNOWN';
+    }>;
+  }>;
   constraints: Array<{ constraintId: string; state: K; detail: string; ownerId: string }>;
   proposedAssignments: Array<{
     assignmentId: string;
@@ -138,45 +155,6 @@ type Scenario = {
   updatedBy: string;
   publishedBy: string | null;
   publishedAt: string | null;
-};
-type OptionRange = {
-  low: number | null;
-  base: number | null;
-  high: number | null;
-  unit: string;
-  knowledgeState: K;
-  confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
-  sourceRefs: Array<{ ref: string; version: number }>;
-};
-type CapacityOption = {
-  optionId: string;
-  kind: 'RESEQUENCE' | 'SCOPE_SPLIT' | 'ADD_CAPACITY';
-  assumptions: Array<{
-    assumption: string;
-    ownerId: string;
-    sourceRef: { ref: string; version: number };
-    knowledgeState: K;
-  }>;
-  affectedMemberships: Array<{ initiativeId: string; membershipVersion: number }>;
-  affectedPeriods: string[];
-  affectedResources: Array<{ resourceRef: string; version: number }>;
-  impact: { date: OptionRange; scope: OptionRange; cost: OptionRange; risk: OptionRange };
-  rationale: string;
-};
-type CapacityComparison = {
-  version: number;
-  comparisonId: string;
-  planRef: { scenarioId: string; version: number };
-  capacityRef: { scenarioId: string; version: number };
-  status: 'DRAFT' | 'SELECTED';
-  options: CapacityOption[];
-  selectedOptionId: string | null;
-  nextGovernedInput: {
-    kind: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION';
-    optionId: string;
-    comparisonId: string;
-    comparisonVersion: number;
-  } | null;
 };
 interface Row extends TableRow {
   id: string;
@@ -237,11 +215,13 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   // zdania „Nie zapisano zmian." bez powodu.
   const [writeRule, setWriteRule] = useState<string | null>(null);
   const [advisorState, setAdvisorState] = useState<
-    'IDLE' | 'SAVING' | 'APPLIED' | 'NO_PRESSURE' | 'CONFLICT' | 'FAILED'
+    'IDLE' | 'SAVING' | 'APPLIED' | 'NO_PRESSURE' | 'NEEDS_PUBLISH' | 'CONFLICT' | 'FAILED'
   >('IDLE');
   const [showCreate, setShowCreate] = useState(false);
   const [newAnalysisId, setNewAnalysisId] = useState('');
   const [newPlanId, setNewPlanId] = useState('');
+  // Tozsamosc AKTUALNIE OTWARTEJ analizy — patrz komentarz w `load()`.
+  const openScenarioId = useRef<string | null>(null);
   const handledCreateRequest = useRef(createRequestId);
   useEffect(() => {
     if (createRequestId === handledCreateRequest.current) return;
@@ -418,8 +398,14 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   }>({ state: 'IDLE', message: '' });
   const [commitmentEditorOpen, setCommitmentEditorOpen] = useState(false);
   const ids = useRef(new Map<string, string>());
-  const load = useCallback(async () => {
-    setState('LOADING');
+  /**
+   * P15-K5 (DEC-421): `silent` — odswiezenie rejestru BEZ przelaczania powierzchni
+   * na galaz „ladowanie". Bez tego kazdy zapis z otwartej karty (podaz, wariant,
+   * doradca) odmontowywal karte i wracal do pierwszej sekcji; uzytkownik tracil
+   * miejsce, w ktorym byl. Zlapane okiem na zrzucie 07b (07.09).
+   */
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setState('LOADING');
     if (demoMode) {
       const range = (base: number, ownerId: string, state: K = 'ESTIMATED'): Range => ({
         knowledgeState: state,
@@ -591,7 +577,14 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       }));
       setRows(nextRows);
       if (nextRows.length) {
-        const initial = nextRows.find((item) => item.state === 'PUBLISHED') ?? nextRows[0];
+        // P15-K5 (DEC-421): `load()` wybieral PIERWSZA opublikowana analize i
+        // NADPISYWAL nia otwarta karte. Kazde odswiezenie rejestru w tle
+        // (zapis podazy, wybor wariantu, doradca) podmienialo uzytkownikowi
+        // dokument pod rekami — zlapane okiem na zrzucie 07b (07.09).
+        const initial =
+          nextRows.find((item) => item.id === openScenarioId.current) ??
+          nextRows.find((item) => item.state === 'PUBLISHED') ??
+          nextRows[0];
         setSelectedId(initial.id);
         const loaded = (await readCapacityScenario(initial.id)) as {
           version: number;
@@ -627,6 +620,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     void load();
   }, [load]);
   const open = async (id: string) => {
+    openScenarioId.current = id;
     setSelectedId(id);
     setWorkspaceOpen(true);
     try {
@@ -641,62 +635,60 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
   const showWorkspace = () => {
     if (scenario && selectedId) setWorkspaceOpen(true);
   };
+  /**
+   * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5: „Nowa analiza" WYPELNIONA.
+   * Do K4 ta funkcja skladala scenariusz w przegladarce z UNKNOWN na kazdym
+   * okresie i zerem rol — karta otwierala sie pusta. Teraz woła `/compute`,
+   * a arkusz okres x rola liczy serwer z planu i ze stanowisk osob.
+   */
   const createAnalysis = async () => {
     const plan = publishedPlans.find((item) => item.id === newPlanId);
     const name = newAnalysisId.trim();
     if (!plan || !name || writeState === 'SAVING') return;
     const scenarioId = `capacity-${crypto.randomUUID()}`;
-    const unknownRange = (ownerId: string): Range => ({
-      knowledgeState: 'UNKNOWN',
-      low: null,
-      base: null,
-      high: null,
-      sourceRef: null,
-      sourceVersion: null,
-      asOf: new Date().toISOString(),
-      confidence: 'UNKNOWN',
-      ownerId,
-      reason: 'Wymaga estymacji i potwierdzenia źródła.',
-    });
-    const next: Scenario = {
-      scenarioId,
-      name,
-      scenarioVersion: 0,
-      status: 'DRAFT',
-      planScenarioId: plan.id,
-      planScenarioVersion: plan.version,
-      windowUnit: plan.windowUnit,
-      timezone: plan.timezone,
-      periods: plan.periods.map((period) => ({
-        ...period,
-        demand: unknownRange('capacity-owner'),
-        supply: unknownRange('resource-manager'),
-      })),
-      constraints: [],
-      proposedAssignments: [],
-      createdBy: '',
-      updatedBy: '',
-      publishedBy: null,
-      publishedAt: null,
-    };
     setWriteRule(null);
     setWriteState('SAVING');
     try {
-      const result = (await writeCapacityScenario(scenarioId, {
+      const result = (await computeCapacityScenario(scenarioId, {
         expectedVersion: 0,
         clientRequestId: crypto.randomUUID(),
         operation: 'CREATE',
-        scenario: next,
+        planScenarioId: plan.id,
+        name,
       })) as { aggregateVersion: number; response: Scenario };
+      openScenarioId.current = scenarioId;
       setSelectedId(scenarioId);
       setAggregateVersion(result.aggregateVersion);
       setScenario(result.response);
-      setWorkspaceOpen(true);
       setShowCreate(false);
       setNewAnalysisId('');
-      await load();
+      await load(true);
       await open(scenarioId);
       setWorkspaceOpen(true);
+      setWriteState('IDLE');
+    } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      setWriteState(
+        error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'FAILED'
+      );
+    }
+  };
+  /** Reczna korekta podazy w arkuszu — przeliczenie z zachowaniem wpisanej wartosci. */
+  const overrideSupply = async (periodId: string, roleId: string, supply: number) => {
+    if (!scenario || writeState === 'SAVING') return;
+    setWriteRule(null);
+    setWriteState('SAVING');
+    try {
+      const result = (await computeCapacityScenario(scenario.scenarioId, {
+        expectedVersion: aggregateVersion,
+        clientRequestId: crypto.randomUUID(),
+        operation: 'UPDATE',
+        planScenarioId: scenario.planScenarioId,
+        supplyOverrides: [{ periodId, roleId, supply }],
+      })) as { aggregateVersion: number; response: Scenario };
+      setAggregateVersion(result.aggregateVersion);
+      setScenario(result.response);
+      await load(true);
       setWriteState('IDLE');
     } catch (error) {
       setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
@@ -722,7 +714,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         scenario,
       });
       await open(scenario.scenarioId);
-      await load();
+      await load(true);
       setWriteState('IDLE');
     } catch (e) {
       setWriteRule(e instanceof RuntimeApiError ? (e.rule ?? null) : null);
@@ -800,7 +792,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         optionId,
         nextKind: nextInputKind,
       });
-      await load();
+      await load(true);
       setWriteState('IDLE');
     } catch (error) {
       setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
@@ -814,7 +806,12 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
     const linkedPlan = publishedPlans.find(
       (plan) => plan.id === scenario.planScenarioId && plan.version === scenario.planScenarioVersion
     );
-    if (scenario.status !== 'PUBLISHED' || !linkedPlan) return;
+    // Cicha degradacja: do K4 ta funkcja po prostu WRACALA, gdy analiza byla
+    // szkicem — uzytkownik klikal „Analizuj" i nic sie nie dzialo, bez slowa.
+    if (scenario.status !== 'PUBLISHED' || !linkedPlan) {
+      setAdvisorState('NEEDS_PUBLISH');
+      return;
+    }
     const existing = comparisons.find(
       (comparison) =>
         comparison.planRef.scenarioId === linkedPlan.id &&
@@ -829,7 +826,7 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
         planRef: { scenarioId: linkedPlan.id, version: linkedPlan.version },
         capacityRef: { scenarioId: scenario.scenarioId, version: aggregateVersion },
       });
-      await load();
+      await load(true);
       setAdvisorState('APPLIED');
     } catch (error) {
       if (error instanceof RuntimeApiError && error.code === 'NO_CAPACITY_PRESSURE_TO_RESOLVE') {
@@ -862,7 +859,31 @@ export const CapacityScenarioSurface: React.FC<CanonicalMenu3Contract & { demoMo
       </div>
     );
   if (workspaceOpen && scenario) {
-    return <CapacityAnalysisCard scenario={scenario} noPressure={advisorState === 'NO_PRESSURE'} onBack={() => setWorkspaceOpen(false)} onAnalyze={() => void proposeOptions()} onPublish={() => void write('PUBLISH')} />;
+    return (
+      <CapacityAnalysisCard
+        scenario={scenario}
+        noPressure={advisorState === 'NO_PRESSURE'}
+        needsPublish={advisorState === 'NEEDS_PUBLISH'}
+        comparisons={comparisons.filter(
+          (comparison) => comparison.capacityRef.scenarioId === scenario.scenarioId
+        )}
+        planName={
+          publishedPlans.find((plan) => plan.id === scenario.planScenarioId)?.name ?? null
+        }
+        advisorBusy={advisorState === 'SAVING'}
+        supplyBusy={writeState === 'SAVING'}
+        onBack={() => {
+          openScenarioId.current = null;
+          setWorkspaceOpen(false);
+        }}
+        onAnalyze={() => void proposeOptions()}
+        onPublish={() => void write('PUBLISH')}
+        onSupplyOverride={(periodId, roleId, supply) =>
+          void overrideSupply(periodId, roleId, supply)
+        }
+        onSelectOption={(comparison, optionId) => void selectOption(comparison, optionId)}
+      />
+    );
   }
   if (!workspaceOpen && !showCreate) {
     const visibleAnalyses = rows.filter((row) =>
@@ -1513,147 +1534,4 @@ const RangeView = ({
       {memberNameOrUnknown(resolveMemberName, value.ownerId, true)}
     </p>
   </div>
-);
-
-const optionLabels: Record<CapacityOption['kind'], string> = {
-  RESEQUENCE: 'Zmień kolejność',
-  SCOPE_SPLIT: 'Podziel zakres',
-  ADD_CAPACITY: 'Zwiększ dostępność',
-};
-
-const OptionImpact = ({ label, value }: { label: string; value: OptionRange }) => (
-  <div className="rounded border border-c-border p-2">
-    <dt className="text-xs font-medium">{label}</dt>
-    <dd className="text-sm">
-      {value.knowledgeState === 'UNKNOWN' || value.knowledgeState === 'UNCONFIRMED'
-        ? `${value.knowledgeState} — brak potwierdzonej wartości`
-        : `${value.low} / ${value.base} / ${value.high} ${value.unit}`}
-    </dd>
-    <dd className="text-xs text-c-text-muted">
-      {value.confidence} ·{' '}
-      {value.sourceRefs.length
-        ? value.sourceRefs.map((source) => `${source.ref} v${source.version}`).join(', ')
-        : 'EVIDENCE_MISSING'}
-    </dd>
-  </div>
-);
-
-const CapacityOptionsPanel = ({
-  comparisons,
-  nextInputKind,
-  onNextInputKind,
-  onSelect,
-  saving,
-  resolveMemberName,
-}: {
-  comparisons: CapacityComparison[];
-  nextInputKind: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION';
-  onNextInputKind: (value: 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION') => void;
-  onSelect: (comparison: CapacityComparison, optionId: string) => void;
-  saving: boolean;
-  resolveMemberName?: MemberNameResolver;
-}) => (
-  <section aria-label="Capacity options comparison" className="border-t border-c-border pt-4">
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h4 className="font-medium">Opcje rozwiązania ograniczeń</h4>
-        <p className="text-xs text-c-text-muted">
-          To jest wyłącznie porównanie. Wybór tworzy kontrolowany wniosek do kolejnej decyzji i nie
-          zmienia samodzielnie planu, bazowej wersji ani przydziału.
-        </p>
-      </div>
-      <label className="text-xs">
-        Kolejna kontrolowana decyzja
-        <select
-          aria-label="Capacity governed next input"
-          className="ml-2 rounded border border-c-border bg-c-background p-2"
-          value={nextInputKind}
-          onChange={(event) =>
-            onNextInputKind(event.target.value as 'MATERIAL_CHANGE' | 'SCHEDULE_DECISION')
-          }
-        >
-          <option value="MATERIAL_CHANGE">Zmiana planu</option>
-          <option value="SCHEDULE_DECISION">Decyzja harmonogramowa</option>
-        </select>
-      </label>
-    </div>
-    {comparisons.length === 0 ? (
-      <p className="mt-3 text-sm text-c-text-muted">
-        Brak zapisanego porównania dla tego wariantu.
-      </p>
-    ) : (
-      comparisons.map((comparison) => (
-        <article key={comparison.comparisonId} className="mt-3 rounded border border-c-border p-3">
-          <div className="flex justify-between text-xs">
-            <span>
-              {comparison.comparisonId} · v{comparison.version} · {comparison.status}
-            </span>
-            <span>
-              Plan {comparison.planRef.scenarioId} v{comparison.planRef.version} · Capacity v
-              {comparison.capacityRef.version}
-            </span>
-          </div>
-          <div className="mt-3 grid gap-3 xl:grid-cols-3">
-            {comparison.options.map((option) => (
-              <section
-                key={option.optionId}
-                aria-label={`Opcja obciążenia: ${optionLabels[option.kind]}`}
-                className={`rounded border p-3 ${comparison.selectedOptionId === option.optionId ? 'border-c-focus-solid' : 'border-c-border'}`}
-              >
-                <h5 className="font-semibold">{optionLabels[option.kind]}</h5>
-                <p className="text-xs text-c-text-muted">{option.rationale}</p>
-                <dl className="mt-2 grid grid-cols-2 gap-2">
-                  <OptionImpact label="Termin" value={option.impact.date} />
-                  <OptionImpact label="Zakres" value={option.impact.scope} />
-                  <OptionImpact label="Koszt" value={option.impact.cost} />
-                  <OptionImpact label="Ryzyko" value={option.impact.risk} />
-                </dl>
-                <div className="mt-2 text-xs">
-                  <strong>Założenia</strong>
-                  {option.assumptions.map((assumption) => (
-                    <p key={`${option.optionId}:${assumption.assumption}`}>
-                      {assumption.knowledgeState} · {assumption.assumption} · właściciel{' '}
-                      {memberNameOrUnknown(resolveMemberName, assumption.ownerId, true)} ·{' '}
-                      {assumption.sourceRef.ref} v
-                      {assumption.sourceRef.version}
-                    </p>
-                  ))}
-                  <p>
-                    Inicjatywy:{' '}
-                    {option.affectedMemberships
-                      .map((item) => `${item.initiativeId} v${item.membershipVersion}`)
-                      .join(', ') || 'brak'}
-                  </p>
-                  <p>Okresy: {option.affectedPeriods.join(', ') || 'brak'}</p>
-                  <p>
-                    Zasoby:{' '}
-                    {option.affectedResources
-                      .map((item) => `${item.resourceRef} v${item.version}`)
-                      .join(', ') || 'brak'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="btn-secondary mt-3 w-full"
-                  disabled={comparison.status !== 'DRAFT' || saving}
-                  onClick={() => onSelect(comparison, option.optionId)}
-                >
-                  {comparison.selectedOptionId === option.optionId
-                    ? 'Wybrano do dalszej decyzji'
-                    : 'Wybierz do dalszej decyzji'}
-                </button>
-              </section>
-            ))}
-          </div>
-          {comparison.nextGovernedInput && (
-            <p role="status" className="mt-3 text-xs">
-              Kontrolowany wniosek: {comparison.nextGovernedInput.kind} · opcja{' '}
-              {comparison.nextGovernedInput.optionId} · porównanie v
-              {comparison.nextGovernedInput.comparisonVersion}
-            </p>
-          )}
-        </article>
-      ))
-    )}
-  </section>
 );

@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-luki-per-rola",
+  "opis": "Karta analizy: Luki i presja per rola",
+  "faza": "przed",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:35:07.366Z"
+}

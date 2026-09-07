@@ -1,0 +1,10 @@
+{
+  "nazwa": "05-nowa-analiza-formularz",
+  "opis": "Obciążenie: formularz „Nowa analiza\" z wyborem opublikowanego planu",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:19:52.931Z"
+}

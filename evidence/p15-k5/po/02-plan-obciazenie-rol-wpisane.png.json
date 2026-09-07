@@ -1,0 +1,10 @@
+{
+  "nazwa": "02-plan-obciazenie-rol-wpisane",
+  "opis": "Karta planu: FTE wpisane per rola, „Zapisano hh:mm\"",
+  "faza": "po",
+  "url": "http://localhost:3180/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:19:12.628Z"
+}

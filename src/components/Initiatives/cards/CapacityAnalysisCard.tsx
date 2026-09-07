@@ -5,21 +5,483 @@ import { StandardArtifactShell } from '@/components/standard/StandardArtifactShe
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
 import { CAPACITY_ANALYSIS_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
+import i18n from '@/i18n';
+import {
+  CapacityOptionsPanel,
+  type CapacityComparison,
+} from '@/components/Initiatives/CapacityOptionsPanel';
 
-type Range={knowledgeState:string;base:number|null};
-export interface CapacityCardScenario {scenarioId:string;name?:string|null;status:'DRAFT'|'PUBLISHED'|'SUPERSEDED';scenarioVersion:number;planScenarioId:string;planScenarioVersion:number;periods:Array<{periodId:string;demand:Range;supply:Range}>;proposedAssignments:Array<{resourceOrRoleId:string;periodIds:string[];rationale:string}>;constraints:Array<{detail:string;state:string}>;publishedAt:string|null}
-export const countCapacityGaps=(scenario:CapacityCardScenario)=>scenario.periods.filter(p=>p.demand.base!==null&&p.supply.base!==null&&p.demand.base>p.supply.base).length;
+type Range = { knowledgeState: string; base: number | null };
+/**
+ * [ODMROZENIE 05_INITIATIVES DEC-421] P15-K5 — linia ARKUSZA: okres x rola.
+ * `null` = „Nieznane", nigdy zero (zero jest twierdzeniem, ktorego nie mamy).
+ */
+export interface CapacityRoleLine {
+  roleId: string;
+  roleLabel: string;
+  demand: number | null;
+  supply: number | null;
+  supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
+  demandSource: 'PLAN' | 'MANUAL' | 'UNKNOWN';
+}
+export interface CapacityCardScenario {
+  scenarioId: string;
+  name?: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+  scenarioVersion: number;
+  planScenarioId: string;
+  planScenarioVersion: number;
+  periods: Array<{
+    periodId: string;
+    demand: Range;
+    supply: Range;
+    roles?: CapacityRoleLine[];
+  }>;
+  proposedAssignments: Array<{ resourceOrRoleId: string; periodIds: string[]; rationale: string }>;
+  constraints: Array<{ detail: string; state: string }>;
+  publishedAt: string | null;
+}
 
-export function CapacityAnalysisCard({scenario,noPressure=false,onBack,onAnalyze,onPublish}:{scenario:CapacityCardScenario;noPressure?:boolean;onBack:()=>void;onAnalyze:()=>void;onPublish:()=>void}){
- const [section,setSection]=useState('source'); const [readMode,setReadMode]=useState(false); const title=resolveBusinessDisplayLabel({displayName:scenario.name,rawId:scenario.scenarioId,fallback:'Analiza bez nazwy'}); const gaps=countCapacityGaps(scenario); const roles=useMemo(()=>[...new Set(scenario.proposedAssignments.map(a=>a.resourceOrRoleId))],[scenario]); const box='rounded-xl border border-c-border-subtle bg-c-surface p-4';
- const content:Record<string,React.ReactNode>={
-  source:<div className={box}>Plan źródłowy · v{scenario.planScenarioVersion}</div>,
-  worksheet:scenario.periods.length?<div className={box}>{scenario.periods.map(p=><div key={p.periodId} className="grid grid-cols-3 border-b border-c-border-subtle py-2"><b>{p.periodId}</b><span>Popyt: {p.demand.base??'Nieznane'}</span><span>Podaż: {p.supply.base??'Nieznane'}</span></div>)}</div>:null,
-  pressure:<div className={box}>{gaps?`Okresy z luką: ${gaps}`:'Brak wykrytych luk'} · Role: {roles.length||'Nieznane'}</div>,
-  proposals:<div className={box}>{noPressure?'Brak przeciążeń do rozwiązania':'Uruchom „Pracuj z AI”, aby otrzymać warianty: przesuń kolejność, podziel zakres lub dołóż moce.'}</div>,
-  decisions:<div className={box}>{scenario.status==='DRAFT'?<button className="rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus" onClick={onPublish}>Opublikuj analizę</button>:`Opublikowano ${scenario.publishedAt?new Intl.DateTimeFormat('pl-PL').format(new Date(scenario.publishedAt)):'—'}`}</div>,
- };
- const sections:StandardSekcjaDef[]=CAPACITY_ANALYSIS_CARD_CONTRACT.flatMap(item=>content[item.id]?[{...item,component:content[item.id],aiContract:{none:true as const,reason:item.aiReason}}]:[]);
- const right={actions:{label:'Akcje',children:<button className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus" onClick={onBack}>Wróć do listy</button>,actionIds:['back']},properties:{label:'Właściwości',children:<ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{id:'status',label:'Status',value:scenario.status==='DRAFT'?'Szkic':scenario.status==='PUBLISHED'?'Opublikowany':'Zastąpiony'},{id:'periods',label:'Okresy',value:scenario.periods.length,mono:true},{id:'roles',label:'Role',value:roles.length,mono:true},{id:'gaps',label:'Luki',value:gaps,mono:true}]}/>},relations:{label:'Powiązania',children:<p className="text-sm">Plan źródłowy · wersja {scenario.planScenarioVersion}</p>},evidence:scenario.constraints.length?{label:'Źródła i założenia',children:<ul className="list-disc pl-4 text-sm">{scenario.constraints.map(item=><li key={item.detail}>{item.detail}</li>)}</ul>}:{pominieta:true as const,reason:'Brak zapisanych ograniczeń.'},comments:{pominieta:true as const,reason:'Brak mechanizmu komentarzy dla analizy.'},history:{label:'Historia',children:<div>Wersja {scenario.scenarioVersion}</div>}};
- return <StandardArtifactShell karta="capacity_analysis" klasa="L" header={{title,onTitleChange:()=>undefined,titleReadOnly:true,artifactType:'document' as any,artifactId:scenario.scenarioId,onSave:()=>undefined,saveState:'saved',onClose:onBack,statusLabel:scenario.status==='DRAFT'?'Szkic':scenario.status==='PUBLISHED'?'Opublikowany':'Zastąpiony',statusTone:scenario.status==='PUBLISHED'?'approved':'draft'}} primaryAction={{intentionallyNone:true,reason:'Publikacja jest w sekcji Decyzje.'}} sections={sections} rightPanel={right} activeSection={section} onSectionChange={setSection} densityMode="n" onDensityModeChange={()=>undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={section} onSectionChange={setSection} readMode={readMode} onReadModeChange={scenario.status==='DRAFT'?setReadMode:undefined} ai={{onAnalizuj:onAnalyze,analizaWToku:false,kontekstArtefaktu:{title,status:scenario.status,type:'capacity_analysis'},moznaEdytowac:scenario.status==='DRAFT'&&!readMode,uzupelnijSekcje:{rodzaj:'wlasnaPropozycja',uruchom:onAnalyze,opis:'Doradca przygotuje propozycje zmian do oceny.'},uzupelnijDokument:{rodzaj:'wlasnaPropozycja',uruchom:onAnalyze,opis:'Doradca przygotuje wariant całej analizy do oceny.'}}}/>} panelAriaLabel="Szczegóły analizy obciążenia"/>;
+export interface CapacityRoleGap {
+  periodId: string;
+  roleId: string;
+  roleLabel: string;
+  demand: number;
+  supply: number;
+  gap: number;
+}
+/** Luka liczona PER ROLA — suma po rolach chowa brak jednej roli za nadmiarem innej. */
+export const capacityRoleGaps = (scenario: CapacityCardScenario): CapacityRoleGap[] =>
+  scenario.periods.flatMap((period) =>
+    (period.roles ?? []).flatMap((role) =>
+      role.demand !== null && role.supply !== null && role.demand > role.supply
+        ? [
+            {
+              periodId: period.periodId,
+              roleId: role.roleId,
+              roleLabel: role.roleLabel,
+              demand: role.demand,
+              supply: role.supply,
+              gap: Math.round((role.supply - role.demand) * 100) / 100,
+            },
+          ]
+        : []
+    )
+  );
+export const countCapacityGaps = (scenario: CapacityCardScenario) =>
+  scenario.periods.some((period) => (period.roles ?? []).length)
+    ? capacityRoleGaps(scenario).length
+    : scenario.periods.filter(
+        (p) => p.demand.base !== null && p.supply.base !== null && p.demand.base > p.supply.base
+      ).length;
+
+const unknownText = () => i18n.t('initiatives.capacityAnalysis.unknownValue', 'Nieznane');
+const num = (value: number | null) =>
+  value === null ? unknownText() : new Intl.NumberFormat(i18n.language === 'pl' ? 'pl-PL' : 'en-US', { maximumFractionDigits: 2 }).format(value);
+const supplySourceLabel = (value: CapacityRoleLine['supplySource']) =>
+  ({
+    RESOURCE_PLAN: i18n.t('initiatives.capacityAnalysis.supplySource.resourcePlan', 'Z Zasobów'),
+    MANUAL: i18n.t('initiatives.capacityAnalysis.supplySource.manual', 'Ręcznie'),
+    UNKNOWN: i18n.t('initiatives.capacityAnalysis.supplySource.unknown', 'Nieznane'),
+  })[value];
+const demandSourceLabel = (value: CapacityRoleLine['demandSource']) =>
+  ({
+    PLAN: i18n.t('initiatives.capacityAnalysis.demandSource.plan', 'Z planu'),
+    MANUAL: i18n.t('initiatives.capacityAnalysis.demandSource.manual', 'Ręcznie'),
+    UNKNOWN: i18n.t(
+      'initiatives.capacityAnalysis.demandSource.unknown',
+      'Nieznane (brak podziału na role)'
+    ),
+  })[value];
+
+export function CapacityAnalysisCard({
+  scenario,
+  noPressure = false,
+  needsPublish = false,
+  comparisons = [],
+  planName,
+  advisorBusy = false,
+  supplyBusy = false,
+  onBack,
+  onAnalyze,
+  onPublish,
+  onSupplyOverride,
+  onSelectOption,
+}: {
+  scenario: CapacityCardScenario;
+  noPressure?: boolean;
+  /** Doradca dziala tylko na OPUBLIKOWANEJ analizie — mowimy to wprost, nie milczymy. */
+  needsPublish?: boolean;
+  comparisons?: CapacityComparison[];
+  planName?: string | null;
+  advisorBusy?: boolean;
+  supplyBusy?: boolean;
+  onBack: () => void;
+  onAnalyze: () => void;
+  onPublish: () => void;
+  onSupplyOverride?: (periodId: string, roleId: string, supply: number) => void;
+  onSelectOption?: (comparison: CapacityComparison, optionId: string) => void;
+}) {
+  const [section, setSection] = useState('source');
+  const [readMode, setReadMode] = useState(false);
+  const [draftSupply, setDraftSupply] = useState<Record<string, string>>({});
+  const title = resolveBusinessDisplayLabel({
+    displayName: scenario.name,
+    rawId: scenario.scenarioId,
+    fallback: i18n.t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy'),
+  });
+  const roleGaps = useMemo(() => capacityRoleGaps(scenario), [scenario]);
+  const gaps = useMemo(() => countCapacityGaps(scenario), [scenario]);
+  const hasSheet = scenario.periods.some((period) => (period.roles ?? []).length > 0);
+  const roles = useMemo(
+    () =>
+      hasSheet
+        ? [
+            ...new Set(
+              scenario.periods.flatMap((period) =>
+                (period.roles ?? []).filter((role) => (role.demand ?? 0) > 0).map((r) => r.roleId)
+              )
+            ),
+          ]
+        : [...new Set(scenario.proposedAssignments.map((a) => a.resourceOrRoleId))],
+    [scenario, hasSheet]
+  );
+  const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
+  const cell = 'px-3 py-2 text-sm';
+  const head = 'px-3 py-2 text-left text-xs font-medium text-c-text-muted';
+
+  const worksheet = hasSheet ? (
+    <div className={`${box} overflow-x-auto`}>
+      <p className="mb-3 text-sm text-c-text-muted">
+        {i18n.t(
+          'initiatives.capacityAnalysis.worksheetHint',
+          'Popyt pochodzi z „Obciążenia ról" opublikowanego planu, podaż ze stanowisk osób w organizacji (1 FTE = 40 h/tydzień). Podaż możesz poprawić ręcznie.'
+        )}
+      </p>
+      <table /* §27-exempt: ARKUSZ okres x rola w karcie artefaktu (siatka wartosci
+               do wpisania), nie lista encji do przegladania — StandardTable nie ma
+               modelu komorki edytowalnej per (wiersz, kolumna) */ className="w-full min-w-[720px] border-collapse">
+        <thead>
+          <tr className="border-b border-c-border-subtle">
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.period', 'Okres')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.role', 'Rola')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.gap', 'Luka')}</th>
+            <th className={head}>{i18n.t('initiatives.capacityAnalysis.columns.supplySourceShort', 'Źródło podaży')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {scenario.periods.flatMap((period) =>
+            (period.roles ?? []).map((role) => {
+              const key = `${period.periodId}|${role.roleId}`;
+              const gap =
+                role.demand === null || role.supply === null
+                  ? null
+                  : Math.round((role.supply - role.demand) * 100) / 100;
+              return (
+                <tr key={key} className="border-b border-c-border-subtle">
+                  <td className={cell}>{period.periodId}</td>
+                  <td className={cell}>{role.roleLabel}</td>
+                  <td className={cell} title={demandSourceLabel(role.demandSource)}>
+                    {num(role.demand)}
+                  </td>
+                  <td className={cell}>
+                    {onSupplyOverride && scenario.status === 'DRAFT' && !readMode ? (
+                      <input
+                        aria-label={`${i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')} ${period.periodId} ${role.roleLabel}`}
+                        className="w-20 rounded border border-c-border bg-c-surface px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                        inputMode="decimal"
+                        disabled={supplyBusy}
+                        value={draftSupply[key] ?? (role.supply === null ? '' : String(role.supply))}
+                        onChange={(event) =>
+                          setDraftSupply((current) => ({ ...current, [key]: event.target.value }))
+                        }
+                        onBlur={(event) => {
+                          const next = Number(event.target.value.replace(',', '.'));
+                          if (!Number.isFinite(next) || next < 0 || next === role.supply) return;
+                          onSupplyOverride(period.periodId, role.roleId, next);
+                        }}
+                      />
+                    ) : (
+                      num(role.supply)
+                    )}
+                  </td>
+                  <td className={cell}>
+                    {gap === null ? (
+                      unknownText()
+                    ) : gap < 0 ? (
+                      <span className="font-medium text-c-danger">{num(gap)}</span>
+                    ) : (
+                      num(gap)
+                    )}
+                  </td>
+                  <td className={`${cell} text-c-text-muted`}>
+                    {supplySourceLabel(role.supplySource)}
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  ) : scenario.periods.length ? (
+    <div className={box}>
+      <p className="mb-3 text-sm text-c-text-muted">
+        {i18n.t(
+          'initiatives.capacityAnalysis.noRoleSheet',
+          'Ta analiza powstała przed wprowadzeniem wymiaru roli. Utwórz nową analizę z opublikowanego planu, aby zobaczyć arkusz okres × rola.'
+        )}
+      </p>
+      {scenario.periods.map((p) => (
+        <div key={p.periodId} className="grid grid-cols-3 border-b border-c-border-subtle py-2">
+          <b>{p.periodId}</b>
+          <span>
+            {i18n.t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}: {num(p.demand.base)}
+          </span>
+          <span>
+            {i18n.t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}: {num(p.supply.base)}
+          </span>
+        </div>
+      ))}
+    </div>
+  ) : null;
+
+  const content: Record<string, React.ReactNode> = {
+    source: (
+      <div className={box}>
+        {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy')} · v
+        {scenario.planScenarioVersion}
+      </div>
+    ),
+    worksheet,
+    pressure: (
+      <div className={box}>
+        {roleGaps.length ? (
+          <ul className="space-y-1 text-sm">
+            {roleGaps.map((gap) => (
+              <li key={`${gap.periodId}|${gap.roleId}`}>
+                <b>{gap.roleLabel}</b> · {gap.periodId} ·{' '}
+                {i18n.t('initiatives.capacityAnalysis.gapLine', {
+                  defaultValue: 'popyt {{demand}} FTE wobec podaży {{supply}} FTE (brakuje {{gap}})',
+                  demand: num(gap.demand),
+                  supply: num(gap.supply),
+                  gap: num(Math.abs(gap.gap)),
+                })}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-c-text-muted">
+            {hasSheet
+              ? i18n.t('initiatives.capacityAnalysis.noGaps', 'Żadna rola nie jest przeciążona.')
+              : i18n.t(
+                  'initiatives.capacityAnalysis.noGapsLegacy',
+                  'Brak wykrytych luk (analiza bez wymiaru roli).'
+                )}
+          </p>
+        )}
+        <p className="mt-3 text-xs text-c-text-muted">
+          {i18n.t('initiatives.capacityAnalysis.columns.roles', 'Role')}: {roles.length || unknownText()}
+        </p>
+      </div>
+    ),
+    proposals: (
+      <div className={box}>
+        {needsPublish && (
+          <p role="status" className="mb-3 text-sm text-c-text-muted">
+            {i18n.t(
+              'initiatives.capacityAnalysis.needsPublish',
+              'Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje", potem uruchom „Pracuj z AI".'
+            )}
+          </p>
+        )}
+        {noPressure && (
+          <p role="status" className="mb-3 text-sm text-c-text-muted">
+            {i18n.t(
+              'initiatives.capacityAdvisor.noPressure',
+              'Brak przeciążeń do rozwiązania.'
+            )}
+          </p>
+        )}
+        <CapacityOptionsPanel
+          comparisons={comparisons}
+          saving={advisorBusy}
+          onSelect={(comparison, optionId) => onSelectOption?.(comparison, optionId)}
+        />
+      </div>
+    ),
+    decisions: (
+      <div className={box}>
+        {scenario.status === 'DRAFT' ? (
+          <button
+            className="rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus"
+            onClick={onPublish}
+          >
+            {i18n.t('initiatives.capacityAnalysis.publish', 'Opublikuj analizę')}
+          </button>
+        ) : (
+          `${i18n.t('initiatives.capacityAnalysis.publishedAt', 'Opublikowano')} ${scenario.publishedAt ? new Intl.DateTimeFormat('pl-PL').format(new Date(scenario.publishedAt)) : '—'}`
+        )}
+      </div>
+    ),
+  };
+  const sections: StandardSekcjaDef[] = CAPACITY_ANALYSIS_CARD_CONTRACT.flatMap((item) =>
+    content[item.id]
+      ? [{ ...item, component: content[item.id], aiContract: { none: true as const, reason: item.aiReason } }]
+      : []
+  );
+  const statusLabel =
+    scenario.status === 'DRAFT'
+      ? i18n.t('initiatives.planScenario.status.draft', 'Szkic')
+      : scenario.status === 'PUBLISHED'
+        ? i18n.t('initiatives.planScenario.status.published', 'Opublikowany')
+        : i18n.t('initiatives.planScenario.status.superseded', 'Zastąpiony');
+  const right = {
+    actions: {
+      label: i18n.t('initiatives.capacityAnalysis.panel.actions', 'Akcje'),
+      children: (
+        <button
+          className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          onClick={onBack}
+        >
+          {i18n.t('initiatives.capacityAnalysis.backToList', 'Wróć do listy')}
+        </button>
+      ),
+      actionIds: ['back'],
+    },
+    properties: {
+      label: i18n.t('initiatives.capacityAnalysis.panel.properties', 'Właściwości'),
+      children: (
+        <ArtifactPropertiesTable
+          propertyLabel={i18n.t('initiatives.capacityAnalysis.panel.property', 'Właściwość')}
+          valueLabel={i18n.t('initiatives.capacityAnalysis.panel.value', 'Wartość')}
+          rows={[
+            { id: 'status', label: i18n.t('initiatives.capacityAnalysis.panel.status', 'Status'), value: statusLabel },
+            {
+              id: 'periods',
+              label: i18n.t('initiatives.capacityAnalysis.columns.periods', 'Okresy'),
+              value: scenario.periods.length,
+              mono: true,
+            },
+            {
+              id: 'roles',
+              label: i18n.t('initiatives.capacityAnalysis.columns.roles', 'Role'),
+              value: roles.length,
+              mono: true,
+            },
+            {
+              id: 'gaps',
+              label: i18n.t('initiatives.capacityAnalysis.columns.gaps', 'Luki'),
+              value: gaps,
+              mono: true,
+            },
+          ]}
+        />
+      ),
+    },
+    relations: {
+      label: i18n.t('initiatives.capacityAnalysis.panel.relations', 'Powiązania'),
+      children: (
+        <p className="text-sm">
+          {planName ?? i18n.t('initiatives.capacityAnalysis.sourcePlanFallback', 'Plan źródłowy')} ·{' '}
+          {i18n.t('initiatives.capacityAnalysis.version', 'wersja')} {scenario.planScenarioVersion}
+        </p>
+      ),
+    },
+    evidence: scenario.constraints.length
+      ? {
+          label: i18n.t('initiatives.capacityAnalysis.panel.evidence', 'Źródła i założenia'),
+          children: (
+            <ul className="list-disc pl-4 text-sm">
+              {scenario.constraints.map((item) => (
+                <li key={item.detail}>{item.detail}</li>
+              ))}
+            </ul>
+          ),
+        }
+      : {
+          pominieta: true as const,
+          reason: i18n.t('initiatives.capacityAnalysis.noConstraints', 'Brak zapisanych ograniczeń.'),
+        },
+    comments: {
+      pominieta: true as const,
+      reason: i18n.t(
+        'initiatives.capacityAnalysis.noComments',
+        'Brak mechanizmu komentarzy dla analizy.'
+      ),
+    },
+    history: {
+      label: i18n.t('initiatives.capacityAnalysis.panel.history', 'Historia'),
+      children: (
+        <div>
+          {i18n.t('initiatives.capacityAnalysis.version', 'wersja')} {scenario.scenarioVersion}
+        </div>
+      ),
+    },
+  };
+  return (
+    <StandardArtifactShell
+      karta="capacity_analysis"
+      klasa="L"
+      header={{
+        title,
+        onTitleChange: () => undefined,
+        titleReadOnly: true,
+        artifactType: 'document' as any,
+        artifactId: scenario.scenarioId,
+        onSave: () => undefined,
+        saveState: supplyBusy ? 'saving' : 'saved',
+        onClose: onBack,
+        statusLabel,
+        statusTone: scenario.status === 'PUBLISHED' ? 'approved' : 'draft',
+      }}
+      primaryAction={{
+        intentionallyNone: true,
+        reason: i18n.t(
+          'initiatives.capacityAnalysis.primaryNone',
+          'Publikacja jest w sekcji Decyzje.'
+        ),
+      }}
+      sections={sections}
+      rightPanel={right}
+      activeSection={section}
+      onSectionChange={setSection}
+      densityMode="n"
+      onDensityModeChange={() => undefined}
+      toolbar={
+        <DocumentCardMenu5
+          sections={sections}
+          activeSection={section}
+          onSectionChange={setSection}
+          readMode={readMode}
+          onReadModeChange={scenario.status === 'DRAFT' ? setReadMode : undefined}
+          ai={{
+            onAnalizuj: onAnalyze,
+            analizaWToku: advisorBusy,
+            kontekstArtefaktu: { title, status: scenario.status, type: 'capacity_analysis' },
+            moznaEdytowac: scenario.status === 'DRAFT' && !readMode,
+            uzupelnijSekcje: {
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: onAnalyze,
+              opis: i18n.t(
+                'initiatives.capacityAnalysis.aiSection',
+                'Doradca przygotuje propozycje zmian do oceny.'
+              ),
+            },
+            uzupelnijDokument: {
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: onAnalyze,
+              opis: i18n.t(
+                'initiatives.capacityAnalysis.aiDocument',
+                'Doradca przygotuje wariant całej analizy do oceny.'
+              ),
+            },
+          }}
+        />
+      }
+      panelAriaLabel={i18n.t('initiatives.capacityAnalysis.panelAria', 'Szczegóły analizy obciążenia')}
+    />
+  );
 }

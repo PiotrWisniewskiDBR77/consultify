@@ -12,6 +12,8 @@ import {
   type GeneratorProposalRow,
   type PlanGenerationMode,
 } from '../Generator/GeneratorPlanuModal';
+// P15-K5 (DEC-421): edytor popytu per rola — jedyny dotyk PlanCard w tym kroku.
+import { PlanRoleDemandEditor } from './PlanRoleDemandEditor';
 
 export interface PlanCardScenario { scenarioId: string; name?: string|null; status: 'DRAFT'|'PUBLISHED'|'SUPERSEDED'; scenarioVersion:number; portfolioScenarioId:string; portfolioScenarioVersion:number; windowUnit:string; timezone:string; periods:Array<{periodId:string;start:string;end:string}>; windows:Array<{initiativeId:string;target:string|null;rationale:string;dependencySnapshot:string[];constraintSnapshot:Array<{detail:string}>}>; assumptions:string[]; updatedBy:string; publishedBy:string|null; publishedAt:string|null }
 
@@ -39,7 +41,7 @@ export function PlanCard({ scenario, initiatives, plannable, proposal, proposalR
     scope: scenario.windows.length ? <div className={box}>{scenario.windows.map(w=><p key={w.initiativeId}>{names.get(w.initiativeId)??w.initiativeId} · {formatPolishDate(w.target)}</p>)}</div> : <div className={box}><p className="text-sm text-c-text-muted">Plan nie ma jeszcze żadnej inicjatywy w zakresie. Wybierz je w generatorze.</p></div>,
     windows: scenario.windows.length ? <div className={box}>{scenario.windows.map((w,index)=><div key={w.initiativeId} className="border-b border-c-border-subtle py-2"><b>{index+1}. {names.get(w.initiativeId)??'Inicjatywa'}</b><p>{formatPolishDate(w.target)} · {w.rationale}</p></div>)}</div> : null,
     dependencies: proposal?.conflicts.length ? <div className={box}>{proposal.conflicts.map(c=><p key={c}>{c}</p>)}</div> : null,
-    capacity: capacityConstraints.length ? <div className={box}><ul>{capacityConstraints.map((detail)=><li key={detail}>{detail}</li>)}</ul></div> : null,
+    capacity: <div className={box}>{capacityConstraints.length?<ul className="mb-3 list-disc pl-4 text-sm text-c-text-muted">{capacityConstraints.map((detail)=><li key={detail}>{detail}</li>)}</ul>:null}<PlanRoleDemandEditor scenarioId={scenario.scenarioId} initiativeNames={names} /></div>,
     decisions: <div className={box}><p>{scenario.publishedAt?`Opublikowano ${formatPolishDate(scenario.publishedAt)}`:'Plan pozostaje szkicem.'}</p>{savedLabel&&<p className="text-sm text-c-text-muted" role="status">{savedLabel}</p>}{scenario.status==='DRAFT'&&<button className="mt-2 rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus" onClick={onPublish}>Opublikuj plan</button>}</div>,
   };
   const sections: StandardSekcjaDef[] = PLAN_CARD_CONTRACT.flatMap((item) => content[item.id] ? [{...item, component:content[item.id], aiContract:{none:true as const,reason:item.aiReason}}] : []);

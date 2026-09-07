@@ -20,12 +20,44 @@ export interface CapacityRange {
   ownerId: string;
   reason: string | null;
 }
+/**
+ * P15-K5 (DEC-421, §4.2 pkt 1): WYMIAR ROLI w mocy. Do K4 `periods[].demand/.supply`
+ * były skalarami na okres, więc „arkusz okres × rola" nie istniał w modelu, a luka
+ * jednej roli chowała się w sumie (pomiar 07.09: 12 luk przy 5 zaplanowanych
+ * tygodniach). Linie ról są DODATKIEM: skalary zostają i są SUMĄ linii, dzięki
+ * czemu `planSolver` i `capacityOptionsAdvisor` liczą jak przedtem, a analizy
+ * sprzed K5 (bez `roles`) walidują się bez zmian.
+ *
+ * `null` znaczy „Nieznane", NIGDY zero — zero to twierdzenie o braku popytu/podaży.
+ */
+export type RoleSupplySource = 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
+export type RoleDemandSource = 'PLAN' | 'MANUAL' | 'UNKNOWN';
+export interface CapacityRoleLine {
+  roleId: string;
+  roleLabel: string;
+  demand: number | null;
+  supply: number | null;
+  supplySource: RoleSupplySource;
+  demandSource: RoleDemandSource;
+}
 export interface CapacityPeriod {
   periodId: string;
   start: string;
   end: string;
   demand: CapacityRange;
   supply: CapacityRange;
+  roles?: CapacityRoleLine[];
+}
+
+/** Suma linii ról: `total` liczy tylko znane wartości, `known` mówi czy jakakolwiek była. */
+export function sumRoleLines(
+  roles: CapacityRoleLine[] | undefined,
+  field: 'demand' | 'supply'
+): { total: number | null; contributing: CapacityRoleLine[] } {
+  const contributing = (roles ?? []).filter((role) => role[field] !== null);
+  if (!contributing.length) return { total: null, contributing: [] };
+  const total = contributing.reduce((sum, role) => sum + (role[field] as number), 0);
+  return { total: Math.round(total * 1000) / 1000, contributing };
 }
 export interface ProposedAssignment {
   assignmentId: string;
@@ -71,6 +103,44 @@ function range(r: CapacityRange) {
   if (!r.sourceRef || !r.sourceVersion)
     throw new MaterialCommandValidationError('Known capacity range requires versioned source');
 }
+/**
+ * Linie ról muszą być spójne z okresem: unikalna rola, wartości ≥ 0, a skalar okresu
+ * = SUMA znanych linii. Bez tej reguły ręczna korekta w arkuszu mogłaby zapisać
+ * podaż roli, której nie widzi ani solver, ani doradca (skalary są ich wejściem).
+ */
+function roleLines(period: CapacityPeriod) {
+  if (!period.roles) return;
+  const seen = new Set<string>();
+  for (const role of period.roles) {
+    if (!role.roleId.trim() || !role.roleLabel.trim())
+      throw new MaterialCommandValidationError('Capacity role line requires role identity');
+    if (seen.has(role.roleId))
+      throw new MaterialCommandValidationError('Capacity role must be unique within a period');
+    seen.add(role.roleId);
+    for (const field of ['demand', 'supply'] as const) {
+      const value = role[field];
+      if (value !== null && (!Number.isFinite(value) || value < 0))
+        throw new MaterialCommandValidationError('Capacity role value must be zero or greater');
+    }
+    if (role.demand === null && role.demandSource !== 'UNKNOWN')
+      throw new MaterialCommandValidationError('Unknown role demand must declare UNKNOWN source');
+    if (role.supply === null && role.supplySource !== 'UNKNOWN')
+      throw new MaterialCommandValidationError('Unknown role supply must declare UNKNOWN source');
+  }
+  for (const field of ['demand', 'supply'] as const) {
+    const { total } = sumRoleLines(period.roles, field);
+    const scalar = period[field].base;
+    if (total === null) {
+      if (scalar !== null)
+        throw new MaterialCommandValidationError(
+          'Period scalar must stay UNKNOWN when no role line is known'
+        );
+      continue;
+    }
+    if (scalar === null || Math.abs(scalar - total) > 0.001)
+      throw new MaterialCommandValidationError('Period scalar must equal the sum of role lines');
+  }
+}
 export function validateCapacityScenario(s: CapacityScenario) {
   if (
     !s.windowUnit.trim() ||
@@ -94,6 +164,7 @@ export function validateCapacityScenario(s: CapacityScenario) {
     previousEnd = p.end;
     range(p.demand);
     range(p.supply);
+    roleLines(p);
   }
   for (const a of s.proposedAssignments) {
     if (!a.rationale.trim() || a.periodIds.some((p) => !periodIds.has(p)))

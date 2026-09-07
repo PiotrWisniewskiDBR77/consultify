@@ -1,0 +1,10 @@
+{
+  "nazwa": "04-propozycje-przed-ai",
+  "opis": "Karta analizy: Propozycje zmian przed uruchomieniem doradcy",
+  "faza": "przed",
+  "url": "http://localhost:3180/initiatives?tab=capacity",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:35:09.499Z"
+}
