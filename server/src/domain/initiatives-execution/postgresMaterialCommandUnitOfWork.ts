@@ -16,7 +16,11 @@ import {
   categorizeScore,
   DEFAULT_THRESHOLDS,
 } from '../../services/raidScoringService.js';
-import { MaterialCommandConflictError, MaterialCommandValidationError } from './materialCommand.js';
+import {
+  MaterialCommandConflictError,
+  MaterialCommandRuleError,
+  MaterialCommandValidationError,
+} from './materialCommand.js';
 
 interface QueryResultRowCount {
   rowCount: number | null;
@@ -24,6 +28,20 @@ interface QueryResultRowCount {
 
 function requireSingleRow(result: QueryResultRowCount, operation: string): void {
   if (result.rowCount !== 1) throw new Error(`${operation} affected ${result.rowCount ?? 0} rows`);
+}
+
+/**
+ * Kod reguly dla duplikatu relacji (P15-K1, DEC-421).
+ *
+ * Nazwa relacji jest teraz STALA (tozsamosc i wersja zrodla siedza w kolumnach
+ * source_id / source_version — migracja 20262107), wiec da sie z niej wprost
+ * wyprowadzic regule, ktora zobaczy uzytkownik.
+ */
+function relationDuplicateRule(relationType: string): string {
+  if (relationType.startsWith('PLAN_SCENARIO_')) return 'PLAN_SCENARIO_DUPLICATE';
+  if (relationType.startsWith('PORTFOLIO_SCENARIO_')) return 'PORTFOLIO_SCENARIO_DUPLICATE';
+  if (relationType.startsWith('CAPACITY_SCENARIO_')) return 'CAPACITY_SCENARIO_DUPLICATE';
+  return 'RELATION_ALREADY_CLAIMED';
 }
 
 class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
@@ -598,22 +616,35 @@ class PostgresMaterialCommandTransaction implements MaterialCommandTransaction {
   }
 
   async claimRelation(claim: AggregateRelationClaim): Promise<void> {
-    const result = await this.client.query(
-      `INSERT INTO ie_aggregate_relations
+    let result: QueryResultRowCount;
+    try {
+      result = await this.client.query(
+        `INSERT INTO ie_aggregate_relations
         (organization_id, relation_type, source_type, source_id, source_version,
          target_type, target_id, payload_json)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb)`,
-      [
-        claim.organizationId,
-        claim.relationType,
-        claim.sourceType,
-        claim.sourceId,
-        claim.sourceVersion,
-        claim.targetType,
-        claim.targetId,
-        JSON.stringify(claim.payload),
-      ]
-    );
+        [
+          claim.organizationId,
+          claim.relationType,
+          claim.sourceType,
+          claim.sourceId,
+          claim.sourceVersion,
+          claim.targetType,
+          claim.targetId,
+          JSON.stringify(claim.payload),
+        ]
+      );
+    } catch (error) {
+      // P15-K1 (DEC-421): naruszenie unikalnosci relacji to reguła domenowa,
+      // nie awaria serwera. Bez tego mapowania `23505` wychodzil na zewnatrz
+      // jako HTTP 500 INITIATIVES_EXECUTION_RUNTIME_FAILED bez przyczyny.
+      if ((error as { code?: unknown } | null)?.code !== '23505') throw error;
+      throw new MaterialCommandRuleError(
+        relationDuplicateRule(claim.relationType),
+        409,
+        `relation ${claim.relationType} already claimed for ${claim.targetType}:${claim.targetId}`
+      );
+    }
     requireSingleRow(result, 'relation claim');
   }
 

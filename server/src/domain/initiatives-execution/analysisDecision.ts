@@ -142,7 +142,7 @@ export async function requestAnalysisDecision(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_ANALYSIS_DECISION:${decision.decisionId}`,
+      relationType: 'INITIATIVE_ANALYSIS_DECISION',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,

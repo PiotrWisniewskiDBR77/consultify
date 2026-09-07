@@ -291,7 +291,7 @@ export async function transitionEffectiveness(
       );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `INITIATIVE_EFFECTIVENESS_SNAPSHOT:${p.snapshotId}`,
+        relationType: 'INITIATIVE_EFFECTIVENESS_SNAPSHOT',
         sourceType: 'initiative',
         sourceId: c.initiativeId,
         sourceVersion: initiative.version + 1,
@@ -435,7 +435,7 @@ export async function closeEffectiveInitiative(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `EFFECTIVENESS_CLOSURE:${snap.snapshotId}`,
+      relationType: 'EFFECTIVENESS_CLOSURE',
       sourceType: 'effectiveness_case',
       sourceId: c.effectivenessCaseId,
       sourceVersion: envelope.expectedVersion + 1,
@@ -524,7 +524,7 @@ export async function archiveClosedInitiative(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_ARCHIVE:${manifest.archiveId}`,
+      relationType: 'INITIATIVE_ARCHIVE',
       sourceType: 'closure_snapshot',
       sourceId: p.closureSnapshotRef.snapshotId,
       sourceVersion: p.closureSnapshotRef.version,

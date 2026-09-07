@@ -310,7 +310,7 @@ export async function draftInterventionCase(
     for (const r of p.signalRefs)
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `INTERVENTION_SIGNAL:${r.signalId}`,
+        relationType: 'INTERVENTION_SIGNAL',
         sourceType: 'management_signal',
         sourceId: r.signalId,
         sourceVersion: r.signalVersion,
@@ -505,7 +505,7 @@ export async function transitionInterventionCase(
         };
         await tx.claimRelation({
           organizationId: envelope.organizationId,
-          relationType: `PLAN_INTERVENTION:${c.interventionId}`,
+          relationType: 'PLAN_INTERVENTION',
           sourceType: 'plan_scenario',
           sourceId: p.planChange.planScenarioId,
           sourceVersion: p.planChange.newVersion,

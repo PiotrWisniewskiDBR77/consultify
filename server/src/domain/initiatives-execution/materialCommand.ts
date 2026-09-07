@@ -310,6 +310,23 @@ export interface PreparedMaterialChange<TMutation, TResponse> {
 }
 
 export class MaterialCommandValidationError extends Error {}
+/**
+ * Naruszenie NAZWANEJ reguly domenowej (P15-K1, DEC-421).
+ *
+ * POWOD: przed ta paczka naruszenie unikalnosci relacji wracalo do uzytkownika
+ * jako HTTP 500 `INITIATIVES_EXECUTION_RUNTIME_FAILED` bez slowa o przyczynie.
+ * Blad domeny musi niesc kod reguly, zeby trasa mogla zwrocic 409/400, a ekran
+ * pokazac zdanie po polsku zamiast „Operacja nie powiodla sie".
+ */
+export class MaterialCommandRuleError extends Error {
+  constructor(
+    readonly rule: string,
+    readonly httpStatus: 400 | 409,
+    message?: string
+  ) {
+    super(message ?? rule);
+  }
+}
 export class MaterialCommandConflictError extends Error {
   constructor(
     message: string,

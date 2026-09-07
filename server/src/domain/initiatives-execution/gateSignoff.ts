@@ -184,7 +184,7 @@ export async function submitGateSignoff(
     );
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `GATE_SIGNOFF:${envelope.aggregateId}`,
+      relationType: 'GATE_SIGNOFF',
       sourceType: 'gate_signoff',
       sourceId: envelope.aggregateId,
       sourceVersion: 1,

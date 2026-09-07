@@ -135,7 +135,7 @@ export async function requestHandoffAcceptance(
     await tx.persistRelatedAggregate(envelope.organizationId, 'decision', d.decisionId, 0, 1, d);
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_HANDOFF_ACCEPTANCE:${d.decisionId}`,
+      relationType: 'INITIATIVE_HANDOFF_ACCEPTANCE',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,

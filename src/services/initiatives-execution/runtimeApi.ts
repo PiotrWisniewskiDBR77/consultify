@@ -89,7 +89,7 @@ async function executionWorkWrite(path: string, method: string, command: Record<
     body: JSON.stringify(command),
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readExecutionWork(caseId: string, signal?: AbortSignal) {
@@ -98,7 +98,7 @@ export async function readExecutionWork(caseId: string, signal?: AbortSignal) {
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export function createExecutionMilestone(caseId: string, milestoneId: string, command: unknown) {
@@ -114,7 +114,7 @@ export async function readExecutionMilestones(caseId: string) {
     { credentials: 'include' }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listMyExecutionWork(signal?: AbortSignal) {
@@ -123,7 +123,7 @@ export async function listMyExecutionWork(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listCapacityScenarioRegister(signal?: AbortSignal) {
@@ -132,7 +132,7 @@ export async function listCapacityScenarioRegister(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function requestHandoffAcceptance(
@@ -149,7 +149,7 @@ export async function requestHandoffAcceptance(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function decideHandoffAcceptance(
@@ -166,7 +166,7 @@ export async function decideHandoffAcceptance(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listMyHandoffAcceptances(signal?: AbortSignal) {
@@ -175,7 +175,7 @@ export async function listMyHandoffAcceptances(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listExecutionCases(signal?: AbortSignal) {
@@ -184,7 +184,7 @@ export async function listExecutionCases(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readExecutionCase(id: string, signal?: AbortSignal) {
@@ -193,7 +193,7 @@ export async function readExecutionCase(id: string, signal?: AbortSignal) {
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readExecutionCaseByInitiative(id: string, signal?: AbortSignal) {
@@ -202,7 +202,7 @@ export async function readExecutionCaseByInitiative(id: string, signal?: AbortSi
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 
@@ -220,7 +220,7 @@ export async function requestScheduleDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function decideScheduleDecision(
@@ -237,7 +237,7 @@ export async function decideScheduleDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listMyScheduleDecisions(signal?: AbortSignal) {
@@ -246,7 +246,7 @@ export async function listMyScheduleDecisions(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readHandoffPackage(id: string, signal?: AbortSignal) {
@@ -255,7 +255,7 @@ export async function readHandoffPackage(id: string, signal?: AbortSignal) {
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 
@@ -490,7 +490,7 @@ export async function submitSourceProposal(submission: SourceProposalSubmission)
     body: JSON.stringify(submission),
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -501,7 +501,13 @@ export async function submitSourceProposal(submission: SourceProposalSubmission)
 export class RuntimeApiError extends Error {
   constructor(
     readonly status: number,
-    readonly code: string
+    readonly code: string,
+    /**
+     * P15-K1 (DEC-421): kod NAZWANEJ reguly domenowej z odpowiedzi serwera.
+     * Bez niego ekran mial tylko „Operacja nie powiodla sie" — uzytkownik nie
+     * wiedzial, czy plan sie powtorzyl, czy portfel jest w innej wersji.
+     */
+    readonly rule?: string
   ) {
     super(code);
   }
@@ -522,6 +528,16 @@ function errorCode(body: unknown): string {
   return String((error as { code?: unknown }).code || 'UNKNOWN_ERROR');
 }
 
+function errorRule(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') return undefined;
+  const direct = (body as { rule?: unknown }).rule;
+  if (typeof direct === 'string' && direct) return direct;
+  const error = (body as { error?: unknown }).error;
+  if (!error || typeof error !== 'object') return undefined;
+  const nested = (error as { rule?: unknown }).rule;
+  return typeof nested === 'string' && nested ? nested : undefined;
+}
+
 export async function registerSourceProposal(
   registration: SourceProposalRegistration,
   signal?: AbortSignal
@@ -534,7 +550,7 @@ export async function registerSourceProposal(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const result = body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -556,7 +572,7 @@ export async function readAnalysisReadiness(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as AnalysisReadinessReadModel;
 }
 
@@ -574,7 +590,7 @@ export async function startInitiativeAnalysis(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -598,7 +614,7 @@ export async function requestAnalysisDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -627,7 +643,7 @@ export async function decideAnalysis(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -639,7 +655,7 @@ export async function listMyAnalysisDecisions(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const decisions = (body as { decisions?: unknown })?.decisions;
   return Array.isArray(decisions) ? (decisions as PendingAnalysisDecisionReadModel[]) : [];
 }
@@ -655,7 +671,7 @@ export async function writePortfolioScenario(scenarioId: string, command: Record
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPortfolioScenario(scenarioId: string, signal?: AbortSignal) {
@@ -664,7 +680,7 @@ export async function readPortfolioScenario(scenarioId: string, signal?: AbortSi
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPortfolioScenarioHistory(scenarioId: string, signal?: AbortSignal) {
@@ -673,7 +689,7 @@ export async function readPortfolioScenarioHistory(scenarioId: string, signal?: 
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPortfolioScenarioDiff(
@@ -687,7 +703,7 @@ export async function readPortfolioScenarioDiff(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function requestPortfolioDecision(
@@ -704,7 +720,7 @@ export async function requestPortfolioDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export interface PortfolioDecisionReadModel {
@@ -737,7 +753,7 @@ export async function readPortfolioDecision(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as PortfolioDecisionReadModel;
 }
 export async function decidePortfolioDecision(
@@ -754,7 +770,7 @@ export async function decidePortfolioDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listMyPortfolioDecisions(signal?: AbortSignal) {
@@ -763,7 +779,7 @@ export async function listMyPortfolioDecisions(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function writePlanScenario(scenarioId: string, command: Record<string, unknown>) {
@@ -777,7 +793,7 @@ export async function writePlanScenario(scenarioId: string, command: Record<stri
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listPlanScenarioRegister(signal?: AbortSignal) {
@@ -786,7 +802,7 @@ export async function listPlanScenarioRegister(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPlanScenario(scenarioId: string, signal?: AbortSignal) {
@@ -795,7 +811,7 @@ export async function readPlanScenario(scenarioId: string, signal?: AbortSignal)
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPlanScenarioHistory(scenarioId: string, signal?: AbortSignal) {
@@ -804,7 +820,7 @@ export async function readPlanScenarioHistory(scenarioId: string, signal?: Abort
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readPlanScenarioDiff(
@@ -818,7 +834,7 @@ export async function readPlanScenarioDiff(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function listPortfolioScenarioRegister(signal?: AbortSignal) {
@@ -827,7 +843,7 @@ export async function listPortfolioScenarioRegister(signal?: AbortSignal) {
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function writeCapacityScenario(id: string, command: Record<string, unknown>) {
@@ -841,7 +857,7 @@ export async function writeCapacityScenario(id: string, command: Record<string, 
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readCapacityScenario(id: string, signal?: AbortSignal) {
@@ -850,7 +866,7 @@ export async function readCapacityScenario(id: string, signal?: AbortSignal) {
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function readCapacityScenarioHistory(id: string, signal?: AbortSignal) {
@@ -859,7 +875,7 @@ export async function readCapacityScenarioHistory(id: string, signal?: AbortSign
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function requestResourceCommitment(id: string, command: Record<string, unknown>) {
@@ -873,7 +889,7 @@ export async function requestResourceCommitment(id: string, command: Record<stri
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function acceptResourceCommitment(id: string, command: Record<string, unknown>) {
@@ -887,7 +903,7 @@ export async function acceptResourceCommitment(id: string, command: Record<strin
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 export async function decideResourceCommitment(id: string, command: Record<string, unknown>) {
@@ -901,7 +917,7 @@ export async function decideResourceCommitment(id: string, command: Record<strin
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 
@@ -913,7 +929,7 @@ export async function listSourceProposals(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const proposals = (body as { proposals?: unknown })?.proposals;
   return Array.isArray(proposals) ? (proposals as SourceProposalReadModel[]) : [];
 }
@@ -927,7 +943,7 @@ export async function readSourceProposal(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return (body as { proposal: SourceProposalReadModel }).proposal;
 }
 
@@ -947,7 +963,7 @@ export async function decideSourceProposal(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const result = body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
   return result;
 }
@@ -961,7 +977,7 @@ export async function readRegisteredInitiative(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as RegisteredInitiativeReadModel;
 }
 
@@ -986,7 +1002,7 @@ export async function amendRegisteredInitiative(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -1008,7 +1024,7 @@ export async function cancelRegisteredInitiative(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -1061,7 +1077,7 @@ export async function listRegisteredInitiatives(
       { credentials: 'include', signal }
     );
     const body = await readJson(response);
-    if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+    if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
     return body as { initiatives: RegisteredInitiativeReadModel[]; nextCursor: string | null };
   };
 
@@ -1162,7 +1178,7 @@ export interface LegacyInitiativeApiRow {
 export async function listLegacyInitiatives(signal?: AbortSignal): Promise<LegacyInitiativeApiRow[]> {
   const response = await fetch('/api/initiatives', { credentials: 'include', signal });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return Array.isArray(body) ? (body as LegacyInitiativeApiRow[]) : [];
 }
 
@@ -1175,7 +1191,7 @@ export async function readInitiativeCards(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { initiativeVersion: number; cards: InitiativeCardVersionReadModel[] };
 }
 
@@ -1200,7 +1216,7 @@ export async function readInitiativeCardSelection(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as {
     initiativeVersion: number;
     registryVersion: 1;
@@ -1229,7 +1245,7 @@ export async function configureInitiativeCardSelection(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -1242,7 +1258,7 @@ export async function readDefinitionReadiness(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as DefinitionReadinessReadModel;
 }
 
@@ -1265,7 +1281,7 @@ export async function refreshInitiativeSource(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -1278,7 +1294,7 @@ export async function readInitiativeCapabilities(
     { credentials: 'include', signal }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as InitiativeCapabilitiesReadModel;
 }
 
@@ -1305,7 +1321,7 @@ export async function reviewInitiativeCard(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const result = body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -1338,7 +1354,7 @@ export async function requestDefinitionDecision(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -1350,7 +1366,7 @@ export async function listMyDefinitionDecisions(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const decisions = (body as { decisions?: unknown })?.decisions;
   return Array.isArray(decisions) ? (decisions as PendingDefinitionDecisionReadModel[]) : [];
 }
@@ -1390,7 +1406,7 @@ export async function createDefinitionRemediationWork(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -1406,7 +1422,7 @@ export async function listMyDefinitionRemediation(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const items = (body as { items?: unknown })?.items;
   return Array.isArray(items) ? (items as PendingDefinitionRemediationReadModel[]) : [];
 }
@@ -1439,7 +1455,7 @@ export async function resolveDefinitionRemediation(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -1468,7 +1484,7 @@ export async function decideDefinition(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body as { status: 'APPLIED' | 'REPLAYED'; aggregateVersion: number };
 }
 
@@ -1489,7 +1505,7 @@ export async function publishInitiativeCard(
     }
   );
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   const result = body as {
     status: 'APPLIED' | 'REPLAYED';
     aggregateVersion: number;
@@ -1516,7 +1532,7 @@ async function allocationRequest(
     signal,
   });
   const body = await readJson(response);
-  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body));
+  if (!response.ok) throw new RuntimeApiError(response.status, errorCode(body), errorRule(body));
   return body;
 }
 

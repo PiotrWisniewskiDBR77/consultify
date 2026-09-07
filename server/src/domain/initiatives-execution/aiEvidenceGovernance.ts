@@ -184,7 +184,7 @@ export async function reviewAIAnalysisProposal(
       );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `AI_TRUTH_CARD:${p.proposalId}`,
+        relationType: 'AI_TRUTH_CARD',
         sourceType: 'ai_analysis_proposal',
         sourceId: p.proposalId,
         sourceVersion: envelope.expectedVersion + 1,

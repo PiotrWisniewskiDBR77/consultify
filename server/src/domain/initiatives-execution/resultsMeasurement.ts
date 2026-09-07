@@ -165,7 +165,7 @@ export async function createResultsKpiObservation(
     const item = { ...p, observationId: envelope.aggregateId, createdAt: new Date().toISOString() };
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `RESULTS_OBSERVATION:${item.observationId}`,
+      relationType: 'RESULTS_OBSERVATION',
       sourceType: 'results_acceptance',
       sourceId: p.resultsCaseRef.resultsCaseId,
       sourceVersion: p.resultsCaseRef.version,

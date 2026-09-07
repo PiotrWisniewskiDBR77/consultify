@@ -242,7 +242,7 @@ export async function requestScheduleDecision(
     await tx.persistRelatedAggregate(envelope.organizationId, 'decision', d.decisionId, 0, 1, d);
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `INITIATIVE_SCHEDULE_DECISION:${d.decisionId}`,
+      relationType: 'INITIATIVE_SCHEDULE_DECISION',
       sourceType: 'initiative',
       sourceId: envelope.aggregateId,
       sourceVersion: envelope.expectedVersion,
@@ -379,7 +379,7 @@ export async function decideSchedule(
       );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `INITIATIVE_HANDOFF_PACKAGE:${handoffPackageId}`,
+        relationType: 'INITIATIVE_HANDOFF_PACKAGE',
         sourceType: 'initiative',
         sourceId: envelope.aggregateId,
         sourceVersion: envelope.expectedVersion,

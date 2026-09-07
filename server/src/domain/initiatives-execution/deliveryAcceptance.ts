@@ -249,7 +249,7 @@ export async function decideDeliveryAcceptance(
       );
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `DELIVERY_BENEFITS_PACK:${pack.packId}`,
+        relationType: 'DELIVERY_BENEFITS_PACK',
         sourceType: 'delivery_acceptance',
         sourceId: d.decisionId,
         sourceVersion: envelope.expectedVersion + 1,

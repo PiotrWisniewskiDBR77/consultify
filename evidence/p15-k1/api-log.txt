@@ -1,0 +1,46 @@
+# P15-K1 dowod na zywo — wlasne API :4151, baza consultify_p15k1
+# data: 2026-09-07T17:15:24.796Z
+
+POST http://127.0.0.1:4151/api/initiatives/runtime-v1/plan-scenarios/plan-p15k1-live-a
+HTTP 201
+{"status":"APPLIED","aggregateVersion":1,"response":{"scenarioId":"plan-p15k1-live-a","name":"Plan plan-p15k1-live-a","scenarioVersion":1,"status":"DRAFT","portfolioScenarioId":"portfolio-p15k1-live","portfolioScenarioVersion":1,"windowUnit":"WEEK","timezone":"Europe/Warsaw","periods":[{"periodId":"T1","start":"2026-09-07T00:00:00.000Z","end":"2026-09-14T00:00:00.000Z"}],"windows":[{"initiativeId"
+
+POST http://127.0.0.1:4151/api/initiatives/runtime-v1/plan-scenarios/plan-p15k1-live-b
+HTTP 201
+{"status":"APPLIED","aggregateVersion":1,"response":{"scenarioId":"plan-p15k1-live-b","name":"Plan plan-p15k1-live-b","scenarioVersion":1,"status":"DRAFT","portfolioScenarioId":"portfolio-p15k1-live","portfolioScenarioVersion":1,"windowUnit":"WEEK","timezone":"Europe/Warsaw","periods":[{"periodId":"T1","start":"2026-09-07T00:00:00.000Z","end":"2026-09-14T00:00:00.000Z"}],"windows":[{"initiativeId"
+
+POST .../plan-p15k1-live-c (wersja portfela 99 — para negatywna)
+HTTP 400
+{"error":{"code":"PORTFOLIO_VERSION_MISMATCH","rule":"PORTFOLIO_VERSION_MISMATCH"},"code":"PORTFOLIO_VERSION_MISMATCH","rule":"PORTFOLIO_VERSION_MISMATCH"}
+
+# --- to samo przez curl (dwa NOWE plany na tej samej wersji portfela) ---
+
+curl -X POST http://127.0.0.1:4151/api/initiatives/runtime-v1/plan-scenarios/plan-p15k1-curl-a
+HTTP 201
+{"status":"APPLIED","aggregateVersion":1,"response":{"scenarioId":"plan-p15k1-curl-a","name":"Plan plan-p15k1-curl-a","scenarioVersion":1,"status":"DRAFT","portfolioScenarioId":"portfolio-p15k1-live","portfolioScenarioVe
+
+curl -X POST http://127.0.0.1:4151/api/initiatives/runtime-v1/plan-scenarios/plan-p15k1-curl-b
+HTTP 201
+{"status":"APPLIED","aggregateVersion":1,"response":{"scenarioId":"plan-p15k1-curl-b","name":"Plan plan-p15k1-curl-b","scenarioVersion":1,"status":"DRAFT","portfolioScenarioId":"portfolio-p15k1-live","portfolioScenarioVe
+
+# --- relacje zapisane przez 4 plany na TEJ SAMEJ wersji portfela ---
+PLAN_SCENARIO_MEMBER  plan-p15k1-curl-a  v1  initiative:init-p15k1-live-1
+PLAN_SCENARIO_MEMBER  plan-p15k1-curl-a  v1  initiative:init-p15k1-live-2
+PLAN_SCENARIO_PORTFOLIO  plan-p15k1-curl-a  v1  portfolio_scenario_version:portfolio-p15k1-live:v1
+PLAN_SCENARIO_MEMBER  plan-p15k1-curl-b  v1  initiative:init-p15k1-live-1
+PLAN_SCENARIO_MEMBER  plan-p15k1-curl-b  v1  initiative:init-p15k1-live-2
+PLAN_SCENARIO_PORTFOLIO  plan-p15k1-curl-b  v1  portfolio_scenario_version:portfolio-p15k1-live:v1
+PLAN_SCENARIO_MEMBER  plan-p15k1-live-a  v1  initiative:init-p15k1-live-1
+PLAN_SCENARIO_MEMBER  plan-p15k1-live-a  v1  initiative:init-p15k1-live-2
+PLAN_SCENARIO_PORTFOLIO  plan-p15k1-live-a  v1  portfolio_scenario_version:portfolio-p15k1-live:v1
+PLAN_SCENARIO_MEMBER  plan-p15k1-live-b  v1  initiative:init-p15k1-live-1
+PLAN_SCENARIO_MEMBER  plan-p15k1-live-b  v1  initiative:init-p15k1-live-2
+PLAN_SCENARIO_PORTFOLIO  plan-p15k1-live-b  v1  portfolio_scenario_version:portfolio-p15k1-live:v1
+# razem wierszy: 12
+
+# --- lancuch migracji na kopii (migrate.postgres.ts, EXIT=0, zastosowano 1: 20262107) ---
+wierszy ie_aggregate_relations po lancuchu: 14
+CREATE INDEX idx_ie_relations_target ON public.ie_aggregate_relations USING btree (organization_id, target_type, target_id)
+CREATE UNIQUE INDEX ie_aggregate_relations_identity_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, source_type, source_id, source_version, target_type, target_id)
+CREATE UNIQUE INDEX ie_aggregate_relations_singleton_source_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, source_type, source_id) WHERE ((relation_type = ANY (ARRAY['INITIATIVE_EXECUTION_CASE'::text, 'ACCEPTED_CLASSIC_ADOPTION'::text, 'TERESA_CHAT_DRAFT_ADOPTION'::text, 'RESOURCE_COMMITMENT_CAPACITY'::text])) OR (relation_type ~~ 'SOURCE\_%'::text))
+CREATE UNIQUE INDEX ie_aggregate_relations_singleton_target_key ON public.ie_aggregate_relations USING btree (organization_id, relation_type, target_type, target_id) WHERE ((relation_type = ANY (ARRAY['INITIATIVE_EXECUTION_CASE'::text, 'ACCEPTED_CLASSIC_ADOPTION'::text, 'TERESA_CHAT_DRAFT_ADOPTION'::text, 'RESOURCE_COMMITMENT_CAPACITY'::text])) OR (relation_type ~~ 'SOURCE\_%'::text))

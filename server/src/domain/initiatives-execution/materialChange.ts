@@ -315,7 +315,7 @@ export async function transitionMaterialChange(
       }
       await tx.claimRelation({
         organizationId: envelope.organizationId,
-        relationType: `MATERIAL_CHANGE_TARGET:${c.proposalId}`,
+        relationType: 'MATERIAL_CHANGE_TARGET',
         sourceType: 'material_change',
         sourceId: c.proposalId,
         sourceVersion: envelope.expectedVersion + 1,

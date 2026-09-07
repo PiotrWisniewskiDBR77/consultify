@@ -914,7 +914,7 @@ export class PostgresInitiativeReader {
          JOIN ie_aggregate_relations rel
            ON rel.organization_id=d.organization_id AND rel.target_type='decision'
           AND rel.target_id=d.aggregate_id
-          AND rel.relation_type ~ '^INITIATIVE_(DEFINITION_DECISION|ANALYSIS_DECISION|PORTFOLIO_DECISION|SCHEDULE_DECISION|HANDOFF_ACCEPTANCE):'
+          AND rel.relation_type IN ('INITIATIVE_DEFINITION_DECISION','INITIATIVE_ANALYSIS_DECISION','INITIATIVE_PORTFOLIO_DECISION','INITIATIVE_SCHEDULE_DECISION','INITIATIVE_HANDOFF_ACCEPTANCE')
          JOIN ie_aggregate_state i
            ON i.organization_id=d.organization_id AND i.aggregate_type='initiative'
           AND i.aggregate_id=rel.source_id
@@ -936,7 +936,7 @@ export class PostgresInitiativeReader {
          JOIN ie_aggregate_relations rel
            ON rel.organization_id=c.organization_id AND rel.target_type='closure_case'
           AND rel.target_id=c.aggregate_id
-          AND rel.relation_type ~ '^INITIATIVE_CLOSURE_CASE:'
+          AND rel.relation_type = 'INITIATIVE_CLOSURE_CASE'
          JOIN ie_aggregate_state i
            ON i.organization_id=c.organization_id AND i.aggregate_type='initiative'
           AND i.aggregate_id=rel.source_id
@@ -1218,7 +1218,7 @@ export class PostgresInitiativeReader {
        JOIN ie_aggregate_state i ON i.organization_id=r.organization_id
         AND i.aggregate_type='intervention_case' AND i.aggregate_id=r.target_id
        WHERE r.organization_id=$1 AND r.source_type='plan_scenario' AND r.source_id=$2
-        AND r.relation_type LIKE 'PLAN_INTERVENTION:%' ORDER BY i.updated_at DESC`,
+        AND r.relation_type = 'PLAN_INTERVENTION' ORDER BY i.updated_at DESC`,
       [organizationId, scenarioId]
     );
     return {

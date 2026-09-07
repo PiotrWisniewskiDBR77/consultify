@@ -10309,6 +10309,18 @@
         "changesCount": "Changes ({{count}})",
         "noDiff": "No differences in initiative windows for the selected versions.",
         "moveNote": "Move only reorders this draft. Publish creates governed Plan Scenario truth; it never baselines or writes Initiative/task dates."
+      },
+      "errors": {
+        "title": "Not saved",
+        "PLAN_SCENARIO_DUPLICATE": "This plan already exists in the organization. Open the existing plan or give the new one a different name.",
+        "PORTFOLIO_VERSION_MISMATCH": "The source portfolio is in a different version than the one you are working on. Refresh the list and pick the current portfolio version.",
+        "PLAN_VERSION_MISMATCH": "The source plan is in a different version than the one you are working on. Refresh the list and pick the current plan version.",
+        "PLAN_MEMBER_NOT_APPROVED": "The plan contains an initiative the portfolio has not approved. Remove it from scope or approve it in the portfolio.",
+        "INITIATIVE_SNAPSHOT_STALE": "At least one initiative changed after it was selected. Refresh the plan scope and try again.",
+        "PLAN_PUBLISH_CONFIRMATION_REQUIRED": "Publishing a plan with conflicts requires an explicit confirmation of the conflict count.",
+        "CAPACITY_SCENARIO_DUPLICATE": "A capacity analysis already exists for this plan. Open the existing one or give the new one a different name.",
+        "PORTFOLIO_SCENARIO_DUPLICATE": "This portfolio scenario already exists. Open the existing one or give the new one a different name.",
+        "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier."
       }
     },
     "analysis": {

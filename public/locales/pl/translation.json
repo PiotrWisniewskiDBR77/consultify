@@ -9745,6 +9745,18 @@
         "changesCount": "Zmiany ({{count}})",
         "noDiff": "Brak różnic w oknach inicjatyw dla wybranych wersji.",
         "moveNote": "Przesuwanie zmienia tylko ten szkic. Publikacja tworzy rządzoną prawdę scenariusza planu; nigdy nie ustala bazowo ani nie zapisuje dat inicjatywy/zadania."
+      },
+      "errors": {
+        "title": "Nie zapisano",
+        "PLAN_SCENARIO_DUPLICATE": "Taki plan już istnieje w tej organizacji. Otwórz istniejący plan albo nadaj nowemu inną nazwę.",
+        "PORTFOLIO_VERSION_MISMATCH": "Portfel źródłowy jest w innej wersji niż ta, na której pracujesz. Odśwież listę i wybierz aktualną wersję portfela.",
+        "PLAN_VERSION_MISMATCH": "Plan źródłowy jest w innej wersji niż ta, na której pracujesz. Odśwież listę i wybierz aktualną wersję planu.",
+        "PLAN_MEMBER_NOT_APPROVED": "W planie jest inicjatywa, której portfel nie zatwierdził. Usuń ją z zakresu albo zatwierdź w portfelu.",
+        "INITIATIVE_SNAPSHOT_STALE": "Co najmniej jedna inicjatywa zmieniła się od czasu wybrania. Odśwież zakres planu i spróbuj ponownie.",
+        "PLAN_PUBLISH_CONFIRMATION_REQUIRED": "Publikacja planu z konfliktami wymaga wyraźnego potwierdzenia liczby konfliktów.",
+        "CAPACITY_SCENARIO_DUPLICATE": "Taka analiza obciążenia już istnieje dla tego planu. Otwórz istniejącą albo nadaj nowej inną nazwę.",
+        "PORTFOLIO_SCENARIO_DUPLICATE": "Taki scenariusz portfela już istnieje. Otwórz istniejący albo nadaj nowemu inną nazwę.",
+        "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej."
       }
     },
     "analysis": {

@@ -108,7 +108,7 @@ export async function createExecutionMilestone(
     };
     await tx.claimRelation({
       organizationId: envelope.organizationId,
-      relationType: `EXECUTION_CASE_MILESTONE:${milestone.milestoneId}`,
+      relationType: 'EXECUTION_CASE_MILESTONE',
       sourceType: 'execution_case',
       sourceId: milestone.executionCaseId,
       sourceVersion: c.version,
@@ -192,7 +192,7 @@ export async function recomputeTaskMilestones(
     if (!relationAlreadyClaimed)
       await tx.claimRelation({
         organizationId,
-        relationType: `MILESTONE_TASK:${milestoneId}:${task.taskId}`,
+        relationType: 'MILESTONE_TASK',
         sourceType: 'execution_milestone',
         sourceId: milestoneId,
         sourceVersion: found.version + 1,
