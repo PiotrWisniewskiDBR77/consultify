@@ -1,0 +1,19 @@
+{
+  "url": "http://localhost:3142/initiatives",
+  "etykieta": "przed",
+  "zakres": "aktywne",
+  "api": {
+    "legacy": 104,
+    "runtimeV1": 6
+  },
+  "liczby": {
+    "wierszeTabeli": 0,
+    "stanPusty": false,
+    "menu3Wszystkie": 0,
+    "menu2PrzyFiltrze": 0
+  },
+  "bledyKonsoli": [
+    "[InitiativesHub] Fetch error: TypeError: Cannot read properties of undefined (reading 'status')\n    at toCanonicalInitiativeRegisterItem (http://localhost:3142/src/components/Initiatives/initiativeRegisterProjection.ts:185:7)\n    at http://localhost:3142/src/components/Initiatives/InitiativesHub.tsx:385:25\n    at Array.map (<anonymous>)\n    at http://localhost:3142/src/components/Initiatives/InitiativesHub.tsx:384:63",
+    "[InitiativesHub] Fetch error: TypeError: Cannot read properties of undefined (reading 'status')\n    at toCanonicalInitiativeRegisterItem (http://localhost:3142/src/components/Initiatives/initiativeRegisterProjection.ts:185:7)\n    at http://localhost:3142/src/components/Initiatives/InitiativesHub.tsx:385:25\n    at Array.map (<anonymous>)\n    at http://localhost:3142/src/components/Initiatives/InitiativesHub.tsx:384:63"
+  ]
+}

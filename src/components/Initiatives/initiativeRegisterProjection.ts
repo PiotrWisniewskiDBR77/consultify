@@ -224,7 +224,14 @@ export const filterCanonicalInitiativeRegisterScope = <
   );
 
 export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiativeReadModel) => {
-  const lifecycle = record.initiative.lifecycleState.toUpperCase();
+  // Historyczne agregaty runtime-v1 potrafia nie miec `lifecycleState` w ogole
+  // (zmierzone na bazie stagingu 07.09.2026: `ie_aggregate_state` ma wiersze
+  // `initiative` z NULL w tym polu). Surowe `.toUpperCase()` rzucalo wtedy
+  // TypeError w srodku `.map()` w `InitiativesHub.fetchData` i kasowalo CALY
+  // rejestr. Brak danych ma byc widoczny, nie ma wywracac tabeli.
+  const lifecycle = String(record.initiative?.lifecycleState ?? '')
+    .trim()
+    .toUpperCase();
   const nextStep = nextStepForLifecycle(lifecycle);
   return {
     id: record.initiative.initiativeId,
@@ -247,6 +254,45 @@ export const projectCanonicalInitiativeRegisterRow = (record: RegisteredInitiati
     sourceFreshness: record.initiative.source?.freshness || 'UNKNOWN',
     updatedAt: record.updatedAt,
   } as const;
+};
+
+/**
+ * PUSTA LISTA INICJATYW (07.09.2026) — `mapInitiativeStatus` z kierunkiem
+ * `runtime-to-status` to zwykly odczyt z `Record<InitiativeLifecycleStatus, …>`:
+ * dla wartosci spoza 12-elementowego slownika zwraca `undefined`, a odczyt
+ * `.status` z `undefined` rzucal `TypeError` w srodku `.map()` w
+ * `InitiativesHub.fetchData`. Efekt zmierzony na bazie stagingu: organizacja
+ * wlasciciela ma agregat runtime-v1 z `lifecycleState: 'EXECUTING'`
+ * (wartosc ze slownika LEGACY, ktora wyciekla do event store) — JEDEN taki
+ * wiersz kasowal cale 97 wierszy rejestru mimo HTTP 200 na obu trasach API.
+ *
+ * Zasada tego pliku brzmi wprost: „never let one legacy row erase the full
+ * table". Dlatego tlumaczymy trzystopniowo i NIGDY nie zwracamy `undefined`:
+ *   1. wartosc runtime-v1 ze slownika kanonicznego,
+ *   2. wartosc LEGACY przetlumaczona na runtime (`EXECUTING` → `IN_EXECUTION`),
+ *   3. `DRAFT` jako widoczny kubelek awaryjny — dokladnie jak
+ *      `normalizeLegacyInitiativeStatus` robi to dla tabeli klasycznej.
+ * Surowa wartosc zostaje na `displayStatus`, wiec diagnoza jest dalej mozliwa.
+ */
+export const runtimeLifecycleToInitiativeStatus = (rawLifecycle: string): InitiativeStatus => {
+  type RuntimeLifecycle = import('@/contracts/initiatives-execution/foundation').InitiativeLifecycleStatus;
+  const normalized = String(rawLifecycle ?? '')
+    .trim()
+    .toUpperCase();
+
+  const direct = mapInitiativeStatus({
+    direction: 'runtime-to-status',
+    lifecycle: normalized as RuntimeLifecycle,
+  });
+  if (direct) return direct.status as InitiativeStatus;
+
+  const viaLegacy = mapInitiativeStatus({ direction: 'legacy-to-runtime', status: normalized });
+  if (viaLegacy) {
+    const mapped = mapInitiativeStatus({ direction: 'runtime-to-status', lifecycle: viaLegacy });
+    if (mapped) return mapped.status as InitiativeStatus;
+  }
+
+  return InitiativeStatus.DRAFT;
 };
 
 /** One canonical adapter used by both the Initiatives and Execution registers. */
@@ -276,10 +322,7 @@ export const toCanonicalInitiativeRegisterItem = (
     // `RegisteredInitiativeReadModel` in runtimeApi.ts) — leaving
     // `registerArea`/`registerAxisRaw`/`registerCategory` unset here is an
     // honest "brak danych", not a bug. Never invent a value for this source.
-    status: mapInitiativeStatus({
-      direction: 'runtime-to-status',
-      lifecycle: projection.lifecycle as import('@/contracts/initiatives-execution/foundation').InitiativeLifecycleStatus,
-    }).status as InitiativeStatus,
+    status: runtimeLifecycleToInitiativeStatus(projection.lifecycle),
     displayStatus: projection.lifecycle,
     priority: initiative.priority as PortfolioInitiative['priority'],
     progress: undefined as unknown as number,

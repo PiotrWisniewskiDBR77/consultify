@@ -1,0 +1,16 @@
+{
+  "url": "http://localhost:3090/initiatives",
+  "etykieta": "sonda-3090",
+  "zakres": "aktywne",
+  "api": {
+    "legacy": 72,
+    "runtimeV1": 5
+  },
+  "liczby": {
+    "wierszeTabeli": 60,
+    "stanPusty": false,
+    "menu3Wszystkie": 60,
+    "menu2PrzyFiltrze": 60
+  },
+  "bledyKonsoli": []
+}
