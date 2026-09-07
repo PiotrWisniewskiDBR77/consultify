@@ -53,10 +53,19 @@ export function GeneratorPlanuModal({
   onClose,
   onGenerate,
   onReview,
+  capacityModesBlockedReason = null,
 }: {
   open: boolean;
   plannable: GeneratorInitiative[];
   busy?: boolean;
+  /**
+   * P15-K7 pkt 2 (DEC-421): powód, dla którego tryby zależne od MOCY są
+   * niedostępne. Do K5 wybór „Według obciążenia ról" bez powiązanej
+   * opublikowanej analizy przechodził po cichu w tryb zależności — plan
+   * układał się BEZ mocy, a użytkownik o tym nie wiedział. Powód widać
+   * ZANIM się kliknie, a serwer i tak odmawia regułą CAPACITY_SCENARIO_REQUIRED.
+   */
+  capacityModesBlockedReason?: string | null;
   proposal?: GeneratorProposalRow[] | null;
   proposalConflicts?: string[];
   /** „Zapisano hh:mm" — znacznik z ODPOWIEDZI serwera po zatwierdzeniu propozycji. */
@@ -72,6 +81,10 @@ export function GeneratorPlanuModal({
   const [periods, setPeriods] = useState(12);
   const [unit, setUnit] = useState<'WEEK' | 'MONTH'>('WEEK');
   const [mode, setMode] = useState<PlanGenerationMode>('DEPENDENCIES');
+  // Tryb zablokowany nie może zostać wybrany „z pamięci" po zmianie stanu planu.
+  useEffect(() => {
+    if (capacityModesBlockedReason && mode !== 'DEPENDENCIES') setMode('DEPENDENCIES');
+  }, [capacityModesBlockedReason, mode]);
   const approved = useMemo(() => plannable.filter((item) => !item.conditional), [plannable]);
   const conditional = useMemo(() => plannable.filter((item) => item.conditional), [plannable]);
   const visible = allowConditional ? plannable : approved;
@@ -213,14 +226,19 @@ export function GeneratorPlanuModal({
                 <option value="DEPENDENCIES">
                   {t('initiatives.planGenerator.modeDependencies', 'Według zależności')}
                 </option>
-                <option value="CAPACITY">
+                <option value="CAPACITY" disabled={Boolean(capacityModesBlockedReason)}>
                   {t('initiatives.planGenerator.modeCapacity', 'Według obciążenia ról')}
                 </option>
-                <option value="MIXED">
+                <option value="MIXED" disabled={Boolean(capacityModesBlockedReason)}>
                   {t('initiatives.planGenerator.modeMixed', 'Mieszany')}
                 </option>
               </select>
             </div>
+            {capacityModesBlockedReason && (
+              <p role="status" className="mt-2 text-sm text-c-text-muted">
+                {capacityModesBlockedReason}
+              </p>
+            )}
           </section>
           <section className={stepClass}>
             <h3 className="font-semibold">{t('initiatives.planGenerator.step4', '4. Generuj')}</h3>

@@ -115,11 +115,44 @@ export function proposeCapacityOptions(
     const proposed = periodIndex.get(periodId);
     return current >= 0 && proposed !== undefined && proposed > current ? [proposed - current] : [];
   });
-  const canResequence = shifts.length > 0;
-  const shiftPeriods = canResequence ? Math.max(...shifts) : null;
   const primaryPeriod = overloaded[0];
   const primaryGap =
     roleGaps.find((gap) => gap.periodId === primaryPeriod.periodId) ?? roleGaps[0] ?? null;
+  /**
+   * P15-K6 (DEC-421): PRZESUNIĘCIE Z ARKUSZA, gdy solver go nie znajdzie.
+   *
+   * ZMIERZONE 07.09 na własnym API: analiza policzona z planu (K5) nie ma
+   * `proposedAssignments`, więc bilans solvera bierze popyt 1 na inicjatywę
+   * i porównuje go ze SKALAREM okresu (sumą wszystkich ról). Przeciążenie
+   * jednej roli w ten bilans nie wchodzi — solver mieścił wszystko w pierwszym
+   * okresie, `shifts` było puste i wariant „Przesuń kolejność" ZAWSZE wracał
+   * z terminem UNKNOWN, czyli bez przesunięcia do przekazania planowi.
+   *
+   * Liczymy więc wprost z arkusza: ile okresów dzieli pierwszy PRZECIĄŻONY
+   * okres tej roli od pierwszego okresu, w którym ta rola ma zapas (podaż
+   * znana i większa od popytu). Brak takiego okresu = UNKNOWN, jak dotąd —
+   * nie zgadujemy.
+   */
+  const roleSheetShift = (() => {
+    if (!primaryGap) return null;
+    const indexes = capacity.periods.map((period, index) => ({ period, index }));
+    const from = indexes.find(({ period }) => period.periodId === primaryGap.periodId);
+    if (!from) return null;
+    const relief = indexes.find(
+      ({ period, index }) =>
+        index > from.index &&
+        (period.roles ?? []).some(
+          (role) =>
+            role.roleId === primaryGap.roleId &&
+            role.supply !== null &&
+            role.demand !== null &&
+            role.supply > role.demand
+        )
+    );
+    return relief ? relief.index - from.index : null;
+  })();
+  const shiftPeriods = shifts.length ? Math.max(...shifts) : roleSheetShift;
+  const canResequence = shiftPeriods !== null;
   // Nazwa roli, nie surowe id — to zdanie czyta PMO w karcie analizy.
   const primaryResource = primaryGap
     ? `rola ${primaryGap.roleLabel}`

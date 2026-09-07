@@ -51,7 +51,9 @@ export type PlanSolverAssumptionReason =
   | { code: 'DEPENDENCIES_PRECEDE' }
   | { code: 'ONE_FEASIBLE_PERIOD' }
   | { code: 'CAPACITY_UNKNOWN_FOR_PERIOD'; period: string }
-  | { code: 'DEMAND_UNKNOWN_FOR_INITIATIVE'; initiativeId: string; period: string };
+  | { code: 'DEMAND_UNKNOWN_FOR_INITIATIVE'; initiativeId: string; period: string }
+  /** P15-K6 (DEC-421): okres wziety z PODPOWIEDZI wariantu doradcy, nie z samej matematyki. */
+  | { code: 'ADVISOR_SHIFT'; initiativeId: string; periods: number };
 
 export type PlanSolverReason =
   | PlanSolverAssignmentReason
@@ -146,6 +148,12 @@ export function decodePlanSolverReason(value: string): PlanSolverReason | null {
         code: 'DEMAND_UNKNOWN_FOR_INITIATIVE',
         initiativeId: text('initiativeId'),
         period: text('period'),
+      };
+    case 'ADVISOR_SHIFT':
+      return {
+        code: 'ADVISOR_SHIFT',
+        initiativeId: text('initiativeId'),
+        periods: number('periods'),
       };
     default:
       return null;
@@ -254,6 +262,13 @@ export function formatPlanSolverReason(
           'Popyt nieznany dla „{{initiative}}" w okresie {{period}} — ograniczenie mocy nie zostało zastosowane.',
         initiative: resolveName(reason.initiativeId),
         period: reason.period,
+      });
+    case 'ADVISOR_SHIFT':
+      return t('initiatives.planSolver.assumption.advisorShift', {
+        defaultValue:
+          'Przesunięcie z wariantu doradcy: „{{initiative}}" o {{periods}} okres(y) później.',
+        initiative: resolveName(reason.initiativeId),
+        periods: reason.periods,
       });
     default:
       return value;

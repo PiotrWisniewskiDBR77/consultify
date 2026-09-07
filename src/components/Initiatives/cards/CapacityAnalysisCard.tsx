@@ -107,6 +107,8 @@ export function CapacityAnalysisCard({
   onPublish,
   onSupplyOverride,
   onSelectOption,
+  onOpenPlan,
+  variantOutcome = null,
 }: {
   scenario: CapacityCardScenario;
   noPressure?: boolean;
@@ -121,6 +123,10 @@ export function CapacityAnalysisCard({
   onPublish: () => void;
   onSupplyOverride?: (periodId: string, roleId: string, supply: number) => void;
   onSelectOption?: (comparison: CapacityComparison, optionId: string) => void;
+  /** P15-K6: „→ plan vN (szkic)" prowadzi do karty planu w zakładce Plan. */
+  onOpenPlan?: (planScenarioId: string) => void;
+  /** P15-K6: wynik ostatniego wyboru wariantu (propozycja poszła / brak przesunięcia). */
+  variantOutcome?: 'APPLIED' | 'NO_SHIFT' | null;
 }) {
   const [section, setSection] = useState('source');
   const [readMode, setReadMode] = useState(false);
@@ -133,6 +139,10 @@ export function CapacityAnalysisCard({
   const roleGaps = useMemo(() => capacityRoleGaps(scenario), [scenario]);
   const gaps = useMemo(() => countCapacityGaps(scenario), [scenario]);
   const hasSheet = scenario.periods.some((period) => (period.roles ?? []).length > 0);
+  const decidedComparisons = useMemo(
+    () => comparisons.filter((comparison) => comparison.selectedOptionId !== null),
+    [comparisons]
+  );
   const roles = useMemo(
     () =>
       hasSheet
@@ -290,12 +300,25 @@ export function CapacityAnalysisCard({
     proposals: (
       <div className={box}>
         {needsPublish && (
-          <p role="status" className="mb-3 text-sm text-c-text-muted">
-            {i18n.t(
-              'initiatives.capacityAnalysis.needsPublish',
-              'Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje", potem uruchom „Pracuj z AI".'
+          <div role="status" className="mb-3">
+            <p className="text-sm text-c-text-muted">
+              {i18n.t(
+                'initiatives.capacityAnalysis.needsPublish',
+                'Doradca liczy warianty dla opublikowanej analizy. Opublikuj analizę w sekcji „Decyzje", potem uruchom „Pracuj z AI".'
+              )}
+            </p>
+            {/* P15-K7 pkt 3: K5 dał komunikat po polsku, ale odsyłał do innej
+                sekcji — przycisk jest tutaj, żeby nie szukać. */}
+            {scenario.status === 'DRAFT' && (
+              <button
+                type="button"
+                className="mt-2 rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                onClick={onPublish}
+              >
+                {i18n.t('initiatives.capacityAnalysis.publish', 'Opublikuj analizę')}
+              </button>
             )}
-          </p>
+          </div>
         )}
         {noPressure && (
           <p role="status" className="mb-3 text-sm text-c-text-muted">
@@ -303,6 +326,19 @@ export function CapacityAnalysisCard({
               'initiatives.capacityAdvisor.noPressure',
               'Brak przeciążeń do rozwiązania.'
             )}
+          </p>
+        )}
+        {variantOutcome && (
+          <p role="status" className="mb-3 text-sm text-c-text-muted">
+            {variantOutcome === 'APPLIED'
+              ? i18n.t(
+                  'initiatives.capacityAnalysis.variantApplied',
+                  'Wybór zapisany. Szczegóły i link do planu znajdziesz w sekcji „Decyzje".'
+                )
+              : i18n.t(
+                  'initiatives.capacityAnalysis.variantNoShift',
+                  'Doradca nie wyliczył wykonalnego przesunięcia — decyzja zapisana, plan bez zmian.'
+                )}
           </p>
         )}
         <CapacityOptionsPanel
@@ -314,6 +350,42 @@ export function CapacityAnalysisCard({
     ),
     decisions: (
       <div className={box}>
+        {/* P15-K6 (DEC-421): ŚLAD WYBORU WARIANTU. Do K5 wybór żył wyłącznie w
+            `nextGovernedInput` panelu porównania — po odświeżeniu karta nie
+            mówiła, co zdecydowano ani gdzie tego szukać w Planie. */}
+        {decidedComparisons.length > 0 && (
+          <ul className="mb-3 space-y-2 text-sm">
+            {decidedComparisons.map((comparison) => (
+              <li key={comparison.comparisonId}>
+                <b>
+                  {i18n.t('initiatives.capacityAnalysis.decision.selected', 'Wybrano wariant')}:
+                </b>{' '}
+                {comparison.decisionNote ??
+                  i18n.t(
+                    'initiatives.capacityAnalysis.decision.noteMissing',
+                    'wariant bez zapisanego opisu'
+                  )}
+                {comparison.resultingPlanRef && (
+                  <>
+                    {' → '}
+                    <button
+                      type="button"
+                      className="underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      onClick={() =>
+                        onOpenPlan?.(comparison.resultingPlanRef?.scenarioId ?? '')
+                      }
+                    >
+                      {i18n.t('initiatives.capacityAnalysis.decision.planDraft', {
+                        defaultValue: 'plan v{{version}} (szkic)',
+                        version: comparison.resultingPlanRef.scenarioVersion,
+                      })}
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         {scenario.status === 'DRAFT' ? (
           <button
             className="rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus"

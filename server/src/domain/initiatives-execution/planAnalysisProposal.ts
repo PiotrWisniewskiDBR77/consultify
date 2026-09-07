@@ -7,7 +7,7 @@ import {
 } from './materialCommand.js';
 import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
-import { solvePlanScenario } from './planSolver.js';
+import { solvePlanScenario, type PlanSolverHint } from './planSolver.js';
 import { encodePlanSolverReason } from './planSolverReason.js';
 
 export interface PlanAnalysisProposal {
@@ -33,6 +33,8 @@ export async function createPlanAnalysisProposal(
     scenarioId: string;
     inputAggregateVersion: number;
     capacityScenarioId?: string;
+    /** P15-K6: przesunięcia z wybranego wariantu doradcy (patrz `PlanSolverHint`). */
+    hints?: PlanSolverHint[];
   }>
 ): Promise<MaterialCommandResult<PlanAnalysisProposal>> {
   return executeMaterialCommand(uow, envelope, async (tx) => {
@@ -52,24 +54,48 @@ export async function createPlanAnalysisProposal(
           envelope.payload.capacityScenarioId
         )
       : null;
+    /**
+     * P15-K6 (DEC-421): analiza obciążenia opisuje wersję planu, z której
+     * powstała. Gdy wybór wariantu doradcy zakłada NOWY szkic v+1, analiza
+     * nadal wskazuje wersję poprzednią — dlatego warunek to `<=`, nie `===`.
+     * Nowsza od planu analiza pozostaje odrzucona (opisywałaby przyszłość).
+     * Trasa i tak podaje tu WYŁĄCZNIE opublikowaną analizę tego planu, a przy
+     * jej braku odrzuca żądanie regułą CAPACITY_SCENARIO_REQUIRED (K7) —
+     * cicha degradacja do trybu zależności już się nie zdarza.
+     */
     const compatibleCapacity =
       capacity?.payload.status === 'PUBLISHED' &&
       capacity.payload.planScenarioId === source.payload.scenarioId &&
-      capacity.payload.planScenarioVersion === source.payload.scenarioVersion
+      capacity.payload.planScenarioVersion <= source.payload.scenarioVersion
         ? capacity.payload
         : undefined;
-    const solved = solvePlanScenario(source.payload, compatibleCapacity);
+    const solved = solvePlanScenario(
+      source.payload,
+      compatibleCapacity,
+      envelope.payload.hints?.filter((hint) => hint.shiftPeriods > 0)
+    );
     const changes = solved.assignments.flatMap(({ window, periodId, rationale }) => {
       const period = source.payload.periods.find((candidate) => candidate.periodId === periodId);
       if (!period) return [];
       const withinPeriod = (value: string | null) =>
         value !== null && value >= period.start && value <= period.end;
+      const proposedTarget = withinPeriod(window.target) ? window.target : period.start;
+      /**
+       * P15-K6: przy przesunięciu z wariantu doradcy okres wypada ZA własnym
+       * `latest` okna. Zwykłe zawężenie do `min(latest, period.end)` dałoby
+       * wtedy `target > latest` i domena odrzuciłaby propozycję regułą
+       * „earliest <= target <= latest". Granicę rozsuwamy DO KOŃCA OKRESU —
+       * tylko w tym jednym przypadku; poza nim zawężenie działa jak dotąd.
+       */
+      const narrowedLatest =
+        window.latest && window.latest < period.end ? window.latest : period.end;
       const after: PlannedWindow = {
         ...window,
         earliest:
           window.earliest && window.earliest > period.start ? window.earliest : period.start,
-        target: withinPeriod(window.target) ? window.target : period.start,
-        latest: window.latest && window.latest < period.end ? window.latest : period.end,
+        target: proposedTarget,
+        latest:
+          proposedTarget !== null && narrowedLatest < proposedTarget ? period.end : narrowedLatest,
         confidence: solved.conflicts.some((item) => item.includes(window.initiativeId))
           ? 'LOW'
           : window.confidence === 'UNKNOWN'

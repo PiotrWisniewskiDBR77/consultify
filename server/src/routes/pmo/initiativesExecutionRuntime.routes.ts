@@ -595,6 +595,17 @@ const PlanAnalysisCreateSchema = z.object({
   scenarioId: z.string().min(1),
   inputAggregateVersion: z.number().int().min(1),
   useCapacity: z.boolean().optional().default(true),
+  /** P15-K6: analiza wskazana wprost (wybór wariantu doradcy na planie v+1). */
+  capacityScenarioId: z.string().min(1).optional(),
+  /** P15-K6: przesunięcia z wariantu „Przesuń kolejność". */
+  hints: z
+    .array(
+      z.object({
+        initiativeId: z.string().min(1),
+        shiftPeriods: z.number().int().min(1),
+      })
+    )
+    .optional(),
 });
 const PlanAnalysisReviewSchema = z.object({
   expectedVersion: z.number().int().min(1),
@@ -4020,12 +4031,43 @@ export function createInitiativesExecutionRuntimeRouter(
         actor.organizationId,
         portfolio.scenario.scope.portfolioId
       );
-      const linkedCapacity = (await deps.reader.listCapacityScenarios(actor.organizationId)).find(
+      /**
+       * P15-K7 (DEC-421, §4.1 pkt 4): KONIEC CICHEJ DEGRADACJI.
+       *
+       * Do K5 tryb „wg obciążenia ról" bez powiązanej opublikowanej analizy
+       * po prostu przechodził w tryb zależności — bez słowa dla użytkownika,
+       * który dostawał plan ułożony BEZ mocy i o tym nie wiedział. Teraz to
+       * jest odmowa z regułą, którą front tłumaczy na polskie zdanie.
+       *
+       * P15-K6: `capacityScenarioId` wskazany wprost obsługuje wybór wariantu
+       * doradcy — analiza opisuje wersję planu, z której powstała (v), a plan
+       * jest już szkicem v+1.
+       */
+      const publishedCapacity = (
+        await deps.reader.listCapacityScenarios(actor.organizationId)
+      ).filter(
         (candidate) =>
           candidate.state === 'PUBLISHED' &&
           candidate.planRef.scenarioId === found.scenario.scenarioId &&
-          candidate.planRef.scenarioVersion === found.scenario.scenarioVersion
+          candidate.planRef.scenarioVersion <= found.scenario.scenarioVersion
       );
+      const explicitCapacity = parsed.data.capacityScenarioId
+        ? publishedCapacity.find((candidate) => candidate.id === parsed.data.capacityScenarioId)
+        : undefined;
+      const linkedCapacity =
+        explicitCapacity ??
+        publishedCapacity.find(
+          (candidate) => candidate.planRef.scenarioVersion === found.scenario.scenarioVersion
+        );
+      if (
+        (parsed.data.useCapacity && !linkedCapacity) ||
+        (parsed.data.capacityScenarioId && !explicitCapacity)
+      ) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_FAILED', rule: 'CAPACITY_SCENARIO_REQUIRED' },
+        });
+        return;
+      }
       const result = await createPlanAnalysisProposal(deps.unitOfWork, {
         organizationId: actor.organizationId,
         actorId: actor.userId,
@@ -4042,9 +4084,45 @@ export function createInitiativesExecutionRuntimeRouter(
           scenarioId: parsed.data.scenarioId,
           inputAggregateVersion: parsed.data.inputAggregateVersion,
           capacityScenarioId: parsed.data.useCapacity ? linkedCapacity?.id : undefined,
+          hints: parsed.data.hints,
         },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+  // P15-K6: karta PLANU musi pokazać propozycję utworzoną z karty ANALIZY.
+  router.get(
+    '/plan-scenarios/:scenarioId/analysis-proposals',
+    asyncHandler(async (req, res) => {
+      const actor = actorFromRequest(req);
+      if (!actor) {
+        res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+        return;
+      }
+      const found = await deps.reader.findPlanScenario(
+        actor.organizationId,
+        firstParam(req.params.scenarioId)
+      );
+      const portfolio = found
+        ? await deps.reader.findPortfolioScenario(
+            actor.organizationId,
+            found.scenario.portfolioScenarioId
+          )
+        : null;
+      if (
+        !found ||
+        !portfolio ||
+        !(await deps.authorize(actor, portfolio.scenario.scope.portfolioId, 'initiative.view'))
+      ) {
+        res.status(404).json({ error: { code: 'NOT_FOUND' } });
+        return;
+      }
+      res.json({
+        items: await deps.reader.listPlanAnalysisProposals(
+          actor.organizationId,
+          firstParam(req.params.scenarioId)
+        ),
+      });
     })
   );
   router.post(

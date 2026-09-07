@@ -30,6 +30,26 @@ export interface PlanCardWindow {
   /** P15-K5: popyt na role w oknie tej inicjatywy (FTE) — wejscie analizy obciazenia. */
   roleDemand?: RoleDemandLine[];
 }
+/**
+ * P15-K7 pkt 1 (DEC-421): WYNIK analizy obciazenia widziany z karty PLANU.
+ * Tylko do odczytu — popyt zadaje sie nizej (`PlanRoleDemandEditor`), podaz
+ * i korekty zyja w karcie analizy. `null` = „Nieznane", nigdy zero.
+ */
+export interface PlanCardCapacityAnalysis {
+  scenarioId: string;
+  name: string | null;
+  scenarioVersion: number;
+  periods: Array<{
+    periodId: string;
+    roles: Array<{
+      roleId: string;
+      roleLabel: string;
+      demand: number | null;
+      supply: number | null;
+      supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
+    }>;
+  }>;
+}
 export interface PlanCardScenario {
   scenarioId: string;
   name?: string | null;
@@ -59,6 +79,11 @@ const formatPolishDate = (value: string | null) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 'Nieznane' : new Intl.DateTimeFormat('pl-PL').format(date);
 };
+/** „Nieznane" zamiast zera — brak liczby nie jest twierdzeniem o zerze. */
+const fteText = (value: number | null) =>
+  value === null
+    ? 'Nieznane'
+    : new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 }).format(value);
 const windowUnitLabel = (value: string) =>
   ({ WEEK: 'Tydzień', MONTH: 'Miesiąc', QUARTER: 'Kwartał' })[value] ?? value;
 /** ISO → wartość `<input type="date">`; pusty napis dla braku daty. */
@@ -109,6 +134,9 @@ export function PlanCard({
   onDependenciesChange,
   onRoleDemandChange,
   onNewDraftVersion,
+  capacityAnalysis = null,
+  onOpenCapacityAnalysis,
+  onNewCapacityAnalysis,
 }: {
   scenario: PlanCardScenario;
   initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
@@ -132,6 +160,10 @@ export function PlanCard({
   /** P15-K5 po scaleniu: zapis popytu per rola idzie tą samą drogą CAS, co reszta karty. */
   onRoleDemandChange?: (initiativeId: string, roleDemand: RoleDemandLine[]) => Promise<boolean>;
   onNewDraftVersion?: () => void;
+  /** P15-K7 pkt 1 (DEC-421): arkusz okres x rola z POWIAZANEJ opublikowanej analizy. */
+  capacityAnalysis?: PlanCardCapacityAnalysis | null;
+  onOpenCapacityAnalysis?: () => void;
+  onNewCapacityAnalysis?: () => void;
 }) {
   const { t } = useTranslation();
   const [section, setSection] = useState('horizon');
@@ -178,6 +210,40 @@ export function PlanCard({
     ],
     [scenario.windows]
   );
+  /**
+   * P15-K7 pkt 1: wiersze arkusza okres x rola z powiazanej analizy. Luka =
+   * podaz - popyt (ujemna = brak ludzi); `null` gdy ktorakolwiek strona jest
+   * nieznana — nie liczymy luki z domyslnego zera.
+   */
+  const capacitySheetRows = useMemo(
+    () =>
+      (capacityAnalysis?.periods ?? []).flatMap((period) =>
+        period.roles.map((role) => ({
+          key: `${period.periodId}|${role.roleId}`,
+          periodId: period.periodId,
+          roleLabel: role.roleLabel,
+          demand: role.demand,
+          supply: role.supply,
+          gap:
+            role.demand === null || role.supply === null
+              ? null
+              : Math.round((role.supply - role.demand) * 100) / 100,
+        }))
+      ),
+    [capacityAnalysis]
+  );
+  /**
+   * P15-K7 pkt 2: tryby zalezne od MOCY sa nieaktywne, dopoki nie ma powiazanej
+   * opublikowanej analizy — z powodem widocznym ZANIM sie kliknie. Serwer i tak
+   * odmawia regula CAPACITY_SCENARIO_REQUIRED; tu chodzi o to, zeby uzytkownik
+   * nie musial sie o nia obic.
+   */
+  const capacityModesBlockedReason = capacityAnalysis
+    ? null
+    : t('initiatives.planCard.capacityModeBlocked', {
+        defaultValue:
+          'Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu.',
+      });
   const [rowError, setRowError] = useState<Record<string, 'ORDER' | 'HORIZON'>>({});
 
   const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
@@ -559,18 +625,97 @@ export function PlanCard({
     // pod nim edytor popytu per rola (K5), który ten popyt dopiero zadaje.
     capacity: (
       <div className={box}>
-        {capacityConstraints.length ? (
+        {/* P15-K7 pkt 1 (DEC-421): WYNIK z powiązanej OPUBLIKOWANEJ analizy —
+            arkusz okres × rola (popyt / podaż / luka), tylko do odczytu.
+            Brak analizy = jawne „Nieznane" plus droga do jej utworzenia; nigdy
+            arkusz zer, bo zero byłoby twierdzeniem, którego nie mamy. */}
+        {capacitySheetRows.length ? (
+          <div className="mb-4 overflow-x-auto">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-c-text-muted">
+                {t('initiatives.planCard.capacityFromAnalysis', {
+                  defaultValue: 'Wynik analizy „{{name}}" (wersja {{version}}).',
+                  name:
+                    capacityAnalysis?.name ??
+                    t('initiatives.capacityAnalysis.unnamed', 'Analiza bez nazwy'),
+                  version: capacityAnalysis?.scenarioVersion ?? 0,
+                })}
+              </p>
+              {onOpenCapacityAnalysis && (
+                <button type="button" className={button} onClick={onOpenCapacityAnalysis}>
+                  {t('initiatives.planCard.openCapacityAnalysis', {
+                    defaultValue: 'Otwórz analizę',
+                  })}
+                </button>
+              )}
+            </div>
+            <table /* §27-exempt: ARKUSZ okres x rola (siatka wartosci z analizy),
+                     nie lista encji do przegladania — bez sortowania, filtrow i kebaba */
+              className="w-full min-w-[560px] border-collapse text-sm"
+              aria-label={t('initiatives.planCard.capacitySheetAria', {
+                defaultValue: 'Obciążenie ról z analizy',
+              })}
+            >
+              <thead>
+                <tr className="border-b border-c-border-subtle text-left text-xs text-c-text-muted">
+                  <th className="px-3 py-2">
+                    {t('initiatives.capacityAnalysis.columns.period', 'Okres')}
+                  </th>
+                  <th className="px-3 py-2">
+                    {t('initiatives.capacityAnalysis.columns.role', 'Rola')}
+                  </th>
+                  <th className="px-3 py-2">
+                    {t('initiatives.capacityAnalysis.columns.demand', 'Popyt (FTE)')}
+                  </th>
+                  <th className="px-3 py-2">
+                    {t('initiatives.capacityAnalysis.columns.supply', 'Podaż (FTE)')}
+                  </th>
+                  <th className="px-3 py-2">
+                    {t('initiatives.capacityAnalysis.columns.gap', 'Luka')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {capacitySheetRows.map((row) => (
+                  <tr key={row.key} className="border-b border-c-border-subtle">
+                    <td className="px-3 py-2">{row.periodId}</td>
+                    <td className="px-3 py-2">{row.roleLabel}</td>
+                    <td className="px-3 py-2">{fteText(row.demand)}</td>
+                    <td className="px-3 py-2">{fteText(row.supply)}</td>
+                    <td className="px-3 py-2">
+                      {row.gap !== null && row.gap < 0 ? (
+                        <span className="font-medium text-c-danger">{fteText(row.gap)}</span>
+                      ) : (
+                        fteText(row.gap)
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <p className="text-sm text-c-text-muted">
+              {t('initiatives.planCard.capacityUnknown', {
+                defaultValue: 'Nieznane — brak opublikowanej analizy obciążenia.',
+              })}
+            </p>
+            {onNewCapacityAnalysis && (
+              <button type="button" className={`mt-2 ${button}`} onClick={onNewCapacityAnalysis}>
+                {t('initiatives.planCard.newCapacityAnalysis', {
+                  defaultValue: 'Nowa analiza z tego planu',
+                })}
+              </button>
+            )}
+          </div>
+        )}
+        {capacityConstraints.length > 0 && (
           <ul className="mb-3 list-disc pl-4 text-sm text-c-text-muted">
             {capacityConstraints.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}
           </ul>
-        ) : (
-          <p className="mb-3 text-sm text-c-text-muted">
-            {t('initiatives.planCard.capacityUnknown', {
-              defaultValue: 'Nieznane — brak opublikowanej analizy obciążenia.',
-            })}
-          </p>
         )}
         <PlanRoleDemandEditor
           windows={scenario.windows}
@@ -716,7 +861,10 @@ export function PlanCard({
             moznaEdytowac: editable,
             uzupelnijSekcje: {
               rodzaj: 'wlasnaPropozycja',
-              uruchom: () => onAnalyze('MIXED'),
+              // P15-K7 pkt 2: bez powiazanej analizy tryb mieszany dostalby 400
+              // z regula CAPACITY_SCENARIO_REQUIRED — nie wysylamy zadania,
+              // ktore z gory wiadomo, ze zostanie odrzucone.
+              uruchom: () => onAnalyze(capacityModesBlockedReason ? 'DEPENDENCIES' : 'MIXED'),
               opis: 'Solver przygotuje propozycję dla aktywnej sekcji do przeglądu.',
             },
             uzupelnijDokument: {
@@ -739,6 +887,7 @@ export function PlanCard({
           onClose={() => setGenerator(false)}
           onGenerate={(input) => (onGenerate ? onGenerate(input) : onAnalyze(input.mode))}
           onReview={onReview}
+          capacityModesBlockedReason={capacityModesBlockedReason}
         />
       }
     />

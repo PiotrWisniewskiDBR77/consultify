@@ -9614,7 +9614,18 @@
         "relations": "Powiązania",
         "evidence": "Źródła i założenia",
         "history": "Historia"
-      }
+      },
+      "decision": {
+        "selected": "Wybrano wariant",
+        "noteMissing": "wariant bez zapisanego opisu",
+        "planDraft": "plan v{{version}} (szkic)",
+        "resequence": "Przesuń kolejność o {{periods}} okres(y) — propozycja do planu.",
+        "resequenceUnknown": "Przesuń kolejność — doradca nie wyliczył wykonalnego przesunięcia, plan bez zmian.",
+        "scopeSplit": "Podziel zakres — decyzja zapisana, plan bez zmian.",
+        "addCapacity": "Dołóż moce — decyzja zapisana, plan bez zmian."
+      },
+      "variantApplied": "Wybór zapisany. Szczegóły i link do planu znajdziesz w sekcji „Decyzje\".",
+      "variantNoShift": "Doradca nie wyliczył wykonalnego przesunięcia — decyzja zapisana, plan bez zmian."
     },
     "planScenario": {
       "status": {
@@ -9803,7 +9814,8 @@
         "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej.",
         "INITIATIVE_NOT_PLANNABLE": "Ta inicjatywa nie kwalifikuje się do planowania. Do planu wchodzą inicjatywy zatwierdzone, a „do zatwierdzenia” tylko jako warunkowe.",
         "INITIATIVE_DEPENDENCY_CYCLE": "Taka zależność domknęłaby koło: inicjatywa czekałaby sama na siebie. Usuń jedną z zależności w tym łańcuchu.",
-        "DEPENDENCY_INITIATIVE_NOT_FOUND": "Wskazana inicjatywa poprzedzająca nie istnieje w tej organizacji. Odśwież plan i wybierz ponownie."
+        "DEPENDENCY_INITIATIVE_NOT_FOUND": "Wskazana inicjatywa poprzedzająca nie istnieje w tej organizacji. Odśwież plan i wybierz ponownie.",
+        "CAPACITY_SCENARIO_REQUIRED": "Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu."
       },
       "roleDemand": {
         "loading": "Wczytuję obciążenie ról…",
@@ -12228,7 +12240,12 @@
       "capacityUnknown": "Nieznane — brak opublikowanej analizy obciążenia.",
       "listEmptyTitle": "Brak planów",
       "listEmptyDescription": "Załóż pierwszy plan przyciskiem „Nowy plan\" — wybierzesz w nim zatwierdzone inicjatywy i horyzont.",
-      "proposalTitle": "Propozycja solvera (do decyzji człowieka)"
+      "proposalTitle": "Propozycja solvera (do decyzji człowieka)",
+      "capacityFromAnalysis": "Wynik analizy „{{name}}\" (wersja {{version}}).",
+      "openCapacityAnalysis": "Otwórz analizę",
+      "newCapacityAnalysis": "Nowa analiza z tego planu",
+      "capacitySheetAria": "Obciążenie ról z analizy",
+      "capacityModeBlocked": "Tryb wg obciążenia ról wymaga opublikowanej analizy obciążenia dla tej wersji planu — utwórz ją w Obciążeniu."
     },
     "planSolver": {
       "selected": "Solver wybrał {{period}}: {{dependency}}; okno inicjatywy obejmuje ten okres; {{capacity}}. Do potwierdzenia przez człowieka.",
@@ -12253,7 +12270,8 @@
         "dependenciesPrecede": "Zależności poprzedzają inicjatywy zależne.",
         "oneFeasiblePeriod": "Deterministyczny solver wybiera jeden możliwy okres docelowy na inicjatywę; żadna data planu ani inicjatywy nie została zmieniona.",
         "capacityUnknownForPeriod": "Obciążenie nieznane dla okresu {{period}} — ograniczenie mocy nie zostało zastosowane.",
-        "demandUnknownForInitiative": "Popyt nieznany dla „{{initiative}}\" w okresie {{period}} — ograniczenie mocy nie zostało zastosowane."
+        "demandUnknownForInitiative": "Popyt nieznany dla „{{initiative}}\" w okresie {{period}} — ograniczenie mocy nie zostało zastosowane.",
+        "advisorShift": "Przesunięcie z wariantu doradcy: „{{initiative}}\" o {{periods}} okres(y) później."
       }
     }
   },

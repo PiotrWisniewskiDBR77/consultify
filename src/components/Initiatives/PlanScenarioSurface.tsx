@@ -22,8 +22,11 @@ import { StandardPreview } from '@/components/standard/StandardPreview';
 import { StandardTable, type TableRow } from '@/components/standard/StandardTable';
 import {
   createPlanAnalysisProposal,
+  listCapacityScenarioRegister,
+  listPlanAnalysisProposals,
   listPlannableInitiatives,
   listPlanScenarioRegister,
+  readCapacityScenario,
   type PlannableInitiative,
   readPlanScenario,
   readPlanScenarioDiff,
@@ -90,6 +93,27 @@ interface PlanAnalysisProposal {
   changes: Array<{ initiativeId: string; before: WindowDraft; after: WindowDraft }>;
 }
 type PlanScenarioHistoryEntry = PlanScenario;
+/**
+ * P15-K7 pkt 1 (DEC-421): ARKUSZ Z POWIĄZANEJ ANALIZY, tylko do odczytu.
+ * `null` w linii roli znaczy „Nieznane", nigdy zero — zero byłoby twierdzeniem
+ * o braku popytu albo podaży, którego nie mamy.
+ */
+export interface LinkedCapacityAnalysis {
+  scenarioId: string;
+  name: string | null;
+  scenarioVersion: number;
+  planScenarioVersion: number;
+  periods: Array<{
+    periodId: string;
+    roles: Array<{
+      roleId: string;
+      roleLabel: string;
+      demand: number | null;
+      supply: number | null;
+      supplySource: 'RESOURCE_PLAN' | 'MANUAL' | 'UNKNOWN';
+    }>;
+  }>;
+}
 interface RegisterRow extends TableRow {
   id: string;
   title: string;
@@ -146,6 +170,10 @@ interface Props extends CanonicalMenu3Contract {
    * nazwaną akcję „Otwórz narzędzia planu".
    */
   onOpenInitiative?: (id: string, title: string) => void;
+  /** P15-K7 pkt 1: „Otwórz analizę" prowadzi do zakładki Obciążenie. */
+  onOpenCapacityAnalysis?: (capacityScenarioId: string) => void;
+  /** P15-K7 pkt 1: „Nowa analiza z tego planu" otwiera tam formularz z planem. */
+  onNewCapacityAnalysis?: (planScenarioId: string) => void;
 }
 const formatDate = (value: string | null) => {
   if (!value) return 'UNKNOWN';
@@ -273,6 +301,8 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   createRequestId = 0,
   demoMode = false,
   onOpenInitiative,
+  onOpenCapacityAnalysis,
+  onNewCapacityAnalysis,
 }) => {
   const { t } = useTranslation();
   const [rows, setRows] = useState<RegisterRow[]>([]);
@@ -294,6 +324,13 @@ export const PlanScenarioSurface: React.FC<Props> = ({
   const [compareTo, setCompareTo] = useState<number | null>(null);
   const [compareState, setCompareState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [analysisProposal, setAnalysisProposal] = useState<PlanAnalysisProposal | null>(null);
+  /**
+   * P15-K7 pkt 1 (DEC-421): WYNIK POWIĄZANEJ ANALIZY OBCIĄŻENIA w karcie planu.
+   * Do K5 sekcja „Obciążenie ról" pokazywała wyłącznie `constraintSnapshot`
+   * (zdanie z seedu) albo „Nieznane" — arkusz okres × rola istniał tylko po
+   * stronie Obciążenia i PMO musiało go szukać w drugiej zakładce.
+   */
+  const [linkedCapacity, setLinkedCapacity] = useState<LinkedCapacityAnalysis | null>(null);
   const [analysisState, setAnalysisState] = useState<'IDLE' | 'LOADING' | 'ERROR'>('IDLE');
   const [publishConfirmationPending, setPublishConfirmationPending] = useState<number | null>(null);
   const [newName, setNewName] = useState('');
@@ -675,6 +712,90 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     });
   }, [rows, onCountsChange]);
 
+  /**
+   * P15-K7 pkt 1 (DEC-421): arkusz z OPUBLIKOWANEJ analizy tej wersji planu.
+   * Brak analizy = `null` (karta pokaże „Nieznane — brak opublikowanej analizy
+   * obciążenia" i przycisk „Nowa analiza z tego planu"), nigdy pusty arkusz.
+   */
+  const loadLinkedCapacity = useCallback(async (planId: string, scenarioVersion: number) => {
+    // Zerujemy TUTAJ, nie w `open()`: otwarcie tego samego planu nie zmienia
+    // tożsamości wersji, więc efekt by się nie powtórzył i arkusz zniknąłby
+    // na dobre po pierwszym wejściu w kartę (zmierzone 07.09 w teście (c)).
+    setLinkedCapacity(null);
+    try {
+      // Rejestr analiz wraca pod kluczem `scenarios` (trasa `/capacity-scenarios`),
+      // nie `items` — pomyłka tutaj daje ciche „brak analizy" przy istniejącej.
+      const register = (await listCapacityScenarioRegister()) as {
+        scenarios?: Array<{
+          id: string;
+          name: string;
+          state: string;
+          version: number;
+          planRef: { scenarioId: string; scenarioVersion: number };
+        }>;
+      };
+      const match = (register.scenarios ?? []).find(
+        (item) =>
+          item.state === 'PUBLISHED' &&
+          item.planRef.scenarioId === planId &&
+          item.planRef.scenarioVersion === scenarioVersion
+      );
+      if (!match) {
+        setLinkedCapacity(null);
+        return;
+      }
+      const detail = (await readCapacityScenario(match.id)) as {
+        scenario: {
+          name?: string | null;
+          scenarioVersion: number;
+          planScenarioVersion: number;
+          periods: LinkedCapacityAnalysis['periods'];
+        };
+      };
+      setLinkedCapacity({
+        scenarioId: match.id,
+        name: detail.scenario.name ?? match.name ?? null,
+        scenarioVersion: detail.scenario.scenarioVersion,
+        planScenarioVersion: detail.scenario.planScenarioVersion,
+        periods: (detail.scenario.periods ?? []).map((period) => ({
+          periodId: period.periodId,
+          roles: period.roles ?? [],
+        })),
+      });
+    } catch {
+      // Brak odczytu rejestru = brak arkusza, a nie pusty arkusz z zerami.
+      setLinkedCapacity(null);
+    }
+  }, []);
+  /**
+   * P15-K6 (DEC-421): propozycja utworzona w karcie ANALIZY (wybór wariantu
+   * „Przesuń kolejność") czeka w karcie PLANU na „Zatwierdź". Bez tego odczytu
+   * propozycja istniała w bazie, a ekran planu jej nie widział.
+   */
+  const loadPendingProposal = useCallback(async (planId: string) => {
+    try {
+      const result = (await listPlanAnalysisProposals(planId)) as {
+        items?: PlanAnalysisProposal[];
+      };
+      const pending = (result.items ?? []).find((item) => item.status === 'PENDING_REVIEW');
+      if (pending) setAnalysisProposal(pending);
+    } catch {
+      // Odczyt propozycji jest dodatkiem — brak nie może zamknąć karty planu.
+      setAnalysisProposal((current) => current);
+    }
+  }, []);
+  // Jedno miejsce odświeżania obu odczytów K6/K7 — także po zapisie, który
+  // podnosi wersję planu (arkusz i propozycja dotyczą KONKRETNEJ wersji).
+  const planIdentity = draft ? `${draft.scenarioId}:${draft.scenarioVersion}` : null;
+  useEffect(() => {
+    if (!planIdentity) return;
+    const [planId, version] = [
+      planIdentity.slice(0, planIdentity.lastIndexOf(':')),
+      Number(planIdentity.slice(planIdentity.lastIndexOf(':') + 1)),
+    ];
+    void loadLinkedCapacity(planId, version);
+    void loadPendingProposal(planId);
+  }, [planIdentity, loadLinkedCapacity, loadPendingProposal]);
   const open = async (id: string) => {
     setSelectedId(id);
     setWorkspaceOpen(true);
@@ -952,6 +1073,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setAnalysisState('IDLE');
     } catch (error) {
       setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      // P15-K7 pkt 2: odmowa CAPACITY_SCENARIO_REQUIRED ma być WIDOCZNA w karcie
+      // (kartę czyta `cardErrorLabel`, który patrzy na `writeState`).
+      setWriteState('ERROR');
       setAnalysisState('ERROR');
     }
   };
@@ -970,7 +1094,9 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       })) as { response: PlanAnalysisProposal };
       setAnalysisProposal(result.response);
       setAnalysisState('IDLE');
-    } catch {
+    } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      setWriteState('ERROR');
       setAnalysisState('ERROR');
     }
   };
@@ -1403,6 +1529,18 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           }
           onNewDraftVersion={() => void createDraftVersionFromPublished()}
           errorLabel={cardErrorLabel}
+          /* P15-K7 (DEC-421): arkusz z powiązanej opublikowanej analizy,
+             a przy jej braku — droga do jej utworzenia i twarda blokada
+             trybów zależnych od mocy (zamiast cichej degradacji). */
+          capacityAnalysis={linkedCapacity}
+          onOpenCapacityAnalysis={
+            linkedCapacity && onOpenCapacityAnalysis
+              ? () => onOpenCapacityAnalysis(linkedCapacity.scenarioId)
+              : undefined
+          }
+          onNewCapacityAnalysis={
+            onNewCapacityAnalysis ? () => onNewCapacityAnalysis(draft.scenarioId) : undefined
+          }
         />
         {publicationConfirmationDialog}
       </>
