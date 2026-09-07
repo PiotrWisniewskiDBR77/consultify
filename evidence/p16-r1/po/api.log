@@ -1,0 +1,27 @@
+zaleglosc: przed=280 poPrzeniesieniu=276 poZamknieciu=271
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+PUT 200 /api/tasks/seed_task_1788642392883_15_6397cd82-2a7b-489f-bfdb-1f3cfe9008c1
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+PUT 200 /api/tasks/seed_task_1788642392883_16_a4a57d28-8a71-414c-8cf2-3acbbdcfd35e
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+GET 200 /api/tasks

@@ -1,0 +1,10 @@
+{
+  "nazwa": "02-zasoby-podglad",
+  "opis": "Podglad wiersza osoby (stan przed R1)",
+  "faza": "przed",
+  "url": "http://localhost:3178/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:30:35.936Z"
+}

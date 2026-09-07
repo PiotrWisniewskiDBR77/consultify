@@ -1,0 +1,10 @@
+{
+  "nazwa": "06-po-zamknieciu",
+  "opis": "Po reloadzie: zadanie uznane za zamkniete zniknelo z zaleglosci",
+  "faza": "po",
+  "url": "http://localhost:3178/execution?tab=resources&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:48:33.756Z"
+}
