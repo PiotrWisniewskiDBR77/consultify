@@ -515,7 +515,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
                 )
               }
             : null,
-        ].filter((row): row is ArtifactPropertyRow => row !== null)
+        ].filter((row) => row !== null) as ArtifactPropertyRow[]
       : [];
 
     const byId: Partial<Record<string, ArtifactRightPanelSection>> = {};
