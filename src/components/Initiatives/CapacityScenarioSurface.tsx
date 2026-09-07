@@ -229,6 +229,8 @@ export const CapacityScenarioSurface: React.FC<
     onOpenPlan?: (planScenarioId: string) => void;
     /** P15-K7 pkt 1: „Nowa analiza z tego planu" wchodzi tu z gotowym planem. */
     createPlanId?: string | null;
+    /** Hub zeruje zadanie po skonsumowaniu — patrz efekt przy `showCreate`. */
+    onCreateRequestConsumed?: () => void;
   }
 > = ({
   activePreset,
@@ -237,6 +239,7 @@ export const CapacityScenarioSurface: React.FC<
   demoMode = false,
   onOpenPlan,
   createPlanId = null,
+  onCreateRequestConsumed,
 }) => {
   const { t } = useTranslation();
   // Katalog osób organizacji — patrz komentarz przy `RangeView` niżej.
@@ -266,14 +269,18 @@ export const CapacityScenarioSurface: React.FC<
   const [newPlanId, setNewPlanId] = useState('');
   // Tozsamosc AKTUALNIE OTWARTEJ analizy — patrz komentarz w `load()`.
   const openScenarioId = useRef<string | null>(null);
-  const handledCreateRequest = useRef(createRequestId);
+  // Odbior nocny 08.09 (C02): `useRef(createRequestId)` startowal juz z nowa
+  // wartoscia przy kazdym swiezym montazu (Plan -> Obciazenie odmontowuje ten
+  // komponent), wiec „Nowa analiza z tego planu” z karty planu nigdy nie otwierala
+  // formularza. Zadanie jest konsumowane raz i zerowane przez hub, wiec powrot na
+  // zakladke nie otwiera formularza ponownie.
   useEffect(() => {
-    if (createRequestId === handledCreateRequest.current) return;
-    handledCreateRequest.current = createRequestId;
+    if (!createRequestId) return;
     // P15-K7: plan przyniesiony z karty planu wypełnia formularz od razu.
     if (createPlanId) setNewPlanId(createPlanId);
     setShowCreate(true);
-  }, [createRequestId, createPlanId]);
+    onCreateRequestConsumed?.();
+  }, [createRequestId, createPlanId, onCreateRequestConsumed]);
   const [nextInputKind, setNextInputKind] = useState<'MATERIAL_CHANGE' | 'SCHEDULE_DECISION'>(
     'MATERIAL_CHANGE'
   );

@@ -401,6 +401,10 @@ export const toCanonicalInitiativeRegisterItemFromLegacyRow = (
     registerAxisRaw: row.axis ?? null,
     registerCategory: row.category ?? null,
     status: normalizeLegacyInitiativeStatus(row.status),
+    // Odbior nocny 08.09 (evidence/odbior-noc-0809/inicjatywy 08a-08c): backend
+    // zapisywal on_hold, a rejestr nigdy nie dostawal `onHold` z wiersza legacy
+    // (71/71 wierszy idzie ta sciezka) — pigulka nie umiala pokazac „Wstrzymana”.
+    onHold: row.onHold === true,
     displayStatus: rawStatus || undefined,
     priority: (String(row.priority || 'MEDIUM').toUpperCase() ||
       'MEDIUM') as PortfolioInitiative['priority'],

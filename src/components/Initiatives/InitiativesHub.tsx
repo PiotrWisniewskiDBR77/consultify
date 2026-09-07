@@ -366,6 +366,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
    * tego użytkownik dostawał nazwę drugiego ekranu i musiał go szukać sam.
    */
   const [capacityCreatePlanId, setCapacityCreatePlanId] = useState<string | null>(null);
+  const resetCapacityCreateRequest = useCallback(() => setCapacityCreateRequestId(0), []);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1771,6 +1772,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           onCountsChange={handleCapacityMenu3Counts}
           createRequestId={capacityCreateRequestId}
           createPlanId={capacityCreatePlanId}
+          onCreateRequestConsumed={resetCapacityCreateRequest}
           onOpenPlan={() => setActiveTab('plan')}
         />
       );

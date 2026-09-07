@@ -1215,6 +1215,8 @@ export async function listRegisteredInitiatives(
 export interface LegacyInitiativeApiRow {
   id: string;
   projectId?: string | null;
+  /** DEC-424 flaga wstrzymania (kontroler zwraca `onHold: Boolean(on_hold)`). */
+  onHold?: boolean | null;
   name?: string | null;
   title?: string | null;
   summary?: string | null;

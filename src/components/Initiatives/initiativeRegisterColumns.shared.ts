@@ -212,7 +212,13 @@ export const createInitiativeRegisterColumns = (
           h('span', {
             className: `h-1.5 w-1.5 flex-shrink-0 rounded-full ${statusDotClass(String(row.status), row.onHold)}`,
           }),
-          getLocalizedStatusLabel(status, t ?? ((key) => key))
+          // Odbior nocny 08.09: wstrzymana inicjatywa ma miec SLOWO, nie tylko kolor kropki.
+          row.onHold === true
+            ? (t ?? ((_key: string, fallback?: string) => fallback ?? _key))(
+                'initiatives.status.ON_HOLD',
+                'Wstrzymana'
+              )
+            : getLocalizedStatusLabel(status, t ?? ((key) => key))
         );
       },
     },

@@ -98,9 +98,10 @@ export const CanonicalInitiativeRegister = ({
             // Dowód 07.09 (zrzut 04): `displayStatus` zna tylko stany runtime-v1, więc
             // „Do zatwierdzenia" świeciło w podglądzie jako „Nieznany", gdy wiersz obok
             // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
-            label:
-              INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] ||
-              getLocalizedStatusLabel(
+            label: initiative.onHold
+              ? t('initiatives.status.ON_HOLD', 'Wstrzymana')
+              : INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] ||
+                getLocalizedStatusLabel(
                 String(initiative.status) as Parameters<typeof getLocalizedStatusLabel>[0],
                 t
               ),
