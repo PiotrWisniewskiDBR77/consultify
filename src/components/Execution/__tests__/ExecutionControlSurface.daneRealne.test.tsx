@@ -14,7 +14,18 @@
  * MUTACJE, na które ten plik reaguje:
  *   (1) powrót źródła do `listManagementSignals`/`listInterventions` → padają
  *       wszystkie przypadki o liczbie wierszy,
- *   (2) zawężenie decyzji do `status === 'PENDING'` → „25 otwartych" spada do 13.
+ *   (2) zawężenie decyzji do `status === 'PENDING'` → „27 w rejestrze" spada do 13.
+ *
+ * AKTUALIZACJA P16/R3 (DEC-453) — trzy przypadki zmieniły oczekiwanie, bo
+ * zmienił się KONTRAKT, nie implementacja:
+ *   · rejestr pokazuje 27 wierszy, nie 25: decyzja rozstrzygnięta ZOSTAJE
+ *     w rejestrze z nowym statusem („wpis nieusuwalny", AUDYT_RYNKU_PMO §4.3).
+ *     Przed R3 znikała z ekranu w chwili rozstrzygnięcia — i to był defekt,
+ *     nie funkcja. Odpada wyłącznie decyzja ARCHIWALNA (`CANCELLED`).
+ *   · kolumna „Eskalacja" pokazuje KROK (`1/3`, `2/3`), nie barwę
+ *     (Czerwona/Bursztynowa) — barwa była dotkliwością wyliczaną z terminu
+ *     i priorytetu, a nie „o ile podniesiono".
+ *   · licznik presetu „Po terminie" liczy TYLKO decyzje nierozstrzygnięte.
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -34,12 +45,36 @@ vi.mock('@/store/useAppStore', () => ({
     selector({ currentUser: { id: 'user-1' }, currentOrganization: { id: 'org-1' } }),
 }));
 
-const { apiGet, raidList, createDecision } = vi.hoisted(() => ({
+const {
+  apiGet,
+  raidList,
+  createDecision,
+  decideDecision,
+  escalateDecision,
+  getOrganizationMembers,
+} = vi.hoisted(() => ({
   apiGet: vi.fn(),
   raidList: vi.fn(),
   createDecision: vi.fn(),
+  decideDecision: vi.fn(),
+  escalateDecision: vi.fn(),
+  getOrganizationMembers: vi.fn(),
 }));
-vi.mock('@/services/api', () => ({ Api: { get: apiGet, raidList, createDecision } }));
+vi.mock('@/services/api', () => ({
+  Api: { get: apiGet, raidList, createDecision, decideDecision, escalateDecision },
+  ApiError: class ApiError extends Error {
+    errorCode: string;
+    status?: number;
+    constructor(payload: any, fallback: string, status?: number) {
+      super(String(payload?.error ?? fallback));
+      this.errorCode = String(payload?.code ?? 'INTERNAL').toUpperCase();
+      this.status = status;
+    }
+  },
+}));
+vi.mock('@/services/api/organizations.api', () => ({
+  OrganizationApi: { getOrganizationMembers: getOrganizationMembers },
+}));
 
 const { listInterventions, listManagementSignals, listCapacityOptions } = vi.hoisted(() => ({
   listInterventions: vi.fn(),
@@ -100,9 +135,25 @@ const RAID = Array.from({ length: 16 }, (_, i) => ({
   dueDate: null,
 }));
 
+/** Inicjatywy „w realizacji" — źródło `sourceId` dla „Nowej decyzji" (P16/R3). */
+const INICJATYWY = [
+  { id: 'ini-1', name: 'Migracja ERP', status: 'EXECUTING', ownerId: 'osoba-1' },
+  { id: 'ini-2', name: 'Program jakości', status: 'BLOCKED', ownerId: 'osoba-2' },
+  { id: 'ini-3', name: 'Zamknięta', status: 'DONE', ownerId: 'osoba-3' },
+];
+
 beforeEach(() => {
   vi.clearAllMocks();
-  apiGet.mockResolvedValue(DECYZJE);
+  apiGet.mockImplementation((sciezka: string) =>
+    Promise.resolve(sciezka === '/initiatives' ? INICJATYWY : DECYZJE)
+  );
+  getOrganizationMembers.mockResolvedValue([
+    { userId: 'osoba-1', name: 'Anna Kowalska' },
+    { userId: 'osoba-2', name: 'Marek Nowak' },
+  ]);
+  createDecision.mockResolvedValue({ id: 'nowa-1' });
+  decideDecision.mockResolvedValue({ id: 'esc-0', status: 'APPROVED' });
+  escalateDecision.mockResolvedValue({ id: 'esc-0', escalationStep: 2 });
   raidList.mockResolvedValue(RAID);
   // Rzeczywistość DBR77: kanoniczny rejestr sterowania jest pusty.
   listInterventions.mockResolvedValue({ items: [] });
@@ -126,11 +177,31 @@ const wierszeZ = (fragment: string) => {
 };
 
 describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
-  it('preset „Decyzje" pokazuje 25 OTWARTYCH decyzji (nie 13 PENDING, nie 35)', async () => {
+  it('preset „Decyzje" pokazuje CAŁY rejestr 27 decyzji — także rozstrzygnięte (P16/R3)', async () => {
     zamontuj('decyzje');
     await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
-    expect(wierszeZ('Decyzja')).toHaveLength(25);
-    expect(screen.queryByText('Decyzja zatwierdzona')).toBeNull();
+    // 25 otwartych + 2 rozstrzygnięte. Rozstrzygnięcie NIE usuwa wpisu
+    // z rejestru — „wpis nieusuwalny" (AUDYT_RYNKU_PMO §4.3).
+    expect(wierszeZ('Decyzja')).toHaveLength(27);
+    expect(screen.getByText('Decyzja zatwierdzona')).toBeInTheDocument();
+    expect(screen.getByText('Decyzja odrzucona')).toBeInTheDocument();
+  });
+
+  it('decyzja ARCHIWALNA (CANCELLED) nie wchodzi do rejestru', async () => {
+    apiGet.mockImplementation((sciezka: string) =>
+      Promise.resolve(
+        sciezka === '/initiatives'
+          ? INICJATYWY
+          : [
+              ...DECYZJE,
+              { id: 'arch-1', title: 'Decyzja usunięta', status: 'CANCELLED', isOverdue: false },
+            ]
+      )
+    );
+    zamontuj('decyzje');
+    await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
+    expect(screen.queryByText('Decyzja usunięta')).toBeNull();
+    expect(wierszeZ('Decyzja')).toHaveLength(27);
   });
 
   it('12 decyzji ma czerwoną liczbę „dni po terminie"', async () => {
@@ -142,11 +213,50 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     expect(czerwone).toHaveLength(12);
   });
 
-  it('kolumna Eskalacja nazywa poziom po polsku (3 czerwone, 9 bursztynowych)', async () => {
+  it('kolumna Eskalacja pokazuje KROK z licznika serwera, nie barwę (P16/R3)', async () => {
+    apiGet.mockImplementation((sciezka: string) =>
+      Promise.resolve(
+        sciezka === '/initiatives'
+          ? INICJATYWY
+          : DECYZJE.map((d, i) =>
+              d.status === 'ESCALATED' ? { ...d, escalationStep: i < 2 ? 3 : 1 } : d
+            )
+      )
+    );
     zamontuj('decyzje');
     await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
-    expect(screen.getAllByText('Czerwona')).toHaveLength(3);
-    expect(screen.getAllByText('Bursztynowa')).toHaveLength(9);
+    // Dwie na maksie (3/3), dziesięć na pierwszym poziomie (1/3).
+    expect(screen.getAllByText('3/3')).toHaveLength(2);
+    expect(screen.getAllByText('1/3')).toHaveLength(10);
+    // Barwa „Czerwona"/„Bursztynowa" to była DOTKLIWOŚĆ, nie krok — po R3
+    // nie ma jej w kolumnie w ogóle.
+    expect(screen.queryByText('Czerwona')).toBeNull();
+    expect(screen.queryByText('Bursztynowa')).toBeNull();
+  });
+
+  it('kolumny decyzji to Tytuł · Potrzebna do dnia · Decydent · Status · Dni po terminie · Eskalacja', async () => {
+    zamontuj('decyzje');
+    await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
+    const naglowki = Array.from(document.querySelectorAll('table thead th')).map((th) =>
+      (th.textContent || '').replace(/[^\p{L} ]/gu, '').trim()
+    );
+    expect(naglowki).toContain('Potrzebna do dnia');
+    expect(naglowki).toContain('Decydent');
+    expect(naglowki).toContain('Status');
+    // „Typ" zostaje WYŁĄCZNIE w RAID — w decyzjach mieszał status z typem.
+    expect(naglowki).not.toContain('Typ');
+  });
+
+  it('przełącznik „Ryzyka" zmienia ZESTAW KOLUMN, nie tylko filtr', async () => {
+    zamontuj('ryzyka');
+    await waitFor(() => expect(screen.getByText('Ryzyko 0')).toBeInTheDocument());
+    const naglowki = Array.from(document.querySelectorAll('table thead th')).map((th) =>
+      (th.textContent || '').replace(/[^\p{L} ]/gu, '').trim()
+    );
+    expect(naglowki).toContain('Typ');
+    expect(naglowki).toContain('Właściciel');
+    expect(naglowki).not.toContain('Decydent');
+    expect(naglowki).not.toContain('Potrzebna do dnia');
   });
 
   it('preset „Ryzyka" pokazuje 16 pozycji RAID, z terminem „—" (0 z 16 ma datę)', async () => {
@@ -156,19 +266,37 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     expect(screen.getAllByText('Ryzyko').length).toBeGreaterThan(0); // etykieta typu
   });
 
-  it('preset „Po terminie" łączy oba rejestry i pokazuje 12 pozycji', async () => {
+  it('preset „Po terminie" liczy TYLKO decyzje nierozstrzygnięte (P16/R3)', async () => {
+    apiGet.mockImplementation((sciezka: string) =>
+      Promise.resolve(
+        sciezka === '/initiatives'
+          ? INICJATYWY
+          : [
+              ...DECYZJE,
+              // Rozstrzygnięta PO TERMINIE — jest w rejestrze, ale nie jest
+              // już zaległością: preset „Po terminie" ma jej NIE liczyć.
+              {
+                id: 'done-late',
+                title: 'Decyzja rozstrzygnięta po terminie',
+                status: 'APPROVED',
+                dueDate: dzien(-30),
+                isOverdue: true,
+                daysOverdue: 30,
+              },
+            ]
+      )
+    );
     zamontuj('po-terminie');
     await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
     expect(wierszeZ('Decyzja po terminie')).toHaveLength(12);
+    expect(screen.queryByText('Decyzja rozstrzygnięta po terminie')).toBeNull();
   });
 
   it('liczniki Menu 3 to dokładnie trzy presety z realnymi liczbami', async () => {
     const onCountsChange = vi.fn();
     zamontuj('decyzje', onCountsChange);
     await waitFor(() =>
-      expect(
-        (onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>)?.decyzje
-      ).toBe(25)
+      expect((onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>)?.decyzje).toBe(27)
     );
     const ostatnie = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>;
     expect(Object.keys(ostatnie).sort()).toEqual(['decyzje', 'po-terminie', 'ryzyka']);

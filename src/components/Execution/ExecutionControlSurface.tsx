@@ -1,20 +1,25 @@
+import { ArrowUpCircle, CheckCircle2, CircleSlash, XCircle } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { StandardPreview } from '@/components/standard';
+import { ReasonDialog } from '@/components/standard/ReasonDialog';
 import {
+  type StandardRowMenu,
   StandardTable,
   type TableColumn,
   type TableRow,
 } from '@/components/standard/StandardTable';
-import { Api } from '@/services/api';
 import {
   memberNameOrUnknown,
-  useOrganizationMemberNames,
   type MemberNameResolver,
+  readMemberId,
+  readMemberLabel,
+  useOrganizationMemberNames,
 } from '@/hooks/useOrganizationMemberNames';
-
+import { Api, ApiError } from '@/services/api';
+import { OrganizationApi } from '@/services/api/organizations.api';
 import {
   createMaterialChange,
   draftIntervention,
@@ -24,13 +29,9 @@ import {
   listManagementSignals,
   transitionIntervention,
 } from '@/services/initiatives-execution/runtimeApi';
+import { useAppStore } from '@/store/useAppStore';
 
 import { countExecutionPresets, type ExecutionMenu3Contract } from './canonicalMenu3';
-import {
-  decisionDaysOverdue,
-  isDecisionOverdue,
-  isOpenDecision,
-} from './executionRealData';
 import {
   executionLocalReviewEnabled,
   executionReviewInterventions,
@@ -38,6 +39,13 @@ import {
   executionReviewRoleLabel,
   executionReviewSignals,
 } from './executionLocalReviewData';
+import {
+  decisionDaysOverdue,
+  filterInFlightInitiatives,
+  isArchivedDecision,
+  isDecisionOverdue,
+  isResolvedDecision,
+} from './executionRealData';
 
 const interventionFieldLabels: Record<string, string> = {
   interventionId: 'Identyfikator interwencji',
@@ -306,7 +314,73 @@ interface GovernanceRow extends TableRow {
   escalation: string;
   isOverdue: boolean;
   source: any;
+  /**
+   * P16/R3 (DEC-453) — pola WYŁĄCZNIE decyzyjne. RAID zostawia je puste; jego
+   * zestaw kolumn (R4) nigdy po nie nie sięga.
+   */
+  /** Identyfikator decyzji BEZ przedrostka `decision:` — do wołania API. */
+  decisionId?: string;
+  /** Osoba, od której decyzja jest oczekiwana (`decision_maker_id`). */
+  decydent?: string;
+  /** Status po polsku: Oczekuje / Eskalowana / Rozstrzygnięta / Odrzucona / Nieaktualna. */
+  statusLabel?: string;
+  /** Status z API (PENDING/ESCALATED/APPROVED/REJECTED/SUPERSEDED). */
+  rawStatus?: string;
+  /** Krok eskalacji 0..3 (licznik z `decision_escalation_log`, nie barwa). */
+  escalationStep?: number;
+  /** Czy TEN użytkownik może rozstrzygnąć (decydent albo ADMIN) — patrz `canDecide`. */
+  canDecide?: boolean;
+  /** Uzasadnienie rozstrzygnięcia — pokazywane w podglądzie, nieusuwalne. */
+  rationale?: string;
+  decidedAt?: string | null;
 }
+
+/**
+ * KROK ESKALACJI po polsku — licznik, nie dotkliwość (P16/R3, DEC-453).
+ *
+ * Trzy poziomy z §4.3 audytu rynku: 1 właściciel inicjatywy → 2 PMO →
+ * 3 komitet. Serwer liczy krok z `decision_escalation_log`
+ * (`escalationStep`), a barwa `escalationLevelName` (none/amber/red) zostaje
+ * osobno jako DOTKLIWOŚĆ — nie mieszamy tych dwóch rzeczy w jednej kolumnie,
+ * bo to był dokładnie defekt kolumny „Typ" przed R3.
+ */
+const ESCALATION_STEP_MAX = 3;
+
+/** Adresat poziomu: 1 właściciel inicjatywy · 2 PMO · 3 komitet. */
+const escalationAddressee = (
+  step: number,
+  t: (key: string, fallback: string) => string
+): string =>
+  step === 1
+    ? t('execution.decisions.escalation.level1', 'Właściciel inicjatywy')
+    : step === 2
+      ? t('execution.decisions.escalation.level2', 'PMO')
+      : t('execution.decisions.escalation.level3', 'Komitet');
+
+/**
+ * KOLUMNA — sam licznik („2/3"), jedna linia.
+ *
+ * Adresat („PMO", „Komitet") NIE wchodzi do kolumny celowo: przy szerokości
+ * kanonicznej „1/3 · Właściciel inicjatywy" łamał się na dwie linie i rozpychał
+ * wiersz (zmierzone na zrzucie), a wiersz tabeli ma być jednolinijkowy. Kto
+ * jest adresatem — mówi podgląd i tooltip (`escalationStepLabel` niżej).
+ */
+const escalationStepShort = (
+  step: number,
+  t: (key: string, fallback: string) => string
+): string =>
+  !step || step <= 0
+    ? t('execution.decisions.escalation.none', 'Brak')
+    : `${step}/${ESCALATION_STEP_MAX}`;
+
+/** PODGLĄD — licznik z adresatem („2/3 · PMO"). */
+const escalationStepLabel = (
+  step: number,
+  t: (key: string, fallback: string) => string
+): string =>
+  !step || step <= 0
+    ? t('execution.decisions.escalation.none', 'Brak')
+    : `${step}/${ESCALATION_STEP_MAX} · ${escalationAddressee(step, t)}`;
 
 const raidTypeLabel = (value: unknown): string =>
   ({
@@ -317,27 +391,37 @@ const raidTypeLabel = (value: unknown): string =>
     ACTION: 'Działanie',
   })[String(value ?? '').toUpperCase()] ?? String(value ?? '—');
 
-const decisionStatusLabel = (value: unknown): string =>
-  ({
-    PENDING: 'Oczekuje',
-    ESCALATED: 'Eskalowana',
-    APPROVED: 'Zatwierdzona',
-    REJECTED: 'Odrzucona',
-    DEFERRED: 'Odroczona',
-  })[String(value ?? '').toUpperCase()] ?? String(value ?? '—');
-
 /**
- * Poziom eskalacji — serwer liczy go sam (`escalationLevel` 0/1/2 +
- * `escalationLevelName` none/amber/red w `DecisionController.getDecisions`),
- * więc tu tylko nazywamy go po polsku. Zero własnej arytmetyki obok silnika.
+ * STATUS DECYZJI (P16/R3, DEC-453) — pięć stanów rejestru z §4.3 audytu rynku:
+ * Oczekuje · Eskalowana · Rozstrzygnięta · Odrzucona · Nieaktualna.
+ *
+ * Przed R3 ta etykieta lądowała w kolumnie „Typ" (obok TYPU pozycji RAID w tej
+ * samej kolumnie) — dwie różne semantyki pod jednym nagłówkiem. Teraz ma
+ * własną kolumnę „Status", a „Typ" zostaje wyłącznie przy RAID.
+ *
+ * `APPROVED` nazywa się po polsku „Rozstrzygnięta", nie „Zatwierdzona":
+ * w rejestrze decyzji chodzi o to, że wynik ZAPADŁ, a nie o zgodę na cudzy
+ * wniosek.
  */
-const escalationLabel = (decision: any): string => {
-  const name = String(decision?.escalationLevelName ?? '').toLowerCase();
-  if (name === 'red') return 'Czerwona';
-  if (name === 'amber') return 'Bursztynowa';
-  if (name === 'none') return 'Brak';
-  const level = Number(decision?.escalationLevel ?? 0);
-  return level >= 2 ? 'Czerwona' : level === 1 ? 'Bursztynowa' : 'Brak';
+const decisionStatusLabel = (
+  value: unknown,
+  t: (key: string, fallback: string) => string
+): string => {
+  const key = String(value ?? '').toUpperCase();
+  const slownik: Record<string, string> = {
+    PENDING: t('execution.decisions.status.pending', 'Oczekuje'),
+    ESCALATED: t('execution.decisions.status.escalated', 'Eskalowana'),
+    APPROVED: t('execution.decisions.status.approved', 'Rozstrzygnięta'),
+    REJECTED: t('execution.decisions.status.rejected', 'Odrzucona'),
+    SUPERSEDED: t('execution.decisions.status.superseded', 'Nieaktualna'),
+    RETURNED_FOR_CLARIFICATION: t(
+      'execution.decisions.status.returned',
+      'Zwrócona do uzupełnienia'
+    ),
+    DEFERRED: t('execution.decisions.status.deferred', 'Odroczona'),
+    CANCELLED: t('execution.decisions.status.cancelled', 'Anulowana'),
+  };
+  return slownik[key] ?? String(value ?? '—');
 };
 
 /**
@@ -372,14 +456,99 @@ const formatDay = (value: string | null | undefined) => {
   }).format(parsed);
 };
 
-/** Kolumny wg planu C2 (wiersz 5): Tytuł · Typ · Właściciel · Termin · Dni po terminie · Eskalacja. */
-const buildGovernanceColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
-  {
-    id: 'title',
-    label: t('execution.governance.columns.title', 'Tytuł'),
-    sortable: true,
-    width: '300px',
+/**
+ * DWA ZESTAWY KOLUMN, nie jeden (P16/R3, DEC-453 + AUDYT_RYNKU_PMO §4.3).
+ *
+ * Przełącznik Menu 3 „Decyzje / Ryzyka" (DEC-426) zmienia ZESTAW KOLUMN, nie
+ * sam filtr — bo decyzja i pozycja RAID opisują się różnymi polami:
+ *   · decyzja  — Tytuł · Potrzebna do dnia · Decydent · Status · Dni po terminie · Eskalacja,
+ *   · RAID     — Tytuł · Typ · Właściciel · Termin · Dni po terminie · Eskalacja.
+ * Przed R3 jedna wspólna kolumna „Typ" pokazywała STATUS decyzji (Oczekuje /
+ * Eskalowana) dla jednych wierszy i TYP pozycji (Ryzyko / Problem) dla drugich.
+ * Kolumny RAID (prawdopodobieństwo, wpływ, ekspozycja) domyka R4 — tu zostaje
+ * dokładnie to, co RAID miał przed R3, żeby nie ruszać cudzego kroku.
+ */
+const kolumnaTytul = (t: (key: string, fallback: string) => string): TableColumn => ({
+  id: 'title',
+  label: t('execution.governance.columns.title', 'Tytuł'),
+  sortable: true,
+  width: '300px',
+});
+
+const kolumnaDniPoTerminie = (t: (key: string, fallback: string) => string): TableColumn => ({
+  id: 'daysOverdue',
+  label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+  sortable: true,
+  width: '130px',
+  render: (row) => {
+    const days = row.daysOverdue as number | null;
+    if (days == null) return <span className="text-c-text-muted">—</span>;
+    return <span className="font-semibold tabular-nums text-c-danger">+{days}</span>;
   },
+});
+
+/** Kolumny DECYZJI (P16/R3). */
+const buildDecisionColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  kolumnaTytul(t),
+  {
+    id: 'dueAt',
+    label: t('execution.decisions.columns.due', 'Potrzebna do dnia'),
+    sortable: true,
+    width: '150px',
+  },
+  {
+    id: 'decydent',
+    label: t('execution.decisions.columns.decisionMaker', 'Decydent'),
+    sortable: true,
+    width: '170px',
+  },
+  {
+    id: 'statusLabel',
+    label: t('execution.decisions.columns.status', 'Status'),
+    sortable: true,
+    filterable: true,
+    width: '140px',
+    render: (row) => {
+      const raw = String(row.rawStatus ?? '').toUpperCase();
+      // Zero crimsona na danych: „Odrzucona" to WYNIK, nie awaria. Czerwień w
+      // tej kolumnie zostaje wyłącznie dla stanu, który krzyczy o działanie
+      // (Eskalowana) — kanon: primary/crimson tylko dla semantyki krytycznej.
+      const tone =
+        raw === 'ESCALATED'
+          ? 'text-c-danger'
+          : raw === 'PENDING'
+            ? 'text-c-text-primary'
+            : 'text-c-text-muted';
+      return <span className={`font-medium ${tone}`}>{String(row.statusLabel ?? '')}</span>;
+    },
+  },
+  kolumnaDniPoTerminie(t),
+  {
+    id: 'escalation',
+    label: t('execution.governance.columns.escalation', 'Eskalacja'),
+    sortable: true,
+    filterable: true,
+    width: '130px',
+    render: (row) => {
+      const step = Number(row.escalationStep ?? 0);
+      const tone =
+        step >= ESCALATION_STEP_MAX
+          ? 'text-c-danger'
+          : step > 0
+            ? 'text-c-warning'
+            : 'text-c-text-muted';
+      return (
+        <span className={`font-medium tabular-nums ${tone}`} title={escalationStepLabel(step, t)}>
+          {escalationStepShort(step, t)}
+        </span>
+      );
+    },
+  },
+];
+
+/** Kolumny RAID — zestaw sprzed R3, bez zmian (domknięcie: R4). */
+const buildRaidColumns = (t: (key: string, fallback: string) => string): TableColumn[] => [
+  kolumnaTytul(t),
   {
     id: 'kindLabel',
     label: t('execution.governance.columns.type', 'Typ'),
@@ -399,17 +568,7 @@ const buildGovernanceColumns = (t: (key: string, fallback: string) => string): T
     sortable: true,
     width: '140px',
   },
-  {
-    id: 'daysOverdue',
-    label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
-    sortable: true,
-    width: '130px',
-    render: (row) => {
-      const days = row.daysOverdue as number | null;
-      if (days == null) return <span className="text-c-text-muted">—</span>;
-      return <span className="font-semibold tabular-nums text-c-danger">+{days}</span>;
-    },
-  },
+  kolumnaDniPoTerminie(t),
   {
     id: 'escalation',
     label: t('execution.governance.columns.escalation', 'Eskalacja'),
@@ -446,7 +605,28 @@ export const ExecutionControlSurface = ({
   const isPolish = !!i18n.language?.startsWith('pl');
   const columns = useMemo(() => buildColumns(t), [t]);
   const signalColumns = useMemo(() => buildSignalColumns(t), [t]);
-  const governanceColumns = useMemo(() => buildGovernanceColumns(t), [t]);
+  const decisionColumns = useMemo(() => buildDecisionColumns(t), [t]);
+  const raidColumns = useMemo(() => buildRaidColumns(t), [t]);
+  const currentUser = useAppStore((store) => store.currentUser);
+  const currentOrganization = useAppStore((store) => store.currentOrganization);
+  /**
+   * KTO MOŻE ROZSTRZYGNĄĆ (P16/R3, DEC-453) — lustro reguły serwera, nie druga
+   * reguła. `DecisionController.decide` odsyła 403 „Only decision owner can
+   * decide", jeśli wołający nie jest decydentem ani ADMIN/OWNER/SUPERADMIN.
+   * Ekran ukrywa wtedy akcje rozstrzygające, żeby MEMBER nie klikał przycisku,
+   * który i tak odbije się o 403. Bramką prawdy zostaje SERWER — to jest
+   * wyłącznie uprzejmość interfejsu.
+   */
+  const canDecide = useCallback(
+    (decisionOwnerId?: string | null) => {
+      const rola = String(currentUser?.role ?? '').toUpperCase();
+      if (['ADMIN', 'ADMINISTRATOR', 'OWNER', 'SUPERADMIN', 'SUPER_ADMIN'].includes(rola)) {
+        return true;
+      }
+      return Boolean(decisionOwnerId) && decisionOwnerId === currentUser?.id;
+    },
+    [currentUser?.id, currentUser?.role]
+  );
   /**
    * 1.12-R1 (C): KATALOG OSÓB dla rejestru RAID.
    * ZMIERZONE NA ZRZUCIE (06.09, ?tab=control, chip „Ryzyka"): kolumna
@@ -461,8 +641,29 @@ export const ExecutionControlSurface = ({
     [governanceRows, setGovernanceRows] = useState<GovernanceRow[]>([]),
     [selectedGovernanceId, setSelectedGovernanceId] = useState<string | null>(null),
     [newDecisionOpen, setNewDecisionOpen] = useState(false),
-    [newDecision, setNewDecision] = useState({ title: '', dueDate: '' }),
+    // P16/R3: formularz „Nowa decyzja" ma cztery pola, bo tyle wymaga kontrakt
+    // (`sourceId` = inicjatywa, `dueDate` = „potrzebna do dnia", decydent).
+    [newDecision, setNewDecision] = useState({
+      title: '',
+      dueDate: '',
+      initiativeId: '',
+      decisionOwnerId: '',
+    }),
     [newDecisionError, setNewDecisionError] = useState<string | null>(null),
+    [newDecisionBusy, setNewDecisionBusy] = useState(false),
+    /** Inicjatywy W REALIZACJI — źródło `sourceId` dla nowej decyzji. */
+    [executionInitiatives, setExecutionInitiatives] = useState<
+      Array<{ id: string; name: string; ownerId?: string | null }>
+    >([]),
+    /** Członkowie organizacji — lista wyboru decydenta. */
+    [orgMembers, setOrgMembers] = useState<Array<{ id: string; name: string }>>([]),
+    /** Otwarte okno powodu: która akcja i na której decyzji. */
+    [reasonDialog, setReasonDialog] = useState<{
+      kind: 'approve' | 'reject' | 'supersede' | 'escalate';
+      row: GovernanceRow;
+    } | null>(null),
+    [reasonBusy, setReasonBusy] = useState(false),
+    [reasonError, setReasonError] = useState<string | null>(null),
     [rows, setRows] = useState<Row[]>([]),
     [signalRows, setSignalRows] = useState<SignalRow[]>([]),
     [selectedSignalId, setSelectedSignalId] = useState<string | null>(null),
@@ -557,22 +758,49 @@ export const ExecutionControlSurface = ({
         : [];
 
     const decisionRows: GovernanceRow[] = decisionItems
-      // Rozstrzygnięte decyzje nie są „do rozstrzygnięcia" — rejestr pokazuje
-      // to, co jeszcze czeka (25 z 35 na pomiarze DBR77).
-      .filter((decision) => isOpenDecision(decision))
-      .map((decision) => ({
-        id: `decision:${decision.id}`,
-        title: decision.title ?? 'Decyzja bez tytułu',
-        kind: 'DECISION' as const,
-        kindLabel: decisionStatusLabel(decision.status),
-        owner: decision.ownerName || decision.requestedByName || 'Nieprzypisana',
-        dueAt: formatDay(decision.dueDate),
-        rawDueAt: decision.dueDate ?? null,
-        daysOverdue: isDecisionOverdue(decision) ? decisionDaysOverdue(decision) : null,
-        escalation: escalationLabel(decision),
-        isOverdue: isDecisionOverdue(decision),
-        source: decision,
-      }));
+      /**
+       * P16/R3 (DEC-453) — REJESTR POKAZUJE TEŻ ROZSTRZYGNIĘTE.
+       *
+       * Przed R3 stał tu `isOpenDecision(...)`, czyli po rozstrzygnięciu wiersz
+       * ZNIKAŁ z ekranu — a właśnie to jest zakazane: „wpis nieusuwalny"
+       * (§4.3, wzorzec Forecast). Decyzja zostaje w rejestrze z nowym statusem
+       * i z uzasadnieniem w podglądzie. Odpada WYŁĄCZNIE decyzja ARCHIWALNA
+       * (`cancelled` z `DELETE /api/decisions/:id`) — tę użytkownik świadomie
+       * usunął z pola widzenia.
+       */
+      .filter((decision) => !isArchivedDecision(decision))
+      .map((decision) => {
+        const escalationStep = Number(decision.escalationStep ?? 0) || 0;
+        return {
+          id: `decision:${decision.id}`,
+          decisionId: String(decision.id),
+          title: decision.title ?? t('execution.decisions.untitled', 'Decyzja bez tytułu'),
+          kind: 'DECISION' as const,
+          // Kolumna „Typ" znika z widoku decyzji (zostaje w RAID). `kindLabel`
+          // wciąż niesie status, bo używa go pigułka podglądu.
+          kindLabel: decisionStatusLabel(decision.status, t),
+          statusLabel: decisionStatusLabel(decision.status, t),
+          rawStatus: String(decision.status ?? '').toUpperCase(),
+          owner: decision.ownerName || decision.requestedByName || 'Nieprzypisana',
+          decydent:
+            decision.ownerName ||
+            (decision.decisionOwnerId
+              ? memberNameOrUnknown(resolveMemberName, decision.decisionOwnerId, isPolish)
+              : isPolish
+                ? 'Nieprzypisany'
+                : 'Unassigned'),
+          dueAt: formatDay(decision.dueDate),
+          rawDueAt: decision.dueDate ?? null,
+          daysOverdue: isDecisionOverdue(decision) ? decisionDaysOverdue(decision) : null,
+          escalationStep,
+          escalation: escalationStepLabel(escalationStep, t),
+          isOverdue: isDecisionOverdue(decision),
+          canDecide: canDecide(decision.decisionOwnerId),
+          rationale: decision.decisionRationale ?? undefined,
+          decidedAt: decision.decidedAt ?? null,
+          source: decision,
+        };
+      });
 
     const raidRows: GovernanceRow[] = raidItems.map((item) => ({
       id: `raid:${item.id}`,
@@ -584,20 +812,62 @@ export const ExecutionControlSurface = ({
       // a nie zmyśloną datę (dobudowa terminów to R3, plan C2 wiersz 5).
       dueAt: formatDay(item.dueDate),
       rawDueAt: item.dueDate ?? null,
-      daysOverdue: item.dueDate && Date.parse(item.dueDate) < Date.now()
-        ? Math.floor((Date.now() - Date.parse(item.dueDate)) / 86_400_000)
-        : null,
+      daysOverdue:
+        item.dueDate && Date.parse(item.dueDate) < Date.now()
+          ? Math.floor((Date.now() - Date.parse(item.dueDate)) / 86_400_000)
+          : null,
       escalation: severityToEscalation(item.severity),
       isOverdue: Boolean(item.dueDate) && Date.parse(item.dueDate) < Date.now(),
       source: item,
     }));
 
     setGovernanceRows([...decisionRows, ...raidRows]);
-  }, [resolveMemberName, isPolish]);
+  }, [resolveMemberName, isPolish, t, canDecide]);
+
+  /**
+   * Słowniki formularza „Nowa decyzja" (P16/R3): inicjatywy w realizacji jako
+   * `sourceId` i członkowie organizacji jako decydent. Ładowane RAZ, obok
+   * rejestru — bez tych dwóch list `POST /api/decisions` nie ma z czego złożyć
+   * kontekstu i kończy się tym samym 400, które R3 naprawia.
+   */
+  const loadDecisionDictionaries = useCallback(async () => {
+    const [inicjatywy, czlonkowie] = await Promise.allSettled([
+      Api.get('/initiatives'),
+      currentOrganization?.id
+        ? OrganizationApi.getOrganizationMembers(currentOrganization.id)
+        : Promise.resolve([]),
+    ]);
+
+    if (inicjatywy.status === 'fulfilled') {
+      const surowe: any[] = Array.isArray(inicjatywy.value)
+        ? inicjatywy.value
+        : ((inicjatywy.value as any)?.initiatives ?? (inicjatywy.value as any)?.items ?? []);
+      setExecutionInitiatives(
+        filterInFlightInitiatives(surowe).map((initiative: any) => ({
+          id: String(initiative.id),
+          name: String(initiative.name ?? initiative.title ?? initiative.id),
+          ownerId: initiative.ownerId ?? initiative.owner_id ?? null,
+        }))
+      );
+    }
+
+    if (czlonkowie.status === 'fulfilled') {
+      const lista = (czlonkowie.value ?? []) as any[];
+      setOrgMembers(
+        lista
+          .map((member) => ({
+            id: readMemberId(member),
+            name: readMemberLabel(member) ?? readMemberId(member),
+          }))
+          .filter((member) => Boolean(member.id))
+      );
+    }
+  }, [currentOrganization?.id]);
 
   const load = useCallback(async () => {
     setState('LOADING');
     void loadGovernance();
+    void loadDecisionDictionaries();
     try {
       const [b, s, capacity] = (await Promise.all([
         listInterventions(),
@@ -691,7 +961,7 @@ export const ExecutionControlSurface = ({
       );
       setState('READY');
     }
-  }, [loadGovernance]);
+  }, [loadGovernance, loadDecisionDictionaries]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -703,15 +973,24 @@ export const ExecutionControlSurface = ({
   // 1.12-R1 (C): trzy presety liczone z POLA, nie z regexa po
   // `JSON.stringify(wiersz)`. Stary filtr „decisions" łapał każdy wiersz,
   // w którym gdziekolwiek padło słowo DECISION — także w nazwie pola.
-  const matches = useCallback(
-    (row: GovernanceRow, preset: string) => {
-      if (preset === 'decyzje') return row.kind === 'DECISION';
-      if (preset === 'ryzyka') return row.kind === 'RAID';
-      if (preset === 'po-terminie') return row.isOverdue;
-      return false;
-    },
-    []
-  );
+  const matches = useCallback((row: GovernanceRow, preset: string) => {
+    if (preset === 'decyzje') return row.kind === 'DECISION';
+    if (preset === 'ryzyka') return row.kind === 'RAID';
+    if (preset === 'po-terminie') {
+      if (!row.isOverdue) return false;
+      /**
+       * P16/R3 (DEC-453): „Po terminie" liczy WYŁĄCZNIE decyzje, które
+       * jeszcze nie zapadły (Oczekuje / Eskalowana). Decyzja rozstrzygnięta
+       * po terminie zostaje w rejestrze (wpis nieusuwalny), ale nie jest już
+       * zaległością — inaczej licznik nigdy by nie spadł do zera i przestałby
+       * cokolwiek znaczyć. Pozycje RAID zostają w tym presecie bez zmian
+       * (ich reguła terminu jest przedmiotem R4).
+       */
+      if (row.kind !== 'DECISION') return true;
+      return row.rawStatus === 'PENDING' || row.rawStatus === 'ESCALATED';
+    }
+    return false;
+  }, []);
   const activeGovernancePreset = activePreset ?? 'decyzje';
   const visibleGovernanceRows = useMemo(
     () => governanceRows.filter((row) => matches(row, activeGovernancePreset)),
@@ -732,32 +1011,200 @@ export const ExecutionControlSurface = ({
    */
   const hasRuntimeControlData = signalRows.length > 0 || rows.length > 0;
   /**
-   * 1.12-R1 (C): „Nowa decyzja" na ISTNIEJĄCYM POST `/api/decisions`
-   * (`Api.createDecision`, walidator `CreateDecisionSchema` — pola `title`
-   * wymagane, `dueDate` opcjonalne). Ten sam wzorzec, którego używa Moja Praca
-   * (`NotebookContent.handleCreateDecision`) — zero nowego backendu.
+   * KOMUNIKAT BŁĘDU PO POLSKU (P16/R3, DEC-453).
+   *
+   * Do R3 ekran wypisywał użytkownikowi stały angielski napis
+   * „Failed to create decision" — bo `Api.createDecision` gubiła całą
+   * odpowiedź serwera i rzucała literał. Teraz `ApiError` niesie `errorCode`
+   * (pole `code` kontrolera) i treść serwera; tłumaczymy PO KODZIE, a gdy kodu
+   * nie znamy — pokazujemy nazwany, polski komunikat ogólny z numerem HTTP,
+   * NIGDY surowy angielski tekst backendu jako jedyną informację.
+   */
+  const decisionErrorMessage = useCallback(
+    (error: unknown, fallbackKey: string, fallbackText: string): string => {
+      const kod = error instanceof ApiError ? error.errorCode : '';
+      const status = error instanceof ApiError ? error.status : undefined;
+      const slownik: Record<string, string> = {
+        REASON_REQUIRED: t(
+          'execution.decisions.errors.reasonRequired',
+          'Uzasadnienie jest wymagane — bez niego decyzja nie zostanie zapisana.'
+        ),
+        RATIONALE_REQUIRED: t(
+          'execution.decisions.errors.reasonRequired',
+          'Uzasadnienie jest wymagane — bez niego decyzja nie zostanie zapisana.'
+        ),
+        ESCALATION_AT_MAX: t(
+          'execution.decisions.errors.escalationAtMax',
+          'Decyzja jest już na najwyższym poziomie eskalacji (3/3 — komitet).'
+        ),
+        ALREADY_FINALIZED: t(
+          'execution.decisions.errors.alreadyFinalized',
+          'Ta decyzja już zapadła — rozstrzygnięcia nie da się cofnąć ani powtórzyć.'
+        ),
+        STALE_VERSION: t(
+          'execution.decisions.errors.staleVersion',
+          'Ktoś zmienił tę decyzję w międzyczasie. Odśwież listę i spróbuj ponownie.'
+        ),
+      };
+      if (kod && slownik[kod]) return slownik[kod];
+      if (status === 403) {
+        return t(
+          'execution.decisions.errors.forbidden',
+          'Nie masz uprawnień do tej operacji — rozstrzygać może decydent albo administrator.'
+        );
+      }
+      if (status === 400) {
+        return t(
+          'execution.decisions.errors.missingContext',
+          'Brakuje danych decyzji — uzupełnij inicjatywę, termin i decydenta.'
+        );
+      }
+      return status
+        ? `${t(fallbackKey, fallbackText)} (HTTP ${status})`
+        : t(fallbackKey, fallbackText);
+    },
+    [t]
+  );
+
+  /**
+   * „NOWA DECYZJA" (P16/R3, DEC-453) — naprawa stałego 400.
+   *
+   * ZMIERZONE PRZED R3: formularz wysyłał `{title, dueDate?, sourceType:
+   * 'execution'}`, a `DecisionController.createDecision` odrzucał to
+   * bezwarunkowo — kontekst decyzji wymaga ALBO project/initiative/task id,
+   * ALBO PARY `sourceType` + `sourceId`. Wysyłany był sam `sourceType`, więc
+   * `hasSourceContext` było zawsze fałszem i KAŻDA próba kończyła się
+   * „Missing decision context".
+   *
+   * Po R3 formularz zbiera cztery pola i wysyła komplet: `initiativeId`
+   * (kontekst) + `sourceId` = ta sama inicjatywa (lineage) + `sourceType`
+   * 'execution' + `dueDate` (kolumna „Potrzebna do dnia", WYMAGANA) +
+   * `decisionOwnerId` (kolumna „Decydent"; serwer zapisuje je do
+   * `decisions.decision_maker_id`).
    */
   const createDecision = async () => {
     const title = newDecision.title.trim();
-    if (!title) return;
+    const initiativeId = newDecision.initiativeId.trim();
+    const dueDate = newDecision.dueDate.trim();
+    if (!title || !initiativeId || !dueDate) return;
     setNewDecisionError(null);
+    setNewDecisionBusy(true);
     try {
       await Api.createDecision({
         title,
-        ...(newDecision.dueDate
-          ? { dueDate: new Date(newDecision.dueDate).toISOString() }
-          : {}),
+        initiativeId,
         sourceType: 'execution',
+        sourceId: initiativeId,
+        dueDate: new Date(dueDate).toISOString(),
+        ...(newDecision.decisionOwnerId ? { decisionOwnerId: newDecision.decisionOwnerId } : {}),
       });
-      setNewDecision({ title: '', dueDate: '' });
+      setNewDecision({ title: '', dueDate: '', initiativeId: '', decisionOwnerId: '' });
       setNewDecisionOpen(false);
       await loadGovernance();
     } catch (error) {
       setNewDecisionError(
-        error instanceof Error ? error.message : 'Nie udało się zapisać decyzji.'
+        decisionErrorMessage(
+          error,
+          'execution.decisions.errors.createFailed',
+          'Nie udało się zapisać decyzji.'
+        )
       );
+    } finally {
+      setNewDecisionBusy(false);
     }
   };
+
+  /**
+   * ROZSTRZYGNIĘCIE / ESKALACJA Z OKNA POWODU (P16/R3, DEC-453).
+   *
+   * Jedna funkcja dla czterech akcji, bo różnią się WYŁĄCZNIE trasą i
+   * statusem docelowym — reguła „bez uzasadnienia nie zapisujesz" jest ta
+   * sama i, co ważniejsze, jest EGZEKWOWANA NA SERWERZE
+   * (`decisionOutcomeService.requiresRationale`). Okno tylko nie pozwala
+   * kliknąć pustego pola; gdyby ktoś obszedł interfejs, serwer i tak odsyła
+   * 400 RATIONALE_REQUIRED.
+   *
+   * `decided_at` / `decided_by` USTAWIA SERWER z `req.user` — front ich nie
+   * wysyła i nie ma jak podmienić autora rozstrzygnięcia.
+   */
+  const confirmReason = async (reason: string) => {
+    if (!reasonDialog) return;
+    const { kind, row } = reasonDialog;
+    const decisionId = row.decisionId;
+    if (!decisionId) return;
+    setReasonBusy(true);
+    setReasonError(null);
+    try {
+      if (kind === 'escalate') {
+        await Api.escalateDecision(decisionId, reason);
+      } else {
+        const status =
+          kind === 'approve' ? 'approved' : kind === 'reject' ? 'rejected' : 'superseded';
+        await Api.decideDecision(decisionId, status, reason);
+      }
+      setReasonDialog(null);
+      await loadGovernance();
+    } catch (error) {
+      setReasonError(
+        decisionErrorMessage(
+          error,
+          'execution.decisions.errors.saveFailed',
+          'Nie udało się zapisać rozstrzygnięcia.'
+        )
+      );
+    } finally {
+      setReasonBusy(false);
+    }
+  };
+
+  /**
+   * KEBAB WIERSZA vs BLOK AKCJI PODGLĄDU — rozdział, nie duplikat.
+   *
+   * Doktryna gęstości §1: JEDNA AKCJA = JEDEN DOM. Ta sama akcja nie może
+   * stać jednocześnie na pasku/kebabie i w bloku akcji. Podział:
+   *   · kebab wiersza  → Otwórz podgląd (nawigacja) + Eskaluj (routing),
+   *   · blok akcji podglądu → Rozstrzygnij · Odrzuć · Nieaktualna (wynik).
+   * Rozstrzygnięcia mieszkają w podglądzie celowo: to są operacje
+   * nieodwracalne, więc wymagają otwartego kontekstu, a nie kliknięcia
+   * z listy w przelocie.
+   */
+  const buildGovernanceRowMenu = useCallback(
+    (row: TableRow): StandardRowMenu => {
+      const wiersz = row as GovernanceRow;
+      const menu: StandardRowMenu = {
+        universalHandlers: {
+          preview: () => setSelectedGovernanceId(wiersz.id),
+        },
+      };
+      if (wiersz.kind !== 'DECISION') return menu;
+      const zakonczona = isResolvedDecision({ status: wiersz.rawStatus });
+      const naMaksie = Number(wiersz.escalationStep ?? 0) >= ESCALATION_STEP_MAX;
+      menu.primary = [
+        {
+          id: 'decision-escalate',
+          label: t('execution.decisions.actions.escalate', 'Eskaluj'),
+          icon: ArrowUpCircle,
+          onClick:
+            zakonczona || naMaksie
+              ? undefined
+              : () => {
+                  setReasonError(null);
+                  setReasonDialog({ kind: 'escalate', row: wiersz });
+                },
+          note: zakonczona
+            ? t('execution.decisions.notes.resolved', 'Decyzja już zapadła.')
+            : naMaksie
+              ? t(
+                  'execution.decisions.notes.escalationMax',
+                  'Najwyższy poziom eskalacji (3/3 — komitet).'
+                )
+              : undefined,
+        },
+      ];
+      return menu;
+    },
+    [t]
+  );
   const cid = (key: string) => {
     const value = ids.current.get(key) ?? crypto.randomUUID();
     ids.current.set(key, value);
@@ -961,11 +1408,7 @@ export const ExecutionControlSurface = ({
     onRegisterFilterControl(
       <div className="flex flex-wrap gap-2">
         {/* 1.12-R1 (C): CTA Menu 2 zakładki „Decyzje i ryzyka". */}
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => setNewDecisionOpen(true)}
-        >
+        <button type="button" className="btn-secondary" onClick={() => setNewDecisionOpen(true)}>
           {t('execution.governance.actions.newDecision', 'Nowa decyzja')}
         </button>
         <button
@@ -1016,38 +1459,96 @@ export const ExecutionControlSurface = ({
       {newDecisionOpen && (
         <div className="mb-3 rounded-lg border border-c-border p-4">
           <div className="mb-2 flex items-center justify-between">
-            <strong>Nowa decyzja</strong>
+            <strong>{t('execution.governance.actions.newDecision', 'Nowa decyzja')}</strong>
             <button
               type="button"
               className="btn-secondary"
               onClick={() => setNewDecisionOpen(false)}
             >
-              Zamknij
+              {t('common.close', 'Zamknij')}
             </button>
           </div>
+          {/*
+            P16/R3 (DEC-453): CZTERY pola, bo tyle wymaga kontrakt serwera.
+            Przed R3 formularz miał dwa (tytuł + termin) i KAŻDY zapis wracał
+            z 400 „Missing decision context" — brakowało inicjatywy, czyli
+            `sourceId`. Inicjatywa i termin są WYMAGANE (przycisk nieaktywny),
+            decydent domyślnie = właściciel wybranej inicjatywy.
+          */}
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="text-xs">
-              Tytuł decyzji
+              {t('execution.decisions.form.title', 'Tytuł decyzji')}
               <input
-                aria-label="Tytuł nowej decyzji"
+                aria-label={t('execution.decisions.form.title', 'Tytuł decyzji')}
                 value={newDecision.title}
                 onChange={(event) =>
                   setNewDecision((current) => ({ ...current, title: event.target.value }))
                 }
-                className="block w-full rounded border border-c-border bg-c-surface p-2"
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
             </label>
             <label className="text-xs">
-              Termin rozstrzygnięcia
+              {t('execution.decisions.form.initiative', 'Inicjatywa (wymagana)')}
+              <select
+                aria-label={t('execution.decisions.form.initiative', 'Inicjatywa (wymagana)')}
+                value={newDecision.initiativeId}
+                onChange={(event) => {
+                  const initiativeId = event.target.value;
+                  const inicjatywa = executionInitiatives.find((item) => item.id === initiativeId);
+                  setNewDecision((current) => ({
+                    ...current,
+                    initiativeId,
+                    // Decydent domyślnie = właściciel inicjatywy; użytkownik
+                    // może go zmienić, ale nie musi go szukać.
+                    decisionOwnerId: current.decisionOwnerId || String(inicjatywa?.ownerId ?? ''),
+                  }));
+                }}
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <option value="">
+                  {t('execution.decisions.form.initiativePlaceholder', 'Wybierz realizację…')}
+                </option>
+                {executionInitiatives.map((initiative) => (
+                  <option key={initiative.id} value={initiative.id}>
+                    {initiative.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs">
+              {t('execution.decisions.form.due', 'Potrzebna do dnia (wymagane)')}
               <input
-                aria-label="Termin nowej decyzji"
+                aria-label={t('execution.decisions.form.due', 'Potrzebna do dnia (wymagane)')}
                 type="date"
                 value={newDecision.dueDate}
                 onChange={(event) =>
                   setNewDecision((current) => ({ ...current, dueDate: event.target.value }))
                 }
-                className="block w-full rounded border border-c-border bg-c-surface p-2"
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               />
+            </label>
+            <label className="text-xs">
+              {t('execution.decisions.form.decisionMaker', 'Decydent')}
+              <select
+                aria-label={t('execution.decisions.form.decisionMaker', 'Decydent')}
+                value={newDecision.decisionOwnerId}
+                onChange={(event) =>
+                  setNewDecision((current) => ({
+                    ...current,
+                    decisionOwnerId: event.target.value,
+                  }))
+                }
+                className="block w-full rounded border border-c-border bg-c-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <option value="">
+                  {t('execution.decisions.form.decisionMakerPlaceholder', 'Ja (domyślnie)')}
+                </option>
+                {orgMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           {newDecisionError && (
@@ -1058,10 +1559,16 @@ export const ExecutionControlSurface = ({
           <button
             type="button"
             className="btn-secondary mt-3"
-            disabled={!newDecision.title.trim()}
+            data-testid="execution-new-decision-save"
+            disabled={
+              !newDecision.title.trim() ||
+              !newDecision.initiativeId.trim() ||
+              !newDecision.dueDate.trim() ||
+              newDecisionBusy
+            }
             onClick={() => void createDecision()}
           >
-            Zapisz decyzję
+            {t('execution.decisions.form.save', 'Zapisz decyzję')}
           </button>
         </div>
       )}
@@ -1084,52 +1591,192 @@ export const ExecutionControlSurface = ({
                   {
                     label: row.escalation,
                     tone:
-                      row.escalation === 'Czerwona'
-                        ? 'danger'
-                        : row.escalation === 'Bursztynowa'
-                          ? 'warning'
-                          : 'neutral',
+                      row.kind === 'DECISION'
+                        ? Number(row.escalationStep ?? 0) >= ESCALATION_STEP_MAX
+                          ? 'danger'
+                          : Number(row.escalationStep ?? 0) > 0
+                            ? 'warning'
+                            : 'neutral'
+                        : row.escalation === 'Czerwona'
+                          ? 'danger'
+                          : row.escalation === 'Bursztynowa'
+                            ? 'warning'
+                            : 'neutral',
                   },
                 ],
                 recommendation:
-                  row.daysOverdue != null
-                    ? `Po terminie o ${row.daysOverdue} dni — rozstrzygnij albo eskaluj.`
-                    : 'Termin jeszcze nie minął.',
+                  row.kind === 'DECISION' && isResolvedDecision({ status: row.rawStatus })
+                    ? t(
+                        'execution.decisions.preview.resolved',
+                        'Decyzja zapadła — wpis jest nieusuwalny.'
+                      )
+                    : row.daysOverdue != null
+                      ? `${t('execution.decisions.preview.overduePrefix', 'Po terminie o')} ${row.daysOverdue} ${t('execution.decisions.preview.overdueSuffix', 'dni — rozstrzygnij albo eskaluj.')}`
+                      : t('execution.decisions.preview.onTime', 'Termin jeszcze nie minął.'),
               }}
               details={{
-                label: row.kind === 'DECISION' ? 'Decyzja' : 'Pozycja RAID',
+                label:
+                  row.kind === 'DECISION'
+                    ? t('execution.decisions.preview.label', 'Decyzja')
+                    : t('execution.governance.preview.raidLabel', 'Pozycja RAID'),
                 text:
                   row.source?.description ||
                   row.source?.recommendation ||
-                  'Brak dodatkowego opisu.',
-                properties: [
-                  { id: 'owner', label: 'Właściciel', value: row.owner },
-                  { id: 'due', label: 'Termin', value: row.dueAt },
-                  {
-                    id: 'overdue',
-                    label: 'Dni po terminie',
-                    value: row.daysOverdue == null ? 'Brak' : String(row.daysOverdue),
-                  },
-                  { id: 'escalation', label: 'Eskalacja', value: row.escalation },
-                ],
+                  t('execution.governance.preview.noDescription', 'Brak dodatkowego opisu.'),
+                properties:
+                  row.kind === 'DECISION'
+                    ? [
+                        {
+                          id: 'decydent',
+                          label: t('execution.decisions.columns.decisionMaker', 'Decydent'),
+                          value: row.decydent ?? '—',
+                        },
+                        {
+                          id: 'due',
+                          label: t('execution.decisions.columns.due', 'Potrzebna do dnia'),
+                          value: row.dueAt,
+                        },
+                        {
+                          id: 'status',
+                          label: t('execution.decisions.columns.status', 'Status'),
+                          value: row.statusLabel ?? '—',
+                        },
+                        {
+                          id: 'overdue',
+                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+                          value:
+                            row.daysOverdue == null
+                              ? t('execution.decisions.escalation.none', 'Brak')
+                              : String(row.daysOverdue),
+                        },
+                        {
+                          id: 'escalation',
+                          label: t('execution.governance.columns.escalation', 'Eskalacja'),
+                          value: row.escalation,
+                        },
+                        // Uzasadnienie pokazujemy TYLKO wtedy, gdy istnieje —
+                        // pusty wiersz „Uzasadnienie: —" udawałby, że decyzja
+                        // zapadła bez powodu, a taka nie ma prawa powstać.
+                        ...(row.rationale
+                          ? [
+                              {
+                                id: 'rationale',
+                                label: t('execution.decisions.preview.rationale', 'Uzasadnienie'),
+                                value: row.rationale,
+                              },
+                            ]
+                          : []),
+                        ...(row.decidedAt
+                          ? [
+                              {
+                                id: 'decidedAt',
+                                label: t('execution.decisions.preview.decidedAt', 'Rozstrzygnięto'),
+                                value: formatDay(row.decidedAt),
+                              },
+                            ]
+                          : []),
+                      ]
+                    : [
+                        {
+                          id: 'owner',
+                          label: t('execution.governance.columns.owner', 'Właściciel'),
+                          value: row.owner,
+                        },
+                        {
+                          id: 'due',
+                          label: t('execution.governance.columns.due', 'Termin'),
+                          value: row.dueAt,
+                        },
+                        {
+                          id: 'overdue',
+                          label: t('execution.governance.columns.daysOverdue', 'Dni po terminie'),
+                          value: row.daysOverdue == null ? 'Brak' : String(row.daysOverdue),
+                        },
+                        {
+                          id: 'escalation',
+                          label: t('execution.governance.columns.escalation', 'Eskalacja'),
+                          value: row.escalation,
+                        },
+                      ],
               }}
-              relationsEmptyLabel="Brak powiązań"
+              /*
+                BLOK AKCJI = trzy ROZSTRZYGNIĘCIA (P16/R3, DEC-453).
+                Eskalacja NIE stoi tutaj — ona jest w kebabie wiersza; ta sama
+                akcja nie może mieć dwóch domów (doktryna gęstości §1).
+                Blok pojawia się WYŁĄCZNIE dla decyzji nierozstrzygniętej i
+                wyłącznie temu, kto może ją rozstrzygnąć (decydent / ADMIN) —
+                MEMBER nie zobaczy przycisku, który i tak odbiłby się o 403.
+              */
+              actions={
+                row.kind === 'DECISION' &&
+                row.canDecide &&
+                !isResolvedDecision({ status: row.rawStatus })
+                  ? {
+                      resolutions: [
+                        {
+                          id: 'decision-approve',
+                          variant: 'positive',
+                          label: t('execution.decisions.actions.approve', 'Rozstrzygnij'),
+                          icon: CheckCircle2,
+                          onClick: () => {
+                            setReasonError(null);
+                            setReasonDialog({ kind: 'approve', row });
+                          },
+                        },
+                        {
+                          id: 'decision-reject',
+                          variant: 'destructive',
+                          label: t('execution.decisions.actions.reject', 'Odrzuć'),
+                          icon: XCircle,
+                          onClick: () => {
+                            setReasonError(null);
+                            setReasonDialog({ kind: 'reject', row });
+                          },
+                        },
+                      ],
+                      informational: [
+                        {
+                          id: 'decision-supersede',
+                          variant: 'neutral',
+                          label: t('execution.decisions.actions.supersede', 'Nieaktualna'),
+                          icon: CircleSlash,
+                          onClick: () => {
+                            setReasonError(null);
+                            setReasonDialog({ kind: 'supersede', row });
+                          },
+                        },
+                      ],
+                    }
+                  : undefined
+              }
+              relationsEmptyLabel={t('execution.governance.preview.noRelations', 'Brak powiązań')}
             />
           )}
         >
           <StandardTable
-            columns={governanceColumns}
+            columns={activeGovernancePreset === 'ryzyka' ? raidColumns : decisionColumns}
             data={visibleGovernanceRows}
             selectedRowId={selectedGovernanceId}
             onRowClick={(row) => setSelectedGovernanceId(row.id)}
-            persistKey="execution.governance.v1"
+            rowMenu={buildGovernanceRowMenu}
+            persistKey={
+              // Zestaw kolumn zmienia się razem z presetem, więc szerokości i
+              // widoczność kolumn muszą mieć OSOBNY klucz zapisu. Wspólny
+              // `execution.governance.v1` zapisywałby ustawienia jednego
+              // zestawu i odtwarzał je dla drugiego (kolumny o innych `id`).
+              activeGovernancePreset === 'ryzyka'
+                ? 'execution.governance.raid.v1'
+                : 'execution.governance.decisions.v1'
+            }
             empty={{
               title:
                 activeGovernancePreset === 'ryzyka'
-                  ? 'Brak pozycji w rejestrze RAID'
-                  : 'Brak decyzji do rozstrzygnięcia',
-              description:
-                'Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka.',
+                  ? t('execution.governance.empty.raidTitle', 'Brak pozycji w rejestrze RAID')
+                  : t('execution.governance.empty.decisionsTitle', 'Brak decyzji w rejestrze'),
+              description: t(
+                'execution.governance.empty.description',
+                'Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka.'
+              ),
             }}
           />
         </TableWithPreviewLayout>
@@ -1354,107 +2001,107 @@ export const ExecutionControlSurface = ({
         świadome otwarcie.
       */}
       {hasRuntimeControlData && showInterventionForm && (
-      <TableWithPreviewLayout<Row>
-        selectedId={selectedId}
-        selectedItem={selected}
-        onSelect={setSelectedId}
-        onOpenFull={(id) => {
-          setSelectedId(id);
-          setShowInterventionForm(true);
-          setInterventionComposerOpen(true);
-        }}
-        itemIds={rows.map((r) => r.id)}
-        getItemById={(id) => rows.find((r) => r.id === id) ?? null}
-        previewOpen={!interventionComposerOpen && Boolean(selectedId)}
-        renderPreview={(r) => (
-          <StandardPreview
-            embedded
-            title={r.title}
-            onClose={() => setSelectedId(null)}
-            onOpenFull={() => {
-              setShowInterventionForm(true);
-              setInterventionComposerOpen(true);
-            }}
-            openLabel="Otwórz interwencję"
-            meta={{
-              pills: [
-                { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
-              ],
-              recommendation: selectedOptionLabel(r.source)
-                ? `Wybrana opcja: ${selectedOptionLabel(r.source)}`
-                : 'Wymaga wyboru ograniczonej interwencji',
-            }}
-            details={{
-              label: 'Uzasadnienie i skutek',
-              text: r.source.hypotheses?.join(', ') || 'UNKNOWN',
-              properties: [
-                { id: 'owner', label: 'Właściciel', value: r.owner || 'UNASSIGNED' },
-                { id: 'authority', label: 'Zatwierdzający', value: r.authority || 'UNKNOWN' },
-                { id: 'sla', label: 'Termin weryfikacji', value: r.slaAt || 'UNKNOWN' },
-                {
-                  id: 'unknowns',
-                  label: 'Niewiadome',
-                  value: r.source.unknowns?.join(', ') || 'Brak',
-                },
-              ],
-            }}
-            relations={[
-              ...(r.source.signalRefs ?? []).map((signal: any) => ({
-                label: `${signal.signalId} v${signal.signalVersion}`,
-              })),
-              ...(r.source.options ?? []).map((option: any) => ({
-                /**
-                 * JĘZYK UCZCIWOŚCI: brak ma być NAZWANY, nigdy nie może wyciec
-                 * jako `undefined`. Do 2026-09-02 etykieta była składana jako
-                 * `${option.kind}: ${option.label}` bez żadnej osłony, więc opcja
-                 * bez pola `kind` (atrapa `executionLocalReviewData.ts`, ale też
-                 * każda przyszła odpowiedź serwera sprzed tej wersji kontraktu)
-                 * dawała na ekranie literalne „undefined: Nie zmieniaj planu".
-                 * Rodzaj opcji pokazujemy PO POLSKU, nie surowym kodem, a gdy
-                 * go nie ma — nie pokazujemy przedrostka w ogóle.
-                 */
-                label: optionKindLabel(option.kind)
-                  ? `${optionKindLabel(option.kind)}: ${option.label}`
-                  : option.label,
-                value: `${confidenceLabel(option.confidence)} · ${reversibilityLabel(option.reversibility)}`,
-              })),
-            ]}
-            relationsEmptyLabel="Brak powiązanych sygnałów"
-          />
-        )}
-      >
-        <StandardTable
-          columns={columns}
-          data={rows}
-          selectedRowId={selectedId}
-          onRowClick={(r) => setSelectedId(r.id)}
-          onRowDoubleClick={(r) => {
-            setSelectedId(r.id);
+        <TableWithPreviewLayout<Row>
+          selectedId={selectedId}
+          selectedItem={selected}
+          onSelect={setSelectedId}
+          onOpenFull={(id) => {
+            setSelectedId(id);
             setShowInterventionForm(true);
             setInterventionComposerOpen(true);
           }}
-          rowMenu={(r) => ({
-            primary: [
-              {
-                id: 'open-intervention',
-                label: 'Otwórz interwencję',
-                onClick: () => {
-                  setSelectedId(r.id);
-                  setShowInterventionForm(true);
-                  setInterventionComposerOpen(true);
+          itemIds={rows.map((r) => r.id)}
+          getItemById={(id) => rows.find((r) => r.id === id) ?? null}
+          previewOpen={!interventionComposerOpen && Boolean(selectedId)}
+          renderPreview={(r) => (
+            <StandardPreview
+              embedded
+              title={r.title}
+              onClose={() => setSelectedId(null)}
+              onOpenFull={() => {
+                setShowInterventionForm(true);
+                setInterventionComposerOpen(true);
+              }}
+              openLabel="Otwórz interwencję"
+              meta={{
+                pills: [
+                  { label: r.status, tone: r.rawStatus === 'ESCALATED' ? 'danger' : 'neutral' },
+                ],
+                recommendation: selectedOptionLabel(r.source)
+                  ? `Wybrana opcja: ${selectedOptionLabel(r.source)}`
+                  : 'Wymaga wyboru ograniczonej interwencji',
+              }}
+              details={{
+                label: 'Uzasadnienie i skutek',
+                text: r.source.hypotheses?.join(', ') || 'UNKNOWN',
+                properties: [
+                  { id: 'owner', label: 'Właściciel', value: r.owner || 'UNASSIGNED' },
+                  { id: 'authority', label: 'Zatwierdzający', value: r.authority || 'UNKNOWN' },
+                  { id: 'sla', label: 'Termin weryfikacji', value: r.slaAt || 'UNKNOWN' },
+                  {
+                    id: 'unknowns',
+                    label: 'Niewiadome',
+                    value: r.source.unknowns?.join(', ') || 'Brak',
+                  },
+                ],
+              }}
+              relations={[
+                ...(r.source.signalRefs ?? []).map((signal: any) => ({
+                  label: `${signal.signalId} v${signal.signalVersion}`,
+                })),
+                ...(r.source.options ?? []).map((option: any) => ({
+                  /**
+                   * JĘZYK UCZCIWOŚCI: brak ma być NAZWANY, nigdy nie może wyciec
+                   * jako `undefined`. Do 2026-09-02 etykieta była składana jako
+                   * `${option.kind}: ${option.label}` bez żadnej osłony, więc opcja
+                   * bez pola `kind` (atrapa `executionLocalReviewData.ts`, ale też
+                   * każda przyszła odpowiedź serwera sprzed tej wersji kontraktu)
+                   * dawała na ekranie literalne „undefined: Nie zmieniaj planu".
+                   * Rodzaj opcji pokazujemy PO POLSKU, nie surowym kodem, a gdy
+                   * go nie ma — nie pokazujemy przedrostka w ogóle.
+                   */
+                  label: optionKindLabel(option.kind)
+                    ? `${optionKindLabel(option.kind)}: ${option.label}`
+                    : option.label,
+                  value: `${confidenceLabel(option.confidence)} · ${reversibilityLabel(option.reversibility)}`,
+                })),
+              ]}
+              relationsEmptyLabel="Brak powiązanych sygnałów"
+            />
+          )}
+        >
+          <StandardTable
+            columns={columns}
+            data={rows}
+            selectedRowId={selectedId}
+            onRowClick={(r) => setSelectedId(r.id)}
+            onRowDoubleClick={(r) => {
+              setSelectedId(r.id);
+              setShowInterventionForm(true);
+              setInterventionComposerOpen(true);
+            }}
+            rowMenu={(r) => ({
+              primary: [
+                {
+                  id: 'open-intervention',
+                  label: 'Otwórz interwencję',
+                  onClick: () => {
+                    setSelectedId(r.id);
+                    setShowInterventionForm(true);
+                    setInterventionComposerOpen(true);
+                  },
                 },
-              },
-            ],
-            universalHandlers: { preview: () => setSelectedId(r.id) },
-          })}
-          persistKey="execution.control.v1"
-          empty={{
-            title: 'Brak spraw interwencyjnych',
-            description:
-              'Dodaj wersjonowany sygnał, aby przygotować pierwszą sprawę interwencyjną.',
-          }}
-        />
-      </TableWithPreviewLayout>
+              ],
+              universalHandlers: { preview: () => setSelectedId(r.id) },
+            })}
+            persistKey="execution.control.v1"
+            empty={{
+              title: 'Brak spraw interwencyjnych',
+              description:
+                'Dodaj wersjonowany sygnał, aby przygotować pierwszą sprawę interwencyjną.',
+            }}
+          />
+        </TableWithPreviewLayout>
       )}
       {interventionComposerOpen && (
         <section
@@ -1728,6 +2375,70 @@ export const ExecutionControlSurface = ({
           )}
         </section>
       )}
+      {/*
+        OKNO WYMAGANEGO POWODU (P16/R3, DEC-453) — jedno dla czterech akcji.
+        Wspólny `ReasonDialog` ze standardu (ten sam, którego używa cykl życia
+        Inicjatyw), więc reguła „przycisk nieaktywny przy pustym polu" jest
+        JEDNYM kawałkiem kodu, a nie kopią per ekran. Czerwień (`destructive`)
+        wyłącznie dla „Odrzuć" — kanon: crimson tylko dla akcji krytycznej.
+      */}
+      <ReasonDialog
+        open={Boolean(reasonDialog)}
+        testIdPrefix="execution-decision-reason"
+        busy={reasonBusy}
+        error={reasonError}
+        destructive={reasonDialog?.kind === 'reject'}
+        title={
+          reasonDialog?.kind === 'approve'
+            ? t('execution.decisions.dialog.approve', 'Rozstrzygnij decyzję')
+            : reasonDialog?.kind === 'reject'
+              ? t('execution.decisions.dialog.reject', 'Odrzuć decyzję')
+              : reasonDialog?.kind === 'supersede'
+                ? t('execution.decisions.dialog.supersede', 'Oznacz decyzję jako nieaktualną')
+                : t('execution.decisions.dialog.escalate', 'Eskaluj decyzję')
+        }
+        confirmLabel={
+          reasonDialog?.kind === 'approve'
+            ? t('execution.decisions.actions.approve', 'Rozstrzygnij')
+            : reasonDialog?.kind === 'reject'
+              ? t('execution.decisions.actions.reject', 'Odrzuć')
+              : reasonDialog?.kind === 'supersede'
+                ? t('execution.decisions.actions.supersede', 'Nieaktualna')
+                : t('execution.decisions.actions.escalate', 'Eskaluj')
+        }
+        label={
+          reasonDialog?.kind === 'escalate'
+            ? t('execution.decisions.dialog.escalateLabel', 'Powód eskalacji (wymagany)')
+            : t('execution.decisions.dialog.rationaleLabel', 'Uzasadnienie (wymagane)')
+        }
+        placeholder={
+          reasonDialog?.kind === 'escalate'
+            ? t(
+                'execution.decisions.dialog.escalatePlaceholder',
+                'Napisz, dlaczego decyzja idzie poziom wyżej.'
+              )
+            : t(
+                'execution.decisions.dialog.rationalePlaceholder',
+                'Napisz jednym zdaniem, dlaczego tak rozstrzygasz — trafi do rejestru na stałe.'
+              )
+        }
+        hint={
+          reasonDialog?.kind === 'escalate'
+            ? t(
+                'execution.decisions.dialog.escalateHint',
+                'Poziom rośnie o jeden: właściciel inicjatywy → PMO → komitet.'
+              )
+            : t(
+                'execution.decisions.dialog.rationaleHint',
+                'Wpisu nie da się usunąć ani rozstrzygnąć drugi raz.'
+              )
+        }
+        onCancel={() => {
+          setReasonDialog(null);
+          setReasonError(null);
+        }}
+        onConfirm={(reason) => void confirmReason(reason)}
+      />
     </section>
   );
 };

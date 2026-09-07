@@ -12689,7 +12689,80 @@
     },
     "dashboard": "Dashboard",
     "calendar": "Calendar",
-    "decisions": "Decisions",
+    "decisions": {
+      "actions": {
+        "approve": "Decide",
+        "reject": "Reject",
+        "supersede": "No longer needed",
+        "escalate": "Escalate"
+      },
+      "columns": {
+        "due": "Needed by",
+        "decisionMaker": "Decision maker",
+        "status": "Status"
+      },
+      "dialog": {
+        "approve": "Decide this decision",
+        "reject": "Reject this decision",
+        "supersede": "Mark decision as no longer needed",
+        "escalate": "Escalate this decision",
+        "rationaleLabel": "Rationale (required)",
+        "rationalePlaceholder": "One sentence on why you are deciding this way — it stays in the register for good.",
+        "rationaleHint": "The entry cannot be deleted, nor decided a second time.",
+        "escalateLabel": "Escalation reason (required)",
+        "escalatePlaceholder": "Say why this decision goes one level up.",
+        "escalateHint": "The level goes up by one: initiative owner → PMO → steering committee."
+      },
+      "errors": {
+        "reasonRequired": "A rationale is required — without it the decision is not saved.",
+        "escalationAtMax": "This decision is already at the highest escalation level (3/3 — steering committee).",
+        "alreadyFinalized": "This decision has already been made — it cannot be undone or decided again.",
+        "staleVersion": "Someone changed this decision in the meantime. Refresh the list and try again.",
+        "forbidden": "You do not have permission for this action — only the decision maker or an admin can decide.",
+        "missingContext": "Decision details are missing — fill in the initiative, the deadline and the decision maker.",
+        "createFailed": "Could not save the decision.",
+        "saveFailed": "Could not save the outcome."
+      },
+      "escalation": {
+        "none": "None",
+        "level1": "Initiative owner",
+        "level2": "PMO",
+        "level3": "Steering committee"
+      },
+      "form": {
+        "title": "Decision title",
+        "initiative": "Initiative (required)",
+        "initiativePlaceholder": "Pick an initiative…",
+        "due": "Needed by (required)",
+        "decisionMaker": "Decision maker",
+        "decisionMakerPlaceholder": "Me (default)",
+        "save": "Save decision"
+      },
+      "notes": {
+        "resolved": "This decision has already been made.",
+        "escalationMax": "Highest escalation level (3/3 — steering committee)."
+      },
+      "preview": {
+        "label": "Decision",
+        "rationale": "Rationale",
+        "decidedAt": "Decided on",
+        "resolved": "The decision has been made — the entry cannot be deleted.",
+        "onTime": "The deadline has not passed yet.",
+        "overduePrefix": "Overdue by",
+        "overdueSuffix": "days — decide or escalate."
+      },
+      "status": {
+        "pending": "Pending",
+        "escalated": "Escalated",
+        "approved": "Decided",
+        "rejected": "Rejected",
+        "superseded": "No longer needed",
+        "returned": "Returned for clarification",
+        "deferred": "Deferred",
+        "cancelled": "Cancelled"
+      },
+      "untitled": "Untitled decision"
+    },
     "heatmap": "Workload Heatmap",
     "hub": {
       "failedToLoad": "Failed to load execution initiatives.",
@@ -13840,6 +13913,16 @@
       },
       "actions": {
         "newDecision": "New decision"
+      },
+      "empty": {
+        "decisionsTitle": "No decisions in the register",
+        "raidTitle": "No items in the RAID register",
+        "description": "The register reads the organization's decisions and RAID items. An empty register means nothing is waiting."
+      },
+      "preview": {
+        "raidLabel": "RAID item",
+        "noDescription": "No further description.",
+        "noRelations": "No relations"
       }
     },
     "rag": {
@@ -13848,7 +13931,8 @@
       "atRisk": "At risk",
       "onTrack": "On track",
       "noDates": "No plan dates"
-    }
+    },
+    "decisionsLabel": "Decisions"
   },
   "benefits": {
     "tabs": {

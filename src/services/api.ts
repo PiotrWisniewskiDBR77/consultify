@@ -151,8 +151,14 @@ export class ApiError extends Error {
     const serverMessage = String(envelope.message ?? envelope.error ?? '').trim();
     super(serverMessage || fallbackMessage);
     this.name = 'ApiError';
+    // P16/R3 (DEC-453): kontrolery domenowe (np. DecisionController) odsyłają
+    // maszynową przyczynę w polu `code` (`REASON_REQUIRED`, `ESCALATION_AT_MAX`,
+    // …), a nie w `errorCode` koperty platformowej. Bez tego odczytu KAŻDY taki
+    // błąd lądował jako `INTERNAL` i ekran nie miał po czym rozpoznać reguły —
+    // został tylko angielski tekst serwera. Kolejność (errorCode → code) jest
+    // addytywna: gdzie `errorCode` jest, zachowanie bez zmian.
     this.errorCode =
-      String(envelope.errorCode ?? 'INTERNAL')
+      String(envelope.errorCode ?? envelope.code ?? 'INTERNAL')
         .trim()
         .toUpperCase() || 'INTERNAL';
     this.correlationId = String(envelope.correlationId ?? '').trim() || null;
@@ -163,6 +169,29 @@ export class ApiError extends Error {
 
 const createApiError = (payload: unknown, fallbackMessage: string, status?: number): ApiError =>
   new ApiError(payload, fallbackMessage, status);
+
+/**
+ * Ciało odpowiedzi błędu jako koperta dla `ApiError` (P16/R3, DEC-453).
+ *
+ * Świadomie NIE jest to `res.json().catch(() => null)`: gdy serwer odda HTML
+ * z proxy albo puste ciało, chcemy ZACHOWAĆ to, co przyszło (jako `error`),
+ * a nie skasować przyczynę do `null`. Nic tu nie jest połykane po cichu —
+ * każda ścieżka zwraca kopertę, którą `ApiError` potrafi opisać.
+ */
+const readErrorPayload = async (res: Response): Promise<unknown> => {
+  let raw = '';
+  try {
+    raw = await res.text();
+  } catch (readError) {
+    return { error: `Nie udało się odczytać odpowiedzi serwera (${String(readError)})` };
+  }
+  if (!raw.trim()) return { error: `HTTP ${res.status}` };
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return { error: raw.slice(0, 500) };
+  }
+};
 
 const buildApiUrl = (url: string): string => {
   if (/^https?:\/\//i.test(url)) return url;
@@ -6688,7 +6717,9 @@ export const Api = {
 
   decideDecision: async (
     id: string,
-    decision: 'approved' | 'rejected' | 'deferred',
+    // P16/R3 (DEC-453): `superseded` = „Nieaktualna" — trzecie rozstrzygnięcie
+    // rejestru decyzji, ta sama trasa `PATCH /decisions/:id/decide`.
+    decision: 'approved' | 'rejected' | 'deferred' | 'superseded',
     rationale?: string,
     notes?: string
   ): Promise<any> => {
@@ -6697,7 +6728,8 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify({ decision, rationale, notes }),
     });
-    if (!res.ok) throw new Error('Failed to decide decision');
+    if (!res.ok)
+      throw createApiError(await readErrorPayload(res), 'Failed to decide decision', res.status);
     return res.json();
   },
 
@@ -6721,7 +6753,8 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify({ reason, escalateToUserId }),
     });
-    if (!res.ok) throw new Error('Failed to escalate decision');
+    if (!res.ok)
+      throw createApiError(await readErrorPayload(res), 'Failed to escalate decision', res.status);
     return res.json();
   },
 
@@ -6822,7 +6855,13 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(decision),
     });
-    if (!res.ok) throw new Error('Failed to create decision');
+    // P16/R3 (DEC-453): do R3 ta funkcja gubiła CAŁĄ odpowiedź serwera i rzucała
+    // stały angielski napis — dlatego ekran „Decyzje i ryzyka" wypisywał
+    // użytkownikowi „Failed to create decision" zamiast powiedzieć, czego
+    // brakuje. `ApiError` niesie status, `errorCode` (pole `code` kontrolera) i
+    // surową kopertę, więc wołający może pokazać komunikat po polsku.
+    if (!res.ok)
+      throw createApiError(await readErrorPayload(res), 'Failed to create decision', res.status);
     return res.json();
   },
 
