@@ -272,7 +272,7 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
   'template-architect-deck': { nazwa: 'Architekt wzorca prezentacji', komponent: 'src/components/Presentations/PresentationTemplateArchitectView.tsx', klasa: 'L', paragraf: 'DEC-432 · DEC-434', statusMigracji: 'przed' },
   'vault-document': { nazwa: 'Dokument sejfu', komponent: 'src/views/vault/VaultDocumentsView.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
   'report-builder': { nazwa: 'Raport', komponent: 'src/views/ReportBuilderView.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
-  'management-report': { nazwa: 'Raport zarządczy', komponent: 'src/components/Reports/Management/ManagementReportsView.tsx', klasa: 'L', paragraf: 'P14-A · DEC-432 · DEC-434', statusMigracji: 'zmigrowana' },
+  'management-report': { nazwa: 'Raport zarządczy', komponent: 'src/components/Reports/Management/ReportsHub.tsx', klasa: 'L', paragraf: 'P14-A · DEC-432 · DEC-434', statusMigracji: 'zmigrowana' },
   'reporting-automation': { nazwa: 'Automatyzacja raportowania', komponent: 'src/components/Reports/Management/ReportingAutomationWorkspace.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
   'governed-context': { nazwa: 'Kontekst zarządzany', komponent: 'src/components/Organization/GovernedContextWorkspace.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },
   'chat-artifact': { nazwa: 'Artefakt czatu', komponent: 'src/components/AIChat/Artifacts/ArtifactViewer.tsx', klasa: 'L', paragraf: 'DEC-434', statusMigracji: 'przed' },

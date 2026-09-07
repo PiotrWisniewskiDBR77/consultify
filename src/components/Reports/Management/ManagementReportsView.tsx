@@ -35,7 +35,6 @@ import {
   ManagementReportStatus,
   ManagementReportType,
 } from '../../../types';
-import { ExportControls } from './ExportControls';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportHistoryTable } from './ReportHistoryTable';
@@ -60,7 +59,7 @@ interface ManagementReportsViewProps {
   className?: string;
 }
 
-const ManagementReportCard: React.FC<{
+export const ManagementReportCard: React.FC<{
   report: ManagementReport;
   onBack: () => void;
   onExportPDF: () => Promise<string>;
@@ -74,9 +73,12 @@ const ManagementReportCard: React.FC<{
     component: children,
     aiContract: { none: true as const, reason: item.aiReason },
   }));
+  const reportTypeLabel: Record<string, string> = { TEAM_MEETING: 'Spotkanie zespołu', TEAM_WEEKLY: 'Raport tygodniowy zespołu', STEERING_COMMITTEE: 'Komitet sterujący', PORTFOLIO_HEALTH: 'Zdrowie portfela', RAID: 'RAID' };
+  const scopeLabel: Record<string, string> = { PORTFOLIO: 'Portfel', PROJECT: 'Projekt', ORGANIZATION: 'Organizacja' };
+  const statusLabel: Record<string, string> = { DRAFT: 'Szkic', FINAL: 'Finalny', APPROVED: 'Zatwierdzony', ARCHIVED: 'Zarchiwizowany' };
   const rightPanel = {
-    actions: { label: 'Akcje', children: <ExportControls reportId={report.id} onExportPDF={onExportPDF} onExportPPTX={onExportPPTX} onShare={onShare} />, actionIds: ['export-pdf', 'export-pptx', 'share'] },
-    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'type', label: 'Typ', value: report.reportType }, { id: 'scope', label: 'Zakres', value: report.scope }, { id: 'status', label: 'Status', value: report.status }, { id: 'period', label: 'Okres', value: `${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodStart))} – ${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodEnd))}`, mono: true }, { id: 'author', label: 'Autor', value: report.generatedByName || '—' }]} /> },
+    actions: { label: 'Akcje', children: <div className="flex flex-col gap-2"><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPDF()}>Eksportuj PDF</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onExportPPTX()}>Eksportuj PPTX</button><button type="button" className="btn-secondary focus-visible:ring-2 focus-visible:ring-c-focus" onClick={() => void onShare()}>Udostępnij link</button></div>, actionIds: ['export-pdf', 'export-pptx', 'share'] },
+    properties: { label: 'Właściwości', children: <ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{ id: 'type', label: 'Typ', value: reportTypeLabel[report.reportType] ?? report.reportType }, { id: 'scope', label: 'Zakres', value: scopeLabel[report.scope] ?? report.scope }, { id: 'status', label: 'Status', value: statusLabel[report.status] ?? report.status }, { id: 'period', label: 'Okres', value: `${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodStart))} – ${new Intl.DateTimeFormat('pl-PL').format(new Date(report.periodEnd))}`, mono: true }, { id: 'author', label: 'Autor', value: report.generatedByName || '—' }]} /> },
     relations: { pominieta: true as const, reason: 'Raport nie deklaruje czytelnych powiązań biznesowych.' },
     evidence: report.aiWarnings?.length ? { label: 'Źródła i założenia', children: <ul className="list-disc pl-4 text-sm">{report.aiWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> } : { pominieta: true as const, reason: 'Brak zapisanych źródeł i założeń.' },
     comments: { pominieta: true as const, reason: 'Raport zarządczy nie ma wątku komentarzy.' },
