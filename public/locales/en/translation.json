@@ -10322,7 +10322,9 @@
         "CAPACITY_SCENARIO_DUPLICATE": "A capacity analysis already exists for this plan. Open the existing one or give the new one a different name.",
         "PORTFOLIO_SCENARIO_DUPLICATE": "This portfolio scenario already exists. Open the existing one or give the new one a different name.",
         "RELATION_ALREADY_CLAIMED": "This link is already recorded. Refresh the view — the change may have been saved earlier.",
-        "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional."
+        "INITIATIVE_NOT_PLANNABLE": "This initiative does not qualify for planning. Plans take approved initiatives; ones pending approval only as conditional.",
+        "INITIATIVE_DEPENDENCY_CYCLE": "That dependency would close a loop: the initiative would wait for itself. Remove one dependency from the chain.",
+        "DEPENDENCY_INITIATIVE_NOT_FOUND": "The chosen predecessor initiative does not exist in this organization. Refresh the plan and pick again."
       }
     },
     "analysis": {
@@ -12704,6 +12706,59 @@
       "accept": "Approve",
       "reject": "Reject",
       "savedAt": "Saved {{time}}"
+    },
+    "planCard": {
+      "publishedReadOnly": "This plan is published — create a new version (draft) to change it.",
+      "newDraftVersion": "Create a new version (draft)",
+      "removeFromPlan": "Remove from plan",
+      "removeFromPlanAria": "Remove \"{{name}}\" from the plan",
+      "emptyScope": "The plan has no initiative in scope yet. Add them below or in the generator.",
+      "addInitiative": "Add initiative",
+      "addInitiativeAria": "Initiative to add to the plan",
+      "addInitiativePlaceholder": "Choose an initiative…",
+      "noAddable": "Every eligible initiative is already in the plan.",
+      "earliest": "Earliest",
+      "target": "Target date",
+      "latest": "Latest",
+      "errorOrder": "Keep the order: earliest ≤ target date ≤ latest.",
+      "errorHorizon": "The date must fall inside the plan horizon ({{from}} – {{to}}).",
+      "afterInitiative": "After initiative",
+      "afterInitiativeAria": "\"{{name}}\" after \"{{predecessor}}\"",
+      "noOtherInitiatives": "The plan holds one initiative — there is nothing to sequence it after.",
+      "emptyWindows": "The plan has no windows yet. Add initiatives in \"Initiative scope\".",
+      "noConflicts": "No conflicts.",
+      "afterList": "after: {{list}}",
+      "noDependencies": "no dependencies",
+      "capacityUnknown": "Unknown — no published capacity analysis.",
+      "listEmptyTitle": "No plans",
+      "listEmptyDescription": "Create the first plan with \"New plan\" — you pick the approved initiatives and the horizon there.",
+      "proposalTitle": "Solver proposal (awaiting a human decision)"
+    },
+    "planSolver": {
+      "selected": "The solver picked {{period}}: {{dependency}}; the initiative window intersects that period; {{capacity}}. Awaiting human confirmation.",
+      "dependency": {
+        "noPredecessor": "no scheduled predecessor",
+        "afterDependency": "after the predecessor period ({{period}})"
+      },
+      "capacity": {
+        "noScenario": "no linked published capacity analysis",
+        "unknown": "capacity is UNKNOWN, so the capacity constraint was not applied",
+        "demandUnknown": "initiative demand is UNKNOWN, so the capacity constraint was not applied",
+        "known": "known capacity {{used}}/{{supply}}"
+      },
+      "conflict": {
+        "noPeriods": "The plan has no periods.",
+        "dependencyCycle": "Dependency cycle: {{path}}",
+        "missingDependency": "Dependency outside the plan: {{initiative}} -> {{dependency}}",
+        "noFeasiblePeriod": "No feasible period for \"{{initiative}}\": the dependency boundary, its own window or known capacity rules out every period.",
+        "noFeasiblePeriodCycle": "No feasible period for \"{{initiative}}\": dependency cycle."
+      },
+      "assumption": {
+        "dependenciesPrecede": "Dependencies precede dependent initiatives.",
+        "oneFeasiblePeriod": "A deterministic solver selects one feasible target period per initiative; no Plan or Initiative date was changed.",
+        "capacityUnknownForPeriod": "Capacity unknown for period {{period}} - the capacity constraint was not applied.",
+        "demandUnknownForInitiative": "Demand unknown for \"{{initiative}}\" in period {{period}} - the capacity constraint was not applied."
+      }
     }
   },
   "execution": {

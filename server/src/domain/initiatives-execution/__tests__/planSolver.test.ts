@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CapacityScenario } from '../capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from '../planScenario.js';
 import { solvePlanScenario } from '../planSolver.js';
+import { decodePlanSolverReason } from '../planSolverReason.js';
 
 const periods = [1, 2, 3, 4].map((quarter) => ({
   periodId: `Q${quarter}`,
@@ -113,15 +114,21 @@ describe('solvePlanScenario', () => {
     const impossible = { ...window('A'), earliest: '2027-01-01T00:00:00.000Z' };
     const result = solvePlanScenario(scenario([impossible]));
     expect(result.assignments).toEqual([]);
-    expect(result.conflicts).toContainEqual(expect.stringContaining('No feasible period for A'));
+    // P15-K3 (DEC-421): konflikt jest KODEM, nie angielskim zdaniem — tłumaczy go
+    // front (`src/components/Initiatives/planSolverReason.ts`).
+    expect(result.conflicts.map((conflict) => decodePlanSolverReason(conflict))).toContainEqual({
+      code: 'NO_FEASIBLE_PERIOD',
+      initiativeId: 'A',
+    });
   });
 
   it('makes an UNKNOWN capacity constraint explicit instead of treating it as zero', () => {
     const result = solvePlanScenario(scenario([window('A')]), capacity([null, 1, 1, 1]));
     expect(result.assignments[0]?.periodId).toBe('Q1');
-    expect(result.assumptions).toContainEqual(
-      expect.stringContaining('Capacity unknown for period Q1')
-    );
+    expect(result.assumptions.map((assumption) => decodePlanSolverReason(assumption))).toContainEqual({
+      code: 'CAPACITY_UNKNOWN_FOR_PERIOD',
+      period: 'Q1',
+    });
   });
 
   it('pushes excess demand to the next period when capacity is known', () => {
@@ -132,7 +139,11 @@ describe('solvePlanScenario', () => {
   it('reports dependency cycles and leaves their members unassigned', () => {
     const result = solvePlanScenario(scenario([window('A', ['B']), window('B', ['A'])]));
     expect(result.assignments).toEqual([]);
-    expect(result.conflicts).toContainEqual(expect.stringContaining('Dependency cycle'));
+    expect(
+      result.conflicts
+        .map((conflict) => decodePlanSolverReason(conflict))
+        .map((reason) => reason?.code)
+    ).toContain('DEPENDENCY_CYCLE');
   });
 
   it('is deterministic for the same input', () => {

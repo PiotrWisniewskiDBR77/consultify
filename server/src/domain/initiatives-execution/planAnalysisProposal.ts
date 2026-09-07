@@ -8,6 +8,7 @@ import {
 import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
 import { solvePlanScenario } from './planSolver.js';
+import { encodePlanSolverReason } from './planSolverReason.js';
 
 export interface PlanAnalysisProposal {
   proposalId: string;
@@ -74,7 +75,10 @@ export async function createPlanAnalysisProposal(
           : window.confidence === 'UNKNOWN'
             ? 'MEDIUM'
             : window.confidence,
-        rationale: `${rationale} Human validation required. ${window.rationale}`,
+        // P15-K3 (DEC-421): uzasadnienie to KOD solvera (z `humanReviewRequired`),
+        // nie sklejone zdanie po angielsku. Poprzednie uzasadnienie zostaje w
+        // `before` propozycji — nie doklejamy go, bo napis rósł z każdą analizą.
+        rationale,
       };
       return JSON.stringify(after) === JSON.stringify(window)
         ? []
@@ -88,12 +92,12 @@ export async function createPlanAnalysisProposal(
       inputScenarioVersion: source.payload.scenarioVersion,
       status: 'PENDING_REVIEW',
       assumptions: [
-        'Dependencies precede dependent initiatives.',
-        'A deterministic solver selects one feasible target period per initiative.',
+        encodePlanSolverReason({ code: 'DEPENDENCIES_PRECEDE' }),
+        encodePlanSolverReason({ code: 'ONE_FEASIBLE_PERIOD' }),
         ...solved.assumptions,
         ...source.payload.assumptions,
       ],
-      rationale: 'Canonical deterministic plan analysis. No Plan or Initiative date was changed.',
+      rationale: encodePlanSolverReason({ code: 'ONE_FEASIBLE_PERIOD' }),
       conflicts: solved.conflicts,
       changes,
       requestedBy: envelope.actorId,

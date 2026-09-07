@@ -72,8 +72,11 @@ export function proposeCapacityOptions(
     sourceRef: { ref: sourceRef, version: capacity.scenarioVersion },
     knowledgeState: 'KNOWN' as const,
   };
+  // P15-K3 (DEC-421): konflikt solvera przechodzi tu jako KOD, bez doklejania
+  // prefiksu — inaczej front nie mógłby go przetłumaczyć i pokazałby surowe
+  // `SOLVER-1:{…}` w oknie propozycji.
   const solverConflictAssumptions = solver.conflicts.map((conflict) => ({
-    assumption: `Solver zgłosił konflikt planu: ${conflict}`,
+    assumption: conflict,
     ownerId: capacity.publishedBy || capacity.updatedBy || capacity.createdBy,
     sourceRef: { ref: sourceRef, version: capacity.scenarioVersion },
     knowledgeState: 'KNOWN' as const,

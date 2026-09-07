@@ -9758,7 +9758,9 @@
         "CAPACITY_SCENARIO_DUPLICATE": "Taka analiza obciążenia już istnieje dla tego planu. Otwórz istniejącą albo nadaj nowej inną nazwę.",
         "PORTFOLIO_SCENARIO_DUPLICATE": "Taki scenariusz portfela już istnieje. Otwórz istniejący albo nadaj nowemu inną nazwę.",
         "RELATION_ALREADY_CLAIMED": "To powiązanie jest już zapisane. Odśwież widok — zmiana mogła zostać zapisana wcześniej.",
-        "INITIATIVE_NOT_PLANNABLE": "Ta inicjatywa nie kwalifikuje się do planowania. Do planu wchodzą inicjatywy zatwierdzone, a „do zatwierdzenia” tylko jako warunkowe."
+        "INITIATIVE_NOT_PLANNABLE": "Ta inicjatywa nie kwalifikuje się do planowania. Do planu wchodzą inicjatywy zatwierdzone, a „do zatwierdzenia” tylko jako warunkowe.",
+        "INITIATIVE_DEPENDENCY_CYCLE": "Taka zależność domknęłaby koło: inicjatywa czekałaby sama na siebie. Usuń jedną z zależności w tym łańcuchu.",
+        "DEPENDENCY_INITIATIVE_NOT_FOUND": "Wskazana inicjatywa poprzedzająca nie istnieje w tej organizacji. Odśwież plan i wybierz ponownie."
       }
     },
     "analysis": {
@@ -12146,6 +12148,59 @@
       "accept": "Zatwierdź",
       "reject": "Odrzuć",
       "savedAt": "Zapisano {{time}}"
+    },
+    "planCard": {
+      "publishedReadOnly": "Plan opublikowany — utwórz nową wersję (szkic), aby zmienić.",
+      "newDraftVersion": "Utwórz nową wersję (szkic)",
+      "removeFromPlan": "Usuń z planu",
+      "removeFromPlanAria": "Usuń „{{name}}\" z planu",
+      "emptyScope": "Plan nie ma jeszcze żadnej inicjatywy w zakresie. Dodaj je niżej albo w generatorze.",
+      "addInitiative": "Dodaj inicjatywę",
+      "addInitiativeAria": "Inicjatywa do dodania do planu",
+      "addInitiativePlaceholder": "Wybierz inicjatywę…",
+      "noAddable": "Wszystkie kwalifikujące się inicjatywy są już w planie.",
+      "earliest": "Najwcześniej",
+      "target": "Data docelowa",
+      "latest": "Najpóźniej",
+      "errorOrder": "Zachowaj kolejność: najwcześniej ≤ data docelowa ≤ najpóźniej.",
+      "errorHorizon": "Data musi mieścić się w horyzoncie planu ({{from}} – {{to}}).",
+      "afterInitiative": "Po inicjatywie",
+      "afterInitiativeAria": "„{{name}}\" po „{{predecessor}}\"",
+      "noOtherInitiatives": "Plan ma jedną inicjatywę — nie ma po czym jej ustawić.",
+      "emptyWindows": "Plan nie ma jeszcze okien. Dodaj inicjatywy w „Zakres inicjatyw\".",
+      "noConflicts": "Brak konfliktów.",
+      "afterList": "po: {{list}}",
+      "noDependencies": "bez zależności",
+      "capacityUnknown": "Nieznane — brak opublikowanej analizy obciążenia.",
+      "listEmptyTitle": "Brak planów",
+      "listEmptyDescription": "Załóż pierwszy plan przyciskiem „Nowy plan\" — wybierzesz w nim zatwierdzone inicjatywy i horyzont.",
+      "proposalTitle": "Propozycja solvera (do decyzji człowieka)"
+    },
+    "planSolver": {
+      "selected": "Solver wybrał {{period}}: {{dependency}}; okno inicjatywy obejmuje ten okres; {{capacity}}. Do potwierdzenia przez człowieka.",
+      "dependency": {
+        "noPredecessor": "brak zaplanowanego poprzednika",
+        "afterDependency": "po okresie poprzednika ({{period}})"
+      },
+      "capacity": {
+        "noScenario": "brak powiązanej opublikowanej analizy obciążenia",
+        "unknown": "obciążenie jest NIEZNANE, więc ograniczenie mocy nie zostało zastosowane",
+        "demandUnknown": "popyt inicjatywy jest NIEZNANY, więc ograniczenie mocy nie zostało zastosowane",
+        "known": "znana moc {{used}}/{{supply}}"
+      },
+      "conflict": {
+        "noPeriods": "Plan nie ma żadnych okresów.",
+        "dependencyCycle": "Cykl zależności: {{path}}",
+        "missingDependency": "Zależność spoza planu: {{initiative}} → {{dependency}}",
+        "noFeasiblePeriod": "Brak możliwego okresu dla „{{initiative}}\": granica zależności, własne okno albo znana moc wykluczają każdy okres.",
+        "noFeasiblePeriodCycle": "Brak możliwego okresu dla „{{initiative}}\": cykl zależności."
+      },
+      "assumption": {
+        "dependenciesPrecede": "Zależności poprzedzają inicjatywy zależne.",
+        "oneFeasiblePeriod": "Deterministyczny solver wybiera jeden możliwy okres docelowy na inicjatywę; żadna data planu ani inicjatywy nie została zmieniona.",
+        "capacityUnknownForPeriod": "Obciążenie nieznane dla okresu {{period}} — ograniczenie mocy nie zostało zastosowane.",
+        "demandUnknownForInitiative": "Popyt nieznany dla „{{initiative}}\" w okresie {{period}} — ograniczenie mocy nie zostało zastosowane."
+      }
     }
   },
   "execution": {

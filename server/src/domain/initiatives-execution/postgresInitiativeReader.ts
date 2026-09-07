@@ -1202,6 +1202,43 @@ export class PostgresInitiativeReader {
   }
 
   /**
+   * ZALEŻNOŚCI MIĘDZY INICJATYWAMI (P15-K3, DEC-421, §4.7 D3').
+   *
+   * Jedno źródło prawdy = tabela `initiative_dependencies` (istnieje od migracji
+   * 292; pomiar 07.09: 0 wierszy). `from_initiative_id` to inicjatywa, która idzie
+   * PO inicjatywie `to_initiative_id` — ta sama orientacja, co
+   * `dependencySnapshot` okna planu i co `dependsOn` w `getModuleInitiativeForPlanning`.
+   */
+  async listInitiativeDependencies(
+    organizationId: string,
+    initiativeIds?: string[]
+  ): Promise<Map<string, string[]>> {
+    const filtered = initiativeIds?.length ? initiativeIds : null;
+    const result = await this.pool.query<{
+      from_initiative_id: string;
+      to_initiative_id: string;
+    }>(
+      filtered
+        ? `SELECT from_initiative_id, to_initiative_id
+             FROM initiative_dependencies
+            WHERE organization_id = $1 AND from_initiative_id = ANY($2::text[])
+            ORDER BY from_initiative_id, to_initiative_id`
+        : `SELECT from_initiative_id, to_initiative_id
+             FROM initiative_dependencies
+            WHERE organization_id = $1
+            ORDER BY from_initiative_id, to_initiative_id`,
+      filtered ? [organizationId, filtered] : [organizationId]
+    );
+    const byInitiative = new Map<string, string[]>();
+    for (const row of result.rows) {
+      const current = byInitiative.get(row.from_initiative_id) ?? [];
+      current.push(row.to_initiative_id);
+      byInitiative.set(row.from_initiative_id, current);
+    }
+    return byInitiative;
+  }
+
+  /**
    * MOST P15-K2 (DEC-421): inicjatywy MODUŁU kwalifikujące się do planowania.
    *
    * Generator planu MUSI pokazywać dokładnie ten sam zbiór, który przepuszcza

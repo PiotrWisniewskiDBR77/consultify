@@ -29,6 +29,7 @@ import {
 } from '@/services/initiatives-execution/runtimeApi';
 
 import type { CanonicalMenu3Contract } from './canonicalMenu3';
+import { formatPlanSolverReason } from './planSolverReason';
 import { CapacityAnalysisCard } from './cards/CapacityAnalysisCard';
 
 type K = 'KNOWN' | 'ESTIMATED' | 'UNKNOWN' | 'UNCONFIRMED';
@@ -1612,7 +1613,12 @@ const CapacityOptionsPanel = ({
                   <strong>Założenia</strong>
                   {option.assumptions.map((assumption) => (
                     <p key={`${option.optionId}:${assumption.assumption}`}>
-                      {assumption.knowledgeState} · {assumption.assumption} · właściciel{' '}
+                      {assumption.knowledgeState} ·{' '}
+                      {/* Konflikt solvera przychodzi jako KOD (P15-K3) — tu dostaje język. */}
+                      {formatPlanSolverReason(assumption.assumption, (klucz, opcje) =>
+                        String(i18n.t(klucz, opcje))
+                      )}{' '}
+                      · właściciel{' '}
                       {memberNameOrUnknown(resolveMemberName, assumption.ownerId, true)} ·{' '}
                       {assumption.sourceRef.ref} v
                       {assumption.sourceRef.version}

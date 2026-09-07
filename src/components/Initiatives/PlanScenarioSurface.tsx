@@ -31,6 +31,7 @@ import {
   registerInitiativeForPlanning,
   reviewPlanAnalysisProposal,
   RuntimeApiError,
+  writeInitiativeDependencies,
   writePlanScenario,
 } from '@/services/initiatives-execution/runtimeApi';
 
@@ -756,8 +757,19 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       setShowCreate(false);
       setWorkspaceOpen(true);
       setWriteState('IDLE');
-      await loadRegister();
+      /*
+       * P15-K3 (DEC-421) — DEFEKT ZŁAPANY OKIEM w przepływie klikanym 07.09
+       * (evidence/p15-k3/przeplyw/02-…): tu stało `await loadRegister()`, a ta
+       * ścieżka wybiera „pierwszy OPUBLIKOWANY plan" i wstawia go do `draft`.
+       * Efekt na ekranie: po „Utwórz plan" otwierała się karta INNEGO planu
+       * (opublikowanego), tylko z identyfikatorem nowego w `selectedId` — czyli
+       * warsztat pracował na cudzych oknach. Lekkie odświeżenie aktualizuje
+       * wyłącznie wiersze rejestru i nie rusza świeżo utworzonego szkicu.
+       */
+      await refreshRegisterRows();
+      markSaved(result.response.scenarioId);
       setSelectedId(result.response.scenarioId);
+      await loadHistory(result.response.scenarioId);
     } catch (error) {
       setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
       setWriteState(
@@ -765,27 +777,38 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       );
     }
   };
-  const write = async (
+  /**
+   * ZAPIS PLANU Z CAS (P15-K3, DEC-421).
+   *
+   * Scenariusz jest ARGUMENTEM, nie odczytem ze stanu Reacta: warsztat karty
+   * (dodaj/usuń inicjatywę, zmień datę, zmień zależność) musi zapisać dokładnie
+   * ten kształt, który właśnie policzył — `setDraft` jest asynchroniczne i
+   * zapis po nim wysyłałby stan sprzed zmiany. `expectedVersion` to ta sama
+   * wersja agregatu, na której karta pracuje; 409 z serwera wraca do ekranu
+   * jako CONFLICT z regułą, a nie jako cicha porażka.
+   */
+  const persistScenario = async (
+    scenario: PlanScenario,
     operation: 'CREATE' | 'UPDATE' | 'PUBLISH',
     publishConfirmation?: { conflictCount: number; statement: string }
   ) => {
-    if (!draft || !knownTimeBasis(draft) || writeState === 'SAVING') {
-      if (draft && !knownTimeBasis(draft)) setWriteState('ERROR');
+    if (!knownTimeBasis(scenario) || writeState === 'SAVING') {
+      if (!knownTimeBasis(scenario)) setWriteState('ERROR');
       return;
     }
     setWriteRule(null);
     setWriteState('SAVING');
-    const key = `${draft.scenarioId}:${aggregateVersion}:${operation}`;
+    const key = `${scenario.scenarioId}:${aggregateVersion}:${operation}`;
     const clientRequestId = commandIds.current.get(key) ?? crypto.randomUUID();
     commandIds.current.set(key, clientRequestId);
     try {
-      const result = (await writePlanScenario(draft.scenarioId, {
+      const result = (await writePlanScenario(scenario.scenarioId, {
         expectedVersion: aggregateVersion,
         clientRequestId,
         operation,
         portfolio: 'auto',
         ...(publishConfirmation ? { publishConfirmation } : {}),
-        scenario: draft,
+        scenario,
       })) as { aggregateVersion: number; response: PlanScenario };
       setAggregateVersion(result.aggregateVersion);
       setDraft(result.response);
@@ -812,6 +835,10 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       );
     }
   };
+  const write = (
+    operation: 'CREATE' | 'UPDATE' | 'PUBLISH',
+    publishConfirmation?: { conflictCount: number; statement: string }
+  ) => (draft ? persistScenario(draft, operation, publishConfirmation) : Promise.resolve());
   const compareVersions = async () => {
     if (!draft || compareFrom === null || compareTo === null || compareFrom === compareTo) return;
     setCompareState('LOADING');
@@ -951,10 +978,11 @@ export const PlanScenarioSurface: React.FC<Props> = ({
         expectedVersion: 1,
         clientRequestId: crypto.randomUUID(),
         outcome,
+        // Ślad decyzji w audycie — po polsku, jak reszta warstwy widocznej dla PMO.
         rationale:
           outcome === 'ACCEPT'
-            ? 'Human accepted proposal for the editable draft.'
-            : 'Human rejected proposal; draft remains unchanged.',
+            ? 'Człowiek zatwierdził propozycję dla edytowalnego szkicu planu.'
+            : 'Człowiek odrzucił propozycję; szkic planu pozostaje bez zmian.',
       })) as { response?: PlanAnalysisProposal };
       if (outcome === 'ACCEPT') {
         // P15 §4.0 D5: „Zatwierdź" = UPDATE okien Z PROPOZYCJI na serwerze, nie
@@ -985,6 +1013,121 @@ export const PlanScenarioSurface: React.FC<Props> = ({
     } catch {
       setAnalysisState('ERROR');
     }
+  };
+  /**
+   * WARSZTAT PLANU W KARCIE (P15-K3, DEC-421, §4.1 pkt 3).
+   *
+   * „Dodaj inicjatywę" = MOST + zapis: inicjatywa modułu musi najpierw zostać
+   * przyjęta do planowania (`register` → agregat `ie/initiative` w
+   * APPROVED_BACKLOG), bo `mutatePlanScenario` odrzuca okno na inicjatywę
+   * spoza portfela regułą PLAN_MEMBER_NOT_APPROVED (zmierzone 07.09). Portfel
+   * roboczy odświeża serwer ze składu okien przy `portfolio: 'auto'`.
+   */
+  const addInitiativeToPlan = async (initiativeId: string) => {
+    if (!draft || draft.status !== 'DRAFT' || draft.windows.some((w) => w.initiativeId === initiativeId))
+      return;
+    const source = plannable.find((item) => item.id === initiativeId);
+    const horizonStart = draft.periods[0]?.start ?? null;
+    const horizonEnd = draft.periods[draft.periods.length - 1]?.end ?? null;
+    setWriteRule(null);
+    try {
+      const registered = await registerInitiativeForPlanning(initiativeId, {
+        clientRequestId: crypto.randomUUID(),
+        allowConditional: source?.conditional === true,
+      });
+      const planned = source?.plannedStartDate ?? null;
+      const window: WindowDraft = {
+        initiativeId,
+        initiativeVersion: registered.aggregateVersion,
+        earliest: horizonStart,
+        target:
+          planned && horizonStart && horizonEnd && planned >= horizonStart && planned <= horizonEnd
+            ? planned
+            : horizonStart,
+        latest: horizonEnd,
+        confidence: 'UNKNOWN',
+        rationale: t('initiatives.planScenario.workbench.defaultRationale'),
+        dependencySnapshot: [],
+        constraintSnapshot: [],
+      };
+      await persistScenario({ ...draft, windows: [...draft.windows, window] }, 'UPDATE');
+    } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      setWriteState(error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR');
+    }
+  };
+  /** „Usuń z planu" — okno znika, a razem z nim członkostwo w portfelu roboczym. */
+  const removeInitiativeFromPlan = async (initiativeId: string) => {
+    if (!draft || draft.status !== 'DRAFT') return;
+    await persistScenario(
+      {
+        ...draft,
+        windows: draft.windows
+          .filter((window) => window.initiativeId !== initiativeId)
+          // Zależność do usuwanej inicjatywy przestaje istnieć w planie; bez tego
+          // solver zgłaszałby „zależność spoza planu" przy każdej analizie.
+          .map((window) => ({
+            ...window,
+            dependencySnapshot: window.dependencySnapshot.filter((id) => id !== initiativeId),
+          })),
+      },
+      'UPDATE'
+    );
+  };
+  /** Zmiana dat jednego okna → zapis PEŁNEGO zestawu okien z CAS. */
+  const changePlanWindowDates = async (
+    initiativeId: string,
+    patch: { earliest?: string | null; target?: string | null; latest?: string | null }
+  ) => {
+    if (!draft || draft.status !== 'DRAFT') return;
+    await persistScenario(
+      {
+        ...draft,
+        windows: draft.windows.map((window) =>
+          window.initiativeId === initiativeId ? { ...window, ...patch } : window
+        ),
+      },
+      'UPDATE'
+    );
+  };
+  /**
+   * „Po inicjatywie" — zapis do `initiative_dependencies` (kanoniczna trasa
+   * runtime-v1) I odświeżenie `dependencySnapshot` okna, bo to snapshot czyta
+   * solver. Cykl wraca z serwera jako 400 z regułą i zatrzymuje zapis planu.
+   */
+  const changeWindowDependencies = async (initiativeId: string, dependsOn: string[]) => {
+    if (!draft || draft.status !== 'DRAFT') return;
+    setWriteRule(null);
+    try {
+      const saved = await writeInitiativeDependencies(initiativeId, {
+        clientRequestId: crypto.randomUUID(),
+        dependsOn,
+      });
+      await persistScenario(
+        {
+          ...draft,
+          windows: draft.windows.map((window) =>
+            window.initiativeId === initiativeId
+              ? { ...window, dependencySnapshot: saved.dependsOn }
+              : window
+          ),
+        },
+        'UPDATE'
+      );
+    } catch (error) {
+      setWriteRule(error instanceof RuntimeApiError ? (error.rule ?? null) : null);
+      setWriteState(error instanceof RuntimeApiError && error.status === 409 ? 'CONFLICT' : 'ERROR');
+    }
+  };
+  /**
+   * „Utwórz nową wersję (szkic)" z planu opublikowanego. Domena nie ma osobnej
+   * komendy rozgałęzienia: `UPDATE` opublikowanego planu podbija wersję i wraca
+   * do stanu SZKIC (`planScenario.ts`), a poprzednia wersja zostaje w historii
+   * jako ZASTĄPIONA. To jedyny istniejący mechanizm — patrz STOP-y kroku K3.
+   */
+  const createDraftVersionFromPublished = async () => {
+    if (!draft || draft.status === 'DRAFT') return;
+    await persistScenario(draft, 'UPDATE');
   };
   const updateWindow = (initiativeId: string, patch: Partial<WindowDraft>) =>
     setDraft((current) =>
@@ -1170,6 +1313,25 @@ export const PlanScenarioSurface: React.FC<Props> = ({
       </div>
     );
   if (workspaceOpen && draft) {
+    /**
+     * KONFLIKT WERSJI NA EKRANIE (P15-K3, DEC-421). Warsztat zapisuje z CAS;
+     * gdy plan zmienił się między odczytem a zapisem, serwer zwraca 409 i to
+     * zdanie mówi człowiekowi, co zrobić — zamiast zostawić wiersz w stanie,
+     * który nie poszedł do bazy.
+     */
+    const cardErrorLabel =
+      writeState === 'CONFLICT' || writeState === 'ERROR'
+        ? writeRule
+          ? t(`initiatives.planScenario.errors.${writeRule}`, {
+              defaultValue:
+                writeState === 'CONFLICT'
+                  ? t('initiatives.planScenario.conflictError')
+                  : t('initiatives.planScenario.writeError'),
+            })
+          : writeState === 'CONFLICT'
+            ? t('initiatives.planScenario.conflictError')
+            : t('initiatives.planScenario.writeError')
+        : null;
     const proposalNames = new Map([
       ...initiatives.map((item) => [item.id, item.name] as const),
       ...plannable.map((item) => [item.id, item.name] as const),
@@ -1203,6 +1365,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           onGenerate={(input) => void generatePlan(input)}
           onReview={(outcome) => void reviewAnalysis(outcome)}
           onPublish={requestPublish}
+          onAddInitiative={(initiativeId) => void addInitiativeToPlan(initiativeId)}
+          onRemoveInitiative={(initiativeId) => void removeInitiativeFromPlan(initiativeId)}
+          onWindowChange={(initiativeId, patch) =>
+            void changePlanWindowDates(initiativeId, patch)
+          }
+          onDependenciesChange={(initiativeId, dependsOn) =>
+            void changeWindowDependencies(initiativeId, dependsOn)
+          }
+          onNewDraftVersion={() => void createDraftVersionFromPublished()}
+          errorLabel={cardErrorLabel}
         />
         {publicationConfirmationDialog}
       </>
@@ -1309,6 +1481,17 @@ export const PlanScenarioSurface: React.FC<Props> = ({
             selectedRowId={selectedId}
             onRowClick={(row) => setSelectedId(String(row.id))}
             onRowDoubleClick={(row) => void open(String(row.id))}
+            /*
+             * P15-K3 (DEC-421): bez tego rekwizytu pusta lista planów mówiła
+             * „No items found" (domyślny napis `StandardTable`) w polskim UI.
+             */
+            empty={{
+              title: t('initiatives.planCard.listEmptyTitle', 'Brak planów'),
+              description: t(
+                'initiatives.planCard.listEmptyDescription',
+                'Załóż pierwszy plan przyciskiem „Nowy plan" — wybierzesz w nim zatwierdzone inicjatywy i horyzont.'
+              ),
+            }}
           />
         </TableWithPreviewLayout>
       </section>
@@ -1685,748 +1868,16 @@ export const PlanScenarioSurface: React.FC<Props> = ({
           />
         </TableWithPreviewLayout>
       </div>
-      {draft && workspaceOpen && (
-        <section
-          aria-label={t('initiatives.planScenario.workbenchAria')}
-          className="min-h-0 border-t border-c-border p-4"
-        >
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">
-              {t('initiatives.planScenario.workbench.title')} · {draft.scenarioId}:v
-              {draft.scenarioVersion}
-            </h3>
-            <span className="text-xs text-c-text-muted">
-              {t('initiatives.planScenario.portfolioLabel')} {draft.portfolioScenarioId}:v
-              {draft.portfolioScenarioVersion}
-            </span>
-            <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={
-                  !aggregateVersion || draft.status !== 'DRAFT' || analysisState === 'LOADING'
-                }
-                onClick={() => void analyzePlan()}
-              >
-                {analysisState === 'LOADING' ? (
-                  <Loader2 className="animate-spin" size={15} />
-                ) : (
-                  <ListOrdered size={15} />
-                )}{' '}
-                {t('initiatives.planScenario.workbench.sequenceByDependencies')}
-              </button>
-              <button
-                type="button"
-                className="btn-ghost"
-                aria-label={t('initiatives.planScenario.workbench.closeAria')}
-                onClick={() => setWorkspaceOpen(false)}
-              >
-                <X size={15} /> {t('common.close')}
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={
-                  draft.status !== 'DRAFT' || !knownTimeBasis(draft) || writeState === 'SAVING'
-                }
-                onClick={() => void write(aggregateVersion ? 'UPDATE' : 'CREATE')}
-              >
-                {writeState === 'SAVING' ? (
-                  <Loader2 className="animate-spin" size={15} />
-                ) : (
-                  <Save size={15} />
-                )}{' '}
-                {t('initiatives.planScenario.workbench.saveDraft')}
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={
-                  !aggregateVersion ||
-                  draft.status !== 'DRAFT' ||
-                  !knownTimeBasis(draft) ||
-                  writeState === 'SAVING'
-                }
-                onClick={requestPublish}
-              >
-                <Send size={15} /> {t('initiatives.planScenario.workbench.publish')}
-              </button>
-            </div>
-          </div>
-          {/*
-           * Odbiór grafiki 174-domkniecie (2026-09-01) — USUNIĘTA DRUGA TABELA.
-           *
-           * Warsztat planu renderował tu `StandardTable` na tym SAMYM zbiorze
-           * `visiblePlanWindows` co tabela główna, tyle że z węższym zestawem
-           * kolumn. Efekt na ekranie: po kliknięciu „Otwórz narzędzia planu"
-           * pod pierwszą tabelą wysuwała się DRUGA tabela z tymi samymi
-           * wierszami. Dokładnie to zgłosił właściciel 2026-08-30:
-           * „narzędzie otwiera tę wybraną linię jako tabelę poniżej tej
-           * tabeli. Ma ona otwierać konkretną kartę. W ogóle nie rozumiem,
-           * jak to działa."
-           *
-           * Duplikat nie niósł żadnej informacji, której nie ma tabela główna
-           * (te same wiersze, podzbiór kolumn, bez podglądu i bez kebaba),
-           * a warsztat i tak edytuje okna niżej — w „Osi czasu" i w edytorze
-           * kolejności. Warsztat zostaje NARZĘDZIEM (horyzont · zakres · oś
-           * czasu · kolejność), a nie powtórzoną listą.
-           */}
-          <fieldset className="mb-4 rounded-md border border-c-border p-3">
-            <legend className="px-1 text-sm font-medium">
-              {t('initiatives.planScenario.workbench.horizon')}
-            </legend>
-            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="text-xs">
-                {t('initiatives.planScenario.form.windowUnit')}
-                <select
-                  aria-label={t('initiatives.planScenario.workbench.windowUnitAria')}
-                  className="mt-1 block w-full bg-c-surface p-2"
-                  value={draft.windowUnit}
-                  onChange={(event) =>
-                    setDraft((current) =>
-                      current ? { ...current, windowUnit: event.target.value } : current
-                    )
-                  }
-                >
-                  <option value="WEEK">{t('initiatives.planScenario.form.weekOption')}</option>
-                  <option value="MONTH">{t('initiatives.planScenario.form.monthOption')}</option>
-                </select>
-              </label>
-              <label className="text-xs">
-                {t('initiatives.planScenario.form.timezone')}
-                <input
-                  aria-label={t('initiatives.planScenario.workbench.timezoneAria')}
-                  className="mt-1 block w-full bg-c-surface p-2"
-                  value={draft.timezone}
-                  onChange={(event) =>
-                    setDraft((current) =>
-                      current ? { ...current, timezone: event.target.value } : current
-                    )
-                  }
-                />
-              </label>
-            </div>
-            <div
-              className="space-y-2"
-              aria-label={t('initiatives.planScenario.workbench.periodsAria')}
-            >
-              {draft.periods.map((period, index) => (
-                <div
-                  key={`${period.periodId}-${index}`}
-                  className="grid grid-cols-1 items-end gap-2 rounded border border-c-border p-2 sm:grid-cols-[minmax(8rem,1fr)_10rem_10rem_auto]"
-                >
-                  <label className="text-xs">
-                    {t('initiatives.planScenario.workbench.periodName')}
-                    <input
-                      aria-label={t('initiatives.planScenario.workbench.periodNameAria', {
-                        index: index + 1,
-                      })}
-                      className="mt-1 block w-full bg-c-surface p-2"
-                      value={period.periodId}
-                      onChange={(event) => updatePeriod(index, { periodId: event.target.value })}
-                    />
-                  </label>
-                  <label className="text-xs">
-                    {t('initiatives.planScenario.workbench.periodFrom')}
-                    <input
-                      aria-label={t('initiatives.planScenario.workbench.periodFromAria', {
-                        index: index + 1,
-                      })}
-                      className="mt-1 block w-full bg-c-surface p-2"
-                      type="date"
-                      value={toDateInput(period.start)}
-                      onChange={(event) =>
-                        updatePeriod(index, { start: toDateIso(event.target.value) })
-                      }
-                    />
-                  </label>
-                  <label className="text-xs">
-                    {t('initiatives.planScenario.workbench.periodTo')}
-                    <input
-                      aria-label={t('initiatives.planScenario.workbench.periodToAria', {
-                        index: index + 1,
-                      })}
-                      className="mt-1 block w-full bg-c-surface p-2"
-                      type="date"
-                      value={toDateInput(period.end)}
-                      onChange={(event) =>
-                        updatePeriod(index, { end: toDateIso(event.target.value) })
-                      }
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    aria-label={t('initiatives.planScenario.workbench.removePeriodAria', {
-                      index: index + 1,
-                    })}
-                    onClick={() => removePeriod(index)}
-                  >
-                    <Trash2 size={15} /> {t('common.delete')}
-                  </button>
-                </div>
-              ))}
-              <button type="button" className="btn-secondary" onClick={addPeriod}>
-                <Plus size={15} /> {t('initiatives.planScenario.workbench.addPeriod')}
-              </button>
-            </div>
-          </fieldset>
-          <fieldset className="mb-4 rounded-md border border-c-border p-3">
-            <legend className="px-1 text-sm font-medium">
-              {t('initiatives.planScenario.workbench.initiativeScope')}
-            </legend>
-            <div className="mb-3 flex flex-wrap items-end gap-3">
-              <label className="text-xs">
-                {t('initiatives.planScenario.workbench.initiativeStatus')}
-                <select
-                  aria-label={t('initiatives.planScenario.workbench.initiativeStatusFilterAria')}
-                  className="mt-1 block min-w-48 bg-c-surface p-2"
-                  value={initiativeLifecycleFilter}
-                  onChange={(event) => setInitiativeLifecycleFilter(event.target.value)}
-                >
-                  <option value="ALL">{t('initiatives.planScenario.workbench.allStatuses')}</option>
-                  {lifecycleOptions.map((lifecycle) => (
-                    <option key={lifecycle} value={lifecycle}>
-                      {lifecycle}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span className="text-xs text-c-text-muted">
-                {t('initiatives.planScenario.workbench.inPlanCount', {
-                  count: draft.windows.length,
-                  total: initiatives.length,
-                })}
-              </span>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {selectableInitiatives.map((initiative) => {
-                const included = draft.windows.some(
-                  (window) => window.initiativeId === initiative.id
-                );
-                return (
-                  <label
-                    key={initiative.id}
-                    className="flex cursor-pointer items-start gap-2 rounded border border-c-border p-2"
-                  >
-                    <input
-                      aria-label={t('initiatives.planScenario.workbench.includeAria', {
-                        name: initiative.name,
-                      })}
-                      type="checkbox"
-                      checked={included}
-                      onChange={() =>
-                        included ? removeWindow(initiative.id) : addWindow(initiative.id)
-                      }
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{initiative.name}</span>
-                      <span className="block text-xs text-c-text-muted">
-                        {initiative.lifecycle ||
-                          t('initiatives.planScenario.workbench.statusUnknown')}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-          <section
-            aria-label={t('initiatives.planScenario.workbench.timelineAria')}
-            className="mb-4 rounded-md border border-c-border p-3"
-          >
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h4 className="text-sm font-medium">
-                  {t('initiatives.planScenario.workbench.timelineTitle')}
-                </h4>
-                <p className="text-xs text-c-text-muted">
-                  {t('initiatives.planScenario.workbench.timelineHint')}
-                </p>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table /* §27-exempt: macierz przypisań inicjatywa × okres (interaktywny grid klik-przypisz), nie ekran listowy — kanoniczna lista okien planu renderuje się niżej przez StandardTable; docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md §3 */
-                className="min-w-max border-collapse text-xs"
-              >
-                <thead>
-                  <tr className="border-b border-c-border">
-                    <th scope="col" className="min-w-60 p-2 text-left font-medium">
-                      {t('initiatives.planScenario.columns.initiative')}
-                    </th>
-                    {draft.periods.map((period) => (
-                      <th
-                        key={period.periodId}
-                        scope="col"
-                        className="min-w-28 border-l border-c-border p-2 text-center"
-                      >
-                        <span className="block font-medium">{period.periodId}</span>
-                        <span className="text-c-text-muted">
-                          {formatDate(period.start)}–{formatDate(period.end)}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {draft.windows.map((window) => {
-                    const activePeriod = draft.periods.findIndex(
-                      (period) =>
-                        window.target && window.target >= period.start && window.target < period.end
-                    );
-                    const initiativeName =
-                      initiatives.find((initiative) => initiative.id === window.initiativeId)
-                        ?.name ?? window.initiativeId;
-                    return (
-                      <tr
-                        key={window.initiativeId}
-                        className="border-b border-c-border last:border-b-0"
-                      >
-                        <th scope="row" className="min-w-60 p-2 text-left font-normal">
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate text-sm font-medium">
-                              {initiativeName}
-                            </span>
-                            <span className="flex shrink-0 gap-1">
-                              <button
-                                type="button"
-                                className="btn-ghost p-1"
-                                aria-label={t('initiatives.planScenario.workbench.moveLeftAria', {
-                                  name: initiativeName,
-                                })}
-                                disabled={activePeriod === 0}
-                                onClick={() => moveWindowAcrossPeriods(window.initiativeId, -1)}
-                              >
-                                ←
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-ghost p-1"
-                                aria-label={t('initiatives.planScenario.workbench.moveRightAria', {
-                                  name: initiativeName,
-                                })}
-                                disabled={activePeriod === draft.periods.length - 1}
-                                onClick={() => moveWindowAcrossPeriods(window.initiativeId, 1)}
-                              >
-                                →
-                              </button>
-                            </span>
-                          </span>
-                        </th>
-                        {draft.periods.map((period, periodIndex) => {
-                          const active = activePeriod === periodIndex;
-                          return (
-                            <td
-                              key={period.periodId}
-                              className="min-w-28 border-l border-c-border p-0"
-                            >
-                              <button
-                                type="button"
-                                aria-label={t('initiatives.planScenario.workbench.assignAria', {
-                                  name: initiativeName,
-                                  period: period.periodId,
-                                })}
-                                aria-pressed={active}
-                                className={`min-h-12 w-full p-2 text-xs transition ${
-                                  active
-                                    ? 'bg-navy-900 text-white dark:bg-[#F4F7FB] dark:text-navy-950'
-                                    : 'bg-c-surface hover:bg-c-surface-raised'
-                                }`}
-                                onClick={() =>
-                                  assignWindowToPeriod(window.initiativeId, periodIndex)
-                                }
-                              >
-                                {active
-                                  ? t(planConfidenceKey[window.confidence] ?? window.confidence)
-                                  : '—'}
-                              </button>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                  {!draft.windows.length && (
-                    <tr>
-                      <td
-                        colSpan={draft.periods.length + 1}
-                        className="p-4 text-sm text-c-text-muted"
-                      >
-                        {t('initiatives.planScenario.workbench.noWindowsSelected')}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-          {!knownTimeBasis(draft) && (
-            <p role="alert" className="mb-4 text-sm text-c-danger">
-              {t('initiatives.planScenario.workbench.unknownTimeBasis')}
-            </p>
-          )}
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="overflow-x-auto">
-              <StandardTable
-                persistKey="initiatives.plan-workbench-windows.v1"
-                data={draft.windows.map((window, index) => ({
-                  ...window,
-                  id: window.initiativeId,
-                  order: index,
-                }))}
-                empty={{ title: t('initiatives.planScenario.workbench.noInitiativesInPlan') }}
-                columns={[
-                  {
-                    id: 'order',
-                    label: t('initiatives.planScenario.workbench.orderSnapshotColumn'),
-                    render: (row) => {
-                      const window = row as WindowDraft & TableRow & { order: number };
-                      const index = window.order;
-                      return (
-                        <div className="p-2">
-                          <div className="flex gap-1">
-                            <button
-                              aria-label={t('initiatives.planScenario.workbench.moveUpAria', {
-                                id: window.initiativeId,
-                              })}
-                              type="button"
-                              onClick={() => move(index, -1)}
-                            >
-                              <ArrowUp size={14} />
-                            </button>
-                            <button
-                              aria-label={t('initiatives.planScenario.workbench.moveDownAria', {
-                                id: window.initiativeId,
-                              })}
-                              type="button"
-                              onClick={() => move(index, 1)}
-                            >
-                              <ArrowDown size={14} />
-                            </button>
-                          </div>
-                          {initiatives.find((item) => item.id === window.initiativeId)?.name ??
-                            window.initiativeId}
-                          <input
-                            aria-label={t(
-                              'initiatives.planScenario.workbench.initiativeVersionAria',
-                              {
-                                id: window.initiativeId,
-                              }
-                            )}
-                            className="mt-1 block w-20 bg-c-surface p-1"
-                            type="number"
-                            min={1}
-                            value={window.initiativeVersion}
-                            onChange={(e) =>
-                              updateWindow(window.initiativeId, {
-                                initiativeVersion: Number(e.target.value),
-                              })
-                            }
-                          />
-                        </div>
-                      );
-                    },
-                  },
-                  {
-                    id: 'target',
-                    label: t('initiatives.planScenario.workbench.draftWindowColumn'),
-                    render: (row) => {
-                      const window = row as WindowDraft & TableRow;
-                      return (
-                        <div className="p-2">
-                          {(['earliest', 'target', 'latest'] as const).map((key) => (
-                            <input
-                              key={key}
-                              aria-label={t(
-                                `initiatives.planScenario.workbench.windowFieldAria.${key}`,
-                                { id: window.initiativeId }
-                              )}
-                              className="mb-1 block bg-c-surface p-1"
-                              type="datetime-local"
-                              value={toInput(window[key])}
-                              onChange={(e) =>
-                                updateWindow(window.initiativeId, { [key]: toIso(e.target.value) })
-                              }
-                            />
-                          ))}
-                        </div>
-                      );
-                    },
-                  },
-                  {
-                    id: 'confidence',
-                    label: t('initiatives.planScenario.workbench.confidenceRationaleColumn'),
-                    render: (row) => {
-                      const window = row as WindowDraft & TableRow;
-                      return (
-                        <div>
-                          <select
-                            aria-label={t('initiatives.planScenario.workbench.confidenceAria', {
-                              id: window.initiativeId,
-                            })}
-                            value={window.confidence}
-                            onChange={(e) =>
-                              updateWindow(window.initiativeId, {
-                                confidence: e.target.value as WindowDraft['confidence'],
-                              })
-                            }
-                          >
-                            {/* Wartość zapisywana zostaje angielska (kontrakt
-                                backendu), tłumaczy się wyłącznie etykieta opcji. */}
-                            {(['UNKNOWN', 'LOW', 'MEDIUM', 'HIGH'] as const).map((level) => (
-                              <option key={level} value={level}>
-                                {t(planConfidenceKey[level] ?? level)}
-                              </option>
-                            ))}
-                          </select>
-                          <textarea
-                            aria-label={t('initiatives.planScenario.workbench.rationaleAria', {
-                              id: window.initiativeId,
-                            })}
-                            className="mt-1 block bg-c-surface p-1"
-                            value={window.rationale}
-                            onChange={(e) =>
-                              updateWindow(window.initiativeId, { rationale: e.target.value })
-                            }
-                          />
-                        </div>
-                      );
-                    },
-                  },
-                  {
-                    id: 'dependencySnapshot',
-                    label: t('initiatives.planScenario.columns.dependencies'),
-                    render: (row) => {
-                      const window = row as WindowDraft & TableRow;
-                      return (
-                        <textarea
-                          aria-label={t('initiatives.planScenario.workbench.dependenciesAria', {
-                            id: window.initiativeId,
-                          })}
-                          className="bg-c-surface p-1"
-                          value={window.dependencySnapshot.join('\n')}
-                          onChange={(e) =>
-                            updateWindow(window.initiativeId, {
-                              dependencySnapshot: e.target.value
-                                .split('\n')
-                                .map((v) => v.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
-                      );
-                    },
-                  },
-                  {
-                    id: 'constraintSnapshot',
-                    label: t('initiatives.planScenario.workbench.constraintsColumn'),
-                    render: (row) => {
-                      const window = row as WindowDraft & TableRow;
-                      return (
-                        <div>
-                          {window.constraintSnapshot.map((constraint) => (
-                            <div key={constraint.constraintId} className="text-xs">
-                              {/* ta sama mapa co w kolumnach — bez niej w tej samej
-                                  sekcji zostawało gołe „UNKNOWN:" */}
-                              {t(planReadinessStateKey[constraint.state] ?? constraint.state)}:{' '}
-                              {constraint.detail}
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            className="btn-secondary mt-1"
-                            onClick={() =>
-                              updateWindow(window.initiativeId, {
-                                constraintSnapshot: [
-                                  ...window.constraintSnapshot,
-                                  {
-                                    constraintId: crypto.randomUUID(),
-                                    state: 'UNKNOWN',
-                                    detail: t(
-                                      'initiatives.planScenario.workbench.defaultConstraintDetail'
-                                    ),
-                                  },
-                                ],
-                              })
-                            }
-                          >
-                            {t('initiatives.planScenario.workbench.addConstraint')}
-                          </button>
-                        </div>
-                      );
-                    },
-                  },
-                ]}
-              />
-            </div>
-            <aside className="space-y-3">
-              <h4 className="font-medium">
-                {t('initiatives.planScenario.aside.assumptionsAndChanges')}
-              </h4>
-              {analysisProposal && (
-                <section
-                  aria-label={t('initiatives.planScenario.aside.analysisProposalAria')}
-                  className="rounded-md border border-c-border p-3 text-xs"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-medium">
-                      {t('initiatives.planScenario.aside.analysisProposalTitle')}
-                    </h4>
-                    <span>{analysisProposal.status}</span>
-                  </div>
-                  <p className="mt-2 text-c-text-muted">
-                    {t('initiatives.planScenario.aside.analysisInput', {
-                      scenarioVersion: analysisProposal.inputScenarioVersion,
-                      aggregateVersion: analysisProposal.inputAggregateVersion,
-                    })}
-                  </p>
-                  <p className="mt-2">{analysisProposal.rationale}</p>
-                  <p className="mt-2">
-                    {t('initiatives.planScenario.aside.changesAndConflicts', {
-                      changes: analysisProposal.changes.length,
-                      conflicts: analysisProposal.conflicts.length,
-                    })}
-                  </p>
-                  {analysisProposal.conflicts.map((conflict) => (
-                    <p key={conflict} className="mt-1 text-c-danger">
-                      {conflict}
-                    </p>
-                  ))}
-                  {analysisProposal.status === "PENDING_REVIEW" && (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => void reviewAnalysis('ACCEPT')}
-                      >
-                        {t('initiatives.planScenario.aside.applyToDraft')}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => void reviewAnalysis('REJECT')}
-                      >
-                        {t('initiatives.planScenario.aside.rejectProposal')}
-                      </button>
-                    </div>
-                  )}
-                  <p className="mt-2 text-c-text-muted">
-                    {t('initiatives.planScenario.aside.saveAndPublishSeparate')}
-                  </p>
-                </section>
-              )}
-              {analysisState === 'ERROR' && (
-                <p role="alert" className="text-xs text-c-danger">
-                  {t('initiatives.planScenario.aside.analysisFailed')}
-                </p>
-              )}
-              <label className="block text-xs">
-                {t('initiatives.planScenario.aside.assumptions')}
-                <textarea
-                  aria-label={t('initiatives.planScenario.aside.assumptionsAria')}
-                  className="mt-1 min-h-24 w-full bg-c-surface p-2"
-                  value={draft.assumptions.join('\n')}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      assumptions: e.target.value
-                        .split('\n')
-                        .map((v) => v.trim())
-                        .filter(Boolean),
-                    })
-                  }
-                />
-              </label>
-              <section aria-label={t('initiatives.planScenario.aside.diffAria')}>
-                <h4 className="font-medium">
-                  {t('initiatives.planScenario.aside.compareVersions')}
-                </h4>
-                {history.length < 2 ? (
-                  <p className="mt-1 text-xs text-c-text-muted">
-                    {t('initiatives.planScenario.aside.compareUnavailable')}
-                  </p>
-                ) : (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <label className="text-xs">
-                      {t('initiatives.planScenario.aside.baseVersion')}
-                      <select
-                        aria-label={t('initiatives.planScenario.aside.baseVersionAria')}
-                        className="mt-1 block w-full bg-c-surface p-1"
-                        value={compareFrom ?? ''}
-                        onChange={(event) => setCompareFrom(Number(event.target.value))}
-                      >
-                        {history.map((version) => (
-                          <option key={version.scenarioVersion} value={version.scenarioVersion}>
-                            v{version.scenarioVersion} · {t(planStatusKey[version.status])}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-xs">
-                      {t('initiatives.planScenario.aside.comparedVersion')}
-                      <select
-                        aria-label={t('initiatives.planScenario.aside.comparedVersionAria')}
-                        className="mt-1 block w-full bg-c-surface p-1"
-                        value={compareTo ?? ''}
-                        onChange={(event) => setCompareTo(Number(event.target.value))}
-                      >
-                        {history.map((version) => (
-                          <option key={version.scenarioVersion} value={version.scenarioVersion}>
-                            v{version.scenarioVersion} · {t(planStatusKey[version.status])}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <button
-                      type="button"
-                      className="btn-secondary col-span-2"
-                      disabled={
-                        compareState === 'LOADING' ||
-                        compareFrom === null ||
-                        compareTo === null ||
-                        compareFrom === compareTo
-                      }
-                      onClick={() => void compareVersions()}
-                    >
-                      {compareState === 'LOADING' ? (
-                        <Loader2 className="animate-spin" size={15} />
-                      ) : (
-                        <Eye size={15} />
-                      )}{' '}
-                      {t('initiatives.planScenario.aside.compareVersionsAction')}
-                    </button>
-                  </div>
-                )}
-                {compareState === 'ERROR' && (
-                  <p role="alert" className="mt-2 text-xs text-c-danger">
-                    {t('initiatives.planScenario.aside.compareFailed')}
-                  </p>
-                )}
-                <h5 className="mt-3 text-xs font-medium">
-                  {t('initiatives.planScenario.aside.changesCount', { count: diff.length })}
-                </h5>
-                {history.length >= 2 && compareState === 'IDLE' && diff.length === 0 && (
-                  <p className="mt-1 text-xs text-c-text-muted">
-                    {t('initiatives.planScenario.aside.noDiff')}
-                  </p>
-                )}
-                {diff.map((change) => (
-                  <div
-                    key={change.initiativeId}
-                    className="mt-1 rounded border border-c-border p-2 text-xs"
-                  >
-                    {change.initiativeId}: {change.before?.target ?? '—'} →{' '}
-                    {change.after?.target ?? '—'}
-                  </div>
-                ))}
-              </section>
-              <p className="text-xs text-c-text-muted">
-                {t('initiatives.planScenario.aside.moveNote')}
-              </p>
-            </aside>
-          </div>
-        </section>
-      )}
+      {/*
+       * P15-K3 (DEC-421): WARSZTAT PLANU PRZENIESIONY DO KARTY.
+       *
+       * Do tej paczki wisiał tu blok `{draft && workspaceOpen && …}` — 742 linie
+       * edytora okien, osi czasu, diffu i historii, NIEOSIĄGALNE, bo gałąź
+       * `workspaceOpen && draft` zwraca `PlanCard` kilkaset linii wyżej. To, co
+       * z niego użyteczne (edycja dat okna, zakres inicjatyw, zależności), żyje
+       * teraz w karcie planu i jest naprawdę klikalne; reszta została usunięta,
+       * żeby nikt nie naprawiał kodu, którego użytkownik nigdy nie zobaczy.
+       */}
       {publicationConfirmationDialog}
     </section>
   );

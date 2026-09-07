@@ -1,5 +1,10 @@
 import type { CapacityScenario } from './capacityScenario.js';
 import type { PlannedWindow, PlanScenario } from './planScenario.js';
+import {
+  encodePlanSolverReason,
+  type PlanSolverCapacityReason,
+  type PlanSolverDependencyReason,
+} from './planSolverReason.js';
 
 export interface PlanSolverResult {
   assignments: Array<{
@@ -26,7 +31,10 @@ export function dependencyOrder(windows: PlannedWindow[]) {
       for (const id of path.slice(Math.max(0, cycleStart))) cycleMembers.add(id);
       cycleMembers.add(window.initiativeId);
       conflicts.push(
-        `Dependency cycle: ${[...path.slice(cycleStart), window.initiativeId].join(' -> ')}`
+        encodePlanSolverReason({
+          code: 'DEPENDENCY_CYCLE',
+          path: [...path.slice(cycleStart), window.initiativeId],
+        })
       );
       return;
     }
@@ -34,7 +42,14 @@ export function dependencyOrder(windows: PlannedWindow[]) {
     for (const dependency of [...window.dependencySnapshot].sort()) {
       const source = byId.get(dependency);
       if (source) visit(source, [...path, window.initiativeId]);
-      else conflicts.push(`Missing dependency in plan: ${window.initiativeId} -> ${dependency}`);
+      else
+        conflicts.push(
+          encodePlanSolverReason({
+            code: 'MISSING_DEPENDENCY',
+            initiativeId: window.initiativeId,
+            dependencyId: dependency,
+          })
+        );
     }
     visiting.delete(window.initiativeId);
     visited.add(window.initiativeId);
@@ -83,7 +98,7 @@ export function solvePlanScenario(
   if (!scenario.periods.length) {
     return {
       assignments: [],
-      conflicts: [...conflicts, 'Plan has no periods'],
+      conflicts: [...conflicts, encodePlanSolverReason({ code: 'NO_PERIODS' })],
       assumptions,
     };
   }
@@ -106,7 +121,7 @@ export function solvePlanScenario(
       ? [targetCandidate, ...candidates.filter(({ index }) => index !== targetCandidate.index)]
       : candidates;
     let selected: (typeof candidates)[number] | undefined;
-    let selectedReason = '';
+    let capacityReason: PlanSolverCapacityReason = { code: 'NO_CAPACITY_SCENARIO' };
 
     for (const candidate of orderedCandidates) {
       const capacityPeriod = capacity?.periods.find(
@@ -115,53 +130,75 @@ export function solvePlanScenario(
       if (!capacityPeriod || capacityPeriod.supply.base === null) {
         if (capacityPeriod?.supply.knowledgeState === 'UNKNOWN') {
           assumptions.push(
-            `Capacity unknown for period ${candidate.period.periodId} — capacity constraint not applied`
+            encodePlanSolverReason({
+              code: 'CAPACITY_UNKNOWN_FOR_PERIOD',
+              period: candidate.period.periodId,
+            })
           );
         }
         selected = candidate;
-        selectedReason = capacityPeriod
-          ? 'capacity is UNKNOWN, so the capacity constraint was explicitly not applied'
-          : 'no linked published capacity scenario was supplied';
+        capacityReason = capacityPeriod
+          ? { code: 'CAPACITY_UNKNOWN' }
+          : { code: 'NO_CAPACITY_SCENARIO' };
         break;
       }
       const demand = demandFor(capacity, window.initiativeId, candidate.period.periodId);
       if (!demand.known) {
         assumptions.push(
-          `Demand unknown for initiative ${window.initiativeId} in period ${candidate.period.periodId} — capacity constraint not applied`
+          encodePlanSolverReason({
+            code: 'DEMAND_UNKNOWN_FOR_INITIATIVE',
+            initiativeId: window.initiativeId,
+            period: candidate.period.periodId,
+          })
         );
         selected = candidate;
-        selectedReason =
-          'initiative demand is UNKNOWN, so the capacity constraint was explicitly not applied';
+        capacityReason = { code: 'DEMAND_UNKNOWN' };
         break;
       }
       const alreadyUsed = usedCapacity.get(candidate.period.periodId) ?? 0;
       if (alreadyUsed + demand.value <= capacityPeriod.supply.base) {
         selected = candidate;
         usedCapacity.set(candidate.period.periodId, alreadyUsed + demand.value);
-        selectedReason = `known capacity ${alreadyUsed + demand.value}/${capacityPeriod.supply.base}`;
+        capacityReason = {
+          code: 'CAPACITY_KNOWN',
+          used: alreadyUsed + demand.value,
+          supply: capacityPeriod.supply.base,
+        };
         break;
       }
     }
 
     if (!selected) {
       conflicts.push(
-        `No feasible period for ${window.initiativeId}: dependency boundary, own window, or known capacity excludes every period`
+        encodePlanSolverReason({
+          code: 'NO_FEASIBLE_PERIOD',
+          initiativeId: window.initiativeId,
+        })
       );
       continue;
     }
     assignedPeriodIndex.set(window.initiativeId, selected.index);
-    const dependencyReason = dependencyIndexes.length
-      ? `after dependency period ${Math.max(...dependencyIndexes) + 1}`
-      : 'no scheduled predecessor';
+    const dependencyReason: PlanSolverDependencyReason = dependencyIndexes.length
+      ? { code: 'AFTER_DEPENDENCY', period: Math.max(...dependencyIndexes) + 1 }
+      : { code: 'NO_PREDECESSOR' };
     assignments.push({
       window,
       periodId: selected.period.periodId,
-      rationale: `Deterministic solver selected ${selected.period.periodId}: ${dependencyReason}; own window intersects the period; ${selectedReason}.`,
+      // Kod, nie zdanie — tłumaczy front (patrz `planSolverReason.ts`).
+      rationale: encodePlanSolverReason({
+        code: 'SELECTED',
+        period: selected.period.periodId,
+        dependency: dependencyReason,
+        capacity: capacityReason,
+        humanReviewRequired: true,
+      }),
     });
   }
 
   for (const cycleMember of [...cycleMembers].sort()) {
-    conflicts.push(`No feasible period for ${cycleMember}: dependency cycle`);
+    conflicts.push(
+      encodePlanSolverReason({ code: 'NO_FEASIBLE_PERIOD_CYCLE', initiativeId: cycleMember })
+    );
   }
   return {
     assignments,

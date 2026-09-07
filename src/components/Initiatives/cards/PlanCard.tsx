@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { DocumentCardMenu5 } from '@/components/standard/DocumentCardMenu5';
 import { StandardArtifactShell } from '@/components/standard/StandardArtifactShell';
 import type { StandardSekcjaDef } from '@/components/standard/StandardArtifactShell.types';
 import { PLAN_CARD_CONTRACT } from '@/components/standard/documentCardContracts';
 import { resolveBusinessDisplayLabel } from '@/components/shared/PreviewPane/businessDisplayLabel';
+
+import { formatPlanSolverReason } from '../planSolverReason';
 import {
   GeneratorPlanuModal,
   type GeneratorInitiative,
@@ -13,36 +17,712 @@ import {
   type PlanGenerationMode,
 } from '../Generator/GeneratorPlanuModal';
 
-export interface PlanCardScenario { scenarioId: string; name?: string|null; status: 'DRAFT'|'PUBLISHED'|'SUPERSEDED'; scenarioVersion:number; portfolioScenarioId:string; portfolioScenarioVersion:number; windowUnit:string; timezone:string; periods:Array<{periodId:string;start:string;end:string}>; windows:Array<{initiativeId:string;target:string|null;rationale:string;dependencySnapshot:string[];constraintSnapshot:Array<{detail:string}>}>; assumptions:string[]; updatedBy:string; publishedBy:string|null; publishedAt:string|null }
+export interface PlanCardWindow {
+  initiativeId: string;
+  earliest: string | null;
+  target: string | null;
+  latest: string | null;
+  rationale: string;
+  dependencySnapshot: string[];
+  constraintSnapshot: Array<{ detail: string }>;
+}
+export interface PlanCardScenario {
+  scenarioId: string;
+  name?: string | null;
+  status: 'DRAFT' | 'PUBLISHED' | 'SUPERSEDED';
+  scenarioVersion: number;
+  portfolioScenarioId: string;
+  portfolioScenarioVersion: number;
+  windowUnit: string;
+  timezone: string;
+  periods: Array<{ periodId: string; start: string; end: string }>;
+  windows: PlanCardWindow[];
+  assumptions: string[];
+  updatedBy: string;
+  publishedBy: string | null;
+  publishedAt: string | null;
+}
+
+/** Zmiana okna wysyłana do zapisu — tylko daty, resztę okna niesie scenariusz. */
+export interface PlanCardWindowPatch {
+  earliest?: string | null;
+  target?: string | null;
+  latest?: string | null;
+}
 
 const formatPolishDate = (value: string | null) => {
   if (!value) return 'Nieznane';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 'Nieznane' : new Intl.DateTimeFormat('pl-PL').format(date);
 };
-const windowUnitLabel = (value: string) => ({ WEEK: 'Tydzień', MONTH: 'Miesiąc', QUARTER: 'Kwartał' })[value] ?? value;
+const windowUnitLabel = (value: string) =>
+  ({ WEEK: 'Tydzień', MONTH: 'Miesiąc', QUARTER: 'Kwartał' })[value] ?? value;
+/** ISO → wartość `<input type="date">`; pusty napis dla braku daty. */
+const toDateInput = (value: string | null) => (value ? value.slice(0, 10) : '');
+const toDateIso = (value: string) => (value ? `${value}T00:00:00.000Z` : null);
 
-export function PlanCard({ scenario, initiatives, plannable, proposal, proposalRows, proposalConflicts, savedLabel, busy, onBack, onAnalyze, onGenerate, onReview, onPublish }: { scenario: PlanCardScenario; initiatives:Array<{id:string;name:string;lifecycle?:string}>; plannable?:GeneratorInitiative[]; proposal?:{conflicts:string[];changes:unknown[];status:string}|null; proposalRows?:GeneratorProposalRow[]|null; proposalConflicts?:string[]; savedLabel?:string|null; busy?:boolean; onBack:()=>void; onAnalyze:(mode:PlanGenerationMode)=>void; onGenerate?:(input:GeneratorPlanInput)=>void; onReview:(outcome:'ACCEPT'|'REJECT')=>void; onPublish:()=>void }) {
-  const [section, setSection] = useState('horizon'); const [generator, setGenerator] = useState(false); const [readMode, setReadMode] = useState(false);
-  const title = resolveBusinessDisplayLabel({displayName:scenario.name,rawId:scenario.scenarioId,fallback:'Plan bez nazwy'});
-  const names = useMemo(() => new Map([...initiatives.map((item)=>[item.id,item.name] as const), ...(plannable??[]).map((item)=>[item.id,item.name] as const)]),[initiatives,plannable]);
-  const capacityConstraints = useMemo(
-    () => [...new Set(scenario.windows.flatMap((window) => window.constraintSnapshot.map((constraint) => constraint.detail)).filter((detail) => detail.trim()))],
+/**
+ * WALIDACJA OKNA (P15-K3, DEC-421): dokładnie ta sama reguła, co
+ * `validatePlanScenario` na serwerze (`earliest <= target <= latest` oraz
+ * całość wewnątrz horyzontu planu). Bez niej serwer odrzucał zapis regułą po
+ * angielsku, a wiersz nie mówił, co jest nie tak.
+ */
+export function validatePlanWindowDates(
+  window: { earliest: string | null; target: string | null; latest: string | null },
+  horizon: { start: string; end: string } | null
+): 'ORDER' | 'HORIZON' | null {
+  const values = [window.earliest, window.target, window.latest];
+  const [earliest, target, latest] = values;
+  if (
+    (earliest && target && earliest > target) ||
+    (target && latest && target > latest) ||
+    (earliest && latest && earliest > latest)
+  )
+    return 'ORDER';
+  if (horizon && values.some((value) => value && (value < horizon.start || value > horizon.end)))
+    return 'HORIZON';
+  return null;
+}
+
+export function PlanCard({
+  scenario,
+  initiatives,
+  plannable,
+  proposal,
+  proposalRows,
+  proposalConflicts,
+  savedLabel,
+  errorLabel,
+  busy,
+  onBack,
+  onAnalyze,
+  onGenerate,
+  onReview,
+  onPublish,
+  onAddInitiative,
+  onRemoveInitiative,
+  onWindowChange,
+  onDependenciesChange,
+  onNewDraftVersion,
+}: {
+  scenario: PlanCardScenario;
+  initiatives: Array<{ id: string; name: string; lifecycle?: string }>;
+  plannable?: GeneratorInitiative[];
+  proposal?: { conflicts: string[]; changes: unknown[]; status: string } | null;
+  proposalRows?: GeneratorProposalRow[] | null;
+  proposalConflicts?: string[];
+  savedLabel?: string | null;
+  /** Komunikat błędu zapisu (np. konflikt wersji) — karta musi go POKAZAĆ. */
+  errorLabel?: string | null;
+  busy?: boolean;
+  onBack: () => void;
+  onAnalyze: (mode: PlanGenerationMode) => void;
+  onGenerate?: (input: GeneratorPlanInput) => void;
+  onReview: (outcome: 'ACCEPT' | 'REJECT') => void;
+  onPublish: () => void;
+  onAddInitiative?: (initiativeId: string) => void;
+  onRemoveInitiative?: (initiativeId: string) => void;
+  onWindowChange?: (initiativeId: string, patch: PlanCardWindowPatch) => void;
+  onDependenciesChange?: (initiativeId: string, dependsOn: string[]) => void;
+  onNewDraftVersion?: () => void;
+}) {
+  const { t } = useTranslation();
+  const [section, setSection] = useState('horizon');
+  const [generator, setGenerator] = useState(false);
+  const [readMode, setReadMode] = useState(false);
+  const [candidate, setCandidate] = useState('');
+  const title = resolveBusinessDisplayLabel({
+    displayName: scenario.name,
+    rawId: scenario.scenarioId,
+    fallback: 'Plan bez nazwy',
+  });
+  const editable = scenario.status === 'DRAFT' && !readMode;
+  const names = useMemo(
+    () =>
+      new Map([
+        ...initiatives.map((item) => [item.id, item.name] as const),
+        ...(plannable ?? []).map((item) => [item.id, item.name] as const),
+      ]),
+    [initiatives, plannable]
+  );
+  const nameOf = (id: string) => names.get(id) ?? id;
+  const horizon = useMemo(
+    () =>
+      scenario.periods.length
+        ? { start: scenario.periods[0].start, end: scenario.periods[scenario.periods.length - 1].end }
+        : null,
+    [scenario.periods]
+  );
+  const inPlan = useMemo(
+    () => new Set(scenario.windows.map((window) => window.initiativeId)),
     [scenario.windows]
   );
-  const box='rounded-xl border border-c-border-subtle bg-c-surface p-4';
-  const content: Record<string, React.ReactNode> = {
-    horizon: <div className={box}><p>{windowUnitLabel(scenario.windowUnit)} · {scenario.timezone}</p><ul>{scenario.periods.map(p=><li key={p.periodId}>{formatPolishDate(p.start)} – {formatPolishDate(p.end)}</li>)}</ul></div>,
-    // P15-K2 (DEC-421): „Zakres inicjatyw" = OKNA PLANU, nie backlog całego modułu.
-    // Pomiar 07.09: sekcja renderowała prop `initiatives` (72 pozycje z
-    // `InitiativesHub`), więc plan z 5 oknami pokazywał 72 inicjatywy jako swój zakres.
-    scope: scenario.windows.length ? <div className={box}>{scenario.windows.map(w=><p key={w.initiativeId}>{names.get(w.initiativeId)??w.initiativeId} · {formatPolishDate(w.target)}</p>)}</div> : <div className={box}><p className="text-sm text-c-text-muted">Plan nie ma jeszcze żadnej inicjatywy w zakresie. Wybierz je w generatorze.</p></div>,
-    windows: scenario.windows.length ? <div className={box}>{scenario.windows.map((w,index)=><div key={w.initiativeId} className="border-b border-c-border-subtle py-2"><b>{index+1}. {names.get(w.initiativeId)??'Inicjatywa'}</b><p>{formatPolishDate(w.target)} · {w.rationale}</p></div>)}</div> : null,
-    dependencies: proposal?.conflicts.length ? <div className={box}>{proposal.conflicts.map(c=><p key={c}>{c}</p>)}</div> : null,
-    capacity: capacityConstraints.length ? <div className={box}><ul>{capacityConstraints.map((detail)=><li key={detail}>{detail}</li>)}</ul></div> : null,
-    decisions: <div className={box}><p>{scenario.publishedAt?`Opublikowano ${formatPolishDate(scenario.publishedAt)}`:'Plan pozostaje szkicem.'}</p>{savedLabel&&<p className="text-sm text-c-text-muted" role="status">{savedLabel}</p>}{scenario.status==='DRAFT'&&<button className="mt-2 rounded-lg border border-c-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-c-focus" onClick={onPublish}>Opublikuj plan</button>}</div>,
+  const addable = useMemo(
+    () => (plannable ?? []).filter((item) => !inPlan.has(item.id)),
+    [inPlan, plannable]
+  );
+  const capacityConstraints = useMemo(
+    () => [
+      ...new Set(
+        scenario.windows
+          .flatMap((window) => window.constraintSnapshot.map((constraint) => constraint.detail))
+          .filter((detail) => detail.trim())
+      ),
+    ],
+    [scenario.windows]
+  );
+  const [rowError, setRowError] = useState<Record<string, 'ORDER' | 'HORIZON'>>({});
+
+  const box = 'rounded-xl border border-c-border-subtle bg-c-surface p-4';
+  const field = 'rounded-lg border border-c-border bg-c-surface px-2 py-1 text-sm';
+  const button =
+    'inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50';
+
+  /**
+   * Plan opublikowany jest TYLKO DO ODCZYTU — zmiana idzie przez nową wersję.
+   * Mechanizm istnieje w domenie: `UPDATE` opublikowanego planu podbija wersję
+   * i wraca do stanu SZKIC (`planScenario.ts` — `status: op === 'PUBLISH' ? …`),
+   * a poprzednia wersja zostaje w historii jako zastąpiona.
+   */
+  const publishedNotice = scenario.status !== 'DRAFT' && (
+    <div className="mt-3 rounded-lg border border-c-border-subtle p-3 text-sm">
+      <p>
+        {t('initiatives.planCard.publishedReadOnly', {
+          defaultValue: 'Plan opublikowany — utwórz nową wersję (szkic), aby zmienić.',
+        })}
+      </p>
+      {onNewDraftVersion && (
+        <button type="button" className={`mt-2 ${button}`} disabled={busy} onClick={onNewDraftVersion}>
+          {t('initiatives.planCard.newDraftVersion', {
+            defaultValue: 'Utwórz nową wersję (szkic)',
+          })}
+        </button>
+      )}
+    </div>
+  );
+
+  const changeWindow = (initiativeId: string, patch: PlanCardWindowPatch) => {
+    const current = scenario.windows.find((window) => window.initiativeId === initiativeId);
+    if (!current || !onWindowChange) return;
+    const problem = validatePlanWindowDates(
+      {
+        earliest: patch.earliest !== undefined ? patch.earliest : current.earliest,
+        target: patch.target !== undefined ? patch.target : current.target,
+        latest: patch.latest !== undefined ? patch.latest : current.latest,
+      },
+      horizon
+    );
+    setRowError((previous) => {
+      const next = { ...previous };
+      if (problem) next[initiativeId] = problem;
+      else delete next[initiativeId];
+      return next;
+    });
+    if (problem) return;
+    onWindowChange(initiativeId, patch);
   };
-  const sections: StandardSekcjaDef[] = PLAN_CARD_CONTRACT.flatMap((item) => content[item.id] ? [{...item, component:content[item.id], aiContract:{none:true as const,reason:item.aiReason}}] : []);
-  const rightPanel={actions:{label:'Akcje',children:<button className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus" onClick={onBack}>Wróć do listy</button>,actionIds:['back']},properties:{label:'Właściwości',children:<ArtifactPropertiesTable propertyLabel="Właściwość" valueLabel="Wartość" rows={[{id:'status',label:'Status',value:scenario.status==='DRAFT'?'Szkic':scenario.status==='PUBLISHED'?'Opublikowany':'Zastąpiony'},{id:'version',label:'Wersja',value:scenario.scenarioVersion,mono:true},{id:'portfolio',label:'Wersja portfela źródłowego',value:scenario.portfolioScenarioVersion,mono:true}]}/>},relations:{label:'Powiązania',children:<p className="text-sm">Portfel źródłowy</p>},evidence:scenario.assumptions.length?{label:'Źródła i założenia',children:<ul className="list-disc pl-4 text-sm">{scenario.assumptions.map(item=><li key={item}>{item}</li>)}</ul>}:{pominieta:true as const,reason:'Brak zapisanych założeń.'},comments:{pominieta:true as const,reason:'Plan nie ma osobnego wątku komentarzy.'},history:{label:'Historia',children:<div className="text-sm">Wersja {scenario.scenarioVersion}</div>}};
-  return <StandardArtifactShell karta="plan" klasa="L" header={{title,onTitleChange:()=>undefined,titleReadOnly:true,artifactType:'document' as any,artifactId:scenario.scenarioId,onSave:()=>undefined,saveState:busy?'saving':'saved',lastSavedLabel:savedLabel??undefined,onClose:onBack,statusLabel:scenario.status==='DRAFT'?'Szkic':scenario.status==='PUBLISHED'?'Opublikowany':'Zastąpiony',statusTone:scenario.status==='PUBLISHED'?'approved':'draft'}} primaryAction={{intentionallyNone:true,reason:'Publikacja jest decyzją w sekcji Decyzje.'}} sections={sections} rightPanel={rightPanel} activeSection={section} onSectionChange={setSection} densityMode="n" onDensityModeChange={()=>undefined} toolbar={<DocumentCardMenu5 sections={sections} activeSection={section} onSectionChange={setSection} readMode={readMode} onReadModeChange={scenario.status==='DRAFT'?setReadMode:undefined} ai={{onAnalizuj:()=>onAnalyze('DEPENDENCIES'),analizaWToku:Boolean(busy),kontekstArtefaktu:{title,status:scenario.status,type:'plan'},moznaEdytowac:scenario.status==='DRAFT'&&!readMode,uzupelnijSekcje:{rodzaj:'wlasnaPropozycja',uruchom:()=>onAnalyze('MIXED'),opis:'Solver przygotuje propozycję dla aktywnej sekcji do przeglądu.'},uzupelnijDokument:{rodzaj:'wlasnaPropozycja',uruchom:()=>setGenerator(true),opis:'Generator przygotuje propozycję całego planu; decyzję podejmiesz w oknie przeglądu.'}}}/>} panelAriaLabel="Szczegóły planu" nakladki={<GeneratorPlanuModal open={generator} plannable={plannable??[]} busy={busy} proposal={proposalRows??null} proposalConflicts={proposalConflicts} savedLabel={savedLabel} onClose={()=>setGenerator(false)} onGenerate={(input)=>onGenerate?onGenerate(input):onAnalyze(input.mode)} onReview={onReview}/>}/>;
+
+  const scopeSection = (
+    <div className={box}>
+      {scenario.windows.length ? (
+        <ul className="space-y-1">
+          {scenario.windows.map((window) => (
+            <li
+              key={window.initiativeId}
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-c-border-subtle py-2 last:border-b-0"
+            >
+              <span className="min-w-0">
+                {nameOf(window.initiativeId)} · {formatPolishDate(window.target)}
+              </span>
+              {editable && onRemoveInitiative && (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  aria-label={t('initiatives.planCard.removeFromPlanAria', {
+                    defaultValue: 'Usuń „{{name}}" z planu',
+                    name: nameOf(window.initiativeId),
+                  })}
+                  onClick={() => onRemoveInitiative(window.initiativeId)}
+                >
+                  {t('initiatives.planCard.removeFromPlan', { defaultValue: 'Usuń z planu' })}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-c-text-muted">
+          {t('initiatives.planCard.emptyScope', {
+            defaultValue:
+              'Plan nie ma jeszcze żadnej inicjatywy w zakresie. Dodaj je niżej albo w generatorze.',
+          })}
+        </p>
+      )}
+      {editable && onAddInitiative && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            className={field}
+            aria-label={t('initiatives.planCard.addInitiativeAria', {
+              defaultValue: 'Inicjatywa do dodania do planu',
+            })}
+            value={candidate}
+            onChange={(event) => setCandidate(event.target.value)}
+          >
+            <option value="">
+              {t('initiatives.planCard.addInitiativePlaceholder', {
+                defaultValue: 'Wybierz inicjatywę…',
+              })}
+            </option>
+            {addable.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+                {item.conditional
+                  ? ` · ${t('initiatives.planGenerator.statusPending', 'Do zatwierdzenia')}`
+                  : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={button}
+            disabled={busy || !candidate}
+            onClick={() => {
+              if (!candidate) return;
+              onAddInitiative(candidate);
+              setCandidate('');
+            }}
+          >
+            {t('initiatives.planCard.addInitiative', { defaultValue: 'Dodaj inicjatywę' })}
+          </button>
+          {!addable.length && (
+            <span className="text-sm text-c-text-muted">
+              {t('initiatives.planCard.noAddable', {
+                defaultValue: 'Wszystkie kwalifikujące się inicjatywy są już w planie.',
+              })}
+            </span>
+          )}
+        </div>
+      )}
+      {publishedNotice}
+    </div>
+  );
+
+  const windowsSection = (
+    <div className={box}>
+      {scenario.windows.length ? (
+        <div className="space-y-3">
+          {scenario.windows.map((window, index) => (
+            <div
+              key={window.initiativeId}
+              className="border-b border-c-border-subtle py-2 last:border-b-0"
+            >
+              <b>
+                {index + 1}. {nameOf(window.initiativeId)}
+              </b>
+              {editable && onWindowChange ? (
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {(
+                    [
+                      ['earliest', t('initiatives.planCard.earliest', { defaultValue: 'Najwcześniej' })],
+                      ['target', t('initiatives.planCard.target', { defaultValue: 'Data docelowa' })],
+                      ['latest', t('initiatives.planCard.latest', { defaultValue: 'Najpóźniej' })],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="text-xs text-c-text-muted">
+                      {label}
+                      <input
+                        type="date"
+                        className={`mt-1 block ${field}`}
+                        aria-label={`${label} — ${nameOf(window.initiativeId)}`}
+                        value={toDateInput(window[key])}
+                        min={horizon ? toDateInput(horizon.start) : undefined}
+                        max={horizon ? toDateInput(horizon.end) : undefined}
+                        onChange={(event) =>
+                          changeWindow(window.initiativeId, {
+                            [key]: toDateIso(event.target.value),
+                          } as PlanCardWindowPatch)
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p>
+                  {formatPolishDate(window.earliest)} → {formatPolishDate(window.target)} →{' '}
+                  {formatPolishDate(window.latest)}
+                </p>
+              )}
+              {rowError[window.initiativeId] && (
+                <p role="alert" className="mt-1 text-sm text-c-danger">
+                  {rowError[window.initiativeId] === 'ORDER'
+                    ? t('initiatives.planCard.errorOrder', {
+                        defaultValue:
+                          'Zachowaj kolejność: najwcześniej ≤ data docelowa ≤ najpóźniej.',
+                      })
+                    : t('initiatives.planCard.errorHorizon', {
+                        defaultValue: 'Data musi mieścić się w horyzoncie planu ({{from}} – {{to}}).',
+                        from: formatPolishDate(horizon?.start ?? null),
+                        to: formatPolishDate(horizon?.end ?? null),
+                      })}
+                </p>
+              )}
+              <div className="mt-2">
+                <span className="text-xs text-c-text-muted">
+                  {t('initiatives.planCard.afterInitiative', { defaultValue: 'Po inicjatywie' })}
+                </span>
+                {editable && onDependenciesChange ? (
+                  <div className="mt-1 flex flex-wrap gap-3">
+                    {scenario.windows
+                      .filter((other) => other.initiativeId !== window.initiativeId)
+                      .map((other) => (
+                        <label
+                          key={other.initiativeId}
+                          className="flex items-center gap-1 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={window.dependencySnapshot.includes(other.initiativeId)}
+                            aria-label={t('initiatives.planCard.afterInitiativeAria', {
+                              defaultValue: '„{{name}}" po „{{predecessor}}"',
+                              name: nameOf(window.initiativeId),
+                              predecessor: nameOf(other.initiativeId),
+                            })}
+                            onChange={(event) =>
+                              onDependenciesChange(
+                                window.initiativeId,
+                                event.target.checked
+                                  ? [...window.dependencySnapshot, other.initiativeId]
+                                  : window.dependencySnapshot.filter(
+                                      (id) => id !== other.initiativeId
+                                    )
+                              )
+                            }
+                          />
+                          {nameOf(other.initiativeId)}
+                        </label>
+                      ))}
+                    {scenario.windows.length < 2 && (
+                      <span className="text-sm text-c-text-muted">
+                        {t('initiatives.planCard.noOtherInitiatives', {
+                          defaultValue: 'Plan ma jedną inicjatywę — nie ma po czym jej ustawić.',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    {window.dependencySnapshot.length
+                      ? window.dependencySnapshot.map(nameOf).join(', ')
+                      : t('common.none', 'Brak')}
+                  </p>
+                )}
+              </div>
+              <p className="mt-2 text-sm text-c-text-muted">
+                {formatPlanSolverReason(window.rationale, t, nameOf)}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-c-text-muted">
+          {t('initiatives.planCard.emptyWindows', {
+            defaultValue: 'Plan nie ma jeszcze okien. Dodaj inicjatywy w „Zakres inicjatyw".',
+          })}
+        </p>
+      )}
+      {publishedNotice}
+    </div>
+  );
+
+  // §4.1 pkt 3 i §4.0 D5: sekcja widoczna ZAWSZE („Brak konfliktów" zamiast
+  // ukrycia — znikająca sekcja czytała się jak brak funkcji), a PROPOZYCJA
+  // solvera renderuje się TU, nie tylko w oknie generatora. Bez tego „Pracuj
+  // z AI → Analizuj" liczyło propozycję, której nie dało się ani zobaczyć,
+  // ani zatwierdzić poza generatorem.
+  const dependenciesSection = (
+    <div className={box}>
+      {proposalRows && proposalRows.length > 0 && (
+        <div className="mb-3 overflow-x-auto">
+          <h4 className="mb-1 font-medium">
+            {t('initiatives.planCard.proposalTitle', {
+              defaultValue: 'Propozycja solvera (do decyzji człowieka)',
+            })}
+          </h4>
+          <table /* §27-exempt: read-only podglad propozycji w karcie (4 kolumny, bez sortowania/filtrow/kebaba) — nie jest przegladana lista encji */
+            className="w-full text-sm"
+            aria-label={t('initiatives.planGenerator.proposalAria', 'Proponowana kolejność')}
+          >
+            <thead>
+              <tr className="text-left text-c-text-muted">
+                <th className="py-1 pr-3">
+                  {t('initiatives.planGenerator.columnInitiative', 'Inicjatywa')}
+                </th>
+                <th className="py-1 pr-3">
+                  {t('initiatives.planGenerator.columnWindow', 'Okno od–do')}
+                </th>
+                <th className="py-1 pr-3">
+                  {t('initiatives.planGenerator.columnRationale', 'Uzasadnienie')}
+                </th>
+                <th className="py-1">
+                  {t('initiatives.planGenerator.columnConflict', 'Konflikt')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {proposalRows.map((row) => (
+                <tr key={row.initiativeId} className="border-t border-c-border-subtle align-top">
+                  <td className="py-1 pr-3">{row.name}</td>
+                  <td className="whitespace-nowrap py-1 pr-3">
+                    {row.from} – {row.to}
+                  </td>
+                  <td className="py-1 pr-3">{formatPlanSolverReason(row.rationale, t, nameOf)}</td>
+                  <td className="py-1">
+                    {row.conflict
+                      ? formatPlanSolverReason(row.conflict, t, nameOf)
+                      : t('common.none', 'Brak')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {editable && proposal?.status === 'PENDING_REVIEW' && (
+            <div className="mt-2 flex gap-2">
+              <button type="button" className={button} disabled={busy} onClick={() => onReview('ACCEPT')}>
+                {t('initiatives.planGenerator.accept', 'Zatwierdź')}
+              </button>
+              <button type="button" className={button} disabled={busy} onClick={() => onReview('REJECT')}>
+                {t('initiatives.planGenerator.reject', 'Odrzuć')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {proposal?.conflicts.length ? (
+        <ul className="list-disc pl-4 text-sm">
+          {proposal.conflicts.map((conflict) => (
+            <li key={conflict} className="text-c-danger">
+              {formatPlanSolverReason(conflict, t, nameOf)}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm">
+          {t('initiatives.planCard.noConflicts', { defaultValue: 'Brak konfliktów.' })}
+        </p>
+      )}
+      <ul className="mt-3 space-y-1 text-sm">
+        {scenario.windows.map((window) => (
+          <li key={window.initiativeId}>
+            {nameOf(window.initiativeId)} —{' '}
+            {window.dependencySnapshot.length
+              ? t('initiatives.planCard.afterList', {
+                  defaultValue: 'po: {{list}}',
+                  list: window.dependencySnapshot.map(nameOf).join(', '),
+                })
+              : t('initiatives.planCard.noDependencies', { defaultValue: 'bez zależności' })}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const content: Record<string, React.ReactNode> = {
+    horizon: (
+      <div className={box}>
+        <p>
+          {windowUnitLabel(scenario.windowUnit)} · {scenario.timezone}
+        </p>
+        <ul>
+          {scenario.periods.map((period) => (
+            <li key={period.periodId}>
+              {formatPolishDate(period.start)} – {formatPolishDate(period.end)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+    // P15-K2 (DEC-421): „Zakres inicjatyw" = OKNA PLANU, nie backlog całego modułu.
+    // P15-K3: ten sam zakres jest EDYTOWALNY w szkicu (dodaj / usuń z planu).
+    scope: scopeSection,
+    windows: windowsSection,
+    dependencies: dependenciesSection,
+    capacity: capacityConstraints.length ? (
+      <div className={box}>
+        <ul>
+          {capacityConstraints.map((detail) => (
+            <li key={detail}>{detail}</li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+      <div className={box}>
+        <p className="text-sm text-c-text-muted">
+          {t('initiatives.planCard.capacityUnknown', {
+            defaultValue: 'Nieznane — brak opublikowanej analizy obciążenia.',
+          })}
+        </p>
+      </div>
+    ),
+    decisions: (
+      <div className={box}>
+        <p>
+          {scenario.publishedAt
+            ? `Opublikowano ${formatPolishDate(scenario.publishedAt)}`
+            : 'Plan pozostaje szkicem.'}
+        </p>
+        {savedLabel && (
+          <p className="text-sm text-c-text-muted" role="status">
+            {savedLabel}
+          </p>
+        )}
+        {errorLabel && (
+          <p className="text-sm text-c-danger" role="alert">
+            {errorLabel}
+          </p>
+        )}
+        {scenario.status === 'DRAFT' && (
+          <button type="button" className={`mt-2 ${button}`} onClick={onPublish}>
+            Opublikuj plan
+          </button>
+        )}
+        {publishedNotice}
+      </div>
+    ),
+  };
+  const sections: StandardSekcjaDef[] = PLAN_CARD_CONTRACT.flatMap((item) =>
+    content[item.id]
+      ? [{ ...item, component: content[item.id], aiContract: { none: true as const, reason: item.aiReason } }]
+      : []
+  );
+  const rightPanel = {
+    actions: {
+      label: 'Akcje',
+      children: (
+        <button
+          className="rounded-lg border border-c-border px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          onClick={onBack}
+        >
+          Wróć do listy
+        </button>
+      ),
+      actionIds: ['back'],
+    },
+    properties: {
+      label: 'Właściwości',
+      children: (
+        <ArtifactPropertiesTable
+          propertyLabel="Właściwość"
+          valueLabel="Wartość"
+          rows={[
+            {
+              id: 'status',
+              label: 'Status',
+              value:
+                scenario.status === 'DRAFT'
+                  ? 'Szkic'
+                  : scenario.status === 'PUBLISHED'
+                    ? 'Opublikowany'
+                    : 'Zastąpiony',
+            },
+            { id: 'version', label: 'Wersja', value: scenario.scenarioVersion, mono: true },
+            {
+              id: 'portfolio',
+              label: 'Wersja portfela źródłowego',
+              value: scenario.portfolioScenarioVersion,
+              mono: true,
+            },
+          ]}
+        />
+      ),
+    },
+    relations: { label: 'Powiązania', children: <p className="text-sm">Portfel źródłowy</p> },
+    evidence: scenario.assumptions.length
+      ? {
+          label: 'Źródła i założenia',
+          children: (
+            <ul className="list-disc pl-4 text-sm">
+              {scenario.assumptions.map((item) => (
+                <li key={item}>{formatPlanSolverReason(item, t, nameOf)}</li>
+              ))}
+            </ul>
+          ),
+        }
+      : { pominieta: true as const, reason: 'Brak zapisanych założeń.' },
+    comments: { pominieta: true as const, reason: 'Plan nie ma osobnego wątku komentarzy.' },
+    history: { label: 'Historia', children: <div className="text-sm">Wersja {scenario.scenarioVersion}</div> },
+  };
+  return (
+    <StandardArtifactShell
+      karta="plan"
+      klasa="L"
+      header={{
+        title,
+        onTitleChange: () => undefined,
+        titleReadOnly: true,
+        artifactType: 'document' as never,
+        artifactId: scenario.scenarioId,
+        onSave: () => undefined,
+        saveState: busy ? 'saving' : 'saved',
+        lastSavedLabel: savedLabel ?? undefined,
+        onClose: onBack,
+        statusLabel:
+          scenario.status === 'DRAFT'
+            ? 'Szkic'
+            : scenario.status === 'PUBLISHED'
+              ? 'Opublikowany'
+              : 'Zastąpiony',
+        statusTone: scenario.status === 'PUBLISHED' ? 'approved' : 'draft',
+      }}
+      primaryAction={{
+        intentionallyNone: true,
+        reason: 'Publikacja jest decyzją w sekcji Decyzje.',
+      }}
+      sections={sections}
+      rightPanel={rightPanel}
+      activeSection={section}
+      onSectionChange={setSection}
+      densityMode="n"
+      onDensityModeChange={() => undefined}
+      toolbar={
+        <DocumentCardMenu5
+          sections={sections}
+          activeSection={section}
+          onSectionChange={setSection}
+          readMode={readMode}
+          onReadModeChange={scenario.status === 'DRAFT' ? setReadMode : undefined}
+          ai={{
+            onAnalizuj: () => onAnalyze('DEPENDENCIES'),
+            analizaWToku: Boolean(busy),
+            kontekstArtefaktu: { title, status: scenario.status, type: 'plan' },
+            moznaEdytowac: editable,
+            uzupelnijSekcje: {
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: () => onAnalyze('MIXED'),
+              opis: 'Solver przygotuje propozycję dla aktywnej sekcji do przeglądu.',
+            },
+            uzupelnijDokument: {
+              rodzaj: 'wlasnaPropozycja',
+              uruchom: () => setGenerator(true),
+              opis: 'Generator przygotuje propozycję całego planu; decyzję podejmiesz w oknie przeglądu.',
+            },
+          }}
+        />
+      }
+      panelAriaLabel="Szczegóły planu"
+      nakladki={
+        <GeneratorPlanuModal
+          open={generator}
+          plannable={plannable ?? []}
+          busy={busy}
+          proposal={proposalRows ?? null}
+          proposalConflicts={proposalConflicts}
+          savedLabel={savedLabel}
+          onClose={() => setGenerator(false)}
+          onGenerate={(input) => (onGenerate ? onGenerate(input) : onAnalyze(input.mode))}
+          onReview={onReview}
+        />
+      }
+    />
+  );
 }

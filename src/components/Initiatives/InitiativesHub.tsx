@@ -293,7 +293,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [activeLifecyclePreset, setActiveLifecyclePreset] =
     useState<InitiativeLifecyclePreset | null>(null);
   const [canonicalMenu3Preset, setCanonicalMenu3Preset] = useState<Record<string, string>>({
-    plan: 'published',
+    plan: 'all',
     capacity: 'all',
   });
   const [canonicalMenu3Counts, setCanonicalMenu3Counts] = useState<

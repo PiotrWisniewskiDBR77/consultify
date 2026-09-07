@@ -1210,4 +1210,65 @@ export class PostgresMaterialCommandUnitOfWork implements MaterialCommandUnitOfW
       client.release();
     }
   }
+
+  /**
+   * ZAPIS ZALEŻNOŚCI INICJATYWY (P15-K3, DEC-421, reguła 26A: pisarzem jest
+   * runtime-v1, nie trasa legacy `execution-control`).
+   *
+   * `dependsOn` ZASTĘPUJE komplet poprzedników jednej inicjatywy w JEDNEJ
+   * transakcji (usuń + wstaw), więc „odznacz ostatnią zależność" jest zwykłym
+   * zapisem pustej listy, a nie osobną ścieżką kasowania. `project_id` bierzemy
+   * z inicjatywy-następnika, bo kolumna ma klucz obcy do `projects` — nie wolno
+   * wstawić tam wartości, której nie ma w tabeli projektów.
+   */
+  async replaceInitiativeDependencies(
+    organizationId: string,
+    initiativeId: string,
+    dependsOn: string[],
+    actorId: string
+  ): Promise<string[]> {
+    const unique = [...new Set(dependsOn.filter((id) => id && id !== initiativeId))].sort();
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const owner = await client.query<{ project_id: string | null }>(
+        `SELECT project_id FROM initiatives WHERE organization_id = $1 AND id = $2`,
+        [organizationId, initiativeId]
+      );
+      if (!owner.rows.length) {
+        await client.query('ROLLBACK');
+        return [];
+      }
+      await client.query(
+        `DELETE FROM initiative_dependencies WHERE organization_id = $1 AND from_initiative_id = $2`,
+        [organizationId, initiativeId]
+      );
+      for (const dependencyId of unique) {
+        await client.query(
+          `INSERT INTO initiative_dependencies
+             (id, organization_id, project_id, from_initiative_id, to_initiative_id, type, created_by)
+           VALUES ($1, $2, $3, $4, $5, 'FINISH_TO_START', $6)`,
+          [
+            `idep-${organizationId}-${initiativeId}-${dependencyId}`.slice(0, 200),
+            organizationId,
+            owner.rows[0].project_id,
+            initiativeId,
+            dependencyId,
+            actorId,
+          ]
+        );
+      }
+      await client.query('COMMIT');
+      return unique;
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Zachowaj oryginalny błąd zapisu; sprzątanie połączenia należy do Pool.
+      }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }

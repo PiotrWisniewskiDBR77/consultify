@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { proposeCapacityOptions } from '../capacityOptionsAdvisor.js';
+import { decodePlanSolverReason } from '../planSolverReason.js';
 import type { CapacityScenario } from '../capacityScenario.js';
 import type { PlanScenario } from '../planScenario.js';
 
@@ -19,7 +20,7 @@ const known = (base: number) => ({
 
 // FIX-1 gate: a plan with a single period and a demand that exceeds the only
 // available period's known supply gives the solver nowhere to shift work to.
-// solvePlanScenario must report a conflict ("No feasible period for ...")
+// solvePlanScenario must report a conflict (kod NO_FEASIBLE_PERIOD)
 // and zero assignments. The advisor must NOT invent a shiftPeriods=1 in
 // that case — it must report UNKNOWN, and must surface the solver conflict
 // as an assumption instead of silently dropping it.
@@ -126,9 +127,14 @@ describe('capacity option advisor — RESEQUENCE honesty (FIX-1)', () => {
   it('surfaces the solver conflict in assumptions instead of dropping it', () => {
     const [resequence] = proposeCapacityOptions(infeasiblePlan, infeasibleCapacity);
 
-    const conflictAssumption = resequence.assumptions.find((a) =>
-      a.assumption.includes('No feasible period for initiative-1')
-    );
+    // P15-K3 (DEC-421): solver niesie konflikt jako KOD; doradca przekazuje go
+    // dalej bez zmiany, a język wybiera dopiero front.
+    const conflictAssumption = resequence.assumptions.find((a) => {
+      const reason = decodePlanSolverReason(a.assumption);
+      return (
+        reason?.code === 'NO_FEASIBLE_PERIOD' && reason.initiativeId === 'initiative-1'
+      );
+    });
     expect(conflictAssumption).toBeDefined();
     expect(conflictAssumption?.ownerId).toBeTruthy();
     expect(conflictAssumption?.sourceRef.ref).toBeTruthy();

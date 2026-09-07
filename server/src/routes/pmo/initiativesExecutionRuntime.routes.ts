@@ -48,6 +48,11 @@ import {
 } from '../../domain/initiatives-execution/effectivenessClosure.js';
 import { createExecutionMilestone } from '../../domain/initiatives-execution/executionMilestone.js';
 import {
+  findInitiativeDependencyCycle,
+  INITIATIVE_DEPENDENCY_CYCLE_RULE,
+  withReplacedDependencies,
+} from '../../domain/initiatives-execution/initiativeDependencyGraph.js';
+import {
   completeExecutionTask,
   createExecutionDecision,
   createExecutionTask,
@@ -556,6 +561,16 @@ const PlanningRegisterSchema = z.object({
   clientRequestId: z.string().min(1).max(255),
   /** „+ do zatwierdzenia": PMO świadomie bierze inicjatywy PENDING_APPROVAL jako warunkowe. */
   allowConditional: z.boolean().optional(),
+});
+/**
+ * P15-K3 (DEC-421): „Po inicjatywie" w karcie planu. `dependsOn` = KOMPLET
+ * poprzedników jednej inicjatywy (pusta lista kasuje wszystkie) — jeden zapis
+ * zamiast pary dodaj/usuń, żeby stan w bazie nie mógł się rozjechać z tym,
+ * co widać w wierszu.
+ */
+const PlanningDependenciesSchema = z.object({
+  clientRequestId: z.string().min(1).max(255),
+  dependsOn: z.array(z.string().min(1)).max(200),
 });
 const PlanAnalysisCreateSchema = z.object({
   expectedVersion: z.literal(0),
@@ -3601,6 +3616,99 @@ export function createInitiativesExecutionRuntimeRouter(
         payload: { allowConditional: parsed.data.allowConditional === true },
       });
       res.status(result.status === 'APPLIED' ? 201 : 200).json(result);
+    })
+  );
+
+  /**
+   * ZALEŻNOŚCI W PLANIE (P15-K3, DEC-421, §4.7 D3').
+   *
+   * „Po inicjatywie X" w wierszu karty planu zapisuje się TU, do tabeli
+   * `initiative_dependencies` (jedyne źródło prawdy; pomiar 07.09: 0 wierszy),
+   * a nie do stanu Reacta. Solver czyta te krawędzie przez `dependencySnapshot`
+   * okna, więc odpowiedź zwraca zapisany komplet — front wstawia go do okna
+   * i zapisuje plan tym samym `UPDATE`, co każdą inną zmianę.
+   *
+   * Cykl = 400 z regułą, nie 500: `validatePlanScenario` odrzuciłby wtedy KAŻDY
+   * następny zapis planu, a użytkownik nie wiedziałby, która krawędź to zrobiła.
+   */
+  const writeInitiativeDependencies = async (
+    req: Request,
+    res: Response,
+    resolveNext: (current: string[]) => string[]
+  ) => {
+    const actor = actorFromRequest(req);
+    if (!actor) {
+      res.status(401).json({ error: { code: 'AUTH_REQUIRED' } });
+      return;
+    }
+    const initiativeId = firstParam(req.params.initiativeId);
+    const moduleInitiative = await deps.reader.findModuleInitiativeForPlanning(
+      actor.organizationId,
+      initiativeId
+    );
+    if (!moduleInitiative) {
+      res.status(404).json({ error: { code: 'NOT_FOUND' } });
+      return;
+    }
+    const projectScope = planningProjectScope(moduleInitiative.projectId, actor.organizationId);
+    if (!(await deps.authorize(actor, projectScope, 'initiative.update'))) {
+      res.status(403).json({ error: { code: 'INITIATIVE_UPDATE_FORBIDDEN' } });
+      return;
+    }
+    const edges = await deps.reader.listInitiativeDependencies(actor.organizationId);
+    const next = resolveNext(edges.get(initiativeId) ?? []);
+    for (const dependencyId of next) {
+      if (
+        !(await deps.reader.findModuleInitiativeForPlanning(actor.organizationId, dependencyId))
+      ) {
+        res.status(400).json({
+          error: { code: 'DEPENDENCY_INITIATIVE_NOT_FOUND', rule: 'DEPENDENCY_INITIATIVE_NOT_FOUND' },
+          code: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
+          rule: 'DEPENDENCY_INITIATIVE_NOT_FOUND',
+        });
+        return;
+      }
+    }
+    const cycle = findInitiativeDependencyCycle(
+      withReplacedDependencies(edges, initiativeId, next)
+    );
+    if (cycle) {
+      res.status(400).json({
+        error: { code: INITIATIVE_DEPENDENCY_CYCLE_RULE, rule: INITIATIVE_DEPENDENCY_CYCLE_RULE, path: cycle },
+        code: INITIATIVE_DEPENDENCY_CYCLE_RULE,
+        rule: INITIATIVE_DEPENDENCY_CYCLE_RULE,
+        path: cycle,
+      });
+      return;
+    }
+    const saved = await deps.unitOfWork.replaceInitiativeDependencies(
+      actor.organizationId,
+      initiativeId,
+      next,
+      actor.userId
+    );
+    res.status(200).json({ initiativeId, dependsOn: saved });
+  };
+
+  router.post(
+    '/planning/initiatives/:initiativeId/dependencies',
+    asyncHandler(async (req, res) => {
+      const parsed = PlanningDependenciesSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: { code: 'VALIDATION_FAILED', issues: parsed.error.issues } });
+        return;
+      }
+      await writeInitiativeDependencies(req, res, () => parsed.data.dependsOn);
+    })
+  );
+
+  router.delete(
+    '/planning/initiatives/:initiativeId/dependencies/:dependencyId',
+    asyncHandler(async (req, res) => {
+      const dependencyId = firstParam(req.params.dependencyId);
+      await writeInitiativeDependencies(req, res, (current) =>
+        current.filter((id) => id !== dependencyId)
+      );
     })
   );
 

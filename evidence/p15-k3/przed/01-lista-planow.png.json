@@ -1,0 +1,9 @@
+{
+  "nazwa": "01-lista-planow",
+  "opis": "Inicjatywy → Plan: lista planów (preset startowy)",
+  "url": "http://localhost:3179/initiatives?tab=plan",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:33:13.439Z"
+}
