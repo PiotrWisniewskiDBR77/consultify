@@ -1829,22 +1829,26 @@ export const DeckBuilder: React.FC = () => {
                   moznaEdytowac
                   uzupelnijSekcje={{
                     rodzaj: 'wlasnaPropozycja',
-                    uruchom: () => handleTeresaDeckIntent(
-                      i18n.language?.startsWith('pl')
-                        ? `Przygotuj propozycję uzupełnienia slajdu: ${activeCard?.title || ''}`
-                        : `Prepare a proposal to complete the slide: ${activeCard?.title || ''}`
-                    ),
+                    uruchom: async () => {
+                      await handleTeresaDeckIntent(
+                        i18n.language?.startsWith('pl')
+                          ? `Przygotuj propozycję uzupełnienia slajdu: ${activeCard?.title || ''}`
+                          : `Prepare a proposal to complete the slide: ${activeCard?.title || ''}`
+                      );
+                    },
                     opis: i18n.language?.startsWith('pl')
                       ? 'Zmiana pojawi się jako propozycja do zaakceptowania lub odrzucenia.'
                       : 'The change appears as a proposal to accept or reject.',
                   }}
                   uzupelnijDokument={{
                     rodzaj: 'wlasnaPropozycja',
-                    uruchom: () => handleTeresaDeckIntent(
-                      i18n.language?.startsWith('pl')
-                        ? 'Przygotuj propozycję uzupełnienia całej prezentacji.'
-                        : 'Prepare a proposal to complete the whole presentation.'
-                    ),
+                    uruchom: async () => {
+                      await handleTeresaDeckIntent(
+                        i18n.language?.startsWith('pl')
+                          ? 'Przygotuj propozycję uzupełnienia całej prezentacji.'
+                          : 'Prepare a proposal to complete the whole presentation.'
+                      );
+                    },
                     opis: i18n.language?.startsWith('pl')
                       ? 'Zmiana całej prezentacji pojawi się jako propozycja do zatwierdzenia.'
                       : 'The whole-deck change appears as a proposal for approval.',

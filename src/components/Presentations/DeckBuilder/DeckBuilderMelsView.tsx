@@ -47,7 +47,10 @@ import {
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
 
 import {
   buildDeckBuilderTopBarChips,
@@ -512,7 +515,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
                 )
               }
             : null,
-        ].filter(Boolean)
+        ].filter((row): row is ArtifactPropertyRow => row !== null)
       : [];
 
     const byId: Partial<Record<string, ArtifactRightPanelSection>> = {};
