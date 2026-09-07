@@ -1,0 +1,12 @@
+raid_id,tytul,rodzaj,wskazuje_na,szczegol
+"f2a38c7c-f8cd-49b1-8f4d-45c1b9b8e0b0","Azure region outage risk","INICJATYWA","12848b35-89f1-46c3-9a70-6cb7328e6acb","""Cloud Migration — Azure"" zostaje w organization_id=dbr77"
+"d0507296-9807-45c9-86a5-b4edab874d99","Data loss during Lakehouse migration","INICJATYWA","94ca149a-c34a-47cc-a930-32378345f5cc","""Data Platform — Lakehouse"" zostaje w organization_id=dbr77"
+"24999b71-68a9-43a5-b88f-4eef9549c5b8","GDPR non-compliance penalty","INICJATYWA","f57953a2-0af0-4e59-bc1c-e840b09957d8","""Security Hardening"" zostaje w organization_id=dbr77"
+"24999b71-68a9-43a5-b88f-4eef9549c5b8","GDPR non-compliance penalty","WLASCICIEL","4cfeae1e-0237-4d48-8755-e1d4669b93d3","ewa.nowicka@dbr77.com ma users.organization_id=dbr77 i brak wiersza w organization_members"
+"fc07b561-64eb-4e65-a9d7-bb65ea945688","Key person dependency — Marek","INICJATYWA","12848b35-89f1-46c3-9a70-6cb7328e6acb","""Cloud Migration — Azure"" zostaje w organization_id=dbr77"
+"9cc45c75-de73-46c6-8964-cf9f4702ee56","UiPath license expired — blocking RPA","INICJATYWA","c55f3b10-e04e-44dd-a2e0-178046902520","""Process Automation — RPA"" zostaje w organization_id=dbr77"
+"9cc45c75-de73-46c6-8964-cf9f4702ee56","UiPath license expired — blocking RPA","WLASCICIEL","d38cf7f5-fc74-40c5-a5ec-86532f8c72e4","jan.zielinski@dbr77.com ma users.organization_id=dbr77 i brak wiersza w organization_members"
+"dc6f7db3-63ee-4735-98c2-b13a9e8d8db6","CI/CD pipeline flaky tests","INICJATYWA","da588307-778c-4089-b86a-38b3a45793d7","""API Gateway v2"" zostaje w organization_id=dbr77"
+"dc6f7db3-63ee-4735-98c2-b13a9e8d8db6","CI/CD pipeline flaky tests","WLASCICIEL","29262ed1-8017-4db2-9ef1-1e258ed71bdc","katarzyna.wojcik@dbr77.com ma users.organization_id=dbr77 i brak wiersza w organization_members"
+"838f9ef8-4865-425a-a42e-45eff2b997dc","API Gateway depends on Auth Service migration","INICJATYWA","da588307-778c-4089-b86a-38b3a45793d7","""API Gateway v2"" zostaje w organization_id=dbr77"
+"838f9ef8-4865-425a-a42e-45eff2b997dc","API Gateway depends on Auth Service migration","WLASCICIEL","29262ed1-8017-4db2-9ef1-1e258ed71bdc","katarzyna.wojcik@dbr77.com ma users.organization_id=dbr77 i brak wiersza w organization_members"
