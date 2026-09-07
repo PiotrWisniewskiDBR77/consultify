@@ -5745,6 +5745,16 @@ Please return:
                         ),
                         tone: statusChipTone(String(selectedRow.status)),
                       },
+                      // DEC-424: wstrzymanie jest FLAGĄ na „W realizacji", nie statusem —
+                      // bez tej pigułki jedynym śladem wstrzymania był przycisk „Wznów".
+                      ...((selectedRow as { onHold?: boolean }).onHold
+                        ? [
+                            {
+                              label: t('initiatives.status.ON_HOLD', 'Wstrzymana'),
+                              tone: 'warning' as const,
+                            },
+                          ]
+                        : []),
                       {
                         label: `${previewModel.progress ?? 0}%`,
                         tone: 'neutral',

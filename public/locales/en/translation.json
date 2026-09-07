@@ -9705,6 +9705,7 @@
       "IN_EXECUTION": "In execution",
       "CLOSED": "Closed",
       "REJECTED": "Rejected",
+      "ON_HOLD": "On hold",
       "unknown": "Unknown status"
     },
     "statusDescription": {

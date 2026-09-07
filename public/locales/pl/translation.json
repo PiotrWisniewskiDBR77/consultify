@@ -9141,6 +9141,7 @@
       "IN_EXECUTION": "W realizacji",
       "CLOSED": "Zamknięta",
       "REJECTED": "Odrzucona",
+      "ON_HOLD": "Wstrzymana",
       "unknown": "Nieznany status"
     },
     "statusDescription": {

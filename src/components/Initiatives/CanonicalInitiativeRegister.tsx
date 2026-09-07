@@ -3,7 +3,11 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StandardPreview, StandardTable } from '@/components/standard';
-import { getInitiativeStatusChipTone } from '@/services/initiativeLifecycle';
+import {
+  getInitiativeStatusChipTone,
+  getLocalizedStatusLabel,
+  type InitiativeStatus,
+} from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -95,7 +99,12 @@ export const CanonicalInitiativeRegister = ({
       meta={{
         pills: [
           {
-            label: INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] || 'Nieznany',
+            // Dowód 07.09 (zrzut 04): `displayStatus` zna tylko stany runtime-v1, więc
+            // „Do zatwierdzenia" świeciło w podglądzie jako „Nieznany", gdy wiersz obok
+            // mówił poprawnie. Etykieta 7 statusów DEC-424 jest źródłem zapasowym.
+            label:
+              INITIATIVE_LIFECYCLE_LABELS[String(initiative.displayStatus)] ||
+              getLocalizedStatusLabel(String(initiative.status) as InitiativeStatus, t),
             tone: getInitiativeStatusChipTone(initiative.status, { onHold: initiative.onHold }),
           },
           {
