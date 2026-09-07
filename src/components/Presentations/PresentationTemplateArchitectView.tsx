@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
@@ -44,6 +45,7 @@ import {
   type TableRow,
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
+import { DocumentCardNFrame } from '@/components/standard/DocumentCardNFrame';
 import { ConfirmModal, Modal } from '@/components/ui/primitives/Modal';
 import { usePresentationImageStyleUiFlag } from '@/hooks/usePresentationImageStyleUiFlag';
 import { getAppErrorLine } from '@/services/errors/appErrorCopy';
@@ -196,6 +198,7 @@ function moveItem<T>(list: T[], from: number, to: number): T[] {
 
 export interface PresentationTemplateArchitectViewProps {
   onTemplateSaved?: (template: PresentationTemplate) => void;
+  initialTemplateId?: string;
 }
 
 /** Approved records stay immutable but must remain governable from this surface. */
@@ -205,8 +208,10 @@ export const canDeprecatePublishedPresentationTemplate = (
 
 export const PresentationTemplateArchitectView: React.FC<
   PresentationTemplateArchitectViewProps
-> = ({ onTemplateSaved }) => {
-  const { t } = useTranslation();
+> = ({ onTemplateSaved, initialTemplateId }) => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const isPolish = i18n.language?.startsWith('pl') ?? false;
   const intentLabel = useIntentLabel(t);
   // Day 228 FIX pkt 3 — pole „Styl obrazu" nie miało akceptu wizualnego
   // właściciela (CLAUDE.md #7/#9). Domyślnie OFF; zdejmowana wyłącznie po
@@ -362,6 +367,12 @@ export const PresentationTemplateArchitectView: React.FC<
   }, []);
 
   useEffect(() => {
+    if (initialTemplateId && templates.some((template) => template.id === initialTemplateId)) {
+      setSelectedTemplateId(initialTemplateId);
+    }
+  }, [initialTemplateId, templates]);
+
+  useEffect(() => {
     if (!selectedTemplateId) {
       setLineage([]);
       setVersionComparison(null);
@@ -404,6 +415,7 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const handleSelectRow = async (row: TableRow): Promise<void> => {
     setSelectedTemplateId(row.id);
+    navigate(`/presentations/templates/deck/${encodeURIComponent(row.id)}`);
     // The list payload already carries `outline_json`, but re-fetch the
     // single record so a stale/partial row (e.g. mid-clone) never shows a
     // half outline in the editor.
@@ -682,7 +694,40 @@ export const PresentationTemplateArchitectView: React.FC<
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
+    <DocumentCardNFrame
+      type="template-architect-deck"
+      title={selectedTemplate?.name || t('presentations.templateArchitect.heading', 'Deck Template Architect')}
+      isPolish={isPolish}
+      editable={!selectedTemplate || isEditable}
+      activeSection={selectedTemplate ? 'structure' : 'definition'}
+      properties={[
+        { id: 'status', label: 'Status', value: selectedTemplate?.lifecycle_state ?? (isPolish ? 'Nowy wzorzec' : 'New template') },
+        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: '—' },
+        { id: 'priority', label: isPolish ? 'Priorytet' : 'Priority', value: '—' },
+        { id: 'period', label: isPolish ? 'Okres' : 'Period', value: '—' },
+        { id: 'source', label: isPolish ? 'Kontekst' : 'Context', value: selectedTemplate?.deck_type ?? '—' },
+        { id: 'created', label: isPolish ? 'Utworzono' : 'Created', value: selectedTemplate?.created_at ?? '—', mono: true },
+        { id: 'updated', label: isPolish ? 'Zaktualizowano' : 'Updated', value: selectedTemplate?.updated_at ?? '—', mono: true },
+      ]}
+      onAnalyze={() => setValidationIssues(validateCurrentTemplate())}
+      analysisBusy={drafting || savingOutline}
+      fillSection={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => setUseLlm(true),
+        opis: isPolish
+          ? 'Włącza istniejącego Architekta AI dla następnego szkicu; wynik pozostaje propozycją przed zapisaniem.'
+          : 'Enables the existing AI Architect for the next draft; the result remains a proposal before saving.',
+      }}
+      fillDocument={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => setUseLlm(true),
+        opis: isPolish
+          ? 'Włącza istniejące dopracowanie całego szkicu przez AI; nic nie jest publikowane automatycznie.'
+          : 'Enables the existing whole-draft AI refinement; nothing is published automatically.',
+      }}
+      evidence={lineage.length ? <p className="text-xs text-c-text-secondary">{lineage.length}</p> : undefined}
+    >
+    <div className="flex min-h-full flex-col gap-4 p-2">
       <header>
         <h2 className="text-lg font-semibold text-c-text">
           {t('presentations.templateArchitect.heading', 'Deck Template Architect')}
@@ -1847,6 +1892,7 @@ export const PresentationTemplateArchitectView: React.FC<
         </label>
       </Modal>
     </div>
+    </DocumentCardNFrame>
   );
 };
 

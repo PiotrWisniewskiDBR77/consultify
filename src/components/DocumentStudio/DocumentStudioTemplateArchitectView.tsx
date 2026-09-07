@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { ColorPatternPicker } from '@/components/shared/colorPatterns/ColorPatternPicker';
 import { useBrandKitColors } from '@/components/shared/colorPatterns/useBrandKitColors';
@@ -34,6 +35,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import { type RowAction } from '@/components/shared/RowActionsMenu';
 import Button from '@/components/ui/primitives/Button';
+import { DocumentCardNFrame } from '@/components/standard/DocumentCardNFrame';
 import { getAppErrorLine } from '@/services/errors/appErrorCopy';
 import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
@@ -145,12 +147,15 @@ function useDocumentTypeOptions(
 
 interface DocumentStudioTemplateArchitectViewProps {
   onTemplateApproved?: (template: DocumentTemplate) => void;
+  initialTemplateId?: string;
 }
 
 export const DocumentStudioTemplateArchitectView: React.FC<
   DocumentStudioTemplateArchitectViewProps
-> = ({ onTemplateApproved }) => {
-  const { t } = useTranslation();
+> = ({ onTemplateApproved, initialTemplateId }) => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const isPolish = i18n.language?.startsWith('pl') ?? false;
   const { requestConfirm } = useManualPrompt();
   const documentTypeOptions = useDocumentTypeOptions(t);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
@@ -490,6 +495,12 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     void refresh();
   }, []);
 
+  useEffect(() => {
+    if (initialTemplateId && templates.some((template) => template.templateId === initialTemplateId)) {
+      setSelectedTemplateId(initialTemplateId);
+    }
+  }, [initialTemplateId, templates]);
+
   const handleDraft = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (purpose.trim().length < 8) return;
@@ -624,7 +635,49 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
+    <DocumentCardNFrame
+      type="template-architect-doc"
+      title={selectedTemplate?.name || t('documentStudio.templateArchitect.heading', 'Document Template Architect')}
+      isPolish={isPolish}
+      editable={!selectedTemplate || selectedTemplate.status === 'draft'}
+      activeSection={selectedTemplate ? 'structure' : 'definition'}
+      properties={[
+        { id: 'status', label: isPolish ? 'Status' : 'Status', value: selectedTemplate?.status ?? (isPolish ? 'Nowy wzorzec' : 'New template') },
+        { id: 'owner', label: isPolish ? 'Właściciel' : 'Owner', value: '—' },
+        { id: 'priority', label: isPolish ? 'Priorytet' : 'Priority', value: '—' },
+        { id: 'period', label: isPolish ? 'Okres' : 'Period', value: '—' },
+        { id: 'source', label: isPolish ? 'Kontekst' : 'Context', value: selectedTemplate?.documentType ?? '—' },
+        { id: 'created', label: isPolish ? 'Utworzono' : 'Created', value: selectedTemplate?.createdAt ?? '—', mono: true },
+        { id: 'updated', label: isPolish ? 'Zaktualizowano' : 'Updated', value: selectedTemplate?.updatedAt ?? '—', mono: true },
+      ]}
+      onAnalyze={() => selectedTemplate && void handleValidate(selectedTemplate.templateId)}
+      analysisBusy={Boolean(busyTemplateId)}
+      fillSection={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => setUseLlm(true),
+        opis: isPolish
+          ? 'Włącza istniejącego Architekta AI dla następnego szkicu; wynik pozostaje propozycją przed zapisaniem.'
+          : 'Enables the existing AI Architect for the next draft; the result remains a proposal before saving.',
+      }}
+      fillDocument={{
+        rodzaj: 'wlasnaPropozycja',
+        uruchom: () => setUseLlm(true),
+        opis: isPolish
+          ? 'Włącza istniejące dopracowanie całego szkicu przez AI; nic nie jest publikowane automatycznie.'
+          : 'Enables the existing whole-draft AI refinement; nothing is published automatically.',
+      }}
+      evidence={
+        selectedTemplate ? (
+          <p className="text-xs text-c-text-secondary">
+            {selectedTemplate.requiredInputs?.length
+              ? selectedTemplate.requiredInputs.join(', ')
+              : isPolish ? 'Brak zapisanych wymaganych źródeł.' : 'No required sources recorded.'}
+          </p>
+        ) : undefined
+      }
+      history={showHistory ? <p className="text-xs text-c-text-secondary">{auditEntries.length}</p> : undefined}
+    >
+    <div className="flex min-h-full flex-col gap-4 p-2">
       <header>
         <h2 className="text-lg font-semibold text-c-text">
           {t('documentStudio.templateArchitect.heading', 'Document Template Architect')}
@@ -816,7 +869,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           columns={tableColumns}
           data={tableRows}
           selectedRowId={selectedTemplateId}
-          onRowClick={(row) => setSelectedTemplateId(row.id)}
+          onRowClick={(row) => {
+            setSelectedTemplateId(row.id);
+            navigate(`/presentations/templates/document/${encodeURIComponent(row.id)}`);
+          }}
           getRowActions={getRowActions}
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
@@ -1375,6 +1431,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         ) : null}
       </section>
     </div>
+    </DocumentCardNFrame>
   );
 };
 
