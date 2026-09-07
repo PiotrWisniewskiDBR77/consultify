@@ -2711,6 +2711,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
                 onCreateVersion={(summary) => createManualVersion(summary)} onRollbackVersion={rollbackToVersion}
                 onLoadVersions={loadVersions} reportStatus={reportStatus}
                 reportId={reportIdForActions || undefined} lastSavedAt={lastSavedAt}
+                embedded
               />,
             },
             {
