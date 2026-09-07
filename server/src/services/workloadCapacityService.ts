@@ -642,12 +642,129 @@ export interface CapacityTimelineWeek {
  * (migracja 20262103). NULL = nikt nie ustawil -> polityka 40 h x 100 %.
  * Rejestr `initiative_resources` zostaje przydzialem do inicjatywy, nie etatem.
  *
- * OKNO: `weeks` tygodni od poniedzialku biezacego tygodnia. Zadania z terminem
- * PRZED oknem (zalegle) wchodza do PIERWSZEGO tygodnia — bo one nadal zjadaja
- * czyjs czas; ukrycie ich zanizaloby oblozenie dokladnie tam, gdzie boli.
- * Zadania BEZ terminu nie sa przypisywane do zadnego tygodnia (raportowane
- * osobno jako `backlogHours`), bo zgadywanie tygodnia bylo fabrykowaniem danych.
+ * OKNO: `weeks` tygodni od poniedzialku biezacego tygodnia.
+ *
+ * ★ [ODMROZENIE 06_EXECUTION DEC-453] P16-R1 (§4 D1/D2, audyt rynku §2.2.2-2.2.3,
+ * §4.2) — ZMIANA DEFINICJI POPYTU. Do 07.09 zadania PO TERMINIE wchodzily w
+ * CALOSCI do tygodnia pierwszego („one nadal zjadaja czyjs czas") i to samo
+ * robi Planview AdaptiveWork („All work items already past the due date … will
+ * be reflected on Today") — z udokumentowana bolaczka: obłozenie 853 % / 310 %,
+ * ktorego nikt nie umie wyjasnic ani rozliczyc. Reszta rynku (Float, Runn,
+ * Teamwork, Forecast, Kantata) liczy obłozenie tygodnia WYLACZNIE z pracy
+ * ZAPLANOWANEJ NA TEN TYDZIEN: „(scheduled work hours / available work hours
+ * IN THE SAME DATE RANGE) x 100".
+ *
+ * Nowe trzy definicje (kazda jednym zdaniem, bo wlasciciel ma umiec je wyjasnic):
+ * 1. POPYT tygodnia = suma UDZIALOW zadan niezakonczonych, ktorych okno
+ *    [start, termin] przecina ten tydzien; udzial = `estimated_hours` x
+ *    (dni robocze zadania w tym tygodniu / dni robocze zadania ogolem)
+ *    — rozklad rowny start->termin, wzorzec Asana/Teamwork („Total hours are
+ *    spread evenly across the date range").
+ * 2. ZALEGLOSC = suma godzin POZOSTALYCH (`estimated_hours` - `actual_hours`)
+ *    zadan niezakonczonych z terminem PRZED poniedzialkiem biezacego tygodnia.
+ *    JEDNA liczba na osobe, w OSOBNYM polu (`backlogHours`) — NIE w popycie
+ *    zadnego tygodnia. To jest nasz wyroznik: rynek albo doklada zaleglosc do
+ *    „dzis" (Planview), albo milczy (Asana).
+ * 3. PODAZ tygodnia = dni robocze tygodnia (pon-pt) x godziny dzienne osoby
+ *    (`weekly_capacity_hours` / 5 x `availability_percent`), a nie stale 40 h.
+ *    NIEOBECNOSCI: rynek odejmuje je od mianownika („Contracted capacity -
+ *    Time off"), u nas ich NIE MA — nie istnieje zadna tabela nieobecnosci
+ *    (sprawdzone 07.09). Dlatego `workingDaysInWeek()` zwraca 5 i jest JEDYNYM
+ *    miejscem, w ktorym Fala 2 odejmie dni wolne.
+ *
+ * Zadania BEZ terminu nadal nie sa zgadywane na tydzien — raportowane osobno
+ * jako `unscheduledHours` (dawniej mieszaly sie z zaleglosc w `backlogHours`).
+ * Zadanie, ktorego okno w calosci minelo, nie wchodzi do popytu ZADNEGO
+ * tygodnia — wchodzi wylacznie do zaleglosci.
  */
+
+/**
+ * Dni robocze (pon-pt) w przedziale domknietym [start, end], liczone po polu
+ * dnia miesiaca (bez arytmetyki milisekundowej — patrz `addDays`).
+ * Wyeksportowane dla testu jednostkowego P16-R1.
+ */
+export function workingDaysBetween(start: Date, end: Date): number {
+  if (end.getTime() < start.getTime()) return 0;
+  let count = 0;
+  const cursor = new Date(start);
+  cursor.setHours(0, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(0, 0, 0, 0);
+  // Zabezpieczenie przed oknem liczonym w latach (zadanie z terminem w 2099):
+  // po 20 000 dniach przerywamy — to i tak nie jest plan, tylko literowka.
+  for (let i = 0; i <= 20000 && cursor.getTime() <= last.getTime(); i += 1) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) count += 1;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return count;
+}
+
+/** Dni robocze JEDNEGO tygodnia. Fala 2 odejmie tu nieobecnosci (brak tabeli). */
+export function workingDaysInWeek(weekStart: string): number {
+  const monday = new Date(`${weekStart}T00:00:00`);
+  if (Number.isNaN(monday.getTime())) return 5;
+  return workingDaysBetween(monday, addDays(monday, 6));
+}
+
+/** Podaz tygodnia = dni robocze x godziny dzienne osoby (nie stale 40 h). */
+export function weeklySupplyHours(
+  weekStart: string,
+  weeklyCapacityHours: number,
+  availabilityPercent: number
+): number {
+  const dailyHours = (Number(weeklyCapacityHours) || 0) / 5;
+  const effectiveDaily = (dailyHours * (Number(availabilityPercent) || 0)) / 100;
+  return round1(workingDaysInWeek(weekStart) * effectiveDaily);
+}
+
+/**
+ * Rozklad rowny pracochlonnosci miedzy startem a terminem zadania: zwraca mape
+ * `poniedzialek tygodnia -> godziny`. 10 h na oknie pon-pt = 2 h/dzien i cale
+ * 10 h w jednym tygodniu; to samo zadanie na oknie dwutygodniowym dzieli sie
+ * proporcjonalnie do liczby dni roboczych w kazdym z tygodni.
+ *
+ * Okno bez ani jednego dnia roboczego (np. sobota-niedziela) NIE gubi godzin —
+ * caly udzial ladu je w tygodniu, w ktorym lezy termin. Godziny nie moga
+ * wyparowac, bo suma popytu ma sie zgadzac z suma pracochlonnosci.
+ * Wyeksportowane dla testu jednostkowego P16-R1.
+ */
+export function spreadTaskHoursByWeek(start: Date, due: Date, hours: number): Map<string, number> {
+  const result = new Map<string, number>();
+  const total = Number(hours) || 0;
+  const from = new Date(start);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date(due);
+  to.setHours(0, 0, 0, 0);
+  const effectiveFrom = from.getTime() > to.getTime() ? to : from;
+  const workingDays = workingDaysBetween(effectiveFrom, to);
+  if (workingDays === 0) {
+    result.set(formatDate(getMonday(to)), total);
+    return result;
+  }
+  const perDay = total / workingDays;
+  const cursor = new Date(effectiveFrom);
+  while (cursor.getTime() <= to.getTime()) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) {
+      const key = formatDate(getMonday(cursor));
+      result.set(key, (result.get(key) || 0) + perDay);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return result;
+}
+/** Jedno zadanie zalegle — tyle, ile trzeba, zeby je rozliczyc bez opuszczania Zasobow. */
+export interface ResourcePlanBacklogTask {
+  taskId: string;
+  title: string;
+  status: string;
+  dueDate: string | null;
+  daysOverdue: number;
+  estimatedHours: number;
+  remainingHours: number;
+}
+
 export interface ResourcePlanRow {
   userId: string;
   name: string;
@@ -657,7 +774,17 @@ export interface ResourcePlanRow {
   supplyHours: number;
   utilizationPercent: number;
   gapHours: number;
+  /**
+   * ZOSTAJE dla ksztaltu odpowiedzi, ale od P16-R1 jest ZAWSZE 0: zaleglosc nie
+   * jest juz doliczana do popytu zadnego tygodnia. Liczba zaleglych godzin
+   * stoi obok, w `backlogHours` (wiersz PIERWSZEGO tygodnia).
+   */
   overdueHours: number;
+  /** Zaleglosc osoby (h) — TYLKO w wierszu pierwszego tygodnia, indziej 0. */
+  backlogHours: number;
+  /** Zadania skladajace sie na `backlogHours` — TYLKO w wierszu pierwszego tygodnia. */
+  backlogTaskIds: string[];
+  backlogTasks: ResourcePlanBacklogTask[];
   taskCount: number;
   supplySource: 'PROFIL' | 'DOMYSLNA';
 }
@@ -673,7 +800,17 @@ export interface ResourcePlan {
     weeklyCapacityHours: number;
     availabilityPercent: number;
     supplySource: 'PROFIL' | 'DOMYSLNA';
+    /**
+     * P16-R1: ZALEGLOSC (termin minal, praca otwarta). Do 07.09 to pole
+     * trzymalo cos INNEGO — godziny zadan BEZ terminu — a zaleglosc siedziala
+     * w popycie tygodnia pierwszego. Zadania bez terminu maja teraz wlasne
+     * pole `unscheduledHours`, zeby jedna nazwa nie znaczyla dwoch rzeczy.
+     */
     backlogHours: number;
+    /** Godziny zadan otwartych BEZ terminu — nie sa zgadywane na zaden tydzien. */
+    unscheduledHours: number;
+    backlogTaskIds: string[];
+    backlogTasks: ResourcePlanBacklogTask[];
   }>;
 }
 
@@ -698,14 +835,25 @@ export async function getExecutionResourcePlan(
   // dawne `firstMonday.getTime() + w * 7 * 24h` w ms dublowało tydzień na
   // zmianie czasu. `buildWeekStarts` liczy poniedziałek z pola dnia miesiąca.
   const weeks: string[] = buildWeekStarts(now, weekCount);
-  const windowEnd = addDays(firstMonday, weekCount * 7);
 
+  // P16-R1: czytamy tez tozsamosc zadania (`id`, `title`, `status`), godziny
+  // FAKTYCZNE i `created_at`. `created_at` jest jedynym dostepnym poczatkiem
+  // okna — tabela `tasks` NIE MA kolumny `start_date` ani `planned_start`
+  // (sprawdzone 07.09: information_schema, 60 kolumn). Gdy taka kolumna
+  // powstanie, wystarczy podmienic `start_at` w tym jednym SELECT.
   const taskRows = await DbPromise.all<{
+    task_id: string;
+    title: string | null;
+    status: string | null;
     user_id: string;
     due_date: string | Date | null;
+    start_at: string | Date | null;
     hours: number | string | null;
+    actual_hours: number | string | null;
   }>(
-    `SELECT assignee_id AS user_id, due_date, COALESCE(estimated_hours, 0) AS hours
+    `SELECT id AS task_id, title, status, assignee_id AS user_id, due_date,
+            created_at AS start_at, COALESCE(estimated_hours, 0) AS hours,
+            COALESCE(actual_hours, 0) AS actual_hours
        FROM tasks
       WHERE organization_id = ? AND assignee_id IS NOT NULL
         AND LOWER(COALESCE(status, '')) NOT IN ${CLOSED_TASK_STATUSES}`,
@@ -742,31 +890,64 @@ export async function getExecutionResourcePlan(
   }
   const byId = new Map(personRows.map((row) => [String(row.user_id), row]));
 
+  const weekSet = new Set(weeks);
   const demand = new Map<string, number>();
   const counts = new Map<string, number>();
-  const overdue = new Map<string, number>();
   const backlog = new Map<string, number>();
+  const backlogTasks = new Map<string, ResourcePlanBacklogTask[]>();
+  const unscheduled = new Map<string, number>();
+  const toDate = (value: string | Date | null): Date | null => {
+    if (!value) return null;
+    const parsed = value instanceof Date ? new Date(value) : new Date(String(value));
+    if (Number.isNaN(parsed.getTime())) return null;
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  };
   for (const row of taskRows) {
     const userId = String(row.user_id);
     if (!byId.has(userId)) continue;
     const hours = Number(row.hours) || 0;
-    if (!row.due_date) {
-      backlog.set(userId, (backlog.get(userId) || 0) + hours);
+    const due = toDate(row.due_date);
+    if (!due) {
+      // Zadanie bez terminu: nie zgadujemy tygodnia (to bylo fabrykowanie
+      // danych) i nie nazywamy go zalegloscia — nic nie przekroczylo terminu,
+      // bo terminu nie ma.
+      unscheduled.set(userId, (unscheduled.get(userId) || 0) + hours);
       continue;
     }
-    const due = row.due_date instanceof Date ? row.due_date : new Date(String(row.due_date));
-    if (Number.isNaN(due.getTime())) {
-      backlog.set(userId, (backlog.get(userId) || 0) + hours);
+    if (due.getTime() < firstMonday.getTime()) {
+      // ZALEGLOSC — osobna liczba, poza popytem KAZDEGO tygodnia (§4 D1).
+      const actual = Number(row.actual_hours) || 0;
+      const remaining = Math.max(round1(hours - actual), 0);
+      backlog.set(userId, (backlog.get(userId) || 0) + remaining);
+      const lista = backlogTasks.get(userId) ?? [];
+      lista.push({
+        taskId: String(row.task_id),
+        title: String(row.title || 'Zadanie bez tytułu'),
+        status: String(row.status || ''),
+        dueDate: formatDate(due),
+        daysOverdue: Math.round((firstMonday.getTime() - due.getTime()) / 86400000),
+        estimatedHours: round1(hours),
+        remainingHours: remaining,
+      });
+      backlogTasks.set(userId, lista);
       continue;
     }
-    if (due.getTime() >= windowEnd.getTime()) continue;
-    const isOverdue = due.getTime() < firstMonday.getTime();
-    const bucket = isOverdue ? weeks[0] : formatDate(getMonday(due));
-    if (!weeks.includes(bucket)) continue;
-    const key = `${userId}|${bucket}`;
-    demand.set(key, (demand.get(key) || 0) + hours);
-    counts.set(key, (counts.get(key) || 0) + 1);
-    if (isOverdue) overdue.set(key, (overdue.get(key) || 0) + hours);
+    // POPYT: pracochlonnosc rozlozona rowno miedzy startem a terminem. Start
+    // sprzed biezacego poniedzialku PRZYCINAMY do poniedzialku — inaczej udzialy
+    // z tygodni, ktore juz minely, wypadlyby poza okno i godziny by wyparowaly
+    // (suma popytu przestalaby sie zgadzac z suma pracochlonnosci otwartej pracy).
+    const rawStart = toDate(row.start_at) ?? due;
+    const start = rawStart.getTime() < firstMonday.getTime() ? firstMonday : rawStart;
+    const udzialy = spreadTaskHoursByWeek(start, due, hours);
+    for (const [weekStart, share] of udzialy) {
+      // Udzialy spoza okna (zadanie z terminem za rok) po prostu nie sa
+      // pokazywane — okno ma `weekCount` tygodni i tyle sie liczy.
+      if (!weekSet.has(weekStart)) continue;
+      const key = `${userId}|${weekStart}`;
+      demand.set(key, (demand.get(key) || 0) + share);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
   }
 
   const people: ResourcePlan['people'] = [];
@@ -781,7 +962,10 @@ export async function getExecutionResourcePlan(
     const weeklyCapacityHours =
       supplySource === 'PROFIL' ? Number(rawHours) : CAPACITY_POLICY.weeklyHoursPerFte;
     const availability = clampAllocationPercent(rawPercent ?? 100);
-    const supply = round1((weeklyCapacityHours * availability) / 100);
+    const zaleglosc = round1(backlog.get(userId) || 0);
+    const zalegleZadania = (backlogTasks.get(userId) ?? []).sort(
+      (a, b) => b.daysOverdue - a.daysOverdue
+    );
     people.push({
       userId,
       name: String(person.name || userId),
@@ -789,11 +973,23 @@ export async function getExecutionResourcePlan(
       weeklyCapacityHours: round1(weeklyCapacityHours),
       availabilityPercent: availability,
       supplySource,
-      backlogHours: round1(backlog.get(userId) || 0),
+      backlogHours: zaleglosc,
+      unscheduledHours: round1(unscheduled.get(userId) || 0),
+      backlogTaskIds: zalegleZadania.map((task) => task.taskId),
+      backlogTasks: zalegleZadania,
     });
     for (const weekStart of weeks) {
       const key = `${userId}|${weekStart}`;
       const demandHours = round1(demand.get(key) || 0);
+      // Podaz liczona PER DZIEN ROBOCZY tygodnia (P16-R1/§4 D2), nie „etat x
+      // dostepnosc" jako stala. Dla pelnego tygodnia (5 dni) wychodzi ta sama
+      // liczba co wczoraj — roznica jest strukturalna: nieobecnosci i tygodnie
+      // niepelne odejmuje sie w JEDNYM miejscu (`workingDaysInWeek`).
+      const supply = weeklySupplyHours(weekStart, weeklyCapacityHours, availability);
+      // Zaleglosc pokazujemy RAZ, w wierszu pierwszego tygodnia — to jedna
+      // liczba na OSOBE, nie na tydzien. W pozostalych wierszach 0 (front
+      // rysuje „—"), zeby nikt nie zsumowal jej osiem razy.
+      const pierwszyTydzien = weekStart === weeks[0];
       rows.push({
         userId,
         name: String(person.name || userId),
@@ -803,7 +999,10 @@ export async function getExecutionResourcePlan(
         supplyHours: supply,
         utilizationPercent: utilizationPercent(demandHours, supply),
         gapHours: round1(supply - demandHours),
-        overdueHours: round1(overdue.get(key) || 0),
+        overdueHours: 0,
+        backlogHours: pierwszyTydzien ? zaleglosc : 0,
+        backlogTaskIds: pierwszyTydzien ? zalegleZadania.map((task) => task.taskId) : [],
+        backlogTasks: pierwszyTydzien ? zalegleZadania : [],
         taskCount: counts.get(key) || 0,
         supplySource,
       });
