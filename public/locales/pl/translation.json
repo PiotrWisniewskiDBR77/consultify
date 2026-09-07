@@ -12808,6 +12808,7 @@
         "role": "Role",
         "conflicts": "Konflikty",
         "overallocated": "Przeciążeni",
+        "noRole": "Bez stanowiska",
         "unassigned": "Nieprzypisana praca",
         "skillGaps": "Braki kompetencji",
         "unconfirmed": "Niepotwierdzone przypisania",
@@ -13313,6 +13314,9 @@
       "actions": {
         "proposeAllocation": "Zaproponuj przydział",
         "addAvailability": "Dodaj dostępność"
+      },
+      "summary": {
+        "utilizationTooltip": "Średnia z {{count}} tygodni"
       }
     },
     "governance": {

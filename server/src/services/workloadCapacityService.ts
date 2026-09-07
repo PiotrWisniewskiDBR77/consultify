@@ -137,6 +137,37 @@ function formatDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+// [ODMROZENIE 06_EXECUTION DEC-453] P16-R0: `addDays` przesuwa datę przez pole
+// dnia miesiąca (`setDate`), a nie przez dodawanie milisekund. Dodawanie
+// `n * 24 * 60 * 60 * 1000` ms zakłada, że każda doba trwa dokładnie 24h — to
+// pęka na zmianie czasu (Europe/Warsaw, ostatnia niedziela października:
+// 25.10.2026 ma 25h). Tydzień, który przechodzi przez tę zmianę, lądował o
+// 23:00 w niedzielę zamiast 00:00 w poniedziałek; `getMonday()` cofał wtedy
+// datę o dodatkowy dzień i dwa kolejne tygodnie wyliczały ten sam poniedziałek
+// (duplikat 19.10/26.10 -> oba jako '2026-10-19'). `setDate` operuje na
+// kalendarzowym dniu miesiąca w czasie lokalnym i silnik JS sam dolicza/odejmuje
+// przesunięcie zegara, więc wynik zawsze pada o północy właściwego dnia.
+function addDays(d: Date, days: number): Date {
+  const result = new Date(d);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+/**
+ * Czysta funkcja (bez I/O): lista poniedziałków `weekCount` kolejnych tygodni
+ * licząc od tygodnia, w którym leży `asOf`. Wyeksportowana dla testu
+ * jednostkowego P16-R0 (mutacja: przywróć arytmetykę milisekundową -> red na
+ * dacie 2026-09-07 + 8 tygodni, bo tydzień 2026-10-19/2026-10-26 się dubluje).
+ */
+export function buildWeekStarts(asOf: Date, weekCount: number): string[] {
+  const firstMonday = getMonday(asOf);
+  const weeks: string[] = [];
+  for (let w = 0; w < weekCount; w += 1) {
+    weeks.push(formatDate(addDays(firstMonday, w * 7)));
+  }
+  return weeks;
+}
+
 export async function getCapacityOverview(orgId: string): Promise<CapacityOverview> {
   const members = await DbPromise.all<UserCapacityRow>(
     `SELECT DISTINCT pm.user_id,
@@ -661,11 +692,13 @@ export async function getExecutionResourcePlan(
   options?: { weeks?: number }
 ): Promise<ResourcePlan> {
   const weekCount = Math.min(26, Math.max(1, Number(options?.weeks) || 8));
-  const firstMonday = getMonday(new Date());
-  const weeks: string[] = [];
-  for (let w = 0; w < weekCount; w += 1)
-    weeks.push(formatDate(getMonday(new Date(firstMonday.getTime() + w * 7 * 24 * 60 * 60 * 1000))));
-  const windowEnd = new Date(firstMonday.getTime() + weekCount * 7 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const firstMonday = getMonday(now);
+  // [ODMROZENIE 06_EXECUTION DEC-453] P16-R0: patrz komentarz przy `addDays` —
+  // dawne `firstMonday.getTime() + w * 7 * 24h` w ms dublowało tydzień na
+  // zmianie czasu. `buildWeekStarts` liczy poniedziałek z pola dnia miesiąca.
+  const weeks: string[] = buildWeekStarts(now, weekCount);
+  const windowEnd = addDays(firstMonday, weekCount * 7);
 
   const taskRows = await DbPromise.all<{
     user_id: string;

@@ -175,9 +175,12 @@ const renderSurface = (props: Record<string, unknown> = {}) =>
   render(
     <MemoryRouter initialEntries={['/execution']}>
       {/* NAPRAWA odbioru 06.09 (DEC-441): preset 'all' zastąpiony 'osoby' —
-          Menu 3 tej zakładki zawężony do 3 chipów (Osoby · Role · Konflikty),
-          patrz ExecutionResourcesSurface.tsx (matches()) i ExecutionHub.tsx
-          (getExecutionMenu3). */}
+          Menu 3 tej zakładki zawężony do 3 chipów. [ODMROZENIE 06_EXECUTION
+          DEC-453] P16-R0: chipy od 07.09 to Osoby · Przeciążeni ·
+          Bez stanowiska (liczone PO OSOBIE, nie po wierszu), patrz
+          ExecutionResourcesSurface.tsx (personMatches()) i ExecutionHub.tsx
+          (getExecutionMenu3) oraz
+          ExecutionResources.chipyLiczaOsoby.test.tsx. */}
       <ExecutionResourcesSurface activePreset="osoby" {...(props as any)} />
     </MemoryRouter>
   );

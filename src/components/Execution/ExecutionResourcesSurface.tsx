@@ -37,7 +37,10 @@ import {
   getExecutionReviewCase,
   getExecutionReviewWork,
 } from './executionLocalReviewData';
-const resourcePresets = ['osoby', 'role', 'konflikty'] as const;
+// [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§3 pkt 3, §4 D7) — patrz komentarz
+// przy `personSummaries`/`personMatches` niżej: poprzednie id `role`/`konflikty`
+// odchodzą, chipy liczą się po osobach.
+const resourcePresets = ['osoby', 'przeciazeni', 'bez-stanowiska'] as const;
 const allocationStatusLabel = (value?: string) =>
   ({
     PROPOSED: 'Propozycja',
@@ -381,44 +384,67 @@ export const ExecutionResourcesSurface = ({
     [planRows]
   );
   /*
-   * NAPRAWA odbioru 06.09 (audytor, DEC-441): Hub deklarował dziesięć chipów
-   * (patrz historia w ExecutionHub.tsx), sześć z nich ('unassigned',
-   * 'skill-gaps', 'unconfirmed', 'cost-risk', 'team', 'initiative') nigdy
-   * nie miało tu gałęzi — spadały do `return false`, czyli ZAWSZE 0,
-   * niezależnie od danych. Kanon (plan 1.12, dopuszcza ≤3 chipy) i Hub są
-   * teraz zgodne na trzech: Osoby · Role · Konflikty.
-   * - `osoby`: był `all` — każdy wiersz osoba×tydzień (bez zmiany logiki).
-   * - `konflikty`: scala dwa JUŻ zaimplementowane, realne sygnały problemu
-   *   (`overallocated` i `needs-decision`) pod jedną nazwą — na DBR77
-   *   (pomiar 06.09) to dokładnie te same 11 wierszy (ujemna luka ⟺
-   *   obłożenie >105%), więc scalenie nic nie ukrywa ani nie zawyża.
-   * - `role`: NOWA gałąź, real (nie fałszywa) — filtruje po `row.role`
-   *   niepustym. Pomiar 06.09: pole `role` w odpowiedzi API resource-plan
-   *   jest PUSTE dla wszystkich 72 wierszy na DBR77 → chip pokaże 0. To
-   *   ZNALEZISKO DANYCH (brak roli w źródle), nie defekt tego filtra —
-   *   gdy dane dostaną rolę, chip zacznie liczyć bez zmiany kodu.
-   * Porzucone bez zamiennika: `unknown` („Dostępność nieznana", było 64/72
-   * na DBR77) — realny i honest sygnał, ale nie mieści się w limicie ≤3 i
-   * nie pasuje semantycznie do „Konflikty" (brak danych o dostępności to
-   * nie to samo co przeciążenie/luka). Zostaje widoczny w danych wiersza
-   * (`supplySource`), przestaje być osobnym chipem — do rozstrzygnięcia
-   * właściciela, jeśli ma wrócić.
+   * [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§3 pkt 3, §4 D7). Zmierzony
+   * defekt (`ExecutionResourcesSurface.tsx:409-411` przed naprawą): chipy
+   * liczyły `tableItems` — czyli WIERSZE osoba×tydzień (8 tygodni × N osób) —
+   * obok paska podsumowania, który mówi „osób 9" (liczba OSÓB). Stąd na
+   * jednym ekranie „Osoby 72" i „osób 9". `konflikty` (przeciążenie
+   * pojedynczego WIERSZA/tygodnia) i `role` (filtr `job_title` — 0/31 na
+   * pomiarze 07.09, bo pole bywa puste) znikają.
+   *
+   * Nowe trzy chipy, liczone PO OSOBIE (`personSummaries`, jeden wpis na
+   * `userId`, z `plan.people[]` — API już agreguje per osobę, nie trzeba
+   * przeliczać z wierszy):
+   * - `osoby`: wszystkie osoby z planu (odpowiednik dawnego `all`).
+   * - `przeciazeni`: osoba ma choć JEDEN tydzień z `utilizationPercent > 100`
+   *   (sprawdzone po WSZYSTKICH wierszach tej osoby w `personOverloaded`,
+   *   nie tylko po jednym tygodniu) — to inna definicja niż dawne
+   *   `konflikty` (>105% LUB luka<0 per wiersz), bo pyta „czy ta osoba ma
+   *   problem w KTÓRYMKOLWIEK tygodniu", nie „ile wierszy ma problem".
+   * - `bez-stanowiska`: osoba bez `role` (`job_title`/`title` oba puste).
+   *
+   * Filtr chipa zawęża TABELĘ (wiersze) do wierszy osób spełniających
+   * kryterium — `activePersonIds` niżej.
    */
-  const matches = useCallback((row: any, preset: string) => {
-    if (preset === 'osoby') return true;
-    if (preset === 'konflikty') {
-      return Number(row.utilizationPercent) > 105 || Number(row.gapHours) < 0;
+  const personOverloaded = useMemo(() => {
+    const overloaded = new Map<string, boolean>();
+    for (const row of planRows) {
+      const isOverloaded = Number(row.utilizationPercent) > 100;
+      overloaded.set(row.userId, (overloaded.get(row.userId) ?? false) || isOverloaded);
     }
-    if (preset === 'role') return Boolean(String(row.role ?? '').trim());
-    return false;
-  }, []);
+    return overloaded;
+  }, [planRows]);
+  const personSummaries = useMemo(
+    () =>
+      planPeople.map((person) => ({
+        userId: person.userId,
+        role: person.role,
+        overloaded: personOverloaded.get(person.userId) ?? false,
+      })),
+    [personOverloaded, planPeople]
+  );
+  const personMatches = useCallback(
+    (person: { role?: string | null; overloaded: boolean }, preset: string) => {
+      if (preset === 'osoby') return true;
+      if (preset === 'przeciazeni') return person.overloaded;
+      if (preset === 'bez-stanowiska') return !String(person.role ?? '').trim();
+      return false;
+    },
+    []
+  );
+  const activePersonIds = useMemo(() => {
+    const preset = activePreset ?? 'osoby';
+    return new Set(
+      personSummaries.filter((person) => personMatches(person, preset)).map((person) => person.userId)
+    );
+  }, [activePreset, personMatches, personSummaries]);
   const visibleItems = useMemo(
-    () => tableItems.filter((row) => matches(row, activePreset ?? 'osoby')),
-    [activePreset, matches, tableItems]
+    () => tableItems.filter((row) => activePersonIds.has(row.userId)),
+    [activePersonIds, tableItems]
   );
   useEffect(
-    () => onCountsChange?.(countExecutionPresets(tableItems, resourcePresets, matches)),
-    [matches, onCountsChange, tableItems]
+    () => onCountsChange?.(countExecutionPresets(personSummaries, resourcePresets, personMatches)),
+    [onCountsChange, personMatches, personSummaries]
   );
   const propose = async () => {
     const p = JSON.parse(json),
@@ -629,7 +655,26 @@ export const ExecutionResourcesSurface = ({
           zmierzone 2026-09-06 na atrapie bez zamockowanego API. */}
       {planState === 'READY' && plan?.summary && (
         <p className="mb-3 text-sm text-c-text-secondary" data-testid="execution-resources-summary">
-          {`Stan na ${new Date(plan.asOf).toLocaleDateString('pl-PL')} · osób ${plan.summary.peopleCount} · popyt ${godziny(plan.summary.demandHours)} · podaż ${godziny(plan.summary.supplyHours)} · obłożenie ${plan.summary.utilizationPercent === null ? 'brak danych' : `${plan.summary.utilizationPercent} %`} · przeciążonych tygodni ${plan.summary.overloadedCount}`}
+          {`Stan na ${new Date(plan.asOf).toLocaleDateString('pl-PL')} · osób ${plan.summary.peopleCount} · popyt ${godziny(plan.summary.demandHours)} · podaż ${godziny(plan.summary.supplyHours)} · `}
+          {/*
+           * [ODMROZENIE 06_EXECUTION DEC-453] P16-R0 (§4 D7, §5 R0 pkt 4):
+           * słowo „obłożenie" tutaj to ŚREDNIA z całego okna (popyt/podaż
+           * zsumowane po wszystkich tygodniach), a wiersz tabeli obok potrafi
+           * pokazać jeden tydzień z obłożeniem 853% (definicja popytu z
+           * zadaniami po terminie w pierwszym tygodniu — to naprawia R1, nie
+           * ten krok). Bez podpisu właściciel czyta „obłożenie 90%" tu i
+           * „853%" niżej jako sprzeczność. Podpis nie zmienia liczby — tylko
+           * mówi, że to średnia, nie wartość pojedynczego tygodnia.
+           */}
+          <span
+            className="cursor-help underline decoration-dotted decoration-c-border underline-offset-2"
+            title={t('execution.resources.summary.utilizationTooltip', 'Średnia z {{count}} tygodni', {
+              count: plan.weeks.length,
+            })}
+          >
+            {`obłożenie ${plan.summary.utilizationPercent === null ? 'brak danych' : `${plan.summary.utilizationPercent} %`}`}
+          </span>
+          {` · przeciążonych tygodni ${plan.summary.overloadedCount}`}
         </p>
       )}
       {planState === 'READY' && planRows.length === 0 ? (
