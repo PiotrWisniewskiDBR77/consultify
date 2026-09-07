@@ -1,0 +1,11 @@
+# DOWÓD DZIAŁANIA --rollback (07.09.2026, 06:31)
+# Po pierwszym --apply (1447 wierszy przeniesionych) uruchomiono cofnięcie
+# z manifestu tego przebiegu. Wynik konsoli:
+scal-organizacje · DBR77 Digital Consulting (dbr77) → DBR77 (a3e05d4a-5397-419d-b486-8e44366c0063) · rollback
+COFNIĘTE: 1447 z 1447 wierszy (manifest: evidence/scal-organizacje/apply-2026-09-07T04-29-06-675Z/manifest.json)
+# Kontrola stanu PO cofnięciu (zapytanie do bazy stagingu):
+raid_legacy	raid_kanon	ini_legacy	users_legacy
+7	0	7	7
+# = stan sprzed pierwszego --apply, co do wiersza. Dopiero potem wykonano
+# --apply nr 2 (katalog apply-OSTATECZNY), którego manifest jest operacyjnym
+# punktem cofnięcia dla obecnego stanu bazy.

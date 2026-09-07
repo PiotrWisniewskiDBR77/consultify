@@ -1,0 +1,5 @@
+# kandydatow kolumn: 75
+LEGACY	audit_events.org_id	leg=497	kan=10369
+LEGACY	organization_switch_log.from_organization_id	leg=2	kan=3
+LEGACY	organization_switch_log.to_organization_id	leg=3	kan=2
+# koniec

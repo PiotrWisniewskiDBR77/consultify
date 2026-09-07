@@ -1,0 +1,55 @@
+2026-09-07 06:29:06:296 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-07 06:29:06:296 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-07 06:29:06:296 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-07 06:29:06:296 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-07 06:29:06:296 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+scal-organizacje · DBR77 Digital Consulting (dbr77) → DBR77 (a3e05d4a-5397-419d-b486-8e44366c0063) · apply
+KATALOG DOWODÓW: /private/tmp/wt-scal-org/evidence/scal-organizacje/apply-2026-09-07T04-29-06-675Z
+PLAN · tabel z danymi w źródle: 99 · wierszy w źródle: 11686 · do przeniesienia: 1447
+  CALOSC: 82 tabel · 1358 wierszy w źródle · 1358 przenoszonych
+  CZESC: 3 tabel · 191 wierszy w źródle · 89 przenoszonych
+  ZOSTAJE_TECHNICZNE: 3 tabel · 10113 wierszy w źródle · 0 przenoszonych
+  ZOSTAJE_KOLIZJA: 11 tabel · 24 wierszy w źródle · 0 przenoszonych
+PLAN CSV: /private/tmp/wt-scal-org/evidence/scal-organizacje/apply-2026-09-07T04-29-06-675Z/plan.csv
+BRAMKA FK ZŁOŻONEGO: 0 (sprawdzono 1 kluczy złożonych dotykających ruszanych tabel)
+WSKAZANIA MIĘDZY ORGANIZACJAMI · PRZED: 164 wierszy w 8 miejscach
+  PRZED (bez FK) · api_logs.user_id → users · 37 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+  PRZED (bez FK) · api_logs.user_id → users · 601 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · access_requests.reviewed_by → users · 1 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+  PRZED · activity_logs.user_id → users · 44 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+  PRZED · activity_logs.user_id → users · 83 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · decisions.created_by → users · 4 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · initiatives.owner_execution_id → users · 2 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · organization_members.user_id → users · 2 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · tasks.assignee_id → users · 15 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · tasks.reporter_id → users · 13 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+KOPIA CSV: 85 plików · MANIFEST: /private/tmp/wt-scal-org/evidence/scal-organizacje/apply-2026-09-07T04-29-06-675Z/manifest.json (1447 wierszy)
+PRZENIESIONE: 1447 wierszy w 85 tabelach
+  PO (bez FK, zadeklarowane) · v8_artifact_origin_links.artifact_id → v8_output_artifacts · 99 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PO (bez FK, zadeklarowane) · api_logs.user_id → users · 9111 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+WSKAZANIA MIĘDZY ORGANIZACJAMI · PO: 575 wierszy · WZROSTY NIEDOPUSZCZONE: 0
+  WZROST · activity_logs.user_id → users · 83 → 570 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063) · DOPUSZCZONE
+  WZROST · rvn_platform_resource_visibility.policy_id → rvn_platform_visibility_policies · 0 → 3 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77) · DOPUSZCZONE
+  DOPUSZCZONE · activity_logs.user_id → users · 570 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  DOPUSZCZONE · rvn_platform_resource_visibility.policy_id → rvn_platform_visibility_policies · 3 wierszy (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+BRAMKA CZŁONKOSTWA: 0 duplikatów (organization_id, user_id)
+LICZBY PRZED/PO CSV: /private/tmp/wt-scal-org/evidence/scal-organizacje/apply-2026-09-07T04-29-06-675Z/liczby-przed-po.csv
+ZOSTAJE W ŹRÓDLE: 10239 wierszy w 17 tabelach
+  activity_logs: 570
+  api_logs: 9113
+  audit_log: 430
+  okr_vnext_checkin_occurrences: 1
+  okr_vnext_checkins: 1
+  okr_vnext_cycles: 1
+  okr_vnext_key_results: 1
+  okr_vnext_objectives: 1
+  okr_vnext_program_policy_versions: 1
+  okr_vnext_programs: 1
+  okr_vnext_sets: 1
+  organization_context_snapshots: 1
+  organization_members: 2
+  project_role_templates: 12
+  rvn_platform_resource_visibility: 1
+  rvn_platform_visibility_policies: 3
+  v8_artifact_origin_links: 99
+ZATWIERDZONE (COMMIT). Uruchom ten sam --dry-run drugi raz — musi wypisać do przeniesienia: 0.

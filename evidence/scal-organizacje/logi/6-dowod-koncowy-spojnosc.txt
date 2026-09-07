@@ -1,0 +1,22 @@
+# DOWÓD KOŃCOWY — 2026-09-07T04:36:54.252Z
+tabela	legacy_po	kanoniczna_po
+activity_logs	570	10620
+api_logs	9113	75813
+audit_log	430	6563
+okr_vnext_checkin_occurrences	1	3
+okr_vnext_checkins	1	29
+okr_vnext_cycles	1	3
+okr_vnext_key_results	1	29
+okr_vnext_objectives	1	11
+okr_vnext_program_policy_versions	1	1
+okr_vnext_programs	1	1
+okr_vnext_sets	1	4
+organization_context_snapshots	1	1
+organization_members	2	16
+project_role_templates	12	12
+rvn_platform_resource_visibility	1	154
+rvn_platform_visibility_policies	3	4
+v8_artifact_origin_links	99	534
+# LEGACY_PO=10239 w 17 tabelach · KANONICZNA_PO=131611
+# FK_SPRAWDZONYCH=294 · ZERWANYCH_WIERSZY=0
+# DUPLIKATY_CZLONKOSTWA=0

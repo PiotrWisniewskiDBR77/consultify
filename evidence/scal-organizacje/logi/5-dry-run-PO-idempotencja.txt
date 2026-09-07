@@ -1,0 +1,48 @@
+2026-09-07 06:34:51:3451 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-07 06:34:51:3451 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-07 06:34:51:3451 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-07 06:34:51:3451 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-07 06:34:51:3451 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+scal-organizacje · DBR77 Digital Consulting (dbr77) → DBR77 (a3e05d4a-5397-419d-b486-8e44366c0063) · dry-run
+KATALOG DOWODÓW: /private/tmp/wt-scal-org/evidence/scal-organizacje/dry-run-2026-09-07T04-34-51-348Z
+PLAN · tabel z danymi w źródle: 17 · wierszy w źródle: 10239 · do przeniesienia: 0
+  CALOSC: 0 tabel · 0 wierszy w źródle · 0 przenoszonych
+  CZESC: 3 tabel · 102 wierszy w źródle · 0 przenoszonych
+  ZOSTAJE_TECHNICZNE: 3 tabel · 10113 wierszy w źródle · 0 przenoszonych
+  ZOSTAJE_KOLIZJA: 11 tabel · 24 wierszy w źródle · 0 przenoszonych
+PLAN CSV: /private/tmp/wt-scal-org/evidence/scal-organizacje/dry-run-2026-09-07T04-34-51-348Z/plan.csv
+BRAMKA FK ZŁOŻONEGO: 0 (sprawdzono 0 kluczy złożonych dotykających ruszanych tabel)
+WSKAZANIA MIĘDZY ORGANIZACJAMI · PRZED: 575 wierszy w 3 miejscach
+  PRZED (bez FK) · v8_artifact_origin_links.artifact_id → v8_output_artifacts · 99 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED (bez FK) · api_logs.user_id → users · 9111 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · activity_logs.user_id → users · 570 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · organization_members.user_id → users · 2 (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PRZED · rvn_platform_resource_visibility.policy_id → rvn_platform_visibility_policies · 3 (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+KOPIA CSV: 0 plików · MANIFEST: /private/tmp/wt-scal-org/evidence/scal-organizacje/dry-run-2026-09-07T04-34-51-348Z/manifest.json (0 wierszy)
+PRZENIESIONE: 0 wierszy w 0 tabelach
+  PO (bez FK, zadeklarowane) · v8_artifact_origin_links.artifact_id → v8_output_artifacts · 99 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  PO (bez FK, zadeklarowane) · api_logs.user_id → users · 9111 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+WSKAZANIA MIĘDZY ORGANIZACJAMI · PO: 575 wierszy · WZROSTY NIEDOPUSZCZONE: 0
+  DOPUSZCZONE · activity_logs.user_id → users · 570 wierszy (dbr77 → a3e05d4a-5397-419d-b486-8e44366c0063)
+  DOPUSZCZONE · rvn_platform_resource_visibility.policy_id → rvn_platform_visibility_policies · 3 wierszy (a3e05d4a-5397-419d-b486-8e44366c0063 → dbr77)
+BRAMKA CZŁONKOSTWA: 0 duplikatów (organization_id, user_id)
+LICZBY PRZED/PO CSV: /private/tmp/wt-scal-org/evidence/scal-organizacje/dry-run-2026-09-07T04-34-51-348Z/liczby-przed-po.csv
+ZOSTAJE W ŹRÓDLE: 10239 wierszy w 17 tabelach
+  activity_logs: 570
+  api_logs: 9113
+  audit_log: 430
+  okr_vnext_checkin_occurrences: 1
+  okr_vnext_checkins: 1
+  okr_vnext_cycles: 1
+  okr_vnext_key_results: 1
+  okr_vnext_objectives: 1
+  okr_vnext_program_policy_versions: 1
+  okr_vnext_programs: 1
+  okr_vnext_sets: 1
+  organization_context_snapshots: 1
+  organization_members: 2
+  project_role_templates: 12
+  rvn_platform_resource_visibility: 1
+  rvn_platform_visibility_policies: 3
+  v8_artifact_origin_links: 99
+DRY-RUN: transakcja WYCOFANA, w bazie nic się nie zmieniło. Kontrole przeszły.
