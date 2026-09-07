@@ -1,0 +1,9 @@
+id,organization_id,user_id,role,status,invited_by_user_id,created_at,permission_scope
+"b100591d-77be-4af7-a788-89fc5e7c3d72","a3e05d4a-5397-419d-b486-8e44366c0063","aa614b34-bfbd-4757-b2d4-52a2caa466f7","OWNER","ACTIVE","","Thu Feb 19 2026 08:58:37 GMT+0100 (Central European Standard Time)",""
+"d8909ab2-90a3-4a55-b5a4-22bb3595da05","a3e05d4a-5397-419d-b486-8e44366c0063","d2b6a316-08c5-47cf-9bf7-4ba50311d5a2","OWNER","ACTIVE","","Mon Mar 16 2026 20:53:36 GMT+0100 (Central European Standard Time)",""
+"2ffe9ae7-8930-4968-a4f3-b6575d137e5d","a3e05d4a-5397-419d-b486-8e44366c0063","025ae9d5-b9c4-4b0e-8e1f-d720c17881ff","MEMBER","ACTIVE","","Wed Mar 18 2026 12:48:43 GMT+0100 (Central European Standard Time)",""
+"7e087ec0-5948-448d-8137-339ed6f44f78","a3e05d4a-5397-419d-b486-8e44366c0063","5bdb3753-88fd-47c2-abe9-7c290b74af65","MEMBER","ACTIVE","","Wed Mar 18 2026 12:48:43 GMT+0100 (Central European Standard Time)",""
+"9ffc0ed1-2902-4fee-8b96-334822254f98","a3e05d4a-5397-419d-b486-8e44366c0063","d93e483a-1ef3-4839-965e-9fc032d80a8f","MEMBER","ACTIVE","","Wed Mar 18 2026 12:48:43 GMT+0100 (Central European Standard Time)",""
+"dfe7d48f-a8fa-4135-884c-b47490e90b3b","a3e05d4a-5397-419d-b486-8e44366c0063","188a66b0-f284-4869-b26c-355df56d808a","MEMBER","ACTIVE","","Wed Mar 18 2026 12:48:43 GMT+0100 (Central European Standard Time)",""
+"6d497368-606c-459a-83e4-378e060e6c61","a3e05d4a-5397-419d-b486-8e44366c0063","60887056-371a-4404-b85c-61c920852579","MEMBER","ACTIVE","d2b6a316-08c5-47cf-9bf7-4ba50311d5a2","Fri May 01 2026 18:48:26 GMT+0200 (Central European Summer Time)",""
+"acceptance-owner-rehearsal-20260813-membership","a3e05d4a-5397-419d-b486-8e44366c0063","acceptance-owner-rehearsal-20260813","OWNER","ACTIVE","","Thu Aug 13 2026 13:15:16 GMT+0200 (Central European Summer Time)",""
