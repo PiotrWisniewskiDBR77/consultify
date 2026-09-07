@@ -26,6 +26,7 @@ import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { useGateAi } from '@/hooks/useGateAi';
 import Api from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { updateRaidItem as updateCanonicalRaidItem } from '@/services/initiatives-execution/raidWrites';
 import { getStatusMeta } from '@/services/initiativeLifecycle';
 
 import { GateReadinessPanel, GateReadinessPill } from '../gate-ai';
@@ -958,7 +959,10 @@ export const GateReadinessSection: React.FC<InitiativeSectionProps> = ({
           if (u.ownerId) payload.ownerId = u.ownerId;
           if (u.dueDate) payload.dueDate = toIsoFromDateOnly(u.dueDate);
           if (Object.keys(payload).length === 0) continue;
-          await Api.patch(`/initiatives/${initiativeId}/raid/${u.raidId}`, payload);
+          // Kanoniczny writer 26A. Wycofana trasa
+          // `PATCH /initiatives/:id/raid/:raidId` odpowiadala 409, wiec
+          // zastosowanie propozycji AI dla RAID nie zmienialo niczego.
+          await updateCanonicalRaidItem(initiativeId, u.raidId, payload);
         }
       }
 

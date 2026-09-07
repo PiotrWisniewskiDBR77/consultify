@@ -12037,7 +12037,11 @@
       "toast": {
         "rescheduleFailed": "Nie udało się zmienić terminu"
       }
-    }
+    },
+    "raid": {
+      "newItemTitle": "Nowa pozycja"
+    },
+    "failedToRemoveRaid2": "Nie udało się usunąć pozycji RAID"
   },
   "execution": {
     "review": {

@@ -88,6 +88,12 @@ import { Api, API_URL, getHeaders } from '@/services/api';
 import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import { V8ResultsApi } from '@/services/api/v8/results';
+import {
+  createRaidItem as createCanonicalRaidItem,
+  deleteRaidItem as deleteCanonicalRaidItem,
+  newRaidItemId,
+  updateRaidItem as updateCanonicalRaidItem,
+} from '@/services/initiatives-execution/raidWrites';
 import { readRegisteredInitiative, requestHandoffAcceptance } from '@/services/initiatives-execution/runtimeApi';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
@@ -1345,14 +1351,15 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       // Add first (non-destructive), then remove.
       for (const x of toAdd) {
         const typeUpper = String(x.type || 'risk').toUpperCase();
-        const res: any = await Api.post(`/initiatives/${initiativeId}/raid`, {
-          type: typeUpper,
+        // Kanoniczny writer 26A — wycofana trasa `/initiatives/:id/raid`
+        // odpowiadala 409 i propozycje AI nigdy sie nie zapisywaly.
+        const id = await createCanonicalRaidItem(initiativeId, newRaidItemId(), {
+          type: typeUpper as 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY',
           title: x.title,
           description: x.description || x.rationale || '',
-          severity: x.severity || 'MEDIUM',
+          severity: (x.severity || 'MEDIUM') as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+          status: 'OPEN',
         });
-
-        const id = String(res?.id || res?.raidId || res?.item?.id || '');
         if (id) {
           setRaidItems((prev) => [
             ...prev,
@@ -1376,11 +1383,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       for (const r of toRemove) {
         const id = r.raidId;
         setRaidItems((prev) => prev.filter((item: any) => String(item?.id) !== String(id)));
-        try {
-          await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
-        } catch {
-          // best-effort
-        }
+        // Bez try/catch: nieudane usuniecie musi przerwac stosowanie propozycji
+        // i powiedziec o tym uzytkownikowi (obsluga w catch ponizej), a nie
+        // zniknac po cichu razem z wierszem na ekranie.
+        await deleteCanonicalRaidItem(initiativeId, String(id));
       }
 
       // Refresh RAID list (server is source of truth)
@@ -3730,14 +3736,29 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     if (!newRaidTitle.trim()) return;
     setIsMutating(true);
     try {
-      const res = await Api.post(`/initiatives/${initiativeId}/raid`, {
-        type: newRaidType,
+      const id = await createCanonicalRaidItem(initiativeId, newRaidItemId(), {
+        type: String(newRaidType).toUpperCase() as
+          | 'RISK'
+          | 'ASSUMPTION'
+          | 'ISSUE'
+          | 'DEPENDENCY',
         title: newRaidTitle,
         description: newRaidDescription,
-        severity: newRaidSeverity,
+        severity: String(newRaidSeverity).toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
         status: 'OPEN',
       });
-      setRaidItems((prev) => [...prev, res]);
+      setRaidItems((prev) => [
+        ...prev,
+        {
+          id,
+          initiativeId,
+          type: newRaidType,
+          title: newRaidTitle,
+          description: newRaidDescription,
+          severity: newRaidSeverity,
+          status: 'OPEN',
+        } as any,
+      ]);
       setNewRaidTitle('');
       setNewRaidDescription('');
       setShowCreateRaid(false);
@@ -3749,21 +3770,53 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     }
   };
 
-  const handleUpdateRaid = useCallback((id: string, updates: Partial<RaidItem>) => {
-    setRaidItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
-  }, []);
+  /**
+   * Edycja pozycji RAID w widoku dokumentu byla do 07.09 WYLACZNIE lokalna —
+   * zaden zapis nie wychodzil na serwer, wiec zmiana znikala po odswiezeniu
+   * strony i nikt sie o tym nie dowiadywal. Teraz idzie kanoniczna komenda.
+   */
+  const handleUpdateRaid = useCallback(
+    (id: string, updates: Partial<RaidItem>) => {
+      setRaidItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+      if (!initiativeId) return;
+      const patch: Record<string, unknown> = {};
+      if (updates.title !== undefined) patch.title = updates.title || null;
+      if (updates.description !== undefined) patch.description = updates.description ?? null;
+      if (updates.status !== undefined) patch.status = String(updates.status).toUpperCase();
+      if (updates.severity !== undefined) patch.severity = String(updates.severity).toUpperCase();
+      // dueDate/ownerId nie naleza do typu RaidItem tego widoku — czytamy je
+      // defensywnie, zeby edytor, ktory je poda, tez zostal zapisany.
+      const extra = updates as Partial<RaidItem> & { dueDate?: string; ownerId?: string };
+      if (extra.dueDate !== undefined) patch.dueDate = extra.dueDate || null;
+      if (extra.ownerId !== undefined) patch.ownerId = extra.ownerId || null;
+      if (Object.keys(patch).length === 0) return;
+      void updateCanonicalRaidItem(initiativeId, id, patch).catch((error: Error) => {
+        toast.error(error.message);
+      });
+    },
+    [initiativeId]
+  );
 
   const handleDeleteRaid = useCallback(
     async (id: string) => {
+      const removed = raidItems.find((item) => item.id === id);
       setRaidItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success(t('initiatives.raidItemRemoved2'));
       try {
-        await Api.delete(`/initiatives/${initiativeId}/raid/${id}`);
-      } catch {
-        // Best-effort backend delete — item already removed from UI
+        await deleteCanonicalRaidItem(initiativeId, id);
+        toast.success(t('initiatives.raidItemRemoved2'));
+      } catch (error: any) {
+        // Nieudane usuniecie bylo polykane w ciszy: wiersz znikal z ekranu,
+        // a na serwerze zostawal. Teraz wraca i mowi, dlaczego.
+        toast.error(
+          error?.message ||
+            t('initiatives.failedToRemoveRaid2', 'Nie udało się usunąć pozycji RAID')
+        );
+        if (removed) {
+          setRaidItems((prev) => (prev.some((i) => i.id === id) ? prev : [...prev, removed]));
+        }
       }
     },
-    [initiativeId, isPolish]
+    [initiativeId, raidItems, t]
   );
 
   // ── Resource CRUD handlers (Team / Budget / Tools) ──────────────────────

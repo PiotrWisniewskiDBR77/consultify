@@ -12595,7 +12595,11 @@
       "toast": {
         "rescheduleFailed": "Couldn't reschedule"
       }
-    }
+    },
+    "raid": {
+      "newItemTitle": "New item"
+    },
+    "failedToRemoveRaid2": "Failed to remove RAID item"
   },
   "execution": {
     "review": {

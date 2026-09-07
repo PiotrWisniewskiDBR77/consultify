@@ -21,14 +21,22 @@ import type {
   RiskResponseStrategy,
 } from '@/components/shared/NModeSections/RaidCanvas';
 import { RaidCanvas } from '@/components/shared/NModeSections/RaidCanvas';
-import { Api } from '@/services/api';
+import {
+  createRaidItem as createCanonicalRaidItem,
+  deleteRaidItem as deleteCanonicalRaidItem,
+  newRaidItemId,
+  updateRaidItem as updateCanonicalRaidItem,
+} from '@/services/initiatives-execution/raidWrites';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
 
-/** Local-only ids are generated client-side before the server confirms the row. */
-const isTempRaidId = (id: string): boolean => id.startsWith('raid-');
+/**
+ * Identyfikator pozycji RAID nadaje teraz KLIENT (kanoniczna komenda 26A jest
+ * adresowana docelowym id), wiec nie ma juz stanu "tymczasowego id" i calej
+ * maszynerii kolejkowania edycji na czas lotu POST-a.
+ */
 
 export const RaidSection: React.FC<InitiativeSectionProps> = ({
   sectionType,
@@ -57,16 +65,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
   // (selects, date picker) go straight through.
   const pendingPatchRef = useRef<Record<string, Partial<RaidItem>>>({});
   const patchTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  // Ids removed locally while their create POST was still in flight — used
-  // to clean up the orphaned server row once the real id comes back.
-  const removedWhilePendingRef = useRef<Set<string>>(new Set());
-  // Edits made to a brand-new item while its create POST is still in
-  // flight can't PATCH yet (no real id exists server-side). Queue them
-  // here keyed by tempId and flush under the real id once the POST
-  // resolves — otherwise they're silently dropped (data-loss bug fixed
-  // 2026-08-01: sendRaidPatch no-ops on temp ids with nowhere for the
-  // edit to go).
-  const queuedPatchForTempIdRef = useRef<Record<string, Partial<RaidItem>>>({});
 
   // Debounced PATCHes are fire-and-forget timers outside React's render
   // cycle — clear them on unmount so navigating away mid-edit doesn't
@@ -105,13 +103,19 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
 
   // ── Handlers ─────────────────────────────────────────────────────────
 
-  /** Backend PATCH /initiatives/:id/raid/:raidId only persists these fields. */
+  /**
+   * Kanoniczny (26A) zapis edycji pozycji RAID.
+   *
+   * Wczesniej szedl na wycofana trase `PATCH /initiatives/:id/raid/:raidId`
+   * (odpowiedz 409) i mial `.catch(() => {})` — edycja przepadala BEZ SLOWA.
+   * Teraz kazda nieudana zmiana mowi uzytkownikowi, co sie stalo.
+   */
   const sendRaidPatch = useCallback(
     (id: string, updates: Partial<RaidItem>) => {
-      if (!initiativeId || isTempRaidId(id)) return;
+      if (!initiativeId) return;
 
       const body: Record<string, unknown> = {};
-      if (updates.title !== undefined) body.title = updates.title;
+      if (updates.title !== undefined) body.title = updates.title || null;
       if (updates.description !== undefined) body.description = updates.description;
       if (updates.status !== undefined) body.status = String(updates.status).toUpperCase();
       if (updates.impact !== undefined) body.severity = String(updates.impact).toUpperCase();
@@ -119,15 +123,15 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         body.probability = String(updates.probability).toUpperCase();
       if (updates.dueDate !== undefined) body.dueDate = updates.dueDate || null;
       if (updates.owner !== undefined) body.ownerId = updates.owner || null;
+      if (updates.mitigation !== undefined) body.mitigationPlan = updates.mitigation || null;
 
-      // Fields like category/mitigation/contingency/proposedAction/source/
-      // responseStrategy/type have no column on this endpoint today — they
-      // stay local-only (UI still reflects them via setRaidItems above).
+      // Pola category/contingency/proposedAction/source/responseStrategy/type
+      // nie maja wlasnej kolumny w kanonicznej komendzie — zostaja lokalne
+      // (UI odzwierciedla je przez setRaidItems powyzej).
       if (Object.keys(body).length === 0) return;
 
-      Api.patch(`/initiatives/${initiativeId}/raid/${id}`, body).catch(() => {
-        // Best-effort — local state already reflects the edit; a silent
-        // background sync failure shouldn't interrupt typing.
+      void updateCanonicalRaidItem(initiativeId, id, body).catch((error: Error) => {
+        toast.error(error.message);
       });
     },
     [initiativeId]
@@ -137,11 +141,18 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
     (type: RaidType) => {
       if (!initiativeId) return;
 
-      const tempId = `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      // Id nadaje klient — kanoniczna komenda jest adresowana docelowym id,
+      // wiec pozycja od pierwszej chwili ma ostateczny identyfikator i kazda
+      // edycja trafia we wlasciwy rekord.
+      const id = newRaidItemId();
+      // Tytul nie moze byc pusty: i wycofany zapis legacy, i kanoniczna
+      // komenda odrzucaja pusty tytul (400). Wpisujemy roboczy, ktory
+      // uzytkownik nadpisuje w tabeli.
+      const title = t('initiatives.raid.newItemTitle', 'Nowa pozycja');
       const newItem = {
-        id: tempId,
+        id,
         type,
-        title: '',
+        title,
         severity: 'MEDIUM' as const,
         status: 'OPEN',
         owner: '',
@@ -149,52 +160,22 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
       };
       setRaidItems((prev) => [newItem, ...prev]);
 
-      Api.post(`/initiatives/${initiativeId}/raid`, {
-        type: String(type).toUpperCase(),
-        title: '',
-        description: '',
+      void createCanonicalRaidItem(initiativeId, id, {
+        type: String(type).toUpperCase() as 'RISK' | 'ASSUMPTION' | 'ISSUE' | 'DEPENDENCY',
+        title,
         severity: 'MEDIUM',
-        idempotencyKey: tempId,
+        status: 'OPEN',
       })
-        .then((res: any) => {
-          const realId = res?.id;
-          if (!realId) return;
-
-          if (removedWhilePendingRef.current.has(tempId)) {
-            // User already removed the row locally before the server id
-            // came back — the local list no longer has it, so just clean
-            // up the now-orphaned server-side row.
-            removedWhilePendingRef.current.delete(tempId);
-            delete queuedPatchForTempIdRef.current[tempId];
-            Api.delete(`/initiatives/${initiativeId}/raid/${realId}`).catch(() => {});
-            return;
-          }
-
-          setRaidItems((prev) =>
-            prev.map((item) => (item.id === tempId ? { ...item, id: realId } : item))
-          );
+        .then(() => {
           toast.success(t('initiatives.raidItemAdded2'));
-
-          // Flush any edit(s) the user made while the create POST was still
-          // in flight — these were queued (not dropped) by sendRaidPatch
-          // because there was no real id to PATCH against yet.
-          const queued = queuedPatchForTempIdRef.current[tempId];
-          if (queued) {
-            delete queuedPatchForTempIdRef.current[tempId];
-            sendRaidPatch(realId, queued);
-          }
         })
-        .catch((e: any) => {
-          removedWhilePendingRef.current.delete(tempId);
-          toast.error(
-            e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item')
-          );
-          // Roll back the optimistic local item — the UI must not claim
-          // something was saved when it wasn't.
-          setRaidItems((prev) => prev.filter((item) => item.id !== tempId));
+        .catch((error: Error) => {
+          toast.error(error.message);
+          // Cofamy optymistyczny wiersz — UI nie moze udawac, ze cos zapisal.
+          setRaidItems((prev) => prev.filter((item) => item.id !== id));
         });
     },
-    [setRaidItems, initiativeId, t, sendRaidPatch]
+    [setRaidItems, initiativeId, t]
   );
 
   const handleUpdateItem = useCallback(
@@ -232,15 +213,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         updates.owner !== undefined;
 
       if (!isKeystrokeField) {
-        if (isTempRaidId(id)) {
-          // Create POST still in flight — nothing to PATCH yet. Queue so
-          // handleAddItem's .then() can flush it once the real id lands.
-          queuedPatchForTempIdRef.current[id] = {
-            ...(queuedPatchForTempIdRef.current[id] || {}),
-            ...updates,
-          };
-          return;
-        }
         sendRaidPatch(id, updates);
         return;
       }
@@ -255,18 +227,6 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         delete pending[id];
         delete timers[id];
         if (!merged) return;
-        if (isTempRaidId(id)) {
-          // The create POST for this item still hadn't resolved by the
-          // time the debounce fired — queue instead of dropping (fixes
-          // the 2026-08-01 silent-data-loss bug: this branch used to call
-          // sendRaidPatch(id, merged) here, which no-ops on temp ids and
-          // threw the edit away for good).
-          queuedPatchForTempIdRef.current[id] = {
-            ...(queuedPatchForTempIdRef.current[id] || {}),
-            ...merged,
-          };
-          return;
-        }
         sendRaidPatch(id, merged);
       }, 400);
     },
@@ -275,6 +235,8 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
 
   const handleRemoveItem = useCallback(
     (id: string) => {
+      // Zapamietujemy wiersz, zeby przywrocic go, gdy serwer odmowi.
+      const removed = raidItems.find((item: { id: string }) => item.id === id);
       setRaidItems((prev) => prev.filter((item) => item.id !== id));
 
       // Drop any pending debounced patch for this item.
@@ -287,25 +249,22 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
 
       if (!initiativeId) return;
 
-      if (isTempRaidId(id)) {
-        // Create POST is still in flight — mark for cleanup once the real
-        // id comes back, since there's nothing to DELETE yet. Also drop
-        // any edit queued for this temp id — the item is gone, nothing
-        // left to flush.
-        removedWhilePendingRef.current.add(id);
-        delete queuedPatchForTempIdRef.current[id];
-        toast.success(t('initiatives.raidItemRemoved2'));
-        return;
-      }
-
-      toast.success(t('initiatives.raidItemRemoved2'));
-      Api.delete(`/initiatives/${initiativeId}/raid/${id}`).catch((e: any) => {
-        toast.error(
-          e?.message || t('initiatives.toast.deleteRaidError', 'Failed to remove RAID item')
-        );
-      });
+      void deleteCanonicalRaidItem(initiativeId, id)
+        .then(() => {
+          toast.success(t('initiatives.raidItemRemoved2'));
+        })
+        .catch((error: Error) => {
+          toast.error(error.message);
+          // Przywracamy wiersz — pozycja nadal istnieje po stronie serwera,
+          // wiec lista nie moze udawac, ze zostala usunieta.
+          if (removed) {
+            setRaidItems((prev) =>
+              prev.some((i: { id: string }) => i.id === id) ? prev : [removed, ...prev]
+            );
+          }
+        });
     },
-    [setRaidItems, initiativeId, t]
+    [setRaidItems, raidItems, initiativeId, t]
   );
 
   const handleConvertToIssue = useCallback(
