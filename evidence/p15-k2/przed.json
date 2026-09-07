@@ -1,0 +1,91 @@
+{
+  "kiedy": "2026-09-07T19:26:49.556254",
+  "api": "http://127.0.0.1:4153/api/initiatives/runtime-v1",
+  "baza": "consultify_p15k2",
+  "plan_scenarios": {
+    "status": "200",
+    "ile": 2,
+    "plany": [
+      {
+        "id": "plan-f807b6fd-357e-40ba-860c-cc7de75afedc",
+        "name": "Plan klikany P11 — Controls Engineer",
+        "state": "PUBLISHED",
+        "inicjatyw": 5,
+        "konflikty": 0,
+        "autor": "Audyt Nocny",
+        "portfel": {
+          "scenarioId": "p11-dec421-portfolio-20260906",
+          "scenarioVersion": 4
+        }
+      },
+      {
+        "id": "p11-dec421-plan-20260906",
+        "name": "Plan transformacji DBR77 — Controls Engineering",
+        "state": "DRAFT",
+        "inicjatyw": 5,
+        "konflikty": 0,
+        "autor": "Audyt Nocny",
+        "portfel": {
+          "scenarioId": "p11-dec421-portfolio-20260906",
+          "scenarioVersion": 2
+        }
+      }
+    ]
+  },
+  "portfolio_scenarios": {
+    "status": "200",
+    "ile": 1,
+    "portfele": [
+      {
+        "id": "p11-dec421-portfolio-20260906",
+        "name": "p11-dec421-portfolio-20260906",
+        "state": "PUBLISHED",
+        "version": 4,
+        "model": {
+          "modelId": "p11-dec421-owner",
+          "version": 1
+        },
+        "scope": {
+          "asOf": "2026-09-06T00:00:00.000Z",
+          "goalIds": [],
+          "portfolioId": "11111111-2222-4333-8444-555555555555"
+        },
+        "updatedAt": "2026-09-06T15:40:56.293Z"
+      }
+    ]
+  },
+  "create_planu_z_inicjatywa_modulu": {
+    "cel": "fbdeede9-85e0-439c-b798-c07caf2ca21c",
+    "wynik": {
+      "status": "400",
+      "body": {
+        "error": {
+          "code": "PLAN_MEMBER_NOT_APPROVED",
+          "rule": "PLAN_MEMBER_NOT_APPROVED"
+        },
+        "code": "PLAN_MEMBER_NOT_APPROVED",
+        "rule": "PLAN_MEMBER_NOT_APPROVED"
+      }
+    }
+  },
+  "most_adoptions_accepted_classic": {
+    "status": "422",
+    "body": {
+      "error": {
+        "code": "INITIATIVE_OWNER_INELIGIBLE"
+      }
+    }
+  },
+  "initiatives_modulu": {
+    "status": "200",
+    "ile": 72,
+    "statusy": {
+      "DRAFT": 9,
+      "IN_EXECUTION": 23,
+      "APPROVED": 12,
+      "CLOSED": 9,
+      "REJECTED": 3,
+      "PENDING_APPROVAL": 16
+    }
+  }
+}
