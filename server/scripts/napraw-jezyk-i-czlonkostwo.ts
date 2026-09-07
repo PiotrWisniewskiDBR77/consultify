@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Naprawa CZTERECH problemów z danymi zmierzonych w
+ * Naprawa PIĘCIU problemów z danymi zmierzonych w
  * `docs/program/PROGRAM_NAPRAWCZY_20260905/DANE_PORZADKI_POMIAR.md`:
  *
  *   1. Angielskie nazwy inicjatyw (organization_id → initiatives.name/title)
@@ -13,8 +13,13 @@
  *      więc ekrany/API liczące uprawnienia z `organization_members` widzą go
  *      jako "spoza organizacji" (pomiar: 16/16 lokalnie, 0/0 na stagingu — brak
  *      pozycji RAID na stagingu).
+ *   5. (dodane 2026-09-07) KAŻDY użytkownik organizacji bez wiersza
+ *      w `organization_members` — NADZBIÓR problemu 4. Pomiar 07.09 na bazie
+ *      stanowiska: DBR77 ma 31 użytkowników i 1 członkostwo (30 brakuje);
+ *      siódemka z problemu 4 to podzbiór tej trzydziestki. Uruchamiany
+ *      WYŁĄCZNIE jawnym `--problem=5`, nigdy przez `--problem=wszystkie`.
  *
- * KAŻDY problem naprawiany OSOBNO przez `--problem=1|2|3|4|wszystkie`.
+ * KAŻDY problem naprawiany OSOBNO przez `--problem=1|2|3|4|5|wszystkie`.
  * Problemy 1 i 2 działają WYŁĄCZNIE po dopasowaniu DOKŁADNEGO tekstu ze
  * słownika `dane-porzadki/slownik-tlumaczen.json` — żadnego zgadywania,
  * żadnego wywołania modelu w środku skryptu. Tekst spoza słownika jest
@@ -55,6 +60,7 @@ import {
   restore,
   csvCell,
   EVIDENCE_DIR,
+  REPO_ROOT,
   iso,
   type Manifest,
   type ManifestEntry,
@@ -76,12 +82,12 @@ function wczytajSlownik(): Slownik {
   return { initiatives: raw.initiatives ?? {}, decisions: raw.decisions ?? {}, raid_items: raw.raid_items ?? {} };
 }
 
-type Problem = '1' | '2' | '3' | '4' | 'wszystkie';
+type Problem = '1' | '2' | '3' | '4' | '5' | 'wszystkie';
 
 function parseProblem(argv = process.argv.slice(2)): Problem {
   const raw = argv.find((x) => x.startsWith('--problem='))?.slice('--problem='.length) ?? 'wszystkie';
-  if (!['1', '2', '3', '4', 'wszystkie'].includes(raw)) {
-    throw new Error(`--problem musi być 1|2|3|4|wszystkie, jest: "${raw}"`);
+  if (!['1', '2', '3', '4', '5', 'wszystkie'].includes(raw)) {
+    throw new Error(`--problem musi być 1|2|3|4|5|wszystkie, jest: "${raw}"`);
   }
   return raw as Problem;
 }
@@ -362,6 +368,176 @@ async function naprawCzlonkostwoRaid(
   return wstawione;
 }
 
+/* ── Problem 5: KAŻDY użytkownik organizacji bez wiersza organization_members ── */
+
+/**
+ * Problem 4 naprawia WYŁĄCZNIE właścicieli pozycji RAID (lokalnie: 7 osób).
+ * POMIAR 07.09 na bazie stanowiska (54400, `consultify_noc`) pokazał, że luka
+ * jest SZERSZA: w organizacji DBR77 jest 31 użytkowników z poprawnym
+ * `users.organization_id`, a tylko 1 wiersz w `organization_members` — czyli
+ * 30 osób bez członkostwa. Siódemka z problemu 4 to PODZBIÓR tej trzydziestki
+ * (ci, którzy akurat są właścicielami pozycji RAID); reszta jest niewidoczna
+ * dla każdego ekranu liczącego uprawnienia z `organization_members`.
+ *
+ * DLACZEGO TO WIDAĆ NA EKRANIE. Katalog nazwisk w UI bierze się z
+ * `GET /api/organizations/:orgId/members` → `OrganizationController.getMembers`
+ * → `organizationService.getActiveMembers` (SELECT z `organization_members`
+ * JOIN `users`, `status='ACTIVE'`). Kontroler NAJPIERW sprawdza, czy WOŁAJĄCY
+ * jest na tej liście — jeśli nie, zwraca 403 `ORG_MEMBERSHIP_REQUIRED`. Bez
+ * członkostwa zalogowany użytkownik dostaje pusty katalog, a
+ * `memberNameOrUnknown` (`src/hooks/useOrganizationMemberNames.ts`) pokazuje
+ * „Nieznany użytkownik" dla KAŻDEGO identyfikatora.
+ *
+ * ROLA — POMIAR, NIE ZAŁOŻENIE. Pierwotny plan brzmiał „wszystkim MEMBER, bo
+ * to najniższa rola, która przywraca dostęp". Czytanie kodu OBALIŁO ten plan:
+ * `organization_members.role` NIE jest tylko etykietą katalogu — NADPISUJE
+ * rolę z tokenu w `server/src/middleware/auth.middleware.ts` w trzech
+ * miejscach (~L870 `resolvedUserRole = membershipRole`, ~L903 `primaryRole`,
+ * ~L954 `fallbackRole`), a `normalizeRoleClaim` (L117) tylko przycina spacje —
+ * nie porównuje poziomów. Dalej `verifyAdmin`
+ * (`server/src/middleware/admin.middleware.ts` ~L204) liczy dostęp z
+ * `membershipRole || role`. Skutek wpisania wszystkim 'MEMBER': 19 osób
+ * z `users.role='ADMIN'` i właściciel z `users.role='OWNER'`, którzy DZIŚ
+ * działają na roli z tokenu (bo brak wiersza = brak nadpisania), zostaliby
+ * ZDEGRADOWANI do MEMBER. Uzupełnienie brakującego członkostwa ma przywracać
+ * dostęp, a nie odbierać — więc rola członkostwa ODWZOROWUJE `users.role`:
+ *
+ *     users.role = OWNER                      → OWNER
+ *     users.role = ADMIN | SUPERADMIN         → ADMIN
+ *     users.role = CONSULTANT                 → CONSULTANT
+ *     wszystko inne (MEMBER/TEAM_MEMBER/USER/
+ *     GUEST/puste)                            → MEMBER
+ *
+ * To odwzorowanie NIGDY nie podnosi: bierze poziom, który użytkownik już ma
+ * w `users.role` (źródło prawdy platformy, obecne w tokenie), i sprowadza go
+ * do wartości dopuszczonej przez CHECK `organization_members_role_check`
+ * (OWNER/ADMIN/MEMBER/CONSULTANT/USER/GUEST). SUPERADMIN celowo schodzi do
+ * ADMIN — nie ma go w CHECK i nie chcemy zapisywać platformowego superadmina
+ * jako właściciela tenanta (zob. AuthController L356).
+ *
+ * POZOSTAŁE POLA:
+ *   status='ACTIVE' — jedyny status widziany przez `getActiveMembers`
+ *                     i przez bramki `*StrictMembership`.
+ *   permission_scope — NIE ustawiamy; `parsePermissionScope`
+ *                     (orgContext.middleware.ts) traktuje NULL jak pusty
+ *                     zakres, czyli brak dodatkowych uprawnień.
+ *   invited_by_user_id — NULL (nikt nie zapraszał; to naprawa danych).
+ *
+ * BEZPIECZEŃSTWO: kryterium doboru to `users.organization_id = <org>` —
+ * dokładnie ta sama zasada, co w problemie 4 („nigdy dla obcych właścicieli").
+ * Użytkownik spoza organizacji nie dostaje członkostwa nigdy.
+ */
+interface KandydatCzlonkostwaOrg {
+  user_id: string;
+  email: string | null;
+  user_role: string | null;
+}
+
+/** Dozwolone przez CHECK `organization_members_role_check`. */
+const ROLE_CZLONKOSTWA = ['OWNER', 'ADMIN', 'MEMBER', 'CONSULTANT', 'USER', 'GUEST'] as const;
+type RolaCzlonkostwa = (typeof ROLE_CZLONKOSTWA)[number];
+
+/** `users.role` → rola członkostwa. Nigdy nie podnosi; nieznane schodzi do MEMBER. */
+export function rolaCzlonkostwaZRoliUzytkownika(userRole: string | null | undefined): RolaCzlonkostwa {
+  switch (String(userRole ?? '').trim().toUpperCase()) {
+    case 'OWNER':
+      return 'OWNER';
+    case 'ADMIN':
+    case 'SUPERADMIN':
+      return 'ADMIN';
+    case 'CONSULTANT':
+      return 'CONSULTANT';
+    default:
+      return 'MEMBER';
+  }
+}
+
+/** Kopia bezpieczeństwa PRZED zapisem — pełny stan `organization_members` organizacji. */
+async function kopiaCzlonkostwPrzed(c: PoolClient, orgId: string): Promise<string> {
+  const katalog = path.join(REPO_ROOT, 'evidence', 'czlonkostwa');
+  fs.mkdirSync(katalog, { recursive: true });
+  const host = (() => {
+    try {
+      return new URL(process.env.DATABASE_URL ?? '').host.replace(/[^A-Za-z0-9.-]/g, '_');
+    } catch {
+      return 'nieznany-host';
+    }
+  })();
+  const { rows, fields } = await c.query(
+    `SELECT * FROM organization_members WHERE organization_id = $1 ORDER BY created_at, id`,
+    [orgId]
+  );
+  const kolumny = fields.map((f) => f.name);
+  const naglowek = kolumny.join(',') + '\n';
+  const tresc = rows
+    .map((r) => kolumny.map((k) => csvCell((r as Record<string, unknown>)[k])).join(','))
+    .join('\n');
+  const sciezka = path.join(katalog, `organization_members-${orgId}-${host}-przed-${iso()}.csv`);
+  fs.writeFileSync(sciezka, naglowek + tresc + (tresc ? '\n' : ''));
+  console.log(`KOPIA PRZED (${rows.length} wierszy): ${sciezka}`);
+  return sciezka;
+}
+
+async function naprawCzlonkostwoOrganizacji(
+  c: PoolClient,
+  orgId: string,
+  apply: boolean,
+  wpisy: ManifestEntry[]
+): Promise<number> {
+  const { rows } = await c.query<KandydatCzlonkostwaOrg>(
+    `SELECT u.id AS user_id, u.email AS email, u.role AS user_role
+       FROM users u
+       LEFT JOIN organization_members om
+         ON om.user_id = u.id AND om.organization_id = u.organization_id
+      WHERE u.organization_id = $1 AND om.id IS NULL
+      ORDER BY u.email`,
+    [orgId]
+  );
+
+  const plan: WierszPlanu[] = rows.map((r) => ({
+    tabela: 'organization_members',
+    id: r.user_id,
+    obecna: `${r.email ?? r.user_id} — brak wiersza organization_members (users.role=${r.user_role ?? '?'})`,
+    proponowana: `INSERT organization_members (role=${rolaCzlonkostwaZRoliUzytkownika(r.user_role)}, status=ACTIVE, permission_scope=NULL)`,
+  }));
+  drukujIZapiszPlanCsv('problem5-czlonkostwo-organizacji', plan);
+  console.log(`Użytkownicy organizacji bez organization_members: ${rows.length}`);
+
+  if (!apply) return rows.length;
+  if (rows.length === 0) return 0;
+
+  await kopiaCzlonkostwPrzed(c, orgId);
+
+  let wstawione = 0;
+  for (const r of rows) {
+    const id = randomUUID();
+    const rola = rolaCzlonkostwaZRoliUzytkownika(r.user_role);
+    wpisy.push({
+      table: 'organization_members',
+      idColumn: 'id',
+      id,
+      action: 'delete', // rollback tego skryptu dla organization_members = DELETE wstawionego wiersza
+      before: {
+        id,
+        organization_id: orgId,
+        user_id: r.user_id,
+        role: rola,
+        status: 'ACTIVE',
+        invited_by_user_id: null,
+        permission_scope: null,
+      },
+    });
+    const wynik = await c.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, status, created_at)
+       VALUES ($1, $2, $3, $4, 'ACTIVE', NOW())
+       ON CONFLICT (organization_id, user_id) DO NOTHING`,
+      [id, orgId, r.user_id, rola]
+    );
+    wstawione += wynik.rowCount ?? 0;
+  }
+  return wstawione;
+}
+
 /* ──────────────────────────────── main ─────────────────────────────── */
 
 async function main(c: PoolClient, org: { id: string; name: string }, mode: { kind: string; manifest?: string }) {
@@ -412,6 +588,14 @@ async function main(c: PoolClient, org: { id: string; name: string }, mode: { ki
   if (problem === '4' || problem === 'wszystkie') {
     console.log('\n=== Problem 4: właściciele RAID bez organization_members ===');
     laczna += await naprawCzlonkostwoRaid(c, org.id, apply, wpisy);
+  }
+  // Problem 5 CELOWO nie wchodzi w `--problem=wszystkie`: jest nadzbiorem
+  // problemu 4 i dotyka KAŻDEGO użytkownika organizacji, więc uruchamia się
+  // wyłącznie jawnym `--problem=5`. Uruchomienie 4 i 5 razem jest bezpieczne
+  // (ON CONFLICT DO NOTHING + ponowny SELECT), ale liczby w logu by się dublowały.
+  if (problem === '5') {
+    console.log('\n=== Problem 5: użytkownicy organizacji bez organization_members ===');
+    laczna += await naprawCzlonkostwoOrganizacji(c, org.id, apply, wpisy);
   }
 
   console.log('');

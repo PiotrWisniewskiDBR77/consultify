@@ -1,0 +1,459 @@
+{
+  "version": 1,
+  "script": "napraw-jezyk-i-czlonkostwo",
+  "organizationId": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+  "organizationName": "DBR77",
+  "createdAt": "2026-09-07T03:19:09.350Z",
+  "entries": [
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "934fba46-2196-41b5-9932-af477850af57",
+      "action": "delete",
+      "before": {
+        "id": "934fba46-2196-41b5-9932-af477850af57",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "27f21af1-0564-4e20-b597-b42895054b19",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "d27f3d10-543c-4919-8310-2e755c1e6bbc",
+      "action": "delete",
+      "before": {
+        "id": "d27f3d10-543c-4919-8310-2e755c1e6bbc",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "e60062fb-cd33-41bf-bac2-f361aae2422a",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "20d32bba-78b0-49f7-9b47-ee0fad759382",
+      "action": "delete",
+      "before": {
+        "id": "20d32bba-78b0-49f7-9b47-ee0fad759382",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "55a7e55c-9c60-4214-8fc5-4a1e4f18d73c",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "76537c7d-3d6f-4c37-9c56-f93e3a2b7742",
+      "action": "delete",
+      "before": {
+        "id": "76537c7d-3d6f-4c37-9c56-f93e3a2b7742",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "cbafa6aa-35f7-48c8-8dce-45c63a5eb17a",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "fca95dfc-3e95-4bce-8843-ba6e608bda8e",
+      "action": "delete",
+      "before": {
+        "id": "fca95dfc-3e95-4bce-8843-ba6e608bda8e",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "61171659-5c19-4317-abe5-a0725c1db6b7",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "62a1a471-25be-49bd-bc7f-726070765d9d",
+      "action": "delete",
+      "before": {
+        "id": "62a1a471-25be-49bd-bc7f-726070765d9d",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "384333c8-7c19-41c2-878d-7dd3be083ba2",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "c93da526-046a-4864-b016-0851072e6cd8",
+      "action": "delete",
+      "before": {
+        "id": "c93da526-046a-4864-b016-0851072e6cd8",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_finance",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "9c69ec41-c5bf-4a2a-980b-32160f905afc",
+      "action": "delete",
+      "before": {
+        "id": "9c69ec41-c5bf-4a2a-980b-32160f905afc",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_it",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "749eca51-a538-4aa5-bd18-3d1d21495eb1",
+      "action": "delete",
+      "before": {
+        "id": "749eca51-a538-4aa5-bd18-3d1d21495eb1",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "aa350449-9b85-4d91-aef7-890032e348c6",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "2ceecf18-4161-47d1-a266-37b04ca264a0",
+      "action": "delete",
+      "before": {
+        "id": "2ceecf18-4161-47d1-a266-37b04ca264a0",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "208535ce-f7c0-4da6-9138-b51326fa5a39",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "ddca3f83-ae7f-4516-8c9c-eb83014df54b",
+      "action": "delete",
+      "before": {
+        "id": "ddca3f83-ae7f-4516-8c9c-eb83014df54b",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "71605fe5-0ad7-4f18-ba1f-6701f22fa37e",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "a1bf2cdf-e221-46a8-8442-e0ef7be752d6",
+      "action": "delete",
+      "before": {
+        "id": "a1bf2cdf-e221-46a8-8442-e0ef7be752d6",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "59919221-4563-4305-bcd4-802893e78dde",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "fd352940-0ffd-43f2-8cb4-d39a2df1a8e6",
+      "action": "delete",
+      "before": {
+        "id": "fd352940-0ffd-43f2-8cb4-d39a2df1a8e6",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "daeffc48-09e2-4979-bff8-d8c71beaea31",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "cc207186-22c8-4ffe-8465-c19605304775",
+      "action": "delete",
+      "before": {
+        "id": "cc207186-22c8-4ffe-8465-c19605304775",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "08acbed8-5cc3-41ed-bd22-e20c1fcae081",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "c028e8a1-87e2-49ae-95e0-667fabae77e9",
+      "action": "delete",
+      "before": {
+        "id": "c028e8a1-87e2-49ae-95e0-667fabae77e9",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "3ab90703-98cb-48c6-a7e9-d2cbe6bed3c6",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "c4a97f00-3cf1-43b3-965b-0b629d101cf7",
+      "action": "delete",
+      "before": {
+        "id": "c4a97f00-3cf1-43b3-965b-0b629d101cf7",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "26376438-7f48-4c39-939c-b430ec1d4681",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "b4b280c6-d7d0-4288-9259-1f43fc2b5c7d",
+      "action": "delete",
+      "before": {
+        "id": "b4b280c6-d7d0-4288-9259-1f43fc2b5c7d",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "c0a75ec3-4bb2-4a28-a12c-1b8f2532c0d0",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "588460da-8e5b-4a98-9c4a-76635b0abb03",
+      "action": "delete",
+      "before": {
+        "id": "588460da-8e5b-4a98-9c4a-76635b0abb03",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "e3be0976-096d-4024-87e8-bcd4afaafead",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "e5ad609e-b0ba-4d83-a548-ec581f35a19d",
+      "action": "delete",
+      "before": {
+        "id": "e5ad609e-b0ba-4d83-a548-ec581f35a19d",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "5009e749-75e5-4816-91c9-494f95bdf5d4",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "2b77a96d-0201-4eb5-8117-715213b4401d",
+      "action": "delete",
+      "before": {
+        "id": "2b77a96d-0201-4eb5-8117-715213b4401d",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "bed1f907-e36b-4d39-bb27-6656e18550bf",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "1f7154f4-d99b-4b13-a235-78e1c59e7fa5",
+      "action": "delete",
+      "before": {
+        "id": "1f7154f4-d99b-4b13-a235-78e1c59e7fa5",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_ops_lead",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "e263ca05-29af-4313-ba97-644ea364e671",
+      "action": "delete",
+      "before": {
+        "id": "e263ca05-29af-4313-ba97-644ea364e671",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "f99ee7a1-5071-46ba-8548-d2d3f72eaa3f",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "682a5785-ddc8-4f76-9f94-d2782732b337",
+      "action": "delete",
+      "before": {
+        "id": "682a5785-ddc8-4f76-9f94-d2782732b337",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "29ee3d62-565b-4f6e-87f8-96570a2e0d8b",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "2d498f95-67d3-48c6-8abb-ca4ce560e55b",
+      "action": "delete",
+      "before": {
+        "id": "2d498f95-67d3-48c6-8abb-ca4ce560e55b",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "e65607c0-be69-48dc-8b71-ba47c0772495",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "e1ab525b-0f9e-4d5e-a16d-ec2336e24929",
+      "action": "delete",
+      "before": {
+        "id": "e1ab525b-0f9e-4d5e-a16d-ec2336e24929",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "bf0f01a2-9ada-4cb8-a331-4dce1930e4f3",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "cf0876dc-8844-471f-8365-fdd2320295d2",
+      "action": "delete",
+      "before": {
+        "id": "cf0876dc-8844-471f-8365-fdd2320295d2",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "fa99c77f-f3da-4127-ba5e-fd7b5d6856e1",
+        "role": "OWNER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "1663d807-8ddf-4e9d-9c22-8d2f16f6a9e7",
+      "action": "delete",
+      "before": {
+        "id": "1663d807-8ddf-4e9d-9c22-8d2f16f6a9e7",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "c3d8b8ee-ef32-4cff-bf23-b10784475fde",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "aa183e3f-c01c-44ea-add3-8e7c6d33082c",
+      "action": "delete",
+      "before": {
+        "id": "aa183e3f-c01c-44ea-add3-8e7c6d33082c",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "aa0a5211-70ab-4654-816d-5ecdf56ca0a1",
+        "role": "MEMBER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "e575e8da-1c88-4bcd-93ec-8f70615b7320",
+      "action": "delete",
+      "before": {
+        "id": "e575e8da-1c88-4bcd-93ec-8f70615b7320",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "7003317c-df0a-48f5-aea0-c4c6da2cd02e",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    },
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "89cdb7d8-8271-4b56-954b-1de19a4d6ee6",
+      "action": "delete",
+      "before": {
+        "id": "89cdb7d8-8271-4b56-954b-1de19a4d6ee6",
+        "organization_id": "cc9db573-260f-4a19-927f-f3cc1fbaea38",
+        "user_id": "c1966071-13b4-4100-886d-8c3ea0687095",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    }
+  ]
+}

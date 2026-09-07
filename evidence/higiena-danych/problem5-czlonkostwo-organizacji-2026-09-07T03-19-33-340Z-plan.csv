@@ -1,0 +1,2 @@
+tabela,id,obecna_wartosc,proponowana_wartosc
+"organization_members","e91daa55-7657-4588-aa55-c7f1c8a34560","pawel.mroczkowski@dbr77.com — brak wiersza organization_members (users.role=OWNER)","INSERT organization_members (role=OWNER, status=ACTIVE, permission_scope=NULL)"

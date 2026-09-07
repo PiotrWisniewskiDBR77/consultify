@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "script": "napraw-jezyk-i-czlonkostwo",
+  "organizationId": "a3e05d4a-5397-419d-b486-8e44366c0063",
+  "organizationName": "DBR77",
+  "createdAt": "2026-09-07T03:20:44.328Z",
+  "entries": [
+    {
+      "table": "organization_members",
+      "idColumn": "id",
+      "id": "e18af8c6-408e-44f1-afbe-56b0d69c74c1",
+      "action": "delete",
+      "before": {
+        "id": "e18af8c6-408e-44f1-afbe-56b0d69c74c1",
+        "organization_id": "a3e05d4a-5397-419d-b486-8e44366c0063",
+        "user_id": "e91daa55-7657-4588-aa55-c7f1c8a34560",
+        "role": "OWNER",
+        "status": "ACTIVE",
+        "invited_by_user_id": null,
+        "permission_scope": null
+      }
+    }
+  ]
+}
