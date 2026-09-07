@@ -33,6 +33,10 @@ import {
   updateDecisionComment,
   updateDecisionRisk,
 } from '../services/decisionCollaborationService.js';
+import {
+  ESCALATION_MAX_LEVEL as DECISION_ESCALATION_MAX_LEVEL,
+  runDecisionEscalationTick,
+} from '../jobs/decisionEscalationJob.js';
 import { assertNotFinalized } from '../services/decisionOutcomeService.js';
 import {
   type DecisionPlaybook,
@@ -184,6 +188,8 @@ const normalizeStatus = (status?: string | null): string => {
       'rejected',
       'escalated',
       'cancelled',
+      // P16/R3 (DEC-453): „Nieaktualna" — czwarty wynik rejestru decyzji.
+      'superseded',
       'returned_for_clarification',
     ].includes(normalized)
   ) {
@@ -192,6 +198,10 @@ const normalizeStatus = (status?: string | null): string => {
   if (normalized === 'made') return 'approved';
   if (normalized === 'expired') return 'escalated';
   if (normalized === 'deferred') return 'pending';
+  // Aliasy rynkowe tej samej semantyki (Techno-PM „Abandoned", Asana
+  // „Obsolete") — mapowane na kanoniczne `superseded`, żeby dane wpisane
+  // innym słownikiem nie spadały cicho do `pending`.
+  if (normalized === 'obsolete' || normalized === 'abandoned') return 'superseded';
   return 'pending';
 };
 
@@ -218,6 +228,9 @@ const isDecisionStatusInput = (status?: string | null): boolean => {
     'cancelled',
     'made',
     'expired',
+    'superseded',
+    'obsolete',
+    'abandoned',
     'returned_for_clarification',
   ].includes(normalized);
 };
@@ -748,6 +761,18 @@ export class DecisionController {
       const blockedItemsCountSelect = hasDecisionImpacts
         ? `(SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker::text IN ('1','true'))`
         : `0`;
+      // P16/R3 (DEC-453): KROK eskalacji (0..3) — licznik, nie dotkliwość.
+      // `decisions.escalation_level` jest tekstem `none|amber|red` i jest
+      // NADPISYWANY niżej w tej samej funkcji z terminu/priorytetu/wpływu,
+      // więc nie może przechowywać kroku; krok żyje w `decision_escalation_log`
+      // (`MAX(to_level)`, brak wiersza = 0) — patrz decisionEscalationJob.ts.
+      // Podzapytanie jest bramkowane istnieniem tabeli: na środowisku bez niej
+      // kolumna zwraca 0 zamiast wywracać CAŁĄ listę decyzji (dokładnie ta
+      // rodzina defektu, którą opisuje komentarz przy `blockedItemsCountSelect`).
+      const hasEscalationLog = (await getTableColumns('decision_escalation_log')).has('to_level');
+      const escalationStepSelect = hasEscalationLog
+        ? `(SELECT COALESCE(MAX(el.to_level), 0) FROM decision_escalation_log el WHERE el.decision_id = d.id)`
+        : `0`;
       // Mirror the Initiatives `?source` filter semantics (e.g. ?source=interview_insight).
       const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
 
@@ -757,7 +782,8 @@ export class DecisionController {
           owner.first_name || ' ' || owner.last_name as owner_name,
           requester.first_name || ' ' || requester.last_name as requested_by_name,
           p.name as project_name,
-          ${blockedItemsCountSelect} as blocked_items_count
+          ${blockedItemsCountSelect} as blocked_items_count,
+          ${escalationStepSelect} as escalation_step
         FROM decisions d
         LEFT JOIN users owner ON d.decision_maker_id = owner.id
         LEFT JOIN users requester ON d.created_by = requester.id
@@ -892,6 +918,15 @@ export class DecisionController {
             relatedObjectType,
             relatedObjectId: relatedObjectIdValue,
             blockedItemsCount: Number(row.blocked_items_count ?? 0),
+            // P16/R3: pola, których rejestr „Decyzje i ryzyka" potrzebuje, żeby
+            // pokazać wynik rozstrzygnięcia BEZ drugiego zapytania per wiersz.
+            initiativeId: (row as any).initiative_id || undefined,
+            escalationStep: Number((row as any).escalation_step ?? 0),
+            escalationStepMax: DECISION_ESCALATION_MAX_LEVEL,
+            escalatedTo: (row as any).escalated_to || undefined,
+            decisionRationale: (row as any).decision_rationale || undefined,
+            decidedAt: (row as any).decided_at || undefined,
+            decidedBy: (row as any).decided_by || undefined,
           };
         })
       );
@@ -1574,7 +1609,7 @@ export class DecisionController {
       const isDeferredAction = requestedStatus === 'deferred';
       const normalizedStatus = normalizeStatus(statusInput || '');
       if (
-        !['approved', 'rejected', 'pending', 'returned_for_clarification'].includes(
+        !['approved', 'rejected', 'superseded', 'pending', 'returned_for_clarification'].includes(
           normalizedStatus
         )
       ) {
@@ -1927,16 +1962,71 @@ export class DecisionController {
         return;
       }
 
-      const nextOwner = escalateToUserId || currentDecision.decision_maker_id;
-      const escalationLevel =
-        normalizePriority(currentDecision.priority) === 'CRITICAL' ||
-        normalizeImpact(currentDecision.impact) === 'HIGH'
-          ? 'red'
-          : 'amber';
+      // P16/R3 (DEC-453) — TRZY POWODY, dla ktorych ten blok wyglada inaczej
+      // niz przed R3:
+      //
+      // 1. POZIOM TO KROK, NIE BARWA. Do R3 eskalacja wpisywala
+      //    `escalation_level = 'red' | 'amber'` wyliczone z priorytetu/wplywu —
+      //    czyli DOTKLIWOSC, nie „o ile podniesiono". Do tego `getDecisions`
+      //    nadpisuje te kolumne przy kazdym odczycie listy
+      //    (`computeEscalationLevel`), wiec slad recznej eskalacji znikal przy
+      //    pierwszym wejsciu na ekran. Krok (0->1->2->3: wlasciciel inicjatywy ->
+      //    PMO -> komitet) zyje teraz w `decision_escalation_log`, wspolnie z
+      //    automatem dobowym (decisionEscalationJob.ts) — jeden licznik, dwa
+      //    wyzwalacze.
+      // 2. DECYDENT NIE JEST PODMIENIANY. Poprzednia wersja robila
+      //    `decision_maker_id = nextOwner`, czyli eskalacja KASOWALA osobe, od
+      //    ktorej decyzja jest oczekiwana — a to jest dokladnie kolumna
+      //    „Decydent" w rejestrze. Adresat eskalacji idzie do `escalated_to`
+      //    (kolumna istniala i nikt jej nie zapisywal).
+      // 3. POWOD JEST WYMAGANY — jak przy rozstrzygnieciu.
+      const reasonText = String(reason || '').trim();
+      if (!reasonText) {
+        res.status(400).json({ error: 'Escalation reason is required', code: 'REASON_REQUIRED' });
+        return;
+      }
+
+      const levelRow = await queryHelpers.queryOne<{ current_level: string | number | null }>(
+        `SELECT COALESCE(MAX(to_level), 0) AS current_level FROM decision_escalation_log WHERE decision_id = ?`,
+        [id]
+      );
+      const currentLevel = Number(levelRow?.current_level ?? 0) || 0;
+      if (currentLevel >= DECISION_ESCALATION_MAX_LEVEL) {
+        res.status(409).json({
+          error: `Decision is already at the highest escalation level (${DECISION_ESCALATION_MAX_LEVEL})`,
+          code: 'ESCALATION_AT_MAX',
+          escalationStep: currentLevel,
+        });
+        return;
+      }
+      const nextLevel = currentLevel + 1;
+      const nextOwner =
+        escalateToUserId ||
+        (currentDecision as any).escalated_to ||
+        currentDecision.decision_maker_id;
 
       await queryHelpers.queryRun(
-        `UPDATE decisions SET status = 'escalated', escalation_level = ?, decision_maker_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [escalationLevel, nextOwner, id]
+        `INSERT INTO decision_escalation_log
+           (id, decision_id, organization_id, from_level, to_level, from_user_id, to_user_id,
+            reason, triggered_by, trigger_type, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'MANUAL', ?)`,
+        [
+          uuidv4(),
+          id,
+          orgId,
+          currentLevel,
+          nextLevel,
+          currentDecision.decision_maker_id ?? null,
+          nextOwner ?? null,
+          reasonText,
+          userId,
+          new Date().toISOString(),
+        ]
+      );
+
+      await queryHelpers.queryRun(
+        `UPDATE decisions SET status = 'escalated', escalated_to = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [nextOwner ?? null, id]
       );
 
       await queryHelpers.queryRun(
@@ -1947,11 +2037,65 @@ export class DecisionController {
           id,
           normalizeStatus(currentDecision.status),
           userId,
-          JSON.stringify({ notes: reason || 'Escalated', escalatedTo: nextOwner }),
+          JSON.stringify({
+            notes: reasonText,
+            escalatedTo: nextOwner,
+            fromLevel: currentLevel,
+            toLevel: nextLevel,
+          }),
         ]
       );
 
-      res.json({ id, message: 'Decision escalated', escalatedBy: userId });
+      res.json({
+        id,
+        message: 'Decision escalated',
+        escalatedBy: userId,
+        escalationStep: nextLevel,
+        escalationStepMax: DECISION_ESCALATION_MAX_LEVEL,
+        escalatedTo: nextOwner ?? null,
+      });
+    }
+  );
+
+  /**
+   * P16 / R3 (DEC-453) — RĘCZNE URUCHOMIENIE AUTOMATU ESKALACJI.
+   *
+   * `POST /api/decisions/escalation/run`  body: `{ dryRun?: boolean }`
+   *
+   * Ta sama funkcja, którą co dobę woła cron (`Scheduler` zadanie 46) — nie
+   * druga kopia reguły. Domyślnie **tryb suchy**: bez jawnego
+   * `dryRun: false` trasa TYLKO wypisuje, co zostałoby podniesione, i nie
+   * dotyka ani jednego wiersza. Wymóg P16 §8: pierwsze uruchomienie na
+   * stagingu wyłącznie po obejrzeniu tej listy.
+   *
+   * Zakres: WYŁĄCZNIE organizacja wołającego (nie globalny sweep) — admin
+   * jednej organizacji nie porusza danych innej.
+   */
+  static runEscalationSweep = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      if (!orgId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const dryRun = (req.body as { dryRun?: unknown })?.dryRun !== false;
+      const result = await runDecisionEscalationTick({ dryRun, organizationId: orgId });
+      res.json({
+        dryRun: result.dryRun,
+        escalated: result.escalated,
+        skippedAtMax: result.skippedAtMax,
+        skippedAlreadyToday: result.skippedAlreadyToday,
+        errors: result.errors,
+        maxLevel: DECISION_ESCALATION_MAX_LEVEL,
+        candidates: result.candidates.map((candidate) => ({
+          decisionId: candidate.decisionId,
+          title: candidate.title,
+          deadline: candidate.deadline,
+          status: candidate.status,
+          fromLevel: candidate.fromLevel,
+          toLevel: candidate.toLevel,
+        })),
+      });
     }
   );
 

@@ -24,6 +24,14 @@ export const DECISION_OUTCOME_STATUSES = [
   'pending',
   'approved',
   'rejected',
+  // P16/R3 (DEC-453, AUDYT_RYNKU_PMO_20260907 §4.3): czwarty wynik rejestru
+  // decyzji — „Nieaktualna". Wzorzec rynkowy: Techno-PM „Abandoned — can be
+  // used when the decision is not required anymore". Wartość WIRE jest
+  // `superseded`; kolumna `decisions.status` jest tekstowa, więc nie wymaga
+  // migracji. To NIE jest `cancelled`: `cancelled` to miękkie archiwum
+  // (deleteDecision, rekord znika z rejestru), a `superseded` to ROZSTRZYGNIĘCIE
+  // — wpis zostaje widoczny w rejestrze z uzasadnieniem, jak approved/rejected.
+  'superseded',
   'returned_for_clarification',
   'escalated',
   'cancelled',
@@ -41,7 +49,10 @@ export type DecisionOutcomeStatus = (typeof DECISION_OUTCOME_STATUSES)[number];
  */
 export function isTerminalDecisionOutcome(status: string | null | undefined): boolean {
   const s = String(status || '').toLowerCase();
-  return s === 'approved' || s === 'rejected';
+  // P16/R3: `superseded` jest terminalne z tego samego powodu co approved/
+  // rejected — „wpis nieusuwalny" (§4.3, wzorzec Forecast: „It is not possible
+  // to delete a status entry… resolve by adding a new entry").
+  return s === 'approved' || s === 'rejected' || s === 'superseded';
 }
 
 /**
@@ -55,6 +66,9 @@ const DECIDE_TARGET_STATUSES: ReadonlySet<string> = new Set([
   'pending',
   'approved',
   'rejected',
+  // P16/R3: „Nieaktualna" jest rozstrzygnięciem, więc idzie tą samą trasą
+  // (`decide`) i tą samą bramką uzasadnienia co Rozstrzygnij/Odrzuć.
+  'superseded',
   'returned_for_clarification',
 ]);
 
@@ -72,7 +86,10 @@ export function isValidDecideTarget(status: string | null | undefined): boolean 
  */
 export function requiresRationale(targetStatus: string): boolean {
   const s = targetStatus.toLowerCase();
-  return s === 'approved' || s === 'rejected';
+  // P16/R3: wszystkie TRZY akcje rozstrzygające z zakładki „Decyzje i ryzyka"
+  // (Rozstrzygnij / Odrzuć / Nieaktualna) wymagają uzasadnienia — decyzja bez
+  // jednego zdania „dlaczego" nie zapisuje się wcale (§4.3, kolumna MVP).
+  return s === 'approved' || s === 'rejected' || s === 'superseded';
 }
 
 export interface OutcomeTransitionResult {

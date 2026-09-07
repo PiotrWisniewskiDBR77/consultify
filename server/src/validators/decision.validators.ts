@@ -82,14 +82,24 @@ export const CreateDecisionSchema = z.object({
 
 export const DecideSchema = z
   .object({
-    decision: z.enum(['approved', 'rejected', 'deferred']).optional(),
+    // P16/R3 (DEC-453): `superseded` = „Nieaktualna" — trzecie rozstrzygnięcie
+    // z rejestru „Decyzje i ryzyka" (obok Rozstrzygnij/Odrzuć). Ta sama trasa
+    // i ta sama bramka uzasadnienia; słownik serwera: decisionOutcomeService.ts.
+    decision: z.enum(['approved', 'rejected', 'deferred', 'superseded']).optional(),
     // MW-DEC-001: RETURNED_FOR_CLARIFICATION added to the OUTCOME axis
     // (decisions.status) — see decisionOutcomeService.ts. PENDING/ESCALATED
     // kept for backward compatibility with existing callers; ESCALATED is
     // rejected downstream by decisionOutcomeService (escalation stays on its
     // own dedicated endpoint/axis, untouched by this schema).
     status: z
-      .enum(['APPROVED', 'REJECTED', 'PENDING', 'ESCALATED', 'RETURNED_FOR_CLARIFICATION'])
+      .enum([
+        'APPROVED',
+        'REJECTED',
+        'SUPERSEDED',
+        'PENDING',
+        'ESCALATED',
+        'RETURNED_FOR_CLARIFICATION',
+      ])
       .optional(),
     rationale: z.string().min(1).max(2000).optional(),
     outcome: z.string().max(2000).optional(),
@@ -175,7 +185,10 @@ export const ReplaceDecisionStakeholdersSchema = z.object({
 });
 
 export const EscalateDecisionSchema = z.object({
-  reason: z.string().max(500).optional(),
+  // P16/R3 (DEC-453): powód eskalacji jest WYMAGANY — jak przy rozstrzygnięciu.
+  // `min(1)` blokuje pusty string na walidatorze; kontroler dodatkowo odrzuca
+  // sam biały znak (`trim()`), żeby spacja nie przechodziła za uzasadnienie.
+  reason: z.string().min(1).max(500),
   escalateToUserId: z.string().optional(),
 });
 
