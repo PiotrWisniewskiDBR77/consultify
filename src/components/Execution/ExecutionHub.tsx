@@ -106,6 +106,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
+import { isAdminOwnerOrSuperAdminRole } from '@/utils/roleGuards';
 
 import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
@@ -785,6 +786,11 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
       ['all', t('common.all', 'All')],
       ['needs-review', t('execution.menu3.reports.needsReview', 'Needs review')],
       ['published', t('execution.menu3.reports.published', 'Published')],
+      // P16-R6 (D6/D7): czwarty chip — „Definicje (N)" liczy CAŁY katalog
+      // (12 pozycji, 4 MVP + 8 Fala 2) i przełącza widok na katalog, ten sam
+      // efekt co pigułka Raporty|Definicje w Menu 2 (`ExecutionReportsSurface`
+      // synchronizuje `registerMode` z `activePreset==='definitions'`).
+      ['definitions', t('execution.menu3.reports.definitions', 'Definitions')],
     ].map(([id, label]) => ({ id, label })),
     // DEC-426 (1.1-E-1, właściciel 06.09): Kokpit menedżera nie miał Menu 3 —
     // dwa panele obok siebie („Co nam grozi" / „Co muszę rozstrzygnąć") są
@@ -876,9 +882,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [resourcesFilterControl, setResourcesFilterControl] = useState<React.ReactNode>(null);
   const [controlFilterControl, setControlFilterControl] = useState<React.ReactNode>(null);
   // 1.12-R4b — Poziom (dropdown Menu2PresetDropdown) + przełącznik
-  // Raporty|Definicje + akcje zaawansowane, zarejestrowane przez
-  // `ExecutionReportsSurface` samo, 1:1 z work/resources/control powyżej.
+  // Raporty|Definicje, zarejestrowane przez `ExecutionReportsSurface` samo,
+  // 1:1 z work/resources/control powyżej.
   const [reportsFilterControl, setReportsFilterControl] = useState<React.ReactNode>(null);
+  // P16-R6 (D6): kebab Menu 3 z akcjami deweloperskimi Raportów („Nowa
+  // definicja"/„Kontrakt raportu (zaawansowane)") — `ExecutionReportsSurface`
+  // renderuje go WYŁĄCZNIE dla ADMIN/OWNER i rejestruje tutaj do prawego
+  // slotu Menu 3 (`StandardModuleBar.menu3Right`), ten sam wzorzec co
+  // `reportsFilterControl` powyżej dla Menu 2.
+  const [reportsMenu3Control, setReportsMenu3Control] = useState<React.ReactNode>(null);
   // DEC-397b (1.1-K6): klik wiersza / kebab „Podgląd" po zamknięciu panelu
   // (X) mają go ponownie otworzyć — patrz InboxContent.tsx (K5, 2f5161f3b4).
   const jedenPanel = useJedenPanel();
@@ -5878,6 +5890,8 @@ Please return:
           activePreset={canonicalMenu3Preset.reports}
           onCountsChange={menu3CountHandlers.reports}
           onRegisterFilterControl={setReportsFilterControl}
+          onRegisterMenu3Control={setReportsMenu3Control}
+          isAdmin={isAdminOwnerOrSuperAdminRole(currentUser?.role)}
         />
       );
     // Rollout tab manages its own data + loading/error states independently of
@@ -6186,6 +6200,12 @@ Please return:
         viewModes={availableViewModes}
         commandRowContent={undefined}
         commandRowRightContent={undefined}
+        // P16-R6 (D6): prawy slot Menu 3 — kebab „Nowa definicja"/„Kontrakt
+        // raportu (zaawansowane)", ADMIN/OWNER only, zarejestrowany przez
+        // `ExecutionReportsSurface` (patrz `reportsMenu3Control` powyżej).
+        // Puste na każdej innej zakładce — zero zmian dla list/work/
+        // resources/control/summary.
+        menu3Right={activeTab === 'reports' ? reportsMenu3Control : undefined}
         chips={
           /*
            * 1.12-R1 (A): PRZYCZYNA martwego Menu 3 „Realizacji" — chipy były

@@ -12841,7 +12841,8 @@
         "partialStale": "Częściowe/nieaktualne",
         "published": "Opublikowane",
         "failed": "Nieudane",
-        "recent": "Ostatnie uruchomienia"
+        "recent": "Ostatnie uruchomienia",
+        "definitions": "Definicje"
       },
       "governance": {
         "decisions": "Decyzje",
@@ -45819,7 +45820,9 @@
       },
       "runs": {
         "title": "Brak raportów",
-        "body": "Kliknij „Nowy raport\", wybierz poziom i okres — migawka powstanie z realnych danych realizacji."
+        "body": "Kliknij „Nowy raport\", wybierz poziom i okres — migawka powstanie z realnych danych realizacji.",
+        "tilesTitle": "Wygeneruj pierwszy raport",
+        "tilesBody": "Wybierz jeden z czterech raportów startowych — migawka powstanie z realnych danych realizacji."
       }
     },
     "narrative": {

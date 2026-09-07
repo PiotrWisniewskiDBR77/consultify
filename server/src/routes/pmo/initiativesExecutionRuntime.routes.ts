@@ -121,6 +121,8 @@ import {
   type EffectiveGovernancePolicy,
   PostgresGovernancePolicyResolver,
 } from '../../domain/initiatives-execution/postgresGovernancePolicyResolver.js';
+import { requireOrgRole } from '../../middleware/rbac.middleware.js';
+
 import { PostgresInitiativeReader } from '../../domain/initiatives-execution/postgresInitiativeReader.js';
 import { PostgresAsOfVersionReader } from '../../domain/initiatives-execution/postgresAsOfVersionReader.js';
 import { PostgresMaterialCommandUnitOfWork } from '../../domain/initiatives-execution/postgresMaterialCommandUnitOfWork.js';
@@ -5492,6 +5494,13 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/report-definitions/:definitionId',
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16-R6 (D6): definicje raportów są
+    // pisane z warsztatu deweloperskiego (Menu 3 kebab, tylko ADMIN/OWNER w
+    // UI — `ExecutionReportsSurface.tsx`). Pomiar 07.09 zastał TĘ trasę bez
+    // ograniczenia roli (grep `role` w tym pliku = zero trafień) — MEMBER
+    // mógł ją wywołać wprost z konsoli mimo ukrytego przycisku. Bramka po
+    // stronie serwera, nie tylko ukryty przycisk w UI.
+    requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req),
         parsed = ReportDefinitionCreateSchema.safeParse(req.body);
@@ -5531,6 +5540,10 @@ export function createInitiativesExecutionRuntimeRouter(
   );
   router.post(
     '/report-definitions/:definitionId/transitions',
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16-R6 (D6) — patrz komentarz przy
+    // POST /report-definitions/:definitionId powyżej: sam ukryty przycisk w
+    // UI nie jest bramką.
+    requireOrgRole('admin'),
     asyncHandler(async (req, res) => {
       const actor = actorFromRequest(req),
         parsed = ReportDefinitionTransitionSchema.safeParse(req.body);

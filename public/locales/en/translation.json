@@ -13382,7 +13382,8 @@
         "partialStale": "Partial/stale",
         "published": "Published",
         "failed": "Failed",
-        "recent": "Recent runs"
+        "recent": "Recent runs",
+        "definitions": "Definitions"
       },
       "governance": {
         "decisions": "Decisions",
@@ -43155,7 +43156,9 @@
       },
       "runs": {
         "title": "No reports",
-        "body": "Click “New report”, pick a level and a period — the snapshot is built from real delivery data."
+        "body": "Click “New report”, pick a level and a period — the snapshot is built from real delivery data.",
+        "tilesTitle": "Generate your first report",
+        "tilesBody": "Pick one of the four starter reports — the snapshot is built from real delivery data."
       }
     },
     "narrative": {
