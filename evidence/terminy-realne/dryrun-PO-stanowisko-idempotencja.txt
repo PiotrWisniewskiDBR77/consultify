@@ -1,0 +1,16 @@
+2026-09-07 05:20:12:2012 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-07 05:20:12:2012 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-07 05:20:12:2012 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-07 05:20:12:2012 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-07 05:20:12:2012 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+PLAN · napraw-terminy-inicjatyw · DBR77 (cc9db573-260f-4a19-927f-f3cc1fbaea38) · dry-run · etykieta=stanowisko
+
+POMIAR · 72 inicjatyw w organizacji
+  bez sensu wobec statusu i dzisiejszej daty : 0
+  plan bez planu bazowego („—" w Odchyleniu) : 0
+  rozjazd plan bazowy vs plan bieżący        : 0
+  licznik przesunięć ≠ 0                     : 0
+  wpisy w dzienniku re-baseline              : 0
+  pominięte (mają zatwierdzony re-baseline)  : 0
+
+  ZERO ZMIAN — terminy są już zgodne z regułami.

@@ -61,6 +61,66 @@ describe('RAG inicjatywy', () => {
   });
 
   /*
+   * 07.09 — SPRZECZNOŚĆ „+40 obok Na czas". Kolumna „Odchylenie (dni)" mierzy
+   * przesunięcie ZOBOWIĄZANIA (od planu bazowego), RAG mierzył wyłącznie
+   * dystans do DZISIEJSZEGO terminu. Wiersz z przesuniętym o 40 dni końcem
+   * pokazywał więc „+40" crimsonem i „Na czas" zielenią naraz — dwie liczby
+   * o różnych pytaniach, bez zaznaczenia tego czytelnikowi. Przesunięte
+   * zobowiązanie to RYZYKO → amber, nie red (czerwień zostaje dla terminu
+   * faktycznie przekroczonego).
+   */
+  it('przesunięty termin (odchylenie > 0) = AMBER, nie zielone „Na czas"', () => {
+    expect(
+      initiativeRag({ baselineEndDate: dayShift(49), plannedEndDate: dayShift(89) }, NOW)
+    ).toBe('amber');
+  });
+
+  it('plan zgodny z baseline’em i termin daleko = zielony (bez zmiany)', () => {
+    expect(
+      initiativeRag({ baselineEndDate: dayShift(40), plannedEndDate: dayShift(40) }, NOW)
+    ).toBe('green');
+  });
+
+  it('termin przyspieszony (odchylenie < 0) zostaje zielony', () => {
+    expect(
+      initiativeRag({ baselineEndDate: dayShift(89), plannedEndDate: dayShift(40) }, NOW)
+    ).toBe('green');
+  });
+
+  /*
+   * 07.09 — POMIAR NA STANOWISKU po uporządkowaniu terminów: 9 inicjatyw
+   * ZAMKNIĘTYCH dostało (zgodnie z regułą właściciela) koniec planu
+   * w przeszłości i natychmiast zaświeciło „+195 / +331 / +229" crimsonem
+   * obok RAG „Po terminie" — mimo że plan bazowy był równy bieżącemu, czyli
+   * poślizgu nie było żadnego. Praca zakończona nie opóźnia się dalej.
+   */
+  it('inicjatywa ZAKOŃCZONA nie jest „po terminie" i nie zbiera poślizgu', () => {
+    const zamknieta = {
+      status: 'CLOSED',
+      baselineEndDate: dayShift(-200),
+      plannedEndDate: dayShift(-200),
+    };
+    expect(initiativeRag(zamknieta, NOW)).toBe('green');
+    expect(initiativeDeviationDays(zamknieta, NOW)).toBe(0);
+    expect(initiativeDeviationDays({ ...zamknieta, status: 'CANCELLED' }, NOW)).toBe(0);
+    expect(initiativeDeviationDays({ ...zamknieta, status: 'ARCHIVED' }, NOW)).toBe(0);
+  });
+
+  it('zakończona z FAKTEM późniejszym niż zobowiązanie — poślizg zostaje pokazany', () => {
+    expect(
+      initiativeDeviationDays(
+        {
+          status: 'CLOSED',
+          baselineEndDate: dayShift(-200),
+          plannedEndDate: dayShift(-200),
+          actualEndDate: dayShift(-180),
+        },
+        NOW
+      )
+    ).toBe(20);
+  });
+
+  /*
    * 1.12-R3 — TEN TEST ZMIENIŁ TREŚĆ ŚWIADOMIE.
    * Do 06.09 sprawdzał, że odchylenie liczy się od `plannedEndDate` („−4"
    * znaczyło „zostały 4 dni"). To była zła miara: wystarczyło przesunąć
