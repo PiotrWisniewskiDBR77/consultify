@@ -49,9 +49,39 @@ export function requireCanonicalExecutionWriter(
  * execution subresources; it must not turn the whole Initiative product into
  * a read-only surface.
  */
+/**
+ * ZAWEZENIE 07.09 (DEC-453) — retirement nie moze wyprzedzac nastepcy.
+ *
+ * 26A mowi: mutacje maja wchodzic przez Runtime-v1, zeby byl DOKLADNIE JEDEN
+ * writer pracy wykonawczej. Ta lista przez 19 dni wymieniala jednak takze
+ * zasoby, dla ktorych kanoniczny writer NIE ISTNIAL albo pisal do INNEGO
+ * modelu odczytu niz ten, ktory czyta ekran. Skutek zmierzony na zywo:
+ * `Dodaj element` w RAID, kamieniach milowych, zasobach, planach obsady,
+ * pozycjach budzetu, rolach bram i przeniesieniu inicjatywy odpowiadalo 409 i
+ * NIC sie nie dzialo. Wlasciciel cofnal odbior Inicjatyw i Realizacji.
+ *
+ * Zasada, ktora ta lista teraz realizuje: sciezka zostaje wycofana WYLACZNIE
+ * wtedy, gdy istnieje kanoniczna komenda Runtime-v1 pisząca do TEGO SAMEGO
+ * modelu odczytu — albo gdy nikt jej nie wola.
+ *
+ * WYCOFANE, bo maja sprawdzonego nastepce:
+ *   `raid` -> POST/PATCH/DELETE
+ *   /api/initiatives/runtime-v1/initiatives/:id/raid-items/:raidItemId
+ *   (pisze do tej samej tabeli `raid_items`, ktora czyta `GET .../raid`;
+ *    dowod: zapisyInicjatyw.raidCanonical.pg.test.ts).
+ *
+ * WYCOFANE, bo NIKT ICH NIE WOLA (zmierzone grepem po `src/`, 0 wolaczy):
+ *   start-execution, block, unblock, lifecycle-*, apply-template,
+ *   apply-blueprint. Otwieranie martwej powierzchni nic nie daje.
+ *
+ * PRZYWROCONE (nastepcy brak lub pisze do innego modelu odczytu):
+ *   milestones, resources, staffing-plans, budget-items, gate-roles, move.
+ *   Kazda z nich wraca na liste wycofanych DOPIERO razem z kanoniczna
+ *   komenda, ktorej zapis widac w tym samym czytniku co dzis.
+ */
 const LEGACY_INITIATIVE_EXECUTION_WRITE_PATHS = [
-  /^\/[^/]+\/(?:start-execution|block|unblock|move)\/?$/,
-  /^\/[^/]+\/(?:milestones|resources|staffing-plans|budget-items|raid|gate-roles)(?:\/.*)?$/,
+  /^\/[^/]+\/(?:start-execution|block|unblock)\/?$/,
+  /^\/[^/]+\/raid(?:\/.*)?$/,
   /^\/[^/]+\/(?:lifecycle-transition-proposals|lifecycle-transition-executions|lifecycle-gate-decisions)(?:\/.*)?$/,
   /^\/[^/]+\/(?:apply-template|apply-blueprint)\/?$/,
 ];

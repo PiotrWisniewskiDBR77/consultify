@@ -13,7 +13,6 @@ import TaskControllerRaw from '../../controllers/TaskController.js';
 const TaskController = TaskControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
-import { requireCanonicalExecutionWriter } from '../../middleware/executionSpineLegacyReadOnly.middleware.js';
 import { requireTaskCapability } from '../../middleware/effectiveCapability.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
@@ -60,11 +59,25 @@ router.use(requireOrgAccess());
 
 // Apply demo context middleware (switches org to demo org if x-demo-mode header is set)
 router.use(demoContextMiddleware);
-// AMD-EXE-SPINE-AUTHORITY-004: retain the legacy PMO task read model during
-// cutover, but route every mutation through the receipt-backed Runtime-v1
-// writer. This runs after auth and tenant resolution to avoid leaking route
-// availability to an unauthenticated or foreign principal.
-router.use(requireCanonicalExecutionWriter);
+// AMD-EXE-SPINE-AUTHORITY-004 (26A) — BRAMKA ZDJETA 07.09, DEC-453.
+//
+// Ta jedna linia odpowiadala 409 na KAZDY zapis calego routera `/api/tasks`:
+// tworzenie i edycje zadania, przeciagniecie na kanbanie Realizacji
+// (`ExecutionHub` -> `PATCH /tasks/:id`), komentarze, listy kontrolne,
+// zaleznosci, przeniesienia. Wlasciciel zglosil to jako „realizacja nie
+// dziala" i cofnal odbior modulu.
+//
+// Kanoniczny nastepca (`/api/initiatives/runtime-v1/execution-cases/:caseId/
+// tasks/:taskId`) ISTNIEJE, ale pisze do zdarzeniowego `ie_aggregate_state`,
+// a NIE do tabeli `tasks`, ktora czyta cale UI Realizacji i Mojej Pracy
+// (zmierzone: `postgresMaterialCommandUnitOfWork.ts` nie ma ani jednego
+// `INSERT/UPDATE` na `tasks`). Bramka wiec nie przekierowywala ruchu — po
+// prostu go kasowala. To nie jest cutover, to jest wylaczona funkcja.
+//
+// Bramka wraca tutaj DOPIERO wtedy, gdy kanoniczna komenda bedzie widoczna w
+// tym samym modelu odczytu, z ktorego korzysta ekran. Do tego czasu jedynym
+// uczciwym stanem jest dzialajacy zapis legacy.
+// Patrz: server/src/middleware/executionSpineLegacyReadOnly.middleware.ts
 
 // ==========================================
 // TASK CRUD
