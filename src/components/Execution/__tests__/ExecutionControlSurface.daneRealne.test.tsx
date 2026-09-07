@@ -27,7 +27,7 @@
  *     i priorytetu, a nie „o ile podniesiono".
  *   · licznik presetu „Po terminie" liczy TYLKO decyzje nierozstrzygnięte.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -142,11 +142,25 @@ const INICJATYWY = [
   { id: 'ini-3', name: 'Zamknięta', status: 'DONE', ownerId: 'osoba-3' },
 ];
 
+/**
+ * Jedna atrapa API dla trzech źródeł zakładki (P16/R5): inicjatywy, sygnały
+ * opóźnień i — domyślnie — rejestr decyzji. `decyzje` podaje przypadek.
+ */
+const odpowiedz = (sciezka: string, decyzje: unknown): unknown =>
+  sciezka === '/initiatives'
+    ? INICJATYWY
+    : sciezka === '/execution-control/delay-signals'
+      ? { signals: [], count: 0 }
+      : decyzje;
+
 beforeEach(() => {
   vi.clearAllMocks();
-  apiGet.mockImplementation((sciezka: string) =>
-    Promise.resolve(sciezka === '/initiatives' ? INICJATYWY : DECYZJE)
-  );
+  // [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: atrapa musi ROZRÓŻNIAĆ trzecie
+  // źródło. Bez tej gałęzi `/execution-control/delay-signals` dostawał listę
+  // DECYZJI i chip „Sygnały" pokazywał 27 zamiast 0 — atrapa karmiła ekran nie
+  // tym, co czyta serwer. `sygnalyAtrapa` trzyma to w jednym miejscu, bo
+  // pojedyncze przypadki nadpisują `apiGet` własnymi implementacjami.
+  apiGet.mockImplementation((sciezka: string) => Promise.resolve(odpowiedz(sciezka, DECYZJE)));
   getOrganizationMembers.mockResolvedValue([
     { userId: 'osoba-1', name: 'Anna Kowalska' },
     { userId: 'osoba-2', name: 'Marek Nowak' },
@@ -167,6 +181,25 @@ const zamontuj = (preset = 'decyzje', onCountsChange?: (c: Record<string, number
       <ExecutionControlSurface activePreset={preset} onCountsChange={onCountsChange} />
     </MemoryRouter>
   );
+
+/**
+ * [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: wariant montujący TAKŻE węzeł
+ * Menu 2. Filtr terminu („Po terminie") nie jest rysowany przez samą
+ * powierzchnię — powierzchnia REJESTRUJE go u gospodarza
+ * (`onRegisterFilterControl`), dokładnie jak CTA „Nowa decyzja" w R3.
+ */
+const zamontujZMenu2 = (preset = 'decyzje') => {
+  const Gospodarz: React.FC = () => {
+    const [kontrolka, setKontrolka] = React.useState<React.ReactNode>(null);
+    return (
+      <MemoryRouter>
+        <div data-testid="execution-menu2">{kontrolka}</div>
+        <ExecutionControlSurface activePreset={preset} onRegisterFilterControl={setKontrolka} />
+      </MemoryRouter>
+    );
+  };
+  return render(<Gospodarz />);
+};
 
 const wierszeZ = (fragment: string) => {
   const tabela = document.querySelector('table');
@@ -190,12 +223,10 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
   it('decyzja ARCHIWALNA (CANCELLED) nie wchodzi do rejestru', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : [
-              ...DECYZJE,
-              { id: 'arch-1', title: 'Decyzja usunięta', status: 'CANCELLED', isOverdue: false },
-            ]
+        odpowiedz(sciezka, [
+          ...DECYZJE,
+          { id: 'arch-1', title: 'Decyzja usunięta', status: 'CANCELLED', isOverdue: false },
+        ])
       )
     );
     zamontuj('decyzje');
@@ -216,11 +247,12 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
   it('kolumna Eskalacja pokazuje KROK z licznika serwera, nie barwę (P16/R3)', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : DECYZJE.map((d, i) =>
-              d.status === 'ESCALATED' ? { ...d, escalationStep: i < 2 ? 3 : 1 } : d
-            )
+        odpowiedz(
+          sciezka,
+          DECYZJE.map((d, i) =>
+            d.status === 'ESCALATED' ? { ...d, escalationStep: i < 2 ? 3 : 1 } : d
+          )
+        )
       )
     );
     zamontuj('decyzje');
@@ -266,30 +298,45 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
     expect(screen.getAllByText('Ryzyko').length).toBeGreaterThan(0); // etykieta typu
   });
 
-  it('preset „Po terminie" liczy TYLKO decyzje nierozstrzygnięte (P16/R3)', async () => {
+  /*
+    [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: „Po terminie" NIE JEST JUŻ
+    PRESETEM MENU 3 — zszedł do Menu 2 jako filtr terminu, bo kanon Triady
+    dopuszcza najwyżej trzy chipy, a §4 D4 wymaga trzeciego chipa „Sygnały".
+    REGUŁA, której ten test pilnował, ZOSTAJE BEZ ZMIAN (decyzja rozstrzygnięta
+    po terminie nie jest zaległością) — zmienia się wyłącznie miejsce, z którego
+    użytkownik ją włącza, więc test steruje teraz filtrem, a nie presetem.
+    Sam filtr sprawdza `ExecutionControlSurface.raidSygnaly.test.tsx`.
+  */
+  it('filtr „Po terminie" liczy TYLKO decyzje nierozstrzygnięte (P16/R3)', async () => {
     apiGet.mockImplementation((sciezka: string) =>
       Promise.resolve(
-        sciezka === '/initiatives'
-          ? INICJATYWY
-          : [
-              ...DECYZJE,
-              // Rozstrzygnięta PO TERMINIE — jest w rejestrze, ale nie jest
-              // już zaległością: preset „Po terminie" ma jej NIE liczyć.
-              {
-                id: 'done-late',
-                title: 'Decyzja rozstrzygnięta po terminie',
-                status: 'APPROVED',
-                dueDate: dzien(-30),
-                isOverdue: true,
-                daysOverdue: 30,
-              },
-            ]
+        odpowiedz(sciezka, [
+          ...DECYZJE,
+          // Rozstrzygnięta PO TERMINIE — jest w rejestrze, ale nie jest już
+          // zaległością: filtr „Po terminie" ma jej NIE liczyć.
+          {
+            id: 'done-late',
+            title: 'Decyzja rozstrzygnięta po terminie',
+            status: 'APPROVED',
+            dueDate: dzien(-30),
+            isOverdue: true,
+            daysOverdue: 30,
+          },
+        ])
       )
     );
-    zamontuj('po-terminie');
+    const { getByTestId } = zamontujZMenu2('decyzje');
     await waitFor(() => expect(screen.getByText('Decyzja po terminie 0')).toBeInTheDocument());
+    // Rozstrzygnięta po terminie JEST w rejestrze (wpis nieusuwalny)…
+    expect(screen.getByText('Decyzja rozstrzygnięta po terminie')).toBeInTheDocument();
+    // …ale po włączeniu filtru terminu znika, bo zaległością już nie jest.
+    const filtr = getByTestId('execution-governance-due-filter');
+    fireEvent.click(within(filtr).getByRole('button'));
+    fireEvent.click(await screen.findByText(/^Po terminie/));
+    await waitFor(() =>
+      expect(screen.queryByText('Decyzja rozstrzygnięta po terminie')).toBeNull()
+    );
     expect(wierszeZ('Decyzja po terminie')).toHaveLength(12);
-    expect(screen.queryByText('Decyzja rozstrzygnięta po terminie')).toBeNull();
   });
 
   it('liczniki Menu 3 to dokładnie trzy presety z realnymi liczbami', async () => {
@@ -299,9 +346,11 @@ describe('1.12-R1 (C) — rejestr decyzji i ryzyk', () => {
       expect((onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>)?.decyzje).toBe(27)
     );
     const ostatnie = onCountsChange.mock.calls.at(-1)?.[0] as Record<string, number>;
-    expect(Object.keys(ostatnie).sort()).toEqual(['decyzje', 'po-terminie', 'ryzyka']);
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16/R5: trzeci chip to „Sygnały",
+    // a nie „Po terminie" (ten zszedł do filtru Menu 2). Nadal DOKŁADNIE trzy.
+    expect(Object.keys(ostatnie).sort()).toEqual(['decyzje', 'ryzyka', 'sygnaly']);
     expect(ostatnie.ryzyka).toBe(16);
-    expect(ostatnie['po-terminie']).toBe(12);
+    expect(ostatnie.sygnaly).toBe(0); // ta atrapa nie zwraca sygnałów opóźnień
   });
 
   it('nie rysuje pustej tabeli interwencji, gdy runtime-v1 ma 0 rekordów', async () => {

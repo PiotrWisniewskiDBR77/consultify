@@ -1,0 +1,9 @@
+{
+  "nazwa": "podglad-raid",
+  "opis": "Podglad pozycji RAID: inicjatywa, p, w, ekspozycja, status + akcje",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:27:27.606Z"
+}

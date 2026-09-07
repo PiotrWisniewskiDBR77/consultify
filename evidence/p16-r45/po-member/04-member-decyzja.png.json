@@ -1,0 +1,21 @@
+{
+  "nazwa": "04-member-decyzja",
+  "opis": "MEMBER: podglad decyzji BEZ Rozstrzygnij/Odrzuc/Nieaktualna",
+  "konto": "anna.kowalska@dbr77.com (MEMBER)",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+  ],
+  "czas": "2026-09-07T21:29:17.318Z"
+}

@@ -1,0 +1,10 @@
+{
+  "nazwa": "02-ryzyka",
+  "opis": "Preset Ryzyka — zestaw kolumn RAID",
+  "faza": "przed",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T19:10:37.523Z"
+}

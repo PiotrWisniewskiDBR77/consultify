@@ -155,6 +155,37 @@ export function newRaidItemId(): string {
   return newRequestId();
 }
 
+/**
+ * ZASILENIE PAMIĘCI WERSJI Z MODELU ODCZYTU (P16/R4, DEC-453).
+ *
+ * ZMIERZONE 07.09 (`evidence/p16-r45/po/api.log`, przebieg przed poprawką):
+ * pamięć wersji żyła WYŁĄCZNIE w tej zakładce przeglądarki, więc PIERWSZY
+ * zapis po każdym przeładowaniu strony szedł z `expectedVersion: 0`, dostawał
+ * 409 `VERSION_OR_IDEMPOTENCY_CONFLICT` i dopiero ponowienie kończyło się 200.
+ * Skutki były dwa, oba złe:
+ *   1. czerwony błąd w konsoli przy KAŻDEJ pierwszej edycji (próg §10 paczki:
+ *      zero błędów konsoli poza `NetworkBuffer`),
+ *   2. CAS nigdy niczego nie chronił — ślepe „0" zawsze przegrywało i zawsze
+ *      było nadpisywane wersją serwera, więc równoległa edycja dwóch osób
+ *      przechodziła bez ostrzeżenia. Zabezpieczenie, które zawsze ustępuje,
+ *      nie jest zabezpieczeniem.
+ *
+ * `GET /api/raid` zwraca teraz `aggregateVersion` (LEFT JOIN na
+ * `ie_aggregate_state`). Pozycje sprzed decyzji 26A nie mają tam wiersza i
+ * przychodzą z `null` — takie POMIJAMY, żeby zostały przy dotychczasowej
+ * adopcji przez 0, a nie dostały zmyślonej wersji.
+ */
+export function seedRaidVersions(
+  items: Array<{ id?: unknown; aggregateVersion?: unknown }> | null | undefined
+): void {
+  for (const item of items ?? []) {
+    const id = String(item?.id ?? '');
+    const version = item?.aggregateVersion;
+    if (!id || typeof version !== 'number' || !Number.isFinite(version)) continue;
+    aggregateVersions.set(id, version);
+  }
+}
+
 export async function createRaidItem(
   initiativeId: string,
   raidItemId: string,

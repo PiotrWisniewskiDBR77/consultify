@@ -1,0 +1,42 @@
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"5009e749-75e5-4816-91c9-494f95bdf5d4","dueDate":null,"probabil
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T19:10:27.633Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","weekStart":"2026-09-07","demandHours":29.8,"supplyHours":40,"u
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt Nocny","requestedById":"76015d70-9117-444f-97a6-4f5eda9d7ad5",
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"5009e749-75e5-4816-91c9-494f95bdf5d4","dueDate":null,"probabil
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/execution-control/capacity/resource-plan?weeks=8
+    {"asOf":"2026-09-07T19:10:27.806Z","weeks":["2026-09-07","2026-09-14","2026-09-21","2026-09-28","2026-10-05","2026-10-12","2026-10-19","2026-10-26"],"rows":[{"userId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","name":"Audyt Nocny","role":"","weekStart":"2026-09-07","demandHours":29.8,"supplyHours":40,"u
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"5009e749-75e5-4816-91c9-494f95bdf5d4","dueDate":null,"probabil
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"5009e749-75e5-4816-91c9-494f95bdf5d4","dueDate":null,"probabil
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/execution-cases
+    {"cases":[]}
+GET 200 /api/decisions
+    [{"id":"39e9c700-0fab-4ee5-b781-7216c9dff366","title":"proba-audyt-decyzja","decisionType":"GATE","recommendation":null,"hasStructure":false,"status":"CANCELLED","decisionOwnerId":"76015d70-9117-444f-97a6-4f5eda9d7ad5","ownerName":"Audyt Nocny","requestedById":"76015d70-9117-444f-97a6-4f5eda9d7ad5",
+GET 200 /api/raid
+    [{"id":"4d214bf8-8200-4065-9ad1-fe61f00e56d8","initiativeId":"fa87dc75-d838-4fa0-8263-590969aa8621","type":"DEPENDENCY","title":"Supply Chain depends on Data Platform feeds","description":null,"severity":"HIGH","status":"OPEN","ownerId":"5009e749-75e5-4816-91c9-494f95bdf5d4","dueDate":null,"probabil
+GET 200 /api/initiatives/runtime-v1/interventions
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/management-signals
+    {"items":[]}
+GET 200 /api/initiatives/runtime-v1/capacity-options
+    {"items":[]}

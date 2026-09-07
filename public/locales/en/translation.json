@@ -13624,7 +13624,8 @@
       "governance": {
         "decisions": "Decisions",
         "risks": "Risks",
-        "overdue": "Overdue"
+        "overdue": "Overdue",
+        "signals": "Signals"
       }
     },
     "scope": {
@@ -14131,6 +14132,9 @@
         "raidLabel": "RAID item",
         "noDescription": "No further description.",
         "noRelations": "No relations"
+      },
+      "filters": {
+        "dueLabel": "Due"
       }
     },
     "rag": {
@@ -14140,7 +14144,119 @@
       "onTrack": "On track",
       "noDates": "No plan dates"
     },
-    "decisionsLabel": "Decisions"
+    "decisionsLabel": "Decisions",
+    "raid": {
+      "untitled": "Untitled RAID item",
+      "columns": {
+        "probability": "Probability",
+        "impact": "Impact",
+        "exposure": "Exposure",
+        "status": "Status"
+      },
+      "probability": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "impact": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "critical": "Critical"
+      },
+      "status": {
+        "open": "Open",
+        "mitigated": "Mitigated",
+        "realized": "Realised",
+        "closed": "Closed"
+      },
+      "actions": {
+        "new": "New RAID item",
+        "changeDue": "Change due date",
+        "changeOwner": "Change owner",
+        "close": "Close item",
+        "escalateToIssue": "Escalate to issue"
+      },
+      "notes": {
+        "alreadyIssue": "This is already an issue.",
+        "closed": "The item is closed."
+      },
+      "form": {
+        "title": "Title (required)",
+        "initiative": "Initiative (required)",
+        "unassigned": "Unassigned",
+        "save": "Save RAID item"
+      },
+      "dialog": {
+        "close": "Close RAID item",
+        "closeLabel": "What was done (required)",
+        "closePlaceholder": "Say in one sentence why the item is being closed.",
+        "closeHint": "The item stays in the register as “Closed” and stops counting towards “Overdue”.",
+        "due": "Change RAID item due date",
+        "owner": "Change RAID item owner"
+      },
+      "preview": {
+        "initiative": "Initiative",
+        "noInitiative": "No initiative",
+        "source": "Escalated from item",
+        "closed": "Item closed — it stays in the register.",
+        "overdueSuffix": "days — change the due date or close the item.",
+        "noDue": "No due date — set one so the item can be tracked."
+      },
+      "errors": {
+        "saveFailed": "The RAID item could not be saved."
+      }
+    },
+    "signals": {
+      "columns": {
+        "entity": "Initiative / task",
+        "kind": "Signal type",
+        "deviation": "Deviation (days)",
+        "reason": "Reason",
+        "detectedAt": "Detected",
+        "state": "State"
+      },
+      "kind": {
+        "lateStart": "Late start",
+        "overdue": "Overdue",
+        "lateFinishRisk": "Late finish risk",
+        "deadlineRisk": "Deadline at risk"
+      },
+      "reason": {
+        "blocked": "Blocked",
+        "dependency": "Dependency not done",
+        "noOwner": "No owner",
+        "raidHighRisk": "High RAID risk",
+        "capacity": "Capacity overload",
+        "noTasks": "No tasks planned",
+        "unknown": "Not determined"
+      },
+      "state": {
+        "new": "New",
+        "intervention": "Intervention",
+        "closed": "Closed"
+      },
+      "actions": {
+        "prepareIntervention": "Prepare intervention"
+      },
+      "preview": {
+        "label": "Delay signal",
+        "initiative": "The signal concerns an initiative.",
+        "task": "The signal concerns a task.",
+        "planned": "Planned date",
+        "decision": "Re-baseline request",
+        "new": "No response yet — raise a re-baseline request or catch the delay up.",
+        "intervention": "The re-baseline request is awaiting a decision in the Decisions view.",
+        "closed": "The re-baseline request has been decided."
+      },
+      "empty": {
+        "title": "No delay signals",
+        "description": "The system computes signals from initiative and task due dates. Empty means nothing is slipping."
+      },
+      "errors": {
+        "interventionFailed": "The re-baseline request could not be created."
+      }
+    }
   },
   "benefits": {
     "tabs": {

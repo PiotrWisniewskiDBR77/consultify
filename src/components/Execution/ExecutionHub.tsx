@@ -627,10 +627,17 @@ function getExecutionMenu3(t: TFn): Record<string, Array<{ id: string; label: st
     // `JSON.stringify` całego wiersza, a wszystkie liczyły z rejestru, który
     // ma na DBR77 zero rekordów. Zgodne z `controlPresets`
     // w ExecutionControlSurface.tsx.
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16-R5 (§4 D4): trzeci chip to
+    // „Sygnały" — 42 sygnały opóźnień policzone przez system
+    // (`/api/execution-control/delay-signals`), których zakładka do dziś nie
+    // czytała. „Po terminie" NIE ZNIKA: schodzi do Menu 2 jako filtr terminu
+    // (`Menu2PresetDropdown` w `ExecutionControlSurface`), bo kanon Triady
+    // dopuszcza najwyżej TRZY chipy, a filtr w Menu 2 działa dodatkowo w
+    // każdym z trzech widoków, nie tylko w jednym.
     control: [
       ['decyzje', t('execution.menu3.governance.decisions', 'Decyzje')],
       ['ryzyka', t('execution.menu3.governance.risks', 'Ryzyka')],
-      ['po-terminie', t('execution.menu3.governance.overdue', 'Po terminie')],
+      ['sygnaly', t('execution.menu3.governance.signals', 'Sygnały')],
     ].map(([id, label]) => ({ id, label })),
     // 1.12-R4b (zlecenie 12r4b): 11 chipów → 3. Zrzut R4
     // (`evidence/1-12-r4/03-zdrowie-programu.png`) pokazał rząd 10+ chipów

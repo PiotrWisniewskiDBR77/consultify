@@ -1,0 +1,9 @@
+{
+  "nazwa": "ryzyka-kolumny",
+  "opis": "Zestaw kolumn RAID: Prawdopodobienstwo, Wplyw, Ekspozycja, Status",
+  "url": "http://localhost:3181/execution?tab=control&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T21:27:07.465Z"
+}
