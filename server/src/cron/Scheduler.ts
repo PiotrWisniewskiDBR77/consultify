@@ -73,6 +73,32 @@ export async function runAdminIamAlertSchedulerTick(): Promise<void> {
   }
 }
 
+/**
+ * P16 / R3 (DEC-453) — ciało zadania 46: dobowy automat eskalacji decyzji po
+ * terminie. Wyeksportowane, żeby trasa administracyjna
+ * (`POST /api/decisions/escalation/run`) i cron uruchamiały DOKŁADNIE tę samą
+ * funkcję, a nie dwie kopie reguły. Domyślnie WŁĄCZONE (zadanie tylko
+ * podnosi poziom i pisze ślad audytu; nie kasuje i nie rozstrzyga niczego);
+ * operator może je wyłączyć `DECISION_ESCALATION_CRON_ENABLED=false`.
+ */
+export async function runDecisionEscalationSchedulerTick(): Promise<void> {
+  if (process.env.DECISION_ESCALATION_CRON_ENABLED === 'false') return;
+  try {
+    const { runDecisionEscalationTick } = await import('../jobs/decisionEscalationJob.js');
+    const result = await runDecisionEscalationTick();
+    if (result.escalated > 0 || result.errors > 0) {
+      logger.info('[Scheduler] Decision escalation sweep', {
+        escalated: result.escalated,
+        errors: result.errors,
+        skippedAtMax: result.skippedAtMax,
+        skippedAlreadyToday: result.skippedAlreadyToday,
+      });
+    }
+  } catch (err: any) {
+    logger.error('[Scheduler] Decision escalation tick failed:', err?.message || err);
+  }
+}
+
 export function registerInternalBetaBackupJob(
   schedule: typeof cron.schedule = cron.schedule
 ): cron.ScheduledTask {
@@ -995,8 +1021,17 @@ export const Scheduler = {
     const job45 = registerInternalBetaBackupJob();
     this.jobs.push(job45);
 
+    // 46. P16/R3 — dobowa eskalacja decyzji po terminie (00:10 UTC). Ta sama
+    // funkcja stoi za ręcznym `POST /api/decisions/escalation/run` (ADMIN),
+    // który ma też tryb suchy — pierwsze uruchomienie na stagingu idzie
+    // wyłącznie po obejrzeniu listy z trybu suchego (P16 §8).
+    const job46 = cron.schedule('10 0 * * *', runDecisionEscalationSchedulerTick, {
+      timezone: 'UTC',
+    });
+    this.jobs.push(job46);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off), Admin IAM Alert Evaluation (Every 5min, default-on)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min), Compute Job Lease Reaper (Every 1min), Audit Independence Detector Sweep (Every 15min tick, default-off), Admin IAM Alert Evaluation (Every 5min, default-on), Decision Escalation Sweep (Daily 00:10 UTC, default-on)'
     );
   },
   async stop(): Promise<void> {

@@ -78,6 +78,15 @@ router.get('/', DecisionController.getDecisions);
 router.get('/bottlenecks', DecisionController.getBottlenecks);
 
 /**
+ * POST /api/decisions/escalation/run
+ * P16/R3 (DEC-453) — ręczne uruchomienie dobowego automatu eskalacji.
+ * ADMIN/OWNER; body `{ dryRun?: boolean }`, DOMYŚLNIE tryb suchy (bez
+ * `dryRun: false` nic się nie zapisuje). Musi stać PRZED `/:id`, inaczej
+ * Express dopasuje „escalation" jako identyfikator decyzji.
+ */
+router.post('/escalation/run', verifyAdmin, DecisionController.runEscalationSweep);
+
+/**
  * GET /api/decisions/:id/required-fields-status
  * Check required fields for a decision against its playbook
  */

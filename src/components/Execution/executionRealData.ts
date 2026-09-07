@@ -150,10 +150,7 @@ export function isDecisionOverdue(decision: RealDecisionLike, now = Date.now()):
   return due != null && due < now;
 }
 
-export function decisionDaysOverdue(
-  decision: RealDecisionLike,
-  now = Date.now()
-): number | null {
+export function decisionDaysOverdue(decision: RealDecisionLike, now = Date.now()): number | null {
   if (typeof decision?.daysOverdue === 'number') return Math.max(0, decision.daysOverdue);
   const due = parseDate(decision?.dueDate);
   if (due == null || due >= now) return null;
@@ -166,6 +163,27 @@ export function overdueOpenDecisions<T extends RealDecisionLike>(
   now = Date.now()
 ): T[] {
   return (decisions ?? []).filter((d) => isOpenDecision(d) && isDecisionOverdue(d, now));
+}
+
+/**
+ * Decyzja ROZSTRZYGNIĘTA — wynik zapadł (P16/R3, DEC-453). Wpis jest
+ * NIEUSUWALNY i ZOSTAJE w rejestrze z nowym statusem — dlatego zakładka
+ * „Decyzje i ryzyka" pokazuje go dalej, zamiast go odfiltrowywać jak przed R3.
+ * `SUPERSEDED` = „Nieaktualna" (słownik serwera: decisionOutcomeService.ts).
+ */
+export const RESOLVED_DECISION_STATUSES = ['APPROVED', 'REJECTED', 'SUPERSEDED'] as const;
+
+export function isResolvedDecision(decision: RealDecisionLike): boolean {
+  return (RESOLVED_DECISION_STATUSES as readonly string[]).includes(upper(decision?.status));
+}
+
+/**
+ * Decyzja ARCHIWALNA — miękko skasowana przez `DELETE /api/decisions/:id`
+ * (status `cancelled`). To NIE jest rozstrzygnięcie: takiego wpisu rejestr nie
+ * pokazuje, bo użytkownik świadomie usunął go z pola widzenia.
+ */
+export function isArchivedDecision(decision: RealDecisionLike): boolean {
+  return upper(decision?.status) === 'CANCELLED';
 }
 
 export function openDecisions<T extends RealDecisionLike>(decisions: T[]): T[] {
@@ -425,7 +443,7 @@ const RAID_LEVEL_SCORE: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, C
  */
 export function raidLevelScore(item: RealRaidItemLike): number | null {
   const p = RAID_LEVEL_SCORE[String(item?.probability ?? '').toUpperCase()];
-  const i = RAID_LEVEL_SCORE[String((item?.impact ?? item?.severity) ?? '').toUpperCase()];
+  const i = RAID_LEVEL_SCORE[String(item?.impact ?? item?.severity ?? '').toUpperCase()];
   if (p && i) return p * i;
   if (typeof item?.riskScore === 'number' && Number.isFinite(item.riskScore)) {
     return item.riskScore;
@@ -452,7 +470,7 @@ const RAID_SEVERITY_LABEL_EN: Record<string, string> = {
  * tego nie ma (UI pokazuje wtedy „—", nie zmyśloną etykietę).
  */
 export function raidSeverityLabel(item: RealRaidItemLike, isPolish = true): string | null {
-  const key = String((item?.impact ?? item?.severity) ?? '').toUpperCase();
+  const key = String(item?.impact ?? item?.severity ?? '').toUpperCase();
   const map = isPolish ? RAID_SEVERITY_LABEL_PL : RAID_SEVERITY_LABEL_EN;
   return map[key] ?? null;
 }
@@ -481,10 +499,7 @@ export function raidOwnerDisplayName(
  * stabilny (Array#sort w V8 jest stabilny od Node 11) — pozycje o równym
  * poziomie zostają w kolejności `created_at DESC` zwróconej przez serwer.
  */
-export function topRaidItemsByLevel<T extends RealRaidItemLike>(
-  items: T[],
-  limit = 10
-): T[] {
+export function topRaidItemsByLevel<T extends RealRaidItemLike>(items: T[], limit = 10): T[] {
   return [...(items ?? [])]
     .sort((a, b) => {
       const sa = raidLevelScore(a);

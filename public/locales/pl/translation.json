@@ -12158,7 +12158,80 @@
     "title": "Centrum Realizacji",
     "dashboard": "Panel",
     "calendar": "Kalendarz",
-    "decisions": "Decyzje",
+    "decisions": {
+      "actions": {
+        "approve": "Rozstrzygnij",
+        "reject": "Odrzuć",
+        "supersede": "Nieaktualna",
+        "escalate": "Eskaluj"
+      },
+      "columns": {
+        "due": "Potrzebna do dnia",
+        "decisionMaker": "Decydent",
+        "status": "Status"
+      },
+      "dialog": {
+        "approve": "Rozstrzygnij decyzję",
+        "reject": "Odrzuć decyzję",
+        "supersede": "Oznacz decyzję jako nieaktualną",
+        "escalate": "Eskaluj decyzję",
+        "rationaleLabel": "Uzasadnienie (wymagane)",
+        "rationalePlaceholder": "Napisz jednym zdaniem, dlaczego tak rozstrzygasz — trafi do rejestru na stałe.",
+        "rationaleHint": "Wpisu nie da się usunąć ani rozstrzygnąć drugi raz.",
+        "escalateLabel": "Powód eskalacji (wymagany)",
+        "escalatePlaceholder": "Napisz, dlaczego decyzja idzie poziom wyżej.",
+        "escalateHint": "Poziom rośnie o jeden: właściciel inicjatywy → PMO → komitet."
+      },
+      "errors": {
+        "reasonRequired": "Uzasadnienie jest wymagane — bez niego decyzja nie zostanie zapisana.",
+        "escalationAtMax": "Decyzja jest już na najwyższym poziomie eskalacji (3/3 — komitet).",
+        "alreadyFinalized": "Ta decyzja już zapadła — rozstrzygnięcia nie da się cofnąć ani powtórzyć.",
+        "staleVersion": "Ktoś zmienił tę decyzję w międzyczasie. Odśwież listę i spróbuj ponownie.",
+        "forbidden": "Nie masz uprawnień do tej operacji — rozstrzygać może decydent albo administrator.",
+        "missingContext": "Brakuje danych decyzji — uzupełnij inicjatywę, termin i decydenta.",
+        "createFailed": "Nie udało się zapisać decyzji.",
+        "saveFailed": "Nie udało się zapisać rozstrzygnięcia."
+      },
+      "escalation": {
+        "none": "Brak",
+        "level1": "Właściciel inicjatywy",
+        "level2": "PMO",
+        "level3": "Komitet"
+      },
+      "form": {
+        "title": "Tytuł decyzji",
+        "initiative": "Inicjatywa (wymagana)",
+        "initiativePlaceholder": "Wybierz realizację…",
+        "due": "Potrzebna do dnia (wymagane)",
+        "decisionMaker": "Decydent",
+        "decisionMakerPlaceholder": "Ja (domyślnie)",
+        "save": "Zapisz decyzję"
+      },
+      "notes": {
+        "resolved": "Decyzja już zapadła.",
+        "escalationMax": "Najwyższy poziom eskalacji (3/3 — komitet)."
+      },
+      "preview": {
+        "label": "Decyzja",
+        "rationale": "Uzasadnienie",
+        "decidedAt": "Rozstrzygnięto",
+        "resolved": "Decyzja zapadła — wpis jest nieusuwalny.",
+        "onTime": "Termin jeszcze nie minął.",
+        "overduePrefix": "Po terminie o",
+        "overdueSuffix": "dni — rozstrzygnij albo eskaluj."
+      },
+      "status": {
+        "pending": "Oczekuje",
+        "escalated": "Eskalowana",
+        "approved": "Rozstrzygnięta",
+        "rejected": "Odrzucona",
+        "superseded": "Nieaktualna",
+        "returned": "Zwrócona do uzupełnienia",
+        "deferred": "Odroczona",
+        "cancelled": "Anulowana"
+      },
+      "untitled": "Decyzja bez tytułu"
+    },
     "heatmap": "Mapa obciążenia",
     "hub": {
       "failedToLoad": "Nie udało się załadować inicjatyw realizacyjnych.",
@@ -13367,6 +13440,16 @@
       },
       "actions": {
         "newDecision": "Nowa decyzja"
+      },
+      "empty": {
+        "decisionsTitle": "Brak decyzji w rejestrze",
+        "raidTitle": "Brak pozycji w rejestrze RAID",
+        "description": "Rejestr czyta decyzje i pozycje RAID organizacji. Pusty rejestr znaczy, że nic nie czeka."
+      },
+      "preview": {
+        "raidLabel": "Pozycja RAID",
+        "noDescription": "Brak dodatkowego opisu.",
+        "noRelations": "Brak powiązań"
       }
     },
     "rag": {
@@ -13375,7 +13458,8 @@
       "atRisk": "Zagrożona",
       "onTrack": "Na czas",
       "noDates": "Brak dat planu"
-    }
+    },
+    "decisionsLabel": "Decyzje"
   },
   "benefits": {
     "tabs": {
