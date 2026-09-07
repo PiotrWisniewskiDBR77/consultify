@@ -1,6 +1,6 @@
 {
-  "zaktualizowano": "2026-09-07 07:29",
-  "sha_rejestru": "ae9facf7ed",
+  "zaktualizowano": "2026-09-07 07:30",
+  "sha_rejestru": "c280234ef7",
   "pojemniki": [
     {
       "id": 1,
@@ -13,10 +13,10 @@
           "nazwa": "Defekty z przejścia właściciela 06.09 (fale jak w nocy 05/06)",
           "wykonawca": "Sonnet/Opus",
           "zalezy_od": "przejście właściciela",
-          "stan": "odebrane",
+          "stan": "w_toku",
           "galaz": "",
           "sha": "ad35c3c09e",
-          "dowod": "ODEBRANE PRZEZ WLASCICIELA 07.09 (DEC-452): przeklikal ekrany i przyjal wszystkie moduly MVP wlasciciela.",
+          "dowod": "Wlasciciel 07.09 przyjal wszystkie moduly POZA REALIZACJA (DEC-452 + sprostowanie wlasciciela). Realizacja czeka na odbior — to modul, ktory zmienil sie tej nocy najbardziej.",
           "uwagi": "Czeka na przejście właściciela (jeszcze nie nastąpiło) — nie startuje przed nim. | Stan 14:06: Czat ✔, Moja Praca ✔ (na żywo), Wywiad W1/W2 scalone lokalnie (stepper+Dopuszczenie usunięte), Narzędzia T1 w toku (DEC-412), karty N K2 w toku (DEC-407), Pomysły — przejście jeszcze nie zaczęte | Stan 17:11: Czat ✔, Moja Praca ✔, Organizacja ✔, Ustawienia ✔, Panel admin ✔; Wywiad W1/W2 na żywo; Wyniki R1–R4 (paczka 8); Materiały M-1 (paczka 8), M-2 kończy; Audyty A1 na żywo, A2 scalone; Inicjatywy I3/I4 na żywo, K5 (paczka 8); u robotników: Z1 (7 znalezisk front), Z2 (4 serwer), K6+A3 | 19:39: paczki 10–12 na żywo (Z1–Z4, K6+A3, M-3 Spotkania za flagą, E-1, A4, R1, R2); S1.13 karty N: DEC-429/430 → P10-S kontrakt + P10-I pełny inwentarz (Opus) w toku | 19:57: karty N — inwentarz zmierzony: 72 typy, ≈140 egzemplarzy (liczba właściciela trafna); AI ma 11/72, kontrakt 9/72 → 8 partii kontraktów (Opus/Codex) po kontrakcie wspólnym (P10-S w toku) | 20:35: karty N — kontrakt K1–K30 (SSOT) + matryca 22 + partie B1/B4/B5/B6 scalone (B2 w toku; B3/B7/B8 do wydania); Codex P10 r2 9/22 na żywo | NOC 06/07.09 (sesja #25): trzy paczki NA ZYWO, kazda potwierdzona odczytem health, nie slowem. Paczka 14b (7c5f57de48): odblokowanie builda + migracja statusow na Twoich danych — 173 wiersze przed = 173 po, 11 wartosci zwinelo sie w 6, zero strat. Paczka 15 (a05a749fcc): 29 bledow starego slownika (w tym CICHA awaria atrybucji KPI), naprawa Realizacji, dane startowe demo, migracja naprawcza bazy, karty N z obu paczek Codexa, raport sceptyka z 47 zrzutami. Paczka 16 (13f70a2a91): kamienie milowe z planem bazowym — kolumna Odchylenie liczy od planu bazowego, a nie dni pozostalych. SCEPTYK ODBIORU: 51 wytycznych -> 25 zrobionych, 13 czesciowo, 1 niezrobiona, 4 niemierzalne, 5 w toku. Jedyna niezrobiona (Realizacja pokazywala 12 wierszy Zatwierdzona zamiast inicjatyw w toku) zostala naprawiona i sprawdzona na obrazie. Galeria 20 pozycji odbiorczych i galeria 35 kart sa robione OD NOWA na finalnym kodzie — zrzutow sceptyka NIE pokaze, bo powstaly przed polowa dzisiejszych zmian. | 07.09 rano: DEC-444..451 podjete. Puste Inicjatywy (jeden wiersz `EXECUTING` w event store kasowal cala liste) NAPRAWIONE i na zywo. Karty N rodziny dokument/kreator ujednolicone (P14-A + P14-B). Scalone dwie organizacje DBR77. **Przejscie wlasciciela nadal NIEROZPOCZETE — to jedyna pozycja, ktorej nie da sie wykonac bez niego.** | **07.09 ODBIOR: wlasciciel przyjal wszystkie moduly.** Odblokowuje 1.9, 1.10 i domkniecie 1.12.",
           "data": "07.09 07:35"
         },
@@ -209,8 +209,8 @@
           "tresc": "Przeszedłem 16 modułów na stagingu na swoich danych po ścieżce pokazu; każdy ma moje „Tak”",
           "kto": "właściciel",
           "artefakt": "karta per moduł na 3100 (jeden obraz, Tak)",
-          "stan": "tak",
-          "dowod": "Wlasciciel 07.09: przeklikal ekrany, przyjal wszystkie moduly MVP wlasciciela (DEC-452)."
+          "stan": "nie",
+          "dowod": "15 z 16 modulow przyjete 07.09 (DEC-452). Zostaje REALIZACJA — nieodbierana, zmieniona tej nocy najmocniej."
         },
         {
           "nr": "S1.2",
@@ -1053,8 +1053,8 @@
     },
     {
       "modul": "Realizacja",
-      "werdykt": "nie",
-      "zdanie": "06.09 20:35: paczka 13b NA ŻYWO (62bc593e55): Kokpit z realnymi ryzykami (16) i obłożeniem (38 %), Raporty na 4 poziomach z DOCX/PDF, Decyzje i ryzyka, Praca, Zasoby, Realizacje z RAG. Scalone lokalnie (paczka 14 po integracji typów P12): Menu 3 raportów ≤3 + CTA. Zostaje R3 kamienie/baseline. Odbiór zbiorczy."
+      "werdykt": "brak",
+      "zdanie": "07.09: czeka na odbior. Zmiany z nocy: Realizacje 23 wiersze w toku (bylo 12 zatwierdzonych), Zasoby 3 pigulki zamiast 10, Odchylenie liczone od planu bazowego, terminy uporzadkowane, zakonczone nie sa juz po terminie, na stagingu Decyzje i ryzyka maja 7 pozycji RAID po scaleniu organizacji."
     },
     {
       "modul": "Wyniki",
