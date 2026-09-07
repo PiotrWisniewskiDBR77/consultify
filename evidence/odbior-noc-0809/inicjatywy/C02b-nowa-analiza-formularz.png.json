@@ -1,0 +1,11 @@
+{
+  "nazwa": "C02b-nowa-analiza-formularz",
+  "opis": "Po „Nowa analiza z tego planu” z karty planu: zakladka Obciazenie z otwartym formularzem nowej analizy (przed poprawka: cicho lista).",
+  "url": "http://localhost:3184/initiatives?tab=plan",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T22:04:58.251Z",
+  "planNazwa": "Plan klikany P11 — Controls Engineer",
+  "przyciskJest": 1,
+  "formularzWidoczny": true,
+  "planZrodlowy": "plan-f807b6fd-357e-40ba-860c-cc7de75afedc"
+}

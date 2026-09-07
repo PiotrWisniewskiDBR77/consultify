@@ -1,0 +1,9 @@
+{
+  "nazwa": "09-rejestr-pigulka-wstrzymana",
+  "opis": "Rejestr Inicjatyw po poprawce onHold: wiersze on_hold maja pigulke „Wstrzymana”.",
+  "url": "http://localhost:3184/initiatives",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T22:04:50.447Z",
+  "wierszy": 60,
+  "wierszeWstrzymana": 6
+}
