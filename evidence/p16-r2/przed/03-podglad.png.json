@@ -1,0 +1,10 @@
+{
+  "nazwa": "03-podglad",
+  "opis": "Podglad wiersza (stan PRZED — brak akcji zapisu)",
+  "faza": "przed",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:10:25.172Z"
+}

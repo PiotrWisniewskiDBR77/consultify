@@ -8,19 +8,7 @@
  * Features: Portfolio Health Dashboard, AI Insights, Decision Gates, Drag & Drop Kanban
  */
 
-import {
-  closestCorners,
-  DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   Calendar,
@@ -47,15 +35,10 @@ import {
   Users,
 } from 'lucide-react';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { ExecutionActionCards } from './ExecutionActionCards';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
-import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
-import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { GeneratedReportView } from '@/components/Reports/GeneratedReportView';
 import {
   generateReportDocument,
@@ -64,6 +47,9 @@ import {
 import type { ReportConfig } from '@/components/Reports/Wizard';
 import { ReportGeneratorWizard } from '@/components/Reports/Wizard';
 import { Callout } from '@/components/shared/NModeBlocks';
+import { JedenPrawyPanel } from '@/components/shared/PreviewPane/JedenPrawyPanel';
+import { PreviewPaneAside } from '@/components/shared/PreviewPane/PreviewPaneAside';
+import { useJedenPanel } from '@/components/shared/PreviewPane/useJedenPanel';
 import { LoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
@@ -75,6 +61,7 @@ import {
 import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useOrganizationMemberNames } from '@/hooks/useOrganizationMemberNames';
+import { executionTypeLabel } from '@/labels/executionTypeLabels';
 import { ROUTES } from '@/routes/routeConfig';
 import {
   Api,
@@ -101,7 +88,6 @@ import {
   STATUS_METADATA,
 } from '@/services/initiativeLifecycle';
 import { listExecutionCases } from '@/services/initiatives-execution/runtimeApi';
-import { executionTypeLabel } from '@/labels/executionTypeLabels';
 import { useConversationStore } from '@/store/useConversationStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
@@ -111,8 +97,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
-import { InitiativeLifecycleActions } from '../Initiatives/lifecycle/InitiativeLifecycleActions';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
+import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
+import { InitiativeLifecycleActions } from '../Initiatives/lifecycle/InitiativeLifecycleActions';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
   FilterChip,
@@ -135,7 +122,7 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import { createInitiativesDemoDataset } from '../Initiatives/initiativesDemoData';
+import { ExecutionActionCards } from './ExecutionActionCards';
 import { ExecutionControlSurface } from './ExecutionControlSurface';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionManagementView } from './ExecutionManagementView';
@@ -145,7 +132,6 @@ import {
   resolveExecutionDeepLinkTab,
 } from './executionModuleTabs';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
-import { buildExecutionSourceRelations } from './executionSourceRelations';
 // 1.12-R1: jedna definicja „w toku / otwarta decyzja / po terminie / RAG"
 // dla kafli i dla tabel — patrz nagłówek executionRealData.ts.
 import {
@@ -162,13 +148,9 @@ import {
   raidOwnerDisplayName,
   raidSeverityLabel,
   raidTypeLabel,
-  topRaidItemsByLevel,
   type RealRaidItemLike,
+  topRaidItemsByLevel,
 } from './executionRealData';
-import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
-import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
-import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
-import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import {
   buildReportMarkdown,
   computeRAG,
@@ -180,11 +162,16 @@ import {
 } from './executionReports';
 import { ExecutionReportsSurface } from './ExecutionReportsSurface';
 import { ExecutionResourcesSurface } from './ExecutionResourcesSurface';
+import { buildExecutionSourceRelations } from './executionSourceRelations';
 import ExecutionSummaryOneLook from './ExecutionSummaryOneLook';
 import type { DelaySignalItem, RiskSignalItem } from './ExecutionTimelineView';
 import { ExecutionWorkloadView } from './ExecutionWorkloadView';
-import { ExecutionWorkSurface, type ExecutionWorkDocumentRef } from './ExecutionWorkSurface';
+import { type ExecutionWorkDocumentRef, ExecutionWorkSurface } from './ExecutionWorkSurface';
 import { ReportDocumentView } from './ReportDocumentView';
+import { ControlLoopReport } from './reports-intelligence/ControlLoopReport';
+import { ResourcesCapacityReport } from './reports-intelligence/ResourcesCapacityReport';
+import { UnifiedExecutionReportGenerator } from './reports-intelligence/UnifiedExecutionReportGenerator';
+import { WorkIntelligenceReport } from './reports-intelligence/WorkIntelligenceReport';
 import { RolloutTab } from './RolloutTab';
 
 const ExecutionInitiativeDocumentView = React.lazy(() =>
@@ -192,9 +179,6 @@ const ExecutionInitiativeDocumentView = React.lazy(() =>
     default: module.InitiativeDocumentView,
   }))
 );
-
-// Kanban column status mapping
-type KanbanColumnId = 'todo' | 'in_progress' | 'review' | 'blocked' | 'done';
 
 type ProjectTaskStatus = Task['status'];
 
@@ -379,135 +363,6 @@ const toPortfolioInitiative = (initiative: FullInitiative): PortfolioInitiative 
   createdAt: (initiative as any).createdAt || new Date().toISOString(),
   updatedAt: (initiative as any).updatedAt || new Date().toISOString(),
 });
-
-const KANBAN_STATUS_MAP: Record<KanbanColumnId, ProjectTaskStatus> = {
-  todo: 'todo',
-  in_progress: 'in_progress',
-  review: 'review',
-  blocked: 'blocked',
-  done: 'done',
-};
-
-// Draggable Task Card component
-interface DraggableTaskCardProps {
-  task: Task;
-  isPastDue: (date?: string) => boolean;
-}
-
-const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }) => {
-  const { t } = useTranslation();
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: task.id,
-    data: { type: 'task', task },
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`p-3 bg-c-surface-raised border border-c-border-subtle rounded-lg hover:border-c-border-strong transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'shadow-lg ring-2 ring-c-accent/40' : ''
-      }`}
-      {...attributes}
-      {...listeners}
-    >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
-          <GripVertical size={14} className="text-c-text-muted flex-shrink-0" />
-          <h4 className="text-sm font-medium text-c-text line-clamp-2">{task.title}</h4>
-        </div>
-        {isPastDue(task.dueDate) && (
-          <span className="text-[10px] text-danger-400 uppercase tracking-wide flex-shrink-0">
-            {t('execution.badges.overdue')}
-          </span>
-        )}
-      </div>
-      {task.initiativeName && (
-        <div className="text-xs text-c-text-muted mb-2 ml-6">{task.initiativeName}</div>
-      )}
-      <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
-        <span className="capitalize">{task.priority}</span>
-        {task.dueDate && (
-          <span className="flex items-center gap-1">
-            <Clock size={12} />
-            {new Date(task.dueDate).toLocaleDateString()}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Droppable Kanban Column component
-interface KanbanColumnProps {
-  id: KanbanColumnId;
-  label: string;
-  accent: string;
-  icon: React.ReactNode;
-  tasks: Task[];
-  isPastDue: (date?: string) => boolean;
-}
-
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
-  id,
-  label,
-  accent,
-  icon,
-  tasks,
-  isPastDue,
-}) => {
-  const { t } = useTranslation();
-  const { setNodeRef, isOver } = useSortable({
-    id: `column-${id}`,
-    data: { type: 'column', columnId: id },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`flex-1 min-w-[260px] bg-c-surface/80 rounded-xl border transition-colors ${
-        isOver ? 'border-c-accent bg-c-accent-soft' : 'border-c-border-subtle'
-      }`}
-      data-testid={`kanban-column-${id}`}
-    >
-      <div
-        className={`flex items-center justify-between px-3 py-2 border-b border-c-border-subtle ${accent}`}
-      >
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-          {icon}
-          {label}
-        </div>
-        <span className="text-xs text-c-text-muted bg-c-surface-raised px-2 py-0.5 rounded-full">
-          {tasks.length}
-        </span>
-      </div>
-      <div className="p-3 space-y-3 max-h-[520px] overflow-y-auto min-h-[100px]">
-        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <DraggableTaskCard key={task.id} task={task} isPastDue={isPastDue} />
-          ))}
-        </SortableContext>
-        {tasks.length === 0 && (
-          <div
-            className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
-              isOver
-                ? 'border-c-accent/50 text-c-accent'
-                : 'border-c-border-subtle text-c-text-muted'
-            }`}
-          >
-            {isOver ? t('execution.kanban.dropHere') : t('execution.kanban.noTasks')}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const MODULE_STATUSES = getStatusesForModule('execution');
 const EXECUTION_STATUS_FALLBACK: InitiativeStatus[] = [
@@ -1490,7 +1345,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           // entirely (the opposite of "show something, but be honest").
           const fallbackInitiatives = executionDemoData.initiatives
             .filter((initiative) => EXECUTION_STATUSES.includes(initiative.status))
-            .map((initiative) => ({ ...initiative, isDemoSample: true })) as unknown as FullInitiative[];
+            .map((initiative) => ({
+              ...initiative,
+              isDemoSample: true,
+            })) as unknown as FullInitiative[];
           setInitiatives(fallbackInitiatives);
           setDemoFallbackActive(true);
           return;
@@ -1741,16 +1599,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [raid, plan] = await Promise.allSettled([
-        Api.raidList(),
-        readExecutionResourcePlan(),
-      ]);
+      const [raid, plan] = await Promise.allSettled([Api.raidList(), readExecutionResourcePlan()]);
       if (cancelled) return;
       if (raid.status === 'fulfilled') {
         const value = raid.value as any;
-        setRaidItems(
-          Array.isArray(value) ? value : (value?.items ?? value?.raid ?? [])
-        );
+        setRaidItems(Array.isArray(value) ? value : (value?.items ?? value?.raid ?? []));
       } else {
         setRaidItems([]);
       }
@@ -1948,7 +1801,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       initiatives.filter((i: any) => i.onHold === true).length;
     const blocked =
       byId.get('derived_initiatives_blocked') ??
-      initiatives.filter((i: any) => String(i.status || '').toUpperCase() === 'IN_EXECUTION').length;
+      initiatives.filter((i: any) => String(i.status || '').toUpperCase() === 'IN_EXECUTION')
+        .length;
     const pendingDecisions =
       byId.get('derived_decisions_pending') ??
       decisions.filter((d: any) => {
@@ -3165,221 +3019,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     [filteredInitiatives]
   );
 
-  // Drag & drop state
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
-
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
-  // Handle drag start
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      if (isPilotParticipant) return;
-      const { active } = event;
-      const taskData = active.data.current;
-      if (taskData?.type === 'task') {
-        setActiveTask(taskData.task);
-      }
-    },
-    [isPilotParticipant]
-  );
-
-  // Handle drag over (for visual feedback)
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    // Visual feedback is handled by isOver in KanbanColumn
-  }, []);
-
-  // Handle drag end - update task status
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      if (isPilotParticipant) {
-        setActiveTask(null);
-        dispatchPilotAccessBlocked({
-          href: '/execution',
-        });
-        return;
-      }
-      const { active, over } = event;
-      setActiveTask(null);
-
-      if (!over) return;
-
-      const activeId = active.id as string;
-      const overId = over.id as string;
-
-      // Determine target column
-      let targetColumnId: KanbanColumnId | null = null;
-
-      if (overId.startsWith('column-')) {
-        targetColumnId = overId.replace('column-', '') as KanbanColumnId;
-      } else {
-        // Dropped on another task - find its column
-        const overTask = tasks.find((t) => t.id === overId);
-        if (overTask) {
-          targetColumnId = normalizeTaskStatus(overTask.status) as KanbanColumnId;
-        }
-      }
-
-      if (!targetColumnId) return;
-
-      const task = tasks.find((t) => t.id === activeId);
-      if (!task) return;
-
-      const currentColumn = normalizeTaskStatus(task.status);
-      if (currentColumn === targetColumnId) return;
-
-      // Get the new status
-      const newStatus = KANBAN_STATUS_MAP[targetColumnId];
-
-      // Optimistic update
-      setTasks((prev) => prev.map((t) => (t.id === activeId ? { ...t, status: newStatus } : t)));
-
-      // DRUGI DEFEKT KANBANU (zmierzony 07.09): `/api/tasks/:id` ma tylko
-      // metode PUT — PATCH wpadal w globalny 404 `API_ROUTE_NOT_FOUND`.
-      // Przez trzy tygodnie maskowala to bramka 26A, ktora i tak odpowiadala
-      // 409 na kazdy zapis tego routera. Po zdjeciu bramki przeciagniecie
-      // karty nadal by nie dzialalo, tylko z innym kodem bledu.
-      try {
-        await Api.put(`/tasks/${activeId}`, { status: newStatus });
-        toast.success(
-          t('execution.toast.taskMoved', 'Zadanie przeniesione do {{column}}', {
-            column: targetColumnId.replace('_', ' '),
-          })
-        );
-      } catch (error) {
-        // Revert on error
-        setTasks((prev) =>
-          prev.map((t) => (t.id === activeId ? { ...t, status: task.status } : t))
-        );
-        toast.error(
-          t('execution.toast.taskStatusError', 'Nie udało się zaktualizować statusu zadania')
-        );
-        console.error('Error updating task status:', error);
-      }
-    },
-    [isPilotParticipant, t, tasks]
-  );
-
-  const renderTaskBoard = () => {
-    const groupedTasks = tasks.reduce(
-      (acc, task) => {
-        const status = normalizeTaskStatus(task.status);
-        acc[status].push(task);
-        return acc;
-      },
-      {
-        todo: [] as Task[],
-        in_progress: [] as Task[],
-        review: [] as Task[],
-        blocked: [] as Task[],
-        done: [] as Task[],
-      }
-    );
-
-    if (isLoadingTasks) {
-      return (
-        <div className="p-6">
-          <LoadingState template="list" rows={6} />
-        </div>
-      );
-    }
-
-    const columns: { id: KanbanColumnId; label: string; accent: string; icon: React.ReactNode }[] =
-      [
-        {
-          id: 'todo',
-          label: t('execution.kanban.toDo'),
-          accent: 'text-c-text-muted',
-          icon: <ClipboardList size={14} />,
-        },
-        {
-          id: 'in_progress',
-          label: t('execution.kanban.inProgress'),
-          accent: 'text-blue-300',
-          icon: <Target size={14} />,
-        },
-        {
-          id: 'review',
-          label: t('execution.kanban.review'),
-          accent: 'text-amber-300',
-          icon: <Scale size={14} />,
-        },
-        {
-          id: 'blocked',
-          label: t('execution.kanban.blocked'),
-          accent: 'text-danger-300',
-          icon: <AlertTriangle size={14} />,
-        },
-        {
-          id: 'done',
-          label: t('execution.kanban.done'),
-          accent: 'text-emerald-300',
-          icon: <CheckCircle2 size={14} />,
-        },
-      ];
-
-    return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex gap-4 p-4 overflow-x-auto" data-testid="kanban-board">
-          <SortableContext items={columns.map((c) => `column-${c.id}`)}>
-            {columns.map((col) => (
-              <KanbanColumn
-                key={col.id}
-                id={col.id}
-                label={col.label}
-                accent={col.accent}
-                icon={col.icon}
-                tasks={groupedTasks[col.id]}
-                isPastDue={isPastDue}
-              />
-            ))}
-          </SortableContext>
-        </div>
-
-        {/* Drag overlay for smooth dragging experience */}
-        <DragOverlay>
-          {activeTask ? (
-            <div className="p-3 bg-c-surface border-2 border-c-accent rounded-lg shadow-xl w-[240px]">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <GripVertical size={14} className="text-c-text-muted" />
-                  <h4 className="text-sm font-medium text-c-text line-clamp-2">
-                    {activeTask.title}
-                  </h4>
-                </div>
-              </div>
-              {activeTask.initiativeName && (
-                <div className="text-xs text-c-text-muted mb-2 ml-6">
-                  {activeTask.initiativeName}
-                </div>
-              )}
-              <div className="flex items-center justify-between text-xs text-c-text-muted ml-6">
-                <span className="capitalize">{activeTask.priority}</span>
-                {activeTask.dueDate && (
-                  <span className="flex items-center gap-1">
-                    <Clock size={12} />
-                    {new Date(activeTask.dueDate).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    );
-  };
+  /*
+   * ── MARTWY KANBAN USUNIETY (P16-R2, D5) ──────────────────────────────────
+   * `renderTaskBoard` (siatka 5 kolumn + DnD) i `handleDragEnd` (`PUT /tasks/:id`)
+   * stały tu od commita 91484aad7c i NIE BYŁY WOŁANE Z ŻADNEGO MIEJSCA —
+   * zmierzone 07.09: jedyne wystąpienie `renderTaskBoard` w całym repo to jego
+   * własna deklaracja. Razem z nimi zniknęły `KanbanColumn`, `DraggableTaskCard`,
+   * `KANBAN_STATUS_MAP`, stan `activeTask`, sensory DnD i importy `@dnd-kit/*`.
+   * Zmiana statusu zadania żyje teraz w Realizacja → Praca: edycja w wierszu
+   * (`ExecutionWorkSurface`, `PUT /api/tasks/:id` z jednym polem).
+   */
 
   // Handle status change from detail panel
   const handleStatusChange = useCallback(
@@ -3497,11 +3146,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               {
                 sources: unavailableSignalSources
                   .map((source) =>
-                    t(`execution.signalsUnavailable.source.${source}`, {
-                      risk: 'risk signals',
-                      delay: 'delay signals',
-                      overspend: 'overspend signals',
-                    }[source])
+                    t(
+                      `execution.signalsUnavailable.source.${source}`,
+                      {
+                        risk: 'risk signals',
+                        delay: 'delay signals',
+                        overspend: 'overspend signals',
+                      }[source]
+                    )
                   )
                   .join(', '),
               }
@@ -3711,8 +3363,8 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const headcount = resourcePlanSummary?.peopleCount ?? 0;
     const defaultCapacityAssumed = Boolean(
       resourcePlanSummary &&
-        resourcePlanSummary.peopleCount > 0 &&
-        resourcePlanSummary.peopleWithoutProfileSupply === resourcePlanSummary.peopleCount
+      resourcePlanSummary.peopleCount > 0 &&
+      resourcePlanSummary.peopleWithoutProfileSupply === resourcePlanSummary.peopleCount
     );
 
     const roi = execSnapshot?.roi?.summary ?? null;
@@ -3873,11 +3525,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         rozstrzygniecia: summaryOneLookProps.decisions.length,
       },
     }));
-  }, [
-    summaryOneLookEnabled,
-    raidItems.length,
-    summaryOneLookProps.decisions.length,
-  ]);
+  }, [summaryOneLookEnabled, raidItems.length, summaryOneLookProps.decisions.length]);
 
   const activeExecutionInitiativeIds = useMemo(() => {
     return new Set(
@@ -4621,8 +4269,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <CalendarDays size={18} className="text-blue-500" />,
         highlights: [
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
           { label: t('execution.table.tasks'), value: totalTasks },
         ],
       },
@@ -4686,8 +4341,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Shield size={18} className="text-emerald-500" />,
         highlights: [
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
         ],
       },
       {
@@ -4714,8 +4376,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <AlertTriangle size={18} className="text-danger-500" />,
         highlights: [
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
-          { label: t('execution.highlights.dueSoon', 'Due soon'), value: actionCenter.dueSoonTasks.length },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
+          {
+            label: t('execution.highlights.dueSoon', 'Due soon'),
+            value: actionCenter.dueSoonTasks.length,
+          },
         ],
       },
       {
@@ -4794,7 +4463,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Freeze discretionary spend',
         ],
         icon: <TrendingUp size={18} className="text-green-500" />,
-        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
+        highlights: [
+          { label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
       },
       {
         id: 'decision-backlog',
@@ -4849,7 +4520,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Add buffers to critical chains',
         ],
         icon: <GripVertical size={18} className="text-c-text-muted" />,
-        highlights: [{ label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives }],
+        highlights: [
+          { label: t('execution.highlights.initiatives', 'Initiatives'), value: totalInitiatives },
+        ],
       },
       {
         id: 'delivery-confidence',
@@ -4874,8 +4547,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ],
         icon: <Sparkles size={18} className="text-blue-500" />,
         highlights: [
-          { label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' },
-          { label: t('execution.badges.blocked'), value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+          {
+            label: t('execution.badges.blocked'),
+            value: blocked,
+            variant: blocked > 0 ? 'critical' : 'default',
+          },
         ],
       },
       {
@@ -4899,7 +4579,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Approve budget changes',
         ],
         icon: <FileText size={18} className="text-indigo-500" />,
-        highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
+        highlights: [
+          {
+            label: t('execution.table.progress'),
+            value: progressPct !== null ? `${progressPct}%` : '—',
+          },
+        ],
       },
     ];
 
@@ -4942,7 +4627,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       ragLogic: 'Mirrors program health RAG: composite of progress, blockers and confidence',
       followUpActions: [],
       icon: <Sparkles size={18} className="text-indigo-500" />,
-      highlights: [{ label: t('execution.table.progress'), value: progressPct !== null ? `${progressPct}%` : '—' }],
+      highlights: [
+        {
+          label: t('execution.table.progress'),
+          value: progressPct !== null ? `${progressPct}%` : '—',
+        },
+      ],
     }));
 
     return [...wizardEntries, ...base];
@@ -5432,7 +5122,6 @@ Please return:
   // StandardPreview canon A7 block 6 action grid — see `reportPreviewActions`
   // below, wired into the 'reports' table-view preview pane.
 
-
   const sidePanelInitiative = useMemo(
     () => (selectedInitiative ? toPortfolioInitiative(selectedInitiative) : null),
     [selectedInitiative]
@@ -5727,99 +5416,100 @@ Please return:
               />
             </div>
 
-            <JedenPrawyPanel rekord={selectedRow && previewModel ? (
-                <StandardPreview
-                  title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
-                  onClose={() => setSummaryPreviewInitiativeId(null)}
-                  onOpenFull={() => handleOpenDocument(selectedRow)}
-                  meta={{
-                    pills: [
-                      {
-                        // ★ Ten sam znalezisko 203-polski co kolumna statusu
-                        // wyżej: `STATUS_METADATA[...].label` jest zawsze
-                        // angielski — pill podglądu pokazywał np. "Blocked"
-                        // podczas gdy tabela obok mówiła po polsku.
-                        label: getLocalizedStatusLabel(
-                          selectedRow.status as InitiativeStatus,
-                          t
-                        ),
-                        tone: statusChipTone(String(selectedRow.status)),
-                      },
-                      // DEC-424: wstrzymanie jest FLAGĄ na „W realizacji", nie statusem —
-                      // bez tej pigułki jedynym śladem wstrzymania był przycisk „Wznów".
-                      ...((selectedRow as { onHold?: boolean }).onHold
-                        ? [
-                            {
-                              label: t('initiatives.status.ON_HOLD', 'Wstrzymana'),
-                              tone: 'warning' as const,
-                            },
-                          ]
-                        : []),
-                      {
-                        label: `${previewModel.progress ?? 0}%`,
-                        tone: 'neutral',
-                      },
-                    ],
-                    trailing: (
-                      <span className="text-[11px] font-semibold text-c-text-secondary">
-                        {selectedRow.plannedEndDate
-                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
-                          : '—'}
-                      </span>
-                    ),
-                  }}
-                  details={{
-                    text: [
-                      `${t('execution.table.assignee', 'Owner')}: ${
-                        previewModel.ownerBusiness
-                          ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
-                          : t('execution.table.unassigned', 'Unassigned')
-                      }`,
-                      `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
-                      `${t('execution.table.deadline', 'Due')}: ${
-                        selectedRow.plannedEndDate
-                          ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
-                          : '—'
-                      }`,
-                      `${t('execution.table.tasks', 'Tasks')}: ${
-                        tasksByInitiative[selectedRow.id]?.length ?? 0
-                      }`,
-                      '',
-                      previewModel.summary?.trim() ||
-                        previewModel.description?.trim() ||
-                        t('common.noDescription', 'No description'),
-                    ].join('\n'),
-                    onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
-                      );
-                    },
-                  }}
-                  ai={{
-                    hints: [
-                      t(
-                        'execution.summary.summarizePrompt',
-                        'Summarize this initiative in 5 bullets and propose 3 next steps.'
+            <JedenPrawyPanel
+              rekord={
+                selectedRow && previewModel ? (
+                  <StandardPreview
+                    title={selectedRow.name || t('execution.initiativeLabel', 'Initiative')}
+                    onClose={() => setSummaryPreviewInitiativeId(null)}
+                    onOpenFull={() => handleOpenDocument(selectedRow)}
+                    meta={{
+                      pills: [
+                        {
+                          // ★ Ten sam znalezisko 203-polski co kolumna statusu
+                          // wyżej: `STATUS_METADATA[...].label` jest zawsze
+                          // angielski — pill podglądu pokazywał np. "Blocked"
+                          // podczas gdy tabela obok mówiła po polsku.
+                          label: getLocalizedStatusLabel(selectedRow.status as InitiativeStatus, t),
+                          tone: statusChipTone(String(selectedRow.status)),
+                        },
+                        // DEC-424: wstrzymanie jest FLAGĄ na „W realizacji", nie statusem —
+                        // bez tej pigułki jedynym śladem wstrzymania był przycisk „Wznów".
+                        ...((selectedRow as { onHold?: boolean }).onHold
+                          ? [
+                              {
+                                label: t('initiatives.status.ON_HOLD', 'Wstrzymana'),
+                                tone: 'warning' as const,
+                              },
+                            ]
+                          : []),
+                        {
+                          label: `${previewModel.progress ?? 0}%`,
+                          tone: 'neutral',
+                        },
+                      ],
+                      trailing: (
+                        <span className="text-[11px] font-semibold text-c-text-secondary">
+                          {selectedRow.plannedEndDate
+                            ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                            : '—'}
+                        </span>
                       ),
-                    ],
-                    onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
-                  }}
-                  relations={sourceRelations}
-                  actions={listPreviewActions}
-                >
-                  {/*
+                    }}
+                    details={{
+                      text: [
+                        `${t('execution.table.assignee', 'Owner')}: ${
+                          previewModel.ownerBusiness
+                            ? `${previewModel.ownerBusiness.firstName ?? ''} ${previewModel.ownerBusiness.lastName ?? ''}`.trim()
+                            : t('execution.table.unassigned', 'Unassigned')
+                        }`,
+                        `${t('execution.table.progress', 'Progress')}: ${previewModel.progress ?? 0}%`,
+                        `${t('execution.table.deadline', 'Due')}: ${
+                          selectedRow.plannedEndDate
+                            ? new Date(selectedRow.plannedEndDate).toLocaleDateString()
+                            : '—'
+                        }`,
+                        `${t('execution.table.tasks', 'Tasks')}: ${
+                          tasksByInitiative[selectedRow.id]?.length ?? 0
+                        }`,
+                        '',
+                        previewModel.summary?.trim() ||
+                          previewModel.description?.trim() ||
+                          t('common.noDescription', 'No description'),
+                      ].join('\n'),
+                      onCopy: () => {
+                        void navigator.clipboard?.writeText(
+                          `${selectedRow.name} — ${selectedRow.status} (${previewModel.progress ?? 0}%)`
+                        );
+                      },
+                    }}
+                    ai={{
+                      hints: [
+                        t(
+                          'execution.summary.summarizePrompt',
+                          'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                        ),
+                      ],
+                      onRunHint: (hint) => openAiChatForInitiative(selectedRow, hint),
+                    }}
+                    relations={sourceRelations}
+                    actions={listPreviewActions}
+                  >
+                    {/*
                     Łańcuch zarządzania w Realizacji (DEC-424: Zatwierdzona → W realizacji,
                     W realizacji → Zamknięta, flaga wstrzymania). Ta sama powierzchnia co w
                     rejestrze Inicjatyw; kebab wiersza jej nie dubluje.
                   */}
-                  <InitiativeLifecycleActions
-                    initiativeId={selectedRow.id}
-                    density="full"
-                    heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
-                    className="mt-4"
-                  />
-                </StandardPreview>
-            ) : null} />
+                    <InitiativeLifecycleActions
+                      initiativeId={selectedRow.id}
+                      density="full"
+                      heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
+                      className="mt-4"
+                    />
+                  </StandardPreview>
+                ) : null
+              }
+            />
           </div>
         </div>
       );
@@ -5999,10 +5689,7 @@ Please return:
                     openDisabledReason={
                       selectedSummaryRiskInitiative
                         ? undefined
-                        : t(
-                            'execution.summary.riskNoInitiative',
-                            'No linked initiative to open'
-                          )
+                        : t('execution.summary.riskNoInitiative', 'No linked initiative to open')
                     }
                     meta={{
                       pills: [
@@ -6196,46 +5883,43 @@ Please return:
            * Zagrożone · Po terminie) realnie zawężają teraz `summaryInitiatives`.
            */
           [
-                ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
-                  ...preset,
-                  count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
-                })),
-                ...(execReportsIntelligenceEnabled && activeTab === 'work'
-                  ? [
-                      {
-                        id: 'work-intelligence-report',
-                        label: t('execution.reports.intelligence.workTab', 'Work report'),
-                      },
-                    ]
-                  : []),
-                ...(execReportsIntelligenceEnabled && activeTab === 'resources'
-                  ? [
-                      {
-                        id: 'resources-intelligence-report',
-                        label: t(
-                          'execution.reports.intelligence.resources.tab',
-                          'Resources report'
-                        ),
-                      },
-                    ]
-                  : []),
-                ...(execReportsIntelligenceEnabled && activeTab === 'control'
-                  ? [
-                      {
-                        id: 'control-intelligence-report',
-                        label: t('execution.reports.intelligence.control.tab', 'Control report'),
-                      },
-                    ]
-                  : []),
-                ...(execReportsIntelligenceEnabled && activeTab === 'reports'
-                  ? [
-                      {
-                        id: 'unified-execution-report-generator',
-                        label: t('execution.reports.intelligence.generator.tab', 'Create report'),
-                      },
-                    ]
-                  : []),
-              ]
+            ...(getExecutionMenu3(t)[activeTab] ?? []).map((preset) => ({
+              ...preset,
+              count: canonicalMenu3Counts[activeTab]?.[preset.id] ?? 0,
+            })),
+            ...(execReportsIntelligenceEnabled && activeTab === 'work'
+              ? [
+                  {
+                    id: 'work-intelligence-report',
+                    label: t('execution.reports.intelligence.workTab', 'Work report'),
+                  },
+                ]
+              : []),
+            ...(execReportsIntelligenceEnabled && activeTab === 'resources'
+              ? [
+                  {
+                    id: 'resources-intelligence-report',
+                    label: t('execution.reports.intelligence.resources.tab', 'Resources report'),
+                  },
+                ]
+              : []),
+            ...(execReportsIntelligenceEnabled && activeTab === 'control'
+              ? [
+                  {
+                    id: 'control-intelligence-report',
+                    label: t('execution.reports.intelligence.control.tab', 'Control report'),
+                  },
+                ]
+              : []),
+            ...(execReportsIntelligenceEnabled && activeTab === 'reports'
+              ? [
+                  {
+                    id: 'unified-execution-report-generator',
+                    label: t('execution.reports.intelligence.generator.tab', 'Create report'),
+                  },
+                ]
+              : []),
+          ]
         }
         activeChip={canonicalMenu3Preset[activeTab] ?? null}
         onChipChange={(id) => {

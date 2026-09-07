@@ -13287,9 +13287,49 @@
         "initiative": "Inicjatywa",
         "person": "Osoba",
         "due": "Termin",
-        "slip": "Poślizg (dni)"
+        "slip": "Poślizg (dni)",
+        "daysOverdue": "Dni po terminie"
       },
-      "degraded": "Niepełne dane: {{count}} {{unit}} bez odpowiedzi"
+      "degraded": "Niepełne dane: {{count}} {{unit}} bez odpowiedzi",
+      "withoutInitiative": "Bez inicjatywy",
+      "status": {
+        "backlog": "Backlog",
+        "todo": "Do zrobienia",
+        "in_progress": "W toku",
+        "review": "W przeglądzie",
+        "blocked": "Zablokowane",
+        "on_hold": "Wstrzymane",
+        "done": "Wykonane",
+        "cancelled": "Anulowane"
+      },
+      "edit": {
+        "hint": "Zmień podwójnym kliknięciem",
+        "notEditable": "Ten wiersz pochodzi z kanonicznego rejestru realizacji — otwórz element pracy, żeby go zmienić.",
+        "person": "Zmień osobę",
+        "due": "Zmień termin",
+        "status": "Zmień status",
+        "close": "Zamknij zadanie",
+        "unassigned": "Nieprzypisany",
+        "saved": "Zapisano zmianę zadania",
+        "failed": "Nie udało się zapisać zmiany: {{powod}}",
+        "unknownReason": "brak odpowiedzi serwera",
+        "transitionBlocked": "Nie można zmienić statusu z „{{z}}” na „{{na}}”.",
+        "blockedByDecision": "Zadania nie można zamknąć: czeka na rozstrzygnięcie decyzji.",
+        "blockedReasonRequired": "Status „Zablokowane” wymaga podania powodu blokady.",
+        "alreadyClosed": "Zadanie jest już zamknięte.",
+        "dictionaryMissing": "Słownik statusów jeszcze się nie wczytał.",
+        "closeBlocked": "Ze statusu „{{z}}” nie można zamknąć zadania — ustaw najpierw „W toku” albo „W przeglądzie”."
+      },
+      "create": {
+        "title": "Nowe zadanie",
+        "fieldTitle": "Tytuł",
+        "submit": "Utwórz zadanie",
+        "created": "Zadanie utworzone",
+        "titleRequired": "Podaj tytuł zadania."
+      },
+      "menu": {
+        "openTask": "Otwórz zadanie"
+      }
     },
     "resources": {
       "columns": {

@@ -1,28 +1,62 @@
 // @vitest-environment node
 /**
- * Kanban Realizacji — metoda zapisu przeciągnięcia karty (DEC-453, commit 91484aad7c).
+ * Zapis statusu zadania w Realizacji — gdzie mieszka i jaką metodą pisze (DEC-453).
  *
- * Zmierzone 07.09 na własnym API (kopia bazy): `PATCH /api/tasks/:id` → 404
- * (`API_ROUTE_NOT_FOUND`, router ma tylko `PUT /:id`), `PUT /api/tasks/:id` → 200
- * i status w tabeli `tasks` zmieniony. Przez trzy tygodnie maskowała to bramka 26A
- * (409 na każdy zapis routera), więc po jej zdjęciu przeciągnięcie nadal by nie
- * działało — tylko z innym kodem błędu.
+ * HISTORIA. Do 07.09 ten plik pilnował, że kanban Realizacji zapisuje przez
+ * `Api.put('/tasks/${activeId}')`, bo `PATCH /api/tasks/:id` odpowiada 404
+ * (router `server/src/routes/pmo/tasks.routes.ts` ma wyłącznie `PUT /:id`;
+ * zmierzone 07.09 na własnym API). Twierdzenie o metodzie było prawdziwe —
+ * ale kanban, którego pilnowało, NIE BYŁ RENDEROWANY: `renderTaskBoard`
+ * i `handleDragEnd` w `ExecutionHub.tsx` nie miały ani jednego wołacza
+ * (jedyne wystąpienie w repo to własna deklaracja). Test zielony bronił kodu,
+ * którego użytkownik nie mógł uruchomić — kształt „biblioteka bez wywołania".
  *
- * MUTACJA: zamień `Api.put` z powrotem na `Api.patch` w handlerze przeciągnięcia
- * → test czerwony.
+ * P16-R2: martwy kanban usunięty, a zapis statusu przeniesiony tam, gdzie
+ * użytkownik naprawdę klika — edycja w wierszu zakładki „Praca"
+ * (`ExecutionWorkSurface.tsx`). Ten plik pilnuje teraz JEDNEGO I DRUGIEGO:
+ * że martwy kod nie wrócił i że żywa ścieżka pisze metodą, którą serwer zna.
+ *
+ * MUTACJE:
+ *   · przywrócenie `renderTaskBoard`/`handleDragEnd` w `ExecutionHub.tsx` → RED,
+ *   · zamiana `Api.updateTask` na `Api.patch` w `ExecutionWorkSurface` → RED,
+ *   · wysłanie pełnego obiektu zamiast `{ [pole]: … }` → RED.
  */
 import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
-const source = readFileSync(new URL('../ExecutionHub.tsx', import.meta.url), 'utf8');
+const hub = readFileSync(new URL('../ExecutionHub.tsx', import.meta.url), 'utf8');
+const praca = readFileSync(new URL('../ExecutionWorkSurface.tsx', import.meta.url), 'utf8');
 
-describe('Kanban Realizacji — zapis statusu zadania po przeciągnięciu', () => {
-  it('woła PUT /tasks/:id (jedyna metoda zapisu tego routera)', () => {
-    expect(source).toMatch(/await Api\.put\(`\/tasks\/\$\{activeId\}`, \{ status: newStatus \}\)/);
+describe('Realizacja — martwy kanban usunięty', () => {
+  it('ExecutionHub nie deklaruje już tablicy kanban ani obsługi przeciągania', () => {
+    expect(hub).not.toMatch(/const renderTaskBoard\s*=/);
+    expect(hub).not.toMatch(/const handleDragEnd\s*=/);
+    expect(hub).not.toMatch(/<DndContext/);
   });
 
-  it('nie woła PATCH /tasks/:id — ta metoda nie istnieje na serwerze (404)', () => {
-    expect(source).not.toMatch(/Api\.patch\(`\/tasks\/\$\{activeId\}`/);
+  it('ExecutionHub nie importuje już @dnd-kit (zależność bez konsumenta w tym pliku)', () => {
+    expect(hub).not.toMatch(/from '@dnd-kit\//);
+  });
+
+  it('ExecutionHub nie pisze już statusu zadania własną trasą', () => {
+    expect(hub).not.toMatch(/Api\.put\(`\/tasks\/\$\{activeId\}`/);
+    expect(hub).not.toMatch(/Api\.patch\(`\/tasks\//);
+  });
+});
+
+describe('Realizacja → Praca — edycja w wierszu pisze PUT /tasks/:id', () => {
+  it('woła Api.updateTask (kanoniczny wrapper PUT /api/tasks/:id)', () => {
+    expect(praca).toMatch(/await Api\.updateTask\(id, \{ \[pole\]: doWyslania \}\)/);
+  });
+
+  it('wysyła DOKŁADNIE jedno pole — nie pełny obiekt zadania', () => {
+    // `{ [pole]: … }` ma jeden klucz z definicji; pełny payload kasowałby
+    // wartości, których użytkownik nie dotknął.
+    expect(praca).not.toMatch(/Api\.updateTask\(id, \{\s*\.\.\.(row|source|zadanie)/);
+  });
+
+  it('NIE woła PATCH /tasks/:id — ta metoda nie istnieje na serwerze (404)', () => {
+    expect(praca).not.toMatch(/Api\.patch\(['"`]\/tasks\//);
   });
 });

@@ -1,0 +1,10 @@
+{
+  "nazwa": "04-po-zmianie-osoby",
+  "opis": "Po zapisie osoby (toast + wiersz odswiezony)",
+  "faza": "po",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:49:00.473Z"
+}

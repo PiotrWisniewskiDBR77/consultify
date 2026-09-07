@@ -1,0 +1,10 @@
+{
+  "nazwa": "10b-podglad-akcje",
+  "opis": "Podglad, blok akcji: Zmien osobe · Zmien termin · Zamknij zadanie (1440x1400)",
+  "faza": "po",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:49:26.509Z"
+}

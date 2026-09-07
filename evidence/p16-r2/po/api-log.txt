@@ -1,0 +1,37 @@
+GET 200 /api/tasks
+GET 200 /api/tasks/workflow-config
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/tasks
+PUT 200 /api/tasks/proba-r2-dowod
+    zadanie={"assigneeId":"e60062fb-cd33-41bf-bac2-f361aae2422a"}
+    odpowiedz={"id":"proba-r2-dowod","project_id":null,"organization_id":"cc9db573-260f-4a19-927f-f3cc1fbaea38","title":"PROBA R2 zadanie po terminie","description":null,"sta
+GET 200 /api/tasks
+GET 200 /api/tasks/workflow-config
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/tasks
+PUT 200 /api/tasks/proba-r2-dowod
+    zadanie={"dueDate":"2026-09-25T00:00:00.000Z"}
+    odpowiedz={"id":"proba-r2-dowod","project_id":null,"organization_id":"cc9db573-260f-4a19-927f-f3cc1fbaea38","title":"PROBA R2 zadanie po terminie","description":null,"sta
+GET 200 /api/tasks
+GET 200 /api/tasks/workflow-config
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/tasks
+PUT 200 /api/tasks/proba-r2-dowod
+    zadanie={"status":"done"}
+    odpowiedz={"id":"proba-r2-dowod","project_id":null,"organization_id":"cc9db573-260f-4a19-927f-f3cc1fbaea38","title":"PROBA R2 zadanie po terminie","description":null,"sta
+GET 200 /api/tasks
+GET 200 /api/tasks/workflow-config
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/tasks
+POST 201 /api/tasks
+    zadanie={"title":"PROBA R2 nowe zadanie z formularza","initiativeId":"ce51efcb-4fb8-4006-a5c7-c87ae4c74b29","assigneeId":"e60062fb-cd33-41bf-bac2-f361aae2422a","dueDate
+    odpowiedz={"id":"887de007-3339-43bf-ac6c-a8767e2ad5d5","project_id":"e75c56da-1016-405b-a163-3c40e5768a7e","organization_id":"cc9db573-260f-4a19-927f-f3cc1fbaea38","title
+GET 200 /api/tasks
+GET 200 /api/tasks/workflow-config
+GET 200 /api/tasks
+GET 200 /api/tasks
+GET 200 /api/tasks

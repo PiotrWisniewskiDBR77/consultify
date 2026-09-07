@@ -13279,7 +13279,7 @@
       "confirm": "Confirm"
     },
     "actions": {
-      "newTask": "New Task",
+      "newTask": "New task",
       "newDecision": "New Decision",
       "raidLog": "RAID Log",
       "export": "Export",
@@ -13801,9 +13801,49 @@
         "initiative": "Initiative",
         "person": "Person",
         "due": "Due",
-        "slip": "Slip (days)"
+        "slip": "Slip (days)",
+        "daysOverdue": "Days overdue"
       },
-      "degraded": "Partial data: {{count}} {{unit}} unavailable"
+      "degraded": "Partial data: {{count}} {{unit}} unavailable",
+      "withoutInitiative": "Without initiative",
+      "status": {
+        "backlog": "Backlog",
+        "todo": "To do",
+        "in_progress": "In progress",
+        "review": "In review",
+        "blocked": "Blocked",
+        "on_hold": "On hold",
+        "done": "Done",
+        "cancelled": "Cancelled"
+      },
+      "edit": {
+        "hint": "Double-click to edit",
+        "notEditable": "This row comes from the canonical delivery register — open the work item to change it.",
+        "person": "Change person",
+        "due": "Change due date",
+        "status": "Change status",
+        "close": "Close task",
+        "unassigned": "Unassigned",
+        "saved": "Task change saved",
+        "failed": "Could not save the change: {{powod}}",
+        "unknownReason": "no server response",
+        "transitionBlocked": "Cannot change status from \"{{z}}\" to \"{{na}}\".",
+        "blockedByDecision": "The task cannot be closed: it is waiting for a decision.",
+        "blockedReasonRequired": "Status \"Blocked\" requires a blocking reason.",
+        "alreadyClosed": "The task is already closed.",
+        "dictionaryMissing": "The status dictionary has not loaded yet.",
+        "closeBlocked": "A task in status \"{{z}}\" cannot be closed — set \"In progress\" or \"In review\" first."
+      },
+      "create": {
+        "title": "New task",
+        "fieldTitle": "Title",
+        "submit": "Create task",
+        "created": "Task created",
+        "titleRequired": "Enter a task title."
+      },
+      "menu": {
+        "openTask": "Open task"
+      }
     },
     "resources": {
       "columns": {

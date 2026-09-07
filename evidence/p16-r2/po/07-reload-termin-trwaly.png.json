@@ -1,0 +1,10 @@
+{
+  "nazwa": "07-reload-termin-trwaly",
+  "opis": "Po przeladowaniu — nowy termin zostal, „Dni po terminie\" znikly",
+  "faza": "po",
+  "url": "http://127.0.0.1:3175/execution?tab=work&view=table",
+  "szerokosc": 1440,
+  "motyw": "jasny",
+  "bledyKonsoli": [],
+  "czas": "2026-09-07T18:49:15.138Z"
+}
