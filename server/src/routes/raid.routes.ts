@@ -55,26 +55,47 @@ router.get(
     // migracji 063 (`mitigation_plan`, NIE `mitigation_status` — ta druga to
     // osobna, niepowiązana kolumna warsztatu V8 execution-control), ale do
     // teraz nie była wystawiana przez ten endpoint.
-    let query = `SELECT id, initiative_id as "initiativeId", type, title, description,
-               impact as severity, status, owner_id as "ownerId", due_date as "dueDate",
-               probability, impact, risk_score as "riskScore", score_category as "scoreCategory",
-               mitigation_plan as "mitigationPlan",
-               created_at as "createdAt" FROM raid_items WHERE organization_id = ?`;
+    // [ODMROZENIE 06_EXECUTION DEC-453] P16/R4: WERSJA AGREGATU w modelu odczytu.
+    //
+    // ZMIERZONE 07.09 (`evidence/p16-r45/po/api.log`): kanoniczny writer
+    // (`raidWrites.ts`) trzyma wersje CAS wylacznie w pamieci przegladarki, wiec
+    // PIERWSZY zapis po kazdym przeladowaniu strony szedl z `expectedVersion: 0`,
+    // dostawal 409 VERSION_OR_IDEMPOTENCY_CONFLICT i dopiero ponowienie konczylo
+    // sie 200. Dwa skutki, oba zle: czerwony blad w konsoli przy KAZDEJ pierwszej
+    // edycji (prog §10: zero bledow konsoli) oraz CAS, ktory NIGDY nie chronil —
+    // slepe „0" zawsze przegrywalo i zawsze bylo nadpisywane wersja serwera, wiec
+    // rownolegla edycja dwoch osob przechodzila bez ostrzezenia.
+    //
+    // LEFT JOIN, nie INNER: pozycje zalozone przed decyzja 26A nie maja wiersza
+    // w `ie_aggregate_state` i ich `aggregateVersion` zostaje `null` — writer
+    // czyta to jako 0 i adoptuje je dokladnie tak, jak dotad.
+    let query = `SELECT r.id, r.initiative_id as "initiativeId", r.type, r.title, r.description,
+               r.impact as severity, r.status, r.owner_id as "ownerId", r.due_date as "dueDate",
+               r.probability, r.impact, r.risk_score as "riskScore", r.score_category as "scoreCategory",
+               r.mitigation_plan as "mitigationPlan",
+               s.version as "aggregateVersion",
+               r.created_at as "createdAt"
+          FROM raid_items r
+          LEFT JOIN ie_aggregate_state s
+            ON s.organization_id = r.organization_id
+           AND s.aggregate_type = 'raid_item'
+           AND s.aggregate_id = r.id
+         WHERE r.organization_id = ?`;
     const params: any[] = [orgId];
     if (initiativeId) {
-      query += ' AND initiative_id = ?';
+      query += ' AND r.initiative_id = ?';
       params.push(initiativeId);
     }
     if (projectId) {
       query +=
-        ' AND initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)';
+        ' AND r.initiative_id IN (SELECT id FROM initiatives WHERE project_id = ? AND organization_id = ?)';
       params.push(projectId, orgId);
     }
     if (type) {
-      query += ' AND type = ?';
+      query += ' AND r.type = ?';
       params.push(type);
     }
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY r.created_at DESC';
     const rows = (await dbAll(query, params)) || [];
     res.json(Array.isArray(rows) ? rows : []);
   })
