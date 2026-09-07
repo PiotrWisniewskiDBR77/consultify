@@ -1,0 +1,54 @@
+{
+ "url": "http://127.0.0.1:3091/reports/builder/report-adma-generated",
+ "tytul": "Consultify",
+ "kliki": [
+  "css=[data-testid=\"pracuj-z-ai\"]"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nMateriały\nKreator raportów\nEdytuj\nDane\nModel\n2\n7\nAudyt Nocny\nAN\nZgłoś do recenzji\nZapisz\nPodgląd\nSekcje\nPracuj z AI\nSPIS TREŚCI\nŹródło: ADMA — Digital Maturity Assessment\nDodaj blok\nZacznij budować raport\n\nDodaj bloki, aby zdefiniować strukturę raportu. Każdy blok może zawierać tekst, dane, wykresy lub wizualizacje.\n\nDodaj pierwszy blok\nAKCJE\nUstawienia\nWersje\n👔 Executive\n📄 Portrait\n🇵🇱 PL\nTREŚĆ\nWYGLĄD\nRECENZJA\nCEL I ODBIORCY\nOdbiorca\nZarząd\nRada\nTechniczny\nOperacyjny\nMieszany\nCel\nDiagnoza\nMapa drogowa\nDecyzja inwest.\nAktualizuj\nPodsumowanie\nTon\nKonsultingowy\nNeutralny\nDecyzyjny\nZAKRES\nSPÓJNOŚĆ TREŚCI\nJĘZYK RAPORTU\nWIZUALIZACJE\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tGENERATED\nWłaściciel\t—\nPriorytet\t—\nOkres\t—\nŹródło\tADMA — Digital Maturity Assessment\nUtworzono\t—\nZaktualizowano\t—\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\n\nADMA — Digital Maturity Assessment\n\nKOMENTARZE\nHISTORIA\nAnalizuj\nUzupełnij tę sekcję\nUzupełnij cały dokument",
+ "dom": {
+  "[data-testid=\"pracuj-z-ai\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1258.84375,
+     "y": 120,
+     "width": 120.15625,
+     "height": 32
+    }
+   ]
+  },
+  "aside": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1088,
+     "y": 168,
+     "width": 320,
+     "height": 780
+    }
+   ]
+  },
+  "aside[style*=\"320px\"]": {
+   "liczba": 1,
+   "boxy": [
+    {
+     "x": 1088,
+     "y": 168,
+     "width": 320,
+     "height": 780
+    }
+   ]
+  }
+ },
+ "kiedy": "2026-09-07T04:06:04.189Z"
+}
