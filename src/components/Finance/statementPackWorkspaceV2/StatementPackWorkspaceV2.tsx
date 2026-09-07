@@ -50,7 +50,9 @@
 
 import { financeArtifactDisplayTitle } from '../../../labels/financeArtifactTitle';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { DocumentCardNFrame } from '@/components/standard/DocumentCardNFrame';
 import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 
 import {
@@ -228,6 +230,8 @@ export function StatementPackWorkspaceV2(props: StatementPackWorkspaceV2Props): 
 
 function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): React.ReactElement {
   const { businessVersionId, resolveLineLabel, onOpenArtifact, onCreateNew, onOpenReportResult, onNavigateBack = () => {} } = props;
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl') ?? true;
   const fetchers: StatementPackWorkspaceV2Fetchers = useMemo(
     () => ({ ...DEFAULT_FETCHERS, ...props.fetchers }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -622,38 +626,36 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
       )}
 
       <FinanceErrorBoundary documentLabel={name} onRetry={refreshAll} onBackToList={onNavigateBack}>
-        <div className="flex flex-1 gap-3 overflow-hidden p-3">
-          <div className="min-w-0 flex-1">
-            {linesState.status === 'error' ? (
-              <div className="p-4 text-xs text-c-danger" data-testid="statement-pack-lines-error">
-                Nie udało się wczytać linii sprawozdania: {linesState.error}
-              </div>
-            ) : (
-              <CanonicalStatementTableV2
-                lines={lines}
-                resolveLineLabel={resolveLineLabel}
-                selectedCellKey={selection ? `${selection.rowKey}::${selection.periodId}` : null}
-                onSelectCell={setSelection}
-                emptyLabel="Brak linii sprawozdania dla tej wersji."
-              />
-            )}
-          </div>
-
-          <div className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto">
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface">
-              <SourceEvidencePanel
-                rowLabel={selectedRowLabel}
-                periodLabel={selection?.periodId ?? ''}
-                cell={selection?.cell ?? null}
-                emptyLabel="Kliknij komórkę w tabeli, żeby zobaczyć jej dowód źródłowy."
-                mappingRow={mappingRow}
-              />
-            </div>
-
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface">
+        <DocumentCardNFrame
+          type="finance-statement-pack"
+          title={name}
+          isPolish={isPolish}
+          editable={['DRAFT', 'READY_FOR_REVIEW', 'IN_REVIEW', 'NEEDS_CHANGES'].includes(status)}
+          activeSection="statements"
+          onAnalyze={() => onCreateNew('HISTORICAL_ANALYSIS', businessVersionId)}
+          properties={[
+            { id: 'name', label: isPolish ? 'Nazwa' : 'Name', value: name },
+            { id: 'status', label: 'Status', value: status },
+            { id: 'version', label: isPolish ? 'Wersja' : 'Version', value: `v${versionNo}` },
+            { id: 'freshness', label: isPolish ? 'Aktualność' : 'Freshness', value: freshness },
+          ]}
+          actions={
+            <StatementReportActionsSection
+              draftStatus={draftStatus}
+              draftError={draftError}
+              openStatus={openStatus}
+              publishStatus={publishStatus}
+              publishError={publishError}
+              onGenerateDraft={handleGenerateDraft}
+              onOpenResult={handleOpenResult}
+              onPublish={handlePublish}
+            />
+          }
+          relations={
+            <div className="space-y-3">
               <NamedCollapsibleSection
                 id="reconciliation"
-                title="Rekoncyliacja"
+                title={isPolish ? 'Rekoncyliacja' : 'Reconciliation'}
                 state={reconciliationSectionState(runsState, runs.length)}
                 tone={runsState.status === 'error' ? 'danger' : 'neutral'}
                 open={selectedRunId !== null}
@@ -673,54 +675,45 @@ function StatementPackWorkspaceV2Inner(props: StatementPackWorkspaceV2Props): Re
                   onSelectRun={handleSelectRun}
                   runDetail={runDetail}
                   runDetailLoading={runDetailLoading}
-                  emptyLabel="Brak przebiegów rekoncyliacji dla tej wersji."
+                  emptyLabel={isPolish ? 'Brak przebiegów rekoncyliacji dla tej wersji.' : 'No reconciliation runs for this version.'}
                 />
               </NamedCollapsibleSection>
+              <RelatedArtifactsSection
+                sourceBusinessVersionId={businessVersionId}
+                descendants={descendants}
+                loading={lineageState.status === 'loading'}
+                loaded={lineageState.status === 'loaded'}
+                onOpenArtifact={onOpenArtifact}
+                onCreateNew={onCreateNew}
+              />
             </div>
-
+          }
+          evidence={
             <div className="rounded-xl border border-c-border-subtle bg-c-surface">
-              <NamedCollapsibleSection
-                id="related-artifacts"
-                title="Powiązane artefakty"
-                state={relatedArtifactsSectionState(lineageState, descendants.length)}
-                tone={lineageState.status === 'error' ? 'danger' : 'neutral'}
-                open
-                onToggle={() => {}}
-              >
-                <RelatedArtifactsSection
-                  sourceBusinessVersionId={businessVersionId}
-                  descendants={descendants}
-                  loading={lineageState.status === 'loading'}
-                  loaded={lineageState.status === 'loaded'}
-                  onOpenArtifact={onOpenArtifact}
-                  onCreateNew={onCreateNew}
-                />
-              </NamedCollapsibleSection>
+              <SourceEvidencePanel
+                rowLabel={selectedRowLabel}
+                periodLabel={selection?.periodId ?? ''}
+                cell={selection?.cell ?? null}
+                emptyLabel={isPolish ? 'Kliknij komórkę w tabeli, żeby zobaczyć jej dowód źródłowy.' : 'Select a table cell to see its source evidence.'}
+                mappingRow={mappingRow}
+              />
             </div>
-
-            <div className="rounded-xl border border-c-border-subtle bg-c-surface">
-              <NamedCollapsibleSection
-                id="report"
-                title="Sekcja raportu"
-                state={reportSectionState(draftStatus, openStatus, publishStatus)}
-                tone={publishStatus === 'published' ? 'ok' : draftStatus === 'failed' || publishStatus === 'failed' ? 'danger' : 'neutral'}
-                open
-                onToggle={() => {}}
-              >
-                <StatementReportActionsSection
-                  draftStatus={draftStatus}
-                  draftError={draftError}
-                  openStatus={openStatus}
-                  publishStatus={publishStatus}
-                  publishError={publishError}
-                  onGenerateDraft={handleGenerateDraft}
-                  onOpenResult={handleOpenResult}
-                  onPublish={handlePublish}
-                />
-              </NamedCollapsibleSection>
+          }
+        >
+          {linesState.status === 'error' ? (
+            <div className="p-4 text-xs text-c-danger" data-testid="statement-pack-lines-error">
+              {isPolish ? 'Nie udało się wczytać linii sprawozdania' : 'Could not load statement lines'}: {linesState.error}
             </div>
-          </div>
-        </div>
+          ) : (
+            <CanonicalStatementTableV2
+              lines={lines}
+              resolveLineLabel={resolveLineLabel}
+              selectedCellKey={selection ? `${selection.rowKey}::${selection.periodId}` : null}
+              onSelectCell={setSelection}
+              emptyLabel={isPolish ? 'Brak linii sprawozdania dla tej wersji.' : 'No statement lines for this version.'}
+            />
+          )}
+        </DocumentCardNFrame>
       </FinanceErrorBoundary>
 
       {pendingReasonFor && (
@@ -777,25 +770,6 @@ function reconciliationSectionState(state: AsyncListState<unknown>, count: numbe
   if (state.status === 'loading') return 'ładowanie…';
   if (state.status === 'error') return 'błąd wczytywania';
   return `${count} ${count === 1 ? 'przebieg' : 'przebiegów'}`;
-}
-
-function relatedArtifactsSectionState(state: AsyncListState<unknown>, count: number): string {
-  if (state.status === 'loading') return 'ładowanie…';
-  if (state.status === 'error') return 'błąd wczytywania';
-  return `${count} ${count === 1 ? 'powiązanie' : 'powiązań'}`;
-}
-
-function reportSectionState(
-  draftStatus: ReportDraftStageStatus,
-  openStatus: ReportOpenStageStatus,
-  publishStatus: ReportPublishStageStatus
-): string {
-  if (publishStatus === 'published') return 'opublikowano';
-  if (openStatus === 'opened') return 'otwarty, gotowy do publikacji';
-  if (draftStatus === 'ready') return 'szkic gotowy';
-  if (draftStatus === 'in_progress') return 'generowanie…';
-  if (draftStatus === 'failed') return 'błąd generowania';
-  return 'nie rozpoczęto';
 }
 
 export default StatementPackWorkspaceV2;

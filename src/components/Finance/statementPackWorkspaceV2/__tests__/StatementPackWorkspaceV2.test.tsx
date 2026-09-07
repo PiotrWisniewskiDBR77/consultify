@@ -146,6 +146,7 @@ describe('StatementPackWorkspaceV2 — assembly renders real data via injected f
     await waitFor(() =>
       expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
     );
+    fireEvent.click(screen.getByRole('button', { name: /Źródła i założenia|Sources and assumptions/i }));
     expect(screen.getByTestId('source-evidence-panel-empty')).toBeInTheDocument();
   });
 });
@@ -229,12 +230,14 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
 
     // Click the presented cell — step 1 (sourceRef) must appear immediately.
     fireEvent.click(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1'));
+    fireEvent.click(screen.getByRole('button', { name: /Źródła i założenia|Sources and assumptions/i }));
     await waitFor(() => expect(screen.getByTestId('source-evidence-ref')).toBeInTheDocument());
     expect(screen.getByTestId('source-evidence-ref')).toHaveTextContent('page');
     // Step 2 (mapping) not yet looked up — no reconciliation run selected.
     expect(screen.queryByTestId('source-evidence-mapping')).not.toBeInTheDocument();
 
     // Open the reconciliation section — auto-selects the first run in this assembly.
+    fireEvent.click(screen.getByRole('button', { name: /Powiązania|Relations/i }));
     fireEvent.click(screen.getByTestId('named-collapsible-trigger-reconciliation'));
     await waitFor(() =>
       expect(screen.getByTestId('source-evidence-mapping-row')).toBeInTheDocument()
@@ -322,6 +325,8 @@ describe('StatementPackWorkspaceV2 — chain proof (source -> mapping -> canonic
       expect(screen.getByTestId('canonical-statement-table-v2')).toBeInTheDocument()
     );
     fireEvent.click(screen.getByTestId('canonical-statement-cell-canon-revenue::period-1'));
+    fireEvent.click(screen.getByRole('button', { name: /Źródła i założenia|Sources and assumptions/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Powiązania|Relations/i }));
     fireEvent.click(screen.getByTestId('named-collapsible-trigger-reconciliation'));
     await waitFor(() => expect(screen.getByTestId('source-evidence-mapping')).toBeInTheDocument());
     // Honest "no match" — NOT a fabricated cross-period match.
