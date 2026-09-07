@@ -1,5 +1,12 @@
 /** Frontend projection of DEC-424. Codes and label keys come from the generated server SSOT. */
-import { InitiativeStatus, INITIATIVE_STATUS_LABEL_KEYS, type InitiativeStatus as InitiativeStatusCode } from '../../packages/shared/src/constants/initiativeStatuses.generated';
+import {
+  InitiativeStatus,
+  INITIATIVE_FLAG_RULES as GENERATED_FLAG_RULES,
+  INITIATIVE_STATUS_LABEL_KEYS,
+  INITIATIVE_TRANSITION_MATRIX,
+  INITIATIVE_VALID_TRANSITIONS,
+  type InitiativeStatus as InitiativeStatusCode,
+} from '../../packages/shared/src/constants/initiativeStatuses.generated';
 import type { StatusTone } from '../components/ui/primitives/chips';
 
 export type ModuleId = 'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
@@ -7,11 +14,14 @@ export interface ModuleConfig { id: ModuleId; name: string; route: string; statu
 export interface StatusMeta { labelKey: string; color: string; bgColor: string; dotColor: string; descriptionKey: string }
 const ALL = Object.values(InitiativeStatus);
 
-export const VALID_TRANSITIONS: Record<InitiativeStatusCode, InitiativeStatusCode[]> = {
-  PROPOSED: [InitiativeStatus.DRAFT, InitiativeStatus.REJECTED], DRAFT: [InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.REJECTED],
-  PENDING_APPROVAL: [InitiativeStatus.DRAFT, InitiativeStatus.APPROVED, InitiativeStatus.REJECTED], APPROVED: [InitiativeStatus.IN_EXECUTION, InitiativeStatus.REJECTED],
-  IN_EXECUTION: [InitiativeStatus.CLOSED, InitiativeStatus.REJECTED], CLOSED: [], REJECTED: [],
-};
+/**
+ * ★ Do 2026-09-07 ta tablica była RĘCZNĄ kopią macierzy serwera i rozjechała się z nią:
+ * pozwalała odrzucić szkic (serwer: brak takiej krawędzi -> 400 INVALID_TRANSITION po
+ * kliknięciu). Teraz pochodzi z wygenerowanego SSOT (`scripts/generate-initiative-statuses.mjs`),
+ * więc rozjazd jest niemożliwy bez przegenerowania pliku.
+ */
+export const VALID_TRANSITIONS: Record<InitiativeStatusCode, InitiativeStatusCode[]> =
+  INITIATIVE_VALID_TRANSITIONS;
 export const MODULES: Record<ModuleId, ModuleConfig> = {
   tools: { id: 'tools', name: 'Tools', route: '/tools', statuses: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT], color: 'slate' },
   assessment: { id: 'assessment', name: 'Assessment', route: '/assessment', statuses: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT], color: 'slate' },
@@ -42,23 +52,80 @@ export const isTerminalStatus = (status: InitiativeStatusCode): boolean => statu
 export const isActiveStatus = (status: InitiativeStatusCode): boolean => !isTerminalStatus(status);
 export const needsAttention = (status: InitiativeStatusCode): boolean => status === InitiativeStatus.PENDING_APPROVAL;
 
-export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean }
-const ACTION_KEYS: Partial<Record<InitiativeStatusCode, string>> = { DRAFT: 'initiatives.transition.createDraft', PENDING_APPROVAL: 'initiatives.transition.submitForReview', APPROVED: 'initiatives.transition.approve', IN_EXECUTION: 'initiatives.transition.startExecution', CLOSED: 'initiatives.transition.markComplete' };
-export function getStatusActions(status: InitiativeStatusCode): StatusAction[] { return getValidNextStatuses(status).map((targetStatus) => ({ labelKey: targetStatus === InitiativeStatus.REJECTED ? 'initiatives.transition.reject' : ACTION_KEYS[targetStatus] ?? 'initiatives.transition.changeStatus', targetStatus, variant: targetStatus === InitiativeStatus.REJECTED ? 'danger' : targetStatus === InitiativeStatus.DRAFT ? 'secondary' : 'primary', requiresReason: targetStatus === InitiativeStatus.REJECTED })); }
+export interface StatusAction { labelKey: string; targetStatus: InitiativeStatusCode; variant: 'primary' | 'secondary' | 'danger'; requiresReason?: boolean; gate?: string }
+/** Klucz etykiety per BRAMKA — słownictwo z tablicy DEC-424 zaakceptowanej przez właściciela. */
+export const gateActionLabelKey = (gate: string): string => `initiatives.lifecycle.action.${gate}`;
+export function getStatusActions(status: InitiativeStatusCode): StatusAction[] {
+  return INITIATIVE_TRANSITION_MATRIX.filter((row) => row.from === status).map((row) => ({
+    labelKey: gateActionLabelKey(row.gate),
+    targetStatus: row.to as InitiativeStatusCode,
+    // Crimson (`danger`) rezerwujemy dla semantyki krytycznej: odrzucenie/anulowanie.
+    variant: row.to === InitiativeStatus.REJECTED ? 'danger' : row.gate === 'SEND_BACK' ? 'secondary' : 'primary',
+    requiresReason: row.condition === 'REASON_REQUIRED',
+    gate: row.gate,
+  }));
+}
 export type ContextActionId = 'task' | 'decision' | 'raid';
 export const getContextActions = (status: InitiativeStatusCode): ContextActionId[] => status === InitiativeStatus.IN_EXECUTION ? ['task', 'decision', 'raid'] : status === InitiativeStatus.DRAFT || status === InitiativeStatus.APPROVED ? ['task', 'raid'] : [];
 
-export const GateType = { SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW', SEND_BACK: 'SEND_BACK', APPROVE: 'APPROVE', START: 'START', COMPLETE: 'COMPLETE', REJECT: 'REJECT' } as const;
-export type GateTypeValue = (typeof GateType)[keyof typeof GateType];
-export const GateRole = { ADMIN: 'ADMIN', CONSULTANT: 'CONSULTANT', PROJECT_MANAGER: 'PROJECT_MANAGER', PROJECT_LEAD: 'PROJECT_LEAD', INITIATIVE_OWNER: 'INITIATIVE_OWNER', PROJECT_SPONSOR: 'PROJECT_SPONSOR', PMO: 'PMO', STEERING_COMMITTEE: 'STEERING_COMMITTEE', TEAM_MEMBER: 'TEAM_MEMBER', BUSINESS_OWNER: 'BUSINESS_OWNER' } as const;
-export type GateRoleValue = (typeof GateRole)[keyof typeof GateRole];
-export const GATE_PERMISSIONS: Record<GateTypeValue, GateRoleValue[]> = { SUBMIT_FOR_REVIEW: [GateRole.CONSULTANT, GateRole.INITIATIVE_OWNER], SEND_BACK: [GateRole.PROJECT_MANAGER, GateRole.PMO], APPROVE: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE], START: [GateRole.PMO], COMPLETE: [GateRole.INITIATIVE_OWNER, GateRole.PMO], REJECT: [GateRole.PROJECT_SPONSOR, GateRole.STEERING_COMMITTEE] };
-export const GATE_TRANSITIONS: Record<GateTypeValue, { from: InitiativeStatusCode[]; to: InitiativeStatusCode }> = {
-  SUBMIT_FOR_REVIEW: { from: [InitiativeStatus.DRAFT], to: InitiativeStatus.PENDING_APPROVAL }, SEND_BACK: { from: [InitiativeStatus.PENDING_APPROVAL], to: InitiativeStatus.DRAFT }, APPROVE: { from: [InitiativeStatus.PENDING_APPROVAL], to: InitiativeStatus.APPROVED }, START: { from: [InitiativeStatus.APPROVED], to: InitiativeStatus.IN_EXECUTION }, COMPLETE: { from: [InitiativeStatus.IN_EXECUTION], to: InitiativeStatus.CLOSED }, REJECT: { from: [InitiativeStatus.PROPOSED, InitiativeStatus.DRAFT, InitiativeStatus.PENDING_APPROVAL, InitiativeStatus.APPROVED, InitiativeStatus.IN_EXECUTION], to: InitiativeStatus.REJECTED },
-};
-export function getGateForTransition(from: InitiativeStatusCode, to: InitiativeStatusCode): GateTypeValue | null { return (Object.entries(GATE_TRANSITIONS).find(([, v]) => v.from.includes(from) && v.to === to)?.[0] as GateTypeValue | undefined) ?? null; }
-export function canUserExecuteGate(roles: string[], gate: GateTypeValue): boolean { return roles.includes('ADMIN') || roles.includes('SUPERADMIN') || GATE_PERMISSIONS[gate].some((role) => roles.includes(role)); }
-export function getFilteredStatusActions(status: InitiativeStatusCode, roles: string[]) { return getStatusActions(status).map((action) => { const gate = getGateForTransition(status, action.targetStatus); const requiredRoles = gate ? GATE_PERMISSIONS[gate] : []; return { ...action, gate, requiredRoles, variant: !gate || canUserExecuteGate(roles, gate) ? action.variant : 'disabled' as any }; }); }
+/** Bramki, role i warunki — WYŁĄCZNIE z wygenerowanego SSOT DEC-424. */
+export type GateTypeValue = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['gate'];
+export type GateRoleValue = (typeof INITIATIVE_TRANSITION_MATRIX)[number]['roles'][number];
+export type InitiativeFlagOperation = (typeof GENERATED_FLAG_RULES)[number]['operation'];
+
+export const GateType = Object.fromEntries(
+  INITIATIVE_TRANSITION_MATRIX.map((row) => [row.gate, row.gate])
+) as Record<GateTypeValue, GateTypeValue>;
+
+export const GATE_PERMISSIONS: Record<string, string[]> = INITIATIVE_TRANSITION_MATRIX.reduce<
+  Record<string, string[]>
+>((out, row) => {
+  out[row.gate] = Array.from(new Set([...(out[row.gate] ?? []), ...row.roles]));
+  return out;
+}, GENERATED_FLAG_RULES.reduce<Record<string, string[]>>((out, rule) => {
+  out[rule.gate] = Array.from(new Set([...(out[rule.gate] ?? []), ...rule.roles]));
+  return out;
+}, {}));
+
+export const GATE_TRANSITIONS: Record<string, { from: InitiativeStatusCode[]; to: InitiativeStatusCode | null }> =
+  INITIATIVE_TRANSITION_MATRIX.reduce<Record<string, { from: InitiativeStatusCode[]; to: InitiativeStatusCode | null }>>(
+    (out, row) => {
+      const entry = out[row.gate] ?? { from: [] as InitiativeStatusCode[], to: row.to as InitiativeStatusCode };
+      if (!entry.from.includes(row.from as InitiativeStatusCode)) entry.from.push(row.from as InitiativeStatusCode);
+      out[row.gate] = entry;
+      return out;
+    },
+    {}
+  );
+
+/** Zachowany kontrakt nazw ról dla ekranów, które indeksują `GATE_PERMISSIONS`. */
+export const GateRole = {
+  ADMIN: 'ADMIN', SUPERADMIN: 'SUPERADMIN', CONSULTANT: 'CONSULTANT',
+  PROJECT_MANAGER: 'PROJECT_MANAGER', PROJECT_LEAD: 'PROJECT_LEAD',
+  INITIATIVE_OWNER: 'INITIATIVE_OWNER', PROJECT_SPONSOR: 'PROJECT_SPONSOR',
+  PMO: 'PMO', STEERING_COMMITTEE: 'STEERING_COMMITTEE',
+  PORTFOLIO_OWNER: 'PORTFOLIO_OWNER', TEAM_MEMBER: 'TEAM_MEMBER',
+  BUSINESS_OWNER: 'BUSINESS_OWNER',
+} as const;
+
+export const INITIATIVE_FLAG_RULES = GENERATED_FLAG_RULES;
+
+export function getTransitionRow(from: InitiativeStatusCode, to: InitiativeStatusCode) {
+  return INITIATIVE_TRANSITION_MATRIX.find((row) => row.from === from && row.to === to) ?? null;
+}
+export function getGateForTransition(from: InitiativeStatusCode, to: InitiativeStatusCode): GateTypeValue | null {
+  return getTransitionRow(from, to)?.gate ?? null;
+}
+export function canUserExecuteGate(roles: string[], gate: string): boolean {
+  return roles.includes('ADMIN') || roles.includes('SUPERADMIN') || (GATE_PERMISSIONS[gate] ?? []).some((role) => roles.includes(role));
+}
+export function getFilteredStatusActions(status: InitiativeStatusCode, roles: string[]) {
+  return getStatusActions(status).map((action) => {
+    const gate = getGateForTransition(status, action.targetStatus);
+    const requiredRoles = gate ? (GATE_PERMISSIONS[gate] ?? []) : [];
+    return { ...action, gate, requiredRoles, variant: !gate || canUserExecuteGate(roles, gate) ? action.variant : ('disabled' as any) };
+  });
+}
 export function getRequiredRolesForNextGate(status: InitiativeStatusCode) { return getValidNextStatuses(status).flatMap((targetStatus) => { const gate = getGateForTransition(status, targetStatus); return gate ? [{ gate, requiredRoles: GATE_PERMISSIONS[gate], targetStatus }] : []; }); }
 
-export default { VALID_TRANSITIONS, MODULES, STATUS_METADATA, getModuleForStatus, getModuleConfigForStatus, isValidTransition, getValidNextStatuses, willChangeModule, getTargetModule, getStatusMeta, getLocalizedStatusLabel, getLocalizedStatusDescription, getStatusesForModule, isStatusInModule, getLifecycleProgress, getLifecycleOrder, isTerminalStatus, isActiveStatus, needsAttention, getStatusActions, getContextActions, GATE_PERMISSIONS, GATE_TRANSITIONS, getGateForTransition, canUserExecuteGate, getFilteredStatusActions, getRequiredRolesForNextGate };
+export default { VALID_TRANSITIONS, MODULES, STATUS_METADATA, getModuleForStatus, getModuleConfigForStatus, isValidTransition, getValidNextStatuses, willChangeModule, getTargetModule, getStatusMeta, getLocalizedStatusLabel, getLocalizedStatusDescription, getStatusesForModule, isStatusInModule, getLifecycleProgress, getLifecycleOrder, isTerminalStatus, isActiveStatus, needsAttention, getStatusActions, getContextActions, GATE_PERMISSIONS, GATE_TRANSITIONS, getGateForTransition, canUserExecuteGate, getFilteredStatusActions, getRequiredRolesForNextGate, getTransitionRow, INITIATIVE_FLAG_RULES };

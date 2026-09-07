@@ -13,6 +13,13 @@ export interface ActionButton {
   /** Stretch to fill available space (flex-1) */
   flex?: boolean;
   disabled?: boolean;
+  /**
+   * Powód, dla którego akcja jest nieaktywna — pokazywany jako `title` przycisku.
+   * Dodane 2026-09-07 razem z łańcuchem zarządzania inicjatywą: wyszarzony przycisk
+   * bez powodu jest tym samym, co „coś poszło nie tak" po fakcie. Addytywne — brak
+   * propu = zero zmian w istniejących stopkach.
+   */
+  title?: string;
   /** Extra CSS classes */
   className?: string;
   /** Single-key shortcut displayed as a badge (e.g. "T" for Triage). Handled by TableWithPreviewLayout. */
@@ -265,6 +272,7 @@ export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({
                   key={btnIdx}
                   onClick={btn.onClick}
                   disabled={btn.disabled}
+                  title={btn.title}
                   className={actionPillClass(
                     btn.colorScheme,
                     [

@@ -12604,7 +12604,59 @@
     "failedToUpdateResource2": "Could not save the resource",
     "failedToRemoveResource2": "Could not remove the resource",
     "failedToUpdateBudgetItem2": "Could not save the budget item",
-    "failedToRemoveBudgetItem2": "Could not remove the budget item"
+    "failedToRemoveBudgetItem2": "Could not remove the budget item",
+    "lifecycle": {
+      "action": {
+        "CREATE_DRAFT": "Create draft",
+        "SUBMIT_FOR_REVIEW": "Submit for approval",
+        "APPROVE": "Approve initiative",
+        "SEND_BACK": "Send back to draft",
+        "REJECT": "Reject initiative",
+        "START": "Start execution",
+        "COMPLETE": "Close initiative",
+        "CANCEL": "Cancel initiative",
+        "BLOCK": "Put execution on hold",
+        "UNBLOCK": "Resume execution",
+        "ARCHIVE": "Archive"
+      },
+      "blocked": {
+        "TITLE_AND_JUSTIFICATION_REQUIRED": "Add a title and a justification first.",
+        "REASON_REQUIRED": "This action requires a reason.",
+        "INITIATIVE_CARD_INCOMPLETE": "The card is incomplete — add description, owner and scope.",
+        "GATE_DECISION_REQUIRED": "A current GO decision from the committee is missing.",
+        "HANDOFF_AND_START_DATE_REQUIRED": "An accepted handoff and a start date are required.",
+        "OPEN_WORK_BLOCKS_CLOSURE": "Open tasks or unresolved decisions block closure.",
+        "GATE_BLOCKED": "Gate readiness not met — complete: {{items}}.",
+        "AUTHOR_ONLY": "Only the initiative author can perform this action.",
+        "INVALID_TRANSITION": "This transition does not exist for the current status.",
+        "UNEXPECTED_CURRENT_STATUS": "The status changed meanwhile — refresh the view.",
+        "MISSING_TRANSITION_GATE": "This transition has no governed gate and cannot run.",
+        "INVALID_FLAG_OPERATION": "This operation is not allowed in the initiative's current state.",
+        "UNSUPPORTED_FLAG_OPERATION": "Unsupported lifecycle flag operation.",
+        "UNKNOWN": "The action could not be completed. Refresh the view and try again."
+      },
+      "heading": "Initiative stage",
+      "loading": "Checking available actions…",
+      "working": "Saving…",
+      "applied": "Saved: {{action}}",
+      "none": "You do not have permission to change this initiative's stage.",
+      "noInitiative": "No initiative.",
+      "preflightFailed": "Could not check the available actions for this initiative.",
+      "reasonTitle": "{{action}} — provide a reason",
+      "reasonLabel": "Reason (required)",
+      "reasonPlaceholder": "Explain why you are making this decision — it goes into the initiative history.",
+      "reasonHint": "Without a reason this operation will not be saved.",
+      "readiness": {
+        "title": "title",
+        "owner": "owner",
+        "timeline_dates": "planned start and end dates",
+        "schedule_milestones": "at least one milestone",
+        "timeline": "baseline timeline (dates)",
+        "benefits_owner": "business owner for benefits",
+        "benefits_kpis": "KPIs",
+        "unknown": "gate requirements"
+      }
+    }
   },
   "execution": {
     "review": {

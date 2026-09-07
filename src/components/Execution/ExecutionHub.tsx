@@ -111,6 +111,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useInitiativeRefreshStore } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus, PortfolioInitiative, Task } from '../../types';
 import { InitiativeCompactPanel } from '../Initiatives/InitiativeCompactPanel';
+import { InitiativeLifecycleActions } from '../Initiatives/lifecycle/InitiativeLifecycleActions';
 import { type InitiativePreviewV3Model } from '../Initiatives/InitiativePreviewV3';
 import { PortfolioHealthScore } from '../MyWork/Executive/PortfolioHealthScore';
 import {
@@ -5795,7 +5796,19 @@ Please return:
                   }}
                   relations={sourceRelations}
                   actions={listPreviewActions}
-                />
+                >
+                  {/*
+                    Łańcuch zarządzania w Realizacji (DEC-424: Zatwierdzona → W realizacji,
+                    W realizacji → Zamknięta, flaga wstrzymania). Ta sama powierzchnia co w
+                    rejestrze Inicjatyw; kebab wiersza jej nie dubluje.
+                  */}
+                  <InitiativeLifecycleActions
+                    initiativeId={selectedRow.id}
+                    density="full"
+                    heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
+                    className="mt-4"
+                  />
+                </StandardPreview>
             ) : null} />
           </div>
         </div>

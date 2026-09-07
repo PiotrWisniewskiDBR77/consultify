@@ -3968,6 +3968,24 @@ router.delete(
   InitiativeController.removeLinkedItem
 );
 router.get('/:id/gate-readiness-check', InitiativeController.getGateReadinessCheck);
+
+/**
+ * GET /api/initiatives/:id/transition-preflight
+ * Co aktor może zrobić z tą inicjatywą i dlaczego nie może (DEC-424).
+ * GET — nietknięty przez `requireCanonicalInitiativeExecutionWriter`.
+ */
+router.get('/:id/transition-preflight', InitiativeController.getTransitionPreflight);
+
+/**
+ * POST /api/initiatives/:id/lifecycle-flag
+ * Flaga „wstrzymana" (HOLD/RESUME) — jedyna osiągalna trasa po wygaszeniu
+ * `/:id/block` i `/:id/unblock` decyzją 26A. Wchodzi w ten sam silnik przejść.
+ */
+router.post(
+  '/:id/lifecycle-flag',
+  requireGovernedInitiativeCapability('initiative.status.change', { shadow: true }),
+  InitiativeController.setLifecycleFlag
+);
 router.get('/:id/status-history', InitiativeController.getStatusHistory);
 
 export default router;

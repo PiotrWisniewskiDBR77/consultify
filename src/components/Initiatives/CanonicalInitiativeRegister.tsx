@@ -7,6 +7,7 @@ import { getInitiativeStatusChipTone } from '@/services/initiativeLifecycle';
 import { PreviewActionBar } from '@/components/shared/PreviewPane/PreviewActionBar';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { InitiativeLifecycleActions } from './lifecycle/InitiativeLifecycleActions';
 import {
   createInitiativeRegisterColumns,
   createInitiativeRegisterRowMenu,
@@ -160,7 +161,20 @@ export const CanonicalInitiativeRegister = ({
           void navigator.clipboard?.writeText(`${initiative.name} — ${initiative.status}`),
       }}
       relations={relationForRow?.(initiative) || []}
-    />
+    >
+      {/*
+        Łańcuch zarządzania (DEC-424/DEC-453): JEDYNE miejsce w rejestrze
+        Inicjatyw, gdzie zmienia się etap. Rola decyduje o widoczności przycisku,
+        warunek — o jego aktywności (powód obok), powód wymagany — o oknie.
+        Kebab wiersza NIE dubluje tych akcji (doktryna gęstości §1).
+      */}
+      <InitiativeLifecycleActions
+        initiativeId={initiative.id}
+        density="full"
+        heading={t('initiatives.lifecycle.heading', 'Etap inicjatywy')}
+        className="mt-4"
+      />
+    </StandardPreview>
   );
 
   return (

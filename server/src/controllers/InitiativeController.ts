@@ -65,6 +65,7 @@ import {
   removeLinkedItem,
 } from '../services/initiative/initiativeLinkedItemsService.js';
 import { findSimilarInitiatives } from '../services/initiative/initiativeSimilarityService.js';
+import { getInitiativeTransitionPreflight } from '../services/initiative/initiativeTransitionPreflightService.js';
 import {
   executeInitiativeTransition,
   getColumnNameSet,
@@ -5928,6 +5929,89 @@ export class InitiativeController {
         getTimelineFlags(id, gate as any, orgId),
       ]);
       res.json({ enabled: true, gate, aiReadiness, timeline });
+    }
+  );
+
+  /**
+   * GET /initiatives/:id/transition-preflight
+   *
+   * Kanoniczny podgląd łańcucha zarządzania inicjatywą (DEC-424): dla każdego
+   * przejścia i każdej flagi mówi, czy rola aktora przechodzi bramkę, czy warunek
+   * merytoryczny jest spełniony i czy trzeba będzie podać powód. Liczone tym samym
+   * kodem, którym `PATCH /:id/status` odmawia — więc interfejs nie może pokazać
+   * przycisku, którego pisarz nie przyjmie.
+   */
+  /**
+   * POST /initiatives/:id/lifecycle-flag  { operation: 'HOLD' | 'RESUME', reason? }
+   *
+   * Wstrzymanie realizacji jest FLAGĄ, nie statusem (DEC-424, wiersz „W realizacji").
+   * Zastane `POST /:id/block` i `/:id/unblock` są od decyzji 26A wygaszone (409), więc
+   * flaga nie miała ŻADNEJ osiągalnej trasy z interfejsu. Ten adapter wchodzi do tego
+   * samego silnika (`executeInitiativeTransition` z `flagOperation`) — nie odtwarza
+   * drugiej kopii reguł i nie reaktywuje wygaszonej ścieżki wykonawczej.
+   */
+  static setLifecycleFlag = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id } = req.params;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const operation = String((req.body as any)?.operation || '')
+        .trim()
+        .toUpperCase();
+      if (operation !== 'HOLD' && operation !== 'RESUME') {
+        res.status(400).json({
+          error: 'Unsupported lifecycle flag operation',
+          rule: 'UNSUPPORTED_FLAG_OPERATION',
+        });
+        return;
+      }
+      const reason = (req.body as any)?.reason;
+      const result = await executeInitiativeTransition({
+        orgId,
+        initiativeId: id,
+        actorId,
+        actorRole: req.user?.role ?? null,
+        actorFirstName: req.user?.firstName ?? null,
+        actorLastName: req.user?.lastName ?? null,
+        actorEmail: req.user?.email ?? null,
+        requestIp: (req as any).ip ?? null,
+        requestUserAgent: (req as any).get?.('user-agent') ?? null,
+        nextStatusInput: 'IN_EXECUTION',
+        flagOperation: operation,
+        reason: reason ? String(reason) : null,
+      });
+      if (!result.ok) {
+        res.status(result.statusCode).json(result.body);
+        return;
+      }
+      res.json({ id, operation, onHold: operation === 'HOLD', message: 'Lifecycle flag updated' });
+    }
+  );
+
+  static getTransitionPreflight = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
+      const { id: initiativeId } = req.params;
+      if (!orgId || !actorId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const preflight = await getInitiativeTransitionPreflight({
+        orgId,
+        initiativeId,
+        actorId,
+        actorRole: req.user?.role ?? null,
+      });
+      if (!preflight) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+      res.json(preflight);
     }
   );
 

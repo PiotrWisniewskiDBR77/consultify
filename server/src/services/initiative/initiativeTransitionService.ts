@@ -56,6 +56,10 @@ import {
   normalizeInitiativeDbStatusForRead,
 } from './initiativeLifecycleCanon.js';
 import { recordHandoff as recordStageHandoff } from './stageHandoffService.js';
+import {
+  evaluateInitiativeAuthorOnly,
+  evaluateInitiativeTransitionCondition,
+} from './initiativeTransitionConditions.js';
 
 // ==========================================
 // SHARED HELPERS (moved from InitiativeController.ts — these are also used by
@@ -585,60 +589,28 @@ export async function executeInitiativeTransition(
       }
 
       const condition = transitionDefinition.condition;
-      const trimmedReason = String(reason ?? '').trim();
-      const ownerId = lockedRow.owner_business_id ?? lockedRow.owner_execution_id;
-      const scopePresent = [lockedRow.scope_in, lockedRow.scope_out]
-        .some((value) => Array.isArray(value) ? value.length > 0 : String(value ?? '').trim().length > 0);
-      if (condition === 'TITLE_AND_JUSTIFICATION' &&
-        (!String(lockedRow.title ?? lockedRow.name ?? '').trim() || !String(lockedRow.description ?? '').trim())) {
+      // Warunki merytoryczne liczy WSPÓLNY moduł `initiativeTransitionConditions`
+      // — ten sam, z którego korzysta `GET /:id/transition-preflight`. Dzięki temu
+      // przycisk wyszarzony w interfejsie i odmowa pisarza mają jedno źródło.
+      const conditionFailure = await evaluateInitiativeTransitionCondition(client, {
+        orgId,
+        initiativeId: id,
+        row: lockedRow,
+        condition,
+        reason: String(reason ?? '').trim(),
+        hasApprovedGateDecision,
+        hasPendingExecutionGateDecisions,
+      });
+      if (conditionFailure) {
         return { kind: 'error', statusCode: 400, body: {
-          error: 'Title and justification are required', rule: 'TITLE_AND_JUSTIFICATION_REQUIRED',
-        } };
-      }
-      if (condition === 'REASON_REQUIRED' && !trimmedReason) {
-        return { kind: 'error', statusCode: 400, body: { error: 'Reason is required', rule: 'REASON_REQUIRED' } };
-      }
-      if (condition === 'CARD_COMPLETE' &&
-        (!String(lockedRow.description ?? '').trim() || !ownerId || !scopePresent)) {
-        return { kind: 'error', statusCode: 400, body: {
-          error: 'Description, owner and scope are required', rule: 'INITIATIVE_CARD_INCOMPLETE',
+          error: conditionFailure.error, rule: conditionFailure.rule,
         } };
       }
       if (transitionDefinition.authorOnly && !isSystemActor) {
-        const createdBy = lockedRow.created_by ? String(lockedRow.created_by) : null;
-        if (!createdBy || createdBy !== String(actorId)) {
+        const authorFailure = evaluateInitiativeAuthorOnly(lockedRow, actorId);
+        if (authorFailure) {
           return { kind: 'error', statusCode: 403, body: {
-            error: 'Only the initiative author can execute this transition', rule: 'AUTHOR_ONLY',
-          } };
-        }
-      }
-      if (condition === 'CURRENT_GO_DECISION') {
-        const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING', client);
-        if (!goNoGo.ok) return { kind: 'error', statusCode: 400, body: {
-          error: 'A current GO decision is required', rule: 'GATE_DECISION_REQUIRED',
-        } };
-      }
-      if (condition === 'HANDOFF_AND_START_DATE') {
-        const handoff = (await client.query<{ ok: boolean }>(
-          `SELECT TRUE AS ok FROM initiative_handoffs
-           WHERE initiative_id = ? AND organization_id = ? AND readiness_allowed = TRUE
-           ORDER BY created_at DESC LIMIT 1`, [id, orgId]
-        )).rows[0];
-        if (!handoff?.ok || !(lockedRow.planned_start_date ?? lockedRow.start_date)) {
-          return { kind: 'error', statusCode: 400, body: {
-            error: 'Accepted handoff and start date are required', rule: 'HANDOFF_AND_START_DATE_REQUIRED',
-          } };
-        }
-      }
-      if (condition === 'NO_OPEN_WORK') {
-        const openTasks = Number((await client.query<{ count: string }>(
-          `SELECT COUNT(*)::text AS count FROM tasks
-           WHERE initiative_id = ? AND organization_id = ?
-             AND UPPER(COALESCE(status, '')) NOT IN ('DONE', 'COMPLETED', 'CANCELLED')`, [id, orgId]
-        )).rows[0]?.count ?? 0);
-        if (openTasks > 0 || await hasPendingExecutionGateDecisions(orgId, id)) {
-          return { kind: 'error', statusCode: 400, body: {
-            error: 'Open tasks or blocking decisions prevent closure', rule: 'OPEN_WORK_BLOCKS_CLOSURE',
+            error: authorFailure.error, rule: authorFailure.rule,
           } };
         }
       }

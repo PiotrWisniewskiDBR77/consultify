@@ -12046,7 +12046,59 @@
     "failedToUpdateResource2": "Nie udało się zapisać zasobu",
     "failedToRemoveResource2": "Nie udało się usunąć zasobu",
     "failedToUpdateBudgetItem2": "Nie udało się zapisać pozycji budżetu",
-    "failedToRemoveBudgetItem2": "Nie udało się usunąć pozycji budżetu"
+    "failedToRemoveBudgetItem2": "Nie udało się usunąć pozycji budżetu",
+    "lifecycle": {
+      "action": {
+        "CREATE_DRAFT": "Utwórz szkic",
+        "SUBMIT_FOR_REVIEW": "Prześlij do zatwierdzenia",
+        "APPROVE": "Zatwierdź inicjatywę",
+        "SEND_BACK": "Zwróć do szkicu",
+        "REJECT": "Odrzuć inicjatywę",
+        "START": "Rozpocznij realizację",
+        "COMPLETE": "Zamknij inicjatywę",
+        "CANCEL": "Anuluj inicjatywę",
+        "BLOCK": "Wstrzymaj realizację",
+        "UNBLOCK": "Wznów realizację",
+        "ARCHIVE": "Zarchiwizuj"
+      },
+      "blocked": {
+        "TITLE_AND_JUSTIFICATION_REQUIRED": "Uzupełnij tytuł i uzasadnienie inicjatywy.",
+        "REASON_REQUIRED": "To działanie wymaga podania powodu.",
+        "INITIATIVE_CARD_INCOMPLETE": "Karta jest niekompletna — uzupełnij opis, właściciela i zakres.",
+        "GATE_DECISION_REQUIRED": "Brakuje aktualnej decyzji GO komitetu.",
+        "HANDOFF_AND_START_DATE_REQUIRED": "Wymagany przyjęty handoff i termin startu realizacji.",
+        "OPEN_WORK_BLOCKS_CLOSURE": "Zamknięcie blokują otwarte zadania lub nierozstrzygnięte decyzje.",
+        "GATE_BLOCKED": "Bramka gotowości niespełniona — uzupełnij: {{items}}.",
+        "AUTHOR_ONLY": "To działanie może wykonać wyłącznie autor inicjatywy.",
+        "INVALID_TRANSITION": "To przejście nie istnieje dla bieżącego statusu.",
+        "UNEXPECTED_CURRENT_STATUS": "Status inicjatywy zmienił się w międzyczasie — odśwież widok.",
+        "MISSING_TRANSITION_GATE": "To przejście nie ma zdefiniowanej bramki i nie może zostać wykonane.",
+        "INVALID_FLAG_OPERATION": "Ta operacja nie jest dozwolona w bieżącym stanie inicjatywy.",
+        "UNSUPPORTED_FLAG_OPERATION": "Nieobsługiwana operacja flagi cyklu życia.",
+        "UNKNOWN": "Nie udało się wykonać działania. Odśwież widok i spróbuj ponownie."
+      },
+      "heading": "Etap inicjatywy",
+      "loading": "Sprawdzam dostępne działania…",
+      "working": "Zapisuję…",
+      "applied": "Zapisano: {{action}}",
+      "none": "Nie masz uprawnień do zmiany etapu tej inicjatywy.",
+      "noInitiative": "Brak inicjatywy.",
+      "preflightFailed": "Nie udało się sprawdzić dostępnych działań dla tej inicjatywy.",
+      "reasonTitle": "{{action}} — podaj powód",
+      "reasonLabel": "Powód (wymagany)",
+      "reasonPlaceholder": "Napisz, dlaczego podejmujesz tę decyzję — trafi do historii inicjatywy.",
+      "reasonHint": "Bez powodu ta operacja nie zostanie zapisana.",
+      "readiness": {
+        "title": "tytuł",
+        "owner": "właściciel",
+        "timeline_dates": "planowane daty startu i końca",
+        "schedule_milestones": "co najmniej jeden kamień milowy",
+        "timeline": "harmonogram bazowy (daty)",
+        "benefits_owner": "właściciel biznesowy korzyści",
+        "benefits_kpis": "wskaźniki KPI",
+        "unknown": "wymagania bramki"
+      }
+    }
   },
   "execution": {
     "review": {
