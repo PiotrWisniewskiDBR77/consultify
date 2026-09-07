@@ -1,0 +1,35 @@
+2026-09-07 05:20:22:2022 [32minfo[39m: [32m[Env] Loaded from:[39m
+2026-09-07 05:20:22:2022 [32minfo[39m: [32m[Env] JWT_SECRET length:[39m
+2026-09-07 05:20:22:2022 [32minfo[39m: [32m[Env] OPENAI_API_KEY set:[39m
+2026-09-07 05:20:22:2022 [32minfo[39m: [32m[Env] OPENROUTER_API_KEY set:[39m
+2026-09-07 05:20:22:2022 [32minfo[39m: [32m[Env] GEMINI_API_KEY/GOOGLE_AI_API_KEY set:[39m
+PLAN · napraw-terminy-inicjatyw · DBR77 (a3e05d4a-5397-419d-b486-8e44366c0063) · apply · etykieta=staging
+
+POMIAR · 97 inicjatyw w organizacji
+  bez sensu wobec statusu i dzisiejszej daty : 17
+  plan bez planu bazowego („—" w Odchyleniu) : 0
+  rozjazd plan bazowy vs plan bieżący        : 0
+  licznik przesunięć ≠ 0                     : 0
+  wpisy w dzienniku re-baseline              : 0
+  pominięte (mają zatwierdzony re-baseline)  : 0
+
+  APPROVED          Cloud Migration Phase 2                      2026-03-13 → 2026-08-03  ⇒  2026-10-05 → 2027-06-16   (zatwierdzona/do zatwierdzenia, a koniec planu już minął)
+  APPROVED          RPA Implementation                           2026-03-09 → 2026-06-04  ⇒  2026-09-24 → 2027-04-15   (zatwierdzona/do zatwierdzenia, a koniec planu już minął)
+  CLOSED            Wdrożenie predykcyjnego utrzymania ruchu (Pd — → —  ⇒  2025-11-03 → 2026-04-14   (brak obu dat planu)
+  CLOSED            Wdrożenie predykcyjnego utrzymania ruchu (Pd — → —  ⇒  2025-05-15 → 2026-01-28   (brak obu dat planu)
+  CLOSED            Wdrożenie predykcyjnego utrzymania ruchu (Pd — → —  ⇒  2025-08-08 → 2025-12-19   (brak obu dat planu)
+  CLOSED            wdrożenie predykcyjnego utrzymania ruchu (Pd — → —  ⇒  2025-02-22 → 2025-12-16   (brak obu dat planu)
+  CLOSED            wdrożenie predykcyjnego utrzymania ruchu w z — → —  ⇒  2025-11-14 → 2026-08-15   (brak obu dat planu)
+  IN_EXECUTION      Automatyzacja magazynu WIP                   — → —  ⇒  2026-05-27 → 2027-03-03   (brak obu dat planu)
+  IN_EXECUTION      DevOps Transformation                        — → 2026-05-05  ⇒  2026-04-11 → 2027-02-20   (brak daty startu)
+  IN_EXECUTION      Poprawa realizacji korzyści programu         — → —  ⇒  2026-07-15 → 2027-01-09   (brak obu dat planu)
+  IN_EXECUTION      Quality Management System 4.0                — → 2026-04-05  ⇒  2026-07-18 → 2027-01-20   (brak daty startu)
+  IN_EXECUTION      Robotyzacja gniazda spawalniczego            — → —  ⇒  2026-04-03 → 2026-11-30   (brak obu dat planu)
+  IN_EXECUTION      System wizyjny kontroli jakości              — → —  ⇒  2026-04-12 → 2026-10-18   (brak obu dat planu)
+  PENDING_APPROVAL  Cybersecurity Enhancement Program            2026-03-20 → 2026-09-02  ⇒  2026-10-23 → 2027-05-12   (zatwierdzona/do zatwierdzenia, a koniec planu już minął)
+  PENDING_APPROVAL  Cybersecurity Enhancement Program (Fork)     — → —  ⇒  2026-11-17 → 2027-04-27   (brak obu dat planu)
+  PENDING_APPROVAL  Data Analytics Platform                      — → —  ⇒  2026-10-14 → 2027-04-28   (brak obu dat planu)
+  PENDING_APPROVAL  IoT Sensor Network Deployment                — → —  ⇒  2026-10-11 → 2027-06-03   (brak obu dat planu)
+
+KOPIA BEZPIECZEŃSTWA (stan PRZED, wszystkie wiersze): /private/tmp/wt-terminy/evidence/terminy-realne/kopia-staging-2026-09-07T03-20-24-887Z.csv
+ZAPISANO · terminy: 17 · plan bazowy zrównany z bieżącym: 17

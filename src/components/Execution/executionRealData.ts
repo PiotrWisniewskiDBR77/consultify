@@ -28,6 +28,10 @@
  *  wszystkie w toku, handoff = opcjonalna bramka, nie warunek istnienia). */
 export const EXECUTION_IN_FLIGHT_STATUSES = ['EXECUTING', 'BLOCKED', 'TRACKING'] as const;
 
+/** Statusy inicjatywy, które znaczą „już się nie dzieje" (po normalizacji —
+ *  `CLOSED`→`DONE`, `REJECTED`→`CANCELLED`, patrz STATUS_ALIASES niżej). */
+export const EXECUTION_TERMINAL_STATUSES = ['DONE', 'CANCELLED', 'ARCHIVED'] as const;
+
 /** Statusy decyzji, które znaczą „jeszcze nie rozstrzygnięta". */
 export const OPEN_DECISION_STATUSES = ['PENDING', 'ESCALATED', 'DEFERRED', 'OPEN'] as const;
 
@@ -112,6 +116,13 @@ export function normalizeInitiativeStatus(status: unknown): string {
   return STATUS_ALIASES[raw] ?? raw;
 }
 
+/** Inicjatywa ZAKOŃCZONA — zamknięta, odrzucona albo zarchiwizowana. */
+export function isTerminalInitiative(initiative: RealInitiativeLike): boolean {
+  return (EXECUTION_TERMINAL_STATUSES as readonly string[]).includes(
+    normalizeInitiativeStatus(initiative?.status)
+  );
+}
+
 /** Inicjatywa jest „w toku” (EXECUTING/BLOCKED/TRACKING). */
 export function isInFlightInitiative(initiative: RealInitiativeLike): boolean {
   return (EXECUTION_IN_FLIGHT_STATUSES as readonly string[]).includes(
@@ -191,6 +202,17 @@ export function initiativeDeviationDays(
   const actual = parseDate(initiative?.actualEndDate);
   if (actual != null) return Math.round((actual - baseline) / DAY_MS);
   const planned = parseDate(initiative?.plannedEndDate);
+  // Inicjatywa ZAKOŃCZONA (DONE/CANCELLED/ARCHIVED) już się nie opóźnia —
+  // klauzula `max(plan, dziś)` ma sens wyłącznie dla pracy, która TRWA.
+  // POMIAR 07.09 (stanowisko, po uporządkowaniu dat): 9 inicjatyw zamkniętych
+  // pokazywało „+195 / +331 / +229" rosnące co dobę, mimo że plan bazowy był
+  // równy planowi bieżącemu, a więc poślizgu nie było ŻADNEGO. Bez faktu
+  // (`actualEndDate`) najlepszym, co wiemy o zakończonej inicjatywie, jest jej
+  // plan — nie dzisiejsza data.
+  if (isTerminalInitiative(initiative)) {
+    if (planned == null) return null;
+    return Math.round((planned - baseline) / DAY_MS);
+  }
   const reference = planned == null ? now : Math.max(planned, now);
   return Math.round((reference - baseline) / DAY_MS);
 }
@@ -198,16 +220,34 @@ export function initiativeDeviationDays(
 /**
  * RAG inicjatywy (metodyka A1 pkt 8 — SZARY to osobny kolor „luka danych",
  * nie fałszywa zieleń):
- *   · po terminie              → red
- *   · termin za ≤ 7 dni        → amber
- *   · dalej niż 7 dni          → green
- *   · brak `plannedEndDate`    → grey
+ *   · zakończona (DONE/CANCELLED/ARCHIVED) → green — praca stoi zamknięta,
+ *     nie jest „po terminie" i nie wolno jej malować crimsonem (prawo UI:
+ *     czerwień = wyłącznie semantyka krytyczna),
+ *   · po terminie                          → red
+ *   · termin za ≤ 7 dni                    → amber
+ *   · POŚLIZG od planu bazowego (> 0 dni)  → amber, nawet jeśli do
+ *     dzisiejszego terminu jeszcze daleko,
+ *   · dalej niż 7 dni i bez poślizgu       → green
+ *   · brak `plannedEndDate`                → grey
+ *
+ * DLACZEGO POŚLIZG WCHODZI DO RAG (07.09, słowa właściciela o ekranie
+ * Realizacji: „możesz poprawić terminy, żeby nie było takich głupot?"):
+ * kolumna „Odchylenie (dni)" mierzy przesunięcie ZOBOWIĄZANIA, a RAG mierzył
+ * wyłącznie dystans do DZISIEJSZEGO terminu. Inicjatywa, która przesunęła
+ * koniec o 40 dni w przyszłość, pokazywała więc „+40" czerwienią i „Na czas"
+ * zielenią w tym samym wierszu — dwie liczby odpowiadające na różne pytania,
+ * bez zaznaczenia tego czytelnikowi. Przesunięte zobowiązanie jest RYZYKIEM,
+ * więc dostaje AMBER („Zagrożona"), a nie RED — czerwień zostaje dla terminu
+ * faktycznie przekroczonego.
  */
 export function initiativeRag(initiative: RealInitiativeLike, now = Date.now()): ExecutionRag {
   const end = parseDate(initiative?.plannedEndDate);
   if (end == null) return 'grey';
+  if (isTerminalInitiative(initiative)) return 'green';
   if (end < now) return 'red';
   if (end - now <= 7 * DAY_MS) return 'amber';
+  const deviation = initiativeDeviationDays(initiative, now);
+  if (deviation != null && deviation > 0) return 'amber';
   return 'green';
 }
 
