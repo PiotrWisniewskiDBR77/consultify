@@ -1,0 +1,8 @@
+tabela,id,typ,tytul,organization_id_przed,organization_id_po
+"raid_items","f2a38c7c-f8cd-49b1-8f4d-45c1b9b8e0b0","RISK","Azure region outage risk","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","d0507296-9807-45c9-86a5-b4edab874d99","RISK","Data loss during Lakehouse migration","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","24999b71-68a9-43a5-b88f-4eef9549c5b8","RISK","GDPR non-compliance penalty","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","fc07b561-64eb-4e65-a9d7-bb65ea945688","RISK","Key person dependency — Marek","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","9cc45c75-de73-46c6-8964-cf9f4702ee56","ISSUE","UiPath license expired — blocking RPA","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","dc6f7db3-63ee-4735-98c2-b13a9e8d8db6","ISSUE","CI/CD pipeline flaky tests","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"
+"raid_items","838f9ef8-4865-425a-a42e-45eff2b997dc","DEPENDENCY","API Gateway depends on Auth Service migration","dbr77","a3e05d4a-5397-419d-b486-8e44366c0063"

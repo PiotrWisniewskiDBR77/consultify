@@ -1,0 +1,7 @@
+tabela,kolumna,wierszy
+"interview_assignment_members","user_id","2"
+"interview_assignments","assignee_user_id","5"
+"interview_questions","answered_by","21"
+"interview_sessions","owner_id","3"
+"organization_members","user_id","3"
+"users","id","3"

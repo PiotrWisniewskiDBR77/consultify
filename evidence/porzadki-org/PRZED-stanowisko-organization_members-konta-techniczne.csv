@@ -1,0 +1,4 @@
+id,organization_id,user_id,email,role,created_at
+"1f7154f4-d99b-4b13-a235-78e1c59e7fa5","cc9db573-260f-4a19-927f-f3cc1fbaea38","seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_ops_lead","ops.lead+cc9db573-260f-4a19-927f-f3cc1fbaea38@seed.local","MEMBER","Mon Sep 07 2026 05:19:09 GMT+0200 (Central European Summer Time)"
+"c93da526-046a-4864-b016-0851072e6cd8","cc9db573-260f-4a19-927f-f3cc1fbaea38","seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_finance","finance+cc9db573-260f-4a19-927f-f3cc1fbaea38@seed.local","MEMBER","Mon Sep 07 2026 05:19:09 GMT+0200 (Central European Summer Time)"
+"9c69ec41-c5bf-4a2a-980b-32160f905afc","cc9db573-260f-4a19-927f-f3cc1fbaea38","seed_user_cc9db573-260f-4a19-927f-f3cc1fbaea38_it","it+cc9db573-260f-4a19-927f-f3cc1fbaea38@seed.local","MEMBER","Mon Sep 07 2026 05:19:09 GMT+0200 (Central European Summer Time)"
