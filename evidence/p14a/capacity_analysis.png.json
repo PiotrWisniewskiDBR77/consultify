@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3194/initiatives?tab=capacity",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Analiza obciążenia — Controls Engineer",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n2\n7\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Wszystkie\n0\nNowa analiza\nSzkice\n0\nOpublikowane\n1\nZ lukami\n1\nAnaliza obciążenia — Controls Engineer\nOpublikowany\nZapisano\nSekcje\nPracuj z AI\nPlan źródłowy\nArkusz obciążenia\nLuki i presja\nPropozycje zmian\nDecyzje\nPlan źródłowy · v3\nAKCJE\nWróć do listy\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tOpublikowany\nOkresy\t12\nRole\t1\nLuki\t12\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj",
+ "kiedy": "2026-09-07T03:46:37.113Z"
+}

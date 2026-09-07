@@ -1,0 +1,21 @@
+{
+ "url": "http://127.0.0.1:3194/initiatives?tab=plan",
+ "tytul": "Consultify",
+ "kliki": [
+  "text=Plan klikany P11 — Controls Engineer",
+  "text=Otwórz",
+  "text=Pracuj z AI"
+ ],
+ "wpisy": [],
+ "zdarzenia": [],
+ "przewin": null,
+ "pelna": false,
+ "wysokosc": 900,
+ "szerokosc": 1440,
+ "motyw": "light",
+ "bledy": [],
+ "bledyKonsoli": [],
+ "odpowiedziHttp": [],
+ "tekst": "LOCAL\n?\nCentrum Pomocy\nOpinie\nDokumenty\n77\nPrzejdź do głównej treści\nInicjatywy\nDane\nModel\n2\n7\nAudyt Nocny\nAN\nInicjatywy\nPlan\nObciążenie\nStatus: Opublikowane\n1\nNowy plan\nSzkice\n1\nOpublikowane\n1\nZ konfliktami\n0\nPlan klikany P11 — Controls Engineer\nOpublikowany\nZapisano\nSekcje\nPracuj z AI\nHoryzont\nZakres inicjatyw\nKolejność i okna\nObciążenie ról\nDecyzje\n\nTydzień · Europe/Warsaw\n\n6.09.2026 – 13.09.2026\n13.09.2026 – 20.09.2026\n20.09.2026 – 27.09.2026\n27.09.2026 – 4.10.2026\n4.10.2026 – 11.10.2026\n11.10.2026 – 18.10.2026\n18.10.2026 – 25.10.2026\n25.10.2026 – 1.11.2026\n1.11.2026 – 8.11.2026\n8.11.2026 – 15.11.2026\n15.11.2026 – 22.11.2026\n22.11.2026 – 29.11.2026\nAKCJE\nWróć do listy\nWŁAŚCIWOŚCI\nWłaściwość\tWartość\nStatus\tOpublikowany\nWersja\t3\nWersja portfela źródłowego\t4\nPOWIĄZANIA\nŹRÓDŁA I ZAŁOŻENIA\nKOMENTARZE\nHISTORIA\nAnalizuj",
+ "kiedy": "2026-09-07T03:46:37.054Z"
+}
